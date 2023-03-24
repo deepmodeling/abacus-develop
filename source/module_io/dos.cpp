@@ -7,7 +7,6 @@
 bool ModuleIO::calculate_dos
 (
 	const int &is,
-	const std::vector<int> &isk,
 	const std::string &fa, //file address for DOS
 	const std::string &fa1, //file address for DOS_smearing
 	const double &de_ev, // delta energy in ev
@@ -17,12 +16,13 @@ bool ModuleIO::calculate_dos
 	const int &nks,//number of k points
 	const int &nkstot,
 	const std::vector<double> &wk,//weight of k points
-	const ModuleBase::matrix &wg,//weight of (kpoint,bands)
+	const std::vector<int> &isk,
 	const int &nbands,// number of bands
-	const ModuleBase::matrix &ekb//store energy for each k point and each band
+	const ModuleBase::matrix &ekb,//store energy for each k point and each band
+	const ModuleBase::matrix &wg//weight of (kpoint,bands)
 )
 {
-	ModuleBase::TITLE("Dos","calculae_dos");
+	ModuleBase::TITLE("ModuleIO","calculate_dos");
 	std::ofstream ofs;
 	std::ofstream ofs1;
 	if(GlobalV::MY_RANK==0)
@@ -45,7 +45,7 @@ bool ModuleIO::calculate_dos
 	}
 	else if(emax_ev < emin_ev)
 	{
-		ModuleBase::WARNING("calculate_dos","emax_ev < emin_ev");
+		ModuleBase::WARNING("ModuleIO::calculate_dos","emax_ev < emin_ev");
 		return 0;
 	}
 
@@ -56,7 +56,7 @@ bool ModuleIO::calculate_dos
 	if(npoints <= 0)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npoints",npoints);
-		ModuleBase::WARNING("calculate_dos","npoints < 0");
+		ModuleBase::WARNING("ModuleIO::calculate_dos","npoints <= 0");
 		return 0;
 	}
 	if(GlobalV::MY_RANK==0)

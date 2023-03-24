@@ -136,7 +136,8 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_nche", cond_nche, "orders of Chebyshev expansions for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dw", cond_dw, "frequency interval for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
-    ModuleBase::GlobalFunc::OUTP(ofs, "cond_wenlarge", cond_wenlarge, "control the t interval: dt = PI/wcut/cond_wenlarge");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_dt", cond_dt, "t interval to integrate Onsager coefficiencies");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_dtbatch", cond_dtbatch, "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_fwhm", cond_fwhm, "FWHM for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_nonlocal", cond_nonlocal, "Nonlocal effects for conductivities");
     
@@ -146,7 +147,6 @@ void Input::Print(const std::string &fn) const
                                  GlobalV::KS_SOLVER,
                                  "cg; dav; lapack; genelpa; scalapack_gvx; cusolver");
     ModuleBase::GlobalFunc::OUTP(ofs, "scf_nmax", scf_nmax, "#number of electron iterations");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_force", out_force, "output the out_force or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "relax_nmax", relax_nmax, "number of ion iteration steps");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_stru", out_stru, "output the structure files after each ion step");
     ModuleBase::GlobalFunc::OUTP(ofs, "force_thr", force_thr, "force threshold, unit: Ry/Bohr");
@@ -268,6 +268,9 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfirst",mdp.md_pfirst,"initial target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_plast",mdp.md_plast,"final target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfreq",mdp.md_pfreq,"oscillation frequency, used to determine qmass of thermostats coupled with barostat");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dump_force", dump_force, "output atomic forces into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dump_vel", dump_vel, "output atomic velocities into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dump_virial", dump_virial, "output lattice virial into the file MD_dump or not");
 
     ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_flag",efield_flag,"add electric field");
@@ -414,17 +417,17 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 
 
     ofs << "\n#Parameters (21.spherical bessel)" << std::endl;
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_ecut",		bessel_nao_ecut, "energy cutoff for spherical bessel functions(Ry)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_tolerence",bessel_nao_tolerence, "tolerence for spherical bessel root");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_rcut",		bessel_nao_rcut, "radial cutoff for spherical bessel functions(a.u.)");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_smooth",	bessel_nao_smooth, "spherical bessel smooth or not");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_sigma",	bessel_nao_sigma, "spherical bessel smearing_sigma");
-   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_ecut",		bessel_nao_ecut, "energy cutoff for spherical bessel functions(Ry)");
-   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_rcut",		bessel_nao_rcut, "radial cutoff for spherical bessel functions(a.u.)");
-   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_tolerence",bessel_nao_tolerence, "tolerence for spherical bessel root");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_lmax",		bessel_descriptor_lmax, "lmax used in generating spherical bessel functions");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_ecut",		bessel_descriptor_ecut, "energy cutoff for spherical bessel functions(Ry)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_tolerence",	bessel_descriptor_tolerence, "tolerence for spherical bessel root");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_smooth",	bessel_descriptor_smooth, "spherical bessel smooth or not");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_sigma",		bessel_descriptor_sigma, "spherical bessel smearing_sigma");
-   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_ecut",		bessel_descriptor_ecut, "energy cutoff for spherical bessel functions(Ry)");
-   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
-   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_tolerence",	bessel_descriptor_tolerence, "tolerence for spherical bessel root");
 
     ofs.close();
     return;

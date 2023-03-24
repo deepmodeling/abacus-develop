@@ -15,7 +15,7 @@ using namespace std;
 TEST_F(PWTEST,test4_4)
 {
     cout<<"dividemthd 2, gamma_only: off, xprime: true, 2 kpoints, check fft"<<endl;
-    ModulePW::PW_Basis_K pwtest;
+    ModulePW::PW_Basis_K pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;
@@ -62,7 +62,7 @@ TEST_F(PWTEST,test4_4)
     complex<double> *tmp = new complex<double> [nx*ny*nz];
     complex<double> * rhor = new complex<double> [nrxx];
     complex<double> * rhogr = new complex<double> [nmaxgr];
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     complex<float> * rhofr = new complex<float> [nrxx];
     complex<float> * rhofgr = new complex<float> [nmaxgr];
 #endif
@@ -115,7 +115,7 @@ TEST_F(PWTEST,test4_4)
 #endif
         complex<double> * rhog = new complex<double> [npwk];
         complex<double> * rhogout = new complex<double> [npwk];
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         complex<float> * rhofg = new complex<float> [npwk];
         complex<float> * rhofgout = new complex<float> [npwk];
 #endif
@@ -124,7 +124,7 @@ TEST_F(PWTEST,test4_4)
             rhog[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
             rhogr[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
         }    
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         for(int ig = 0 ; ig < npwk ; ++ig)
         {
             rhofg[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
@@ -137,7 +137,7 @@ TEST_F(PWTEST,test4_4)
 
         pwtest.recip2real(rhogr,rhogr,ik); //check in-place transform
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         ModuleBase::GlobalFunc::ZEROS(rhofr, nrxx);
         pwtest.recip2real(rhofg,rhofr,ik, true, float(1)); //check out-of-place transform
 
@@ -153,7 +153,7 @@ TEST_F(PWTEST,test4_4)
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(),rhor[ixy*nplane+iz].imag(),1e-6);
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhogr[ixy*nplane+iz].real(),1e-6);
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(),rhogr[ixy*nplane+iz].imag(),1e-6);
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhofr[ixy*nplane+iz].real(),1e-4);
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(),rhofr[ixy*nplane+iz].imag(),1e-4);
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhofgr[ixy*nplane+iz].real(),1e-4);
@@ -167,7 +167,7 @@ TEST_F(PWTEST,test4_4)
 
         pwtest.real2recip(rhogr,rhogr,ik);
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         ModuleBase::GlobalFunc::ZEROS(rhofgout, npwk);
         pwtest.real2recip(rhofr,rhofgout,ik, true, float(1));
 
@@ -180,7 +180,7 @@ TEST_F(PWTEST,test4_4)
             EXPECT_NEAR(rhog[ig].imag(),rhogout[ig].imag(),1e-6);
             EXPECT_NEAR(rhog[ig].real(),rhogr[ig].real(),1e-6);
             EXPECT_NEAR(rhog[ig].imag(),rhogr[ig].imag(),1e-6);
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
             EXPECT_NEAR(rhofg[ig].real(),rhofgout[ig].real(),1e-4);
             EXPECT_NEAR(rhofg[ig].imag(),rhofgout[ig].imag(),1e-4);
             EXPECT_NEAR(rhofg[ig].real(),rhofgr[ig].real(),1e-4);
@@ -191,7 +191,7 @@ TEST_F(PWTEST,test4_4)
 
         delete [] rhog;
         delete [] rhogout;
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         delete [] rhofg;
         delete [] rhofgout;
 #endif
@@ -226,7 +226,7 @@ TEST_F(PWTEST,test4_4)
     delete[] kvec_d;
     delete[] rhogr;
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     delete[] rhofr;
     delete[] rhofgr;
     fftwf_cleanup();

@@ -2,9 +2,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_base/timer.h"
+#include "module_base/element_name.h"
 namespace elecstate
 {
-/*Broken, please fix it
 // translate from write_rho in charge.cpp.
 void Potential::write_potential(
 	const int &is, 
@@ -15,81 +15,134 @@ void Potential::write_potential(
 	const int &hartree)const
 {
     ModuleBase::TITLE("potential","write_potential");
+	if (GlobalV::out_pot!=1) 
+	{
+		return;
+	}
+    ModuleBase::timer::tick("Potential","write_potential");
 
     std::ofstream ofs;
 
-    if(GlobalV::MY_RANK==0)
-    {
-        ofs.open( fn.c_str() );
+	if(GlobalV::MY_RANK==0)
+	{
+		ofs.open(fn.c_str());
+		
+		if (!ofs)
+		{
+            ModuleBase::WARNING("Potential::write_potential","Can't create Potential File!");
+		}	
 
-        ofs << this->ucell_->latName << std::endl;//1
-        ofs << " " << this->ucell_->lat0 * 0.529177 << std::endl;
-        ofs << " " << this->ucell_->latvec.e11 << " " << this->ucell_->latvec.e12 << " " << this->ucell_->latvec.e13 << std::endl;
-        ofs << " " << this->ucell_->latvec.e21 << " " << this->ucell_->latvec.e22 << " " << this->ucell_->latvec.e23 << std::endl;
-        ofs << " " << this->ucell_->latvec.e31 << " " << this->ucell_->latvec.e32 << " " << this->ucell_->latvec.e33 << std::endl;
+		/// output header for cube file
+		ofs << "Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn." << std::endl;
+		ofs << GlobalV::NSPIN << " (nspin) " << std::endl;
 
-        for(int it=0; it<this->ucell_->ntype; it++)
-        {
-            ofs << " " << this->ucell_->atoms[it].label;
-        }
-        ofs << std::endl;
-        for(int it=0; it<this->ucell_->ntype; it++)
-        {
-            ofs << " " << this->ucell_->atoms[it].na;
-        }
-        ofs << std::endl;
-        ofs << "Direct" << std::endl;
+        // We assum that SPIN1_POT.cube does not need Fermi Energy.
+		// if(GlobalV::NSPIN==1 || GlobalV::NSPIN == 4)
+		// {
+		// 	ofs << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
+		// }
+		// else if(GlobalV::NSPIN==2)
+		// {
+		// 	if (GlobalV::TWO_EFERMI)
+		// 	{
+		// 		if(is==0)		ofs << GlobalC::en.ef_up << " (fermi energy for spin=1, in Ry)" << std::endl; 
+		// 		else if(is==1)	ofs << GlobalC::en.ef_dw << " (fermi energy for spin=2, in Ry)" << std::endl;
+		// 	}
+		// 	else
+		// 	{
+		// 		ofs << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
+		// 	}
+		// }
+		// else
+		// {
+		// 	ModuleBase::WARNING_QUIT("write_potential","check nspin!");
+		// }
 
-        for(int it=0; it<this->ucell_->ntype; it++)
-        {
-            for(int ia=0; ia<this->ucell_->atoms[it].na; ia++)
-            {
-                ofs << " " << this->ucell_->atoms[it].taud[ia].x
-                    << " " << this->ucell_->atoms[it].taud[ia].y
-                    << " " << this->ucell_->atoms[it].taud[ia].z << std::endl;
-            }
-        }
-        ofs << this->rho_basis_->nx << " " << this->rho_basis_->ny << " " << this->rho_basis_->nz;
-        ofs << std::setprecision(precision);
-        ofs << scientific; 
-        if(!ofs)
-        {
-            ModuleBase::WARNING("potential::write_potential","Can't create VHartree File!");
-        }
-    }	
+		ofs << GlobalC::ucell.nat << " 0.0 0.0 0.0 " << std::endl;
+		double fac=GlobalC::ucell.lat0;
+		ofs << this->rho_basis_->nx 
+			<< " " << fac*GlobalC::ucell.latvec.e11/double(this->rho_basis_->nx) 
+			<< " " << fac*GlobalC::ucell.latvec.e12/double(this->rho_basis_->nx) 
+			<< " " << fac*GlobalC::ucell.latvec.e13/double(this->rho_basis_->nx) << std::endl;
+		ofs << this->rho_basis_->ny 
+			<< " " << fac*GlobalC::ucell.latvec.e21/double(this->rho_basis_->ny) 
+			<< " " << fac*GlobalC::ucell.latvec.e22/double(this->rho_basis_->ny) 
+			<< " " << fac*GlobalC::ucell.latvec.e23/double(this->rho_basis_->ny) << std::endl;
+		ofs << this->rho_basis_->nz 
+			<< " " << fac*GlobalC::ucell.latvec.e31/double(this->rho_basis_->nz) 
+			<< " " << fac*GlobalC::ucell.latvec.e32/double(this->rho_basis_->nz) 
+			<< " " << fac*GlobalC::ucell.latvec.e33/double(this->rho_basis_->nz) << std::endl;
+
+		std::string element = "";
+		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		{
+			// erase the number in label, such as Fe1.
+			element = GlobalC::ucell.atoms[it].label;
+			std::string::iterator temp = element.begin();
+			while (temp != element.end())
+			{
+				if ((*temp >= '1') && (*temp <= '9'))
+				{
+					temp = element.erase(temp);
+				}
+				else
+				{
+					temp++;
+				}
+			}
+
+			for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+			{
+				//convert from label to atomic number
+				int z = 0;
+				for(int j=0; j!=ModuleBase::element_name.size(); j++)
+				{
+					if (element == ModuleBase::element_name[j])
+					{
+						z=j+1;
+						break;
+					}
+				}
+				ofs << " " << z << " " << GlobalC::ucell.atoms[it].ncpp.zv
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
+						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
+			}
+		}
+		ofs << std::setprecision(precision);
+		ofs << scientific;
+	}
 
 #ifndef __MPI
     int count=0;
-    for(int k=0; k<this->rho_basis_->nz; k++)
-    {
-        ofs << "\n" << k << " iz";
-        double value = 0.0;
-        double ave = 0.0;
-        for(int j=0; j<this->rho_basis_->ny; j++)
-        {
-            for(int i=0; i<this->rho_basis_->nx; i++)
-            {
-                if(count%8==0) ofs << "\n";
-                value = v(is, i*this->rho_basis_->ny*this->rho_basis_->nz + j*this->rho_basis_->nz + k);
-                ofs << " " << value;
-                ave += value;
-                ++count;
+	for(int i=0; i<this->rho_basis_->nx; i++)
+	{
+		for(int j=0; j<this->rho_basis_->ny; j++)
+		{
+			for(int k=0; k<this->rho_basis_->nz; k++)
+			{
+                ofs << " " << v(is, k*this->rho_basis_->nx*this->rho_basis_->ny+i*this->rho_basis_->ny+j);
+				if(k%6==5 && k!=this->rho_basis_->nz-1) ofs << "\n";
             }
+            ofs << "\n";
         }
-        ofs << "\n" << ave/this->rho_basis_->nx/this->rho_basis_->ny << " average";
     }
 #else
     MPI_Barrier(MPI_COMM_WORLD);
     // only do in the first pool.
     if(GlobalV::MY_POOL==0)
     {
+        int nxyz = this->rho_basis_->nx * this->rho_basis_->ny * this->rho_basis_->nz;
+		double* pot_cube = new double[nxyz];
+		ModuleBase::GlobalFunc::ZEROS(pot_cube, nxyz);
+
         // num_z: how many planes on processor 'ip'
         int *num_z = new int[GlobalV::NPROC_IN_POOL];
         ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-        for (int iz=0;iz<this->rho_basis_->nz;iz++)
+        for (int iz=0;iz<GlobalC::bigpw->nbz;iz++)
         {
             int ip = iz % GlobalV::NPROC_IN_POOL;
-            num_z[ip]++;
+            num_z[ip] += GlobalC::bigpw->bz;
         }
 
         // start_z: start position of z in
@@ -139,7 +192,6 @@ void Potential::write_potential(
                 for(int ir=0; ir<nxy; ir++)
                 {
                     zpiece[ir] = v(is, ir*this->rho_basis_->nplane+iz-this->rho_basis_->startz_current );
-                    //GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*this->rho_basis_->nplane+iz=" << ir*this->rho_basis_->nplane+iz;
                 }
             }
             // case 2: > first part rho: send the rho to
@@ -161,30 +213,43 @@ void Potential::write_potential(
                 //GlobalV::ofs_running << "\n Receieve First number = " << zpiece[0];
             }
 
-            // write data
             if(GlobalV::MY_RANK==0)
             {
-                //ofs << "\niz=" << iz;
                 double ave = 0.0;
                 for(int ir=0; ir<nxy; ir++)
                 {
-                    if(count%8==0) ofs << "\n";
-                    ofs << " " << zpiece[ir];
-                    ave += zpiece[ir];
-                    ++count;
+                    pot_cube[ir+iz*nxy]=zpiece[ir];
                 }
-                ofs << "\n" << ave/nxy << " average"; 
             }
         }
         delete[] zpiece;
+		delete[] which_ip;
+		delete[] num_z;
+		delete[] start_z;
+        if(GlobalV::MY_RANK==0)
+		{
+			for(int ix=0; ix<this->rho_basis_->nx; ix++)
+			{
+				for(int iy=0; iy<this->rho_basis_->ny; iy++)
+				{
+					for (int iz=0; iz<this->rho_basis_->nz; iz++)
+					{
+						ofs << " " << pot_cube[iz*this->rho_basis_->nx*this->rho_basis_->ny+ix*this->rho_basis_->ny+iy];
+						if(iz%6==5 && iz!=this->rho_basis_->nz-1) ofs << "\n";
+					}
+					ofs << "\n";
+				}
+			}
+		}
+        delete[] pot_cube;
     }
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     if(GlobalV::MY_RANK==0) ofs.close();
-    ModuleBase::timer::tick("potential","write_potential");
+    ModuleBase::timer::tick("Potential","write_potential");
     return;
 }
-*/
+
 
 void Potential::write_elecstat_pot(const std::string &fn, const std::string &fn_ave, ModulePW::PW_Basis* rho_basis, const Charge* const chr)
 {

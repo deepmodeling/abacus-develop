@@ -13,7 +13,7 @@ if(ENABLE_LCAO)
             ../module_charge/charge.cpp ../../module_base/parallel_reduce.cpp
             ../../module_hamilt_pw/hamilt_pwdft/structure_factor.cpp
             ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp ../occupy.cpp
-            ../kernels/elecstate_op.cpp ../../module_io/rwstream.cpp ../../module_io/write_wfc_pw.cpp
+            ../kernels/elecstate_op.cpp ../../module_io/binstream.cpp ../../module_io/write_wfc_pw.cpp
   )
 
   install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -106,10 +106,18 @@ list(APPEND planewave_serial_srcs
   ../../module_pw/pw_transform_k.cpp
 )
 
+list(APPEND symmetry
+../../module_cell/module_symmetry/symmetry.cpp
+../../module_cell/module_symmetry/symmetry_basic.cpp
+../../module_cell/module_symmetry/symm_other.cpp
+../../module_io/output.cpp
+)
+
 add_library(
   planewave_serial
   OBJECT
   ${planewave_serial_srcs}
+  ${symmetry}
 )
 
 AddTest(

@@ -17,8 +17,8 @@ using namespace std;
 TEST_F(PWTEST,test_other)
 {
     cout<<"Test other codes"<<endl;
-    ModulePW::PW_Basis pwtest;
-    ModulePW::PW_Basis_K pwktest;
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
+    ModulePW::PW_Basis_K pwktest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec(0.2, 0, 0, 0, 1, 0, 0, 0, 1);
 #ifdef __MPI
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
@@ -35,13 +35,13 @@ TEST_F(PWTEST,test_other)
     ModuleBase::Vector3<double> *kvec_d = new ModuleBase::Vector3<double>[nks];
     kvec_d[0].set(0,0,0.5);
     kvec_d[1].set(0.5,0.5,0.5);
-    GlobalV::precision_flag = "double"; //temporary
+    pwktest.set_precision("double");
     pwktest.initgrids(2, latvec, 4,4,4);
     pwktest.initparameters(true, 20, nks, kvec_d);
     pwktest.setuptransform();
     pwktest.collect_local_pw();
-#ifdef __MIX_PRECISION
-    GlobalV::precision_flag = "single";
+#ifdef __ENABLE_FLOAT_FFTW
+    pwktest.set_precision("single");
 #endif
     pwktest.initparameters(true, 8, nks, kvec_d);
     pwktest.setuptransform();
@@ -49,7 +49,7 @@ TEST_F(PWTEST,test_other)
     const int nrxx = pwktest.nrxx;
     complex<double> * rhor1 = new complex<double> [nrxx];
     complex<double> * rhor2 = new complex<double> [nrxx];
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     complex<float> * rhofr1 = new complex<float> [nrxx];
     complex<float> * rhofr2 = new complex<float> [nrxx];
 #endif
@@ -59,7 +59,7 @@ TEST_F(PWTEST,test_other)
         const int npwk = pwktest.npwk[ik];
         complex<double> * rhog1 = new complex<double> [npwk];
         complex<double> * rhog2 = new complex<double> [npwk];
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         complex<float> * rhofg1 = new complex<float> [npwk];
         complex<float> * rhofg2 = new complex<float> [npwk];
 #endif
@@ -68,7 +68,7 @@ TEST_F(PWTEST,test_other)
             rhog1[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwktest.getgdirect(ik,ig).x+1) + 1);
             rhog2[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwktest.getgdirect(ik,ig).x+1) + 1);
         }    
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         for(int ig = 0 ; ig < npwk ; ++ig)
         {
             rhofg1[ig] = 1.0/(pwktest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwktest.getgdirect(ik,ig).x+1) + 1);
@@ -88,7 +88,7 @@ TEST_F(PWTEST,test_other)
         {
             EXPECT_NEAR(abs(rhog1[ig]),abs(rhog2[ig]),1e-8);
         }
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         pwktest.recip_to_real(ctx, rhofg1, rhofr1, ik);
         pwktest.recip2real(rhofg2, rhofr2, ik);
         for(int ir = 0 ; ir < nrxx; ++ir)
@@ -107,14 +107,14 @@ TEST_F(PWTEST,test_other)
 
         delete [] rhog1;
         delete [] rhog2;
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         delete [] rhofg1;
         delete [] rhofg2;
 #endif
     }
     delete [] rhor1;
     delete [] rhor2;
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     delete [] rhofr1;
     delete [] rhofr2;
 #endif
@@ -123,7 +123,7 @@ TEST_F(PWTEST,test_other)
     double* d_kvec_c = pwktest.get_kvec_c_data<double>();
     double* d_gcar = pwktest.get_gcar_data<double>();
     double* d_gk2 = pwktest.get_gk2_data<double>();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     float* s_kvec_c = pwktest.get_kvec_c_data<float>();
     float* s_gcar = pwktest.get_gcar_data<float>();
     float* s_gk2 = pwktest.get_gk2_data<float>();
@@ -131,12 +131,12 @@ TEST_F(PWTEST,test_other)
 
     
     delete[] kvec_d;
-    ModulePW::PW_Basis *p_pw = new ModulePW::PW_Basis();
-    ModulePW::PW_Basis_K *p_pwk = new ModulePW::PW_Basis_K();
+    ModulePW::PW_Basis *p_pw = new ModulePW::PW_Basis(device_flag, precision_flag);
+    ModulePW::PW_Basis_K *p_pwk = new ModulePW::PW_Basis_K(device_flag, precision_flag);
     delete p_pw;
     delete p_pwk;
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }

@@ -1,9 +1,10 @@
 #include "esolver_ks_lcao_tddft.h"
 
 #include "module_io/cal_r_overlap_R.h"
+#include "module_io/dipole_io.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
-#include "module_io/dipole_io.h"
+#include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 
 //--------------temporary----------------------------
@@ -279,10 +280,65 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
 void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 {
+    if (this->conv_elec)
+    {
+        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        {
+            bool bit = false; // LiuXh, 2017-03-21
+            // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
+            if (this->psi != nullptr)
+            {
+                hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
+                this->p_hamilt->matrix(h_mat, s_mat);
+                ModuleIO::saving_HS(h_mat.p,
+                                    s_mat.p,
+                                    bit,
+                                    hsolver::HSolverLCAO::out_mat_hs,
+                                    "data-" + std::to_string(ik),
+                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            }
+            else if (this->psid != nullptr)
+            {
+                hamilt::MatrixBlock<double> h_mat, s_mat;
+                this->p_hamilt->matrix(h_mat, s_mat);
+                ModuleIO::saving_HS(h_mat.p,
+                                    s_mat.p,
+                                    bit,
+                                    hsolver::HSolverLCAO::out_mat_hs,
+                                    "data-" + std::to_string(ik),
+                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+            }
+        }
+    }
+
+    if (this->conv_elec)
+    {
+        if (elecstate::ElecStateLCAO::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO::out_wfc_flag = 1;
+        }
+        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        {
+            if (this->psi != nullptr)
+            {
+                this->psi[0].fix_k(ik);
+                this->pelec->print_psi(this->psi[0]);
+            }
+            else
+            {
+                this->psid[0].fix_k(ik);
+                this->pelec->print_psi(this->psid[0]);
+            }
+        }
+        elecstate::ElecStateLCAO::out_wfc_flag = 0;
+    }
+
     // (9) Calculate new potential according to new Charge Density.
 
     if (!this->conv_elec)
     {
+        if (GlobalV::NSPIN == 4)
+            GlobalC::ucell.cal_ux();
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         GlobalC::en.delta_escf(this->pelec);
     }
@@ -304,6 +360,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->psi_laststep
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
+
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
             this->psi->fix_k(ik);
@@ -375,14 +432,12 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         }
         ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
 
-        /* Broken, please fix it
-                if (GlobalV::out_pot == 1) // LiuXh add 20200701
-                {
-                    std::stringstream ssp;
-                    ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT";
-                    this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
-                }
-        */
+        if (GlobalV::out_pot == 1) // LiuXh add 20200701
+        {
+            std::stringstream ssp;
+            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+        }
     }
 
     if (this->conv_elec)
@@ -418,7 +473,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_hsR)
     {
-        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
+        if (GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
         {
             ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }
@@ -426,7 +481,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_t)
     {
-        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
+        if (GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
         {
             ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
         }
@@ -434,11 +489,11 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
     if (hsolver::HSolverLCAO::out_mat_dh)
     {
-        if (!(GlobalV::CALCULATION == "md" && (istep % hsolver::HSolverLCAO::out_hsR_interval != 0)))
+        if (GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
         {
             ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }
-    }   
+    }
 
     // add by jingan for out r_R matrix 2019.8.14
     if (INPUT.out_mat_r)
@@ -526,14 +581,14 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                  &info);
 
         const char N_char = 'N', T_char = 'T';
-        const double one_float[2] = {1.0, 0.0}, zero_float[2] = {0.0, 0.0};
-        const complex<double> half_float[2] = {0.5, 0.0};
+        const complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};
+        const complex<double> half_float = {0.5, 0.0};
         pzgemm_(&T_char,
                 &T_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 this->LOC.dm_k[ik].c,
                 &one_int,
                 &one_int,
@@ -542,7 +597,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp1,
                 &one_int,
                 &one_int,
@@ -553,7 +608,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 tmp1,
                 &one_int,
                 &one_int,
@@ -562,7 +617,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp2,
                 &one_int,
                 &one_int,
@@ -573,7 +628,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 Sinv,
                 &one_int,
                 &one_int,
@@ -582,7 +637,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp3,
                 &one_int,
                 &one_int,
@@ -593,7 +648,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
-                &one_float[0],
+                &one_float,
                 tmp3,
                 &one_int,
                 &one_int,
@@ -602,7 +657,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
-                &zero_float[0],
+                &zero_float,
                 tmp4,
                 &one_int,
                 &one_int,
@@ -611,12 +666,12 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
         pzgeadd_(&N_char,
                  &GlobalV::NLOCAL,
                  &GlobalV::NLOCAL,
-                 &half_float[0],
+                 &half_float,
                  tmp2,
                  &one_int,
                  &one_int,
                  this->LOC.ParaV->desc,
-                 &half_float[0],
+                 &half_float,
                  tmp4,
                  &one_int,
                  &one_int,
@@ -624,12 +679,12 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 
         pztranu_(&GlobalV::NLOCAL,
                  &GlobalV::NLOCAL,
-                 &one_float[0],
+                 &one_float,
                  tmp4,
                  &one_int,
                  &one_int,
                  this->LOC.ParaV->desc,
-                 &zero_float[0],
+                 &zero_float,
                  tmp5,
                  &one_int,
                  &one_int,

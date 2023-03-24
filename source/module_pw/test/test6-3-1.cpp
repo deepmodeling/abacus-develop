@@ -15,7 +15,7 @@ using namespace std;
 TEST_F(PWTEST,test6_3_1)
 {
     cout<<"dividemthd 2, gamma_only: on, xprime: false, full_pw: true, full_pw_dim: 1, check fft"<<endl;
-    ModulePW::PW_Basis pwtest;
+    ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx,ny,nz;  //f*G
     double wfcecut;
@@ -117,7 +117,7 @@ TEST_F(PWTEST,test6_3_1)
         }
     }    
     double * rhor = new double [nrxx];
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     complex<float> * rhofg = new complex<float> [npw];
     complex<float> * rhofgr = new complex<float> [nmaxgr];
     complex<float> * rhofgout = new complex<float> [npw];
@@ -138,7 +138,7 @@ TEST_F(PWTEST,test6_3_1)
 
     pwtest.recip2real(rhogr,(double*)rhogr);//check in-place transform
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     pwtest.recip2real(rhofg,rhofr);//check out-of-place transform
 
     pwtest.recip2real(rhofgr,(float*)rhofgr);//check in-place transform
@@ -151,7 +151,7 @@ TEST_F(PWTEST,test6_3_1)
         {
             EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhor[ixy*nplane+iz],1e-6);
             EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),((double*)rhogr)[ixy*nplane+iz],1e-6);
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
             EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhofr[ixy*nplane+iz],1e-4);
             EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),((float*)rhofgr)[ixy*nplane+iz],1e-4);
 #endif
@@ -163,7 +163,7 @@ TEST_F(PWTEST,test6_3_1)
 
     pwtest.real2recip((double*)rhogr,rhogr);//check in-place transform
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     pwtest.real2recip(rhofr,rhofgout);//check out-of-place transform
 
     pwtest.real2recip((float*)rhofgr,rhofgr);//check in-place transform
@@ -175,7 +175,7 @@ TEST_F(PWTEST,test6_3_1)
         EXPECT_NEAR(rhog[ig].imag(),rhogout[ig].imag(),1e-6);
         EXPECT_NEAR(rhogr[ig].real(),rhogout[ig].real(),1e-6);
         EXPECT_NEAR(rhogr[ig].imag(),rhogout[ig].imag(),1e-6);
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
         EXPECT_NEAR(rhofg[ig].real(),rhofgout[ig].real(),1e-4);
         EXPECT_NEAR(rhofg[ig].imag(),rhofgout[ig].imag(),1e-4);
         EXPECT_NEAR(rhofgr[ig].real(),rhofgout[ig].real(),1e-4);
@@ -190,7 +190,7 @@ TEST_F(PWTEST,test6_3_1)
     delete [] rhogr;
 
     fftw_cleanup();
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
     delete [] rhofg;
     delete [] rhofgout;
     delete [] rhofr;

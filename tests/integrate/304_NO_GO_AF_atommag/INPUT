@@ -7,6 +7,7 @@ ecutwfc        20
 scf_thr            1.0e-8
 scf_nmax          50
 out_chg     0
+out_mul     1
 
 #init_chg    file
 #out_dos    1

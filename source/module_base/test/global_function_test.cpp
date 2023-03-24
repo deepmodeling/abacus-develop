@@ -58,6 +58,12 @@
  *   - judge whether the KS_SOLVER is column major
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
+ * - VECTOR_TO_PTR_v3double
+ *    - get a copy of the ptr of a vector whose elements' type belongs to Vector3<double>
+ * - MemAvailable
+ *    - get the current memory valus
+ * - TETS_LEVEL
+ *    - set the test level
  */
 
 inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b)
@@ -657,6 +663,56 @@ TEST_F(GlobalFunctionTest,Vector2Ptr)
     }
 }
 
+TEST_F(GlobalFunctionTest,MemAvailable)
+{
+    for(int i=0;i<5;i++)
+    {
+        std::ifstream ifs("/proc/meminfo");
+        while (ifs.good())
+        {
+            std::string label, size, kB;
+            ifs >> label >> size >> kB;
+            if (label == "MemAvailable:")
+            {
+                EXPECT_LE(std::stol(size)-1000,ModuleBase::GlobalFunc::MemAvailable());
+                EXPECT_GE(std::stol(size)+1000,ModuleBase::GlobalFunc::MemAvailable());
+            }
+        }
+    }
+}
+
+TEST_F(GlobalFunctionTest,TEST_LEVEL)
+{
+    std::string name;
+    bool test_bool=false;
+    name="none";
+    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
+    EXPECT_EQ(GlobalV::test_wf,0);
+    EXPECT_EQ(GlobalV::test_potential,0);
+    EXPECT_EQ(GlobalV::test_charge,0);
+    name="init_potential";
+    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
+    EXPECT_EQ(GlobalV::test_wf,1);
+    EXPECT_EQ(GlobalV::test_potential,1);
+    EXPECT_EQ(GlobalV::test_charge,1);
+    name="init_read";
+    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
+    EXPECT_EQ(GlobalV::test_input,1);
+    EXPECT_EQ(GlobalV::test_winput,1);
+    EXPECT_EQ(GlobalV::test_kpoint,1);
+    EXPECT_EQ(GlobalV::test_atom,1);
+    EXPECT_EQ(GlobalV::test_unitcell,1);
+#ifndef __EPM
+        EXPECT_EQ(GlobalV::test_pseudo_cell,1);
+#else
+        EXPECT_EQ(test_epm_unitcell,1);
+#endif
+    name="pw_init";
+    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
+    EXPECT_EQ(GlobalV::test_pw,1);
+}
+
+
 /*
 TEST_F(GlobalFunctionTest, Note)
 {
@@ -670,4 +726,17 @@ TEST_F(GlobalFunctionTest, Note)
     ifs.close();
 }
 */
+
+TEST_F(GlobalFunctionTest,Vector2Ptr_v3double)
+{
+    int size = 100;
+    std::vector<ModuleBase::Vector3<double>> abcd(size, ModuleBase::Vector3<double>(1.1,2.2,3.3));
+    ModuleBase::Vector3<double>* ptr_v3d = nullptr;
+    ptr_v3d=ModuleBase::GlobalFunc::VECTOR_TO_PTR(abcd);
+    for (int i = 0; i < size; ++i)
+    {
+        EXPECT_EQ(ptr_v3d[i],ModuleBase::Vector3<double>(1.1,2.2,3.3));
+    }
+}
+
 

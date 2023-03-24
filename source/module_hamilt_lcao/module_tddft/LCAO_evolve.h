@@ -55,14 +55,12 @@ class Evolve_LCAO_Matrix
                   const int nlocal,     
                   const std::complex<double>* U_operator,
                   const std::complex<double>* psi_k_laststep,
-                  std::complex<double>* psi_k,
-                  std::complex<double>* psi_not_norm) const;
+                  std::complex<double>* psi_k) const;
 
     void norm_wfc(
                   const int nband,
                   const int nlocal,     
                   const std::complex<double>* Stmp,
-                  const std::complex<double>* psi_not_norm,
                   std::complex<double>* psi_k,
                   const int print_matrix) const;
           

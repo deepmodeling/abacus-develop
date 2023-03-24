@@ -3,6 +3,7 @@
 #include "module_base/timer.h"
 #include "module_base/parallel_common.h"
 #include "module_base/lapack_connector.h"
+#include "module_base/blacs_connector.h"
 #include "module_base/memory.h"
 
 //#include "build_st_pw.h"
@@ -39,7 +40,9 @@ ORB_control::ORB_control() :
     setup_2d(false)
 {}
 ORB_control::~ORB_control()
-{}
+{
+    Cblacs_exit(1); //delete global variables in cblacs but do not close MPI
+}
 
 void ORB_control::read_orb_first(
     std::ofstream& ofs_in,

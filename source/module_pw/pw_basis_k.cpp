@@ -1,4 +1,6 @@
 #include "pw_basis_k.h"
+
+#include <utility>
 #include "../module_base/constants.h"
 #include "../module_base/timer.h"
 #include "module_base/memory.h"
@@ -20,8 +22,8 @@ PW_Basis_K::~PW_Basis_K()
     delete[] gk2;
     delete[] ig2ixyz_k_;
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+    if (this->device == "gpu") {
+        if (this->precision == "single") {
             delmem_sd_op()(gpu_ctx, this->s_kvec_c);
             delmem_sd_op()(gpu_ctx, this->s_gcar);
             delmem_sd_op()(gpu_ctx, this->s_gk2);
@@ -36,7 +38,7 @@ PW_Basis_K::~PW_Basis_K()
     }
     else {
 #endif
-        if (GlobalV::precision_flag == "single") {
+        if (this->precision == "single") {
             delmem_sh_op()(cpu_ctx, this->s_kvec_c);
             delmem_sh_op()(cpu_ctx, this->s_gcar);
             delmem_sh_op()(cpu_ctx, this->s_gk2);
@@ -91,8 +93,8 @@ void PW_Basis_K:: initparameters(
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+    if (this->device == "gpu") {
+        if (this->precision == "single") {
             resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
@@ -103,7 +105,7 @@ void PW_Basis_K:: initparameters(
     }
     else {
 #endif
-        if (GlobalV::precision_flag == "single") {
+        if (this->precision == "single") {
             resmem_sh_op()(cpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
@@ -160,7 +162,7 @@ void PW_Basis_K::setupIndGk()
         }
     }
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->device == "gpu") {
         resmem_int_op()(gpu_ctx, this->d_igl2isz_k, this->npwk_max * this->nks);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
@@ -221,8 +223,8 @@ void PW_Basis_K::collect_local_pw()
         }
     }
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
-        if (GlobalV::precision_flag == "single") {
+    if (this->device == "gpu") {
+        if (this->precision == "single") {
             resmem_sd_op()(gpu_ctx, this->s_gk2, this->npwk_max * this->nks);
             resmem_sd_op()(gpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3);
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_gk2, this->gk2, this->npwk_max * this->nks);
@@ -237,7 +239,7 @@ void PW_Basis_K::collect_local_pw()
     }
     else {
 #endif
-        if (GlobalV::precision_flag == "single") {
+        if (this->precision == "single") {
             resmem_sh_op()(cpu_ctx, this->s_gk2, this->npwk_max * this->nks, "PW_B_K::s_gk2");
             resmem_sh_op()(cpu_ctx, this->s_gcar, this->npwk_max * this->nks * 3, "PW_B_K::s_gcar");
             castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_gk2, this->gk2, this->npwk_max * this->nks);
@@ -325,7 +327,7 @@ void PW_Basis_K::get_ig2ixyz_k()
         }
     }
 #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
+    if (this->device == "gpu") {
         resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
     }

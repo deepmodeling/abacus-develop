@@ -25,7 +25,7 @@ void XC_Functional::xc(const double &rho, double &exc, double &vxc)
         switch( id )
         {
             // Exchange functionals containing slater exchange
-            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_PBE_R: 
+            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_PBE_R: case XC_GGA_X_PBE_SOL:
             case XC_GGA_X_WC: case XC_GGA_X_B88: case XC_GGA_X_PW91:
             //  SLA,PBX,rPBX,PBXsol,WC,B88,PW91_X
                 XC_Functional::slater(rs, e, v);break;
@@ -43,7 +43,7 @@ void XC_Functional::xc(const double &rho, double &exc, double &vxc)
                 break;
 
             // Correlation functionals containing PW correlation
-            case XC_GGA_C_PBE: case XC_GGA_C_PW91: case XC_LDA_C_PW:
+            case XC_GGA_C_PBE: case XC_GGA_C_PW91: case XC_LDA_C_PW: case XC_GGA_C_PBE_SOL:
             //   PBC,PW91,PWLDA
                 XC_Functional::pw(rs, 0, e, v);break;
 
@@ -82,7 +82,7 @@ void XC_Functional::xc_spin(const double &rho, const double &zeta,
         switch( id )
         {
             // Exchange functionals containing slater exchange
-            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_PBE_R: 
+            case XC_LDA_X: case XC_GGA_X_PBE: case XC_GGA_X_PBE_R: case XC_GGA_X_PBE_SOL: 
             case XC_GGA_X_WC: case XC_GGA_X_B88: case XC_GGA_X_PW91:
             //  SLA,PBX,rPBX,PBXsol,WC,B88,PW91_X
                 XC_Functional::slater_spin(rho, zeta, e, vup, vdw);	break;
@@ -107,15 +107,9 @@ void XC_Functional::xc_spin(const double &rho, const double &zeta,
                 XC_Functional::pz_spin(rs, zeta, e, vup, vdw); break;
 
             // Correlation functionals containing PW correlationtests/integrate/101_PW_OU_pseudopot
-            case XC_GGA_C_PBE:
+            case XC_GGA_C_PBE: case XC_GGA_C_PBE_SOL:
             //   PBC,PBCsol
                 XC_Functional::pw_spin(rs, zeta, e, vup, vdw); break;
-
-            // Correlation functionals that already contains LDA components
-            // so sets to 0 here
-            case XC_GGA_X_HCTH_A: case XC_GGA_C_HCTH_A: case XC_GGA_X_OPTX:
-            //HCTH_X  HTCH_C      OPTX
-                e = vup = vdw =0.0;
 
             // Cases that are only realized in LIBXC
             default:

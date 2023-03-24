@@ -598,7 +598,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 					std::complex<double>* crecv = new std::complex<double>[GlobalV::NBANDS*lgd2];
 					ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS*lgd2);
 					tag = i * 3 + 2;
-					MPI_Recv(crecv,GlobalV::NBANDS*lgd2,mpicomplex,i,tag,DIAG_WORLD, &status);
+					MPI_Recv(crecv,GlobalV::NBANDS*lgd2,MPI_DOUBLE_COMPLEX,i,tag,DIAG_WORLD, &status);
 				
 					for (int ib=0; ib<GlobalV::NBANDS; ib++)
 					{
@@ -647,7 +647,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 				}
 			
 				tag = GlobalV::DRANK * 3 + 2;
-				MPI_Send(csend, GlobalV::NBANDS*GlobalC::GridT.lgd, mpicomplex, 0, tag, DIAG_WORLD);
+				MPI_Send(csend, GlobalV::NBANDS*GlobalC::GridT.lgd, MPI_DOUBLE_COMPLEX, 0, tag, DIAG_WORLD);
 
 				delete[] csend;
 			}
@@ -659,7 +659,7 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::c
 	}
 
 	#ifdef __MPI
-	MPI_Bcast(ctot_send,GlobalV::NBANDS*GlobalV::NLOCAL,mpicomplex,0,DIAG_WORLD);
+	MPI_Bcast(ctot_send,GlobalV::NBANDS*GlobalV::NLOCAL,MPI_DOUBLE_COMPLEX,0,DIAG_WORLD);
 	#endif
 
 	for(int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -721,19 +721,19 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L, const int i
 	char transb = 'N';
 	int occBands = occ_bands;
 	int nlocal = GlobalV::NLOCAL;
-	double alpha[2]={1.0, 0.0}, beta[2]={0.0, 0.0};
+	std::complex<double> alpha={1.0, 0.0}, beta={0.0, 0.0};
 	int one = 1;
 #ifdef __MPI
-	pzgemm_(&transa,&transb,&occBands,&nlocal,&nlocal,&alpha[0],
+	pzgemm_(&transa,&transb,&occBands,&nlocal,&nlocal,&alpha,
 			&psi_in[0](ik_L, 0, 0), &one, &one, lowf.ParaV->desc,
 							  midmatrix,&one,&one,lowf.ParaV->desc,
-													   &beta[0],
+													   &beta,
 							   C_matrix,&one,&one,lowf.ParaV->desc);
 							   
-	pzgemm_(&transb,&transb,&occBands,&occBands,&nlocal,&alpha[0],
+	pzgemm_(&transb,&transb,&occBands,&occBands,&nlocal,&alpha,
 								 C_matrix,&one,&one,lowf.ParaV->desc,
 			&psi_in[0](ik_R, 0, 0), &one, &one, lowf.ParaV->desc,
-														 &beta[0],
+														 &beta,
 							   out_matrix,&one,&one,lowf.ParaV->desc);	
 
 	//int *ipiv = new int[ lowf.ParaV->nrow+lowf.ParaV->desc[4] ];

@@ -175,7 +175,7 @@ TEST_F(MD_func_test, compute_stress)
 TEST_F(MD_func_test, MDdump)
 {
     MD_func::InitPos(ucell, pos);
-    MD_func::MDdump(0, ucell, virial, force);
+    MD_func::MDdump(0, ucell, INPUT, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs,output_str);
@@ -191,7 +191,7 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  10.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
+    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (kBar)"));
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
@@ -199,19 +199,19 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
+    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITION (Angstrom)    FORCE (eV/Angstrom)    VELOCITY (Angstrom/fs)"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs.close();
 
     // append
-    MD_func::MDdump(1, ucell, virial, force);
+    MD_func::MDdump(1, ucell, INPUT, virial, force, vel);
     std::ifstream ifs2("MD_dump");
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("MDSTEP:  0"));
@@ -226,7 +226,7 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  10.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
+    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (kBar)"));
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
@@ -234,15 +234,15 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
+    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITION (Angstrom)    FORCE (eV/Angstrom)    VELOCITY (Angstrom/fs)"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
     getline(ifs2,output_str);
     getline(ifs2,output_str);
@@ -258,7 +258,7 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  10.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (KBAR)"));
+    EXPECT_THAT(output_str,testing::HasSubstr("VIRIAL (kBar)"));
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
@@ -266,15 +266,15 @@ TEST_F(MD_func_test, MDdump)
     getline(ifs2,output_str);
     EXPECT_THAT(output_str,testing::HasSubstr("  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)"));
+    EXPECT_THAT(output_str,testing::HasSubstr("INDEX    LABEL    POSITION (Angstrom)    FORCE (eV/Angstrom)    VELOCITY (Angstrom/fs)"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  5.200000000000  5.200000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  5.100000000000  0.000000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  5.300000000000  5.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(output_str,testing::HasSubstr("  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs2.close();
 
     remove("MD_dump");

@@ -6,7 +6,7 @@ namespace ModuleESolver
     {
         // pw_rho = new ModuleBase::PW_Basis();
         
-        pw_rho = new ModulePW::PW_Basis_Big(); 
+        pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
         GlobalC::rhopw = this->pw_rho; //Temporary
         //temporary, it will be removed
         GlobalC::bigpw = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);

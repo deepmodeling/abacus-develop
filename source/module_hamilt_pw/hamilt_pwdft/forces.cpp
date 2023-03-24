@@ -750,9 +750,10 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW:
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v = XC_Functional::v_xc_meta(rho_basis->nrxx,
-                                                          rho_basis->nxyz,
                                                           GlobalC::ucell.omega,
-                                                          chr);
+                                                          GlobalC::ucell.tpiba,
+                                                          chr,
+                                                          GlobalC::rhopw);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -763,10 +764,11 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW:
     }
     else
     {
+        if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx,
-                                                     rho_basis->nxyz,
-                                                     GlobalC::ucell.omega,
-                                                     chr);
+                                                     chr,
+                                                     rho_basis,
+                                                     &GlobalC::ucell);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);

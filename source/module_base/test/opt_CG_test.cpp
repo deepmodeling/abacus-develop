@@ -25,6 +25,7 @@ protected:
 
     void SetUp()
     {
+        cg.setPara(1.);
         cg.allocate(tools.nx);
         cg.init_b(tools.le.b);
         task = new char[60];
@@ -55,17 +56,17 @@ protected:
         }
         for (int iter = 0; iter < maxiter; ++iter)
         {
+            if (residual < tol) 
+            {
+                final_iter = iter;
+                break;
+            }
             cg.next_direct(Ap, 0, p);
             tools.le.get_Ap(tools.le.A, p, Ap);
             int ifPD = 0;
             step = cg.step_length(Ap, p, ifPD);
             for (int i = 0; i < 3; ++i) x[i] += step * p[i]; 
             residual = cg.get_residual();
-            if (residual < tol) 
-            {
-                final_iter = iter;
-                break;
-            }
         }
     }
 
@@ -146,7 +147,8 @@ TEST_F(CG_test, Stand_Solve_LinearEq)
     EXPECT_NEAR(x[0], 0.5, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 1.6429086563584579739e-18, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5, DOUBLETHRESHOLD);
-    ASSERT_EQ(final_iter, 3);
+    ASSERT_EQ(final_iter, 4);
+    ASSERT_EQ(cg.get_iter(), 4);
 }
 
 TEST_F(CG_test, PR_Solve_LinearEq)
@@ -156,6 +158,7 @@ TEST_F(CG_test, PR_Solve_LinearEq)
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000166533, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 3);
+    ASSERT_EQ(cg.get_iter(), 3);
 }
 
 TEST_F(CG_test, HZ_Solve_LinearEq)
@@ -165,6 +168,7 @@ TEST_F(CG_test, HZ_Solve_LinearEq)
     EXPECT_NEAR(x[1], -9.4368957093138305936e-16, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000011102, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 3);
+    ASSERT_EQ(cg.get_iter(), 3);
 }
 
 TEST_F(CG_test, PR_Min_Func)
@@ -174,6 +178,7 @@ TEST_F(CG_test, PR_Min_Func)
     EXPECT_NEAR(x[1], 2.0713759992720870429, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.2871067233169171118, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 18);
+    ASSERT_EQ(cg.get_iter(), 18);
 }
 
 TEST_F(CG_test, HZ_Min_Func)
@@ -183,5 +188,6 @@ TEST_F(CG_test, HZ_Min_Func)
     EXPECT_NEAR(x[1], 2.0691732100663737803, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.2780872787668311474, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 18);
+    ASSERT_EQ(cg.get_iter(), 18);
 }
 // g++ -std=c++11 ../opt_CG.cpp ../opt_DCsrch.cpp ./CG_test.cpp ./test_tools.cpp  -lgtest -lpthread -lgtest_main -o test.exe

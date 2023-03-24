@@ -22,6 +22,7 @@ public:
         by = 1;
         bz = 1;
     }
+    PW_Basis_K_Big(std::string device_, std::string precision_) : PW_Basis_K(device_, precision_) {}
     ~PW_Basis_K_Big(){};
     void setbxyz(const int bx_in, const int by_in, const int bz_in)
     {

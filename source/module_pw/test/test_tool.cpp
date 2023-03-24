@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include "../../module_base/parallel_global.h"
+#include "depend_mock.h"
 #include "mpi.h"
 #include <iostream>
 void setupmpi(int argc,char **argv,int &nproc, int &myrank)
@@ -10,23 +10,6 @@ void setupmpi(int argc,char **argv,int &nproc, int &myrank)
 		std::cout<<"MPI_Init_thread request "<<MPI_THREAD_FUNNELED<<" but provide "<<provided<<std::endl;
     MPI_Comm_size(MPI_COMM_WORLD,&nproc);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-    MPI_Datatype block[2];
-	block[0]=MPI_DOUBLE;
-	block[1]=MPI_DOUBLE;
-	
-	int ac[2]={1,1};
-	MPI_Aint dipc[2]={0,sizeof(double)};
-
-	// MPI_Type_struct: create a struct datatype
-	MPI_Type_create_struct(
-	2,// count: number of blocks(integer)
-	ac,//number of element in each block(array)
-	dipc,//byte displacement of each block
-	block,//type of element in each block(array of handles to datatype objects)
-	&mpicomplex);//new type
-	
-	MPI_Type_commit(&mpicomplex);
-	MPI_Op_create((MPI_User_function *)Parallel_Global::myProd,1,&myOp);
 }
 
 
@@ -79,7 +62,6 @@ void divide_pools(const int &nproc, const int &myrank, int &nproc_in_pool, int &
 void finishmpi()
 {
     MPI_Comm_free(&POOL_WORLD);
-    MPI_Type_free(&mpicomplex);
     MPI_Finalize();   
 }
 #endif

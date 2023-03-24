@@ -56,7 +56,7 @@ public:
 
 	// Constructors and destructor
 	Grid(const int &test_grid_in);
-	~Grid();
+	virtual ~Grid();
 
 	void init(
 		std::ofstream &ofs,
