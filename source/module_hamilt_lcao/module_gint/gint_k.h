@@ -27,6 +27,23 @@ class Gint_k : public Gint
     void reset_spin(const int &spin_now_in){this->spin_now = spin_now_in;};
     // get the spin.
     int get_spin(void)const{return spin_now;}
+
+    //renew gint index for new iteration
+    void renew(const bool& soft = false)
+    {
+        if(soft && this->spin_now == 0) 
+        {//in this case, gint will not be recalculated
+            return;
+        }
+        else if (this->spin_now != -1)
+        {
+            int start_spin = -1;
+            this->reset_spin(start_spin);
+            this->destroy_pvpR();
+            this->allocate_pvpR();
+        }
+        return;
+    }
  
     // allocate the <phi_0 | V | phi_R> matrix element.
     void allocate_pvpR(void);

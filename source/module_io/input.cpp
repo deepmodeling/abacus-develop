@@ -67,7 +67,7 @@ void Input::Init(const std::string &fn)
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                              ABACUS v3.1                                            "
+    GlobalV::ofs_running << "                              ABACUS v3.2                                            "
                          << std::endl << std::endl;
     GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
                          << std::endl << std::endl;

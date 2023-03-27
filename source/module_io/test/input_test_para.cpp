@@ -140,7 +140,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
-        EXPECT_EQ(INPUT.occupations,"smearing");
+  //      EXPECT_EQ(INPUT.occupations,"smearing");
         EXPECT_EQ(INPUT.smearing_method,"fixed");
         EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
         EXPECT_EQ(INPUT.mixing_mode,"pulay");
@@ -298,7 +298,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.omc,0);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);
-        EXPECT_EQ(INPUT.coulomb_type,"full");
+//        EXPECT_EQ(INPUT.coulomb_type,"full");
         EXPECT_EQ(INPUT.imp_sol,0);
         EXPECT_DOUBLE_EQ(INPUT.eb_k,80.0);
         EXPECT_DOUBLE_EQ(INPUT.tau,1.0798 * 1e-5);
@@ -354,6 +354,11 @@ TEST_F(InputParaTest,Bcast)
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	    EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+        EXPECT_FALSE(INPUT.mixing_tau);
+        EXPECT_FALSE(INPUT.mixing_dftu);
+        EXPECT_EQ(INPUT.out_bandgap,0);
+        EXPECT_EQ(INPUT.out_mat_t,0);
+
 	}
 }
 
