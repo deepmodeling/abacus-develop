@@ -293,6 +293,34 @@ void UnitCell::set_iat2itia(void)
     return;
 }
 
+void UnitCell::update_pos_tau(const double* pos)
+{
+    int iat = 0;
+    for (int it = 0; it < this->ntype; it++)
+    {
+        Atom* atom = &this->atoms[it];
+        for (int ia = 0; ia < atom->na; ia++)
+        {
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                if (atom->mbl[ia][ik])
+                {
+                    atom->dis[ia][ik] = pos[3 * iat + ik] / this->lat0 - atom->tau[ia][ik];
+                    atom->tau[ia][ik] = pos[3 * iat + ik] / this->lat0;
+                }
+            }
+
+            // the direct coordinates also need to be updated.
+            atom->dis[ia] = atom->dis[ia] * this->GT;
+            atom->taud[ia] = atom->tau[ia] * this->GT;
+            iat++;
+        }
+    }
+    assert(iat == this->nat);
+    this->periodic_boundary_adjustment();
+    this->bcast_atoms_tau();
+}
+
 void UnitCell::update_pos_taud(double* posd_in)
 {
     int iat = 0;
@@ -301,9 +329,11 @@ void UnitCell::update_pos_taud(double* posd_in)
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
-            this->atoms[it].taud[ia].x += posd_in[iat*3];
-            this->atoms[it].taud[ia].y += posd_in[iat*3 + 1];
-            this->atoms[it].taud[ia].z += posd_in[iat*3 + 2];
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                atom->taud[ia][ik] += posd_in[3*iat + ik];
+                atom->dis[ia][ik] = posd_in[3*iat + ik];
+            }
             iat++;
         }
     }
@@ -315,6 +345,7 @@ void UnitCell::update_pos_taud(double* posd_in)
 // posd_in is atomic displacements here  liuyu 2023-03-22
 void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
 {
+    int iat = 0;
     for (int it = 0; it < this->ntype; it++)
     {
         Atom* atom = &this->atoms[it];
@@ -322,11 +353,13 @@ void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
         {
             for ( int ik = 0; ik < 3; ++ik)
             {
-                atom->taud[ia][ik] += posd_in[ia][ik];
-                atom->dis[ia][ik] = posd_in[ia][ik];
+                atom->taud[ia][ik] += posd_in[iat][ik];
+                atom->dis[ia][ik] = posd_in[iat][ik];
             }
+            iat++;
         }
     }
+    assert(iat == this->nat);
     this->periodic_boundary_adjustment();
     this->bcast_atoms_tau();
 }
