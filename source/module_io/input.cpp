@@ -2668,6 +2668,10 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 		bessel_descriptor_ecut = std::to_string(ecutwfc);
 	}
 
+    if (calculation != "md")
+    {
+        mdp.md_prec_level = 0;
+    }
     if (mdp.md_prec_level != 1)
     {
         ref_cell_factor = 1.0;

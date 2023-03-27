@@ -140,6 +140,15 @@ void Charge_Mixing::reset()		// Peize Lin add 2018-11-01
 	irstep = 0;
 	idstep = 0;
 	totstep = 0;
+
+    if (this->mixing_mode == "pulay")
+    {
+        this->deallocate_Pulay();
+    }
+    else if (this->mixing_mode == "broyden")
+    {
+        this->deallocate_Broyden();
+    }
 }
 
 void Charge_Mixing::allocate_Pulay()
@@ -299,6 +308,7 @@ void Charge_Mixing::allocate_Pulay()
 
 void Charge_Mixing::deallocate_Pulay()
 {
+    if (!this->initp) return;
 	// delete: Rrho[i] = rho_out[i] - rho_in[i];
 	for (int is=0; is<GlobalV::NSPIN; is++)
 	{
@@ -366,6 +376,7 @@ void Charge_Mixing::deallocate_Pulay()
 		}
 		delete[] tau_save2;	
 	}
+    this->initp = false;
 }
 
 // calculate < dR | dR >
