@@ -105,6 +105,8 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     {
+        ModuleBase::TITLE("ESolver_KS", "init_after_vc");
+
         ESolver_FP::init_after_vc(inp,ucell);
 
         // symm_flag == 0 in md calculation, thus this part is annotated

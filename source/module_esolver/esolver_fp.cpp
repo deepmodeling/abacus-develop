@@ -41,6 +41,8 @@ namespace ModuleESolver
 
     void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
     {
+        ModuleBase::TITLE("ESolver_FP", "init_after_vc");
+
         if (inp.nx * inp.ny * inp.nz == 0)
             this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
         else

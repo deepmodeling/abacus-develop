@@ -195,6 +195,9 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     {
+        ModuleBase::TITLE("ESolver_KS_PW", "init_after_vc");
+        ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
+
         ESolver_KS<FPTYPE, Device>::init_after_vc(inp,ucell);
 
         this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
@@ -224,6 +227,7 @@ namespace ModuleESolver
         
         //temporary
         this->Init_GlobalC(inp,ucell);
+        ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
     }
 
     template<typename FPTYPE, typename Device>

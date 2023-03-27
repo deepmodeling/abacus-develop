@@ -500,6 +500,7 @@ void Input_Conv::Convert(void)
     GlobalV::SCF_NMAX = INPUT.scf_nmax;
     GlobalV::RELAX_NMAX = INPUT.relax_nmax;
     GlobalV::MD_NSTEP = INPUT.mdp.md_nstep;
+    GlobalV::md_prec_level = INPUT.mdp.md_prec_level;
 
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
