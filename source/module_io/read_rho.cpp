@@ -75,9 +75,9 @@ bool ModuleIO::read_rho(
 			ifs >> temp; // skip atomic number
 			ifs >> temp; // skip Z valance
 			// ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell->atoms[it].ncpp.zv,quit); // check Z valance
-			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell->atoms[it].taud[ia].x,quit);
-			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell->atoms[it].taud[ia].y,quit);
-			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell->atoms[it].taud[ia].z,quit);
+			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell->atoms[it].tau[ia].x,quit);
+			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell->atoms[it].tau[ia].y,quit);
+			ModuleBase::CHECK_DOUBLE(ifs,fac*ucell->atoms[it].tau[ia].z,quit);
 		}
 	}
 
