@@ -9,7 +9,7 @@ namespace ModuleIO
 	
 void read_dm(const int &is, const std::string &fn, double*** DM, double** DM_R);
 
-void ModuleIO::write_dm(
+void write_dm(
 #ifdef __MPI
 	const int* trace_lo,
 #endif
@@ -20,7 +20,7 @@ void ModuleIO::write_dm(
 	const int &out_dm,
 	double*** DM,
 	const double& ef,
-	const UnitCell* ucell)
+	const UnitCell* ucell);
 
 }
 

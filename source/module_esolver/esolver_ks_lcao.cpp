@@ -940,6 +940,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
             }
             std::remove(ssd_tmp.str().c_str());
+            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
             ModuleIO::write_dm(
 #ifdef __MPI
                 GlobalC::GridT.trace_lo,
