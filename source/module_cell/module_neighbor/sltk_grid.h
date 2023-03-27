@@ -88,6 +88,27 @@ public:
 	double cell_y_length;
 	double cell_z_length;
 	CellSet ***Cell; //dx , dy ,dz is cell number in each direction,respectly.
+	void delete_Cell() //it will replace by container soon!
+	{
+		if (this->init_cell_flag)
+		{
+			for (int i = 0;i < this->dx;i++)
+			{
+				for (int j = 0;j < this->dy;j++)
+				{
+					delete[] this->Cell[i][j];
+				}
+			}
+
+			for (int i = 0;i < this->dx;i++)
+			{
+				delete[] this->Cell[i];
+			}
+
+			delete[] this->Cell;
+			this->init_cell_flag = false;
+		}
+	}
 
 	double grid_length[3];
 	double vec1[3];
