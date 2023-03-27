@@ -447,7 +447,19 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+
+        ModuleIO::write_dm(
+#ifdef __MPI
+            GlobalC::GridT.trace_lo,
+#endif
+            is,
+            0,
+            ssd.str(),
+            precision,
+            this->LOC.out_dm,
+            this->LOC.DM,
+            ef_tmp,
+            &(GlobalC::ucell));
 
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
