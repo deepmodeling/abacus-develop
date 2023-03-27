@@ -81,6 +81,7 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 			atoms[i].ncpp.set_pseudo_nc( upf );
 
 			log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
+			ModuleBase::GlobalFunc::OUT(log,"pseudopotention atom type",atoms[i].ncpp.psd);
 			ModuleBase::GlobalFunc::OUT(log,"pseudopotential type",atoms[i].ncpp.pp_type);
 			ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
 			ModuleBase::GlobalFunc::OUT(log,"nonlocal core correction", atoms[i].ncpp.nlcc);
