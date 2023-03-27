@@ -25,7 +25,7 @@ public:
 	/// overlap between lcao basis phi and descriptor basis alpha
 	double *****Table_DSR;
 
-	bool destroy_nr;
+	bool table_allocated;
 
 	
 	/// O stands for orbitals.

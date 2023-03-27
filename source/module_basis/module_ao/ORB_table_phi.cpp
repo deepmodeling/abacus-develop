@@ -9,18 +9,16 @@
 #include <omp.h>
 #endif
 
-double ORB_table_phi::dr = -1.0;
-
 ORB_table_phi::ORB_table_phi()
 {
-	destroy_sr = false;
-	destroy_tr = false;
+	overlap_table_allocated = false;
+	kinetic_table_allocated = false;
 
 	ntype = 0;
 	lmax = 0;
 	kmesh = 0;
 	Rmax = 0.0;
-	dr = 0.0;
+	dr = -1.0;
 	dk = 0.0;
 
 	nlm = 0;
@@ -30,6 +28,9 @@ ORB_table_phi::ORB_table_phi()
 	r=nullptr;
 	rab=nullptr;
 	kab=nullptr;
+
+	Table_SR = nullptr;
+	Table_TR = nullptr;
 }
 
 ORB_table_phi::~ORB_table_phi()
@@ -103,9 +104,9 @@ void ORB_table_phi::allocate
 	return;
 }
 
-int ORB_table_phi::get_rmesh(const double &R1, const double &R2)
+int ORB_table_phi::get_rmesh(const double &R1, const double &R2) const
 {
-	int rmesh = static_cast<int>((R1+R2)/ ORB_table_phi::dr) + 5;
+	int rmesh = static_cast<int>((R1+R2)/ this->dr) + 5;
 	//mohan update 2009-09-08 +1 ==> +5
 	//considering interpolation or so on...
 	if (rmesh % 2 == 0) rmesh ++;
@@ -388,7 +389,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 	ModuleBase::TITLE("ORB_table_phi", "init_Table");
 	ModuleBase::timer::tick("ORB_table_phi", "init_Table");
 	const int ntype = orb.get_ntype();
-	assert( ORB_table_phi::dr > 0.0);
+	assert( this->dr > 0.0);
 	assert( OV_nTpairs>0);
 
 	// record necessary information for the sizes of tables
@@ -543,8 +544,8 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 		}// end jt
 	}// end it
 
-	destroy_sr = true;
-	destroy_tr = true;
+	overlap_table_allocated = true;
+	kinetic_table_allocated = true;
 	ModuleBase::Memory::record("ORB::Table_SR&TR", sizeof(double) * memory_cost);
 
 	ModuleBase::timer::tick("ORB_table_phi", "init_Table");
@@ -554,7 +555,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 
 void ORB_table_phi::Destroy_Table(LCAO_Orbitals &orb)
 {
-	if(!destroy_sr && !destroy_tr) return;
+	if(!overlap_table_allocated && !kinetic_table_allocated) return;
 	
 	const int ntype = orb.get_ntype();
 	int dim1 = 0;
@@ -575,36 +576,39 @@ void ORB_table_phi::Destroy_Table(LCAO_Orbitals &orb)
 				{
 					for (int L = 0; L < 2*lmax_now + 1; L++)
 					{
-						if(destroy_sr) delete [] Table_SR[ir][dim1][dim2][L];
-						if(destroy_tr) delete [] Table_TR[ir][dim1][dim2][L];
+						if(overlap_table_allocated) delete [] Table_SR[ir][dim1][dim2][L];
+						if(kinetic_table_allocated) delete [] Table_TR[ir][dim1][dim2][L];
                 	}
-                	if(destroy_sr) delete [] Table_SR[ir][dim1][dim2];
-					if(destroy_tr) delete [] Table_TR[ir][dim1][dim2];
+                	if(overlap_table_allocated) delete [] Table_SR[ir][dim1][dim2];
+					if(kinetic_table_allocated) delete [] Table_TR[ir][dim1][dim2];
 				}
-            	if(destroy_sr) delete [] Table_SR[ir][dim1];
-				if(destroy_tr) delete [] Table_TR[ir][dim1];
+            	if(overlap_table_allocated) delete [] Table_SR[ir][dim1];
+				if(kinetic_table_allocated) delete [] Table_TR[ir][dim1];
             	dim1++;
 
 			}
         }
 
 		dim1 = 0;
-		if(destroy_sr) delete [] Table_SR[ir];
-		if(destroy_tr) delete [] Table_TR[ir];
+		if(overlap_table_allocated) delete [] Table_SR[ir];
+		if(kinetic_table_allocated) delete [] Table_TR[ir];
 	}
 
-	if(destroy_sr) delete[] Table_SR;
-	if(destroy_tr) delete[] Table_TR;
+	if(overlap_table_allocated) delete[] Table_SR;
+	if(kinetic_table_allocated) delete[] Table_TR;
 
-	destroy_sr = true;
-	destroy_tr = true;
+	Table_SR = nullptr;
+	Table_TR = nullptr;
+
+	overlap_table_allocated = false;
+	kinetic_table_allocated = false;
 
 	return;
 }
 
 
 void ORB_table_phi::_destroy_table() {
-	if(!destroy_sr && !destroy_tr) {
+	if(!overlap_table_allocated && !kinetic_table_allocated) {
 		return;
 	}
 
@@ -632,29 +636,32 @@ void ORB_table_phi::_destroy_table() {
 				{
 					for (int L = 0; L < 2*lmax_now + 1; L++)
 					{
-						if(destroy_sr) delete [] Table_SR[ir][dim1][dim2][L];
-						if(destroy_tr) delete [] Table_TR[ir][dim1][dim2][L];
+						if(overlap_table_allocated) delete [] Table_SR[ir][dim1][dim2][L];
+						if(kinetic_table_allocated) delete [] Table_TR[ir][dim1][dim2][L];
 					}
-					if(destroy_sr) delete [] Table_SR[ir][dim1][dim2];
-					if(destroy_tr) delete [] Table_TR[ir][dim1][dim2];
+					if(overlap_table_allocated) delete [] Table_SR[ir][dim1][dim2];
+					if(kinetic_table_allocated) delete [] Table_TR[ir][dim1][dim2];
 				}
-				if(destroy_sr) delete [] Table_SR[ir][dim1];
-				if(destroy_tr) delete [] Table_TR[ir][dim1];
+				if(overlap_table_allocated) delete [] Table_SR[ir][dim1];
+				if(kinetic_table_allocated) delete [] Table_TR[ir][dim1];
 				dim1++;
 
 			}
         }
 
 		dim1 = 0;
-		if(destroy_sr) delete [] Table_SR[ir];
-		if(destroy_tr) delete [] Table_TR[ir];
+		if(overlap_table_allocated) delete [] Table_SR[ir];
+		if(kinetic_table_allocated) delete [] Table_TR[ir];
 	}
 
-	if(destroy_sr) delete[] Table_SR;
-	if(destroy_tr) delete[] Table_TR;
+	if(overlap_table_allocated) delete[] Table_SR;
+	if(kinetic_table_allocated) delete[] Table_TR;
 
-	destroy_sr = true;
-	destroy_tr = true;
+	overlap_table_allocated = false;
+	kinetic_table_allocated = false;
+
+	Table_SR = nullptr;
+	Table_TR = nullptr;
 
 	return;
 }

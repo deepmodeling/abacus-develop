@@ -43,8 +43,8 @@ class ORB_table_phi
 	double***** Table_SR;
 	double***** Table_TR;
 
-	bool destroy_sr;
-	bool destroy_tr;
+	bool overlap_table_allocated;
+	bool kinetic_table_allocated;
 	/**
 	 * \brief make table of Spherical bessel
 	 *
@@ -99,9 +99,9 @@ class ORB_table_phi
     ModuleBase::IntArray OV_Opair;
     ModuleBase::IntArray OV_L2plus1;
 
-	static int get_rmesh( const double &R1, const double &R2);
+	int get_rmesh( const double &R1, const double &R2) const;
 
-	static double dr;
+	double dr;
 	int Rmesh;
 
 

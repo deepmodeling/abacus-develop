@@ -10,7 +10,7 @@
 
 ORB_table_alpha::ORB_table_alpha()
 {
-	destroy_nr = false;
+	table_allocated = false;
 
 	ntype = 0;
 	lmax = 0;
@@ -351,7 +351,7 @@ void ORB_table_alpha::init_Table_Alpha(
 			}			  // end N1
 		}				  // end L1
 	}					  // end T1
-	destroy_nr = true;
+	table_allocated = true;
 
 	ModuleBase::Memory::record("ORB::Table_DSR", sizeof(double) * memory_cost);
 
@@ -362,7 +362,7 @@ void ORB_table_alpha::init_Table_Alpha(
 
 
 void ORB_table_alpha::_destroy_table() {
-	if (!destroy_nr) {
+	if (!table_allocated) {
 		return;
 	}
 
@@ -390,14 +390,14 @@ void ORB_table_alpha::_destroy_table() {
 	}
 	delete[] Table_DSR;
 	Table_DSR = nullptr;
-	destroy_nr = false;
+	table_allocated = false;
 	return;
 }
 
 
 void ORB_table_alpha::Destroy_Table_Alpha(LCAO_Orbitals &orb)
 {
-	if (!destroy_nr)
+	if (!table_allocated)
 	{
 		return;
 	}
@@ -432,7 +432,7 @@ void ORB_table_alpha::Destroy_Table_Alpha(LCAO_Orbitals &orb)
 	}
 	delete[] Table_DSR;
     Table_DSR = nullptr;
-	destroy_nr = false;
+	table_allocated = false;
 	return;
 }
 
