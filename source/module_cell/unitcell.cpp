@@ -796,7 +796,7 @@ void UnitCell::read_pseudo(ofstream &ofs)
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n\n\n\n";
 
-    read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);
+    read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);//read related pseudopotention file
 
     if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info)
     {
