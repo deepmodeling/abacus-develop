@@ -14,9 +14,10 @@ option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for PW." OFF)
+option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
 # option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF) # broken
 option(USE_ROCM "Enable support to ROCm." OFF)
-option(USE_OPENMP " Enable OpenMP in abacus." ON)
+option(USE_OPENMP "Enable OpenMP in ABACUS." ON)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(BUILD_TESTING "Build ABACUS unit tests" OFF)
 option(INFO "Enable gathering of math library information" OFF)
@@ -25,6 +26,7 @@ option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(USE_ELPA "Enable ELPA" ON)
 option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
 option(GIT_SUBMODULE "Check submodules during build" ON)
+option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 
@@ -121,6 +123,10 @@ if(ENABLE_LCAO)
 else()
   set(ENABLE_DEEPKS OFF)
   set(ENABLE_LIBRI OFF)
+endif()
+
+if(DEBUG_INFO)
+  add_compile_definitions(__DEBUG)
 endif()
 
 find_package(MPI REQUIRED)
@@ -280,12 +286,14 @@ else()
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs
     FFTW3::FFTW3
-    FFTW3::FFTW3_FLOAT
     LAPACK::LAPACK
     ScaLAPACK::ScaLAPACK
   )
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
+  endif()
+  if (ENABLE_FLOAT_FFTW)
+    list(APPEND math_libs FFTW3::FFTW3_FLOAT)
   endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
     list(APPEND math_libs -lgfortran)
@@ -296,6 +304,10 @@ else()
   else()
     message(WARNING "Cannot find the correct library for Fortran.")
   endif()
+endif()
+
+if (ENABLE_FLOAT_FFTW)
+  add_definitions(-D__ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)
@@ -367,7 +379,15 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
+<<<<<<< HEAD
   find_package(Libxc HINTS ${Libxc_DIR}/share/cmake/Libxc ${Libxc_DIR}/lib/cmake/Libxc)
+=======
+  find_package(Libxc HINTS
+    ${Libxc_DIR}/share/cmake/Libxc
+    ${Libxc_DIR}/lib/cmake/Libxc
+    ${Libxc_DIR}/lib64/cmake/Libxc
+  )
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
   if(${Libxc_FOUND})
     message(STATUS "Found Libxc: version " ${Libxc_VERSION})
     if(${Libxc_VERSION} VERSION_LESS 5.1.7)
@@ -475,7 +495,8 @@ target_link_libraries(${ABACUS_BIN_NAME}
     planewave
     surchem
     neighbor
-    io
+    io_basic
+    io_advanced
     relax
     driver
     xc_

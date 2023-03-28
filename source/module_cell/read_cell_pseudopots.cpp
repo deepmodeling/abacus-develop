@@ -2,7 +2,7 @@
 #include "module_base/parallel_common.h"
 #include "module_io/input.h"
 #ifdef __LCAO
-//#include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+//#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 
 
@@ -135,21 +135,3 @@ void UnitCell::print_unitcell_pseudo(const std::string &fn)
 	ofs.close();
 	return;
 }
-
-
-#ifdef __MPI
-void UnitCell::bcast_unitcell_pseudo(void)
-{
-	Parallel_Common::bcast_int( meshx );
-	Parallel_Common::bcast_int( natomwfc );
-	Parallel_Common::bcast_int( lmax );
-	Parallel_Common::bcast_int( lmax_ppwf );
-
-	bcast_unitcell();
-}
-
-void UnitCell::bcast_unitcell_pseudo2(void)
-{
-	bcast_unitcell2();
-}
-#endif

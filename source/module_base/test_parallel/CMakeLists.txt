@@ -20,6 +20,10 @@ install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES parallel_global_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES parallel_reduce_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+<<<<<<< HEAD
+=======
+find_program(BASH bash)
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
 add_test(NAME base_parallel_common_test
       COMMAND ${BASH} parallel_common_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

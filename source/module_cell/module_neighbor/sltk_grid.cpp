@@ -57,6 +57,7 @@ Grid::Grid(const int &test_grid_in):test_grid(test_grid_in)
 Grid::~Grid()
 {
 	delete[] atomlink;
+	this->delete_Cell();
 
 }
 
@@ -84,6 +85,7 @@ void Grid::setMemberVariables(
 {
 	ModuleBase::TITLE("SLTK_Grid", "setMemberVariables");
 
+	this->delete_Cell();
 	// mohan add 2010-09-05
 	AdjacentSet::call_times = 0;
 

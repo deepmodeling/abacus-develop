@@ -6,7 +6,11 @@
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/parallel_common.h"
+<<<<<<< HEAD
 #include "module_gint/grid_technique.h"
+=======
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"

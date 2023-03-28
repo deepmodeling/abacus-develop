@@ -78,7 +78,7 @@ void OUTP(std::ofstream &ofs, const std::string &name, const T &a, const std::st
 template <class T>
 void OUT(const std::string &name,const T &a)
 {
-    std::cout << " " << std::setw(40) << name << " = " << a;
+    std::cout << " " << std::setw(40) << name << " = " << a << std::endl;
 //	std::cout << " " << name << a << std::endl;
     return;
 }
@@ -141,7 +141,7 @@ inline void ZEROS(T *u,const TI n)		// Peize Lin change int to TI at 2020.03.03
 // NAME : TEST_LEVEL
 // control the test_level
 //==========================================================
-void TEST_LEVEL(const std::string &name);
+void TEST_LEVEL(const std::string &name, bool disable);
 
 
 //==========================================================

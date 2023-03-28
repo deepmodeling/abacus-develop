@@ -143,7 +143,16 @@ void MD_func::RandomVel(
             }
         }
 
-        double factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
+        double factor;
+        if(3*numIon == frozen_freedom || temperature == 0)
+        {
+            factor = 0;
+        }
+        else
+        {
+            factor = 0.5*(3*numIon-frozen_freedom)*temperature/GetAtomKE(numIon, vel, allmass);
+        }
+        
         for(int i=0; i<numIon; i++)
         {
             vel[i] = vel[i]*sqrt(factor);
@@ -180,21 +189,6 @@ void MD_func::InitVel(
         RandomVel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, vel);
     }
 	std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
-}
-
-void MD_func::InitPos(
-	const UnitCell &unit_in, 
-	ModuleBase::Vector3<double>* pos)
-{
-	int ion=0;
-	for(int it=0;it<unit_in.ntype;it++)
-	{
-		for(int i=0;i<unit_in.atoms[it].na;i++)
-		{
-			pos[ion] = unit_in.atoms[it].tau[i]*unit_in.lat0;
-			ion++;
-		}
-	}
 }
 
 //calculate potential, force and virial
@@ -239,7 +233,6 @@ void MD_func::force_virial(
 
 void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)
 {
-	GlobalV::ofs_running<<"\noutput Pressure for check!"<<std::endl;
     double stress_scalar = 0.0, virial_scalar = 0.0;
     for(int i=0;i<3;i++)
     {
@@ -247,13 +240,13 @@ void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matr
 		virial_scalar += virial(i,i)/3;
     }
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
-    GlobalV::ofs_running<<"Virtual Pressure is "<<stress_scalar*unit_transform<<" Kbar "<<std::endl;
-    GlobalV::ofs_running<<"Virial Term is "<<virial_scalar*unit_transform<<" Kbar "<<std::endl;
-    GlobalV::ofs_running<<"Kenetic Term is "<<(stress_scalar-virial_scalar)*unit_transform<<" Kbar "<<std::endl;
+    GlobalV::ofs_running << "Virtual Pressure is " << stress_scalar*unit_transform << " kbar " << std::endl;
+    GlobalV::ofs_running << "Virial Term is " << virial_scalar*unit_transform << " kbar "<< std::endl;
+    GlobalV::ofs_running << "Kinetic Term is " << (stress_scalar-virial_scalar)*unit_transform << " kbar "<< std::endl;
 
     GlobalV::ofs_running.unsetf(ios::fixed);
     GlobalV::ofs_running << std::setprecision(8) << std::endl;
-    ModuleBase::GlobalFunc::NEW_PART("MD STRESS (KBAR)");
+    ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
     for (int i=0; i<3; i++)
     {
         GlobalV::ofs_running << std::setw(15) << stress(i,0)*unit_transform 
@@ -266,8 +259,10 @@ void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matr
 
 void MD_func::MDdump(const int &step, 
         const UnitCell &unit_in,
+        const Input &inp,
         const ModuleBase::matrix &virial, 
-        const ModuleBase::Vector3<double> *force)
+        const ModuleBase::Vector3<double> *force,
+        const ModuleBase::Vector3<double> *vel)
 {
     if(GlobalV::MY_RANK) return;
 
@@ -283,22 +278,24 @@ void MD_func::MDdump(const int &step,
         ofs.open(file.str(), ios::app);
     }
 
-    const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;
-    const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
+    const double unit_pos = unit_in.lat0 / ModuleBase::ANGSTROM_AU;    // Angstrom
+    const double unit_vel = 1.0 / ModuleBase::ANGSTROM_AU / ModuleBase::AU_to_FS;    // Angstrom/fs
+    const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI,3) * 1.0e-8;    // kBar
+    const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;    // eV/Angstrom
 
     ofs << "MDSTEP:  " << step << std::endl;
     ofs << std::setprecision(12) << std::setiosflags(ios::fixed);
 
-    ofs << "LATTICE_CONSTANT: " << unit_in.lat0 << std::endl;
+    ofs << "LATTICE_CONSTANT: " << unit_in.lat0_angstrom << " Angstrom" << std::endl;
 
     ofs << "LATTICE_VECTORS" << std::endl;
     ofs << "  " << unit_in.latvec.e11 << "  " << unit_in.latvec.e12 << "  " << unit_in.latvec.e13 << std::endl; 
     ofs << "  " << unit_in.latvec.e21 << "  " << unit_in.latvec.e22 << "  " << unit_in.latvec.e23 << std::endl;
     ofs << "  " << unit_in.latvec.e31 << "  " << unit_in.latvec.e32 << "  " << unit_in.latvec.e33 << std::endl;
 
-    if(GlobalV::CAL_STRESS)
+    if(GlobalV::CAL_STRESS && inp.dump_virial)
     {
-        ofs << "VIRIAL (KBAR)" << std::endl;
+        ofs << "VIRIAL (kbar)" << std::endl;
         for(int i=0; i<3; ++i)
         {
             ofs << "  " << virial(i, 0) * unit_virial 
@@ -307,7 +304,17 @@ void MD_func::MDdump(const int &step,
         }
     }
 
-    ofs << "INDEX    LABEL    POSITIONS    FORCE (eV/Angstrom)" << std::endl;
+    ofs << "INDEX    LABEL    POSITION (Angstrom)";
+    if(inp.dump_force)
+    {
+        ofs << "    FORCE (eV/Angstrom)";
+    }
+    if(inp.dump_vel)
+    {
+        ofs << "    VELOCITY (Angstrom/fs)";
+    }
+    ofs << std::endl;
+
     int index = 0;
     for(int it=0; it<unit_in.ntype; ++it)
     {
@@ -315,12 +322,24 @@ void MD_func::MDdump(const int &step,
         {
             ofs << "  " << index
             << "  " << unit_in.atom_label[it]
-            << "  " << unit_in.atoms[it].tau[ia].x
-            << "  " << unit_in.atoms[it].tau[ia].y
-            << "  " << unit_in.atoms[it].tau[ia].z
-            << "  " << force[index].x * unit_force 
-            << "  " << force[index].y * unit_force 
-            << "  " << force[index].z * unit_force << std::endl;
+            << "  " << unit_in.atoms[it].tau[ia].x * unit_pos
+            << "  " << unit_in.atoms[it].tau[ia].y * unit_pos
+            << "  " << unit_in.atoms[it].tau[ia].z * unit_pos;
+
+            if(inp.dump_force)
+            {
+                ofs << "  " << force[index].x * unit_force
+                    << "  " << force[index].y * unit_force
+                    << "  " << force[index].z * unit_force;
+            }
+
+            if(inp.dump_vel)
+            {
+                ofs << "  " << vel[index].x * unit_vel
+                    << "  " << vel[index].y * unit_vel
+                    << "  " << vel[index].z * unit_vel;
+            }
+            ofs << std::endl;
             index++;
         }
     }
@@ -365,9 +384,15 @@ double MD_func::current_temp(double &kinetic,
             const double *allmass,
             const ModuleBase::Vector3<double> *vel)
 {
-    kinetic = GetAtomKE(natom, vel, allmass);
-
-    return 2 * kinetic / (3 * natom - frozen_freedom);
+    if(3 * natom == frozen_freedom)
+    {
+        return 0;
+    }
+    else
+    {
+        kinetic = GetAtomKE(natom, vel, allmass);
+        return 2 * kinetic / (3 * natom - frozen_freedom);
+    }
 }
 
 void MD_func::temp_vector(const int &natom, 

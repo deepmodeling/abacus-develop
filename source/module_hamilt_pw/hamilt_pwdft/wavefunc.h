@@ -39,12 +39,6 @@ class wavefunc : public WF_atomic
 	// used if k dependent staff is ready.
 	void prepare_k(void);
 
-    void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<float>> &wvf, hamilt::Hamilt<float>* phm_in = nullptr);
-    void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt<double>* phm_in = nullptr);
-    void diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf);
-
-    template <typename FPTYPE, typename Device>
-    void diago_PAO_in_pw_k2(const Device* ctx, const int &ik, psi::Psi<std::complex<FPTYPE>, Device> &wvf, hamilt::Hamilt<FPTYPE, Device>* phm_in = nullptr);
     int get_R(int ix, int iy, int iz);     // pengfei 2016-11-23
 
     int iw2it(int iw);
@@ -57,5 +51,17 @@ class wavefunc : public WF_atomic
     ModuleBase::Vector3<int> ***R;
     int ** Rmax;
 };
+
+namespace hamilt
+{
+
+void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<float>> &wvf, hamilt::Hamilt<float>* phm_in = nullptr);
+void diago_PAO_in_pw_k2(const int &ik, psi::Psi<std::complex<double>> &wvf, hamilt::Hamilt<double>* phm_in = nullptr);
+void diago_PAO_in_pw_k2(const int &ik, ModuleBase::ComplexMatrix &wvf);
+
+template <typename FPTYPE, typename Device>
+void diago_PAO_in_pw_k2(const Device* ctx, const int &ik, psi::Psi<std::complex<FPTYPE>, Device> &wvf, hamilt::Hamilt<FPTYPE, Device>* phm_in = nullptr);
+
+}
 
 #endif //wavefunc

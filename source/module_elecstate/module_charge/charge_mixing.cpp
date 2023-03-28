@@ -3,6 +3,7 @@
 #include "module_base/inverse_matrix.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
+#include "module_base/element_elec_config.h"
 
 Charge_Mixing::Charge_Mixing()
 {
@@ -47,6 +48,60 @@ void Charge_Mixing::set_mixing
     return;
 }
 
+void Charge_Mixing::need_auto_set()
+{
+	this->autoset = true;
+}
+
+void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
+{
+	//auto set parameters once
+	if(!this->autoset)
+	{
+		return;
+	}
+	else {
+		this->autoset = false;
+	}
+	GlobalV::ofs_running<<"--------------AUTO-SET---------------"<<std::endl;
+	//0.2 for metal and 0.7 for others
+	if(bandgap_in * ModuleBase::Ry_to_eV < 1.0)
+	{
+		this->mixing_beta = 0.2;
+	}
+	else
+	{
+		this->mixing_beta = 0.7;
+	}
+	GlobalV::ofs_running<<"      Autoset mixing_beta to "<<this->mixing_beta<<std::endl;
+
+	bool has_trans_metal = false;
+	// find elements of cell
+	for(int it=0;it<ucell_.ntype;it++)
+	{
+		if(ModuleBase::IsTransMetal.find(ucell_.atoms[it].ncpp.psd) != ModuleBase::IsTransMetal.end())
+		{
+			if(ModuleBase::IsTransMetal.at(ucell_.atoms[it].ncpp.psd)) 
+			{
+				has_trans_metal = true;
+			}
+		}
+	}
+	// auto set kerker mixing for trans metal system
+	if(has_trans_metal)
+	{
+		this->mixing_gg0 = 1.5;
+	}
+	else
+	{
+		this->mixing_gg0 = 0.0;
+	}
+	GlobalV::ofs_running<<"      Autoset mixing_gg0 to "<<this->mixing_gg0<<std::endl;
+	GlobalV::ofs_running<<"-------------------------------------"<<std::endl;
+	//auto set for inhomogeneous system
+
+}
+
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
 	for (int is=0; is<GlobalV::NSPIN; is++)
@@ -82,6 +137,10 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 	double scf_thr2 = 0.0;
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
+		if(is!=0 && is!=3 && GlobalV::DOMAG_Z)
+		{
+			continue;
+		}
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:scf_thr2)
 #endif
@@ -118,6 +177,11 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		rho123[is] = new double[GlobalC::rhopw->nrxx];
+		if(is!=0 && is!=3 && GlobalV::DOMAG_Z)
+		{
+			ModuleBase::GlobalFunc::ZEROS(rho123[is], GlobalC::rhopw->nrxx);
+			continue;
+		} 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -163,11 +227,12 @@ void Charge_Mixing::mix_rho(const int &iter, Charge* chr)
 
 	// mohan add 2012-06-05
 	// rho_save is the charge before mixing
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
+		if(is!=0 && is!=3 && GlobalV::DOMAG_Z) continue;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
 		for(int ir=0; ir<GlobalC::rhopw->nrxx; ++ir)
 		{
 			chr->rho_save[is][ir] = rho123[is][ir];

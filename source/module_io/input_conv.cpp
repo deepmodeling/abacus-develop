@@ -19,7 +19,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_read.h"
 #endif
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -31,7 +31,6 @@
 template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
-    ModuleBase::timer::tick("Input_Conv", "parse_expression");
     int count = 0;
     std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
     std::vector<std::string> str;
@@ -296,16 +295,8 @@ void Input_Conv::Convert(void)
         // wavefunctions are spinors with 2 components
         GlobalV::NPOL = 2;
         // set the domag variable to make a spin-orbit calculation with zero magnetization
-        if (GlobalV::NONCOLIN)
-        {
-            GlobalV::DOMAG = true;
-            GlobalV::DOMAG_Z = false;
-        }
-        else
-        {
-            GlobalV::DOMAG = false;
-            GlobalV::DOMAG_Z = true;
-        }
+        GlobalV::DOMAG = false;
+        GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
 
@@ -502,6 +493,15 @@ void Input_Conv::Convert(void)
                                 INPUT.mixing_ndim,
                                 INPUT.mixing_gg0,
                                 INPUT.mixing_tau); // mohan modify 2014-09-27, add mixing_gg0
+    //using bandgap to auto set mixing_beta
+    if(std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
+    {
+        GlobalC::CHR_MIX.need_auto_set();
+    }
+    else if(INPUT.mixing_beta > 1.0 || INPUT.mixing_beta<0.0)
+    {
+        ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+    }
 
     //----------------------------------------------------------
     // iteration
@@ -525,6 +525,7 @@ void Input_Conv::Convert(void)
     GlobalC::en.out_dos = INPUT.out_dos;
     GlobalC::en.out_band = INPUT.out_band;
     GlobalC::en.out_proj_band = INPUT.out_proj_band;
+    GlobalV::out_app_flag = INPUT.out_app_flag;
 
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
 #ifdef __LCAO

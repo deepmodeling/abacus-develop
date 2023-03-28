@@ -135,15 +135,30 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			Gint_inout inout(this->loc->DM, pelec->charge, Gint_Tools::job_type::rho);
    			gg.cal_gint(&inout);
 			pelec->charge->save_rho_before_sum_band(); //xiaohui add 2014-12-09
-			std::stringstream ss;
-			std::stringstream ss1;
-			ss << GlobalV::global_out_dir << "BAND" << ib + 1;
+			std::stringstream ssc;
+			ssc << GlobalV::global_out_dir << "BAND" << ib + 1;
 			// 0 means definitely output charge density.
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				ss<<"_SPIN"<<is <<"_CHG";
-				bool for_plot = true;
-				ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ss.str(), 3, for_plot );
+				ssc<<"_SPIN"<<is<<"_CHG.cube";
+				double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+				ModuleIO::write_rho(
+#ifdef __MPI
+				    GlobalC::bigpw->bz,
+				    GlobalC::bigpw->nbz,
+				    GlobalC::rhopw->nplane,
+				    GlobalC::rhopw->startz_current,
+#endif
+				    pelec->charge->rho_save[is],
+				    is,
+				    GlobalV::NSPIN,
+				    0,
+				    ssc.str(),
+				    GlobalC::rhopw->nx,
+				    GlobalC::rhopw->ny,
+				    GlobalC::rhopw->nz,
+				    ef_tmp,
+				    &(GlobalC::ucell));
 			}
 		}
 	}

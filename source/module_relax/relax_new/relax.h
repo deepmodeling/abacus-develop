@@ -15,7 +15,7 @@ class Relax
     ~Relax(){};
 
     //prepare for relaxation
-    void init_relax(const int nat);
+    void init_relax(const int nat_in, const int out_stru_in);
     //perform a single relaxation step
     bool relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in);
 
@@ -41,10 +41,8 @@ class Relax
     //move ions and lattice vectors
     void move_cell_ions(const bool is_new_dir);
 
-    //init after cell moves
-    void init_after_vc();
-
     int nat; // number of atoms
+    int out_stru;
     bool ltrial; // if last step is trial step
 
     double step_size;

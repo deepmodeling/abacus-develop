@@ -17,7 +17,7 @@ public:
     void restart();
     void post_force();
 
-    ModuleBase::Vector3<double> *fictitious_force;  // Langevin fictitious_force
+    ModuleBase::Vector3<double> *total_force;  // total force = true force + Langevin fictitious_force
 
 };
 

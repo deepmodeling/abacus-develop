@@ -3,13 +3,12 @@
 
 Parallel_Grid::Parallel_Grid()
 {
-	this->allocate = false;
+    this->allocate = false;
     this->allocate_final_scf = false; //LiuXh add 20180619
 }
 
 Parallel_Grid::~Parallel_Grid()
 {
-	//if(this->allocate) //LiuXh modify 20180619
 	if(this->allocate || this->allocate_final_scf) //LiuXh add 20180619
 	{
 		for(int ip=0; ip<GlobalV::KPAR; ip++)
@@ -21,6 +20,7 @@ Parallel_Grid::~Parallel_Grid()
 		delete[] numz;
 		delete[] startz;
 		delete[] whichpro;
+        delete[] nproc_in_pool;
 	}
 }
 
@@ -62,6 +62,22 @@ void Parallel_Grid::init(
 	this->ncxy = ncx * ncy;
 	this->ncxyz = ncxy * ncz;
 
+    // enable to call this function again liuyu 2023-03-10
+    if(this->allocate)
+    {
+        for(int ip=0; ip<GlobalV::KPAR; ip++)
+        {
+            delete[] numz[ip];
+            delete[] startz[ip];
+            delete[] whichpro[ip];
+        }
+        delete[] numz;
+        delete[] startz;
+        delete[] whichpro;
+        delete[] nproc_in_pool;
+        this->allocate = false;
+    }
+
 	// (2)
 	assert(allocate==false);
 	assert(GlobalV::KPAR > 0);
@@ -81,8 +97,6 @@ void Parallel_Grid::init(
 	this->numz = new int*[GlobalV::KPAR];
 	this->startz = new int*[GlobalV::KPAR];
 	this->whichpro = new int*[GlobalV::KPAR];
-	this->numdata = new int*[GlobalV::KPAR];
-	this->startdata = new int*[GlobalV::KPAR];
 
 	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
@@ -90,13 +104,9 @@ void Parallel_Grid::init(
 		this->numz[ip] = new int[nproc];
 		this->startz[ip] = new int[nproc];
 		this->whichpro[ip] = new int[this->ncz];
-		this->numdata[ip] = new int[nproc];
-		this->startdata[ip] = new int[nproc];
 		ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
 		ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
 		ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
-		ModuleBase::GlobalFunc::ZEROS(this->numdata[ip], nproc);
-		ModuleBase::GlobalFunc::ZEROS(this->startdata[ip], nproc);
 	}
 
 	this->allocate = true;
@@ -164,20 +174,6 @@ void Parallel_Grid::z_distribution(void)
 //		{
 //			GlobalV::ofs_running << "\n iz=" << iz << " whichpro=" << whichpro[ip][iz];
 //		}
-
-		//(4)
-		for(int proc=0; proc<nproc; proc++)
-		{
-			numdata[ip][proc] = numz[ip][proc]*ncxy;
-		}
-
-		//(5)
-		startdata[ip][0]=0;
-		for(int proc=1; proc<nproc; proc++)
-		{
-			startdata[ip][proc]=startdata[ip][proc-1]+numdata[ip][proc-1];
-		}
-		
 	}
 
 	delete[] startp;
@@ -443,8 +439,6 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 	this->numz = new int*[GlobalV::KPAR];
 	this->startz = new int*[GlobalV::KPAR];
 	this->whichpro = new int*[GlobalV::KPAR];
-	this->numdata = new int*[GlobalV::KPAR];
-	this->startdata = new int*[GlobalV::KPAR];
 
 	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
@@ -452,13 +446,9 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 		this->numz[ip] = new int[nproc];
 		this->startz[ip] = new int[nproc];
 		this->whichpro[ip] = new int[this->ncz];
-		this->numdata[ip] = new int[nproc];
-		this->startdata[ip] = new int[nproc];
 		ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
 		ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
 		ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
-		ModuleBase::GlobalFunc::ZEROS(this->numdata[ip], nproc);
-		ModuleBase::GlobalFunc::ZEROS(this->startdata[ip], nproc);
 	}
 
 	this->allocate_final_scf = true;

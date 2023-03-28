@@ -4,7 +4,7 @@
 #include <vector>
 using std::vector;
 
-#include "../module_orbital/ORB_atomic_lm.h"
+#include "../module_basis/module_ao/ORB_atomic_lm.h"
 
 // out of conv_coulomb_pot.size(), imagine all rab(i.e. dr) are equal to rab[conv_coulomb_pot.size()-1]
 class Conv_Coulomb_Pot

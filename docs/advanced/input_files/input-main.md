@@ -23,16 +23,16 @@
   [relax_nmax](#relax_nmax) | [relax_method](#relax_method) | [relax_cg_thr](#relax_cg_thr) | [relax_bfgs_w1](#relax_bfgs_w1) | [relax_bfgs_w2](#relax_bfgs_w2) | [relax_bfgs_rmax](#relax_bfgs_rmax) | [relax_bfgs_rmin](#relax_bfgs_rmin) | [relax_bfgs_init](#relax_bfgs_init) | [cal_force](#cal_force) | [force_thr](#force_thr) | [force_thr_ev](#force_thr_ev) | [force_thr_ev2](#force_thr_ev2) | [cal_stress](#cal_stress) | [stress_thr](#stress_thr) | [press1, press2, press3](#press1-press2-press3) | [fixed_axes](#fixed_axes) | [cell_factor](#cell_factor) | [fixed_ibrav](#fixed_ibrav) | [relax_new](#relax_new) | [relax_scale_force](#relax_scale_force)
 - [Variables related to output information](#variables-related-to-output-information)
 
-  [out_force](#out_force) | [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_bandgap](#out_bandgap) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_mat_t](#out_mat_t) | [out_mat_dh](#out_mat_dh) | [out_hs2_interval](#out_hs2_interval) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
+  [out_mul](#out_mul) | [out_freq_elec](#out_freq_elec) | [out_freq_ion](#out_freq_ion) | [out_chg](#out_chg) | [out_pot](#out_pot) | [out_dm](#out_dm) | [out_wfc_pw](#out_wfc_pw) | [out_wfc_r](#out_wfc_r) | [out_wfc_lcao](#out_wfc_lcao) | [out_dos](#out_dos) | [out_band](#out_band) | [out_proj_band](#out_proj_band) | [out_stru](#out_stru) | [out_bandgap](#out_bandgap) | [out_level](#out_level) | [out_alllog](#out_alllog) | [out_mat_hs](#out_mat_hs) | [out_mat_r](#out_mat_r) | [out_mat_hs2](#out_mat_hs2) | [out_mat_t](#out_mat_t) | [out_mat_dh](#out_mat_dh) | [out_app_flag](#out_app_flag) | [out_hs2_interval](#out_hs2_interval) | [out_element_info](#out_element_info) | [restart_save](#restart_save) | [restart_load](#restart_load) | [dft_plus_dmft](#dft_plus_dmft) | [rpa](#rpa)
 - [Density of states](#density-of-states)
 
   [dos_edelta_ev](#dos_edelta_ev) | [dos_sigma](#dos_sigma) | [dos_scale](#dos_scale) | [dos_emin_ev](#dos_emin_ev) | [dos_emax_ev](#dos_emax_ev) | [dos_nche](#dos_nche)
 - [Exact exchange](#exact-exchange) (Under tests)
 
-  [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence)
+  [exx_hybrid_alpha](#exx_hybrid_alpha) | [exx_hse_omega](#exx_hse_omega) | [exx_separate_loop](#exx_separate_loop) | [exx_hybrid_step](#exx_hybrid_step) | [exx_lambda](#exx_lambda) | [exx_pca_threshold](#exx_pca_threshold) | [exx_c_threshold](#exx_c_threshold) | [exx_v_threshold](#exx_v_threshold) | [exx_c_grad_threshold](#exx_c_grad_threshold) | [exx_v_grad_threshold](#exx_v_grad_threshold) | [exx_dm_threshold](#exx_dm_threshold) | [exx_schwarz_threshold](#exx_schwarz_threshold) | [exx_cauchy_threshold](#exx_cauchy_threshold) | [exx_cauchy_grad_threshold](#exx_cauchy_grad_threshold) | [exx_ccp_threshold](#exx_ccp_threshold) | [exx_ccp_rmesh_times](#exx_ccp_rmesh_times) | [exx_distribute_type](#exx_distribute_type) | [exx_opt_orb_lmax](#exx_opt_orb_lmax) | [exx_opt_orb_ecut](#exx_opt_orb_ecut) | [exx_opt_orb_tolerence](#exx_opt_orb_tolerence) | [exx_real_number](#exx_real_number)
 - [Molecular dynamics](#molecular-dynamics)
 
-  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
+  [md_type](#md_type) | [md_thermostat](#md_thermostat) | [md_nstep](#md_nstep) | [md_restart](#md_restart) | [md_dt](#md_dt) | [md_tfirst, md_tlast](#md_tfirst-md_tlast) | [md_dumpfreq](#md_dumpfreq) | [md_restartfreq](#md_restartfreq) | [md_seed](#md_seed) | [md_prec_level](#md_prec_level) | [ref_cell_factor](#ref_cell_factor) | [md_tfreq](#md_tfreq) | [md_tchain](#md_tchain) | [md_pmode](#md_pmode) | [md_pcouple](#md_pcouple) | [md_pfirst, md_plast](#md_pfirst-md_plast) | [md_pfreq](#md_pfreq) | [md_pchain](#md_pchain) | [dump_force](#dump_force) | [dump_vel](#dump_vel) | [dump_virial](#dump_virial) | [lj_rcut](#lj_rcut) | [lj_epsilon](#lj_epsilon) | [lj_sigma](#lj_sigma) | [pot_file](#pot_file) | [msst_direction](#msst_direction) | [msst_vel](#msst_vel) | [msst_vis](#msst_vis) | [msst_tscale](#msst_tscale) | [msst_qmass](#msst_qmass) | [md_damp](#md_damp) | [md_tolerance](#md_tolerance) | [md_nraise](#md_nraise)
 - [vdW correction](#vdw-correction)
 
   [vdw_method](#vdw_method) | [vdw_s6](#vdw_s6) | [vdw_s8](#vdw_s8) | [vdw_a1](#vdw_a1) | [vdw_a2](#vdw_a2) | [vdw_d](#vdw_d) | [vdw_abc](#vdw_abc) | [vdw_C6_file](#vdw_c6_file) | [vdw_C6_unit](#vdw_c6_unit) | [vdw_R0_file](#vdw_r0_file) | [vdw_R0_unit](#vdw_r0_unit) | [vdw_cutoff_type](#vdw_cutoff_type) | [vdw_cutoff_radius](#vdw_cutoff_radius) | [vdw_radius_unit](#vdw_radius_unit) | [vdw_cutoff_period](#vdw_cutoff_period) | [vdw_cn_thr](#vdw_cn_thr) | [vdw_cn_thr_unit](#vdw_cn_thr_unit)
@@ -48,9 +48,12 @@
 - [Variables useful for debugging](#variables-useful-for-debugging)
 
   [nurse](#nurse) | [t_in_h](#t_in_h) | [vl_in_h](#vl_in_h) | [vnl_in_h](#vnl_in_h) | [vh_in_h](#vh_in_h) | [vion_in_h](#vion_in_h) | [test_force](#test_force) | [test_stress](#test_stress) | [colour](#colour) | [test_skip_ewald](#test_skip_ewald)
+- [NAOs](#naos)
+
+  [bessel_nao_ecut](#bessel_nao_ecut) | [bessel_nao_tolerence](#bessel_nao_tolerence) | [bessel_nao_rcut](#bessel_nao_rcut) | [bessel_nao_smooth](#bessel_nao_smooth) | [bessel_nao_sigma](#bessel_nao_sigma)
 - [DeePKS](#deepks)
 
-  [deepks_out_labels](#deepks_out_labels) | [deepks_scf](#deepks_scf) | [deepks_model](#deepks_model) | [bessel_descriptor_lmax](#bessel_descriptor_lmax) | [bessel_descriptor_rcut](#bessel_descriptor_rcut) | [bessel_descriptor_tolerence](#bessel_descriptor_tolerence) | [deepks_bandgap](#deepks_bandgap) | [deepks_out_unittest](#deepks_out_unittest)
+  [deepks_out_labels](#deepks_out_labels) | [deepks_scf](#deepks_scf) | [deepks_model](#deepks_model) | [bessel_descriptor_lmax](#bessel_descriptor_lmax) | [bessel_descriptor_ecut](#bessel_descriptor_ecut) | [bessel_descriptor_tolerence](#bessel_descriptor_tolerence) | [bessel_descriptor_rcut](#bessel_descriptor_rcut) | [bessel_descriptor_smooth](#bessel_descriptor_smooth) | [bessel_descriptor_sigma](#bessel_descriptor_sigma) | [deepks_bandgap](#deepks_bandgap) | [deepks_out_unittest](#deepks_out_unittest)
 - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
 
   [of_kinetic](#of_kinetic) | [of_method](#of_method) | [of_conv](#of_conv) | [of_tole](#of_tole) | [of_tolp](#of_tolp) | [of_tf_weight](#of_tf_weight) | [of_vw_weight](#of_vw_weight) | [of_wt_alpha](#of_wt_alpha) | [of_wt_beta](#of_wt_beta) | [of_wt_rho0](#of_wt_rho0) | [of_hold_rho0](#of_hold_rho0) | [of_read_kernel](#of_read_kernel) | [of_kernel_file](#of_kernel_file) | [of_full_pw](#of_full_pw) | [of_full_pw_dim](#of_full_pw_dim)
@@ -62,7 +65,7 @@
   [gate_flag](#gate_flag) | [zgate](#zgate) | [block](#block) | [block_down](#block_down) | [block_up](#block_up) | [block_height](#block_height)
 - [Electronic conductivities](#electronic-conductivities)
 
-  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_wenlarge](#cond_wenlarge) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
+  [cal_cond](#cal_cond) | [cond_nche](#cond_nche) | [cond_dw](#cond_dw) | [cond_wcut](#cond_wcut) | [cond_dt](#cond_dt) | [cond_dtbatch](#cond_dtbatch) | [cond_fwhm](#cond_fwhm) | [cond_nonlocal](#cond_nonlocal)
 - [Implicit solvation model](#implicit-solvation-model)
 
   [imp_sol](#imp_sol) | [eb_k](#eb_k) | [tau](#tau) | [sigma_k](#sigma_k) | [nc_k](#nc_k)
@@ -100,7 +103,7 @@ These variables are used to control general system parameters.
   - *test_memory* : checks memory required for the calculation. The number is not quite reliable, please use it with care
   - *test_neighbour* : only performs neighbouring atom search
   - *gen_bessel* : generates projectors (a series of Bessel functions) for DeePKS; see also keywords bessel_descriptor_lmax, bessel_descriptor_rcut and bessel_descriptor_tolerence. A file named `jle.orb` will be generated which contains the projectors. An example is provided in examples/H2O-deepks-pw.
-  - *get_S* : only works for multi-k calculation with LCAO basis. Generates and writes the overlap matrix to a file names `SR.csr` in the working directory. The format of the file will be the same as that generated by [out_mat_hs2](#out_mat_hs2).
+  - *get_S* : only works for multi-k calculation with LCAO basis. Generates and writes the overlap matrix to a file named `SR.csr` in the working directory. The format of the file will be the same as that generated by [out_mat_hs2](#out_mat_hs2).
 - **Default**: scf
 
 ### esolver_type
@@ -172,7 +175,7 @@ These variables are used to control general system parameters.
 ### init_chg
 
 - **Type**: String
-- **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density. If set to `atomic`, the density is starting from the summation of the atomic density of single atoms. If set this to `file`, the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHGCAR. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHGCAR. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+- **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density. If set to `atomic`, the density is starting from the summation of the atomic density of single atoms. If set this to `file`, the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
 - **Default**: atomic
 
 ### init_vel
@@ -308,7 +311,7 @@ These variables are used to control parameters related to input files.
 ### read_file_dir
 
 - **Type**: String
-- **Description**: when the program needs to read files such as electron density(`SPIN1_CHG`) as a starting point, this variable tells the location of the files. For example, './' means the file is located in the working directory.
+- **Description**: when the program needs to read files such as electron density(`SPIN1_CHG.cube`) as a starting point, this variable tells the location of the files. For example, './' means the file is located in the working directory.
 - **Default**: OUT.$suffix
 
 ### wannier_card
@@ -338,7 +341,7 @@ These variables are used to control the plane wave related parameters.
 ### pw_seed
 
 - **Type**: Integer
-- **Description**: Only useful for plane wave basis only now. It is the random seed to initialize wave functions. Only positive integers are avilable.
+- **Description**: Only useful for plane wave basis only now. It is the random seed to initialize wave functions. Only positive integers are available.
 - **Default**:0
 
 ### pw_diag_thr
@@ -441,7 +444,7 @@ calculations.
 ### ks_solver
 
 - **Type**: String
-- **Description**: It's about the choice of diagonalization methods for the hamiltonian matrix expanded in a certain basis set.
+- **Description**: It's about the choice of diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
@@ -468,9 +471,9 @@ calculations.
 - **Type**: Integer
 - **Description**: Number of Kohn-Sham orbitals to calculate. It is recommended you setup this value, especially when you use smearing techniques, more bands should be included.
 - **Default**:
-  - nspin=1: 1.2\*occupied_bands, occupied_bands + 10)
-  - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10) , nelec_spin = max(nelec_spin_up, nelec_spin_down)
-  - nspin=4: 1.2\*nelec, nelec + 20)
+  - nspin=1: max(1.2\*occupied_bands, occupied_bands + 10)
+  - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
+  - nspin=4: max(1.2\*nelec, nelec + 20)
 
 ### nbands_istate
 
@@ -517,8 +520,15 @@ calculations.
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter: 0 means no new charge
-- **Default**: 0.7
+- **Description**: mixing parameter. We recommend the following options:
+  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts. 
+    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**; 
+    - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
+    - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
+  - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
+  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**  
+  - For low-dimensional large systems, the setup of **mixing_beta=0.1**, **mixing_ndim=20**, and **mixing_gg0=1.5** usually works well.
+- **Default**: -10.0
 
 ### mixing_ndim
 
@@ -549,7 +559,7 @@ calculations.
   If you set gamma_only = 1, ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file. If you set gamma_only = 0, more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
 
   > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-  >
+
 - **Default**: 0
 
 ### printe
@@ -635,13 +645,13 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
 ### emin_sto
 
 - **Type**: Real
-- **Description**: Trial energy to guess the lower bound of eigen energies of the Hamitonian Operator $\hat{H}$. The unit is Ry.
+- **Description**: Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator $\hat{H}$. The unit is Ry.
 - **Default**:0.0
 
 ### emax_sto
 
 - **Type**: Real
-- **Description**: Trial energy to guess the upper bound of eigen energies of the Hamitonian Operator $\hat{H}$. The unit is Ry.
+- **Description**: Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator $\hat{H}$. The unit is Ry.
 - **Default**:0.0
 
 ### seed_sto
@@ -807,7 +817,7 @@ These variables are used to control the geometry relaxation.
 ### relax_scale_force
 
 - **Type**: Real
-- **Description**: This parameter is only relavant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
+- **Description**: This parameter is only relevant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
 - **Default**: 0.5
 
 ### cell_factor
@@ -822,12 +832,6 @@ These variables are used to control the geometry relaxation.
 
 These variables are used to control the output of properties.
 
-### out_force
-
-- **Type**: Boolean
-- **Description**: Determines whether to output the out_force into a file named `Force.dat` or not. If 1, then force will be written; if 0, then the force will not be written.
-- **Default**: 0
-
 ### out_mul
 
 - **Type**: Boolean
@@ -837,7 +841,7 @@ These variables are used to control the output of properties.
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when converged in SCF. Used for the restart of SCF.
+- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on),  wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on), and density matrix of localized orbitals (if [out_dm](#out_dm) is turned on). If set to 0, ABACUS will output them only when converged in SCF or electronic iters reach its maximum. Used for the restart of SCF.
 - **Default**: 0
 
 ### out_freq_ion
@@ -846,18 +850,18 @@ These variables are used to control the output of properties.
 - **Description**: If set to >1, it represents the frequency of ionic steps to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when ionic steps reach its maximum step. Used for the restart of MD or Relax.
 - **Default**: 0
 
+> Note : out_freq_ion is currently useless.
+
 ### out_chg
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHGCAR and SPIN2_CHGCAR (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
+- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
 - **Default**: 0
 
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential on real space grid. The name of the file is SPIN1_POT and SPIN2_POT (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot and ElecStaticP ot_AV E (along the z-axis).
-
-> Note : output = 1 is currently broken as of v3.0.2
+- **Description**: If set to 1, ABACUS will output the local potential on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot and ElecStaticP ot_AV E (along the z-axis).
 
 - **Default**: 0
 
@@ -951,9 +955,9 @@ These variables are used to control the output of properties.
 ### out_mat_r
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_pos_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
+- **Description**: For LCAO calculations, if out_mat_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
 
-  The file starts with "Matrix Dimension of r(R): " followed by the dimension of the matrix. The rest of the format is arranged into blocks, such as:
+  Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
 
   ```
   -5 -5 -5    //R (lattice vector)
@@ -965,20 +969,22 @@ These variables are used to control the output of properties.
 
   Each block here contains the matrix for the corresponding cell. There are three columns in each block, giving the matrix elements in x, y, z directions, respectively. There are altogether nbasis * nbasis lines in each block, which emulates the matrix elements.
 
+  In MD calculations, if [out_app_flag](#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, The output frequency is controlled by [out_hs2_interval](#out_hs2_interval). For example, if we are running a 10-step MD with out_hs2_interval = 3, then `$x` will be 0, 3, 6, and 9.
+
   > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
+
 - **Default**: 0
 
 ### out_mat_hs2
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix H(R) and overlap matrix S(R).
+- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$.
 
-  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SNPIN0.csr` are generated, which contain the Hamiltonian matrix H(R) and overlap matrix S(R) respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain H(R) for spin up and spin down, respectively.
+  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain $H(R)$ for spin up and spin down, respectively.
 
-  As for molecular dynamics calculations, the matrices will be printed for every `n` step, where `n` is set by another input parameter `out_hs2_interval`. Output files will be put in a separate directory, matrix_HS, and will be named `$x`_data-HR-sparse_SPIN0.csr, etc. Here `$x` is the number of MD step. For example, if we are running a 10-step MD with out_hs2_interval = 3, then `$x` will be 0,3,6 and 9.
+  As for molecular dynamics calculations, the format is controlled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag) in the same manner as the position matrix as detailed in [out_mat_r](#out_mat_r).
 
-  Each file starts with two lines, the first gives the dimension of the matrix, while the latter indicates how many different `R` are in the file.
+  Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
 
   The rest of the files are arranged in blocks. Each block starts with a line giving the lattice vector `R` and the number of nonzero matrix elements, such as:
 
@@ -1001,18 +1007,24 @@ These variables are used to control the output of properties.
 
 ### out_mat_t
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix T(R). The format will be the same as the Hamiltonian matrix H(R) and overlap matrix S(R) as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval).
+- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
 - **Default**: 0
 
 ### out_mat_dh
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix H(R) and overlap matrix S(R) as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval).
+- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
 - **Default**: 0
+
+### out_app_flag
+
+- **Type**: Boolean
+- **Description**: Whether output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during MD. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Default**: true
 
 ### out_hs2_interval
 
 - **Type**: Integer
-- **Description**: Only relevant for printing H(R), S(R), T(R), dH(R) matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
+- **Description**: Only relevant for printing $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
 - **Default**: 1
 
 ### out_element_info
@@ -1101,6 +1113,42 @@ These variables are used to control the calculation of DOS.
 
 [back to top](#full-list-of-input-keywords)
 
+## NAOs
+
+These variables are used to control the generation of numerical atomic orbitals (NAOs). NAOs is the linear combination of bessel functions.
+
+### bessel_nao_ecut
+
+- **Type**: Real
+- **Description**: energy cutoff of bessel functions.
+- **Default**: same as ecutwfc
+
+### bessel_nao_tolerence
+
+- **Type**: Real
+- **Description**: tolerance when searching for the zeros of bessel functions.
+- **Default**: 1.0e-12
+
+### bessel_nao_rcut
+
+- **Type**: Real
+- **Description**: cutoff radius of bessel functions.
+- **Default**: 6.0
+
+### bessel_nao_smooth
+
+- **Type**: Boolean
+- **Description**: whether the bessel functions smooth at radius cutoff. 
+- **Default**: 1
+
+### bessel_nao_sigma
+
+- **Type**: Real
+- **Description**: energy range for smooth. See also `bessel_nao_smooth`.
+- **Default**: 0.1
+
+[back to top](#full-list-of-input-keywords)
+
 ## DeePKS
 
 These variables are used to control the usage of DeePKS method (a comprehensive data-driven approach to improve the accuracy of DFT).
@@ -1118,13 +1166,6 @@ Warning: this function is not robust enough for the current version. Please try 
 
   NUMERICAL_DESCRIPTOR
   jle.orb
-  ```
-
-  NUMERICAL_DESCRIPTOR
-  jle.orb
-
-  ```
-
   ```
 - **Default**: 0
 
@@ -1146,17 +1187,35 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Description**: the projectors used in DeePKS are bessel functions. To generate such projectors, set calculation type to `gen_bessel` and run ABACUS. The lmax of Bessel functions is specified using bessel_descriptor_lmax. See also [calculation](#calculation).
 - **Default**: 2
 
-### bessel_descriptor_rcut
+### bessel_descriptor_ecut
 
 - **Type**: Real
-- **Description**: cutoff radius of bessel functions. See also `bessel_descriptor_lmax`.
-- **Default**: 6.0
+- **Description**: energy cutoff of bessel functions. See also `bessel_descriptor_lmax`.
+- **Default**: same as ecutwfc
 
 ### bessel_descriptor_tolerence
 
 - **Type**: Real
 - **Description**: tolerance when searching for the zeros of bessel functions. See also `bessel_descriptor_lmax`.
 - **Default**: 1.0e-12
+
+### bessel_descriptor_rcut
+
+- **Type**: Real
+- **Description**: cutoff radius of bessel functions. See also `bessel_descriptor_lmax`.
+- **Default**: 6.0
+
+### bessel_descriptor_smooth
+
+- **Type**: Boolean
+- **Description**: whether the bessel functions smooth at radius cutoff. See also `bessel_descriptor_lmax`.
+- **Default**: 1
+
+### bessel_descriptor_sigma
+
+- **Type**: Real
+- **Description**: energy range for smooth. See also `bessel_descriptor_smooth`.
+- **Default**: 0.1
 
 ### deepks_bandgap
 
@@ -1366,19 +1425,19 @@ These variables are relevant when using hybrid functionals
 ### exx_hybrid_alpha
 
 - **Type**: Real
-- **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha F_{X}+(1-\alpha)E_{X,LDA/GGA}$
-- **Default**: 0.25
+- **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
+- **Default**: 1 if dft_functional==hf else 0.25
 
 ### exx_hse_omega
 
 - **Type**: Real
-- **Description**: range-separation parameter in HSE functional, such that $1/r=erfc(\omega r)/r+erf(\omega r)/r$.
+- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$.
 - **Default**: 0.11
 
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration.
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. (Currently not used)
 - **Default**: 1
 
 ### exx_hybrid_step
@@ -1417,10 +1476,22 @@ These variables are relevant when using hybrid functionals
 - **Description**: The Fock exchange can be expressed as $\Sigma_{k,l}(ik|jl)D_{kl}$ where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
+### exx_c_grad_threshold
+
+- **Type**: Real
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). $\nabla C^{k}_{ij}$ is used in force and stress. Smaller components (less than exx_c_grad_threshold) of the $\nabla C^{k}_{ij}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
+- **Default**: 1E-4
+
+### exx_v_grad_threshold
+
+- **Type**: Real
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). With the approximation $\Phi_{i}\Phi_{j}\sim C^{k}_{ij}P_{k}$, the four-center integral in Fock exchange is expressed as $(ik|jl)=\Sigma_{a,b}C^{a}_{ij}V_{ab}C^{b}_{kl}$, where $V_{ab}=(P_{a}|P_{b})$ is a double-center integral. $\nabla V_{ab}$ is used in force and stress. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
+- **Default**: 1E-1
+
 ### exx_schwarz_threshold
 
 - **Type**: Real
-- **Description**: In practice the four-center integrals are sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each integral before carrying out explicit evaluations. Those that are smaller than exx_schwarz_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-5.
+- **Description**: In practice the four-center integrals are sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each integral before carrying out explicit evaluations. Those that are smaller than exx_schwarz_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-5.  (Currently not used)
 - **Default**: 0
 
 ### exx_cauchy_threshold
@@ -1429,22 +1500,28 @@ These variables are relevant when using hybrid functionals
 - **Description**: In practice the Fock exchange matrix is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-7.
 - **Default**: 1E-7
 
+### exx_cauchy_grad_threshold
+
+- **Type**: Real
+- **Description**: In practice the Fock exchange matrix in force and stress is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_grad_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-7.
+- **Default**: 1E-7
+
 ### exx_ccp_threshold
 
 - **Type**: Real
-- **Description**: It is related to the cutoff of on-site Coulomb potentials, currently not used.
+- **Description**: It is related to the cutoff of on-site Coulomb potentials. (Currently not used)
 - **Default**: 1e-8
 
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE1, setting it to 1 is enough. But for PBE0, a much larger number must be used.
-- **Default**: 10
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Coulomb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
+- **Default**: 1.5 if dft_functional==hse else 10
 
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. `order` is where atom pairs are simply distributed by their orders. `hmeans` is a distribution where the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. `kmeans1` and `kmeans2` are two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems.
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. `order` is where atom pairs are simply distributed by their orders. `hmeans` is a distribution where the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. `kmeans1` and `kmeans2` are two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
 ### exx_opt_orb_lmax
@@ -1467,7 +1544,7 @@ These variables are relevant when using hybrid functionals
 
 ### exx_real_number
 
-- **Type**: Boolen
+- **Type**: Boolean
 - **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
 - **Default**: 1 if gamma_only else 0
 
@@ -1488,7 +1565,7 @@ These variables are used to control the molecular dynamics calculations.
   - 2: NVT ensemble with Langevin method;
   - 4: MSST method;
 
-  ***Note: when md_type is set to 1, md_tfreq is required to stablize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.***
+  > Note: when md_type is set to 1, md_tfreq is required to stabilize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
 - **Default**: 1
 
 ### md_thermostat
@@ -1549,6 +1626,23 @@ These variables are used to control the molecular dynamics calculations.
   - md_seed >= 0: srand(md_seed) in MD initialization.
 - **Default**: -1
 
+### md_prec_level
+
+- **Type**: Integer
+- **Description**: Determine the precision level of vc-md. 
+  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
+  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
+  - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+  > Note: this parameter is only used in variable-cell MD!
+- **Default**: 0
+
+### ref_cell_factor
+
+- **Type**: Real
+- **Description**: 
+  Construct a reference cell bigger than the initial cell. Only used in variable-cell MD, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Default**: 1.0
+
 ### md_tfreq
 
 - **Type**: Real
@@ -1599,6 +1693,24 @@ These variables are used to control the molecular dynamics calculations.
 - **Type**: Integer
 - **Description**: number of thermostats coupled with the barostat in the Nose Hoover Chain method.
 - **Default**: 1
+
+### dump_force
+
+- **Type**: Boolean
+- **Description**: Output atomic forces into the file `MD_dump` or not. If `true`, forces will be written, otherwise forces will not be written.
+- **Default**: false
+
+### dump_vel
+
+- **Type**: Boolean
+- **Description**: Output atomic velocities into the file `MD_dump` or not. If `true`, velocities will be written, otherwise velocities will not be written.
+- **Default**: false
+
+### dump_virial
+
+- **Type**: Boolean
+- **Description**: Output lattice virial into the file `MD_dump` or not. If `true`, lattice virial will be written, otherwise lattice virial will not be written.
+- **Default**: false
 
 ### lj_rcut
 
@@ -1931,7 +2043,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  If `td_vext` is true, the td_vext_dire is a string to set the number of electric field, like "1 2" representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
+  If `td_vext` is true, the td_vext_dire is a string to set the number of electric fields, like "1 2" representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
   - 1: the direction of external light field is along x axis.
   - 2: the direction of external light field is along y axis.
   - 3: the direction of external light field is along z axis.
@@ -1962,14 +2074,14 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Integer
 - **Description**:
-  nubmer of step where electric field start
+  number of step where electric field start
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
 - **Description**:
-  nubmer of step where electric field end
+  number of step where electric field end
 - **Default**: 100
 
 ### td_lcut1
@@ -1992,7 +2104,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  frequency of Gauss type elctric field  (fs^-1)
+  frequency of Gauss type electric field  (fs^-1)
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 22.13
 
@@ -2000,7 +2112,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase of Gauss type elctric field  
+  phase of Gauss type electric field  
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.0
 
@@ -2008,7 +2120,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  sigma of Gauss type elctric field  (fs)
+  sigma of Gauss type electric field  (fs)
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 30.0
 
@@ -2016,7 +2128,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time center of Gauss type elctric field  
+  step number of time center of Gauss type electric field  
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 100
 
@@ -2024,7 +2136,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  amplitude of Gauss type elctric field  (V/A)
+  amplitude of Gauss type electric field  (V/A)
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.25
 
@@ -2032,7 +2144,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  frequency of Trapezoid type elctric field  (fs^-1)
+  frequency of Trapezoid type electric field  (fs^-1)
   E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
   E = amp*cos(2pi*f*t+phase) , t1<t<t2
   E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
@@ -2043,7 +2155,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase of Trapezoid type elctric field  
+  phase of Trapezoid type electric field  
   E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
   E = amp*cos(2pi*f*t+phase) , t1<t<t2
   E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
@@ -2054,7 +2166,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time interval 1 of Trapezoid type elctric field  
+  step number of time interval 1 of Trapezoid type electric field  
   E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
   E = amp*cos(2pi*f*t+phase) , t1<t<t2
   E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
@@ -2065,7 +2177,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time interval 2 of Trapezoid type elctric field  
+  step number of time interval 2 of Trapezoid type electric field  
   E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
   E = amp*cos(2pi*f*t+phase) , t1<t<t2
   E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
@@ -2076,7 +2188,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time interval 3 of Trapezoid type elctric field  
+  step number of time interval 3 of Trapezoid type electric field  
   E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
   E = amp*cos(2pi*f*t+phase) , t1<t<t2
   E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
@@ -2087,7 +2199,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  amplitude of Trapezoid type elctric field  (V/A)
+  amplitude of Trapezoid type electric field  (V/A)
   E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
   E = amp*cos(2pi*f*t+phase) , t1<t<t2
   E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
@@ -2098,7 +2210,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  frequence 1 of Trigonometric type elctric field  (fs^-1)
+  frequency 1 of Trigonometric type electric field  (fs^-1)
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 1.164656
 
@@ -2106,7 +2218,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  frequence 2 of Trigonometric type elctric field  (fs^-1)
+  frequency 2 of Trigonometric type electric field  (fs^-1)
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 0.029116
 
@@ -2114,7 +2226,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase 1 of Trigonometric type elctric field  
+  phase 1 of Trigonometric type electric field  
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 0.0
 
@@ -2122,7 +2234,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase 2 of Trigonometric type elctric field  
+  phase 2 of Trigonometric type electric field  
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 0.0
 
@@ -2130,7 +2242,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  amplitude of Trigonometric type elctric field  (V/A)
+  amplitude of Trigonometric type electric field  (V/A)
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 2.74
 
@@ -2138,7 +2250,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of switch time of Heaviside type elctric field 
+  step number of switch time of Heaviside type electric field 
   E = amp , t<t0
   E = 0.0 , t>t0
 - **Default**: 100
@@ -2146,7 +2258,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  amplitude of Heaviside type elctric field  (V/A)
+  amplitude of Heaviside type electric field  (V/A)
   E = amp , t<t0
   E = 0.0 , t>t0
 - **Default**: 2.74
@@ -2253,7 +2365,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 Frequency-dependent electronic conductivities can be calculated with Kubo-Greenwood formula[Phys. Rev. B 83, 235120 (2011)].
 
-Onsager coefficiencies:
+Onsager coefficients:
 
 $L_{mn}(\omega)=(-1)^{m+n}\frac{2\pi e^2\hbar^2}{3m_e^2\omega\Omega}$
 
@@ -2303,17 +2415,23 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Description**: Cutoff frequency for frequency-dependent conductivities. The unit is eV.
 - **Default**: 10.0
 
-### cond_wenlarge
+### cond_dt
+
+- **Type**: Real
+- **Description**: t interval to integrate Onsager coefficients. The unit is a.u.
+- **Default**: 0.02
+
+### cond_dtbatch
 
 - **Type**: Integer
-- **Description**: Control the t interval: dt = $\frac{\pi}{\omega_{cut}\times\omega enlarge}$
-- **Default**: 10
+- **Description**: exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
+- **Default**: 4
 
 ### cond_fwhm
 
 - **Type**: Integer
 - **Description**: We use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
-- **Default**: 0.3
+- **Default**: 0.4
 
 ### cond_nonlocal
 

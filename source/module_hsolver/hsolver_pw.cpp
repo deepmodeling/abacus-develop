@@ -7,7 +7,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include <algorithm>
 
 namespace hsolver {
@@ -107,7 +107,7 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, p
         }
         /// calculate the contribution of Psi for charge density rho
     }
-    castmem_2d_2h_op()(cpu_ctx, cpu_ctx, &pes->ekb(0, 0), eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
+    castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
     this->endDiagh();
 
@@ -163,7 +163,7 @@ void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHami
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            GlobalC::wf.diago_PAO_in_pw_k2(this->ctx, ik, psi, pHamilt);
+            hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, pHamilt);
         }
         else
         {
@@ -228,7 +228,7 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
     //It is too complex now and should be modified.
     if (iter == 1)
     {
-        if (abs(this->diag_ethr - 1.0e-2) < 1.0e-10)
+        if (abs(this->diag_ethr - 1.0e-2) < 1.0e-6)
         {
             if (GlobalV::init_chg == "file")
             {

@@ -553,11 +553,15 @@ int get_node_rank() {
 #endif
 
 std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type) {
-std::string str = "gpu";
+    std::string str = "gpu";
+    std::string env = "host";
+    int device_num = -1;
 #if ((defined __CUDA) || (defined __ROCM))
-    if (device::get_device_num() <= 0) {
+    device_num = device::get_device_num();
+    if (device_num <= 0) {
         str = "cpu";
     }
+    env = "device";
 #else
     str = "cpu";
 #endif
@@ -574,7 +578,13 @@ std::string str = "gpu";
         return str;
     }
     else {
-        ModuleBase::WARNING_QUIT("device", "INPUT device setting does not match the request!");
+        std::string msg = "INPUT device setting does not match the request!";
+        msg += "\n Input device = " + device;
+        msg += "\n Input basis_type = " + basis_type;
+        msg += "\n Input ks_solver = " + ks_solver;
+        msg += "\n Compile setting = " + env;
+        msg += "\n Environment device_num = " + std::to_string(device_num) + "\n";
+        ModuleBase::WARNING_QUIT("device", msg);
         return "unknown";
     }
 }

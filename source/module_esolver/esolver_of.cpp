@@ -17,7 +17,7 @@
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
@@ -283,8 +283,7 @@ void ESolver_OF::beforeOpt(const int istep)
     // Temporary, md and relax will merge later   liuyu add 2022-11-07
     if(GlobalV::CALCULATION == "md" && istep)
     {
-        CE.update_istep();
-        CE.save_pos_next(GlobalC::ucell);
+        CE.update_all_dis(GlobalC::ucell);
         CE.extrapolate_charge(pelec->charge);
 
         if(GlobalC::ucell.cell_parameter_updated)
@@ -345,6 +344,7 @@ void ESolver_OF::beforeOpt(const int istep)
 void ESolver_OF::updateV()
 {
     // (1) get dL/dphi
+    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(pelec->charge, &GlobalC::ucell); // Hartree + XC + external
     this->kineticPotential(pelec->charge->rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -885,9 +885,6 @@ void ESolver_OF::printInfo()
 
 void ESolver_OF::afterOpt()
 {
-    // Temporary liuyu add 2022-11-07
-    CE.update_all_pos(GlobalC::ucell);
-
     if (this->conv)
     {
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
@@ -898,14 +895,39 @@ void ESolver_OF::afterOpt()
         GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
     }
 
-    if (GlobalV::out_chg > 0)
+    for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        if (GlobalV::out_chg == 1)
         {
             std::stringstream ssc;
-            std::stringstream ss1;
-            ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-            ModuleIO::write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+            ModuleIO::write_rho(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                GlobalC::rhopw->nplane,
+                GlobalC::rhopw->startz_current,
+#endif
+                pelec->charge->rho_save[is],
+                is,
+                GlobalV::NSPIN,
+                iter,
+                ssc.str(),
+                GlobalC::rhopw->nx,
+                GlobalC::rhopw->ny,
+                GlobalC::rhopw->nz,
+                ef_tmp,
+                &(GlobalC::ucell),
+                3);
+        }
+        
+        if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+        {
+            int precision = 3; // be consistent with esolver_ks_lcao.cpp
+            std::stringstream ssp;
+            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
         }
     }
 }
@@ -972,6 +994,7 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
     }
     tempRho->rho_core = pelec->charge->rho_core;
 
+    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
@@ -1005,6 +1028,7 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta
 {
     double *pdPhidTheta = new double[this->nrxx];
 
+    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(ptempRho, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 

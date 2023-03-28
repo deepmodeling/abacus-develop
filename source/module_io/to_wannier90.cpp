@@ -36,6 +36,12 @@ toWannier90::~toWannier90()
         delete[] exclude_bands;
     if (GlobalV::BASIS_TYPE == "lcao")
         delete unk_inLcao;
+    delete[] R_centre;
+    delete[] L;
+    delete[] m;
+    delete[] rvalue;
+    delete[] alfa;
+    delete[] tag_cal_band;
 }
 
 void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi)
@@ -225,6 +231,8 @@ void toWannier90::read_nnkp()
                 nnkp_read >> x_axis[count].x >> x_axis[count].y >> x_axis[count].z;
                 ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, alfa[count]);
             }
+            delete[] z_axis;
+            delete[] x_axis;
         }
     }
     else
@@ -1380,6 +1388,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ModuleBase::ComplexMatrix &
             }
         }
     }
+    delete[] gk;
 }
 
 void toWannier90::get_trial_orbitals_lm_k(const int wannier_index,
@@ -1841,7 +1850,7 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
                     ModuleBase::GlobalFunc::ZEROS(crecv, GlobalV::NBANDS * lgd2);
                     tag = i * 3 + 2;
 #ifdef __MPI
-                    MPI_Recv(crecv, GlobalV::NBANDS * lgd2, mpicomplex, i, tag, DIAG_WORLD, &status);
+                    MPI_Recv(crecv, GlobalV::NBANDS * lgd2, MPI_DOUBLE_COMPLEX, i, tag, DIAG_WORLD, &status);
 #endif
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
@@ -1893,7 +1902,7 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 
                 tag = GlobalV::DRANK * 3 + 2;
 #ifdef __MPI
-                MPI_Send(csend, GlobalV::NBANDS * GlobalC::GridT.lgd, mpicomplex, 0, tag, DIAG_WORLD);
+                MPI_Send(csend, GlobalV::NBANDS * GlobalC::GridT.lgd, MPI_DOUBLE_COMPLEX, 0, tag, DIAG_WORLD);
 #endif
 
                 delete[] csend;
@@ -1904,7 +1913,7 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
 #endif
     }
 #ifdef __MPI
-    MPI_Bcast(ctot_send, GlobalV::NBANDS * GlobalV::NLOCAL, mpicomplex, 0, DIAG_WORLD);
+    MPI_Bcast(ctot_send, GlobalV::NBANDS * GlobalV::NLOCAL, MPI_DOUBLE_COMPLEX, 0, DIAG_WORLD);
 #endif
 
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)

@@ -651,7 +651,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
         int nrm = 0;
 
         // output of rgen: the number of vectors in the sphere
-        const int mxr = 50;
+        const int mxr = 200;
         // the maximum number of R vectors included in r
         ModuleBase::Vector3<double>* r = new ModuleBase::Vector3<double>[mxr];
         double* r2 = new double[mxr];
@@ -750,9 +750,10 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW:
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v = XC_Functional::v_xc_meta(rho_basis->nrxx,
-                                                          rho_basis->nxyz,
                                                           GlobalC::ucell.omega,
-                                                          chr);
+                                                          GlobalC::ucell.tpiba,
+                                                          chr,
+                                                          GlobalC::rhopw);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -763,10 +764,11 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc, ModulePW:
     }
     else
     {
+        if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx,
-                                                     rho_basis->nxyz,
-                                                     GlobalC::ucell.omega,
-                                                     chr);
+                                                     chr,
+                                                     rho_basis,
+                                                     &GlobalC::ucell);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -1087,6 +1089,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
     //for orbital free case
     if(!GlobalC::en.vnew_exist)
     {
+        ModuleBase::timer::tick("Forces", "cal_force_scc");
         return;
     }
 

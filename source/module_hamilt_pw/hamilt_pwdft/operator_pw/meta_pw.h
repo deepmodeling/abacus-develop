@@ -3,7 +3,7 @@
 
 #include "operator_pw.h"
 #include "module_base/matrix.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 
@@ -41,8 +41,8 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     FPTYPE get_tpiba() const {return this->tpiba;}
     const int * get_isk() const {return this->isk;}
     const FPTYPE* get_vk() const {return this->vk;}
-    const int get_vk_row() const {return this->vk_row;}
-    const int get_vk_col() const {return this->vk_col;}
+    int get_vk_row() const {return this->vk_row;}
+    int get_vk_col() const {return this->vk_col;}
     ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
 
     private:

@@ -37,7 +37,7 @@ class FFTW;
  * v^+f(A)v = \sum_{n=0}^{norder-1} C_n[f]*v^+v_n = \sum_{n=0}^{norder-1} C_n[f] * w_n, 
  * where w_n = v^+ * v_n = v^+ * T_n(A) * v
  * 
- * USAGE：
+ * USAGE: 
  * Chebyshev che(10); // constructe a chebyshev expansion of 10 orders (n=0,1,...,9)
  * 1. che.calcoef_real(&a, &A::cos) 						// calculate C_n[f], where f is a.cos
  *    for(int i=0;i<10;++i) cout<<che.coef_real[i]<<endl; 	//Then we print C_n[f]
@@ -169,7 +169,7 @@ public:
 		std::complex<REAL>* arrayn_1,  //v_{n-1}
 		const int N, const int LDA = 1,  const int m = 1);
 	//return 2xTn-Tn_1
-	inline REAL recurs(const REAL x, const REAL Tn, const REAL Tn_1);
+	REAL recurs(const REAL x, const REAL Tn, const REAL Tn_1);
 	
 	// V.
 	// auxiliary function
@@ -221,7 +221,7 @@ public:
 	fftw_plan coef_plan;
 };
 
-#ifdef __MIX_PRECISION
+#ifdef __ENABLE_FLOAT_FFTW
 template<>
 class FFTW<float>
 {

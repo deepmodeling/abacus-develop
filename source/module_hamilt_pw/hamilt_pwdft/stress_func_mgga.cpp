@@ -58,7 +58,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 			{
 				psi[ig] = ppsi[ig];
 			}
-			XC_Functional::grad_wfc(psi, ik, gradwfc, GlobalC::wfcpw);
+			XC_Functional::grad_wfc(psi, ik, gradwfc, GlobalC::wfcpw, GlobalC::ucell.tpiba);
 
 			int ipol = 0;
 			for (int ix = 0; ix < 3; ix++)

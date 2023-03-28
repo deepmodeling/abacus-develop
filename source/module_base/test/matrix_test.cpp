@@ -18,9 +18,11 @@
  *      - operator "*=", "+=", "-="
  *      - function trace_on
  *      - function zero_out
+ *      - function fill_out(fill a matrix with a const double)
  *      - function max/min/absmax
  *      - function norm
- *      - function print (not called in abacus, no need to test)
+ *      - function print(print the element which is larger than threshold)
+ *      - function reshape(change the index of the array)
  * 
  * - Tested functions related to class matrix
  *      - operator "+", "-", "*" between two matrixs
@@ -336,4 +338,47 @@ TEST_F(matrixTest,Alloc)
 	EXPECT_EXIT(ModuleBase::matrixAlloc(), ::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Allocation error for Matrix"));
+}
+
+TEST_F(matrixTest,Fillout)
+{
+    double k=2.4;
+    m33a.fill_out(k);
+    for (int i=0;i<m33a.nr;++i)
+    {
+        for (int j=0;j<m33a.nc;++j)
+        {
+            EXPECT_DOUBLE_EQ(m33a(i,j),k);
+        }
+    }
+}
+
+
+TEST_F(matrixTest,Print)
+{
+    std::string output;
+    const double threshold=4.0;
+    testing::internal::CaptureStdout();
+    //EXPECT_EXIT(m33a.print(std::cout,threshold),::testing::ExitedWithCode(0),"");
+    m33a.print(std::cout,threshold);
+    output  = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("0\t0\t0\t\n0\t5\t6\t\n7\t8\t9\t\n"));
+}
+
+TEST_F(matrixTest,Reshape)
+{
+    const int nr_new=3;
+    const int nc_new=2;
+    const bool flag_zero=true;
+    m23a.reshape(nr_new,nc_new,flag_zero);
+    ASSERT_DEATH(m33a.reshape(nr_new,nc_new),"");
+    EXPECT_DOUBLE_EQ(m23a.nr,nr_new);
+    EXPECT_DOUBLE_EQ(m23a.nc,nc_new);
+    for (int i=0;i<m23a.nr;++i)
+    {
+        for (int j=0;j<m23a.nc;++j)
+        {
+            EXPECT_DOUBLE_EQ(m23a(i,j),0.0);
+        }
+    }
 }

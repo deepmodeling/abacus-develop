@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 etotref -602.8643309993128
 etotperatomref -301.4321654997
 totalforceref 16.350762
 totalstressref 30.184735
 totaltimeref +7.1335
+=======
+etotref -602.8643311620368
+etotperatomref -301.4321655810
+totalforceref 16.350762
+totalstressref 30.184781
+totaltimeref +15.198
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52

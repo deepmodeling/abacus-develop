@@ -3,7 +3,6 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 
-nbands			8
 symmetry		0
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
@@ -11,19 +10,16 @@ gamma_only      0
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-8
+scf_thr				1e-6
 scf_nmax			100
 
-nspin           2
 noncolin	1
 #Parameters (3.Basis)
 basis_type		lcao
 
 #Parameters (4.Smearing)
-smearing_method		fixed
+smearing_method		gauss
 smearing_sigma			0.002
 
 #Parameters (5.Mixing)
-mixing_type		pulay
-mixing_beta		0.7
 

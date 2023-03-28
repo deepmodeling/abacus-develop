@@ -77,7 +77,7 @@ mpirun -np 2 abacus
 The main output information is stored in the file `OUT.MgO/running_scf.log`, which starts with
 
 ```
-                             WELCOME TO ABACUS v3.1
+                             WELCOME TO ABACUS v3.2
 
                'Atomic-orbital Based Ab-initio Computation at UStc'
 

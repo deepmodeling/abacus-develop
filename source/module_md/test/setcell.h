@@ -56,7 +56,7 @@ public:
         delete[] ucell.atoms[0].vel;
         delete[] ucell.atoms[0].mbl;
         ucell.atoms[0].tau = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].tau_original = new ModuleBase::Vector3<double>[4];
+        ucell.atoms[0].dis = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].taud = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].vel = new ModuleBase::Vector3<double>[4];
         ucell.atoms[0].mbl = new ModuleBase::Vector3<int>[4];
@@ -110,6 +110,10 @@ public:
         GlobalV::global_readin_dir = "./";
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         GlobalV::CAL_STRESS = 1;
+
+        INPUT.dump_virial = true;
+        INPUT.dump_force = true;
+        INPUT.dump_vel = true;
 
         INPUT.mdp.md_restart = 0;
         INPUT.mdp.md_dt = 1;

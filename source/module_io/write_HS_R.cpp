@@ -144,7 +144,7 @@ void ModuleIO::output_T_R(
     ModuleBase::timer::tick("ModuleIO","output_T_R"); 
 
     std::stringstream sst;
-    if(GlobalV::CALCULATION == "md")
+    if(GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag)
     {
         sst << GlobalV::global_matrix_dir << istep << "_" << TR_filename;
     }
@@ -154,9 +154,9 @@ void ModuleIO::output_T_R(
     }
 
     UHM.calculate_TR_sparse(sparse_threshold);
-    ModuleIO::save_TR_sparse(*UHM.LM, sparse_threshold, binary, sst.str().c_str());
+    ModuleIO::save_TR_sparse(istep, *UHM.LM, sparse_threshold, binary, sst.str().c_str());
     UHM.destroy_TR_sparse();
 
-    ModuleBase::timer::tick("ModuleIO","output_S_R");
+    ModuleBase::timer::tick("ModuleIO","output_T_R");
     return;
 }

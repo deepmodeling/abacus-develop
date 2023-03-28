@@ -10,8 +10,6 @@
 using namespace std;
 
 #if defined __MPI
-MPI_Datatype mpicomplex;
-MPI_Op myOp;
 MPI_Comm POOL_WORLD;
 
 void Parallel_Global::myProd(complex<double> *in,complex<double> *inout,int *len,MPI_Datatype *dptr)
@@ -61,25 +59,6 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
-	
-	MPI_Datatype block[2];
-	block[0]=MPI_DOUBLE;
-	block[1]=MPI_DOUBLE;
-	
-	int ac[2]={1,1};
-	MPI_Aint dipc[2]={0,sizeof(double)};
-
-	// MPI_Type_struct: create a struct datatype
-	MPI_Type_struct(
-	2,// count: number of blocks(integer)
-	ac,//number of element in each block(array)
-	dipc,//byte displacement of each block
-	block,//type of element in each block(array of handles to datatype objects)
-	&mpicomplex);//new type
-	
-	MPI_Type_commit(&mpicomplex);
-	MPI_Op_create((MPI_User_function *)Parallel_Global::myProd,1,&myOp);
-	
 #endif
     return;
 }

@@ -11,7 +11,11 @@ get_target_property(ABACUS_LINK_LIBRARIES ${ABACUS_BIN_NAME} LINK_LIBRARIES)
 target_link_libraries(
     test_deepks
     base cell symmetry md surchem xc_
+<<<<<<< HEAD
     neighbor orb io relax gint driver esolver hsolver psi elecstate 
+=======
+    neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
     pthread vdw dftu
     deepks device

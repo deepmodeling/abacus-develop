@@ -57,8 +57,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
-        EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
+        EXPECT_EQ(INPUT.cond_dt,0.02);
+		EXPECT_EQ(INPUT.cond_dtbatch,4);
+        EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.4);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
         EXPECT_EQ(INPUT.gdir,3);
@@ -78,9 +79,12 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.search_pbc);
         EXPECT_EQ(INPUT.symmetry,0);
         EXPECT_FALSE(INPUT.init_vel);
+        EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.0);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
         EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_FALSE(INPUT.out_force);
+        EXPECT_TRUE(INPUT.dump_force);
+        EXPECT_TRUE(INPUT.dump_vel);
+        EXPECT_TRUE(INPUT.dump_virial);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -135,7 +139,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.smearing_method,"fixed");
         EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
         EXPECT_EQ(INPUT.mixing_mode,"pulay");
-        EXPECT_DOUBLE_EQ(INPUT.mixing_beta,0.7);
+        EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
         EXPECT_DOUBLE_EQ(INPUT.mixing_gg0,0.00);
         EXPECT_EQ(INPUT.init_wfc,"atomic");
@@ -161,6 +165,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
         EXPECT_FALSE(INPUT.out_alllog);
@@ -328,6 +333,7 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
+    EXPECT_EQ(INPUT.mdp.md_prec_level,0);
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
@@ -345,10 +351,10 @@ TEST_F(InputTest, Default)
 
 TEST_F(InputTest, Read)
 {
-	std::string input_file = "INPUT";
+	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	EXPECT_EQ(INPUT.suffix,"autotest");
-	EXPECT_EQ(INPUT.stru_file,"STRU");
+	EXPECT_EQ(INPUT.stru_file,"./support/STRU");
 	EXPECT_EQ(INPUT.kpoint_file,"KPT");
 	EXPECT_EQ(INPUT.pseudo_dir,"../../PP_ORB/");
 	EXPECT_EQ(INPUT.orbital_dir,"../../PP_ORB/");
@@ -378,7 +384,8 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.cond_nche,20);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
-        EXPECT_EQ(INPUT.cond_wenlarge,10);
+        EXPECT_EQ(INPUT.cond_dt,0.07);
+		EXPECT_EQ(INPUT.cond_dtbatch,2);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.3);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
@@ -401,7 +408,9 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
         EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_FALSE(INPUT.out_force);
+        EXPECT_FALSE(INPUT.dump_force);
+        EXPECT_FALSE(INPUT.dump_vel);
+        EXPECT_FALSE(INPUT.dump_virial);
         EXPECT_NEAR(INPUT.force_thr,1.0e-3,1.0e-7);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -486,6 +495,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_app_flag,0);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
         EXPECT_FALSE(INPUT.out_alllog);
@@ -655,6 +665,8 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
+    EXPECT_EQ(INPUT.mdp.md_prec_level,1);
+    EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.2);
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);

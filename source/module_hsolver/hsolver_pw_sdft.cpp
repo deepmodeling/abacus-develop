@@ -5,9 +5,6 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include <algorithm>
-
-//temporary
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace hsolver
 {
     void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
@@ -58,13 +55,6 @@ namespace hsolver
 			stoiter.orthog(ik,psi,stowf);
 			stoiter.checkemm(ik,istep, iter, stowf);	//check and reset emax & emin
 		}
-		// DiagoCG would keep 9*nbasis memory in cache during loop-k
-        // it should be deleted before calculating charge
-		if(this->method == "cg")
-        {
-            delete pdiagh;
-            pdiagh = nullptr;
-        }
 
 		this->endDiagh();
 
@@ -96,7 +86,7 @@ namespace hsolver
 		{
 			for(int is=0; is < GlobalV::NSPIN; is++)
 			{
-				ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], GlobalC::rhopw->nrxx);
+				ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], pes->charge->nrxx);
 			}
 		}
 		// calculate stochastic rho
@@ -108,25 +98,7 @@ namespace hsolver
 		// mohan add 2009-01-23
 		//en.calculate_harris();
 
-		if(GlobalV::MY_STOGROUP==0)
-		{
-			Symmetry_rho srho;
-			for(int is=0; is < GlobalV::NSPIN; is++)
-			{
-				srho.begin(is, *(pes->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
-			}
-		}
-		else
-		{
-#ifdef __MPI
-			if(ModuleSymmetry::Symmetry::symm_flag == 1)	MPI_Barrier(MPI_COMM_WORLD);
-#endif
-		}
-
-		if(GlobalV::MY_STOGROUP == 0)
-		{
-        	GlobalC::en.deband = GlobalC::en.delta_e(pes);
-		}
+		//will do rho symmetry and energy calculation in esolver
         ModuleBase::timer::tick(this->classname, "solve");
         return;
     }

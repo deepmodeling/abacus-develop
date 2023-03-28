@@ -24,7 +24,7 @@
 #include "module_elecstate/energy.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_io/restart.h"
 

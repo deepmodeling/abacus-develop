@@ -6,7 +6,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
-#include "module_orbital/ORB_control.h"
+#include "module_basis/module_ao/ORB_control.h"
 
 namespace ModuleESolver
 {
@@ -18,6 +18,7 @@ namespace ModuleESolver
         ~ESolver_KS_LCAO();
 
         void Init(Input& inp, UnitCell& cell) override;
+        void init_after_vc(Input& inp, UnitCell& cell) override;
 
         void cal_Energy(double& etot) override;
         void cal_Force(ModuleBase::matrix& force) override;

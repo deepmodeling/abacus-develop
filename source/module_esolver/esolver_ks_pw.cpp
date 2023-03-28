@@ -11,7 +11,7 @@
 #include "module_io/print_info.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_elecstate/occupy.h"
-#include "module_relax/relax_old/variable_cell.h"    // liuyu 2022-11-07
+#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
@@ -87,6 +87,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
+        if(this->psi != nullptr) delete this->psi;
         this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
 
         // cout<<GlobalC::rhopw->nrxx<<endl;
@@ -192,6 +193,40 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
+    void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    {
+        ESolver_KS<FPTYPE, Device>::init_after_vc(inp,ucell);
+
+        this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+        this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+#ifdef __MPI
+        if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
+#endif
+        this->pw_wfc->setuptransform();
+        for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
+        this->pw_wfc->collect_local_pw(); 
+
+        delete this->phsol;  this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+
+        delete this->pelec;  this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
+
+        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+        delete this->pelec->pot;
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc));
+        
+        //temporary
+        this->Init_GlobalC(inp,ucell);
+    }
+
+    template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
@@ -199,16 +234,25 @@ namespace ModuleESolver
         // Temporary, md and relax will merge later   liuyu add 2022-11-07
         if(GlobalV::CALCULATION == "md" && istep)
         {
-            this->CE.update_istep();
-            this->CE.save_pos_next(GlobalC::ucell);
-            this->CE.extrapolate_charge(this->pelec->charge);
-
-            if(GlobalC::ucell.cell_parameter_updated)
+            // different precision level for vc-md
+            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
             {
-                Variable_Cell::init_after_vc();
+                this->init_after_vc(INPUT, GlobalC::ucell);
             }
-
-            //this->pelec->init_scf(istep, GlobalC::sf.strucFac);
+            else
+            {
+                this->CE.update_all_dis(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
+                {
+                    Variable_Cell::init_after_vc();
+                    GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                    GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                    GlobalC::wfcpw->collect_local_pw(); 
+                    GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                    GlobalC::wf.init_at_1();
+                }
+            }
         }
 
         if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
@@ -217,25 +261,25 @@ namespace ModuleESolver
             {
                 GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
                 // charge extrapolation if istep>0.
-                this->CE.update_istep();
-                this->CE.update_all_pos(GlobalC::ucell);
+                this->CE.update_all_dis(GlobalC::ucell);
                 this->CE.extrapolate_charge(this->pelec->charge);
-                this->CE.save_pos_next(GlobalC::ucell);
 
                 GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
                 // calculate the new potential accordint to
                 // the new charge density.
                 //this->pelec->init_scf( istep, GlobalC::sf.strucFac );
             }
+
+            if(GlobalC::ucell.cell_parameter_updated)
+            {
+                GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+                GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+                GlobalC::wfcpw->collect_local_pw(); 
+                GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+                GlobalC::wf.init_at_1();
+            }
         }
-        if(GlobalC::ucell.cell_parameter_updated)
-        {
-            GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
-            GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-            GlobalC::wfcpw->collect_local_pw(); 
-            GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
-        }
+
         //init Hamilt, this should be allocated before each scf loop
         //Operators in HamiltPW should be reallocated once cell changed
         //delete Hamilt if not first scf
@@ -409,6 +453,7 @@ namespace ModuleESolver
     {
         if (!this->conv_elec)
         {
+            if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
             this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
             GlobalC::en.delta_escf(this->pelec);
         }
@@ -425,13 +470,9 @@ namespace ModuleESolver
         GlobalC::en.calculate_etot();
         //We output it for restarting the scf.
         bool print = false;
-        if (this->out_freq_elec == 0)
+        if (this->out_freq_elec && iter % this->out_freq_elec == 0)
         {
-            if (this->conv_elec) print = true;
-        }
-        else
-        {
-            if (iter % this->out_freq_elec == 0 || this->conv_elec) print = true;
+            print = true;
         }
 
         if (print)
@@ -441,18 +482,52 @@ namespace ModuleESolver
                 for (int is = 0; is < GlobalV::NSPIN; is++)
                 {
                     std::stringstream ssc;
-                    std::stringstream ss1;
-                    ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG";
-                    ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                    ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
+                    double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                    ModuleIO::write_rho(
+#ifdef __MPI
+                        GlobalC::bigpw->bz,
+                        GlobalC::bigpw->nbz,
+                        GlobalC::rhopw->nplane,
+                        GlobalC::rhopw->startz_current,
+#endif
+                        this->pelec->charge->rho_save[is],
+                        is,
+                        GlobalV::NSPIN,
+                        iter,
+                        ssc.str(),
+                        GlobalC::rhopw->nx,
+                        GlobalC::rhopw->ny,
+                        GlobalC::rhopw->nz,
+                        ef_tmp,
+                        &(GlobalC::ucell),
+                        3);
                 }
                 if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
                     for (int is = 0; is < GlobalV::NSPIN; is++)
                     {
                         std::stringstream ssc;
-                        std::stringstream ss1;
-                        ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU";
-                        ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+                        ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
+                        double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                        ModuleIO::write_rho(
+#ifdef __MPI
+                            GlobalC::bigpw->bz,
+                            GlobalC::bigpw->nbz,
+                            GlobalC::rhopw->nplane,
+                            GlobalC::rhopw->startz_current,
+#endif
+                            this->pelec->charge->kin_r_save[is],
+                            is,
+                            GlobalV::NSPIN,
+                            iter,
+                            ssc.str(),
+                            GlobalC::rhopw->nx,
+                            GlobalC::rhopw->ny,
+                            GlobalC::rhopw->nz,
+                            ef_tmp,
+                            &(GlobalC::ucell),
+                            3);
                     }
                 }
             }
@@ -472,25 +547,75 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     {
-        // Temporary liuyu add 2022-11-07
-        this->CE.update_all_pos(GlobalC::ucell);
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
         {
-            std::stringstream ssc;
-            std::stringstream ss1;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-            ModuleIO::write_rho(this->pelec->charge->rho_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                int precision = 3; // be consistent with esolver_ks_lcao.cpp
+                std::stringstream ssp;
+                ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
+                this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            }
         }
-        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+
+        if (GlobalV::out_chg)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
                 std::stringstream ssc;
-                std::stringstream ss1;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU";
-                ModuleIO::write_rho(this->pelec->charge->kin_r_save[is], is, 0, ssc.str());//mohan add 2007-10-17
+                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                ModuleIO::write_rho(
+#ifdef __MPI
+                    GlobalC::bigpw->bz,
+                    GlobalC::bigpw->nbz,
+                    GlobalC::rhopw->nplane,
+                    GlobalC::rhopw->startz_current,
+#endif
+                    this->pelec->charge->rho_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    0,
+                    ssc.str(),
+                    GlobalC::rhopw->nx,
+                    GlobalC::rhopw->ny,
+                    GlobalC::rhopw->nz,
+                    ef_tmp,
+                    &(GlobalC::ucell));
             }
+            if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            {
+                for (int is = 0; is < GlobalV::NSPIN; is++)
+                {
+                    std::stringstream ssc;
+                    ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
+                    double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                    ModuleIO::write_rho(
+#ifdef __MPI
+                        GlobalC::bigpw->bz,
+                        GlobalC::bigpw->nbz,
+                        GlobalC::rhopw->nplane,
+                        GlobalC::rhopw->startz_current,
+#endif
+                        this->pelec->charge->kin_r_save[is],
+                        is,
+                        GlobalV::NSPIN,
+                        0,
+                        ssc.str(),
+                        GlobalC::rhopw->nx,
+                        GlobalC::rhopw->ny,
+                        GlobalC::rhopw->nz,
+                        ef_tmp,
+                        &(GlobalC::ucell));      
+                }
+            }
+        }
+
+        if (GlobalC::wf.out_wfc_pw == 1 || GlobalC::wf.out_wfc_pw == 2)
+        {
+            std::stringstream ssw;
+            ssw << GlobalV::global_out_dir << "WAVEFUNC";
+            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
         }
         if (this->conv_elec)
         {
@@ -537,6 +662,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
         Forces<double, Device> ff;
+        if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                                new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
@@ -549,6 +675,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::cal_Stress(ModuleBase::matrix& stress)
     {
         Stress_PW<double, Device> ss(this->pelec);
+        if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                              new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
@@ -593,12 +720,13 @@ namespace ModuleESolver
         int nspin0=1;
         if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
-        ModuleIO::write_istate_info(this->pelec,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
         // compute density of states
         if (GlobalC::en.out_dos)
         {
             ModuleIO::write_dos_pw(this->pelec->ekb,
                 this->pelec->wg,
+                &(GlobalC::kv),
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.bcoeff);
@@ -683,7 +811,7 @@ namespace ModuleESolver
 
         if(INPUT.cal_cond)
 	    {
-            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge, this->pelec->wg);
+            this->KG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, this->pelec->wg);
         }
     }
 

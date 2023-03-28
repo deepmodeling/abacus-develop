@@ -23,6 +23,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "charge.h"
 #include "module_elecstate/magnetism.h"
+<<<<<<< HEAD
+=======
+#include "module_elecstate/energy.h"
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -35,45 +39,54 @@
 Charge::Charge()
 {
 	allocate_rho = false;
-    allocate_rho_final_scf = false; //LiuXh add 20180619
+	allocate_rho_final_scf = false; //LiuXh add 20180619
 }
 
 
 Charge::~Charge()
 {
-	//if(allocate_rho) //LiuXh modify 20180619
-	if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619
-	{
-		for(int i=0; i<GlobalV::NSPIN; i++)
-		{
-			delete[] rho[i];
-			delete[] rhog[i];
-			delete[] rho_save[i];
-			delete[] rhog_save[i];
-			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-			{
-				delete[] kin_r[i];
-				delete[] kin_r_save[i];
-			}
-		}
-		delete[] rho;
-		delete[] rhog;
-		delete[] rho_save;
-		delete[] rhog_save;
-    	delete[] rho_core;
-		delete[] rhog_core;
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-		{
-			delete[] kin_r;
-			delete[] kin_r_save;
-		}
-	}
+    this->destroy();
 }
 
+void Charge::destroy()
+{
+    if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619
+    {
+        for(int i=0; i<GlobalV::NSPIN; i++)
+        {
+            delete[] rho[i];
+            delete[] rhog[i];
+            delete[] rho_save[i];
+            delete[] rhog_save[i];
+            if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            {
+                delete[] kin_r[i];
+                delete[] kin_r_save[i];
+            }
+        }
+        delete[] rho;
+        delete[] rhog;
+        delete[] rho_save;
+        delete[] rhog_save;
+        delete[] rho_core;
+        delete[] rhog_core;
+        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            delete[] kin_r;
+            delete[] kin_r_save;
+        }
+    }
+}
 
 void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in)
 {
     ModuleBase::TITLE("Charge","allocate");
+
+    if(allocate_rho == true)
+    {
+        this->destroy();
+        allocate_rho = false;
+    }
 
 	assert(allocate_rho == false);
 
@@ -152,69 +165,96 @@ void Charge::init_rho()
     }
     else if (GlobalV::init_chg == "file")
     {
-        GlobalV::ofs_running << " try to read charge from file : ";
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ssc;
-            ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG";
-            GlobalV::ofs_running << ssc.str() << std::endl;
-            // mohan update 2012-02-10
-            if (ModuleIO::read_rho(is, ssc.str(), this->rho[is], this->prenspin))
-            {
-                GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-            }
-            else if (is > 0 && GlobalV::NSPIN == 4)
-            {
-                // read only spin (up+down)
-                if (prenspin == 1)
-                {
-                    GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
-                                         << std::endl;
-                    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                    {
-                        this->rho[is][ir] = 0.0;
-                    }
-                }
-                //
-                else if (prenspin == 2)
-                { // read up and down , then rearrange them.
-                    if (is == 1)
-                    {
-                        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
-                    }
-                    else if (is == 2)
-                    {
-                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
-                                             << std::endl;
-                    }
-                    else if (is == 3)
-                    {
-                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
-                        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
-                        {
-                            this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
-                            this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
-                            this->rho[1][ir] = 0.0;
-                            this->rho[2][ir] = 0.0;
-                        }
-                    }
-                }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
-                }
-            }
-        }
+	GlobalV::ofs_running << " try to read charge from file : ";
+	for (int is=0; is<GlobalV::NSPIN; ++is)
+	{
+		std::stringstream ssc;
+		ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+		GlobalV::ofs_running << ssc.str() << std::endl;
+		double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+		if (ModuleIO::read_rho(
+#ifdef __MPI
+			&(GlobalC::Pgrid),
+#endif
+			is,
+			GlobalV::NSPIN,
+			ssc.str(),
+			this->rho[is],
+			GlobalC::rhopw->nx,
+			GlobalC::rhopw->ny,
+			GlobalC::rhopw->nz,
+			ef_tmp,
+			&(GlobalC::ucell),
+			this->prenspin))
+		{
+			GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+		}
+		else if(is > 0)
+		{
+			if (prenspin == 1)
+			{
+			    GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
+			                         << std::endl;
+			    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+			    {
+			        this->rho[is][ir] = 0.0;
+			    }
+			}
+			//
+			else if (prenspin == 2)
+			{ // read up and down , then rearrange them.
+			    if (is == 1)
+			    {
+			        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
+			    }
+			    else if (is == 2)
+			    {
+			        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+			                             << std::endl;
+			    }
+			    else if (is == 3)
+			    {
+			        GlobalV::ofs_running << " rearrange charge density " << std::endl;
+			        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+			        {
+			            this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
+			            this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
+			            this->rho[1][ir] = 0.0;
+			            this->rho[2][ir] = 0.0;
+			        }
+			    }
+			}
+		}
+		else
+		{
+			ModuleBase::WARNING_QUIT("init_rho","!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, or you must set read_file_dir \n to a specific directory. ");
+		}
+	}
+
+
         
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
+	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	{
 			for (int is = 0; is < GlobalV::NSPIN; is++)
 			{
 				std::stringstream ssc;
-				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU";
+				ssc << GlobalV::global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
 				GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str() << std::endl;
-				// mohan update 2012-02-10
-				if (ModuleIO::read_rho(is, ssc.str(), this->kin_r[is], this->prenspin))
+				// mohan update 2012-02-10, sunliang update 2023-03-09
+				if (ModuleIO::read_rho(
+#ifdef __MPI
+							&(GlobalC::Pgrid),
+#endif
+							is,
+							GlobalV::NSPIN,
+							ssc.str(),
+							this->kin_r[is],
+							GlobalC::rhopw->nx,
+							GlobalC::rhopw->ny,
+							GlobalC::rhopw->nz,
+							GlobalC::en.ef,
+							&(GlobalC::ucell),
+							this->prenspin))
 				{
 					GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
 				}
@@ -502,7 +542,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 					{
 						double sin_a1, sin_a2, cos_a1, cos_a2;
 						if(GlobalV::DOMAG)
-						{
+						{//will not be used now, will be deleted later
 							ModuleBase::libm::sincos(atom->angle1[0], &sin_a1, &cos_a1);
 							ModuleBase::libm::sincos(atom->angle2[0], &sin_a2, &cos_a2);
 						}
@@ -514,7 +554,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 							const std::complex<double> swap = GlobalC::sf.strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
 							rho_g3d(0, ig) += swap ;
 							if(GlobalV::DOMAG)
-							{
+							{//will not be used now, will be deleted later
 								rho_g3d(1, ig) += swap * (GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv) 
 								* sin_a1 * cos_a2;
 								rho_g3d(2, ig) += swap * (GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv) 
@@ -524,7 +564,8 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 							}
 							else if(GlobalV::DOMAG_Z)
 							{
-								//rho_g3d(3, ig) += swap * GlobalC::ucell.magnet.start_magnetization[it];
+								rho_g3d(1, ig) = 0.0;
+								rho_g3d(2, ig) = 0.0;
 								rho_g3d(3, ig) += swap * (GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv);
 							}
 						}
@@ -535,9 +576,12 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 						for(int ia = 0;ia<atom->na;ia++)
 						{
 							double sin_a1, sin_a2, cos_a1, cos_a2;
-							if(GlobalV::DOMAG)
+							if(GlobalV::DOMAG || GlobalV::DOMAG_Z)
 							{
 								ModuleBase::libm::sincos(atom->angle1[ia], &sin_a1, &cos_a1);
+							}
+							if(GlobalV::DOMAG)
+							{
 								ModuleBase::libm::sincos(atom->angle2[ia], &sin_a2, &cos_a2);
 							}
 #ifdef _OPENMP
@@ -552,19 +596,26 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 
 								std::complex<double> swap = exp(ci_tpi * Gtau) * rho_lgl[rho_basis->ig2igg[ig]];
 
+								//calculate rho_total
 								rho_g3d(0, ig) += swap;
+								//calculate mag_z
+								if(GlobalV::DOMAG || GlobalV::DOMAG_Z)
+								{
+									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
+										* cos_a1;
+								}
+								//calculate mag_x and mag_y
 								if(GlobalV::DOMAG)
 								{
 									rho_g3d(1, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
 										* sin_a1 * cos_a2;
 									rho_g3d(2, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
 										* sin_a1 * sin_a2;
-									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) 
-										* cos_a1;
 								}
-								else if(GlobalV::DOMAG_Z)
+								else
 								{
-									rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv);
+									rho_g3d(1, ig) = 0.0;
+									rho_g3d(2, ig) = 0.0;
 								}
 							}
 						}

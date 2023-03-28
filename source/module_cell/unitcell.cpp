@@ -10,7 +10,7 @@
 using namespace std;
 
 #ifdef __LCAO
-#include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 #include "module_base/global_file.h"
@@ -301,70 +301,26 @@ void UnitCell::update_pos_tau(const double* pos)
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
-            if (atom->mbl[ia].x != 0)
+            for ( int ik = 0; ik < 3; ++ik)
             {
-                atom->tau_original[ia].x += (pos[3 * iat] / this->lat0 - atom->tau[ia].x);
-                atom->tau[ia].x = pos[3 * iat] / this->lat0;
-            }
-            if (atom->mbl[ia].y != 0)
-            {
-                atom->tau_original[ia].y += (pos[3 * iat + 1] / this->lat0 - atom->tau[ia].y);
-                atom->tau[ia].y = pos[3 * iat + 1] / this->lat0;
-            }
-            if (atom->mbl[ia].z != 0)
-            {
-                atom->tau_original[ia].z += (pos[3 * iat + 2] / this->lat0 - atom->tau[ia].z);
-                atom->tau[ia].z = pos[3 * iat + 2] / this->lat0;
+                if (atom->mbl[ia][ik])
+                {
+                    atom->dis[ia][ik] = pos[3 * iat + ik] / this->lat0 - atom->tau[ia][ik];
+                    atom->tau[ia][ik] = pos[3 * iat + ik] / this->lat0;
+                }
             }
 
             // the direct coordinates also need to be updated.
+            atom->dis[ia] = atom->dis[ia] * this->GT;
             atom->taud[ia] = atom->tau[ia] * this->GT;
             iat++;
         }
     }
     assert(iat == this->nat);
-    return;
+    this->periodic_boundary_adjustment();
+    this->bcast_atoms_tau();
 }
 
-void UnitCell::update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; ++it)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ++ia)
-        {
-            if (atom->mbl[ia].x != 0)
-            {
-                atom->tau_original[ia].x += (posd_in[iat].x / this->lat0 - atom->tau[ia].x);
-                atom->tau[ia].x = posd_in[iat].x / this->lat0;
-            }
-            if (atom->mbl[ia].y != 0)
-            {
-                atom->tau_original[ia].y += (posd_in[iat].y / this->lat0 - atom->tau[ia].y);
-                atom->tau[ia].y = posd_in[iat].y / this->lat0;
-            }
-            if (atom->mbl[ia].z != 0)
-            {
-                atom->tau_original[ia].z += (posd_in[iat].z / this->lat0 - atom->tau[ia].z);
-                atom->tau[ia].z = posd_in[iat].z / this->lat0;
-            }
-
-            // the direct coordinates also need to be updated.
-            atom->taud[ia] = atom->tau[ia] * this->GT;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
-// Note : note here we are not keeping track of 'tau_original', namely
-// the Cartesian coordinate before periodic adjustment
-// The reason is that this is only used in relaxation
-// for which we are not using 2nd order extrapolation
-// and tau_original is only relevant for 2nd order extrapolation
-// and is only meaningful in the context of MD
 void UnitCell::update_pos_taud(double* posd_in)
 {
     int iat = 0;
@@ -373,9 +329,33 @@ void UnitCell::update_pos_taud(double* posd_in)
         Atom* atom = &this->atoms[it];
         for (int ia = 0; ia < atom->na; ia++)
         {
-            this->atoms[it].taud[ia].x += posd_in[iat*3];
-            this->atoms[it].taud[ia].y += posd_in[iat*3 + 1];
-            this->atoms[it].taud[ia].z += posd_in[iat*3 + 2];
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                atom->taud[ia][ik] += posd_in[3*iat + ik];
+                atom->dis[ia][ik] = posd_in[3*iat + ik];
+            }
+            iat++;
+        }
+    }
+    assert(iat == this->nat);
+    this->periodic_boundary_adjustment();
+    this->bcast_atoms_tau();
+}
+
+// posd_in is atomic displacements here  liuyu 2023-03-22
+void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in)
+{
+    int iat = 0;
+    for (int it = 0; it < this->ntype; it++)
+    {
+        Atom* atom = &this->atoms[it];
+        for (int ia = 0; ia < atom->na; ia++)
+        {
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                atom->taud[ia][ik] += posd_in[iat][ik];
+                atom->dis[ia][ik] = posd_in[iat][ik];
+            }
             iat++;
         }
     }
@@ -452,94 +432,6 @@ void UnitCell::bcast_atoms_tau()
     }
 #endif
 }
-
-void UnitCell::save_cartesian_position(double* pos) const
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            pos[3 * iat] = atom->tau[ia].x * this->lat0;
-            pos[3 * iat + 1] = atom->tau[ia].y * this->lat0;
-            pos[3 * iat + 2] = atom->tau[ia].z * this->lat0;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
-void UnitCell::save_cartesian_position(ModuleBase::Vector3<double>* pos) const
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; ++it)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ++ia)
-        {
-            pos[iat] = atom->tau_original[ia] * this->lat0;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
-void UnitCell::save_cartesian_position_original(double* pos) const
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            pos[3 * iat] = atom->tau_original[ia].x * this->lat0;
-            pos[3 * iat + 1] = atom->tau_original[ia].y * this->lat0;
-            pos[3 * iat + 2] = atom->tau_original[ia].z * this->lat0;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
-void UnitCell::save_cartesian_position_original(ModuleBase::Vector3<double>* pos) const
-{
-    int iat = 0;
-    for (int it = 0; it < this->ntype; ++it)
-    {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ++ia)
-        {
-            pos[iat] = atom->tau_original[ia] * this->lat0;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    return;
-}
-
-/*
-bool UnitCell::judge_big_cell(void) const
-{
-    double diameter = 2 * GlobalV::SEARCH_RADIUS;
-
-    double dis_x = this->omega / cross(a1 * lat0, a2 * lat0).norm();
-    double dis_y = this->omega / cross(a2 * lat0, a3 * lat0).norm();
-    double dis_z = this->omega / cross(a3 * lat0, a1 * lat0).norm();
-
-    if (dis_x > diameter && dis_y > diameter && dis_z > diameter)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
-*/
 
 #ifndef __CMD
 void UnitCell::cal_ux()
@@ -687,15 +579,6 @@ void UnitCell::setup_cell(
 #else
 			ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
 #endif
-
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
-
 		}
 	}
 #ifdef __MPI
@@ -717,8 +600,7 @@ void UnitCell::setup_cell(
 	}
 
 #ifdef __MPI
-	this->bcast_unitcell_pseudo();
-
+	this->bcast_unitcell();
 	// mohan add 2010-09-29
 	#ifdef __LCAO
 	orb.bcast_files(ntype, GlobalV::MY_RANK);
@@ -810,6 +692,13 @@ void UnitCell::read_pseudo(ofstream &ofs)
 
     if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info)
     {
+<<<<<<< HEAD
+=======
+	for(int i=0;i<this->ntype;i++)
+	{
+		ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
+	}
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
         for(int it=0; it<ntype; it++)
         {
             Atom* atom = &atoms[it];
@@ -873,7 +762,11 @@ void UnitCell::read_pseudo(ofstream &ofs)
     }
 
 #ifdef __MPI
+<<<<<<< HEAD
     bcast_unitcell_pseudo2();
+=======
+    bcast_unitcell2();
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
 #endif
 
     for(int it=0; it<ntype; it++)
@@ -932,6 +825,16 @@ void UnitCell::read_pseudo(ofstream &ofs)
     }
 
     cal_meshx();
+<<<<<<< HEAD
+=======
+
+#ifdef __MPI
+    Parallel_Common::bcast_int( meshx );
+    Parallel_Common::bcast_int( natomwfc );
+    Parallel_Common::bcast_int( lmax );
+    Parallel_Common::bcast_int( lmax_ppwf );
+#endif
+>>>>>>> 597d101b5e2f0979645e60b803172ecac0895b52
 }
 
 void UnitCell::setup_cell_classic(
@@ -997,13 +900,6 @@ void UnitCell::setup_cell_classic(
 #else
 			ok2 = this->read_atom_positions(ifa, ofs_running, ofs_warning);
 #endif
-			if(ok2&&GlobalV::out_element_info)
-			{
-				for(int i=0;i<this->ntype;i++)
-				{
-					ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-				}
-			}
 		}
 	}
 #ifdef __MPI
@@ -1640,7 +1536,7 @@ void UnitCell::remake_cell()
 		double celldm12 = (latvec.e11 * latvec.e21 + latvec.e12 * latvec.e22 + latvec.e13 * latvec.e23);
 		double cos12 = celldm12 / celldm1 / celldm2;
 
-		if(cos12 <= 0.5 || cos12 >= 1.0)
+		if(cos12 <= -0.5 || cos12 >= 1.0)
 		{
 			ModuleBase::WARNING_QUIT("unitcell","wrong cos12!");
 		}
@@ -1757,7 +1653,7 @@ void UnitCell::remake_cell()
 		double celldm13 = (latvec.e11 * latvec.e31 + latvec.e12 * latvec.e32 + latvec.e13 * latvec.e33);
 		double cos13 = celldm13 / celldm1 / celldm3;
 		double celldm23 = (latvec.e21 * latvec.e31 + latvec.e22 * latvec.e32 + latvec.e23 * latvec.e33);
-		double cos23 = celldm23 / celldm1 / celldm3;
+		double cos23 = celldm23 / celldm2 / celldm3;
 
 		double sin12 = std::sqrt(1.0 - cos12 * cos12);
 		if(cos12 >= 1.0)

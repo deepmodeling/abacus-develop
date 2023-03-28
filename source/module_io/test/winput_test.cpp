@@ -26,7 +26,7 @@ TEST_F(WInputTest, Read)
 {
 	winput::Default();
 	std::stringstream ss1;
-	ss1 << "WINPUT";
+	ss1 << "./support/WINPUT";
 	winput::Read(ss1.str());
 	EXPECT_EQ(winput::target,"test");
 	EXPECT_EQ(winput::wlmr_dir        ,"./");
@@ -85,7 +85,6 @@ TEST_F(WInputTest, Read)
 	EXPECT_EQ(winput::mesh            ,999);
 	EXPECT_DOUBLE_EQ(winput::dr       ,0.01);
 	EXPECT_EQ(winput::sum_lm          ,0);
-	remove("WINPUT");
 }
 
 TEST_F(WInputTest, Print)

@@ -31,7 +31,7 @@ namespace ModuleESolver
 
         // pw_rho = new ModuleBase::PW_Basis();
         //temporary, it will be removed
-        pw_wfc = new ModulePW::PW_Basis_K_Big(); 
+        pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, GlobalV::precision_flag);
         GlobalC::wfcpw = this->pw_wfc; //Temporary
         ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
         tmp->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
@@ -79,7 +79,7 @@ namespace ModuleESolver
     #ifdef __MPI
             this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
     #endif
-            this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+            this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
             this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
     #ifdef __MPI
             if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
@@ -100,6 +100,31 @@ namespace ModuleESolver
 
         // Initialize charge extrapolation
         CE.Init_CE();
+    }
+
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    {
+        ESolver_FP::init_after_vc(inp,ucell);
+
+        // symm_flag == 0 in md calculation, thus this part is annotated
+        // if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        // {
+        //     GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
+        //     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
+        // }
+
+        // reset cartesian coordinates due to the change of lattice
+        GlobalC::kv.set_after_vc(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, GlobalC::ucell.G, GlobalC::ucell.latvec);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+
+        // initialize the real-space uniform grid for FFT and parallel
+        // distribution of plane waves
+        GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
+            GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
+            
+        // Calculate Structure factor
+        GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
     }
 
     template<typename FPTYPE, typename Device>
@@ -219,9 +244,26 @@ namespace ModuleESolver
                     }
                     else
                     {
-                        //charge mixing
+                        //----------charge mixing---------------
+                        //before first calling mix_rho(), bandgap and cell structure can be analyzed to get better default parameters
+                        if(iter == 1)
+                        {
+                            double bandgap_for_autoset = 0.0;
+                            if (!GlobalV::TWO_EFERMI)
+                            {
+                                GlobalC::en.cal_bandgap(this->pelec);
+                                bandgap_for_autoset = GlobalC::en.bandgap;
+                            }
+                            else
+                            {
+                                GlobalC::en.cal_bandgap_updw(this->pelec);
+                                bandgap_for_autoset = std::min(GlobalC::en.bandgap_up, GlobalC::en.bandgap_dw);
+                            }
+                            GlobalC::CHR_MIX.auto_set(bandgap_for_autoset, GlobalC::ucell);
+                        }
                         //conv_elec = this->estate.mix_rho();
                         GlobalC::CHR_MIX.mix_rho(iter, pelec->charge);
+                        //----------charge mixing done-----------
                     }
                 }
 #ifdef __MPI

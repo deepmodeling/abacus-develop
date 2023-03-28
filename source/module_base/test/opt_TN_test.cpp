@@ -23,6 +23,7 @@ protected:
 
     void SetUp()
     {
+        tn.setPara(1.);
         tn.allocate(tools.nx);
         task = new char[60];
         p = new double[tools.nx];
@@ -72,7 +73,7 @@ protected:
             }
             else if (func_label == 1)
             {
-                tn.next_direct(x, gradient, flag, p, &(tools.mf), &MinFunc::dfuncdx);
+                tn.next_direct(x, gradient, flag, p, &(tools.mf), &ModuleESolver::ESolver_OF::dfuncdx);
             }
             for (int i = 0; i < 3; ++i) temp_x[i] = x[i];
             task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
@@ -114,6 +115,7 @@ TEST_F(TN_test, TN_Solve_LinearEq)
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000166533, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 1);
+    ASSERT_EQ(tn.get_iter(), 1);
 }
 
 TEST_F(TN_test, TN_Min_Func)
@@ -123,4 +125,5 @@ TEST_F(TN_test, TN_Min_Func)
     EXPECT_NEAR(x[1], 2.1208751163987624722, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.4951527720891863993, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 6);
+    ASSERT_EQ(tn.get_iter(), 6);
 }

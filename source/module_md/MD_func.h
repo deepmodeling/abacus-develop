@@ -14,8 +14,6 @@ class MD_func
     ~MD_func() {};
 
     static double gaussrand();
-	
-	static void InitPos( const UnitCell &unit_in, ModuleBase::Vector3<double>* pos);
 
 	static void InitVel(
 		const UnitCell &unit_in, 
@@ -58,11 +56,13 @@ class MD_func
 
 	static void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress);
 
-	static void MDdump(
-		const int &step, 
-		const UnitCell &unit_in,
-		const ModuleBase::matrix &virial, 
-		const ModuleBase::Vector3<double> *force);
+    static void MDdump(
+        const int &step, 
+        const UnitCell &unit_in,
+        const Input &inp,
+        const ModuleBase::matrix &virial, 
+        const ModuleBase::Vector3<double> *force,
+        const ModuleBase::Vector3<double> *vel);
 
 	static void getMassMbl(const UnitCell &unit_in, 
 		double* allmass, 

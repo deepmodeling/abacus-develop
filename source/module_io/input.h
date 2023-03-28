@@ -46,6 +46,8 @@ class Input
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
+    bool dump_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
+    double ref_cell_factor;    // construct a reference cell bigger than the initial cell  liuyu 2023-03-21
 
     /* symmetry level: 
       -1, no symmetry at all; 
@@ -82,7 +84,8 @@ class Input
     int cond_nche; //orders of Chebyshev expansions for conductivities
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
-    int cond_wenlarge;
+    double cond_dt;  //dt to integrate conductivities
+    int cond_dtbatch; //exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
     double cond_fwhm; //FWHM for conductivities 
     bool cond_nonlocal; //if calculate nonlocal effects
 
@@ -106,7 +109,7 @@ class Input
     // Forces
     //==========================================================
     bool cal_force;
-    bool out_force;
+    bool dump_force;    // output atomic forces into the file MD_dump or not. liuyu 2023-03-01
     double force_thr; // threshold of force in unit (Ry/Bohr)
     double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
 
@@ -118,6 +121,7 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
+    bool dump_virial;    // output lattice virial into the file MD_dump or not. liuyu 2023-03-01
 
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
@@ -240,6 +244,7 @@ class Input
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     bool out_mat_dh;
     int out_hs2_interval;
+    bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     bool out_wfc_lcao; // output the wave functions in local basis.
@@ -458,7 +463,7 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u; // true:DFT+U correction; false：standard DFT calculation(default)
+    bool dft_plus_u; // true:DFT+U correction; false: standard DFT calculation(default)
     int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
     int omc; // whether turn on occupation matrix control method or not
@@ -468,7 +473,7 @@ class Input
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
     //==========================================================
-    bool dft_plus_dmft; // true:DFT+DMFT; false：standard DFT calcullation(default)
+    bool dft_plus_dmft; // true:DFT+DMFT; false: standard DFT calcullation(default)
 
     //==========================================================
     //    RPA           Rong Shi added on 2022-04
@@ -491,7 +496,7 @@ class Input
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
     //==========================================================
-    bool imp_sol; // true:implicit solvation correction; false：vacuum calculation(default)
+    bool imp_sol; // true:implicit solvation correction; false: vacuum calculation(default)
     double eb_k;
     double tau;
     double sigma_k;

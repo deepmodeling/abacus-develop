@@ -88,7 +88,7 @@ void Symm_Other::print1(const int &ibrav, const double *cel_const, std::ofstream
     	ModuleBase::GlobalFunc::OUT(ofs_running,"LATTICE CONSTANT A",cel_const[0]);
 		ModuleBase::GlobalFunc::OUT(ofs_running,"B/A RATIO",cel_const[1]);
 		ModuleBase::GlobalFunc::OUT(ofs_running,"C/A RATIO",cel_const[2]);
-		ModuleBase::GlobalFunc::OUT(ofs_running,"COS(BETA)",cel_const[4]);	
+		ModuleBase::GlobalFunc::OUT(ofs_running,"COS(BETA)",cel_const[4]);
 	}
 	else if(ibrav==14)
 	{
