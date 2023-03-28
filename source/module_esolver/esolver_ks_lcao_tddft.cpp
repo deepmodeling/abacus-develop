@@ -298,7 +298,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
             {
@@ -309,7 +310,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
         }
     }

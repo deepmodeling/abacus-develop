@@ -323,6 +323,8 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_dt,1);
 	EXPECT_EQ(INPUT.mdp.md_dumpfreq,1);
 	EXPECT_EQ(INPUT.mdp.md_nraise,1);
+	EXPECT_EQ(INPUT.cal_syns,0);
+	EXPECT_EQ(INPUT.dmax,0.01);
 	EXPECT_EQ(INPUT.mdp.md_nstep,10);
 	EXPECT_EQ(INPUT.mdp.md_pchain,1);
 	EXPECT_EQ(INPUT.mdp.md_pcouple,"none");
@@ -655,6 +657,8 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_dt,1);
 	EXPECT_EQ(INPUT.mdp.md_dumpfreq,1);
 	EXPECT_EQ(INPUT.mdp.md_nraise,1);
+	EXPECT_EQ(INPUT.cal_syns,0);
+	EXPECT_EQ(INPUT.dmax,0.01);
 	EXPECT_EQ(INPUT.mdp.md_nstep,10);
 	EXPECT_EQ(INPUT.mdp.md_pchain,1);
 	EXPECT_EQ(INPUT.mdp.md_pcouple,"none");

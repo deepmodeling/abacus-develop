@@ -264,6 +264,8 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_tfreq",mdp.md_tfreq,"oscillation frequency, used to determine qmass of NHC");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_damp",mdp.md_damp,"damping parameter (time units) used to add force in Langevin method");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_nraise",mdp.md_nraise,"parameters used when md_type=0");
+    ModuleBase::GlobalFunc::OUTP(ofs,"cal_syns",cal_syns,"calculate asynchronous overlap matrix to output for Hefei-NAMD");
+    ModuleBase::GlobalFunc::OUTP(ofs,"dmax",dmax,"maximum displacement of all atoms in one step (bohr)");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_tolerance",mdp.md_tolerance,"tolerance for velocity rescaling (K)");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pmode",mdp.md_pmode,"NPT ensemble mode: none, iso, aniso, tri");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pcouple",mdp.md_pcouple,"whether couple different components: xyz, xy, yz, xz, none");

@@ -98,7 +98,6 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         double* p_eigenvalues = &(pes->ekb(ik, 0));
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
 
-
         if (skip_charge)
         {
             pes->print_psi(psi);
