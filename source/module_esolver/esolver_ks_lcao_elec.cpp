@@ -188,15 +188,15 @@ namespace ModuleESolver
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                 ModuleIO::read_dm(
 #ifdef __MPI
-		    GlobalC::GridT.nnrg,
-		    GlobalC::GridT.trace_lo,
+		            GlobalC::GridT.nnrg,
+		            GlobalC::GridT.trace_lo,
 #endif
-		    is,
-		    ssd.str(),
-		    this->LOC.DM,
-		    this->LOC.DM_R,
-		    ef_tmp,
-		    &(GlobalC::ucell));
+		            is,
+		            ssd.str(),
+		            this->LOC.DM,
+		            this->LOC.DM_R,
+		            ef_tmp,
+		            &(GlobalC::ucell));
             }
 
             // calculate the charge density

@@ -100,7 +100,7 @@ void ModuleIO::read_dm(
     }
     else
     {
-#ifdef __MPI
+    #ifdef __MPI
         ModuleBase::WARNING_QUIT("ModuleIO::read_dm","The nnrg should not be update");
         ModuleBase::CHECK_INT(ifs,nnrg);
 
