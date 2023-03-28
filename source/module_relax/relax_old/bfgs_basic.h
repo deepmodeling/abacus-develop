@@ -29,9 +29,11 @@ class BFGS_Basic
 	void reset_hessian(void);
 	void save_bfgs(void);
 
-	double* grad; // std::vector containing 3N components of ( grad( V(x) ) )
-	double* move; // movements
+	double* pos; // std::vector containing 3N coordinates of the system ( x )
+	double* grad; //std::vector containing 3N components of ( grad( V(x) ) )
+	double* move; // pos = pos_p + move.
 
+	double* pos_p; // p: previous
 	double* grad_p; // p: previous
 	double* move_p; 
 
@@ -47,7 +49,7 @@ class BFGS_Basic
 								// to the minimum value at the previous step
 
 	// mohan add 2010-07-27
-	double check_move(const double &move_p);
+	double check_move(const double &pos, const double &pos_p);
 	private:
 
 	bool wolfe_flag;

@@ -20,17 +20,20 @@ double Ions_Move_Basic::best_xxx = 1.0;
 
 int Ions_Move_Basic::out_stru=0;
 
-void Ions_Move_Basic::setup_gradient(double *grad, const ModuleBase::matrix &force)
+void Ions_Move_Basic::setup_gradient(double* pos, double *grad, const ModuleBase::matrix &force)
 {
 	ModuleBase::TITLE("Ions_Move_Basic","setup_gradient");
 	
 	assert(GlobalC::ucell.ntype>0);
+	assert(pos!=NULL);
 	assert(grad!=NULL);
 	assert(dim == 3*GlobalC::ucell.nat);
 
+	ModuleBase::GlobalFunc::ZEROS(pos, dim);
 	ModuleBase::GlobalFunc::ZEROS(grad, dim);
 
 	// (1) init gradient
+	// the unit of pos: Bohr.
 	// the unit of force: Ry/Bohr.
 	// the unit of gradient: 
 	int iat=0;
@@ -38,21 +41,15 @@ void Ions_Move_Basic::setup_gradient(double *grad, const ModuleBase::matrix &for
 	{
 		Atom* atom = &GlobalC::ucell.atoms[it];
 		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
-		{	
-			if(atom->mbl[ia].x == 1)
-			{
-				grad[3*iat  ] = -force(iat, 0)*GlobalC::ucell.lat0;
-				//this->grad[3*iat  ] = -force(iat, 0);
-			}
-			if(atom->mbl[ia].y == 1)
-			{
-				grad[3*iat+1] = -force(iat, 1)*GlobalC::ucell.lat0;
-			}
-			if(atom->mbl[ia].z == 1)
-			{
-				grad[3*iat+2] = -force(iat, 2)*GlobalC::ucell.lat0;
-				//std::cout << " grad=" << grad[3*iat+2] << std::endl;
-			}
+		{
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                pos[3*iat + ik] = atom->tau[ia][ik] * GlobalC::ucell.lat0;
+                if (atom->mbl[ia][ik])
+                {
+                    grad[3*iat + ik] = - force(iat, ik) * GlobalC::ucell.lat0;
+                }
+            }
 			++iat;
 		}
 	}
@@ -60,11 +57,12 @@ void Ions_Move_Basic::setup_gradient(double *grad, const ModuleBase::matrix &for
 	return;
 }
 
-void Ions_Move_Basic::move_atoms(double *move)
+void Ions_Move_Basic::move_atoms(double *move, double *pos)
 {
 	ModuleBase::TITLE("Ions_Move_Basic","move_atoms");
 
 	assert(move!=NULL);
+	assert(pos!=NULL);
 
 	//------------------------
 	// for test only
@@ -91,31 +89,16 @@ void Ions_Move_Basic::move_atoms(double *move)
 		assert( iat == GlobalC::ucell.nat );
 	}
 
-    int iat = 0;
-    const double move_threshold = 1.0e-10;
-    ModuleBase::Vector3<double> *move_ion = new ModuleBase::Vector3<double> [GlobalC::ucell.nat];
-    for(int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        Atom* atom = &GlobalC::ucell.atoms[it];
-        for(int ia = 0; ia < atom->na; ia++)
-        {
-            for (int k = 0; k < 3; ++k)
-            {
-                if( abs(move[3*iat + k]) > move_threshold && atom->mbl[ia][k])
-                {
-                    move_ion[iat][k] = move[3*iat + k] / GlobalC::ucell.lat0;
-                }
-                else
-                {
-                    move_ion[iat][k] = 0;
-                }
-            }
-            move_ion[iat] = move_ion[iat] * GlobalC::ucell.GT;
-            iat++;
-        }
-    }
-    assert( iat == GlobalC::ucell.nat );
-    GlobalC::ucell.update_pos_taud(move_ion);
+	const double move_threshold = 1.0e-10;
+	const int total_freedom = GlobalC::ucell.nat * 3;
+	for(int i =0;i<total_freedom;i++)
+	{
+		if( abs(move[i]) > move_threshold )
+		{
+			pos[i] += move[i];
+		}
+	}
+	GlobalC::ucell.update_pos_tau(pos);
 
 	//--------------------------------------------
 	// Print out the structure file.
@@ -128,7 +111,6 @@ void Ions_Move_Basic::move_atoms(double *move)
 	{
 		GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
 	}
-    delete[] move_ion;
 	return;
 }
 

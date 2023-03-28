@@ -515,13 +515,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        if (this->UHM.GK.get_spin() != -1)
-        {
-            int start_spin = -1;
-            this->UHM.GK.reset_spin(start_spin);
-            this->UHM.GK.destroy_pvpR();
-            this->UHM.GK.allocate_pvpR();
-        }
+        this->UHM.GK.renew();
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
@@ -653,11 +647,19 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 }
 void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 {
-
+    //print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
+        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO::out_mat_hs)
+        {
+            this->UHM.GK.renew(true);
+        }
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
+            if(hsolver::HSolverLCAO::out_mat_hs) 
+            {
+                this->p_hamilt->updateHk(ik);
+            }
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
             if (this->psi != nullptr)
@@ -672,11 +674,9 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
-            {
-                hamilt::MatrixBlock<double> h_mat, s_mat;
-                this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
-                                    s_mat.p,
+            {//gamma_only case, Hloc and Sloc are correct H and S matrix
+                ModuleIO::saving_HS(this->LM.Hloc.data(),
+                                    this->LM.Sloc.data(),
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),

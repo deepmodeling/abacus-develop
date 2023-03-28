@@ -18,6 +18,7 @@ public:
 	int cg_step;
 
 private:
+	double* pos0;
 	double* grad0;
         double* cg_grad0;
 	double* move0;
