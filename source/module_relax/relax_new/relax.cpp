@@ -7,12 +7,13 @@
 #include "module_base/tool_title.h"
 #include "module_base/parallel_common.h"
 
-void Relax::init_relax(const int nat_in)
+void Relax::init_relax(const int nat_in, const int out_stru_in)
 {
     ModuleBase::TITLE("Relax","init_relax");
 
     //set some initial conditions / constants
     nat = nat_in;
+    out_stru = out_stru_in;
     istep = 0;
     cg_step = 0;
     ltrial = false;
@@ -594,7 +595,7 @@ void Relax::move_cell_ions(const bool is_new_dir)
     // =================================================================
     std::stringstream ss;
     ss << GlobalV::global_out_dir << "STRU_ION";
-    if (Lattice_Change_Basic::out_stru == 1)
+    if (out_stru == 1)
     {
         ss << istep;
         istep ++;
