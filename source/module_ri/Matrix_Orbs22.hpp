@@ -220,7 +220,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs22::cal_grad_overlap_matrix(
 													const Tdata overlap = co10.second.cal_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB1, MB2 );
 													switch(matrix_order)
 													{										
-														const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co8.second.cal_grad_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB1, MB2 ));
+														const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co10.second.cal_grad_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB1, MB2 ));
 														const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
 														const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
 														const size_t iB1 = index_B1[TB][LB1][NB1][MB1];

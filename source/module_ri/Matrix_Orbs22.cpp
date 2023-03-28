@@ -87,8 +87,8 @@ void Matrix_Orbs22::init_radial(
 {
 	ModuleBase::TITLE("Matrix_Orbs22","init_radial");
 	ModuleBase::timer::tick("Matrix_Orbs22", "init_radial");
-	assert( orb_A1.size() == orb_A2.get_ntype() );
-	assert( orb_B1.size() == orb_B2.get_ntype() );
+	assert( orb_A1.get_ntype() == orb_A2.get_ntype() );
+	assert( orb_B1.get_ntype() == orb_B2.get_ntype() );
 	for( size_t TA=0; TA!=orb_A1.get_ntype(); ++TA )
 		for( size_t TB=0; TB!=orb_B1.get_ntype(); ++TB)
 			for( int LA1=0; LA1!=orb_A1.Phi[TA].getLmax(); ++LA1 )
