@@ -2,7 +2,7 @@
 #about the lattice structure.
 
 ATOMIC_SPECIES
-Cu 1.000 Si.pz-vbc.UPF 	#Element, Mass, Pseudopotential
+Si 1.000  Cu_ONCV_PBE-1.0.upf	#Element, Mass, Pseudopotential
 
 NUMERICAL_ORBITAL
 ./Si_lda_8.0au_50Ry_2s2p1d
