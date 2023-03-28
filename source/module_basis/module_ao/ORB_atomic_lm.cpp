@@ -323,6 +323,7 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool
 	ModuleBase::timer::tick("NOrbital_Lm", "extra_uniform");
 }
 
+/*
 void Numerical_Orbital_Lm::use_uniform(const double &dr_uniform_in)
 {
 	assert(dr_uniform_in>0.0);
@@ -396,6 +397,7 @@ void Numerical_Orbital_Lm::use_uniform(const double &dr_uniform_in)
 
 	return;
 }
+*/
 
 //liaochen modify on 2010/4/7
 //use Sbt_new
