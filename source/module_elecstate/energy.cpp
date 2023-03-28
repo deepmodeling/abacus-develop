@@ -140,7 +140,7 @@ void energy::print_etot(
 	this->iter = iter_in;
 
 	GlobalV::ofs_running << std::setprecision(12);
-	GlobalV::ofs_running << std::setiosflags(ios::left);
+	GlobalV::ofs_running << std::setiosflags(ios::right);
 
 	GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
@@ -189,29 +189,35 @@ void energy::print_etot(
             this->print_format("E_DeePKS", GlobalC::ld.E_delta);
         }
 #endif
+    }
+    else
+    {
+        GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30) << "eV" << std::endl;
+        this->print_format("E_KohnSham",etot);
+        this->print_format("E_Harris",etot_harris);
+    }
 
-		if(GlobalV::TWO_EFERMI)
-		{
-			this->print_format("E_Fermi_up",ef_up);
-			this->print_format("E_Fermi_dw",ef_dw);
-		}
-		else
-		{
-			this->print_format("E_Fermi",this->ef);
-		}
-		if (GlobalV::out_bandgap)
-		{
-			if (!GlobalV::TWO_EFERMI)
-            {
-				this->print_format("E_bandgap", this->bandgap);
-			}
-			else
-			{
-				this->print_format("E_bandgap_up", this->bandgap_up);
-				this->print_format("E_bandgap_dw", this->bandgap_dw);
-			}
-		}
-	}//xiaohui add "OUT_LEVEL", 2015-09-16
+    if(GlobalV::TWO_EFERMI)
+    {
+        this->print_format("E_Fermi_up",ef_up);
+        this->print_format("E_Fermi_dw",ef_dw);
+    }
+    else
+    {
+        this->print_format("E_Fermi",this->ef);
+    }
+    if (GlobalV::out_bandgap)
+    {
+        if (!GlobalV::TWO_EFERMI)
+        {
+            this->print_format("E_bandgap", this->bandgap);
+        }
+        else
+        {
+            this->print_format("E_bandgap_up", this->bandgap_up);
+            this->print_format("E_bandgap_dw", this->bandgap_dw);
+        }
+    }
 
 	if (iter_in == 1)   // pengfei Li added 2015-1-31
 	{

@@ -35,7 +35,6 @@ MDrun::MDrun(MD_parameters& MD_para_in, UnitCell &unit_in):
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::InitPos(ucell, pos);
     MD_func::InitVel(ucell, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
 }
 
@@ -64,40 +63,62 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver)
 
 void MDrun::first_half()
 {
-    if(GlobalV::MY_RANK==0) //only first rank do md
-    for(int i=0; i<ucell.nat; ++i)
-    {
-        for(int k=0; k<3; ++k)
-        {
-            if(ionmbl[i][k])
-            {
-                vel[i][k] += 0.5*force[i][k]*mdp.md_dt/allmass[i];
-                pos[i][k] += vel[i][k]*mdp.md_dt;
-            }
-        }
-    }
-#ifdef __MPI
-    MPI_Bcast(pos , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    MPI_Bcast(vel , ucell.nat*3,MPI_DOUBLE,0,MPI_COMM_WORLD);
-#endif
-
-    ucell.update_pos_tau(pos);
-    ucell.periodic_boundary_adjustment();
-    MD_func::InitPos(ucell, pos);
+    update_vel(force);
+    update_pos();
 }
 
 void MDrun::second_half()
 {
-    for(int i=0; i<ucell.nat; ++i)
+    update_vel(force);
+}
+
+void MDrun::update_pos()
+{
+    if(GlobalV::MY_RANK==0)
     {
-        for(int k=0; k<3; ++k)
+        for(int i=0; i<ucell.nat; ++i)
         {
-            if(ionmbl[i][k])
+            for(int k=0; k<3; ++k)
             {
-                vel[i][k] += 0.5*force[i][k]*mdp.md_dt/allmass[i];
+                if(ionmbl[i][k])
+                {
+                    pos[i][k] = vel[i][k] * mdp.md_dt / ucell.lat0;
+                }
+                else
+                {
+                    pos[i][k] = 0;
+                }
+            }
+            pos[i] = pos[i] * ucell.GT;
+        }
+    }
+
+#ifdef __MPI
+    MPI_Bcast(pos, ucell.nat*3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
+
+    ucell.update_pos_taud(pos);
+}
+
+void MDrun::update_vel(const ModuleBase::Vector3<double>* force)
+{
+    if(GlobalV::MY_RANK == 0)
+    {
+        for(int i=0; i<ucell.nat; ++i)
+        {
+            for(int k=0; k<3; ++k)
+            {
+                if(ionmbl[i][k])
+                {
+                    vel[i][k] += 0.5*force[i][k]*mdp.md_dt/allmass[i];
+                }
             }
         }
     }
+
+#ifdef __MPI
+    MPI_Bcast(vel, ucell.nat*3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
 }
 
 void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)

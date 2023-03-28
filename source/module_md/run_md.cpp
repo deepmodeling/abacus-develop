@@ -39,7 +39,6 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
     else if(INPUT.mdp.md_type == 4)
     {
         mdrun = new MSST(INPUT.mdp, unit_in);
-        unit_in.cell_parameter_updated = true;
     }
 
     // md cycle

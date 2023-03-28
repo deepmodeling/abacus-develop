@@ -29,21 +29,19 @@ class Charge
     // NAME : rhog_core [ngm], the core charge in reciprocal space
     //==========================================================
 
-    double **rho;
-    double **rho_save;
+    double **rho = nullptr;
+    double **rho_save = nullptr;
 
-    std::complex<double> **rhog;
-    std::complex<double> **rhog_save;
+    std::complex<double> **rhog = nullptr;
+    std::complex<double> **rhog_save = nullptr;
 
-    double **kin_r; // kinetic energy density in real space, for meta-GGA
-    double **kin_r_save; // kinetic energy density in real space, for meta-GGA
-                         // wenfei 2021-07-28
+    double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
+    double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
+                                   // wenfei 2021-07-28
 
-    double *rho_core;
-    std::complex<double> *rhog_core;
+    double *rho_core = nullptr;
+    std::complex<double> *rhog_core = nullptr;
 
-    double *start_mag_type;
-    double *start_mag_atom;
     int prenspin = 1;
 
     void init_rho();
@@ -86,6 +84,8 @@ class Charge
     int nspin; // number of spins
   private:
     double sum_rho(void) const;
+
+    void destroy();    // free arrays  liuyu 2023-03-12
 
     bool allocate_rho;
 

@@ -147,7 +147,7 @@ public:
 			ucell->atoms[it].na = this->natom[it];
 			//coordinates and related physical quantities
 			delete[] ucell->atoms[it].tau;
-			delete[] ucell->atoms[it].tau_original;
+			delete[] ucell->atoms[it].dis;
 			delete[] ucell->atoms[it].taud;
 			delete[] ucell->atoms[it].vel;
 			delete[] ucell->atoms[it].mag;
@@ -156,7 +156,7 @@ public:
 			delete[] ucell->atoms[it].m_loc_;
 			delete[] ucell->atoms[it].mbl;
 			ucell->atoms[it].tau = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].tau_original = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
+			ucell->atoms[it].dis = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
 			ucell->atoms[it].taud = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
 			ucell->atoms[it].vel = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
 			ucell->atoms[it].mag = new double[ucell->atoms[it].na];
@@ -186,7 +186,7 @@ public:
 						ucell->latvec.e31, ucell->latvec.e32, ucell->latvec.e33,
 						ucell->atoms[it].taud[ia].x, ucell->atoms[it].taud[ia].y, ucell->atoms[it].taud[ia].z);
 				}
-				ucell->atoms[it].tau_original[ia] = ucell->atoms[it].tau[ia];
+                ucell->atoms[it].dis[ia].set(0, 0, 0);
 				if(this->init_vel)
 				{
 					ucell->atoms[it].vel[ia].x = this->velocity[this->atomic_index*3+0];

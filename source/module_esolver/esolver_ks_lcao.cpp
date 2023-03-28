@@ -195,6 +195,31 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     }
 }
 
+void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
+{
+    ESolver_KS::init_after_vc(inp, ucell);
+
+    delete this->pelec;  
+    this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF));
+
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+
+    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+
+    if(this->pelec->pot != nullptr)
+    {
+        delete this->pelec->pot;
+        this->pelec->pot = new elecstate::Potential(
+            GlobalC::rhopw,
+            &GlobalC::ucell,
+            &(GlobalC::ppcell.vloc),
+            &(GlobalC::sf.strucFac),
+            &(GlobalC::en.etxc),
+            &(GlobalC::en.vtxc)
+        );
+    }
+}
+
 void ESolver_KS_LCAO::cal_Energy(double& etot)
 {
     etot = GlobalC::en.etot;
@@ -490,13 +515,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        if (this->UHM.GK.get_spin() != -1)
-        {
-            int start_spin = -1;
-            this->UHM.GK.reset_spin(start_spin);
-            this->UHM.GK.destroy_pvpR();
-            this->UHM.GK.allocate_pvpR();
-        }
+        this->UHM.GK.renew();
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
@@ -628,10 +647,19 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 }
 void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 {
-    if (this->conv_elec && !INPUT.cal_syns)
+    //print Hamiltonian and Overlap matrix
+    if (this->conv_elec)
     {
+        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO::out_mat_hs)
+        {
+            this->UHM.GK.renew(true);
+        }
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
+            if(hsolver::HSolverLCAO::out_mat_hs) 
+            {
+                this->p_hamilt->updateHk(ik);
+            }
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
             if (this->psi != nullptr)
@@ -647,11 +675,9 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
-            {
-                hamilt::MatrixBlock<double> h_mat, s_mat;
-                this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
-                                    s_mat.p,
+            {//gamma_only case, Hloc and Sloc are correct H and S matrix
+                ModuleIO::saving_HS(this->LM.Hloc.data(),
+                                    this->LM.Sloc.data(),
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
@@ -806,9 +832,6 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
-    // Temporary liuyu add 2022-11-07
-    CE.update_all_pos(GlobalC::ucell);
-
     if (this->LOC.out_dm1 == 1)
     {
         double** dm2d;

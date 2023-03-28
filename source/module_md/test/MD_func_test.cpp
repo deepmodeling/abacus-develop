@@ -15,9 +15,6 @@
  *   - MD_func::gaussrand
  *     - genarate Gaussian random number
  *
- *   - MD_func::InitPos
- *     - initialize atomic positions
- *
  *   - MD_func::RandomVel
  *     - initialize atomic velocity randomly
  * 
@@ -82,24 +79,6 @@ TEST_F(MD_func_test, gaussrand)
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), 1.1122716058967226);
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), -0.34532367182326629);
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), 0.60805637857480721);
-}
-
-TEST_F(MD_func_test, initpos)
-{
-    MD_func::InitPos(ucell, pos);
-    
-    EXPECT_DOUBLE_EQ(pos[0].x, 0.0);
-    EXPECT_DOUBLE_EQ(pos[0].y, 0.0);
-    EXPECT_DOUBLE_EQ(pos[0].z, 0.0);
-    EXPECT_DOUBLE_EQ(pos[1].x, 5.2);
-    EXPECT_DOUBLE_EQ(pos[1].y, 5.2);
-    EXPECT_DOUBLE_EQ(pos[1].z, 0.0);
-    EXPECT_DOUBLE_EQ(pos[2].x, 5.1);
-    EXPECT_DOUBLE_EQ(pos[2].y, 0.0);
-    EXPECT_DOUBLE_EQ(pos[2].z, 5.0);
-    EXPECT_DOUBLE_EQ(pos[3].x, 0.0);
-    EXPECT_DOUBLE_EQ(pos[3].y, 5.3);
-    EXPECT_DOUBLE_EQ(pos[3].z, 5.0);
 }
 
 TEST_F(MD_func_test, randomvel)
@@ -174,7 +153,6 @@ TEST_F(MD_func_test, compute_stress)
 
 TEST_F(MD_func_test, MDdump)
 {
-    MD_func::InitPos(ucell, pos);
     MD_func::MDdump(0, ucell, INPUT, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;

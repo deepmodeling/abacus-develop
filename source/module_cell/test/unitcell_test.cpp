@@ -64,11 +64,6 @@ Magnetism::~Magnetism()
  *     - check_tau(): check if any "two atoms are too close"
  *   - SelectiveDynamics
  *     - if_atoms_can_move():it is true if any coordinates of any atom can move, i.e. mbl = 1
- *   - SaveCartesianPosition
- *     - save_cartesian_position(): make a copy of atomic Cartesian coordinates: tau
- *   - SaveCartesianPositionOriginal
- *     - save_cartesian_position_original(): make a copy of original atomic Cartesian coordinates: tau_original
- *       tau_original means without periodic adjustment
  *   - PeriodicBoundaryAdjustment
  *     - periodic_boundary_adjustment(): move atoms inside the unitcell after relaxation
  *   - PrintCell
@@ -84,10 +79,6 @@ Magnetism::~Magnetism()
  *     - Actually an integrated function to call UnitCell::print_cell and Atom::print_Atom
  *   - UpdateVel
  *     - update_vel(const ModuleBase::Vector3<double>* vel_in)
- *   - UpdatePosTau1
- *     - update_pos_tau(const double* pos)
- *   - UpdatePosTau2
- *     - update_pos_tau(const ModuleBase::Vector3<double>* posd_in)
  *   - CalUx
  *     - cal_ux(): calculate magnetic moments of cell
  *   - ReadOrbFile
@@ -602,68 +593,6 @@ TEST_F(UcellTest,SelectiveDynamics)
 	EXPECT_TRUE(ucell->if_atoms_can_move());
 }
 
-TEST_F(UcellTest,SaveCartesianPosition)
-{
-	UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-	GlobalV::relax_new = utp.relax_new;
-	ucell = utp.SetUcellInfo();
-	//the first realization
-	double* pos = new double[3*ucell->nat];
-	ucell->save_cartesian_position(pos);
-	//another realization
-	ModuleBase::Vector3<double>* pos1 = new ModuleBase::Vector3<double>[ucell->nat];
-	ucell->save_cartesian_position(pos1);
-	int iat = 0;
-	for(int it=0; it<utp.natom.size(); ++it)
-	{
-		for(int ia=0; ia<utp.natom[it];++ia)
-		{
-			//first
-			EXPECT_DOUBLE_EQ(pos[3*iat],ucell->atoms[it].tau[ia].x*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos[3*iat+1],ucell->atoms[it].tau[ia].y*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos[3*iat+2],ucell->atoms[it].tau[ia].z*ucell->lat0);
-			//second
-			EXPECT_DOUBLE_EQ(pos1[iat].x,ucell->atoms[it].tau[ia].x*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos1[iat].y,ucell->atoms[it].tau[ia].y*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos1[iat].z,ucell->atoms[it].tau[ia].z*ucell->lat0);
-			++iat;
-		}
-	}
-	delete[] pos;
-	delete[] pos1;
-}
-
-TEST_F(UcellTest,SaveCartesianPositionOriginal)
-{
-	UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-	GlobalV::relax_new = utp.relax_new;
-	ucell = utp.SetUcellInfo();
-	//the first realization
-	double* pos = new double[3*ucell->nat];
-	ucell->save_cartesian_position_original(pos);
-	//another realization
-	ModuleBase::Vector3<double>* pos1 = new ModuleBase::Vector3<double>[ucell->nat];
-	ucell->save_cartesian_position_original(pos1);
-	int iat = 0;
-	for(int it=0; it<utp.natom.size(); ++it)
-	{
-		for(int ia=0; ia<utp.natom[it];++ia)
-		{
-			//first
-			EXPECT_DOUBLE_EQ(pos[3*iat],ucell->atoms[it].tau_original[ia].x*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos[3*iat+1],ucell->atoms[it].tau_original[ia].y*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos[3*iat+2],ucell->atoms[it].tau[ia].z*ucell->lat0);
-			//second
-			EXPECT_DOUBLE_EQ(pos1[iat].x,ucell->atoms[it].tau_original[ia].x*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos1[iat].y,ucell->atoms[it].tau_original[ia].y*ucell->lat0);
-			EXPECT_DOUBLE_EQ(pos1[iat].z,ucell->atoms[it].tau_original[ia].z*ucell->lat0);
-			++iat;
-		}
-	}
-	delete[] pos;
-	delete[] pos1;
-}
-
 TEST_F(UcellDeathTest,PeriodicBoundaryAdjustment1)
 {
 	UcellTestPrepare utp = UcellTestLib["C1H2-PBA"];
@@ -840,54 +769,6 @@ TEST_F(UcellTest,UpdateVel)
 		EXPECT_DOUBLE_EQ(vel_in[iat].z,0.1*iat);
 	}
 	delete[] vel_in;
-}
-
-TEST_F(UcellTest,UpdatePosTau1)
-{
-	UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-	GlobalV::relax_new = utp.relax_new;
-	ucell = utp.SetUcellInfo();
-	double* pos_in = new double[ucell->nat*3];
-	ucell->set_iat2itia();
-	for(int iat=0; iat<ucell->nat; ++iat)
-	{
-		pos_in[iat*3] = 0.01*ucell->lat0;
-		pos_in[iat*3+1] = 0.01*ucell->lat0;
-		pos_in[iat*3+2] = 0.01*ucell->lat0;
-	}
-	ucell->update_pos_tau(pos_in);
-	for(int iat=0; iat<ucell->nat; ++iat)
-	{
-		int it, ia;
-		ucell->iat2iait(iat,&ia,&it);
-		if(ucell->atoms[it].mbl[ia].x != 0) EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia].x,0.01);
-		if(ucell->atoms[it].mbl[ia].y != 0) EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia].y,0.01);
-		if(ucell->atoms[it].mbl[ia].z != 0) EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia].z,0.01);
-	}
-	delete[] pos_in;
-}
-
-TEST_F(UcellTest,UpdatePosTau2)
-{
-	UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
-	GlobalV::relax_new = utp.relax_new;
-	ucell = utp.SetUcellInfo();
-	ModuleBase::Vector3<double>* pos_in = new ModuleBase::Vector3<double>[ucell->nat];
-	ucell->set_iat2itia();
-	for(int iat=0; iat<ucell->nat; ++iat)
-	{
-		pos_in[iat].set(0.01*ucell->lat0,0.01*ucell->lat0,0.01*ucell->lat0);
-	}
-	ucell->update_pos_tau(pos_in);
-	for(int iat=0; iat<ucell->nat; ++iat)
-	{
-		int it, ia;
-		ucell->iat2iait(iat,&ia,&it);
-		if(ucell->atoms[it].mbl[ia].x != 0) EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia].x,0.01);
-		if(ucell->atoms[it].mbl[ia].y != 0) EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia].y,0.01);
-		if(ucell->atoms[it].mbl[ia].z != 0) EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia].z,0.01);
-	}
-	delete[] pos_in;
 }
 
 TEST_F(UcellTest,CalUx1)

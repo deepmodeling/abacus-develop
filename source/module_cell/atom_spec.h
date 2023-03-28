@@ -36,7 +36,7 @@ public:
 
     std::string label; // atomic symbol
     ModuleBase::Vector3<double> *tau;// Cartesian coordinates of each atom in this type.
-    ModuleBase::Vector3<double> *tau_original;// Cartesian coordinates of each atom in this type, but without periodic adjustment.
+    ModuleBase::Vector3<double> *dis;// direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
 	ModuleBase::Vector3<double> *taud;// Direct coordinates of each atom in this type.
     ModuleBase::Vector3<double> *vel;// velocities of each atom in this type.
     ModuleBase::Vector3<double> *force; // force acting on each atom in this type.

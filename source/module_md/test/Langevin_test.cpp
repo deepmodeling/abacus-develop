@@ -73,18 +73,18 @@ TEST_F(Langevin_test, first_half)
 {
     mdrun->first_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9957116654640092, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0016393608896004908, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 0.0049409894499896556, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2079697932877451, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1985329235797453, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0045070523389717319, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0930848914994087, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 0.0011838145470033955, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.9932869712840313, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 9.9993642687852322, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.2974098983662827, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 5.0029326569457702, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00042883345359910814, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00016393608896004904, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, 0.00049409894499896569, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00079697932877452634, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00014670764202547791, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.0004507052338971732, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00069151085005912606, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, 0.00011838145470033956, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00067130287159685429, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, -6.3573121476911994e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, -0.00025901016337184232, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, 0.00029326569457701463, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00010372985195918919, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 3.9654243613399205e-05, doublethreshold);
@@ -105,18 +105,18 @@ TEST_F(Langevin_test, second_half)
     mdrun->first_half();
     mdrun->second_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9933045979909725, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.00033862365219131471, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9954281801131337, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.1986310958164275, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.2027340532086015, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 9.9987348662023798, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0973799076212742, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 0.003868919168865627, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 5.0001845767835942, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 9.9999789728863995, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.3031968974372354, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9996952920372832, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00066954020090275205, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 3.3862365219131354e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -0.00045718198868662484, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, -0.0001368904183573199, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, 0.00027340532086011393, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, -0.00012651337976204397, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00026200923787255071, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, 0.00038689191688656276, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, 1.8457678359430833e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, -2.1027113600492346e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.000319689743723507, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -3.0470796271690045e-05, doublethreshold);
     
     EXPECT_NEAR(mdrun->vel[0].x, -8.2630969616448438e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 0.0001366029202159129, doublethreshold);

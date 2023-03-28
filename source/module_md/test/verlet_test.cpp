@@ -74,18 +74,18 @@ TEST_F(Verlet_test, first_half)
 {
     mdrun->first_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9994204767196599, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2063192793031234, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1939342598421803, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0039873402383468889, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0944648036273872, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 9.9998836061438716, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.997763438399228, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 0.0046704699702541427, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.303223068197739, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9988287446427613, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00063192793031220879, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00060657401578200095, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.00039873402383468892, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00055351963726126224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, -1.1639385612741475e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00022365616007718661, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, 0.00046704699702541431, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.00032230681977380224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -0.00011712553572388214, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00013193932519649473, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.1576379239356465e-05, doublethreshold);
@@ -106,18 +106,18 @@ TEST_F(Verlet_test, NVE)
     mdrun->first_half();
     mdrun->second_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9994204767196599, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2063192793031234, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1939342598421803, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0039873402383468889, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0944648036273872, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 9.9998836061438716, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.997763438399228, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 0.0046704699702541427, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.303223068197739, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9988287446427613, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00063192793031220879, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00060657401578200095, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.00039873402383468892, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00055351963726126224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, -1.1639385612741475e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00022365616007718661, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, 0.00046704699702541431, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.00032230681977380224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -0.00011712553572388214, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00013179791402898947, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.1809815495212933e-05, doublethreshold);
@@ -139,18 +139,18 @@ TEST_F(Verlet_test, Anderson)
     mdrun->mdp.md_thermostat = "anderson";
     mdrun->second_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9994204767196599, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2063192793031234, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1939342598421803, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0039873402383468889, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0944648036273872, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 9.9998836061438716, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.997763438399228, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 0.0046704699702541427, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.303223068197739, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9988287446427613, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00063192793031220879, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00060657401578200095, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.00039873402383468892, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00055351963726126224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, -1.1639385612741475e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00022365616007718661, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, 0.00046704699702541431, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.00032230681977380224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -0.00011712553572388214, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00013179791402898947, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.1809815495212933e-05, doublethreshold);
@@ -172,18 +172,18 @@ TEST_F(Verlet_test, Berendsen)
     mdrun->mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9994204767196599, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2063192793031234, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1939342598421803, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0039873402383468889, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0944648036273872, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 9.9998836061438716, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.997763438399228, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 0.0046704699702541427, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.303223068197739, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9988287446427613, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00063192793031220879, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00060657401578200095, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.00039873402383468892, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00055351963726126224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, -1.1639385612741475e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00022365616007718661, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, 0.00046704699702541431, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.00032230681977380224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -0.00011712553572388214, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00013179175250738632, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.1806458403162173e-05, doublethreshold);
@@ -205,18 +205,18 @@ TEST_F(Verlet_test, rescaling)
     mdrun->mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9994204767196599, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2063192793031234, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1939342598421803, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0039873402383468889, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0944648036273872, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 9.9998836061438716, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.997763438399228, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 0.0046704699702541427, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.303223068197739, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9988287446427613, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00063192793031220879, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00060657401578200095, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.00039873402383468892, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00055351963726126224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, -1.1639385612741475e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00022365616007718661, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, 0.00046704699702541431, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.00032230681977380224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -0.00011712553572388214, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00013178559069770653, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.1803101154153484e-05, doublethreshold);
@@ -238,18 +238,18 @@ TEST_F(Verlet_test, rescale_v)
     mdrun->mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     
-    EXPECT_NEAR(mdrun->pos[0].x, 9.9945454470992772, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.0029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, 9.9994204767196599, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].x, 5.2063192793031234, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].y, 5.1939342598421803, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[1].z, 0.0039873402383468889, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].x, 5.0944648036273872, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].y, 9.9998836061438716, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[2].z, 4.997763438399228, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].x, 0.0046704699702541427, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].y, 5.303223068197739, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[3].z, 4.9988287446427613, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].x, 0.00063192793031220879, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].y, -0.00060657401578200095, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[1].z, 0.00039873402383468892, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].x, -0.00055351963726126224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].y, -1.1639385612741475e-05, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[2].z, -0.00022365616007718661, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].x, 0.00046704699702541431, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].y, 0.00032230681977380224, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[3].z, -0.00011712553572388214, doublethreshold);
 
     EXPECT_NEAR(mdrun->vel[0].x, -0.00013178559069770653, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.1803101154153484e-05, doublethreshold);

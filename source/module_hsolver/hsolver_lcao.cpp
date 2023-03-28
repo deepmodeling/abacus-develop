@@ -90,6 +90,10 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
+        hamilt::MatrixBlock<T> h_mat, s_mat;
+
+        psi.fix_k(ik);
+
         /// solve eigenvector and eigenvalue for H(k)
         double* p_eigenvalues = &(pes->ekb(ik, 0));
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);

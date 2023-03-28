@@ -36,27 +36,20 @@ void Ions_Move_Basic::setup_gradient(double* pos, double *grad, const ModuleBase
 	// the unit of pos: Bohr.
 	// the unit of force: Ry/Bohr.
 	// the unit of gradient: 
-	GlobalC::ucell.save_cartesian_position(pos);
 	int iat=0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
 	{
 		Atom* atom = &GlobalC::ucell.atoms[it];
 		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
-		{	
-			if(atom->mbl[ia].x == 1)
-			{
-				grad[3*iat  ] = -force(iat, 0)*GlobalC::ucell.lat0;
-				//this->grad[3*iat  ] = -force(iat, 0);
-			}
-			if(atom->mbl[ia].y == 1)
-			{
-				grad[3*iat+1] = -force(iat, 1)*GlobalC::ucell.lat0;
-			}
-			if(atom->mbl[ia].z == 1)
-			{
-				grad[3*iat+2] = -force(iat, 2)*GlobalC::ucell.lat0;
-				//std::cout << " grad=" << grad[3*iat+2] << std::endl;
-			}
+		{
+            for ( int ik = 0; ik < 3; ++ik)
+            {
+                pos[3*iat + ik] = atom->tau[ia][ik] * GlobalC::ucell.lat0;
+                if (atom->mbl[ia][ik])
+                {
+                    grad[3*iat + ik] = - force(iat, ik) * GlobalC::ucell.lat0;
+                }
+            }
 			++iat;
 		}
 	}
@@ -106,10 +99,6 @@ void Ions_Move_Basic::move_atoms(double *move, double *pos)
 		}
 	}
 	GlobalC::ucell.update_pos_tau(pos);
-
-	GlobalC::ucell.periodic_boundary_adjustment();
-	
-	GlobalC::ucell.bcast_atoms_tau();
 
 	//--------------------------------------------
 	// Print out the structure file.
