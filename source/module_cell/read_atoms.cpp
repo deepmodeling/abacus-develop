@@ -1245,7 +1245,7 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 		if (strcmp("Element",word) == 0)
 		{
 			ModuleBase::GlobalFunc::READ_VALUE(ifs , atom->ncpp.psd);//read element type from orbit file
-			std::cout << "UnitCell::read_orbit_file_test" << atom->ncpp.psd <<std::endl;
+			//std::cout << "UnitCell::read_orbit_file_test" << atom->ncpp.psd <<std::endl;
 		}
 		if (strcmp("Lmax", word) == 0)
 		{
