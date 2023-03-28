@@ -100,78 +100,59 @@ psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 bool ModuleIO::read_rho(const int &is, const std::string &fn, double* rho, int &prenspin) //add by dwan
 {
 	std::ifstream ifs(fn.c_str());
-
-	std::string name;
-	ifs >> name;
-    
 	bool quit=false;
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.lat0 * 0.529177,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e11,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e12,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e13,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e21,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e22,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e23,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e31,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e32,quit);
-	ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.latvec.e33,quit);
-	for(int it=0; it<GlobalC::ucell.ntype; it++)
-	{
-		ModuleBase::CHECK_STRING(ifs,GlobalC::ucell.atoms[it].label,quit);
-	}
 
-	for(int it=0; it<GlobalC::ucell.ntype; it++)
-	{
-		ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.atoms[it].na,quit);
-	}
+	ifs.ignore(300, '\n'); // skip the header
 
-	std::string coordinate;
-	ifs >> coordinate;
-	double tau;
+	ModuleBase::CHECK_INT(ifs, GlobalV::NSPIN);
+	ifs.ignore(150, ')');
+	ifs >> GlobalC::en.ef;
+	ifs.ignore(150, '\n');
+
+	ModuleBase::CHECK_INT(ifs,GlobalC::ucell.nat,quit);
+	ifs.ignore(150, '\n');
+
+	double fac=GlobalC::ucell.lat0;
+	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nx);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e11/double(GlobalC::rhopw->nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e12/double(GlobalC::rhopw->nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e13/double(GlobalC::rhopw->nx), quit);
+	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->ny);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e21/double(GlobalC::rhopw->ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e22/double(GlobalC::rhopw->ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e23/double(GlobalC::rhopw->ny), quit);
+	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nz);	
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e31/double(GlobalC::rhopw->nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e32/double(GlobalC::rhopw->nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*GlobalC::ucell.latvec.e33/double(GlobalC::rhopw->nz), quit);
+
+	int temp = 0;
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	{
 		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-			ifs>>tau;
-			ifs>>tau;
-			ifs>>tau;
-			/*
-			ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.atoms[it].taud[ia].x,quit);
-			ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.atoms[it].taud[ia].y,quit);
-			ModuleBase::CHECK_DOUBLE(ifs,GlobalC::ucell.atoms[it].taud[ia].z,quit);
-			*/
+			ifs >> temp;
+			ifs >> temp; 
+			ifs >> temp; 
+			ifs >> temp; 
+			ifs >> temp; 
 		}
 	}
 
-	ModuleBase::CHECK_INT(ifs, GlobalV::NSPIN);
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, GlobalC::en.ef);
-
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nx);	
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->ny);	
-	ModuleBase::CHECK_INT(ifs, GlobalC::rhopw->nz);	
-
-	const int nxy = GlobalC::rhopw->nx * GlobalC::rhopw->ny;
-	double *zpiece = new double[nxy];
-	for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+	for(int i=0; i<GlobalC::rhopw->nx; i++)
 	{
-		ModuleBase::GlobalFunc::ZEROS(zpiece, nxy);
 		for(int j=0; j<GlobalC::rhopw->ny; j++)
 		{
-			for(int i=0; i<GlobalC::rhopw->nx; i++)
+			for(int k=0; k<GlobalC::rhopw->nz; k++)
 			{
-				ifs >> zpiece[ i*GlobalC::rhopw->ny + j ];
+				ifs >> rho[k*GlobalC::rhopw->nx*GlobalC::rhopw->ny+i*GlobalC::rhopw->ny+j];
 			}
 		}
-
-		for(int ir=0; ir<nxy; ir++)
-		{
-			rho[ir*GlobalC::rhopw->nplane+iz] = zpiece[ir];
-		}
-	}// iz
-	delete[] zpiece;
+	}
 
 	ifs.close();
-	return true;
+    return true;
+
 }
 
 //bool Occupy::use_gaussian_broadening=false;

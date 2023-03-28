@@ -5,9 +5,7 @@
 
 namespace ModuleIO
 {
-	bool calculate_dos(
-		const int &is,
-		const std::vector<int> &isk,
+	bool calculate_dos(const int &is,		
 		const std::string &fn,// file address for DOS.
 		const std::string &fn1,// file address for DOS_smearing.
 		const double &de_ev, // delta energy in ev.
@@ -17,9 +15,10 @@ namespace ModuleIO
 		const int &nks,//number of k points
 		const int &nkstot,
 		const std::vector<double> &wk,//weight of k points
-		const ModuleBase::matrix &wg,//weight of (kpoint,bands)
+		const std::vector<int> &isk,
 		const int &nbands,// number of bands
-		const ModuleBase::matrix &ekb);//store energy for each k point and each band
+		const ModuleBase::matrix &ekb, //store energy for each k point and each band
+		const ModuleBase::matrix &wg); //weight of (kpoint,bands))
 }
 
 #endif 

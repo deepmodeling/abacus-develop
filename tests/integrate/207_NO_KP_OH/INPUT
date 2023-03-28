@@ -12,7 +12,7 @@ gamma_only      0
 #Parameters (2.Iteration)
 ecutwfc			20
 scf_thr				1e-8
-scf_nmax			1
+scf_nmax			50
 
 #Parameters (3.Basis)
 basis_type		lcao
