@@ -64,6 +64,8 @@
  *    - get the current memory valus
  * - TETS_LEVEL
  *    - set the test level
+ * - BLOCK_HERE
+ * 	  - add the block
  */
 
 inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b)
@@ -712,6 +714,54 @@ TEST_F(GlobalFunctionTest,TEST_LEVEL)
     EXPECT_EQ(GlobalV::test_pw,1);
 }
 
+TEST_F(GlobalFunctionTest,BlockHere)
+{
+	std::string output2;
+	std::string block_in="111";
+	GlobalV::MY_RANK=1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0),"");
+	output2 = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"
+		"\n Here is a Block, 1: go on 0: quit"
+		"\n 111"
+		"\n********************************************"));
+}
+
+TEST_F(GlobalFunctionTest,BlockHere2)
+{
+	std::string output2;
+	std::string block_in="111";
+	GlobalV::MY_RANK=0;
+	std::string fake_input = "1";
+	std::istringstream iss{fake_input};
+	std::cin.rdbuf(iss.rdbuf());
+	testing::internal::CaptureStdout();
+//	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0),"");
+	ModuleBase::GlobalFunc::BLOCK_HERE(block_in);
+	output2 = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"
+		"\n Here is a Block, 1: go on 0: quit"
+		"\n 111"
+		"\n********************************************"));
+}
+
+TEST_F(GlobalFunctionTest,BlockHere3)
+{
+	std::string output2;
+	std::string block_in="111";
+	GlobalV::MY_RANK=0;
+	testing::internal::CaptureStdout();
+	std::string fake_input = "0";
+	std::istringstream iss{fake_input};
+	std::cin.rdbuf(iss.rdbuf());
+	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0),"");
+	output2 = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"
+		"\n Here is a Block, 1: go on 0: quit"
+		"\n 111"
+		"\n********************************************"));
+}
 
 /*
 TEST_F(GlobalFunctionTest, Note)
