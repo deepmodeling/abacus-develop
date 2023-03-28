@@ -5,7 +5,7 @@
 #include "fstream"
 #include "module_hsolver/hsolver.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_io/cal_test.h"
 #include "module_elecstate/module_charge/charge_extra.h"
 // #include "estates.h"
@@ -27,6 +27,8 @@ namespace ModuleESolver
         bool conv_elec;   // If electron density is converged in scf.
         int out_freq_elec;// frequency for output
         virtual void Init(Input& inp, UnitCell& cell) override;
+
+        virtual void init_after_vc(Input& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 
         virtual void Run(const int istep, UnitCell& cell) override;
 

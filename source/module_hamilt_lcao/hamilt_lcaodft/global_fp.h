@@ -2,14 +2,14 @@
 #define GLOBAL_FP_H
 
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_gint/grid_technique.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "local_orbital_wfc.h"
 #include "local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h" 
-#include "module_orbital/ORB_read.h"
-#include "module_orbital/ORB_gen_tables.h"
+#include "module_basis/module_ao/ORB_read.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #ifdef __EXX
 #include "src_ri/exx_lcao.h"
 #include "module_ri/Exx_LRI.h"

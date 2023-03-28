@@ -14,8 +14,6 @@ class MD_func
     ~MD_func() {};
 
     static double gaussrand();
-	
-	static void InitPos( const UnitCell &unit_in, ModuleBase::Vector3<double>* pos);
 
 	static void InitVel(
 		const UnitCell &unit_in, 

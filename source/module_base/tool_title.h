@@ -16,16 +16,8 @@ namespace ModuleBase
 {
 
 void TITLE(
-    const std::string &class_function_name,
-#ifndef __DEBUG
-    const bool disable=true
-#else
-    const bool disable=false
-#endif
-);
-void TITLE(
     const std::string &class_name,
-    const std::string &function_name,
+    const std::string &function_name = "",
 #ifndef __DEBUG
     const bool disable=true
 #else
