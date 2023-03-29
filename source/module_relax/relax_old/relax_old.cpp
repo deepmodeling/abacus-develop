@@ -1,7 +1,6 @@
 #include "relax_old.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/print_info.h"
-#include "../variable_cell.h" // mohan add 2021-02-01
 
 void Relax_old::init_relax()
 {
@@ -43,7 +42,6 @@ bool Relax_old::relax_step(ModuleBase::matrix force, ModuleBase::matrix stress, 
 		converged = this->do_relax(istep, force_step, force, GlobalC::en.etot);
 		if(!converged) 
 		{
-			this->reset_after_relax(istep);
 			GlobalC::ucell.ionic_position_updated = true;
 			return converged;
 		}
@@ -59,8 +57,11 @@ bool Relax_old::relax_step(ModuleBase::matrix force, ModuleBase::matrix stress, 
 		converged = this->do_cellrelax(istep,stress_step, stress, GlobalC::en.etot);
 		if(!converged)
 		{
+            force_step = 1;
+            stress_step++;
 			GlobalC::ucell.cell_parameter_updated = true;
-			this->reset_after_cellrelax(force_step, stress_step);
+            GlobalC::ucell.setup_cell_after_vc(GlobalV::ofs_running);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 		}
 		return converged;
 	}
@@ -122,32 +123,4 @@ bool Relax_old::do_cellrelax(const int&istep, const int& stress_step, const Modu
 	ModuleBase::TITLE("Relax_old","do_cellrelax");
 	LCM.cal_lattice_change(istep, stress_step, stress, total_energy);
     return LCM.get_converged();
-}
-void Relax_old::reset_after_relax(const int& istep)
-{
-	ModuleBase::TITLE("Relax_old","reset_after_relax");
-    // Temporary  liuyu add 2022-11-04
-    if(!(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp"))
-    {
-        GlobalV::ofs_running << " Setup the structure factor in plane wave basis." << std::endl;
-        GlobalC::sf.setup_structure_factor(&GlobalC::ucell,GlobalC::rhopw);
-    }
-}
-
-void Relax_old::reset_after_cellrelax(int& f_step, int& s_step)
-{
-	ModuleBase::TITLE("Relax_old","reset_after_cellrelax");
-    // Temporary  liuyu add 2022-11-04
-    if(GlobalV::ESOLVER_TYPE == "lj" || GlobalV::ESOLVER_TYPE == "dp")
-    {
-        GlobalC::ucell.setup_cell_after_vc(GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
-    }
-    else
-    {
-        Variable_Cell::init_after_vc();
-    }
-
-	f_step = 1;
-	++s_step;
 }

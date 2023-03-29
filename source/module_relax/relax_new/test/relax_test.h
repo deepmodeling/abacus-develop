@@ -1,5 +1,4 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "../../variable_cell.h"
 
 namespace GlobalC
 {

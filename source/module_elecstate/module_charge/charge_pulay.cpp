@@ -141,13 +141,19 @@ void Charge_Mixing::reset()		// Peize Lin add 2018-11-01
 	idstep = 0;
 	totstep = 0;
 
-    if (this->mixing_mode == "pulay")
+    // liuyu add 2023-03-29
+    // if md_prec_level == 2, charge mixing should re-allocate 
+    // due to the change of FFT grids
+    if (GlobalV::md_prec_level == 2)
     {
-        this->deallocate_Pulay();
-    }
-    else if (this->mixing_mode == "broyden")
-    {
-        this->deallocate_Broyden();
+        if (this->mixing_mode == "pulay")
+        {
+            this->deallocate_Pulay();
+        }
+        else if (this->mixing_mode == "broyden")
+        {
+            this->deallocate_Broyden();
+        }
     }
 }
 

@@ -11,7 +11,6 @@
 #include "module_io/print_info.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_elecstate/occupy.h"
-#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
@@ -200,33 +199,49 @@ namespace ModuleESolver
 
         ESolver_KS<FPTYPE, Device>::init_after_vc(inp,ucell);
 
-        this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
-        this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+        if (GlobalV::md_prec_level == 2)
+        {
+            this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+            this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
 #ifdef __MPI
-        if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
-        //qianrui add 2021-8-13 to make different kpar parameters can get the same results
+            if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
+            //qianrui add 2021-8-13 to make different kpar parameters can get the same results
 #endif
-        this->pw_wfc->setuptransform();
-        for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
-        this->pw_wfc->collect_local_pw(); 
+            this->pw_wfc->setuptransform();
+            for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
+            this->pw_wfc->collect_local_pw(); 
 
-        delete this->phsol;  this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+            delete this->phsol;  
+            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
 
-        delete this->pelec;  this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
+            delete this->pelec;  
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
 
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+            this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
 
-        delete this->pelec->pot;
-        this->pelec->pot = new elecstate::Potential(
-            GlobalC::rhopw,
-            &GlobalC::ucell,
-            &(GlobalC::ppcell.vloc),
-            &(GlobalC::sf.strucFac),
-            &(GlobalC::en.etxc),
-            &(GlobalC::en.vtxc));
-        
-        //temporary
-        this->Init_GlobalC(inp,ucell);
+            delete this->pelec->pot;
+            this->pelec->pot = new elecstate::Potential(
+                GlobalC::rhopw,
+                &GlobalC::ucell,
+                &(GlobalC::ppcell.vloc),
+                &(GlobalC::sf.strucFac),
+                &(GlobalC::en.etxc),
+                &(GlobalC::en.vtxc));
+
+            //temporary
+            this->Init_GlobalC(inp,ucell);
+        }
+        else
+        {
+            GlobalC::ppcell.init_vnl(GlobalC::ucell);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
+
+            GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
+            GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
+            GlobalC::wfcpw->collect_local_pw(); 
+            GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+            GlobalC::wf.init_at_1();
+        }
         ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
     }
 
@@ -235,52 +250,17 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
-        // Temporary, md and relax will merge later   liuyu add 2022-11-07
-        if(GlobalV::CALCULATION == "md" && istep)
+        if (istep)
         {
-            // different precision level for vc-md
-            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
+            if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+            {
+                this->CE.update_all_dis(GlobalC::ucell);
+                this->CE.extrapolate_charge(this->pelec->charge);
+            }
+
+            if (GlobalC::ucell.cell_parameter_updated)
             {
                 this->init_after_vc(INPUT, GlobalC::ucell);
-            }
-            else
-            {
-                this->CE.update_all_dis(GlobalC::ucell);
-                this->CE.extrapolate_charge(this->pelec->charge);
-                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
-                {
-                    Variable_Cell::init_after_vc();
-                    GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
-                    GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-                    GlobalC::wfcpw->collect_local_pw(); 
-                    GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-                    GlobalC::wf.init_at_1();
-                }
-            }
-        }
-
-        if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
-        {
-            if(GlobalC::ucell.ionic_position_updated)
-            {
-                GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
-                // charge extrapolation if istep>0.
-                this->CE.update_all_dis(GlobalC::ucell);
-                this->CE.extrapolate_charge(this->pelec->charge);
-
-                GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
-                // calculate the new potential accordint to
-                // the new charge density.
-                //this->pelec->init_scf( istep, GlobalC::sf.strucFac );
-            }
-
-            if(GlobalC::ucell.cell_parameter_updated)
-            {
-                GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
-                GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-                GlobalC::wfcpw->collect_local_pw(); 
-                GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-                GlobalC::wf.init_at_1();
             }
         }
 
