@@ -9,7 +9,6 @@
 // Last modified:   2008-08-12 ywcui : add zhegvx
 // 					2008-08-13 mohan : find bug,test.
 // 					2008-09-03 mohan : Add zgesv
-// 					2009-03-08 mohan : add ilaenv
 // =============================================================================
 
 #ifndef LAPACKCONNECTOR_HPP
@@ -28,21 +27,6 @@ using namespace std;
 
 extern "C"
 {
-	// ispec: the returnd value
-	// 1: an unblocked algorithm will give the best performance
-	// 2: the minimal block size for which the block routine should 
-	// be used
-	// 3: the cross over point
-	// 4: the number of shift
-	// ...
-	int ilaenv_(int* ispec,
-				char* name,
-				char* opts,
-				const int* n1,
-				const int* n2,
-				const int* n3,
-				const int* n4);
-
 
 	void zpotrf_( const char* uplo,
 				const int* n,
@@ -287,21 +271,6 @@ private:
 
 	
 public:
-	
-	static inline
-	int ilaenv( int ispec, 
-				char *name,
-				char *opts,
-				const int n1,
-				const int n2,
-				const int n3,
-				const int n4
-				)
-	{
-		const int nb = ilaenv_(&ispec, name, opts, &n1, &n2, &n3, &n4);
-		return nb;	
-	}
-
 	static inline
 	void zgesv (const int n,
 				const int nrhs,
@@ -325,7 +294,7 @@ public:
 				int n,
 				ComplexMatrix &a,
 				const int lda,
-				int info)
+				int& info)
 	{
 /*		complex<double> *aux = LapackConnector::transpose(a, n, lda);
 		zpotrf_( &uplo, &n, aux, &lda, &info);
@@ -341,7 +310,7 @@ public:
 				int n,
 				ComplexMatrix &a,
 				const int lda,
-				int info)
+				int& info)
 	{
 /*		complex<double> *aux = LapackConnector::transpose(a, n, lda);
 		zpotri_( &uplo, &n, aux, &lda, &info);
@@ -367,7 +336,7 @@ public:
                 complex<double>* work,
                 int lwork,
                 double* rwork,
-                int info	)
+                int& info	)
 	{	// Transpose the complex matrix to the fortran-form real-complex array.
 		complex<double>* aux = LapackConnector::transpose(a, n, lda);
 		complex<double>* bux = LapackConnector::transpose(b, n, ldb);
@@ -434,7 +403,7 @@ public:
 				 double* rwork,
 				 int* iwork,
 				 int* ifail,
-				 int info)
+				 int& info)
 	{
 		 // Transpose the complex matrix to the fortran-form real-complex array.
 		complex<double>* aux = LapackConnector::transpose(a, n, lda);

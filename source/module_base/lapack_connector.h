@@ -21,9 +21,6 @@
 
 extern "C"
 {
-    int ilaenv_(int* ispec,const char* name,const char* opts,
-                const int* n1,const int* n2,const int* n3,const int* n4);
-
 
     // solve the generalized eigenproblem Ax=eBx, where A is Hermitian and complex couble
     // zhegv_ & zhegvd_ returns all eigenvalues while zhegvx_ returns selected ones
@@ -300,22 +297,13 @@ private:
 	}
 
 public:
-
-    static inline
-    int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int n2,
-                const int n3,const int n4)
-    {
-        const int nb = ilaenv_(&ispec, name, opts, &n1, &n2, &n3, &n4);
-        return nb;
-    }
-    
     // wrap function of fortran lapack routine zhegvd.
     static inline
     void zhegvd(const int itype, const char jobz, const char uplo, const int n, 
                 std::complex<double>* a, const int lda, 
                 const std::complex<double>* b, const int ldb, double* w, 
                 std::complex<double>* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int info)
+                int* iwork, int liwork, int& info)
     {
         zhegvd_(&itype, &jobz, &uplo, &n, 
                 a, &lda, b, &ldb, w,
@@ -330,7 +318,7 @@ public:
                 std::complex<float>* a, const int lda,
                 const std::complex<float>* b, const int ldb, float* w, 
                 std::complex<float>* work, int lwork, float* rwork, int lrwork,
-                int* iwork, int liwork, int info)
+                int* iwork, int liwork, int& info)
     {
         // call the fortran routine
         chegvd_(&itype, &jobz, &uplo, &n,
@@ -345,7 +333,7 @@ public:
                 std::complex<double>* a, const int lda, 
                 const std::complex<double>* b, const int ldb, double* w, 
                 std::complex<double>* work, int lwork, double* rwork, int lrwork,
-                int* iwork, int liwork, int info)
+                int* iwork, int liwork, int& info)
     {	
         // call the fortran routine
         zhegvd_(&itype, &jobz, &uplo, &n, 
@@ -360,7 +348,7 @@ public:
                  std::complex<double>* a, const int lda, 
                  const double vl, const double vu, const int il, const int iu, const double abstol, 
                  const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
     {
         zheevx_(&jobz, &range, &uplo, &n, 
                 a, &lda, &vl, &vu, &il, &iu, 
@@ -374,7 +362,7 @@ public:
                  std::complex<float>* a, const int lda,
                  const float vl, const float vu, const int il, const int iu, const float abstol,
                  const int m, float* w, std::complex<float>* z, const int ldz,
-                 std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
+                 std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int &info)
     {
         cheevx_(&jobz, &range, &uplo, &n,
                 a, &lda, &vl, &vu, &il, &iu,
@@ -388,7 +376,7 @@ public:
                  std::complex<double>* a, const int lda,
                  const double vl, const double vu, const int il, const int iu, const double abstol,
                  const int m, double* w, std::complex<double>* z, const int ldz,
-                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+                 std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int &info)
     {
         zheevx_(&jobz, &range, &uplo, &n,
                 a, &lda, &vl, &vu, &il, &iu,
@@ -400,7 +388,7 @@ public:
     static inline
     void zhegv(	const int itype,const char jobz,const char uplo,const int n,ModuleBase::ComplexMatrix& a,
                 const int lda,ModuleBase::ComplexMatrix& b,const int ldb,double* w,std::complex<double>* work,
-                int lwork,double* rwork,int info)
+                int lwork,double* rwork,int& info)
     {	// Transpose the std::complex matrix to the fortran-form real-std::complex array.
         std::complex<double>* aux = LapackConnector::transpose(a, n, lda);
         std::complex<double>* bux = LapackConnector::transpose(b, n, ldb);
@@ -422,7 +410,7 @@ public:
                  const int ldb, const double vl, const double vu, const int il, const int iu,
                  const double abstol, const int m, double* w, ModuleBase::ComplexMatrix& z, const int ldz,
                  std::complex<double>* work, const int lwork, double* rwork, int* iwork,
-                 int* ifail, int info)
+                 int* ifail, int& info)
     {
         // Transpose the std::complex matrix to the fortran-form real-std::complex array.
         std::complex<double>* aux = LapackConnector::transpose(a, n, lda);
@@ -451,7 +439,7 @@ public:
                  const int ldb, const float vl, const float vu, const int il, const int iu,
                  const float abstol, const int m, float* w, std::complex<float>* z, const int ldz,
                  std::complex<float>* work, const int lwork, float* rwork, int* iwork,
-                 int* ifail, int info, int nbase_x)
+                 int* ifail, int& info, int nbase_x)
     {
         // Transpose the std::complex matrix to the fortran-form real-std::complex array.
         std::complex<float>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
@@ -484,7 +472,7 @@ public:
                  const int ldb, const double vl, const double vu, const int il, const int iu,
                  const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
                  std::complex<double>* work, const int lwork, double* rwork, int* iwork,
-                 int* ifail, int info, int nbase_x)
+                 int* ifail, int& info, int nbase_x)
     {
         // Transpose the std::complex matrix to the fortran-form real-std::complex array.
         std::complex<double>* aux = LapackConnector::transpose(a, n, lda, nbase_x);
@@ -517,7 +505,7 @@ public:
                  const int ldb, const float vl, const float vu, const int il, const int iu,
                  const float abstol, const int m, float* w, std::complex<float>* z, const int ldz,
                  std::complex<float>* work, const int lwork, float* rwork, int* iwork,
-                 int* ifail, int info, int nbase_x)
+                 int* ifail, int& info, int nbase_x)
     {
         chegvx(itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
     }
@@ -529,7 +517,7 @@ public:
                  const int ldb, const double vl, const double vu, const int il, const int iu,
                  const double abstol, const int m, double* w, std::complex<double>* z, const int ldz,
                  std::complex<double>* work, const int lwork, double* rwork, int* iwork,
-                 int* ifail, int info, int nbase_x)
+                 int* ifail, int& info, int nbase_x)
     {
         zhegvx(itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork, iwork, ifail, info, nbase_x);
     }
@@ -568,7 +556,7 @@ public:
 
 	// wrap function of fortran lapack routine dsyev.
     static inline
-	void dsyev( const char jobz, const char uplo, ModuleBase::matrix &a, double* w, int info )		// Peize Lin update 2017-10-17
+	void dsyev( const char jobz, const char uplo, ModuleBase::matrix &a, double* w, int& info )		// Peize Lin update 2017-10-17
 	{
 		assert(a.nr==a.nc);
 		const char uplo_changed = change_uplo(uplo);
