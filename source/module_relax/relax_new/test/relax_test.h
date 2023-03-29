@@ -48,6 +48,4 @@ Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};
 void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basis* rho_basis){};
 
-void Variable_Cell::init_after_vc(){};
-
 extern Input INPUT;
