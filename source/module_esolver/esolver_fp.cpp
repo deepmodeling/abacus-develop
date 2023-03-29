@@ -42,7 +42,24 @@ namespace ModuleESolver
     void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
     {
         ModuleBase::TITLE("ESolver_FP", "init_after_vc");
-        if (GlobalV::md_prec_level == 2)
+
+        if (GlobalV::md_prec_level == 0)
+        {
+            //only G-vector and K-vector are changed due to the change of lattice vector
+            //FFT grids do not change!!
+            pw_rho->initgrids(cell.lat0, cell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
+            pw_rho->collect_local_pw(); 
+            pw_rho->collect_uniqgg();
+
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
+        }
+        else if (GlobalV::md_prec_level == 1)
+        {
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
+        }
+        else if (GlobalV::md_prec_level == 2)
         {
             if (inp.nx * inp.ny * inp.nz == 0)
                 this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
@@ -63,23 +80,6 @@ namespace ModuleESolver
 
         GlobalC::kv.set_after_vc(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-
-        if (GlobalV::md_prec_level != 2)
-        {
-            //only G-vector and K-vector are changed due to the change of lattice vector
-            //FFT grids do not change!!
-            pw_rho->initgrids(cell.lat0, cell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
-            pw_rho->collect_local_pw(); 
-            pw_rho->collect_uniqgg();
-            GlobalC::sf.setup_structure_factor(&cell, GlobalC::rhopw);
-
-            GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
-            //=================================
-            // initalize local pseudopotential
-            //=================================
-            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
-        }
     }
 
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)

@@ -289,18 +289,14 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
 //
 void ESolver_OF::beforeOpt(const int istep)
 {
-    if (istep)
+    if (GlobalC::ucell.cell_parameter_updated)
     {
-        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
-        {
-            CE.update_all_dis(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
-        }
-
-        if (GlobalC::ucell.cell_parameter_updated)
-        {
-            this->init_after_vc(INPUT, GlobalC::ucell);
-        }
+        this->init_after_vc(INPUT, GlobalC::ucell);
+    }
+    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+    {
+        CE.update_all_dis(GlobalC::ucell);
+        CE.extrapolate_charge(pelec->charge);
     }
 
     this->pelec->init_scf(istep, GlobalC::sf.strucFac);

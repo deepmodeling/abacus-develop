@@ -231,6 +231,14 @@ namespace ModuleESolver
             //temporary
             this->Init_GlobalC(inp,ucell);
         }
+        else if (GlobalV::md_prec_level == 1)
+        {
+            GlobalC::ppcell.init_vnl(GlobalC::ucell);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
+
+            GlobalC::wf.init_after_vc(GlobalC::kv.nks);
+            GlobalC::wf.init_at_1();
+        }
         else
         {
             GlobalC::ppcell.init_vnl(GlobalC::ucell);
@@ -250,18 +258,14 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
 
-        if (istep)
+        if (GlobalC::ucell.cell_parameter_updated)
         {
-            if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
-            {
-                this->CE.update_all_dis(GlobalC::ucell);
-                this->CE.extrapolate_charge(this->pelec->charge);
-            }
-
-            if (GlobalC::ucell.cell_parameter_updated)
-            {
-                this->init_after_vc(INPUT, GlobalC::ucell);
-            }
+            this->init_after_vc(INPUT, GlobalC::ucell);
+        }
+        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+        {
+            this->CE.update_all_dis(GlobalC::ucell);
+            this->CE.extrapolate_charge(this->pelec->charge);
         }
 
         //init Hamilt, this should be allocated before each scf loop
@@ -372,6 +376,7 @@ namespace ModuleESolver
             GlobalC::en.ef_dw  = 0.0;
             // choose if psi should be diag in subspace
             // be careful that istep start from 0 and iter start from 1
+            // if (iter == 1) 
             if((istep==0||istep==1)&&iter==1) 
             {
                 hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;

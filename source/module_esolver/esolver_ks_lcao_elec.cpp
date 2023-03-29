@@ -257,18 +257,14 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 
-        if (istep)
+        if (GlobalC::ucell.cell_parameter_updated)
         {
-            if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
-            {
-                CE.update_all_dis(GlobalC::ucell);
-                CE.extrapolate_charge(pelec->charge);
-            }
-
-            if (GlobalC::ucell.cell_parameter_updated)
-            {
-                this->init_after_vc(INPUT, GlobalC::ucell);
-            }
+            this->init_after_vc(INPUT, GlobalC::ucell);
+        }
+        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+        {
+            CE.update_all_dis(GlobalC::ucell);
+            CE.extrapolate_charge(pelec->charge);
         }
 
         //----------------------------------------------------------
