@@ -1332,10 +1332,8 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     double arg=0.0;
 
     //rotate function (different from real space, without scaling gmatrix)
-    auto rotate_recip = [&] (ModuleBase::Matrix3& g) 
+    auto rotate_recip = [&] (ModuleBase::Matrix3& g, ModuleBase::Vector3<int>& g0) 
     {
-        ModuleBase::Vector3<int> g0=tmp_gdirect0;
-        
         ii = int(g.e11 * g0.x + g.e21 * g0.y + g.e31 * g0.z) ;
         if (ii < 0)
         {
@@ -1365,12 +1363,12 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             for (int k = 0; k< fftnz; ++k)
             {
                 int ixyz0=(i*fftny+j)*fftnz+k;
-                int ipw0=ixyz2ipw[ixyz0];
-                //if a fft-grid is not in pw-sphere, just do not consider it.
-                if (ipw0==-1) continue;
-                
                 if (!symflag[ixyz0])
                 {
+                    int ipw0=ixyz2ipw[ixyz0];
+                    //if a fft-grid is not in pw-sphere, just do not consider it.
+                    if (ipw0==-1) continue;
+
                     tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                     std::complex<double> sum(0, 0);
                     int rot_count=0;
@@ -1379,12 +1377,15 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         // note : do not use PBC after rotation. 
                         // we need a real gdirect to get the correspoding rhogtot.
 
-                        rotate_recip(kgmatrix[invmap[isym]]);
+                        rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0);
 
-                        if(ii>=fftnx || jj>=fftny || kk>= fftnz && !GlobalV::GAMMA_ONLY_PW)
+                        if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
-                            std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
-                            ModuleBase::QUIT();
+                            if(!GlobalV::GAMMA_ONLY_PW)
+                            {
+                                std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
+		                        ModuleBase::QUIT();
+                            }
                             // for gamma_only_pw, just do not consider this rotation.
                             continue;
                         }
@@ -1398,9 +1399,9 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                             continue;   //else, just skip it
                         }
                         //fft-grid index to new-gdirect
-                        tmp_gdirect_double.x=static_cast<double>(ii>int(nx/2)+1)?(ii-nx):ii;
-                        tmp_gdirect_double.y=static_cast<double>(jj>int(ny/2)+1)?(jj-ny):jj;
-                        tmp_gdirect_double.z=static_cast<double>(kk>int(nz/2)+1)?(kk-nz):kk;
+                        tmp_gdirect_double.x=static_cast<double>((ii>int(nx/2)+1)?(ii-nx):ii);
+                        tmp_gdirect_double.y=static_cast<double>((jj>int(ny/2)+1)?(jj-ny):jj);
+                        tmp_gdirect_double.z=static_cast<double>((kk>int(nz/2)+1)?(kk-nz):kk);
                         //calculate phase factor
                         tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
                         double cos_arg=0.0, sin_arg=0.0;
