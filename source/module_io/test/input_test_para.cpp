@@ -3,6 +3,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
+#include <stdlib.h>
 
 /************************************************
  *  unit test of Input::bcast
@@ -361,6 +362,19 @@ TEST_F(InputParaTest,Bcast)
 
 	}
 }
+
+TEST_F(InputParaTest,Init)
+{
+	std::string input_file = "./support/INPUT";
+	Input input_tmp;
+	EXPECT_NO_THROW(input_tmp.Init(input_file));
+	if(GlobalV::MY_RANK==0)
+	{
+		int status = system("rm -r ./OUT.autotest/");
+		EXPECT_EQ(status,0);
+	}
+}
+
 
 int main(int argc, char **argv)
 {

@@ -185,7 +185,18 @@ namespace ModuleESolver
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
-                ModuleIO::read_dm(is, ssd.str(), this->LOC.DM, this->LOC.DM_R);
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                ModuleIO::read_dm(
+#ifdef __MPI
+		            GlobalC::GridT.nnrg,
+		            GlobalC::GridT.trace_lo,
+#endif
+		            is,
+		            ssd.str(),
+		            this->LOC.DM,
+		            this->LOC.DM_R,
+		            ef_tmp,
+		            &(GlobalC::ucell));
             }
 
             // calculate the charge density
