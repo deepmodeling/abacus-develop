@@ -1365,13 +1365,13 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             for (int k = 0; k< fftnz; ++k)
             {
                 int ixyz0=(i*fftny+j)*fftnz+k;
-                tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                 int ipw0=ixyz2ipw[ixyz0];
                 //if a fft-grid is not in pw-sphere, just do not consider it.
                 if (ipw0==-1) continue;
                 
                 if (!symflag[ixyz0])
                 {
+                    tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                     std::complex<double> sum(0, 0);
                     int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
