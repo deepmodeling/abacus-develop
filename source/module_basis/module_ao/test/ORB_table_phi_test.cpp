@@ -305,7 +305,6 @@ TEST_F(OrbTablePhiTest, GetRmesh) {
 }
 
 
-#ifndef NDEBUG
 TEST_F(OrbTablePhiTest, GetRmeshAbnormal) {
 
 	otp.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
@@ -317,7 +316,6 @@ TEST_F(OrbTablePhiTest, GetRmeshAbnormal) {
 	std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output, testing::HasSubstr("rmesh <= 0"));
 }
-#endif
 
 
 TEST_F(OrbTablePhiTest, PlotTable) {

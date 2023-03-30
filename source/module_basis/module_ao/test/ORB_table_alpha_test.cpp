@@ -177,7 +177,6 @@ TEST_F(OrbTableAlphaTest, Allocate) {
 }
 
 
-#ifndef NDEBUG
 TEST_F(OrbTableAlphaTest, AllocateSanityCheck) {
 
     // make sure allocate() would abort with unphysical input
@@ -197,7 +196,6 @@ TEST_F(OrbTableAlphaTest, AllocateSanityCheck) {
     EXPECT_EXIT(ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, -0.1),
             testing::KilledBySignal(SIGABRT), "");
 }
-#endif
 
 
 TEST_F(OrbTableAlphaTest, GetRmesh) {
@@ -218,7 +216,7 @@ TEST_F(OrbTableAlphaTest, GetRmesh) {
 
 }
 
-#ifndef NDEBUG
+
 TEST_F(OrbTableAlphaTest, GetRmeshAbnormal) {
 
     ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
@@ -230,7 +228,6 @@ TEST_F(OrbTableAlphaTest, GetRmeshAbnormal) {
 	std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output, testing::HasSubstr("rmesh <= 0"));
 }
-#endif
 
 
 TEST_F(OrbTableAlphaTest, DS2Lplus1) {
