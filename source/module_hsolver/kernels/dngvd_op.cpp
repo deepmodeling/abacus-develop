@@ -62,27 +62,41 @@ struct dnevx_op<FPTYPE, psi::DEVICE_CPU> {
         }
 
         int info = 0;
-        int lwork = 0;
-        int nb = LapackConnector::ilaenv(1, "ZHETRD", "L", nstart, -1, -1, -1);
-        if (nb < 1) {
-            nb = std::max(1, nstart);
-        }
-
-        if (nb == 1 || nb >= nstart) {
-            lwork = 2 * nstart; // qianrui fix a bug 2021-7-25 : lwork should be at least max(1,2*n)
-        } else {
-            lwork = (nb + 1) * nstart;
-        }
+        int lwork = -1;
+        std::complex<FPTYPE> *work = new std::complex<FPTYPE>[1];
         FPTYPE *rwork = new FPTYPE[7 * nstart];
         int *iwork = new int[5 * nstart];
         int *ifail = new int[nstart];
-        ModuleBase::GlobalFunc::ZEROS(rwork, 7 * nstart);
-        ModuleBase::GlobalFunc::ZEROS(iwork, 5 * nstart);
-        ModuleBase::GlobalFunc::ZEROS(ifail, nstart);
-        // important part:
-        // In davidson, the size of work is different from dnevx_op in diagH_subspace.
-        std::complex<FPTYPE> *work = new std::complex<FPTYPE>[2 * lwork];
-        ModuleBase::GlobalFunc::ZEROS(work, lwork); // qianrui change it, only first lwork numbers are used in zhegvx
+        
+        // When lwork = -1, the demension of work will be assumed
+        // Assume the denmension of work by output work[0]
+        LapackConnector::xheevx(
+            1, // ITYPE = 1:  A*x = (lambda)*B*x
+            'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
+            'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
+            'L', // UPLO = 'L':  Lower triangles of A and B are stored.
+            nstart, // N = base
+            aux, // A is COMPLEX*16 array  dimension (LDA, N)
+            ldh, // LDA = base
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            nbands, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            0.0, // ABSTOL
+            nbands, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
+            eigenvalue, // W store eigenvalues
+            vcc, // store eigenvector
+            ldh, // LDZ: The leading dimension of the array Z.
+            work,
+            lwork,
+            rwork,
+            iwork,
+            ifail,
+            info);
+       
+    
+        lwork = int(work[0].real());
+        delete[] work; work = new std::complex<FPTYPE>[lwork];
 
         // The A and B storage space is (nstart * ldh), and the data that really participates in the zhegvx
         // operation is (nstart * nstart). In this function, the data that A and B participate in the operation will
