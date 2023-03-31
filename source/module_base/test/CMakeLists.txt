@@ -152,3 +152,8 @@ AddTest(
   TARGET base_element_basis_index
   SOURCES element_basis_index_test.cpp ../element_basis_index.cpp
 )
+
+AddTest(
+  TARGET base_tool_threading
+  SOURCES tool_threading_test.cpp ../tool_threading.h
+)
