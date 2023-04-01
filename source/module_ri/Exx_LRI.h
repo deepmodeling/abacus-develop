@@ -9,12 +9,14 @@
 #include "LRI_CV.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_base/matrix.h"
 #include <RI/physics/Exx.h>
 
 #include <vector>
 #include <array>
 #include <map>
+#include <deque>
 #include <mpi.h>
 
 	class Local_Orbital_Charge;
@@ -50,15 +52,11 @@ public:
 
 	void write_Hexxs(const std::string &file_name) const;
 	void read_Hexxs(const std::string &file_name);
-	std::vector<std::vector<Tdata>> Hexxs_to_Hk(const Parallel_Orbitals &pv, 
-				std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-				const int ik
-				);
-	void mix_Hk(const Parallel_Orbitals &pv, 
-				std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-				std::vector<Tdata> &Hk,
-				std::vector<std::deque<Tdata>> &Hk_seq,
-				);
+	// void mix_Hk(const Parallel_Orbitals &pv, 
+	// 			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
+	// 			std::vector<Tdata> &Hk,
+	// 			std::vector<std::deque<Tdata>> &Hk_seq,
+	// 			);
 
 private:
 	const Exx_Info::Exx_Info_RI &info;

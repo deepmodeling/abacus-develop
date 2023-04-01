@@ -301,67 +301,19 @@ void Exx_LRI<Tdata>::read_Hexxs(const std::string &file_name)
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
 
-template<typename Tdata>
-std::vector<std::vector<Tdata>> Exx_LRI<Tdata>::Hexxs_to_Hk(const Parallel_Orbitals &pv, 
-				std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-				const int ik
-				)
-{
-	ModuleBase::TITLE("Exx_LRI", "Hexxs_to_Hk");
-	ModuleBase::timer::tick("Exx_LRI", "Hexxs_to_Hk");
-
-	std::vector<std::vector<Tdata>> Hk;
-	Hk.resize(uhm.LM->ParaV->nrow);
-	for(size_t ic=0; ic!=uhm.LM->ParaV->nrow; ++ic)
-		Hk[ic].resize(uhm.LM->ParaV->ncol);
-
-
-	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{GlobalC::kv.isk[ik]}}, {4,{0,1,2,3}}};
-	for(const int is_b : is_list.at(GlobalV::NSPIN))
-	{
-		int is0_b, is1_b;
-		std::tie(is0_b, is1_b) = RI_2D_Comm::split_is_block(is_b);
-		for(const auto &Hs_tmpA : Hexxs[is_b])
-		{
-			const TA &iat0 = Hs_tmpA.first;
-			for(const auto &Hs_tmpB : Hs_tmpA.second)
-			{
-				const TA &iat1 = Hs_tmpB.first.first;
-				const TC &cell1 = Hs_tmpB.first.second;
-				const Tdata frac = std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec))
-				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
-				for(size_t iw0_b=0, iw0_b<H.shape[0]; ++iw0_b)
-				{
-					const int iwt0 = RI_2D_Comm::get_iwt(iat0, iw0_b, is0_b);
-					if(pv.trace_loc_row[iwt0]<0) continue;
-					for(size_t iw1_b=0; iw1_b<H.shape[1]; ++iw1_b)
-					{
-						const int iwt1 = RI_2D_Comm::get_iwt(iat1, iw1_b, is1_b);
-						if(pv.trace_loc_col[iwt1]<0)	continue;
-
-						Hk[iwt0][iwt1] = RI::Global_Func::convert<Tdata>(H(iw0_b, iw1_b)) * frac
-					}
-				}
-			}
-		}
-	}
-
-	ModuleBase::timer::tick("Exx_LRI", "Hexxs_to_Hk");
-}
-
-template<typename Tdata>
-void Exx_LRI<Tdata>::mix_Hk(const Parallel_Orbitals &pv, 
-				std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-				std::vector<Tdata> &Hk,
-				std::vector<std::deque<Tdata>> &Hk_seq,
-				)
-{
-	ModuleBase::TITLE("Exx_LRI", "mix_Hk");
-	ModuleBase::timer::tick("Exx_LRI", "mix_Hk");
+// template<typename Tdata>
+// void Exx_LRI<Tdata>::mix_Hk(const Parallel_Orbitals &pv, 
+// 				const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
+// 				std::vector<Tdata> &Hk,
+// 				std::vector<std::deque<Tdata>> &Hk_seq,
+// 				)
+// {
+// 	ModuleBase::TITLE("Exx_LRI", "mix_Hk");
+// 	ModuleBase::timer::tick("Exx_LRI", "mix_Hk");
 
 
 
-	ModuleBase::timer::tick("Exx_LRI", "mix_Hk");
-}
+// 	ModuleBase::timer::tick("Exx_LRI", "mix_Hk");
+// }
 
 #endif

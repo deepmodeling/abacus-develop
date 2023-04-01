@@ -42,6 +42,11 @@ namespace RI_2D_Comm
 		const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm);
 
+	template<typename Tdata>
+	extern std::vector<std::vector<std::vector<Tdata>>> Hexxs_to_Hk(const Parallel_Orbitals &pv, 
+			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
+			const int ik);
+
 //private:
 	extern std::vector<int> get_ik_list(const int is_k);
 	extern inline std::tuple<int,int,int> get_iat_iw_is_block(const int iwt);
