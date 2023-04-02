@@ -43,7 +43,7 @@ namespace RI_2D_Comm
 		LCAO_Matrix &lm);
 
 	template<typename Tdata>
-	extern std::vector<std::vector<std::vector<Tdata>>> Hexxs_to_Hk(const Parallel_Orbitals &pv, 
+	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(const Parallel_Orbitals &pv, 
 			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
 			const int ik);
 

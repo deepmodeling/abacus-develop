@@ -131,24 +131,25 @@ void RI_2D_Comm::add_Hexx(
 	// 		}
 	// 	}
 	// }
-	std::vector<std::vector<std::vector<Tdata>>> Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
-	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{GlobalC::kv.isk[ik]}}, {4,{0,1,2,3}}};
-	for(const int is_b : is_list.at(GlobalV::NSPIN))
-		for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
-			for(size_t iwt1; iwt1!=GlobalV::NLOCAL; ++iwt1)
+	std::vector<std::vector<Tdata>> Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+		for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+		{
+			if(pv.in_this_processor(iwt0, iwt1))
 			{
-				const Tdata Hk_tmp = alpha * Hk[is_b][iwt0][iwt1];
+				const Tdata Hk_tmp = alpha * Hk[iwt0][iwt1];
 				if(GlobalV::GAMMA_ONLY_LOCAL)
 					lm.set_HSgamma(iwt0, iwt1, RI::Global_Func::convert<double>(Hk_tmp), 'L', lm.Hloc.data());
 				else
 					lm.set_HSk(iwt0, iwt1, RI::Global_Func::convert<std::complex<double>>(Hk_tmp), 'L', -1);
 			}
+		}
 
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
 }
 
 template<typename Tdata>
-std::vector<std::vector<std::vector<Tdata>>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals &pv, 
+std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals &pv, 
 				const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
 				const int ik
 				)
@@ -156,16 +157,14 @@ std::vector<std::vector<std::vector<Tdata>>> RI_2D_Comm::Hexxs_to_Hk(const Paral
 	ModuleBase::TITLE("Exx_LRI", "Hexxs_to_Hk");
 	ModuleBase::timer::tick("Exx_LRI", "Hexxs_to_Hk");
 
-	std::vector<std::vector<std::vector<Tdata>>> Hk;
-	Hk.resize(GlobalV::NSPIN);
+	std::vector<std::vector<Tdata>> Hk;
+	Hk.resize(GlobalV::NLOCAL);
+	for(size_t ir=0; ir!=GlobalV::NLOCAL; ++ir)
+		Hk[ir].resize(GlobalV::NLOCAL);
 
 	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{GlobalC::kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))
 	{
-		Hk[is_b].resize(pv.nrow);
-		for(size_t ir=0; ir!=pv.nrow; ++ir)
-			Hk[is_b][ir].resize(pv.ncol);
-
 		int is0_b, is1_b;
 		std::tie(is0_b, is1_b) = RI_2D_Comm::split_is_block(is_b);
 		for(const auto &Hs_tmpA : Hexxs[is_b])
@@ -185,7 +184,7 @@ std::vector<std::vector<std::vector<Tdata>>> RI_2D_Comm::Hexxs_to_Hk(const Paral
 					{
 						const int iwt1 = RI_2D_Comm::get_iwt(iat1, iw1_b, is1_b);
 						if(pv.trace_loc_col[iwt1]<0)	continue;
-						Hk[is_b][iwt0][iwt1] = RI::Global_Func::convert<Tdata>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<Tdata>(frac);
+						Hk[iwt0][iwt1] += RI::Global_Func::convert<Tdata>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<Tdata>(frac);
 					}
 				}
 			}
