@@ -88,7 +88,8 @@ void RI_2D_Comm::add_Hexx(
 	const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
 	const Parallel_Orbitals &pv,
-	LCAO_Matrix &lm
+	LCAO_Matrix &lm,
+	std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq
 	)
 {
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
@@ -131,7 +132,22 @@ void RI_2D_Comm::add_Hexx(
 	// 		}
 	// 	}
 	// }
-	std::vector<std::vector<Tdata>> Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+	std::vector<std::vector<Tdata>> Hk;
+	switch(GlobalC::CHR_MIX.mixing_mode)
+	{
+		case "plain":
+			if(Hk_seq[ik].empty())
+				Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			else
+				Hk = (1-GlobalC::CHR_MIX.mixing_beta) * HK_m2D[ik] + GlobalC::CHR_MIX.mixing_beta * RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			Hk_seq[ik].emplace_back(Hk);
+			break;
+		// case "pulay":
+		// 	break;
+		default:
+			throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
+	}
+
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 		for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
 		{

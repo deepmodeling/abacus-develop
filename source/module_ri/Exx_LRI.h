@@ -49,6 +49,7 @@ public:
 	Tdata Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
+	std::vector<std::deque<std::vector<std::vector<Tdata>>>> Hk_seq;
 
 	void write_Hexxs(const std::string &file_name) const;
 	void read_Hexxs(const std::string &file_name);
