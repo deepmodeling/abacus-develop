@@ -52,11 +52,6 @@ public:
 
 	void write_Hexxs(const std::string &file_name) const;
 	void read_Hexxs(const std::string &file_name);
-	// void mix_Hk(const Parallel_Orbitals &pv, 
-	// 			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-	// 			std::vector<Tdata> &Hk,
-	// 			std::vector<std::deque<Tdata>> &Hk_seq,
-	// 			);
 
 private:
 	const Exx_Info::Exx_Info_RI &info;

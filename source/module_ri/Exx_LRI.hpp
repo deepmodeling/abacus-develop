@@ -301,19 +301,4 @@ void Exx_LRI<Tdata>::read_Hexxs(const std::string &file_name)
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
 
-// template<typename Tdata>
-// void Exx_LRI<Tdata>::mix_Hk(const Parallel_Orbitals &pv, 
-// 				const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-// 				std::vector<Tdata> &Hk,
-// 				std::vector<std::deque<Tdata>> &Hk_seq,
-// 				)
-// {
-// 	ModuleBase::TITLE("Exx_LRI", "mix_Hk");
-// 	ModuleBase::timer::tick("Exx_LRI", "mix_Hk");
-
-
-
-// 	ModuleBase::timer::tick("Exx_LRI", "mix_Hk");
-// }
-
 #endif
