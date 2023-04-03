@@ -1405,14 +1405,11 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         //calculate phase factor
                         tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
                         double cos_arg = 0.0, sin_arg = 0.0;
-                        double tmp_sin = 0.0, tmp_cos = 0.0;
                         // for each pricell in supercell:
                         for(int ipt=0;ipt<this->ncell;++ipt)
                         {
-                            arg = tmp_gdirect_double * (gtrans[invmap[isym]]+ptrans[ipt]) ;
-                            ModuleBase::libm::sincos(arg, &tmp_sin, &tmp_cos);
-                            cos_arg += tmp_sin;
-                            sin_arg += tmp_cos;
+                            arg = tmp_gdirect_double * (gtrans[invmap[isym]] + ptrans[ipt]);
+                            ModuleBase::libm::sincos(arg, &sin_arg, &cos_arg);
                         }
                         // add nothing to sum, so don't consider this isym into rot_count
                         cos_arg/=static_cast<double>(ncell);
