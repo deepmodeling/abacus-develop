@@ -134,10 +134,14 @@ void RI_2D_Comm::add_Hexx(
 	// }
 	std::vector<std::vector<Tdata>> Hk;
 	double mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
-	if(GlobalC::CHR_MIX.get_mixing_mode() == "plain")
+	const std::string mixing_mode = GlobalC::CHR_MIX.get_mixing_mode();
+	if(mixing_mode == "plain")
 	{
 		if(Hk_seq[ik].empty)
+		{
 			Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			Hk_seq[ik].emplace_back(Hk);
+		}
 		else
 		{
 			std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
@@ -146,12 +150,16 @@ void RI_2D_Comm::add_Hexx(
 				for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
 					if(pv.in_this_processor(iwt0, iwt1))
 						Hk[iwt0][iwt1] = (1-mixing_beta) * Hk_seq_tmp[iwt0][iwt1] + mixing_beta * Hk_tmp[iwt0][iwt1];
-			Hk_seq[ik].pop_front();
+			Hk_seq[ik][0] = Hk;
 		}
-		Hk_seq[ik].emplace_back(Hk);
+	}
+	else if(mixing_mode == "pulay" && GlobalC::exx_info.info_global.separate_loop == 0)
+	{
+		std::vector<std::vector<Tdata>> Hk_new = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+		Hk = RI_2D_Comm::pulay_mixing(Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
 	}
 	else
-		throw std::invalid_argument("EXX only support plain mixing.");
+		throw std::invalid_argument("`exx_separate_loop 0` support plain and pulay mixing, while `exx_separate_loop 1` only support plain mixing.");
 
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 		for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
@@ -175,8 +183,8 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals 
 				const int ik
 				)
 {
-	ModuleBase::TITLE("Exx_LRI", "Hexxs_to_Hk");
-	ModuleBase::timer::tick("Exx_LRI", "Hexxs_to_Hk");
+	ModuleBase::TITLE("RI_2D_Comm", "Hexxs_to_Hk");
+	ModuleBase::timer::tick("RI_2D_Comm", "Hexxs_to_Hk");
 
 	std::vector<std::vector<Tdata>> Hk;
 	Hk.resize(GlobalV::NLOCAL);
@@ -212,8 +220,69 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals 
 		}
 	}
 
+	ModuleBase::timer::tick("RI_2D_Comm", "Hexxs_to_Hk");
 	return Hk;
-	ModuleBase::timer::tick("Exx_LRI", "Hexxs_to_Hk");
+}
+
+template<typename Tdata>
+std::vector<std::vector<Tdata>> RI_2D_Comm::pulay_mixing(
+	const Parallel_Orbitals &pv,
+	std::deque<std::vector<std::vector<Tdata>>> &Hk_seq,
+	const std::vector<std::vector<Tdata>> &Hk_new,
+	const double mixing_beta,
+	const std::string mixing_mode)
+{
+	ModuleBase::TITLE("RI_2D_Comm", "pulay_mixing");
+	ModuleBase::timer::tick("RI_2D_Comm", "pulay_mixing");
+
+	std::vector<std::vector<Tdata>> Hk;
+	if(GlobalC::CHR_MIX.get_totstep() == 0)
+	{
+		Hk_seq.clear();
+		Hk = Hk_new;
+		Hk_seq.emplace_back(Hk);
+	}
+	else if(GlobalC::CHR_MIX.get_totstep() == 1)
+	{
+		for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+			for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+				if(pv.in_this_processor(iwt0, iwt1))
+				{
+					Hk[iwt0][iwt1] = (1-mixing_beta) * Hk_seq[0][iwt0][iwt1] + mixing_beta * Hk_new[iwt0][iwt1];
+					Hk_seq[0][iwt0][iwt1] = Hk[iwt0][iwt1];
+				}
+	}
+	else
+	{
+		std::vector<std::vector<Tdata>> Hk_seq_tmp;
+		for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+			for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+				if(pv.in_this_processor(iwt0, iwt1))
+					Hk_seq_tmp[iwt0][iwt1] = (1-mixing_beta) * Hk_seq[Hk_seq.size()-1][iwt0][iwt1] + mixing_beta * Hk_new[iwt0][iwt1];
+		Hk_seq.emplace_back(Hk_seq_tmp);
+		if(Hk_seq.size() > GlobalC::CHR_MIX.get_dstep()+1)
+			Hk_seq.pop_front();
+		
+		auto pos_mod = [](const int i, const int N){ return (i%N+N)%N; };
+		auto index = [&](const int i) -> int
+		{
+			const int alpha_size = Hk_seq.size()-1;
+			const int alpha_begin = GlobalC::CHR_MIX.get_idstep() - alpha_size;
+			return pos_mod( alpha_begin+i, GlobalC::CHR_MIX.get_dstep() );
+		};
+		for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+			for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+				if(pv.in_this_processor(iwt0, iwt1))
+				{
+					Hk[iwt0][iwt1] = (1+GlobalC::CHR_MIX.get_alpha()[index(Hk_seq.size()-2)]) * Hk_seq[Hk_seq.size()-1][iwt0][iwt1];
+					for( int i=1; i<=Hk_seq.size()-2; ++i )
+						Hk[iwt0][iwt1] += ( GlobalC::CHR_MIX.get_alpha()[index(i-1)] - GlobalC::CHR_MIX.get_alpha()[index(i)] ) * Hk_seq[i][iwt0][iwt1];
+					Hk[iwt0][iwt1] -= GlobalC::CHR_MIX.get_alpha()[index(0)] * Hk_seq[0][iwt0][iwt1];
+				}
+	}
+
+	ModuleBase::timer::tick("RI_2D_Comm", "pulay_mixing");
+	return Hk;
 }
 
 std::tuple<int,int,int>

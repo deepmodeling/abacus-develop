@@ -45,9 +45,16 @@ namespace RI_2D_Comm
 		std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq);
 
 	template<typename Tdata>
-	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(const Parallel_Orbitals &pv, 
+	std::vector<std::vector<Tdata>> Hexxs_to_Hk(const Parallel_Orbitals &pv, 
 			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
 			const int ik);
+	template<typename Tdata>
+	std::vector<std::vector<Tdata>> pulay_mixing(
+		const Parallel_Orbitals &pv,
+		std::deque<std::vector<std::vector<Tdata>>> &Hk_seq,
+		const std::vector<std::vector<Tdata>> &Hk_new,
+		const double mixing_beta,
+		const std::string mixing_mode);
 
 //private:
 	extern std::vector<int> get_ik_list(const int is_k);
