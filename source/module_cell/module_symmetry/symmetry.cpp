@@ -1443,7 +1443,6 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             }
         }
     }
-    std::cout<<"ncellxyz:"<<ncellxyz[0]<<" "<<ncellxyz[1]<<" "<<ncellxyz[2]<<std::endl;
     delete[] symflag;
     delete[] ipw_record;
     delete[] ixyz_record;
