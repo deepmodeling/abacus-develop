@@ -1,7 +1,7 @@
 #include <memory>
 #include <array>
 #include "symmetry.h"
-
+#include "module_base/libm/libm.h"
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
@@ -1404,13 +1404,15 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         tmp_gdirect_double.z=static_cast<double>((kk>int(nz/2)+1)?(kk-nz):kk);
                         //calculate phase factor
                         tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
-                        double cos_arg=0.0, sin_arg=0.0;
+                        double cos_arg = 0.0, sin_arg = 0.0;
+                        double tmp_sin = 0.0, tmp_cos = 0.0;
                         // for each pricell in supercell:
                         for(int ipt=0;ipt<this->ncell;++ipt)
                         {
                             arg = tmp_gdirect_double * (gtrans[invmap[isym]]+ptrans[ipt]) ;
-                            cos_arg += cos(arg);
-                            sin_arg += sin(arg);   
+                            ModuleBase::libm::sincos(arg, &tmp_sin, &tmp_cos);
+                            cos_arg += tmp_sin;
+                            sin_arg += tmp_cos;
                         }
                         // add nothing to sum, so don't consider this isym into rot_count
                         cos_arg/=static_cast<double>(ncell);
