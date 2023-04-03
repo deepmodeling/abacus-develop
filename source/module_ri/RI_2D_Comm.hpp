@@ -236,6 +236,10 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::pulay_mixing(
 	ModuleBase::timer::tick("RI_2D_Comm", "pulay_mixing");
 
 	std::vector<std::vector<Tdata>> Hk;
+	Hk.resize(GlobalV::NLOCAL);
+	for(size_t ir=0; ir!=GlobalV::NLOCAL; ++ir)
+		Hk[ir].resize(GlobalV::NLOCAL);
+
 	if(GlobalC::CHR_MIX.get_totstep() == 0)
 	{
 		Hk_seq.clear();
@@ -255,6 +259,10 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::pulay_mixing(
 	else
 	{
 		std::vector<std::vector<Tdata>> Hk_seq_tmp;
+		Hk_seq_tmp.resize(GlobalV::NLOCAL);
+		for(size_t ir=0; ir!=GlobalV::NLOCAL; ++ir)
+			Hk_seq_tmp[ir].resize(GlobalV::NLOCAL);
+
 		for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 			for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
 				if(pv.in_this_processor(iwt0, iwt1))
