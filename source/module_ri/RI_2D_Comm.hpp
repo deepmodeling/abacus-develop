@@ -159,7 +159,8 @@ void RI_2D_Comm::add_Hexx(
 		Hk = RI_2D_Comm::pulay_mixing(Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
 	}
 	else
-		throw std::invalid_argument("`exx_separate_loop 0` support plain and pulay mixing, while `exx_separate_loop 1` only support plain mixing.");
+		ModuleBase::WARNING_QUIT("RI_2D_Comm::add_Hexx",
+                                     "`exx_separate_loop 0` support plain and pulay mixing, while `exx_separate_loop 1` only support plain mixing.");
 
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 		for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
