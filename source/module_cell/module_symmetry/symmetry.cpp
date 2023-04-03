@@ -1405,18 +1405,24 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         //calculate phase factor
                         tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
                         double cos_arg = 0.0, sin_arg = 0.0;
+                        double arg_gtrans = tmp_gdirect_double * gtrans[invmap[isym]];
+                        std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
                         // for each pricell in supercell:
-                        for(int ipt=0;ipt<this->ncell;++ipt)
+                        for (int ipt = 0;ipt < this->ncell;++ipt)
                         {
-                            arg = tmp_gdirect_double * (gtrans[invmap[isym]] + ptrans[ipt]);
-                            ModuleBase::libm::sincos(arg, &sin_arg, &cos_arg);
+                            arg = tmp_gdirect_double * ptrans[ipt];
+                            double tmp_cos = 0.0, tmp_sin = 0.0;
+                            ModuleBase::libm::sincos(arg, &tmp_sin, &tmp_cos);
+                            cos_arg += tmp_cos;
+                            sin_arg += tmp_sin;
                         }
                         // add nothing to sum, so don't consider this isym into rot_count
                         cos_arg/=static_cast<double>(ncell);
                         sin_arg/=static_cast<double>(ncell);
                         //deal with double-zero
-                        if(equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
-                        std::complex<double> gphase( cos_arg,  sin_arg );
+                        if (equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
+                        std::complex<double> gphase(cos_arg, sin_arg);
+                        gphase = phase_gtrans * gphase;
                         //deal with small difference from 1
                         if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
                         gphase_record[rot_count]=gphase;
@@ -1437,7 +1443,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             }
         }
     }
-
+    std::cout<<"ncellxyz:"<<ncellxyz[0]<<" "<<ncellxyz[1]<<" "<<ncellxyz[2]<<std::endl;
     delete[] symflag;
     delete[] ipw_record;
     delete[] ixyz_record;
