@@ -133,20 +133,25 @@ void RI_2D_Comm::add_Hexx(
 	// 	}
 	// }
 	std::vector<std::vector<Tdata>> Hk;
-	switch(GlobalC::CHR_MIX.mixing_mode)
+	double mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
+	if(GlobalC::CHR_MIX.get_mixing_mode() == "plain")
 	{
-		case "plain":
-			if(Hk_seq[ik].empty())
-				Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
-			else
-				Hk = (1-GlobalC::CHR_MIX.mixing_beta) * HK_m2D[ik] + GlobalC::CHR_MIX.mixing_beta * RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
-			Hk_seq[ik].emplace_back(Hk);
-			break;
-		// case "pulay":
-		// 	break;
-		default:
-			throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
+		if(Hk_seq[ik].empty)
+			Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+		else
+		{
+			std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
+			std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+				for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+					if(pv.in_this_processor(iwt0, iwt1))
+						Hk[iwt0][iwt1] = (1-mixing_beta) * Hk_seq_tmp[iwt0][iwt1] + mixing_beta * Hk_tmp[iwt0][iwt1];
+			Hk_seq[ik].pop_front();
+		}
+		Hk_seq[ik].emplace_back(Hk);
 	}
+	else
+		throw std::invalid_argument("EXX only support plain mixing.");
 
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 		for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)

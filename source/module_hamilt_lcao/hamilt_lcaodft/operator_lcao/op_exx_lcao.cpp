@@ -32,14 +32,16 @@ void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_double.Hexxs,
 				*this->LM->ParaV,
-				*this->LM);
+				*this->LM,
+				GlobalC::exx_lri_double.Hk_seq);
 		else
 			RI_2D_Comm::add_Hexx(
 				ik,
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_complex.Hexxs,
 				*this->LM->ParaV,
-				*this->LM);
+				*this->LM,
+				GlobalC::exx_lri_complex.Hk_seq);
     }
 #endif
 }
@@ -57,14 +59,16 @@ void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_double.Hexxs,
 				*this->LM->ParaV,
-				*this->LM);
+				*this->LM,
+				GlobalC::exx_lri_double.Hk_seq);
 		else
 			RI_2D_Comm::add_Hexx(
 				ik,
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_complex.Hexxs,
 				*this->LM->ParaV,
-				*this->LM);
+				*this->LM,
+				GlobalC::exx_lri_complex.Hk_seq);
     }
 #endif
 }

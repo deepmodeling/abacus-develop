@@ -16,6 +16,7 @@
 #include <tuple>
 #include <map>
 #include <set>
+#include <deque>
 
 namespace RI_2D_Comm
 {
