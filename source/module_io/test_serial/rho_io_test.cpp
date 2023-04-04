@@ -10,17 +10,28 @@ InfoNonlocal::~InfoNonlocal(){}
 LCAO_Orbitals::LCAO_Orbitals(){}
 LCAO_Orbitals::~LCAO_Orbitals(){}
 #endif
-Magnetism::Magnetism(){}
-Magnetism::~Magnetism(){}
+Magnetism::Magnetism()
+{
+	this->tot_magnetization = 0.0;
+	this->abs_magnetization = 0.0;
+	this->start_magnetization = nullptr;
+}
+Magnetism::~Magnetism()
+{
+	delete[] this->start_magnetization;
+}
 
 /************************************************
- *  unit test of read_rho
+ *  unit test of read_rho and write_rho
  ***********************************************/
 
 /**
  * - Tested Functions:
  *   - read_rho()
  *     - the function to read_rho from file
+ *     - the serial version without MPI
+ *   - write_rho()
+ *     - the function to write_rho to file
  *     - the serial version without MPI
  */
 

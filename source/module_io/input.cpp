@@ -304,6 +304,7 @@ void Input::Default(void)
     out_hs2_interval = 1;
     out_app_flag = true;
     out_mat_r = 0; // jingan add 2019-8-14
+    out_mat_dh = 0;
     out_wfc_lcao = false;
     out_alllog = false;
     dos_emin_ev = -15; //(ev)

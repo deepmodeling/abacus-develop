@@ -10,7 +10,7 @@
 
 ORB_table_alpha::ORB_table_alpha()
 {
-	destroy_nr = false;
+	table_allocated = false;
 
 	ntype = 0;
 	lmax = 0;
@@ -36,6 +36,8 @@ ORB_table_alpha::~ORB_table_alpha()
 	//delete[] rab;
 	delete[] kab;
 	delete[] DS_2Lplus1;
+
+	_destroy_table();
 }
 
 void ORB_table_alpha::allocate(
@@ -48,7 +50,7 @@ void ORB_table_alpha::allocate(
 {
 	ModuleBase::TITLE("ORB_table_alpha", "allocate");
 
-	this->ntype = ntype_in; // type of elements.
+	this->ntype = ntype_in; // number of (orbital) elements
 	this->lmax = lmax_in;
 	this->kmesh = kmesh_in;
 	this->Rmax = Rmax_in;
@@ -255,17 +257,27 @@ void ORB_table_alpha::init_Table_Alpha(
 
 	size_t memory_cost = 0;
 	// <1Phi|2Alpha>
+
+	lmax_.resize(ntype);
+	lmax_d_ = orb.Alpha[0].getLmax();
+	nchi_pairs_.resize(ntype);
+
 	for (int T1 = 0; T1 < ntype; T1++) // type 1 is orbital
 	{
 		const int Lmax1 = orb.Phi[T1].getLmax();
 		const int Lmax2 = orb.Alpha[0].getLmax();
 		const int lmax_now = std::max(Lmax1, Lmax2);
 		int L2plus1 = 2 * lmax_now + 1;
+
+		lmax_[T1] = Lmax1;
+
 		//-------------------------------------------------------------
 		// how many <psi|alpha_l>
 		// here we count all possible psi with (L,N) index for type T1.
 		//-------------------------------------------------------------
 		const int pairs_chi = orb.Phi[T1].getTotal_nchi() * orb.Alpha[0].getTotal_nchi();
+
+		nchi_pairs_[T1] = pairs_chi;
 
 		if (pairs_chi == 0)
 		{
@@ -339,7 +351,7 @@ void ORB_table_alpha::init_Table_Alpha(
 			}			  // end N1
 		}				  // end L1
 	}					  // end T1
-	destroy_nr = true;
+	table_allocated = true;
 
 	ModuleBase::Memory::record("ORB::Table_DSR", sizeof(double) * memory_cost);
 
@@ -348,9 +360,44 @@ void ORB_table_alpha::init_Table_Alpha(
 	return;
 }
 
+
+void ORB_table_alpha::_destroy_table() {
+	if (!table_allocated) {
+		return;
+	}
+
+	// S(R) or dS(R)
+	for (int itable = 0; itable != 2; ++itable) {
+
+		for (int ielem = 0; ielem < ntype; ielem++) {
+			int lmax_now = std::max(lmax_[ielem], lmax_d_);
+			int nchipair = nchi_pairs_[ielem];
+
+			// mohan fix bug 2011-03-30
+			if (nchipair == 0) {
+				continue;
+			}
+
+			for (int ipair = 0; ipair < nchipair; ++ipair) {
+				for (int l = 0; l < 2 * lmax_now + 1; ++l) {
+					delete[] Table_DSR[itable][ielem][ipair][l];
+				}
+				delete[] Table_DSR[itable][ielem][ipair];
+			}
+			delete[] Table_DSR[itable][ielem];
+		}
+		delete[] Table_DSR[itable];
+	}
+	delete[] Table_DSR;
+	Table_DSR = nullptr;
+	table_allocated = false;
+	return;
+}
+
+
 void ORB_table_alpha::Destroy_Table_Alpha(LCAO_Orbitals &orb)
 {
-	if (!destroy_nr)
+	if (!table_allocated)
 	{
 		return;
 	}
@@ -385,6 +432,7 @@ void ORB_table_alpha::Destroy_Table_Alpha(LCAO_Orbitals &orb)
 	}
 	delete[] Table_DSR;
     Table_DSR = nullptr;
+	table_allocated = false;
 	return;
 }
 

@@ -48,6 +48,10 @@ For restarting SCF calculations, users are referred to the documentation about [
 
 If you train the DeePKS model with force labels, then the DeePKS model can provide force calculation with the same accuracy as your target method, and can thus be used for structural optimization. To do that, you just need to train the model with force label enabled.
 
+**9. How to estimate the max memory consumption?**
+
+Run `/usr/bin/time -v mpirun -n 4 abacus`, and locate "Maximum resident set size" in the output log at the end. Please note that this value is the peak memory size of the main MPI process.
+
 [back to top](#frequently-asked-questions)
 
 ## Failed jobs

@@ -35,6 +35,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const Mo
 	for(int ik=0;ik<GlobalC::kv.nks;ik++)
 	{
 		npw = GlobalC::kv.ngk[ik];
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 		for(int i=0;i<npw;i++)
 		{
 			gk[0][i] = GlobalC::wfcpw->getgpluskcar(ik,i)[0] * factor;
@@ -60,12 +63,16 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const Mo
 					{
 						ppsi = &(GlobalC::wf.evc[ik](ibnd, 0));
 					}
+					FPTYPE sum = 0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum)
+#endif
 					for(int i=0;i<npw;i++)
 					{
-						s_kin[l][m] +=
-							wg(ik, ibnd)*gk[l][i]*gk[m][i]
+						sum += wg(ik, ibnd)*gk[l][i]*gk[m][i]
 							*(FPTYPE((conj(ppsi[i]) * ppsi[i]).real()));
 					}
+					s_kin[l][m] += sum;
 				}
 			}
 		}

@@ -77,9 +77,9 @@ private:
 	void cal_kradial(void);
 	void cal_kradial_sbpool(void);
 	void cal_rradial_sbpool(void);
-	void norm_test()const;
+	//void norm_test()const;
 	void plot()const;
-	void use_uniform(const double &dr_uniform_in);
+	//void use_uniform(const double &dr_uniform_in);
 	void extra_uniform(const double &dr_uniform_in, const bool &force_flag);
 
 	std::string label;

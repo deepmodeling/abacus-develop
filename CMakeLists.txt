@@ -379,20 +379,18 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc HINTS
+  find_package(Libxc REQUIRED HINTS
     ${Libxc_DIR}/share/cmake/Libxc
     ${Libxc_DIR}/lib/cmake/Libxc
     ${Libxc_DIR}/lib64/cmake/Libxc
   )
-  if(${Libxc_FOUND})
-    message(STATUS "Found Libxc: version " ${Libxc_VERSION})
-    if(${Libxc_VERSION} VERSION_LESS 5.1.7)
-      message(FATAL_ERROR "LibXC >= 5.1.7 is required; found ${Libxc_VERSION}")
-    endif()
-    target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
-    include_directories(${Libxc_INCLUDE_DIRS})
-    add_compile_definitions(USE_LIBXC)
+  message(STATUS "Found Libxc: version " ${Libxc_VERSION})
+  if(${Libxc_VERSION} VERSION_LESS 5.1.7)
+    message(FATAL_ERROR "LibXC >= 5.1.7 is required.")
   endif()
+  target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
+  include_directories(${Libxc_INCLUDE_DIRS})
+  add_compile_definitions(USE_LIBXC)
 endif()
 
 if(DEFINED DeePMD_DIR)

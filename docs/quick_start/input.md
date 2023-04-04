@@ -26,7 +26,7 @@ The parameter list always starts with key word `INPUT_PARAMETERS`. Any content b
 Any line starting with `#` or `/` will also be ignored.
 
 Each parameter value is provided by specifying the name of the input variable
-and then putting the value after the name, separated by one or more blank characters(space or tab). The following characters (≤ 150) in the same line will be neglected.
+and then putting the value after the name, separated by one or more blank characters(space or tab). The following characters (> 150) in the same line will be neglected.
 
 Depending on the input variable, the value may be an integer, a real number or a string. The parameters can be given in any order, but only one parameter should be given per line.
 

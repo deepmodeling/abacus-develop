@@ -790,7 +790,19 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 ssd << GlobalV::global_out_dir << "tmp"
                     << "_SPIN" << is + 1 << "_DM_R";
             }
-            ModuleIO::write_dm(is, iter, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+
+            ModuleIO::write_dm(
+#ifdef __MPI
+                GlobalC::GridT.trace_lo,
+#endif
+                is,
+                iter,
+                ssd.str(),
+                precision,
+                this->LOC.out_dm,
+                this->LOC.DM,
+                ef_tmp,
+                &(GlobalC::ucell));
         }
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -928,7 +940,19 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
             }
             std::remove(ssd_tmp.str().c_str());
-            ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+            ModuleIO::write_dm(
+#ifdef __MPI
+                GlobalC::GridT.trace_lo,
+#endif
+                is,
+                0,
+                ssd.str(),
+                precision,
+                this->LOC.out_dm,
+                this->LOC.DM,
+                ef_tmp,
+                &(GlobalC::ucell));
         }
     }
 
