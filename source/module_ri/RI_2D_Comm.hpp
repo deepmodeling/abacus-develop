@@ -156,7 +156,7 @@ void RI_2D_Comm::add_Hexx(
 	else if(mixing_mode == "pulay" && GlobalC::exx_info.info_global.separate_loop == 0)
 	{
 		std::vector<std::vector<Tdata>> Hk_new = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
-		Hk = RI_2D_Comm::pulay_mixing(Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
+		Hk = RI_2D_Comm::pulay_mixing(pv, Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
 	}
 	else
 		ModuleBase::WARNING_QUIT("RI_2D_Comm::add_Hexx",
