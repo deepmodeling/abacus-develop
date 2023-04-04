@@ -766,7 +766,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
 	EXPECT_EQ(INPUT.exx_hybrid_alpha,"1");
 	EXPECT_EQ(INPUT.exx_real_number,"0");
-        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"10");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"5");
 	EXPECT_EQ(INPUT.diago_proc,1);
 	EXPECT_EQ(INPUT.mem_saver,0);
 	EXPECT_EQ(INPUT.cal_force,1);
