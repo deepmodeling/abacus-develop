@@ -1,8 +1,8 @@
 #include "module_base/global_variable.h"
 #include "module_base/global_function.h"
 
-#include "module_orbital/ORB_control.h"	
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_control.h"	
+#include "module_basis/module_ao/ORB_read.h"
 
 #include "module_cell/unitcell.h"
 

@@ -1,6 +1,6 @@
 #include "unitcell.h"
 #ifdef __LCAO
-#include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 #include "../module_base/timer.h"
 #include "../module_base/constants.h"
@@ -535,7 +535,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			if (na > 0)
 			{
        			delete[] atoms[it].tau;
-				delete[] atoms[it].tau_original;
+				delete[] atoms[it].dis;
 				delete[] atoms[it].taud;
 				delete[] atoms[it].vel;
        			delete[] atoms[it].mbl;
@@ -544,7 +544,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                 delete[] atoms[it].angle2;
                 delete[] atoms[it].m_loc_;
        			atoms[it].tau = new ModuleBase::Vector3<double>[na];
-				atoms[it].tau_original = new ModuleBase::Vector3<double>[na];
+				atoms[it].dis = new ModuleBase::Vector3<double>[na];
        			atoms[it].taud = new ModuleBase::Vector3<double>[na];
 				atoms[it].vel = new ModuleBase::Vector3<double>[na];
        			atoms[it].mbl = new ModuleBase::Vector3<int>[na];
@@ -803,7 +803,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 						atoms[it].mbl[ia] = 0.0;
 						atoms[it].mbl[ia].print();
 					}
-					atoms[it].tau_original[ia] = atoms[it].tau[ia];
+                    atoms[it].dis[ia].set(0, 0, 0);
 				}//endj
 			}// end na
 			//reset some useless parameters

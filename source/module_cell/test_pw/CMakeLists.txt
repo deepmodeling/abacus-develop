@@ -15,6 +15,7 @@ AddTest(
 	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
+find_program(BASH bash)
 add_test(NAME cell_unitcell_test_pw_para
       COMMAND ${BASH} unitcell_test_pw_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

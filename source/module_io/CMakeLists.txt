@@ -13,7 +13,7 @@ list(APPEND objects
     print_info.cpp
     read_rho.cpp
     restart.cpp
-    rwstream.cpp
+    binstream.cpp
     write_wfc_pw.cpp
     write_input.cpp
     write_rho.cpp
@@ -70,4 +70,5 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(test)
+  add_subdirectory(test_serial)
 endif()

@@ -4,7 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "module_psi/kernels/memory_op.h"

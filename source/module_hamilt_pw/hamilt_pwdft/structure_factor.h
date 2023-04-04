@@ -3,7 +3,7 @@
 
 #include "module_cell/unitcell.h"
 #include "module_base/complexmatrix.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 #include "module_psi/psi.h"
 
 using namespace std;

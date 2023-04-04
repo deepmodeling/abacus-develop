@@ -3,6 +3,7 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
+find_program(BASH bash)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

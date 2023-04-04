@@ -1,4 +1,4 @@
-///adapted from parallel_orbitals from module_orbital
+///adapted from parallel_orbitals from module_basis/module_ao
 ///deals with the parallelization of atomic basis
 
 #include "module_base/global_function.h"

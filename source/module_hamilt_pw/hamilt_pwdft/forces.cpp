@@ -651,7 +651,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion, ModulePW
         int nrm = 0;
 
         // output of rgen: the number of vectors in the sphere
-        const int mxr = 50;
+        const int mxr = 200;
         // the maximum number of R vectors included in r
         ModuleBase::Vector3<double>* r = new ModuleBase::Vector3<double>[mxr];
         double* r2 = new double[mxr];
@@ -1089,6 +1089,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
     //for orbital free case
     if(!GlobalC::en.vnew_exist)
     {
+        ModuleBase::timer::tick("Forces", "cal_force_scc");
         return;
     }
 

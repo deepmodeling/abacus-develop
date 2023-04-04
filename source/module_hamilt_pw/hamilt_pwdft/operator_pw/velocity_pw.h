@@ -3,7 +3,7 @@
 #include "operator_pw.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 namespace hamilt
 {
 
@@ -32,9 +32,9 @@ class Velocity
         std::complex<double>* tmhpsi,
         const bool add = false
     )const;
+    bool nonlocal = true;
 
     private:
-    bool nonlocal = true;
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     const int* isk = nullptr;

@@ -68,8 +68,8 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     this->Init_GlobalC(inp,ucell);//temporary
 
 	stowf.init(GlobalC::kv.nks);
-	if(INPUT.nbands_sto != 0)	Init_Sto_Orbitals(this->stowf, inp.seed_sto);
-	else						Init_Com_Orbitals(this->stowf, GlobalC::kv);
+	if(INPUT.nbands_sto != 0)	Init_Sto_Orbitals(this->stowf, inp.seed_sto, GlobalC::kv.nks);
+	else						Init_Com_Orbitals(this->stowf, GlobalC::kv, GlobalC::wf.npwx);
 	for (int ik =0 ; ik < GlobalC::kv.nks; ++ik)
     {
         this->stowf.shchi[ik].create(this->stowf.nchip[ik],GlobalC::wf.npwx,false);
@@ -87,7 +87,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
 void ESolver_SDFT_PW::beforescf(const int istep)
 {
     ESolver_KS_PW::beforescf(istep);
-	if(istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep%INPUT.initsto_freq == 0) Update_Sto_Orbitals(this->stowf, INPUT.seed_sto);
+	if(istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep%INPUT.initsto_freq == 0) Update_Sto_Orbitals(this->stowf, INPUT.seed_sto, GlobalC::kv.nks);
 }
 
 void ESolver_SDFT_PW::eachiterfinish(int iter)
@@ -102,9 +102,25 @@ void ESolver_SDFT_PW::afterscf(const int istep)
 	    for(int is=0; is<GlobalV::NSPIN; is++)
         {
             std::stringstream ssc;
-            std::stringstream ss1;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-            ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str() );//mohan add 2007-10-17
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+            ModuleIO::write_rho(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                GlobalC::rhopw->nplane,
+                GlobalC::rhopw->startz_current,
+#endif
+                pelec->charge->rho_save[is],
+                is,
+                GlobalV::NSPIN,
+                0,
+                ssc.str(),
+                GlobalC::rhopw->nx,
+                GlobalC::rhopw->ny,
+                GlobalC::rhopw->nz,
+                ef_tmp,
+                &(GlobalC::ucell));
         }
     }
     if(this->conv_elec)
@@ -202,7 +218,7 @@ void ESolver_SDFT_PW::postprocess()
     
     if(INPUT.cal_cond)
 	{
-        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_wenlarge);
+        this->sKG(INPUT.cond_nche,INPUT.cond_fwhm,INPUT.cond_wcut,INPUT.cond_dw,INPUT.cond_dt, INPUT.cond_dtbatch);
     }
     if(INPUT.out_dos)
 	{

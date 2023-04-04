@@ -39,7 +39,6 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
     else if(INPUT.mdp.md_type == 4)
     {
         mdrun = new MSST(INPUT.mdp, unit_in);
-        unit_in.cell_parameter_updated = true;
     }
 
     // md cycle
@@ -65,7 +64,6 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
 
         if((mdrun->step_ + mdrun->step_rst_) % mdrun->mdp.md_dumpfreq == 0)
         {
-            // Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
             mdrun->outputMD(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
             MD_func::MDdump(mdrun->step_ + mdrun->step_rst_, 

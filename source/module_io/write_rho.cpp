@@ -1,37 +1,40 @@
 #include "module_io/rho_io.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/element_name.h"
 
 void ModuleIO::write_rho(
-	const double* rho_save, 
-	const int &is, 
-	const int &iter, 
-	const std::string &fn, 
-	const int &precision, 
-	const bool for_plot)
+#ifdef __MPI
+	const int& bz,
+	const int& nbz,
+	const int& nplane,
+	const int& startz_current,
+#endif
+	const double* rho_save,
+	const int& is,
+	const int& nspin,
+	const int& iter,
+	const std::string& fn,
+	const int& nx,
+	const int& ny,
+	const int& nz,
+	const double& ef,
+	const UnitCell* ucell,
+	const int &precision)
 {
 	ModuleBase::TITLE("ModuleIO","write_rho");
-
+	
 	if (GlobalV::out_chg==0) 
 	{
 		return;
 	}
-	else if(iter % GlobalV::out_chg != 0) 
-	{
-		return; // mohan add 2010-05-22
-	}
-	
+
 	time_t start, end;
 	std::ofstream ofs_cube;
-
-	std::string fn_cube = fn;
-	fn_cube.append(".cube");
-	
+  
 	if(GlobalV::MY_RANK==0)
 	{
 		start = time(NULL);
 
-		ofs_cube.open(fn_cube.c_str());
+		ofs_cube.open(fn.c_str());
 		
 		if (!ofs_cube)
 		{
@@ -39,50 +42,39 @@ void ModuleIO::write_rho(
 		}	
 
 		/// output header for cube file
-		ofs_cube << "Cubefile created from ABACUS SCF calculation" << std::endl;
+		ofs_cube << "Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn." << std::endl;
 		// ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
-		ofs_cube << GlobalV::NSPIN << " (nspin) ";
-		if(GlobalV::NSPIN==1 || GlobalV::NSPIN == 4)
+		ofs_cube << nspin << " (nspin) ";
+		if (GlobalV::TWO_EFERMI)
 		{
-			ofs_cube << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
-		}
-		else if(GlobalV::NSPIN==2)
-		{
-			if (GlobalV::TWO_EFERMI)
-			{
-				if(is==0)		ofs_cube << GlobalC::en.ef_up << " (fermi energy for spin=1, in Ry)" << std::endl; 
-				else if(is==1)	ofs_cube << GlobalC::en.ef_dw << " (fermi energy for spin=2, in Ry)" << std::endl;
-			}
-			else
-			{
-				ofs_cube << GlobalC::en.ef << " (fermi energy, in Ry)" << std::endl;
-			}
+			if(is==0)	ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
+			else if(is==1)	ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
 		}
 		else
 		{
-			ModuleBase::WARNING_QUIT("write_rho","check nspin!");
+			ofs_cube << ef << " (fermi energy, in Ry)" << std::endl;
 		}
-
-		ofs_cube << GlobalC::ucell.nat << " 0.0 0.0 0.0 " << std::endl;
-		double fac=GlobalC::ucell.lat0;
-		ofs_cube << GlobalC::rhopw->nx 
-			<< " " << fac*GlobalC::ucell.latvec.e11/double(GlobalC::rhopw->nx) 
-			<< " " << fac*GlobalC::ucell.latvec.e12/double(GlobalC::rhopw->nx) 
-			<< " " << fac*GlobalC::ucell.latvec.e13/double(GlobalC::rhopw->nx) << std::endl;
-		ofs_cube << GlobalC::rhopw->ny 
-			<< " " << fac*GlobalC::ucell.latvec.e21/double(GlobalC::rhopw->ny) 
-			<< " " << fac*GlobalC::ucell.latvec.e22/double(GlobalC::rhopw->ny) 
-			<< " " << fac*GlobalC::ucell.latvec.e23/double(GlobalC::rhopw->ny) << std::endl;
-		ofs_cube << GlobalC::rhopw->nz 
-			<< " " << fac*GlobalC::ucell.latvec.e31/double(GlobalC::rhopw->nz) 
-			<< " " << fac*GlobalC::ucell.latvec.e32/double(GlobalC::rhopw->nz) 
-			<< " " << fac*GlobalC::ucell.latvec.e33/double(GlobalC::rhopw->nz) << std::endl;
+		
+		ofs_cube << ucell->nat << " 0.0 0.0 0.0 " << std::endl;
+		double fac=ucell->lat0;
+		ofs_cube << nx 
+			<< " " << fac*ucell->latvec.e11/double(nx) 
+			<< " " << fac*ucell->latvec.e12/double(nx) 
+			<< " " << fac*ucell->latvec.e13/double(nx) << std::endl;
+		ofs_cube << ny 
+			<< " " << fac*ucell->latvec.e21/double(ny) 
+			<< " " << fac*ucell->latvec.e22/double(ny) 
+			<< " " << fac*ucell->latvec.e23/double(ny) << std::endl;
+		ofs_cube << nz 
+			<< " " << fac*ucell->latvec.e31/double(nz) 
+			<< " " << fac*ucell->latvec.e32/double(nz) 
+			<< " " << fac*ucell->latvec.e33/double(nz) << std::endl;
 
 		std::string element = "";
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		for(int it=0; it<ucell->ntype; it++)
 		{
 			// erase the number in label, such as Fe1.
-			element = GlobalC::ucell.atoms[it].label;
+			element = ucell->atoms[it].label;
 			std::string::iterator temp = element.begin();
 			while (temp != element.end())
 			{
@@ -96,7 +88,7 @@ void ModuleIO::write_rho(
 				}
 			}
 
-			for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+			for(int ia=0; ia<ucell->atoms[it].na; ia++)
 			{
 				//convert from label to atomic number
 				int z = 0;
@@ -108,31 +100,17 @@ void ModuleIO::write_rho(
 						break;
 					}
 				}
-				ofs_cube << " " << z << " " << GlobalC::ucell.atoms[it].ncpp.zv
-						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].x
-						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].y
-						 << " " << fac*GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
+				ofs_cube << " " << z << " " << ucell->atoms[it].ncpp.zv
+						 << " " << fac*ucell->atoms[it].tau[ia].x
+						 << " " << fac*ucell->atoms[it].tau[ia].y
+						 << " " << fac*ucell->atoms[it].tau[ia].z << std::endl;
 			}
 		}
 		ofs_cube << std::setprecision(precision);
 		ofs_cube << scientific;
 	}
-	
-#ifndef __MPI
-	for(int i=0; i<GlobalC::rhopw->nx; i++)
-	{
-		for(int j=0; j<GlobalC::rhopw->ny; j++)
-		{
-			for(int k=0; k<GlobalC::rhopw->nz; k++)
-			{
-				ofs_cube << " " << rho_save[k*GlobalC::rhopw->nx*GlobalC::rhopw->ny+i*GlobalC::rhopw->ny+j];
-				// ++count_cube;
-				if(k%6==5 && k!=GlobalC::rhopw->nz-1) ofs_cube << "\n";
-			}
-			ofs_cube << "\n";
-		}
-	}
-#else
+
+#ifdef __MPI
 //	for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++) chr.rho[0][ir]=1; // for testing
 //	GlobalV::ofs_running << "\n GlobalV::RANK_IN_POOL = " << GlobalV::RANK_IN_POOL;
 	
@@ -140,7 +118,7 @@ void ModuleIO::write_rho(
 	if(GlobalV::MY_POOL==0)
 	{
 		/// for cube file
-		int nxyz = GlobalC::rhopw->nx * GlobalC::rhopw->ny * GlobalC::rhopw->nz;
+		int nxyz = nx * ny * nz;
 		double* chg_cube = new double[nxyz];
 		ModuleBase::GlobalFunc::ZEROS(chg_cube, nxyz);
 		/// for cube file
@@ -148,10 +126,10 @@ void ModuleIO::write_rho(
 		// num_z: how many planes on processor 'ip'
     		int *num_z = new int[GlobalV::NPROC_IN_POOL];
     		ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-    		for (int iz=0;iz<GlobalC::bigpw->nbz;iz++)
+    		for (int iz=0;iz<nbz;iz++)
     		{
         		int ip = iz % GlobalV::NPROC_IN_POOL;
-        		num_z[ip] += GlobalC::bigpw->bz;
+        		num_z[ip] += bz;
     		}
 
 		// start_z: start position of z in 
@@ -164,9 +142,9 @@ void ModuleIO::write_rho(
     		}
 
 		// which_ip: found iz belongs to which ip.
-		int *which_ip = new int[GlobalC::rhopw->nz];
-		ModuleBase::GlobalFunc::ZEROS(which_ip, GlobalC::rhopw->nz);
-		for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+		int *which_ip = new int[nz];
+		ModuleBase::GlobalFunc::ZEROS(which_ip, nz);
+		for(int iz=0; iz<nz; iz++)
 		{
 			for(int ip=0; ip<GlobalV::NPROC_IN_POOL; ip++)
 			{
@@ -186,11 +164,11 @@ void ModuleIO::write_rho(
 
 		
 		int count=0;
-		int nxy = GlobalC::rhopw->nx * GlobalC::rhopw->ny;
+		int nxy = nx * ny;
 		double* zpiece = new double[nxy];
 
 		// save the rho one z by one z.
-		for(int iz=0; iz<GlobalC::rhopw->nz; iz++)
+		for(int iz=0; iz<nz; iz++)
 		{
 			// std::cout << "\n iz=" << iz << std::endl;
 			// tag must be different for different iz.
@@ -206,7 +184,7 @@ void ModuleIO::write_rho(
 					// mohan change to rho_save on 2012-02-10
 					// because this can make our next restart calculation lead
 					// to the same scf_thr as the one saved.
-					zpiece[ir] = rho_save[ir*GlobalC::rhopw->nplane+iz-GlobalC::rhopw->startz_current];
+					zpiece[ir] = rho_save[ir*nplane+iz-startz_current];
 					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::rhopw->nplane+iz=" << ir*GlobalC::rhopw->nplane+iz;
 				}
 			}
@@ -217,7 +195,7 @@ void ModuleIO::write_rho(
 				for(int ir=0; ir<nxy; ir++)
 				{
 					// zpiece[ir] = rho[is][ir*num_z[GlobalV::RANK_IN_POOL]+iz];
-					zpiece[ir] = rho_save[ir*GlobalC::rhopw->nplane+iz-GlobalC::rhopw->startz_current];
+					zpiece[ir] = rho_save[ir*nplane+iz-startz_current];
 					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::rhopw->nplane+iz=" << ir*GlobalC::rhopw->nplane+iz;
 				}
 				MPI_Send(zpiece, nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
@@ -231,7 +209,6 @@ void ModuleIO::write_rho(
 				// GlobalV::ofs_running << "\n Receieve First number = " << zpiece[0];
 			}
 
-			// write data	
 			if(GlobalV::MY_RANK==0)
 			{
 				/// for cube file
@@ -249,14 +226,14 @@ void ModuleIO::write_rho(
 		// for cube file
 		if(GlobalV::MY_RANK==0)
 		{
-			for(int ix=0; ix<GlobalC::rhopw->nx; ix++)
+			for(int ix=0; ix<nx; ix++)
 			{
-				for(int iy=0; iy<GlobalC::rhopw->ny; iy++)
+				for(int iy=0; iy<ny; iy++)
 				{
-					for (int iz=0; iz<GlobalC::rhopw->nz; iz++)
+					for (int iz=0; iz<nz; iz++)
 					{
-						ofs_cube << " " << chg_cube[iz*GlobalC::rhopw->nx*GlobalC::rhopw->ny+ix*GlobalC::rhopw->ny+iy];
-						if(iz%6==5 && iz!=GlobalC::rhopw->nz-1) ofs_cube << "\n";
+						ofs_cube << " " << chg_cube[iz*nx*ny+ix*ny+iy];
+						if(iz%6==5 && iz!=nz-1) ofs_cube << "\n";
 					}
 					ofs_cube << "\n";
 				}
@@ -266,6 +243,20 @@ void ModuleIO::write_rho(
 		/// for cube file
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
+#else
+	for(int i=0; i<nx; i++)
+	{
+		for(int j=0; j<ny; j++)
+		{
+			for(int k=0; k<nz; k++)
+			{
+				ofs_cube << " " << rho_save[k*nx*ny+i*ny+j];
+				// ++count_cube;
+				if(k%6==5 && k!=nz-1) ofs_cube << "\n";
+			}
+			ofs_cube << "\n";
+		}
+	}
 #endif
 
 	if(GlobalV::MY_RANK==0) 
