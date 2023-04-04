@@ -14,7 +14,7 @@ AddTest(
 )
 AddTest(
   TARGET base_tool_check
-  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp ../global_function.cpp
 )
 AddTest(
   TARGET base_memory
@@ -140,7 +140,7 @@ AddTest(
 
 AddTest(
   TARGET base_global_file
-  SOURCES global_file_test.cpp ../global_file.cpp  ../global_variable.cpp ../memory.cpp ../timer.cpp
+  SOURCES global_file_test.cpp ../global_file.cpp  ../global_variable.cpp ../memory.cpp ../timer.cpp ../global_function.cpp
 )
 
 AddTest(
