@@ -367,9 +367,7 @@ void Input_Conv::Convert(void)
     if (INPUT.restart_save)
     {
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
-        const std::string command0 = "test -d " + GlobalC::restart.folder + " || mkdir " + GlobalC::restart.folder;
-        if (GlobalV::MY_RANK == 0)
-            system(command0.c_str());
+        ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "hse"
             || INPUT.dft_functional == "opt_orb" || INPUT.dft_functional == "scan0")
         {
