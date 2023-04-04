@@ -1,4 +1,5 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace hamilt{
 
@@ -22,38 +23,35 @@ struct cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_CPU> {
             std::complex<FPTYPE> *vkb2,
             std::complex<FPTYPE> *dbecp_noevc)
     {
+        // npwx >= npw
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
         for (int i = 0; i < nkb; i++)
         {
-            const std::complex<FPTYPE>* pvkb0i = vkbi + i * npwx;
-            const std::complex<FPTYPE>* pvkb0j = vkbj + i * npwx;
-            std::complex<FPTYPE>* pvkb = nullptr;
-            std::complex<FPTYPE>* pdbecp_noevc = dbecp_noevc + i * npwx;
-
-            // third term of dbecp_noevc
-            //std::complex<FPTYPE>* pvkb = &vkb2(i,0);
-            //std::complex<FPTYPE>* pdbecp_noevc = &dbecp_noevc(i, 0);
-            FPTYPE qvec[3] = {0, 0, 0};
             for (int ig = 0; ig < npw; ig++)
             {
-                pvkb = vkb1 + i * npwx;
-                qvec[ipol] = gcar[(ik * npwx + ig) * 3 + ipol] + kvec_c[ik * 3 + ipol];
-                qvec[jpol] = gcar[(ik * npwx + ig) * 3 + jpol] + kvec_c[ik * 3 + jpol];
-                pvkb[ig] += static_cast<FPTYPE>(0.5) * qvec[ipol] * pvkb0j[ig] +
-                            static_cast<FPTYPE>(0.5) * qvec[jpol] * pvkb0i[ig];
-
-                pdbecp_noevc[ig] -= static_cast<FPTYPE>(2.0) * pvkb[ig];
-
-                if (ipol == jpol) {
-                    pvkb = vkb + i * npwx;
-                    pdbecp_noevc[ig] -= pvkb[ig];
-                }
-                pvkb = vkb2 + i * npwx;
+                auto pvkb0i = vkbi + i * npwx;
+                auto pvkb0j = vkbj + i * npwx;
+                auto pdbecp_noevc = dbecp_noevc + i * npwx;
+                FPTYPE qvec[3];
                 for (int ii = 0; ii < 3; ii++) {
                     qvec[ii] = gcar[(ik * npwx + ig) * 3 + ii] + kvec_c[ik * 3 + ii];
                 }
+                auto pvkb1 = vkb1 + i * npwx;
+                pvkb1[ig] += static_cast<FPTYPE>(0.5) * qvec[ipol] * pvkb0j[ig] +
+                             static_cast<FPTYPE>(0.5) * qvec[jpol] * pvkb0i[ig];
+                pdbecp_noevc[ig] -= static_cast<FPTYPE>(2.0) * pvkb1[ig];
+
+                if (ipol == jpol) {
+                    auto pvkb = vkb + i * npwx;
+                    pdbecp_noevc[ig] -= pvkb[ig];
+                }
+                auto pvkb2 = vkb2 + i * npwx;
+                
                 FPTYPE qvec_norm2 = qvec[0] * qvec[0] + qvec[1] * qvec[1] + qvec[2] * qvec[2];
                 FPTYPE qm1 = qvec_norm2 > 1e-16 ? 1.0 / sqrt(qvec_norm2) : 0;
-                pdbecp_noevc[ig] -= static_cast<FPTYPE>(2.0) * pvkb[ig] * qvec[ipol] *
+                pdbecp_noevc[ig] -= static_cast<FPTYPE>(2.0) * pvkb2[ig] * qvec[ipol] *
                                         qvec[jpol] * qm1 *	tpiba;
             } // end ig
         }//end nkb
@@ -84,13 +82,20 @@ struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
             const std::complex<FPTYPE> *dbecp,
             FPTYPE *stress)
     {
-        for (int ib = 0; ib < nbands_occ; ib++)
+        FPTYPE local_stress = 0;
+#ifdef _OPENMP
+#pragma omp parallel reduction(+:local_stress)
+{
+#endif
+        int iat = 0, sum = 0;
+        for (int it = 0; it < ntype; it++)
         {
-            FPTYPE fac = d_wg[ik * wg_nc + ib] * 1.0;
-            int iat = 0, sum = 0;
-            for (int it = 0; it < ntype; it++)
+            const int Nprojs = atom_nh[it];
+#ifdef _OPENMP
+#pragma omp for collapse(4)
+#endif
+            for (int ib = 0; ib < nbands_occ; ib++)
             {
-                const int Nprojs = atom_nh[it];
                 for (int ia=0; ia < atom_na[it]; ia++)
                 {
                     for (int ip1=0; ip1<Nprojs; ip1++)
@@ -100,21 +105,26 @@ struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
                             if(!multi_proj && ip1 != ip2) {
                                 continue;
                             }
-                            FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2];
-                            const int inkb1 = sum + ip1;
-                            const int inkb2 = sum + ip2;
+                            FPTYPE fac = d_wg[ik * wg_nc + ib] * 1.0;
+                            FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                            const int inkb1 = sum + ia * Nprojs + ip1;
+                            const int inkb2 = sum + ia * Nprojs + ip2;
                             //out<<"\n ps = "<<ps;
 
 
                             const FPTYPE dbb = ( conj( dbecp[ ib * nkb + inkb1] ) * becp[ ib * nkb + inkb2] ).real();
-                            stress[ipol * 3 + jpol] -= ps * fac * dbb;
+                            local_stress -= ps * fac * dbb;
                         }
                     }//end ip
-                    ++iat;
-                    sum+=Nprojs;
                 }//ia
-            } //end it
-        }
+            } 
+            sum += atom_na[it] * Nprojs;
+            iat += atom_na[it];
+        } //end it
+#ifdef _OPENMP
+}
+#endif
+        stress[ipol * 3 + jpol] += local_stress;
     }
 };
 

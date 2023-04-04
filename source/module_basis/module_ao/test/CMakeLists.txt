@@ -22,6 +22,8 @@ list(APPEND depend_files
   ../../../module_base/global_variable.cpp
   ../../../module_base/global_function.cpp
   ../../../module_base/global_file.cpp
+  ../../../module_base/libm/branred.cpp
+  ../../../module_base/libm/sincos.cpp
   ../ORB_control.cpp
   ../ORB_read.cpp
   ../ORB_atomic.cpp
