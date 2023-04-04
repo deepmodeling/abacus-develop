@@ -738,24 +738,31 @@ void Nose_Hoover::update_volume()
 
 
     // Diagonal components
-    if(pflag[0])
+    if (mdp.md_prec_level == 1)
     {
         factor = exp(v_omega[0] * mdp.md_dt / 2);
-        ucell.latvec.e11 *= factor;
+        ucell.lat0 *= factor;
     }
-
-    if(pflag[1])
+    else
     {
-        factor = exp(v_omega[1] * mdp.md_dt / 2);
-        ucell.latvec.e22 *= factor;
-    }
+        if(pflag[0])
+        {
+            factor = exp(v_omega[0] * mdp.md_dt / 2);
+            ucell.latvec.e11 *= factor;
+        }
 
-    if(pflag[2])
-    {
-        factor = exp(v_omega[2] * mdp.md_dt / 2);
-        ucell.latvec.e33 *= factor;
-    }
+        if(pflag[1])
+        {
+            factor = exp(v_omega[1] * mdp.md_dt / 2);
+            ucell.latvec.e22 *= factor;
+        }
 
+        if(pflag[2])
+        {
+            factor = exp(v_omega[2] * mdp.md_dt / 2);
+            ucell.latvec.e33 *= factor;
+        }
+    }
 
     // tri mode, off-diagonal components, second half
     if(pflag[4])
