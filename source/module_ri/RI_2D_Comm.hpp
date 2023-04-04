@@ -137,7 +137,7 @@ void RI_2D_Comm::add_Hexx(
 	const std::string mixing_mode = GlobalC::CHR_MIX.get_mixing_mode();
 	if(mixing_mode == "plain")
 	{
-		if(Hk_seq[ik].empty)
+		if(Hk_seq[ik].empty())
 		{
 			Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
 			Hk_seq[ik].emplace_back(Hk);
