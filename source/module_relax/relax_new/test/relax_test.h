@@ -1,5 +1,4 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "../../variable_cell.h"
 
 namespace GlobalC
 {
@@ -48,7 +47,5 @@ pseudo_nc::~pseudo_nc(){};
 Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};
 void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basis* rho_basis){};
-
-void Variable_Cell::init_after_vc(){};
 
 extern Input INPUT;

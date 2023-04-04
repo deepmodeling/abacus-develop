@@ -41,15 +41,45 @@ namespace ModuleESolver
 
     void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
     {
-        if (inp.nx * inp.ny * inp.nz == 0)
-            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
-        else
-            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
+        ModuleBase::TITLE("ESolver_FP", "init_after_vc");
 
-        this->pw_rho->initparameters(false, inp.ecutrho);
-        this->pw_rho->setuptransform();
-        this->pw_rho->collect_local_pw(); 
-        this->pw_rho->collect_uniqgg();
+        if (GlobalV::md_prec_level == 0)
+        {
+            //only G-vector and K-vector are changed due to the change of lattice vector
+            //FFT grids do not change!!
+            pw_rho->initgrids(cell.lat0, cell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
+            pw_rho->collect_local_pw(); 
+            pw_rho->collect_uniqgg();
+
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
+        }
+        else if (GlobalV::md_prec_level == 1)
+        {
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
+        }
+        else if (GlobalV::md_prec_level == 2)
+        {
+            if (inp.nx * inp.ny * inp.nz == 0)
+                this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
+            else
+                this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
+
+            this->pw_rho->initparameters(false, inp.ecutrho);
+            this->pw_rho->setuptransform();
+            this->pw_rho->collect_local_pw(); 
+            this->pw_rho->collect_uniqgg();
+        }
+
+        if(ModuleSymmetry::Symmetry::symm_flag == 1)
+        {
+            GlobalC::symm.analy_sys(cell, GlobalV::ofs_running);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
+        }
+
+        GlobalC::kv.set_after_vc(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)

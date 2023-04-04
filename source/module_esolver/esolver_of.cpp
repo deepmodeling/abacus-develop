@@ -17,7 +17,6 @@
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
@@ -240,6 +239,16 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     CE.Init_CE();
 }
 
+void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
+{
+    ModuleBase::timer::tick("ESolver_OF", "init_after_vc");
+
+    ESolver_FP::init_after_vc(inp,ucell);
+
+    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
+}
+
 void ESolver_OF::Run(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
@@ -280,19 +289,17 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
 //
 void ESolver_OF::beforeOpt(const int istep)
 {
-    // Temporary, md and relax will merge later   liuyu add 2022-11-07
-    if(GlobalV::CALCULATION == "md" && istep)
+    if (GlobalC::ucell.cell_parameter_updated)
+    {
+        this->init_after_vc(INPUT, GlobalC::ucell);
+    }
+    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
     {
         CE.update_all_dis(GlobalC::ucell);
         CE.extrapolate_charge(pelec->charge);
-
-        if(GlobalC::ucell.cell_parameter_updated)
-        {
-            Variable_Cell::init_after_vc();
-        }
-
-        this->pelec->init_scf(istep, GlobalC::sf.strucFac);
     }
+
+    this->pelec->init_scf(istep, GlobalC::sf.strucFac);
 
     //calculate ewald energy
     H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho);

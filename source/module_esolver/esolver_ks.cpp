@@ -105,26 +105,20 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     {
-        ESolver_FP::init_after_vc(inp,ucell);
+        ModuleBase::TITLE("ESolver_KS", "init_after_vc");
 
-        // symm_flag == 0 in md calculation, thus this part is annotated
-        // if (ModuleSymmetry::Symmetry::symm_flag == 1)
-        // {
-        //     GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
-        //     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
-        // }
+        ESolver_FP::init_after_vc(inp, ucell);
 
-        // reset cartesian coordinates due to the change of lattice
-        GlobalC::kv.set_after_vc(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, GlobalC::ucell.G, GlobalC::ucell.latvec);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+        if (GlobalV::md_prec_level == 2)
+        {
+            // initialize the real-space uniform grid for FFT and parallel
+            // distribution of plane waves
+            GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
+                        GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
 
-        // initialize the real-space uniform grid for FFT and parallel
-        // distribution of plane waves
-        GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
-            GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
-            
-        // Calculate Structure factor
-        GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+            // Calculate Structure factor
+            GlobalC::sf.setup_structure_factor(&ucell, GlobalC::rhopw);
+        }
     }
 
     template<typename FPTYPE, typename Device>

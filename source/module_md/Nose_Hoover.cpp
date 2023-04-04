@@ -17,11 +17,6 @@ Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(M
         ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC !!! ");
     }
 
-    if(mdp.md_pmode != "none")
-    {
-        ucell.cell_parameter_updated = true;
-    }
-
     // init NPT related variables
     for(int i=0; i<6; ++i)
     {
@@ -154,6 +149,10 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 
     MDrun::setup(p_ensolve);
+    if(mdp.md_pmode != "none")
+    {
+        ucell.cell_parameter_updated = true;
+    }
 
     // determine target temperature
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
