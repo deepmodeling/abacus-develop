@@ -797,22 +797,24 @@ void UnitCell::read_pseudo(ofstream &ofs)
                     abtype += 1;
                     if(abtype == 1)
                     {
-                        std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
-                        ofs << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
+                        std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
+                        ofs << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
                     }
-                    std::cout<<" Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].ncpp.psd);
+                    std::cout<<" Warning: the number of valence electrons in pseudopotential > " << ModuleBase::MinZval.at(atoms[it].ncpp.psd);
                     std::cout<<" for " << atoms[it].ncpp.psd << ": " << ModuleBase::EleConfig.at(atoms[it].ncpp.psd) << std::endl;
-                    ofs << " Warning: number valence electrons > " << ModuleBase::MinZval.at(atoms[it].ncpp.psd);
+                    ofs << " Warning: the number of valence electrons in pseudopotential > " << ModuleBase::MinZval.at(atoms[it].ncpp.psd);
                     ofs << " for " << atoms[it].ncpp.psd << ": " << ModuleBase::EleConfig.at(atoms[it].ncpp.psd) << std::endl;
                 }
             }
         }
         if(abtype>0)
         {
-            std::cout<< " Please make sure the pseudopotential file is what you need"<<std::endl;
-            std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"<<std::endl;
-            ofs << " Please make sure the pseudopential file is what you need"<<std::endl;
-            ofs << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+            std::cout<< " Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient." << std::endl;
+			std::cout<< " If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning."<<std::endl;
+            std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"<<std::endl;
+            ofs << " Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient."<<std::endl;
+            ofs << " If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning."<<std::endl;
+            ofs << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
             ModuleBase::GlobalFunc::OUT(ofs,"");
         }
     }
