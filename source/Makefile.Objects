@@ -300,7 +300,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
-    variable_cell.o\
     relax_old.o\
     relax.o\
     line_search.o\

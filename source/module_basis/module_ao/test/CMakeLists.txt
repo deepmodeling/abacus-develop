@@ -22,6 +22,8 @@ list(APPEND depend_files
   ../../../module_base/global_variable.cpp
   ../../../module_base/global_function.cpp
   ../../../module_base/global_file.cpp
+  ../../../module_base/libm/branred.cpp
+  ../../../module_base/libm/sincos.cpp
   ../ORB_control.cpp
   ../ORB_read.cpp
   ../ORB_atomic.cpp
@@ -89,6 +91,16 @@ AddTest(
     TARGET ORB_table_alpha_test
     SOURCES ORB_table_alpha_test.cpp
         ../ORB_table_alpha.cpp
+        ../ORB_read.cpp
+        ../ORB_atomic.cpp
+        ../ORB_atomic_lm.cpp
+    LIBS ${math_libs} device base
+)
+
+AddTest(
+    TARGET ORB_table_phi_test
+    SOURCES ORB_table_phi_test.cpp
+        ../ORB_table_phi.cpp
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp

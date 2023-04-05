@@ -27,19 +27,13 @@ int ELPA_Solver::eigenvector(complex<double>* A, double* EigenValue, complex<dou
         t=-1;
         timer(myid, "elpa_eigenvectors_dc", "1", t);
     }
-    elpa_eigenvectors(NEW_ELPA_HANDLE_POOL[handle_id],
-                                        reinterpret_cast<double _Complex*>(A),
-                EigenValue, reinterpret_cast<double _Complex*>(EigenVector),
-                                        &info);
+    elpa_eigenvectors(NEW_ELPA_HANDLE_POOL[handle_id], A, EigenValue, EigenVector, &info);
     if((loglevel>0 && myid==0) || loglevel>1)
     {
         timer(myid, "elpa_eigenvectors_dc", "1", t);
     }
-#ifdef __MPI
     MPI_Allreduce(&info, &allinfo, 1, MPI_INT, MPI_MAX, comm);
-#else
     allinfo = info;
-#endif
     return allinfo;
 }
 
@@ -135,8 +129,6 @@ int ELPA_Solver::generalized_eigenvector(complex<double>* A, complex<double>* B,
         timer(myid, "elpa_eigenvectors", "3", t);
     }
     if(loglevel>2) saveMatrix("A_tilde.dat", nFull, A, desc, cblacs_ctxt);
-    //elpa_eigenvectors_all_host_arrays_dc(NEW_ELPA_HANDLE_POOL[handle_id], reinterpret_cast<double _Complex*>(A),
-    //                     EigenValue, reinterpret_cast<double _Complex*>(EigenVector), &info);
     info=eigenvector(A, EigenValue, EigenVector);
     if((loglevel>0 && myid==0) || loglevel>1)
     {
@@ -165,9 +157,6 @@ int ELPA_Solver::generalized_eigenvector(complex<double>* A, complex<double>* B,
 
 int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, complex<double>* EigenVector, int& DecomposedState)
 {
-    double _Complex* b = reinterpret_cast<double _Complex*>(B);
-    double _Complex* q = reinterpret_cast<double _Complex*>(EigenVector);
-
     int info=0;
     int allinfo=0;
     double t;
@@ -186,11 +175,8 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
         {
             timer(myid, "pzpotrf_", "1", t);
         }
-#ifdef __MPI
         MPI_Allreduce(&info, &allinfo, 1, MPI_INT, MPI_MAX, comm);
-#else
         allinfo = info;
-#endif
         if(allinfo != 0) //if pdpotrf fail, try elpa_cholesky_real
         {
             DecomposedState=2;
@@ -199,16 +185,13 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
                 t=-1;
                 timer(myid, "elpa_cholesky_dc", "2", t);
             }
-            elpa_cholesky_dc(NEW_ELPA_HANDLE_POOL[handle_id], b, &info);
+            elpa_cholesky(NEW_ELPA_HANDLE_POOL[handle_id], B, &info);
             if(loglevel>1)
             {
                 timer(myid, "elpa_cholesky_dc", "2", t);
             }
-#ifdef __MPI
             MPI_Allreduce(&info, &allinfo, 1, MPI_INT, MPI_MAX, comm);
-#else
             allinfo = info;
-#endif
         }
     } else
     {
@@ -218,16 +201,13 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
             t=-1;
             timer(myid, "elpa_cholesky_dc", "1", t);
         }
-        elpa_cholesky_dc(NEW_ELPA_HANDLE_POOL[handle_id], b, &info);
+        elpa_cholesky(NEW_ELPA_HANDLE_POOL[handle_id], B, &info);
         if(loglevel>1)
         {
             timer(myid, "elpa_cholesky_dc", "1", t);
         }
-#ifdef __MPI
         MPI_Allreduce(&info, &allinfo, 1, MPI_INT, MPI_MAX, comm);
-#else
         allinfo = info;
-#endif
         if(allinfo != 0)
         {
             DecomposedState=1;
@@ -241,11 +221,8 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
             {
                 timer(myid, "pzpotrf_", "2", t);
             }
-#ifdef __MPI
             MPI_Allreduce(&info, &allinfo, 1, MPI_INT, MPI_MAX, comm);
-#else
             allinfo = info;
-#endif
         }
     }
 
@@ -275,7 +252,7 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
             t=-1;
             timer(myid, "invert U", "1", t);
         }
-        elpa_invert_trm_dc(NEW_ELPA_HANDLE_POOL[handle_id], b, &info);
+        elpa_invert_triangular(NEW_ELPA_HANDLE_POOL[handle_id], B, &info);
         if(loglevel>1)
         {
             timer(myid, "invert U", "1", t);
@@ -292,16 +269,13 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
         }
         //elpa_eigenvectors_all_host_arrays_dc(NEW_ELPA_HANDLE_POOL[handle_id], b,
         //                     EigenValue, q, &info);
-		info=eigenvector(B, EigenValue, EigenVector);
+        info=eigenvector(B, EigenValue, EigenVector);
         if(loglevel>1)
         {
             timer(myid, "calculate eigenvalue and eigenvector of B", "1", t);
         }
-#ifdef __MPI
         MPI_Allreduce(&info, &allinfo, 1, MPI_INT, MPI_MAX, comm);
-#else   
         allinfo = info;
-#endif
         // calculate q*ev and put to work
         for(int i=0; i<nacols; ++i)
         {

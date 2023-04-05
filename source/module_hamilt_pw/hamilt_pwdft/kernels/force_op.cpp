@@ -1,5 +1,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace hamilt{
 
 template <typename FPTYPE>
@@ -18,10 +22,13 @@ struct cal_vkb1_nl_op<FPTYPE, psi::DEVICE_CPU> {
         const FPTYPE *gcar,
         std::complex<FPTYPE> *vkb1)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
         for (int i = 0; i < nkb; i++) {
-            std::complex<FPTYPE> *pvkb1 = vkb1 + i * npwx;
-            const std::complex<FPTYPE> *pvkb = vkb + i * vkb_nc;
             for (int ig = 0; ig < nbasis; ig++) {
+                std::complex<FPTYPE> *pvkb1 = vkb1 + i * npwx;
+                const std::complex<FPTYPE> *pvkb = vkb + i * vkb_nc;
                 pvkb1[ig] = pvkb[ig] * NEG_IMAG_UNIT * gcar[(ik * npwk_max + ig) * 3 + ipol];
             }
         }
@@ -53,13 +60,23 @@ struct cal_force_nl_op<FPTYPE, psi::DEVICE_CPU> {
         const std::complex<FPTYPE> *dbecp,
         FPTYPE *force)
     {
-        for (int ib = 0; ib < nbands_occ; ib++) {
-            FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
-            int iat = 0;
-            int sum = 0;
-            for (int it = 0; it < ntype; it++) {
-                const int Nprojs = atom_nh[it];
-                for (int ia = 0; ia < atom_na[it]; ia++) {
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
+        int iat0 = 0;
+        int sum0 = 0;
+        for (int it = 0; it < ntype; it++) {
+            const int Nprojs = atom_nh[it];
+#ifdef _OPENMP
+#pragma omp for collapse(2)
+#endif
+            for (int ia = 0; ia < atom_na[it]; ia++) {
+                for (int ib = 0; ib < nbands_occ; ib++) {
+                    FPTYPE local_force[3] = {0, 0, 0};
+                    FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
+                    int iat = iat0 + ia;
+                    int sum = sum0 + ia * Nprojs;
                     for (int ip = 0; ip < Nprojs; ip++) {
                         // FPTYPE ps = GlobalC::ppcell.deeq[GlobalV::CURRENT_SPIN, iat, ip, ip];
                         FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip];
@@ -68,15 +85,10 @@ struct cal_force_nl_op<FPTYPE, psi::DEVICE_CPU> {
 
                         for (int ipol=0; ipol<3; ipol++) {
                             const FPTYPE dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) * becp[ib * nkb + inkb]).real();
-                            force[iat * forcenl_nc + ipol] -= ps * fac * dbb;
+                            local_force[ipol] -= ps * fac * dbb;
                             //cf[iat*3+ipol] += ps * fac * dbb;
                         }
-                    }
-
-                    if(multi_proj) {
-                        for (int ip = 0; ip < Nprojs; ip++) {
-                            const int inkb = sum + ip;
-                            //for (int ip2=0; ip2<Nprojs; ip2++)
+                        if(multi_proj) {
                             for (int ip2=0; ip2<Nprojs; ip2++) {
                                 if ( ip != ip2 ) {
                                     const int jnkb = sum + ip2;
@@ -84,17 +96,35 @@ struct cal_force_nl_op<FPTYPE, psi::DEVICE_CPU> {
 
                                     for (int ipol = 0; ipol < 3; ipol++) {
                                         const FPTYPE dbb = ( conj( dbecp[ipol * nbands * nkb + ib * nkb + inkb] ) * becp[ib * nkb + jnkb] ).real();
-                                        force[iat * forcenl_nc + ipol] -= ps * fac * dbb;
+                                        local_force[ipol] -= ps * fac * dbb;
                                     }
                                 }
                             }
                         }
                     }
-                    ++iat;
-                    sum+=Nprojs;
+#ifdef _OPENMP
+                    if (omp_get_num_threads() > 1)
+                    {
+                        for (int ipol=0; ipol<3; ipol++) {
+                            #pragma omp atomic
+                            force[iat * forcenl_nc + ipol] += local_force[ipol];
+                        }
+                    }
+                    else
+#endif
+                    {
+                        for (int ipol=0; ipol<3; ipol++) {
+                            force[iat * forcenl_nc + ipol] += local_force[ipol];
+                        }
+                    }
                 }
-            } //end it
-        }
+            } // end ia
+            iat0 += atom_na[it];
+            sum0 += atom_na[it] * Nprojs;
+        } //end it
+#ifdef _OPENMP
+}
+#endif
     }
 };
 

@@ -1,7 +1,7 @@
 #include <memory>
 #include <array>
 #include "symmetry.h"
-
+#include "module_base/libm/libm.h"
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
@@ -1304,7 +1304,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     const int &fftnx, const int &fftny, const int &fftnz)
 {
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
-    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+    ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 
 	// allocate flag for each FFT grid.
     bool* symflag = new bool[fftnx*fftny*fftnz];
@@ -1327,17 +1327,13 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 
     //tmp variables
     ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
-    ModuleBase::Vector3<int> tmp_gdirect(0, 0, 0);
     ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
     int ipw, ixyz, ii, jj, kk=0;
     double arg=0.0;
 
     //rotate function (different from real space, without scaling gmatrix)
-    auto rotate_recip = [&] (int isym) 
+    auto rotate_recip = [&] (ModuleBase::Matrix3& g, ModuleBase::Vector3<int>& g0) 
     {
-        ModuleBase::Matrix3 g=kgmatrix[invmap[isym]];
-        ModuleBase::Vector3<int> g0=tmp_gdirect0;
-        
         ii = int(g.e11 * g0.x + g.e21 * g0.y + g.e31 * g0.z) ;
         if (ii < 0)
         {
@@ -1360,32 +1356,29 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     };
     for (int i = 0; i< fftnx; ++i)
     {
+        tmp_gdirect0.x=(i>int(nx/2)+1)?(i-nx):i;
         for (int j = 0; j< fftny; ++j)
         {
+            tmp_gdirect0.y=(j>int(ny/2)+1)?(j-ny):j;
             for (int k = 0; k< fftnz; ++k)
             {
-                if (!symflag[i * fftny * fftnz + j * fftnz + k])
+                int ixyz0=(i*fftny+j)*fftnz+k;
+                if (!symflag[ixyz0])
                 {
-                    //if a fft-grid is not in pw-sphere, just do not consider it.
-                    int ixyz0=(i*fftny+j)*fftnz+k;
                     int ipw0=ixyz2ipw[ixyz0];
+                    //if a fft-grid is not in pw-sphere, just do not consider it.
                     if (ipw0==-1) continue;
 
+                    tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                     std::complex<double> sum(0, 0);
                     int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
                     {
-                        // fft-grid index to old-gdirect
-                        tmp_gdirect0.x=(i>int(nx/2)+1)?(i-nx):i;
-                        tmp_gdirect0.y=(j>int(ny/2)+1)?(j-ny):j;
-                        tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                         // note : do not use PBC after rotation. 
                         // we need a real gdirect to get the correspoding rhogtot.
-                        rotate_recip(isym);
-                        //fft-grid index to new-gdirect
-                        tmp_gdirect.x=(ii>int(nx/2)+1)?(ii-nx):ii;
-                        tmp_gdirect.y=(jj>int(ny/2)+1)?(jj-ny):jj;
-                        tmp_gdirect.z=(kk>int(nz/2)+1)?(kk-nz):kk;
+
+                        rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0);
+
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
                             if(!GlobalV::GAMMA_ONLY_PW)
@@ -1405,24 +1398,31 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                                 //std::cout<<"warning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
                             continue;   //else, just skip it
                         }
+                        //fft-grid index to new-gdirect
+                        tmp_gdirect_double.x=static_cast<double>((ii>int(nx/2)+1)?(ii-nx):ii);
+                        tmp_gdirect_double.y=static_cast<double>((jj>int(ny/2)+1)?(jj-ny):jj);
+                        tmp_gdirect_double.z=static_cast<double>((kk>int(nz/2)+1)?(kk-nz):kk);
                         //calculate phase factor
-                        tmp_gdirect_double.x=(double)tmp_gdirect.x;
-                        tmp_gdirect_double.y=(double)tmp_gdirect.y;
-                        tmp_gdirect_double.z=(double)tmp_gdirect.z;
-                        double cos_arg=0.0, sin_arg=0.0;
+                        tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
+                        double cos_arg = 0.0, sin_arg = 0.0;
+                        double arg_gtrans = tmp_gdirect_double * gtrans[invmap[isym]];
+                        std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
                         // for each pricell in supercell:
-                        for(int ipt=0;ipt<this->ncell;++ipt)
+                        for (int ipt = 0;ipt < this->ncell;++ipt)
                         {
-                            arg = ( tmp_gdirect_double * (gtrans[invmap[isym]]+ptrans[ipt]) ) * ModuleBase::TWO_PI;
-                            cos_arg += cos(arg);
-                            sin_arg += sin(arg);   
+                            arg = tmp_gdirect_double * ptrans[ipt];
+                            double tmp_cos = 0.0, tmp_sin = 0.0;
+                            ModuleBase::libm::sincos(arg, &tmp_sin, &tmp_cos);
+                            cos_arg += tmp_cos;
+                            sin_arg += tmp_sin;
                         }
                         // add nothing to sum, so don't consider this isym into rot_count
-                        cos_arg/=double(ncell);
-                        sin_arg/=double(ncell);
+                        cos_arg/=static_cast<double>(ncell);
+                        sin_arg/=static_cast<double>(ncell);
                         //deal with double-zero
-                        if(equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
-                        std::complex<double> gphase( cos_arg,  sin_arg );
+                        if (equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
+                        std::complex<double> gphase(cos_arg, sin_arg);
+                        gphase = phase_gtrans * gphase;
                         //deal with small difference from 1
                         if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
                         gphase_record[rot_count]=gphase;
@@ -1434,7 +1434,6 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                     }
                     assert(rot_count<=nrotk);
                     sum /= rot_count;
-
                     for (int isym = 0; isym < rot_count; ++isym)
                     {
                         rhogtot[ipw_record[isym]] = sum/gphase_record[isym];
@@ -1444,13 +1443,12 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             }
         }
     }
-
     delete[] symflag;
     delete[] ipw_record;
     delete[] ixyz_record;
     delete[] gphase_record;
     delete[] invmap;
-    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+    ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
 
 

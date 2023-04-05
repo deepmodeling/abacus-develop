@@ -69,7 +69,7 @@ AddTest(
   LIBS ${math_libs} device
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
           ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
-          ../memory.cpp
+          ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp
 )
 AddTest(
   TARGET base_math_sphbes
@@ -151,4 +151,9 @@ AddTest(
 AddTest(
   TARGET base_element_basis_index
   SOURCES element_basis_index_test.cpp ../element_basis_index.cpp
+)
+
+AddTest(
+  TARGET base_tool_threading
+  SOURCES tool_threading_test.cpp ../tool_threading.h
 )
