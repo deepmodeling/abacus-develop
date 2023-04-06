@@ -1,14 +1,14 @@
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_base/element_name.h"
 
-void ModuleIO::write_rho(
+void ModuleIO::write_cube(
 #ifdef __MPI
 	const int& bz,
 	const int& nbz,
 	const int& nplane,
 	const int& startz_current,
 #endif
-	const double* rho_save,
+	const double* data,
 	const int& is,
 	const int& nspin,
 	const int& iter,
@@ -18,11 +18,12 @@ void ModuleIO::write_rho(
 	const int& nz,
 	const double& ef,
 	const UnitCell* ucell,
-	const int &precision)
+	const int &precision,
+	const int &out_fermi)
 {
-	ModuleBase::TITLE("ModuleIO","write_rho");
+	ModuleBase::TITLE("ModuleIO","write_cube");
 	
-	if (GlobalV::out_chg==0) 
+	if (GlobalV::out_chg==0 && GlobalV::out_pot==0) 
 	{
 		return;
 	}
@@ -38,21 +39,29 @@ void ModuleIO::write_rho(
 		
 		if (!ofs_cube)
 		{
-				ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
+				ModuleBase::WARNING("ModuleIO::write_cube","Can't create Output File!");
 		}	
 
 		/// output header for cube file
 		ofs_cube << "Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn." << std::endl;
 		// ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
 		ofs_cube << nspin << " (nspin) ";
-		if (GlobalV::TWO_EFERMI)
+		
+		if (out_fermi == 1)
 		{
-			if(is==0)	ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
-			else if(is==1)	ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+			if (GlobalV::TWO_EFERMI)
+			{
+				if(is==0)	ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
+				else if(is==1)	ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+			}
+			else
+			{
+				ofs_cube << ef << " (fermi energy, in Ry)" << std::endl;
+			}
 		}
 		else
 		{
-			ofs_cube << ef << " (fermi energy, in Ry)" << std::endl;
+			ofs_cube << std::endl;
 		}
 		
 		ofs_cube << ucell->nat << " 0.0 0.0 0.0 " << std::endl;
@@ -119,8 +128,8 @@ void ModuleIO::write_rho(
 	{
 		/// for cube file
 		int nxyz = nx * ny * nz;
-		double* chg_cube = new double[nxyz];
-		ModuleBase::GlobalFunc::ZEROS(chg_cube, nxyz);
+		double* data_cube = new double[nxyz];
+		ModuleBase::GlobalFunc::ZEROS(data_cube, nxyz);
 		/// for cube file
 	
 		// num_z: how many planes on processor 'ip'
@@ -184,7 +193,7 @@ void ModuleIO::write_rho(
 					// mohan change to rho_save on 2012-02-10
 					// because this can make our next restart calculation lead
 					// to the same scf_thr as the one saved.
-					zpiece[ir] = rho_save[ir*nplane+iz-startz_current];
+					zpiece[ir] = data[ir*nplane+iz-startz_current];
 					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::rhopw->nplane+iz=" << ir*GlobalC::rhopw->nplane+iz;
 				}
 			}
@@ -195,7 +204,7 @@ void ModuleIO::write_rho(
 				for(int ir=0; ir<nxy; ir++)
 				{
 					// zpiece[ir] = rho[is][ir*num_z[GlobalV::RANK_IN_POOL]+iz];
-					zpiece[ir] = rho_save[ir*nplane+iz-startz_current];
+					zpiece[ir] = data[ir*nplane+iz-startz_current];
 					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*GlobalC::rhopw->nplane+iz=" << ir*GlobalC::rhopw->nplane+iz;
 				}
 				MPI_Send(zpiece, nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
@@ -214,7 +223,7 @@ void ModuleIO::write_rho(
 				/// for cube file
 				for(int ir=0; ir<nxy; ir++)
 				{
-					chg_cube[ir+iz*nxy]=zpiece[ir];
+					data_cube[ir+iz*nxy]=zpiece[ir];
 				}
 				/// for cube file
 			}
@@ -232,14 +241,14 @@ void ModuleIO::write_rho(
 				{
 					for (int iz=0; iz<nz; iz++)
 					{
-						ofs_cube << " " << chg_cube[iz*nx*ny+ix*ny+iy];
+						ofs_cube << " " << data_cube[iz*nx*ny+ix*ny+iy];
 						if(iz%6==5 && iz!=nz-1) ofs_cube << "\n";
 					}
 					ofs_cube << "\n";
 				}
 			}
 		}
-		delete[] chg_cube;
+		delete[] data_cube;
 		/// for cube file
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -250,7 +259,7 @@ void ModuleIO::write_rho(
 		{
 			for(int k=0; k<nz; k++)
 			{
-				ofs_cube << " " << rho_save[k*nx*ny+i*ny+j];
+				ofs_cube << " " << data[k*nx*ny+i*ny+j];
 				// ++count_cube;
 				if(k%6==5 && k!=nz-1) ofs_cube << "\n";
 			}
@@ -262,7 +271,7 @@ void ModuleIO::write_rho(
 	if(GlobalV::MY_RANK==0) 
 	{
 		end = time(NULL);
-		ModuleBase::GlobalFunc::OUT_TIME("write_rho",start,end);
+		ModuleBase::GlobalFunc::OUT_TIME("write_cube",start,end);
 		// ofs.close();
 		/// for cube file
 		ofs_cube.close();

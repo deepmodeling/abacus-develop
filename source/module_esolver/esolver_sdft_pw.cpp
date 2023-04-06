@@ -6,7 +6,7 @@
 #include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_io/write_istate_info.h"
 
 //-------------------Temporary------------------
@@ -104,7 +104,7 @@ void ESolver_SDFT_PW::afterscf(const int istep)
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-            ModuleIO::write_rho(
+            ModuleIO::write_cube(
 #ifdef __MPI
                 GlobalC::bigpw->bz,
                 GlobalC::bigpw->nbz,

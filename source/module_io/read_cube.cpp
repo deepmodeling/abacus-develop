@@ -1,15 +1,15 @@
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_base/global_variable.h"
 
 
-bool ModuleIO::read_rho(
+bool ModuleIO::read_cube(
 #ifdef __MPI
 		Parallel_Grid* Pgrid,
 #endif
 		const int &is,
 		const int &nspin,
 		const std::string &fn,
-		double* rho,
+		double* data,
 		int& nx,
 		int& ny,
 		int& nz,
@@ -17,7 +17,7 @@ bool ModuleIO::read_rho(
 		const UnitCell* ucell,
 		int &prenspin)
 {
-    ModuleBase::TITLE("ModuleIO","read_rho");
+    ModuleBase::TITLE("ModuleIO","read_cube");
     std::ifstream ifs(fn.c_str());
     if (!ifs) 
 	{
@@ -117,7 +117,7 @@ bool ModuleIO::read_rho(
 		{
 			zpiece = tempRho[iz];
 		}
-		Pgrid->zpiece_to_all(zpiece, iz, rho);
+		Pgrid->zpiece_to_all(zpiece, iz, data);
 	}// iz
 
 	if(GlobalV::MY_RANK==0||(GlobalV::ESOLVER_TYPE == "sdft"&&GlobalV::RANK_IN_STOGROUP==0))
@@ -134,14 +134,14 @@ bool ModuleIO::read_rho(
 	}
 #else
 	GlobalV::ofs_running << " Read SPIN = " << is+1 << " charge now." << std::endl;
-	// consistent with the write_rho,
+	// consistent with the write_cube,
 	for(int i=0; i<nx; i++)
 	{
 		for(int j=0; j<ny; j++)
 		{
 			for(int k=0; k<nz; k++)
 			{
-				ifs >> rho[k*nx*ny+i*ny+j];
+				ifs >> data[k*nx*ny+i*ny+j];
 			}
 		}
 	}

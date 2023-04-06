@@ -21,7 +21,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_io/restart.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 
 LCAO_Orbitals::LCAO_Orbitals(){}
 LCAO_Orbitals::~LCAO_Orbitals(){}
@@ -98,7 +98,7 @@ psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
 	return psi;
 }
 
-bool ModuleIO::read_rho(const int &is,
+bool ModuleIO::read_cube(const int &is,
 	const int &nspin,
 	const std::string &fn,
 	double* rho,

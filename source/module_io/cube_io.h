@@ -8,14 +8,14 @@
 
 namespace ModuleIO
 {
-	bool read_rho(
+	bool read_cube(
 #ifdef __MPI
 		Parallel_Grid* Pgrid,
 #endif
 		const int &is,
 		const int &nspin,
 		const std::string &fn,
-		double* rho,
+		double* data,
 		int& nx,
 		int& ny,
 		int& nz,
@@ -23,14 +23,14 @@ namespace ModuleIO
 		const UnitCell* ucell,
 		int &prenspin);
 
-	void write_rho(
+	void write_cube(
 #ifdef __MPI
 		const int& bz,
 		const int& nbz,
 		const int& nplane,
 		const int& startz_current,
 #endif
-		const double* rho_save,
+		const double* data,
 		const int& is,
 		const int& nspin,
 		const int& iter,
@@ -40,7 +40,8 @@ namespace ModuleIO
 		const int& nz,
 		const double& ef,
 		const UnitCell* ucell,
-		const int &precision = 11);//mohan add 2007-10-17
+		const int &precision = 11,
+		const int &out_fermi = 1);//mohan add 2007-10-17
 }
 
 #endif

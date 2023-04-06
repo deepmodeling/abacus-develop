@@ -2,7 +2,7 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dm_io.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_io/dipole_io.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_HS.h"
@@ -412,7 +412,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         std::stringstream ssc;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
         double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-        ModuleIO::write_rho(
+        ModuleIO::write_cube(
 #ifdef __MPI
             GlobalC::bigpw->bz,
             GlobalC::bigpw->nbz,
