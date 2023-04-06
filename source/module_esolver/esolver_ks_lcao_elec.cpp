@@ -20,7 +20,6 @@
 #endif
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_io/dm_io.h"
@@ -269,38 +268,14 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 
-        // Temporary, md and relax will merge later   liuyu add 2022-11-07
-        if(GlobalV::CALCULATION == "md" && istep)
+        if (GlobalC::ucell.cell_parameter_updated)
         {
-            // different precision level for vc-md
-            if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 2)
-            {
-                this->init_after_vc(INPUT, GlobalC::ucell);
-            }
-            else
-            {
-                this->CE.update_all_dis(GlobalC::ucell);
-                this->CE.extrapolate_charge(this->pelec->charge);
-                if(GlobalC::ucell.cell_parameter_updated && GlobalV::md_prec_level == 0)
-                {
-                    Variable_Cell::init_after_vc();
-                }
-            }
+            this->init_after_vc(INPUT, GlobalC::ucell);
         }
-
-        if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
-            if(GlobalC::ucell.ionic_position_updated)
-            {
-                GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
-                // charge extrapolation if istep>0.
-                this->CE.update_all_dis(GlobalC::ucell);
-                this->CE.extrapolate_charge(this->pelec->charge);
-
-                GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
-                // calculate the new potential accordint to
-                // the new charge density.
-            }
+            CE.update_all_dis(GlobalC::ucell);
+            CE.extrapolate_charge(pelec->charge);
         }
 
         //----------------------------------------------------------

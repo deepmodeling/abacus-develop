@@ -1252,7 +1252,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_app_flag", word) == 0)
         {
-            read_value(ifs, out_app_flag);
+            read_bool(ifs, out_app_flag);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -1375,7 +1375,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("md_restart", word) == 0)
         {
-            read_value(ifs, mdp.md_restart);
+            read_bool(ifs, mdp.md_restart);
         }
         else if (strcmp("md_pmode", word) == 0)
         {
@@ -2577,9 +2577,10 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             cal_stress = 1;
         }
 
-        if(mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
+        // md_prec_level only used in vc-md  liuyu 2023-03-27
+        if(mdp.md_type != 4 && (mdp.md_type != 1 || mdp.md_pmode == "none"))
         {
-            GlobalV::md_prec_level = mdp.md_prec_level;
+            mdp.md_prec_level = 0;
         }
     }
     else if (calculation == "cell-relax") // mohan add 2011-11-04
@@ -2668,7 +2669,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 		bessel_descriptor_ecut = std::to_string(ecutwfc);
 	}
 
-    if (GlobalV::md_prec_level != 1)
+    if (calculation != "md")
+    {
+        mdp.md_prec_level = 0;
+    }
+    if (mdp.md_prec_level != 1)
     {
         ref_cell_factor = 1.0;
     }
