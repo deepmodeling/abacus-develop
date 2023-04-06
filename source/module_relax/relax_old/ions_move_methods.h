@@ -1,6 +1,7 @@
 #ifndef IONS_MOVE_METHODS_H
 #define IONS_MOVE_METHODS_H
 
+using namespace std;
 #include "ions_move_basic.h"
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
