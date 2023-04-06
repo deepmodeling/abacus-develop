@@ -91,10 +91,10 @@ void test_deepks::set_ekcut()
 	{
 		double ek_current;
 
-		in_ao.open(ORB.orbital_file[it].c_str());
+		in_ao.open(ucell.orbital_fn[it].c_str());
 		if(!in_ao)
 		{
-			GlobalV::ofs_running << "error : cannot find LCAO file : " << ORB.orbital_file[it] << std::endl;
+			GlobalV::ofs_running << "error : cannot find LCAO file : " << ucell.orbital_fn[it] << std::endl;
 		}
 
 		string word;
@@ -145,8 +145,6 @@ void test_deepks::set_orbs(const double &lat0_in)
 {
 	for(int it=0;it<ntype;it++)
 	{
-		GlobalV::ofs_running << "read and set from orbital_file : " << ORB.orbital_file[it] << std::endl;
-		GlobalV::ofs_running << "ucell.ntype, ucell.lmax : " << ucell.ntype << " " << ucell.lmax << std::endl;
 		ooo.read_orb_first(
 			GlobalV::ofs_running,
 			ORB,
@@ -180,6 +178,8 @@ void test_deepks::set_orbs(const double &lat0_in)
 			ucell.infoNL.nprojmax,
 			ucell.infoNL.nproj,
 			ucell.infoNL.Beta);
+        GlobalV::ofs_running << "read and set from orbital_file : " << ORB.orbital_file[it] << std::endl;
+        GlobalV::ofs_running << "ucell.ntype, ucell.lmax : " << ucell.ntype << " " << ucell.lmax << std::endl;
 	}
 	return;
 }
