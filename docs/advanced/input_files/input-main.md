@@ -863,7 +863,7 @@ These variables are used to control the output of properties.
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot.cube.
+- **Description**: If set to 1, ABACUS will output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot.cube. Our toolset includes a Python script located at `tools/average_pot/aveElecStatPot.py` that calculates the average electrostatic potential along the z-axis and outputs it to ElecStaticPot_AVE.
 - **Default**: 0
 
 ### out_dm
@@ -1634,6 +1634,7 @@ These variables are used to control the molecular dynamics calculations.
 
 - **Type**: Integer
 - **Description**: Determine the precision level of vc-md.
+
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
   - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
   - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
