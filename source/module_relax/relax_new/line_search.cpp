@@ -38,7 +38,7 @@ bool Line_Search::line_search(
         return this->brent(x,y,f,xnew,conv_thr);
     }
     ModuleBase::WARNING_QUIT("line_search","ls_step <0");
-    return false;
+    __builtin_unreachable();
 }
 
 bool Line_Search::first_order(
