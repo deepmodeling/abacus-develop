@@ -203,9 +203,7 @@ void ModuleBase::Global_File::make_dir_atom(const std::string &label)
 //----------------------------------------------------------
     std::stringstream ss;
     ss << GlobalV::global_out_dir << label << "/";
-
-    std::string command1 = "test -d " + ss.str() + " || mkdir " + ss.str();
-    std::system( command1.c_str() );
+    ModuleBase::GlobalFunc::MAKE_DIR(ss.str());
     return;
 }
 
