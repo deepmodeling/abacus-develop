@@ -6,6 +6,7 @@
 #endif
 
 #include <complex>
+using std::complex;
 
 namespace Parallel_Reduce
 {
