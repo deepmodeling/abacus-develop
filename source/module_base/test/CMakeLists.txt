@@ -10,11 +10,11 @@ AddTest(
 )
 AddTest(
   TARGET base_tool_quit
-  SOURCES tool_quit_test.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES tool_quit_test.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_tool_check
-  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_memory
@@ -32,7 +32,7 @@ AddTest(
 AddTest(
   TARGET base_matrix3
   LIBS ${math_libs}
-  SOURCES matrix3_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES matrix3_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_intarray
@@ -45,11 +45,11 @@ AddTest(
 AddTest(
  TARGET base_matrix
   LIBS ${math_libs}
-  SOURCES matrix_test.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES matrix_test.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_complexarray
-  SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_complexmatrix
@@ -78,12 +78,12 @@ AddTest(
 AddTest(
   TARGET base_mathzone
   LIBS ${math_libs}
-  SOURCES mathzone_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES mathzone_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_mathzone_add1
   LIBS ${math_libs}
-  SOURCES mathzone_add1_test.cpp ../mathzone_add1.cpp ../math_sphbes.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES mathzone_add1_test.cpp ../mathzone_add1.cpp ../math_sphbes.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_math_polyint
@@ -115,7 +115,7 @@ AddTest(
 AddTest(
   TARGET base_math_chebyshev
   LIBS ${math_libs}
-  SOURCES math_chebyshev_test.cpp ../math_chebyshev.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../memory.cpp
+  SOURCES math_chebyshev_test.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
 )
 
 AddTest(
@@ -130,7 +130,7 @@ AddTest(
 
 AddTest(
   TARGET base_ylm
-  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp  ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp
+  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp  ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
 )
 
 AddTest(
@@ -140,7 +140,7 @@ AddTest(
 
 AddTest(
   TARGET base_global_file
-  SOURCES global_file_test.cpp ../global_file.cpp  ../global_variable.cpp ../memory.cpp ../timer.cpp
+  SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp
 )
 
 AddTest(
