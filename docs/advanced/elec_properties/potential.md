@@ -94,6 +94,7 @@ Si
 ```
 
 the KPT file is:
+
 ```
 K_POINTS
 0
@@ -103,5 +104,4 @@ Gamma
 
 Run the program, and you will see the following two files in the output directory,
 
-- ElecStaticPot: contains electrostatic potential (unit: Rydberg) in realspace. This file can be visually viewed by the software of VESTA.
-- ElecStaticPot_AVE: contains electrostatic potential (unit: Rydberg) along the z-axis (here z-axis is the default direction of vacuum layer) in realspace.
+- ElecStaticPot.cube: contains electrostatic potential (unit: Rydberg) in realspace. This file can be visually viewed by the software of VESTA.
