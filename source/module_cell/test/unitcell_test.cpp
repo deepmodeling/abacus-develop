@@ -1008,10 +1008,8 @@ TEST_F(UcellTest,ReadAtomPositionsS1)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1042,10 +1040,8 @@ TEST_F(UcellTest,ReadAtomPositionsS2)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1077,10 +1073,8 @@ TEST_F(UcellTest,ReadAtomPositionsS4Noncolin)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1112,10 +1106,8 @@ TEST_F(UcellTest,ReadAtomPositionsS4Colin)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1146,10 +1138,8 @@ TEST_F(UcellTest,ReadAtomPositionsC)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1180,10 +1170,8 @@ TEST_F(UcellTest,ReadAtomPositionsCA)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1214,10 +1202,8 @@ TEST_F(UcellTest,ReadAtomPositionsCACXY)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1248,10 +1234,8 @@ TEST_F(UcellTest,ReadAtomPositionsCACXZ)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1282,10 +1266,8 @@ TEST_F(UcellTest,ReadAtomPositionsCACYZ)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1316,10 +1298,8 @@ TEST_F(UcellTest,ReadAtomPositionsCACXYZ)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1351,10 +1331,8 @@ TEST_F(UcellTest,ReadAtomPositionsCAU)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
@@ -1384,10 +1362,8 @@ TEST_F(UcellTest,ReadAtomPositionsWarning1)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning));
 	ofs_running.close();
 	ofs_warning.close();
@@ -1430,10 +1406,8 @@ TEST_F(UcellTest,ReadAtomPositionsWarning2)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning));
 	ofs_running.close();
 	ofs_warning.close();
@@ -1469,10 +1443,8 @@ TEST_F(UcellTest,ReadAtomPositionsWarning3)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,GlobalV::ofs_warning));
 	ofs_running.close();
 	GlobalV::ofs_warning.close();
@@ -1508,10 +1480,8 @@ TEST_F(UcellDeathTest,ReadAtomPositionsWarning4)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning),
 			::testing::ExitedWithCode(1),"");
@@ -1546,10 +1516,8 @@ TEST_F(UcellTest,ReadAtomPositionsWarning5)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,GlobalV::ofs_warning));
 	ofs_running.close();
 	GlobalV::ofs_warning.close();

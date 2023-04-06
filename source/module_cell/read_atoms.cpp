@@ -4,10 +4,7 @@
 #endif
 #include "../module_base/timer.h"
 #include "../module_base/constants.h"
-
-#ifndef __CELL
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
-#endif
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
 #ifdef __LCAO
@@ -141,7 +138,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	}
 
 	// Peize Lin add 2016-09-23
-#ifndef __CELL
 #ifdef __MPI 
 #ifdef __EXX
 	if( GlobalC::exx_info.info_global.cal_exx )
@@ -171,7 +167,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
     }
 #endif // __EXX
 #endif // __MPI
-#endif // __CELL
 #endif // __LCAO
 	//==========================
 	// read in lattice constant
@@ -471,10 +466,8 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			}
 			ModuleBase::GlobalFunc::OUT(ofs_running, "atom label",atoms[it].label);
 
-#ifndef __CMD
 			bool set_element_mag_zero = false;
 			ModuleBase::GlobalFunc::READ_VALUE(ifpos, magnet.start_magnetization[it] );
-#endif
 
 #ifndef __SYMMETRY
 			//===========================================
@@ -512,10 +505,6 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
 				}
 			} // end basis type
-#endif
-
-#ifdef __CMD
-			ifpos.ignore(150, '\n');
 #endif
 
 			//=========================
@@ -562,9 +551,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                                         mv.y = true ;
                                         mv.z = true ;
                                         atoms[it].vel[ia].set(0,0,0);
-#ifndef __CMD
 										atoms[it].mag[ia]=magnet.start_magnetization[it];//if this line is used, default startmag_type would be 2
-#endif										
 										atoms[it].angle1[ia]=0;
 										atoms[it].angle2[ia]=0;
 										atoms[it].m_loc_[ia].set(0,0,0);
@@ -606,9 +593,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                                                 }
 												else if ( tmpid == "mag" || tmpid == "magmom")
 												{
-#ifndef __CMD
 													set_element_mag_zero = true;
-#endif
 													double tmpamg=0;
 													ifpos >> tmpamg;
 													tmp=ifpos.get();
@@ -639,18 +624,14 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 													 ifpos >> atoms[it].angle1[ia];
 													 atoms[it].angle1[ia]=atoms[it].angle1[ia]/180 *ModuleBase::PI;
 													 input_angle_mag=true;
-#ifndef __CMD
 													 set_element_mag_zero = true;
-#endif
 												}
 												else if ( tmpid == "angle2")
 												{
 													 ifpos >> atoms[it].angle2[ia];
 													 atoms[it].angle2[ia]=atoms[it].angle2[ia]/180 *ModuleBase::PI;
 													 input_angle_mag=true;
-#ifndef __CMD
 													 set_element_mag_zero = true;
-#endif
 												}
 												
                                         }
@@ -703,10 +684,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 						ModuleBase::GlobalFunc::OUT(ofs_running, "noncollinear magnetization_x",atoms[it].m_loc_[ia].x);
 						ModuleBase::GlobalFunc::OUT(ofs_running, "noncollinear magnetization_y",atoms[it].m_loc_[ia].y);
 						ModuleBase::GlobalFunc::OUT(ofs_running, "noncollinear magnetization_z",atoms[it].m_loc_[ia].z);
-
-#ifndef __CMD
 						ModuleBase::GlobalFunc::ZEROS(magnet.ux_ ,3);
-#endif						
 					}
 					else if(GlobalV::NSPIN==2)
 					{
@@ -807,12 +785,10 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 				}//endj
 			}// end na
 			//reset some useless parameters
-#ifndef __CMD
 			if(set_element_mag_zero)
 			{
 				magnet.start_magnetization[it] = 0.0;
 			}
-#endif
 		}//end for ntype
 	}// end scan_begin
 
@@ -953,13 +929,7 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 		{
 			ofs << std::endl;
 			ofs << atoms[it].label << " #label" << std::endl;
-
-#ifndef __CMD
 			ofs << magnet.start_magnetization[it] << " #magnetism" << std::endl;
-#else
-			ofs << "0" << " #magnetism" << std::endl;
-#endif
-
 			ofs << atoms[it].na << " #number of atoms" << std::endl;
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
@@ -993,12 +963,7 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 		{
 			ofs << std::endl;
 			ofs << atoms[it].label << " #label" << std::endl;
-#ifndef __CMD
 			ofs << magnet.start_magnetization[it] << " #magnetism" << std::endl;
-#else
-			ofs << "0" << " #magnetism" << std::endl;
-#endif
-			
 			ofs << atoms[it].na << " #number of atoms" << std::endl;
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
@@ -1069,11 +1034,7 @@ void UnitCell::print_tau(void)const
                 << std::setw(20) << atoms[it].tau[ia].x
                 << std::setw(20) << atoms[it].tau[ia].y
                 << std::setw(20) << atoms[it].tau[ia].z
-#ifndef __CMD
 				<< std::setw(20) << atoms[it].mag[ia]
-#else
-				<< std::setw(20) << 0
-#endif
 				<< std::setw(20) << atoms[it].vel[ia].x
                 << std::setw(20) << atoms[it].vel[ia].y
                 << std::setw(20) << atoms[it].vel[ia].z
@@ -1117,11 +1078,7 @@ void UnitCell::print_tau(void)const
                 << std::setw(20) << atoms[it].taud[ia].x
                 << std::setw(20) << atoms[it].taud[ia].y
                 << std::setw(20) << atoms[it].taud[ia].z
-#ifndef __CMD
 				<< std::setw(20) << atoms[it].mag[ia]
-#else
-				<< std::setw(20) << 0
-#endif
 				<< std::setw(20) << atoms[it].vel[ia].x
                 << std::setw(20) << atoms[it].vel[ia].y
                 << std::setw(20) << atoms[it].vel[ia].z

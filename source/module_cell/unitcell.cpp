@@ -134,8 +134,6 @@ void UnitCell::bcast_unitcell(void)
     Parallel_Common::bcast_double(latvec_supercell.e31);
     Parallel_Common::bcast_double(latvec_supercell.e32);
     Parallel_Common::bcast_double(latvec_supercell.e33);
-
-#ifndef __CMD
     Parallel_Common::bcast_double(magnet.start_magnetization, ntype);
 
     if (GlobalV::NSPIN == 4)
@@ -144,7 +142,6 @@ void UnitCell::bcast_unitcell(void)
         Parallel_Common::bcast_double(magnet.ux_[1]);
         Parallel_Common::bcast_double(magnet.ux_[2]);
     }
-#endif
 
     for (int i = 0; i < ntype; i++)
     {
@@ -433,7 +430,6 @@ void UnitCell::bcast_atoms_tau()
 #endif
 }
 
-#ifndef __CMD
 void UnitCell::cal_ux()
 {
     double amag, uxmod;
@@ -490,7 +486,6 @@ void UnitCell::cal_ux()
     }
     return;
 }
-#endif
 
 bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b)
 {
@@ -516,12 +511,8 @@ void UnitCell::setup_cell(
 	ModuleBase::TITLE("UnitCell","setup_cell");	
 	// (1) init mag
 	assert(ntype>0);
-#ifndef __CMD
-
 	delete[] magnet.start_magnetization;
 	magnet.start_magnetization = new double[this->ntype];
-
-#endif
 
 	// (2) init *Atom class array.
 	this->atoms = new Atom[this->ntype]; // atom species.

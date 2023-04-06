@@ -170,10 +170,8 @@ TEST_F(UcellTest,SetupCellClassic)
 	GlobalV::NSPIN = 1;
 	ucell->ntype = 2;
 	LCAO_Orbitals orb;
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->setup_cell_classic(orb,fn,ofs_running,GlobalV::ofs_warning);
 	ofs_running.close();
 	GlobalV::ofs_warning.close();
@@ -191,10 +189,8 @@ TEST_F(UcellDeathTest,SetupCellClassicWarning1)
 	GlobalV::NSPIN = 1;
 	ucell->ntype = 2;
 	LCAO_Orbitals orb;
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ucell->setup_cell_classic(orb,fn,ofs_running,GlobalV::ofs_warning),::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
@@ -215,10 +211,8 @@ TEST_F(UcellDeathTest,SetupCellClassicWarning2)
 	GlobalV::NSPIN = 1;
 	ucell->ntype = 2;
 	LCAO_Orbitals orb;
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ucell->setup_cell_classic(orb,fn,ofs_running,GlobalV::ofs_warning),::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
@@ -239,10 +233,8 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	GlobalV::NSPIN = 1;
 	ucell->ntype = 2;
 	LCAO_Orbitals orb;
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->setup_cell_classic(orb,fn,ofs_running,GlobalV::ofs_warning);
 	ucell->setup_cell_after_vc(ofs_running);
 	ofs_running.close();

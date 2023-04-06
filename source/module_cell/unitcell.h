@@ -6,10 +6,7 @@
 #include "module_base/matrix3.h"
 #include "module_base/intarray.h"
 #include "module_io/output.h"
-#ifndef __CMD
 #include "module_elecstate/magnetism.h"
-#endif
-
 #include "atom_spec.h"
 
 #ifdef __LCAO
@@ -24,11 +21,8 @@ public:
     Atom *atoms;
 
     bool set_atom_flag;//added on 2009-3-8 by mohan
-
-#ifndef __CMD
     Magnetism magnet;  // magnetism Yu Liu 2021-07-03
     void cal_ux();
-#endif
     bool judge_parallel(double a[3],ModuleBase::Vector3<double> b);
 	double *atom_mag;
 	int n_mag_at;

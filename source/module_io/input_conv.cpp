@@ -264,11 +264,6 @@ void Input_Conv::Convert(void)
         }
     }
 #endif
-    /*
-#ifndef __CMD
-    GlobalC::ucell.n_mag_at=INPUT.n_mag_at;
-    GlobalC::ucell.atom_mag=INPUT.atom_mag;
-#endif*/
     //--------------------------------------------
     // added by zhengdy-soc
     //--------------------------------------------

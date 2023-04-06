@@ -90,10 +90,8 @@ if(GlobalV::MY_RANK==0)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	//call read_atom_positions
 	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,ofs_warning));
 	ofs_running.close();
@@ -131,10 +129,8 @@ TEST_F(UcellTest,SetupCellClassic)
 	GlobalV::ofs_warning.open("setup_cell.warn");
 	GlobalV::NSPIN = 1;
 	ucell->ntype = 2;
-#ifndef __CMD
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-#endif
 	ucell->setup_cell_classic(fn,ofs_running,GlobalV::ofs_warning);
 	ofs_running.close();
 	GlobalV::ofs_warning.close();
