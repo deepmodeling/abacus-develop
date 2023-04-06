@@ -123,7 +123,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-	
+
 	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
 	EXPECT_EQ(ELEC_evolve::td_val_elec_01,1);
 	EXPECT_EQ(ELEC_evolve::td_val_elec_02,1);
@@ -212,7 +212,7 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
+
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.latname="none";
@@ -228,7 +228,7 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
+
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
@@ -243,7 +243,7 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
+
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.relax_new=false;
@@ -259,7 +259,7 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
+
 	INPUT.Default();
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
@@ -381,7 +381,7 @@ TEST_F(InputConvTest,restart_save )
 	int a=access(GlobalC::restart.folder.c_str(),0);
 	EXPECT_EQ(a,0);
 	EXPECT_EQ(GlobalC::restart.info_save.save_charge,true);
-	EXPECT_EQ(GlobalC::restart.info_save.save_H,true);	
+	EXPECT_EQ(GlobalC::restart.info_save.save_H,true);
 }
 
 TEST_F(InputConvTest,restart_save2 )
@@ -390,7 +390,7 @@ TEST_F(InputConvTest,restart_save2 )
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	INPUT.restart_save=true;
-	INPUT.dft_functional == "default";
+	INPUT.dft_functional = "default";
 	Input_Conv::Convert();
 	EXPECT_EQ(GlobalC::restart.info_save.save_charge,true);
 }
@@ -401,7 +401,7 @@ TEST_F(InputConvTest, restart_load)
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	INPUT.restart_load=true;
-	INPUT.dft_functional == "hf";
+	INPUT.dft_functional = "hf";
 	Input_Conv::Convert();
 	EXPECT_EQ( GlobalC::restart.folder,GlobalV::global_readin_dir + "restart/");
 	EXPECT_EQ(GlobalC::restart.info_load.load_charge,true);
