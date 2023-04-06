@@ -1252,7 +1252,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_app_flag", word) == 0)
         {
-            read_value(ifs, out_app_flag);
+            read_bool(ifs, out_app_flag);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -1375,7 +1375,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("md_restart", word) == 0)
         {
-            read_value(ifs, mdp.md_restart);
+            read_bool(ifs, mdp.md_restart);
         }
         else if (strcmp("md_pmode", word) == 0)
         {

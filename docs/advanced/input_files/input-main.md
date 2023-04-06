@@ -1590,9 +1590,9 @@ These variables are used to control the molecular dynamics calculations.
 
 - **Type**: Boolean
 - **Description**: to control whether restart md.
-  - 0: When set to 0, ABACUS will calculate md normally.
-  - 1: When set to 1, ABACUS will calculate md from the last step in your test before.
-- **Default**: 0
+  - true: ABACUS will calculate md normally.
+  - false: ABACUS will calculate md from the last step in your previous md calculation.
+- **Default**: false
 
 ### md_dt
 
