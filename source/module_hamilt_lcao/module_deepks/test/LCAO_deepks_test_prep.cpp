@@ -117,12 +117,7 @@ void test_deepks::set_ekcut()
 
 void test_deepks::setup_cell()
 {
-	ucell.setup_cell(
-        ORB,
-        "./",
-        "STRU", 
-        GlobalV::ofs_running);
-
+	ucell.setup_cell("STRU", GlobalV::ofs_running);
     ucell.read_pseudo(GlobalV::ofs_running);
 
 	return;
@@ -156,6 +151,8 @@ void test_deepks::set_orbs(const double &lat0_in)
 			GlobalV::ofs_running,
 			ORB,
 			ucell.ntype,
+            ucell.orbital_fn,
+            ucell.descriptor_file,
 			ucell.lmax,
 			lcao_ecut,
 			lcao_dk,

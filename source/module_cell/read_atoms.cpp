@@ -7,11 +7,8 @@
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
-#ifdef __LCAO
-int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
-#else
+
 int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
-#endif
 {
 	ModuleBase::TITLE("UnitCell","read_atom_species");
 
@@ -94,46 +91,20 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_ORBITAL") )
 		{
-			orb.read_in_flag = true;
 			for(int i=0; i<ntype; i++)
 			{
-				//-----------------------------------
-				// Turn off the read in NONLOCAL file
-				// function since 2013-08-02 by mohan
-				//-----------------------------------
-
                 ifa >> orbital_fn[i];
-
-                std::string ofile = GlobalV::global_orbital_dir + orbital_fn[i];
-				//-----------------------------------
-				// Turn off the read in NONLOCAL file
-				// function since 2013-08-02 by mohan
-				//-----------------------------------
-				//ModuleBase::GlobalFunc::READ_VALUE(ifa, nfile);
-				
-				orb.orbital_file.push_back(ofile);
-
-				//-----------------------------------
-				// Turn off the read in NONLOCAL file
-				// function since 2013-08-02 by mohan
-				//-----------------------------------
-				//orb.nonlocal_file.push_back(nfile);
-
-//				ofs_running << " For atom type " << i + 1 << std::endl;
-//			    ofs_running << " Read in numerical orbitals from file " << ofile << std::endl;
-//			    ofs_running << " Read in nonlocal projectors from file " << nfile << std::endl;
-				
 			}
 		}	
 		// caoyu add 2021-03-16
 		if(GlobalV::deepks_setorb)
 		{
 			if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
-				ifa >> orb.descriptor_file;
+				ifa >> descriptor_file;
 			}
 		}
 		else{
-			orb.descriptor_file = orb.orbital_file[0];
+			descriptor_file = GlobalV::global_orbital_dir + orbital_fn[0];
 		}
 	}
 
@@ -398,11 +369,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 // Read atomic positions
 // return 1: no problem.
 // return 0: some problems.
-#ifdef __LCAO
-bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
-#else
 bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
-#endif
 {
 	ModuleBase::TITLE("UnitCell","read_atom_positions");
 
@@ -478,7 +445,8 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 #ifdef __LCAO
 			if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
 			{
-				this->read_orb_file(it,orb.orbital_file[it],ofs_running,&(atoms[it]));
+                std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
+				this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
 			}
 			else
 #else

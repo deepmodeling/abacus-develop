@@ -844,11 +844,10 @@ TEST_F(UcellTest,ReadAtomSpecies)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
@@ -866,9 +865,8 @@ TEST_F(UcellDeathTest,ReadAtomSpeciesWarning1)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->read_atom_species(orb,ifa,ofs_running),
+	EXPECT_EXIT(ucell->read_atom_species(ifa,ofs_running),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("unrecongnized pseudo type."));
@@ -886,9 +884,8 @@ TEST_F(UcellDeathTest,ReadAtomSpeciesWarning2)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->read_atom_species(orb,ifa,ofs_running),
+	EXPECT_EXIT(ucell->read_atom_species(ifa,ofs_running),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("lat0<=0.0"));
@@ -906,9 +903,8 @@ TEST_F(UcellDeathTest,ReadAtomSpeciesWarning3)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->read_atom_species(orb,ifa,ofs_running),
+	EXPECT_EXIT(ucell->read_atom_species(ifa,ofs_running),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("do not use LATTICE_PARAMETERS without explicit specification of lattice type"));
@@ -926,10 +922,9 @@ TEST_F(UcellDeathTest,ReadAtomSpeciesWarning4)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	ucell->latName = "bcc";
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->read_atom_species(orb,ifa,ofs_running),
+	EXPECT_EXIT(ucell->read_atom_species(ifa,ofs_running),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("do not use LATTICE_VECTORS along with explicit specification of lattice type"));
@@ -944,7 +939,6 @@ TEST_F(UcellTest,ReadAtomSpeciesLatName)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	std::vector<std::string> latName_in = {"sc","fcc","bcc","hexagonal","trigonal","st","bct","so","baco","fco","bco","sm","bacm","triclinic"};
 	for(int i=0;i<latName_in.size();++i)
 	{
@@ -953,7 +947,7 @@ TEST_F(UcellTest,ReadAtomSpeciesLatName)
 		std::ofstream ofs_running;
 		ofs_running.open("read_atom_species.tmp");
 		ucell->latName = latName_in[i];
-		EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+		EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 		if(ucell->latName == "sc"){
 			EXPECT_DOUBLE_EQ(ucell->latvec.e11,1.0);
 			EXPECT_DOUBLE_EQ(ucell->latvec.e22,1.0);
@@ -974,10 +968,9 @@ TEST_F(UcellDeathTest,ReadAtomSpeciesWarning5)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	ucell->latName = "arbitrary";
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->read_atom_species(orb,ifa,ofs_running),
+	EXPECT_EXIT(ucell->read_atom_species(ifa,ofs_running),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("latname not supported"));
@@ -998,19 +991,18 @@ TEST_F(UcellTest,ReadAtomPositionsS1)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1030,19 +1022,18 @@ TEST_F(UcellTest,ReadAtomPositionsS2)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 2;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1062,20 +1053,19 @@ TEST_F(UcellTest,ReadAtomPositionsS4Noncolin)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 4;
 	GlobalV::NONCOLIN = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1095,20 +1085,19 @@ TEST_F(UcellTest,ReadAtomPositionsS4Colin)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 4;
 	GlobalV::NONCOLIN = false;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1128,19 +1117,18 @@ TEST_F(UcellTest,ReadAtomPositionsC)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1160,19 +1148,18 @@ TEST_F(UcellTest,ReadAtomPositionsCA)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1192,19 +1179,18 @@ TEST_F(UcellTest,ReadAtomPositionsCACXY)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1224,19 +1210,18 @@ TEST_F(UcellTest,ReadAtomPositionsCACXZ)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1256,19 +1241,18 @@ TEST_F(UcellTest,ReadAtomPositionsCACYZ)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1288,19 +1272,18 @@ TEST_F(UcellTest,ReadAtomPositionsCACXYZ)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1320,20 +1303,19 @@ TEST_F(UcellTest,ReadAtomPositionsCAU)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::NSPIN = 1;
 	GlobalV::fixed_atoms = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning);
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1353,18 +1335,17 @@ TEST_F(UcellTest,ReadAtomPositionsWarning1)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning));
+	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,ofs_warning));
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1397,18 +1378,17 @@ TEST_F(UcellTest,ReadAtomPositionsWarning2)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning));
+	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,ofs_warning));
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -1434,18 +1414,17 @@ TEST_F(UcellTest,ReadAtomPositionsWarning3)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,GlobalV::ofs_warning));
+	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,GlobalV::ofs_warning));
 	ofs_running.close();
 	GlobalV::ofs_warning.close();
 	ifa.close();
@@ -1471,11 +1450,10 @@ TEST_F(UcellDeathTest,ReadAtomPositionsWarning4)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
@@ -1483,7 +1461,7 @@ TEST_F(UcellDeathTest,ReadAtomPositionsWarning4)
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->read_atom_positions(orb,ifa,ofs_running,ofs_warning),
+	EXPECT_EXIT(ucell->read_atom_positions(ifa,ofs_running,ofs_warning),
 			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("read_atom_positions, mismatch in atom number for atom type: Mg"));
@@ -1505,20 +1483,19 @@ TEST_F(UcellTest,ReadAtomPositionsWarning5)
 	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
-	LCAO_Orbitals orb;
 	GlobalV::test_pseudo_cell = 2;
 	GlobalV::BASIS_TYPE = "lcao";
 	GlobalV::deepks_setorb = true;
 	GlobalV::CALCULATION = "md";
 	GlobalV::ESOLVER_TYPE="arbitrary";
-	EXPECT_NO_THROW(ucell->read_atom_species(orb,ifa,ofs_running));
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	EXPECT_NO_THROW(ucell->read_atom_positions(orb,ifa,ofs_running,GlobalV::ofs_warning));
+	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,GlobalV::ofs_warning));
 	ofs_running.close();
 	GlobalV::ofs_warning.close();
 	ifa.close();

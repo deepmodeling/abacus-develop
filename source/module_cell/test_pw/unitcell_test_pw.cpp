@@ -30,8 +30,6 @@ Magnetism::~Magnetism()
  *     - read_atom_positions(): read atomic coordinates, velocities, magmoms
  *   - SetupCell
  *     - setup_cell(): the pw version
- *   - SetupCellClassic
- *     - setup_cell_classic: the pw version
  */
 
 class UcellTest : public ::testing::Test
@@ -106,35 +104,13 @@ if(GlobalV::MY_RANK==0)
 
 TEST_F(UcellTest,SetupCell)
 {
-	std::string s_pseudopot_dir = "./support/";
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	GlobalV::ofs_warning.open("setup_cell.warn");
 	GlobalV::NSPIN = 1;
 	ucell->ntype = 2;
-	ucell->setup_cell(s_pseudopot_dir,fn,ofs_running);
+	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
-	GlobalV::ofs_warning.close();
-	remove("setup_cell.warn");
-	remove("setup_cell.tmp");
-}
-
-TEST_F(UcellTest,SetupCellClassic)
-{
-	std::string s_pseudopot_dir = "./support/";
-	std::string fn = "./support/STRU_MgO";
-	std::ofstream ofs_running;
-	ofs_running.open("setup_cell.tmp");
-	GlobalV::ofs_warning.open("setup_cell.warn");
-	GlobalV::NSPIN = 1;
-	ucell->ntype = 2;
-	delete[] ucell->magnet.start_magnetization;
-	ucell->magnet.start_magnetization = new double[ucell->ntype];
-	ucell->setup_cell_classic(fn,ofs_running,GlobalV::ofs_warning);
-	ofs_running.close();
-	GlobalV::ofs_warning.close();
-	remove("setup_cell.warn");
 	remove("setup_cell.tmp");
 }
 
