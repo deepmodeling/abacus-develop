@@ -151,6 +151,7 @@ void test_deepks::set_orbs(const double &lat0_in)
 			GlobalV::ofs_running,
 			ORB,
 			ucell.ntype,
+            GlobalV::global_orbital_dir,
             ucell.orbital_fn,
             ucell.descriptor_file,
 			ucell.lmax,

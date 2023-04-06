@@ -86,7 +86,7 @@ void ORB_control::read_orb_first(
     orb.Rmax = lcao_rmax_in;
 
     // liuyu add 2023-04-06
-    if (my_rank == 0)
+    if (my_rank == 0 && !orb.read_in_flag)
     {
         orb.read_in_flag = true;
         orb.descriptor_file = descriptor_file;
