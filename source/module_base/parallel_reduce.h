@@ -5,7 +5,6 @@
 #include "mpi.h"
 #endif
 
-using namespace std;
 #include <complex>
 
 namespace Parallel_Reduce
