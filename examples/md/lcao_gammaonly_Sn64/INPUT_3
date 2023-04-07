@@ -28,7 +28,7 @@ mixing_beta            0.3
 chg_extrap             second-order
 
 #Parameters (6.MD)
-md_type                0
+md_type                nvt
 md_thermostat          anderson
 md_nraise              40
 md_nstep               10

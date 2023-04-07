@@ -37,27 +37,27 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 			std::cout << " ---------------------------------------------------------" << std::endl;
 
-            if(INPUT.mdp.md_type == -1)
+            if(INPUT.mdp.md_type == "fire")
             {
                 std::cout << " ENSEMBLE                 : " << "FIRE" << std::endl;
             }
-            else if(INPUT.mdp.md_type == 0)
+            else if(INPUT.mdp.md_type == "nve")
             {
-                std::cout << " ENSEMBLE                 : " << INPUT.mdp.md_thermostat << std::endl;
+                std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
             }
-            else if(INPUT.mdp.md_type == 1 && INPUT.mdp.md_pmode == "none")
+            else if(INPUT.mdp.md_type == "nvt")
             {
-                std::cout << " ENSEMBLE                 : " << "NVT" << std::endl;
+                std::cout << " ENSEMBLE                 : " << "NVT    mode: " << INPUT.mdp.md_thermostat << std::endl;
             }
-            else if(INPUT.mdp.md_type == 1 && INPUT.mdp.md_pmode != "none")
+            else if(INPUT.mdp.md_type == "npt")
             {
                 std::cout << " ENSEMBLE                 : " << "NPT    mode: " << INPUT.mdp.md_pmode << std::endl;
             }
-            else if(INPUT.mdp.md_type==2)
+            else if(INPUT.mdp.md_type == "langevin")
             {
                 std::cout << " ENSEMBLE                 : " << "Langevin" << std::endl;
             }
-            else if(INPUT.mdp.md_type==4)
+            else if(INPUT.mdp.md_type == "msst")
             {
                 std::cout << " ENSEMBLE                 : " << "MSST" << std::endl;
             }
