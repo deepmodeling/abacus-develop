@@ -104,6 +104,7 @@ TEST_F(Verlet_test, first_half)
 TEST_F(Verlet_test, NVE)
 {
     mdrun->first_half();
+    mdrun->mdp.md_type = "nve";
     mdrun->second_half();
     
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -136,6 +137,7 @@ TEST_F(Verlet_test, NVE)
 TEST_F(Verlet_test, Anderson)
 {
     mdrun->first_half();
+    mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "anderson";
     mdrun->second_half();
     
@@ -169,6 +171,7 @@ TEST_F(Verlet_test, Anderson)
 TEST_F(Verlet_test, Berendsen)
 {
     mdrun->first_half();
+    mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     
@@ -202,6 +205,7 @@ TEST_F(Verlet_test, Berendsen)
 TEST_F(Verlet_test, rescaling)
 {
     mdrun->first_half();
+    mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     
@@ -235,6 +239,7 @@ TEST_F(Verlet_test, rescaling)
 TEST_F(Verlet_test, rescale_v)
 {
     mdrun->first_half();
+    mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     

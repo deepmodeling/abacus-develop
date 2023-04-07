@@ -45,6 +45,7 @@ protected:
         ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
+        INPUT.mdp.md_type = "npt";
         INPUT.mdp.md_pmode = "tri";
         mdrun = new Nose_Hoover(INPUT.mdp, ucell);
         mdrun->setup(p_esolver);
