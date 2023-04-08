@@ -14,12 +14,13 @@ struct ekinetic_pw_op<FPTYPE, psi::DEVICE_CPU> {
       std::complex<FPTYPE>* tmhpsi,
       const std::complex<FPTYPE>* tmpsi_in)
   {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for (int ib = 0; ib < nband; ++ib) {
       for (int ig = 0; ig < npw; ++ig) {
-        tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
+        tmhpsi[ib * max_npw + ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ib * max_npw + ig];
       }
-      tmhpsi += max_npw;
-      tmpsi_in += max_npw;
     }
   }
 };

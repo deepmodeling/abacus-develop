@@ -76,6 +76,7 @@ public:
     }
 
     virtual void Init(Input &inp, UnitCell &ucell) override;
+    virtual void init_after_vc(Input &inp, UnitCell &ucell) override;
     virtual void Run(int istep, UnitCell& ucell) override;
     virtual void postprocess() override;
 

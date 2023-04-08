@@ -249,7 +249,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_dumpfreq",mdp.md_dumpfreq,"The period to dump MD information");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_restartfreq",mdp.md_restartfreq,"The period to output MD restart information");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_seed",mdp.md_seed,"random seed for MD");
-    ModuleBase::GlobalFunc::OUTP(ofs,"md_prec_level",GlobalV::md_prec_level,"precision level for vc-md");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_prec_level",mdp.md_prec_level,"precision level for vc-md");
     ModuleBase::GlobalFunc::OUTP(ofs,"ref_cell_factor",ref_cell_factor,"construct a reference cell bigger than the initial cell");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_restart",mdp.md_restart,"whether restart");
 	ModuleBase::GlobalFunc::OUTP(ofs,"lj_rcut",mdp.lj_rcut,"cutoff radius of LJ potential");
@@ -351,7 +351,8 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_threshold", exx_cauchy_threshold, "threshold to screen exx using Cauchy-Schwartz inequality");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_grad_threshold", exx_c_grad_threshold, "threshold to screen nabla C matrix in exx");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_grad_threshold", exx_v_grad_threshold, "threshold to screen nabla V matrix in exx");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_grad_threshold", exx_cauchy_grad_threshold, "threshold to screen nabla exx using Cauchy-Schwartz inequality");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_force_threshold", exx_cauchy_force_threshold, "threshold to screen exx force using Cauchy-Schwartz inequality");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_stress_threshold", exx_cauchy_stress_threshold, "threshold to screen exx stress using Cauchy-Schwartz inequality");
     //ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_threshold", exx_ccp_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_rmesh_times", exx_ccp_rmesh_times, "how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals");
     //ModuleBase::GlobalFunc::OUTP(ofs, "exx_distribute_type", exx_distribute_type, "htime or kmeans1 or kmeans2");

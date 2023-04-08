@@ -3,6 +3,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
+#include <stdlib.h>
 
 /************************************************
  *  unit test of Input::bcast
@@ -242,7 +243,8 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_grad_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_grad_threshold,1E-1);
-        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_grad_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
         EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
         EXPECT_EQ(INPUT.exx_distribute_type,"htime");
@@ -361,6 +363,19 @@ TEST_F(InputParaTest,Bcast)
 
 	}
 }
+
+TEST_F(InputParaTest,Init)
+{
+	std::string input_file = "./support/INPUT";
+	Input input_tmp;
+	EXPECT_NO_THROW(input_tmp.Init(input_file));
+	if(GlobalV::MY_RANK==0)
+	{
+		int status = system("rm -r ./OUT.autotest/");
+		EXPECT_EQ(status,0);
+	}
+}
+
 
 int main(int argc, char **argv)
 {

@@ -373,6 +373,9 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
     ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for (int ig = 0;ig < npw; ig++)
     {
         _gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);

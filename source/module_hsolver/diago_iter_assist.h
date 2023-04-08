@@ -69,6 +69,23 @@ class DiagoIterAssist
     static std::complex<FPTYPE> zero;
 };
 
+template<typename FPTYPE, typename Device>
+FPTYPE DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
+
+template<typename FPTYPE, typename Device>
+int DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = 30;
+
+template<typename FPTYPE, typename Device>
+FPTYPE DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = 1.0e-2;
+
+template<typename FPTYPE, typename Device>
+bool DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
+
+template<typename FPTYPE, typename Device>
+std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::one = std::complex<FPTYPE>(1, 0);
+
+template<typename FPTYPE, typename Device>
+std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::zero = std::complex<FPTYPE>(0, 0);
 } // namespace hsolver
 
 #endif

@@ -59,6 +59,7 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver)
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, virial);
     MD_func::compute_stress(ucell, vel, allmass, virial, stress);
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    ucell.ionic_position_updated = true;
 }
 
 void MDrun::first_half()

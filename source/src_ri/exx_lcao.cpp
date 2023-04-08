@@ -1,4 +1,4 @@
-#ifdef __MPI   
+#ifdef __MPI
 #include "exx_lcao.h"
 
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
@@ -38,7 +38,7 @@
 #endif
 
 // Peize Lin test
-#include<stdexcept>	
+#include<stdexcept>
 #include<sys/time.h>
 #include "../src_ri/test_code/element_basis_index-test.h"
 #include "../src_ri/test_code/matrix-test.h"
@@ -104,7 +104,7 @@ Exx_Lcao::Exx_Lcao( const Exx_Info::Exx_Info_Global &info_global )
 			const ModuleBase::matrix m1=init_matrix(1,3,10), m2=init_matrix(3,2,0);
 			ModuleBase::matrix m3(m1.nr,m2.nc);
 			BlasConnector::gemm(
-				'N', 'N', 
+				'N', 'N',
 				m3.nr, m3.nc, m1.nc,
 				1, m1.c, m1.nc, m2.c, m2.nc,
 				0, m3.c, m3.nc);
@@ -114,7 +114,7 @@ Exx_Lcao::Exx_Lcao( const Exx_Info::Exx_Info_Global &info_global )
 			const ModuleBase::matrix m1=transpose(init_matrix(1,3,10)), m2=init_matrix(3,2,0);
 			ModuleBase::matrix m3(m1.nc,m2.nc);
 			BlasConnector::gemm(
-				'T', 'N', 
+				'T', 'N',
 				m3.nr, m3.nc, m1.nr,
 				1, m1.c, m1.nc, m2.c, m2.nc,
 				0, m3.c, m3.nc);
@@ -124,7 +124,7 @@ Exx_Lcao::Exx_Lcao( const Exx_Info::Exx_Info_Global &info_global )
 			const ModuleBase::matrix m1=transpose(init_matrix(1,3,10)), m2=init_matrix(3,2,0);
 			ModuleBase::matrix m3(m1.nc,m2.nc);
 			BlasConnector::gemm(
-				'N', 'T', 
+				'N', 'T',
 				m3.nr, m3.nc, m1.nr,
 				1, m1.c, m1.nc, m2.c, m2.nc,
 				0, m3.c, m3.nc);
@@ -156,22 +156,22 @@ Exx_Lcao::Exx_Lcao( const Exx_Info::Exx_Info_Global &info_global )
 	{
 		constexpr int S=10000;
 		constexpr int N=1000;
-		ModuleBase::matrix m1(N,N), m2(N,N), m3(N,N);	
-		timeval time;		
+		ModuleBase::matrix m1(N,N), m2(N,N), m3(N,N);
+		timeval time;
 		gettimeofday(&time, NULL);
-		
+
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('N', 'N', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
 		std::cout<<"NN\t"<<cut_time(time)<<std::endl;
-		
+
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('N', 'T', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
 		std::cout<<"NT\t"<<cut_time(time)<<std::endl;
-		
+
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('T', 'N', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
 		std::cout<<"TN\t"<<cut_time(time)<<std::endl;
-		
+
 		for(int s=0; s<S; ++s)
 			BlasConnector::gemm('T', 'T', N, N, N, 1, m1.c, N, m2.c, N, 0, m3.c, N);
 		std::cout<<"TT\t"<<cut_time(time)<<std::endl;
@@ -197,7 +197,7 @@ Exx_Lcao::Exx_Lcao( const Exx_Info::Exx_Info_Global &info_global )
 
 Exx_Lcao::Exx_Info_Lcao::Exx_Info_Lcao( const Exx_Info::Exx_Info_Global &info_global )
 	:ccp_type(info_global.ccp_type),
-	 hse_omega(info_global.hse_omega){} 
+	 hse_omega(info_global.hse_omega){}
 
 void Exx_Lcao::init()
 {
@@ -205,19 +205,15 @@ void Exx_Lcao::init()
 	{
 		auto mkdir_one = [](const std::string &dir)
 		{
-			const std::string command0 =  "test -d " + dir + " || mkdir " + dir;
-			if(GlobalV::MY_RANK==0)
-			{
-				system( command0.c_str() );
-			}
+			ModuleBase::GlobalFunc::MAKE_DIR(dir);
 		};
 		test_dir = {"test_exx/process/","test_exx/thread/","test_exx/matrix/"};
 		mkdir_one("test_exx");
 		mkdir_one(test_dir.process);
 		mkdir_one(test_dir.thread);
 		mkdir_one(test_dir.matrix);
-	};	
-	
+	};
+
 	auto test_rk = []()
 	{
 		auto pr_v = []( const std::string & file, const std::vector<double> & v )
@@ -751,7 +747,7 @@ ofs_mpi.close();
 		m_abfslcaos_lcaos.init( 1, this->kmesh_times, 1 );
 		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos );
 		m_abfslcaos_lcaos.init_radial_table();
-		
+
 		pthread_rwlock_t rwlock_Cw;	pthread_rwlock_init(&rwlock_Cw,NULL);
 		pthread_rwlock_t rwlock_Vw;	pthread_rwlock_init(&rwlock_Vw,NULL);
 
@@ -772,7 +768,7 @@ ofs_mpi.close();
 			Cws,
 			Vws);
 		C->print(std::cout, 1E-10)<<std::endl;
-		
+
 		pthread_rwlock_destroy(&rwlock_Cw);
 		pthread_rwlock_destroy(&rwlock_Vw);
 	};
@@ -819,7 +815,7 @@ gettimeofday( &t_start_all, NULL);
 		}
 		return atom_centres_core;
 	};
-	
+
 gettimeofday( &t_start, NULL);
 #ifdef __MPI
 	if(atom_pairs_core_origin.empty())
@@ -844,7 +840,7 @@ ofs_mpi<<"TIME@ Htime::distribute\t"<<time_during(t_start)<<std::endl;
 //for( const auto & i : atom_pairs_core_origin )
 //	ofs_atom_pair<<i.first<<"\t"<<i.second<<std::endl;
 //ofs_atom_pair.close();
-	
+
 	#if TEST_EXX_LCAO==1
 		std::ofstream ofs_adjs("adjs.dat");
 		test_adjs(ofs_adjs);
@@ -874,7 +870,7 @@ gettimeofday( &t_start, NULL);
 	H_atom_pairs_core = Abfs::get_H_pairs_core( atom_pairs_core );
 ofs_mpi<<"H_atom_pairs_core\t"<<H_atom_pairs_core.size()<<std::endl;
 ofs_mpi<<"TIME@ Exx_Lcao::allocate_Hexx\t"<<time_during(t_start)<<std::endl;
-	
+
 gettimeofday( &t_start, NULL);
 	Cs = Abfs::cal_Cs( atom_centres_core, m_abfs_abfs,m_abfslcaos_lcaos, index_abfs,index_lcaos, info.c_threshold, Cws,Vws );
 ofs_mpi<<"TIME@ Abfs::cal_Cs\t"<<time_during(t_start)<<std::endl;
@@ -898,11 +894,11 @@ ofs_mpi<<"TIME@ cauchy::init\t"<<time_during(t_start)<<std::endl;
 	#elif EXX_DM==3
 	DM_para.allreduce.init( MPI_COMM_WORLD, Abfs::get_H_pairs_core_group( atom_pairs_core ), pv);
 	#endif
-	
+
 	#if EXX_H_COMM==2
 	Hexx_para.allreduce2.init(MPI_COMM_WORLD, H_atom_pairs_core, pv);
 	#endif
-	
+
 ofs_mpi<<"TIME@ Exx_Lcao::cal_exx_ions\t"<<time_during(t_start_all)<<std::endl;
 
 ofs_mpi<<"sizeof_Cs:\t"<<get_sizeof(Cs)<<std::endl;
@@ -1086,7 +1082,7 @@ ofs_mpi.close();
 			*/
 		}
 	};
-	
+
 	auto print_WFC = [&](std::complex<double>*** wfc_k_grid)
 	{
 		if( GlobalV::GAMMA_ONLY_LOCAL )
@@ -1127,7 +1123,7 @@ ofs_mpi.close();
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			for(int is=0; is<GlobalV::NSPIN; ++is)
-			{		
+			{
 				std::ofstream ofs("Hexx_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(is)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
 				this->Hexx_para.HK_Gamma_m2D[is].print(ofs, 1E-10)<<std::endl;
 			}
@@ -1148,7 +1144,7 @@ ofs_mpi.close();
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			for(int is=0; is<GlobalV::NSPIN; ++is)
-			{		
+			{
 				std::ofstream ofs("wfc_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_"+ModuleBase::GlobalFunc::TO_STRING(is)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
 				psi_gamma[is].print(ofs, 1E-10)<<std::endl;
 			}
@@ -1162,7 +1158,7 @@ ofs_mpi.close();
 			}
 		}
 	};
-	
+
 	#if TEST_EXX_LCAO==1
 	//	ofs_matrixes("Cws_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_end.dat",Cws);
 	//	ofs_matrixes("Vws_"+ModuleBase::GlobalFunc::TO_STRING(istep)+"_end.dat",Vws);
@@ -1237,7 +1233,7 @@ void Exx_Lcao::cal_Hexx_gamma( const std::set<std::pair<size_t,size_t>> &atom_pa
 }
 */
 
-double Exx_Lcao::cal_energy( 
+double Exx_Lcao::cal_energy(
 	const std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> &HexxR ) const
 {
 	ModuleBase::TITLE("Exx_Lcao","cal_energy");
@@ -1271,7 +1267,7 @@ gettimeofday( &t_start, NULL);
 	const std::map<int,double> SPIN_multiple = {{1,2}, {2,1}, {4,1}};							// ???
 	energy *= SPIN_multiple.at(GlobalV::NSPIN);			// ?
 	energy /= 2;					// /2 for Ry
-	
+
 ofs_mpi<<"TIME@ Exx_Lcao::cal_energy_cal\t"<<time_during(t_start)<<std::endl;
 	Parallel_Reduce::reduce_double_all(energy);
 ofs_mpi<<"E_exx\t"<<energy<<std::endl;
@@ -1282,7 +1278,7 @@ ofs_mpi.close();
 void Exx_Lcao::add_Hexx( const size_t ik, const double alpha, LCAO_Matrix &lm) const
 {
 	ModuleBase::TITLE("Exx_Lcao","add_Hexx");
-	
+
 	if( GlobalV::GAMMA_ONLY_LOCAL )
 	{
 		const ModuleBase::matrix & H = Hexx_para.HK_Gamma_m2D[ik];
@@ -1305,12 +1301,12 @@ void Exx_Lcao::add_Hexx( const size_t ik, const double alpha, LCAO_Matrix &lm) c
 void Exx_Lcao::init_radial_table_ions( const std::set<size_t> &atom_centres_core, const std::vector<std::pair<size_t,size_t>> &atom_pairs_core )
 {
 	ModuleBase::TITLE("Exx_Lcao::init_radial_table_ions");
-	
+
 std::ofstream ofs_mpi(test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 
 	std::map<size_t,std::map<size_t,std::set<double>>> radial_R;
-	
+
 	auto print_atom = [&](std::ostream &os)
 	{
 		os<<"atom_centres_core:"<<"\t";
@@ -1342,7 +1338,7 @@ timeval t_start;
 			}
 		}
 	};
-	
+
 	for(int it=0; it!=GlobalC::ucell.ntype; ++it)
 	{
 		radial_R[it][it].insert(0.0);
@@ -1442,7 +1438,7 @@ ofs_mpi<<"TIME@ radial_R_V\t"<<time_during(t_start)<<std::endl;
 	#elif TEST_EXX_LCAO==-1
 		#error "TEST_EXX_LCAO"
 	#endif
-	
+
 	#if TEST_EXX_LCAO==1
 		std::ofstream ofs_V("delta_R_V.dat");
 		for( const double & r : radial_R[0][0] )
@@ -1469,13 +1465,13 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
     const int mkl_threads = mkl_get_max_threads();
 	mkl_set_num_threads(std::max(1UL,mkl_threads/atom_pairs_core.size()));
 #endif
-	
+
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR(GlobalV::NSPIN);
 #ifdef _OPENMP
 	omp_lock_t Hexx_lock;
 	omp_init_lock(&Hexx_lock);
 #endif
-	
+
 #ifdef _OPENMP
 	#pragma omp parallel
 #endif
@@ -1523,7 +1519,7 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 		};
 
 		// insert m_tmp into m_all
-		auto insert_matrixes = []( 
+		auto insert_matrixes = [](
 			std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> & m_all,
 			std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> & m_tmp)
 		{
@@ -1561,17 +1557,17 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 			}
 			return true;
 		};
-		
+
 		std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> HexxR_tmp(GlobalV::NSPIN);
-	
+
 #ifdef _OPENMP
 		#pragma omp for
 #endif
 		for(size_t i_atom_pair=0; i_atom_pair<atom_pairs_core.size(); ++i_atom_pair)
-		{		
+		{
 			const size_t iat1 = atom_pairs_core[i_atom_pair].first;
 			const size_t iat2 = atom_pairs_core[i_atom_pair].second;
-			
+
 			//ofs_thread<<iat1<<"\t"<<iat2<<std::endl;
 
 			auto add_Hexx_one = [&HexxR_tmp, iat1, iat2, this](
@@ -1584,13 +1580,13 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 						*HexxR_ptr += Hexx_one_T;
 					else
 						HexxR_tmp[is][iat_J][iat_I][Abfs::Vector3_Order<int>(-box_IJ)%this->Born_von_Karman_period] = std::move(Hexx_one_T);
-				}	
+				}
 				if( ModuleBase::matrix * const HexxR_ptr = static_cast<ModuleBase::matrix*const>(ModuleBase::GlobalFunc::MAP_EXIST( HexxR_tmp[is], iat_I, iat_J, Abfs::Vector3_Order<int>(box_IJ)%this->Born_von_Karman_period )) )
 					*HexxR_ptr += Hexx_one;
 				else
 					HexxR_tmp[is][iat_I][iat_J][Abfs::Vector3_Order<int>(box_IJ)%this->Born_von_Karman_period] = std::move(Hexx_one);
 			};
-			
+
 			for( const auto & Cp1s : Cps.at(iat1) )
 			{
 				const size_t iat3 = Cp1s.first;
@@ -1613,7 +1609,7 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 						{
 							const Abfs::Vector3_Order<int> & box4 = Cp2.first;
 							const auto & Cp24 = Cp2.second;
-							
+
 							if( schwarz.screen( iat1,iat2,iat3,iat4, box3,box4 ) )	continue;
 
 							for( const auto &Vp : Vps.at(iat1).at(iat2) )
@@ -1640,12 +1636,12 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 									index_lcaos[it2].count_size,
 									index_lcaos[it4].count_size );
 								if(!( cauchy_postcal = cauchy.postcalB( info_step, VC_24_T, index_lcaos[it2].count_size, index_abfs[it1].count_size, index_lcaos[it4].count_size, cauchy_postcal ) ))	continue;
-													
+
 								const ModuleBase::matrix C_13_T = transform( C_13,						// iw3*iw1, \mu1
 									index_lcaos[it1].count_size,
 									index_lcaos[it3].count_size,
 									index_abfs[it1].count_size );
-									 
+
 								for( size_t is=0; is!=GlobalV::NSPIN; ++is )
 								{
 									switch( cauchy_postcal )		// Attention: case and go on calculating
@@ -1660,8 +1656,8 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 													index_lcaos[it3].count_size,
 													index_abfs[it1].count_size * index_lcaos[it2].count_size,
 													index_lcaos[it4].count_size,
-													1, 
-													*DM_ptr, 
+													1,
+													*DM_ptr,
 													VC_24 );
 												if( cauchy.postcalC( info_step, DVC_32, index_lcaos[it3].count_size, index_abfs[it1].count_size, index_lcaos[it2].count_size, 1 ) )
 												{
@@ -1685,8 +1681,8 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 													index_lcaos[it1].count_size,
 													index_abfs[it1].count_size * index_lcaos[it2].count_size,
 													index_lcaos[it4].count_size,
-													1, 
-													*DM_ptr, 
+													1,
+													*DM_ptr,
 													VC_24 );
 												if( cauchy.postcalC( info_step, DVC_12, index_lcaos[it1].count_size, index_abfs[it1].count_size, index_lcaos[it2].count_size, 3 ) )
 												{
@@ -1710,8 +1706,8 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 													index_lcaos[it3].count_size,
 													index_abfs[it1].count_size * index_lcaos[it4].count_size,
 													index_lcaos[it2].count_size,
-													1, 
-													*DM_ptr, 
+													1,
+													*DM_ptr,
 													VC_24_T );
 												if( cauchy.postcalC( info_step, DVC_34, index_lcaos[it3].count_size, index_abfs[it1].count_size, index_lcaos[it4].count_size, 1 ) )
 												{
@@ -1735,8 +1731,8 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 													index_lcaos[it1].count_size,
 													index_abfs[it1].count_size * index_lcaos[it4].count_size,
 													index_lcaos[it2].count_size,
-													1, 
-													*DM_ptr, 
+													1,
+													*DM_ptr,
 													VC_24_T );
 												if( cauchy.postcalC( info_step, DVC_14, index_lcaos[it1].count_size, index_abfs[it1].count_size, index_lcaos[it4].count_size, 3 ) )
 												{
@@ -1757,7 +1753,7 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 							}	// end for box2
 						}	// end for box4
 					}	// end for box3
-					
+
 #ifdef _OPENMP
 					if( !vector_empty(HexxR_tmp) && omp_test_lock(&Hexx_lock) )
 					{
@@ -1792,11 +1788,11 @@ std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,Mo
 #ifdef _OPENMP
 	omp_destroy_lock(&Hexx_lock);
 #endif
-	
+
 #ifdef __MKL
     mkl_set_num_threads(mkl_threads);
 #endif
-	
+
 	return HexxR;
 }
 #endif //__MPI

@@ -16,6 +16,9 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
       // {
       //   rho[spin][ir] += weight * norm(wfcr[ir]);
       // }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
       for (int ir = 0; ir < nrxx; ir++)
       {
         rho[spin][ir] += w1 * norm(wfcr[ir]);
@@ -32,12 +35,18 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
     const std::complex<FPTYPE>* wfcr,
     const std::complex<FPTYPE>* wfcr_another_spin) 
     {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
       for (int ir = 0; ir < nrxx; ir++) {
           rho[0][ir] += w1 * (norm(wfcr[ir]) + norm(wfcr_another_spin[ir]));
       }
       // In this case, calculate the three components of the magnetization
       if (DOMAG)
       {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
           for (int ir = 0; ir < nrxx; ir++) {
               rho[1][ir] += w1 * 2.0
                                           * (wfcr[ir].real() * wfcr_another_spin[ir].real()
@@ -50,6 +59,9 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
       }
       else if (DOMAG_Z)
       {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
           for (int ir = 0; ir < nrxx; ir++)
           {
               rho[1][ir] = 0;
@@ -58,6 +70,9 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
           }
       }
       else {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#endif
           for (int is = 1; is < 4; is++)
           {
               for (int ir = 0; ir < nrxx; ir++)

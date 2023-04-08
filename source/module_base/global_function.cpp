@@ -73,9 +73,6 @@ void MAKE_DIR(const std::string &fn)
             ModuleBase::WARNING_QUIT("MAKE_DIR", fn);
         }
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
     return;
 }
 

@@ -314,7 +314,7 @@ TEST_F(UcellDeathTest,ReadPseudoWarning2)
 	testing::internal::CaptureStdout();
 	EXPECT_NO_THROW(ucell->read_pseudo(ofs));
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("Warning: number valence electrons > 3 for Al: [Ne] 3s2 3p1"));
+	EXPECT_THAT(output,testing::HasSubstr("Warning: the number of valence electrons in pseudopotential > 3 for Al: [Ne] 3s2 3p1"));
 }
 
 #ifdef __MPI

@@ -8,8 +8,6 @@
 
 MSST::MSST(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {
-    ucell.cell_parameter_updated = true;
-
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
     mdp.msst_vis = mdp.msst_vis / ModuleBase::AU_to_MASS / ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
@@ -39,6 +37,7 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver)
     ModuleBase::timer::tick("MSST", "setup");
 
     MDrun::setup(p_esolver);
+    ucell.cell_parameter_updated = true;
 
     int sd = mdp.msst_direction;
 
@@ -241,6 +240,9 @@ void MSST::rescale(double volume)
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
+    // ucell.latvec.e11 *= 1.01;
+    // ucell.latvec.e22 *= 1.01;
+    // ucell.latvec.e33 *= 1.01;
 
     ucell.setup_cell_after_vc(GlobalV::ofs_running);
 
@@ -248,6 +250,9 @@ void MSST::rescale(double volume)
     for(int i=0; i<ucell.nat; ++i)
     {
         vel[i][sd] *= dilation[sd];
+        // vel[i][0] = 0;
+        // vel[i][1] = 0;
+        // vel[i][2] = 0;
     }
 }
 

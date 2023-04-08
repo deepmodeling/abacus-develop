@@ -121,6 +121,7 @@ void Numerical_Orbital_Lm::set_orbital_info
 	//so we first generate psi_uniform first
 	//we put uniform in ahead of cal_kradial
 	
+	/*
 	bool uni = true;
 	if (uni)
 	{
@@ -130,6 +131,8 @@ void Numerical_Orbital_Lm::set_orbital_info
 	{
 		this->use_uniform(dr_uniform);
 	}
+	*/
+	this->extra_uniform(dr_uniform, force_flag);
 
 	switch(psi_type)
 	{
@@ -320,6 +323,7 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool
 	ModuleBase::timer::tick("NOrbital_Lm", "extra_uniform");
 }
 
+/*
 void Numerical_Orbital_Lm::use_uniform(const double &dr_uniform_in)
 {
 	assert(dr_uniform_in>0.0);
@@ -393,6 +397,7 @@ void Numerical_Orbital_Lm::use_uniform(const double &dr_uniform_in)
 
 	return;
 }
+*/
 
 //liaochen modify on 2010/4/7
 //use Sbt_new
@@ -646,6 +651,7 @@ void Numerical_Orbital_Lm::cal_rradial_sbpool(void)
 //FOUND LOCAL VARIABLE
 //asum : integral of psi*psi in whole space
 //===============================================
+/*
 void Numerical_Orbital_Lm::norm_test(void)const
 {
 //	ModuleBase::TITLE(ofs_onscaling, "Numerical_Orbital_Lm", "norm_test");
@@ -679,6 +685,7 @@ void Numerical_Orbital_Lm::norm_test(void)const
 	delete[] f;
 	return;
 }
+*/
 
 void Numerical_Orbital_Lm::plot(void)const
 {
