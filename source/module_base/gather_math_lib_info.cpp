@@ -27,7 +27,8 @@ void zgemm_i(const char *transa,
              std::complex<double> *c,
              const int *ldc)
 {
-    GlobalV::ofs_info << std::defaultfloat << "zgemm " << *transa << " " << *transb << " " << *m << " " << *n << " "
+    GlobalV::ofs_info.unsetf(std::ios_base::floatfield);
+    GlobalV::ofs_info << "zgemm " << *transa << " " << *transb << " " << *m << " " << *n << " "
                       << *k << " " << *alpha << " " << *lda << " " << *ldb << " " << *beta << " " << *ldc << std::endl;
     zgemm_(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
@@ -70,7 +71,8 @@ void zhegvx_i(const int *itype,
               int *ifail,
               int *info)
 {
-    GlobalV::ofs_info << std::defaultfloat << "zhegvx " << *itype << " " << *jobz << " " << *range << " " << *uplo
+    GlobalV::ofs_info.unsetf(std::ios_base::floatfield);
+    GlobalV::ofs_info << "zhegvx " << *itype << " " << *jobz << " " << *range << " " << *uplo
                       << " " << *n << " " << *lda << " " << *ldb << " " << *vl << " " << *vu << " " << *il << " " << *iu
                       << " " << *abstol << " " << *m << " " << *lwork << " " << *info << std::endl;
     zhegvx_(itype, jobz, range, uplo, n, a, lda, b, ldb, vl, vu, il, iu, abstol, m, w, z, ldz, work, lwork, rwork,
