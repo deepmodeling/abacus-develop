@@ -154,7 +154,7 @@ void init()
 
     //GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
     GlobalC::ucell.setup("none", 1, 2, false, "None");
-    GlobalC::ucell.setup_cell(GlobalC::ORB, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
+    GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
     GlobalC::CHR.cal_nelec();
     int out_mat_r = 0;
     GlobalC::ORB.Read_Orbitals(GlobalV::ofs_running,GlobalC::ucell.ntype,GlobalC::ucell.lmax,GlobalV::deepks_setorb,

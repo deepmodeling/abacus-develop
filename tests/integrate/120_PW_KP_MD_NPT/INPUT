@@ -1,0 +1,29 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix          autotest
+calculation     md
+pseudo_dir      ../../PP_ORB
+nbands          8
+
+#Parameters (Accuracy)
+ecutwfc         20
+scf_nmax        20
+basis_type      pw
+ks_solver       cg
+mixing_type     pulay
+mixing_beta     0.7
+
+cal_stress          1
+cal_force           1
+
+md_nstep         3
+md_type          1
+md_pmode         iso
+md_dt            1
+md_prec_level    1
+ref_cell_factor  1.05
+md_tchain        4
+md_tfreq         0.1
+md_tfirst        10
+md_pfirst        0.01
+init_vel         1

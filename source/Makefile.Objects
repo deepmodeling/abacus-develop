@@ -300,7 +300,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
-    variable_cell.o\
     relax_old.o\
     relax.o\
     line_search.o\
@@ -432,6 +431,7 @@ OBJS_SRC_RI=abfs.o\
 
 OBJS_MODULE_RI=Matrix_Orbs11.o\
       Matrix_Orbs21.o\
+      Matrix_Orbs22.o\
       RI_2D_Comm.o
 
 OBJS_PARALLEL=parallel_common.o\

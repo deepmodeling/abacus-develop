@@ -62,7 +62,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 
 - `CMAKE_INSTALL_PREFIX`: the path of ABACUS binary to install; `/usr/local/bin/abacus` by default
 - Compilers
-  - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpc`(Intel C++ compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
+  - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpx`(Intel C++ compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
   - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpc`(for Intel MPI).
 - Requirements: Unless indicated, CMake will try to find under default paths.
   - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
@@ -75,10 +75,13 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
   - `Libxc_DIR`: (Optional) Path to Libxc.
   > Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
+  - `LIBRI_DIR`: (Optional) Path to LibRI.
+  - `LIBCOMM_DIR`: (Optional) Path to LibComm.
 
 - Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.
   - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
   - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals. If `Libxc_DIR` is defined, `ENABLE_LIBXC` will set to 'ON'.
+  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) to suppport variety of functionals. If `LIBRI_DIR` and `LIBCOMM_DIR` is defined, `ENABLE_LIBRI` will set to 'ON'.
   - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
@@ -151,14 +154,19 @@ We also support [Gitpod](https://www.gitpod.io/): [Open in Gitpod](https://gitpo
 
 ## Install by conda
 
-Conda is a package management system with separated environment, not requiring system privileges. A pre-built ABACUS binary with all requirements is available at [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus). Install ABACUS by the commands below:
+Conda is a package management system with a separated environment, not requiring system privileges. A pre-built ABACUS binary with all requirements is available at [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus).
 
 ```bash
+# Install
 # We recommend installing ABACUS in a new environment to avoid potential conflicts:
 conda create -n abacus_env abacus -c deepmodeling -c conda-forge
+
+# Run
 conda activate abacus_env
-# ABACUS is ready to go:
-mpirun -n 4 abacus
+OMP_NUM_THREADS=1 mpirun -n 4 abacus
+
+# Update
+conda update -n abacus_env abacus -c deepmodeling -c conda-forge
 ```
 
 For more details on building a conda package of ABACUS, please refer to the [conda recipe file](/conda/meta.yaml) [online](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).

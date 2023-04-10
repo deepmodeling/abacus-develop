@@ -3,7 +3,6 @@ add_library(
     OBJECT
 
     relax_driver.cpp
-    variable_cell.cpp
 
     relax_new/relax.cpp
     relax_new/line_search.cpp

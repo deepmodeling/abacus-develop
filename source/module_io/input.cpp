@@ -299,6 +299,8 @@ void Input::Default(void)
     out_band = 0;
     out_proj_band = 0;
     out_mat_hs = 0;
+    cal_syns = 0;
+    dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
     out_mat_t = 0;
     out_hs2_interval = 1;
@@ -380,7 +382,8 @@ void Input::Default(void)
     exx_cauchy_threshold = 1E-7;
     exx_c_grad_threshold = 1E-4;
     exx_v_grad_threshold = 1E-1;
-    exx_cauchy_grad_threshold = 1E-7;
+    exx_cauchy_force_threshold = 1E-7;
+    exx_cauchy_stress_threshold = 1E-7;
     exx_ccp_threshold = 1E-8;
     exx_ccp_rmesh_times = "default";
 
@@ -1252,7 +1255,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_app_flag", word) == 0)
         {
-            read_value(ifs, out_app_flag);
+            read_bool(ifs, out_app_flag);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -1333,6 +1336,14 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.md_nraise);
         }
+        else if (strcmp("cal_syns", word) == 0)
+        {
+            read_value(ifs, cal_syns);
+        }
+        else if (strcmp("dmax", word) == 0)
+        {
+            read_value(ifs, dmax);
+        }
         else if (strcmp("md_tolerance", word) == 0)
         {
             read_value(ifs, mdp.md_tolerance);
@@ -1375,7 +1386,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("md_restart", word) == 0)
         {
-            read_value(ifs, mdp.md_restart);
+            read_bool(ifs, mdp.md_restart);
         }
         else if (strcmp("md_pmode", word) == 0)
         {
@@ -1834,9 +1845,13 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, exx_v_grad_threshold);
         }
-        else if (strcmp("exx_cauchy_grad_threshold", word) == 0)
+        else if (strcmp("exx_cauchy_force_threshold", word) == 0)
         {
-            read_value(ifs, exx_cauchy_grad_threshold);
+            read_value(ifs, exx_cauchy_force_threshold);
+        }
+        else if (strcmp("exx_cauchy_stress_threshold", word) == 0)
+        {
+            read_value(ifs, exx_cauchy_stress_threshold);
         }
         else if (strcmp("exx_ccp_threshold", word) == 0)
         {
@@ -2439,7 +2454,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (exx_ccp_rmesh_times == "default")
     {
         if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
-            exx_ccp_rmesh_times = "10";
+            exx_ccp_rmesh_times = "5";
         else if (dft_functional == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
@@ -2577,9 +2592,10 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             cal_stress = 1;
         }
 
-        if(mdp.md_type == 4 || (mdp.md_type == 1 && mdp.md_pmode != "none"))
+        // md_prec_level only used in vc-md  liuyu 2023-03-27
+        if(mdp.md_type != 4 && (mdp.md_type != 1 || mdp.md_pmode == "none"))
         {
-            GlobalV::md_prec_level = mdp.md_prec_level;
+            mdp.md_prec_level = 0;
         }
     }
     else if (calculation == "cell-relax") // mohan add 2011-11-04
@@ -2668,7 +2684,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 		bessel_descriptor_ecut = std::to_string(ecutwfc);
 	}
 
-    if (GlobalV::md_prec_level != 1)
+    if (calculation != "md")
+    {
+        mdp.md_prec_level = 0;
+    }
+    if (mdp.md_prec_level != 1)
     {
         ref_cell_factor = 1.0;
     }
@@ -2899,6 +2919,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_damp);
     Parallel_Common::bcast_string(mdp.pot_file);
     Parallel_Common::bcast_int(mdp.md_nraise);
+    Parallel_Common::bcast_bool(cal_syns);
+    Parallel_Common::bcast_double(dmax);
     Parallel_Common::bcast_double(mdp.md_tolerance);
     Parallel_Common::bcast_string(mdp.md_pmode);
     Parallel_Common::bcast_string(mdp.md_pcouple);
@@ -3020,7 +3042,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(exx_cauchy_threshold);
     Parallel_Common::bcast_double(exx_c_grad_threshold);
     Parallel_Common::bcast_double(exx_v_grad_threshold);
-    Parallel_Common::bcast_double(exx_cauchy_grad_threshold);
+    Parallel_Common::bcast_double(exx_cauchy_force_threshold);
+    Parallel_Common::bcast_double(exx_cauchy_stress_threshold);
     Parallel_Common::bcast_double(exx_ccp_threshold);
     Parallel_Common::bcast_string(exx_ccp_rmesh_times);
     Parallel_Common::bcast_string(exx_distribute_type);
@@ -3209,6 +3232,10 @@ void Input::Check(void)
             {
                 ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
             }
+        }
+        if (mdp.md_prec_level == 1 && (mdp.md_type != 1 || mdp.md_pmode != "iso"))
+        {
+            ModuleBase::WARNING_QUIT("Input::Check", "md_prec_level = 1 only used in isotropic vc-md currently!");
         }
     }
     else if (calculation == "gen_bessel")

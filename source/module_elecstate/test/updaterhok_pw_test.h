@@ -167,13 +167,7 @@ bool ModuleIO::read_rho(const int &is,
 
 //bool Occupy::use_gaussian_broadening=false;
 
-void UnitCell::setup_cell(
-#ifdef __LCAO
-		LCAO_Orbitals &orb,
-#endif
-		const std::string &s_pseudopot_dir,
-		const std::string &fn,
-		std::ofstream &log)
+void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 {
 	// (1) init mag
 	assert(ntype>0);
@@ -192,13 +186,13 @@ void UnitCell::setup_cell(
 	//========================
 	// call read_atom_species
 	//========================
-	const int error = this->read_atom_species(orb, ifa, log);
+	const int error = this->read_atom_species(ifa, log);
 
 
 	//==========================
 	// call read_atom_positions
 	//==========================
-	ok2 = this->read_atom_positions(orb, ifa, log, GlobalV::ofs_warning);
+	ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
 	//========================================================
 	// Calculate unit cell volume
 	// the reason to calculate volume here is 
@@ -221,7 +215,7 @@ void UnitCell::setup_cell(
 	return;
 }
 
-int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
+int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 {
 	delete[] atom_label;
 	delete[] atom_mass;
@@ -263,7 +257,7 @@ int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofs
 	return 0;
 }
 
-bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
+bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
 {
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
 	{

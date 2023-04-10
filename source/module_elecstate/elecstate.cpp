@@ -162,7 +162,6 @@ void ElecState::calculate_weights()
                              -1,
                              this->klist->isk);
         }
-
         // qianrui fix a bug on 2021-7-21
         Parallel_Reduce::reduce_double_allpool(this->demet);
     }
@@ -222,14 +221,18 @@ void ElecState::calEBand()
 {
     ModuleBase::TITLE("ElecState", "calEBand");
     // calculate ebands using wg and ekb
-    this->eband = 0.0;
+    double eband = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) reduction(+:eband)
+#endif
     for (int ik = 0; ik < this->ekb.nr; ++ik)
     {
         for (int ibnd = 0; ibnd < this->ekb.nc; ibnd++)
         {
-            this->eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
+            eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
         }
     }
+    this->eband = eband;
     if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
     {
         //==================================

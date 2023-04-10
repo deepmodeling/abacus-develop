@@ -97,12 +97,12 @@ auto LRI_CV<Tdata>::cal_datas(
 			const int ia0 = GlobalC::ucell.iat2ia[iat0];
 			const int it1 = GlobalC::ucell.iat2it[iat1];
 			const int ia1 = GlobalC::ucell.iat2ia[iat1];
-			const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it0].tau[ia0];
-			const ModuleBase::Vector3<double> tau2 = GlobalC::ucell.atoms[it1].tau[ia1];
+			const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
+			const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
 			const double Rcut = std::min(
 				GlobalC::ORB.Phi[it0].getRcut() * rmesh_times + GlobalC::ORB.Phi[it1].getRcut(),
 				GlobalC::ORB.Phi[it1].getRcut() * rmesh_times + GlobalC::ORB.Phi[it0].getRcut());
-			const Abfs::Vector3_Order<double> R_delta = -tau1+tau2+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
+			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
 			if( R_delta.norm()*GlobalC::ucell.lat0 < Rcut )
 			{
 				const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
@@ -326,9 +326,9 @@ LRI_CV<Tdata>::DPcal_C_dC(
 			}
 			else
 			{
-				const std::vector<size_t> sizes = {this->index_abfs[it0].count_size,
-				                                   this->index_lcaos[it0].count_size,
-												   this->index_lcaos[it0].count_size};
+				const RI::Shape_Vector sizes = {this->index_abfs[it0].count_size,
+				                                this->index_lcaos[it0].count_size,
+				                                this->index_lcaos[it0].count_size};
 				const std::array<RI::Tensor<Tdata>,3>
 					dC({RI::Tensor<Tdata>({sizes}), RI::Tensor<Tdata>({sizes}), RI::Tensor<Tdata>({sizes})});
 				if(flags.at("writable_dCws"))

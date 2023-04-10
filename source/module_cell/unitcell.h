@@ -6,10 +6,7 @@
 #include "module_base/matrix3.h"
 #include "module_base/intarray.h"
 #include "module_io/output.h"
-#ifndef __CMD
 #include "module_elecstate/magnetism.h"
-#endif
-
 #include "atom_spec.h"
 
 #ifdef __LCAO
@@ -24,11 +21,8 @@ public:
     Atom *atoms;
 
     bool set_atom_flag;//added on 2009-3-8 by mohan
-
-#ifndef __CMD
     Magnetism magnet;  // magnetism Yu Liu 2021-07-03
     void cal_ux();
-#endif
     bool judge_parallel(double a[3],ModuleBase::Vector3<double> b);
 	double *atom_mag;
 	int n_mag_at;
@@ -196,6 +190,7 @@ public:
     std::string *pseudo_fn;
     std::string *pseudo_type; // pseudopotential types for each elements, sunliang added 2022-09-15. 
     std::string *orbital_fn;   // filenames of orbitals, liuyu add 2022-10-19
+    std::string descriptor_file;  // filenames of descriptor_file, liuyu add 2023-04-06
 
 #ifdef __MPI
     void bcast_unitcell(void);
@@ -204,30 +199,14 @@ public:
 
 	void set_iat2itia(void);
 
-    void setup_cell(
-#ifdef __LCAO
-		LCAO_Orbitals &orb,
-#endif
-		const std::string &s_pseudopot_dir, 
-		const std::string &fn, 
-		std::ofstream &log);
-	void setup_cell_classic(
-#ifdef __LCAO
-		LCAO_Orbitals &orb,
-#endif
-		const std::string &fn, 
-		std::ofstream &ofs_running,
-		std::ofstream &ofs_warning); // liuyu 2021-07-13, RX changed ofs_running and ofs_warning from globalV to inputs. 2021-07-24
+    void setup_cell(const std::string &fn, std::ofstream &log);
+
 #ifdef __LCAO
 	InfoNonlocal infoNL;//store nonlocal information of lcao, added by zhengdy 2021-09-07
-
-	int read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running);
-	bool read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
     void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
-#else
+#endif
 	int read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running); // read in the atom information for each type of atom
 	bool read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
-#endif
 
     void read_pseudo(ofstream &ofs);
 	int find_type(const std::string &label);

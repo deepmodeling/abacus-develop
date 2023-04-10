@@ -4,6 +4,7 @@ if (ENABLE_LIBRI)
             OBJECT
             Matrix_Orbs11.cpp
             Matrix_Orbs21.cpp
+            Matrix_Orbs22.cpp
             RI_2D_Comm.cpp
     )
 endif()

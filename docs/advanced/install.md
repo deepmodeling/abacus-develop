@@ -55,7 +55,7 @@ The new EXX implementation depends on two external libraries:
 
 These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
 
-If you prefer using manually downloaded libraries, set `-DENABLE_LIBRI=ON, -DGIT_SUBMODULE=OFF`, and provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`. Remember to make sure the commit numbers match with those in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder.
+If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`. 
 
 ## Build Unit Tests
 
