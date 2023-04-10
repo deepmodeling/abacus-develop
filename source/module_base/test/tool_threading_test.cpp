@@ -11,11 +11,8 @@
 *   - BLOCK_TASK_DIST_1D:
 *       - (template)Distributing 1d tasks by block_size and worker id (int and long long)
 **/
-class tool_threading_test : public testing::Test
-{
 
-};
-TEST(tool_threading, TASK_DIST_1D_test_int)
+TEST(ToolThreadingTEST, TastDist1DInt)
 {
     int nw=1;
     int iw=1;
@@ -36,7 +33,7 @@ TEST(tool_threading, TASK_DIST_1D_test_int)
     EXPECT_EQ(le,6);
 }
 
-TEST(tool_threading, TASK_DIST_1D_test_longlong)
+TEST(ToolThreadingTEST, TastDist1DLonglong)
 {
     long long nw=1;
     long long iw=1;
@@ -57,7 +54,7 @@ TEST(tool_threading, TASK_DIST_1D_test_longlong)
     EXPECT_EQ(le,6);
 }
 
-TEST(tool_threading, BLOCK_TASK_DIST_1D_test_int)
+TEST(ToolThreadingTEST, BlockTaskDist1DInt)
 {
     int nw=1;
     int iw=1;
@@ -79,7 +76,7 @@ TEST(tool_threading, BLOCK_TASK_DIST_1D_test_int)
     EXPECT_EQ(le,6);
 }
 
-TEST(tool_threading, BLOCK_TASK_DIST_1D_test_longlong)
+TEST(ToolThreadingTEST, BlockTaskDist1DLonglong)
 {
     long long nw=1;
     long long iw=1;
