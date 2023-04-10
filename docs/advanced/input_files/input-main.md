@@ -245,6 +245,8 @@
 		- [md\_damp](#md_damp)
 		- [md\_tolerance](#md_tolerance)
 		- [md\_nraise](#md_nraise)
+    - [cal_syns](#cal_syns) 
+    - [dmax](#dmax)
 	- [DFT+*U* correction](#dftu-correction)
 		- [dft\_plus\_u](#dft_plus_u)
 		- [orbital\_corr](#orbital_corr)
@@ -2062,6 +2064,19 @@ These variables are used to control the molecular dynamics calculations.
   - Berendsen: the "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`;
   - Rescale_v: every `md_nraise` steps the current temperature is rescaled to the target temperature;
 - **Default**: 1
+
+### cal_syns
+
+- **Type**: Boolean
+- **Description**:
+  If set to 1, asynchronous overlap matrix is calculated for Hefei-NAMD.
+- **Default**: 0
+
+### dmax
+
+- **Type**: Real
+- **Description**: The maximum displacement of all atoms in one step (bohr). This parameter is useful when cal_syns = 1 .
+- **Default**: 0.01
 
 [back to top](#full-list-of-input-keywords)
 

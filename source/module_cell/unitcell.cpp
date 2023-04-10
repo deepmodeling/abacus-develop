@@ -1047,6 +1047,10 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
         ModuleBase::GlobalFunc::OUT(log, "Volume (A^3))", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
 
+    lat0_angstrom = lat0 * 0.529177;
+    tpiba  = ModuleBase::TWO_PI / lat0;
+    tpiba2 = tpiba * tpiba;
+
     // lattice vectors in another form.
     a1.x = latvec.e11;
     a1.y = latvec.e12;
