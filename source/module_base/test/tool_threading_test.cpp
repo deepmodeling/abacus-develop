@@ -12,6 +12,14 @@
 *       - (template)Distributing 1d tasks by block_size and worker id (int and long long)
 **/
 
+// The meaning of the parameters used in the following tests
+// nw: nworker
+// iw: iworker
+// nt: ntask
+// st: start
+// le: len
+// bs: block_size
+
 TEST(ToolThreadingTEST, TastDist1DInt)
 {
     int nw=1;
