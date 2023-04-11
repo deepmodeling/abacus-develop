@@ -189,7 +189,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
         if(mdp.md_pchain)
         {
             mass_peta[0] = t_target / mdp.md_pfreq / mdp.md_pfreq;
-            for(int m=1; m<mdp.md_tchain; ++m)
+            for(int m=1; m<mdp.md_pchain; ++m)
             {
                 mass_peta[m] = t_target / mdp.md_pfreq / mdp.md_pfreq;
                 g_peta[m] = (mass_peta[m-1]*v_peta[m-1]*v_peta[m-1]-t_target) / mass_peta[m];
@@ -206,7 +206,7 @@ void Nose_Hoover::first_half()
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 
     // update thermostats coupled with barostat if NPT ensemble
-    if(npt_flag && mdp.md_tchain)
+    if(npt_flag && mdp.md_pchain)
     {
         baro_thermo();
     }
@@ -290,7 +290,7 @@ void Nose_Hoover::second_half()
     particle_thermo();
 
     // update thermostats coupled with barostat if NPT ensemble
-    if(npt_flag && mdp.md_tchain)
+    if(npt_flag && mdp.md_pchain)
     {
         baro_thermo();
     }
@@ -738,24 +738,31 @@ void Nose_Hoover::update_volume()
 
 
     // Diagonal components
-    if(pflag[0])
+    if (mdp.md_prec_level == 1)
     {
         factor = exp(v_omega[0] * mdp.md_dt / 2);
-        ucell.latvec.e11 *= factor;
+        ucell.lat0 *= factor;
     }
-
-    if(pflag[1])
+    else
     {
-        factor = exp(v_omega[1] * mdp.md_dt / 2);
-        ucell.latvec.e22 *= factor;
-    }
+        if(pflag[0])
+        {
+            factor = exp(v_omega[0] * mdp.md_dt / 2);
+            ucell.latvec.e11 *= factor;
+        }
 
-    if(pflag[2])
-    {
-        factor = exp(v_omega[2] * mdp.md_dt / 2);
-        ucell.latvec.e33 *= factor;
-    }
+        if(pflag[1])
+        {
+            factor = exp(v_omega[1] * mdp.md_dt / 2);
+            ucell.latvec.e22 *= factor;
+        }
 
+        if(pflag[2])
+        {
+            factor = exp(v_omega[2] * mdp.md_dt / 2);
+            ucell.latvec.e33 *= factor;
+        }
+    }
 
     // tri mode, off-diagonal components, second half
     if(pflag[4])

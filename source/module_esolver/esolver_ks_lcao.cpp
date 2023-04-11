@@ -677,7 +677,8 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
             {//gamma_only case, Hloc and Sloc are correct H and S matrix
@@ -686,7 +687,8 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
         }
     }

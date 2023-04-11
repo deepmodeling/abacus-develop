@@ -194,6 +194,8 @@ msst_qmass                     -1 #mass of thermostat
 md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC
 md_damp                        1 #damping parameter (time units) used to add force in Langevin method
 md_nraise                      1 #parameters used when md_type=0
+cal_syns                       0 #calculate asynchronous overlap matrix to output for Hefei-NAMD
+dmax                           0.01 #maximum displacement of all atoms in one step (bohr)
 md_tolerance                   100 #tolerance for velocity rescaling (K)
 md_pmode                       none #NPT ensemble mode: none, iso, aniso, tri
 md_pcouple                     none #whether couple different components: xyz, xy, yz, xz, none
