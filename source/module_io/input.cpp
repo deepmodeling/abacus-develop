@@ -3224,7 +3224,7 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
             }
         }
-        if (mdp.md_prec_level == 1 && (mdp.md_type != 1 || mdp.md_pmode != "iso"))
+        if (mdp.md_prec_level == 1 && !(mdp.md_type == "npt" && mdp.md_pmode == "iso"))
         {
             ModuleBase::WARNING_QUIT("Input::Check", "md_prec_level = 1 only used in isotropic vc-md currently!");
         }

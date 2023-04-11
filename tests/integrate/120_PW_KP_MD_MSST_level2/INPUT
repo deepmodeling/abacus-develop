@@ -17,7 +17,7 @@ cal_stress          1
 cal_force           1
 
 md_nstep         3
-md_type          4
+md_type          msst
 md_prec_level    2
 md_tfirst        10
 md_dt            1
