@@ -399,6 +399,9 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     this->orb_con.read_orb_first(GlobalV::ofs_running,
                                  GlobalC::ORB,
                                  ucell.ntype,
+                                 GlobalV::global_orbital_dir,
+                                 ucell.orbital_fn,
+                                 ucell.descriptor_file,
                                  ucell.lmax,
                                  inp.lcao_ecut,
                                  inp.lcao_dk,
@@ -674,7 +677,8 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
             {//gamma_only case, Hloc and Sloc are correct H and S matrix
@@ -683,7 +687,8 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
         }
     }

@@ -48,6 +48,9 @@ void ORB_control::read_orb_first(
     std::ofstream& ofs_in,
     LCAO_Orbitals& orb,
     const int& ntype, // mohan add 2021-04-26
+    const std::string& orbital_dir,  // liuyu add 2023-04-06
+    const std::string *orbital_file,  // liuyu add 2023-04-06
+    const std::string& descriptor_file,  // liuyu add 2023-04-06
     const int& lmax, // mohan add 2021-04-26 
     const double& lcao_ecut_in, // mohan add 2021-04-16
     const double& lcao_dk_in, // mohan add 2021-04-16
@@ -81,6 +84,21 @@ void ORB_control::read_orb_first(
     orb.dk = lcao_dk_in;
     orb.dR = lcao_dr_in;
     orb.Rmax = lcao_rmax_in;
+
+    // liuyu add 2023-04-06
+    if (my_rank == 0 && !orb.read_in_flag)
+    {
+        orb.read_in_flag = true;
+        orb.descriptor_file = descriptor_file;
+        for(int it = 0; it < ntype; ++it)
+        {
+            std::string ofile = orbital_dir + orbital_file[it];
+            orb.orbital_file.push_back(ofile);
+        }
+    }
+#ifdef __MPI
+    orb.bcast_files(ntype, my_rank);
+#endif
 
     orb.Read_Orbitals(
         ofs_in,

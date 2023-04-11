@@ -145,7 +145,7 @@ AddTest(
 
 AddTest(
   TARGET base_tool_title
-  SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp
+  SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp ../global_function.cpp ../timer.cpp ../tool_quit.cpp  ../global_file.cpp ../memory.cpp
 )
 
 AddTest(

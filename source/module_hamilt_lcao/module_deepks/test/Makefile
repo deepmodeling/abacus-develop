@@ -58,7 +58,7 @@ VPATH=../../module_base\
 #==========================
 # Define HONG
 #==========================
-HONG= -DMETIS -DMKL_ILP64 -D__LCAO ${HONG_FFTW} -D__CELL -D__CMD 
+HONG= -DMETIS -DMKL_ILP64 -D__LCAO ${HONG_FFTW}
 
 FP_OBJS_0=main.o\
 LCAO_deepks_test.o\

@@ -34,7 +34,7 @@ VPATH=../module_base\
 #==========================
 # Define HONG
 #==========================
-HONG= -DMETIS -DMKL_ILP64 -D__MPI -D__CELL -D__NORMAL -D__SYMMETRY
+HONG= -DMETIS -DMKL_ILP64 -D__MPI -D__NORMAL -D__SYMMETRY
 
 FP_OBJS_0=run_symmetry.o\
 $(OBJS_IO)\

@@ -218,7 +218,7 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
 
     if(calculation == "md" && restart)
     {
-        ofs.open( ss.str(), ios::app );
+        ofs.open(ss.str(), std::ios::app);
     }
     else
     {

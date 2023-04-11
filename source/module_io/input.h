@@ -241,6 +241,8 @@ class Input
     bool out_band; // band calculation pengfei 2014-10-13
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     bool out_mat_hs; // output H matrix and S matrix in local basis.
+    bool cal_syns; // calculate asynchronous S matrix to output
+    double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     bool out_mat_dh;
     int out_hs2_interval;
@@ -362,7 +364,7 @@ class Input
 
     double exx_lambda;
 
-	std::string exx_real_number;
+    std::string exx_real_number;
     double exx_pca_threshold;
     double exx_c_threshold;
     double exx_v_threshold;
@@ -371,7 +373,8 @@ class Input
     double exx_cauchy_threshold;
     double exx_c_grad_threshold;
     double exx_v_grad_threshold;
-    double exx_cauchy_grad_threshold;
+    double exx_cauchy_force_threshold;
+    double exx_cauchy_stress_threshold;
     double exx_ccp_threshold;
     std::string exx_ccp_rmesh_times;
 

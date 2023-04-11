@@ -39,6 +39,9 @@ public:
         std::ofstream& ofs_in,
         LCAO_Orbitals& orb,
         const int& ntype, // mohan add 2021-04-26
+        const std::string& orbital_dir,  // liuyu add 2023-04-06
+        const std::string* orbital_file,  // liuyu add 2023-04-06
+        const std::string& descriptor_file,  // liuyu add 2023-04-06
         const int& lmax, // mohan add 2021-04-26 
         const double& lcao_ecut_in, // mohan add 2021-04-16
         const double& lcao_dk_in, // mohan add 2021-04-16

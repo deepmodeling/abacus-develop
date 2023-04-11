@@ -33,3 +33,5 @@ INPUT_PARAMETERS
 
  out_wfc_lcao     1
  out_mat_hs           1
+ cal_syns	1
+ dmax		0.01
