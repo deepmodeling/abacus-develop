@@ -984,7 +984,7 @@ void Symmetry::pricell(double* pos)
     }
 
     ModuleBase::Vector3<double> diff;
-    ModuleBase::Vector3<double> tmp_ptrans;
+    double tmp_ptrans[3];
 
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
@@ -996,17 +996,17 @@ void Symmetry::pricell(double* pos)
     {
         //set up the current test std::vector "gtrans"
         //and "gtrans" could possibly contain trivial translations:
-        tmp_ptrans.x = this->get_translation_vector( pos[i*3+0], sptmin.x);
-        tmp_ptrans.y = this->get_translation_vector( pos[i*3+1], sptmin.y);
-        tmp_ptrans.z = this->get_translation_vector( pos[i*3+2], sptmin.z);
+        tmp_ptrans[0] = this->get_translation_vector( pos[i*3+0], sptmin.x);
+        tmp_ptrans[1] = this->get_translation_vector( pos[i*3+1], sptmin.y);
+        tmp_ptrans[2] = this->get_translation_vector( pos[i*3+2], sptmin.z);
         //translate all the atomic coordinates by "gtrans"
         for (int it = 0; it < ntype; it++)
         {
             for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
             {
-                this->check_translation( rotpos[ia*3+0], tmp_ptrans.x );
-                this->check_translation( rotpos[ia*3+1], tmp_ptrans.y );
-                this->check_translation( rotpos[ia*3+2], tmp_ptrans.z );
+                this->check_translation( rotpos[ia*3+0], tmp_ptrans[0] );
+                this->check_translation( rotpos[ia*3+1], tmp_ptrans[1] );
+                this->check_translation( rotpos[ia*3+2], tmp_ptrans[2] );
 
                 this->check_boundary( rotpos[ia*3+0] );
                 this->check_boundary( rotpos[ia*3+1] );
@@ -1039,16 +1039,17 @@ void Symmetry::pricell(double* pos)
         }
 
         //the current test is successful
-        if (no_diff)    ptrans.push_back(tmp_ptrans);
+        if (no_diff)    ptrans.push_back(ModuleBase::Vector3<double>
+            (tmp_ptrans[0], tmp_ptrans[1], tmp_ptrans[2]));
 
         //restore the original rotated coordinates by subtracting "ptrans"
         for (int it = 0; it < ntype; it++)
         {
             for (int ia = istart[it]; ia < na[it] + istart[it]; ia++)
             {
-                rotpos[ia*3+0] -= tmp_ptrans.x;
-                rotpos[ia*3+1] -= tmp_ptrans.y;
-                rotpos[ia*3+2] -= tmp_ptrans.z;
+                rotpos[ia*3+0] -= tmp_ptrans[0];
+                rotpos[ia*3+1] -= tmp_ptrans[1];
+                rotpos[ia*3+2] -= tmp_ptrans[2];
             }
         }
     }

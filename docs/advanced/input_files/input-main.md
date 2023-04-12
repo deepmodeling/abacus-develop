@@ -1834,29 +1834,30 @@ These variables are used to control the molecular dynamics calculations.
 
 ### md_type
 
-- **Type**: Integer
-- **Description**: control the algorithm to integrate the equation of motion for md. When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat based on the velocity Verlet algorithm.
+- **Type**: String
+- **Description**: control the algorithm to integrate the equation of motion for md.
 
-  - -1: FIRE method to relax;
-  - 0: velocity Verlet algorithm (default: NVE ensemble);
-  - 1: Nose-Hoover style non-Hamiltonian equations of motion;
-  - 2: NVT ensemble with Langevin method;
-  - 4: MSST method;
+  - fire: FIRE method.
+  - nve: NVE ensemble with velocity Verlet algorithm.
+  - nvt: NVT ensemble, see [md_thermostat](#md_thermostat) in detail.
+  - npt: Nose-Hoover style NPT ensemble, see [md_pmode](#md_pmode) in detail.
+  - langevin: NVT ensemble with Langevin thermostat.
+  - msst: MSST method.
 
-  > Note: when md_type is set to 1, md_tfreq is required to stabilize temperature. It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
-- **Default**: 1
+- **Default**: nvt
 
 ### md_thermostat
 
 - **Type**: String
-- **Description**: specify the thermostat based on the velocity Verlet algorithm (useful when `md_type` is set to 0).
+- **Description**: specify the temperature control method used in NVT ensemble.
 
-  - nve: NVE ensemble.
-  - anderson: NVT ensemble with Anderson thermostat, see the parameter `md_nraise`.
-  - berendsen: NVT ensemble with Berendsen thermostat, see the parameter `md_nraise`.
-  - rescaling: NVT ensemble with velocity Rescaling method 1, see the parameter `md_tolerance`.
-  - rescale_v: NVT ensemble with velocity Rescaling method 2, see the parameter `md_nraise`.
-- **Default**: NVE
+  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
+  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
+  - berendsen: Berendsen thermostat, see the parameter [md_nraise](#md_nraise) in detail.
+  - rescaling: velocity Rescaling method 1, see the parameter [md_tolerance](#md_tolerance) in detail.
+  - rescale_v: velocity Rescaling method 2, see the parameter [md_nraise](#md_nraise) in detail.
+
+- **Default**: nhc
 
 ### md_nstep
 
@@ -1918,7 +1919,7 @@ These variables are used to control the molecular dynamics calculations.
 
 - **Type**: Real
 - **Description**: 
-  Construct a reference cell bigger than the initial cell. Only used in variable-cell MD, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+  Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
 - **Default**: 1.0
 
 ### md_tfreq
@@ -1926,6 +1927,7 @@ These variables are used to control the molecular dynamics calculations.
 - **Type**: Real
 - **Description**: control the frequency of the temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
 - **Default**: 1/40/md_dt
+  > Note: It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
 
 ### md_tchain
 
@@ -1936,12 +1938,12 @@ These variables are used to control the molecular dynamics calculations.
 ### md_pmode
 
 - **Type**: String
-- **Description**: specify the NVT or NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
-  - none: NVT ensemble.
-  - iso: NPT ensemble with isotropic cetl fluctuations.
-  - aniso: NPT ensemble with anisotropic cetl fluctuations.
-  - tri: NPT ensemble with non-orthogonal (triclinic) simulation box.
-- **Default**: none
+- **Description**: specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - iso: isotropic cell fluctuations.
+  - aniso: anisotropic cell fluctuations.
+  - tri: non-orthogonal (triclinic) simulation box.
+- **Default**: iso
+- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
 
 ### md_pcouple
 
@@ -2041,7 +2043,7 @@ These variables are used to control the molecular dynamics calculations.
 ### msst_qmass
 
 - **Type**: Real
-- **Description**: Inertia of extended system variable. Used only when md_type is 4, you should set a number that is larger than 0. Note that Qmass of NHC is set by md_tfreq.
+- **Description**: Inertia of extended system variable. Used only when md_type is msst, you should set a number that is larger than 0. Note that Qmass of NHC is set by md_tfreq.
 - **Default**: No default
 
 ### md_damp

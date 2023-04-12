@@ -26,7 +26,7 @@ ks_solver       scalapack_gvx
 mixing_type     pulay
 mixing_beta     0.3
 
-md_type          4
+md_type          msst
 md_tfirst        10
 md_dt            1
 md_restart       0
