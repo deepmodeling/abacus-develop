@@ -2586,14 +2586,14 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             init_vel = 1;
         }
-        if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == 4
-            || (mdp.md_type == 1 && mdp.md_pmode != "none"))
+        if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == "msst"
+            || mdp.md_type == "npt")
         {
             cal_stress = 1;
         }
 
         // md_prec_level only used in vc-md  liuyu 2023-03-27
-        if(mdp.md_type != 4 && (mdp.md_type != 1 || mdp.md_pmode == "none"))
+        if(mdp.md_type != "msst" && mdp.md_type != "npt")
         {
             mdp.md_prec_level = 0;
         }
@@ -2885,7 +2885,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(lcao_dr);
     Parallel_Common::bcast_double(lcao_rmax);
     // zheng daye add 2014/5/5
-    Parallel_Common::bcast_int(mdp.md_type);
+    Parallel_Common::bcast_string(mdp.md_type);
     Parallel_Common::bcast_string(mdp.md_thermostat);
     Parallel_Common::bcast_int(mdp.md_nstep);
     Parallel_Common::bcast_double(mdp.md_dt);
@@ -3207,9 +3207,9 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
         if (mdp.md_tfirst < 0 && esolver_type != "tddft")
             ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
-        if (mdp.md_type == 1 && mdp.md_pmode != "none" && mdp.md_pfirst < 0)
+        if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
-        if (mdp.md_type == 4)
+        if (mdp.md_type == "msst")
         {
             if (mdp.msst_qmass <= 0)
             {
@@ -3223,7 +3223,7 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
             }
         }
-        if (mdp.md_prec_level == 1 && (mdp.md_type != 1 || mdp.md_pmode != "iso"))
+        if (mdp.md_prec_level == 1 && !(mdp.md_type == "npt" && mdp.md_pmode == "iso"))
         {
             ModuleBase::WARNING_QUIT("Input::Check", "md_prec_level = 1 only used in isotropic vc-md currently!");
         }

@@ -9,8 +9,8 @@ public:
     MD_parameters()
 	{
 		md_restart = 0;
-		md_type = 1;
-        md_thermostat = "nve";
+        md_type = "nvt";
+        md_thermostat = "nhc";
         md_nstep = 10;
 		md_dt = 1.0;
 		md_tfirst = -1.0;
@@ -34,7 +34,7 @@ public:
 		msst_tscale = 0.01;
 
 		// NHC
-        md_pmode = "none";
+        md_pmode = "iso";
         md_pcouple = "none";
         md_tfreq = 0.0;
         md_pfirst = -1.0;
@@ -46,7 +46,6 @@ public:
 		// Langevin
 		md_damp = 1.0;
 
-        // thermostats when md_type = 0
         md_tolerance = 100.0; 
         md_nraise = 1;
 	};
@@ -54,8 +53,8 @@ public:
 
     int md_nstep;                 // md nstep
     bool md_restart;              // 1: restart MD, 0: no restart MD
-    int md_type;                  // -1: FIRE, 0: velocity Verlet, 1: NVT NHC, 2: LGV, 4: MSST 
-    std::string md_thermostat;    // specify the thermostat based on the velocity Verlet algorithm
+    std::string md_type;          // fire, nve, nvt, npt, langevin, msst
+    std::string md_thermostat;    // specify the thermostat: nhc, anderson, berendsen, rescaling, rescale_v
     double md_dt;                 // Time increment (hbar/E_hartree)
     double md_tfirst;             // Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast;              // Target temperature
@@ -78,7 +77,7 @@ public:
 	double msst_tscale;              // reduction in initial temperature (0~1)
 
 	// NHC
-    std::string md_pmode;          // NPT ensemble mode: none, iso, aniso, tri
+    std::string md_pmode;          // NPT ensemble mode: iso, aniso, tri
     std::string md_pcouple;        // whether couple different components: xyz, xy, yz, xz, none
     double md_tfreq;               // Oscillation frequency, used to determine qmass of thermostats coupled with particles
     double md_pfirst;             // Initial pressure
@@ -90,9 +89,8 @@ public:
 	// Langevin
 	double md_damp;                // damping parameter (time units)
 
-    // thermostats when md_type = 0
     double md_tolerance;           // tolerance for velocity rescaling (K)
-    int md_nraise;                 // parameters used when md_type=0
+    int md_nraise;                 // parameters used when md_type=nvt
 
 };
 

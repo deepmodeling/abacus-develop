@@ -43,7 +43,7 @@ void Verlet::apply_thermostat()
     double t_target = 0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
-    if(mdp.md_thermostat == "nve"){}
+    if(mdp.md_type == "nve"){}
     else if(mdp.md_thermostat == "rescaling")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
@@ -91,7 +91,7 @@ void Verlet::apply_thermostat()
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Verlet", "No such thermostat !");
+        ModuleBase::WARNING_QUIT("Verlet", "No such thermostat!");
     }
 }
 

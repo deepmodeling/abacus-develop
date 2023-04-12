@@ -29,6 +29,6 @@ stress_thr      1e-6
 cal_force           1
 force_thr_ev    1.0e-3
 
-md_type		0
+md_type		nve
 md_dt			0.01
 init_vel                1
