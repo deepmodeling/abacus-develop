@@ -2884,16 +2884,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(lcao_dk);
     Parallel_Common::bcast_double(lcao_dr);
     Parallel_Common::bcast_double(lcao_rmax);
-    /*
-        // mohan add 2011-11-07
-        Parallel_Common::bcast_double( mdp.dt );
-        Parallel_Common::bcast_int( md_restart );
-        Parallel_Common::bcast_double( md_tolv );
-        Parallel_Common::bcast_string( md_thermostat );
-        Parallel_Common::bcast_double( md_temp0 );
-        Parallel_Common::bcast_int( md_tstep );
-        Parallel_Common::bcast_double( md_delt );
-    */
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_int(mdp.md_type);
     Parallel_Common::bcast_string(mdp.md_thermostat);
