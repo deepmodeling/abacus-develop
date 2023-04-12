@@ -344,6 +344,7 @@ OBJS_IO=input.o\
     output.o\
     print_info.o\
     read_cube.o\
+    read_rho.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
@@ -352,6 +353,7 @@ OBJS_IO=input.o\
     winput.o\
     write_input.o\
     write_cube.o\
+    write_rho.o\
     write_dipole.o\
     write_wfc_r.o\
 

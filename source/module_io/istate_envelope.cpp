@@ -4,7 +4,7 @@
 #include "module_base/global_variable.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
-#include "module_io/cube_io.h"
+#include "module_io/rho_io.h"
 
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {pes = pes_in;}
@@ -102,7 +102,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
                 std::stringstream ss;
                 ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_s_" << is + 1 << "_ENV.cube";
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                ModuleIO::write_cube(
+                ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,
@@ -229,7 +229,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
                 std::stringstream ss;
                 ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";
                 double& ef_tmp = GlobalC::en.get_ef(ispin,GlobalV::TWO_EFERMI);
-                ModuleIO::write_cube(
+                ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,

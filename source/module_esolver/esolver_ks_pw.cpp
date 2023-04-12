@@ -29,7 +29,7 @@
 #include "module_io/numerical_basis.h"
 #include "module_io/to_wannier90.h"
 #include "module_io/berryphase.h"
-#include "module_io/cube_io.h"
+#include "module_io/rho_io.h"
 #include "module_psi/kernels/device.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
@@ -473,7 +473,7 @@ namespace ModuleESolver
                     std::stringstream ssc;
                     ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_CHG.cube";
                     double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                    ModuleIO::write_cube(
+                    ModuleIO::write_rho(
 #ifdef __MPI
                         GlobalC::bigpw->bz,
                         GlobalC::bigpw->nbz,
@@ -499,7 +499,7 @@ namespace ModuleESolver
                         std::stringstream ssc;
                         ssc << GlobalV::global_out_dir << "tmp" << "_SPIN" << is + 1 << "_TAU.cube";
                         double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                        ModuleIO::write_cube(
+                        ModuleIO::write_rho(
 #ifdef __MPI
                             GlobalC::bigpw->bz,
                             GlobalC::bigpw->nbz,
@@ -554,7 +554,7 @@ namespace ModuleESolver
                 std::stringstream ssc;
                 ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                ModuleIO::write_cube(
+                ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,
@@ -579,7 +579,7 @@ namespace ModuleESolver
                     std::stringstream ssc;
                     ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
                     double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                    ModuleIO::write_cube(
+                    ModuleIO::write_rho(
 #ifdef __MPI
                         GlobalC::bigpw->bz,
                         GlobalC::bigpw->nbz,

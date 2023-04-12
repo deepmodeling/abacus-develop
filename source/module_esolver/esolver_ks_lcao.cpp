@@ -5,7 +5,7 @@
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
 #include "module_io/nscf_fermi_surf.h"
-#include "module_io/cube_io.h"
+#include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
@@ -763,7 +763,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             ssc << GlobalV::global_out_dir << "tmp"
                 << "_SPIN" << is + 1 << "_CHG.cube";
             double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-            ModuleIO::write_cube(
+            ModuleIO::write_rho(
 #ifdef __MPI
                 GlobalC::bigpw->bz,
                 GlobalC::bigpw->nbz,
@@ -817,7 +817,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 ssc << GlobalV::global_out_dir << "tmp"
                     << "_SPIN" << is + 1 << "_TAU.cube";
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                ModuleIO::write_cube(
+                ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,
@@ -877,7 +877,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             const int precision = 3;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
             double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-            ModuleIO::write_cube(
+            ModuleIO::write_rho(
 #ifdef __MPI
                 GlobalC::bigpw->bz,
                 GlobalC::bigpw->nbz,
@@ -903,7 +903,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 std::stringstream ssc;
                 ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-                ModuleIO::write_cube(
+                ModuleIO::write_rho(
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,

@@ -5,7 +5,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/blas_connector.h"
-#include "module_io/cube_io.h"
+#include "module_io/rho_io.h"
 
 IState_Charge::IState_Charge(
     psi::Psi<double>* psi_gamma_in,
@@ -142,7 +142,7 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			{
 				ssc<<"_SPIN"<<is<<"_CHG.cube";
 				double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-				ModuleIO::write_cube(
+				ModuleIO::write_rho(
 #ifdef __MPI
 				    GlobalC::bigpw->bz,
 				    GlobalC::bigpw->nbz,

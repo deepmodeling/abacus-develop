@@ -1,5 +1,5 @@
-#ifndef CUBE_IO_H
-#define CUBE_IO_H
+#ifndef RHO_IO_H
+#define RHO_IO_H
 #include <string>
 #include "module_cell/unitcell.h"
 #ifdef __MPI
@@ -8,14 +8,14 @@
 
 namespace ModuleIO
 {
-	bool read_cube(
+	bool read_rho(
 #ifdef __MPI
 		Parallel_Grid* Pgrid,
 #endif
 		const int &is,
 		const int &nspin,
 		const std::string &fn,
-		double* data,
+		double* rho,
 		int& nx,
 		int& ny,
 		int& nz,
@@ -23,14 +23,14 @@ namespace ModuleIO
 		const UnitCell* ucell,
 		int &prenspin);
 
-	void write_cube(
+	void write_rho(
 #ifdef __MPI
 		const int& bz,
 		const int& nbz,
 		const int& nplane,
 		const int& startz_current,
 #endif
-		const double* data,
+		const double* rho_save,
 		const int& is,
 		const int& nspin,
 		const int& iter,
@@ -40,8 +40,7 @@ namespace ModuleIO
 		const int& nz,
 		const double& ef,
 		const UnitCell* ucell,
-		const int &precision = 11,
-		const int &out_fermi = 1);//mohan add 2007-10-17
+		const int &precision = 11);//mohan add 2007-10-17
 }
 
 #endif
