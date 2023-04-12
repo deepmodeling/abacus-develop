@@ -23,52 +23,55 @@ Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(M
         pstart[i] = pstop[i] = pfreq[i] = p_target[i] = pflag[i] = 0;
     }
 
-    // determine the NPT methods
-    if(mdp.md_pmode == "iso")
+    if (mdp.md_type == "npt")
     {
-        mdp.md_pcouple = "xyz";
-        pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
-        pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
-        pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
-        pflag[0] = pflag[1] = pflag[2] = 1;
-    }
-    else if(mdp.md_pmode == "aniso")
-    {
-        if(mdp.md_pcouple == "xyz")
+        // determine the NPT methods
+        if(mdp.md_pmode == "iso")
         {
-            ModuleBase::WARNING_QUIT("Nose_Hoover", "md_pcouple==xyz will convert aniso to iso!");
+            mdp.md_pcouple = "xyz";
+            pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
+            pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
+            pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
+            pflag[0] = pflag[1] = pflag[2] = 1;
         }
-        pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
-        pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
-        pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
-        pflag[0] = pflag[1] = pflag[2] = 1;
-    }
-    //------------------------------------------------------
-    // The lattice must be lower-triangular under tri mode.
-    // e11  0    0
-    // e21  e22  0
-    // e31  e32  e33
-    // Under Voigt notation, xx, yy, zz, yz, xz, xy.
-    //------------------------------------------------------
-    else if(mdp.md_pmode == "tri")
-    {
-        if(ucell.latvec.e12 || ucell.latvec.e13 || ucell.latvec.e23)
+        else if(mdp.md_pmode == "aniso")
         {
-            ModuleBase::WARNING_QUIT("Nose_Hoover", "the lattice must be lower-triangular when md_pmode == tri!");
+            if(mdp.md_pcouple == "xyz")
+            {
+                ModuleBase::WARNING_QUIT("Nose_Hoover", "md_pcouple==xyz will convert aniso to iso!");
+            }
+            pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
+            pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
+            pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
+            pflag[0] = pflag[1] = pflag[2] = 1;
         }
-        pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
-        pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
-        pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
-        pflag[0] = pflag[1] = pflag[2] = 1;
+        //------------------------------------------------------
+        // The lattice must be lower-triangular under tri mode.
+        // e11  0    0
+        // e21  e22  0
+        // e31  e32  e33
+        // Under Voigt notation, xx, yy, zz, yz, xz, xy.
+        //------------------------------------------------------
+        else if(mdp.md_pmode == "tri")
+        {
+            if(ucell.latvec.e12 || ucell.latvec.e13 || ucell.latvec.e23)
+            {
+                ModuleBase::WARNING_QUIT("Nose_Hoover", "the lattice must be lower-triangular when md_pmode == tri!");
+            }
+            pstart[0] = pstart[1] = pstart[2] = mdp.md_pfirst;
+            pstop[0] = pstop[1] = pstop[2] = mdp.md_plast;
+            pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
+            pflag[0] = pflag[1] = pflag[2] = 1;
 
-        pstart[3] = pstart[4] = pstart[5] = 0;
-        pstop[3] = pstop[4] = pstop[5] = 0;
-        pfreq[3] = pfreq[4] = pfreq[5] = mdp.md_pfreq;
-        pflag[3] = pflag[4] = pflag[5] = 1;
-    }
-    else if(mdp.md_pmode != "none")
-    {
-        ModuleBase::WARNING_QUIT("Nose_Hoover", "No such md_pmode yet!");
+            pstart[3] = pstart[4] = pstart[5] = 0;
+            pstop[3] = pstop[4] = pstop[5] = 0;
+            pfreq[3] = pfreq[4] = pfreq[5] = mdp.md_pfreq;
+            pflag[3] = pflag[4] = pflag[5] = 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Nose_Hoover", "No such md_pmode yet!");
+        }
     }
 
     // determine whether NPT ensemble
@@ -149,7 +152,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 
     MDrun::setup(p_ensolve);
-    if(mdp.md_pmode != "none")
+    if(mdp.md_type == "npt")
     {
         ucell.cell_parameter_updated = true;
     }
@@ -189,7 +192,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
         if(mdp.md_pchain)
         {
             mass_peta[0] = t_target / mdp.md_pfreq / mdp.md_pfreq;
-            for(int m=1; m<mdp.md_tchain; ++m)
+            for(int m=1; m<mdp.md_pchain; ++m)
             {
                 mass_peta[m] = t_target / mdp.md_pfreq / mdp.md_pfreq;
                 g_peta[m] = (mass_peta[m-1]*v_peta[m-1]*v_peta[m-1]-t_target) / mass_peta[m];
@@ -206,7 +209,7 @@ void Nose_Hoover::first_half()
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 
     // update thermostats coupled with barostat if NPT ensemble
-    if(npt_flag && mdp.md_tchain)
+    if(npt_flag && mdp.md_pchain)
     {
         baro_thermo();
     }
@@ -290,7 +293,7 @@ void Nose_Hoover::second_half()
     particle_thermo();
 
     // update thermostats coupled with barostat if NPT ensemble
-    if(npt_flag && mdp.md_tchain)
+    if(npt_flag && mdp.md_pchain)
     {
         baro_thermo();
     }
@@ -738,24 +741,31 @@ void Nose_Hoover::update_volume()
 
 
     // Diagonal components
-    if(pflag[0])
+    if (mdp.md_prec_level == 1)
     {
         factor = exp(v_omega[0] * mdp.md_dt / 2);
-        ucell.latvec.e11 *= factor;
+        ucell.lat0 *= factor;
     }
-
-    if(pflag[1])
+    else
     {
-        factor = exp(v_omega[1] * mdp.md_dt / 2);
-        ucell.latvec.e22 *= factor;
-    }
+        if(pflag[0])
+        {
+            factor = exp(v_omega[0] * mdp.md_dt / 2);
+            ucell.latvec.e11 *= factor;
+        }
 
-    if(pflag[2])
-    {
-        factor = exp(v_omega[2] * mdp.md_dt / 2);
-        ucell.latvec.e33 *= factor;
-    }
+        if(pflag[1])
+        {
+            factor = exp(v_omega[1] * mdp.md_dt / 2);
+            ucell.latvec.e22 *= factor;
+        }
 
+        if(pflag[2])
+        {
+            factor = exp(v_omega[2] * mdp.md_dt / 2);
+            ucell.latvec.e33 *= factor;
+        }
+    }
 
     // tri mode, off-diagonal components, second half
     if(pflag[4])

@@ -23,7 +23,7 @@ of_full_pw_dim   1
 basis_type	pw
 
 md_restart	0
-md_type		1
+md_type		nvt
 md_nstep	2
 md_dt		0.25
 md_tfirst	58022.52706

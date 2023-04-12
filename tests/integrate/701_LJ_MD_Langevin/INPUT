@@ -16,7 +16,7 @@ cal_stress          1
 
 #Parameters (MD)
 md_nstep            5
-md_type             2
+md_type             langevin
 md_dt               1
 md_tfirst           300
 

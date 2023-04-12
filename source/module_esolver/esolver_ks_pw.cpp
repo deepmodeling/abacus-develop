@@ -239,7 +239,7 @@ namespace ModuleESolver
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
             GlobalC::wf.init_at_1();
         }
-        else
+        else if (GlobalV::md_prec_level == 0)
         {
             GlobalC::ppcell.init_vnl(GlobalC::ucell);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
