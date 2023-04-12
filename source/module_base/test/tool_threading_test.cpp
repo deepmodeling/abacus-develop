@@ -1,5 +1,7 @@
 #include "../tool_threading.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include <omp.h>
 /************************************************
 *  unit test of threading tool
 ***********************************************/
