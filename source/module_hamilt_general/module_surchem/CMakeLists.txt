@@ -16,3 +16,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(surchem)
 endif()
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()
