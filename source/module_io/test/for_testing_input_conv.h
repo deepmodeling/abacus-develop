@@ -111,7 +111,6 @@ UnitCell::UnitCell(){
 	
 	itia2iat.create(1, 1);
 	lc = new int[3];
-	itiaiw2iwt.create(1, 1, 1);
 	
 	latvec = ModuleBase::Matrix3();
 	latvec_supercell = ModuleBase::Matrix3();

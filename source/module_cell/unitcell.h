@@ -67,7 +67,14 @@ public:
 	int *iwt2iat; // iwt ==> iat.
 	int *iwt2iw; // iwt ==> iw, Peize Lin add 2018-07-02
     ModuleBase::IntArray itia2iat;//(it, ia)==>iat, the index in nat, add 2009-3-2 by mohan
-    ModuleBase::IntArray itiaiw2iwt;//(it, ia, iw)==>iwt, the index in nwfc, add 2009-3-2 by mohan
+    //atom index iat to the first global index for orbital of this atom
+    std::vector<int> iat2iwt;
+    // indexing tool for find orbital global index from it,ia,iw
+    template<typename Tiait>
+    inline Tiait itiaiw2iwt(const Tiait &it, const Tiait &ia, const Tiait &iw) const
+    {
+        return Tiait(this->iat2iwt[this->itia2iat(it, ia)] + iw);
+    }
 
     //========================================================
     // indexing tools for ia and it
