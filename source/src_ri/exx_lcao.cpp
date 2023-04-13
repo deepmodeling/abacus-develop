@@ -1026,7 +1026,7 @@ ofs_mpi.close();
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			std::ofstream ofs("LOC.DM.dat",std::ofstream::app);
-			const int it1=0, it2=0;
+			const size_t it1=0, it2=0;
 			for( size_t ia1=0; ia1!=GlobalC::ucell.atoms[it1].na; ++ia1 )
 				for( size_t ia2=0; ia2!=GlobalC::ucell.atoms[it2].na; ++ia2 )
 					for( size_t is=0; is!=GlobalV::NSPIN; ++is )
