@@ -158,9 +158,11 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					for (int ig = 0;ig < npw;++ig)
 					{
                 	    std::complex<double> skig = sk[ig];
-						std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * GlobalC::wfcpw->lat0) * skig;
                 	    pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
-						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;;
+						// std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * GlobalC::wfcpw->lat0) * skig;
+						// pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;
+						// The second term will be eliminate when doing <psi|beta>Dij<beta|psi> or we can say (\nabla_q+\nabla_q')S(q'-q) = 0
+						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;
 					}
 				} //end id
 				++jkb;
