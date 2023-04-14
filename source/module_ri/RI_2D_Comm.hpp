@@ -133,10 +133,41 @@ void RI_2D_Comm::add_Hexx(
 	// 	}
 	// }
 	std::vector<std::vector<Tdata>> Hk;
-	double mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
-	const std::string mixing_mode = GlobalC::CHR_MIX.get_mixing_mode();
-	if(mixing_mode == "plain")
+
+	if(GlobalC::exx_info.info_global.separate_loop == 0)
 	{
+		double mixing_beta = GlobalC::CHR_MIX.get_mixing_beta();
+		const std::string mixing_mode = GlobalC::CHR_MIX.get_mixing_mode();
+		if(mixing_mode == "plain")
+		{
+			if(Hk_seq[ik].empty())
+			{
+				Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+				Hk_seq[ik].emplace_back(Hk);
+			}
+			else
+			{
+				std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
+				std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+				for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+					for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+						if(pv.in_this_processor(iwt0, iwt1))
+							Hk[iwt0][iwt1] = (1-mixing_beta) * Hk_seq_tmp[iwt0][iwt1] + mixing_beta * Hk_tmp[iwt0][iwt1];
+				Hk_seq[ik][0] = Hk;
+			}
+		}
+		else if(mixing_mode == "pulay")
+		{
+			std::vector<std::vector<Tdata>> Hk_new = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			Hk = RI_2D_Comm::pulay_mixing(pv, Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
+		}
+		else
+			ModuleBase::WARNING_QUIT("RI_2D_Comm::add_Hexx",
+    	                                 "`exx_separate_loop 0` only support plain and pulay mixing.");
+	}
+	else if(GlobalC::exx_info.info_global.separate_loop == 1)
+	{
+		double mixing_beta = GlobalC::exx_info.info_global.mixing_beta_for_loop1;
 		if(Hk_seq[ik].empty())
 		{
 			Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
@@ -153,14 +184,6 @@ void RI_2D_Comm::add_Hexx(
 			Hk_seq[ik][0] = Hk;
 		}
 	}
-	else if(mixing_mode == "pulay" && GlobalC::exx_info.info_global.separate_loop == 0)
-	{
-		std::vector<std::vector<Tdata>> Hk_new = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
-		Hk = RI_2D_Comm::pulay_mixing(pv, Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
-	}
-	else
-		ModuleBase::WARNING_QUIT("RI_2D_Comm::add_Hexx",
-                                     "`exx_separate_loop 0` support plain and pulay mixing, while `exx_separate_loop 1` only support plain mixing.");
 
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 		for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
