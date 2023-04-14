@@ -142,7 +142,7 @@ template <typename FPTYPE = double, typename Device = psi::DEVICE_CPU> class Dia
 
     const std::complex<FPTYPE> * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
-
+template <typename FPTYPE, typename Device> int DiagoDavid<FPTYPE, Device>::PW_DIAG_NDIM = 4;
 } // namespace hsolver
 
 #endif

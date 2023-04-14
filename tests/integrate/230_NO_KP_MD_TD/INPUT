@@ -21,7 +21,7 @@ md_nstep			1
 
 scf_thr			1.0e-6
 
-md_type		    0
+md_type		    nve
 md_dt			0.01
 md_tfirst       0
 

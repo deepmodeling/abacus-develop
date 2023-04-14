@@ -4,26 +4,26 @@ Molecular dynamics (MD) is a computer simulation method for analyzing the physic
 
 By setting `calculation` to be `md`, ABACUS currently provides several different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
 
-  - -1: FIRE method
-  - 0: velocity Verlet algorithm (default: NVE ensemble)
-  - 1: Nose-Hoover style non-Hamiltonian equations of motion
-  - 2: NVT ensemble with Langevin thermostat
-  - 4: MSST method
+  - fire: FIRE method
+  - nve: NVE ensemble with velocity Verlet algorithm
+  - nvt: NVT ensemble
+  - npt: Nose-Hoover style NPT ensemble
+  - langevin: NVT ensemble with Langevin thermostat
+  - msst: MSST method
 
-When `md_type` is set to 0, `md_thermostat` is used to specify the thermostat based on the velocity Verlet algorithm.
+When `md_type` is set to nvt, `md_thermostat` is used to specify the temperature control method used in NVT ensemble.
 
-  - nve: NVE ensemble
-  - anderson: NVT ensemble with Anderson thermostat
-  - berendsen: NVT ensemble with Berendsen thermostat
-  - rescaling: NVT ensemble with velocity Rescaling method 1
-  - rescale_v: NVT ensemble with velocity Rescaling method 2
+  - nhc: Nose-Hoover chain
+  - anderson: Anderson thermostat
+  - berendsen: Berendsen thermostat
+  - rescaling: velocity Rescaling method 1
+  - rescale_v: velocity Rescaling method 2
 
-When `md_type` is set to 1, `md_pmode` is used to specify the NVT or NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+When `md_type` is set to npt, `md_pmode` is used to specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
 
-  - none: NVT ensemble
-  - iso: NPT ensemble with isotropic cetl fluctuations
-  - aniso: NPT ensemble with anisotropic cetl fluctuations
-  - tri: NPT ensemble with non-orthogonal (triclinic) simulation box
+  - iso: isotropic cell fluctuations
+  - aniso: anisotropic cell fluctuations
+  - tri: non-orthogonal (triclinic) simulation box
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 

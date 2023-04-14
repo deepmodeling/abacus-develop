@@ -449,7 +449,9 @@ void ORB_gen_tables::snap_psipsi(
 	const int &m2,
 	const int &N2,
 	const int &nspin,
-	std::complex<double> *olm1) const
+	std::complex<double> *olm1,
+	bool cal_syns,
+	double dmax) const
 {
 	//ModuleBase::TITLE("ORB_gen_tables","snap_psipsi");
 	//ModuleBase::timer::tick ("ORB_gen_tables", "snap_psipsi");
@@ -485,9 +487,11 @@ void ORB_gen_tables::snap_psipsi(
 	/// \f[ \int psi(r) psi(r-R)\f] dr independent of R if R == 0. 
 	/// distance += tiny1 avoid overflow during calculation.
 	const double tiny1 = 1e-12;
-	const double tiny2 = 1e-10;
+	double tiny2 = 1e-10;
 	if (distance < tiny1)
 		distance += tiny1;
+
+	if (cal_syns) tiny2 = dmax;
 
 	/// (2) if there exist overlap, calculate the mesh number
 	/// between two atoms
@@ -524,7 +528,7 @@ void ORB_gen_tables::snap_psipsi(
 	arr_dR[0] = noar.getX() * this->lat0;
 	arr_dR[1] = noar.getY() * this->lat0;
 	arr_dR[2] = noar.getZ() * this->lat0;
-
+	
 	//double xdr = arr_dR[0] / distance;
 	//double ydr = arr_dR[1] / distance;
 	//double zdr = arr_dR[2] / distance;

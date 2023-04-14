@@ -169,8 +169,8 @@ dos_sigma                      0.07 #gauss b coefficeinet(default=0.07)
 dos_nche                       100 #orders of Chebyshev expansions for dos
 
 #Parameters (9.Molecular dynamics)
-md_type                        1 #choose ensemble
-md_thermostat                  nve #choose thermostat
+md_type                        nvt #choose ensemble
+md_thermostat                  nhc #choose thermostat
 md_nstep                       10 #md steps
 md_dt                          1 #time step
 md_tchain                      1 #number of Nose-Hoover chains
@@ -193,9 +193,11 @@ msst_tscale                    0.01 #reduction in initial temperature
 msst_qmass                     -1 #mass of thermostat
 md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC
 md_damp                        1 #damping parameter (time units) used to add force in Langevin method
-md_nraise                      1 #parameters used when md_type=0
+md_nraise                      1 #parameters used when md_type=nvt
+cal_syns                       0 #calculate asynchronous overlap matrix to output for Hefei-NAMD
+dmax                           0.01 #maximum displacement of all atoms in one step (bohr)
 md_tolerance                   100 #tolerance for velocity rescaling (K)
-md_pmode                       none #NPT ensemble mode: none, iso, aniso, tri
+md_pmode                       iso #NPT ensemble mode: iso, aniso, tri
 md_pcouple                     none #whether couple different components: xyz, xy, yz, xz, none
 md_pchain                      1 #num of thermostats coupled with barostat
 md_pfirst                      -1 #initial target pressure
@@ -269,7 +271,8 @@ exx_schwarz_threshold          0 #
 exx_cauchy_threshold           0 #
 exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
-exx_cauchy_grad_threshold      0 #
+exx_cauchy_force_threshold     0 #
+exx_cauchy_stress_threshold    0 #
 exx_ccp_threshold              1e-08 #
 exx_ccp_rmesh_times            default #
 exx_distribute_type            htime #htime or kmeans1 or kmeans2

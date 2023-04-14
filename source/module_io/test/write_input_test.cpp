@@ -189,8 +189,8 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("dos_nche                       100 #orders of Chebyshev expansions for dos"));
         EXPECT_THAT(output,testing::HasSubstr(""));
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (9.Molecular dynamics)"));
-        EXPECT_THAT(output,testing::HasSubstr("md_type                        1 #choose ensemble"));
-        EXPECT_THAT(output,testing::HasSubstr("md_thermostat                  nve #choose thermostat"));
+        EXPECT_THAT(output,testing::HasSubstr("md_type                        nvt #choose ensemble"));
+        EXPECT_THAT(output,testing::HasSubstr("md_thermostat                  nhc #choose thermostat"));
         EXPECT_THAT(output,testing::HasSubstr("md_nstep                       10 #md steps"));
         EXPECT_THAT(output,testing::HasSubstr("md_dt                          1 #time step"));
         EXPECT_THAT(output,testing::HasSubstr("md_tchain                      1 #number of Nose-Hoover chains"));
@@ -211,9 +211,9 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("msst_qmass                     -1 #mass of thermostat"));
         EXPECT_THAT(output,testing::HasSubstr("md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC"));
         EXPECT_THAT(output,testing::HasSubstr("md_damp                        1 #damping parameter (time units) used to add force in Langevin method"));
-        EXPECT_THAT(output,testing::HasSubstr("md_nraise                      1 #parameters used when md_type=0"));
+        EXPECT_THAT(output,testing::HasSubstr("md_nraise                      1 #parameters used when md_type=nvt"));
         EXPECT_THAT(output,testing::HasSubstr("md_tolerance                   100 #tolerance for velocity rescaling (K)"));
-        EXPECT_THAT(output,testing::HasSubstr("md_pmode                       none #NPT ensemble mode: none, iso, aniso, tri"));
+        EXPECT_THAT(output,testing::HasSubstr("md_pmode                       iso #NPT ensemble mode: iso, aniso, tri"));
         EXPECT_THAT(output,testing::HasSubstr("md_pcouple                     none #whether couple different components: xyz, xy, yz, xz, none"));
         EXPECT_THAT(output,testing::HasSubstr("md_pchain                      1 #num of thermostats coupled with barostat"));
         EXPECT_THAT(output,testing::HasSubstr("md_pfirst                      -1 #initial target pressure"));
@@ -285,7 +285,8 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_threshold           0 #threshold to screen exx using Cauchy-Schwartz inequality"));
         EXPECT_THAT(output,testing::HasSubstr("exx_c_grad_threshold           0 #threshold to screen nabla C matrix in exx"));
         EXPECT_THAT(output,testing::HasSubstr("exx_v_grad_threshold           0 #threshold to screen nabla V matrix in exx"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_grad_threshold      0 #threshold to screen nabla exx using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_force_threshold     0 #threshold to screen exx force using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_stress_threshold    0 #threshold to screen exx stress using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_lmax               0 #the maximum l of the spherical Bessel functions for opt ABFs"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_ecut               0 #the cut-off of plane wave expansion for opt ABFs"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_tolerence          0 #the threshold when solving for the zeros of spherical Bessel functions for opt ABFs"));

@@ -83,14 +83,14 @@ Tmatrix Exx_Abfs::Parallel::Communicate::Hexx::Ra2D_to_Km2D(const Parallel_Orbit
 	{
 		for(auto & HR_a2D_A : HR_a2D[is])
 		{
-			const size_t iat1 = HR_a2D_A.first;
-			const size_t it1 = GlobalC::ucell.iat2it[iat1];
-			const size_t ia1 = GlobalC::ucell.iat2ia[iat1];
+			const int iat1 = HR_a2D_A.first;
+			const int it1 = GlobalC::ucell.iat2it[iat1];
+			const int ia1 = GlobalC::ucell.iat2ia[iat1];
 			for(auto & HR_a2D_B : HR_a2D_A.second)
 			{
-				const size_t iat2 = HR_a2D_B.first;
-				const size_t it2 = GlobalC::ucell.iat2it[iat2];
-				const size_t ia2 = GlobalC::ucell.iat2ia[iat2];
+				const int iat2 = HR_a2D_B.first;
+				const int it2 = GlobalC::ucell.iat2it[iat2];
+				const int ia2 = GlobalC::ucell.iat2ia[iat2];
 
 				Tmatrix HK_a2D;
 				for(auto & HR_a2D_C : HR_a2D_B.second)
