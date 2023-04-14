@@ -189,8 +189,8 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("dos_nche                       100 #orders of Chebyshev expansions for dos"));
         EXPECT_THAT(output,testing::HasSubstr(""));
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (9.Molecular dynamics)"));
-        EXPECT_THAT(output,testing::HasSubstr("md_type                        1 #choose ensemble"));
-        EXPECT_THAT(output,testing::HasSubstr("md_thermostat                  nve #choose thermostat"));
+        EXPECT_THAT(output,testing::HasSubstr("md_type                        nvt #choose ensemble"));
+        EXPECT_THAT(output,testing::HasSubstr("md_thermostat                  nhc #choose thermostat"));
         EXPECT_THAT(output,testing::HasSubstr("md_nstep                       10 #md steps"));
         EXPECT_THAT(output,testing::HasSubstr("md_dt                          1 #time step"));
         EXPECT_THAT(output,testing::HasSubstr("md_tchain                      1 #number of Nose-Hoover chains"));
@@ -211,9 +211,9 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("msst_qmass                     -1 #mass of thermostat"));
         EXPECT_THAT(output,testing::HasSubstr("md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC"));
         EXPECT_THAT(output,testing::HasSubstr("md_damp                        1 #damping parameter (time units) used to add force in Langevin method"));
-        EXPECT_THAT(output,testing::HasSubstr("md_nraise                      1 #parameters used when md_type=0"));
+        EXPECT_THAT(output,testing::HasSubstr("md_nraise                      1 #parameters used when md_type=nvt"));
         EXPECT_THAT(output,testing::HasSubstr("md_tolerance                   100 #tolerance for velocity rescaling (K)"));
-        EXPECT_THAT(output,testing::HasSubstr("md_pmode                       none #NPT ensemble mode: none, iso, aniso, tri"));
+        EXPECT_THAT(output,testing::HasSubstr("md_pmode                       iso #NPT ensemble mode: iso, aniso, tri"));
         EXPECT_THAT(output,testing::HasSubstr("md_pcouple                     none #whether couple different components: xyz, xy, yz, xz, none"));
         EXPECT_THAT(output,testing::HasSubstr("md_pchain                      1 #num of thermostats coupled with barostat"));
         EXPECT_THAT(output,testing::HasSubstr("md_pfirst                      -1 #initial target pressure"));

@@ -39,7 +39,6 @@ UnitCell::UnitCell()
 
     itia2iat.create(1, 1);
     lc = new int[3];
-    itiaiw2iwt.create(1, 1, 1);
 
     latvec = ModuleBase::Matrix3();
     latvec_supercell = ModuleBase::Matrix3();
@@ -873,7 +872,8 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 	this->iwt2iw = new int[GlobalV::NLOCAL];
 
 	this->itia2iat.create(ntype, namax);
-	this->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
+	//this->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
+	this->iat2iwt.resize(nat);
 	int iat=0;
 	int iwt=0;
 	for(int it = 0;it < ntype;it++)
@@ -882,9 +882,10 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 		{
 			this->itia2iat(it, ia) = iat;
 			//this->iat2ia[iat] = ia;
+			this->iat2iwt[iat] = iwt;
 			for(int iw=0; iw<atoms[it].nw * GlobalV::NPOL; iw++)
 			{
-				this->itiaiw2iwt(it, ia, iw) = iwt;
+				//this->itiaiw2iwt(it, ia, iw) = iwt;
 				this->iwt2iat[iwt] = iat;
 				this->iwt2iw[iwt] = iw;
 				++iwt;
@@ -1046,6 +1047,10 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
         ModuleBase::GlobalFunc::OUT(log, "Volume (Bohr^3)", this->omega);
         ModuleBase::GlobalFunc::OUT(log, "Volume (A^3))", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
+
+    lat0_angstrom = lat0 * 0.529177;
+    tpiba  = ModuleBase::TWO_PI / lat0;
+    tpiba2 = tpiba * tpiba;
 
     // lattice vectors in another form.
     a1.x = latvec.e11;

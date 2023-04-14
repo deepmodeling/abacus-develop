@@ -61,6 +61,12 @@ Magnetism::~Magnetism()
  *     - cal_nwfc(): calcuate the total number of local basis: NSPIN != 4
  *     - this corresponds to number_of_proj, PP_BETA in pp file, and atoms[it].l_nchi[nw], nw from orb file
  *     - setup GlobalV::NLOCAL
+ *     - interfaces initialed in this function:
+ *       - itia2iat
+ *       - iat2iwt
+ *       - itiaiw2iwt
+ *       - iwt2iat
+ *       - iwt2iw
  *   - CalNwfc2
  *     - cal_nwfc(): calcuate the total number of local basis: NSPIN == 4
  *   - CheckStructure
@@ -257,6 +263,37 @@ TEST_F(UcellTest,CalNwfc1)
 	EXPECT_EQ(ucell->atoms[1].nw,9);
 	EXPECT_EQ(ucell->nwmax,9);
 	EXPECT_EQ(GlobalV::NLOCAL,3*9);
+	//check itia2iat
+	EXPECT_EQ(ucell->itia2iat.getSize(), 4);
+	EXPECT_EQ(ucell->itia2iat(0,0), 0);
+	EXPECT_EQ(ucell->itia2iat(0,1), 0);
+	EXPECT_EQ(ucell->itia2iat(1,0), 1);
+	EXPECT_EQ(ucell->itia2iat(1,1), 2);
+	//check iat2iwt
+	EXPECT_EQ(ucell->iat2iwt.size(), 3);
+	EXPECT_EQ(ucell->iat2iwt[0], 0);
+	EXPECT_EQ(ucell->iat2iwt[1], 9);
+	EXPECT_EQ(ucell->iat2iwt[2], 18);
+	//check itiaiw2iwt
+	EXPECT_EQ(ucell->itiaiw2iwt(0, 0, 0), 0);
+	EXPECT_EQ(ucell->itiaiw2iwt(0, 0, 1), 1);
+	EXPECT_EQ(ucell->itiaiw2iwt(0, 0, 8), 8);
+	EXPECT_EQ(ucell->itiaiw2iwt(1, 0, 0), 9);
+	EXPECT_EQ(ucell->itiaiw2iwt(1, 1, 0), 18);
+	//check itia2iat
+	EXPECT_EQ(ucell->itia2iat.getSize(), 4);
+	EXPECT_EQ(ucell->itia2iat(0, 0), 0);
+	EXPECT_EQ(ucell->itia2iat(0, 1), 0);
+	EXPECT_EQ(ucell->itia2iat(1, 0), 1);
+	EXPECT_EQ(ucell->itia2iat(1, 1), 2);
+	//check iwt2iat
+	EXPECT_EQ(ucell->iwt2iat[0], 0);
+	EXPECT_EQ(ucell->iwt2iat[10], 1);
+	EXPECT_EQ(ucell->iwt2iat[20], 2);
+	//check iwt2iw
+	EXPECT_EQ(ucell->iwt2iw[0], 0);
+	EXPECT_EQ(ucell->iwt2iw[10], 1);
+	EXPECT_EQ(ucell->iwt2iw[20], 2);
 }
 
 TEST_F(UcellTest,CalNwfc2)

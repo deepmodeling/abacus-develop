@@ -327,13 +327,15 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_dt,1);
 	EXPECT_EQ(INPUT.mdp.md_dumpfreq,1);
 	EXPECT_EQ(INPUT.mdp.md_nraise,1);
+	EXPECT_EQ(INPUT.cal_syns,0);
+	EXPECT_EQ(INPUT.dmax,0.01);
 	EXPECT_EQ(INPUT.mdp.md_nstep,10);
 	EXPECT_EQ(INPUT.mdp.md_pchain,1);
 	EXPECT_EQ(INPUT.mdp.md_pcouple,"none");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,-1);
-	EXPECT_EQ(INPUT.mdp.md_pmode,"none");
+	EXPECT_EQ(INPUT.mdp.md_pmode,"iso");
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
@@ -341,10 +343,10 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
-	EXPECT_EQ(INPUT.mdp.md_thermostat,"nve");
+	EXPECT_EQ(INPUT.mdp.md_thermostat,"nhc");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tolerance,100);
-	EXPECT_EQ(INPUT.mdp.md_type,1);
+	EXPECT_EQ(INPUT.mdp.md_type,"nvt");
 	EXPECT_EQ(INPUT.mdp.msst_direction,2);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_qmass,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_tscale,0.01);
@@ -663,13 +665,15 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_dt,1);
 	EXPECT_EQ(INPUT.mdp.md_dumpfreq,1);
 	EXPECT_EQ(INPUT.mdp.md_nraise,1);
+	EXPECT_EQ(INPUT.cal_syns,0);
+	EXPECT_EQ(INPUT.dmax,0.01);
 	EXPECT_EQ(INPUT.mdp.md_nstep,10);
 	EXPECT_EQ(INPUT.mdp.md_pchain,1);
 	EXPECT_EQ(INPUT.mdp.md_pcouple,"none");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,-1);
-	EXPECT_EQ(INPUT.mdp.md_pmode,"none");
+	EXPECT_EQ(INPUT.mdp.md_pmode,"iso");
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
@@ -678,10 +682,10 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
-	EXPECT_EQ(INPUT.mdp.md_thermostat,"nve");
+	EXPECT_EQ(INPUT.mdp.md_thermostat,"nhc");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tolerance,100);
-	EXPECT_EQ(INPUT.mdp.md_type,1);
+	EXPECT_EQ(INPUT.mdp.md_type,"nvt");
 	EXPECT_EQ(INPUT.mdp.msst_direction,2);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_qmass,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_tscale,0.01);
@@ -856,7 +860,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.mdp.md_tfreq = 0;
 	INPUT.mdp.md_pfreq = 0;
 	INPUT.mdp.md_restart = 1;
-	INPUT.mdp.md_type = 1;
+	INPUT.mdp.md_type = "npt";
 	INPUT.mdp.md_pmode = "iso";
 	// the 6th calling
 	INPUT.Default_2();
@@ -1012,7 +1016,7 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("temperature of MD calculation should be set!"));
 	INPUT.mdp.md_tfirst = 1.0;
 	//
-	INPUT.mdp.md_type = 1;
+	INPUT.mdp.md_type = "npt";
 	INPUT.mdp.md_pmode = "iso";
 	INPUT.mdp.md_pfirst = -1.0;
 	testing::internal::CaptureStdout();
@@ -1021,7 +1025,7 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("pressure of MD calculation should be set!"));
 	INPUT.mdp.md_pfirst = 1.0;
 	//
-	INPUT.mdp.md_type = 4;
+	INPUT.mdp.md_type = "msst";
 	INPUT.mdp.msst_qmass = -1.0;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");

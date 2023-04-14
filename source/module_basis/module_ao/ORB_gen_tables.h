@@ -50,7 +50,9 @@ class ORB_gen_tables
     	const int &m2,
 		const int &n2,
 		const int &nspin,
-		std::complex<double> *olm1=NULL)const;
+		std::complex<double> *olm1=NULL,
+		bool cal_syns = false,
+		double dmax = 0.0)const;
 
 	void snap_psibeta_half(
 		const LCAO_Orbitals &orb,
