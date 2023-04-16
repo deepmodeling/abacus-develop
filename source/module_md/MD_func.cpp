@@ -416,6 +416,9 @@ void temp_vector(const int &natom,
     }
 }
 
+// liuyu add 2023-04-16
+// determine thr current MD step according to Restart_md.dat if md_restart is true,
+// then STRU_MD_$step will be read directly instead of STRU
 double current_step(const int& my_rank, const std::string& file_dir)
 {
     bool ok = true;
