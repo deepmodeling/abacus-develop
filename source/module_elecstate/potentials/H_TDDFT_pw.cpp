@@ -211,11 +211,11 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
     {
         vext_space = ((i - lcut1) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
     }
-    else if (i >= this->rho_basis_->nx * lcut1 && i < this->rho_basis_->nx * lcut2)
+    else if (i >= lcut1 && i < lcut2)
     {
-        vext_space = -i / this->rho_basis_->nx * this->ucell_->lat0;
+        vext_space = -i * this->ucell_->lat0;
     }
-    else if (i >= this->rho_basis_->nx * lcut2)
+    else if (i >= lcut2)
     {
         vext_space = ((i - lcut2) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
     }

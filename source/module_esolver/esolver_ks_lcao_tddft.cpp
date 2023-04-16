@@ -365,9 +365,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
 
-        std::complex<double> *p_psi = &psi[0](0,0,0);
-        std::complex<double> *p_psi_laststep = &psi_laststep[0](0,0,0);
-        for (int index = 0; index < psi[0].size(); ++index)
+        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
             this->psi->fix_k(ik);
             this->psi_laststep->fix_k(ik);
@@ -375,6 +373,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             for (int index = 0; index < size0; ++index)
                 psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
         }
+        
         if (istep > 1 && ELEC_evolve::td_edm == 0)
             this->cal_edm_tddft();
     }

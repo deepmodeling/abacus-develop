@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+np=`cat /proc/cpuinfo | grep "cpu cores" | uniq| awk '{print $NF}'`
+echo "nprocs in this machine is $np"
+
+for i in 4;do
+    if [[ $i -gt $np ]];then
+        continue
+    fi
+    echo "TEST in parallel, nprocs=$i"
+<<<<<<< HEAD
+    mpirun -np $i ./base_ParaReduce
+=======
+<<<<<<< HEAD:source/module_base/test_parallel/parallel_global_test.sh
+    mpirun -np $i ./base_ParaGlobal
+=======
+    mpirun -np $i ./base_ParaReduce
+>>>>>>> 48501f02... Fix : bug of electric field in tddft (#1938):source/module_base/test_parallel/parallel_reduce_test.sh
+>>>>>>> 48501f02... Fix : bug of electric field in tddft (#1938)
+    break    
+done

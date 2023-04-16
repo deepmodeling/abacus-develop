@@ -61,52 +61,21 @@ void ModuleIO::write_dipole(const double *rho_save,
     ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
 #else
 
-            // case 2: > first part rho: processor 0 receive the rho
-            // from other processors
-            else if (GlobalV::RANK_IN_POOL == 0)
-            {
-                MPI_Recv(zpiece, nxy, MPI_DOUBLE, which_ip[iz], tag, POOL_WORLD, &ierror);
-                // GlobalV::ofs_running << "\n Receieve First number = " << zpiece[0];
-            }
+    double dipole_elec[3] = {0.0, 0.0, 0.0};
 
-            // write data
-            if (GlobalV::MY_RANK == 0)
-            {
-                //	ofs << "\niz=" << iz;
-                // mohan update 2011-03-30
-                for (int iy = 0; iy < GlobalC::rhopw->ny; iy++)
-                {
-                    for (int ix = 0; ix < GlobalC::rhopw->nx; ix++)
-                    {
-                        /*
-                                                if(ix<GlobalC::pw.ncx/2)
-                                                    {dipole_elec_x +=
-                           zpiece[ix*GlobalC::pw.ncy+iy]*ix*GlobalC::ucell.lat0*0.529177/GlobalC::pw.ncx;} else
-                                                    {dipole_elec_x +=
-                           zpiece[ix*GlobalC::pw.ncy+iy]*(ix-GlobalC::pw.ncx)*GlobalC::ucell.lat0*0.529177/GlobalC::pw.ncx;}
-                                                if(iy<GlobalC::pw.ncy/2)
-                                                    {dipole_elec_y +=
-                           zpiece[ix*GlobalC::pw.ncy+iy]*iy*GlobalC::ucell.lat0*0.529177/GlobalC::pw.ncy;} else
-                                                    {dipole_elec_y +=
-                           zpiece[ix*GlobalC::pw.ncy+iy]*(iy-GlobalC::pw.ncy)*GlobalC::ucell.lat0*0.529177/GlobalC::pw.ncy;}
-                                                if(iz<GlobalC::pw.ncz/2)
-                                                    {dipole_elec_z +=
-                           zpiece[ix*GlobalC::pw.ncy+iy]*iz*GlobalC::ucell.lat0*0.529177/GlobalC::pw.ncz;} else
-                                                    {dipole_elec_z +=
-                           zpiece[ix*GlobalC::pw.ncy+iy]*(iz-GlobalC::pw.ncz)*GlobalC::ucell.lat0*0.529177/GlobalC::pw.ncz;}
-                        */
-                        dipole_elec_x += zpiece[ix * GlobalC::rhopw->ny + iy] * ix * GlobalC::ucell.lat0 * 0.529177
-                                         / GlobalC::rhopw->nx;
-                        dipole_elec_y += zpiece[ix * GlobalC::rhopw->ny + iy] * iy * GlobalC::ucell.lat0 * 0.529177
-                                         / GlobalC::rhopw->ny;
-                        dipole_elec_z += zpiece[ix * GlobalC::rhopw->ny + iy] * iz * GlobalC::ucell.lat0 * 0.529177
-                                         / GlobalC::rhopw->nz;
-                    }
-                }
-            }
-        } // end iz
+    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ++ir)
+    {
+        int i = ir / (GlobalC::rhopw->ny * GlobalC::rhopw->nplane);
+        int j = ir / GlobalC::rhopw->nplane - i * GlobalC::rhopw->ny;
+        int k = ir % GlobalC::rhopw->nplane + GlobalC::rhopw->startz_current;
+        double x = (double)i / GlobalC::rhopw->nx;
+        double y = (double)j / GlobalC::rhopw->ny;
+        double z = (double)k / GlobalC::rhopw->nz;
 
-        delete[] zpiece;
+        dipole_elec[0] += rho_save[ir] * x;
+        dipole_elec[1] += rho_save[ir] * y;
+        dipole_elec[2] += rho_save[ir] * z;
+    }
 
     Parallel_Reduce::reduce_double_pool(dipole_elec[0]);
     Parallel_Reduce::reduce_double_pool(dipole_elec[1]);
@@ -116,11 +85,12 @@ void ModuleIO::write_dipole(const double *rho_save,
         dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
     }
 
-        std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec_x << std::endl;
-        std::cout << std::setprecision(8) << "dipole_elec_y: " << dipole_elec_y << std::endl;
-        std::cout << std::setprecision(8) << "dipole_elec_z: " << dipole_elec_z << std::endl;
+    std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
+    std::cout << std::setprecision(8) << "dipole_elec_y: " << dipole_elec[1] << std::endl;
+    std::cout << std::setprecision(8) << "dipole_elec_z: " << dipole_elec[2] << std::endl;
 
-        ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << " " << dipole_elec_z << std::endl;
+    ofs << std::setprecision(8) << istep << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
+        << std::endl;
 
     double dipole_ion[3] = {0.0};
     double dipole_sum = 0.0;
@@ -157,7 +127,6 @@ void ModuleIO::write_dipole(const double *rho_save,
 
 #endif
 
-    // calculate ion dipole;
     if (GlobalV::MY_RANK == 0)
     {
         end = time(NULL);
