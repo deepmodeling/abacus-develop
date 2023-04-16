@@ -158,7 +158,7 @@ void Charge::init_rho()
     std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
     if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
     {
-        this->atomic_rho(GlobalV::NSPIN, rho, GlobalC::rhopw);
+        this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, GlobalC::rhopw);
     }
     else if (GlobalV::init_chg == "file")
     {
@@ -338,7 +338,7 @@ void Charge::renormalize_rho(void)
 // rho_at (read from pseudopotential files)
 // allocate work space (psic must already be allocated)
 //-------------------------------------------------------
-void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::PW_Basis* rho_basis)const		// Peize Lin refactor 2021.04.08
+void Charge::atomic_rho(const int spin_number_need, const double& omega, double** rho_in, ModulePW::PW_Basis* rho_basis)const		// Peize Lin refactor 2021.04.08
 {
     ModuleBase::TITLE("Charge","atomic_rho");
     ModuleBase::timer::tick("Charge","atomic_rho");
@@ -467,7 +467,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 #pragma omp for
 #endif
 					for (int igg=0; igg< rho_basis->ngg ; igg++)
-						rho_lgl[igg] /= GlobalC::ucell.omega;
+						rho_lgl[igg] /= omega;
 #ifdef _OPENMP
 }
 #endif
@@ -635,7 +635,7 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 
 		for(int ir=0; ir<rho_basis->nrxx; ++ir)
 			ne[is] += rho_in[is][ir];
-		ne[is] *= GlobalC::ucell.omega/(double)rho_basis->nxyz; 
+		ne[is] *= omega/(double)rho_basis->nxyz; 
 		Parallel_Reduce::reduce_double_pool( ne[is] );
 
         // we check that everything is correct
@@ -656,9 +656,9 @@ void Charge::atomic_rho(const int spin_number_need, double** rho_in, ModulePW::P
 		Parallel_Reduce::reduce_double_pool( sumrea );	
 
 		// mohan fix bug 2011-04-03
-        neg = neg / (double)rho_basis->nxyz * GlobalC::ucell.omega;
-        ima = ima / (double)rho_basis->nxyz * GlobalC::ucell.omega;
-		sumrea = sumrea / (double)rho_basis->nxyz * GlobalC::ucell.omega;
+        neg = neg / (double)rho_basis->nxyz * omega;
+        ima = ima / (double)rho_basis->nxyz * omega;
+		sumrea = sumrea / (double)rho_basis->nxyz * omega;
 
         if( ((neg<-1.0e-4) && (is==0||GlobalV::NSPIN==2)) || ima>1.0e-4)
         {

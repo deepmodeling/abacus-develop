@@ -793,12 +793,12 @@ calculations.
 
 - **Type**: Real
 - **Description**: mixing parameter. We recommend the following options:
-  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts. 
-    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**; 
+  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts.
+    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**;
     - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
     - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
   - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
-  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**  
+  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**
   - For low-dimensional large systems, the setup of **mixing_beta=0.1**, **mixing_ndim=20**, and **mixing_gg0=1.5** usually works well.
 - **Default**: -10.0
 
@@ -815,11 +815,13 @@ calculations.
 - **Default**: 0.0
 
 ### mixing_tau
+
 - **Type**: Boolean
 - **Description**: Only relevant for meta-GGA calculations. If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
 - **Default**: False
 
 ### mixing_dftu
+
 - **Type**: Boolean
 - **Description**: Only relevant for DFT+U calculations. If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
 - **Default**: False
@@ -831,7 +833,7 @@ calculations.
   If you set gamma_only = 1, ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file. If you set gamma_only = 0, more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
 
   > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-
+  >
 - **Default**: 0
 
 ### printe
@@ -1133,8 +1135,7 @@ These variables are used to control the output of properties.
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot and ElecStaticP ot_AV E (along the z-axis).
-
+- **Description**: If set to 1, ABACUS will output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot.cube. Our toolset includes a Python script located at `tools/average_pot/aveElecStatPot.py` that calculates the average electrostatic potential along the z-axis and outputs it to ElecStaticPot_AVE.
 - **Default**: 0
 
 ### out_dm
@@ -1146,7 +1147,7 @@ These variables are used to control the output of properties.
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs the coefficients of wave functions into text files. The file names are WAVEFUNC$K.txt, where $K is the index of k point. When set this variable to 2, results are stored in binary files. The file names are WAVEFUNC$K.dat.
+- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs the coefficients of wave functions into text files. The file names are WAVEFUNC$K$.txt, where $K$ is the index of k point. When set this variable to 2, results are stored in binary files. The file names are WAVEFUNC$K$.dat.
 - **Default**: 0
 
 ### out_wfc_r
@@ -1188,7 +1189,7 @@ These variables are used to control the output of properties.
 ### out_bandgap
 
 - **Type**: Boolean
-- **Description**: If set to 1, the bandgap will be printed out at each SCF step. 
+- **Description**: If set to 1, the bandgap will be printed out at each SCF step.
 - **Default**: 0
 
 ### out_level
@@ -1244,7 +1245,7 @@ These variables are used to control the output of properties.
   In MD calculations, if [out_app_flag](#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, The output frequency is controlled by [out_hs2_interval](#out_hs2_interval). For example, if we are running a 10-step MD with out_hs2_interval = 3, then `$x` will be 0, 3, 6, and 9.
 
   > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-
+  >
 - **Default**: 0
 
 ### out_mat_hs2
@@ -1274,15 +1275,17 @@ These variables are used to control the output of properties.
   - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
 
   > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-
+  >
 - **Default**: 0
 
 ### out_mat_t
+
 - **Type**: Boolean
 - **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
 - **Default**: 0
 
 ### out_mat_dh
+
 - **Type**: Boolean
 - **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_hs2_interval](#out_hs2_interval) and [out_app_flag](#out_app_flag).
 - **Default**: 0
@@ -1410,7 +1413,7 @@ These variables are used to control the generation of numerical atomic orbitals 
 ### bessel_nao_smooth
 
 - **Type**: Boolean
-- **Description**: whether the bessel functions smooth at radius cutoff. 
+- **Description**: whether the bessel functions smooth at radius cutoff.
 - **Default**: 1
 
 ### bessel_nao_sigma
@@ -1908,11 +1911,14 @@ These variables are used to control the molecular dynamics calculations.
 ### md_prec_level
 
 - **Type**: Integer
-- **Description**: Determine the precision level of vc-md. 
+- **Description**: Determine the precision level of vc-md.
+
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
   - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
   - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+
   > Note: this parameter is only used in variable-cell MD!
+  >
 - **Default**: 0
 
 ### ref_cell_factor
@@ -2102,7 +2108,9 @@ These variables are used to control DFT+U correlated parameters
 
 - **Type**: Real
 - **Description**: Hubbard Coulomb interaction parameter U(ev) in plus U correction, which should be specified for each atom unless Yukawa potential is used.
+
 > Note : since we only implemented the simplified scheme by Duradev, the 'U' here is actually Ueff which is given by hubbard U minus hund J.
+
 - **Default**: 0.0
 
 ### yukawa_potential
@@ -2121,7 +2129,9 @@ These variables are used to control DFT+U correlated parameters
 
 - **Type**: Integer
 - **Description**: The parameter controls what form of occupation matrix control we are using. If set to 0, then no occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step. If set to 1, then the first SCF step will use an initial density matrix read from a file named `initial_onsite.dm`, but for later steps, the onsite density matrix will be updated. If set to 2, the same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
+
 > Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
+
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -2315,7 +2325,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### td_print_eij
 
 - **Type**: double
-- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij 
+- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij
 - **Default**: -1
 
 ### td_force_dt
@@ -2405,7 +2415,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase of Gauss type electric field  
+  phase of Gauss type electric field\
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.0
 
@@ -2421,7 +2431,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time center of Gauss type electric field  
+  step number of time center of Gauss type electric field\
   amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 100
 
@@ -2448,10 +2458,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase of Trapezoid type electric field  
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  phase of Trapezoid type electric field\
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 0.0
 
@@ -2459,10 +2469,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time interval 1 of Trapezoid type electric field  
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  step number of time interval 1 of Trapezoid type electric field\
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1875
 
@@ -2470,10 +2480,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time interval 2 of Trapezoid type electric field  
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  step number of time interval 2 of Trapezoid type electric field\
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 5625
 
@@ -2481,10 +2491,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of time interval 3 of Trapezoid type electric field  
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  step number of time interval 3 of Trapezoid type electric field\
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 7500
 
@@ -2492,10 +2502,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  amplitude of Trapezoid type electric field  (V/A)
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  amplitude of Trapezoid type electric field  (V/A)\
+  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
+  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
+  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 2.74
 
@@ -2519,7 +2529,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase 1 of Trigonometric type electric field  
+  phase 1 of Trigonometric type electric field\
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 0.0
 
@@ -2527,7 +2537,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  phase 2 of Trigonometric type electric field  
+  phase 2 of Trigonometric type electric field\
   amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
 - **Default**: 0.0
 
@@ -2543,16 +2553,17 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  step number of switch time of Heaviside type electric field 
-  E = amp , t<t0
+  step number of switch time of Heaviside type electric field\
+  E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 100
+
 ### td_heavi_amp
 
 - **Type**: String
 - **Description**:
-  amplitude of Heaviside type electric field  (V/A)
-  E = amp , t<t0
+  amplitude of Heaviside type electric field  (V/A)\
+  E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 2.74
 
@@ -2571,7 +2582,6 @@ These variables are used to control berry phase and wannier90 interface paramete
   - 1: Output efield.
   - 0: do not Output efield.
 - **Default**: 0
-
 
 ### ocp
 

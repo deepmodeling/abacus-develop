@@ -1213,6 +1213,7 @@ void Symmetry::pricell(double* pos)
     if(this->ncell != ntrans)
     {
         std::cout << " ERROR: PRICELL: NCELL != NTRANS !" << std::endl;
+        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
 		ModuleBase::QUIT();
     }
     if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
