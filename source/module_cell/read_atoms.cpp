@@ -56,11 +56,16 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
                 }
             }
 
-            if (ss >> one_string)
+            if (!end && ss >> one_string && one_string[0] != '#')
             {
-                if (!end && one_string[0] != '#')
+                if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
                 {
                     pseudo_type[i] = one_string;
+                }
+                else
+                {
+                    GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << endl;
+                    ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
                 }
             }
 
