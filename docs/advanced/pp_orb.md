@@ -8,6 +8,8 @@ The default value of basis_type is pw. The size of pw basis set is controlled by
 
 When choosing lcao basis set, users need to prepare a set of atomic orbitals. Such files may be downloaded from the [official website](http://abacus.ustc.edu.cn/pseudo/list.htm). For more information, also check the `NUMERICAL_ORBITAL` section in the specification of the [STRU file](./input_files/stru.md).
 
+The sequence of orbitals in lcao basis set is as follows. First, all the orbitals belonging to one particular atom are put together. These atom orbitals are arranged as the atom order specified in the STRU file. Then, the orbitals of each atom are arranged according to the orbital files. If the orbital file says that the number of s、p、d...orbitals is $n_s$、$n_p$、$n_d$...then the orbitals are aligned as first $n_s$ s orbitals, then $n_p$ p orbitals, and then $n_d$ d orbitals...Last, the angular part of each orbital is real spherical harmonic function. They are aligned as Y00, Y10, Y11, Y1-1, Y20, Y21, Y2-1, Y22, Y2-2, which is s,$p_z$,$p_x$,$p_y$,$d_{z^2}$,$d_{xz}$,$d_{yz}$,$d_{x^2-y^2}$,$d_{xy}$. The corresponding formula can be seen in [Table of spherical harmonics - Wikipedia](https://en.wikipedia.org/wiki/Table_of_spherical_harmonics#Real_spherical_harmonics). Note that these formula lack of the Condon–Shortley phase $(-1)^m$, which is presented in the lcao orbitals of ABACUS.
+
 ## Generating atomic orbital bases
 
 Users may also choose to generate their own atomic obitals. In ABACUS, the atomic orbital bases are generated using a scheme developed in the [paper](https://iopscience.iop.org/article/10.1088/0953-8984/22/44/445501). A detailed description of the procedure for generating orbitals will be provided later.
