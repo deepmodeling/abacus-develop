@@ -64,7 +64,6 @@ class OperatorLCAO : public Operator<T>
                             nullptr};
 #endif
     }
-    //use for tddft evolve,added by zaotian
     void matrixHk_l(MatrixBlock<T> &hk_in, MatrixBlock<T> &hk_last_in, MatrixBlock<T> &sk_in)
     {
         this->get_hls_pointers();
@@ -92,7 +91,6 @@ class OperatorLCAO : public Operator<T>
                             nullptr};
 #endif
     }
-
     /* Function contributeHk() is defined in derived class, for constructing <phi_{\mu}|H|phi_{\nu}>(K) 
     */
     virtual void contributeHk(int ik)

@@ -52,7 +52,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
 
     return;
 }
-//added by zhaoht for test
+//usenew propagator
 void Evolve_LCAO_Matrix::evolve_complex_matrix_1(const int& ik,
                                                hamilt::Hamilt<double>* p_hamilt,
                                                psi::Psi<std::complex<double>>* psi_k,
@@ -82,7 +82,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix_1(const int& ik,
 
     return;
 }
-//test above
+
 void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
                                               hamilt::Hamilt<double>* p_hamilt,
                                               std::complex<double>* psi_k,
@@ -215,7 +215,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
     int lwork = 3 * GlobalV::NLOCAL - 1; // tmp
     std::complex<double>* work = new std::complex<double>[lwork];
     ModuleBase::GlobalFunc::ZEROS(work, lwork);
-    int ipiv[GlobalV::NLOCAL];
+    int* ipiv = new int[GlobalV::NLOCAL];
 
     LapackConnector::zgetrf(GlobalV::NLOCAL, GlobalV::NLOCAL, Denominator, GlobalV::NLOCAL, ipiv, &info);
     LapackConnector::zgetri(GlobalV::NLOCAL, Denominator, GlobalV::NLOCAL, ipiv, work, lwork, &info);
@@ -363,7 +363,7 @@ void Evolve_LCAO_Matrix::using_LAPACK_complex(const int& ik,
     */
 
     delete[] work;
-    //	delete[] ipiv;
+    delete[] ipiv;
 
     return;
 }
@@ -391,7 +391,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(
     complex<double>* Htmp = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(Htmp, this->ParaV->nloc);
     BlasConnector::copy(this->ParaV->nloc, h_mat.p, 1, Htmp, 1);
-
+    
     complex<double>* U_operator = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(U_operator, this->ParaV->nloc);
 
@@ -404,20 +404,19 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(
 
 // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    complex<double>* psi_not_norm = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(psi_not_norm, this->ParaV->nloc);
-
     /// @brief apply U_operator to the wave function of the previous step for new wave function
     /// @input U_operator, psi_k_laststep
-    /// @output psi_k, psi_not_norm (used by norm_wfc)
-    U_to_wfc(nband, nlocal, U_operator, psi_k_laststep, psi_k, psi_not_norm);
+    /// @output psi_k
+    U_to_wfc(nband, nlocal, U_operator, psi_k_laststep, psi_k);
+
+    
 
 // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief normalize psi_k
     /// @input Stmp, psi_not_norm, psi_k, print_matrix
     /// @output psi_k
-    norm_wfc(nband, nlocal, Stmp, psi_not_norm, psi_k, print_matrix);
+    norm_wfc(nband, nlocal, Stmp, psi_k, print_matrix);
 
 
 // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -430,12 +429,10 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(
     delete[] Stmp;
     delete[] Htmp;
     delete[] U_operator;
-    delete[] psi_not_norm;
-
     return;
 }
 
-//added by zhaoht for test
+
 void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
             const int nband,
             const int nlocal,         
@@ -490,20 +487,19 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
 
 // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    complex<double>* psi_not_norm = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(psi_not_norm, this->ParaV->nloc);
-
     /// @brief apply U_operator to the wave function of the previous step for new wave function
     /// @input U_operator, psi_k_laststep
-    /// @output psi_k, psi_not_norm (used by norm_wfc)
-    U_to_wfc(nband, nlocal, U_operator, psi_k_laststep, psi_k, psi_not_norm);
+    /// @output psi_k
+    U_to_wfc(nband, nlocal, U_operator, psi_k_laststep, psi_k);
+
+    
 
 // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief normalize psi_k
     /// @input Stmp, psi_not_norm, psi_k, print_matrix
     /// @output psi_k
-    norm_wfc(nband, nlocal, Stmp, psi_not_norm, psi_k, print_matrix);
+    norm_wfc(nband, nlocal, Stmp, psi_k, print_matrix);
 
 
 // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -516,11 +512,8 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
     delete[] Stmp;
     delete[] Htmp;
     delete[] U_operator;
-    delete[] psi_not_norm;
-
     return;
 }
-//test above
 
 void Evolve_LCAO_Matrix::compute_U_operator(
                 const int nband,
@@ -567,8 +560,8 @@ void Evolve_LCAO_Matrix::compute_U_operator(
 
 // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - para * Htmp;     beta1 = - para = -0.25 * INPUT.mdp.md_dt
-    // Denominator = Stmp + para * Htmp;   beta2 = para = 0.25 * INPUT.mdp.md_dt
+    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * INPUT.mdp.md_dt
+    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * INPUT.mdp.md_dt
     complex<double> alpha = {1.0, 0.0};
     complex<double> beta1 = {0.0, -0.25 * INPUT.mdp.md_dt};
     complex<double> beta2 = {0.0, 0.25 * INPUT.mdp.md_dt};
@@ -621,7 +614,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
 //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) Next, invert Denominator
     int* ipiv = new int[this->ParaV->nloc];
-    int info;
+    int info = 0;
     // (3.1) compute ipiv
     ScalapackConnector::getrf(
         nlocal,
@@ -631,7 +624,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         1, 
         this->ParaV->desc,
         ipiv, 
-        info
+        &info
     );
     int lwork = -1;
     int liwotk = -1;
@@ -649,7 +642,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         &lwork,
         iwork.data(),
         &liwotk,
-        info
+        &info
     );
     lwork = work[0].real();
     work.resize(lwork, 0);
@@ -667,7 +660,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         &lwork,
         iwork.data(),
         &liwotk,
-        info
+        &info
     );
     assert(0 == info);
 
@@ -676,7 +669,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
     // (4) U_operator = Denominator * Numerator;
     ScalapackConnector::gemm(
         'N',
-        'T',
+        'N',
         nlocal,
         nlocal,
         nlocal,
@@ -695,7 +688,7 @@ void Evolve_LCAO_Matrix::compute_U_operator(
         1,
         this->ParaV->desc
     );
-    //zaotian added for test 
+
     if (print_matrix)
     {
         GlobalV::ofs_running << " fenmu^-1:" << endl;
@@ -749,50 +742,30 @@ void Evolve_LCAO_Matrix::U_to_wfc(
                 const int nlocal,   
                 const std::complex<double>* U_operator,
                 const std::complex<double>* psi_k_laststep,
-                std::complex<double>* psi_k,
-                std::complex<double>* psi_not_norm) const
+                std::complex<double>* psi_k) const
 {
-    complex<double>* psi_not_norm_trans = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(psi_not_norm_trans, this->ParaV->nloc);
 
     ScalapackConnector::gemm(
-        'T',
-        'T',
+        'N',
+        'N',
+        nlocal,
         nband,
         nlocal,
-        nlocal,
         1.0,
-        psi_k_laststep,
-        1,
-        1,
-        this->ParaV->desc_wfc,
         U_operator,
         1,
         1,
         this->ParaV->desc,
+        psi_k_laststep,
+        1,
+        1,
+        this->ParaV->desc_wfc,
         0.0,
-        psi_not_norm,
+        psi_k,
         1,
         1,
-        this->ParaV->desc
+        this->ParaV->desc_wfc
     );
-    ScalapackConnector::tranu(
-        nlocal,
-        nlocal,
-        1.0,
-        psi_not_norm,
-        1,
-        1,
-        this->ParaV->desc,
-        0.0,
-        psi_not_norm_trans,
-        1,
-        1,
-        this->ParaV->desc
-    );
-    BlasConnector::copy(this->ParaV->nloc_wfc, psi_not_norm_trans, 1, psi_k, 1);
-
-    delete[] psi_not_norm_trans;
 }
 
 
@@ -800,57 +773,38 @@ void Evolve_LCAO_Matrix::norm_wfc(
                 const int nband,
                 const int nlocal,   
                 const std::complex<double>* Stmp,
-                const std::complex<double>* psi_not_norm,
                 std::complex<double>* psi_k,
                 const int print_matrix) const
 {
-    complex<double>* tmp1 = new complex<double>[this->ParaV->nloc];
-    complex<double>* tmp2 = new complex<double>[this->ParaV->nloc];
-    complex<double>* tmp3 = new complex<double>[this->ParaV->nloc_wfc];
-    ModuleBase::GlobalFunc::ZEROS(tmp1, this->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(tmp2, this->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(tmp3, this->ParaV->nloc_wfc);
-
+    complex<double>* tmp1 = new complex<double>[this->ParaV->nloc_wfc];
+    ModuleBase::GlobalFunc::ZEROS(tmp1, this->ParaV->nloc_wfc);
+   
     complex<double>* Cij = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(Cij, this->ParaV->nloc);
-   
-
+    
     ScalapackConnector::gemm(
-            'T',
             'N',
+            'N',
+            nlocal,
             nband,
             nlocal,
-            nlocal,
             1.0,
-            psi_k,
-            1,
-            1,
-            this->ParaV->desc_wfc,
             Stmp,
             1,
             1,
             this->ParaV->desc,
+            psi_k,
+            1,
+            1,
+            this->ParaV->desc_wfc,
             0.0,
             tmp1,
             1,
             1,
-            this->ParaV->desc
+            this->ParaV->desc_wfc
     );
-    ScalapackConnector::tranu(
-        nlocal,
-        nlocal,
-        1.0,
-        tmp1,
-        1,
-        1,
-        this->ParaV->desc,
-        0.0,
-        tmp2,
-        1,
-        1,
-        this->ParaV->desc
-    );
-    BlasConnector::copy(this->ParaV->nloc_wfc, tmp2, 1, tmp3, 1);
+
+    
     ScalapackConnector::gemm(
         'C',
         'N',
@@ -862,7 +816,7 @@ void Evolve_LCAO_Matrix::norm_wfc(
         1,
         1,
         this->ParaV->desc_wfc,
-        tmp3,
+        tmp1,
         1,
         1,
         this->ParaV->desc_wfc,
@@ -915,18 +869,19 @@ void Evolve_LCAO_Matrix::norm_wfc(
 
     // std::cout << "nlocal" << nlocal << std::endl;
     // std::cout << "GlobalV::NLOCAL" << GlobalV::NLOCAL << std::endl;
+    BlasConnector::copy(this->ParaV->nloc_wfc, psi_k, 1, tmp1, 1);
 
     ScalapackConnector::gemm(
-        'T',
         'N',
-        GlobalV::NLOCAL,
+        'N',
+        nlocal,
         nband,
         nband,
         1.0,
-        psi_not_norm,
+        tmp1,
         1,
         1,
-        this->ParaV->desc,
+        this->ParaV->desc_wfc,
         Cij,
         1,
         1,
@@ -938,6 +893,7 @@ void Evolve_LCAO_Matrix::norm_wfc(
         this->ParaV->desc_wfc
     );
 
+
     if (print_matrix)
     {
         GlobalV::ofs_running << " Cij:" << endl;
@@ -945,27 +901,11 @@ void Evolve_LCAO_Matrix::norm_wfc(
         {
             for (int j = 0; j < this->ParaV->nrow; j++)
             {
-                GlobalV::ofs_running << Cij[i * this->ParaV->ncol + j].real() << "+" << Cij[i * this->ParaV->ncol + j].imag() << "i ";
+                GlobalV::ofs_running << Cij[i * this->ParaV->ncol + j].real() << "+" << Cij[i * this->ParaV->ncol_bands + j].imag() << "i ";
             }
             GlobalV::ofs_running << endl;
         }
         GlobalV::ofs_running << endl;
-        // GlobalV::ofs_running << " psi_k_laststep:" << endl;
-        // for (int i = 0; i < this->ParaV->ncol_bands; i++)
-        // {
-        //     for (int j = 0; j < this->ParaV->nrow; j++)
-        //     {
-        //         double aa, bb;
-        //         aa = psi_k_laststep[i * this->ParaV->ncol + j].real();
-        //         bb = psi_k_laststep[i * this->ParaV->ncol + j].imag();
-        //         if (abs(aa) < 1e-8)
-        //             aa = 0.0;
-        //         if (abs(bb) < 1e-8)
-        //             bb = 0.0;
-        //         GlobalV::ofs_running << aa << "+" << bb << "i ";
-        //     }
-        //     GlobalV::ofs_running << endl;
-        // }
         GlobalV::ofs_running << endl;
         GlobalV::ofs_running << " psi_k:" << endl;
         for (int i = 0; i < this->ParaV->ncol_bands; i++)
@@ -990,8 +930,8 @@ void Evolve_LCAO_Matrix::norm_wfc(
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
                 double aa, bb;
-                aa = psi_not_norm[i * this->ParaV->ncol + j].real();
-                bb = psi_not_norm[i * this->ParaV->ncol + j].imag();
+                aa = tmp1[i * this->ParaV->ncol + j].real();
+                bb = tmp1[i * this->ParaV->ncol + j].imag();
                 if (abs(aa) < 1e-8)
                     aa = 0.0;
                 if (abs(bb) < 1e-8)
@@ -1002,29 +942,10 @@ void Evolve_LCAO_Matrix::norm_wfc(
         }
         GlobalV::ofs_running << endl;
         GlobalV::ofs_running << endl;
-        // GlobalV::ofs_running << " psi_k nlocal*nlocal transpose:" << endl;
-        // for (int i = 0; i < this->ParaV->ncol; i++)
-        // {
-        //     for (int j = 0; j < this->ParaV->ncol; j++)
-        //     {
-        //         double aa, bb;
-        //         aa = psi_not_norm_trans[i * this->ParaV->ncol + j].real();
-        //         bb = psi_not_norm_trans[i * this->ParaV->ncol + j].imag();
-        //         if (abs(aa) < 1e-8)
-        //             aa = 0.0;
-        //         if (abs(bb) < 1e-8)
-        //             bb = 0.0;
-        //         GlobalV::ofs_running << aa << "+" << bb << "i ";
-        //     }
-        //     GlobalV::ofs_running << endl;
-        // }
-        // GlobalV::ofs_running << endl;
     }
 
 
     delete[] tmp1;
-    delete[] tmp2;
-    delete[] tmp3;
     delete[] Cij;
 
 }
@@ -1038,52 +959,33 @@ void Evolve_LCAO_Matrix::compute_ekb(
                 double* ekb) const
 {
 
-    complex<double>* tmp1 = new complex<double>[this->ParaV->nloc];
-    complex<double>* tmp2 = new complex<double>[this->ParaV->nloc];
-    complex<double>* tmp3 = new complex<double>[this->ParaV->nloc_wfc];
-    ModuleBase::GlobalFunc::ZEROS(tmp1, this->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(tmp2, this->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(tmp3, this->ParaV->nloc_wfc);
+    complex<double>* tmp1 = new complex<double>[this->ParaV->nloc_wfc];
+    ModuleBase::GlobalFunc::ZEROS(tmp1, this->ParaV->nloc_wfc);
 
     complex<double>* Eij = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(Eij, this->ParaV->nloc);
 
     ScalapackConnector::gemm(
-        'T',
         'N',
+        'N',
+        nlocal,
         nband,
         nlocal,
-        nlocal,
         1.0,
-        psi_k,
-        1,
-        1,
-        this->ParaV->desc_wfc,
         Htmp,
         1,
         1,
         this->ParaV->desc,
+        psi_k,
+        1,
+        1,
+        this->ParaV->desc_wfc,
         0.0,
         tmp1,
         1,
         1,
-        this->ParaV->desc
+        this->ParaV->desc_wfc
     );
-    ScalapackConnector::tranu(
-        nlocal,
-        nlocal,
-        1.0,
-        tmp1,
-        1,
-        1,
-        this->ParaV->desc,
-        0.0,
-        tmp2,
-        1,
-        1,
-        this->ParaV->desc
-    );
-    BlasConnector::copy(this->ParaV->nloc_wfc, tmp2, 1, tmp3, 1);
 
     ScalapackConnector::gemm(
             'C',
@@ -1096,7 +998,7 @@ void Evolve_LCAO_Matrix::compute_ekb(
             1,
             1,
             this->ParaV->desc_wfc,
-            tmp3,
+            tmp1,
             1,
             1,
             this->ParaV->desc_wfc,
@@ -1144,12 +1046,7 @@ void Evolve_LCAO_Matrix::compute_ekb(
     MPI_Comm_rank(this->ParaV->comm_2D, &myid);
     
     double* Eii = new double[nband];
-
-
-    for (int i = 0; i < nband; i++)
-    {
-        Eii[i] = 0.0;
-    }
+    ModuleBase::GlobalFunc::ZEROS(Eii, nband);
     for (int iprow = 0; iprow < this->ParaV->dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < this->ParaV->dim1; ++ipcol)
@@ -1183,8 +1080,6 @@ void Evolve_LCAO_Matrix::compute_ekb(
     info = MPI_Allreduce(Eii, ekb, nband, MPI_DOUBLE, MPI_SUM, this->ParaV->comm_2D);
     
     delete[] tmp1;
-    delete[] tmp2;
-    delete[] tmp3;
     delete[] Eij;
     delete[] Eii;
 }

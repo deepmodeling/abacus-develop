@@ -5,8 +5,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
-#include "module_gint/gint_gamma.h"
-#include "module_gint/gint_k.h"
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_elecstate/potentials/potential_new.h"
@@ -52,7 +52,6 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
     //void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) override;
     void matrix(MatrixBlock<T> &hk_in, MatrixBlock<T> &sk_in) override;
     void matrix_l(MatrixBlock<T> &hk_in, MatrixBlock<T> &hk_last_in, MatrixBlock<T> &sk_in) override;
-
 };
 
 } // namespace hamilt

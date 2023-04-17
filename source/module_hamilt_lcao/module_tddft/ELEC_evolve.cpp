@@ -41,7 +41,6 @@ void ELEC_evolve::evolve_psi(const int& istep,
         psi_laststep->fix_k(ik);
         if(istep<3){
             ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, &(ekb(ik, 0)));}
-        //added by zhaoht for test
         else{
             ELM.evolve_complex_matrix_1(ik, phm, psi, psi_laststep, &(ekb(ik, 0)));
         }
