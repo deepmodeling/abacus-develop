@@ -312,9 +312,6 @@
 		- [out\_efield](#out_efield)
 		- [ocp](#ocp)
 		- [ocp\_set](#ocp_set)
-		- [td\_val\_elec\_01](#td_val_elec_01)
-		- [td\_val\_elec\_02](#td_val_elec_02)
-		- [td\_val\_elec\_03](#td_val_elec_03)
 	- [Variables useful for debugging](#variables-useful-for-debugging)
 		- [nurse](#nurse)
 		- [t\_in\_h](#t_in_h)
@@ -2587,24 +2584,6 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: string
 - **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**: none
-
-### td_val_elec_01
-
-- **Type**: Integer
-- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the first element.
-- **Default**: 1.0
-
-### td_val_elec_02
-
-- **Type**: Integer
-- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the second element.
-- **Default**: 1.0
-
-### td_val_elec_03
-
-- **Type**: Integer
-- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the third element.
-- **Default**: 1.0
 
 [back to top](#full-list-of-input-keywords)
 
