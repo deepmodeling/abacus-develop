@@ -240,14 +240,7 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->SlocR),
         &(LM_in->Sloc2)
     );
-    if(this->ops == nullptr)
-    {
-        this->ops = overlap;
-    }
-    else
-    {
-        this->ops->add(overlap);
-    }
+    this->ops->add(overlap);
 
     // kinetic term (<psi|T|psi>),
     // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2
@@ -311,12 +304,31 @@ void HamiltLCAO<std::complex<double>>::matrix(MatrixBlock<std::complex<double>> 
 }
 
 // case for nspin<4, gamma_only
-template <> void HamiltLCAO<double>::matrix(MatrixBlock<double> &hk_in, MatrixBlock<double> &sk_in)
+template <>
+void HamiltLCAO<double>::matrix(MatrixBlock<double> &hk_in, MatrixBlock<double> &sk_in)
 {
     auto op = dynamic_cast<OperatorLCAO<double>*>(this->opsd);
     assert(op != NULL);
     op->matrixHk(hk_in, sk_in);
 }
+void HamiltLCAO<std::complex<double>>::matrix_l(MatrixBlock<std::complex<double>> &hk_in,
+                                                MatrixBlock<std::complex<double>> &hk_last_in,
+                                                MatrixBlock<std::complex<double>> &sk_in)
+{
+    auto op = dynamic_cast<OperatorLCAO<std::complex<double>>*>(this->ops);
+    assert(op != NULL);
+    op->matrixHk_l(hk_in, hk_last_in, sk_in);
+}
+void HamiltLCAO<double>::matrix_l(MatrixBlock<double> &hk_in, 
+                                  MatrixBlock<double> &hk_last_in,
+                                  MatrixBlock<double> &sk_in)
+{
+    auto op = dynamic_cast<OperatorLCAO<double>*>(this->opsd);
+    assert(op != NULL);
+    op->matrixHk_l(hk_in, hk_last_in, sk_in);
+}
+
+
 
 template <> void HamiltLCAO<double>::updateHk(const int ik)
 {

@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/vector3.h"
 #include "module_base/complexmatrix.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_orbital/parallel_orbitals.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "module_base/abfs-vector3_order.h"
@@ -23,7 +23,7 @@ class LCAO_Matrix
     
     // folding the fixed Hamiltonian (T+Vnl) if
 	// k-point algorithm is used.
-	void folding_fixedH(const int &ik, bool cal_syns = false);
+	void folding_fixedH(const int &ik);
 
     Parallel_Orbitals *ParaV;
 
@@ -54,6 +54,7 @@ private:
     // diagonalize.
     //------------------------------
     std::vector<std::complex<double>> Hloc2;
+    std::vector<std::complex<double>> Hloc2_last;
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
     //with soc, zhengdy-soc
@@ -201,6 +202,8 @@ private:
     void print_HSk(const char &mtype, const char &vtype = 'C', const double &accuracy = 1.0e-5, std::ostream &os=std::cout);
     void update_Hloc(void);
     void update_Hloc2(const int &ik);
+    //added by zhaoht for test
+    void update_Hl(const int &ik);
 
     void allocate_HS_R(const int &nnr);
 

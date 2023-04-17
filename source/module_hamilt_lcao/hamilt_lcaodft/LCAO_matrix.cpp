@@ -101,10 +101,13 @@ void LCAO_Matrix::allocate_HS_k(const long &nloc)
     this->Sloc2.resize(nloc);
     this->Hloc_fixed2.resize(nloc);
     this->Hloc2.resize(nloc);
+    //added by zhaoht for test
+    this->Hloc2_last.resize(nloc);
 
     ModuleBase::GlobalFunc::ZEROS(Sloc2.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc_fixed2.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc2.data(),nloc);
+    ModuleBase::GlobalFunc::ZEROS(Hloc2_last.data(),nloc);
     
     return;
 }
@@ -594,8 +597,20 @@ void LCAO_Matrix::update_Hloc2(const int &ik)
 
 	return;
 }
+//added by zhaoht for test
+void LCAO_Matrix::update_Hl(const int &ik)
+{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+	for (long i = 0; i < this->ParaV->nloc; i++)
+	{
+		Hloc2_last[i]=Hloc2[i];
+	}
 
-
+	return;
+}
+//above
 void LCAO_Matrix::output_HSk(const char &mtype, std::string &fn)
 {
     ModuleBase::TITLE("LCAO_Matrix","output_HSk");

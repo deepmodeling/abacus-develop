@@ -23,6 +23,13 @@ class Evolve_LCAO_Matrix
                                psi::Psi<std::complex<double>>* psi_k,
                                psi::Psi<std::complex<double>>* psi_k_laststep,
                                double* ekb) const;
+    //added by zhaoht for test
+    void evolve_complex_matrix_1(const int& ik,
+                               hamilt::Hamilt<double>* p_hamilt,
+                               psi::Psi<std::complex<double>>* psi_k,
+                               psi::Psi<std::complex<double>>* psi_k_laststep,
+                               double* ekb) const;
+    //above
 
   private:
     // LCAO_Matrix* LM;
@@ -41,6 +48,15 @@ class Evolve_LCAO_Matrix
                   hamilt::Hamilt<double>* p_hamilt,
                   std::complex<double>* psi_k,
                   double* ekb) const;
+//added by zhaoht for test
+    void using_ScaLAPACK_complex_1(
+                  const int nband,
+                  const int nlocal,         
+                  const std::complex<double>* psi_k_laststep,
+                  hamilt::Hamilt<double>* p_hamilt,
+                  std::complex<double>* psi_k,
+                  double* ekb) const;
+//above
 
     void compute_U_operator(
                   const int nband,
@@ -55,12 +71,14 @@ class Evolve_LCAO_Matrix
                   const int nlocal,     
                   const std::complex<double>* U_operator,
                   const std::complex<double>* psi_k_laststep,
-                  std::complex<double>* psi_k) const;
+                  std::complex<double>* psi_k,
+                  std::complex<double>* psi_not_norm) const;
 
     void norm_wfc(
                   const int nband,
                   const int nlocal,     
                   const std::complex<double>* Stmp,
+                  const std::complex<double>* psi_not_norm,
                   std::complex<double>* psi_k,
                   const int print_matrix) const;
           
