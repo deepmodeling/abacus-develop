@@ -189,7 +189,7 @@
 #381_NO_GO_HSE
 #401_NP_KP_sp
 #401_NP_KP_spd
-501_NO_neighboring_GaAs512
+#501_NO_neighboring_GaAs512
 601_NO_TDDFT_CO
 601_NO_TDDFT_CO_occ
 601_NO_TDDFT_graphene_kpoint
