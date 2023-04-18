@@ -28,7 +28,6 @@
 #include "../pw_basis_k.h"
 #include "../pw_basis.h"
 #include "../fft.h"
-#include "module_psi/kernels/memory_op.h"
 class PWBasisKTEST: public testing::Test
 {
 public:
