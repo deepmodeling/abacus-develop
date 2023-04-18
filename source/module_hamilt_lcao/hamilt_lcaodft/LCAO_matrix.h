@@ -54,7 +54,6 @@ private:
     // diagonalize.
     //------------------------------
     std::vector<std::complex<double>> Hloc2;
-    std::vector<std::complex<double>> Hloc2_last;
     std::vector<std::complex<double>> Sloc2;
     std::vector<std::complex<double>> Hloc_fixed2;
     //with soc, zhengdy-soc
@@ -202,8 +201,6 @@ private:
     void print_HSk(const char &mtype, const char &vtype = 'C', const double &accuracy = 1.0e-5, std::ostream &os=std::cout);
     void update_Hloc(void);
     void update_Hloc2(const int &ik);
-
-    void update_Hl(const int &ik);
 
     void allocate_HS_R(const int &nnr);
 

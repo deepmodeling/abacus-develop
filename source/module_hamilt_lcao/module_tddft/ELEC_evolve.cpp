@@ -25,6 +25,7 @@ void ELEC_evolve::evolve_psi(const int& istep,
                              Local_Orbital_wfc& lowf,
                              psi::Psi<std::complex<double>>* psi,
                              psi::Psi<std::complex<double>>* psi_laststep,
+                             std::complex<double>** Hk_laststep,
                              ModuleBase::matrix& ekb)
 {
     ModuleBase::TITLE("ELEC_evolve", "eveolve_psi");
@@ -39,11 +40,7 @@ void ELEC_evolve::evolve_psi(const int& istep,
         Evolve_LCAO_Matrix ELM(lowf.ParaV);
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
-        if(istep<3){
-            ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, &(ekb(ik, 0)));}
-        else{
-            ELM.evolve_complex_matrix_1(ik, phm, psi, psi_laststep, &(ekb(ik, 0)));
-        }
+        ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, Hk_laststep[ik], &(ekb(ik, 0)));
         ModuleBase::timer::tick("Efficience", "evolve_k");
     } // end k
 

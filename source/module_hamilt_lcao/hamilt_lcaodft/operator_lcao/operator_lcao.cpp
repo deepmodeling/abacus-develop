@@ -40,20 +40,6 @@ void OperatorLCAO<std::complex<double>>::get_hs_pointers()
 }
 
 template<>
-void OperatorLCAO<double>::get_hls_pointers()
-{
-    return;
-}
-template<>
-void OperatorLCAO<std::complex<double>>::get_hls_pointers()
-{
-    ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
-    this->hmatrix_k = this->LM->Hloc2.data();
-    this->hmatrix_k_last = this->LM->Hloc2_last.data();
-    this->smatrix_k = this->LM->Sloc2.data();
-}
-
-template<>
 void OperatorLCAO<double>::refresh_h()
 {
     // Set the matrix 'H' to zero.

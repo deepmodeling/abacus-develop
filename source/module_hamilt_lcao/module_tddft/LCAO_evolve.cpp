@@ -27,6 +27,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
                                                hamilt::Hamilt<double>* p_hamilt,
                                                psi::Psi<std::complex<double>>* psi_k,
                                                psi::Psi<std::complex<double>>* psi_k_laststep,
+                                               std::complex<double>* Hk_laststep,
                                                double* ekb) const
 {
     ModuleBase::TITLE("Evolve_LCAO_Matrix", "evolve_complex_matrix");
@@ -36,37 +37,7 @@ void Evolve_LCAO_Matrix::evolve_complex_matrix(const int& ik,
     if (GlobalV::ESOLVER_TYPE == "tddft")
     {
 #ifdef __MPI
-        this->using_ScaLAPACK_complex(GlobalV::NBANDS, GlobalV::NLOCAL, psi_k_laststep[0].get_pointer(), p_hamilt, psi_k[0].get_pointer(), ekb);
-#else
-        this->using_LAPACK_complex(ik, p_hamilt, psi_k[0].get_pointer(), psi_k_laststep[0].get_pointer(), ekb);
-#endif
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Evolve_LCAO_Matrix::evolve_complex_matrix",
-                                 "only esolver_type == tddft cando evolve");
-    }
-
-    time_t time_end = time(NULL);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    return;
-}
-//usenew propagator
-void Evolve_LCAO_Matrix::evolve_complex_matrix_1(const int& ik,
-                                               hamilt::Hamilt<double>* p_hamilt,
-                                               psi::Psi<std::complex<double>>* psi_k,
-                                               psi::Psi<std::complex<double>>* psi_k_laststep,
-                                               double* ekb) const
-{
-    ModuleBase::TITLE("Evolve_LCAO_Matrix", "evolve_complex_matrix");
-    time_t time_start = time(NULL);
-    GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
-
-    if (GlobalV::ESOLVER_TYPE == "tddft")
-    {
-#ifdef __MPI
-        this->using_ScaLAPACK_complex_1(GlobalV::NBANDS, GlobalV::NLOCAL, psi_k_laststep[0].get_pointer(), p_hamilt, psi_k[0].get_pointer(), ekb);
+        this->using_ScaLAPACK_complex(GlobalV::NBANDS, GlobalV::NLOCAL, psi_k_laststep[0].get_pointer(), Hk_laststep, p_hamilt, psi_k[0].get_pointer(), ekb);
 #else
         this->using_LAPACK_complex(ik, p_hamilt, psi_k[0].get_pointer(), psi_k_laststep[0].get_pointer(), ekb);
 #endif
@@ -374,6 +345,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(
             const int nband,
             const int nlocal,         
             const std::complex<double>* psi_k_laststep,
+            const std::complex<double>* Hk_laststep,
             hamilt::Hamilt<double>* p_hamilt,
             std::complex<double>* psi_k,
             double* ekb) const
@@ -391,73 +363,26 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(
     complex<double>* Htmp = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(Htmp, this->ParaV->nloc);
     BlasConnector::copy(this->ParaV->nloc, h_mat.p, 1, Htmp, 1);
-    
-    complex<double>* U_operator = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(U_operator, this->ParaV->nloc);
 
-// (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute U_operator
-    /// @input Stmp, Htmp, print_matrix
-    /// @output U_operator
-    compute_U_operator(nband, nlocal, Stmp, Htmp, U_operator, print_matrix);
-
-// (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief apply U_operator to the wave function of the previous step for new wave function
-    /// @input U_operator, psi_k_laststep
-    /// @output psi_k
-    U_to_wfc(nband, nlocal, U_operator, psi_k_laststep, psi_k);
-
-    
-
-// (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief normalize psi_k
-    /// @input Stmp, psi_not_norm, psi_k, print_matrix
-    /// @output psi_k
-    norm_wfc(nband, nlocal, Stmp, psi_k, print_matrix);
-
-
-// (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    
-    /// @brief compute ekb
-    /// @input Htmp, psi_k
-    /// @output ekb
-    compute_ekb(nband, nlocal, Htmp, psi_k, ekb);
-
-    delete[] Stmp;
-    delete[] Htmp;
-    delete[] U_operator;
-    return;
-}
-
-
-void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
-            const int nband,
-            const int nlocal,         
-            const std::complex<double>* psi_k_laststep,
-            hamilt::Hamilt<double>* p_hamilt,
-            std::complex<double>* psi_k,
-            double* ekb) const
-{
-    ModuleBase::TITLE("Evolve_LCAO_Matrix", "using_ScaLAPACK_complex");
-
-    int print_matrix = 0;
-    hamilt::MatrixBlock<complex<double>> h_mat, h_mat_last, s_mat;
-    p_hamilt->matrix_l(h_mat, h_mat_last, s_mat);
-
-    complex<double>* Stmp = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Stmp, this->ParaV->nloc);
-    BlasConnector::copy(this->ParaV->nloc, s_mat.p, 1, Stmp, 1);
-
-    complex<double>* Htmp_last = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Htmp_last, this->ParaV->nloc);
-    BlasConnector::copy(this->ParaV->nloc, h_mat_last.p, 1, Htmp_last, 1);
-
-    complex<double>* Htmp = new complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Htmp, this->ParaV->nloc);
-    BlasConnector::copy(this->ParaV->nloc, h_mat.p, 1, Htmp, 1);
+    //print test
+    /*GlobalV::ofs_running << " H(t) matrix :" << endl;
+    for (int i = 0; i < this->ParaV->nrow; i++)
+    {
+        for (int j = 0; j < this->ParaV->ncol; j++)
+        {
+            GlobalV::ofs_running << Hk_laststep[i * this->ParaV->ncol + j].real() << "+" << Hk_laststep[i * this->ParaV->ncol + j].imag() << "i ";
+        }
+        GlobalV::ofs_running << endl;}
+    GlobalV::ofs_running << " H(t+dt) matrix :" << endl;
+    for (int i = 0; i < this->ParaV->nrow; i++)
+    {
+        for (int j = 0; j < this->ParaV->ncol; j++)
+        {
+            GlobalV::ofs_running << Htmp[i * this->ParaV->ncol + j].real() << "+" << Htmp[i * this->ParaV->ncol + j].imag() << "i ";
+        }
+        GlobalV::ofs_running << endl;}
+    //
+*/
 
     complex<double> mixing = {0.5, 0.0};
     ScalapackConnector::geadd(
@@ -465,7 +390,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
         nlocal,
         nlocal,
         mixing,
-        Htmp_last,
+        Hk_laststep,
         1,
         1,
         this->ParaV->desc,
@@ -475,6 +400,14 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
         1,
         this->ParaV->desc
     );
+    /*GlobalV::ofs_running << " H(t+dt/2) matrix :" << endl;
+    for (int i = 0; i < this->ParaV->nrow; i++)
+    {
+        for (int j = 0; j < this->ParaV->ncol; j++)
+        {
+            GlobalV::ofs_running << Htmp[i * this->ParaV->ncol + j].real() << "+" << Htmp[i * this->ParaV->ncol + j].imag() << "i ";
+        }
+        GlobalV::ofs_running << endl;}*/
     complex<double>* U_operator = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(U_operator, this->ParaV->nloc);
 
@@ -514,6 +447,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex_1(
     delete[] U_operator;
     return;
 }
+
 
 void Evolve_LCAO_Matrix::compute_U_operator(
                 const int nband,

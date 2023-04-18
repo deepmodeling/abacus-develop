@@ -51,7 +51,6 @@ template <typename T> class HamiltLCAO : public Hamilt<double>
     // not used in PW base
     //void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) override;
     void matrix(MatrixBlock<T> &hk_in, MatrixBlock<T> &sk_in) override;
-    void matrix_l(MatrixBlock<T> &hk_in, MatrixBlock<T> &hk_last_in, MatrixBlock<T> &sk_in) override;
 };
 
 } // namespace hamilt

@@ -22,11 +22,7 @@ class Evolve_LCAO_Matrix
                                hamilt::Hamilt<double>* p_hamilt,
                                psi::Psi<std::complex<double>>* psi_k,
                                psi::Psi<std::complex<double>>* psi_k_laststep,
-                               double* ekb) const;
-    void evolve_complex_matrix_1(const int& ik,
-                               hamilt::Hamilt<double>* p_hamilt,
-                               psi::Psi<std::complex<double>>* psi_k,
-                               psi::Psi<std::complex<double>>* psi_k_laststep,
+                               std::complex<double>* Hk_laststep,
                                double* ekb) const;
 
   private:
@@ -43,13 +39,7 @@ class Evolve_LCAO_Matrix
                   const int nband,
                   const int nlocal,         
                   const std::complex<double>* psi_k_laststep,
-                  hamilt::Hamilt<double>* p_hamilt,
-                  std::complex<double>* psi_k,
-                  double* ekb) const;
-    void using_ScaLAPACK_complex_1(
-                  const int nband,
-                  const int nlocal,         
-                  const std::complex<double>* psi_k_laststep,
+                  const std::complex<double>* Hk_laststep,
                   hamilt::Hamilt<double>* p_hamilt,
                   std::complex<double>* psi_k,
                   double* ekb) const;

@@ -41,6 +41,9 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 {
     // this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
     delete psi_laststep;
+    for(int ik = 0; ik < GlobalC::kv.nks; ++ik){
+        delete Hk_laststep[ik];}
+        delete Hk_laststep;
 }
 
 void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
@@ -188,7 +191,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     if (GlobalV::ESOLVER_TYPE == "tddft" && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
-        ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep, this->pelec_td->ekb);
+        ELEC_evolve::evolve_psi(istep, this->p_hamilt, this->LOWF, this->psi, this->psi_laststep, this->Hk_laststep, this->pelec_td->ekb);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
     }
@@ -351,7 +354,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         GlobalC::en.cal_converged(this->pelec);
     }
 
-    // store wfc
+    // store wfc and Hk laststep
     if (istep >= 1 && this->conv_elec)
     {
         if (this->psi_laststep == nullptr)
@@ -364,6 +367,13 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             this->psi_laststep
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
+        if (this->Hk_laststep == nullptr){
+            this->Hk_laststep = new std::complex<double>*[GlobalC::kv.nks];
+            for(int ik = 0; ik < GlobalC::kv.nks; ++ik){
+                this->Hk_laststep[ik] = new std::complex<double>[this->LOC.ParaV->nloc];
+                ModuleBase::GlobalFunc::ZEROS(Hk_laststep[ik], this->LOC.ParaV->nloc);
+            }
+        }
 
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
@@ -372,10 +382,15 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             int size0 = psi->get_nbands() * psi->get_nbasis();
             for (int index = 0; index < size0; ++index)
                 psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
+            //use for new propagator
+            this->p_hamilt->updateHk(ik);
+            //store Hk laststep
+            hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
+            this->p_hamilt->matrix(h_mat, s_mat);
+            BlasConnector::copy(this->LOC.ParaV->nloc, h_mat.p, 1, Hk_laststep[ik], 1);
         }
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik){
-            this->LM.update_Hl(ik);
-        }
+        
+
         if (istep > 1 && ELEC_evolve::td_edm == 0)
             this->cal_edm_tddft();
     }

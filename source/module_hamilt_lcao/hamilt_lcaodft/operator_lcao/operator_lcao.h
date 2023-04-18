@@ -64,33 +64,7 @@ class OperatorLCAO : public Operator<T>
                             nullptr};
 #endif
     }
-    void matrixHk_l(MatrixBlock<T> &hk_in, MatrixBlock<T> &hk_last_in, MatrixBlock<T> &sk_in)
-    {
-        this->get_hls_pointers();
-#ifdef __MPI
-        hk_in = MatrixBlock<T>{hmatrix_k,
-                            (size_t)this->LM->ParaV->nrow,
-                            (size_t)this->LM->ParaV->ncol,
-                            this->LM->ParaV->desc};
-        hk_last_in = MatrixBlock<T>{hmatrix_k_last,
-                            (size_t)this->LM->ParaV->nrow,
-                            (size_t)this->LM->ParaV->ncol,
-                            this->LM->ParaV->desc};           
-        sk_in = MatrixBlock<T>{smatrix_k,
-                            (size_t)this->LM->ParaV->nrow,
-                            (size_t)this->LM->ParaV->ncol,
-                            this->LM->ParaV->desc};
-#else
-        hk_in = MatrixBlock<T>{hmatrix_k,
-                            (size_t)this->LM->ParaV->nrow,
-                            (size_t)this->LM->ParaV->ncol,
-                            nullptr};
-        sk_in = MatrixBlock<T>{smatrix_k,
-                            (size_t)this->LM->ParaV->nrow,
-                            (size_t)this->LM->ParaV->ncol,
-                            nullptr};
-#endif
-    }
+
     /* Function contributeHk() is defined in derived class, for constructing <phi_{\mu}|H|phi_{\nu}>(K) 
     */
     virtual void contributeHk(int ik)
@@ -107,12 +81,10 @@ class OperatorLCAO : public Operator<T>
 
     private:
     void get_hs_pointers();
-    void get_hls_pointers();
 
     // there are H and S matrix for each k point in reciprocal space
     // type double for gamma_only case, type complex<double> for multi-k-points case
     T* hmatrix_k = nullptr;
-    T* hmatrix_k_last = nullptr;
     T* smatrix_k = nullptr;
 
     //only used for Gamma_only case

@@ -317,24 +317,7 @@ template <> void HamiltLCAO<double>::matrix(MatrixBlock<double> &hk_in, MatrixBl
     assert(op != NULL);
     op->matrixHk(hk_in, sk_in);
 }
-template <>
-void HamiltLCAO<std::complex<double>>::matrix_l(MatrixBlock<std::complex<double>> &hk_in,
-                                                MatrixBlock<std::complex<double>> &hk_last_in,
-                                                MatrixBlock<std::complex<double>> &sk_in)
-{
-    auto op = dynamic_cast<OperatorLCAO<std::complex<double>>*>(this->ops);
-    assert(op != NULL);
-    op->matrixHk_l(hk_in, hk_last_in, sk_in);
-}
-template <>
-void HamiltLCAO<double>::matrix_l(MatrixBlock<double> &hk_in, 
-                                  MatrixBlock<double> &hk_last_in,
-                                  MatrixBlock<double> &sk_in)
-{
-    auto op = dynamic_cast<OperatorLCAO<double>*>(this->opsd);
-    assert(op != NULL);
-    op->matrixHk_l(hk_in, hk_last_in, sk_in);
-}
+
 template <> void HamiltLCAO<double>::updateHk(const int ik)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateHk");
