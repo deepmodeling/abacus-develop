@@ -67,7 +67,7 @@ void Verlet::apply_thermostat()
             double deviation;
             for(int i=0; i<ucell.nat; ++i)
             {  
-                if(rand()/double(RAND_MAX) <= 1.0 / mdp.md_nraise)
+                if(static_cast<double>(std::rand())/RAND_MAX <= 1.0 / mdp.md_nraise)
                 {
                     deviation = sqrt(mdp.md_tlast / allmass[i]);
                     for(int k=0; k<3; ++k)

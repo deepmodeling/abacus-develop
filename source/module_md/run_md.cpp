@@ -6,8 +6,8 @@
 #include "Nose_Hoover.h"
 #include "Langevin.h"
 #include "module_io/input.h"
-#include "../module_io/print_info.h"
-#include "../module_base/timer.h"
+#include "module_io/print_info.h"
+#include "module_base/timer.h"
 
 Run_MD::Run_MD(){}
 
@@ -39,6 +39,10 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver)
     else if(INPUT.mdp.md_type == "msst")
     {
         mdrun = new MSST(INPUT.mdp, unit_in);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
     }
 
     // md cycle

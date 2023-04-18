@@ -1871,7 +1871,7 @@ These variables are used to control the molecular dynamics calculations.
 ### md_restart
 
 - **Type**: Boolean
-- **Description**: to control whether restart md.
+- **Description**: Control whether restart md. ABACUS read in `Restart_md.dat` to determine the current md step, then read in the corresponding `STRU_MD_$step` in the folder `OUT.$suffix/STRU/` automatically.
   - true: ABACUS will calculate md normally.
   - false: ABACUS will calculate md from the last step in your previous md calculation.
 - **Default**: false

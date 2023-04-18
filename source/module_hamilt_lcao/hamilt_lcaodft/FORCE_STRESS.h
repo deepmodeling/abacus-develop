@@ -17,7 +17,6 @@ class Force_Stress_LCAO
 	friend class md;
 	friend void Input_Conv::Convert();
 	friend class ions;
-	friend class MD_func;
 
 	public :
 	

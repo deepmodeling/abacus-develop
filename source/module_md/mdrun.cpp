@@ -205,36 +205,5 @@ void MDrun::write_restart()
 
 void MDrun::restart()
 {
-    bool ok = true;
-
-    if(!GlobalV::MY_RANK)
-    {
-        std::stringstream ssc;
-        ssc << GlobalV::global_readin_dir << "Restart_md.dat";
-        std::ifstream file(ssc.str().c_str());
-
-        if(!file)
-        {
-            ok = false;
-        }
-
-        if(ok)
-        {
-            file >> step_rst_;
-            file.close();
-        }
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-
-    if(!ok)
-    {
-        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
+    step_rst_ = MD_func::current_step(GlobalV::MY_RANK, GlobalV::global_readin_dir);
 }
