@@ -7,6 +7,7 @@
 
      12/Oct/2018  Released by Feng Qi
      03/2023/     Refactored by Yuyang Ji
+     18/04/2023   Convert to namespace by Yu Liu
 
 ***********************************************************************/
 
@@ -14,20 +15,13 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/matrix.h"
-#include "module_base/complexmatrix.h"
 #include "module_base/scalapack_connector.h"
 #include "write_orb_info.h"
-#ifdef __LCAO
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#endif
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 
-ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+namespace Mulliken_Charge
+{
+
+ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
     LCAO_Hamilt &uhm
 )
 {
@@ -126,7 +120,7 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken(const std::vector<ModuleBase::m
     return orbMulP;
 }
 
-ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
+ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
     LCAO_Hamilt &uhm
 )
 {
@@ -227,20 +221,13 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
 #endif
     }
 #ifdef __MPI
-    // atom_arrange::delete_vector(
-	// 	GlobalV::ofs_running,
-	// 	GlobalV::SEARCH_PBC,
-	// 	GlobalC::GridD, 
-	// 	GlobalC::ucell, 
-	// 	GlobalV::SEARCH_RADIUS, 
-	// 	GlobalV::test_atom_input); 
     MPI_Reduce(MecMulP.c, orbMulP.c, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif 
 
     return orbMulP;
 }
 
-std::vector<std::vector<std::vector<double>>> Mulliken_Charge::convert(const ModuleBase::matrix &orbMulP)
+std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP)
 {
     std::vector<std::vector<std::vector<double>>> AorbMulP;
     AorbMulP.resize(GlobalV::NSPIN);
@@ -265,17 +252,17 @@ std::vector<std::vector<std::vector<double>>> Mulliken_Charge::convert(const Mod
     return AorbMulP;
 }
 
-void Mulliken_Charge::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
+void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
     ModuleBase::matrix orbMulP;
     if(GlobalV::GAMMA_ONLY_LOCAL)
-        orbMulP = this->cal_mulliken(loc.dm_gamma, uhm);
+        orbMulP = cal_mulliken(loc.dm_gamma, uhm);
     else
-        orbMulP = this->cal_mulliken_k(loc.dm_k, uhm);
+        orbMulP = cal_mulliken_k(loc.dm_k, uhm);
 
-    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
+    std::vector<std::vector<std::vector<double>>> AorbMulP = convert(orbMulP);
 
     if(GlobalV::MY_RANK == 0)
     {
@@ -448,7 +435,7 @@ void Mulliken_Charge::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbi
     }
 }
 
-double Mulliken_Charge::output_cut(const double& result)
+double output_cut(const double& result)
 {
     if(std::abs(result) < 1e-6)
     {
@@ -456,3 +443,5 @@ double Mulliken_Charge::output_cut(const double& result)
     }
     return result;
 }
+
+} // namespace Mulliken_Charge
