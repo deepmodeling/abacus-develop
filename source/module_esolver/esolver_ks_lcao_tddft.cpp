@@ -502,7 +502,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
-    if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
+    if( GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
     {
         if (hsolver::HSolverLCAO::out_mat_hsR)
         {

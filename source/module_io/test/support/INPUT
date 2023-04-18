@@ -128,7 +128,7 @@ lcao_dr                        0.01 #delta r for 1D integration in LCAO
 lcao_rmax                      30 #max R for 1D two-center integration table
 out_mat_hs                     0 #output H and S matrix
 out_mat_hs2                    0 #output H(R) and S(R) matrix
-out_hs2_interval               1 #interval for printing H(R) and S(R) matrix during MD
+out_interval               1 #interval for printing H(R) and S(R) matrix during MD
 out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD
 out_element_info               0 #output (projected) wavefunction of each element
 out_mat_r                      0 #output r(R) matrix

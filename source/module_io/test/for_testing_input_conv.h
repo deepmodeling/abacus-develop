@@ -26,11 +26,11 @@
 #include "module_md/MD_func.h"
 
 bool berryphase::berry_phase_flag=false;
+int GlobalV::out_interval = 1;
 int elecstate::ElecStateLCAO::out_wfc_lcao = 0;
 bool elecstate::ElecStateLCAO::need_psi_grid = 1;
 int hsolver::HSolverLCAO::out_mat_hs = 0;
 int hsolver::HSolverLCAO::out_mat_hsR = 0;
-int hsolver::HSolverLCAO::out_hsR_interval = 1;
 int hsolver::HSolverLCAO::out_mat_t = 0;
 int hsolver::HSolverLCAO::out_mat_dh = 0;
 int Local_Orbital_Charge::out_dm = 0;

@@ -254,4 +254,5 @@ std::string init_chg = "";
 int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
+int out_interval = 0;    // convert from out_hsR_interval liuyu 2023-04-18
 } // namespace GlobalV

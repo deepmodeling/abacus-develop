@@ -283,6 +283,7 @@ extern int out_chg;
 
 extern double nelec;
 extern bool out_bandgap;
+extern int out_interval;
 
 } // namespace GlobalV
 #endif
