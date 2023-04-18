@@ -285,15 +285,6 @@ void ESolver_KS_LCAO::postprocess()
         ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, &(GlobalC::kv), &(GlobalC::Pkpoints));
     }
 
-    // GlobalV::mulliken charge analysis
-#ifdef __LCAO
-    if (GlobalV::out_mul == 1)
-    {
-        Mulliken_Charge MC;
-        MC.out_mulliken(this->UHM, this->LOC);
-    } // qifeng add 2019/9/10, jiyy modify 2023/2/27
-#endif
-
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
         nspin0 = 2;
@@ -1128,10 +1119,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             } // end deepks_scf == 0
         } // end bandgap label
     } // end deepks_out_labels
-#endif
 
     // 3. DeePKS PDM and descriptor
-#ifdef __DEEPKS
     const Parallel_Orbitals* pv = this->LOWF.ParaV;
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
@@ -1239,6 +1228,16 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             r_matrix.out_rR(istep);
         }
     }
+
+    // GlobalV::mulliken charge analysis
+    if (GlobalV::out_mul)
+    {
+        if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
+        {
+            Mulliken_Charge MC;
+            MC.out_mulliken(istep, this->UHM, this->LOC);
+        }
+    } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {

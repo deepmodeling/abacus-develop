@@ -1109,7 +1109,7 @@ These variables are used to control the output of properties.
 ### out_mul
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt
+- **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt. In MD calculations, the output interval is controlled by [out_interval](#out_interval).
 - **Default**: 0
 
 ### out_freq_elec
@@ -1299,7 +1299,7 @@ These variables are used to control the output of properties.
 ### out_interval
 
 - **Type**: Integer
-- **Description**: Only relevant for printing $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. It controls the interval at which to print. Check input parameter [out_mat_hs2](#out_mat_hs2) for more information.
+- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. Check input parameter [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info

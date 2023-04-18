@@ -14,7 +14,7 @@ class Mulliken_Charge
 {
 	public:
 
-	void out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc);
+	void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc);
 
 	private:
     /* 

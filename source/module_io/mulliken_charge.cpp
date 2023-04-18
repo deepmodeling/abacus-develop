@@ -140,27 +140,8 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
     MecMulP.create(GlobalV::NSPIN, nlocal);
     orbMulP.create(GlobalV::NSPIN, nlocal);
 
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(
-		GlobalV::ofs_running,
-		GlobalV::OUT_LEVEL,
-		GlobalC::ORB.get_rcutmax_Phi(), 
-		GlobalC::ucell.infoNL.get_rcutmax_Beta(), 
-		GlobalV::GAMMA_ONLY_LOCAL);
-	atom_arrange::search(
-		GlobalV::SEARCH_PBC,
-		GlobalV::ofs_running,
-		GlobalC::GridD, 
-		GlobalC::ucell, 
-		GlobalV::SEARCH_RADIUS,
-		GlobalV::test_atom_input);
-	uhm.LM->allocate_HS_R(uhm.LM->ParaV->nnr);
-	uhm.LM->zeros_HSR('S');
-	uhm.genH.calculate_S_no(uhm.LM->SlocR.data());
-	uhm.genH.build_ST_new('S', false, GlobalC::ucell, uhm.LM->SlocR.data());
-
     for(size_t ik = 0; ik != GlobalC::kv.nks; ++ik)
     {
-        uhm.LM->allocate_HS_k(uhm.LM->ParaV->nloc);
         uhm.LM->zeros_HSk('S');
 		uhm.LM->folding_fixedH(ik);
 
@@ -246,13 +227,13 @@ ModuleBase::matrix Mulliken_Charge::cal_mulliken_k(const std::vector<ModuleBase:
 #endif
     }
 #ifdef __MPI
-    atom_arrange::delete_vector(
-		GlobalV::ofs_running,
-		GlobalV::SEARCH_PBC,
-		GlobalC::GridD, 
-		GlobalC::ucell, 
-		GlobalV::SEARCH_RADIUS, 
-		GlobalV::test_atom_input); 
+    // atom_arrange::delete_vector(
+	// 	GlobalV::ofs_running,
+	// 	GlobalV::SEARCH_PBC,
+	// 	GlobalC::GridD, 
+	// 	GlobalC::ucell, 
+	// 	GlobalV::SEARCH_RADIUS, 
+	// 	GlobalV::test_atom_input); 
     MPI_Reduce(MecMulP.c, orbMulP.c, GlobalV::NSPIN*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif 
 
@@ -284,7 +265,7 @@ std::vector<std::vector<std::vector<double>>> Mulliken_Charge::convert(const Mod
     return AorbMulP;
 }
 
-void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
+void Mulliken_Charge::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
@@ -301,7 +282,16 @@ void Mulliken_Charge::out_mulliken(LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         const int nlocal = (GlobalV::NSPIN == 4) ? GlobalV::NLOCAL/2 : GlobalV::NLOCAL;
         std::stringstream as;
         as << GlobalV::global_out_dir << "mulliken.txt";
-        std::ofstream os(as.str().c_str());
+        std::ofstream os;
+        if (step == 0)
+        {
+            os.open(as.str().c_str());
+        }
+        else
+        {
+            os.open(as.str().c_str(), ios::app);
+        }
+        os << "STEP: " << step << std::endl;
         os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;
 
 		double sch = 0.0;
