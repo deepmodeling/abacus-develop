@@ -18,10 +18,8 @@
 #include "module_base/scalapack_connector.h"
 #include "write_orb_info.h"
 
-namespace Mulliken_Charge
-{
 
-ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
     LCAO_Hamilt &uhm
 )
 {
@@ -120,11 +118,11 @@ ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
     return orbMulP;
 }
 
-ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
+ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
     LCAO_Hamilt &uhm
 )
 {
-    ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken");
+    ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken_k");
 
     const int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     const int nlocal = (GlobalV::NSPIN == 4) ? GlobalV::NLOCAL/2 : GlobalV::NLOCAL;
@@ -227,7 +225,7 @@ ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &
     return orbMulP;
 }
 
-std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP)
+std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase::matrix &orbMulP)
 {
     std::vector<std::vector<std::vector<double>>> AorbMulP;
     AorbMulP.resize(GlobalV::NSPIN);
@@ -252,17 +250,17 @@ std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &
     return AorbMulP;
 }
 
-void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
+void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
     ModuleBase::matrix orbMulP;
     if(GlobalV::GAMMA_ONLY_LOCAL)
-        orbMulP = cal_mulliken(loc.dm_gamma, uhm);
+        orbMulP = ModuleIO::cal_mulliken(loc.dm_gamma, uhm);
     else
-        orbMulP = cal_mulliken_k(loc.dm_k, uhm);
+        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, uhm);
 
-    std::vector<std::vector<std::vector<double>>> AorbMulP = convert(orbMulP);
+    std::vector<std::vector<std::vector<double>>> AorbMulP = ModuleIO::convert(orbMulP);
 
     if(GlobalV::MY_RANK == 0)
     {
@@ -323,16 +321,16 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                     {
                         if (GlobalV::NSPIN==1)
                         {
-                            double spin1 = output_cut(AorbMulP[0][i][num]);
+                            double spin1 = ModuleIO::output_cut(AorbMulP[0][i][num]);
                             os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                         }
                         else if (GlobalV::NSPIN==2)
                         {
-                            double spin1 = output_cut(AorbMulP[0][i][num]); 
-                            double spin2 = output_cut(AorbMulP[1][i][num]);
-                            double sum = output_cut(spin1 + spin2);
-                            double diff = output_cut(spin1 - spin2);
+                            double spin1 = ModuleIO::output_cut(AorbMulP[0][i][num]); 
+                            double spin2 = ModuleIO::output_cut(AorbMulP[1][i][num]);
+                            double sum = ModuleIO::output_cut(spin1 + spin2);
+                            double diff = ModuleIO::output_cut(spin1 - spin2);
                             os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                             sum_m[1] += AorbMulP[1][i][num];
@@ -342,7 +340,7 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                             double spin[4];
                             for(int j=0;j<4;j++)
                             {
-                                spin[j] = output_cut(AorbMulP[j][i][num]);
+                                spin[j] = ModuleIO::output_cut(AorbMulP[j][i][num]);
                                 sum_m[j] += AorbMulP[j][i][num];
                             } 
                             os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
@@ -352,16 +350,16 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
 
                     if (GlobalV::NSPIN==1)
                     {
-                        double spin1 = output_cut(sum_m[0]);
+                        double spin1 = ModuleIO::output_cut(sum_m[0]);
                         os << "  sum over m "<< std::setw(45) << spin1 << std::endl;
                         sum_l[0] += sum_m[0];
                     }
                     else if (GlobalV::NSPIN==2)
                     {
-                        double spin1 = output_cut(sum_m[0]);
-                        double spin2 = output_cut(sum_m[1]);
-                        double sum = output_cut(spin1 + spin2);
-                        double diff = output_cut(spin1 - spin2);
+                        double spin1 = ModuleIO::output_cut(sum_m[0]);
+                        double spin2 = ModuleIO::output_cut(sum_m[1]);
+                        double sum = ModuleIO::output_cut(spin1 + spin2);
+                        double diff = ModuleIO::output_cut(spin1 - spin2);
                         os << "  sum over m "<< std::setw(45) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
                         sum_l[0] += sum_m[0];
                         sum_l[1] += sum_m[1];
@@ -371,7 +369,7 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                         double spin[4];
                         for(int j=0;j<4;j++)
                         {
-                            spin[j] = output_cut(sum_m[j]);
+                            spin[j] = ModuleIO::output_cut(sum_m[j]);
                             sum_l[j] += sum_m[j];
                         }
                         os << "  sum over m "<< std::setw(45) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
@@ -382,16 +380,16 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                 {
                     if (GlobalV::NSPIN==1)
                     {
-                        double spin1 = output_cut(sum_l[0]);
+                        double spin1 = ModuleIO::output_cut(sum_l[0]);
                         os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::endl;
                         total_charge += sum_l[0];
                     }
                     else if (GlobalV::NSPIN==2)
                     {
-                        double spin1 = output_cut(sum_l[0]);
-                        double spin2 = output_cut(sum_l[1]);
-                        double sum = output_cut(spin1 + spin2);
-                        double diff = output_cut(spin1 - spin2);
+                        double spin1 = ModuleIO::output_cut(sum_l[0]);
+                        double spin2 = ModuleIO::output_cut(sum_l[1]);
+                        double sum = ModuleIO::output_cut(spin1 + spin2);
+                        double diff = ModuleIO::output_cut(spin1 - spin2);
                         os << "  sum over m+zeta "<< std::setw(40) << spin1 << std::setw(30) << spin2 << std::setw(35) << sum << std::setw(25) << diff << std::endl;
                         total_charge += sum_l[0] + sum_l[1];
                         atom_mag += sum_l[0] - sum_l[1];
@@ -401,7 +399,7 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
                         double spin[4];
                         for(int j=0;j<4;j++)
                         {
-                            spin[j] = output_cut(sum_l[j]);
+                            spin[j] = ModuleIO::output_cut(sum_l[j]);
                             total_charge_soc[j] += sum_l[j];
                         }
                         os << "  sum over m+zeta "<< std::setw(40) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
@@ -414,14 +412,14 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
             else if (GlobalV::NSPIN==2)
             {
                 os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << total_charge <<std::endl;
-                os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << output_cut(atom_mag) <<std::endl;
+                os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << ModuleIO::output_cut(atom_mag) <<std::endl;
             }
             else if (GlobalV::NSPIN==4)
             {
-                double spin1 = output_cut(total_charge_soc[0]);
-                double spin2 = output_cut(total_charge_soc[1]);
-                double spin3 = output_cut(total_charge_soc[2]);
-                double spin4 = output_cut(total_charge_soc[3]);
+                double spin1 = ModuleIO::output_cut(total_charge_soc[0]);
+                double spin2 = ModuleIO::output_cut(total_charge_soc[1]);
+                double spin3 = ModuleIO::output_cut(total_charge_soc[2]);
+                double spin4 = ModuleIO::output_cut(total_charge_soc[3]);
                 os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
                 << spin1 <<std::endl;
                 os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
@@ -434,14 +432,3 @@ void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
         ModuleIO::write_orb_info();
     }
 }
-
-double output_cut(const double& result)
-{
-    if(std::abs(result) < 1e-6)
-    {
-        return 0.0;
-    }
-    return result;
-}
-
-} // namespace Mulliken_Charge

@@ -8,7 +8,7 @@
 
 // by qifeng, refactor by jiyy 2023-02-25
 // convert to namespace, liuyu 2023-04-18
-namespace Mulliken_Charge
+namespace ModuleIO
 {
 	void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc);
 
@@ -32,6 +32,13 @@ namespace Mulliken_Charge
 
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 
-    double output_cut(const double& result);
+    inline double output_cut(const double& result)
+    {
+        if(std::abs(result) < 1e-6)
+        {
+            return 0.0;
+        }
+        return result;
+    }
 }
 #endif
