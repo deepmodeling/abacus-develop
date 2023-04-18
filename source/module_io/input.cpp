@@ -219,7 +219,7 @@ void Input::Default(void)
     // gamma_only = false;
     gamma_only = false;
     gamma_only_local = false;
-    ecutwfc = 0.0;
+    ecutwfc = 50.0;
     ecutrho = 0.0;
     ncx = 0;
     ncy = 0;

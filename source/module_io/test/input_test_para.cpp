@@ -115,7 +115,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.nbspline,-1);
         EXPECT_FALSE(INPUT.gamma_only);
         EXPECT_FALSE(INPUT.gamma_only_local);
-        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,50.0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
