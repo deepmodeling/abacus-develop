@@ -245,8 +245,8 @@
 		- [md\_damp](#md_damp)
 		- [md\_tolerance](#md_tolerance)
 		- [md\_nraise](#md_nraise)
-    - [cal_syns](#cal_syns) 
-    - [dmax](#dmax)
+	- [cal_syns](#cal_syns)
+	- [dmax](#dmax)
 	- [DFT+*U* correction](#dftu-correction)
 		- [dft\_plus\_u](#dft_plus_u)
 		- [orbital\_corr](#orbital_corr)
@@ -1159,7 +1159,7 @@ These variables are used to control the output of properties.
 ### out_wfc_lcao
 
 - **Type**: Boolean
-- **Description**: **Only used in localized orbitals set**. If set to 1, ABACUS will output the wave functions coefficients.
+- **Description**: **Only used in localized orbitals set**. If set to 1, ABACUS will output the wave functions coefficients. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
 - **Default**: 0
 
 ### out_dos
@@ -1207,7 +1207,7 @@ These variables are used to control the output of properties.
 ### out_mat_hs
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs is set to 1, ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of files in the directory `OUT.${suffix}`. The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index.
+- **Description**: For LCAO calculations, if out_mat_hs is set to 1, ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of files in the directory `OUT.${suffix}`. The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
 
   For nspin = 1 and nspin = 4 calculations, there will be only one spin component, so `$k` runs from 0 up to $nkpoints - 1$. For nspin = 2, `$k` runs from $2*nkpoints - 1$. In the latter case, the files are arranged into blocks of up and down spins. For example, if there are 3 k points, then we have the following correspondence:
 
