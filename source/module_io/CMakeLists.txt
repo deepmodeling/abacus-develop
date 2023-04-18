@@ -49,6 +49,7 @@ if(ENABLE_LCAO)
       mulliken_charge.cpp
       write_HS_R.cpp
       write_HS_sparse.cpp
+      single_R_io.cpp
       write_dm_sparse.cpp
       cal_r_overlap_R.cpp
   )
