@@ -816,7 +816,6 @@ void Evolve_LCAO_Matrix::compute_U_operator_taylor(const int nband,
 
     // complex<double> beta = {0.0, -0.5 * INPUT.mdp.md_dt};
     complex<double> beta = {0.0, -0.25 * INPUT.mdp.md_dt}; // for ETRS
-    cout << "beta=" << beta << endl;
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // invert Stmp
