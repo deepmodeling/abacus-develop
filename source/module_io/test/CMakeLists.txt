@@ -77,8 +77,18 @@ AddTest(
 	../../module_cell/module_symmetry/symmetry.cpp
 )
 
- AddTest(
+AddTest(
   TARGET io_write_input_test
   LIBS ${math_libs} base device
   SOURCES write_input_test.cpp ../write_input.cpp ../input.cpp
+)
+
+AddTest(
+  TARGET io_single_R_test
+  LIBS ${math_libs}
+  SOURCES single_R_io_test.cpp ../single_R_io.cpp
+  	../../module_base/global_variable.cpp
+	../../module_base/parallel_reduce.cpp
+	../../module_base/parallel_common.cpp
+	../../module_base/parallel_global.cpp
 )
