@@ -44,6 +44,7 @@ class ELEC_evolve
                            Local_Orbital_wfc& lowf,
                            psi::Psi<std::complex<double>>* psi,
                            psi::Psi<std::complex<double>>* psi_laststep,
+                           std::complex<double>** Hk_laststep,
                            ModuleBase::matrix& ekb);
 };
 
