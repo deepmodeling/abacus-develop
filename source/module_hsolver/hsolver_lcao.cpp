@@ -125,7 +125,6 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 
 int HSolverLCAO::out_mat_hs = 0;
 int HSolverLCAO::out_mat_hsR = 0;
-int HSolverLCAO::out_hsR_interval = 1;
 int HSolverLCAO::out_mat_t = 0;
 int HSolverLCAO::out_mat_dh = 0;
 

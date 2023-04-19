@@ -620,9 +620,9 @@ namespace ModuleESolver
 		{
 			std::stringstream ssp;
 			std::stringstream ssp_ave;
-			ssp << GlobalV::global_out_dir << "ElecStaticPot";
-			ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-			this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
+			ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
+			// ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
+			this->pelec->pot->write_elecstat_pot(ssp.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
 		}
 
         if (GlobalV::OUT_LEVEL != "m")

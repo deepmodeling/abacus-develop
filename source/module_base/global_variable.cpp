@@ -97,7 +97,7 @@ std::string ocp_set = "none";
 std::vector<double> ocp_kb;
 // int ocp_n=0;
 // double ocp_kb[10000];
-int out_mul = 0; // qifeng add 2019/9/10
+bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
@@ -254,4 +254,5 @@ std::string init_chg = "";
 int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
+int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 } // namespace GlobalV

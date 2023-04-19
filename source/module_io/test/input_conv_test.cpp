@@ -160,7 +160,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ( hsolver::HSolverLCAO::out_mat_hsR,false);
 	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_t,false);
 	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_dh,INPUT.out_mat_dh);
-	EXPECT_EQ(hsolver::HSolverLCAO::out_hsR_interval,1);
+	EXPECT_EQ(GlobalV::out_interval,1);
 	EXPECT_EQ(elecstate::ElecStateLCAO::out_wfc_lcao,false);
 	EXPECT_EQ(GlobalC::en.dos_emin_ev,-15);
 	EXPECT_EQ(GlobalC::en.dos_emax_ev,15);

@@ -158,7 +158,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
-        EXPECT_THAT(output,testing::HasSubstr("out_hs2_interval               1 #interval for printing H(R) and S(R) matrix during MD"));
+        EXPECT_THAT(output,testing::HasSubstr("out_interval               1 #interval for printing H(R) and S(R) matrix during MD"));
         EXPECT_THAT(output,testing::HasSubstr("out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_t                      0 #output T(R) matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_element_info               0 #output (projected) wavefunction of each element"));

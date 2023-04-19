@@ -76,7 +76,7 @@ void Langevin::post_force()
             fictitious_force = - allmass[i] * vel[i] / mdp.md_damp;
             for(int j=0; j<3; ++j)
             {
-                fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / mdp.md_damp / mdp.md_dt) * (rand()/double(RAND_MAX) - 0.5);
+                fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / mdp.md_damp / mdp.md_dt) * (static_cast<double>(std::rand())/RAND_MAX - 0.5);
             }
             total_force[i] = force[i] + fictitious_force;
         }

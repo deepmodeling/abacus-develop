@@ -32,6 +32,12 @@
  * 
  *   - MD_func::outStress
  *     - output stress
+ * 
+ *   - MD_func::current_step
+ *     - test the current_step function with the correct file path
+ * 
+ *   - MD_func::current_step_warning
+ *     - test the current_step function with an incorrect file path
  */
 
 class MD_func_test : public testing::Test
@@ -291,4 +297,24 @@ TEST_F(MD_func_test, outStress)
 
     ifs.close();
     remove("running.log");
+}
+
+TEST_F(MD_func_test, current_step)
+{
+    // Set up the file directory and create the Restart_md.dat file
+    std::string file_dir = "./";
+    std::ofstream file(file_dir + "Restart_md.dat");
+    file << 123;
+    file.close();
+
+    // Call the function with the correct file path and check the result
+    EXPECT_EQ(MD_func::current_step(0, file_dir), 123);
+    remove("Restart_md.dat");
+}
+
+TEST_F(MD_func_test, current_step_warning)
+{
+    // Call the function and check that it outputs a warning and quits
+    std::string file_dir = "./";
+    EXPECT_EXIT(MD_func::current_step(0, file_dir), ::testing::ExitedWithCode(0), "");
 }

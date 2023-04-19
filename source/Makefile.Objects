@@ -343,6 +343,7 @@ OBJS_IO=input.o\
     numerical_basis.o\
     output.o\
     print_info.o\
+    read_cube.o\
     read_rho.o\
     restart.o\
     binstream.o\
@@ -351,6 +352,7 @@ OBJS_IO=input.o\
     write_wfc_pw.o\
     winput.o\
     write_input.o\
+    write_cube.o\
     write_rho.o\
     write_dipole.o\
     write_wfc_r.o\

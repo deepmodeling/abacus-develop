@@ -46,10 +46,6 @@ public:
 	std::string device_flag = "cpu";
 	ModulePW::PW_Basis pwb;
 	ModulePW::PW_Basis pwb1;
-	void SetUp()
-	{}
-	void TearDown()
-	{}
 };
 
 TEST_F(PWBasisTEST,Constructor)
@@ -57,6 +53,8 @@ TEST_F(PWBasisTEST,Constructor)
 	ModulePW::PW_Basis pwb2(device_flag, precision_flag);
 	EXPECT_EQ(pwb1.classname,"PW_Basis");
 	EXPECT_EQ(pwb2.classname,"PW_Basis");
+	EXPECT_EQ(pwb2.device,"cpu");
+	EXPECT_EQ(pwb2.precision,"double");
 	EXPECT_EQ(pwb2.ft.device,"cpu");
 	EXPECT_EQ(pwb2.ft.precision,"double");
 }

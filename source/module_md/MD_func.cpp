@@ -1,9 +1,11 @@
 #include "MD_func.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/timer.h"
+#include "module_base/global_variable.h"
+#include "module_base/timer.h"
 
+namespace MD_func
+{
 
-double MD_func::gaussrand()
+double gaussrand()
 {
     static double V1, V2, S;
     static int phase = 0;
@@ -13,8 +15,8 @@ double MD_func::gaussrand()
     {
         do 
         {
-            double U1 = rand()/double(RAND_MAX);
-            double U2 = rand()/double(RAND_MAX);
+            double U1 = static_cast<double>(std::rand())/RAND_MAX;
+            double U2 = static_cast<double>(std::rand())/RAND_MAX;
              
             V1 = 2.0 * U1 - 1.0;
             V2 = 2.0 * U2 - 1.0;
@@ -33,7 +35,7 @@ double MD_func::gaussrand()
     return X;
 }
 
-double MD_func::GetAtomKE(
+double GetAtomKE(
 		const int &numIon,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass)
@@ -48,7 +50,7 @@ double MD_func::GetAtomKE(
 	return ke;
 }
 
-void MD_func::compute_stress(
+void compute_stress(
 		const UnitCell &unit_in,
 		const ModuleBase::Vector3<double> *vel, 
 		const double *allmass, 
@@ -77,7 +79,7 @@ void MD_func::compute_stress(
 }
 
 // Read Velocity from STRU liuyu 2021-09-24
-void MD_func::ReadVel(
+void ReadVel(
 	const UnitCell &unit_in, 
 	ModuleBase::Vector3<double>* vel)
 {
@@ -97,7 +99,7 @@ void MD_func::ReadVel(
 }
 
 // Initial velocity randomly
-void MD_func::RandomVel(
+void RandomVel(
 	const int& numIon, 
 	const double& temperature, 
 	const double* allmass,
@@ -165,7 +167,7 @@ void MD_func::RandomVel(
     return;
 }
 
-void MD_func::InitVel(
+void InitVel(
 	const UnitCell &unit_in, 
 	const double& temperature, 
 	double* allmass,
@@ -192,7 +194,7 @@ void MD_func::InitVel(
 }
 
 //calculate potential, force and virial
-void MD_func::force_virial(
+void force_virial(
 		ModuleESolver::ESolver *p_esolver,
 		const int &istep,
 		UnitCell &unit_in,
@@ -231,7 +233,7 @@ void MD_func::force_virial(
     ModuleBase::timer::tick("MD_func", "force_virial");
 }
 
-void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)
+void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)
 {
     double stress_scalar = 0.0, virial_scalar = 0.0;
     for(int i=0;i<3;i++)
@@ -257,7 +259,7 @@ void MD_func::outStress(const ModuleBase::matrix &virial, const ModuleBase::matr
     GlobalV::ofs_running << std::setiosflags(ios::left);
 }
 
-void MD_func::MDdump(const int &step, 
+void MDdump(const int &step, 
         const UnitCell &unit_in,
         const Input &inp,
         const ModuleBase::matrix &virial, 
@@ -349,7 +351,7 @@ void MD_func::MDdump(const int &step,
     ofs.close();
 }
 
-void MD_func::getMassMbl(const UnitCell &unit_in, 
+void getMassMbl(const UnitCell &unit_in, 
 			double* allmass, 
 			ModuleBase::Vector3<int> &frozen,
 			ModuleBase::Vector3<int>* ionmbl)
@@ -372,13 +374,13 @@ void MD_func::getMassMbl(const UnitCell &unit_in,
 	}
 }
 
-double MD_func::target_temp(const int &istep, const double &tfirst, const double &tlast)
+double target_temp(const int &istep, const double &tfirst, const double &tlast)
 {
     double delta = (double)(istep) / GlobalV::MD_NSTEP;
     return tfirst + delta * (tlast - tfirst);
 }
 
-double MD_func::current_temp(double &kinetic,
+double current_temp(double &kinetic,
             const int &natom, 
             const int &frozen_freedom, 
             const double *allmass,
@@ -395,7 +397,7 @@ double MD_func::current_temp(double &kinetic,
     }
 }
 
-void MD_func::temp_vector(const int &natom, 
+void temp_vector(const int &natom, 
             const ModuleBase::Vector3<double> *vel, 
             const double *allmass, 
             ModuleBase::matrix &t_vector)
@@ -413,3 +415,46 @@ void MD_func::temp_vector(const int &natom,
         }
     }
 }
+
+// liuyu add 2023-04-16
+// determine thr current MD step according to Restart_md.dat if md_restart is true,
+// then STRU_MD_$step will be read directly instead of STRU
+double current_step(const int& my_rank, const std::string& file_dir)
+{
+    bool ok = true;
+    int step = 0;
+
+    if (my_rank == 0)
+    {
+        std::stringstream ssc;
+        ssc << file_dir << "Restart_md.dat";
+        std::ifstream file(ssc.str().c_str());
+
+        if(!file)
+        {
+            ok = false;
+        }
+
+        if(ok)
+        {
+            file >> step;
+            file.close();
+        }
+    }
+
+#ifdef __MPI
+    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+
+    if(!ok)
+    {
+        ModuleBase::WARNING_QUIT("current_step", "no Restart_md.dat!");
+    }
+
+#ifdef __MPI
+    MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+    return step;
+}
+
+} // namespace MD_func
