@@ -533,6 +533,7 @@ void Input_Conv::Convert(void)
     GlobalV::out_app_flag = INPUT.out_app_flag;
 
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
+    GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
     Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
@@ -540,7 +541,6 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO::out_mat_dh = INPUT.out_mat_dh;
-    hsolver::HSolverLCAO::out_hsR_interval = INPUT.out_hs2_interval;
     elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
     if (INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)
     {
