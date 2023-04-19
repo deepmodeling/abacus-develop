@@ -45,7 +45,9 @@ class ELEC_evolve
                            psi::Psi<std::complex<double>>* psi,
                            psi::Psi<std::complex<double>>* psi_laststep,
                            std::complex<double>** Hk_laststep,
-                           ModuleBase::matrix& ekb);
+                           ModuleBase::matrix& ekb,
+                           int htype,
+                           int propagator);
 };
 
 #endif
