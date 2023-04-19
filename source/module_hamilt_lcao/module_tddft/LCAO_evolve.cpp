@@ -375,6 +375,10 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int nband,
     ModuleBase::GlobalFunc::ZEROS(Htmp, this->ParaV->nloc);
     BlasConnector::copy(this->ParaV->nloc, h_mat.p, 1, Htmp, 1);
 
+    complex<double>* Hold = new complex<double>[this->ParaV->nloc];
+    ModuleBase::GlobalFunc::ZEROS(Hold, this->ParaV->nloc);
+    BlasConnector::copy(this->ParaV->nloc, h_mat.p, 1, Hold, 1);
+
     complex<double>* U_operator = new complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(U_operator, this->ParaV->nloc);
 
@@ -432,7 +436,7 @@ void Evolve_LCAO_Matrix::using_ScaLAPACK_complex(const int nband,
     /// @brief compute ekb
     /// @input Htmp, psi_k
     /// @output ekb
-    compute_ekb(nband, nlocal, Htmp, psi_k, ekb);
+    compute_ekb(nband, nlocal, Hold, psi_k, ekb);
 
     delete[] Stmp;
     delete[] Htmp;
