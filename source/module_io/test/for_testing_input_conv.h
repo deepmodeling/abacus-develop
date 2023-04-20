@@ -23,13 +23,13 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_io/berryphase.h"
+#include "module_md/MD_func.h"
 
 bool berryphase::berry_phase_flag=false;
 int elecstate::ElecStateLCAO::out_wfc_lcao = 0;
 bool elecstate::ElecStateLCAO::need_psi_grid = 1;
 int hsolver::HSolverLCAO::out_mat_hs = 0;
 int hsolver::HSolverLCAO::out_mat_hsR = 0;
-int hsolver::HSolverLCAO::out_hsR_interval = 1;
 int hsolver::HSolverLCAO::out_mat_t = 0;
 int hsolver::HSolverLCAO::out_mat_dh = 0;
 int Local_Orbital_Charge::out_dm = 0;
@@ -241,6 +241,11 @@ void UnitCell::setup(const std::string &latname_in,
 	return;
 }
 void Structure_Factor::set(const int&){return;}
+
+namespace MD_func
+{
+    double current_step(const int& my_rank, const std::string& file_dir){return 0;}
+}
 
 namespace GlobalC
 {

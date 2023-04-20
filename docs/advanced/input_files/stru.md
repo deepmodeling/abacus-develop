@@ -16,7 +16,7 @@ For this example, no need to supply any input to the variable `latname` in the I
 
 ```
 ATOMIC_SPECIES
-Si 28.00 Si_ONCV_PBE-1.0.upf upf201 // label; mass; pseudo_file
+Si 28.00 Si_ONCV_PBE-1.0.upf upf201 // label; mass; pseudo_file; pseudo_type
 
 NUMERICAL_ORBITAL
 Si_gga_8au_60Ry_2s2p1d.orb //numerical_orbital_file
@@ -81,6 +81,8 @@ information that comes below.
   Here `Si_ONCV_PBE-1.0.upf` is the pseudopotential file. When the path is not specified, the file is assumed to be located in work directory. Otherwise, please explicitly specify the location of the pseudopotential files.
 
   After the pseudopotential file, `upf201` is the type of pseudopotential. There are five options: `upf`(.UPF format), `upf201`(the new .UPF format), `vwr`(.vwr format), `blps`(bulk-derived local pseudopotential), and `auto`(automatically identified). If no pseudopotential type is assigned, the default value is `auto`, and the pseudopotential type will be automatically identified.
+
+  When [esolver_type](./input-main.md#esolver_type) is set to `lj` or `dp`, the keyword `pseudo_file` and `pseudo_type` is needless.
 
   Different types of pseudopotentials can be used for different elements, but note that the XC functionals assigned by all pseudopotentials should be the same one. If not, the choice of XC functional must be set explicitly using the [dft_functional](./input-main.md#dft_functional) keyword.
 
