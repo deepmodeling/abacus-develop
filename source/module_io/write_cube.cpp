@@ -47,6 +47,8 @@ void ModuleIO::write_cube(
 		// ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
 		ofs_cube << nspin << " (nspin) ";
 		
+		ofs_cube << std::fixed;
+		ofs_cube << std::setprecision(6);
 		if (out_fermi == 1)
 		{
 			if (GlobalV::TWO_EFERMI)
@@ -115,6 +117,7 @@ void ModuleIO::write_cube(
 						 << " " << fac*ucell->atoms[it].tau[ia].z << std::endl;
 			}
 		}
+		ofs_cube.unsetf(ostream::fixed);
 		ofs_cube << std::setprecision(precision);
 		ofs_cube << scientific;
 	}
