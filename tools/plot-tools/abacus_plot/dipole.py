@@ -93,9 +93,15 @@ class Dipole:
         labels = {0: 'X', 1: 'Y', 2: 'Z'}
         x_data = self.energies if unit == 'eV' else sc.nu2lambda(
             sc.eV/sc.h*self.energies)*1e9
-
+        
+        #plot the adsorption spectra and output the data
+        adsorption_spectra_data = x_data[:, np.newaxis]
         for direc in directions:
             ax.plot(x_data, self.get_abs(direc), label=labels[direc])
+            adsorption_spectra_data = np.concatenate((adsorption_spectra_data, self.get_abs(direc)[:, np.newaxis]),axis=1)
+            if direc != directions[-1]:
+                adsorption_spectra_data = np.concatenate((adsorption_spectra_data, x_data[:, np.newaxis]),axis=1)
+        np.savetxt('absorpation_spectra.dat', adsorption_spectra_data)
 
         xlabel = 'Energy (eV)' if unit == 'eV' else 'Wave Length (nm)'
         ax.set_xlabel(xlabel)
