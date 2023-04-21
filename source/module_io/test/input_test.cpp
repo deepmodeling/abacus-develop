@@ -719,6 +719,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.basis_type,"lcao");
 	INPUT.ks_solver = "default";
 	INPUT.lcao_ecut = 0;
+	INPUT.scf_thr = -1.0;
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
 	// the 1st calling
 	INPUT.Default_2();
@@ -761,6 +762,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.basis_type = "pw";
 	INPUT.ks_solver = "default";
 	INPUT.gamma_only_local = 1;
+	INPUT.scf_thr = -1.0;
 	// the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
