@@ -245,8 +245,8 @@
 		- [md\_damp](#md_damp)
 		- [md\_tolerance](#md_tolerance)
 		- [md\_nraise](#md_nraise)
-	- [cal_syns](#cal_syns)
-	- [dmax](#dmax)
+		- [cal\_syns](#cal_syns)
+		- [dmax](#dmax)
 	- [DFT+*U* correction](#dftu-correction)
 		- [dft\_plus\_u](#dft_plus_u)
 		- [orbital\_corr](#orbital_corr)
@@ -852,7 +852,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
-- **Default**: 1.0e-9
+- **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
 
 ### chg_extrap
 
