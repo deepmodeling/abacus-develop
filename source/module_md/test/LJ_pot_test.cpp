@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
-#include "setcell.h"
 #include "module_esolver/esolver_lj.h"
 #include "module_md/MD_func.h"
+#include "setcell.h"
 
 #define doublethreshold 1e-12
 
@@ -17,7 +17,7 @@
 
 class LJ_pot_test : public testing::Test
 {
-protected:
+  protected:
     ModuleBase::Vector3<double> *force;
     ModuleBase::matrix stress;
     double potential;
@@ -29,8 +29,8 @@ protected:
         Setcell::setupcell(ucell);
 
         natom = ucell.nat;
-        force = new ModuleBase::Vector3<double> [natom];
-        stress.create(3,3);
+        force = new ModuleBase::Vector3<double>[natom];
+        stress.create(3, 3);
 
         Setcell::parameters();
 
@@ -41,7 +41,7 @@ protected:
 
     void TearDown()
     {
-        delete []force;
+        delete[] force;
     }
 };
 
@@ -68,13 +68,13 @@ TEST_F(LJ_pot_test, force)
 
 TEST_F(LJ_pot_test, stress)
 {
-    EXPECT_NEAR(stress(0,0), 8.0360222227631859e-07, doublethreshold);
-    EXPECT_NEAR(stress(0,1), 1.7207745586539077e-07, doublethreshold);
-    EXPECT_NEAR(stress(0,2), 0, doublethreshold);
-    EXPECT_NEAR(stress(1,0), 1.7207745586539077e-07, doublethreshold);
-    EXPECT_NEAR(stress(1,1), 1.0630708613186662e-06, doublethreshold);
-    EXPECT_NEAR(stress(1,2), -1.1858461261560206e-22, doublethreshold);
-    EXPECT_NEAR(stress(2,0), 0, doublethreshold);
-    EXPECT_NEAR(stress(2,1), -1.1858461261560206e-22, doublethreshold);
-    EXPECT_NEAR(stress(2,2), 6.4275429572682057e-07, doublethreshold);
+    EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
+    EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
+    EXPECT_NEAR(stress(0, 2), 0, doublethreshold);
+    EXPECT_NEAR(stress(1, 0), 1.7207745586539077e-07, doublethreshold);
+    EXPECT_NEAR(stress(1, 1), 1.0630708613186662e-06, doublethreshold);
+    EXPECT_NEAR(stress(1, 2), -1.1858461261560206e-22, doublethreshold);
+    EXPECT_NEAR(stress(2, 0), 0, doublethreshold);
+    EXPECT_NEAR(stress(2, 1), -1.1858461261560206e-22, doublethreshold);
+    EXPECT_NEAR(stress(2, 2), 6.4275429572682057e-07, doublethreshold);
 }
