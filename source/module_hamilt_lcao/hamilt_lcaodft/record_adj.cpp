@@ -469,7 +469,7 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 }
 #endif
 	ModuleBase::timer::tick("Record_adj","for_grid");
-	//info_modified=true;
+	info_modified=true;
 //	std::cout << " after for_grid" << std::endl;
 	return;
 }
