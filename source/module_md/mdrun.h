@@ -1,15 +1,15 @@
 #ifndef MDRUN_H
 #define MDRUN_H
 
-#include "MD_parameters.h"
-#include "../module_cell/unitcell.h"
 #include "../module_base/matrix.h"
+#include "../module_cell/unitcell.h"
+#include "MD_parameters.h"
 #include "module_esolver/esolver.h"
 
 class MDrun
 {
-public:
-    MDrun(MD_parameters& MD_para_in, UnitCell &unit_in);
+  public:
+    MDrun(MD_parameters &MD_para_in, UnitCell &unit_in);
     virtual ~MDrun();
 
     /**
@@ -36,7 +36,7 @@ public:
     /**
      * @brief perform half-step update of vel due to atomic force
      */
-    virtual void update_vel(const ModuleBase::Vector3<double>* force);
+    virtual void update_vel(const ModuleBase::Vector3<double> *force);
 
     /**
      * @brief output MD information such as energy, temperature, and pressure
@@ -56,26 +56,25 @@ public:
     virtual void restart();
 
     MD_parameters &mdp;
-	UnitCell &ucell;
-    bool stop;                           // MD stop or not
+    UnitCell &ucell;
+    bool stop; // MD stop or not
 
     // All parameters are in a.u. unit.
-    double t_current;                    // current temperature
-    int step_;                           // the MD step finished in current calculation
-    int step_rst_;                       // the MD step finished in previous calculations
-    double energy_;                      // total energy of the system
-	int frozen_freedom_;                 // the fixed freedom of the system
+    double t_current;    // current temperature
+    int step_;           // the MD step finished in current calculation
+    int step_rst_;       // the MD step finished in previous calculations
+    double energy_;      // total energy of the system
+    int frozen_freedom_; // the fixed freedom of the system
 
-    double *allmass;                     // atom mass 
-    ModuleBase::Vector3<double> *pos;    // atom displacements  liuyu modify 2023-03-22
-    ModuleBase::Vector3<double> *vel;    // atom velocity
-    ModuleBase::Vector3<int> *ionmbl;    // atom is frozen or not
-    ModuleBase::Vector3<double> *force;  // force of each atom
-    ModuleBase::matrix virial;           // virial for this lattice
-	ModuleBase::matrix stress;           // stress for this lattice
-    double potential;                    // potential energy
-    double kinetic;                      // kinetic energy
-
+    double *allmass;                    // atom mass
+    ModuleBase::Vector3<double> *pos;   // atom displacements  liuyu modify 2023-03-22
+    ModuleBase::Vector3<double> *vel;   // atom velocity
+    ModuleBase::Vector3<int> *ionmbl;   // atom is frozen or not
+    ModuleBase::Vector3<double> *force; // force of each atom
+    ModuleBase::matrix virial;          // virial for this lattice
+    ModuleBase::matrix stress;          // stress for this lattice
+    double potential;                   // potential energy
+    double kinetic;                     // kinetic energy
 };
 
 #endif
