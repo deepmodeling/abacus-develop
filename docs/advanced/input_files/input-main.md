@@ -83,7 +83,11 @@
 		- [initsto\_freq](#initsto_freq)
 		- [npart\_sto](#npart_sto)
 	- [Geometry relaxation](#geometry-relaxation)
+		- [relax\_method](#relax_method)
+		- [relax\_new](#relax_new)
+		- [relax\_scale\_force](#relax_scale_force)
 		- [relax\_nmax](#relax_nmax)
+		- [relax\_cg\_thr](#relax_cg_thr)
 		- [cal\_force](#cal_force)
 		- [force\_thr](#force_thr)
 		- [force\_thr\_ev](#force_thr_ev)
@@ -99,10 +103,6 @@
 		- [fixed\_axes](#fixed_axes)
 		- [fixed\_ibrav](#fixed_ibrav)
 		- [fixed\_atoms](#fixed_atoms)
-		- [relax\_method](#relax_method)
-		- [relax\_cg\_thr](#relax_cg_thr)
-		- [relax\_new](#relax_new)
-		- [relax\_scale\_force](#relax_scale_force)
 		- [cell\_factor](#cell_factor)
 	- [Variables related to output information](#variables-related-to-output-information)
 		- [out\_mul](#out_mul)
@@ -956,11 +956,38 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
 
 These variables are used to control the geometry relaxation.
 
+### relax_method
+
+- **Type**: String
+- **Description**: The methods to do geometry optimization, note that there are two implementations of the CG method, see [relax_new](#relax_new):
+  - cg: using the conjugate gradient (cg) algorithm (see relax_new for the new cg method).
+  - bfgs: using the BFGS algorithm.
+  - sd: using the steepest descent (sd) algorithm.
+- **Default**: cg
+
+### relax_new
+
+- **Type**: Boolean
+- **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
+- **Default**: True
+
+### relax_scale_force
+
+- **Type**: Real
+- **Description**: This parameter is only relevant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
+- **Default**: 0.5
+
 ### relax_nmax
 
 - **Type**: Integer
 - **Description**: The maximal number of ionic iteration steps, the minimum value is 1.
 - **Default**: 1
+
+### relax_cg_thr
+
+- **Type**: Real
+- **Description**: When move-method is set to 'cg-bfgs', a mixed cg-bfgs algorithm is used. The ions first move according to cg method, then switched to bfgs when the maximum of force on atoms is reduced below cg-threshold. The unit is eV/Angstrom.
+- **Default**: 0.5
 
 ### cal_force
 
@@ -1031,14 +1058,14 @@ These variables are used to control the geometry relaxation.
 ### press1, press2, press3
 
 - **Type**: Real
-- **Description**: the external pressures along three axes, the compressive stress is taken to be positive, and the unit is KBar.
+- **Description**: The external pressures along three axes, the compressive stress is taken to be positive, and the unit is KBar.
 - **Default**: 0
 
 ### fixed_axes
 
 - **Type**: String
-- **Description**: which axes are fixed when do cell relaxation. Possible choices are:
-  - None : default; all can relax
+- **Description**: Axes that are fixed during cell relaxation. Possible choices are:
+  - None : default; all of the axes can relax
   - volume : relaxation with fixed volume
   - shape : fix shape but change volume (i.e. only lattice constant changes)
   - a : fix a axis during relaxation
@@ -1055,7 +1082,7 @@ These variables are used to control the geometry relaxation.
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Description**: when set to true, the lattice type will be preserved during relaxation. Must be used along with [relax_new](#relax_new) set to true, and a specific [latname](#latname) must be provided
+- **Description**: When set to true, the lattice type will be preserved during relaxation. Must be used along with [relax_new](#relax_new) set to true, and a specific [latname](#latname) must be provided
 
 > Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges.
 
@@ -1064,35 +1091,8 @@ These variables are used to control the geometry relaxation.
 ### fixed_atoms
 
 - **Type**: Boolean
-- **Description**: when set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
+- **Description**: When set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
 - **Default**: False
-
-### relax_method
-
-- **Type**: String
-- **Description**: The method to do geometry optimizations, note that there are two implementations of the CG method, see [relax_new](#relax_new):
-  - bfgs: using BFGS algorithm.
-  - sd: using steepest-descent algorithm.
-  - cg: using cg algorithm.
-- **Default**: cg
-
-### relax_cg_thr
-
-- **Type**: Real
-- **Description**: When move-method is set to 'cg-bfgs', a mixed cg-bfgs algorithm is used. The ions first move according to cg method, then switched to bfgs when the maximum of force on atoms is reduced below cg-threshold. The unit is eV/Angstrom.
-- **Default**: 0.5
-
-### relax_new
-
-- **Type**: Boolean
-- **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
-- **Default**: True
-
-### relax_scale_force
-
-- **Type**: Real
-- **Description**: This parameter is only relevant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
-- **Default**: 0.5
 
 ### cell_factor
 
@@ -1432,7 +1432,7 @@ Warning: this function is not robust enough for the current version. Please try 
 ### deepks_out_labels
 
 - **Type**: Boolean
-- **Description**: when set to 1, ABACUS will calculate and output descriptor for DeePKS training. In `LCAO` calculation, a path of *.orb file is needed to be specified under `NUMERICAL_DESCRIPTOR`in `STRU`file. For example:
+- **Description**: When set to 1, ABACUS will calculate and output descriptor for DeePKS training. In `LCAO` calculation, a path of *.orb file is needed to be specified under `NUMERICAL_DESCRIPTOR`in `STRU`file. For example:
 
   ```
   NUMERICAL_ORBITAL
