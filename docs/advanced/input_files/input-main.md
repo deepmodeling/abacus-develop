@@ -2581,7 +2581,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   - 1: Output efield.
   - 0: do not Output efield.
-  The unit of output file if atomic unit.
+  The unit of output file is atomic unit.
 - **Default**: 0
 
 ### ocp
