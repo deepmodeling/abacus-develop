@@ -3,12 +3,15 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-
-Record_adj::Record_adj() : iat2ca(nullptr) {}
-Record_adj::~Record_adj(){}
+Record_adj::Record_adj() : iat2ca(nullptr) {info_modified=false;}
+Record_adj::~Record_adj(){
+	if(info_modified)
+		this->delete_grid();
+}
 
 void Record_adj::delete_grid(void)
 {
+	info_modified=false;
 	for(int i=0; i<na_proc; i++)
 	{
 		// how many 'numerical orbital' adjacents
@@ -152,7 +155,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 	// info will identify each atom in each unitcell.
 	//------------------------------------------------
 	this->info = new int**[na_proc];
-
+	info_modified=true;
 #ifdef _OPENMP
 #pragma omp parallel
 {
@@ -283,7 +286,7 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 	this->na_each = new int[na_proc];
 	ModuleBase::GlobalFunc::ZEROS(na_each, na_proc);
 	this->info = new int**[na_proc];
-
+	info_modified=true;
 #ifdef _OPENMP
 #pragma omp parallel
 {

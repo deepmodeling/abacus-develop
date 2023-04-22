@@ -10,6 +10,8 @@
 //---------------------------------------------------
 class Record_adj
 {
+	private:
+		bool info_modified;
 	public:
 
 	Record_adj();
