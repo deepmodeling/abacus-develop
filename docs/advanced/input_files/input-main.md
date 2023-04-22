@@ -2581,7 +2581,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   - 1: Output efield.
   - 0: do not Output efield.
-  The unit of output file is atomic unit ( 1 a.u. = 1 Ry / bohr = 51.422 V/Angstrom ).
+  The unit of output file is atomic unit ( 1 a.u. = 1 Ry/bohr = 51.422 V/Angstrom ).
 - **Default**: 0
 
 ### ocp
