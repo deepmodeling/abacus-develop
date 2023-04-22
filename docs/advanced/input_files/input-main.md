@@ -453,7 +453,7 @@ These variables are used to control general system parameters.
 ### init_vel
 
 - **Type**: Boolean
-- **Description**: Read the atom velocity from the atom file (STRU) if set to true.
+- **Description**: Read the atom velocity from the atom file (STRU) if set to true. (atomic unit)
 - **Default**: false
 
 ### nelec
@@ -2581,6 +2581,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   - 1: Output efield.
   - 0: do not Output efield.
+  The unit of output file if atomic unit.
 - **Default**: 0
 
 ### ocp
