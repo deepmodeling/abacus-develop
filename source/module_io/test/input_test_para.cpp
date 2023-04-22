@@ -137,7 +137,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.vion_in_h,1);
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
-        EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+        EXPECT_DOUBLE_EQ(INPUT.scf_thr,-1.0);
         EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
