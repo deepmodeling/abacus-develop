@@ -453,7 +453,7 @@ These variables are used to control general system parameters.
 ### init_vel
 
 - **Type**: Boolean
-- **Description**: Read the atom velocity from the atom file (STRU) if set to true. (atomic unit : 1 a.u. = 21.87691 Angstrom/fs )
+- **Description**: Read the atom velocity from the atom file (STRU) if set to true. (atomic unit : 1 a.u. = 21.877 Angstrom/fs )
 - **Default**: false
 
 ### nelec
