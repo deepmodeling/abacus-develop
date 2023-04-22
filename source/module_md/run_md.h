@@ -6,12 +6,11 @@
 
 class Run_MD
 {
-public:
+  public:
     Run_MD();
     ~Run_MD();
 
     void md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver);
-
 };
 
 #endif
