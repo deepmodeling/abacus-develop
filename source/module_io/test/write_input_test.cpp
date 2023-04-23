@@ -148,7 +148,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (5.LCAO)"));
         EXPECT_THAT(output,testing::HasSubstr("basis_type                     lcao #PW; LCAO in pw; LCAO"));
         EXPECT_THAT(output,testing::HasSubstr("nb2d                           0 #2d distribution of atoms"));
-        EXPECT_THAT(output,testing::HasSubstr("gamma_only                     1 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used"));
+        EXPECT_THAT(output,testing::HasSubstr("gamma_only                     0 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used"));
         EXPECT_THAT(output,testing::HasSubstr("search_radius                  -1 #input search radius (Bohr)"));
         EXPECT_THAT(output,testing::HasSubstr("search_pbc                     1 #input periodic boundary condition"));
         EXPECT_THAT(output,testing::HasSubstr("lcao_ecut                      20 #energy cutoff for LCAO"));
@@ -158,7 +158,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
-        EXPECT_THAT(output,testing::HasSubstr("out_interval               1 #interval for printing H(R) and S(R) matrix during MD"));
+        EXPECT_THAT(output,testing::HasSubstr("out_interval                   1 #interval for printing H(R) and S(R) matrix during MD"));
         EXPECT_THAT(output,testing::HasSubstr("out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_t                      0 #output T(R) matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_element_info               0 #output (projected) wavefunction of each element"));
