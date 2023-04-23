@@ -1,8 +1,8 @@
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "setcell.h"
-#include "module_md/Nose_Hoover.h"
+#include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
+#include "module_md/Nose_Hoover.h"
+#include "setcell.h"
 
 #define doublethreshold 1e-12
 
@@ -20,20 +20,20 @@
  *
  *   - Nose_Hoover::second_half
  *     - the second half of equation of motion, update velocities
- * 
+ *
  *   - Nose_Hoover::write_restart
  *     - write the information into files used for MD restarting
- * 
+ *
  *   - Nose_Hoover::restart
  *     - restart MD when md_restart is true
- * 
+ *
  *   - Nose_Hoover::outputMD
  *     - output MD information such as energy, temperature, and pressure
  */
 
 class NHC_test : public testing::Test
 {
-protected:
+  protected:
     MDrun *mdrun;
     UnitCell ucell;
 
@@ -60,21 +60,21 @@ protected:
 TEST_F(NHC_test, setup)
 {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(0,0), 6.0100555286436806e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(0,1), -1.4746713013791574e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(0,2), 1.5039983732220751e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(1,0), -1.4746713013791574e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(1,1), 3.4437172989317909e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(1,2), -1.251414906590483e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(2,0), 1.5039983732220751e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(2,1), -1.251414906590483e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(2,2), 1.6060561926126463e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(0, 2), 1.5039983732220751e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(1, 0), -1.4746713013791574e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(1, 1), 3.4437172989317909e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(1, 2), -1.251414906590483e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(2, 0), 1.5039983732220751e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(2, 1), -1.251414906590483e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
 TEST_F(NHC_test, first_half)
 {
     mdrun->first_half();
-    
+
     EXPECT_NEAR(mdrun->pos[0].x, -0.00023793471204889866, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00017779705725471447, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].z, -4.2849245001782489e-05, doublethreshold);
@@ -106,7 +106,7 @@ TEST_F(NHC_test, second_half)
 {
     mdrun->first_half();
     mdrun->second_half();
-    
+
     EXPECT_NEAR(mdrun->pos[0].x, -0.00023793503786683287, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.0001777972998948069, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].z, -4.2849303620229072e-05, doublethreshold);
@@ -144,22 +144,24 @@ TEST_F(NHC_test, write_restart)
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("3"));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("4"));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("-0.110497   -0.554723   -0.465415   -0.424699   "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("-0.0116537   -0.0247908   -0.020418   -0.0171934   "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("0.00391652   0.00331999   0.00198239   -0.000609301   0.000658853   -0.000356508   "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("4"));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("0.537401   2.2182   2.83291   77.7478   "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("0.327474   -0.152756   1.07616e-10   3.60329   "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("3"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("4"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.110497   -0.554723   -0.465415   -0.424699   "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0116537   -0.0247908   -0.020418   -0.0171934   "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr("0.00391652   0.00331999   0.00198239   -0.000609301   0.000658853   -0.000356508   "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("4"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("0.537401   2.2182   2.83291   77.7478   "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("0.327474   -0.152756   1.07616e-10   3.60329   "));
     ifs.close();
 }
 
@@ -168,7 +170,7 @@ TEST_F(NHC_test, restart)
     mdrun->restart();
     remove("Restart_md.dat");
 
-    Nose_Hoover* nhc =dynamic_cast<Nose_Hoover*>(mdrun);
+    Nose_Hoover *nhc = dynamic_cast<Nose_Hoover *>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(mdrun->mdp.md_tchain, 4);
     EXPECT_EQ(mdrun->mdp.md_pchain, 4);
@@ -194,7 +196,6 @@ TEST_F(NHC_test, restart)
     EXPECT_EQ(nhc->v_peta[1], -0.152756);
     EXPECT_EQ(nhc->v_peta[2], 1.07616e-10);
     EXPECT_EQ(nhc->v_peta[3], 3.60329);
-
 }
 
 TEST_F(NHC_test, outputMD)
@@ -205,16 +206,28 @@ TEST_F(NHC_test, outputMD)
 
     std::ifstream ifs("running.log");
     std::string output_str;
-    getline(ifs,output_str);
-    getline(ifs,output_str);
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    getline(ifs, output_str);
+    getline(ifs, output_str);
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ------------------------------------------------------------------------------------------------"));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ------------------------------------------------------------------------------------------------"));
     ifs.close();
     remove("running.log");
 }

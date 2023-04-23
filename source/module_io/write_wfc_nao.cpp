@@ -1,6 +1,7 @@
 #include "write_wfc_nao.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
+#include "../module_base/global_function.h"
+#include "../module_base/global_variable.h"
 
 void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
 {
@@ -10,15 +11,15 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
     std::ofstream ofs;
     if (GlobalV::DRANK==0)
     {
-        ofs.open(name.c_str(), ofstream::app);
+        ofs.open(name.c_str(), std::ofstream::app);
         if (!ofs)
         {
-            ModuleBase::WARNING("Pdiag_Basic::write_wfc_nao","Can't write local orbital wave functions.");
+            ModuleBase::WARNING("ModuleIO::write_wfc_nao","Can't write local orbital wave functions.");
         }
         ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
         ofs << GlobalV::NLOCAL << " (number of orbitals)";
         ofs << std::setprecision(8);
-        ofs << scientific;
+        ofs << std::scientific;
 
         for (int i=0; i<GlobalV::NBANDS; i++)
         {
@@ -41,7 +42,7 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
     return;
 }
 
-void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
+void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
@@ -49,17 +50,17 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<doubl
     std::ofstream ofs;
     if (GlobalV::DRANK==0)
     {
-        ofs.open(name.c_str(), ofstream::app);
+        ofs.open(name.c_str(), std::ofstream::app);
         if (!ofs)
         {
-            ModuleBase::WARNING("Pdiag_Basic::write_wfc_nao","Can't write local orbital wave functions.");
+            ModuleBase::WARNING("ModuleIO::write_wfc_nao","Can't write local orbital wave functions.");
         }
         ofs << std::setprecision(25);
 		ofs << ik+1 << " (index of k points)" << std::endl;
-		ofs << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z << std::endl;
+		ofs << kvec_c.x << " " << kvec_c.y << " " << kvec_c.z << std::endl;
         ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
         ofs << GlobalV::NLOCAL << " (number of orbitals)";
-        ofs << scientific;
+        ofs << std::scientific;
 
         for (int i=0; i<GlobalV::NBANDS; i++)
         {

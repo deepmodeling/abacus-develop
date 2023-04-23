@@ -252,7 +252,7 @@ void Input::Default(void)
     //----------------------------------------------------------
     // iteration
     //----------------------------------------------------------
-    scf_thr = 1.0e-9;
+    scf_thr = -1.0; // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
@@ -2691,6 +2691,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (mdp.md_prec_level != 1)
     {
         ref_cell_factor = 1.0;
+    }
+
+    if (scf_thr == -1.0)
+    {
+        if (basis_type == "lcao" || basis_type == "lcao_in_pw")
+        {
+            scf_thr = 1.0e-7;
+        }
+        else if (basis_type == "pw")
+        {
+            scf_thr = 1.0e-9;
+        }
     }
 }
 #ifdef __MPI

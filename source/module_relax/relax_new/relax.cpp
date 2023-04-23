@@ -6,13 +6,12 @@
 #include "module_base/tool_title.h"
 #include "module_base/parallel_common.h"
 
-void Relax::init_relax(const int nat_in, const int out_stru_in)
+void Relax::init_relax(const int nat_in)
 {
     ModuleBase::TITLE("Relax","init_relax");
 
     //set some initial conditions / constants
     nat = nat_in;
-    out_stru = out_stru_in;
     istep = 0;
     cg_step = 0;
     ltrial = false;
@@ -540,6 +539,9 @@ void Relax::move_cell_ions(const bool is_new_dir)
 
 	GlobalC::ucell.update_pos_taud(move_ion);
 
+	// Print the structure file.
+	GlobalC::ucell.print_tau();
+
     // =================================================================
     // Step 4 : update G,GT and other stuff
     // =================================================================
@@ -588,21 +590,6 @@ void Relax::move_cell_ions(const bool is_new_dir)
         GlobalC::ucell.GGT = GlobalC::ucell.G * GlobalC::ucell.GT;
         GlobalC::ucell.invGGT = GlobalC::ucell.GGT.Inverse();
     }
-
-    // =================================================================
-    // Step 5 : print the new structure
-    // =================================================================
-    std::stringstream ss;
-    ss << GlobalV::global_out_dir << "STRU_ION";
-    if (out_stru == 1)
-    {
-        ss << istep;
-        istep ++;
-        GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
-    }
-    ss << "_D";    
-    GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
-    GlobalC::ucell.print_tau();
 
     // =================================================================
     // Step 6 : prepare something for next SCF

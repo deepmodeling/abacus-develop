@@ -1,16 +1,21 @@
 #include "verlet.h"
-#include "MD_func.h"
+
 #include "../module_base/timer.h"
+#include "MD_func.h"
 
-Verlet::Verlet(MD_parameters& MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in){}
+Verlet::Verlet(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
+{
+}
 
-Verlet::~Verlet(){}
+Verlet::~Verlet()
+{
+}
 
 void Verlet::setup(ModuleESolver::ESolver *p_ensolve)
 {
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::tick("Verlet", "setup");
-    
+
     MDrun::setup(p_ensolve);
 
     ModuleBase::timer::tick("Verlet", "setup");
@@ -43,36 +48,38 @@ void Verlet::apply_thermostat()
     double t_target = 0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
-    if(mdp.md_type == "nve"){}
-    else if(mdp.md_thermostat == "rescaling")
+    if (mdp.md_type == "nve")
+    {
+    }
+    else if (mdp.md_thermostat == "rescaling")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
-        if(abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
+        if (abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
         {
             thermalize(0, t_current, t_target);
         }
     }
-    else if(mdp.md_thermostat == "rescale_v")
+    else if (mdp.md_thermostat == "rescale_v")
     {
-        if((step_+step_rst_) % mdp.md_nraise == 0)
+        if ((step_ + step_rst_) % mdp.md_nraise == 0)
         {
             t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
             thermalize(0, t_current, t_target);
         }
     }
-    else if(mdp.md_thermostat == "anderson")
+    else if (mdp.md_thermostat == "anderson")
     {
-        if(GlobalV::MY_RANK==0)
+        if (GlobalV::MY_RANK == 0)
         {
             double deviation;
-            for(int i=0; i<ucell.nat; ++i)
-            {  
-                if(static_cast<double>(std::rand())/RAND_MAX <= 1.0 / mdp.md_nraise)
+            for (int i = 0; i < ucell.nat; ++i)
+            {
+                if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
                 {
                     deviation = sqrt(mdp.md_tlast / allmass[i]);
-                    for(int k=0; k<3; ++k)
+                    for (int k = 0; k < 3; ++k)
                     {
-                        if(ionmbl[i][k]) 
+                        if (ionmbl[i][k])
                         {
                             vel[i][k] = deviation * MD_func::gaussrand();
                         }
@@ -81,10 +88,10 @@ void Verlet::apply_thermostat()
             }
         }
 #ifdef __MPI
-        MPI_Bcast(vel, ucell.nat*3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
     }
-    else if(mdp.md_thermostat == "berendsen")
+    else if (mdp.md_thermostat == "berendsen")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
         thermalize(mdp.md_nraise, t_current, t_target);
@@ -98,16 +105,16 @@ void Verlet::apply_thermostat()
 void Verlet::thermalize(const int &nraise, const double &current_temp, const double &target_temp)
 {
     double fac = 0;
-    if(nraise > 0 && current_temp > 0 && target_temp >0)
+    if (nraise > 0 && current_temp > 0 && target_temp > 0)
     {
         fac = sqrt(1 + (target_temp / current_temp - 1) / nraise);
     }
-    else if(nraise == 0 && current_temp > 0 && target_temp >0)
+    else if (nraise == 0 && current_temp > 0 && target_temp > 0)
     {
         fac = sqrt(target_temp / current_temp);
     }
 
-    for(int i=0; i < ucell.nat; ++i)
+    for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i] *= fac;
     }

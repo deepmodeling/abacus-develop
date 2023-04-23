@@ -92,3 +92,9 @@ AddTest(
 	../../module_base/parallel_common.cpp
 	../../module_base/parallel_global.cpp
 )
+
+AddTest(
+  TARGET io_write_wfc_nao
+  LIBS ${math_libs} base device
+  SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp
+)

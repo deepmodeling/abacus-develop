@@ -16,7 +16,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
 		}
 		else
 		{
-			rl.init_relax(GlobalC::ucell.nat, Lattice_Change_Basic::out_stru);
+			rl.init_relax(GlobalC::ucell.nat);
 		}
 	}
 
@@ -73,7 +73,23 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
 			{
 				stop = rl_old.relax_step(force, stress, istep, force_step, stress_step);    // pengfei Li 2018-05-14
 			}
-			
+
+			if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+			{
+				// print structure
+				std::stringstream ss, ss1;
+				ss << GlobalV::global_out_dir << "STRU_ION_D";
+				GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
+
+				if(Ions_Move_Basic::out_stru)
+				{	
+					ss1 << GlobalV::global_out_dir << "STRU_ION";
+					ss1 << istep << "_D";
+					GlobalC::ucell.print_stru_file(ss1.str(), 2, 0);
+
+					GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
+				}
+			}			
 		}
 		time_t fend = time(NULL);
 
