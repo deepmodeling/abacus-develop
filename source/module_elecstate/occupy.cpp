@@ -1,6 +1,6 @@
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "occupy.h"
 #include "module_base/mymath.h"
+#include "module_base/constants.h"
 #include "module_base/parallel_reduce.h"
 
 Occupy::Occupy(){}
@@ -113,7 +113,8 @@ void Occupy::iweights
     double &ef,//output: the highest occupied Kohn-Sham level.
     ModuleBase::matrix &wg,//output: weight for each k, each band.
     const int &is,//the spin index now.
-    const std::vector<int> &isk//distinguish k point belong to which spin.
+    const std::vector<int> &isk,//distinguish k point belong to which spin.
+    int iter
 )
 {
 	assert(is<2); //not include non-collinear yet!
@@ -175,7 +176,7 @@ void Occupy::iweights
 		}
 	}
 
-    if(conv == false && GlobalC::en.iter == 2)
+    if(conv == false && iter == 2)
     {
        ModuleBase::WARNING_QUIT("Occupied","not converged, change 'smearing' method.");
     }

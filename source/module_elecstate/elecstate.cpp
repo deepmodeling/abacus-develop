@@ -88,7 +88,8 @@ void ElecState::calculate_weights()
                              GlobalC::en.ef_up,
                              this->wg,
                              0,
-                             this->klist->isk);
+                             this->klist->isk,
+                             GlobalC::en.iter);
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
@@ -97,7 +98,8 @@ void ElecState::calculate_weights()
                              GlobalC::en.ef_dw,
                              this->wg,
                              1,
-                             this->klist->isk);
+                             this->klist->isk,
+                             GlobalC::en.iter);
             // ef = ( ef_up + ef_dw ) / 2.0_dp need??? mohan add 2012-04-16
         }
         else
@@ -111,7 +113,8 @@ void ElecState::calculate_weights()
                              this->ef,
                              this->wg,
                              -1,
-                             this->klist->isk);
+                             this->klist->isk,
+                             GlobalC::en.iter);
         }
     }
     else if (Occupy::use_gaussian_broadening)

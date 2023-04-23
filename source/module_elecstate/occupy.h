@@ -40,7 +40,7 @@ public:
 
     static void iweights(const int nks,const std::vector<double> &wk,const int nband,
                          const double &nelec, double **ekb, double &ef, 
-						ModuleBase::matrix &wg, const int &is, const std::vector<int> &isk);
+						ModuleBase::matrix &wg, const int &is, const std::vector<int> &isk, int iter = 0);
 
     static void gweights(const int nks,const std::vector<double> &wk,const int nband,
 						const double &nelec,const double &smearing_sigma,
