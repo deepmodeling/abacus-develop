@@ -119,7 +119,8 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     if(max_grad > force_thr_eva) force_converged = false;
 	if(GlobalV::OUT_LEVEL=="ie")
 	{
-		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
+		std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff*ModuleBase::Ry_to_eV << std::endl;
+        std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
 	}
 //=========================================
 //set gradient for cell degrees of freedom
