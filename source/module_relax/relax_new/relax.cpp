@@ -18,6 +18,8 @@ void Relax::init_relax(const int nat_in)
     brent_done = false;
     step_size = 1.0;
     srp_srp = 100000;
+    etot = 0;
+    etot_p = 0;
 
     force_thr_eva = GlobalV::FORCE_THR * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
     fac_force  = GlobalV::relax_scale_force * 0.1;
@@ -47,6 +49,8 @@ void Relax::init_relax(const int nat_in)
 bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in)
 {
     ModuleBase::TITLE("Relax","relax_step");
+
+    if(istep>0) etot_p = etot;
     etot = etot_in * ModuleBase::Ry_to_eV; //convert to eV
 
     bool relax_done = this->setup_gradient(force, stress);
@@ -119,6 +123,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     if(max_grad > force_thr_eva) force_converged = false;
 	if(GlobalV::OUT_LEVEL=="ie")
 	{
+        std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
 		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
 	}
 //=========================================
