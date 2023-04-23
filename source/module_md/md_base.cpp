@@ -1,6 +1,6 @@
-#include "mdrun.h"
+#include "md_base.h"
 
-#include "MD_func.h"
+#include "md_func.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif

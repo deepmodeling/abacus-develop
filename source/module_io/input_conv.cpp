@@ -27,7 +27,7 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_psi/kernels/device.h"
-#include "module_md/MD_func.h"
+#include "module_md/md_func.h"
 
 template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {

@@ -1,4 +1,4 @@
-#include "module_md/FIRE.h"
+#include "module_md/fire.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -8,7 +8,7 @@
 #define doublethreshold 1e-12
 
 /************************************************
- *  unit test of functions in FIRE.h
+ *  unit test of functions in fire.h
  ***********************************************/
 
 /**
