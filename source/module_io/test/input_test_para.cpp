@@ -258,6 +258,8 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
+        EXPECT_EQ(INPUT.td_htype,0);
+        EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);

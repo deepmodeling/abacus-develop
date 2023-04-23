@@ -380,6 +380,9 @@ class Input
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
 
+    int td_htype; // type of Hamiltonian to calculate propagator
+    int propagator; // method of propagator
+
     int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
 
     std::string td_ttype ; //type of time domain

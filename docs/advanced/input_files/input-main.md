@@ -282,6 +282,8 @@
 		- [td\_edm](#td_edm)
 		- [td\_print\_eij](#td_print_eij)
 		- [td\_force\_dt](#td_force_dt)
+		- [td\_htype](#td_htype)
+		- [propagator](#propagator)
 		- [td\_vext](#td_vext)
 		- [td\_vext\_dire](#td_vext_dire)
 		- [td\_stype](#td_stype)
@@ -2320,6 +2322,25 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Real
 - **Description**: Time-dependent evolution force changes time step. (fs)
 - **Default**: 0.02
+
+### td_htype
+
+- **Type**: Integer
+- **Description**:
+  type of Hamiltonian to calculate propagator (for propagator = 0 or 1).
+  - 0: H(t+dt).
+  - 1: H(t+dt/2).
+- **Default**: 0
+
+### propagator
+
+- **Type**: Integer
+- **Description**:
+  method of propagator.
+  - 0: Crank-Nicolson.
+  - 1: 4th Taylor expansions of exponential.
+  - 2: enforced time-reversal symmetry (ETRS).
+- **Default**: 0
 
 ### td_vext
 
