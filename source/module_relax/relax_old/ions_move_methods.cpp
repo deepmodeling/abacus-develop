@@ -64,22 +64,6 @@ void Ions_Move_Methods::cal_movement(const int &istep, const int &force_step, co
 	{
 		ModuleBase::WARNING("Ions_Move_Methods::init","the parameter GlobalV::RELAX_METHOD is not correct.");
 	}
-
-	// print the atom positions for convinience.
-	std::stringstream ss;
-
-	ss << GlobalV::global_out_dir << "STRU_ION";
-	
-	if(Ions_Move_Basic::out_stru)
-	{	
-		ss << istep; 
-	}
-	
-	//xiaohui modify 2015-03-15, cancel outputfile "STRU_ION"
-	//GlobalC::ucell.print_stru_file(ss.str(),1);
-	ss << "_D";
-    GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
-
 	return;
 }
 

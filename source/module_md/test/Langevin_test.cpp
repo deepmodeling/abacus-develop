@@ -1,8 +1,9 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "setcell.h"
 #include "module_md/Langevin.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
+#include "setcell.h"
 
 #define doublethreshold 1e-12
 
@@ -20,23 +21,23 @@
  *
  *   - Langevin::second_half
  *     - the second half of equation of motion, update velocities
- * 
+ *
  *   - Langevin::write_restart
  *     - write the information into files used for MD restarting
- * 
+ *
  *   - Langevin::restart
  *     - restart MD when md_restart is true
- * 
+ *
  *   - Langevin::outputMD
  *     - output MD information such as energy, temperature, and pressure
  */
 
 class Langevin_test : public testing::Test
 {
-protected:
+  protected:
     MDrun *mdrun;
     UnitCell ucell;
-    
+
     void SetUp()
     {
         Setcell::setupcell(ucell);
@@ -58,21 +59,21 @@ protected:
 TEST_F(Langevin_test, setup)
 {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(0,0), 6.0100555286436806e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(0,1), -1.4746713013791574e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(0,2), 1.5039983732220751e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(1,0), -1.4746713013791574e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(1,1), 3.4437172989317909e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(1,2), -1.251414906590483e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(2,0), 1.5039983732220751e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(2,1), -1.251414906590483e-06, doublethreshold);
-    EXPECT_NEAR(mdrun->stress(2,2), 1.6060561926126463e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(0, 2), 1.5039983732220751e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(1, 0), -1.4746713013791574e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(1, 1), 3.4437172989317909e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(1, 2), -1.251414906590483e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(2, 0), 1.5039983732220751e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(2, 1), -1.251414906590483e-06, doublethreshold);
+    EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
 TEST_F(Langevin_test, first_half)
 {
     mdrun->first_half();
-    
+
     EXPECT_NEAR(mdrun->pos[0].x, -0.00042883345359910814, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00016393608896004904, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].z, 0.00049409894499896569, doublethreshold);
@@ -104,7 +105,7 @@ TEST_F(Langevin_test, second_half)
 {
     mdrun->first_half();
     mdrun->second_half();
-    
+
     EXPECT_NEAR(mdrun->pos[0].x, -0.00066954020090275205, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 3.3862365219131354e-05, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].z, -0.00045718198868662484, doublethreshold);
@@ -117,7 +118,7 @@ TEST_F(Langevin_test, second_half)
     EXPECT_NEAR(mdrun->pos[3].x, -2.1027113600492346e-06, doublethreshold);
     EXPECT_NEAR(mdrun->pos[3].y, 0.000319689743723507, doublethreshold);
     EXPECT_NEAR(mdrun->pos[3].z, -3.0470796271690045e-05, doublethreshold);
-    
+
     EXPECT_NEAR(mdrun->vel[0].x, -8.2630969616448438e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 0.0001366029202159129, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].z, -0.00011334362366793093, doublethreshold);
@@ -140,8 +141,8 @@ TEST_F(Langevin_test, write_restart)
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr("3"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("3"));
     ifs.close();
 }
 
@@ -161,16 +162,28 @@ TEST_F(Langevin_test, outputMD)
 
     std::ifstream ifs("running.log");
     std::string output_str;
-    getline(ifs,output_str);
-    getline(ifs,output_str);
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
-    getline(ifs,output_str);
-    EXPECT_THAT(output_str,testing::HasSubstr(" ------------------------------------------------------------------------------------------------"));
+    getline(ifs, output_str);
+    getline(ifs, output_str);
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ------------------------------------------------------------------------------------------------"));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ------------------------------------------------------------------------------------------------"));
     ifs.close();
     remove("running.log");
 }

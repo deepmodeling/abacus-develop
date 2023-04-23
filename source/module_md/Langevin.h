@@ -5,8 +5,8 @@
 
 class Langevin : public MDrun
 {
-public:
-    Langevin(MD_parameters& MD_para_in, UnitCell &unit_in);
+  public:
+    Langevin(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~Langevin();
 
     void setup(ModuleESolver::ESolver *p_ensolve);
@@ -17,8 +17,7 @@ public:
     void restart();
     void post_force();
 
-    ModuleBase::Vector3<double> *total_force;  // total force = true force + Langevin fictitious_force
-
+    ModuleBase::Vector3<double> *total_force; // total force = true force + Langevin fictitious_force
 };
 
 #endif
