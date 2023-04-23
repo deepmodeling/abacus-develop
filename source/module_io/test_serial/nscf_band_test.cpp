@@ -47,12 +47,12 @@ protected:
         nband = 3;
         fermie = 0.0;
         ekb.create(nks, nband);
-	ekb(0,0) = -2.0;
-	ekb(0,1) = -1.0;
-	ekb(0,2) =  0.0;
-	ekb(1,0) =  1.0;
-	ekb(1,1) =  2.0;
-	ekb(1,2) =  3.0;
+	    ekb(0,0) = -2.0;
+	    ekb(0,1) = -1.0;
+	    ekb(0,2) =  0.0;
+	    ekb(1,0) =  1.0;
+	    ekb(1,1) =  2.0;
+	    ekb(1,2) =  3.0;
         kv = new K_Vectors;
         kv->isk.resize(nks);
         kv->isk[0] = 0;
