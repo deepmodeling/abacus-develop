@@ -50,8 +50,8 @@ bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix
 {
     ModuleBase::TITLE("Relax","relax_step");
 
-    if(istep>0) etot_p = etot;
     etot = etot_in * ModuleBase::Ry_to_eV; //convert to eV
+    if( istep == 0 ) etot_p = etot;
 
     bool relax_done = this->setup_gradient(force, stress);
     if(relax_done) return relax_done;
@@ -71,6 +71,8 @@ bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix
         this->move_cell_ions(false);
         dmovel = dmove;
     }
+
+    istep ++;
 
     return relax_done;
 }
@@ -125,6 +127,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 	{
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
 		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
+        etot_p = etot;
 	}
 //=========================================
 //set gradient for cell degrees of freedom
