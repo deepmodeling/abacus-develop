@@ -1840,7 +1840,7 @@ These variables are used to control the molecular dynamics calculations.
 - **Type**: String
 - **Description**: control the algorithm to integrate the equation of motion for md.
 
-  - fire: FIRE method.
+  - fire: a MD-based relaxation algorithm, named `fast inertial relaxation engine`, see details in [md.md](../md.md#fire).
   - nve: NVE ensemble with velocity Verlet algorithm.
   - nvt: NVT ensemble, see [md_thermostat](#md_thermostat) in detail.
   - npt: Nose-Hoover style NPT ensemble, see [md_pmode](#md_pmode) in detail.

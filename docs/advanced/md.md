@@ -4,7 +4,7 @@ Molecular dynamics (MD) is a computer simulation method for analyzing the physic
 
 By setting `calculation` to be `md`, ABACUS currently provides several different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
 
-  - fire: FIRE method
+  - fire: a MD-based relaxation algorithm, see [details](#fire) here
   - nve: NVE ensemble with velocity Verlet algorithm
   - nvt: NVT ensemble
   - npt: Nose-Hoover style NPT ensemble
