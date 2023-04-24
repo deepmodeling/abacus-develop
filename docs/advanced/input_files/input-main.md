@@ -963,6 +963,7 @@ These variables are used to control the geometry relaxation.
   - cg: using the conjugate gradient (cg) algorithm (see relax_new for the new cg method).
   - bfgs: using the BFGS algorithm.
   - sd: using the steepest descent (sd) algorithm.
+  - fire: MD-based relaxation algorithm, named `fast inertial relaxation engine`, this algorithm should be employed by setting [md_type](#md_type) to `fire`.
 - **Default**: cg
 
 ### relax_new
