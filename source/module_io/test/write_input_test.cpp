@@ -19,6 +19,7 @@ class write_input : public testing::Test
 
 TEST_F(write_input,print)
 {
+    INPUT.Default();
     INPUT.Read("./support/witestfile");
     std::string output_file = "write_input_test.log";
     INPUT.Print(output_file);
