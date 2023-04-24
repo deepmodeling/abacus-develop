@@ -5,8 +5,8 @@
 
 class MSST : public MDrun
 {
-public:
-    MSST(MD_parameters& MD_para_in, UnitCell &unit_in);
+  public:
+    MSST(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~MSST();
 
     void setup(ModuleESolver::ESolver *p_ensolve);
@@ -22,15 +22,14 @@ public:
     void propagate_voldot();
 
     ModuleBase::Vector3<double> *old_v;
-    ModuleBase::Vector3<double> dilation;      // dilation scale
-    ModuleBase::Vector3<double> omega;         // time derivative of volume
-    double p0;               // initial pressure
-    double v0;               // initial volume
-    double e0;               // initial energy
-    double totmass;          // total mass of the cell
-    double lag_pos;          // Lagrangian location of cell
-    double vsum;             // sum over v^2
-
+    ModuleBase::Vector3<double> dilation; // dilation scale
+    ModuleBase::Vector3<double> omega;    // time derivative of volume
+    double p0;                            // initial pressure
+    double v0;                            // initial volume
+    double e0;                            // initial energy
+    double totmass;                       // total mass of the cell
+    double lag_pos;                       // Lagrangian location of cell
+    double vsum;                          // sum over v^2
 };
 
 #endif

@@ -119,7 +119,7 @@ deepks_model                    #file dir of traced pytorch model: 'model.ptg
 #Parameters (5.LCAO)
 basis_type                     lcao #PW; LCAO in pw; LCAO
 nb2d                           0 #2d distribution of atoms
-gamma_only                     T #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
+gamma_only                     F #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
 search_radius                  -1 #input search radius (Bohr)
 search_pbc                     1 #input periodic boundary condition
 lcao_ecut                      20 #energy cutoff for LCAO
@@ -128,7 +128,8 @@ lcao_dr                        0.01 #delta r for 1D integration in LCAO
 lcao_rmax                      30 #max R for 1D two-center integration table
 out_mat_hs                     0 #output H and S matrix
 out_mat_hs2                    0 #output H(R) and S(R) matrix
-out_interval               1 #interval for printing H(R) and S(R) matrix during MD
+out_interval                   1 #interval for printing H(R) and S(R) matrix during MD
+out_app_flag                   0 #interval for printing H(R) and S(R) matrix during MD
 out_element_info               0 #output (projected) wavefunction of each element
 out_mat_r                      0 #output r(R) matrix
 out_wfc_lcao                   0 #ouput LCAO wave functions
@@ -266,7 +267,6 @@ exx_schwarz_threshold          0 #
 exx_cauchy_threshold           0 #
 exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
-exx_cauchy_grad_threshold      0 #
 exx_ccp_threshold              1e-08 #
 exx_ccp_rmesh_times            default #
 exx_distribute_type            htime #htime or kmeans1 or kmeans2

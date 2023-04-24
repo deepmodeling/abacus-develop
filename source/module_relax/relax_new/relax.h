@@ -78,7 +78,7 @@ class Relax
     double gr_sr; //cross product between search direction and gradient
     double e1ord1, e1ord2, e2ord, e2ord2;
     double dmove,dmovel,dmoveh;
-    double etot;
+    double etot, etot_p;
     double force_thr_eva;
 
     bool brent_done; //if brent line search is finished
