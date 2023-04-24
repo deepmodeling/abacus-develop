@@ -305,6 +305,11 @@ void Input_Conv::Convert(void)
         {
             ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for soc yet!");
         }
+
+        if(INPUT.gamma_only_local)
+        {
+            ModuleBase::WARNING_QUIT("input_conv", "soc does not support gamma only calculation");
+        }
     }
     else
     {
