@@ -286,8 +286,8 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_threshold           0 #threshold to screen exx using Cauchy-Schwartz inequality"));
         EXPECT_THAT(output,testing::HasSubstr("exx_c_grad_threshold           0 #threshold to screen nabla C matrix in exx"));
         EXPECT_THAT(output,testing::HasSubstr("exx_v_grad_threshold           0 #threshold to screen nabla V matrix in exx"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_force_threshold     0 #threshold to screen exx force using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_stress_threshold    0 #threshold to screen exx stress using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_force_threshold     1e-07 #threshold to screen exx force using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_stress_threshold    1e-07 #threshold to screen exx stress using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_lmax               0 #the maximum l of the spherical Bessel functions for opt ABFs"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_ecut               0 #the cut-off of plane wave expansion for opt ABFs"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_tolerence          0 #the threshold when solving for the zeros of spherical Bessel functions for opt ABFs"));
@@ -337,7 +337,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr(""));    
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (19.dft+u)"));
         EXPECT_THAT(output,testing::HasSubstr("dft_plus_u                     0 #true:DFT+U correction; false: standard DFT calcullation(default)"));
-        EXPECT_THAT(output,testing::HasSubstr("yukawa_lambda                  0 #default:0.0"));
+        EXPECT_THAT(output,testing::HasSubstr("yukawa_lambda                  -1 #default:0.0"));
         EXPECT_THAT(output,testing::HasSubstr("yukawa_potential               0 #default: false"));
         EXPECT_THAT(output,testing::HasSubstr("omc                            0 #the mode of occupation matrix control"));    
         EXPECT_THAT(output,testing::HasSubstr("hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)"));
