@@ -13,6 +13,7 @@
 #include "src_ri/exx_abfs-util.h"
 #include "src_ri/exx_abfs-io.h"
 #include "src_ri/conv_coulomb_pot_k.h"
+#include "src_ri/conv_coulomb_pot_k-template.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "src_ri/serialization_cereal.h"

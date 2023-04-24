@@ -36,7 +36,6 @@ if (ENABLE_LIBRI)
         exx_abfs-screen-schwarz.cpp
         exx_abfs-util.cpp
         exx_abfs.cpp
-        exx_lcao.cpp
         exx_opt_orb-print.cpp
         exx_opt_orb.cpp
     )
