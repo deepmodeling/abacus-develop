@@ -18,9 +18,9 @@ add_subdirectory(kernels)
 target_link_libraries(container kernels)
 
 if(ENABLE_COVERAGE)
-  add_coverage(container)
+  add_coverage(module_container)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
+  add_subdirectory(tests)
 endif()

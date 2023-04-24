@@ -50,7 +50,7 @@ add_library(
 )
 
 if(ENABLE_CONTAINER)
-  add_subdirectory(container)
+  add_subdirectory(module_container)
 endif()
 
 if(ENABLE_COVERAGE)
