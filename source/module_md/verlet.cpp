@@ -1,7 +1,7 @@
 #include "verlet.h"
 
-#include "../module_base/timer.h"
-#include "MD_func.h"
+#include "md_func.h"
+#include "module_base/timer.h"
 
 Verlet::Verlet(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {

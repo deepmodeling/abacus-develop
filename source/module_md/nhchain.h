@@ -1,7 +1,7 @@
 #ifndef NOSE_HOOVER_H
 #define NOSE_HOOVER_H
 
-#include "mdrun.h"
+#include "md_base.h"
 
 class Nose_Hoover : public MDrun
 {

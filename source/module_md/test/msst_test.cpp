@@ -1,4 +1,4 @@
-#include "module_md/MSST.h"
+#include "module_md/msst.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -8,7 +8,7 @@
 #define doublethreshold 1e-12
 
 /************************************************
- *  unit test of functions in MSST.h
+ *  unit test of functions in msst.h
  ***********************************************/
 
 /**

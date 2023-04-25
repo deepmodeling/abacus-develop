@@ -1,7 +1,7 @@
 #ifndef LANGEVIN_H
 #define LANGEVIN_H
 
-#include "mdrun.h"
+#include "md_base.h"
 
 class Langevin : public MDrun
 {

@@ -1,12 +1,12 @@
-#include "mdrun.h"
+#include "md_base.h"
 
-#include "MD_func.h"
+#include "md_func.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "../module_base/timer.h"
-#include "../module_io/print_info.h"
+#include "module_base/timer.h"
 #include "module_esolver/esolver.h"
+#include "module_io/print_info.h"
 
 MDrun::MDrun(MD_parameters &MD_para_in, UnitCell &unit_in) : mdp(MD_para_in), ucell(unit_in)
 {

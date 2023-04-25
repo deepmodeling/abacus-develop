@@ -2,7 +2,7 @@
 #define INPUT_H
 
 #include "module_base/vector3.h"
-#include "module_md/MD_parameters.h"
+#include "module_md/md_para.h"
 
 #include <fstream>
 #include <string>

@@ -1,4 +1,4 @@
-#include "MD_func.h"
+#include "md_func.h"
 
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"

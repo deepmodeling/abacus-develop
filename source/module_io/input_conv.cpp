@@ -27,7 +27,7 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_psi/kernels/device.h"
-#include "module_md/MD_func.h"
+#include "module_md/md_func.h"
 
 template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
@@ -304,6 +304,11 @@ void Input_Conv::Convert(void)
         if (INPUT.cal_force || INPUT.cal_stress)
         {
             ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for soc yet!");
+        }
+
+        if(INPUT.gamma_only_local)
+        {
+            ModuleBase::WARNING_QUIT("input_conv", "soc does not support gamma only calculation");
         }
     }
     else

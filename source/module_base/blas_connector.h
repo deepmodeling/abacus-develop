@@ -24,8 +24,8 @@ extern "C"
 
 	//reason for passing results as argument instead of returning it:
 	//see https://www.numbercrunch.de/blog/2014/07/lost-in-translation/
-	void zdotc_(std::complex<double> *result, const int *n, const std::complex<double> *zx,
-		const int *incx, const std::complex<double> *zy, const int *incy);
+	// void zdotc_(std::complex<double> *result, const int *n, const std::complex<double> *zx,
+	// 	const int *incx, const std::complex<double> *zy, const int *incy);
 	// Peize Lin add ?dot 2017-10-27, to compute d=x*y
 	float sdot_(const int *N, const float *X, const int *incX, const float *Y, const int *incY);
 	double ddot_(const int *N, const double *X, const int *incX, const double *Y, const int *incY);

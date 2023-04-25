@@ -1,7 +1,7 @@
 #ifndef VERLET_H
 #define VERLET_H
 
-#include "mdrun.h"
+#include "md_base.h"
 
 class Verlet : public MDrun
 {
