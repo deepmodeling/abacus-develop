@@ -17,7 +17,7 @@
 #include "../src_ri/test_code/element_basis_index-test.h"
 #include "../src_ri/test_code/test_function.h"
 
-void Exx_Opt_Orb::generate_matrix() const
+void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 {
 // std::ofstream ofs_mpi(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 
@@ -209,7 +209,7 @@ void Exx_Opt_Orb::generate_matrix() const
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)},
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})}};
-							print_matrix(
+							print_matrix(kv,
 								"matrix",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
@@ -219,7 +219,7 @@ void Exx_Opt_Orb::generate_matrix() const
 						}
 						else
 						{
-							print_matrix(
+							print_matrix(kv,
 								"matrix",
 								ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I),
 								{{ms_jys_jys.at(T).at(I).at(T).at(I)}},
@@ -275,7 +275,7 @@ void Exx_Opt_Orb::generate_matrix() const
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) }};
-							print_matrix(
+							print_matrix(kv,
 								"matrix",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
@@ -285,7 +285,7 @@ void Exx_Opt_Orb::generate_matrix() const
 						}
 						else
 						{
-							print_matrix(
+							print_matrix(kv,
 								"matrix",
 								ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB),
 								{{ms_jys_jys.at(TA).at(IA).at(TA).at(IA), ms_jys_jys.at(TA).at(IA).at(TB).at(IB)},
