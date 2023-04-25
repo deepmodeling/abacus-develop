@@ -29,11 +29,12 @@ T Conv_Coulomb_Pot_K::cal_orbs_ccp(
 	const T & orbs,
 	const Ccp_Type &ccp_type,
 	const std::map<std::string,double> &parameter,
-	const double rmesh_times)
+	const double rmesh_times, 
+    const int& nks)
 {
 	T orbs_ccp(orbs.size());
 	for( size_t i=0; i!=orbs.size(); ++i )
-		orbs_ccp[i] = cal_orbs_ccp( orbs[i], ccp_type, parameter, rmesh_times );
+		orbs_ccp[i] = cal_orbs_ccp(orbs[i], ccp_type, parameter, rmesh_times, nks );
 	return orbs_ccp;
 }
 
@@ -42,7 +43,8 @@ Numerical_Orbital_Lm Conv_Coulomb_Pot_K::cal_orbs_ccp<Numerical_Orbital_Lm>(
 	const Numerical_Orbital_Lm & orbs,
 	const Ccp_Type &ccp_type,
 	const std::map<std::string,double> &parameter,
-	const double rmesh_times);
+    const double rmesh_times,
+    const int& nks);
 
 	
 	
