@@ -8,7 +8,7 @@
 #include "esolver_of.h"
 #include "esolver_lj.h"
 #include "esolver_dp.h"
-#include "module_md/MD_parameters.h"
+#include "module_md/md_para.h"
 
 namespace ModuleESolver
 {

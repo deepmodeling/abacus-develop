@@ -1,7 +1,7 @@
 #ifndef FIRE_H
 #define FIRE_H
 
-#include "mdrun.h"
+#include "md_base.h"
 
 class FIRE : public MDrun
 {

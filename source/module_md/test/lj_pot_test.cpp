@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
-#include "module_md/MD_func.h"
+#include "module_md/md_func.h"
 #include "setcell.h"
 
 #define doublethreshold 1e-12

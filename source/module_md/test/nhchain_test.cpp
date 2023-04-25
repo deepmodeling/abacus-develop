@@ -1,13 +1,14 @@
+#include "module_md/nhchain.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
-#include "module_md/Nose_Hoover.h"
 #include "setcell.h"
 
 #define doublethreshold 1e-12
 
 /************************************************
- *  unit test of functions in Nose_Hoover.h
+ *  unit test of functions in nhchain.h
  ***********************************************/
 
 /**

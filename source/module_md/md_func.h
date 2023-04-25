@@ -1,7 +1,7 @@
 #ifndef MD_FUNC_H
 #define MD_FUNC_H
 
-#include "MD_parameters.h"
+#include "md_para.h"
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_esolver/esolver.h"

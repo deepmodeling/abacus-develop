@@ -246,14 +246,14 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       elpa_new_complex.o\
       utils.o\
 
-OBJS_MD=MD_func.o\
+OBJS_MD=fire.o\
+    langevin.o\
+    md_base.o\
+    md_func.o\
+    msst.o\
+    nhchain.o\
     run_md.o\
-	mdrun.o\
-	verlet.o\
-    MSST.o\
-    Nose_Hoover.o\
-    FIRE.o\
-    Langevin.o\
+    verlet.o\
 
 OBJS_NEIGHBOR=sltk_adjacent_set.o\
     sltk_atom.o\

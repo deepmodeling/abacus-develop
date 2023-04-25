@@ -1,7 +1,7 @@
 #ifndef MSST_H
 #define MSST_H
 
-#include "mdrun.h"
+#include "md_base.h"
 
 class MSST : public MDrun
 {

@@ -1,4 +1,4 @@
-#include "module_md/MD_func.h"
+#include "module_md/md_func.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -8,7 +8,7 @@
 #define doublethreshold 1e-12
 
 /************************************************
- *  unit test of functions in MD_func.h
+ *  unit test of functions in md_func.h
  ***********************************************/
 
 /**

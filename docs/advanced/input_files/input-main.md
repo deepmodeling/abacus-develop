@@ -963,6 +963,7 @@ These variables are used to control the geometry relaxation.
   - cg: using the conjugate gradient (cg) algorithm (see relax_new for the new cg method).
   - bfgs: using the BFGS algorithm.
   - sd: using the steepest descent (sd) algorithm.
+  - fire: MD-based relaxation algorithm, named `fast inertial relaxation engine`, this algorithm should be employed by setting [md_type](#md_type) to `fire`.
 - **Default**: cg
 
 ### relax_new
@@ -1840,7 +1841,7 @@ These variables are used to control the molecular dynamics calculations.
 - **Type**: String
 - **Description**: control the algorithm to integrate the equation of motion for md.
 
-  - fire: FIRE method.
+  - fire: a MD-based relaxation algorithm, named `fast inertial relaxation engine`, see details in [md.md](../md.md#fire).
   - nve: NVE ensemble with velocity Verlet algorithm.
   - nvt: NVT ensemble, see [md_thermostat](#md_thermostat) in detail.
   - npt: Nose-Hoover style NPT ensemble, see [md_pmode](#md_pmode) in detail.

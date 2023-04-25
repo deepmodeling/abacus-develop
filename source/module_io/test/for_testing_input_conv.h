@@ -23,7 +23,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_io/berryphase.h"
-#include "module_md/MD_func.h"
+#include "module_md/md_func.h"
 
 bool berryphase::berry_phase_flag=false;
 int elecstate::ElecStateLCAO::out_wfc_lcao = 0;

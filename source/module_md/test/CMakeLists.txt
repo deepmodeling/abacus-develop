@@ -2,7 +2,7 @@ remove_definitions(-D__MPI -D__LCAO )
 add_definitions(-D__NORMAL)
 
 list(APPEND depend_files 
-  ../MD_func.cpp
+  ../md_func.cpp
   ../../module_io/input.cpp
   ../../module_cell/unitcell.cpp
   ../../module_cell/atom_spec.cpp
@@ -47,23 +47,23 @@ list(APPEND depend_files
 AddTest(
   TARGET md_LJ_pot
   LIBS ${math_libs} psi device
-  SOURCES LJ_pot_test.cpp  
+  SOURCES lj_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
   LIBS ${math_libs} psi device
-  SOURCES MD_func_test.cpp  
+  SOURCES md_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
   LIBS ${math_libs} psi device
-  SOURCES FIRE_test.cpp
-  ../mdrun.cpp
-  ../FIRE.cpp
+  SOURCES fire_test.cpp
+  ../md_base.cpp
+  ../fire.cpp
   ${depend_files}
 )
 
@@ -71,7 +71,7 @@ AddTest(
   TARGET md_verlet
   LIBS ${math_libs} psi device
   SOURCES verlet_test.cpp
-  ../mdrun.cpp
+  ../md_base.cpp
   ../verlet.cpp
   ${depend_files}
 )
@@ -79,26 +79,26 @@ AddTest(
 AddTest(
   TARGET md_nhc
   LIBS ${math_libs} psi device
-  SOURCES NHC_test.cpp
-  ../mdrun.cpp
-  ../Nose_Hoover.cpp
+  SOURCES nhchain_test.cpp
+  ../md_base.cpp
+  ../nhchain.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET md_msst
   LIBS ${math_libs} psi device
-  SOURCES MSST_test.cpp
-  ../mdrun.cpp
-  ../MSST.cpp
+  SOURCES msst_test.cpp
+  ../md_base.cpp
+  ../msst.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET md_lgv
   LIBS ${math_libs} psi device
-  SOURCES Langevin_test.cpp
-  ../mdrun.cpp
-  ../Langevin.cpp
+  SOURCES langevin_test.cpp
+  ../md_base.cpp
+  ../langevin.cpp
   ${depend_files}
 )

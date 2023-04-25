@@ -1,6 +1,6 @@
-#include "Langevin.h"
+#include "langevin.h"
 
-#include "MD_func.h"
+#include "md_func.h"
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 

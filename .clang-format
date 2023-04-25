@@ -42,8 +42,6 @@ IncludeIsMainSourceRegex: ''
 IndentWidth: '4'
 IndentWrappedFunctionNames: true
 PointerAlignment: Right
-# About Pointer
-PointerAlignment: Left
 
 PackConstructorInitializers: NextLine
 

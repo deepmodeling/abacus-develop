@@ -1,9 +1,9 @@
 #ifndef MDRUN_H
 #define MDRUN_H
 
-#include "../module_base/matrix.h"
-#include "../module_cell/unitcell.h"
-#include "MD_parameters.h"
+#include "md_para.h"
+#include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 #include "module_esolver/esolver.h"
 
 class MDrun

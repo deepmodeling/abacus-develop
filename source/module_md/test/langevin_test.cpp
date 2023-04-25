@@ -1,4 +1,4 @@
-#include "module_md/Langevin.h"
+#include "module_md/langevin.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -8,7 +8,7 @@
 #define doublethreshold 1e-12
 
 /************************************************
- *  unit test of functions in Langevin.h
+ *  unit test of functions in langevin.h
  ***********************************************/
 
 /**
