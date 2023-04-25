@@ -17,8 +17,6 @@ namespace Lattice_Change_Basic
 
 	extern double lattice_change_ini; // initial value of trust radius,
 
-	extern int out_stru; // output the structure or not,
-
 	//----------------------------------------------------------------------------
 	// setup the gradient, all the same for any geometry optimization methods.
 	//----------------------------------------------------------------------------

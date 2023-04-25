@@ -71,7 +71,7 @@ class Test_SETGRAD : public testing::Test
             GlobalC::ucell.lc[1] = 1;
             GlobalC::ucell.lc[2] = 1;
 
-            rl.init_relax(nat,0);
+            rl.init_relax(nat);
             rl.relax_step(force_in,stress_in,0.0);
 
             for(int i=0;i<3;i++)
@@ -85,14 +85,14 @@ class Test_SETGRAD : public testing::Test
             //reset lattice vector
             GlobalC::ucell.latvec.Identity();
             INPUT.fixed_axes = "shape";
-            rl.init_relax(nat,0);
+            rl.init_relax(nat);
             rl.relax_step(force_in,stress_in,0.0);
             push_result();
 
             //reset lattice vector
             GlobalC::ucell.latvec.Identity();
             INPUT.fixed_axes = "volume";
-            rl.init_relax(nat,0);
+            rl.init_relax(nat);
             rl.relax_step(force_in,stress_in,0.0);
             push_result();
 
@@ -103,7 +103,7 @@ class Test_SETGRAD : public testing::Test
             GlobalC::ucell.lc[0] = 0;
             GlobalC::ucell.lc[1] = 0;
             GlobalC::ucell.lc[2] = 0;
-            rl.init_relax(nat,0);
+            rl.init_relax(nat);
             rl.relax_step(force_in,stress_in,0.0);
             push_result();
         }
@@ -164,7 +164,7 @@ class Test_RELAX : public testing::Test
             force_in.create(nat,3);
             stress_in.create(3,3);
 
-            rl.init_relax(nat,0);
+            rl.init_relax(nat);
 
             for(int istep=0;istep<nstep;istep++)
             {

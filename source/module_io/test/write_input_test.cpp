@@ -19,6 +19,7 @@ class write_input : public testing::Test
 
 TEST_F(write_input,print)
 {
+    INPUT.Default();
     INPUT.Read("./support/witestfile");
     std::string output_file = "write_input_test.log";
     INPUT.Print(output_file);
@@ -148,7 +149,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (5.LCAO)"));
         EXPECT_THAT(output,testing::HasSubstr("basis_type                     lcao #PW; LCAO in pw; LCAO"));
         EXPECT_THAT(output,testing::HasSubstr("nb2d                           0 #2d distribution of atoms"));
-        EXPECT_THAT(output,testing::HasSubstr("gamma_only                     1 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used"));
+        EXPECT_THAT(output,testing::HasSubstr("gamma_only                     0 #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used"));
         EXPECT_THAT(output,testing::HasSubstr("search_radius                  -1 #input search radius (Bohr)"));
         EXPECT_THAT(output,testing::HasSubstr("search_pbc                     1 #input periodic boundary condition"));
         EXPECT_THAT(output,testing::HasSubstr("lcao_ecut                      20 #energy cutoff for LCAO"));
@@ -158,7 +159,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
-        EXPECT_THAT(output,testing::HasSubstr("out_interval               1 #interval for printing H(R) and S(R) matrix during MD"));
+        EXPECT_THAT(output,testing::HasSubstr("out_interval                   1 #interval for printing H(R) and S(R) matrix during MD"));
         EXPECT_THAT(output,testing::HasSubstr("out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD"));
         EXPECT_THAT(output,testing::HasSubstr("out_mat_t                      0 #output T(R) matrix"));
         EXPECT_THAT(output,testing::HasSubstr("out_element_info               0 #output (projected) wavefunction of each element"));
@@ -285,8 +286,8 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_threshold           0 #threshold to screen exx using Cauchy-Schwartz inequality"));
         EXPECT_THAT(output,testing::HasSubstr("exx_c_grad_threshold           0 #threshold to screen nabla C matrix in exx"));
         EXPECT_THAT(output,testing::HasSubstr("exx_v_grad_threshold           0 #threshold to screen nabla V matrix in exx"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_force_threshold     0 #threshold to screen exx force using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_stress_threshold    0 #threshold to screen exx stress using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_force_threshold     1e-07 #threshold to screen exx force using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_cauchy_stress_threshold    1e-07 #threshold to screen exx stress using Cauchy-Schwartz inequality"));        EXPECT_THAT(output,testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_lmax               0 #the maximum l of the spherical Bessel functions for opt ABFs"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_ecut               0 #the cut-off of plane wave expansion for opt ABFs"));
         EXPECT_THAT(output,testing::HasSubstr("exx_opt_orb_tolerence          0 #the threshold when solving for the zeros of spherical Bessel functions for opt ABFs"));
@@ -336,7 +337,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr(""));    
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (19.dft+u)"));
         EXPECT_THAT(output,testing::HasSubstr("dft_plus_u                     0 #true:DFT+U correction; false: standard DFT calcullation(default)"));
-        EXPECT_THAT(output,testing::HasSubstr("yukawa_lambda                  0 #default:0.0"));
+        EXPECT_THAT(output,testing::HasSubstr("yukawa_lambda                  -1 #default:0.0"));
         EXPECT_THAT(output,testing::HasSubstr("yukawa_potential               0 #default: false"));
         EXPECT_THAT(output,testing::HasSubstr("omc                            0 #the mode of occupation matrix control"));    
         EXPECT_THAT(output,testing::HasSubstr("hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)"));

@@ -284,12 +284,3 @@
 906_OF_LibxcPBE
 920_OF_MD_LDA
 920_OF_MD_LibxcPBE
-Autotest.sh
-CASES
-check_file.cpp
-clean.sh
-CMakeLists.txt
-log
-README.md
-Single_job.sh
-tools

@@ -5,8 +5,8 @@
 
 class Verlet : public MDrun
 {
-public:
-    Verlet(MD_parameters& MD_para_in, UnitCell &unit_in);
+  public:
+    Verlet(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~Verlet();
 
     void setup(ModuleESolver::ESolver *p_ensolve);
@@ -17,7 +17,6 @@ public:
     void outputMD(std::ofstream &ofs, bool cal_stress);
     void write_restart();
     void restart();
-
 };
 
 #endif

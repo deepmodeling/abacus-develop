@@ -62,7 +62,7 @@ void Local_Orbital_Charge::allocate_DM_k(void)
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 inline void cal_DM_ATOM(const Grid_Technique &gt,
                         const std::complex<double> fac,
-                        Record_adj RA,
+                        const Record_adj &RA,
                         const int ia1,
                         const int iw1_lo,
                         const int nw1,
@@ -144,7 +144,7 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
 // added by zhengdy-soc, for non-collinear case
 inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
                            const std::complex<double> fac,
-                           Record_adj RA,
+                           const Record_adj &RA,
                            const int ia1,
                            const int iw1_lo,
                            const int nw1,

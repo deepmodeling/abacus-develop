@@ -19,9 +19,10 @@ namespace Ions_Move_Basic
 	extern double relax_bfgs_rmax; // max value of trust radius,
 	extern double relax_bfgs_rmin; // min value of trust radius,
 	extern double relax_bfgs_init; // initial value of trust radius,
-        extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length
+	extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length
 
-	extern int out_stru; // output the structure or not,
+	extern int out_stru; // output the structure or not
+	//funny way to pass this parameter, but nevertheless
 
 	//----------------------------------------------------------------------------
 	// setup the gradient, all the same for any geometry optimization methods.
