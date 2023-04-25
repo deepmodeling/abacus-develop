@@ -10,7 +10,6 @@
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
 #include "src_ri/exx_abfs-construct_orbs.h"
-#include "src_ri/exx_abfs-util.h"
 #include "src_ri/exx_abfs-io.h"
 #include "src_ri/conv_coulomb_pot_k.h"
 #include "src_ri/conv_coulomb_pot_k-template.h"
