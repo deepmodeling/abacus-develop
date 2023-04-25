@@ -13,7 +13,6 @@
 #include "exx_abfs-matrix_orbs22.h"
 
 #include "../src_ri/test_code/exx_abfs-unittest.h"
-#include "../src_ri/test_code/exx_lcao-test.h"
 #include "../src_ri/test_code/element_basis_index-test.h"
 #include "../src_ri/test_code/test_function.h"
 
