@@ -27,15 +27,17 @@ void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
 		if(GlobalC::exx_info.info_ri.real_number)
-			RI_2D_Comm::add_Hexx(
-				ik,
+            RI_2D_Comm::add_Hexx(
+                GlobalC::kv,
+                ik,
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_double.Hexxs,
 				*this->LM->ParaV,
 				*this->LM);
 		else
-			RI_2D_Comm::add_Hexx(
-				ik,
+            RI_2D_Comm::add_Hexx(
+                GlobalC::kv,
+                ik,
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_complex.Hexxs,
 				*this->LM->ParaV,
@@ -52,15 +54,17 @@ void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
 		if(GlobalC::exx_info.info_ri.real_number)
-			RI_2D_Comm::add_Hexx(
-				ik,
+            RI_2D_Comm::add_Hexx(
+                GlobalC::kv,
+                ik,
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_double.Hexxs,
 				*this->LM->ParaV,
 				*this->LM);
 		else
-			RI_2D_Comm::add_Hexx(
-				ik,
+            RI_2D_Comm::add_Hexx(
+                GlobalC::kv,
+                ik,
 				GlobalC::exx_info.info_global.hybrid_alpha,
 				GlobalC::exx_lri_complex.Hexxs,
 				*this->LM->ParaV,

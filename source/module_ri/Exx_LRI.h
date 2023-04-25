@@ -37,7 +37,7 @@ private:
 public:
 	Exx_LRI( const Exx_Info::Exx_Info_RI &info_in ) :info(info_in){}
 
-	void init(const MPI_Comm &mpi_comm_in);
+	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
 	void cal_exx_ions();
 	void cal_exx_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv);
 	void cal_exx_force();
@@ -53,7 +53,8 @@ public:
 
 private:
 	const Exx_Info::Exx_Info_RI &info;
-	MPI_Comm mpi_comm;
+    MPI_Comm mpi_comm;
+    const K_Vectors *p_kv;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;

@@ -139,9 +139,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD);
+                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD);
+                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, GlobalC::kv);
         }
     }
 #endif

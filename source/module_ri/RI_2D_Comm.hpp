@@ -19,20 +19,20 @@
 #include <stdexcept>
 
 template<typename Tdata, typename Tmatrix>
-auto RI_2D_Comm::split_m2D_ktoR(const std::vector<Tmatrix> &mks_2D, const Parallel_Orbitals &pv)
+auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<Tmatrix> &mks_2D, const Parallel_Orbitals &pv)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
 	ModuleBase::timer::tick("RI_2D_Comm", "split_m2D_ktoR");
 
-	const TC period = RI_Util::get_Born_vonKarmen_period();
+	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
 	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
 	const double SPIN_multiple = std::map<int,double>{{1,0.5}, {2,1}, {4,1}}.at(GlobalV::NSPIN);							// why?
 
 	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> mRs_a2D(GlobalV::NSPIN);
 	for(int is_k=0; is_k<nspin_k.at(GlobalV::NSPIN); ++is_k)
 	{
-		const std::vector<int> ik_list = RI_2D_Comm::get_ik_list(is_k);
+		const std::vector<int> ik_list = RI_2D_Comm::get_ik_list(kv, is_k);
 		for(const TC &cell : RI_Util::get_Born_von_Karmen_cells(period))
 		{
 			RI::Tensor<Tdata> mR_2D;
@@ -42,7 +42,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const std::vector<Tmatrix> &mks_2D, const Parall
 				RI::Tensor<Tdata_m> mk_2D = RI_Util::Matrix_to_Tensor<Tdata_m>(mks_2D[ik]);
 				const Tdata_m frac = SPIN_multiple
 					* RI::Global_Func::convert<Tdata_m>( std::exp(
-						- ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell)*GlobalC::ucell.latvec))));
+						- ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell)*GlobalC::ucell.latvec))));
 				if(mR_2D.empty())
 					mR_2D = RI::Global_Func::convert<Tdata>(mk_2D * frac);
 				else
@@ -84,7 +84,8 @@ auto RI_2D_Comm::split_m2D_ktoR(const std::vector<Tmatrix> &mks_2D, const Parall
 
 template<typename Tdata>
 void RI_2D_Comm::add_Hexx(
-	const int ik,
+    const K_Vectors &kv,
+    const int ik,
 	const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
 	const Parallel_Orbitals &pv,
@@ -93,7 +94,7 @@ void RI_2D_Comm::add_Hexx(
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
 
-	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{GlobalC::kv.isk[ik]}}, {4,{0,1,2,3}}};
+	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))
 	{
 		int is0_b, is1_b;
@@ -106,7 +107,7 @@ void RI_2D_Comm::add_Hexx(
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
 				const std::complex<double> frac = alpha
-					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)) );
+					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)) );
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
 				{

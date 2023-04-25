@@ -66,7 +66,7 @@ void RPA_LRI<Tdata>::cal_postSCF_exx(
                 const Local_Orbital_Charge& loc,
                 const Parallel_Orbitals& pv)
 {
-    exx_lri_rpa.init(mpi_comm_in);
+    exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
     exx_lri_rpa.cal_exx_elec(loc, pv);
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;

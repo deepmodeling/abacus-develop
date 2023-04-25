@@ -26,7 +26,7 @@
 #include <string>
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
+void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 {
 	ModuleBase::TITLE("Exx_LRI","init");
 	ModuleBase::timer::tick("Exx_LRI", "init");
@@ -48,7 +48,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 //	}
 
 
-	this->mpi_comm = mpi_comm_in;
+    this->mpi_comm = mpi_comm_in;
+    this->p_kv = &kv_in;
 
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( GlobalC::ORB, this->info.kmesh_times );
 
@@ -112,7 +113,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
-	const std::array<Tcell,Ndim> period = {GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]};
+	const std::array<Tcell,Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
@@ -170,8 +171,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 
 	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> Ds =
 		GlobalV::GAMMA_ONLY_LOCAL
-		? RI_2D_Comm::split_m2D_ktoR<Tdata>(loc.dm_gamma, pv)
-		: RI_2D_Comm::split_m2D_ktoR<Tdata>(loc.dm_k, pv);
+		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, loc.dm_gamma, pv)
+		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, loc.dm_k, pv);
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
