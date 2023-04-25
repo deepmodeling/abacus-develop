@@ -39,7 +39,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalC::ucell.lc[0],1);
 	EXPECT_EQ(GlobalC::ucell.lc[1],1);
 	EXPECT_EQ(GlobalC::ucell.lc[2],1);
-	EXPECT_EQ(GlobalV::KSPACING,0.0);
+	EXPECT_EQ(GlobalV::KSPACING[0],0.0);
+	EXPECT_EQ(GlobalV::KSPACING[1],0.0);
+	EXPECT_EQ(GlobalV::KSPACING[2],0.0);
 	EXPECT_DOUBLE_EQ(GlobalV::MIN_DIST_COEF,0.2);
 	EXPECT_EQ(GlobalV::NBANDS,8);
 	EXPECT_EQ(GlobalC::wf.pw_seed,1);

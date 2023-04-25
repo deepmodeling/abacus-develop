@@ -158,7 +158,10 @@ void Input_Conv::Convert(void)
         GlobalV::fixed_atoms = INPUT.fixed_atoms;
     }
 
-    GlobalV::KSPACING = INPUT.kspacing;
+    for(int i=0;i<3;i++)
+    {
+        GlobalV::KSPACING[i] = INPUT.kspacing[i];
+    }
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalC::wf.pw_seed = INPUT.pw_seed;

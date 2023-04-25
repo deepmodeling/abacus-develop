@@ -166,7 +166,7 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
-    kspacing = 0.0;
+    for(int i=0;i<3;i++){kspacing[i] = 0;}
     min_dist_coef = 0.2;
     //----------------------------------------------------------
     // electrons / spin
@@ -688,7 +688,35 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("kspacing", word) == 0)
         {
-            read_value(ifs, kspacing);
+            std::string s;
+            std::getline(ifs,s);
+            std::stringstream ss(s);
+
+            //read 3 values
+            int count = 0;
+            while((ss >> kspacing[count]) && count < 3)
+            {
+                count++;
+            }
+            //if not read one or read two values, 
+            if (count == 0 || count == 2){
+                ModuleBase::WARNING_QUIT("Input", "kspacing accept 1 or 3 double values");
+            }
+
+            //if only read one value, set all to kspacing[0]
+            if (count == 1){
+                kspacing[1] = kspacing[0];
+                kspacing[2] = kspacing[0];
+            }
+            //std::cout << "count: " << count << " kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl; 
+
+            //if has kspacing equal to 0, quit.
+            for (int i=0;i<3;i++)
+            {
+                if (kspacing[i] <= 0){
+                    ModuleBase::WARNING_QUIT("Input", "kspacing should be > 0");
+                }
+            }
         }
         else if (strcmp("min_dist_coef", word) == 0)
         {
@@ -2731,7 +2759,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
-    Parallel_Common::bcast_double(kspacing);
+    for(int i=0;i<3;i++)
+    {Parallel_Common::bcast_double(kspacing[i]);}
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
@@ -3163,9 +3192,11 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
-    if (kspacing < 0.0)
-    {
-        ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
+    for (int i=0;i<3;i++){
+        if (kspacing[i] < 0.0)
+        {
+            ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
+        }
     }
 
     if (nelec < 0.0)

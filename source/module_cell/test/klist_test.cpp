@@ -266,11 +266,15 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 TEST_F(KlistTest, ReadKpointsKspacing)
 {
 	kv->nspin = 1;
-	GlobalV::KSPACING = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[1] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[2] = 0.052918; // 0.52918/Bohr = 1/A
 	std::string k_file = "./support/KPT3";
 	kv->read_kpoints(k_file);
 	EXPECT_EQ(kv->nkstot,343);
-	GlobalV::KSPACING=0.0;
+	GlobalV::KSPACING[0]=0.0;
+	GlobalV::KSPACING[1]=0.0;
+	GlobalV::KSPACING[2]=0.0;
 }
 
 TEST_F(KlistTest, ReadKpointsGamma)

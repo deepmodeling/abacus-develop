@@ -59,7 +59,7 @@ class Input
 
     bool berry_phase; // berry phase calculation
     int gdir; // berry phase calculation
-    double kspacing;
+    double kspacing[3];
     double min_dist_coef;
     //==========================================================
     // Wannier functions
