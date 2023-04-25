@@ -17,16 +17,6 @@ if (ENABLE_LIBRI)
         exx_abfs-matrix_orbs11.cpp
         exx_abfs-matrix_orbs21.cpp
         exx_abfs-matrix_orbs22.cpp
-        # exx_abfs-parallel-communicate-allreduce.cpp
-        # exx_abfs-parallel-communicate-dm-allreduce.cpp
-        # exx_abfs-parallel-communicate-dm.cpp
-        # exx_abfs-parallel-communicate-dm2.cpp
-        exx_abfs-parallel-communicate-dm3-allreduce.cpp
-        exx_abfs-parallel-communicate-function.cpp
-        # exx_abfs-parallel-communicate-hexx-allreduce.cpp
-        exx_abfs-parallel-communicate-hexx-allreduce2.cpp
-        exx_abfs-parallel-communicate-hexx.cpp
-        exx_abfs-parallel-distribute-kmeans.cpp
         exx_abfs-pca.cpp
         exx_abfs-screen-cauchy.cpp
         exx_abfs-util.cpp
