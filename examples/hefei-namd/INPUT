@@ -22,7 +22,7 @@ INPUT_PARAMETERS
  mixing_type     pulay
  mixing_beta     0.7
 
- md_type          0
+ md_type          nve
  md_restart         0
  md_tfirst        10
  init_vel         1
@@ -33,3 +33,5 @@ INPUT_PARAMETERS
 
  out_wfc_lcao     1
  out_mat_hs           1
+ cal_syns	1
+ dmax		0.01

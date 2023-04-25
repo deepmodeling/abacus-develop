@@ -511,19 +511,22 @@ void Force_Stress_LCAO::getForceStress(
 		}
 
 #ifdef __DEEPKS
+		if (GlobalV::deepks_scf)
+		{
+			for (int i=0; i<3; i++)
+			{
+				for (int j=0; j<3; j++)
+				{
+					scs(i,j) += svnl_dalpha(i,j);
+				}
+			}
+		}
 		if (GlobalV::deepks_out_labels) //not parallelized yet
         {
 			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_base;
 			// wenfei add 2021/11/2
 			if (GlobalV::deepks_scf)
 			{
-				for (int i=0; i<3; i++)
-				{
-					for (int j=0; j<3; j++)
-					{
-						scs(i,j) += svnl_dalpha(i,j);
-					}
-				}
 				GlobalC::ld.save_npy_s(scs, "s_tot.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_tot, w/ model
 				GlobalC::ld.cal_gvepsl(GlobalC::ucell.nat);
 				GlobalC::ld.save_npy_gvepsl(GlobalC::ucell.nat); //  unitless, grad_vepsl

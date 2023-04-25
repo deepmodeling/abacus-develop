@@ -1,14 +1,14 @@
 add_library(
     md
     OBJECT
-    MD_func.cpp
+    fire.cpp
+    langevin.cpp
+    md_base.cpp
+    md_func.cpp
+    msst.cpp
+    nhchain.cpp
     run_md.cpp
-	mdrun.cpp
-	verlet.cpp
-    MSST.cpp
-    Nose_Hoover.cpp
-    FIRE.cpp
-    Langevin.cpp
+    verlet.cpp
 )
 
 if(ENABLE_COVERAGE)

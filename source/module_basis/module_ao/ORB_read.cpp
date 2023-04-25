@@ -51,6 +51,7 @@ void LCAO_Orbitals::bcast_files(
 	// block "NUMERICAL_ORBITAL" in structure
 	// file.
 	Parallel_Common::bcast_bool(read_in_flag);
+    Parallel_Common::bcast_string(descriptor_file);
 	if(!read_in_flag)
 	{
 		return;

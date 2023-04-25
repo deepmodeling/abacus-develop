@@ -4,6 +4,7 @@
 #include <string>
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_base/abfs-vector3_order.h"
+#include "single_R_io.h"
 
 namespace ModuleIO
 {

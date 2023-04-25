@@ -33,11 +33,6 @@ pw_diag_thr 1.0e-7
 init_chg file
 out_dos 1
 dos_sigma 0.07
-
-#Parameters (Smearing)
-smearing_method gaussian
-smearing_sigma 0.02
-
 ```
 
 Some parameters in the INPUT file are explained:

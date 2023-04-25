@@ -44,6 +44,9 @@ ModuleBase::Vector3<double> WF_igk::get_1qvec_cartesian(const int ik, const int 
 double *WF_igk::get_qvec_cartesian(const int &ik)
 {
 	double *qmod = new double[GlobalC::kv.ngk[ik]];
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
 	{
 		// cartesian coordinate
@@ -61,6 +64,9 @@ std::complex<double> *WF_igk::get_sk(const int ik, const int it, const int ia, M
 	const std::complex<double> kphase = std::complex<double>(cos(arg), -sin(arg));
 	std::complex<double> *sk = new std::complex<double>[GlobalC::kv.ngk[ik]];
 	const int nx = wfc_basis->nx, ny = wfc_basis->ny, nz = wfc_basis->nz;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for(int igl = 0; igl < GlobalC::kv.ngk[ik]; ++igl)
 	{
 		const int isz = wfc_basis->getigl2isz(ik,igl);
@@ -104,13 +110,17 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
          * eigts3 = GlobalC::sf.get_eigts3_data<FPTYPE>();
     for (int it = 0; it < GlobalC::ucell.ntype; it++) {
         h_atom_na[it] = GlobalC::ucell.atoms[it].na;
-        for (int ia = 0; ia < h_atom_na[it]; ia++) {
-            auto * tau = reinterpret_cast<double *>(GlobalC::ucell.atoms[it].tau);
-            h_atom_tau[iat * 3 + 0] = static_cast<FPTYPE>(tau[ia * 3 + 0]);
-            h_atom_tau[iat * 3 + 1] = static_cast<FPTYPE>(tau[ia * 3 + 1]);
-            h_atom_tau[iat * 3 + 2] = static_cast<FPTYPE>(tau[ia * 3 + 2]);
-            iat++;
-        }
+    }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int iat = 0; iat < GlobalC::ucell.nat; iat++) {
+        int it = GlobalC::ucell.iat2it[iat];
+        int ia = GlobalC::ucell.iat2ia[iat];
+        auto * tau = reinterpret_cast<double *>(GlobalC::ucell.atoms[it].tau);
+        h_atom_tau[iat * 3 + 0] = static_cast<FPTYPE>(tau[ia * 3 + 0]);
+        h_atom_tau[iat * 3 + 1] = static_cast<FPTYPE>(tau[ia * 3 + 1]);
+        h_atom_tau[iat * 3 + 2] = static_cast<FPTYPE>(tau[ia * 3 + 2]);
     }
     if (device == psi::GpuDevice) {
         resmem_int_op()(ctx, atom_na, GlobalC::ucell.ntype);

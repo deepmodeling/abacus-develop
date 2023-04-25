@@ -176,5 +176,6 @@ void Charge_Mixing::deallocate_Broyden()
 		}
 		delete[] dF;
 		delete[] dn;
+        this->initb = false;
 	}
 }

@@ -17,6 +17,9 @@ struct meta_pw_op<FPTYPE, psi::DEVICE_CPU> {
             std::complex<FPTYPE>* out,
             const bool add)
     {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int ig = 0; ig < npw; ig++) {
             FPTYPE fact = (gcar[(ik * npwx + ig) * 3 + pol] +
                            kvec_c[ik * 3 + pol]) * tpiba;

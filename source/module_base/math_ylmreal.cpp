@@ -7,6 +7,7 @@
 #include "ylm.h"
 #include "module_base/kernels/math_op.h"
 #include "module_psi/kernels/memory_op.h"
+#include "module_base/libm/libm.h"
 
 namespace ModuleBase
 {
@@ -389,6 +390,9 @@ void YlmReal::Ylm_Real
 //----------------------------------------------------------
     if (lmax == 0)
     {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int i=0;i<ng;i++)
         {
             ylm(0, i) = ModuleBase::SQRT_INVERSE_FOUR_PI;
@@ -404,6 +408,9 @@ void YlmReal::Ylm_Real
     double *cost = new double[ng];
     double *phi = new double[ng];
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int ig = 0;ig < ng;ig++)
     {
         const double gmod = g[ig].norm();
@@ -435,26 +442,29 @@ void YlmReal::Ylm_Real
 // NAME : p(Legendre Polynomials) (0 <= m <= l)
 //==========================================================
     ModuleBase::realArray p(lmax+1,lmax+1,ng);
-    int m;
-    int i;
-    double x1, x2;
     int lm = -1;
     for (int l=0; l<=lmax; l++)
     {
         const double c = sqrt((2*l+1) / ModuleBase::FOUR_PI);
         if (l == 0)
         {
-            for (i=0;i<ng;i++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int i=0;i<ng;i++)
             {
                 p(0,0,i) = 1.0;
             }
         }
         else if (l == 1)
         {
-            for (i=0;i<ng;i++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int i=0;i<ng;i++)
             {
                 p(0,1,i) = cost[i];
-                x1 = 1.0 - cost[i] * cost[i];
+                auto x1 = 1.0 - cost[i] * cost[i];
                 x1 = std::max(0.0, x1);
                 p(1,1,i) = -sqrt(x1);
             }
@@ -465,18 +475,24 @@ void YlmReal::Ylm_Real
             const int l2 = l-2;
             const int l3 = 2*l-1;
             //  recursion on l for P(:,l,m)
-            for (m=0; m<=l2; m++)  // do m = 0, l - 2//mohan modify 2007-10-13
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+            for (int m=0; m<=l2; m++)  // do m = 0, l - 2//mohan modify 2007-10-13
             {
-                for (i=0; i<ng; i++)
+                for (int i=0; i<ng; i++)
                 {
                     p(m, l, i) = (cost[i] * l3 * p(m, l1, i) -
                                   (l1 + m ) * p(m, l2, i)) / (l - m);
                 }
             } // end do
-            for (i=0;i<ng;i++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int i=0;i<ng;i++)
             {
                 p(l1, l, i) = cost[i] * l3 * p(l1, l1, i);
-                x2 = 1.0 - cost[i] * cost[i];
+                auto x2 = 1.0 - cost[i] * cost[i];
                 x2 = std::max(0.0, x2);
                 p(l, l, i) = Semi_Fact(l3) * pow(x2, static_cast<double>(l) / 2.0) ;//mohan modify 2007-10-13
                 if (l%2 == 1)
@@ -488,12 +504,15 @@ void YlmReal::Ylm_Real
 
         // Y_lm, m = 0
         ++lm;
-        for (i=0;i<ng;i++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+        for (int i=0;i<ng;i++)
         {
             ylm(lm, i) = c*p(0, l, i);
         }
 
-        for (m=1;m<=l;m++)
+        for (int m=1;m<=l;m++)
         {
             // Y_lm, m > 0
             const double same = c * sqrt
@@ -504,18 +523,19 @@ void YlmReal::Ylm_Real
                                 *ModuleBase::SQRT2;
 
             ++lm;
-            for (i=0;i<ng;i++)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int i=0;i<ng;i++)
             {
-                ylm(lm, i) = same * p(m,l,i) * cos(m * phi[i]);
+				double sinp, cosp;
+                ModuleBase::libm::sincos(m * phi[i], &sinp, &cosp);
+                ylm(lm, i) = same * p(m,l,i) * cosp;
+				ylm(lm + 1, i) = same * p(m,l,i) * sinp;
             }
 
             // Y_lm, m < 0
             ++lm;
-            for (i=0;i<ng;i++)
-            {
-                ylm(lm, i) = same * p(m,l,i) * sin(m * phi[i]);
-            }
-
 
             /*
              * mohan test bug 2009-03-03

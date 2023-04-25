@@ -13,10 +13,6 @@
  *   - Line_Search::update_brent()
  *   - Line_Search::brent()
  */
-namespace ModuleBase
-{
-	void WARNING_QUIT(const std::string &file,const std::string &description) {return;}
-}
 
 // test of all cases of third_order()
 class Test_TO : public testing::Test
@@ -191,5 +187,5 @@ TEST_F(Test_LS, line_search)
 	for(int i=0;i<xnew_arr.size();i++)
 	{
 		EXPECT_NEAR(xnew_arr[i],xnew_arr_ref[i],1e-8);
-	}	
+	}
 }
