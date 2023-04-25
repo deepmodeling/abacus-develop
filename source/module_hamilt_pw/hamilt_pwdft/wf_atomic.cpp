@@ -622,7 +622,7 @@ void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int
 #else  // !__MPI
         if(pw_seed > 0)//qianrui add 2021-8-13
         {
-            srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+            srand(unsigned(pw_seed + ik));
         }
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
