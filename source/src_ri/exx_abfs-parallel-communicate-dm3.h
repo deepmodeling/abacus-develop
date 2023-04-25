@@ -21,14 +21,10 @@
 class Exx_Abfs::Parallel::Communicate::DM3
 {
 public:
-    void cal_DM(const double threshold_D,
-        Local_Orbital_Charge &loc);
 
 	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>> DMr;
 
 private:
-	template<typename Tmatrix> std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,ModuleBase::matrix>>>>
-		K_to_R(const std::vector<Tmatrix> &DK_2D, const double threshold_D, const Parallel_Orbitals &pv) const;
 	const ModuleBase::matrix &D_phase( const ModuleBase::matrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;
 	ModuleBase::matrix D_phase( const ModuleBase::ComplexMatrix &DK, const int ik, const Abfs::Vector3_Order<int> &box2) const;
 //	std::vector<std::map<size_t,std::map<size_t,std::map<Abfs::Vector3_Order<int>,matrix>>>>

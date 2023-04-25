@@ -5,7 +5,6 @@ if (ENABLE_LIBRI)
 
   if(ENABLE_LCAO)
     list(APPEND objects
-        abfs.cpp
         conv_coulomb_pot.cpp
         conv_coulomb_pot_k.cpp
         exx_abfs-abfs_index.cpp
@@ -23,19 +22,14 @@ if (ENABLE_LIBRI)
         # exx_abfs-parallel-communicate-dm.cpp
         # exx_abfs-parallel-communicate-dm2.cpp
         exx_abfs-parallel-communicate-dm3-allreduce.cpp
-        exx_abfs-parallel-communicate-dm3.cpp
         exx_abfs-parallel-communicate-function.cpp
         # exx_abfs-parallel-communicate-hexx-allreduce.cpp
         exx_abfs-parallel-communicate-hexx-allreduce2.cpp
         exx_abfs-parallel-communicate-hexx.cpp
-        exx_abfs-parallel-distribute-htime.cpp
         exx_abfs-parallel-distribute-kmeans.cpp
-        exx_abfs-parallel-distribute-order.cpp
         exx_abfs-pca.cpp
         exx_abfs-screen-cauchy.cpp
-        exx_abfs-screen-schwarz.cpp
         exx_abfs-util.cpp
-        exx_abfs.cpp
         exx_opt_orb-print.cpp
         exx_opt_orb.cpp
     )
