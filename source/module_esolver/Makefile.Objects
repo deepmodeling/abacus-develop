@@ -398,7 +398,6 @@ OBJS_LCAO=DM_gamma.o\
 OBJS_SRC_RI=conv_coulomb_pot.o\
       conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o \
-      exx_abfs-dm.o \
       exx_abfs-inverse_matrix_double.o \
       exx_abfs-jle.o \
       exx_abfs-io.o \
@@ -406,11 +405,7 @@ OBJS_SRC_RI=conv_coulomb_pot.o\
       exx_abfs-matrix_orbs11.o \
       exx_abfs-matrix_orbs21.o \
       exx_abfs-matrix_orbs22.o \
-      exx_abfs-matrix_lcaoslcaos_lcaoslcaos.o \
       exx_abfs-pca.o \
-      exx_abfs-util.o \
-      exx_abfs-screen-schwarz.o \
-      exx_abfs-screen-cauchy.o \
       exx_opt_orb.o \
       exx_opt_orb-print.o \
       exx_lip.o\
