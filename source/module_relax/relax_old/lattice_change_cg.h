@@ -1,9 +1,8 @@
 #ifndef LATTICE_CHANGE_CG_H
 #define LATTICE_CHANGE_CG_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 class Lattice_Change_CG
 {
 
@@ -12,7 +11,7 @@ class Lattice_Change_CG
     ~Lattice_Change_CG();
 
     void allocate(void);
-    void start(const ModuleBase::matrix &stress_in, const double &etot);
+    void start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot);
 
   private:
     double *lat0;

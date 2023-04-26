@@ -1,8 +1,6 @@
 #ifndef BFGS_BASIC
 #define BFGS_BASIC
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 
 // references
@@ -24,7 +22,7 @@ class BFGS_Basic
 
   protected:
     void allocate_basic(void);
-    void new_step(void);
+    void new_step(const double& lat0);
     void reset_hessian(void);
     void save_bfgs(void);
 
@@ -46,7 +44,7 @@ class BFGS_Basic
                      // to the minimum value at the previous step
 
     // mohan add 2010-07-27
-    double check_move(const double& pos, const double& pos_p);
+    double check_move(const double& lat0, const double& pos, const double& pos_p);
 
   private:
     bool wolfe_flag;
@@ -54,7 +52,7 @@ class BFGS_Basic
 
     int bfgs_ndim;
 
-    void update_inverse_hessian(void);
+    void update_inverse_hessian(const double& lat0);
     void check_wolfe_conditions(void);
     void compute_trust_radius(void);
 };

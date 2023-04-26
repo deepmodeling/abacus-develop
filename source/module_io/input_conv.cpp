@@ -211,6 +211,7 @@ void Input_Conv::Convert(void)
     Ions_Move_Basic::relax_bfgs_rmin = INPUT.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = INPUT.relax_bfgs_init;
     Ions_Move_Basic::out_stru = INPUT.out_stru; // mohan add 2012-03-23
+    Lattice_Change_Basic::fixed_axes = INPUT.fixed_axes;
 
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
