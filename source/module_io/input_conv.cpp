@@ -10,6 +10,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/lattice_change_basic.h"
 #ifdef __EXX
 #include "src_ri/exx_abfs-jle.h"
 #endif
