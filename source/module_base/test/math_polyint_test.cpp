@@ -1,7 +1,10 @@
-#include"../math_polyint.h"
-#include"gtest/gtest.h"
-#include"../realarray.h"
-#include<math.h>
+#include "../math_polyint.h"
+
+#include <math.h>
+
+#include "../realarray.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #define doublethreshold 1e-9
 
@@ -88,6 +91,10 @@ TEST_F(bessell0,PolynomialInterpolationThreeDimension)
     EXPECT_NEAR(y3,sinc(2.005),doublethreshold);
     EXPECT_NEAR(y4,sinc(3.005),doublethreshold);
     EXPECT_NEAR(y5,sinc(3.505),doublethreshold);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT( double y6 = ModuleBase::PolyInt::Polynomial_Interpolation(table3,0,0,TableLength,interval,3.9997); ,::testing::ExitedWithCode(0), "");
+    std::string output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Not enough space allocated for radial FFT"));
 }
 
 TEST_F(bessell0,PolynomialInterpolationFourDimension)
