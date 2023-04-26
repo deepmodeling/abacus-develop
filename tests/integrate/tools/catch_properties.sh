@@ -133,14 +133,10 @@ fi
 
 #echo $out_pot2
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
-	pot1ref=refElecStaticPot
-	pot1cal=OUT.autotest/ElecStaticPot
-	pot2ref=refElecStaticPot_AVE
-	pot2cal=OUT.autotest/ElecStaticPot_AVE
+	pot1ref=refElecStaticPot.cube
+	pot1cal=OUT.autotest/ElecStaticPot.cube
 	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
-	python3 ../tools/CompareFile.py $pot2ref $pot2cal 8
-	echo "ComparePot_avg_pass $?" >>$1
 fi
 
 #echo $get_s

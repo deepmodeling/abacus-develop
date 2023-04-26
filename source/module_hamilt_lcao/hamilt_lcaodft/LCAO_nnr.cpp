@@ -316,7 +316,7 @@ int Grid_Technique::binary_search_find_R2_offset(int val, int iat) {
 }
 
 // be called in LCAO_Hamilt::calculate_Hk.
-void LCAO_Matrix::folding_fixedH(const int &ik)
+void LCAO_Matrix::folding_fixedH(const int &ik, bool cal_syns)
 {
 	ModuleBase::TITLE("LCAO_nnr","folding_fixedH");
     ModuleBase::timer::tick("LCAO_nnr", "folding_fixedH");
@@ -365,6 +365,14 @@ void LCAO_Matrix::folding_fixedH(const int &ik)
 			Atom* atom1 = &GlobalC::ucell.atoms[T1];
 			const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
 			int index = pv->nlocstart[iat];
+
+			if (cal_syns)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    tau1[k] = tau1[k] - atom1->vel[I1][k] * INPUT.mdp.md_dt / GlobalC::ucell.lat0 ;
+                }
+            }
 
 			// (2) search among all adjacent atoms.
 			for (int ad = 0; ad < adjs.adj_num+1; ++ad)

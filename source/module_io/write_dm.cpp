@@ -1,8 +1,5 @@
 #include "module_io/dm_io.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_base/parallel_reduce.h"
-#include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 
 //-------------------------------------------------
@@ -39,12 +36,17 @@
 // a 'count' integer array in the code.
 // UPDATED BY MOHAN 2014-05-18
 void ModuleIO::write_dm(
+#ifdef __MPI
+	const int* trace_lo,
+#endif
 	const int &is, 
 	const int &iter, 
 	const std::string &fn, 
 	const int &precision,
 	const int &out_dm,
-	double*** DM)
+	double*** DM,
+	const double& ef,
+	const UnitCell* ucell)
 {
     ModuleBase::TITLE("ModuleIO","write_dm");
 
@@ -52,10 +54,7 @@ void ModuleIO::write_dm(
 	{
 		return;
 	}
-	else if(iter % out_dm != 0)
-	{
-		return; 
-	}
+
 	ModuleBase::timer::tick("ModuleIO","write_dm");
 
 	time_t start, end;
@@ -68,33 +67,33 @@ void ModuleIO::write_dm(
 		ofs.open(fn.c_str());
 		if (!ofs)
 		{
-			ModuleBase::WARNING("ModuleIO::write_rho","Can't create Charge File!");
+			ModuleBase::WARNING("ModuleIO::write_dm","Can't create DENSITY MATRIX File!");
 		}
 
 		//GlobalV::ofs_running << "\n Output charge file." << std::endl;
 
-		ofs << GlobalC::ucell.latName << std::endl;//1
-		ofs << " " << GlobalC::ucell.lat0 * ModuleBase::BOHR_TO_A << std::endl;
-		ofs << " " << GlobalC::ucell.latvec.e11 << " " << GlobalC::ucell.latvec.e12 << " " << GlobalC::ucell.latvec.e13 << std::endl;
-		ofs << " " << GlobalC::ucell.latvec.e21 << " " << GlobalC::ucell.latvec.e22 << " " << GlobalC::ucell.latvec.e23 << std::endl;
-		ofs << " " << GlobalC::ucell.latvec.e31 << " " << GlobalC::ucell.latvec.e32 << " " << GlobalC::ucell.latvec.e33 << std::endl;
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		ofs << ucell->latName << std::endl;//1
+		ofs << " " << ucell->lat0 * ModuleBase::BOHR_TO_A << std::endl;
+		ofs << " " << ucell->latvec.e11 << " " << ucell->latvec.e12 << " " << ucell->latvec.e13 << std::endl;
+		ofs << " " << ucell->latvec.e21 << " " << ucell->latvec.e22 << " " << ucell->latvec.e23 << std::endl;
+		ofs << " " << ucell->latvec.e31 << " " << ucell->latvec.e32 << " " << ucell->latvec.e33 << std::endl;
+		for(int it=0; it<ucell->ntype; it++)
 		{
-			ofs << " " << GlobalC::ucell.atoms[it].label;
+			ofs << " " << ucell->atoms[it].label;
 		}
 		ofs << std::endl;
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		for(int it=0; it<ucell->ntype; it++)
 		{
-			ofs << " " << GlobalC::ucell.atoms[it].na;
+			ofs << " " << ucell->atoms[it].na;
 		}
 		ofs << std::endl;
 		ofs << "Direct" << std::endl;
 
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		for(int it=0; it<ucell->ntype; it++)
 		{
-			Atom* atom = &GlobalC::ucell.atoms[it];
+			Atom* atom = &ucell->atoms[it];
 			ofs << std::setprecision(15);
-			for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+			for(int ia=0; ia<ucell->atoms[it].na; ia++)
 			{
 				ofs << " " << atom->taud[ia].x
 					<< " " << atom->taud[ia].y
@@ -103,20 +102,7 @@ void ModuleIO::write_dm(
 		}
 
 		ofs << "\n " << GlobalV::NSPIN;
-		if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
-		{
-			ofs << "\n " << GlobalC::en.ef << " (fermi energy)";
-		}
-		else if(GlobalV::NSPIN==2)
-		{
-			if(is==0)ofs << "\n " << GlobalC::en.ef_up << " (fermi energy for spin=1)";
-			else if(is==1)ofs << "\n " << GlobalC::en.ef_dw << " (fermi energy for spin=2)";
-		}
-		else
-		{
-			ModuleBase::WARNING_QUIT("write_rho","check nspin!");
-		}
-
+		ofs << "\n " << ef << " (fermi energy)";
 
 		ofs << "\n  " << GlobalV::NLOCAL << " " << GlobalV::NLOCAL << std::endl;
 
@@ -146,12 +132,12 @@ void ModuleIO::write_dm(
     {
         // when reduce, there may be 'redundance', we need to count them.
         ModuleBase::GlobalFunc::ZEROS(count, GlobalV::NLOCAL);
-        const int mu = GlobalC::GridT.trace_lo[i];
+        const int mu = trace_lo[i];
         if (mu >= 0)
         {
             for (int j=0; j<GlobalV::NLOCAL; ++j)
             {
-                const int nu = GlobalC::GridT.trace_lo[j];
+                const int nu = trace_lo[j];
                 if (nu >= 0)
                 {
                     count[j]=1; 
@@ -166,7 +152,7 @@ void ModuleIO::write_dm(
         {
             for (int j=0; j<GlobalV::NLOCAL; j++)
             {
-                const int nu = GlobalC::GridT.trace_lo[j];
+                const int nu = trace_lo[j];
                 if (nu >=0)
                 {
                     tmp[j] = DM[is][mu][nu];
@@ -198,7 +184,7 @@ void ModuleIO::write_dm(
 	if(GlobalV::MY_RANK==0)
 	{
 		end = time(NULL);
-		ModuleBase::GlobalFunc::OUT_TIME("write_rho",start,end);
+		ModuleBase::GlobalFunc::OUT_TIME("write_dm",start,end);
 		ofs.close();
 	}
 	ModuleBase::timer::tick("ModuleIO","write_dm");

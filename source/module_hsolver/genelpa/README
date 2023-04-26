@@ -1,4 +1,10 @@
 GenELPA, v1.1.1, customized for ABACUS
 
+changelog:
+
+- 2023/3/30
+    - Add new interface for elpa 2021.11.001 and later.
+    - Remove the `#define __MPI ...` conditional inclusion codes around MPI functions. Because ELPA and genelpa are both MPI programs, it is nonsense to only wrap some MPI functions in these codes.
+
 Project: <https://github.com/pplab/GenELPA>
 

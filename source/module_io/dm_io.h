@@ -2,13 +2,36 @@
 #define DM_IO_H
 
 #include <string>
-#include "module_orbital/parallel_orbitals.h"
-#include "module_base/abfs-vector3_order.h"
+#include "module_cell/unitcell.h"
 
 namespace ModuleIO
 {
-	void read_dm(const int &is, const std::string &fn, double*** DM, double** DM_R);
-	void write_dm(const int &is, const int &iter, const std::string &fn, const int &precision, const int &out_dm, double*** DM);
+	
+void read_dm(
+#ifdef __MPI
+	const int nnrg,
+	const int* trace_lo,
+#endif
+	const int &is,
+	const std::string &fn,
+	double*** DM,
+	double** DM_R,
+	double& ef,
+	const UnitCell* ucell);
+
+void write_dm(
+#ifdef __MPI
+	const int* trace_lo,
+#endif
+	const int &is,
+	const int &iter,
+	const std::string &fn,
+	const int &precision,
+	const int &out_dm,
+	double*** DM,
+	const double& ef,
+	const UnitCell* ucell);
+
 }
 
 #endif

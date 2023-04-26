@@ -59,19 +59,32 @@ namespace LRI_CV_Tools
 
 	template<typename T, std::size_t N>
 	extern std::array<std::vector<T>,N>
-	change_order(std::vector<std::array<T,N>> &&ds_in);
+	change_order(
+		std::vector<std::array<T,N>> &&ds_in);
 	template<typename T, std::size_t N>
 	std::vector<std::array<T,N>>
-	change_order(std::array<std::vector<T>,N> &&ds_in);
+	change_order(
+		std::array<std::vector<T>,N> &&ds_in);
 	template<typename T, std::size_t N>
 	extern std::array<std::vector<std::vector<T>>,N>
-	change_order(std::vector<std::vector<std::array<T,N>>> &&ds_in);
+	change_order(
+		std::vector<std::vector<std::array<T,N>>> &&ds_in);
 	template<typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
 	extern std::array<std::map<TkeyA,std::map<TkeyB,Tvalue>>,N>
-	change_order(std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> && ds_in);
+	change_order(
+		std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> && ds_in);
 
 	template<typename Tcell>
-	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times);	
+	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times);
+
+	template<typename TA, typename Tcell, typename Tdata>
+	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>>
+	get_CVws(
+		const std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>> &CVs);
+	template<typename TA, typename Tcell, typename Tdata>
+	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>>
+	get_dCVws(
+		const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs);	
 }
 
 #include "LRI_CV_Tools.hpp"

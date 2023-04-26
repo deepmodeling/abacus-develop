@@ -269,7 +269,7 @@ TEST_F(EState,RhoPW)
     // UnitCell object.
     // this function will read STRU and pseudopotential files
     // should add more EXPECTs after calling
-    GlobalC::ucell.setup_cell(orb, GlobalV::global_pseudo_dir, GlobalV::stru_file, GlobalV::ofs_running);
+    GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
     // here GlobalC::kv and GlobalC::symm are used directly
     // the file KPT is read here
     GlobalC::kv.set(GlobalC::symm,
@@ -381,7 +381,7 @@ TEST_F(EState,RhoPW)
 					GlobalC::rhopw->ny,
 					GlobalC::rhopw->nz,
 					GlobalC::en.ef,
-					GlobalC::ucell,
+					&(GlobalC::ucell),
 					GlobalC::CHR.prenspin);
         for (int ix = 0; ix < GlobalC::rhopw->nrxx; ix++)
         //for (int ix = 0; ix < 5; ix++)

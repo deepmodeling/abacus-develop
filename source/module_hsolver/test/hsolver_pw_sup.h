@@ -1,4 +1,4 @@
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 
 namespace ModulePW
 {
@@ -8,7 +8,7 @@ PW_Basis::~PW_Basis(){};
 
 void PW_Basis::initgrids(
     const double lat0_in, //unit length (unit in bohr)
-    const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0) 
+    const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0)
     const double gridecut //unit in Ry, ecut to set up grids
 )
 {
@@ -117,8 +117,6 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
 template class DiagoCG<float, psi::DEVICE_CPU>;
 template class DiagoCG<double, psi::DEVICE_CPU>;
 
-template <typename FPTYPE, typename Device> int DiagoDavid<FPTYPE, Device>::PW_DIAG_NDIM = 4;
-
 template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::DiagoDavid(const FPTYPE* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
@@ -174,27 +172,8 @@ void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device>* phm_in,
 template class DiagoDavid<float, psi::DEVICE_CPU>;
 template class DiagoDavid<double, psi::DEVICE_CPU>;
 
-template<typename FPTYPE, typename Device>
-FPTYPE DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
-
-template<typename FPTYPE, typename Device>
-int DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = 30;
-
-template<typename FPTYPE, typename Device>
-FPTYPE DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = 1.0e-2;
-
-template<typename FPTYPE, typename Device>
-bool DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
-
-template<typename FPTYPE, typename Device>
-std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::one = std::complex<FPTYPE>(1, 0);
-
-template<typename FPTYPE, typename Device>
-std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::zero = std::complex<FPTYPE>(0, 0);
-
 template class DiagoIterAssist<float, psi::DEVICE_CPU>;
 template class DiagoIterAssist<double, psi::DEVICE_CPU>;
-
 
 }//namespace hsolver
 

@@ -4,7 +4,7 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis.h"
 #include "module_base/parallel_global.h"
 
 //==========================================================
@@ -29,28 +29,26 @@ class Charge
     // NAME : rhog_core [ngm], the core charge in reciprocal space
     //==========================================================
 
-    double **rho;
-    double **rho_save;
+    double **rho = nullptr;
+    double **rho_save = nullptr;
 
-    std::complex<double> **rhog;
-    std::complex<double> **rhog_save;
+    std::complex<double> **rhog = nullptr;
+    std::complex<double> **rhog_save = nullptr;
 
-    double **kin_r; // kinetic energy density in real space, for meta-GGA
-    double **kin_r_save; // kinetic energy density in real space, for meta-GGA
-                         // wenfei 2021-07-28
+    double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
+    double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
+                                   // wenfei 2021-07-28
 
-    double *rho_core;
-    std::complex<double> *rhog_core;
+    double *rho_core = nullptr;
+    std::complex<double> *rhog_core = nullptr;
 
-    double *start_mag_type;
-    double *start_mag_atom;
     int prenspin = 1;
 
     void init_rho();
     // mohan update 2021-02-20
     void allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in);
 
-    void atomic_rho(const int spin_number_need, double **rho_in, ModulePW::PW_Basis *rho_basis) const;
+    void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, ModulePW::PW_Basis *rho_basis) const;
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
 
@@ -86,6 +84,8 @@ class Charge
     int nspin; // number of spins
   private:
     double sum_rho(void) const;
+
+    void destroy();    // free arrays  liuyu 2023-03-12
 
     bool allocate_rho;
 

@@ -50,10 +50,10 @@ energy::~energy()
 void energy::calculate_harris()
 {
 //	ModuleBase::TITLE("energy","calculate_harris");
-	this->etot_harris = eband + deband_harris 
-	+ (etxc - etxcc) 
-	+ H_Ewald_pw::ewald_energy 
-	+ elecstate::H_Hartree_pw::hartree_energy 
+	this->etot_harris = eband + deband_harris
+	+ (etxc - etxcc)
+	+ H_Ewald_pw::ewald_energy
+	+ elecstate::H_Hartree_pw::hartree_energy
 	+ demet
 	+ exx
 	+ elecstate::Efield::etotefield
@@ -61,7 +61,7 @@ void energy::calculate_harris()
 	+ evdw;  						// Peize Lin add evdw 2021.03.09
 
 #ifdef __LCAO
-	if(GlobalV::dft_plus_u) 
+	if(GlobalV::dft_plus_u)
 	{
 		this->etot_harris += GlobalC::dftu.get_energy();  //Energy correction from DFT+U; Quxin adds on 20201029
 	}
@@ -72,7 +72,7 @@ void energy::calculate_harris()
 		this->etot_harris += GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
 	}
 #endif
-	
+
 	return;
 }
 
@@ -80,10 +80,10 @@ void energy::calculate_etot(void)
 {
 	ModuleBase::TITLE("energy","calculate_etot");
 	//std::cout << "\n demet in etot = " << demet << std::endl;
-	this->etot = eband + deband 
-	+ (etxc - etxcc) 
-	+ H_Ewald_pw::ewald_energy 
-	+ elecstate::H_Hartree_pw::hartree_energy 
+	this->etot = eband + deband
+	+ (etxc - etxcc)
+	+ H_Ewald_pw::ewald_energy
+	+ elecstate::H_Hartree_pw::hartree_energy
 	+ demet
 	+ descf
 	+ exx
@@ -113,9 +113,9 @@ void energy::calculate_etot(void)
 	// std::cout << " fermienergy= "<<ef<<std::endl;
 
 #ifdef __LCAO
-    if(GlobalV::dft_plus_u) 
+    if(GlobalV::dft_plus_u)
 	{
-		this->etot += GlobalC::dftu.get_energy();																	  
+		this->etot += GlobalC::dftu.get_energy();
 	}
 #endif
 #ifdef __DEEPKS
@@ -128,11 +128,11 @@ void energy::calculate_etot(void)
 }
 
 void energy::print_etot(
-	const bool converged, 
-	const int &iter_in, 
-	const double &scf_thr, 
-	const double &duration, 
-	const double &pw_diag_thr, 
+	const bool converged,
+	const int &iter_in,
+	const double &scf_thr,
+	const double &duration,
+	const double &pw_diag_thr,
 	const double &avg_iter,
 	bool print)
 {
@@ -140,94 +140,90 @@ void energy::print_etot(
 	this->iter = iter_in;
 
 	GlobalV::ofs_running << std::setprecision(12);
-	GlobalV::ofs_running << std::setiosflags(ios::left);
+	GlobalV::ofs_running << std::setiosflags(ios::right);
 
 	GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
-	if(GlobalV::OUT_LEVEL != "m") //xiaohui add "OUT_LEVEL", 2015-09-16
-	{
-		if(GlobalV::BASIS_TYPE=="pw")ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Error Threshold",pw_diag_thr); //xiaohui add 2013-09-02
+    if(GlobalV::BASIS_TYPE=="pw")ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Error Threshold",pw_diag_thr); //xiaohui add 2013-09-02
 
-		if (this->printe > 0 && ((iter + 1) % this->printe == 0 || converged || iter == GlobalV::SCF_NMAX))
-		{
-			GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30) << "eV" << std::endl;
-			this->print_format("E_KohnSham", etot);
-			this->print_format("E_Harris", etot_harris);
-			this->print_format("E_band", eband);
-			this->print_format("E_one_elec", eband + deband);
-			this->print_format("E_Hartree", elecstate::H_Hartree_pw::hartree_energy);
-			this->print_format("E_xc", etxc - etxcc);
-			this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
-			this->print_format("E_demet", demet); //mohan add 2011-12-02
-			this->print_format("E_descf", descf);
-			if (INPUT.vdw_method == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
-			{
-				this->print_format("E_vdwD2", evdw);
-			}
-            else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
-			{
-				this->print_format("E_vdwD3", evdw);
-			}
-			this->print_format("E_exx", exx);	
-					
-			if (GlobalV::imp_sol)
-        	{
-				esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw);
-            	esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
-				this->print_format("E_sol_el", esol_el);
-				this->print_format("E_sol_cav", esol_cav);
-			}
-            if(GlobalV::EFIELD_FLAG)
-            {
-                this->print_format("E_efield", elecstate::Efield::etotefield);
-            }
-            if(GlobalV::GATE_FLAG)
-            {
-                this->print_format("E_gatefield", elecstate::Gatefield::etotgatefield);
-            }
+    if (this->printe > 0 && ((iter + 1) % this->printe == 0 || converged || iter == GlobalV::SCF_NMAX))
+    {
+        GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30) << "eV" << std::endl;
+        this->print_format("E_KohnSham", etot);
+        this->print_format("E_Harris", etot_harris);
+        this->print_format("E_band", eband);
+        this->print_format("E_one_elec", eband + deband);
+        this->print_format("E_Hartree", elecstate::H_Hartree_pw::hartree_energy);
+        this->print_format("E_xc", etxc - etxcc);
+        this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
+        this->print_format("E_demet", demet); //mohan add 2011-12-02
+        this->print_format("E_descf", descf);
+        if (INPUT.vdw_method == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
+        {
+            this->print_format("E_vdwD2", evdw);
+        }
+        else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
+        {
+            this->print_format("E_vdwD3", evdw);
+        }
+        this->print_format("E_exx", exx);
+        if (GlobalV::imp_sol)
+        {
+            esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw);
+            esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
+            this->print_format("E_sol_el", esol_el);
+            this->print_format("E_sol_cav", esol_cav);
+        }
+        if(GlobalV::EFIELD_FLAG)
+        {
+            this->print_format("E_efield", elecstate::Efield::etotefield);
+        }
+        if(GlobalV::GATE_FLAG)
+        {
+            this->print_format("E_gatefield", elecstate::Gatefield::etotgatefield);
+        }
 
 #ifdef __DEEPKS
-			if (GlobalV::deepks_scf)	//caoyu add 2021-08-10
-			{
-				this->print_format("E_DeePKS", GlobalC::ld.E_delta);
-			}
+        if (GlobalV::deepks_scf)	//caoyu add 2021-08-10
+        {
+            this->print_format("E_DeePKS", GlobalC::ld.E_delta);
+        }
 #endif
-		}
-			else
-		{
-			GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30) << "eV" << std::endl;
-			this->print_format("E_KohnSham",etot);
-			this->print_format("E_Harris",etot_harris);
-		}
+    }
+    else
+    {
+        GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30) << "eV" << std::endl;
+        this->print_format("E_KohnSham",etot);
+        this->print_format("E_Harris",etot_harris);
+    }
 
-		if(GlobalV::TWO_EFERMI)
-		{
-			this->print_format("E_Fermi_up",ef_up);
-			this->print_format("E_Fermi_dw",ef_dw);
-		}
-		else
-		{
-			this->print_format("E_Fermi",this->ef);
-		}
-		if (GlobalV::out_bandgap)
-		{
-			if (!GlobalV::TWO_EFERMI)
-            {
-				this->print_format("E_bandgap", this->bandgap);
-			}
-			else
-			{
-				this->print_format("E_bandgap_up", this->bandgap_up);
-				this->print_format("E_bandgap_dw", this->bandgap_dw);
-			}
-		}
-	}//xiaohui add "OUT_LEVEL", 2015-09-16
+    if(GlobalV::TWO_EFERMI)
+    {
+        this->print_format("E_Fermi_up",ef_up);
+        this->print_format("E_Fermi_dw",ef_dw);
+    }
+    else
+    {
+        this->print_format("E_Fermi",this->ef);
+    }
+    if (GlobalV::out_bandgap)
+    {
+        if (!GlobalV::TWO_EFERMI)
+        {
+            this->print_format("E_bandgap", this->bandgap);
+        }
+        else
+        {
+            this->print_format("E_bandgap_up", this->bandgap_up);
+            this->print_format("E_bandgap_dw", this->bandgap_dw);
+        }
+    }
 
 	if (iter_in == 1)   // pengfei Li added 2015-1-31
 	{
 		this->etot_old = this->etot;
 	}
-	
+
 	// mohan update 2011-02-26
 	std::stringstream ss;
 
@@ -284,8 +280,8 @@ void energy::print_etot(
 		{
 			if(GlobalV::MY_RANK==0)
 			{
-				printf( "\e[36m%-15f\e[0m", GlobalC::en.etot);	
-				//printf( "[36m%-15f[0m", GlobalC::en.etot);	
+				printf( "\e[36m%-15f\e[0m", GlobalC::en.etot);
+				//printf( "[36m%-15f[0m", GlobalC::en.etot);
 				if(GlobalV::NSPIN==2)
 				{
 					std::cout << std::setprecision(2);
@@ -313,14 +309,14 @@ void energy::print_etot(
 					//printf( "[32m%-14e[0m", scf_thr);
 				}
 				// 34 is blue
-				printf( "\e[36m%-15f\e[0m", GlobalC::en.etot*ModuleBase::Ry_to_eV);	
-				//printf( "[36m%-15f[0m", GlobalC::en.etot*ModuleBase::Ry_to_eV);	
+				printf( "\e[36m%-15f\e[0m", GlobalC::en.etot*ModuleBase::Ry_to_eV);
+				//printf( "[36m%-15f[0m", GlobalC::en.etot*ModuleBase::Ry_to_eV);
 				std::cout << std::setprecision(3);
 	//			std::cout << std::setw(11) << GlobalC::en.eband;
 	//			std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
 	//			std::cout << std::setw(11) << GlobalC::en.etxc - GlobalC::en.etxcc;
 				std::cout << std::resetiosflags(ios::scientific);
-				
+
 				std::cout << std::setw(11) << duration;
 				std::cout << std::endl;
 			}
@@ -359,7 +355,7 @@ void energy::print_format(const std::string &name, const double &value)
 	GlobalV::ofs_running << std::setiosflags(ios::showpos);
 	std::stringstream name2;
 	name2 << name;
-	GlobalV::ofs_running << " " << std::setw(12) << name2.str() << std::setw(30) <<  value 
+	GlobalV::ofs_running << " " << std::setw(12) << name2.str() << std::setw(30) <<  value
 	<< std::setw(30) << value * ModuleBase::Ry_to_eV << std::endl;
 	GlobalV::ofs_running << std::resetiosflags(ios::showpos);
 	return;
@@ -426,10 +422,10 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 #endif
 
     deband0 *= GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
-	
+
 	// \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
 	deband0 -= 2*exx;				// Peize Lin add 2017-10-16
-	
+
     return deband0;
 } // end subroutine delta_e
 
@@ -575,6 +571,27 @@ void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
 	}
 	this->bandgap_up = lumo_up - homo_up;
 	this->bandgap_dw = lumo_dw - homo_dw;
+}
+
+double& energy::get_ef(const int& is, const bool& two_efermi)
+{
+	if(!two_efermi)
+	{
+		return this->ef;
+	}
+	else if(is==0)
+	{
+		return this->ef_up;
+	}
+	else if(is==1)
+	{
+		return this->ef_dw;
+	}
+	else
+	{
+		ModuleBase::WARNING_QUIT("energy","Please check NSPIN when TWO_EFERMI is true");
+		__builtin_unreachable();
+	}
 }
 
 // Peize Lin add 2016-12-03

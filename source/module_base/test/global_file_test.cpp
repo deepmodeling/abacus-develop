@@ -86,3 +86,72 @@ TEST_F(GlobalFile,openlog)
         std::string sss = "Si.log"; 
         remove(sss.c_str());
 }
+
+TEST_F(GlobalFile,closelog)
+{
+		std::ofstream ofs;
+		std::string sss = "Si.log";
+		ofs.open(sss.c_str());
+		ModuleBase::Global_File::close_log(ofs, sss);
+		EXPECT_FALSE(ofs.is_open());
+		if (ofs.is_open())
+		{
+			ofs.close();
+		}
+		remove(sss.c_str());
+}
+
+TEST_F(GlobalFile,closealllog)
+{
+		/* 
+		For module_io/input.cpp:line3578 close_log() is a void function,
+		All its contents is calling close_all_log() in module_base/global_file.cpp
+		For Input::close_log() what is left to test are the validities of parameters
+		GlobalV::MY_RANK and this->out_alllog.
+		*/
+		/* Test out_alllog == true case */
+		std::string header = "running_";
+		std::string tailCpuRank0 = "_cpu0.log";
+		std::string tail = ".log";
+		std::string f1 = header + GlobalV::CALCULATION + tailCpuRank0;
+		
+		if (GlobalV::ofs_running.is_open())
+		{
+			GlobalV::ofs_running.close();
+		}
+		if (GlobalV::ofs_warning.is_open())
+		{
+			GlobalV::ofs_warning.close();
+		}
+		GlobalV::ofs_running.open(f1.c_str());
+		GlobalV::ofs_warning.open("warning.log");
+		ModuleBase::Global_File::close_all_log(0,true);
+		EXPECT_FALSE(GlobalV::ofs_running.is_open());
+		if (GlobalV::ofs_running.is_open())
+		{
+			GlobalV::ofs_running.close();
+		}
+		EXPECT_FALSE(GlobalV::ofs_warning.is_open());
+		if (GlobalV::ofs_warning.is_open())
+		{
+			GlobalV::ofs_warning.close();
+		}
+		remove(f1.c_str());
+		//remove("warning.log");
+		/* Test out_alllog == false case */
+		GlobalV::ofs_running.open("running.log");
+		GlobalV::ofs_warning.open("warning.log");
+		ModuleBase::Global_File::close_all_log(0,false);
+		EXPECT_FALSE(GlobalV::ofs_running.is_open());
+		if (GlobalV::ofs_running.is_open())
+		{
+			GlobalV::ofs_running.close();
+		}
+		EXPECT_FALSE(GlobalV::ofs_warning.is_open());
+		if (GlobalV::ofs_warning.is_open())
+		{
+			GlobalV::ofs_warning.close();
+		}
+		remove("running.log");
+		remove("warning.log");
+}

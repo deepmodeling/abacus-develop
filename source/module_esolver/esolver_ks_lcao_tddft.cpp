@@ -177,13 +177,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        if (this->UHM.GK.get_spin() != -1)
-        {
-            int start_spin = -1;
-            this->UHM.GK.reset_spin(start_spin);
-            this->UHM.GK.destroy_pvpR();
-            this->UHM.GK.allocate_pvpR();
-        }
+        this->UHM.GK.renew();
     }
 }
 
@@ -280,10 +274,19 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
 void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 {
+    //print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
+        if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->UHM.GK.renew(true);
+        }
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
+            if(hsolver::HSolverLCAO::out_mat_hs) 
+            {
+                this->p_hamilt->updateHk(ik);
+            }
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
             if (this->psi != nullptr)
@@ -295,7 +298,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
             {
@@ -306,7 +310,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
         }
     }
@@ -406,10 +411,27 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         const int precision = 3;
-
         std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-        ModuleIO::write_rho(pelec->charge->rho_save[is], is, 0, ssc.str()); // mohan add 2007-10-17
+        ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+        double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+        ModuleIO::write_rho(
+#ifdef __MPI
+            GlobalC::bigpw->bz,
+            GlobalC::bigpw->nbz,
+            GlobalC::rhopw->nplane,
+            GlobalC::rhopw->startz_current,
+#endif
+            pelec->charge->rho_save[is],
+            is,
+            GlobalV::NSPIN,
+            0,
+            ssc.str(),
+            GlobalC::rhopw->nx,
+            GlobalC::rhopw->ny,
+            GlobalC::rhopw->nz,
+            ef_tmp,
+            &(GlobalC::ucell),
+            precision);
 
         if (ELEC_evolve::out_dipole == 1)
         {
@@ -427,7 +449,19 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+
+        ModuleIO::write_dm(
+#ifdef __MPI
+            GlobalC::GridT.trace_lo,
+#endif
+            is,
+            0,
+            ssd.str(),
+            precision,
+            this->LOC.out_dm,
+            this->LOC.DM,
+            ef_tmp,
+            &(GlobalC::ucell));
 
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
@@ -455,11 +489,6 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             GlobalV::ofs_running << std::setprecision(16);
         if (GlobalV::OUT_LEVEL != "m")
             GlobalV::ofs_running << " EFERMI = " << GlobalC::en.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        if (GlobalV::OUT_LEVEL == "ie")
-        {
-            GlobalV::ofs_running << " " << GlobalV::global_out_dir << " final etot is "
-                                 << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        }
     }
     else
     {
@@ -468,43 +497,38 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
-    if (hsolver::HSolverLCAO::out_mat_hsR)
+    if( GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
     {
-        if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
+        if (hsolver::HSolverLCAO::out_mat_hsR)
         {
             ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }
-    }
 
-    if (hsolver::HSolverLCAO::out_mat_t)
-    {
-        if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
+        if (hsolver::HSolverLCAO::out_mat_t)
         {
             ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
         }
-    }
 
-    if (hsolver::HSolverLCAO::out_mat_dh)
-    {
-        if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
+        if (hsolver::HSolverLCAO::out_mat_dh)
         {
             ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
         }
-    }   
 
-    // add by jingan for out r_R matrix 2019.8.14
-    if (INPUT.out_mat_r)
-    {
-        cal_r_overlap_R r_matrix;
-        r_matrix.init(*this->LOWF.ParaV);
+        // add by jingan for out r_R matrix 2019.8.14
+        if (INPUT.out_mat_r)
+        {
+            cal_r_overlap_R r_matrix;
+            r_matrix.init(*this->LOWF.ParaV);
 
-        if (hsolver::HSolverLCAO::out_mat_hsR)
-        {
-            r_matrix.out_rR_other(istep, this->LM.output_R_coor);
-        }
-        else
-        {
-            r_matrix.out_rR(istep);
+            if (hsolver::HSolverLCAO::out_mat_hsR)
+            {
+                r_matrix.out_rR_other(istep, this->LM.output_R_coor);
+            }
+            else
+            {
+                r_matrix.out_rR(istep);
+            
+            }
         }
     }
 }

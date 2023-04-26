@@ -37,10 +37,9 @@ void calculate()
 	ucell.latName = "none";
 	ifs.close();
 	output out;
-	ucell.setup_cell_classic(
+	ucell.setup_cell(
 	"STRU", 
-	ofs_running,
-	ofs_warning);
+	ofs_running);
 	std::cout << "set up cell classic done." << std::endl;
 	symm.analy_sys(ucell, out, ofs_running);
 	ofs_running.close();

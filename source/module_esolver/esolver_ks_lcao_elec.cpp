@@ -20,7 +20,6 @@
 #endif
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_io/dm_io.h"
@@ -185,7 +184,18 @@ namespace ModuleESolver
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
-                ModuleIO::read_dm(is, ssd.str(), this->LOC.DM, this->LOC.DM_R);
+                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                ModuleIO::read_dm(
+#ifdef __MPI
+		            GlobalC::GridT.nnrg,
+		            GlobalC::GridT.trace_lo,
+#endif
+		            is,
+		            ssd.str(),
+		            this->LOC.DM,
+		            this->LOC.DM_R,
+		            ef_tmp,
+		            &(GlobalC::ucell));
             }
 
             // calculate the charge density
@@ -258,34 +268,14 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 
-        // Temporary, md and relax will merge later   liuyu add 2022-11-07
-        if(GlobalV::CALCULATION == "md" && istep)
+        if (GlobalC::ucell.cell_parameter_updated)
         {
-            CE.update_istep();
-            CE.save_pos_next(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
-
-            if(GlobalC::ucell.cell_parameter_updated)
-            {
-                Variable_Cell::init_after_vc();
-            }
+            this->init_after_vc(INPUT, GlobalC::ucell);
         }
-
-        if(GlobalV::CALCULATION=="relax" || GlobalV::CALCULATION=="cell-relax")
+        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
-            if(GlobalC::ucell.ionic_position_updated)
-            {
-                GlobalV::ofs_running << " Setup the extrapolated charge." << std::endl;
-                // charge extrapolation if istep>0.
-                CE.update_istep();
-                CE.update_all_pos(GlobalC::ucell);
-                CE.extrapolate_charge(pelec->charge);
-                CE.save_pos_next(GlobalC::ucell);
-
-                GlobalV::ofs_running << " Setup the Vl+Vh+Vxc according to new structure factor and new charge." << std::endl;
-                // calculate the new potential accordint to
-                // the new charge density.
-            }
+            CE.update_all_dis(GlobalC::ucell);
+            CE.extrapolate_charge(pelec->charge);
         }
 
         //----------------------------------------------------------

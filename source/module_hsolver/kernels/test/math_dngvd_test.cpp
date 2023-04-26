@@ -30,7 +30,7 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
     const psi::DEVICE_GPU* gpu_ctx = {};
 
     // prepare A & B in CPU
-    std::vector<complex<double>> matrix_A = {
+    std::vector<std::complex<double>> matrix_A = {
         {-0.351417, -1.73472},
         {-8.32667, 2.3744},
         {4.16334, 3.64292},
@@ -58,7 +58,7 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
         // {3.296e-17,-9.454e-17}, {-6.939e-18,-1.908e-17}, {4.574e-01,-5.783e-17},{-1.388e-17,6.939e-18},
         // {-5.204e-17,2.776e-17}, {8.327e-17,1.041e-17}, {-6.939e-18,-4.163e-17}, {4.574e-01,-3.451e-17}
     };
-    std::vector<complex<double>> matrix_B = {
+    std::vector<std::complex<double>> matrix_B = {
         {1, 0},
         {0, 0},
         {0, 0},
@@ -84,7 +84,7 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
 
     // prepare W & V in CPU in dngv_op
     std::vector<double> W_dngv_op = {0.0, 0.0, 0.0, 0.0};
-    std::vector<complex<double>> matrix_V_dngv_op = {{0.0, 0.0},
+    std::vector<std::complex<double>> matrix_V_dngv_op = {{0.0, 0.0},
                                                      {0.0, 0.0},
                                                      {0.0, 0.0},
                                                      {0.0, 0.0},
@@ -103,7 +103,7 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
 
     // prepare W & V in CPU in dngvx_op
     std::vector<double> W_DNGVX = {0.0, 0.0};
-    std::vector<complex<double>> matrix_V_DNGVX = {{0.0, 0.0},
+    std::vector<std::complex<double>> matrix_V_DNGVX = {{0.0, 0.0},
                                                    {0.0, 0.0},
                                                    {0.0, 0.0},
                                                    {0.0, 0.0},
@@ -128,7 +128,7 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
 TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
 {
     // prepare transpose in GPU
-    std::vector<complex<double>> transpose = {
+    std::vector<std::complex<double>> transpose = {
         {-0.351417, -1.73472},
         {-8.32667, 2.3744},
         {4.16334, 3.64292},
@@ -147,7 +147,7 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
     hsolver::destoryBLAShandle();
 
     // copy transpose data from GPU to CPU
-    std::vector<complex<double>> transpose_result = {
+    std::vector<std::complex<double>> transpose_result = {
         {0.0, 0.0},
         {0.0, 0.0},
         {0.0, 0.0},
@@ -158,12 +158,12 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
     };
     synchronize_memory_op_G2C_Z()(cpu_ctx, gpu_ctx, transpose_result.data(), device_transpose, transpose.size());
 
-    // std::vector<complex<double> > test_result = {
+    // std::vector<std::complex<double> > test_result = {
     //     {-0.351417,-1.73472}, {-0.351417,-1.73472}, {-0.351417,-1.73472},
     //     {-8.32667,2.3744}, {-8.32667,2.3744}, {-8.32667,2.3744},
     //     {4.16334,3.64292}, {4.16334,3.64292}, {4.16334,3.64292},
     // };
-    std::vector<complex<double>> test_result = {
+    std::vector<std::complex<double>> test_result = {
         {-0.351417, -1.73472},
         {-0.351417, -1.73472},
         {-8.32667, 2.3744},

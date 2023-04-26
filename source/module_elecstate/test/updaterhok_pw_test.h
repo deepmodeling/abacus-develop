@@ -1,5 +1,5 @@
 #include "module_base/global_variable.h"
-#include "module_orbital/ORB_read.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/occupy.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/magnetism.h"
@@ -19,7 +19,7 @@
 #include "module_io/input.h"
 #include "module_elecstate/energy.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_io/restart.h"
 #include "module_io/rho_io.h"
 
@@ -54,6 +54,7 @@ pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
 energy::energy(){}
 energy::~energy(){}
+double& energy::get_ef(const int&is, const bool& two_efermi){return this->ef;} //just mock
 
 
 XC_Functional::XC_Functional(){}
@@ -105,7 +106,7 @@ bool ModuleIO::read_rho(const int &is,
 	int& ny,
 	int& nz,
 	double& ef,
-	UnitCell& ucell,
+	const UnitCell* ucell,
 	int &prenspin)
 {
 	std::ifstream ifs(fn.c_str());
@@ -118,27 +119,27 @@ bool ModuleIO::read_rho(const int &is,
 	ifs >> ef;
 	ifs.ignore(150, '\n');
 
-	ModuleBase::CHECK_INT(ifs,ucell.nat,quit);
+	ModuleBase::CHECK_INT(ifs,ucell->nat,quit);
 	ifs.ignore(150, '\n');
 
-	double fac=ucell.lat0;
+	double fac=ucell->lat0;
 	ModuleBase::CHECK_INT(ifs,nx);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e11/double(nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e12/double(nx), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e13/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e11/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e12/double(nx), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e13/double(nx), quit);
 	ModuleBase::CHECK_INT(ifs, ny);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e21/double(ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e22/double(ny), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e23/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e21/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e22/double(ny), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e23/double(ny), quit);
 	ModuleBase::CHECK_INT(ifs, nz);	
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e31/double(nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e32/double(nz), quit);
-	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell.latvec.e33/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e31/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e32/double(nz), quit);
+	ModuleBase::CHECK_DOUBLE(ifs, fac*ucell->latvec.e33/double(nz), quit);
 
 	int temp = 0;
-	for(int it=0; it<ucell.ntype; it++)
+	for(int it=0; it<ucell->ntype; it++)
 	{
-		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		for(int ia=0; ia<ucell->atoms[it].na; ia++)
 		{
 			ifs >> temp;
 			ifs >> temp; 
@@ -166,13 +167,7 @@ bool ModuleIO::read_rho(const int &is,
 
 //bool Occupy::use_gaussian_broadening=false;
 
-void UnitCell::setup_cell(
-#ifdef __LCAO
-		LCAO_Orbitals &orb,
-#endif
-		const std::string &s_pseudopot_dir,
-		const std::string &fn,
-		std::ofstream &log)
+void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 {
 	// (1) init mag
 	assert(ntype>0);
@@ -191,13 +186,13 @@ void UnitCell::setup_cell(
 	//========================
 	// call read_atom_species
 	//========================
-	const int error = this->read_atom_species(orb, ifa, log);
+	const int error = this->read_atom_species(ifa, log);
 
 
 	//==========================
 	// call read_atom_positions
 	//==========================
-	ok2 = this->read_atom_positions(orb, ifa, log, GlobalV::ofs_warning);
+	ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
 	//========================================================
 	// Calculate unit cell volume
 	// the reason to calculate volume here is 
@@ -220,7 +215,7 @@ void UnitCell::setup_cell(
 	return;
 }
 
-int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofstream &ofs_running)
+int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 {
 	delete[] atom_label;
 	delete[] atom_mass;
@@ -262,7 +257,7 @@ int UnitCell::read_atom_species(LCAO_Orbitals &orb, std::ifstream &ifa, std::ofs
 	return 0;
 }
 
-bool UnitCell::read_atom_positions(LCAO_Orbitals &orb, std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
+bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning)
 {
 	if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
 	{

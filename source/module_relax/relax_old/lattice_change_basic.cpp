@@ -17,8 +17,6 @@ double Lattice_Change_Basic::etot_p = 0.0;
 // double Lattice_Change_Basic::lattice_change_ini = 0.5; // default is 0.5
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.5
 
-int Lattice_Change_Basic::out_stru = 0;
-
 void Lattice_Change_Basic::setup_gradient(double *lat, double *grad, ModuleBase::matrix &stress)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
@@ -143,26 +141,6 @@ void Lattice_Change_Basic::change_lattice(double *move, double *lat)
     Parallel_Common::bcast_double(GlobalC::ucell.a3.y);
     Parallel_Common::bcast_double(GlobalC::ucell.a3.z);
 #endif
-    /*
-            std::cout<<" LATTICE CONSTANT NEW: "<<std::endl;
-            std::cout<<" "<<std::setprecision(12)<<GlobalC::ucell.latvec.e11<<"   "<<GlobalC::ucell.latvec.e12<<"
-       "<<GlobalC::ucell.latvec.e13<<std::endl; std::cout<<" "<<std::setprecision(12)<<GlobalC::ucell.latvec.e21<<"
-       "<<GlobalC::ucell.latvec.e22<<"   "<<GlobalC::ucell.latvec.e23<<std::endl; std::cout<<"
-       "<<std::setprecision(12)<<GlobalC::ucell.latvec.e31<<"   "<<GlobalC::ucell.latvec.e32<<"
-       "<<GlobalC::ucell.latvec.e33<<std::endl;
-    */
-        //--------------------------------------------
-        // Print out the structure file.
-        //--------------------------------------------
-    std::stringstream ss;
-    ss << GlobalV::global_out_dir << "STRU_ION";
-    if (out_stru == 1)
-    {
-        ss << istep;
-        GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
-    }
-    ss << "_D";    
-    GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
 
     return;
 }

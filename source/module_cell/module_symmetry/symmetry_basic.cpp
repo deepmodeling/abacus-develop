@@ -89,7 +89,8 @@ double Symmetry_Basic::check_diff(const double &x1, const double &x2)
 	return diff;
 }
 
-void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index) const
+
+void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) const
 {
 	double** tmp = new double*[nat];
 	for(int ia=0; ia<nat; ia++)
@@ -119,7 +120,7 @@ void Symmetry_Basic::order_atoms(double* pos, const int &nat, const int *index) 
 
 	return;
 }
-
+/*
 // atom ordering for each atom type.
 void Symmetry_Basic::atom_ordering(double *posi, const int natom, int *subindex)
 {
@@ -274,7 +275,7 @@ void Symmetry_Basic::order_z(double* pos2, const int &oldpos2, const int &newpos
 	delete[] index2;
 	delete[] tmp2;
 }
-
+*/
 //convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
 //to a set of vectors (vb) represented in the basis vectors new1, new2, new3
 void Symmetry_Basic::veccon(

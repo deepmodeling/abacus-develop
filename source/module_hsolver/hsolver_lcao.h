@@ -2,7 +2,7 @@
 #define HSOLVERLCAO_H
 
 #include "hsolver.h"
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 namespace hsolver
 {
@@ -28,7 +28,6 @@ class HSolverLCAO : public HSolver<double>
 
     static int out_mat_hs; // mohan add 2010-09-02
     static int out_mat_hsR; // LiuXh add 2019-07-16
-    static int out_hsR_interval;
     static int out_mat_t;
     static int out_mat_dh;
 

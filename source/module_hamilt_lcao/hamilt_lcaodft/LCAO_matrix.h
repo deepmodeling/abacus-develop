@@ -5,15 +5,13 @@
 #include "module_base/global_variable.h"
 #include "module_base/vector3.h"
 #include "module_base/complexmatrix.h"
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "module_base/abfs-vector3_order.h"
 
 class LCAO_Matrix
 {
-    friend class Mulliken_Charge;
-
     public:
 
     LCAO_Matrix();
@@ -23,7 +21,7 @@ class LCAO_Matrix
     
     // folding the fixed Hamiltonian (T+Vnl) if
 	// k-point algorithm is used.
-	void folding_fixedH(const int &ik);
+	void folding_fixedH(const int &ik, bool cal_syns = false);
 
     Parallel_Orbitals *ParaV;
 

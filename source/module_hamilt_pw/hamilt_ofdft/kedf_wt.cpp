@@ -35,9 +35,9 @@ void KEDF_WT::set_para(int nx, double dV, double alpha, double beta, double nele
         this->fillKernel(tf_weight, vw_weight, pw_rho);
 }
 
-// 
+//
 // Ewt = Ctf * \int{rho^alpha * W(r - r') * rho^beta drdr'} + T_vW + T_TF, T_vW and T_TF will be added in ESolver_OF
-// 
+//
 double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho)
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
@@ -93,9 +93,9 @@ double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, M
 }
 
 
-// 
+//
 // Vwt = cTF * [alpha rho^{alpha-1} \int{W(r - r')rho^{beta}(r') dr'} + beta rho^{beta-1} \int{W(r' - r)rho^{alpha}(r') dr'}]
-// 
+//
 void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_WT", "wt_potential");
@@ -112,7 +112,7 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
     {
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            rpotential(is, ir) += this->cTF * 
+            rpotential(is, ir) += this->cTF *
                                     (this->alpha * pow(prho[is][ir], this->alpha-1.) * kernelRhoBeta[is][ir]
                                     + this->beta * pow(prho[is][ir], this->beta-1.) * kernelRhoAlpha[is][ir]);
         }
@@ -160,7 +160,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
     {
         coef = 0.;
         mult = -1. + this->alpha + this->beta;
-    }    
+    }
     else
     {
         coef = 1./3.;
@@ -256,7 +256,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 // Calculate WT kernel according to Lindhard response function
 double KEDF_WT::WTkernel(double eta, double tf_weight, double vw_weight)
 {
-    if (eta < 0.) 
+    if (eta < 0.)
     {
         return 0.;
     }
@@ -275,22 +275,22 @@ double KEDF_WT::WTkernel(double eta, double tf_weight, double vw_weight)
     {
         double eta2 = eta * eta;
         double invEta2 = 1. / eta2;
-        double LindG = 3. * (1. - vw_weight) * eta2 
-                        -tf_weight-0.6 
-                        + invEta2 * (-0.13714285714285712 
+        double LindG = 3. * (1. - vw_weight) * eta2
+                        -tf_weight-0.6
+                        + invEta2 * (-0.13714285714285712
                         + invEta2 * (-6.39999999999999875E-2
                         + invEta2 * (-3.77825602968460128E-2
                         + invEta2 * (-2.51824061652633074E-2
                         + invEta2 * (-1.80879839616166146E-2
                         + invEta2 * (-1.36715733124818332E-2
                         + invEta2 * (-1.07236045520990083E-2
-                        + invEta2 * (-8.65192783339199453E-3 
+                        + invEta2 * (-8.65192783339199453E-3
                         + invEta2 * (-7.1372762502456763E-3
                         + invEta2 * (-5.9945117538835746E-3
-                        + invEta2 * (-5.10997527675418131E-3 
-                        + invEta2 * (-4.41060829979912465E-3 
-                        + invEta2 * (-3.84763737842981233E-3 
-                        + invEta2 * (-3.38745061493813488E-3 
+                        + invEta2 * (-5.10997527675418131E-3
+                        + invEta2 * (-4.41060829979912465E-3
+                        + invEta2 * (-3.84763737842981233E-3
+                        + invEta2 * (-3.38745061493813488E-3
                         + invEta2 * (-3.00624946457977689E-3)))))))))))))));
         return LindG;
     }
@@ -318,8 +318,8 @@ double KEDF_WT::diffLinhard(double eta, double vw_weight)
     else
     {
         double eta2 = eta * eta;
-        return ((eta2 + 1.) * 0.25 / eta2 * log(abs((1. + eta)/ 
-             (1.-eta))) - 0.5/eta) / pow((0.5 + 0.25 * (1. - eta2) 
+        return ((eta2 + 1.) * 0.25 / eta2 * log(abs((1. + eta)/
+             (1.-eta))) - 0.5/eta) / pow((0.5 + 0.25 * (1. - eta2)
              * log((1. + eta) / abs(1. - eta))/eta) , 2) - 6. * eta * vw_weight;
     }
 }
@@ -363,7 +363,7 @@ void KEDF_WT::fillKernel(double tf_weight, double vw_weight, ModulePW::PW_Basis 
 // Read kernel from file
 void KEDF_WT::readKernel(std::string fileName, ModulePW::PW_Basis *pw_rho)
 {
-    std::ifstream ifs(fileName.c_str(), ios::in);
+    std::ifstream ifs(fileName.c_str(), std::ios::in);
 
     GlobalV::ofs_running << "Read WT kernel from " << fileName << std::endl;
     if (!ifs) ModuleBase::WARNING_QUIT("kedf_wt.cpp", "The kernel file of WT KEDF not found");

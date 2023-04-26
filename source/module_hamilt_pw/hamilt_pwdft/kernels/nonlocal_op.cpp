@@ -20,6 +20,9 @@ struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
       std::complex<FPTYPE>* ps,
       const std::complex<FPTYPE>* becp)
   {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(3)
+#endif
     for (int ii = 0; ii < l1; ii++) {
       // each atom has nproj, means this is with structure factor;
       // each projector (each atom) must multiply coefficient
@@ -50,10 +53,9 @@ struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
       std::complex<FPTYPE>* ps,
       const std::complex<FPTYPE>* becp)
   {
-    int psind = 0.0;
-    int becpind = 0.0;
-    std::complex<FPTYPE> becp1{0, 0};
-    std::complex<FPTYPE> becp2{0, 0};
+#ifdef _OPENMP
+#pragma omp parallel for collapse(3)
+#endif
     for (int ii = 0; ii < l1; ii++)
       // each atom has nproj, means this is with structure factor;
       // each projector (each atom) must multiply coefficient
@@ -62,10 +64,10 @@ struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
         for (int kk = 0; kk < l3; kk++)
           for (int xx = 0; xx < l3; xx++)
           {
-              psind = (sum + ii * l3 + kk) * l2 + jj;
-              becpind = jj * nkb + sum + ii * l3 + xx;
-              becp1 = becp[becpind];
-              becp2 = becp[becpind + nkb];
+              int psind = (sum + ii * l3 + kk) * l2 + jj;
+              int becpind = jj * nkb + sum + ii * l3 + xx;
+              auto &becp1 = becp[becpind];
+              auto &becp2 = becp[becpind + nkb];
               ps[psind] += deeq_nc[((0 * deeq_x + iat + ii) * deeq_y + kk) * deeq_z + xx] * becp1
                            + deeq_nc[((1 * deeq_x + iat + ii) * deeq_y + kk) * deeq_z + xx] * becp2;
               ps[psind + 1] += deeq_nc[((2 * deeq_x + iat + ii) * deeq_y + kk) * deeq_z + xx] * becp1

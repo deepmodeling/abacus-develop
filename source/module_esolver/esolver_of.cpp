@@ -17,7 +17,6 @@
 //---------------------------------------------------
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_relax/variable_cell.h"    // liuyu 2022-11-07
 
 namespace ModuleESolver
 {
@@ -240,6 +239,16 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     CE.Init_CE();
 }
 
+void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
+{
+    ModuleBase::timer::tick("ESolver_OF", "init_after_vc");
+
+    ESolver_FP::init_after_vc(inp,ucell);
+
+    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
+}
+
 void ESolver_OF::Run(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "Run");
@@ -280,20 +289,17 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
 //
 void ESolver_OF::beforeOpt(const int istep)
 {
-    // Temporary, md and relax will merge later   liuyu add 2022-11-07
-    if(GlobalV::CALCULATION == "md" && istep)
+    if (GlobalC::ucell.cell_parameter_updated)
     {
-        CE.update_istep();
-        CE.save_pos_next(GlobalC::ucell);
-        CE.extrapolate_charge(pelec->charge);
-
-        if(GlobalC::ucell.cell_parameter_updated)
-        {
-            Variable_Cell::init_after_vc();
-        }
-
-        this->pelec->init_scf(istep, GlobalC::sf.strucFac);
+        this->init_after_vc(INPUT, GlobalC::ucell);
     }
+    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+    {
+        CE.update_all_dis(GlobalC::ucell);
+        CE.extrapolate_charge(pelec->charge);
+    }
+
+    this->pelec->init_scf(istep, GlobalC::sf.strucFac);
 
     //calculate ewald energy
     H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho);
@@ -886,9 +892,6 @@ void ESolver_OF::printInfo()
 
 void ESolver_OF::afterOpt()
 {
-    // Temporary liuyu add 2022-11-07
-    CE.update_all_pos(GlobalC::ucell);
-
     if (this->conv)
     {
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
@@ -904,9 +907,26 @@ void ESolver_OF::afterOpt()
         if (GlobalV::out_chg == 1)
         {
             std::stringstream ssc;
-            std::stringstream ss1;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG";
-            ModuleIO::write_rho(pelec->charge->rho[is], is, iter, ssc.str(), 3);//mohan add 2007-10-17
+            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
+            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+            ModuleIO::write_rho(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                GlobalC::rhopw->nplane,
+                GlobalC::rhopw->startz_current,
+#endif
+                pelec->charge->rho_save[is],
+                is,
+                GlobalV::NSPIN,
+                iter,
+                ssc.str(),
+                GlobalC::rhopw->nx,
+                GlobalC::rhopw->ny,
+                GlobalC::rhopw->nz,
+                ef_tmp,
+                &(GlobalC::ucell),
+                3);
         }
         
         if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16

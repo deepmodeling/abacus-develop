@@ -205,7 +205,8 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs, "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_dh", out_mat_dh, "output of derivative of H(R) matrix");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_hs2_interval", out_hs2_interval, "interval for printing H(R) and S(R) matrix during MD");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_interval", out_interval, "interval for printing H(R) and S(R) matrix during MD");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_app_flag", out_app_flag, "whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
@@ -248,6 +249,8 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_dumpfreq",mdp.md_dumpfreq,"The period to dump MD information");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_restartfreq",mdp.md_restartfreq,"The period to output MD restart information");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_seed",mdp.md_seed,"random seed for MD");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_prec_level",mdp.md_prec_level,"precision level for vc-md");
+    ModuleBase::GlobalFunc::OUTP(ofs,"ref_cell_factor",ref_cell_factor,"construct a reference cell bigger than the initial cell");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_restart",mdp.md_restart,"whether restart");
 	ModuleBase::GlobalFunc::OUTP(ofs,"lj_rcut",mdp.lj_rcut,"cutoff radius of LJ potential");
 	ModuleBase::GlobalFunc::OUTP(ofs,"lj_epsilon",mdp.lj_epsilon,"the value of epsilon for LJ potential");
@@ -260,9 +263,11 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 	ModuleBase::GlobalFunc::OUTP(ofs,"msst_qmass",mdp.msst_qmass,"mass of thermostat");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_tfreq",mdp.md_tfreq,"oscillation frequency, used to determine qmass of NHC");
 	ModuleBase::GlobalFunc::OUTP(ofs,"md_damp",mdp.md_damp,"damping parameter (time units) used to add force in Langevin method");
-    ModuleBase::GlobalFunc::OUTP(ofs,"md_nraise",mdp.md_nraise,"parameters used when md_type=0");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_nraise",mdp.md_nraise,"parameters used when md_type=nvt");
+    ModuleBase::GlobalFunc::OUTP(ofs,"cal_syns",cal_syns,"calculate asynchronous overlap matrix to output for Hefei-NAMD");
+    ModuleBase::GlobalFunc::OUTP(ofs,"dmax",dmax,"maximum displacement of all atoms in one step (bohr)");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_tolerance",mdp.md_tolerance,"tolerance for velocity rescaling (K)");
-    ModuleBase::GlobalFunc::OUTP(ofs,"md_pmode",mdp.md_pmode,"NPT ensemble mode: none, iso, aniso, tri");
+    ModuleBase::GlobalFunc::OUTP(ofs,"md_pmode",mdp.md_pmode,"NPT ensemble mode: iso, aniso, tri");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pcouple",mdp.md_pcouple,"whether couple different components: xyz, xy, yz, xz, none");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pchain",mdp.md_pchain,"num of thermostats coupled with barostat");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfirst",mdp.md_pfirst,"initial target pressure");
@@ -346,7 +351,8 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_threshold", exx_cauchy_threshold, "threshold to screen exx using Cauchy-Schwartz inequality");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_c_grad_threshold", exx_c_grad_threshold, "threshold to screen nabla C matrix in exx");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_v_grad_threshold", exx_v_grad_threshold, "threshold to screen nabla V matrix in exx");
-    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_grad_threshold", exx_cauchy_grad_threshold, "threshold to screen nabla exx using Cauchy-Schwartz inequality");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_force_threshold", exx_cauchy_force_threshold, "threshold to screen exx force using Cauchy-Schwartz inequality");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_cauchy_stress_threshold", exx_cauchy_stress_threshold, "threshold to screen exx stress using Cauchy-Schwartz inequality");
     //ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_threshold", exx_ccp_threshold, "");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_ccp_rmesh_times", exx_ccp_rmesh_times, "how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals");
     //ModuleBase::GlobalFunc::OUTP(ofs, "exx_distribute_type", exx_distribute_type, "htime or kmeans1 or kmeans2");

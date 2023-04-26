@@ -91,29 +91,12 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         pHamilt->updateHk(ik);
 
         hamilt::MatrixBlock<T> h_mat, s_mat;
-        T *h_mat_copy, *s_mat_copy;
-        if (hsolver::HSolverLCAO::out_mat_hs)
-        {
-            pHamilt->matrix(h_mat, s_mat);
-            h_mat_copy = new T[this->ParaV[0].nloc];
-            s_mat_copy = new T[this->ParaV[0].nloc];
-            BlasConnector::copy(this->ParaV[0].nloc, h_mat.p, 1, h_mat_copy, 1);
-            BlasConnector::copy(this->ParaV[0].nloc, s_mat.p, 1, s_mat_copy, 1);
-        }
 
         psi.fix_k(ik);
 
         /// solve eigenvector and eigenvalue for H(k)
         double* p_eigenvalues = &(pes->ekb(ik, 0));
         this->hamiltSolvePsiK(pHamilt, psi, p_eigenvalues);
-
-        if (hsolver::HSolverLCAO::out_mat_hs)
-        {
-            BlasConnector::copy(this->ParaV[0].nloc, h_mat_copy, 1, h_mat.p, 1);
-            BlasConnector::copy(this->ParaV[0].nloc, s_mat_copy, 1, s_mat.p, 1);
-            delete[] h_mat_copy;
-            delete[] s_mat_copy;
-        }
 
         if (skip_charge)
         {
@@ -142,7 +125,6 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 
 int HSolverLCAO::out_mat_hs = 0;
 int HSolverLCAO::out_mat_hsR = 0;
-int HSolverLCAO::out_hsR_interval = 1;
 int HSolverLCAO::out_mat_t = 0;
 int HSolverLCAO::out_mat_dh = 0;
 

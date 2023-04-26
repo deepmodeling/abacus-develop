@@ -2,7 +2,7 @@
 #include "module_base/parallel_common.h"
 #include "module_io/input.h"
 #ifdef __LCAO
-//#include "../module_orbital/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+//#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 
 

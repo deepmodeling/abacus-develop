@@ -12,14 +12,14 @@ VERSION = ABACUS
 HEADERS = *.h
 
 VPATH=./src_global:\
-./module_orbital:\
+./module_basis/module_ao:\
 ./module_neighbor:\
 ./module_symmetry:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
 ./module_md:\
-./module_pw:\
+./module_basis/module_pw:\
 ./module_hamilt_general/module_surchem:\
 ./module_deepks:\
 ./module_hamilt_general/module_xc:\
@@ -43,7 +43,7 @@ VPATH=./src_global:\
 ./module_hamilt_pw/hamilt_pwdft/operator_pw:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_pw/hamilt_pwdft/kernels:\
-./module_gint:\
+./module_hamilt_lcao/module_gint:\
 ./module_dftu:\
 ./module_relax:\
 ./module_relax/relax_old:\
@@ -246,14 +246,14 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       elpa_new_complex.o\
       utils.o\
 
-OBJS_MD=MD_func.o\
+OBJS_MD=fire.o\
+    langevin.o\
+    md_base.o\
+    md_func.o\
+    msst.o\
+    nhchain.o\
     run_md.o\
-	mdrun.o\
-	verlet.o\
-    MSST.o\
-    Nose_Hoover.o\
-    FIRE.o\
-    Langevin.o\
+    verlet.o\
 
 OBJS_NEIGHBOR=sltk_adjacent_set.o\
     sltk_atom.o\
@@ -300,7 +300,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
-    variable_cell.o\
     relax_old.o\
     relax.o\
     line_search.o\
@@ -343,6 +342,7 @@ OBJS_IO=input.o\
     numerical_basis.o\
     output.o\
     print_info.o\
+    read_cube.o\
     read_rho.o\
     restart.o\
     binstream.o\
@@ -351,6 +351,7 @@ OBJS_IO=input.o\
     write_wfc_pw.o\
     winput.o\
     write_input.o\
+    write_cube.o\
     write_rho.o\
 	write_wfc_realspace.o\
 
@@ -427,6 +428,7 @@ OBJS_SRC_RI=abfs.o\
 
 OBJS_MODULE_RI=Matrix_Orbs11.o\
       Matrix_Orbs21.o\
+      Matrix_Orbs22.o\
       RI_2D_Comm.o
 
 OBJS_PARALLEL=parallel_common.o\

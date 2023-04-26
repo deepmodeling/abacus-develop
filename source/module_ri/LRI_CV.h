@@ -8,7 +8,7 @@
 
 #include "Matrix_Orbs11.h"
 #include "Matrix_Orbs21.h"
-#include "module_orbital/ORB_atomic_lm.h"
+#include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/element_basis_index.h"
 
@@ -57,6 +57,7 @@ public:
 		const std::map<std::string,bool> &flags);						// "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
 	
 	size_t get_index_abfs_size(const size_t &iat){return this->index_abfs[iat].count_size; }
+
 private:
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
@@ -65,10 +66,12 @@ private:
 	ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
 	double ccp_rmesh_times;
 
+public:
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Vws;
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Cws;
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>> dVws;
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>> dCws;
+private:
 	pthread_rwlock_t rwlock_Vw;
 	pthread_rwlock_t rwlock_Cw;
 	pthread_rwlock_t rwlock_dVw;

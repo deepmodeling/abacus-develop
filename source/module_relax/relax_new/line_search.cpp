@@ -37,6 +37,8 @@ bool Line_Search::line_search(
     {
         return this->brent(x,y,f,xnew,conv_thr);
     }
+    ModuleBase::WARNING_QUIT("line_search","ls_step <0");
+    __builtin_unreachable();
 }
 
 bool Line_Search::first_order(
@@ -276,15 +278,16 @@ bool Line_Search::brent(
 
         xnew = xb;
         if(std::abs(dy)<conv_thr) return true;
-        if(ls_step == 4)
+        if(ls_step == 4) //I'm not sure if this is a good choice, but the idea is there should not be so many line search steps
+                         //I feel if the line search does not converge, we'd better change the direction and restart line search
         {
-            GlobalV::ofs_running << "Too much Brent steps, let's do next CG step" << std::endl;
+            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
             //ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
 
         return false;
-    }//end ibrack
+    }//end bracked
     else
     {
         if(!( (xa<=xb && xb<=xc) || (xc<=xb && xb<=xa) ))
@@ -355,7 +358,7 @@ bool Line_Search::brent(
 
         double fab = (fa+fb)/2.0;
         double dy = (fb+(fab-fb)/(xa-xb)*xd)*xd;
-        
+
         xa = xb;
         fa = fb;
         ya = yb;
@@ -380,7 +383,7 @@ bool Line_Search::brent(
         if(std::abs(dy)<conv_thr) return true;
         if(ls_step == 4)
         {
-            GlobalV::ofs_running << "Too much Brent steps, let's do next CG step" << std::endl;
+            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
             //ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }

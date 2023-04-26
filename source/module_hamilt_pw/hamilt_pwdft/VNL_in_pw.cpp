@@ -3,7 +3,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "module_orbital/ORB_gen_tables.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/math_polyint.h"
@@ -373,6 +373,9 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
     ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
     for (int ig = 0;ig < npw; ig++)
     {
         _gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);

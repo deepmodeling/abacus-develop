@@ -79,7 +79,7 @@ namespace ModuleESolver
     #ifdef __MPI
             this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
     #endif
-            this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+            this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
             this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
     #ifdef __MPI
             if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
@@ -100,6 +100,25 @@ namespace ModuleESolver
 
         // Initialize charge extrapolation
         CE.Init_CE();
+    }
+
+    template<typename FPTYPE, typename Device>
+    void ESolver_KS<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    {
+        ModuleBase::TITLE("ESolver_KS", "init_after_vc");
+
+        ESolver_FP::init_after_vc(inp, ucell);
+
+        if (GlobalV::md_prec_level == 2)
+        {
+            // initialize the real-space uniform grid for FFT and parallel
+            // distribution of plane waves
+            GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
+                        GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
+
+            // Calculate Structure factor
+            GlobalC::sf.setup_structure_factor(&ucell, GlobalC::rhopw);
+        }
     }
 
     template<typename FPTYPE, typename Device>

@@ -48,7 +48,7 @@ include Makefile.Objects
 VPATH=../../module_base\
 :../../module_io\
 :../../module_hamilt_pw/hamilt_pwdft\
-:../../module_orbital\
+:../../module_basis/module_ao\
 :../../module_neighbor\
 :../../module_cell\
 :../../\
@@ -58,7 +58,7 @@ VPATH=../../module_base\
 #==========================
 # Define HONG
 #==========================
-HONG= -DMETIS -DMKL_ILP64 -D__LCAO ${HONG_FFTW} -D__CELL -D__CMD 
+HONG= -DMETIS -DMKL_ILP64 -D__LCAO ${HONG_FFTW}
 
 FP_OBJS_0=main.o\
 LCAO_deepks_test.o\

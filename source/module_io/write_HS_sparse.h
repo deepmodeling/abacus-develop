@@ -27,6 +27,7 @@ namespace ModuleIO
         const std::string &SR_filename
     );
     void save_TR_sparse(
+        const int &istep,
         LCAO_Matrix &lm,
         const double& sparse_threshold,
         const bool &binary,  
@@ -38,8 +39,6 @@ namespace ModuleIO
         const double& sparse_threshold,
         const bool &binary
     );
-    void output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv);
-    void output_soc_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, std::complex<double>>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv);
 }
 
 #endif

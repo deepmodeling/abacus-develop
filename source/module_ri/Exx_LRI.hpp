@@ -17,7 +17,7 @@
 #include "module_base/timer.h"
 #include "src_ri/serialization_cereal.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_orbital/parallel_orbitals.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <RI/distribute/Distribute_Equally.h>
 #include <RI/global/Map_Operator-3.h>
@@ -125,6 +125,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		Vs = this->cv.cal_Vs(
 			list_As_Vs.first, list_As_Vs.second[0],
 			{{"writable_Vws",true}});
+	this->cv.Vws = LRI_CV_Tools::get_CVws(Vs);
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
 	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
@@ -133,6 +134,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 			dVs = this->cv.cal_dVs(
 				list_As_Vs.first, list_As_Vs.second[0],
 				{{"writable_dVws",true}});
+		this->cv.dVws = LRI_CV_Tools::get_dCVws(dVs);
 		this->exx_lri.set_dVs(std::move(dVs), this->info.V_grad_threshold);
 	}
 
@@ -146,11 +148,13 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 			{{"cal_dC",GlobalV::CAL_FORCE||GlobalV::CAL_STRESS},
 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
+	this->cv.Cws = LRI_CV_Tools::get_CVws(Cs);
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
 	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
+		this->cv.dCws = LRI_CV_Tools::get_dCVws(dCs);
 		this->exx_lri.set_dCs(std::move(dCs), this->info.C_grad_threshold);
 	}
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
@@ -237,7 +241,7 @@ void Exx_LRI<Tdata>::cal_exx_force()
 	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
 		
-	this->exx_lri.set_csm_threshold(this->info.cauchy_grad_threshold);
+	this->exx_lri.set_csm_threshold(this->info.cauchy_force_threshold);
 
 	this->force_exx.create(GlobalC::ucell.nat, Ndim);
 	for(int is=0; is<GlobalV::NSPIN; ++is)
@@ -261,7 +265,7 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::TITLE("Exx_LRI","cal_exx_stress");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 		
-	this->exx_lri.set_csm_threshold(this->info.cauchy_grad_threshold);
+	this->exx_lri.set_csm_threshold(this->info.cauchy_stress_threshold);
 
 	this->stress_exx.create(Ndim, Ndim);
 	for(int is=0; is<GlobalV::NSPIN; ++is)

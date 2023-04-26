@@ -49,6 +49,10 @@ add_library(
     ${LIBM_SRC}
 )
 
+if(ENABLE_CONTAINER)
+  add_subdirectory(module_container)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(base)
 endif()
