@@ -227,7 +227,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 				ModuleBase::WARNING("PP_BETA reading", warningstr);
 			}
 		}
-		if(!read_cutoff_radius_index) // if cutoff_radius_index is not set in pp, we set is as mesh.
+		if(!read_cutoff_radius_index) // if cutoff_radius_index is not set in pp, we set it as mesh.
 		{
 			kkbeta[ib] = mesh;
 		}
