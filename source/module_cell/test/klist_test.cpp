@@ -277,6 +277,35 @@ TEST_F(KlistTest, ReadKpointsKspacing)
 	GlobalV::KSPACING[2]=0.0;
 }
 
+TEST_F(KlistTest, ReadKpointsKspacing3values)
+{
+	kv->nspin = 1;
+	GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[1] = 0.06; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[2] = 0.07; // 0.52918/Bohr = 1/A
+	std::string k_file = "./support/KPT3";
+	kv->read_kpoints(k_file);
+	EXPECT_EQ(kv->nkstot,210);
+	GlobalV::KSPACING[0]=0.0;
+	GlobalV::KSPACING[1]=0.0;
+	GlobalV::KSPACING[2]=0.0;
+}
+
+TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
+{
+	kv->nspin = 1;
+	GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[1] = 0; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[2] = 0.07; // 0.52918/Bohr = 1/A
+	std::string k_file = "./support/KPT3";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(kv->read_kpoints(k_file),::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	GlobalV::KSPACING[0]=0.0;
+	GlobalV::KSPACING[1]=0.0;
+	GlobalV::KSPACING[2]=0.0;
+}
+
 TEST_F(KlistTest, ReadKpointsGamma)
 {
 	std::string k_file = "./support/KPT";

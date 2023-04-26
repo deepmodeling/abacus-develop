@@ -177,6 +177,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 	}
     else if (GlobalV::KSPACING[0] > 0.0)
     {
+        if (GlobalV::KSPACING[1] <= 0 || GlobalV::KSPACING[2] <= 0){
+            ModuleBase::WARNING_QUIT("K_Vectors","kspacing shold > 0");
+        };
         //number of K points = max(1,int(|bi|/KSPACING+1))
         ModuleBase::Matrix3 btmp = GlobalC::ucell.G;
         double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);

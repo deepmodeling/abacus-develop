@@ -1486,5 +1486,7 @@ TEST_F(ReadKSpacingTest, InvalidInput) {
     std::ifstream ifs(tmpfile);
 	testing::internal::CaptureStdout();
 	INPUT.read_kspacing(ifs);
+	std::string output;
+	output = testing::internal::GetCapturedStdout();
     EXPECT_TRUE(ifs.fail());
 }
