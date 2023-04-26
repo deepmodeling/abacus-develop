@@ -688,35 +688,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("kspacing", word) == 0)
         {
-            std::string s;
-            std::getline(ifs,s);
-            std::stringstream ss(s);
-
-            //read 3 values
-            int count = 0;
-            while((ss >> kspacing[count]) && count < 3)
-            {
-                count++;
-            }
-            //if not read one or read two values, 
-            if (count == 0 || count == 2){
-                ModuleBase::WARNING_QUIT("Input", "kspacing accept 1 or 3 double values");
-            }
-
-            //if only read one value, set all to kspacing[0]
-            if (count == 1){
-                kspacing[1] = kspacing[0];
-                kspacing[2] = kspacing[0];
-            }
-            //std::cout << "count: " << count << " kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl; 
-
-            //if has kspacing equal to 0, quit.
-            for (int i=0;i<3;i++)
-            {
-                if (kspacing[i] <= 0){
-                    ModuleBase::WARNING_QUIT("Input", "kspacing should be > 0");
-                }
-            }
+            read_kspacing(ifs);
         }
         else if (strcmp("min_dist_coef", word) == 0)
         {
@@ -3192,11 +3164,21 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
+    int kspacing_zero_num = 0;
     for (int i=0;i<3;i++){
         if (kspacing[i] < 0.0)
         {
             ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
         }
+        else if (kspacing[i] == 0.0)
+        {
+            kspacing_zero_num++;
+        }
+    }
+    if (kspacing_zero_num > 0 && kspacing_zero_num < 3)
+    {
+        std::cout << "kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl;
+        ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
     }
 
     if (nelec < 0.0)

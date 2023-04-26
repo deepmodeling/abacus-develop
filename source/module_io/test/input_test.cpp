@@ -956,7 +956,7 @@ TEST_F(InputTest, Check)
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("kspacing must > 0"));
-	INPUT.kspacing[0] = 0.8;
+	INPUT.kspacing[0] = INPUT.kspacing[1] = INPUT.kspacing[2] = 0.8;
 	//
 	INPUT.nelec = -1;
 	testing::internal::CaptureStdout();
@@ -1436,4 +1436,55 @@ TEST_F(InputTest, Check)
 	*/
 }
 
+
 #undef private
+
+
+class ReadKSpacingTest : public ::testing::Test {
+protected:
+    void SetUp() 
+	{
+        // create a temporary file for testing
+        tmpfile = std::tmpnam(nullptr);
+        std::ofstream ofs(tmpfile);
+        ofs << "1.0"; // valid input
+        ofs.close();
+    }
+
+    void TearDown() override {
+        std::remove(tmpfile.c_str());
+    }
+
+    std::string tmpfile;
+};
+
+TEST_F(ReadKSpacingTest, ValidInputOneValue) {
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 1.0);
+    EXPECT_EQ(INPUT.kspacing[2], 1.0);
+}
+
+TEST_F(ReadKSpacingTest, ValidInputThreeValue) {
+	std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0 3.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 2.0);
+    EXPECT_EQ(INPUT.kspacing[2], 3.0);
+}
+
+TEST_F(ReadKSpacingTest, InvalidInput) {
+    std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+	testing::internal::CaptureStdout();
+	INPUT.read_kspacing(ifs);
+    EXPECT_TRUE(ifs.fail());
+}
