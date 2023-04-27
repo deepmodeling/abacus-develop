@@ -300,7 +300,7 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info();
+    ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
     return;

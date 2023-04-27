@@ -409,7 +409,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
             out << "</pdos>" << std::endl;
             out.close();
         }
-        ModuleIO::write_orb_info();
+        ModuleIO::write_orb_info(&(GlobalC::ucell));
     }
     delete[] pdos;
 
