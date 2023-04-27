@@ -118,3 +118,15 @@ add_test(NAME cell_unitcell_test_parallel
       COMMAND ${BASH} unitcell_test_parallel.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+AddTest(
+  TARGET cell_setup_nonlocal
+  LIBS ${math_libs} base device
+  SOURCES setup_nonlocal_test.cpp ../setup_nonlocal.cpp
+    ../../module_basis/module_ao/ORB_nonlocal.cpp
+    ../../module_basis/module_ao/ORB_nonlocal_lm.cpp
+    ../../module_hamilt_pw/hamilt_pwdft/soc.cpp
+    ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo_nc.cpp
+    ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
+    ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+)
