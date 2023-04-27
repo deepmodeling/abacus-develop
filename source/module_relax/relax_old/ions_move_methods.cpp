@@ -1,7 +1,8 @@
 #include "ions_move_methods.h"
 
 #include "ions_move_basic.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 
 Ions_Move_Methods::Ions_Move_Methods()
 {
@@ -10,9 +11,9 @@ Ions_Move_Methods::~Ions_Move_Methods()
 {
 }
 
-void Ions_Move_Methods::allocate()
+void Ions_Move_Methods::allocate(const int &natom)
 {
-    Ions_Move_Basic::dim = GlobalC::ucell.nat * 3;
+    Ions_Move_Basic::dim = natom * 3;
 
     if (GlobalV::RELAX_METHOD == "bfgs")
     {
@@ -42,7 +43,8 @@ void Ions_Move_Methods::allocate()
 void Ions_Move_Methods::cal_movement(const int &istep,
                                      const int &force_step,
                                      const ModuleBase::matrix &f,
-                                     const double &etot)
+                                     const double &etot,
+                                     UnitCell &ucell)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
 
@@ -54,19 +56,19 @@ void Ions_Move_Methods::cal_movement(const int &istep,
         // move_ions
         // output tau
         // check all symmery
-        bfgs.start(f, etot);
+        bfgs.start(ucell, f, etot);
     }
     else if (GlobalV::RELAX_METHOD == "sd")
     {
-        sd.start(f, etot);
+        sd.start(ucell, f, etot);
     }
     else if (GlobalV::RELAX_METHOD == "cg")
     {
-        cg.start(f, etot);
+        cg.start(ucell, f, etot);
     }
     else if (GlobalV::RELAX_METHOD == "cg_bfgs")
     {
-        cg.start(f, etot); // added by pengfei 13-8-10
+        cg.start(ucell, f, etot); // added by pengfei 13-8-10
     }
     else
     {

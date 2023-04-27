@@ -1,9 +1,8 @@
 #ifndef IONS_MOVE_CG_H
 #define IONS_MOVE_CG_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 class Ions_Move_CG
 {
   public:
@@ -11,7 +10,7 @@ class Ions_Move_CG
     ~Ions_Move_CG();
 
     void allocate(void);
-    void start(const ModuleBase::matrix &force, const double &etot);
+    void start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot);
 
     static double RELAX_CG_THR;
     int sd_step;

@@ -72,6 +72,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_rmin,0.00001);
 	EXPECT_EQ(Ions_Move_Basic::relax_bfgs_init,0.5);
 	EXPECT_EQ(Ions_Move_Basic::out_stru,0);
+    EXPECT_EQ(Lattice_Change_Basic::fixed_axes,"None");
 	EXPECT_EQ(GlobalV::CAL_STRESS,0);
 	EXPECT_EQ(GlobalV::RELAX_METHOD,"cg");
 	EXPECT_DOUBLE_EQ(GlobalV::relax_scale_force,0.5);

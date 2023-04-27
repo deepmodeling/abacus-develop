@@ -1,7 +1,8 @@
 #include "lattice_change_cg.h"
 
 #include "lattice_change_basic.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 
 // the 'dim' variable is defined in Lattice_Change_Basic
 using namespace Lattice_Change_Basic;
@@ -60,7 +61,7 @@ void Lattice_Change_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Lattice_Change_CG::start(const ModuleBase::matrix &stress_in, const double &etot_in)
+void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in)
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
@@ -116,7 +117,7 @@ CG_begin:
     }
 
     ModuleBase::matrix stress(stress_in);
-    Lattice_Change_Basic::setup_gradient(lat, grad, stress);
+    Lattice_Change_Basic::setup_gradient(ucell, lat, grad, stress);
     // use energy_in and istep to setup etot and etot_old.
     Lattice_Change_Basic::setup_etot(etot_in, 0);
     // use gradient and etot and etot_old to check
@@ -125,7 +126,7 @@ CG_begin:
     // cout<<"stress  sd = "<<sd<<"  trial = "<<trial<<"  istep = "<<istep<<endl;
     if (flag == 0)
     {
-        Lattice_Change_Basic::check_converged(stress, grad);
+        Lattice_Change_Basic::check_converged(ucell, stress, grad);
         // cout<<"Lattice_Change_Basic::converged = "<<Lattice_Change_Basic::converged<<endl;
     }
 
@@ -162,7 +163,7 @@ CG_begin:
             }
 
             setup_move(move0, cg_gradn, steplength); // move the atom position
-            Lattice_Change_Basic::change_lattice(move0, lat);
+            Lattice_Change_Basic::change_lattice(ucell, move0, lat);
 
             for (int i = 0; i < dim; i++) // grad0 ,cg_grad0 are used to store the grad and cg_grad for the future using
             {
@@ -218,7 +219,7 @@ CG_begin:
                 }
 
                 setup_move(move, cg_gradn, best_x);
-                Lattice_Change_Basic::change_lattice(move, lat);
+                Lattice_Change_Basic::change_lattice(ucell, move, lat);
 
                 trial = false;
                 xa = 0;
@@ -276,7 +277,7 @@ CG_begin:
                     }
 
                     setup_move(move, cg_gradn, best_x);
-                    Lattice_Change_Basic::change_lattice(move, lat);
+                    Lattice_Change_Basic::change_lattice(ucell, move, lat);
 
                     Lattice_Change_Basic::lattice_change_ini = xc;
                 }
