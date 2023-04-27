@@ -1,0 +1,18 @@
+INPUT_PARAMETERS
+suffix              autotest
+calculation         scf
+ntype               1
+nspin               1
+pseudo_dir          ../../PP_ORB
+symmetry            1
+nbands              10 
+
+ecutwfc             50
+scf_thr             1.0e-7  // about iteration
+
+basis_type		pw
+smearing_method            gauss
+smearing_sigma               0.002
+
+mixing_type         pulay       // about charge mixing
+mixing_beta         0.7

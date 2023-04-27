@@ -2,6 +2,7 @@
 #define LATTICE_CHANGE_BASIC_H
 
 #include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 
 namespace Lattice_Change_Basic
 {
@@ -16,22 +17,23 @@ extern double etot;         // total energy of this step,
 extern double etot_p;       // total energy of last step,
 
 extern double lattice_change_ini; // initial value of trust radius,
+extern std::string fixed_axes;    // convert from INPUT.fixed_axes
 
 //----------------------------------------------------------------------------
 // setup the gradient, all the same for any geometry optimization methods.
 //----------------------------------------------------------------------------
-void setup_gradient(double *lat, double *grad, ModuleBase::matrix &stress);
+void setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress);
 
 //----------------------------------------------------------------------------
 // move the atom positions, considering the periodic boundary condition.
 //----------------------------------------------------------------------------
-void change_lattice(double *move, double *lat);
+void change_lattice(UnitCell &ucell, double *move, double *lat);
 
 //----------------------------------------------------------------------------
 // check the converged conditions ( if largest gradient is smaller than
 // the threshold)
 //----------------------------------------------------------------------------
-void check_converged(ModuleBase::matrix &stress, double *grad);
+void check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad);
 
 //----------------------------------------------------------------------------
 // terminate the geometry optimization.

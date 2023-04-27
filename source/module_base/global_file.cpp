@@ -235,7 +235,7 @@ void ModuleBase::Global_File::close_log( std::ofstream &ofs,const std::string &f
 	{
     	ofs.close();
 	}
-    ofs << "CLOSE "<<fn<<".log"<<" DONE."<<std::endl;
+    //ofs << "CLOSE "<<fn<<".log"<<" DONE."<<std::endl;
     return;
 }
 

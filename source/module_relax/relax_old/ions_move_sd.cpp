@@ -1,7 +1,8 @@
 #include "ions_move_sd.h"
 
 #include "ions_move_basic.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 
 using namespace Ions_Move_Basic;
 
@@ -27,7 +28,7 @@ void Ions_Move_SD::allocate(void)
     this->pos_saved = new double[dim];
 }
 
-void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
+void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -46,7 +47,7 @@ void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
     // 0: ediff < 0
     bool judgement = 0;
     setup_etot(etot_in, judgement);
-    setup_gradient(pos, grad, force);
+    setup_gradient(ucell, force, pos, grad);
 
     if (istep == 1 || etot_in <= energy_saved)
     {
@@ -67,10 +68,10 @@ void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
         }
     }
 
-    Ions_Move_Basic::check_converged(grad);
+    Ions_Move_Basic::check_converged(ucell, grad);
     if (Ions_Move_Basic::converged)
     {
-        Ions_Move_Basic::terminate();
+        Ions_Move_Basic::terminate(ucell);
     }
     else
     {
@@ -79,7 +80,7 @@ void Ions_Move_SD::start(const ModuleBase::matrix& force, const double& etot_in)
         {
             move[i] = -grad_saved[i] * trust_radius;
         }
-        move_atoms(move, pos_saved);
+        move_atoms(ucell, move, pos_saved);
         Ions_Move_Basic::update_iter++;
     }
 

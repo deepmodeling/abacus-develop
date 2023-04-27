@@ -2,6 +2,7 @@
 #define IONS_MOVE_BASIC_H
 
 #include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 
 namespace Ions_Move_Basic
 {
@@ -27,23 +28,23 @@ extern int out_stru; // output the structure or not
 //----------------------------------------------------------------------------
 // setup the gradient, all the same for any geometry optimization methods.
 //----------------------------------------------------------------------------
-void setup_gradient(double *pos, double *grad, const ModuleBase::matrix &force);
+void setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad);
 
 //----------------------------------------------------------------------------
 // move the atom positions, considering the periodic boundary condition.
 //----------------------------------------------------------------------------
-void move_atoms(double *move, double *pos);
+void move_atoms(UnitCell &ucell, double *move, double *pos);
 
 //----------------------------------------------------------------------------
 // check the converged conditions ( if largest gradient is smaller than
 // the threshold)
 //----------------------------------------------------------------------------
-void check_converged(const double *grad);
+void check_converged(const UnitCell &ucell, const double *grad);
 
 //----------------------------------------------------------------------------
 // terminate the geometry optimization.
 //----------------------------------------------------------------------------
-void terminate(void);
+void terminate(const UnitCell &ucell);
 
 //----------------------------------------------------------------------------
 // setup the total energy, keep the new energy or not.
