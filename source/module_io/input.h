@@ -73,6 +73,7 @@ class Input
     //==========================================================
     int nche_sto; // number of orders for Chebyshev expansion in stochastic DFT //qinarui 2021-2-5
     int nbands_sto;			// number of stochastic bands //qianrui 2021-2-5
+    std::string nbndsto_str; // string parameter for stochastic bands
     int seed_sto; // random seed for sDFT
     double emax_sto; // Emax & Emin to normalize H
     double emin_sto;

@@ -2,8 +2,10 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 calculation     scf
+esolver_type    sdft
 
 nbands			100
+nbands_sto      0         #execute KSDFT
 pseudo_dir	../../PP_ORB
 symmetry	    1
 kpar            2
