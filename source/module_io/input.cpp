@@ -687,7 +687,10 @@ bool Input::Read(const std::string &fn)
         {
             std::string nbsto_str;
             read_value(ifs, nbndsto_str);
-            nbands_sto = std::stoi(nbndsto_str);
+            if (nbndsto_str != "all")
+            {
+                nbands_sto = std::stoi(nbndsto_str);
+            }
         }
         else if (strcmp("kspacing", word) == 0)
         {

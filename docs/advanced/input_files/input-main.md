@@ -908,9 +908,7 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
   - nbands_sto > 0: This parameter determines the number of stochastic orbitals to be calculated in both SDFT and MDFT. Increasing the number of bands will result in more precise results and smaller stochastic errors ($ \propto 1/\sqrt{N_{\chi}}$);
   If you want to perform MDFT, you should set the parameter [nbands](#nbands), which represents the number of KS orbitals.
   - nbands_sto = 0: This means that a KSDFT calculation will be executed.
-  - nbands_sto = all: This uses all complete basis to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
-  
-  
+  - nbands_sto = all: This uses all complete basis to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors
 - **Default**: 256
 
 ### nche_sto
