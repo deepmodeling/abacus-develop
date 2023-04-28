@@ -12,12 +12,12 @@ std::vector<double> Conv_Coulomb_Pot_K::cal_psi_ccp( const std::vector<double> &
 
 // rongshi add 2022-07-27
 // Sphere truction -- Spencer
-std::vector<double> Conv_Coulomb_Pot_K::cal_psi_hf(const std::vector<double> &psif,
+std::vector<double> Conv_Coulomb_Pot_K::cal_psi_hf(const int& nks, const std::vector<double> &psif,
                                                    const std::vector<double> &k_radial,
                                                    const double omega = 0)
 {	
     const int nspin0 = (GlobalV::NSPIN==2) ? 2 : 1;
-    const double Rc = std::pow(0.75 * GlobalC::kv.nks/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
+    const double Rc = std::pow(0.75 * nks/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
     std::vector<double> psik2_ccp(psif.size());
     for (size_t ik = 0; ik < psif.size(); ++ik)
         psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1 - std::cos(k_radial[ik] * Rc));
@@ -43,7 +43,8 @@ Numerical_Orbital_Lm Conv_Coulomb_Pot_K::cal_orbs_ccp<Numerical_Orbital_Lm>(
 	const Numerical_Orbital_Lm &orbs,
 	const Ccp_Type &ccp_type,
 	const std::map<std::string,double> &parameter,
-	const double rmesh_times)
+    const double rmesh_times,
+    const int& nks)
 {
 	std::vector<double> psik2_ccp;
 	switch(ccp_type)
@@ -51,7 +52,7 @@ Numerical_Orbital_Lm Conv_Coulomb_Pot_K::cal_orbs_ccp<Numerical_Orbital_Lm>(
 		case Ccp_Type::Ccp:
 			psik2_ccp = cal_psi_ccp( orbs.get_psif() );		break;
 		case Ccp_Type::Hf:
-        	psik2_ccp = cal_psi_hf(orbs.get_psif(), orbs.get_k_radial());      break;
+        	psik2_ccp = cal_psi_hf(nks, orbs.get_psif(), orbs.get_k_radial());      break;
 		case Ccp_Type::Hse:
 			psik2_ccp = cal_psi_hse( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hse_omega") );		break;
 		default:

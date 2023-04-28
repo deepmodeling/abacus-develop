@@ -12,9 +12,13 @@ class Ions_Move_Methods
     Ions_Move_Methods();
     ~Ions_Move_Methods();
 
-    void allocate(void);
+    void allocate(const int &natom);
     // void cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot);
-    void cal_movement(const int &istep, const int &force_step, const ModuleBase::matrix &f, const double &etot);
+    void cal_movement(const int &istep,
+                      const int &force_step,
+                      const ModuleBase::matrix &f,
+                      const double &etot,
+                      UnitCell &ucell);
 
     bool get_converged(void) const
     {

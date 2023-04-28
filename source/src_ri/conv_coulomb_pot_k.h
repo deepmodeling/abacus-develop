@@ -18,8 +18,9 @@ public:
 		const T &orbs,
 		const Ccp_Type &ccp_type,
 		const std::map<std::string,double> &parameter,
-		const double rmesh_times);
-	
+        const double rmesh_times,
+        const int& nks);
+
 	template<typename T> static T cal_orbs_ccp_rmesh(
 		const T & orbs,
 		const Ccp_Type &ccp_type,
@@ -37,7 +38,7 @@ private:
 
 	static std::vector<double> cal_psi_ccp( const std::vector<double> & psif );
 	
-	static std::vector<double> cal_psi_hf(const std::vector<double> &psif,
+	static std::vector<double> cal_psi_hf(const int& nks, const std::vector<double> &psif,
                                           const std::vector<double> &k_radial,
                                           const double omega);
 

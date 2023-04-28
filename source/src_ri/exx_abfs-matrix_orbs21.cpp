@@ -11,7 +11,6 @@
 
 #include<sys/time.h>					// Peize Lin test
 #include "../src_ri/test_code/test_function.h"			// Peize Lin test 2016-04-05
-#include "../src_ri/test_code/exx_lcao-test.h"
 #include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 
 void Exx_Abfs::Matrix_Orbs21::init(

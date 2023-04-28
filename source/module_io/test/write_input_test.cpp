@@ -44,7 +44,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("esolver_type                   ksdft #the energy solver: ksdft, sdft, ofdft, tddft, lj, dp"));
         EXPECT_THAT(output,testing::HasSubstr("ntype                          1 #atom species number"));
         EXPECT_THAT(output,testing::HasSubstr("nspin                          1 #1: single spin; 2: up and down spin; 4: noncollinear spin"));
-        EXPECT_THAT(output,testing::HasSubstr("kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 which means read KPT file"));
+        EXPECT_THAT(output,testing::HasSubstr("kspacing                       0 0 0  #unit in 1/bohr, should be > 0, default is 0 which means read KPT file"));
         EXPECT_THAT(output,testing::HasSubstr("min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms"));
         EXPECT_THAT(output,testing::HasSubstr("nbands                         8 #number of bands"));
         EXPECT_THAT(output,testing::HasSubstr("nbands_sto                     256 #number of stochastic bands"));

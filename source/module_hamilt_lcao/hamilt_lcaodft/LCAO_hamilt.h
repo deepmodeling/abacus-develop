@@ -28,7 +28,6 @@ class LCAO_Hamilt
     void calculate_STN_R_sparse_for_T(const double &sparse_threshold);
     void calculat_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold);
     void calculat_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold);
-    void calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold);
 #ifdef __EXX
     template<typename Tdata> void calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold,
         const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, RI::Tensor<Tdata>>>> &Hexxs);

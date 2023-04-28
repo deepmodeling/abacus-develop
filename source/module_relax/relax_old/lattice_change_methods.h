@@ -3,6 +3,7 @@
 
 #include "lattice_change_basic.h"
 #include "lattice_change_cg.h"
+#include "module_cell/unitcell.h"
 
 class Lattice_Change_Methods
 {
@@ -16,7 +17,8 @@ class Lattice_Change_Methods
     void cal_lattice_change(const int &istep,
                             const int &stress_step,
                             const ModuleBase::matrix &stress,
-                            const double &etot);
+                            const double &etot,
+                            UnitCell &ucell);
 
     bool get_converged(void) const
     {

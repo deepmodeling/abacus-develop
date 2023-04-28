@@ -22,7 +22,7 @@ extern int NBANDS;
 extern int NBANDS_ISTATE; // 1.05 // mohan add 2011-03-22
 extern int NLOCAL; // 1.1 // mohan add 2009-05-29
 
-extern double KSPACING;
+extern double KSPACING[3];
 extern double MIN_DIST_COEF;
 
 extern double PSEUDORCUT;

@@ -66,7 +66,9 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"default");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -400,7 +402,9 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"hse");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -949,12 +953,12 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("please don't set diago_proc with lcao base"));
 	INPUT.diago_proc = 1;
 	//
-	INPUT.kspacing = -1;
+	INPUT.kspacing[0] = -1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("kspacing must > 0"));
-	INPUT.kspacing = 0.8;
+	INPUT.kspacing[0] = INPUT.kspacing[1] = INPUT.kspacing[2] = 0.8;
 	//
 	INPUT.nelec = -1;
 	testing::internal::CaptureStdout();
@@ -1434,4 +1438,57 @@ TEST_F(InputTest, Check)
 	*/
 }
 
+
 #undef private
+
+
+class ReadKSpacingTest : public ::testing::Test {
+protected:
+    void SetUp() 
+	{
+        // create a temporary file for testing
+        tmpfile = std::tmpnam(nullptr);
+        std::ofstream ofs(tmpfile);
+        ofs << "1.0"; // valid input
+        ofs.close();
+    }
+
+    void TearDown() override {
+        std::remove(tmpfile.c_str());
+    }
+
+    std::string tmpfile;
+};
+
+TEST_F(ReadKSpacingTest, ValidInputOneValue) {
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 1.0);
+    EXPECT_EQ(INPUT.kspacing[2], 1.0);
+}
+
+TEST_F(ReadKSpacingTest, ValidInputThreeValue) {
+	std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0 3.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 2.0);
+    EXPECT_EQ(INPUT.kspacing[2], 3.0);
+}
+
+TEST_F(ReadKSpacingTest, InvalidInput) {
+    std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+	testing::internal::CaptureStdout();
+	INPUT.read_kspacing(ifs);
+	std::string output;
+	output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(ifs.fail());
+}

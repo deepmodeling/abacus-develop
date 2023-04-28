@@ -139,9 +139,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD);
+                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD);
+                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, GlobalC::kv);
         }
     }
 #endif
@@ -1179,8 +1179,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, this->LOC, *this->LOWF.ParaV);
-        rpa_lri_double.init(MPI_COMM_WORLD);
+        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, GlobalC::kv, this->LOC, *this->LOWF.ParaV);
+        rpa_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
     }
 #endif

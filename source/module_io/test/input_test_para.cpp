@@ -73,7 +73,9 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"default");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
