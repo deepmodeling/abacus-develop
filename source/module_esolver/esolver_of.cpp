@@ -1133,7 +1133,7 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     }
     else if (this->of_kinetic == "lkt")
     {
-        this->lkt.get_stress(this->pphi, this->pw_rho);
+        this->lkt.get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho);
         this->vw.get_stress(pelec->charge->rho, this->pw_rho);
         kinetic_stress += this->lkt.stress + this->vw.stress;
     }

@@ -135,16 +135,70 @@ void KEDF_LKT::lkt_potential(const double * const * prho, ModulePW::PW_Basis *pw
     ModuleBase::timer::tick("KEDF_LKT", "LKT_potential");
 }
 
-void KEDF_LKT::get_stress(const double * const * prho, ModulePW::PW_Basis *pw_rho)
+void KEDF_LKT::get_stress(const double cell_vol, const double * const * prho, ModulePW::PW_Basis *pw_rho)
 {
-    // Waiting for update.
-    // double temp = 0.;
-    // temp = 2. * this->LKTenergy / (3. * cellVol);
+    double *as = new double[this->nx]; // a*s
+    double **nabla_rho = new double*[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        nabla_rho[i] = new double[this->nx];
+    }
+    double *nabla_term = new double[this->nx];
 
-    // for (int i = 0; i < 3; ++i)
-    // {
-    //     this->stress(i, i) = temp;
-    // }
+    if (GlobalV::NSPIN  == 1)
+    {
+        this->nabla(prho[0], pw_rho, nabla_rho);
+        this->get_as(prho[0], nabla_rho, as);
+
+        for (int alpha = 0; alpha < 3; ++alpha)
+        {
+            for (int beta = alpha; beta < 3; ++beta)
+            {
+                this->stress(alpha, beta) = 0;
+
+                if (alpha == beta)
+                {
+                    this->stress(alpha, beta) = 2.0/3.0 / cell_vol * this->LKTenergy;
+                }
+
+                double integral_term = 0.;
+                for (int ir = 0; ir < this->nx; ++ir)
+                {
+                    double coef = std::tanh(as[ir]) / std::cosh(as[ir]);
+                    if (as[ir] != 0.)
+                    {
+                        integral_term += - nabla_rho[alpha][ir] * nabla_rho[beta][ir]
+                                         / as[ir] / prho[0][ir]
+                                         * std::pow(this->s_coef * this->lkt_a, 2) * coef;
+                    }
+                    if (alpha == beta)
+                    {
+                        integral_term += 1.0/3.0 * as[ir] * std::pow(prho[0][ir], 5.0/3.0) * coef;
+                    }
+                }
+                Parallel_Reduce::reduce_double_all(integral_term);
+                integral_term *= this->cTF * this->dV / cell_vol;
+
+                this->stress(alpha, beta) += integral_term;
+            }
+        }
+        for (int alpha = 1; alpha < 3; ++alpha)
+        {
+            for (int beta = 0; beta < alpha; ++beta)
+            {
+                this->stress(alpha, beta) = this->stress(beta, alpha);
+            }
+        }
+    }
+    else if (GlobalV::NSPIN == 2)
+    {
+        // Waiting for update
+    }
+
+    delete[] as;
+    for (int i = 0; i < 3; ++i) delete[] nabla_rho[i];
+    delete[] nabla_rho;
+    delete[] nabla_term;
 }
 
 void KEDF_LKT::nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **routput)

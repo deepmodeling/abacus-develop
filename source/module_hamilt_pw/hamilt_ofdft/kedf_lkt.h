@@ -25,7 +25,7 @@ public:
     double get_energy(const double * const *prho, ModulePW::PW_Basis *pw_rho);
     double get_energy_density(const double * const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho);
     void lkt_potential(const double * const * prho, ModulePW::PW_Basis *pw_rho,  ModuleBase::matrix &rpotential);
-    void get_stress(const double * const * prho, ModulePW::PW_Basis *pw_rho);
+    void get_stress(const double cellVol, const double * const * prho, ModulePW::PW_Basis *pw_rho);
 
     double LKTenergy = 0.; // LKT energy
     ModuleBase::matrix stress;
