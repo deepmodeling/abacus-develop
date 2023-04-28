@@ -138,8 +138,12 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
         }
         if (epsilon > MAX_EPS)
+        {
             ofs_running << "ERROR: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl
-            << "Please set `symmetry` to 0 or -1 in INPUT file.  "<< std::endl;
+                << "Please set `symmetry` to 0 or -1 in INPUT file.  " << std::endl;
+            ModuleBase::QUIT();
+        }
+            
         if (eps_changed)
         {
             ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl
@@ -148,7 +152,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         assert(tmp_nrotk == this->nrotk);
     }
     else
-	this->getgroup(this->nrot, this->nrotk, ofs_running);
+        this->getgroup(this->nrot, this->nrotk, ofs_running);
 
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
