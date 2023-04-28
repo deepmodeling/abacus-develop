@@ -104,11 +104,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3, 
              this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
              
-    GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", real_brav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", ilattname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", real_brav);
-    Symm_Other::print1(real_brav, cel_const, GlobalV::ofs_running);
+    ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS TYPE", real_brav);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS LATTICE NAME", ilattname);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav", real_brav);
+    Symm_Other::print1(real_brav, cel_const, ofs_running);
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
@@ -139,15 +139,15 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         }
         if (epsilon > MAX_EPS)
         {
-            ofs_running << "ERROR: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl
-                << "Please set `symmetry` to 0 or -1 in INPUT file.  " << std::endl;
+            ofs_running << "ERROR: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl;
+            ofs_running << "Please set `symmetry` to 0 or -1 in INPUT file.  " << std::endl;
             ModuleBase::QUIT();
         }
             
         if (eps_changed)
         {
-            ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl
-                << " Changed `symmetry_prec` to " << std::setiosflags(ios::scientific) << epsilon <<"." << std::endl;
+            ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl;
+            ofs_running << " Changed `symmetry_prec` to " << epsilon <<"." << std::endl;
         }
         assert(tmp_nrotk == this->nrotk);
     }
