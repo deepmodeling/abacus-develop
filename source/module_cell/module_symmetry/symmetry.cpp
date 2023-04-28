@@ -25,6 +25,8 @@ int Symmetry::symm_flag=0;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
+    constexpr double MAX_EPS = 1e-3;
+    constexpr double MULT_EPS = 2.0;
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
 	ModuleBase::timer::tick("Symmetry","analy_sys");
@@ -118,8 +120,36 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
-	this->setgroup(this->symop, this->nop, this->real_brav);
+    this->setgroup(this->symop, this->nop, this->real_brav);
+    
+    if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
+    {
+        int tmp_nrot, tmp_nrotk;
+        this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
+        //some different method to enlarge symmetry_prec
+        bool eps_changed = false;
+        auto eps_mult = [this](double mult) {epsilon *= mult;};
+        auto eps_to = [this](double new_eps) {epsilon = new_eps;};
+        //enlarge epsilon and regenerate pointgroup
+        while (tmp_nrotk < this->nrotk && epsilon < MAX_EPS) 
+        {
+            eps_mult(MULT_EPS);
+            eps_changed = true;
+            this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
+        }
+        if (epsilon > MAX_EPS)
+            ofs_running << "ERROR: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl
+            << "Please set `symmetry` to 0 or -1 in INPUT file.  "<< std::endl;
+        if (eps_changed)
+        {
+            ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl
+                << " Changed `symmetry_prec` to " << setiosflags(ios::scientific) << epsilon << "." << std::endl;
+        }
+        assert(tmp_nrotk == this->nrotk);
+    }
+    else
 	this->getgroup(this->nrot, this->nrotk, ofs_running);
+
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
