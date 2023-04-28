@@ -25,7 +25,7 @@ int Symmetry::symm_flag=0;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
-    const double MAX_EPS = 1e-3;
+    const double MAX_EPS = std::max(1e-3, epsilon);
     const double MULT_EPS = 2.0;
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
