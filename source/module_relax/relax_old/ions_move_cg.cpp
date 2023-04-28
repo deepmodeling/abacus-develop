@@ -1,7 +1,8 @@
 #include "ions_move_cg.h"
 
 #include "ions_move_basic.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 using namespace Ions_Move_Basic;
 
 double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5
@@ -57,7 +58,7 @@ void Ions_Move_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::start(const ModuleBase::matrix &force, const double &etot_in)
+void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(dim > 0);
@@ -111,7 +112,7 @@ CG_begin:
         nbrent = 0;
     }
 
-    Ions_Move_Basic::setup_gradient(pos, grad, force);
+    Ions_Move_Basic::setup_gradient(ucell, force, pos, grad);
     // use energy_in and istep to setup etot and etot_old.
     Ions_Move_Basic::setup_etot(etot_in, 0);
     // use gradient and etot and etot_old to check
@@ -120,13 +121,13 @@ CG_begin:
     // std::cout<<"sd = "<<sd<<"  trial = "<<trial<<"  istep = "<<istep<<std::endl;
     if (flag == 0)
     {
-        Ions_Move_Basic::check_converged(grad);
+        Ions_Move_Basic::check_converged(ucell, grad);
         // std::cout<<"Ions_Move_Basic::converged = "<<Ions_Move_Basic::converged<<std::endl;
     }
 
     if (Ions_Move_Basic::converged)
     {
-        Ions_Move_Basic::terminate();
+        Ions_Move_Basic::terminate(ucell);
     }
     else
     {
@@ -157,7 +158,7 @@ CG_begin:
             }
 
             setup_move(move0, cg_gradn, steplength); // move the atom position
-            Ions_Move_Basic::move_atoms(move0, pos);
+            Ions_Move_Basic::move_atoms(ucell, move0, pos);
 
             for (int i = 0; i < dim; i++) // grad0 ,cg_grad0 are used to store the grad and cg_grad for the future using
             {
@@ -223,7 +224,7 @@ CG_begin:
                 }
 
                 setup_move(move, cg_gradn, best_x);
-                Ions_Move_Basic::move_atoms(move, pos);
+                Ions_Move_Basic::move_atoms(ucell, move, pos);
 
                 trial = false;
                 xa = 0;
@@ -281,7 +282,7 @@ CG_begin:
                     }
 
                     setup_move(move, cg_gradn, best_x);
-                    Ions_Move_Basic::move_atoms(move, pos);
+                    Ions_Move_Basic::move_atoms(ucell, move, pos);
 
                     Ions_Move_Basic::relax_bfgs_init = xc;
                 }

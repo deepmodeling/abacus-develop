@@ -12,8 +12,8 @@ namespace elecstate
 class ElecState
 {
   public:
-    ElecState(){};
-    ElecState(Charge* charge_in){this->charge = charge_in;};
+    ElecState(){}
+    ElecState(Charge* charge_in){this->charge = charge_in;}
     virtual ~ElecState()
     {
         if(this->pot != nullptr) 
@@ -21,7 +21,7 @@ class ElecState
             delete this->pot;
             this->pot = nullptr;
         }
-    };
+    }
     void init_ks(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
                       int nk_in); // number of k points

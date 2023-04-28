@@ -13,7 +13,7 @@
 // #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 using namespace std;
 
-template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
+template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 {
     ModuleBase::TITLE("RPA_LRI", "init");
     ModuleBase::timer::tick("RPA_LRI", "init");
@@ -21,6 +21,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
     this->lcaos = exx_lri_rpa.lcaos;
     this->abfs = exx_lri_rpa.abfs;
     this->abfs_ccp = exx_lri_rpa.abfs_ccp;
+    this->p_kv = &kv_in;
 
     //	this->cv = std::move(exx_lri_rpa.cv);
     //    exx_lri_rpa.cv = exx_lri_rpa.cv;
@@ -31,7 +32,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::cal_rpa_cv()
     std::vector<TA> atoms(GlobalC::ucell.nat);
     for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
         atoms[iat] = iat;
-    const std::array<Tcell, Ndim> period = {GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]};
+    const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
 
     const std::array<Tcell, Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
@@ -59,11 +60,13 @@ template <typename Tdata> void RPA_LRI<Tdata>::cal_rpa_cv()
 }
 
 template <typename Tdata>
-void RPA_LRI<Tdata>::cal_postSCF_exx(const MPI_Comm &mpi_comm_in,
-                                     const Local_Orbital_Charge &loc,
-                                     const Parallel_Orbitals &pv)
+void RPA_LRI<Tdata>::cal_postSCF_exx(
+                const MPI_Comm& mpi_comm_in,
+                const K_Vectors& kv,
+                const Local_Orbital_Charge& loc,
+                const Parallel_Orbitals& pv)
 {
-    exx_lri_rpa.init(mpi_comm_in);
+    exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
     exx_lri_rpa.cal_exx_elec(loc, pv);
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
@@ -101,7 +104,7 @@ void RPA_LRI<Tdata>::out_eigen_vector(const Parallel_Orbitals &parav, const psi:
 
     ModuleBase::TITLE("DFT_RPA_interface", "out_eigen_vector");
 
-    const int nks_tot = GlobalV::NSPIN == 2 ? GlobalC::kv.nks / 2 : GlobalC::kv.nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? p_kv->nks / 2 : p_kv->nks;
     const int npsin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
     const std::complex<double> zero(0.0, 0.0);
 
@@ -157,7 +160,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_struc()
         return;
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)GlobalC::kv.nks / 2 : GlobalC::kv.nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->nks / 2 : p_kv->nks;
     ModuleBase::Matrix3 lat = GlobalC::ucell.latvec / ModuleBase::BOHR_TO_A;
     ModuleBase::Matrix3 G = GlobalC::ucell.G * TWOPI_Bohr2A;
     std::stringstream ss;
@@ -172,13 +175,13 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_struc()
     ofs << G.e21 << std::setw(15) << G.e22 << std::setw(15) << G.e23 << std::endl;
     ofs << G.e31 << std::setw(15) << G.e32 << std::setw(15) << G.e33 << std::endl;
 
-    ofs << GlobalC::kv.nmp[0] << std::setw(6) << GlobalC::kv.nmp[1] << std::setw(6) << GlobalC::kv.nmp[2]
+    ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2]
         << std::setw(6) << std::endl;
 
     for (int ik = 0; ik != nks_tot; ik++)
-        ofs << std::setw(15) << std::fixed << std::setprecision(9) << GlobalC::kv.kvec_c[ik].x * TWOPI_Bohr2A
-            << std::setw(15) << std::fixed << std::setprecision(9) << GlobalC::kv.kvec_c[ik].y * TWOPI_Bohr2A
-            << std::setw(15) << std::fixed << std::setprecision(9) << GlobalC::kv.kvec_c[ik].z * TWOPI_Bohr2A
+        ofs << std::setw(15) << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A
+            << std::setw(15) << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].y * TWOPI_Bohr2A
+            << std::setw(15) << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].z * TWOPI_Bohr2A
             << std::endl;
     ofs.close();
     return;
@@ -189,7 +192,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_bands(const elecstate::ElecSt
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
     if (GlobalV::MY_RANK != 0)
         return;
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)GlobalC::kv.nks / 2 : GlobalC::kv.nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->nks / 2 : p_kv->nks;
     const int nspin_tmp = GlobalV::NSPIN == 2 ? 2 : 1;
     std::stringstream ss;
     ss << "band_out";
@@ -257,7 +260,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
         mu_shift[I] = all_mu;
         all_mu += exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[I]);
     }
-    const int nks_tot = GlobalV::NSPIN == 2 ? (int)GlobalC::kv.nks / 2 : GlobalC::kv.nks;
+    const int nks_tot = GlobalV::NSPIN == 2 ? (int)p_kv->nks / 2 : p_kv->nks;
     std::stringstream ss;
     ss << "coulomb_mat_" << GlobalV::MY_RANK << ".txt";
 
@@ -283,7 +286,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
                 RI::Tensor<complex<double>> tmp_VR = RI::Global_Func::convert<complex<double>>(JPp.second);
 
                 const double arg = 1
-                                   * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * GlobalC::ucell.latvec))
+                                   * (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * GlobalC::ucell.latvec))
                                    * ModuleBase::TWO_PI; // latvec
                 const complex<double> kphase = complex<double>(cos(arg), sin(arg));
                 if (Vq_k_IJ[J].empty())
@@ -297,7 +300,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
                 size_t nu_num = exx_lri_rpa.cv.get_index_abfs_size(GlobalC::ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << GlobalC::kv.wk[ik] / 2.0 * GlobalV::NSPIN << std::endl;
+                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * GlobalV::NSPIN << std::endl;
                 for (int i = 0; i != vq_J.data->size(); i++)
                 {
                     ofs << std::setw(21) << std::fixed << std::setprecision(12) << (*vq_J.data)[i].real()
