@@ -170,6 +170,7 @@
 		- [of\_wt\_beta](#of_wt_beta)
 		- [of\_wt\_rho0](#of_wt_rho0)
 		- [of\_hold\_rho0](#of_hold_rho0)
+		- [of\_lkt\_a](#of_lkt_a)
 		- [of\_read\_kernel](#of_read_kernel)
 		- [of\_kernel\_file](#of_kernel_file)
 		- [of\_full\_pw](#of_full_pw)
@@ -1512,7 +1513,7 @@ Warning: this function is not robust enough for the current version. Please try 
 ### of_kinetic
 
 * **Type**: string
-* **Description**: the type of kinetic energy density functional, including tf, vw, wt, and tf+.
+* **Description**: the type of kinetic energy density functional, including tf (Thomas-Fermi), vw (von Weizsäcker), wt (Wang-Teter), tf+ (TF$\rm{\lambda}$vW), and lkt (Luo-Karasiev-Trickey).
 * **Default**: wt
 
 ### of_method
@@ -1580,6 +1581,12 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Description**: If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
 - **Default**: 0
+
+### of_lkt_a
+
+- **Type**: Double
+- **Description**: parameter a of LKT KEDF.
+- **Default**: 1.3
 
 ### of_read_kernel
 
