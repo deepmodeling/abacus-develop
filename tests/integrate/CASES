@@ -7,6 +7,7 @@
 101_PW_OU_pseudopots
 101_PW_upf100_Al_pseudopots
 101_PW_upf201_Al_pseudopots
+101_PW_upf201_Eu_pseudopots
 101_PW_upf201_blps_pseudopots
 101_PW_upf201_pseudopots
 101_PW_upf201_upf100_pseudopots
@@ -270,6 +271,7 @@
 902_OF_KE_TF+
 902_OF_KE_vW
 902_OF_KE_WT
+902_OF_KE_LKT
 903_OF_TF_weight
 903_OF_vW_weight
 903_OF_WT_alphabeta
