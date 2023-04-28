@@ -25,8 +25,8 @@ int Symmetry::symm_flag=0;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
-    constexpr double MAX_EPS = 1e-3;
-    constexpr double MULT_EPS = 2.0;
+    const double MAX_EPS = 1e-3;
+    const double MULT_EPS = 2.0;
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
 	ModuleBase::timer::tick("Symmetry","analy_sys");
@@ -147,7 +147,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         if (eps_changed)
         {
             ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl
-                << " Changed `symmetry_prec` to " << setiosflags(ios::scientific) << epsilon << "." << std::endl;
+                << " Changed `symmetry_prec` to " << std::setiosflags(ios::scientific) << epsilon <<"." << std::endl;
         }
         assert(tmp_nrotk == this->nrotk);
     }
