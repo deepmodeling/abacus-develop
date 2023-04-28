@@ -97,7 +97,7 @@ void K_Vectors::set(
         if (!match)
         {
             ModuleBase::WARNING_QUIT("K_Vectors:ibz_kpoint",
-            "symmetry operation of reciprocal lattice is wrong! ");
+            "Symmetry operation in reciprocal lattice cannot match the equivalent k-points. Maybe a higher `symmetry_prec` is needed?  ");
         }
         if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
