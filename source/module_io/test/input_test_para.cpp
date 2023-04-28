@@ -317,6 +317,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,5./6.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a,1.3);
         EXPECT_TRUE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);

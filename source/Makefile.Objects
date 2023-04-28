@@ -218,6 +218,7 @@ OBJS_HAMILT=hamilt_pw.o\
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\
     kedf_wt.o\
+    kedf_lkt.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\

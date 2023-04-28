@@ -330,6 +330,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("of_wt_beta                     0.833333 #parameter beta of WT KEDF"));
         EXPECT_THAT(output,testing::HasSubstr("of_wt_rho0                     1 #the average density of system, used in WT KEDF, in Bohr^-3"));
         EXPECT_THAT(output,testing::HasSubstr("of_hold_rho0                   0 #If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero"));
+        EXPECT_THAT(output,testing::HasSubstr("of_lkt_a                       1.3 #parameter a of LKT KEDF"));
         EXPECT_THAT(output,testing::HasSubstr("of_full_pw                     0 #If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used"));
         EXPECT_THAT(output,testing::HasSubstr("of_full_pw_dim                 0 #If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only"));
         EXPECT_THAT(output,testing::HasSubstr("of_read_kernel                 0 #If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF"));

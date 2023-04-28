@@ -184,6 +184,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::of_wt_beta,0.833333);
 	EXPECT_EQ(GlobalV::of_wt_rho0,1.0);
 	EXPECT_EQ(GlobalV::of_hold_rho0,false);
+	EXPECT_EQ(GlobalV::of_lkt_a,1.3);
     EXPECT_EQ(GlobalV::of_full_pw,false);
 	EXPECT_EQ(GlobalV::of_full_pw_dim,0);
 	EXPECT_EQ(GlobalV::of_read_kernel,false);

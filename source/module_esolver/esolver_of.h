@@ -9,6 +9,7 @@
 #include "module_hamilt_pw/hamilt_ofdft/kedf_tf.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_vw.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_wt.h"
+#include "module_hamilt_pw/hamilt_ofdft/kedf_lkt.h"
 #include "module_elecstate/module_charge/charge.h"
 
 namespace ModuleESolver
@@ -93,6 +94,7 @@ private:
     KEDF_TF tf;
     KEDF_vW vw;
     KEDF_WT wt;
+    KEDF_LKT lkt;
 
     // charge extrapolation liuyu add 2022-11-07
     Charge_Extra CE;

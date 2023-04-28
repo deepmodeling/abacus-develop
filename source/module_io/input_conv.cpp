@@ -624,6 +624,7 @@ void Input_Conv::Convert(void)
     GlobalV::of_wt_beta = INPUT.of_wt_beta;
     GlobalV::of_wt_rho0 = INPUT.of_wt_rho0;
     GlobalV::of_hold_rho0 = INPUT.of_hold_rho0;
+    GlobalV::of_lkt_a = INPUT.of_lkt_a;
     GlobalV::of_full_pw = INPUT.of_full_pw;
     GlobalV::of_full_pw_dim = INPUT.of_full_pw_dim;
     GlobalV::of_read_kernel = INPUT.of_read_kernel;

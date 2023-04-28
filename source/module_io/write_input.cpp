@@ -401,6 +401,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_beta", of_wt_beta, "parameter beta of WT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_rho0", of_wt_rho0, "the average density of system, used in WT KEDF, in Bohr^-3");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_hold_rho0", of_hold_rho0, "If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_lkt_a", of_lkt_a, "parameter a of LKT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw", of_full_pw, "If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw_dim", of_full_pw_dim, "If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_read_kernel", of_read_kernel, "If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF");

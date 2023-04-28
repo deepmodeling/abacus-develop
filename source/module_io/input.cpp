@@ -541,6 +541,7 @@ void Input::Default(void)
     of_wt_beta = 5. / 6.;
     of_wt_rho0 = 0.;
     of_hold_rho0 = false;
+    of_lkt_a = 1.3;
     of_full_pw = true;
     of_full_pw_dim = 0;
     of_read_kernel = false;
@@ -2001,6 +2002,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, of_hold_rho0);
         }
+        else if (strcmp("of_lkt_a", word) == 0)
+        {
+            read_value(ifs, of_lkt_a);
+        }
         else if (strcmp("of_full_pw", word) == 0)
         {
             read_bool(ifs, of_full_pw);
@@ -3116,6 +3121,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(of_wt_beta);
     Parallel_Common::bcast_double(of_wt_rho0);
     Parallel_Common::bcast_bool(of_hold_rho0);
+    Parallel_Common::bcast_double(of_lkt_a);
     Parallel_Common::bcast_bool(of_full_pw);
     Parallel_Common::bcast_int(of_full_pw_dim);
     Parallel_Common::bcast_bool(of_read_kernel);
