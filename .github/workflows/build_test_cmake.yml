@@ -33,7 +33,7 @@ jobs:
           name: "Build with GNU compilers and extra components without ELPA"
         - tag: gnu
           build_args: "-DENABLE_MPI=0"
-          name: "Build with GNU compilers without LCAO and MPI."
+          name: "Build with GNU compilers without LCAO and MPI"
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
