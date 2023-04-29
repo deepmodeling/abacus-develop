@@ -13,7 +13,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
     {
         if (!GlobalV::relax_new)
         {
-            rl_old.init_relax();
+            rl_old.init_relax(GlobalC::ucell.nat);
         }
         else
         {
@@ -72,7 +72,13 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
             }
             else
             {
-                stop = rl_old.relax_step(force, stress, istep, force_step, stress_step); // pengfei Li 2018-05-14
+                stop = rl_old.relax_step(istep,
+                                         GlobalC::en.etot,
+                                         GlobalC::ucell,
+                                         force,
+                                         stress,
+                                         force_step,
+                                         stress_step); // pengfei Li 2018-05-14
             }
 
             if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")

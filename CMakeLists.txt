@@ -30,6 +30,8 @@ option(GIT_SUBMODULE "Check submodules during build" ON)
 option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
+# Do not use the new container by default.
+option(ENABLE_CONTAINER "Enable the new multi-device container." OFF)
 
 if(ENABLE_LCAO)
   set(ABACUS_BIN_NAME abacus)
@@ -558,6 +560,10 @@ if (ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME}
           ri
           libri)
+endif()
+
+if (ENABLE_CONTAINER)
+  target_link_libraries(${ABACUS_BIN_NAME} container kernels)
 endif()
 
 install(PROGRAMS ${ABACUS_BIN_PATH}

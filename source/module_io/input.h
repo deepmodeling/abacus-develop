@@ -59,7 +59,7 @@ class Input
 
     bool berry_phase; // berry phase calculation
     int gdir; // berry phase calculation
-    double kspacing;
+    double kspacing[3];
     double min_dist_coef;
     //==========================================================
     // Wannier functions
@@ -574,6 +574,32 @@ class Input
         ifs.ignore(150, '\n');
         return;
     }
+    void read_kspacing(std::ifstream &ifs)
+    {
+        std::string s;
+        std::getline(ifs, s);
+        std::stringstream ss(s);
+        // read 3 values
+        int count = 0;
+        while ((ss >> kspacing[count]) && count < 3)
+        {
+            count++;
+        }
+        // if not read even one value, or read two values, the input is invalid.
+        if (count == 0 || count == 2)
+        {
+            std::cout << "kspacing can only accept one or three double values." << std::endl;
+            ifs.setstate(std::ios::failbit);
+        }
+        // if only read one value, set all to kspacing[0]
+        if (count == 1)
+        {
+            kspacing[1] = kspacing[0];
+            kspacing[2] = kspacing[0];
+        }
+        // std::cout << "count: " << count << " kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2]
+        // << std::endl;
+    };
 
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);

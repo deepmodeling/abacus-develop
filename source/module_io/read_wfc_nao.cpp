@@ -1,5 +1,4 @@
 #include "read_wfc_nao.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 
@@ -56,7 +55,8 @@ inline int CTOT2q_c(
 // be called in local_orbital_wfc::allocate_k
 int ModuleIO::read_wfc_nao_complex(
     std::complex<double>** ctot, 
-    const int& ik, 
+    const int& ik,
+    const ModuleBase::Vector3<double> kvec_c,
     const Parallel_Orbitals* ParaV, 
     psi::Psi<std::complex<double>>* psi, 
     elecstate::ElecState* pelec)
@@ -108,15 +108,15 @@ int ModuleIO::read_wfc_nao_complex(
 			error = 4;
 		}
 		else if ( 
-			abs(kx-GlobalC::kv.kvec_c[ik].x)>1.0e-5 ||
-			abs(ky-GlobalC::kv.kvec_c[ik].y)>1.0e-5 ||
-			abs(kz-GlobalC::kv.kvec_c[ik].z)>1.0e-5 )
+			abs(kx-kvec_c.x)>1.0e-5 ||
+			abs(ky-kvec_c.y)>1.0e-5 ||
+			abs(kz-kvec_c.z)>1.0e-5 )
 		{	
 			GlobalV::ofs_warning << " k std::vector is not correct" << std::endl;
 			GlobalV::ofs_warning << " Read in kx=" << kx << " ky = " << ky << " kz = " << kz << std::endl;
-			GlobalV::ofs_warning << " In fact, kx=" << GlobalC::kv.kvec_c[ik].x 
-			 << " ky=" << GlobalC::kv.kvec_c[ik].y
-			 << " kz=" << GlobalC::kv.kvec_c[ik].z << std::endl;
+			GlobalV::ofs_warning << " In fact, kx=" << kvec_c.x 
+			 << " ky=" << kvec_c.y
+			 << " kz=" << kvec_c.z << std::endl;
 			 error = 4; 
 		}
         else if (nbands!=GlobalV::NBANDS)
@@ -277,8 +277,8 @@ int ModuleIO::read_wfc_nao(
         {
             int ib;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(is, i));
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(is, i));
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(is, i));
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(is, i));
             assert( (i+1)==ib);
 			//std::cout << " ib=" << ib << std::endl;
             for (int j=0; j<GlobalV::NLOCAL; j++)
