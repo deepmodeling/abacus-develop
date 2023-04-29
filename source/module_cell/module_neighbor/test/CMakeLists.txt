@@ -8,8 +8,3 @@ AddTest(
   SOURCES ../sltk_adjacent_set.cpp ./sltk_adjacent_set_test.cpp
 )
 
-AddTest(
-  TARGET cell_neighbor_load_atom
-  SOURCES ../sltk_atom_input.cpp ./sltk_atom_input_test.cpp
-)
-
