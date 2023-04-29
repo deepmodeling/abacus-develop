@@ -42,5 +42,11 @@ jobs:
       - name: Build
         run: |
           git config --global --add safe.directory `pwd`
-          cmake -B build -DBUILD_TESTING=ON ${{ matrix.build_args }}
-          cmake --build build -j2
+          ${{ if eq(matrix.name, "Build with GNU compilers without LCAO and MPI.")}}:
+            cmake -B build ${{ matrix.build_args }}
+            cmake --build build -j2
+            cd tests/integrate/101_PW_15_pseudopots/
+            ../../../build/abacus_pw 
+          ${{ else }}:  
+            cmake -B build -DBUILD_TESTING=ON ${{ matrix.build_args }}
+            cmake --build build -j2
