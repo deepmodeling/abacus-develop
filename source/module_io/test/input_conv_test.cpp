@@ -127,9 +127,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
 
 	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_01,1);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_02,1);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_03,1);
 	EXPECT_EQ(ELEC_evolve::td_vext,false);
 	EXPECT_EQ(ELEC_evolve::out_dipole,false);
 	EXPECT_EQ(ELEC_evolve::out_efield,false);

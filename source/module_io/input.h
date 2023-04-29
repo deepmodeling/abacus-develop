@@ -372,9 +372,6 @@ class Input
     // Fuxiang He add 2016-10-26
     //==========================================================
     double td_force_dt; //"fs"
-    int td_val_elec_01; // valence electron 01
-    int td_val_elec_02; // valence electron 02
-    int td_val_elec_03; // valence electron 03
     bool td_vext; // add extern potential or not
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not
@@ -382,6 +379,9 @@ class Input
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
+
+    int td_htype; // type of Hamiltonian to calculate propagator
+    int propagator; // method of propagator
 
     int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
 

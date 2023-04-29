@@ -36,20 +36,32 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
     int count = 0;
     std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
     std::vector<std::string> str;
-    std::string::size_type pos1, pos2;
-    std::string c = " ";
-    pos2 = fn.find(c);
-    pos1 = 0;
-    while (std::string::npos != pos2)
-    {
-        str.push_back(fn.substr(pos1, pos2 - pos1));
-        pos1 = pos2 + c.size();
-        pos2 = fn.find(c, pos1);
+    std::stringstream ss(fn);
+    std::string section;
+    while (ss >> section) {
+        int index = 0;
+        if (str.empty()) {
+            while (index < section.size() && std::isspace(section[index])) {
+                index++;
+            }
+        }
+        section.erase(0, index);
+        str.push_back(section);
     }
-    if (pos1 != fn.length())
-    {
-        str.push_back(fn.substr(pos1));
-    }
+    // std::string::size_type pos1, pos2;
+    // std::string c = " ";
+    // pos2 = fn.find(c);
+    // pos1 = 0;
+    // while (std::string::npos != pos2)
+    // {
+    //     str.push_back(fn.substr(pos1, pos2 - pos1));
+    //     pos1 = pos2 + c.size();
+    //     pos2 = fn.find(c, pos1);
+    // }
+    // if (pos1 != fn.length())
+    // {
+    //     str.push_back(fn.substr(pos1));
+    // }
     regex_t reg;
     regcomp(&reg, pattern.c_str(), REG_EXTENDED);
     regmatch_t pmatch[1];
@@ -357,9 +369,6 @@ void Input_Conv::Convert(void)
 //----------------------------------------------------------
 #ifdef __LCAO
     ELEC_evolve::td_force_dt = INPUT.td_force_dt;
-    ELEC_evolve::td_val_elec_01 = INPUT.td_val_elec_01;
-    ELEC_evolve::td_val_elec_02 = INPUT.td_val_elec_02;
-    ELEC_evolve::td_val_elec_03 = INPUT.td_val_elec_03;
     ELEC_evolve::td_vext = INPUT.td_vext;
     if (ELEC_evolve::td_vext)
     {

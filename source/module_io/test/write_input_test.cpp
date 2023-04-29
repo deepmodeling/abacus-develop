@@ -294,9 +294,6 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr(""));    
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (16.tddft)"));
         EXPECT_THAT(output,testing::HasSubstr("td_force_dt                    0.02 #time of force change"));
-        EXPECT_THAT(output,testing::HasSubstr("td_val_elec_01                 1 #td_val_elec_01"));
-        EXPECT_THAT(output,testing::HasSubstr("td_val_elec_02                 1 #td_val_elec_02"));
-        EXPECT_THAT(output,testing::HasSubstr("td_val_elec_03                 1 #td_val_elec_03"));    
         EXPECT_THAT(output,testing::HasSubstr("td_vext                        0 #add extern potential or not"));
         EXPECT_THAT(output,testing::HasSubstr("td_vext_dire                                      1 #extern potential direction"));
         EXPECT_THAT(output,testing::HasSubstr("out_dipole                     0 #output dipole or not"));
