@@ -65,7 +65,7 @@ if(IntelMKL_FOUND)
       INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE_DIR}")
   endif()
   add_library(IntelMKL::MKL INTERFACE IMPORTED)
-  if (ENBALE_MPI)
+  if (ENABLE_MPI)
     set_property(TARGET IntelMKL::MKL PROPERTY
     INTERFACE_LINK_LIBRARIES
     "-Wl,--start-group"
