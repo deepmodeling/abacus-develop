@@ -408,7 +408,6 @@ void Input::Default(void)
     td_vext = false;
     td_vext_dire = "1";
 
-    td_htype = 0;
     propagator = 0;
 
     out_dipole = false;
@@ -1547,10 +1546,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("td_edm", word) == 0)
         {
             read_value(ifs, td_edm);
-        }
-        else if (strcmp("td_htype", word) == 0)
-        {
-            read_value(ifs, td_htype);
         }
         else if (strcmp("propagator", word) == 0)
         {
@@ -2981,7 +2976,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_bool(td_vext);
     Parallel_Common::bcast_string(td_vext_dire);
-    Parallel_Common::bcast_int(td_htype);
     Parallel_Common::bcast_int(propagator);
     Parallel_Common::bcast_int(td_stype);
     Parallel_Common::bcast_string(td_ttype);

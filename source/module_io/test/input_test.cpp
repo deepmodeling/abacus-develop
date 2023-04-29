@@ -254,7 +254,6 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
-		EXPECT_EQ(INPUT.td_htype,0);
 		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		EXPECT_EQ(INPUT.td_ttype,"0");
@@ -590,7 +589,6 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
         EXPECT_EQ(INPUT.td_vext,0);
         // EXPECT_EQ(INPUT.td_vext_dire,"1");
-		EXPECT_EQ(INPUT.td_htype,0);
 		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		// EXPECT_EQ(INPUT.td_ttype,"0");

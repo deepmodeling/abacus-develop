@@ -203,7 +203,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                 this->psi_laststep,
                                 this->Hk_laststep,
                                 this->pelec_td->ekb,
-                                INPUT.td_htype,
+                                td_htype,
                                 INPUT.propagator);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
@@ -382,7 +382,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
 
-        if (INPUT.td_htype == 1)
+        if (td_htype == 1)
         {
             if (this->Hk_laststep == nullptr)
             {
@@ -404,7 +404,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
 
             // store Hamiltonian
-            if (INPUT.td_htype == 1)
+            if (td_htype == 1)
             {
                 this->p_hamilt->updateHk(ik);
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;

@@ -25,6 +25,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
     std::complex<double>** Hk_laststep = nullptr;
     //same as pelec
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
+    int td_htype = 1;
 
   protected:
     virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
