@@ -111,6 +111,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 			    }
                 nb0 = nb;
             }
+			double lmmat[9] = {0, 0, 1, -1, 0, 0, 0, -1, 0};
             for(int id = 0; id < 3; ++id)
             {
                 const int lm = static_cast<int>( nhtolm(it, ih) );
@@ -119,12 +120,24 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
                     ModuleBase::Vector3<double> gg = gk[ig];
                     double ggnorm = gg.norm();
 					if(ggnorm < 1e-8)
-						tmpgradvkb(id, ih, ig) = 0.0;
+					{
+						if(lm == 0 || lm > 3)
+						{
+							tmpgradvkb(id, ih, ig) = 0.0;
+						}
+						else//lm = 1,2,3;  l = 1
+						{
+							//q \to 0 : \nabla(f(q)Y(\hat{q})) = f(q)/q*sqrt(3/4/pi)*vec(-delta(lm,2), -delta(lm,3), delta(lm,1))
+							// tmpgradvkb(id, ih, ig) = 0.0;
+							tmpgradvkb(id, ih, ig) = dvq[ig] * sqrt(3.0/4.0/M_PI) * lmmat[(lm-1)*3 + id];
+						}
+					}
 					else
-
+					{
 			    		tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm 
 												+ dylm[id](lm, ig)/GlobalC::wfcpw->tpiba * vq [ig];//note: dylm/d(tpiba * gx) = 1/tpiba * dylm/dgx
-                    tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
+					}
+					tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
 			    }
             }
         }
@@ -145,9 +158,11 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					for (int ig = 0;ig < npw;++ig)
 					{
                 	    std::complex<double> skig = sk[ig];
-						std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * GlobalC::wfcpw->lat0) * skig;
                 	    pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
-						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;;
+						// std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * GlobalC::wfcpw->lat0) * skig;
+						// pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;
+						// The second term will be eliminate when doing <psi|beta>Dij<beta|psi> or we can say (\nabla_q+\nabla_q')S(q'-q) = 0
+						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;
 					}
 				} //end id
 				++jkb;

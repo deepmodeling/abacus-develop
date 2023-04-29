@@ -11,7 +11,7 @@ cal_force           1
 cal_stress          1
 
 md_nstep            3
-md_type             4
+md_type             msst
 md_dt               1
 md_tfirst           200
 md_dumpfreq         1

@@ -155,8 +155,8 @@ TEST_F(UcellTest,ReadPseudo)
 		ifs.close();
 		std::string command1 = "test -d C && rm -rf C";
 		std::string command2 = "test -d H && rm -rf H";
-    		std::system( command1.c_str() );
-    		std::system( command2.c_str() );
+		std::system( command1.c_str() );
+		std::system( command2.c_str() );
 	}
 	//read_cell_pseudopots
 	//bcast_unitcell2

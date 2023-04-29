@@ -10,6 +10,9 @@ struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
         std::complex<FPTYPE>* out,
         const FPTYPE* in)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
         for (int ir = 0; ir < size; ++ir)
         {
             out[ir] *= in[ir];
@@ -23,13 +26,15 @@ struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
         std::complex<FPTYPE>* out1,
         const FPTYPE** in)
     {
-        std::complex<FPTYPE> sup = {0, 0}, sdown = {0, 0};
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int ir = 0; ir < size; ir++) {
-            sup = out[ir] * (in[0][ir] + in[3][ir])
+            auto sup = out[ir] * (in[0][ir] + in[3][ir])
                 + out1[ir]
                         * (in[1][ir]
                         - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-            sdown = out1[ir] * (in[0][ir] - in[3][ir])
+            auto sdown = out1[ir] * (in[0][ir] - in[3][ir])
                     + out[ir]
                         * (in[1][ir]
                             + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);

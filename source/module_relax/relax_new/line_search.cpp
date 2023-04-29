@@ -37,6 +37,8 @@ bool Line_Search::line_search(
     {
         return this->brent(x,y,f,xnew,conv_thr);
     }
+    ModuleBase::WARNING_QUIT("line_search","ls_step <0");
+    __builtin_unreachable();
 }
 
 bool Line_Search::first_order(
@@ -356,7 +358,7 @@ bool Line_Search::brent(
 
         double fab = (fa+fb)/2.0;
         double dy = (fb+(fab-fb)/(xa-xb)*xd)*xd;
-        
+
         xa = xb;
         fa = fb;
         ya = yb;

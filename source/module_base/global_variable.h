@@ -108,7 +108,7 @@ extern int ocp;
 extern std::string ocp_set;
 extern std::vector<double> ocp_kb;
 // extern double ocp_kb[10000];
-extern int out_mul; // qifeng add 2019/9/10
+extern bool out_mul; // qifeng add 2019/9/10
 //========================================================================
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
@@ -283,6 +283,7 @@ extern int out_chg;
 
 extern double nelec;
 extern bool out_bandgap;
+extern int out_interval;
 
 } // namespace GlobalV
 #endif

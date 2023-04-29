@@ -311,7 +311,6 @@ TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
                             // finite difference 
                             // note that S_R[0] is unique
                             for (int ir = 5; ir != rmesh-4; ++ir) {
-                                //std::cout << "ir = " << ir << std::endl;
                                 double dS_R_fd = 
                                     ( +1.0/280*S_R[ir-4] - 4.0/105*S_R[ir-3] 
                                       +1.0/5*S_R[ir-2] - 4.0/5*S_R[ir-1] 
@@ -326,6 +325,8 @@ TEST_F(OrbTableAlphaTest, FiniteDiffOverlap) {
             }
         }
     }
+	delete [] S_R;
+	delete [] dS_R;
 }
 
 
@@ -338,12 +339,12 @@ TEST_F(OrbTableAlphaTest, DestroyTable) {
     ota.init_Table_Alpha(&sbr_, lcao_);
 
     // should do nothing
-    ota.destroy_nr = false;
+    ota.table_allocated = false;
     ota.Destroy_Table_Alpha(lcao_);
     EXPECT_NE(ota.Table_DSR, nullptr);
 
     // should destroy the table
-    ota.destroy_nr = true;
+    ota.table_allocated = true;
     ota.Destroy_Table_Alpha(lcao_);
     EXPECT_EQ(ota.Table_DSR, nullptr);
 }
@@ -363,6 +364,26 @@ TEST_F(OrbTableAlphaTest, PrintTable) {
     // TODO content/format check to be done after code refactoring
 
     remove("./S_I_mu_alpha.dat");
+	ota.Destroy_Table_Alpha(lcao_);
+}
+
+
+TEST_F(OrbTableAlphaTest, AutoDestroyTable) {
+    ota.allocate(ntype_, lmax_, lcao_.get_kmesh(), Rmax_, dR_, dk_);
+    ota.init_DS_Opair(lcao_);
+
+    init_sph_bessel();
+    ota.init_Table_Alpha(&sbr_, lcao_);
+
+    // should do nothing
+    ota.table_allocated = false;
+    ota._destroy_table();
+    EXPECT_NE(ota.Table_DSR, nullptr);
+
+    // should destroy the table
+    ota.table_allocated = true;
+    ota._destroy_table();
+    EXPECT_EQ(ota.Table_DSR, nullptr);
 }
 
 

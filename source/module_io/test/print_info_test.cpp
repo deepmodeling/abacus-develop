@@ -74,7 +74,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	kv->read_kpoints(k_file);
 	EXPECT_EQ(kv->nkstot,512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
-	std::vector<int> md_types = {-1,0,1,2,4};
+	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};
 	GlobalV::MY_RANK = 0;
 	for(int i=0; i<cal_type.size(); ++i)
 	{
@@ -107,40 +107,34 @@ TEST_F(PrintInfoTest, SetupParameters)
 			for(int j=0; j<md_types.size(); ++j)
 			{
 				INPUT.mdp.md_type = md_types[j];
-				if(INPUT.mdp.md_type != 1)
-				{
-					testing::internal::CaptureStdout();
-					EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-					output = testing::internal::GetCapturedStdout();
-					EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
-					if(INPUT.mdp.md_type == -1)
-					{
-						EXPECT_THAT(output,testing::HasSubstr("FIRE"));
-					}
-					else if(INPUT.mdp.md_type == 2)
-					{
-						EXPECT_THAT(output,testing::HasSubstr("Langevin"));
-					}
-					else if(INPUT.mdp.md_type == 4)
-					{
-						EXPECT_THAT(output,testing::HasSubstr("MSST"));
-					}
-				}
-				else
-				{
-					INPUT.mdp.md_pmode = "none";
-					testing::internal::CaptureStdout();
-					EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-					output = testing::internal::GetCapturedStdout();
-					EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
-					EXPECT_THAT(output,testing::HasSubstr("NVT"));
-					INPUT.mdp.md_pmode = "arbitrary";
-					testing::internal::CaptureStdout();
-					EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-					output = testing::internal::GetCapturedStdout();
-					EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
-					EXPECT_THAT(output,testing::HasSubstr("NPT"));
-				}
+                testing::internal::CaptureStdout();
+                EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
+                output = testing::internal::GetCapturedStdout();
+                EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
+                if(INPUT.mdp.md_type == "fire")
+                {
+                    EXPECT_THAT(output,testing::HasSubstr("FIRE"));
+                }
+                else if(INPUT.mdp.md_type == "nve")
+                {
+                    EXPECT_THAT(output,testing::HasSubstr("NVE"));
+                }
+                else if(INPUT.mdp.md_type == "nvt")
+                {
+                    EXPECT_THAT(output,testing::HasSubstr("NVT"));
+                }
+                else if(INPUT.mdp.md_type == "npt")
+                {
+                    EXPECT_THAT(output,testing::HasSubstr("NPT"));
+                }
+                else if(INPUT.mdp.md_type == "langevin")
+                {
+                    EXPECT_THAT(output,testing::HasSubstr("Langevin"));
+                }
+                else if(INPUT.mdp.md_type == "msst")
+                {
+                    EXPECT_THAT(output,testing::HasSubstr("MSST"));
+                }
 			}
 		}
 	}

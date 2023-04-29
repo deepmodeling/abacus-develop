@@ -3,6 +3,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
+#include <stdlib.h>
 
 /************************************************
  *  unit test of Input::bcast
@@ -114,7 +115,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.nbspline,-1);
         EXPECT_FALSE(INPUT.gamma_only);
         EXPECT_FALSE(INPUT.gamma_only_local);
-        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,50.0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -136,7 +137,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.vion_in_h,1);
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
-        EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+        EXPECT_DOUBLE_EQ(INPUT.scf_thr,-1.0);
         EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
@@ -169,7 +170,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
-        EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
@@ -242,7 +243,8 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_grad_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_grad_threshold,1E-1);
-        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_grad_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
         EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
         EXPECT_EQ(INPUT.exx_distribute_type,"htime");
@@ -337,17 +339,17 @@ TEST_F(InputParaTest,Bcast)
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfirst,-1);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,0);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,-1);
-	    EXPECT_EQ(INPUT.mdp.md_pmode,"none");
+	    EXPECT_EQ(INPUT.mdp.md_pmode,"iso");
 	    EXPECT_EQ(INPUT.mdp.md_restart,0);
 	    EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	    EXPECT_EQ(INPUT.mdp.md_seed,-1);
 	    EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
-	    EXPECT_EQ(INPUT.mdp.md_thermostat,"nve");
+	    EXPECT_EQ(INPUT.mdp.md_thermostat,"nhc");
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,-1);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.md_tolerance,100);
-	    EXPECT_EQ(INPUT.mdp.md_type,1);
+	    EXPECT_EQ(INPUT.mdp.md_type,"nvt");
 	    EXPECT_EQ(INPUT.mdp.msst_direction,2);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_qmass,-1);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_tscale,0.01);
@@ -361,6 +363,19 @@ TEST_F(InputParaTest,Bcast)
 
 	}
 }
+
+TEST_F(InputParaTest,Init)
+{
+	std::string input_file = "./support/INPUT";
+	Input input_tmp;
+	EXPECT_NO_THROW(input_tmp.Init(input_file));
+	if(GlobalV::MY_RANK==0)
+	{
+		int status = system("rm -r ./OUT.autotest/");
+		EXPECT_EQ(status,0);
+	}
+}
+
 
 int main(int argc, char **argv)
 {

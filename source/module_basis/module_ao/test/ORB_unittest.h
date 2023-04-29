@@ -71,5 +71,7 @@ public:
 	int lmax=1;
 	double lat0 = 1.0;
 	string case_dir = "./GaAs/";
+    string *orbital_fn;
+    string descriptor_file;
 };
 #endif

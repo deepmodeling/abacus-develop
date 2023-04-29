@@ -12,8 +12,6 @@
 
 class LCAO_Matrix
 {
-    friend class Mulliken_Charge;
-
     public:
 
     LCAO_Matrix();
@@ -23,7 +21,7 @@ class LCAO_Matrix
     
     // folding the fixed Hamiltonian (T+Vnl) if
 	// k-point algorithm is used.
-	void folding_fixedH(const int &ik);
+	void folding_fixedH(const int &ik, bool cal_syns = false);
 
     Parallel_Orbitals *ParaV;
 

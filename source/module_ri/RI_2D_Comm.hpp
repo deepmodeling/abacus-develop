@@ -166,9 +166,9 @@ RI_2D_Comm::split_is_block(const int is_b)
 	switch(GlobalV::NSPIN)
 	{
 		case 1:	case 2:
-			return {0,0};
+			return std::make_tuple(0, 0);
 		case 4:
-			return {is_b/2, is_b%2};
+			return std::make_tuple(is_b/2, is_b%2);
 		default:
 			throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 	}

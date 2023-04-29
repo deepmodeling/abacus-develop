@@ -11,7 +11,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
 {
   protected:
     // xx = tf.random.uniform([100], minval=-4, maxval=4, dtype = tf.float64)
-    std::vector<complex<double>> psi_L = {{-0.65412617, -0.74208893},
+    std::vector<std::complex<double>> psi_L = {{-0.65412617, -0.74208893},
                                           {-2.21731157, 0.42540039},
                                           {3.36373004, -2.51647562},
                                           {-2.985111, -0.53251562},
@@ -24,7 +24,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
                                           {3.41302551, -2.3175205},
                                           {-0.27628221, -1.35701656}};
 
-    std::vector<complex<double>> psi_R = {{-1.67837557e-01, -1.70017454e-01},
+    std::vector<std::complex<double>> psi_R = {{-1.67837557e-01, -1.70017454e-01},
                                           {-2.92128115e-02, 2.82765887e-01},
                                           {-8.71641062e-02, -1.15934278e-01},
                                           {3.36269232e+00, -1.44692661e-02},
@@ -90,7 +90,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using gemv_op_gpu = hsolver::gemv_op<double, psi::DEVICE_GPU>;
 
     // haozhihan add
-    std::vector<complex<double>> L = {{-0.65412617, -0.74208893},
+    std::vector<std::complex<double>> L = {{-0.65412617, -0.74208893},
                                       {-2.21731157, 0.42540039},
                                       {3.36373004, -2.51647562},
                                       {-2.985111, -0.53251562},
@@ -103,7 +103,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
                                       {3.41302551, -2.3175205},
                                       {-0.27628221, -1.35701656}};
 
-    std::vector<complex<double>> R = {{-1.67837557e-01, -1.70017454e-01},
+    std::vector<std::complex<double>> R = {{-1.67837557e-01, -1.70017454e-01},
                                       {-2.92128115e-02, 2.82765887e-01},
                                       {-8.71641062e-02, -1.15934278e-01},
                                       {3.36269232e+00, -1.44692661e-02},
@@ -646,7 +646,7 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                  {-0.54274745, -0.09682102},
                                                  {0.30232967, 0.49411249}};
 
-    const std::vector<complex<double>> B(8);
+    const std::vector<std::complex<double>> B(8);
 
     int n = 2;
     int LDA = 3;
@@ -671,14 +671,14 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
     // run
     hsolver::matrixSetToAnother<double, psi::DEVICE_GPU>()(gpu_ctx, n, device_A, LDA, device_B, LDB);
 
-    std::vector<complex<double>> B_gpu2cpu(8);
+    std::vector<std::complex<double>> B_gpu2cpu(8);
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>()(cpu_ctx,
                                                                                                  gpu_ctx,
                                                                                                  B_gpu2cpu.data(),
                                                                                                  device_B,
                                                                                                  B_gpu2cpu.size());
 
-    std::vector<complex<double>> B_cpu(8);
+    std::vector<std::complex<double>> B_cpu(8);
     hsolver::matrixSetToAnother<double, psi::DEVICE_CPU>()(cpu_ctx, n, A.data(), LDA, B_cpu.data(), LDB);
 
     // for (int i = 0; i < 4; i++)

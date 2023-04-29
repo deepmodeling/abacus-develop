@@ -298,7 +298,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
             {
@@ -309,7 +310,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
                                     "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0]); // LiuXh, 2017-03-21
+                                    this->LOWF.ParaV[0],
+                                    1); // LiuXh, 2017-03-21
             }
         }
     }
@@ -447,7 +449,19 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
         }
-        ModuleIO::write_dm(is, 0, ssd.str(), precision, this->LOC.out_dm, this->LOC.DM);
+
+        ModuleIO::write_dm(
+#ifdef __MPI
+            GlobalC::GridT.trace_lo,
+#endif
+            is,
+            0,
+            ssd.str(),
+            precision,
+            this->LOC.out_dm,
+            this->LOC.DM,
+            ef_tmp,
+            &(GlobalC::ucell));
 
         if (GlobalV::out_pot == 1) // LiuXh add 20200701
         {
@@ -475,11 +489,6 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             GlobalV::ofs_running << std::setprecision(16);
         if (GlobalV::OUT_LEVEL != "m")
             GlobalV::ofs_running << " EFERMI = " << GlobalC::en.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        if (GlobalV::OUT_LEVEL == "ie")
-        {
-            GlobalV::ofs_running << " " << GlobalV::global_out_dir << " final etot is "
-                                 << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        }
     }
     else
     {
@@ -488,7 +497,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
-    if( GlobalV::CALCULATION != "md" || (istep % hsolver::HSolverLCAO::out_hsR_interval == 0))
+    if( GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
     {
         if (hsolver::HSolverLCAO::out_mat_hsR)
         {

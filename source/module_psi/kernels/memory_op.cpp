@@ -4,6 +4,7 @@
 #include "module_psi/kernels/types.h"
 #include "module_psi/kernels/memory_op.h"
 #include "module_base/memory.h"
+#include "module_base/tool_threading.h"
 
 namespace psi{
 namespace memory{
@@ -35,7 +36,11 @@ struct resize_memory_op<FPTYPE, psi::DEVICE_CPU> {
 template <typename FPTYPE> 
 struct set_memory_op<FPTYPE, psi::DEVICE_CPU> {
   void operator()(const psi::DEVICE_CPU* dev, FPTYPE* arr, const int var, const size_t size) {
-    memset(arr, var, sizeof(FPTYPE) * size);
+    ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
+      int beg, len;
+      ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096/sizeof(FPTYPE), beg, len);
+      memset(arr + beg, var, sizeof(FPTYPE)*len);
+    });
   }
 };
 
@@ -46,7 +51,11 @@ struct synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_CPU> {
                   FPTYPE* arr_out, 
                   const FPTYPE* arr_in, 
                   const size_t size) {
-    memcpy(arr_out, arr_in, sizeof(FPTYPE) * size);
+    ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
+      int beg, len;
+      ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096/sizeof(FPTYPE), beg, len);
+      memcpy(arr_out + beg, arr_in + beg, sizeof(FPTYPE)*len);
+    });
   }
 };
 
@@ -57,6 +66,9 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_CPU, psi::DEVICE_CPU> {
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE_out))
+#endif
         for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<FPTYPE_out>(arr_in[ii]);
         }

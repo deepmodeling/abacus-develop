@@ -21,12 +21,9 @@ namespace ModuleIO
 		ModuleBase::TITLE("ModuleIO", "write_psi_r_1");
 		ModuleBase::timer::tick("ModuleIO", "write_psi_r_1");
 
-		const string outdir = GlobalV::global_out_dir + folder_name + "/";
-		const std::string command0 =  "test -d " + outdir + " || mkdir " + outdir;
-    	if(GlobalV::MY_RANK==0)
-        	system( command0.c_str() );
-
-#ifdef __MPI		
+		const std::string outdir = GlobalV::global_out_dir + folder_name + "/";
+		ModuleBase::GlobalFunc::MAKE_DIR(outdir);
+#ifdef __MPI
 		std::vector<MPI_Request> mpi_requests;
 #endif
 		for(int ik=0; ik<wfc_g.get_nk(); ++ik)
@@ -43,7 +40,7 @@ namespace ModuleIO
                 std::vector<double> wfc_i2;
                 if (square)
                     for (int ir = 0; ir < wfc_r2.size(); ++ir)
-                        wfc_r2[ir] = std::norm(wfc_r[ir]);   // "std::norm(z)" returns |z|^2 
+                        wfc_r2[ir] = std::norm(wfc_r[ir]);   // "std::norm(z)" returns |z|^2
                 else
                 {
                     wfc_i2.resize(wfc_r.size());
@@ -90,7 +87,7 @@ namespace ModuleIO
 	std::vector<std::complex<double>> cal_wfc_r(const psi::Psi<std::complex<double>> &wfc_g, const int ik, const int ib)
 	{
 		ModuleBase::timer::tick("ModuleIO", "cal_wfc_r");
-		
+
 		std::vector<std::complex<double>> wfc_r(GlobalC::wfcpw->nrxx);
 		GlobalC::wfcpw->recip2real(&wfc_g(ib,0), wfc_r.data(),ik);
 
@@ -99,7 +96,7 @@ namespace ModuleIO
 	}
 
 
-	
+
 	// Input: chg_r[ir]
 #ifdef  __MPI
 	void write_chg_r_1(const std::vector<double> &chg_r, const std::string &file_name, MPI_Request &mpi_request)
@@ -135,7 +132,7 @@ namespace ModuleIO
 				for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ++ia)
 					ofs<<GlobalC::ucell.atoms[it].taud[ia].x<<" "<<GlobalC::ucell.atoms[it].taud[ia].y<<" "<<GlobalC::ucell.atoms[it].taud[ia].z<<std::endl;
 			ofs<<std::endl;
-			
+
 			ofs<<GlobalC::wfcpw->nx<<" "<<GlobalC::wfcpw->ny<<" "<<GlobalC::wfcpw->nz<<std::endl;
 #ifdef  __MPI
 		}
@@ -147,7 +144,7 @@ namespace ModuleIO
 			ofs.open(file_name, ofstream::app);
 		}
 #endif
-		
+
 		assert(GlobalC::wfcpw->nx * GlobalC::wfcpw->ny * GlobalC::wfcpw->nplane == chg_r.size());
 		for(int iz=0; iz<GlobalC::wfcpw->nplane; ++iz)
 		{
