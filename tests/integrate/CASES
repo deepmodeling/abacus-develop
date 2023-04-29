@@ -191,7 +191,6 @@
 #401_NP_KP_spd
 #501_NO_neighboring_GaAs512
 601_NO_TDDFT_H2
-601_NO_TDDFT_H2_halfH
 601_NO_TDDFT_H2_taylor
 601_NO_TDDFT_H2_etrs
 601_NO_TDDFT_H2_kpoint
