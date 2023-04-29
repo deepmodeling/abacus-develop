@@ -37,6 +37,7 @@ option(ENABLE_CONTAINER "Enable the new multi-device container." OFF)
 if (NOT ENABLE_MPI)
   set (ENABLE_LCAO OFF)
   set (ENABLE_DEEPKS OFF)
+  set (BUILD_TESTING OFF)
 endif()
 
 if(ENABLE_LCAO)
