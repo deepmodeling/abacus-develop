@@ -213,7 +213,7 @@ void KEDF_LKT::nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **
     std::complex<double> *recip_nabla = new std::complex<double>[pw_rho->npw];
     pw_rho->real2recip(pinput, recip_data);
 
-    std::complex<double> img = 1.0j;
+    std::complex<double> img {0.0, 1.0};
     for (int j = 0; j < 3; ++j)
     {
         for (int ip = 0; ip < pw_rho->npw; ++ip)
@@ -231,7 +231,7 @@ void KEDF_LKT::nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **
 void KEDF_LKT::divergence(const double *const *pinput, ModulePW::PW_Basis *pw_rho, double *routput)
 {
     std::complex<double> *recip_container = new std::complex<double>[pw_rho->npw];
-    std::complex<double> img = 1.0j;
+    std::complex<double> img {0.0, 1.0};
     ModuleBase::GlobalFunc::ZEROS(routput, this->nx);
     for (int i = 0; i < 3; ++i)
     {
