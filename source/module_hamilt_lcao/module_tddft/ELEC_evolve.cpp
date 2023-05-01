@@ -1,20 +1,17 @@
 #include "ELEC_evolve.h"
 
-#include "module_base/timer.h"
-#include "module_base/parallel_reduce.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "LCAO_evolve.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/timer.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 ELEC_evolve::ELEC_evolve(){};
 ELEC_evolve::~ELEC_evolve(){};
 
 double ELEC_evolve::td_force_dt;
-int ELEC_evolve::td_val_elec_01;
-int ELEC_evolve::td_val_elec_02;
-int ELEC_evolve::td_val_elec_03;
 bool ELEC_evolve::td_vext;
 std::vector<int> ELEC_evolve::td_vext_dire_case;
 bool ELEC_evolve::out_dipole;
@@ -28,7 +25,10 @@ void ELEC_evolve::evolve_psi(const int& istep,
                              Local_Orbital_wfc& lowf,
                              psi::Psi<std::complex<double>>* psi,
                              psi::Psi<std::complex<double>>* psi_laststep,
-                             ModuleBase::matrix& ekb)
+                             std::complex<double>** Hk_laststep,
+                             ModuleBase::matrix& ekb,
+                             int htype,
+                             int propagator)
 {
     ModuleBase::TITLE("ELEC_evolve", "eveolve_psi");
     ModuleBase::timer::tick("ELEC_evolve", "evolve_psi");
@@ -42,7 +42,14 @@ void ELEC_evolve::evolve_psi(const int& istep,
         Evolve_LCAO_Matrix ELM(lowf.ParaV);
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
-        ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, &(ekb(ik, 0)));
+        if (Hk_laststep == nullptr)
+        {
+            ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, nullptr, &(ekb(ik, 0)), htype, propagator);
+        }
+        else
+        {
+            ELM.evolve_complex_matrix(ik, phm, psi, psi_laststep, Hk_laststep[ik], &(ekb(ik, 0)), htype, propagator);
+        }
         ModuleBase::timer::tick("Efficience", "evolve_k");
     } // end k
 

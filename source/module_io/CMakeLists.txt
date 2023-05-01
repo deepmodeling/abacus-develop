@@ -11,11 +11,13 @@ list(APPEND objects
     numerical_descriptor.cpp
     output.cpp
     print_info.cpp
+    read_cube.cpp
     read_rho.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
     write_input.cpp
+    write_cube.cpp
     write_rho.cpp
     write_dipole.cpp
     write_wfc_r.cpp
@@ -47,6 +49,7 @@ if(ENABLE_LCAO)
       mulliken_charge.cpp
       write_HS_R.cpp
       write_HS_sparse.cpp
+      single_R_io.cpp
       write_dm_sparse.cpp
       cal_r_overlap_R.cpp
   )

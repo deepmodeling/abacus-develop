@@ -273,7 +273,7 @@ namespace ModuleESolver
 #ifdef __MPI
                 FPTYPE duration = (FPTYPE)(MPI_Wtime() - iterstart);
 #else
-                FPTYPE duration = (std::chrono::system_clock::now() - iterstart).count() / CLOCKS_PER_SEC;
+                FPTYPE duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<FPTYPE>(1e6);
 #endif
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)

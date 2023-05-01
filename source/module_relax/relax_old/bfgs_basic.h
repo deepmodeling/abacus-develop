@@ -1,8 +1,6 @@
 #ifndef BFGS_BASIC
 #define BFGS_BASIC
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 
 // references
@@ -18,48 +16,45 @@
 class BFGS_Basic
 {
 
-	public:
-	BFGS_Basic();
-	~BFGS_Basic();
+  public:
+    BFGS_Basic();
+    ~BFGS_Basic();
 
-	protected:
+  protected:
+    void allocate_basic(void);
+    void new_step(const double& lat0);
+    void reset_hessian(void);
+    void save_bfgs(void);
 
-	void allocate_basic(void);
-	void new_step(void);
-	void reset_hessian(void);
-	void save_bfgs(void);
+    double* pos;  // std::vector containing 3N coordinates of the system ( x )
+    double* grad; // std::vector containing 3N components of ( grad( V(x) ) )
+    double* move; // pos = pos_p + move.
 
-	double* pos; // std::vector containing 3N coordinates of the system ( x )
-	double* grad; //std::vector containing 3N components of ( grad( V(x) ) )
-	double* move; // pos = pos_p + move.
+    double* pos_p;  // p: previous
+    double* grad_p; // p: previous
+    double* move_p;
 
-	double* pos_p; // p: previous
-	double* grad_p; // p: previous
-	double* move_p; 
+  public:                        // mohan update 2011-06-12
+    static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
+    static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
 
-	public://mohan update 2011-06-12
+  protected:
+    bool save_flag;
+    bool tr_min_hit; //.TRUE. if the trust_radius has already been set
+                     // to the minimum value at the previous step
 
-	static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
-	static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
-	
-	protected:
+    // mohan add 2010-07-27
+    double check_move(const double& lat0, const double& pos, const double& pos_p);
 
-	bool save_flag;
-	bool tr_min_hit;			//.TRUE. if the trust_radius has already been set
-								// to the minimum value at the previous step
+  private:
+    bool wolfe_flag;
+    ModuleBase::matrix inv_hess;
 
-	// mohan add 2010-07-27
-	double check_move(const double &pos, const double &pos_p);
-	private:
+    int bfgs_ndim;
 
-	bool wolfe_flag;
-	ModuleBase::matrix inv_hess;
-
-	int bfgs_ndim;
-
-	void update_inverse_hessian(void);
-	void check_wolfe_conditions(void);
-	void compute_trust_radius(void);
+    void update_inverse_hessian(const double& lat0);
+    void check_wolfe_conditions(void);
+    void compute_trust_radius(void);
 };
 
 #endif

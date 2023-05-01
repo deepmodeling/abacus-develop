@@ -15,7 +15,6 @@ class LCAO_gen_fixedH
 {
     friend class Force_LCAO_gamma;
     friend class Force_LCAO_k;
-    friend class Mulliken_Charge; // qifeng  2019/9/10
     friend class LCAO_Hamilt;
 
   public:

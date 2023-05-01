@@ -11,17 +11,27 @@ find_path(MKL_INCLUDE_DIR mkl_dfti.h HINTS ${MKLROOT}/include)
 find_library(MKL_INTEL NAMES mkl_intel_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
 find_library(MKL_INTEL_THREAD NAMES mkl_intel_thread HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
 find_library(MKL_CORE NAMES mkl_core HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-find_library(MKL_BLACS_INTELMPI NAMES mkl_blacs_intelmpi_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
+if(ENABLE_MPI)
+  find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
+  find_library(MKL_BLACS_INTELMPI NAMES mkl_blacs_intelmpi_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
+endif()
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE
 # if all listed variables are TRUE
 
-find_package_handle_standard_args(IntelMKL DEFAULT_MSG MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS_INTELMPI MKL_INCLUDE_DIR)
+if(ENABLE_MPI)
+  find_package_handle_standard_args(IntelMKL DEFAULT_MSG MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS_INTELMPI MKL_INCLUDE_DIR)
+else()
+  find_package_handle_standard_args(IntelMKL MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_INCLUDE_DIR)
+endif()
 
 if(IntelMKL_FOUND)
-  set(MKL_LIBRARIES ${MKL_INTEL} ${MKL_INTEL_THREAD} ${MKL_CORE} ${MKL_SCALAPACK} ${MKL_BLACS_INTELMPI})
+  if (ENABLE_MPI)
+    set(MKL_LIBRARIES ${MKL_INTEL} ${MKL_INTEL_THREAD} ${MKL_CORE} ${MKL_SCALAPACK} ${MKL_BLACS_INTELMPI})
+  else()
+    set(MKL_LIBRARIES ${MKL_INTEL} ${MKL_INTEL_THREAD} ${MKL_CORE})
+  endif()
   set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
 
   if(NOT TARGET IntelMKL::INTEL)
@@ -55,12 +65,23 @@ if(IntelMKL_FOUND)
       INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE_DIR}")
   endif()
   add_library(IntelMKL::MKL INTERFACE IMPORTED)
-  set_property(TARGET IntelMKL::MKL PROPERTY
-  INTERFACE_LINK_LIBRARIES
-  "-Wl,--start-group"
-  IntelMKL::INTEL IntelMKL::INTEL_THREAD IntelMKL::CORE IntelMKL::SCALAPACK IntelMKL::BLACS_INTELMPI
-  "-Wl,--end-group"
-  )
+  if (ENABLE_MPI)
+    set_property(TARGET IntelMKL::MKL PROPERTY
+    INTERFACE_LINK_LIBRARIES
+    "-Wl,--start-group"
+    IntelMKL::INTEL IntelMKL::INTEL_THREAD IntelMKL::CORE IntelMKL::SCALAPACK IntelMKL::BLACS_INTELMPI
+    "-Wl,--end-group"
+    )
+  else()
+    set_property(TARGET IntelMKL::MKL PROPERTY
+    INTERFACE_LINK_LIBRARIES
+    "-Wl,--start-group"
+    IntelMKL::INTEL IntelMKL::INTEL_THREAD IntelMKL::CORE)
+  endif()
 endif()
 
-mark_as_advanced(MKL_INCLUDE_DIR MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS_INTELMPI)
+if(ENABLE_MPI)
+  mark_as_advanced(MKL_INCLUDE_DIR MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS_INTELMPI)
+else()
+  mark_as_advanced(MKL_INCLUDE_DIR MKL_INTEL MKL_INTEL_THREAD MKL_CORE)
+endif()

@@ -12,7 +12,6 @@
 #include <limits>
 
 #include "../src_ri/test_code/element_basis_index-test.h"		// Peize Lin test
-#include "../src_ri/test_code/exx_lcao-test.h"		// Peize Lin test
 #include <sys/time.h>			// Peize Lin test
 #include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"		// Peize Lin test
 

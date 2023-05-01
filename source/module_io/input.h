@@ -2,7 +2,7 @@
 #define INPUT_H
 
 #include "module_base/vector3.h"
-#include "module_md/MD_parameters.h"
+#include "module_md/md_para.h"
 
 #include <fstream>
 #include <string>
@@ -59,7 +59,7 @@ class Input
 
     bool berry_phase; // berry phase calculation
     int gdir; // berry phase calculation
-    double kspacing;
+    double kspacing[3];
     double min_dist_coef;
     //==========================================================
     // Wannier functions
@@ -73,6 +73,7 @@ class Input
     //==========================================================
     int nche_sto; // number of orders for Chebyshev expansion in stochastic DFT //qinarui 2021-2-5
     int nbands_sto;			// number of stochastic bands //qianrui 2021-2-5
+    std::string nbndsto_str; // string parameter for stochastic bands
     int seed_sto; // random seed for sDFT
     double emax_sto; // Emax & Emin to normalize H
     double emin_sto;
@@ -245,7 +246,7 @@ class Input
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     bool out_mat_dh;
-    int out_hs2_interval;
+    int out_interval;
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
@@ -373,9 +374,6 @@ class Input
     // Fuxiang He add 2016-10-26
     //==========================================================
     double td_force_dt; //"fs"
-    int td_val_elec_01; // valence electron 01
-    int td_val_elec_02; // valence electron 02
-    int td_val_elec_03; // valence electron 03
     bool td_vext; // add extern potential or not
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not
@@ -383,6 +381,8 @@ class Input
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
+
+    int propagator; // method of propagator
 
     int td_stype ; //type of space domain  0 : length gauge  1: velocity gauge
 
@@ -506,6 +506,7 @@ class Input
     double of_wt_beta;    // parameter beta of WT KEDF
     double of_wt_rho0;    // set the average density of system, in Bohr^-3
     bool of_hold_rho0;  // If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero.
+    double of_lkt_a;    // parameter a of LKT KEDF
     bool of_full_pw;    // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used.
     int of_full_pw_dim; // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
     bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
@@ -575,6 +576,32 @@ class Input
         ifs.ignore(150, '\n');
         return;
     }
+    void read_kspacing(std::ifstream &ifs)
+    {
+        std::string s;
+        std::getline(ifs, s);
+        std::stringstream ss(s);
+        // read 3 values
+        int count = 0;
+        while ((ss >> kspacing[count]) && count < 3)
+        {
+            count++;
+        }
+        // if not read even one value, or read two values, the input is invalid.
+        if (count == 0 || count == 2)
+        {
+            std::cout << "kspacing can only accept one or three double values." << std::endl;
+            ifs.setstate(std::ios::failbit);
+        }
+        // if only read one value, set all to kspacing[0]
+        if (count == 1)
+        {
+            kspacing[1] = kspacing[0];
+            kspacing[2] = kspacing[0];
+        }
+        // std::cout << "count: " << count << " kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2]
+        // << std::endl;
+    };
 
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);

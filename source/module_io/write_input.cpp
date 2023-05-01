@@ -49,7 +49,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,"esolver_type",esolver_type,"the energy solver: ksdft, sdft, ofdft, tddft, lj, dp");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
-    ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
+    std::stringstream kspacing_ss;
+    for(int i=0;i<3;i++){kspacing_ss << kspacing[i] << " ";}
+    ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing_ss.str(),  "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
     ModuleBase::GlobalFunc::OUTP(ofs, "min_dist_coef", min_dist_coef, "factor related to the allowed minimum distance between two atoms");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands", nbands, "number of bands");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands_sto", nbands_sto, "number of stochastic bands");
@@ -205,7 +207,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs, "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_dh", out_mat_dh, "output of derivative of H(R) matrix");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_hs2_interval", out_hs2_interval, "interval for printing H(R) and S(R) matrix during MD");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_interval", out_interval, "interval for printing H(R) and S(R) matrix during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_app_flag", out_app_flag, "whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
@@ -363,9 +365,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_01", td_val_elec_01, "td_val_elec_01");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_02", td_val_elec_02, "td_val_elec_02");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_03", td_val_elec_03, "td_val_elec_03");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext", td_vext, "add extern potential or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext_dire", td_vext_dire, "extern potential direction");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
@@ -402,6 +401,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_beta", of_wt_beta, "parameter beta of WT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_rho0", of_wt_rho0, "the average density of system, used in WT KEDF, in Bohr^-3");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_hold_rho0", of_hold_rho0, "If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_lkt_a", of_lkt_a, "parameter a of LKT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw", of_full_pw, "If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw_dim", of_full_pw_dim, "If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_read_kernel", of_read_kernel, "If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF");

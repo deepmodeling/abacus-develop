@@ -20,7 +20,7 @@ Exx_Lip::Exx_Lip( const Exx_Info::Exx_Info_Lip &info_in )
 	 exx_matrix(NULL),
 	 exx_energy(0){}
 
-void Exx_Lip::cal_exx()
+void Exx_Lip::cal_exx(const int& nks)
 {
 	ModuleBase::TITLE("Exx_Lip","cal_exx");
 	
@@ -92,7 +92,7 @@ void Exx_Lip::cal_exx()
 	auto print_Hexxk = [&]()
 	{
 		static int istep=1;
-		for(int ik=0; ik!=GlobalC::kv.nks; ++ik)
+		for(int ik=0; ik!=nks; ++ik)
 		{
 			std::ofstream ofs("Hexxk_"+ModuleBase::GlobalFunc::TO_STRING(istep++)+"_"+ModuleBase::GlobalFunc::TO_STRING(ik)+"_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
 			for(int i=0; i!=GlobalV::NLOCAL; ++i)
@@ -147,7 +147,7 @@ void Exx_Lip::cal_exx()
 }
 */
 
-void Exx_Lip::init(
+void Exx_Lip::init(ModuleSymmetry::Symmetry &symm,
 	K_Vectors *kv_ptr_in, 
 	wavefunc *wf_ptr_in,  
 	ModulePW::PW_Basis_K *wfc_basis_in, 
@@ -188,7 +188,7 @@ void Exx_Lip::init(
 		}
 		else if(GlobalV::init_chg=="file")
 		{
-			read_q_pack();
+			read_q_pack(symm);
 		}
 
 		phi = new std::complex<double>*[GlobalV::NLOCAL];
@@ -570,7 +570,7 @@ void Exx_Lip::exx_energy_cal()
 		}
 	}
 #ifdef __MPI
-	MPI_Allreduce( &exx_energy_tmp, &exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different GlobalC::kv.nks => deadlock
+	MPI_Allreduce( &exx_energy_tmp, &exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different kv.nks => deadlock
 #endif
 	exx_energy *= (GlobalV::NSPIN==1) ? 2 : 1;
 	exx_energy /= 2;										// ETOT = E_band - 1/2 E_exx
@@ -671,7 +671,7 @@ void Exx_Lip::write_q_pack() const
 	return;
 }
 
-void Exx_Lip::read_q_pack()
+void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry &symm)
 {
 	const std::string exx_q_pack = "exx_q_pack/";
 
@@ -679,8 +679,8 @@ void Exx_Lip::read_q_pack()
 
 	q_pack->kv_ptr = new K_Vectors();
 	const std::string exx_kpoint_card = GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
-	q_pack->kv_ptr->set( GlobalC::symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec );
-//	q_pack->kv_ptr->set( GlobalC::symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, &Pkpoints );
+	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec );
+//	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, &Pkpoints );
 
 
 	q_pack->wf_ptr = new wavefunc();

@@ -4,10 +4,10 @@
 #ifndef SETCELL_H
 #define SETCELL_H
 
-#include "module_io/input.h"
-#include "module_cell/unitcell.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
+#include "module_io/input.h"
 
 Magnetism::Magnetism()
 {
@@ -22,7 +22,7 @@ Magnetism::~Magnetism()
 
 class Setcell
 {
-public:
+  public:
     static void setupcell(UnitCell &ucell)
     {
         ucell.ntype = 1;
@@ -41,7 +41,7 @@ public:
         ucell.lat0_angstrom = ucell.lat0 * 0.529177;
         ucell.tpiba = ModuleBase::TWO_PI / ucell.lat0;
         ucell.tpiba2 = ucell.tpiba * ucell.tpiba;
-        
+
         ucell.latvec.e11 = ucell.latvec.e22 = ucell.latvec.e33 = 10;
         ucell.latvec.e12 = ucell.latvec.e13 = ucell.latvec.e23 = 0;
         ucell.latvec.e21 = ucell.latvec.e31 = ucell.latvec.e32 = 0;

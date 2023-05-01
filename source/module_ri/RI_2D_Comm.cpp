@@ -5,6 +5,7 @@
 
 #include "RI_2D_Comm.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_cell/klist.h"
 
 #include <string>
 #include <stdexcept>
@@ -60,11 +61,11 @@ auto RI_2D_Comm::get_2D_judge(const Parallel_Orbitals &pv)
 
 
 std::vector<int>
-RI_2D_Comm::get_ik_list(const int is_k)
+RI_2D_Comm::get_ik_list(const K_Vectors &kv, const int is_k)
 {
 	std::vector<int> ik_list;
-	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
-		if(GlobalC::kv.isk[ik]==is_k)
+	for(int ik=0; ik<kv.nks; ++ik)
+		if(kv.isk[ik]==is_k)
 			ik_list.push_back(ik);
 	return ik_list;
 }

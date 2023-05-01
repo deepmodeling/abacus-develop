@@ -141,6 +141,7 @@ void Input::Default(void)
     ntype = 0;
     nbands = 0;
     nbands_sto = 256;
+    nbndsto_str = "256";
     nbands_istate = 5;
     pw_seed = 1;
     emin_sto = 0.0;
@@ -166,7 +167,7 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
-    kspacing = 0.0;
+    for(int i=0;i<3;i++){kspacing[i] = 0;}
     min_dist_coef = 0.2;
     //----------------------------------------------------------
     // electrons / spin
@@ -219,7 +220,7 @@ void Input::Default(void)
     // gamma_only = false;
     gamma_only = false;
     gamma_only_local = false;
-    ecutwfc = 0.0;
+    ecutwfc = 50.0;
     ecutrho = 0.0;
     ncx = 0;
     ncy = 0;
@@ -252,7 +253,7 @@ void Input::Default(void)
     //----------------------------------------------------------
     // iteration
     //----------------------------------------------------------
-    scf_thr = 1.0e-9;
+    scf_thr = -1.0; // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
@@ -303,7 +304,7 @@ void Input::Default(void)
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
     out_mat_t = 0;
-    out_hs2_interval = 1;
+    out_interval = 1;
     out_app_flag = true;
     out_mat_r = 0; // jingan add 2019-8-14
     out_mat_dh = 0;
@@ -406,11 +407,10 @@ void Input::Default(void)
     // tddft
     //----------------------------------------------------------
     td_force_dt = 0.02;
-    td_val_elec_01 = 1;
-    td_val_elec_02 = 1;
-    td_val_elec_03 = 1;
     td_vext = false;
     td_vext_dire = "1";
+
+    propagator = 0;
 
     out_dipole = false;
     out_efield = false;
@@ -487,7 +487,7 @@ void Input::Default(void)
 
     cell_factor = 1.2; // LiuXh add 20180619
 
-    out_mul = 0; // qi feng add 2019/9/10
+    out_mul = false; // qi feng add 2019/9/10
 
     //----------------------------------------------------------			//Peize Lin add 2020-04-04
     // restart
@@ -542,6 +542,7 @@ void Input::Default(void)
     of_wt_beta = 5. / 6.;
     of_wt_rho0 = 0.;
     of_hold_rho0 = false;
+    of_lkt_a = 1.3;
     of_full_pw = true;
     of_full_pw_dim = 0;
     of_read_kernel = false;
@@ -685,11 +686,16 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("nbands_sto", word) == 0) // number of stochastic bands
         {
-            read_value(ifs, nbands_sto);
+            std::string nbsto_str;
+            read_value(ifs, nbndsto_str);
+            if (nbndsto_str != "all")
+            {
+                nbands_sto = std::stoi(nbndsto_str);
+            }
         }
         else if (strcmp("kspacing", word) == 0)
         {
-            read_value(ifs, kspacing);
+            read_kspacing(ifs);
         }
         else if (strcmp("min_dist_coef", word) == 0)
         {
@@ -1250,9 +1256,9 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, out_mat_dh);
         }
-        else if (strcmp("out_hs2_interval", word) == 0)
+        else if (strcmp("out_interval", word) == 0)
         {
-            read_value(ifs, out_hs2_interval);
+            read_value(ifs, out_interval);
         }
         else if (strcmp("out_app_flag", word) == 0)
         {
@@ -1525,18 +1531,6 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_force_dt);
         }
-        else if (strcmp("td_val_elec_01", word) == 0)
-        {
-            read_value(ifs, td_val_elec_01);
-        }
-        else if (strcmp("td_val_elec_02", word) == 0)
-        {
-            read_value(ifs, td_val_elec_02);
-        }
-        else if (strcmp("td_val_elec_03", word) == 0)
-        {
-            read_value(ifs, td_val_elec_03);
-        }
         else if (strcmp("td_vext", word) == 0)
         {
             read_value(ifs, td_vext);
@@ -1560,6 +1554,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("td_edm", word) == 0)
         {
             read_value(ifs, td_edm);
+        }
+        else if (strcmp("propagator", word) == 0)
+        {
+            read_value(ifs, propagator);
         }
         else if (strcmp("td_stype", word) == 0)
         {
@@ -2006,6 +2004,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, of_hold_rho0);
         }
+        else if (strcmp("of_lkt_a", word) == 0)
+        {
+            read_value(ifs, of_lkt_a);
+        }
         else if (strcmp("of_full_pw", word) == 0)
         {
             read_bool(ifs, of_full_pw);
@@ -2239,10 +2241,11 @@ bool Input::Read(const std::string &fn)
             exit(0);
         }
 
-        if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0)
+        if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0 && strcmp(ks_solver.c_str(), "default") != 0 )
         {
             std::cout << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported "
                       << std::endl;
+            std::cout << " You'are using " << ks_solver.c_str() << std::endl;
             exit(0);
         }
     }
@@ -2426,6 +2429,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             vdw_cutoff_radius = "95";
         }
+    }
+
+    if (nbndsto_str == "all")
+    {
+        nbands_sto = 0;
+    }
+    else if (nbndsto_str == "0" && esolver_type == "sdft")
+    {
+        esolver_type = "ksdft";
     }
     if (esolver_type != "sdft")
         bndpar = 1;
@@ -2697,6 +2709,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         ref_cell_factor = 1.0;
     }
+
+    if (scf_thr == -1.0)
+    {
+        if (basis_type == "lcao" || basis_type == "lcao_in_pw")
+        {
+            scf_thr = 1.0e-7;
+        }
+        else if (basis_type == "pw")
+        {
+            scf_thr = 1.0e-9;
+        }
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -2723,7 +2747,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
-    Parallel_Common::bcast_double(kspacing);
+    for(int i=0;i<3;i++)
+    {Parallel_Common::bcast_double(kspacing[i]);}
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
@@ -2873,7 +2898,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
     Parallel_Common::bcast_bool(out_app_flag);
-    Parallel_Common::bcast_int(out_hs2_interval);
+    Parallel_Common::bcast_int(out_interval);
 
     Parallel_Common::bcast_double(dos_emin_ev);
     Parallel_Common::bcast_double(dos_emax_ev);
@@ -2889,7 +2914,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(lcao_dk);
     Parallel_Common::bcast_double(lcao_dr);
     Parallel_Common::bcast_double(lcao_rmax);
-
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_string(mdp.md_type);
     Parallel_Common::bcast_string(mdp.md_thermostat);
@@ -2974,12 +2998,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int(vdw_cutoff_period.y);
     Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
-    Parallel_Common::bcast_int(td_val_elec_01);
-    Parallel_Common::bcast_int(td_val_elec_02);
-    Parallel_Common::bcast_int(td_val_elec_03);
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_bool(td_vext);
     Parallel_Common::bcast_string(td_vext_dire);
+    Parallel_Common::bcast_int(propagator);
     Parallel_Common::bcast_int(td_stype);
     Parallel_Common::bcast_string(td_ttype);
     Parallel_Common::bcast_int(td_tstart);
@@ -3110,6 +3132,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(of_wt_beta);
     Parallel_Common::bcast_double(of_wt_rho0);
     Parallel_Common::bcast_bool(of_hold_rho0);
+    Parallel_Common::bcast_double(of_lkt_a);
     Parallel_Common::bcast_bool(of_full_pw);
     Parallel_Common::bcast_int(of_full_pw_dim);
     Parallel_Common::bcast_bool(of_read_kernel);
@@ -3157,8 +3180,20 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
-    if (kspacing < 0.0)
+    int kspacing_zero_num = 0;
+    for (int i=0;i<3;i++){
+        if (kspacing[i] < 0.0)
+        {
+            ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
+        }
+        else if (kspacing[i] == 0.0)
+        {
+            kspacing_zero_num++;
+        }
+    }
+    if (kspacing_zero_num > 0 && kspacing_zero_num < 3)
     {
+        std::cout << "kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl;
         ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
     }
 

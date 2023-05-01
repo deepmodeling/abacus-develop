@@ -12,9 +12,9 @@
 namespace RI_Util
 {
 	inline std::array<int,3>
-	get_Born_vonKarmen_period()
+	get_Born_vonKarmen_period(const K_Vectors &kv)
 	{
-		return std::array<int,3>{GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]};
+		return std::array<int,3>{kv.nmp[0], kv.nmp[1], kv.nmp[2]};
 	}
 
 	template<typename Tcell>

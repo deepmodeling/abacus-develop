@@ -12,8 +12,6 @@
 
 class LCAO_Matrix
 {
-    friend class Mulliken_Charge;
-
     public:
 
     LCAO_Matrix();

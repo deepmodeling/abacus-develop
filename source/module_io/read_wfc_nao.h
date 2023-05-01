@@ -26,6 +26,7 @@ namespace ModuleIO
     int read_wfc_nao_complex(
         std::complex<double>** ctot, 
         const int& ik,
+        const ModuleBase::Vector3<double> kvec_c,
         const Parallel_Orbitals* ParaV, 
         psi::Psi<std::complex<double>>* psi,
         elecstate::ElecState* pelec);

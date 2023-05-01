@@ -266,11 +266,44 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 TEST_F(KlistTest, ReadKpointsKspacing)
 {
 	kv->nspin = 1;
-	GlobalV::KSPACING = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[1] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[2] = 0.052918; // 0.52918/Bohr = 1/A
 	std::string k_file = "./support/KPT3";
 	kv->read_kpoints(k_file);
 	EXPECT_EQ(kv->nkstot,343);
-	GlobalV::KSPACING=0.0;
+	GlobalV::KSPACING[0]=0.0;
+	GlobalV::KSPACING[1]=0.0;
+	GlobalV::KSPACING[2]=0.0;
+}
+
+TEST_F(KlistTest, ReadKpointsKspacing3values)
+{
+	kv->nspin = 1;
+	GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[1] = 0.06; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[2] = 0.07; // 0.52918/Bohr = 1/A
+	std::string k_file = "./support/KPT3";
+	kv->read_kpoints(k_file);
+	EXPECT_EQ(kv->nkstot,210);
+	GlobalV::KSPACING[0]=0.0;
+	GlobalV::KSPACING[1]=0.0;
+	GlobalV::KSPACING[2]=0.0;
+}
+
+TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
+{
+	kv->nspin = 1;
+	GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[1] = 0; // 0.52918/Bohr = 1/A
+	GlobalV::KSPACING[2] = 0.07; // 0.52918/Bohr = 1/A
+	std::string k_file = "./support/KPT3";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(kv->read_kpoints(k_file),::testing::ExitedWithCode(0),"");
+	output = testing::internal::GetCapturedStdout();
+	GlobalV::KSPACING[0]=0.0;
+	GlobalV::KSPACING[1]=0.0;
+	GlobalV::KSPACING[2]=0.0;
 }
 
 TEST_F(KlistTest, ReadKpointsGamma)
@@ -701,8 +734,9 @@ TEST_F(KlistTest, IbzKpoint)
 	EXPECT_EQ(kv->nkstot,512);
 	//calculate ibz_kpoint
 	std::string skpt;
-	ModuleSymmetry::Symmetry::symm_flag=1;
-	kv->ibz_kpoint(symm,ModuleSymmetry::Symmetry::symm_flag,skpt, ucell);
+    ModuleSymmetry::Symmetry::symm_flag = 1;
+    bool match = true;
+    kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
 	EXPECT_EQ(kv->nkstot_ibz,35);
 	GlobalV::ofs_running<<skpt<<std::endl;
 	GlobalV::ofs_running.close();
@@ -725,8 +759,9 @@ TEST_F(KlistTest, IbzKpointIsMP)
 	EXPECT_TRUE(kv->is_mp);
 	//calculate ibz_kpoint
 	std::string skpt;
-	ModuleSymmetry::Symmetry::symm_flag=0;
-	kv->ibz_kpoint(symm,ModuleSymmetry::Symmetry::symm_flag,skpt, ucell);
+    ModuleSymmetry::Symmetry::symm_flag = 0;
+    bool match = true;
+    kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
 	EXPECT_EQ(kv->nkstot_ibz,260);
 	GlobalV::ofs_running<<skpt<<std::endl;
 	GlobalV::ofs_running.close();

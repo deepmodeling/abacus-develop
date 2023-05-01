@@ -1,5 +1,7 @@
 #include "../tool_threading.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include <omp.h>
 /************************************************
 *  unit test of threading tool
 ***********************************************/
@@ -10,6 +12,10 @@
 *       - (template)Distributing 1d tasks by worker id (int and long long)
 *   - BLOCK_TASK_DIST_1D:
 *       - (template)Distributing 1d tasks by block_size and worker id (int and long long)
+*   - OMP_PARALLE:
+*       - Run functions in parallel mode
+*   - TRY_OMP_PARALLEL:
+*       - Run functions in parallel mode（Add the judgment statement to determine whether program is in parallel）
 **/
 
 // The meaning of the parameters used in the following tests
@@ -19,6 +25,14 @@
 // st: start
 // le: len
 // bs: block_size
+
+//Test function used in the following tests
+void test_fun(int a,int b)
+    {
+        std::cout<<a<<std::endl;
+        std::cout<<b;
+        return ;
+    }
 
 TEST(ToolThreadingTEST, TastDist1DInt)
 {
@@ -104,4 +118,44 @@ TEST(ToolThreadingTEST, BlockTaskDist1DLonglong)
     ModuleBase:: BLOCK_TASK_DIST_1D(nw3,iw,nt3,bs,st,le);
     EXPECT_EQ(st,6);
     EXPECT_EQ(le,6);
+}
+
+TEST(ToolThreadingTEST, OmpParalle)
+{
+    std::string output1;
+	testing::internal::CaptureStdout();
+    ModuleBase::OMP_PARALLEL(test_fun);
+	output1 = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output1,testing::HasSubstr("1"));
+    EXPECT_THAT(output1,testing::HasSubstr("0"));
+}
+#define _OPENMP
+TEST(ToolThreadingTEST, OmpParalleOpenmp)
+{
+    std::string output2;
+	testing::internal::CaptureStdout();
+    ModuleBase::OMP_PARALLEL(test_fun);
+	output2 = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output2,testing::HasSubstr(std::to_string(omp_get_num_threads())));
+    EXPECT_THAT(output2,testing::HasSubstr(std::to_string(omp_get_thread_num())));
+}
+#undef _OPENMP
+TEST(ToolThreadingTEST, TryOmpParalle)
+{
+    std::string output3;
+	testing::internal::CaptureStdout();
+    ModuleBase::TRY_OMP_PARALLEL(test_fun);
+	output3 = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output3,testing::HasSubstr("1"));
+    EXPECT_THAT(output3,testing::HasSubstr("0"));
+}
+#define _OPENMP
+TEST(ToolThreadingTEST, TryOmpParalleOpenmp)
+{
+    std::string output4;
+	testing::internal::CaptureStdout();
+    ModuleBase::TRY_OMP_PARALLEL(test_fun);
+	output4= testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output4,testing::HasSubstr(std::to_string(omp_get_num_threads())));
+    EXPECT_THAT(output4,testing::HasSubstr(std::to_string(omp_get_thread_num())));
 }
