@@ -216,7 +216,7 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals 
 	for(size_t ir=0; ir!=GlobalV::NLOCAL; ++ir)
 		Hk[ir].resize(GlobalV::NLOCAL);
 
-	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
+	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{GlobalC::kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))
 	{
 		int is0_b, is1_b;
@@ -228,7 +228,7 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals 
 			{
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
-				const std::complex<double> frac = std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)));
+				const std::complex<double> frac = std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)));
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
 				{
