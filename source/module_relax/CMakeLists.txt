@@ -26,3 +26,7 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(relax_new/test)
 endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(relax_old/test)
+endif()

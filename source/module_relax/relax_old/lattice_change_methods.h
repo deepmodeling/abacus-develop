@@ -3,7 +3,6 @@
 
 #include "lattice_change_basic.h"
 #include "lattice_change_cg.h"
-#include "module_cell/unitcell.h"
 
 class Lattice_Change_Methods
 {
