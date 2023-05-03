@@ -25,6 +25,8 @@ int Symmetry::symm_flag=0;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
+    const double MAX_EPS = std::max(1e-3, epsilon);
+    const double MULT_EPS = 2.0;
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
 	ModuleBase::timer::tick("Symmetry","analy_sys");
@@ -102,11 +104,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3, 
              this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
              
-    GlobalV::ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", real_brav);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", ilattname);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", real_brav);
-    Symm_Other::print1(real_brav, cel_const, GlobalV::ofs_running);
+    ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS TYPE", real_brav);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS LATTICE NAME", ilattname);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav", real_brav);
+    Symm_Other::print1(real_brav, cel_const, ofs_running);
   //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
   //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
   //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
@@ -118,8 +120,40 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
          //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 	test_brav = true; // output the real ibrav and point group
-	this->setgroup(this->symop, this->nop, this->real_brav);
-	this->getgroup(this->nrot, this->nrotk, ofs_running);
+    this->setgroup(this->symop, this->nop, this->real_brav);
+    
+    if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
+    {
+        int tmp_nrot, tmp_nrotk;
+        this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
+        //some different method to enlarge symmetry_prec
+        bool eps_changed = false;
+        auto eps_mult = [this](double mult) {epsilon *= mult;};
+        auto eps_to = [this](double new_eps) {epsilon = new_eps;};
+        //enlarge epsilon and regenerate pointgroup
+        while (tmp_nrotk < this->nrotk && epsilon < MAX_EPS) 
+        {
+            eps_mult(MULT_EPS);
+            eps_changed = true;
+            this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
+        }
+        if (epsilon > MAX_EPS)
+        {
+            ofs_running << "ERROR: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl;
+            ofs_running << "Please set `symmetry` to 0 or -1 in INPUT file.  " << std::endl;
+            ModuleBase::QUIT();
+        }
+            
+        if (eps_changed)
+        {
+            ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl;
+            ofs_running << " Changed `symmetry_prec` to " << epsilon <<"." << std::endl;
+        }
+        assert(tmp_nrotk == this->nrotk);
+    }
+    else
+        this->getgroup(this->nrot, this->nrotk, ofs_running);
+
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
