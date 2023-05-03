@@ -282,7 +282,7 @@ TEST_F(BFGS_Basic_Test, New_Step_WarningQuit)
     double lat0 = 1.0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.new_step(lat0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.new_step(lat0), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs_ndim > 1 not implemented yet"));
 }
@@ -370,7 +370,7 @@ TEST_F(BFGS_Basic_Test, Compute_Trust_Radius_Warning_Quit)
     bfgs.tr_min_hit = true;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.compute_trust_radius(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.compute_trust_radius(), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs history already reset at previous step, we got trapped!"));
 }

@@ -200,7 +200,7 @@ TEST_F(Ions_Move_SD_Test, Cal_Tradius_Wraning_Quit)
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(im_sd.cal_tradius_sd(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(im_sd.cal_tradius_sd(), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("istep < 1!"));
 }

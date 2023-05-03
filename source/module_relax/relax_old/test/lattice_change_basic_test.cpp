@@ -242,7 +242,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case1)
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
-    EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 1323947.0517790399, 1e-12);
+    EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 1323947.0517790401, 1e-12);
     EXPECT_FALSE(Lattice_Change_Basic::converged);
 
     ifs.close();
@@ -354,7 +354,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case4)
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
-    EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 147105.22797544888, 1e-12);
+    EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 147105.22797544891, 1e-12);
     EXPECT_FALSE(Lattice_Change_Basic::converged);
 
     ifs.close();

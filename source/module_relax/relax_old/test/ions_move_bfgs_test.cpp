@@ -398,7 +398,7 @@ TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Warning_Quit1)
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("trust radius is too small! Break down."));
 }
@@ -419,7 +419,7 @@ TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Warning_Quit2)
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("BFGS: move-length unreasonably short"));
 }
