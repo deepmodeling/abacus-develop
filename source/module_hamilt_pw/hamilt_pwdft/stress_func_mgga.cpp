@@ -4,10 +4,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 //calculate the Pulay term of mGGA stress correction in PW
-template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const ModuleBase::matrix& v_ofk, const Charge* const chr, const psi::Psi<complex<FPTYPE>>* psi_in)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
+                                              const ModuleBase::matrix& wg,
+                                              const ModuleBase::matrix& v_ofk,
+                                              const Charge* const chr,
+                                              K_Vectors& kv,
+											  ModulePW::PW_Basis_K* wfc_basis,
+                                              const psi::Psi<complex<FPTYPE>>* psi_in)
 {
-	ModuleBase::timer::tick("Stress_Func","stress_mgga");
+    ModuleBase::timer::tick("Stress_Func","stress_mgga");
 
 	if (GlobalV::NSPIN==4) ModuleBase::WARNING_QUIT("stress_mgga","noncollinear stress + mGGA not implemented");
 
@@ -21,10 +27,10 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 	int ipol2xy[3][3];
 	FPTYPE sigma_mgga[3][3];
 
-	gradwfc = new std::complex<FPTYPE>*[GlobalC::wfcpw->nrxx];
-	crosstaus = new FPTYPE**[GlobalC::wfcpw->nrxx];
+	gradwfc = new std::complex<FPTYPE>*[wfc_basis->nrxx];
+	crosstaus = new FPTYPE**[wfc_basis->nrxx];
 	
-	for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
+	for(int ir = 0;ir<wfc_basis->nrxx;ir++)
 	{
 		crosstaus[ir] = new FPTYPE*[6];
 		gradwfc[ir] = new std::complex<FPTYPE>[3];
@@ -36,10 +42,10 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 		}
 	}
 
-	for(int ik=0; ik<GlobalC::kv.nks; ik++)
+	for(int ik=0; ik<kv.nks; ik++)
 	{
-		if(GlobalV::NSPIN==2) current_spin = GlobalC::kv.isk[ik];
-		const int npw = GlobalC::kv.ngk[ik]; 	
+		if(GlobalV::NSPIN==2) current_spin = kv.isk[ik];
+		const int npw = kv.ngk[ik]; 	
 		psi = new complex<FPTYPE>[npw];
 
 		for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
@@ -58,7 +64,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 			{
 				psi[ig] = ppsi[ig];
 			}
-			XC_Functional::grad_wfc(psi, ik, gradwfc, GlobalC::wfcpw, GlobalC::ucell.tpiba);
+			XC_Functional::grad_wfc(psi, ik, gradwfc, wfc_basis, GlobalC::ucell.tpiba);
 
 			int ipol = 0;
 			for (int ix = 0; ix < 3; ix++)
@@ -67,7 +73,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 				{
 					ipol2xy[ix][iy]=ipol;
 					ipol2xy[iy][ix]=ipol;
-					for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
+					for(int ir = 0;ir<wfc_basis->nrxx;ir++)
 					{
 						crosstaus[ir][ipol][current_spin] += 2.0 * w1 * (gradwfc[ir][ix].real() * gradwfc[ir][iy].real() + gradwfc[ir][ix].imag() * gradwfc[ir][iy].imag());
 					}
@@ -82,7 +88,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 	//reduction of crosstaus w.r.t. kpools here.
 	//will check later
 
-	for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
+	for(int ir = 0;ir<wfc_basis->nrxx;ir++)
 	{
 		delete[] gradwfc[ir];
 	}
@@ -97,7 +103,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 				FPTYPE delta= 0.0;
 				if(ix==iy) delta=1.0;
 				sigma_mgga[ix][iy] = 0.0;
-				for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
+				for(int ir = 0;ir<wfc_basis->nrxx;ir++)
 				{
 					FPTYPE x = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[ir][ipol2xy[ix][iy]][is]);
 					sigma_mgga[ix][iy] += x;
@@ -106,7 +112,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 		}
 	}
 	
-	for(int ir = 0;ir<GlobalC::wfcpw->nrxx;ir++)
+	for(int ir = 0;ir<wfc_basis->nrxx;ir++)
 	{
 		for(int j = 0;j<6;j++)
 		{
@@ -129,7 +135,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma, const M
 	{
 		for(int j=0;j<3;j++)
 		{
-			sigma(i,j) += sigma_mgga[i][j] / GlobalC::wfcpw->nxyz;
+			sigma(i,j) += sigma_mgga[i][j] / wfc_basis->nxyz;
 		}
 	}
 	ModuleBase::timer::tick("Stress_Func","stress_mgga");

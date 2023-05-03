@@ -269,7 +269,7 @@ void Numerical_Descriptor::jlq3d_overlap(
     ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3 <double> [np];
     for (int ig=0; ig<np; ig++)
     {
-        gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
     }
 
     ModuleBase::YlmReal::Ylm_Real(total_lm, np, gk, ylm);

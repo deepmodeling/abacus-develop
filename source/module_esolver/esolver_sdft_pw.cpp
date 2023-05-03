@@ -154,7 +154,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
 	}
     hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
     hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-    this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf, istep, iter, GlobalV::KS_SOLVER);   
+    this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalC::wfcpw, this->stowf, istep, iter, GlobalV::KS_SOLVER);   
     if(GlobalV::MY_STOGROUP==0)
     {
         Symmetry_rho srho;
@@ -184,12 +184,30 @@ void ESolver_SDFT_PW::cal_Energy(double& etot)
 void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)
 {
 	Sto_Forces ff;
-    ff.init(force, this->pelec->wg, this->psi, this->stowf, pelec->charge);
+    ff.cal_stoforce(force,
+                    this->pelec->wg,
+                    pelec->charge,
+                    GlobalC::rhopw,
+                    GlobalC::symm,
+                    GlobalC::sf,
+                    &GlobalC::kv,
+                    GlobalC::wfcpw,
+                    this->psi,
+                    this->stowf);
 }
 void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix &stress)
 {
 	Sto_Stress_PW ss;
-    ss.cal_stress(stress, this->pelec->wg, this->psi, this->stowf, pelec->charge);
+    ss.cal_stress(stress,
+                  this->pelec->wg,
+                  GlobalC::rhopw,
+                  GlobalC::symm,
+                  GlobalC::sf,
+                  GlobalC::kv,
+                  GlobalC::wfcpw,
+                  this->psi,
+                  this->stowf,
+                  pelec->charge);
 }
 void ESolver_SDFT_PW::postprocess()
 {
@@ -207,7 +225,15 @@ void ESolver_SDFT_PW::postprocess()
         hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
         hsolver::DiagoIterAssist<double>::PW_DIAG_THR = std::max(std::min(1e-5, 0.1 * GlobalV::SCF_THR / std::max(1.0, GlobalV::nelec)),1e-12);
         hsolver::DiagoIterAssist<double>::need_subspace = false;
-        this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec,this->stowf,istep, iter, GlobalV::KS_SOLVER, true);
+        this->phsol->solve(this->p_hamilt,
+                           this->psi[0],
+                           this->pelec,
+                           GlobalC::wfcpw,
+                           this->stowf,
+                           istep,
+                           iter,
+                           GlobalV::KS_SOLVER,
+                           true);
         GlobalC::en.ef = this->pelec->ef; //Temporary: Please use this->pelec->ef. GlobalC::en.ef is not recommended.
     }
     ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder();//release lots of memories

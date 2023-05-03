@@ -19,7 +19,11 @@ class HSolverPW: public HSolver<FPTYPE, Device>
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
+    void solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+               psi::Psi<std::complex<FPTYPE>, Device>& psi,
+               elecstate::ElecState* pes,
+               const std::string method_in,
+               const bool skip_charge) override;
 
     virtual FPTYPE cal_hsolerror() override;
     virtual FPTYPE set_diagethr(const int istep, const int iter, const FPTYPE drho) override;
@@ -29,7 +33,9 @@ class HSolverPW: public HSolver<FPTYPE, Device>
     void endDiagh();
     void hamiltSolvePsiK(hamilt::Hamilt<FPTYPE, Device>* hm, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue);
 
-    void updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, const int ik);
+    void updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+                    psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                    const int ik);
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 

@@ -66,13 +66,13 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std
         writeUNK(*psi);
         outEIG(ekb);
         cal_Mmn(*psi);
-        cal_Amn(*psi);
+        cal_Amn(*psi, GlobalC::wfcpw);
     }
 #ifdef __LCAO
     else if (GlobalV::BASIS_TYPE == "lcao")
     {
         getUnkFromLcao();
-        cal_Amn(this->unk_inLcao[0]);
+        cal_Amn(this->unk_inLcao[0], GlobalC::wfcpw);
         cal_Mmn(this->unk_inLcao[0]);
         writeUNK(this->unk_inLcao[0]);
         outEIG(ekb);
@@ -603,7 +603,7 @@ void toWannier90::writeUNK(const psi::Psi<std::complex<double>> &wfc_pw)
 #endif
 }
 
-void toWannier90::cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw)
+void toWannier90::cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis_K* wfc_basis)
 {
     const int pwNumberMax = GlobalC::wf.npwx;
 
@@ -623,7 +623,7 @@ void toWannier90::cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw)
     for (int ik = 0; ik < cal_num_kpts; ik++)
     {
         trial_orbitals[ik].create(num_wannier, pwNumberMax);
-        produce_trial_in_pw(ik, trial_orbitals[ik]);
+        produce_trial_in_pw(ik, wfc_basis, trial_orbitals[ik]);
     }
 
     // test by jingan
@@ -775,7 +775,7 @@ void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw)
         mmn_file.close();
 }
 
-void toWannier90::produce_trial_in_pw(const int &ik, ModuleBase::ComplexMatrix &trial_orbitals_k)
+void toWannier90::produce_trial_in_pw(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix &trial_orbitals_k)
 {
 
     for (int i = 0; i < num_wannier; i++)
@@ -812,7 +812,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ModuleBase::ComplexMatrix &
     ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
     for (int ig = 0; ig < npw; ig++)
     {
-        gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
     }
 
     ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
@@ -1707,7 +1707,7 @@ void toWannier90::lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital
 {
     this->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
     Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, this->table_local);
-    Wavefunc_in_pw::produce_local_basis_in_pw(ik, orbital_in_G, this->table_local);
+    Wavefunc_in_pw::produce_local_basis_in_pw(ik, GlobalC::wfcpw, orbital_in_G, this->table_local);
 }
 
 void toWannier90::getUnkFromLcao()

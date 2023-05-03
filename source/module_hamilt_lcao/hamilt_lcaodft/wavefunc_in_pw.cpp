@@ -247,12 +247,14 @@ const double *rab, const int &l, double* table)
 	return;
 }
 
-
-void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::ComplexMatrix &psi, const ModuleBase::realArray &table_local)
+void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
+											   ModulePW::PW_Basis_K *wfc_basis,
+                                               ModuleBase::ComplexMatrix &psi,
+                                               const ModuleBase::realArray &table_local)
 {
 	ModuleBase::TITLE("Wavefunc_in_pw","produce_local_basis_in_pw");
 	assert(ik>=0);
-	const int npw = GlobalC::kv.ngk[ik];
+	const int npw = wfc_basis->npwk[ik];
 	const int total_lm = ( GlobalC::ucell.lmax + 1) * ( GlobalC::ucell.lmax + 1);
 	ModuleBase::matrix ylm(total_lm, npw);
 	std::complex<double> *aux = new std::complex<double>[npw];
@@ -261,7 +263,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
 	for(int ig=0;ig<npw;ig++)
 	{
-		gk[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig);
+		gk[ig] = wfc_basis->getgpluskcar(ik, ig);
 	}
 
 	ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
@@ -447,8 +449,11 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 	delete[] gk;
 }
 
-
-void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::ComplexMatrix &psi, const ModuleBase::realArray &table_local, ModuleBase::Vector3<double> q)   // pengfei 2016-11-23
+void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik,
+                                                 ModuleBase::ComplexMatrix &psi,
+                                                 ModulePW::PW_Basis_K *wfc_basis,
+                                                 const ModuleBase::realArray &table_local,
+                                                 ModuleBase::Vector3<double> q) // pengfei 2016-11-23
 {
 	ModuleBase::TITLE("Wavefunc_in_pw","produce_local_basis_in_pw");
 	assert(ik>=0);
@@ -462,7 +467,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 
 	for(int ig=0;ig<npw;ig++)
 	{
-		gkq[ig] = GlobalC::wf.get_1qvec_cartesian(ik, ig) + q;
+		gkq[ig] = wfc_basis->getgpluskcar(ik, ig) + q;
 	}
 
 	ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gkq, ylm);
@@ -474,7 +479,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 	{
 		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
 		{
-			std::complex<double> *skq = GlobalC::wf.get_skq(ik, it, ia, q);
+			std::complex<double> *skq = GlobalC::wf.get_skq(ik, it, ia, wfc_basis, q);
 			int ic=0;
 			for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{

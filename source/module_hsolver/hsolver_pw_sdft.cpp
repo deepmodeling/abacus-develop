@@ -9,7 +9,8 @@ namespace hsolver
 {
     void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
                            psi::Psi<std::complex<double>>& psi, 
-                           elecstate::ElecState* pes, 
+                           elecstate::ElecState* pes,
+						   ModulePW::PW_Basis_K* wfc_basis, 
                            Stochastic_WF& stowf,
 						   const int istep,
                            const int iter,
@@ -67,7 +68,7 @@ namespace hsolver
 		}
 
 		stoiter.itermu(iter,pes);
-		stoiter.calHsqrtchi(stowf);
+		stoiter.calHsqrtchi(stowf, wfc_basis);
 		if(skip_charge)
     	{
     	    ModuleBase::timer::tick(this->classname, "solve");
@@ -90,7 +91,7 @@ namespace hsolver
 			}
 		}
 		// calculate stochastic rho
-		stoiter.sum_stoband(stowf,pes,pHamilt);
+		stoiter.sum_stoband(stowf,pes,pHamilt,wfc_basis);
 
 
 		//(6) calculate the delta_harris energy 

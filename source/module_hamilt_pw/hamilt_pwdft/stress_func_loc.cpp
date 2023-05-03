@@ -6,8 +6,12 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO
-template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
+                                             ModulePW::PW_Basis* rho_basis,
+                                             Structure_Factor& sf,
+                                             const bool is_pw,
+                                             const Charge* const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_loc");
     ModuleBase::timer::tick("Stress_Func","stress_loc");
@@ -65,9 +69,9 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma, ModulePW
 			for (int ig=0; ig<rho_basis->npw; ig++)
 			{
 				if(rho_basis->ig_gge0==ig)
-					evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * (GlobalC::sf.strucFac(it,ig) * conj(aux[ig])).real();
+					evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * (sf.strucFac(it,ig) * conj(aux[ig])).real();
 				else
-					evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * (GlobalC::sf.strucFac(it,ig) * conj(aux[ig]) * fact).real();
+					evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * (sf.strucFac(it,ig) * conj(aux[ig]) * fact).real();
 			}
 		}
 	}
@@ -107,7 +111,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma, ModulePW
 			{
 				for (int m = 0; m<l+1;m++)
 				{
-					local_sigma(l, m) = local_sigma(l, m) + (conj(aux[ig]) * GlobalC::sf.strucFac(nt, ig)).real() 
+					local_sigma(l, m) = local_sigma(l, m) + (conj(aux[ig]) * sf.strucFac(nt, ig)).real() 
 						* 2.0 * dvloc[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba2 * 
 						rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
 				}
@@ -126,9 +130,9 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma, ModulePW
 		}
 }
 #endif
-	}
+}
 
-	if(is_pw)
+    if(is_pw)
 	{
 		for(int l = 0;l< 3;l++)
 		{

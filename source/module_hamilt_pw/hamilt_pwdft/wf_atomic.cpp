@@ -238,15 +238,14 @@ void WF_atomic::check_evc()const
     //ModuleBase::QUIT();
 }
 
-void WF_atomic::atomic_wfc
-(	const int ik,
-  const int np,
-  const int lmax_wfc,
-  ModuleBase::ComplexMatrix &wfcatom,
-  const ModuleBase::realArray &table_q,
-  const int &table_dimension,
-  const double &dq
-)const
+void WF_atomic::atomic_wfc(const int ik,
+                           const int np,
+                           const int lmax_wfc,
+                           ModulePW::PW_Basis_K *wfc_basis,
+                           ModuleBase::ComplexMatrix &wfcatom,
+                           const ModuleBase::realArray &table_q,
+                           const int &table_dimension,
+                           const double &dq) const
 {
     if (GlobalV::test_wf>3) ModuleBase::TITLE("WF_atomic","atomic_wfc");
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
@@ -262,7 +261,7 @@ void WF_atomic::atomic_wfc
     ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3 <double> [np];
     for (int ig=0;ig<np;ig++)
     {
-        gk[ig] = WF_atomic::get_1qvec_cartesian(ik, ig);
+        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
     }
     //ylm = spherical harmonics functions
     ModuleBase::YlmReal::Ylm_Real(total_lm, np, gk, ylm);
@@ -276,7 +275,7 @@ void WF_atomic::atomic_wfc
         for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
         {
 			//std::cout << "\n it = " << it << " ia = " << ia << std::endl;
-            std::complex<double> *sk = this->get_sk(ik, it, ia,GlobalC::wfcpw);
+            std::complex<double> *sk = this->get_sk(ik, it, ia,wfc_basis);
             //-------------------------------------------------------
             // Calculate G space 3D wave functions
             //-------------------------------------------------------
@@ -483,7 +482,7 @@ void WF_atomic::atomic_wfc
     delete[] chiaux;
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
     return;
-} //end subroutine atomic_wfc
+} // end subroutine atomic_wfc
 
 #ifdef __MPI
 void WF_atomic::stick_to_pool(float *stick, const int &ir, float *out, ModulePW::PW_Basis_K* wfc_basis) const
@@ -605,7 +604,7 @@ void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int
                 {
                     const FPTYPE rr = tmprr[wfc_basis->getigl2isz(ik,ig)];
                     const FPTYPE arg= ModuleBase::TWO_PI * tmparg[wfc_basis->getigl2isz(ik,ig)];
-                    const FPTYPE gk2 = GlobalC::wfcpw->getgk2(ik,ig);
+                    const FPTYPE gk2 = wfc_basis->getgk2(ik,ig);
                     ppsi[ig+startig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
                 }
                 startig += npwx;
@@ -632,14 +631,14 @@ void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX); //qianrui add RAND_MAX
                 const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
-                const FPTYPE gk2 = GlobalC::wfcpw->getgk2(ik,ig);
+                const FPTYPE gk2 = wfc_basis->getgk2(ik,ig);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
             if(GlobalV::NPOL==2)for (int ig = this->npwx;ig < this->npwx + ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX);
                 const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
-                const FPTYPE gk2 = GlobalC::wfcpw->getgk2(ik,ig-this->npwx);
+                const FPTYPE gk2 = wfc_basis->getgk2(ik,ig-this->npwx);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
         }

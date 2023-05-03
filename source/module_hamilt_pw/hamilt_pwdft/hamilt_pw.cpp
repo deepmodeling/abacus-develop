@@ -13,14 +13,14 @@
 namespace hamilt
 {
 
-template<typename FPTYPE, typename Device>
-HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
+template <typename FPTYPE, typename Device>
+HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->classname = "HamiltPW";
     const auto tpiba2 = static_cast<FPTYPE>(GlobalC::ucell.tpiba2);
     const auto tpiba = static_cast<FPTYPE>(GlobalC::ucell.tpiba);
-    const int* isk = GlobalC::kv.isk.data();
-    const FPTYPE* gk2 = GlobalC::wfcpw->get_gk2_data<FPTYPE>();
+    const int* isk = pkv->isk.data();
+    const FPTYPE* gk2 = wfc_basis->get_gk2_data<FPTYPE>();
 
     if (GlobalV::T_IN_H)
     {
@@ -28,8 +28,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
         Operator<std::complex<FPTYPE>, Device>* ekinetic = new Ekinetic<OperatorPW<FPTYPE, Device>>(
             tpiba2,
             gk2,
-            GlobalC::wfcpw->nks,
-            GlobalC::wfcpw->npwk_max
+            wfc_basis->nks,
+            wfc_basis->npwk_max
         );
         if(this->ops == nullptr)
         {
@@ -75,7 +75,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
                 pot_in->get_v_effective_data<FPTYPE>(),
                 pot_in->get_effective_v().nr,
                 pot_in->get_effective_v().nc,
-                GlobalC::wfcpw
+                wfc_basis
             );
             if(this->ops == nullptr)
             {
@@ -91,7 +91,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
                 pot_in->get_vofk_effective_data<FPTYPE>(),
                 pot_in->get_effective_vofk().nr,
                 pot_in->get_effective_vofk().nc,
-                GlobalC::wfcpw
+                wfc_basis
             );
             this->ops->add(meta);
         }
@@ -101,7 +101,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in)
         Operator<std::complex<FPTYPE>, Device>* nonlocal = new Nonlocal<OperatorPW<FPTYPE, Device>>(
             isk,
             &GlobalC::ppcell,
-            &GlobalC::ucell
+            &GlobalC::ucell,
+            wfc_basis
         );
         if(this->ops == nullptr)
         {

@@ -87,7 +87,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         if(this->psi != nullptr) delete this->psi;
-        this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
+        this->psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::wfcpw->npwk_max);
 
         // cout<<GlobalC::rhopw->nrxx<<endl;
         // cout<<"before ufft allocate"<<endl;
@@ -115,7 +115,7 @@ namespace ModuleESolver
         //======================================
         // Initalize non local pseudopotential
         //======================================
-        GlobalC::ppcell.init_vnl(GlobalC::ucell);
+        GlobalC::ppcell.init_vnl(GlobalC::ucell, GlobalC::wfcpw);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         GlobalC::ppcell.cal_effective_D();
@@ -132,7 +132,7 @@ namespace ModuleESolver
         if (GlobalV::NBANDS != 0 || GlobalV::ESOLVER_TYPE != "sdft")
         // qianrui add temporarily. In the future, wfcinit() should be compatible with cases when NBANDS=0
         {
-            GlobalC::wf.wfcinit(this->psi);
+            GlobalC::wf.wfcinit(this->psi, GlobalC::wfcpw);
         }
 
         // denghui added 20221116
@@ -233,7 +233,7 @@ namespace ModuleESolver
         }
         else if (GlobalV::md_prec_level == 1)
         {
-            GlobalC::ppcell.init_vnl(GlobalC::ucell);
+            GlobalC::ppcell.init_vnl(GlobalC::ucell, GlobalC::wfcpw);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
@@ -241,7 +241,7 @@ namespace ModuleESolver
         }
         else if (GlobalV::md_prec_level == 0)
         {
-            GlobalC::ppcell.init_vnl(GlobalC::ucell);
+            GlobalC::ppcell.init_vnl(GlobalC::ucell, GlobalC::wfcpw);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
             GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);
@@ -279,7 +279,7 @@ namespace ModuleESolver
         //allocate HamiltPW
         if(this->p_hamilt == nullptr)
         {
-            this->p_hamilt = new hamilt::HamiltPW<FPTYPE, Device>(this->pelec->pot);
+            this->p_hamilt = new hamilt::HamiltPW<FPTYPE, Device>(this->pelec->pot, GlobalC::wfcpw, &GlobalC::kv);
         }
 
         //----------------------------------------------------------
@@ -657,7 +657,15 @@ namespace ModuleESolver
                                new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
                                reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
         }
-        ff.init(force, this->pelec->wg, this->pelec->charge, this->__kspw_psi);
+        ff.cal_force(force,
+                        this->pelec->wg,
+                        this->pelec->charge,
+                        GlobalC::rhopw,
+                        GlobalC::symm,
+                        GlobalC::sf,
+                        &GlobalC::kv,
+                        GlobalC::wfcpw,
+                        this->__kspw_psi);
     }
 
     template<typename FPTYPE, typename Device>
@@ -670,7 +678,15 @@ namespace ModuleESolver
                              new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
                              reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
         }
-        ss.cal_stress(stress, this->psi, this->__kspw_psi);
+        ss.cal_stress(stress,
+                      GlobalC::ucell,
+                      GlobalC::rhopw,
+                      GlobalC::symm,
+                      GlobalC::sf,
+                      GlobalC::kv,
+                      GlobalC::wfcpw,
+                      this->psi,
+                      this->__kspw_psi);
 
         //external stress
         double unit_transform = 0.0;

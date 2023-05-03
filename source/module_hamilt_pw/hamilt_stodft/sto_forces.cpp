@@ -11,9 +11,16 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
-
-
-void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in, Stochastic_WF& stowf, const Charge* const chr)
+void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
+                              const ModuleBase::matrix& wg,
+                              const Charge* const chr,
+                              ModulePW::PW_Basis* rho_basis,
+                              ModuleSymmetry::Symmetry& symm,
+                              Structure_Factor& sf,
+							  K_Vectors* pkv,
+							  ModulePW::PW_Basis_K* wfc_basis,
+                              const psi::Psi<std::complex<double>>* psi_in,
+                              Stochastic_WF& stowf)
 {
 	ModuleBase::timer::tick("Sto_Force","cal_force");
 	ModuleBase::TITLE("Sto_Forces", "init");
@@ -25,11 +32,11 @@ void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, c
 	ModuleBase::matrix forcecc(nat, 3);
 	ModuleBase::matrix forcenl(nat, 3);
 	ModuleBase::matrix forcescc(nat, 3);
-    this->cal_force_loc(forcelc, GlobalC::rhopw, chr);
-    this->cal_force_ew(forceion, GlobalC::rhopw);
-    this->cal_sto_force_nl(forcenl, wg, psi_in,stowf);
-	this->cal_force_cc(forcecc, GlobalC::rhopw, chr);
-	this->cal_force_scc(forcescc, GlobalC::rhopw);
+    this->cal_force_loc(forcelc, rho_basis, chr);
+    this->cal_force_ew(forceion, rho_basis, sf);
+    this->cal_sto_force_nl(forcenl, wg, wfc_basis, psi_in,stowf);
+	this->cal_force_cc(forcecc, rho_basis, chr);
+	this->cal_force_scc(forcescc, rho_basis);
 	
     //impose total force = 0
     int iat = 0;
@@ -112,8 +119,8 @@ void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, c
 				pos[3*iat+2] = GlobalC::ucell.atoms[it].taud[ia].z;
 				for(int k=0; k<3; ++k)
 				{
-					GlobalC::symm.check_translation( pos[iat*3+k], -floor(pos[iat*3+k]));
-					GlobalC::symm.check_boundary( pos[iat*3+k] );
+					symm.check_translation( pos[iat*3+k], -floor(pos[iat*3+k]));
+					symm.check_boundary( pos[iat*3+k] );
 				}
 				iat++;				
 			}
@@ -129,7 +136,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, c
 			
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-		GlobalC::symm.force_symmetry(force , pos, GlobalC::ucell);
+		symm.force_symmetry(force , pos, GlobalC::ucell);
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
 			ModuleBase::Mathzone::Direct_to_Cartesian(force(iat,0),force(iat,1),force(iat,2),
@@ -175,7 +182,7 @@ void Sto_Forces::init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, c
     return;
 }
 
-void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, ModulePW::PW_Basis_K* wfc_basis,  const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
 {
 	ModuleBase::TITLE("Sto_Forces","cal_force_nl");
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
@@ -205,7 +212,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase:
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
         {
-            GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+            GlobalC::ppcell.getvnl(ik, wfc_basis, GlobalC::ppcell.vkb);
         }
 
         // get becp according to wave functions and vkb
@@ -244,17 +251,17 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase:
 				if (ipol==0)
 				{
 					for (int ig=0; ig<npw; ig++)
-                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * GlobalC::wfcpw->getgcar(ik,ig)[0];
+                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik,ig)[0];
                 }
 				if (ipol==1)
 				{
 					for (int ig=0; ig<npw; ig++)
-                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * GlobalC::wfcpw->getgcar(ik,ig)[1];
+                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik,ig)[1];
                 }
 				if (ipol==2)
 				{
 					for (int ig=0; ig<npw; ig++)
-                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * GlobalC::wfcpw->getgcar(ik,ig)[2];
+                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik,ig)[2];
                 }
 			}
             //KS orbitals

@@ -2,12 +2,12 @@
 #define STO_FORCES_H
 
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
-#include "sto_wf.h"
 #include "module_psi/psi.h"
+#include "sto_wf.h"
 
 class Sto_Forces : public Forces<double>
 {
-public:
+  public:
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
      * is computed from 4 main parts
@@ -20,11 +20,23 @@ public:
     Sto_Forces(){};
     ~Sto_Forces(){};
 
-    void init(ModuleBase::matrix& matrix, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>* psi_in,Stochastic_WF& stowf, const Charge* const chr);
+    void cal_stoforce(ModuleBase::matrix& force,
+                      const ModuleBase::matrix& wg,
+                      const Charge* const chr,
+                      ModulePW::PW_Basis* rho_basis,
+                      ModuleSymmetry::Symmetry& symm,
+                      Structure_Factor& sf,
+                      K_Vectors* pkv,
+                      ModulePW::PW_Basis_K* wfc_basis,
+                      const psi::Psi<std::complex<double>>* psi_in,
+                      Stochastic_WF& stowf);
 
-private:
-    void cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf);
-
+  private:
+    void cal_sto_force_nl(ModuleBase::matrix& forcenl,
+                          const ModuleBase::matrix& wg,
+                          ModulePW::PW_Basis_K* wfc_basis,
+                          const psi::Psi<complex<double>>* psi_in,
+                          Stochastic_WF& stowf);
 };
 
 #endif

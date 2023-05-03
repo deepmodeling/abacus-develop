@@ -91,9 +91,8 @@ Input INPUT;
 void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 
-psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
+psi::Psi<complex<double>>* wavefunc::allocate(const int nks, const int npwx)
 {
-	this->npwx = GlobalC::wfcpw->npwk_max;
 	psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(nks, GlobalV::NBANDS,npwx, nullptr);
 	return psi;
 }

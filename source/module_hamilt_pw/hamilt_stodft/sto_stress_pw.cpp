@@ -1,8 +1,18 @@
 #include "sto_stress_pw.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
-void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf, const Charge* const chr)
+void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
+                               const ModuleBase::matrix& wg,
+							   ModulePW::PW_Basis* rho_basis,
+							   ModuleSymmetry::Symmetry& symm,
+                               Structure_Factor& sf,
+							   K_Vectors& kv,
+							   ModulePW::PW_Basis_K* wfc_basis,
+                               const psi::Psi<complex<double>>* psi_in,
+                               Stochastic_WF& stowf,
+                               const Charge* const chr)
 {
 	ModuleBase::TITLE("Sto_Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Sto_Stress_PW","cal_stress");    
@@ -17,29 +27,29 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::m
 	ModuleBase::matrix sigmaxcc(3,3);
 
 	//kinetic contribution
-	sto_stress_kin(sigmakin, wg, psi_in, stowf);
+	sto_stress_kin(sigmakin, wg, symm, kv, wfc_basis, psi_in, stowf);
 	
 	//hartree contribution
-	stress_har(sigmahar, GlobalC::rhopw, 1, chr);
+	stress_har(sigmahar, rho_basis, 1, chr);
 
     //ewald contribution
-    stress_ewa(sigmaewa, GlobalC::rhopw, 1);
+    stress_ewa(sigmaewa, rho_basis, 1);
 
     //xc contribution: add gradient corrections(non diagonal)
     for(int i=0;i<3;++i)
 	{
        sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
-    stress_gga(sigmaxc, chr);
+    stress_gga(sigmaxc, rho_basis, chr);
 
     //local contribution
-    stress_loc(sigmaloc, GlobalC::rhopw, 1, chr);
+    stress_loc(sigmaloc, rho_basis, sf, 1, chr);
     
     //nlcc
-    stress_cc(sigmaxcc, GlobalC::rhopw, 1, chr);
+    stress_cc(sigmaxcc, rho_basis, sf, 1, chr);
    
     //nonlocal
-	sto_stress_nl(sigmanl, wg, psi_in, stowf);
+	sto_stress_nl(sigmanl, wg, symm, kv, wfc_basis, psi_in, stowf);
 
 
     for(int ipol=0;ipol<3;++ipol)
@@ -58,7 +68,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::m
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-		GlobalC::symm.stress_symmetry(sigmatot,GlobalC::ucell);
+		symm.stress_symmetry(sigmatot,GlobalC::ucell);
 	}
 
 	bool ry = false;
@@ -83,7 +93,13 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot, const ModuleBase::m
     
 }
 
-void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
+                                   const ModuleBase::matrix& wg,
+								   ModuleSymmetry::Symmetry& symm,
+                                   K_Vectors& kv,
+                                   ModulePW::PW_Basis_K* wfc_basis,
+                                   const psi::Psi<complex<double>>* psi_in,
+                                   Stochastic_WF& stowf)
 {
 	ModuleBase::TITLE("Sto_Stress_PW","cal_stress");
 	ModuleBase::timer::tick("Sto_Stress_PW","cal_stress");
@@ -92,7 +108,8 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::
 	ModuleBase::matrix s_kin(3,3,true);
 
 		
-	int npwx = GlobalC::wf.npwx;
+	const int npwx = wfc_basis->npwk_max;
+	const int nks = wfc_basis->nks;
 	gk[0]= new double[npwx]; 
 	gk[1]= new double[npwx];
 	gk[2]= new double[npwx];
@@ -100,16 +117,16 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::
 	int nksbands = psi_in->get_nbands();
 	if(GlobalV::MY_STOGROUP != 0) nksbands = 0;
 
-	for(int ik=0;ik<GlobalC::kv.nks;++ik)
+	for(int ik=0;ik<nks;++ik)
 	{
 		const int nstobands = stowf.nchip[ik];
 		const int nbandstot = nstobands + nksbands;
-		const int npw = GlobalC::kv.ngk[ik];
+		const int npw = wfc_basis->npwk[ik];
 		for(int i=0;i<npw;++i)
 		{
-			gk[0][i]=GlobalC::wfcpw->getgpluskcar(ik,i)[0]*factor;
-			gk[1][i]=GlobalC::wfcpw->getgpluskcar(ik,i)[1]*factor;
-			gk[2][i]=GlobalC::wfcpw->getgpluskcar(ik,i)[2]*factor;
+			gk[0][i]=wfc_basis->getgpluskcar(ik,i)[0]*factor;
+			gk[1][i]=wfc_basis->getgpluskcar(ik,i)[1]*factor;
+			gk[2][i]=wfc_basis->getgpluskcar(ik,i)[2]*factor;
 		}
 
 		//kinetic contribution
@@ -136,7 +153,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::
 						{
 							std::complex<double> p = stowf.shchi[ik](ibnd-nksbands, i);
 							double np = p.real() * p.real() + p.imag() * p.imag();
-							s_kin(l,m) += GlobalC::kv.wk[ik]*gk[l][i]*gk[m][i] * np;
+							s_kin(l,m) += kv.wk[ik]*gk[l][i]*gk[m][i] * np;
 						}
 					}
 				}
@@ -176,7 +193,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-		GlobalC::symm.stress_symmetry(sigma,GlobalC::ucell);
+		symm.stress_symmetry(sigma,GlobalC::ucell);
 	}
 	delete[] gk[0];
 	delete[] gk[1];
@@ -187,8 +204,15 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma, const ModuleBase::
 	return;
 }
 
-void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf){
-	ModuleBase::TITLE("Sto_Stress_Func","stres_nl");
+void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
+                                  const ModuleBase::matrix& wg,
+								  ModuleSymmetry::Symmetry& symm,
+                                  K_Vectors& kv,
+                                  ModulePW::PW_Basis_K* wfc_basis,
+                                  const psi::Psi<complex<double>>* psi_in,
+                                  Stochastic_WF& stowf)
+{
+    ModuleBase::TITLE("Sto_Stress_Func","stres_nl");
 	ModuleBase::timer::tick("Sto_Stress_Func","stres_nl");
 	
 	const int nkb = GlobalC::ppcell.nkb;
@@ -200,7 +224,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 
 	ModuleBase::matrix sigmanlc(3,3,true);
 	int* nchip = stowf.nchip;
-	const int npwx = GlobalC::wf.npwx;
+	const int npwx = wfc_basis->npwk_max;
 	int nksbands = psi_in->get_nbands();
 	if(GlobalV::MY_STOGROUP != 0) nksbands = 0;
 	
@@ -213,20 +237,20 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 	}
 	ModuleBase::ComplexMatrix vkb2( nkb, npwx );
 	
-    for (int ik = 0;ik < GlobalC::kv.nks;ik++)
+    for (int ik = 0;ik < kv.nks;ik++)
     {
 		const int nstobands = stowf.nchip[ik];
 		const int nbandstot = nstobands + nksbands;
-		const int npw = GlobalC::kv.ngk[ik];
+		const int npw = kv.ngk[ik];
 		// dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
 		ModuleBase::ComplexMatrix dbecp( nbandstot, nkb);
 		ModuleBase::ComplexMatrix becp( nbandstot, nkb);
 		  
-		if (GlobalV::NSPIN==2) GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+		if (GlobalV::NSPIN==2) GlobalV::CURRENT_SPIN = kv.isk[ik];
 		// generate vkb
 		if (GlobalC::ppcell.nkb > 0)
 		{
-			GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
+			GlobalC::ppcell.getvnl(ik, wfc_basis, GlobalC::ppcell.vkb);
 		}
 
 		// get becp according to wave functions and vkb
@@ -253,10 +277,10 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 		Parallel_Reduce::reduce_complex_double_pool( becp.c, becp.size);
 			
 		for(int i=0;i<3;++i) {
-			get_dvnl1(vkb0[i],ik,i);
+			get_dvnl1(vkb0[i],ik,i, wfc_basis);
 		}
 				
-		get_dvnl2(vkb2,ik);
+		get_dvnl2(vkb2,ik, wfc_basis);
 
 		ModuleBase::Vector3<double> qvec;
 		double* qvec0[3];
@@ -278,14 +302,14 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 					// third term of dbecp_noevc
 					for (int ig = 0; ig < npw; ++ig) 
 					{
-						qvec = GlobalC::wfcpw->getgpluskcar(ik, ig);
+						qvec = wfc_basis->getgpluskcar(ik, ig);
 						pvkb1[ig] += 0.5 * qvec0[ipol][0] * pvkb0j[ig] +
 									0.5 * qvec0[jpol][0] * pvkb0i[ig];
 					} // end ig	  
 				}//end nkb
  
 
-				ModuleBase::ComplexMatrix dbecp_noevc(nkb, GlobalC::wf.npwx, true);
+				ModuleBase::ComplexMatrix dbecp_noevc(nkb, npwx, true);
 				for (int i = 0; i < nkb; ++i) 
 				{
 					std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
@@ -308,7 +332,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 					pvkb = &vkb2(i,0);
 					for (int ig = 0; ig < npw;++ig) 
 					{
-						qvec =	GlobalC::wfcpw->getgpluskcar(ik, ig);
+						qvec =	wfc_basis->getgpluskcar(ik, ig);
 						double qm1;
 						if(qvec.norm2() > 1e-16) qm1 = 1.0 / qvec.norm(); 
 						else qm1 = 0; 
@@ -334,7 +358,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 					if(ib < nksbands)
 						fac = wg(ik, ib);
 					else
-						fac = GlobalC::kv.wk[ik];
+						fac = kv.wk[ik];
 					int iat = 0;
 					int sum = 0;
 					for (int it=0; it<GlobalC::ucell.ntype; ++it)
@@ -394,7 +418,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma, const ModuleBase::m
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-		GlobalC::symm.stress_symmetry(sigma,GlobalC::ucell);
+		symm.stress_symmetry(sigma,GlobalC::ucell);
 	}
 	
 	//  this->print(ofs_running, "nonlocal stress", stresnl);

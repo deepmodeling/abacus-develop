@@ -29,9 +29,9 @@ class WF_igk
 	public:
 
     // Calculate kinetic energy
-    double* get_qvec_cartesian(const int &ik);
+    // double* get_qvec_cartesian(const int &ik);
 
-    ModuleBase::Vector3<double> get_1qvec_cartesian(const int ik,const int ig)const;
+    // ModuleBase::Vector3<double> get_1qvec_cartesian(const int ik,const int ig)const;
 
     std::complex<double>* get_sk(const int ik, const int it, const int ia, ModulePW::PW_Basis_K* wfc_basis)const;
 
@@ -39,7 +39,10 @@ class WF_igk
     void get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis, std::complex<FPTYPE> * sk)const;
 
     // pengfei 2016-11-23
-    std::complex<double>* get_skq(int ik, int it, int ia, ModuleBase::Vector3<double> q);
-
+    std::complex<double>* get_skq(int ik,
+                                  int it,
+                                  int ia,
+                                  ModulePW::PW_Basis_K* wfc_basis,
+                                  ModuleBase::Vector3<double> q);
 };
 #endif

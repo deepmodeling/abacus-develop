@@ -5,8 +5,12 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 //NLCC term, need to be tested
-template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw, const Charge* const chr)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
+                                            ModulePW::PW_Basis *rho_basis,
+                                            Structure_Factor &sf,
+                                            const bool is_pw,
+                                            const Charge *const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_cc");
 	ModuleBase::timer::tick("Stress_Func","stress_cc");
@@ -43,7 +47,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW:
 #ifdef USE_LIBXC
     	const auto etxc_vtxc_v = XC_Functional::v_xc_meta(
             rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba,
-            chr, GlobalC::rhopw);
+            chr, rho_basis);
         
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -56,7 +60,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW:
 	{
 		if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     	const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx,
-			chr, GlobalC::rhopw, &GlobalC::ucell);
+			chr, rho_basis, &GlobalC::ucell);
 		GlobalC::en.etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
 		GlobalC::en.vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
 		vxc = std::get<2>(etxc_vtxc_v);
@@ -116,9 +120,9 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW:
 			{
 				std::complex<double> local_sigmadiag;
 				if(rho_basis->ig_gge0==ig)
-					local_sigmadiag = conj(psic[ig] ) * GlobalC::sf.strucFac (nt, ig) * rhocg[rho_basis->ig2igg[ig]];
+					local_sigmadiag = conj(psic[ig] ) * sf.strucFac (nt, ig) * rhocg[rho_basis->ig2igg[ig]];
 				else
-					local_sigmadiag = conj(psic[ig] ) * GlobalC::sf.strucFac (nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
+					local_sigmadiag = conj(psic[ig] ) * sf.strucFac (nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
 				sigmadiag += local_sigmadiag.real();
 			}
 			this->deriv_drhoc (
@@ -146,7 +150,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma, ModulePW:
 				{
 					for (int m = 0;m< 3;m++)
 					{
-						const std::complex<FPTYPE> t = conj(psic[ig]) * GlobalC::sf.strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba *
+						const std::complex<FPTYPE> t = conj(psic[ig]) * sf.strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba *
 												  rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
 						//						sigmacc [l][ m] += t.real();
 						local_sigma(l,m) += t.real();

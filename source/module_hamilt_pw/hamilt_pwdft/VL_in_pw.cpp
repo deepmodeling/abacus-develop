@@ -30,7 +30,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix &vloc_in, ModulePW::PW_Basi
 	double *vloc1d = new double[rho_basis->ngg];
 	ModuleBase::GlobalFunc::ZEROS(vloc1d, rho_basis->ngg);
 
-	this->allocate();
+	this->allocate(rho_basis->ngg);
 	
 	for (int it = 0; it < GlobalC::ucell.ntype; it++) 
 	{
@@ -50,7 +50,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix &vloc_in, ModulePW::PW_Basi
 					atom->ncpp.vloc_at, // local potential in real space radial form.  
 		          	this->zp[it],
 					vloc1d,
-					GlobalC::rhopw);
+					rho_basis);
 		}
 		else
 		{
@@ -66,17 +66,17 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix &vloc_in, ModulePW::PW_Basi
 
 	delete[] vloc1d;
 
-	this->print_vloc();
+	this->print_vloc(rho_basis);
 
 	ModuleBase::timer::tick("ppcell_vl","init_vloc");
 	return;
 }
 
 
-void pseudopot_cell_vl::allocate(void)
+void pseudopot_cell_vl::allocate(const int ngg)
 {
 	if(GlobalV::test_pp>0) ModuleBase::TITLE("pseudopot_cell_vl","allocate");
-	this->vloc.create(GlobalC::ucell.ntype, GlobalC::rhopw->ngg);
+	this->vloc.create(GlobalC::ucell.ntype, ngg);
 
 	delete[] numeric;
 	this->numeric = new bool[GlobalC::ucell.ntype];
@@ -145,8 +145,8 @@ void pseudopot_cell_vl::vloc_of_g(
 	}
 	ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
 	vloc_1d[0] *= 4*3.1415926;
-	std::cout << "  vloc_1d[0]=" <<  vloc_1d[0]/GlobalC::rhopw->npw << std::endl;
-	std::cout << "  vloc_1d[0]=" <<  vloc_1d[0]/GlobalC::rhopw->nxyz << std::endl;
+	std::cout << "  vloc_1d[0]=" <<  vloc_1d[0]/rho_basis->npw << std::endl;
+	std::cout << "  vloc_1d[0]=" <<  vloc_1d[0]/rho_basis->nxyz << std::endl;
 	*/
 
 	// (1)
@@ -222,7 +222,7 @@ void pseudopot_cell_vl::vloc_of_g(
 } // end subroutine vloc_of_g
 
 
-void pseudopot_cell_vl::print_vloc(void)const
+void pseudopot_cell_vl::print_vloc(ModulePW::PW_Basis* rho_basis)const
 {
 	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
 	bool check_vl = GlobalV::out_element_info;
@@ -233,9 +233,9 @@ void pseudopot_cell_vl::print_vloc(void)const
 			std::stringstream ss ;
 			ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/v_loc_g.dat" ;
 			std::ofstream ofs_vg( ss.str().c_str() );
-			for(int ig=0;ig<GlobalC::rhopw->ngg;ig++)
+			for(int ig=0;ig<rho_basis->ngg;ig++)
 			{
-				ofs_vg << std::setw(15) << GlobalC::rhopw->gg_uniq [ig] * GlobalC::ucell.tpiba2 
+				ofs_vg << std::setw(15) << rho_basis->gg_uniq [ig] * GlobalC::ucell.tpiba2 
 				   	<< std::setw(15) << this->vloc(it, ig) << std::endl;
 			}
 			ofs_vg.close();

@@ -10,6 +10,7 @@
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #endif
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
@@ -46,14 +47,14 @@ public:
 
 	int lmaxkb; // max angular momentum for non-local projectors
 
-	void init_vnl(UnitCell &cell);
+	void init_vnl(UnitCell &cell, ModulePW::PW_Basis_K* wfc_basis);
 
     template <typename FPTYPE, typename Device>
-    void getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const;
+    void getvnl(Device * ctx, const int &ik, ModulePW::PW_Basis_K *wfc_basis, std::complex<FPTYPE>* vkb_in)const;
 
-    void getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const;
+    void getvnl(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix& vkb_in)const;
 
-	void getvnl_alpha(const int &ik);
+	// void getvnl_alpha(const int &ik, ModulePW::PW_Basis_K *wfc_basis);
 
 	void init_vnl_alpha(void);
 
@@ -131,6 +132,8 @@ private:
 
     double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
     std::complex<double> * z_vkb = nullptr;
+
+	ModulePW::PW_Basis_K* wfcpw = nullptr;
 };
 
 #endif // VNL_IN_PW

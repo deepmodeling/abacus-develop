@@ -3,8 +3,13 @@
 #include "module_base/timer.h"
 
 //calculate the kinetic stress in PW base
-template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg, const psi::Psi<complex<FPTYPE>>* psi_in)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
+                                             const ModuleBase::matrix& wg,
+											 ModuleSymmetry::Symmetry& symm,
+                                             K_Vectors& kv,
+                                             ModulePW::PW_Basis_K* wfc_basis,
+                                             const psi::Psi<complex<FPTYPE>>* psi_in)
 {
     ModuleBase::TITLE("Stress_Func","stress_kin");
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
@@ -22,9 +27,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const Mo
 	}
 		
 	int npwx=0;
-	for(int ik=0; ik<GlobalC::kv.nks; ik++)
+	for(int ik=0; ik<kv.nks; ik++)
 	{
-		if(npwx<GlobalC::kv.ngk[ik])npwx=GlobalC::kv.ngk[ik];
+		if(npwx<kv.ngk[ik])npwx=kv.ngk[ik];
 	}
 		
 	gk[0]= new FPTYPE[npwx];
@@ -32,17 +37,17 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const Mo
 	gk[2]= new FPTYPE[npwx];
 	FPTYPE factor=ModuleBase::TWO_PI/GlobalC::ucell.lat0;
 
-	for(int ik=0;ik<GlobalC::kv.nks;ik++)
+	for(int ik=0;ik<kv.nks;ik++)
 	{
-		npw = GlobalC::kv.ngk[ik];
+		npw = kv.ngk[ik];
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for(int i=0;i<npw;i++)
 		{
-			gk[0][i] = GlobalC::wfcpw->getgpluskcar(ik,i)[0] * factor;
-			gk[1][i] = GlobalC::wfcpw->getgpluskcar(ik,i)[1] * factor;
-			gk[2][i] = GlobalC::wfcpw->getgpluskcar(ik,i)[2] * factor;
+			gk[0][i] = wfc_basis->getgpluskcar(ik,i)[0] * factor;
+			gk[1][i] = wfc_basis->getgpluskcar(ik,i)[1] * factor;
+			gk[2][i] = wfc_basis->getgpluskcar(ik,i)[2] * factor;
 		}
 
 		//kinetic contribution
@@ -134,13 +139,13 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma, const Mo
 		}
 	}
 	//do symmetry
-	if(ModuleSymmetry::Symmetry::symm_flag == 1)
-	{
-		GlobalC::symm.stress_symmetry(sigma, GlobalC::ucell);
-	}//end symmetry
-	
-	delete[] gk[0];
-	delete[] gk[1];
+    if (ModuleSymmetry::Symmetry::symm_flag == 1)
+    {
+        symm.stress_symmetry(sigma, GlobalC::ucell);
+    } // end symmetry
+
+    delete[] gk[0];
+    delete[] gk[1];
 	delete[] gk[2];
 	delete[] gk;
 		

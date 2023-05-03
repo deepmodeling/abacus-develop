@@ -25,9 +25,12 @@ class Stochastic_Iter
     Stochastic_Iter();
     ~Stochastic_Iter();
 
-    void init(const int, int* nchip_in, const int method_in, Stochastic_WF& stowf);
-    
-    void sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<double>* pHamilt);
+    void init(int* nchip_in, const int method_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf);
+
+    void sum_stoband(Stochastic_WF& stowf,
+                     elecstate::ElecState* pes,
+                     hamilt::Hamilt<double>* pHamilt,
+                     ModulePW::PW_Basis_K* wfc_basis);
 
     double calne(elecstate::ElecState* pes);
 
@@ -61,7 +64,7 @@ class Stochastic_Iter
     //chiallorder cost too much memories and should be cleaned after scf.
     void cleanchiallorder();
     //cal shchi = \sqrt{f(\hat{H})}|\chi>
-    void calHsqrtchi(Stochastic_WF& stowf);
+    void calHsqrtchi(Stochastic_WF& stowf, ModulePW::PW_Basis_K* wfc_basis);
     //cal Pn = \sum_\chi <\chi|Tn(\hat{h})|\chi>
     void calPn(const int& ik, Stochastic_WF& stowf);
     //cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>

@@ -59,6 +59,7 @@ class HSolver
         hamilt::Hamilt<FPTYPE, Device>* phm,
         psi::Psi<std::complex<FPTYPE>, Device>& ppsi, 
         elecstate::ElecState* pes, 
+        ModulePW::PW_Basis_K* wfc_basis,
         Stochastic_WF& stowf,
         const int istep,
         const int iter,

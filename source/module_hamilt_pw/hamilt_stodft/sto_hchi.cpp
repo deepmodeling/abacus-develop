@@ -16,9 +16,9 @@ Stochastic_hchi::~Stochastic_hchi()
 {
 }
 
-void Stochastic_hchi:: init()
+void Stochastic_hchi:: init(ModulePW::PW_Basis_K* wfc_basis)
 {
-
+	wfcpw = wfc_basis;
 }
 
 
@@ -35,7 +35,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 	const int npm = GlobalV::NPOL * m;
 	const int inc = 1;
 	const double tpiba2 = GlobalC::ucell.tpiba2;
-	const int nrxx = GlobalC::rhopw->nrxx;
+	const int nrxx = this->wfcpw->nrxx;
 	//------------------------------------
 	//(1) the kinetical energy.
 	//------------------------------------
@@ -47,7 +47,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 		{
 			for (int ig = 0; ig < npw; ++ig)
 			{
-				hchibg[ig] = GlobalC::wfcpw->getgk2(ik,ig) * tpiba2 * chibg[ig];
+				hchibg[ig] = this->wfcpw->getgk2(ik,ig) * tpiba2 * chibg[ig];
 			}
 			chibg += npwx;
 			hchibg += npwx;
@@ -66,12 +66,12 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 		const double* pveff = &((*GlobalTemp::veff)(current_spin, 0));
 		for(int ib = 0 ; ib < m ; ++ib)
 		{
-			GlobalC::wfcpw->recip2real(chibg, porter, ik);
+			this->wfcpw->recip2real(chibg, porter, ik);
 			for (int ir=0; ir< nrxx; ir++)
 			{
 				porter[ir] *=  pveff[ir];
 			}
-			GlobalC::wfcpw->real2recip(porter, hchibg, ik, true);
+			this->wfcpw->real2recip(porter, hchibg, ik, true);
 			
 			chibg += npwx;
 			hchibg += npwx;

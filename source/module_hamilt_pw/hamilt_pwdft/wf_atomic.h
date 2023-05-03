@@ -34,16 +34,14 @@ class WF_atomic : public WF_igk
     public: //template change to public, will be refactor later. added by zhengdy 20230302
     int *irindex = nullptr;
 
-    void atomic_wfc
-    (
-        const int ik,
-        const int np,
-        const int lmax_wfc,
-        ModuleBase::ComplexMatrix &wfcatom,
-        const ModuleBase::realArray &table_q,
-        const int &table_dimension,
-        const double &dq
-    )const;
+    void atomic_wfc(const int ik,
+                    const int np,
+                    const int lmax_wfc,
+                    ModulePW::PW_Basis_K *wfc_basis,
+                    ModuleBase::ComplexMatrix &wfcatom,
+                    const ModuleBase::realArray &table_q,
+                    const int &table_dimension,
+                    const double &dq) const;
 
     //==================================
     // Calculate random wave functions

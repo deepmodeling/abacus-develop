@@ -5,15 +5,17 @@
 //==========================================================
 #ifndef NUMERICAL_BASIS_H
 #define NUMERICAL_BASIS_H
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/matrix.h"
-#include "../module_base/vector3.h"
-#include "../module_base/intarray.h"
-#include "../module_base/complexarray.h"
-#include "../module_base/complexmatrix.h"
-#include "bessel_basis.h"
 #include <vector>
+
+#include "bessel_basis.h"
+#include "module_base/complexarray.h"
+#include "module_base/complexmatrix.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/intarray.h"
+#include "module_base/matrix.h"
+#include "module_base/vector3.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_psi/psi.h"
 //==========================================================
 // CLASS :
@@ -37,18 +39,22 @@ class Numerical_Basis
 	std::vector<ModuleBase::IntArray> mu_index;
 	static std::vector<ModuleBase::IntArray> init_mu_index(void);
 
-	void numerical_atomic_wfc(const int &ik,const int &np,ModuleBase::ComplexMatrix &psi);
+    void numerical_atomic_wfc(const int &ik,
+                              ModulePW::PW_Basis_K *wfc_basis,
+                              ModuleBase::ComplexMatrix &psi);
 
-	ModuleBase::ComplexArray cal_overlap_Q(
-		const int &ik, const int &np, const psi::Psi<std::complex<double>> &psi,
-		const double derivative_order ) const;
-		
-	ModuleBase::ComplexArray cal_overlap_Sq(
+    ModuleBase::ComplexArray cal_overlap_Q(const int &ik,
+                                           const int &np,
+                                           ModulePW::PW_Basis_K *wfc_basis,
+                                           const psi::Psi<std::complex<double>> &psi,
+                                           const double derivative_order) const;
+
+    ModuleBase::ComplexArray cal_overlap_Sq(
 		const int &ik, 
 		const int &np,
 		const double derivative_order ) const;
 
-	static ModuleBase::matrix cal_overlap_V(const psi::Psi<std::complex<double>> &psi, const double derivative_order);
+	static ModuleBase::matrix cal_overlap_V(ModulePW::PW_Basis_K* wfc_basis, const psi::Psi<std::complex<double>> &psi, const double derivative_order);
 
 	ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk) const;
 

@@ -10,11 +10,12 @@ namespace hsolver
         HSolverPW_SDFT(ModulePW::PW_Basis_K* wfc_basis_in, Stochastic_WF& stowf, const int method_sto):HSolverPW(wfc_basis_in)
         {
             this->classname = "HSolverPW_SDFT";
-            stoiter.init(wfc_basis_in->npwk_max, stowf.nchip, method_sto, stowf);
+            stoiter.init(stowf.nchip, method_sto, wfc_basis_in, stowf);
         }
         virtual void solve(hamilt::Hamilt<double>* pHamilt,
                            psi::Psi<std::complex<double>>& psi, 
                            elecstate::ElecState* pes, 
+                           ModulePW::PW_Basis_K* wfc_basis,
                            Stochastic_WF& stowf,
                            const int istep,
                            const int iter,
