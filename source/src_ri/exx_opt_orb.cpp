@@ -309,29 +309,6 @@ RI::Tensor<double> Exx_Opt_Orb::cal_proj(
 {
     ModuleBase::TITLE("Exx_Opt_Orb::cal_proj");
 
-        auto Tensor_transpose = [](const RI::Tensor<double>& m)
-        {
-            assert(m.shape.size() == 2);
-            RI::Tensor<double> tm(m.shape);
-            for (size_t i = 0; i != m.shape[0]; ++i)
-                for (size_t j = 0; j != m.shape[1]; ++j)
-                    tm(i, j) = m(j, i);
-            return tm;
-        };
-        auto Tensor_mul = [](const RI::Tensor<double>& m1, const RI::Tensor<double>& m2)
-        {
-            assert(m1.shape.size() == 2);
-            assert(m2.shape.size() == 2);
-            assert(m1.shape[1] == m2.shape[0]);
-            RI::Tensor<double> tm({ m1.shape[0], m2.shape[1] });
-            for (size_t i = 0; i != m1.shape[0]; ++i)
-                for (size_t j = 0; j != m2.shape[1]; ++j)
-                    for (size_t k = 0; k != m1.shape[1]; ++k)
-                        tm(i, j) += m1(i, k) * m2(k, j);
-            return tm;
-        };
-        
-
 //auto print_nrc = [](const matrix & m){ std::cout<<"\t"<<m.nr<<"\t"<<m.nc<<std::endl; };
 
 	RI::Tensor<double> m_proj = m_big;
@@ -344,7 +321,7 @@ RI::Tensor<double> Exx_Opt_Orb::cal_proj(
 //print_nrc(m_left[il]);
 //print_nrc(m_middle[il][ir]);
 //print_nrc(m_right[ir]);
-			m_proj = m_proj - Tensor_mul(m_left[il] , Tensor_mul(m_middle[il][ir], Tensor_transpose(m_right[ir])));
+			m_proj = m_proj - m_left[il] *m_middle[il][ir] * m_right[ir].transpose();
 		}
 	}
 	return m_proj;
