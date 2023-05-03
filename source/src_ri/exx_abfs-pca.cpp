@@ -1,9 +1,8 @@
 #include "exx_abfs-pca.h"
 
 #include "exx_abfs-abfs_index.h"
-#include "exx_abfs-matrix_orbs11.h"
-#include "exx_abfs-matrix_orbs21.h"
-#include "exx_abfs-inverse_matrix_double.h"
+#include "module_ri/Matrix_Orbs11.h"
+#include "module_ri/Matrix_Orbs21.h"
 
 #include "../module_base/lapack_connector.h"
 #include "../module_base/global_function.h"
@@ -15,7 +14,7 @@
 #include <sys/time.h>			// Peize Lin test
 #include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"		// Peize Lin test
 
-std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_Abfs::PCA::cal_PCA( 
+std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> Exx_Abfs::PCA::cal_PCA( 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos, 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 	const double kmesh_times )
@@ -42,7 +41,7 @@ std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_
 	for( size_t T=0; T!=abfs.size(); ++T )
 		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
 
-	Exx_Abfs::Matrix_Orbs21 m_abfslcaos_lcaos;
+	Matrix_Orbs21 m_abfslcaos_lcaos;
 //gettimeofday( &t_start, NULL);
 	m_abfslcaos_lcaos.init( 1, kmesh_times, 1 );
 //ofs<<"TIME@m_abfslcaos_lcaos.init\t"<<time_during(t_start)<<std::endl;
@@ -59,10 +58,10 @@ std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_
 
 	GlobalC::exx_info.info_ri.abfs_Lmax = Lmax_bak;
 	
-	std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> eig(abfs.size());
+	std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> eig(abfs.size());
 	for( size_t T=0; T!=abfs.size(); ++T )
 	{
-		const ModuleBase::matrix && A = m_abfslcaos_lcaos.cal_overlap_matrix(  
+		const RI::Tensor<double> && A = m_abfslcaos_lcaos.cal_overlap_matrix<double>(  
 			T, 
 			T, 
 			ModuleBase::Vector3<double>{0,0,0},
@@ -70,7 +69,7 @@ std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_
 			index_abfs, 
 			index_lcaos,
 			index_lcaos,
-			Exx_Abfs::Matrix_Orbs21::Matrix_Order::A2B_A1);
+			Matrix_Orbs21::Matrix_Order::A2BA1);
 //ofs<<"A:"<<std::endl<<A<<std::endl;
 		
 		eig[T].resize(abfs[T].size());
@@ -78,22 +77,56 @@ std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_
 		{
 //ofs<<"get_sub_matrix:"<<std::endl<<get_sub_matrix( A, T, L, range_abfs, index_abfs )<<std::endl;
 //			const matrix A_sub = get_column_mean0_matrix( get_sub_matrix( A, T, L, range_abfs, index_abfs ) );
-			const ModuleBase::matrix A_sub = get_sub_matrix( A, T, L, range_abfs, index_abfs );
+			const RI::Tensor<double> A_sub = get_sub_matrix( A, T, L, range_abfs, index_abfs );
 //ofs<<"A_sub:"<<std::endl<<A_sub<<std::endl;
 //ofs<<"transpose:"<<std::endl<<transpose(A_sub)<<std::endl;
 //ofs<<"mul:"<<std::endl<<transpose(A_sub) * A_sub<<std::endl;
-			ModuleBase::matrix mm = transpose(A_sub) * A_sub;
+            RI::Tensor<double> mm = A_sub.transpose() * A_sub;
 //ofs<<"mm:"<<std::endl<<mm<<std::endl;
-			std::vector<double> eig_value(mm.nr);
+			std::vector<double> eig_value(mm.shape[0]);
 			
 			int info;
-//gettimeofday( &t_start, NULL);
-			LapackConnector::dsyev( 'V', 'U', mm, ModuleBase::GlobalFunc::VECTOR_TO_PTR(eig_value), info );
-//ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
+            //gettimeofday( &t_start, NULL);
+            auto tensor2matrix = [](RI::Tensor<double>& t)
+            {
+                ModuleBase::matrix m(t.shape[0], t.shape[1]);
+                for (int ir = 0; ir != t.shape[0]; ++ir)
+                    for (int ic = 0; ic != t.shape[1]; ++ic)
+                        m(ir, ic) = t(ir, ic);
+                return m;
+            };
+            auto matrix2tensor = [](ModuleBase::matrix& m)
+            {
+                RI::Tensor<double> t(RI::Shape_Vector{static_cast<unsigned long>(m.nr), static_cast<unsigned long>(m.nc)});
+                for (int ir = 0; ir != m.nr; ++ir)
+                    for (int ic = 0; ic != m.nc; ++ic)
+                        t(ir, ic) = m(ir, ic);
+                return t;
+            };
+            ModuleBase::matrix mm_mat = tensor2matrix(mm);
+            LapackConnector::dsyev('V', 'U', mm_mat, ModuleBase::GlobalFunc::VECTOR_TO_PTR(eig_value), info);
+            mm = matrix2tensor(mm_mat);
+
+            //ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
 			if( info )
 			{
-				std::cout<<std::endl<<"info_dsyev = "<<info<<std::endl;
-				mm.print(GlobalV::ofs_warning)<<std::endl;
+                std::cout << std::endl << "info_dsyev = " << info << std::endl;
+                auto tensor_print = [](RI::Tensor<double>& m, std::ostream& os, const double threshold)
+                {
+                    for (int ir = 0; ir != m.shape[0]; ++ir)
+                    {
+                        for (int ic = 0; ic != m.shape[1]; ++ic)
+                        {
+                            if (std::abs(m(ir, ic)) > threshold)
+                                os << m(ir, ic) << "\t";
+                            else
+                                os << 0 << "\t";
+                        }
+                        os << std::endl;
+                    }
+                    os << std::endl;
+                };
+                tensor_print(mm, GlobalV::ofs_warning, 0.0);
 				std::cout<<"in file "<<__FILE__<<" line "<<__LINE__<<std::endl;
 				ModuleBase::QUIT();
 			}
@@ -109,8 +142,8 @@ std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> Exx_
 	return eig;
 }
 
-ModuleBase::matrix Exx_Abfs::PCA::get_sub_matrix( 
-	const ModuleBase::matrix & m,
+RI::Tensor<double> Exx_Abfs::PCA::get_sub_matrix( 
+	const RI::Tensor<double> & m,
 	const size_t & T,
 	const size_t & L,
 	const ModuleBase::Element_Basis_Index::Range & range,
@@ -118,25 +151,25 @@ ModuleBase::matrix Exx_Abfs::PCA::get_sub_matrix(
 {
 	ModuleBase::TITLE("Exx_Abfs::PCA::get_sub_matrix");
 	
-	ModuleBase::matrix m_sub( m.nr, range[T][L].N );
-	for( size_t ir=0; ir!=m.nr; ++ir )
+    RI::Tensor<double> m_sub(RI::Shape_Vector{m.shape[0], range[T][L].N });
+	for( size_t ir=0; ir!=m.shape[0]; ++ir )
 		for( size_t N=0; N!=range[T][L].N; ++N )
 			m_sub( ir, N ) = m( ir, index[T][L][N][0] );
 	return m_sub;
 }
 
 
-ModuleBase::matrix Exx_Abfs::PCA::get_column_mean0_matrix( const ModuleBase::matrix & m )
+RI::Tensor<double> Exx_Abfs::PCA::get_column_mean0_matrix( const RI::Tensor<double> & m )
 {
-	ModuleBase::matrix m_new( m.nr, m.nc );
-	for( size_t ic=0; ic!=m.nc; ++ic )
+	RI::Tensor<double> m_new( m.shape);
+	for( size_t ic=0; ic!=m.shape[1]; ++ic )
 	{
 		double sum=0;
-		for( size_t ir=0; ir!=m.nr; ++ir )
+		for( size_t ir=0; ir!=m.shape[0]; ++ir )
 			sum += m(ir,ic);
-		const double mean = sum/m.nr;
+		const double mean = sum/m.shape[0];
 //ofs<<mean<<"\t";
-		for( size_t ir=0; ir!=m.nr; ++ir )
+		for( size_t ir=0; ir!=m.shape[0]; ++ir )
 			m_new(ir,ic) = m(ir,ic) - mean;
 	}
 //ofs<<std::endl;

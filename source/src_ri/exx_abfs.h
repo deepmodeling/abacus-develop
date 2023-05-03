@@ -22,10 +22,6 @@ public:
 	class IO;
 	class Construct_Orbs;
 	class PCA;
-
-	class Matrix_Orbs11;
-	class Matrix_Orbs21;
-	class Matrix_Orbs22;
 	
 	int rmesh_times = 5;				// Peize Lin test
 	int kmesh_times = 1;				// Peize Lin test

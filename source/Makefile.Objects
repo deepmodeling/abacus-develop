@@ -408,9 +408,6 @@ OBJS_SRC_RI=conv_coulomb_pot_k.o\
       exx_abfs-jle.o \
       exx_abfs-io.o \
       exx_abfs-construct_orbs.o \
-      exx_abfs-matrix_orbs11.o \
-      exx_abfs-matrix_orbs21.o \
-      exx_abfs-matrix_orbs22.o \
       exx_abfs-pca.o \
       exx_opt_orb.o \
       exx_opt_orb-print.o \
