@@ -5,9 +5,9 @@
 void Exx_Opt_Orb::print_matrix(
     const K_Vectors &kv,
     const std::string& file_name,
-	const std::vector<ModuleBase::matrix> &matrix_Q, 
-	const std::vector<std::vector<ModuleBase::matrix>> &matrix_S,
-	const ModuleBase::matrix &matrix_V,
+	const std::vector<RI::Tensor<double>> &matrix_Q, 
+	const std::vector<std::vector<RI::Tensor<double>>> &matrix_S,
+	const RI::Tensor<double> &matrix_V,
 	const size_t TA, const size_t IA, const size_t TB, const size_t IB,
 	const ModuleBase::Element_Basis_Index::Range &range_jles, 
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_jles) const
@@ -77,8 +77,8 @@ void Exx_Opt_Orb::print_matrix(
 		ofs << Exx_Abfs::Jle::Lmax << " lmax" << std::endl;
 
 		ofs << kv.nkstot << " nks" << std::endl;
-		assert( matrix_V.nr == matrix_V.nc );
-		ofs	<< matrix_V.nr << " nbands" << std::endl;
+		assert( matrix_V.shape[0] == matrix_V.shape[1] );
+		ofs	<< matrix_V.shape[0] << " nbands" << std::endl;
 		
 		auto cal_sum_M = [&range_jles](size_t T) -> size_t
 		{
@@ -116,7 +116,7 @@ void Exx_Opt_Orb::print_matrix(
 		//---------------------
 		ofs<< "<OVERLAP_Q>" << std::endl;
 		
-		for( size_t ib=0; ib!=matrix_V.nr; ++ib )
+		for( size_t ib=0; ib!=matrix_V.shape[0]; ++ib )
 		{
 			for( size_t iat=0; iat!=matrix_Q.size(); ++iat )
 			{
@@ -184,9 +184,9 @@ void Exx_Opt_Orb::print_matrix(
 		//---------------------	
 		ofs << "<OVERLAP_V>" << std::endl;
 		
-		for( size_t ib1=0; ib1!=matrix_V.nr; ++ib1 )
+		for( size_t ib1=0; ib1!=matrix_V.shape[0]; ++ib1 )
 		{
-			for( size_t ib2=0; ib2!=matrix_V.nc; ++ib2 )
+			for( size_t ib2=0; ib2!=matrix_V.shape[1]; ++ib2 )
 			{
 				ofs<<matrix_V(ib1,ib2)*scale<<"\t";
 			}

@@ -9,6 +9,7 @@
 #include "Matrix_Orbs22.h"
 #include "RI_Util.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include <sys/time.h>
 
 template<typename Tdata>
 RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(
@@ -272,4 +273,47 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs22::cal_grad_overlap_matrix(
 	return m;
 }
 
+// 4-parameter interface, for opt_orb
+template<typename Tdata>
+std::map < size_t, std::map<size_t, std::map<size_t, std::map<size_t, RI::Tensor<Tdata>>>>> Matrix_Orbs22::cal_overlap_matrix_all(
+	const ModuleBase::Element_Basis_Index::IndexLNM &index_A1,
+	const ModuleBase::Element_Basis_Index::IndexLNM &index_A2,
+	const ModuleBase::Element_Basis_Index::IndexLNM &index_B1,
+	const ModuleBase::Element_Basis_Index::IndexLNM &index_B2 ) const
+{
+// std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
+timeval t_start;
+gettimeofday( &t_start, NULL);
+	std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t, RI::Tensor<Tdata>>>>> matrixes;
+
+	for( const auto &co1 : center2_orb22_s )
+	{
+		const size_t TA = co1.first;
+		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
+		{
+			const ModuleBase::Vector3<double> &tauA( GlobalC::ucell.atoms[TA].tau[IA] );
+
+			for( const auto &co2 : co1.second )
+			{
+				const size_t TB = co2.first;
+				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
+				{
+					const ModuleBase::Vector3<double> &tauB( GlobalC::ucell.atoms[TB].tau[IB] );
+
+					matrixes[TA][IA][TB][IB] = cal_overlap_matrix<Tdata>(
+						TA,
+						TB,
+						GlobalC::ucell.atoms[TA].tau[IA],
+						GlobalC::ucell.atoms[TB].tau[IB],
+						index_A1,
+						index_A2,
+						index_B1,
+						index_B2,
+						Matrix_Order::A1B1A2B2);
+				}
+			}
+		}
+	}
+	return matrixes;
+}
 #endif
