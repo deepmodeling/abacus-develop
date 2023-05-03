@@ -264,7 +264,7 @@ void diago_PAO_in_pw_k2(const int &ik,
                         ModulePW::PW_Basis_K *wfc_basis,
                         hamilt::Hamilt<double> *phm_in)
 {
-	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
+    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals
 	const int starting_nw = GlobalC::wf.get_starting_nw();
 	if(starting_nw == 0) return;
@@ -313,20 +313,28 @@ void diago_PAO_in_pw_k2(const int &ik,
 	{
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
 		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-		
-		GlobalC::wf.atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfc_basis, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( GlobalC::wf.init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
-		{
-			GlobalC::wf.atomicrandom(wfcatom,0,starting_nw,ik, wfc_basis);
-		}
 
-		//====================================================
-		// If not enough atomic wfc are available, complete
-		// with random wfcs
-		//====================================================
-		GlobalC::wf.random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
+        GlobalC::wf.atomic_wfc(ik,
+                               current_nbasis,
+                               GlobalC::ucell.lmax_ppwf,
+                               wfc_basis,
+                               wfcatom,
+                               GlobalC::ppcell.tab_at,
+                               GlobalV::NQX,
+                               GlobalV::DQ);
+        if (GlobalC::wf.init_wfc == "atomic+random"
+            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
+        {
+            GlobalC::wf.atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
+        }
 
-		// (7) Diago with cg method.
+        //====================================================
+        // If not enough atomic wfc are available, complete
+        // with random wfcs
+        //====================================================
+        GlobalC::wf.random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
+
+        // (7) Diago with cg method.
 		//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
 		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
 		{
@@ -373,7 +381,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_CPU *ctx,
                         ModulePW::PW_Basis_K *wfc_basis,
                         hamilt::Hamilt<double, psi::DEVICE_CPU> *phm_in)
 {
-	diago_PAO_in_pw_k2(ik, wvf, wfc_basis, phm_in);
+    diago_PAO_in_pw_k2(ik, wvf, wfc_basis, phm_in);
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -381,7 +389,8 @@ template <>
 void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         const int &ik,
                         psi::Psi<std::complex<float>, psi::DEVICE_GPU> &wvf,
-                        ModulePW::PW_Basis_K *wfc_basis hamilt::Hamilt<float, psi::DEVICE_GPU> *phm_in, )
+                        ModulePW::PW_Basis_K *wfc_basis,
+                        hamilt::Hamilt<float, psi::DEVICE_GPU> *phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
     // (6) Prepare for atmoic orbitals or random orbitals
@@ -397,10 +406,18 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
     if(GlobalC::wf.init_wfc.substr(0,6)=="atomic")
     {
-        GlobalC::wf.atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, wfc_basis, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-        if( GlobalC::wf.init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
+        GlobalC::wf.atomic_wfc(ik,
+                               current_nbasis,
+                               GlobalC::ucell.lmax_ppwf,
+                               wfc_basis,
+                               wfcatom,
+                               GlobalC::ppcell.tab_at,
+                               GlobalV::NQX,
+                               GlobalV::DQ);
+        if (GlobalC::wf.init_wfc == "atomic+random"
+            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
         {
-            GlobalC::wf.atomicrandom(wfcatom,0,starting_nw,ik, wfc_basis);
+            GlobalC::wf.atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
         }
 
         //====================================================
@@ -409,9 +426,9 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
         //====================================================
         GlobalC::wf.random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
     }
-    else if(GlobalC::wf.init_wfc=="random")
+    else if (GlobalC::wf.init_wfc == "random")
     {
-        GlobalC::wf.random(wfcatom.c,0,nbands,ik, wfc_basis);
+        GlobalC::wf.random(wfcatom.c, 0, nbands, ik, wfc_basis);
     }
 
     // store wfcatom on the GPU
@@ -459,9 +476,9 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         const int &ik,
                         psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
-                        hamilt::Hamilt<double, psi::DEVICE_GPU> *phm_in, )
+                        hamilt::Hamilt<double, psi::DEVICE_GPU> *phm_in)
 {
-	ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
+    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals
 	const int starting_nw = GlobalC::wf.get_starting_nw();
 	if(starting_nw == 0) return;
@@ -475,24 +492,32 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 	if(GlobalC::wf.init_wfc.substr(0,6)=="atomic")
 	{
-		GlobalC::wf.atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfcatom, wfc_basis, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
-		if( GlobalC::wf.init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc )//added by qianrui 2021-5-16
-		{
-			GlobalC::wf.atomicrandom(wfcatom,0,starting_nw,ik, wfc_basis);
-		}
+        GlobalC::wf.atomic_wfc(ik,
+                               current_nbasis,
+                               GlobalC::ucell.lmax_ppwf,
+                               wfc_basis,
+                               wfcatom,
+                               GlobalC::ppcell.tab_at,
+                               GlobalV::NQX,
+                               GlobalV::DQ);
+        if (GlobalC::wf.init_wfc == "atomic+random"
+            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
+        {
+            GlobalC::wf.atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
+        }
 
-		//====================================================
-		// If not enough atomic wfc are available, complete
-		// with random wfcs
-		//====================================================
-		GlobalC::wf.random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
-	}
-	else if(GlobalC::wf.init_wfc=="random")
-	{
-		GlobalC::wf.random(wfcatom.c,0,nbands,ik, wfc_basis);
-	}
+        //====================================================
+        // If not enough atomic wfc are available, complete
+        // with random wfcs
+        //====================================================
+        GlobalC::wf.random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
+    }
+    else if (GlobalC::wf.init_wfc == "random")
+    {
+        GlobalC::wf.random(wfcatom.c, 0, nbands, ik, wfc_basis);
+    }
 
-	// store wfcatom on the GPU
+    // store wfcatom on the GPU
 	std::complex<double> *z_wfcatom = nullptr;
 	resmem_zd_op()(gpu_ctx, z_wfcatom, wfcatom.nr * wfcatom.nc);
 	syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, z_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
@@ -536,22 +561,24 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 
 }//namespace hamilt
 
-void wavefunc::wfcinit_k(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis_K *wfc_basis)
+void wavefunc::wfcinit_k(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basis_K *wfc_basis)
 {
-	ModuleBase::TITLE("wavefunc","wfcinit_k");
+    ModuleBase::TITLE("wavefunc", "wfcinit_k");
 
-	if(GlobalV::BASIS_TYPE=="pw") 
-	{
-        if(this->irindex != nullptr) delete[] this->irindex;
-        this->irindex = new int [wfc_basis->fftnxy];
-		wfc_basis->getfftixy2is(this->irindex);
-    #if defined(__CUDA) || defined(__ROCM)
-    if (GlobalV::device_flag == "gpu") {
-        wfc_basis->get_ig2ixyz_k();
+    if (GlobalV::BASIS_TYPE == "pw")
+    {
+        if (this->irindex != nullptr)
+            delete[] this->irindex;
+        this->irindex = new int[wfc_basis->fftnxy];
+        wfc_basis->getfftixy2is(this->irindex);
+#if defined(__CUDA) || defined(__ROCM)
+        if (GlobalV::device_flag == "gpu")
+        {
+            wfc_basis->get_ig2ixyz_k();
+        }
+#endif
     }
-    #endif
-	}
-	if(GlobalV::CALCULATION=="nscf")
+    if(GlobalV::CALCULATION=="nscf")
 	{
 		return;
 	}

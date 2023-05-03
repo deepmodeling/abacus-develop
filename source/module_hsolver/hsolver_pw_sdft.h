@@ -13,13 +13,13 @@ namespace hsolver
             stoiter.init(stowf.nchip, method_sto, wfc_basis_in, stowf);
         }
         virtual void solve(hamilt::Hamilt<double>* pHamilt,
-                           psi::Psi<std::complex<double>>& psi, 
-                           elecstate::ElecState* pes, 
+                           psi::Psi<std::complex<double>>& psi,
+                           elecstate::ElecState* pes,
                            ModulePW::PW_Basis_K* wfc_basis,
                            Stochastic_WF& stowf,
                            const int istep,
                            const int iter,
-                           const std::string method_in, 
+                           const std::string method_in,
                            const bool skip_charge) override;
         virtual double set_diagethr(const int istep, const int iter, const double drho) override;                   
         virtual double cal_hsolerror() override

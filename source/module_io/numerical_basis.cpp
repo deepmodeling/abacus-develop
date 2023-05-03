@@ -150,12 +150,11 @@ void Numerical_Basis::output_overlap( const psi::Psi<std::complex<double>> &psi)
     return;
 }
 
-ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(
-    const int &ik,
-    const int &np,
-    ModulePW::PW_Basis_K* wfc_basis,
-    const psi::Psi<std::complex<double>> &psi,
-	const double derivative_order) const
+ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int &ik,
+                                                        const int &np,
+                                                        ModulePW::PW_Basis_K *wfc_basis,
+                                                        const psi::Psi<std::complex<double>> &psi,
+                                                        const double derivative_order) const
 {
     ModuleBase::TITLE("Numerical_Basis","cal_overlap_Q");
     ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Q");
@@ -169,8 +168,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(
 	const double normalization = (4 * ModuleBase::PI) / sqrt(GlobalC::ucell.omega);			// Peize Lin add normalization 2015-12-29
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
-    for (int ig=0; ig<np; ig++)
-        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+    for (int ig = 0; ig < np; ig++)
+        gk[ig] = wfc_basis->getgpluskcar(ik, ig);
 
     const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
@@ -247,8 +246,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
 	const double normalization = (4 * ModuleBase::PI) * (4 * ModuleBase::PI) / GlobalC::ucell.omega;			// Peize Lin add normalization 2015-12-29
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
-    for (int ig=0; ig<np; ig++)
-        gk[ig] = GlobalC::wfcpw->getgpluskcar(ik,ig);
+    for (int ig = 0; ig < np; ig++)
+        gk[ig] = GlobalC::wfcpw->getgpluskcar(ik, ig);
 
     const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
@@ -348,13 +347,12 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
 }
 
 // Peize Lin add for dpsi 2020.04.23
-ModuleBase::matrix Numerical_Basis::cal_overlap_V(
-    ModulePW::PW_Basis_K* wfc_basis,
-	const psi::Psi<std::complex<double>> &psi,
-	const double derivative_order)
+ModuleBase::matrix Numerical_Basis::cal_overlap_V(ModulePW::PW_Basis_K *wfc_basis,
+                                                  const psi::Psi<std::complex<double>> &psi,
+                                                  const double derivative_order)
 {
-	ModuleBase::matrix overlap_V(GlobalC::kv.nks, GlobalV::NBANDS);
-	for(int ik=0; ik<GlobalC::kv.nks; ++ik)
+    ModuleBase::matrix overlap_V(GlobalC::kv.nks, GlobalV::NBANDS);
+    for(int ik=0; ik<GlobalC::kv.nks; ++ik)
 	{
         std::vector<ModuleBase::Vector3<double>> gk(GlobalC::kv.ngk[ik]);
         for (int ig=0; ig<gk.size(); ig++)
@@ -449,16 +447,15 @@ std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
     return mu_index_;
 }
 
-void Numerical_Basis::numerical_atomic_wfc(
-    const int &ik,
-    ModulePW::PW_Basis_K *wfc_basis,
-    ModuleBase::ComplexMatrix &psi)
+void Numerical_Basis::numerical_atomic_wfc(const int &ik,
+                                           ModulePW::PW_Basis_K *wfc_basis,
+                                           ModuleBase::ComplexMatrix &psi)
 {
     ModuleBase::TITLE("Numerical_Basis", "numerical_atomic_wfc");
     const int np = wfc_basis->npwk[ik];
     std::vector<ModuleBase::Vector3<double>> gk(np);
-    for (int ig=0; ig<np; ig++)
-        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+    for (int ig = 0; ig < np; ig++)
+        gk[ig] = wfc_basis->getgpluskcar(ik, ig);
 
     const int total_lm = ( GlobalC::ucell.lmax + 1) * ( GlobalC::ucell.lmax + 1);
     ModuleBase::matrix ylm(total_lm, np);

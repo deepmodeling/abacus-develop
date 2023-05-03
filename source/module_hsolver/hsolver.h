@@ -54,18 +54,15 @@ class HSolver
         return;
     }
 
-    virtual void solve
-    (
-        hamilt::Hamilt<FPTYPE, Device>* phm,
-        psi::Psi<std::complex<FPTYPE>, Device>& ppsi, 
-        elecstate::ElecState* pes, 
-        ModulePW::PW_Basis_K* wfc_basis,
-        Stochastic_WF& stowf,
-        const int istep,
-        const int iter,
-        const std::string method, 
-        const bool skip_charge=false
-    )
+    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
+                       psi::Psi<std::complex<FPTYPE>, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       ModulePW::PW_Basis_K* wfc_basis,
+                       Stochastic_WF& stowf,
+                       const int istep,
+                       const int iter,
+                       const std::string method,
+                       const bool skip_charge = false)
     {
         return;
     }

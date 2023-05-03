@@ -134,9 +134,10 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					}
 					else
 					{
-			    		tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm 
-												+ dylm[id](lm, ig)/this->wfcpw->tpiba * vq [ig];//note: dylm/d(tpiba * gx) = 1/tpiba * dylm/dgx
-					}
+                        tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq[ig] * gg[id] / ggnorm
+                                                 + dylm[id](lm, ig) / this->wfcpw->tpiba
+                                                       * vq[ig]; // note: dylm/d(tpiba * gx) = 1/tpiba * dylm/dgx
+                    }
 					tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
 			    }
             }
@@ -146,8 +147,8 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 		// now add the structure factor and factor (-i)^l
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,this->wfcpw);
-			
+            std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia, this->wfcpw);
+
             for (int ih = 0;ih < nh;++ih)
 			{
 				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih));

@@ -32,14 +32,14 @@ class Forces
     ~Forces(){};
 
     void cal_force(ModuleBase::matrix& force,
-                      const ModuleBase::matrix& wg,
-                      const Charge* const chr,
-                      ModulePW::PW_Basis* rho_basis,
-                      ModuleSymmetry::Symmetry& symm,
-                      Structure_Factor& sf,
-                      K_Vectors* pkv = nullptr,
-                      ModulePW::PW_Basis_K* psi_basis = nullptr,
-                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
+                   const ModuleBase::matrix& wg,
+                   const Charge* const chr,
+                   ModulePW::PW_Basis* rho_basis,
+                   ModuleSymmetry::Symmetry& symm,
+                   Structure_Factor& sf,
+                   K_Vectors* pkv = nullptr,
+                   ModulePW::PW_Basis_K* psi_basis = nullptr,
+                   const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
 
   protected:
     int nat = 0;

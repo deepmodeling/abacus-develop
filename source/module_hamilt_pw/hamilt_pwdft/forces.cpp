@@ -23,14 +23,14 @@ FPTYPE Forces<FPTYPE, Device>::output_acc = 1.0e-8; // (Ryd/angstrom).
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
-                                          const ModuleBase::matrix& wg,
-                                          const Charge* const chr,
-                                          ModulePW::PW_Basis* rho_basis,
-                                          ModuleSymmetry::Symmetry& symm,
-                                          Structure_Factor& sf,
-                                          K_Vectors* pkv,
-                                          ModulePW::PW_Basis_K* wfc_basis,
-                                          const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
+                                       const ModuleBase::matrix& wg,
+                                       const Charge* const chr,
+                                       ModulePW::PW_Basis* rho_basis,
+                                       ModuleSymmetry::Symmetry& symm,
+                                       Structure_Factor& sf,
+                                       K_Vectors* pkv,
+                                       ModulePW::PW_Basis_K* wfc_basis,
+                                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
     this->nat = GlobalC::ucell.nat;

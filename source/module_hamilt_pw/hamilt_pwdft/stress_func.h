@@ -128,7 +128,7 @@ class Stress_Func
     // 7) the stress from the non-local pseudopotentials
     void stress_nl(ModuleBase::matrix& sigma,
                    const ModuleBase::matrix& wg,
-                   K_Vectors &kv,
+                   K_Vectors& kv,
                    ModuleSymmetry::Symmetry& symm,
                    ModulePW::PW_Basis_K* wfc_basis,
                    const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // nonlocal part in PW basis
@@ -142,7 +142,9 @@ class Stress_Func
                 ModuleBase::Vector3<FPTYPE>* gk,
                 ModuleBase::matrix& dylm,
                 const int ipol); // used in get_dvnl1()
-    void get_dvnl2(ModuleBase::ComplexMatrix& vkb, const int ik, ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
+    void get_dvnl2(ModuleBase::ComplexMatrix& vkb,
+                   const int ik,
+                   ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
     FPTYPE Polynomial_Interpolation_nl(const ModuleBase::realArray& table,
                                        const int& dim1,
                                        const int& dim2,

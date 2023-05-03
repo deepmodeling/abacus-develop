@@ -25,12 +25,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
     if (GlobalV::T_IN_H)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
-        Operator<std::complex<FPTYPE>, Device>* ekinetic = new Ekinetic<OperatorPW<FPTYPE, Device>>(
-            tpiba2,
-            gk2,
-            wfc_basis->nks,
-            wfc_basis->npwk_max
-        );
+        Operator<std::complex<FPTYPE>, Device>* ekinetic
+            = new Ekinetic<OperatorPW<FPTYPE, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
         if(this->ops == nullptr)
         {
             this->ops = ekinetic;
@@ -70,13 +66,12 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
         {
             //register Potential by gathered operator
             pot_in->pot_register(pot_register_in);
-            Operator<std::complex<FPTYPE>, Device>* veff = new Veff<OperatorPW<FPTYPE, Device>>(
-                isk,
-                pot_in->get_v_effective_data<FPTYPE>(),
-                pot_in->get_effective_v().nr,
-                pot_in->get_effective_v().nc,
-                wfc_basis
-            );
+            Operator<std::complex<FPTYPE>, Device>* veff
+                = new Veff<OperatorPW<FPTYPE, Device>>(isk,
+                                                       pot_in->get_v_effective_data<FPTYPE>(),
+                                                       pot_in->get_effective_v().nr,
+                                                       pot_in->get_effective_v().nc,
+                                                       wfc_basis);
             if(this->ops == nullptr)
             {
                 this->ops = veff;
@@ -85,25 +80,20 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
             {
                 this->ops->add(veff);
             }
-            Operator<std::complex<FPTYPE>, Device>* meta = new Meta<OperatorPW<FPTYPE, Device>>(
-                tpiba,
-                isk,
-                pot_in->get_vofk_effective_data<FPTYPE>(),
-                pot_in->get_effective_vofk().nr,
-                pot_in->get_effective_vofk().nc,
-                wfc_basis
-            );
+            Operator<std::complex<FPTYPE>, Device>* meta
+                = new Meta<OperatorPW<FPTYPE, Device>>(tpiba,
+                                                       isk,
+                                                       pot_in->get_vofk_effective_data<FPTYPE>(),
+                                                       pot_in->get_effective_vofk().nr,
+                                                       pot_in->get_effective_vofk().nc,
+                                                       wfc_basis);
             this->ops->add(meta);
         }
     }
     if (GlobalV::VNL_IN_H)
     {
-        Operator<std::complex<FPTYPE>, Device>* nonlocal = new Nonlocal<OperatorPW<FPTYPE, Device>>(
-            isk,
-            &GlobalC::ppcell,
-            &GlobalC::ucell,
-            wfc_basis
-        );
+        Operator<std::complex<FPTYPE>, Device>* nonlocal
+            = new Nonlocal<OperatorPW<FPTYPE, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
         if(this->ops == nullptr)
         {
             this->ops = nonlocal;

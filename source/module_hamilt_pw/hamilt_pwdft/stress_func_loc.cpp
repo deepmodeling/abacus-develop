@@ -68,11 +68,13 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		{
 			for (int ig=0; ig<rho_basis->npw; ig++)
 			{
-				if(rho_basis->ig_gge0==ig)
-					evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * (sf.strucFac(it,ig) * conj(aux[ig])).real();
-				else
-					evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * (sf.strucFac(it,ig) * conj(aux[ig]) * fact).real();
-			}
+                if (rho_basis->ig_gge0 == ig)
+                    evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
+                             * (sf.strucFac(it, ig) * conj(aux[ig])).real();
+                else
+                    evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
+                             * (sf.strucFac(it, ig) * conj(aux[ig]) * fact).real();
+            }
 		}
 	}
 	for(int nt = 0;nt< GlobalC::ucell.ntype; nt++)
@@ -111,10 +113,11 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 			{
 				for (int m = 0; m<l+1;m++)
 				{
-					local_sigma(l, m) = local_sigma(l, m) + (conj(aux[ig]) * sf.strucFac(nt, ig)).real() 
-						* 2.0 * dvloc[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba2 * 
-						rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
-				}
+                    local_sigma(l, m) = local_sigma(l, m)
+                                        + (conj(aux[ig]) * sf.strucFac(nt, ig)).real() * 2.0
+                                              * dvloc[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba2
+                                              * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
+                }
 			}
 		}
 #ifdef _OPENMP
@@ -130,9 +133,9 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		}
 }
 #endif
-}
+	}
 
-    if(is_pw)
+	if(is_pw)
 	{
 		for(int l = 0;l< 3;l++)
 		{

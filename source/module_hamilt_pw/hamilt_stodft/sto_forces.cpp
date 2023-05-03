@@ -17,12 +17,12 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
                               ModulePW::PW_Basis* rho_basis,
                               ModuleSymmetry::Symmetry& symm,
                               Structure_Factor& sf,
-							  K_Vectors* pkv,
-							  ModulePW::PW_Basis_K* wfc_basis,
+                              K_Vectors* pkv,
+                              ModulePW::PW_Basis_K* wfc_basis,
                               const psi::Psi<std::complex<double>>* psi_in,
                               Stochastic_WF& stowf)
 {
-	ModuleBase::timer::tick("Sto_Force","cal_force");
+    ModuleBase::timer::tick("Sto_Force","cal_force");
 	ModuleBase::TITLE("Sto_Forces", "init");
 	this->nat =  GlobalC::ucell.nat;
 	force.create(nat, 3);
@@ -34,10 +34,10 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 	ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, rho_basis, chr);
     this->cal_force_ew(forceion, rho_basis, sf);
-    this->cal_sto_force_nl(forcenl, wg, wfc_basis, psi_in,stowf);
-	this->cal_force_cc(forcecc, rho_basis, chr);
-	this->cal_force_scc(forcescc, rho_basis);
-	
+    this->cal_sto_force_nl(forcenl, wg, wfc_basis, psi_in, stowf);
+    this->cal_force_cc(forcecc, rho_basis, chr);
+    this->cal_force_scc(forcescc, rho_basis);
+
     //impose total force = 0
     int iat = 0;
 
@@ -119,9 +119,9 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 				pos[3*iat+2] = GlobalC::ucell.atoms[it].taud[ia].z;
 				for(int k=0; k<3; ++k)
 				{
-					symm.check_translation( pos[iat*3+k], -floor(pos[iat*3+k]));
-					symm.check_boundary( pos[iat*3+k] );
-				}
+                    symm.check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                    symm.check_boundary(pos[iat * 3 + k]);
+                }
 				iat++;				
 			}
 		}
@@ -251,7 +251,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase:
 				if (ipol==0)
 				{
 					for (int ig=0; ig<npw; ig++)
-                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik,ig)[0];
+                        pvkb1[ig] = pvkb[ig] * ModuleBase::NEG_IMAG_UNIT * wfc_basis->getgcar(ik, ig)[0];
                 }
 				if (ipol==1)
 				{

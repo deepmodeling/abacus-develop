@@ -167,21 +167,21 @@ void WF_igk::get_sk(Device * ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis,
 }
 
 std::complex<double> *WF_igk::get_skq(int ik,
-									  const int it,
-									  const int ia,
-                                      ModulePW::PW_Basis_K* wfc_basis,
-									  ModuleBase::Vector3<double> q) // pengfei 2016-11-23
+                                      const int it,
+                                      const int ia,
+                                      ModulePW::PW_Basis_K *wfc_basis,
+                                      ModuleBase::Vector3<double> q) // pengfei 2016-11-23
 {
-	std::complex<double> *skq = new std::complex<double>[GlobalC::kv.ngk[ik]];
+    std::complex<double> *skq = new std::complex<double>[GlobalC::kv.ngk[ik]];
 
-	for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
-	{
-		ModuleBase::Vector3<double> qkq = wfc_basis->getgpluskcar(ik,ig) + q;
-		double arg = (qkq * GlobalC::ucell.atoms[it].tau[ia]) * ModuleBase::TWO_PI;
+    for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
+    {
+        ModuleBase::Vector3<double> qkq = wfc_basis->getgpluskcar(ik, ig) + q;
+        double arg = (qkq * GlobalC::ucell.atoms[it].tau[ia]) * ModuleBase::TWO_PI;
 		skq[ig] = std::complex<double>(cos(arg), -sin(arg));
-	}
+    }
 
-	return skq;
+    return skq;
 }
 
 template void WF_igk::get_sk<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, ModulePW::PW_Basis_K*, std::complex<float>*) const;

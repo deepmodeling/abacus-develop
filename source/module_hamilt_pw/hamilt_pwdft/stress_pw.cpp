@@ -6,11 +6,11 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
-										   ModulePW::PW_Basis* rho_basis,
-										   ModuleSymmetry::Symmetry& symm,
-										   Structure_Factor& sf,
-										   K_Vectors &kv,
-										   ModulePW::PW_Basis_K* wfc_basis,
+                                           ModulePW::PW_Basis* rho_basis,
+                                           ModuleSymmetry::Symmetry& symm,
+                                           Structure_Factor& sf,
+                                           K_Vectors& kv,
+                                           ModulePW::PW_Basis_K* wfc_basis,
                                            const psi::Psi<complex<FPTYPE>>* psi_in,
                                            const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
 {
@@ -61,35 +61,42 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
 	}
 
 	//kinetic contribution
-	this->stress_kin(sigmakin, this->pelec->wg, symm, kv, wfc_basis, psi_in);
-	
-	//hartree contribution
+    this->stress_kin(sigmakin, this->pelec->wg, symm, kv, wfc_basis, psi_in);
+
+    // hartree contribution
     this->stress_har(sigmahar, rho_basis, 1, pelec->charge);
 
-    //ewald contribution
+    // ewald contribution
     this->stress_ewa(sigmaewa, rho_basis, 1);
 
-    //xc contribution: add gradient corrections(non diagonal)
-    for(int i=0;i<3;i++)
-	{
-       sigmaxc(i,i) = - (GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
+    // xc contribution: add gradient corrections(non diagonal)
+    for (int i = 0; i < 3; i++)
+    {
+        sigmaxc(i, i) = -(GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
     }
     this->stress_gga(sigmaxc, rho_basis, pelec->charge);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) {
-        this->stress_mgga(sigmaxc, this->pelec->wg, this->pelec->pot->get_effective_vofk(), pelec->charge, kv, wfc_basis, psi_in);
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        this->stress_mgga(sigmaxc,
+                          this->pelec->wg,
+                          this->pelec->pot->get_effective_vofk(),
+                          pelec->charge,
+                          kv,
+                          wfc_basis,
+                          psi_in);
     }
 
-    //local contribution
+    // local contribution
     this->stress_loc(sigmaloc, rho_basis, sf, 1, pelec->charge);
-    
-    //nlcc
-    this->stress_cc(sigmaxcc, rho_basis, sf, 1, pelec->charge);
-   
-    //nonlocal
-	this->stress_nl(sigmanl, this->pelec->wg, kv, symm, wfc_basis, d_psi_in);
 
-	//vdw term
-	stress_vdw(sigmavdw, ucell);
+    // nlcc
+    this->stress_cc(sigmaxcc, rho_basis, sf, 1, pelec->charge);
+
+    // nonlocal
+    this->stress_nl(sigmanl, this->pelec->wg, kv, symm, wfc_basis, d_psi_in);
+
+    // vdw term
+    stress_vdw(sigmavdw, ucell);
 
     for(int ipol=0;ipol<3;ipol++)
 	{
@@ -108,8 +115,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-		symm.stress_symmetry(sigmatot, GlobalC::ucell);
-	}
+        symm.stress_symmetry(sigmatot, GlobalC::ucell);
+    }
 
 	bool ry = false;
 	this->printstress_total(sigmatot, ry);

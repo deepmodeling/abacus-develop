@@ -6,7 +6,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const ModuleBase::matrix& wg,
-											 ModuleSymmetry::Symmetry& symm,
+                                             ModuleSymmetry::Symmetry& symm,
                                              K_Vectors& kv,
                                              ModulePW::PW_Basis_K* wfc_basis,
                                              const psi::Psi<complex<FPTYPE>>* psi_in)
@@ -27,12 +27,13 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	}
 		
 	int npwx=0;
-	for(int ik=0; ik<kv.nks; ik++)
-	{
-		if(npwx<kv.ngk[ik])npwx=kv.ngk[ik];
-	}
-		
-	gk[0]= new FPTYPE[npwx];
+    for (int ik = 0; ik < kv.nks; ik++)
+    {
+        if (npwx < kv.ngk[ik])
+            npwx = kv.ngk[ik];
+    }
+
+    gk[0]= new FPTYPE[npwx];
 	gk[1]= new FPTYPE[npwx];
 	gk[2]= new FPTYPE[npwx];
 	FPTYPE factor=ModuleBase::TWO_PI/GlobalC::ucell.lat0;
@@ -43,14 +44,14 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-		for(int i=0;i<npw;i++)
-		{
-			gk[0][i] = wfc_basis->getgpluskcar(ik,i)[0] * factor;
-			gk[1][i] = wfc_basis->getgpluskcar(ik,i)[1] * factor;
-			gk[2][i] = wfc_basis->getgpluskcar(ik,i)[2] * factor;
-		}
+        for (int i = 0; i < npw; i++)
+        {
+            gk[0][i] = wfc_basis->getgpluskcar(ik, i)[0] * factor;
+            gk[1][i] = wfc_basis->getgpluskcar(ik, i)[1] * factor;
+            gk[2][i] = wfc_basis->getgpluskcar(ik, i)[2] * factor;
+        }
 
-		//kinetic contribution
+        //kinetic contribution
 
 		for(int l=0;l<3;l++)
 		{
@@ -146,7 +147,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 
     delete[] gk[0];
     delete[] gk[1];
-	delete[] gk[2];
+    delete[] gk[2];
 	delete[] gk;
 		
 	ModuleBase::timer::tick("Stress_Func","stress_kin");

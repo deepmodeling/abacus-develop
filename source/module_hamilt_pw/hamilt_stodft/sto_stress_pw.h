@@ -1,20 +1,19 @@
 #ifndef STO_STRESS_PW_H
 #define STO_STRESS_PW_H
 
-#include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
-#include "sto_wf.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/module_charge/charge.h"
-//qianrui create 2021-6-4
+#include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
+#include "sto_wf.h"
+// qianrui create 2021-6-4
 
-class Sto_Stress_PW:public Stress_Func<double>
+class Sto_Stress_PW : public Stress_Func<double>
 {
-	public :
-	
-	Sto_Stress_PW (){};
-	~Sto_Stress_PW (){};
+  public:
+    Sto_Stress_PW(){};
+    ~Sto_Stress_PW(){};
 
-	//calculate the stress in PW basis
+    // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& sigmatot,
                     const ModuleBase::matrix& wg,
                     ModulePW::PW_Basis* rho_basis,

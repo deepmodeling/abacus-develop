@@ -75,7 +75,13 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        stress_mgga(sigmaxc, this->pelec->pot->get_effective_vofk(), this->pelec->wg, pelec->charge, kv, wfc_basis, psi_in);
+        stress_mgga(sigmaxc,
+                    this->pelec->pot->get_effective_vofk(),
+                    this->pelec->wg,
+                    pelec->charge,
+                    kv,
+                    wfc_basis,
+                    psi_in);
 
     // local contribution
     stress_loc(sigmaloc, this->rhopw, sf, 1, pelec->charge);
