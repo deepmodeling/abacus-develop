@@ -23,10 +23,6 @@ public:
 		const double kmesh_times_mot,
 		const double times_threshold=0);
 		
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orth_orbs( 
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
-		const double norm_threshold=std::numeric_limits<double>::min() );
-
 	static void print_orbs_size(
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		std::ostream &os);		

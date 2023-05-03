@@ -112,20 +112,6 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	return abfs_same_atom_pca;
 }
 
-std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::orth_orbs(
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
-	const double norm_threshold )
-{
-	ModuleBase::TITLE("Exx_Abfs::Construct_Orbs::orth_orbs");
-	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		orbs_psi = get_psi( orbs );
-	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		orbs_psi_orth = orth( orbs_psi, orbs, norm_threshold );
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		orbs_new = orbital( orbs_psi_orth, orbs, 1 );
-	return orbs_new;
-}
-
 /*
 template<>
 std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_Orbs::psi_mult_psi(
