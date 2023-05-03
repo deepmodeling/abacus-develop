@@ -402,8 +402,7 @@ OBJS_LCAO=DM_gamma.o\
       dm_2d.o\
       wavefunc_in_pw.o\
 
-OBJS_SRC_RI=conv_coulomb_pot.o\
-      conv_coulomb_pot_k.o\
+OBJS_SRC_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o \
       exx_abfs-inverse_matrix_double.o \
       exx_abfs-jle.o \
