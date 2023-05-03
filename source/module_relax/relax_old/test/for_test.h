@@ -1,4 +1,5 @@
-#define private public
+#ifndef TEST_RELAX_OLD_H
+#define TEST_RELAX_OLD_H
 
 #include "module_cell/unitcell.h"
 
@@ -102,3 +103,5 @@ pseudo_nc::pseudo_nc()
 pseudo_nc::~pseudo_nc()
 {
 }
+
+#endif

@@ -1,9 +1,8 @@
-#define private public
-#include "module_relax/relax_old/lattice_change_cg.h"
-
 #include "for_test.h"
+#define private public
 #include "gtest/gtest.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+#include "module_relax/relax_old/lattice_change_cg.h"
 /************************************************
  *  unit tests of class Lattice_Change_CG
  ***********************************************/
@@ -523,7 +522,6 @@ TEST_F(Lattice_Change_CG_Test, Setup_Move)
 
     lc_cg.setup_move(move, cg_gradn, trust_radius);
 
-
     EXPECT_DOUBLE_EQ(move[0], -1.0);
     EXPECT_DOUBLE_EQ(move[1], -1.0);
     EXPECT_DOUBLE_EQ(move[2], -1.0);
@@ -534,4 +532,3 @@ TEST_F(Lattice_Change_CG_Test, Setup_Move)
     EXPECT_DOUBLE_EQ(move[7], -1.0);
     EXPECT_DOUBLE_EQ(move[8], -1.0);
 }
-

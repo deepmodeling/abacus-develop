@@ -1,10 +1,9 @@
-#define private public
-#include "module_relax/relax_old/ions_move_sd.h"
-
 #include "for_test.h"
+#define private public
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/ions_move_sd.h"
 /************************************************
  *  unit tests of class Ions_Move_SD
  ***********************************************/

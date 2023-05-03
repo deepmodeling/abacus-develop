@@ -1,10 +1,9 @@
+#include "module_relax/relax_old/ions_move_basic.h"
 #define private public
 #define protected public
-#include "module_relax/relax_old/bfgs_basic.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/bfgs_basic.h"
 /************************************************
  *  unit tests of class BFGS_Basic
  ***********************************************/

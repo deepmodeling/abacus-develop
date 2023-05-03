@@ -1,9 +1,8 @@
-#define private public
-#include "module_relax/relax_old/ions_move_cg.h"
-
 #include "for_test.h"
+#define private public
 #include "gtest/gtest.h"
 #include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/ions_move_cg.h"
 /************************************************
  *  unit tests of class Ions_Move_CG
  ***********************************************/
