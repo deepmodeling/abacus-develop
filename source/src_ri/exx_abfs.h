@@ -18,7 +18,6 @@ public:
 	class Util;
 	class Abfs_Index;
 	class Jle;
-	class Inverse_Matrix_Double;
 	class IO;
 	class Construct_Orbs;
 	class PCA;
