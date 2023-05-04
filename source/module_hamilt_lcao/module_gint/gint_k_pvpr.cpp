@@ -229,20 +229,24 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
     // Distribution of data.
     ModuleBase::timer::tick("Gint_k","Distri");
     const int nlocal = GlobalV::NLOCAL;
+    std::vector<std::complex<double>> tmp(nlocal);
     const double sign_table[2] = {1.0, -1.0};
 #ifdef _OPENMP
 #pragma omp parallel
 {
 #endif
-    //using tmp with threading safe mode
-    std::vector<std::complex<double>> tmp(nlocal);
     //loop each row with index i, than loop each col with index j 
     for (int i=0; i<nlocal; i++)
     {
-        tmp.assign(nlocal, std::complex<double>(0.0, 0.0));
+#ifdef _OPENMP
+#pragma omp for
+#endif
+        for (int j=0; j<nlocal; j++)
+        {
+            tmp[j] = std::complex<double>(0.0, 0.0);
+        }
         int i_flag = i & 1; // i % 2 == 0
         const int mug = GlobalC::GridT.trace_lo[i];
-        const int mug0 = mug/GlobalV::NPOL;
         // if the row element is on this processor.
         if (mug >= 0)
         {
@@ -273,6 +277,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
             }
             else
             {
+                const int mug0 = mug/GlobalV::NPOL;
                 if (GlobalV::DOMAG)
                 {
 #ifdef _OPENMP
