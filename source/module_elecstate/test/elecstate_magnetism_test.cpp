@@ -23,9 +23,9 @@
 Charge::Charge(){}
 Charge::~Charge(){}
 
-int elecstate::get_rhopw_nrxx() { return 100; }
-int elecstate::get_rhopw_nxyz() { return 1000; }
-double elecstate::get_ucell_omega() { return 500.0; }
+const int elecstate::get_rhopw_nrxx() { return 100; }
+const int elecstate::get_rhopw_nxyz() { return 1000; }
+const double elecstate::get_ucell_omega() { return 500.0; }
 
 class MagnetismTest : public ::testing::Test
 {
