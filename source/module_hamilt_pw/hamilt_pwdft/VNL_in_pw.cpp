@@ -104,11 +104,6 @@ void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, 
 	}
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"TOTAL NUMBER OF NONLOCAL PROJECTORS",nkb);
-	if (nkb <= 0 || !allocate_vkb)
-	{
-		ModuleBase::timer::tick("ppcell_vnl","init");
-		return;
-	}
 
 	if( this->nhm > 0 )
 	{
@@ -164,8 +159,11 @@ void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, 
 	// dq+4)*cell_factor;
 	this->lmaxq = 2 * this->lmaxkb + 1;
 	int npwx = this->wfcpw->npwk_max;
-	vkb.create(nkb, npwx);
-	ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(double));
+	if (nkb > 0 && allocate_vkb )
+	{
+		vkb.create(nkb, npwx);
+		ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(double));
+	}
 
 	//this->nqx = 10000;		// calculted in allocate_nlpot.f90
 	//GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ); //LiuXh modify 20180515
