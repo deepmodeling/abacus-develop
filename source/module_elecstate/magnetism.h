@@ -30,6 +30,10 @@ public:
     double ux_[3];
 	bool lsign_;
 
+    int get_rhopw_nrxx() const;
+    int get_rhopw_nxyz() const;
+    double get_ucell_omega() const;
+
 private:
     bool judge_parallel(double a[3],ModuleBase::Vector3<double> b);
 

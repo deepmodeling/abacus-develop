@@ -446,6 +446,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     vnl_op.o\
     global.o\
     magnetism.o\
+    magnetism_getters.o\
     occupy.o\
     structure_factor.o\
     soc.o\
