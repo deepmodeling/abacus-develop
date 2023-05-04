@@ -141,6 +141,7 @@ void Input::Default(void)
     ntype = 0;
     nbands = 0;
     nbands_sto = 256;
+    nbndsto_str = "256";
     nbands_istate = 5;
     pw_seed = 1;
     emin_sto = 0.0;
@@ -405,11 +406,10 @@ void Input::Default(void)
     // tddft
     //----------------------------------------------------------
     td_force_dt = 0.02;
-    td_val_elec_01 = 1;
-    td_val_elec_02 = 1;
-    td_val_elec_03 = 1;
     td_vext = false;
     td_vext_dire = "1";
+
+    propagator = 0;
 
     out_dipole = false;
     out_efield = false;
@@ -541,6 +541,7 @@ void Input::Default(void)
     of_wt_beta = 5. / 6.;
     of_wt_rho0 = 0.;
     of_hold_rho0 = false;
+    of_lkt_a = 1.3;
     of_full_pw = true;
     of_full_pw_dim = 0;
     of_read_kernel = false;
@@ -684,7 +685,12 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("nbands_sto", word) == 0) // number of stochastic bands
         {
-            read_value(ifs, nbands_sto);
+            std::string nbsto_str;
+            read_value(ifs, nbndsto_str);
+            if (nbndsto_str != "all")
+            {
+                nbands_sto = std::stoi(nbndsto_str);
+            }
         }
         else if (strcmp("kspacing", word) == 0)
         {
@@ -1524,18 +1530,6 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_force_dt);
         }
-        else if (strcmp("td_val_elec_01", word) == 0)
-        {
-            read_value(ifs, td_val_elec_01);
-        }
-        else if (strcmp("td_val_elec_02", word) == 0)
-        {
-            read_value(ifs, td_val_elec_02);
-        }
-        else if (strcmp("td_val_elec_03", word) == 0)
-        {
-            read_value(ifs, td_val_elec_03);
-        }
         else if (strcmp("td_vext", word) == 0)
         {
             read_value(ifs, td_vext);
@@ -1559,6 +1553,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("td_edm", word) == 0)
         {
             read_value(ifs, td_edm);
+        }
+        else if (strcmp("propagator", word) == 0)
+        {
+            read_value(ifs, propagator);
         }
         else if (strcmp("td_stype", word) == 0)
         {
@@ -2001,6 +1999,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, of_hold_rho0);
         }
+        else if (strcmp("of_lkt_a", word) == 0)
+        {
+            read_value(ifs, of_lkt_a);
+        }
         else if (strcmp("of_full_pw", word) == 0)
         {
             read_bool(ifs, of_full_pw);
@@ -2422,6 +2424,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             vdw_cutoff_radius = "95";
         }
+    }
+
+    if (nbndsto_str == "all")
+    {
+        nbands_sto = 0;
+    }
+    else if (nbndsto_str == "0" && esolver_type == "sdft")
+    {
+        esolver_type = "ksdft";
     }
     if (esolver_type != "sdft")
         bndpar = 1;
@@ -2982,12 +2993,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int(vdw_cutoff_period.y);
     Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
-    Parallel_Common::bcast_int(td_val_elec_01);
-    Parallel_Common::bcast_int(td_val_elec_02);
-    Parallel_Common::bcast_int(td_val_elec_03);
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_bool(td_vext);
     Parallel_Common::bcast_string(td_vext_dire);
+    Parallel_Common::bcast_int(propagator);
     Parallel_Common::bcast_int(td_stype);
     Parallel_Common::bcast_string(td_ttype);
     Parallel_Common::bcast_int(td_tstart);
@@ -3117,6 +3126,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(of_wt_beta);
     Parallel_Common::bcast_double(of_wt_rho0);
     Parallel_Common::bcast_bool(of_hold_rho0);
+    Parallel_Common::bcast_double(of_lkt_a);
     Parallel_Common::bcast_bool(of_full_pw);
     Parallel_Common::bcast_int(of_full_pw_dim);
     Parallel_Common::bcast_bool(of_read_kernel);

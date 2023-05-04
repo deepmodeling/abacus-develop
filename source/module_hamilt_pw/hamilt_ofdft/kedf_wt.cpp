@@ -21,10 +21,10 @@ void KEDF_WT::set_para(int nx, double dV, double alpha, double beta, double nele
         this->rho0 = 1./(pw_rho->nxyz * dV) * nelec;
     }
 
-    this->kF = pow(3. * pow(ModuleBase::PI, 2) * this->rho0, 1./3.);
+    this->kF = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0, 1./3.);
     this->tkF = 2. * this->kF;
 
-    this->WTcoef = 5./(9. * this->alpha * this->beta * pow(this->rho0, this->alpha + this->beta - 5./3.));
+    this->WTcoef = 5./(9. * this->alpha * this->beta * std::pow(this->rho0, this->alpha + this->beta - 5./3.));
 
     if (this->kernel != NULL) delete[] this->kernel;
     this->kernel = new double[pw_rho->npw];
@@ -49,7 +49,7 @@ double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
     {
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            energy += pow(prho[0][ir], this->alpha) * kernelRhoBeta[0][ir];
+            energy += std::pow(prho[0][ir], this->alpha) * kernelRhoBeta[0][ir];
         }
         energy *= this->dV * this->cTF;
     }
@@ -82,7 +82,7 @@ double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, M
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
     this->multiKernel(prho, kernelRhoBeta, this->beta, pw_rho);
 
-    double result = this->cTF * pow(prho[is][ir], this->alpha) * kernelRhoBeta[is][ir];
+    double result = this->cTF * std::pow(prho[is][ir], this->alpha) * kernelRhoBeta[is][ir];
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -113,8 +113,8 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
         for (int ir = 0; ir < this->nx; ++ir)
         {
             rpotential(is, ir) += this->cTF *
-                                    (this->alpha * pow(prho[is][ir], this->alpha-1.) * kernelRhoBeta[is][ir]
-                                    + this->beta * pow(prho[is][ir], this->beta-1.) * kernelRhoAlpha[is][ir]);
+                                    (this->alpha * std::pow(prho[is][ir], this->alpha-1.) * kernelRhoBeta[is][ir]
+                                    + this->beta * std::pow(prho[is][ir], this->beta-1.) * kernelRhoAlpha[is][ir]);
         }
     }
 
@@ -124,7 +124,7 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
     {
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            energy += pow(prho[0][ir], this->alpha) * kernelRhoBeta[0][ir];
+            energy += std::pow(prho[0][ir], this->alpha) * kernelRhoBeta[0][ir];
         }
         energy *= this->dV * this->cTF;
     }
@@ -177,13 +177,13 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            tempRho[ir] = pow(prho[is][ir], this->alpha);
+            tempRho[ir] = std::pow(prho[is][ir], this->alpha);
         }
         pw_rho->real2recip(tempRho, recipRhoAlpha[is]);
 
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            tempRho[ir] = pow(prho[is][ir], this->beta);
+            tempRho[ir] = std::pow(prho[is][ir], this->beta);
         }
         pw_rho->real2recip(tempRho, recipRhoBeta[is]);
     }
@@ -225,11 +225,11 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 
             if (GlobalV::GAMMA_ONLY_PW)
             {
-                this->stress(a,b) *= - pow(ModuleBase::PI,2) / (this->alpha * this->beta * this->kF * pow(this->rho0, this->alpha + this->beta - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
+                this->stress(a,b) *= - std::pow(ModuleBase::PI,2) / (this->alpha * this->beta * this->kF * std::pow(this->rho0, this->alpha + this->beta - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
             }
             else
             {
-                this->stress(a,b) *= - pow(ModuleBase::PI,2) / (2. * this->alpha * this->beta * this->kF * pow(this->rho0, this->alpha + this->beta - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
+                this->stress(a,b) *= - std::pow(ModuleBase::PI,2) / (2. * this->alpha * this->beta * this->kF * std::pow(this->rho0, this->alpha + this->beta - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
             }
         }
     }
@@ -319,7 +319,7 @@ double KEDF_WT::diffLinhard(double eta, double vw_weight)
     {
         double eta2 = eta * eta;
         return ((eta2 + 1.) * 0.25 / eta2 * log(abs((1. + eta)/
-             (1.-eta))) - 0.5/eta) / pow((0.5 + 0.25 * (1. - eta2)
+             (1.-eta))) - 0.5/eta) / std::pow((0.5 + 0.25 * (1. - eta2)
              * log((1. + eta) / abs(1. - eta))/eta) , 2) - 6. * eta * vw_weight;
     }
 }
@@ -333,7 +333,7 @@ void KEDF_WT::multiKernel(const double * const * prho, double **rkernelRho, doub
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            rkernelRho[is][ir] = pow(prho[is][ir], exponent);
+            rkernelRho[is][ir] = std::pow(prho[is][ir], exponent);
         }
         pw_rho->real2recip(rkernelRho[is], recipkernelRho[is]);
         for (int ip = 0; ip < pw_rho->npw; ++ip)
