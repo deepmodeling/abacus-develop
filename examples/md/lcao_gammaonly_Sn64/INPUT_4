@@ -1,17 +1,16 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix                  Sn_msst
-calculation             md
-ntype                   1
-nbands                  160
-symmetry                0
-pseudo_dir              ../../../tests/PP_ORB
-orbital_dir             ../../../tests/PP_ORB
+suffix                 Si_msst
+calculation            md
+nbands                 20
+symmetry               0
+pseudo_dir             ../../../tests/PP_ORB
+orbital_dir            ../../../tests/PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc                 30
-scf_thr                 1e-5
-scf_nmax                100
+ecutwfc                30
+scf_thr                1e-5
+scf_nmax               100
 
 #Parameters (3.Basis)
 basis_type             lcao
@@ -20,7 +19,7 @@ gamma_only             1
 
 #Parameters (4.Smearing)
 smearing_method        gaussian
-smearing_sigma         0.01
+smearing_sigma         0.001
 
 #Parameters (5.Mixing)
 mixing_type            pulay
