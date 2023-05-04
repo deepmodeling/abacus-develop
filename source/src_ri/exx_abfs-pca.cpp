@@ -151,10 +151,21 @@ RI::Tensor<double> Exx_Abfs::PCA::get_sub_matrix(
 {
 	ModuleBase::TITLE("Exx_Abfs::PCA::get_sub_matrix");
 	
-    RI::Tensor<double> m_sub(RI::Shape_Vector{m.shape[0], range[T][L].N });
-	for( size_t ir=0; ir!=m.shape[0]; ++ir )
-		for( size_t N=0; N!=range[T][L].N; ++N )
-			m_sub( ir, N ) = m( ir, index[T][L][N][0] );
+    assert(m.shape.size() == 3);
+    RI::Tensor<double> m_sub(RI::Shape_Vector{m.shape[0] * m.shape[1], range[T][L].N });
+    size_t count = 0;
+    for (size_t ir = 0; ir != m.shape[0]; ++ir)
+    {
+        for (size_t jr = 0; jr != m.shape[1]; ++jr)
+        {
+            for (size_t N = 0; N != range[T][L].N; ++N)
+            {
+                m_sub(count, N) = m(ir, jr, index[T][L][N][0]);
+            }
+            ++count;
+        }
+    }
+
 	return m_sub;
 }
 
