@@ -511,6 +511,10 @@ void Force_Stress_LCAO::getForceStress(
 		}
 
 #ifdef __DEEPKS
+		if (GlobalV::deepks_out_labels) //not parallelized yet
+        {
+			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_base;
+		}
 		if (GlobalV::deepks_scf)
 		{
 			for (int i=0; i<3; i++)
@@ -523,7 +527,6 @@ void Force_Stress_LCAO::getForceStress(
 		}
 		if (GlobalV::deepks_out_labels) //not parallelized yet
         {
-			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_base;
 			// wenfei add 2021/11/2
 			if (GlobalV::deepks_scf)
 			{
