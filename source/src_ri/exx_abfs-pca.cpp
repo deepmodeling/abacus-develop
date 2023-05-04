@@ -14,7 +14,24 @@
 #include <sys/time.h>			// Peize Lin test
 #include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"		// Peize Lin test
 
-std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> Exx_Abfs::PCA::cal_PCA( 
+static inline void tensor_dsyev(const char jobz, const char uplo, RI::Tensor<double>& a, double* w, int& info)
+{
+    // reference: dsyev in lapack_connector.h (for ModuleBase::matrix)
+    assert(a.shape.size() == 2);
+    assert(a.shape[0] == a.shape[1]);
+    const int nr = a.shape[0];
+    const int nc = a.shape[1];
+
+    double work_tmp;
+    constexpr int minus_one = -1;
+    dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, &work_tmp, &minus_one, &info);		// get best lwork
+
+    const int lwork = work_tmp;
+    std::vector<double> work(std::max(1, lwork));
+    dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, ModuleBase::GlobalFunc::VECTOR_TO_PTR(work), &lwork, &info);
+};
+
+std::vector<std::vector<std::pair<std::vector<double>, RI::Tensor<double>>>> Exx_Abfs::PCA::cal_PCA(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos, 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 	const double kmesh_times )
@@ -87,25 +104,8 @@ std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> Exx_
 			
 			int info;
             //gettimeofday( &t_start, NULL);
-            auto tensor2matrix = [](RI::Tensor<double>& t)
-            {
-                ModuleBase::matrix m(t.shape[0], t.shape[1]);
-                for (int ir = 0; ir != t.shape[0]; ++ir)
-                    for (int ic = 0; ic != t.shape[1]; ++ic)
-                        m(ir, ic) = t(ir, ic);
-                return m;
-            };
-            auto matrix2tensor = [](ModuleBase::matrix& m)
-            {
-                RI::Tensor<double> t(RI::Shape_Vector{static_cast<unsigned long>(m.nr), static_cast<unsigned long>(m.nc)});
-                for (int ir = 0; ir != m.nr; ++ir)
-                    for (int ic = 0; ic != m.nc; ++ic)
-                        t(ir, ic) = m(ir, ic);
-                return t;
-            };
-            ModuleBase::matrix mm_mat = tensor2matrix(mm);
-            LapackConnector::dsyev('V', 'U', mm_mat, ModuleBase::GlobalFunc::VECTOR_TO_PTR(eig_value), info);
-            mm = matrix2tensor(mm_mat);
+
+            tensor_dsyev('V', 'L', mm, ModuleBase::GlobalFunc::VECTOR_TO_PTR(eig_value), info);
 
             //ofs<<"TIME@LapackConnector::dsyev\t"<<time_during(t_start)<<std::endl;
 			if( info )
