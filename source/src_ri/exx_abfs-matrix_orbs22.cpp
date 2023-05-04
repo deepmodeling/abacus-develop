@@ -8,7 +8,6 @@
 #include "../module_base/ylm.h"
 
 #include "../src_ri/test_code/test_function.h"			// Peize Lin test 2016-04-05
-#include "../src_ri/test_code/exx_lcao-test.h"
 #include "../module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 
 void Exx_Abfs::Matrix_Orbs22::init(
@@ -16,7 +15,7 @@ void Exx_Abfs::Matrix_Orbs22::init(
 	const double kmesh_times,
 	const double rmesh_times)
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
+// std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 gettimeofday( &t_start, NULL);
 	
@@ -46,8 +45,8 @@ gettimeofday( &t_start, NULL);
 	//=========================================
 	MGT.init_Gaunt_CH( 2*Lmax+1 );			// why +1
 	MGT.init_Gaunt( 2*Lmax+1 );
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init\t"<<time_during(t_start)<<std::endl;
-ofs.close();
+// ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init\t"<<time_during(t_start)<<std::endl;
+// ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs22::init_radial(
@@ -56,7 +55,6 @@ void Exx_Abfs::Matrix_Orbs22::init_radial(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_B1,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_B2 )
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs22","init_radial");
@@ -80,8 +78,8 @@ gettimeofday( &t_start, NULL);
 													orb_B1[TB][LB1][NB1],
 													orb_B2[TB][LB2][NB2],
 													MOT, MGT)));
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial\t"<<time_during(t_start)<<std::endl;
-ofs.close();
+// ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial\t"<<time_during(t_start)<<std::endl;
+// ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs22::init_radial(
@@ -90,7 +88,6 @@ void Exx_Abfs::Matrix_Orbs22::init_radial(
 	const LCAO_Orbitals &orb_B1,
 	const LCAO_Orbitals &orb_B2 )
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs22","init_radial");
@@ -114,13 +111,12 @@ gettimeofday( &t_start, NULL);
 													orb_B1.Phi[TB].PhiLN(LB1,NB1),
 													orb_B2.Phi[TB].PhiLN(LB2,NB2),
 													MOT, MGT)));
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial\t"<<time_during(t_start)<<std::endl;
-ofs.close();
+// ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial\t"<<time_during(t_start)<<std::endl;
+// ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs22::init_radial_table()
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs22","init_radial_table");
@@ -136,13 +132,12 @@ gettimeofday( &t_start, NULL);
 									for( auto &coI : coH.second )
 										for( auto &coJ : coI.second )
 											coJ.second.init_radial_table();
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial_table\t"<<time_during(t_start)<<std::endl;
-ofs.close();
+// ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial_table\t"<<time_during(t_start)<<std::endl;
+// ofs.close();
 }
 
 void Exx_Abfs::Matrix_Orbs22::init_radial_table( const std::map<size_t,std::map<size_t,std::set<double>>> &Rs )
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 gettimeofday( &t_start, NULL);
 	ModuleBase::TITLE("Exx_Abfs::Matrix_Orbs22","init_radial_table_Rs");
@@ -163,7 +158,7 @@ gettimeofday(&t_small, NULL);
 					for( size_t i=0; i!=4; ++i )
 						radials.insert(iq+i);
 				}
-ofs<<"\t"<<RsA.first<<"\t"<<RsB.first<<"\t"<<time_during(t_small)<<"\t"<<flush;
+// ofs<<"\t"<<RsA.first<<"\t"<<RsB.first<<"\t"<<time_during(t_small)<<"\t"<<flush;
 gettimeofday(&t_small, NULL);
 				for( auto &coC : *center2_orb22_sAB )
 					for( auto &coD : coC.second )
@@ -174,11 +169,11 @@ gettimeofday(&t_small, NULL);
 										for( auto &coI : coH.second )
 											for( auto &coJ : coI.second )
 												coJ.second.init_radial_table(radials);
-ofs<<time_during(t_small)<<std::endl;
+// ofs<<time_during(t_small)<<std::endl;
 			}
 		}
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial_table_Rs\t"<<time_during(t_start)<<std::endl;
-ofs.close();
+// ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::init_radial_table_Rs\t"<<time_during(t_start)<<std::endl;
+// ofs.close();
 }
 
 
@@ -273,7 +268,7 @@ std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matr
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B1,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B2 ) const
 {
-std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
+// std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 timeval t_start;
 gettimeofday( &t_start, NULL);
 	std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> matrixes;
@@ -306,7 +301,7 @@ gettimeofday( &t_start, NULL);
 			}
 		}
 	}
-ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::cal_overlap_matrix\t"<<time_during(t_start)<<std::endl;
-ofs.close();
+// ofs<<"TIME@Exx_Abfs::Matrix_Orbs22::cal_overlap_matrix\t"<<time_during(t_start)<<std::endl;
+// ofs.close();
 	return matrixes;
 }

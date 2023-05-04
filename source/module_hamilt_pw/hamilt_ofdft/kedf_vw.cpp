@@ -1,5 +1,7 @@
 #include "./kedf_vw.h"
+
 #include <iostream>
+
 #include "module_base/parallel_reduce.h"
 
 void KEDF_vW::set_para(int nx, double dV, double vw_weight)
@@ -9,13 +11,13 @@ void KEDF_vW::set_para(int nx, double dV, double vw_weight)
     this->vw_weight = vw_weight;
 }
 
-// 
+//
 // EvW = -1/2 \int{sqrt(rho) nabla^2 sqrt(rho)}
-// 
+//
 double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
-    double **tempPhi = new double* [GlobalV::NSPIN];
+    double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
@@ -25,8 +27,9 @@ double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
         }
     }
 
-    double **LapPhi = new double* [GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is) LapPhi[is] = new double[pw_rho->nrxx];
+    double **LapPhi = new double *[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+        LapPhi[is] = new double[pw_rho->nrxx];
     this->laplacianPhi(tempPhi, LapPhi, pw_rho);
 
     double energy = 0.; // in Ry
@@ -36,7 +39,7 @@ double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
         {
             energy += tempPhi[0][ir] * LapPhi[0][ir];
         }
-        energy *= this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+        energy *= this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -47,7 +50,7 @@ double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
                 energy += 2 * tempPhi[is][ir] * LapPhi[is][ir];
             }
         }
-        energy *= 0.5 * this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+        energy *= 0.5 * this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
     }
     this->vWenergy = energy;
     Parallel_Reduce::reduce_double_all(this->vWenergy);
@@ -66,7 +69,7 @@ double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
 double KEDF_vW::get_energy_density(double **pphi, int is, int ir, ModulePW::PW_Basis *pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
-    double **tempPhi = new double* [GlobalV::NSPIN];
+    double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
@@ -76,12 +79,13 @@ double KEDF_vW::get_energy_density(double **pphi, int is, int ir, ModulePW::PW_B
         }
     }
 
-    double **LapPhi = new double* [GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is) LapPhi[is] = new double[pw_rho->nrxx];
+    double **LapPhi = new double *[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+        LapPhi[is] = new double[pw_rho->nrxx];
     this->laplacianPhi(tempPhi, LapPhi, pw_rho);
 
-    double energyDen = 0.; // in Ry
-    energyDen = 0.5 * tempPhi[is][ir] * LapPhi[is][ir] * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+    double energyDen = 0.;                                                     // in Ry
+    energyDen = 0.5 * tempPhi[is][ir] * LapPhi[is][ir] * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -93,16 +97,16 @@ double KEDF_vW::get_energy_density(double **pphi, int is, int ir, ModulePW::PW_B
     return energyDen;
 }
 
-// 
+//
 // Vvw(r)=-1/2 * [\nabla^2 sqrt(rho(r))]/sqrt(rho(r))
 // Here we calculate Vvw * 2 * phi = - sign(phi) * \nabla^2 sqrt(rho(r))
-// 
-void KEDF_vW::vW_potential(const double * const *pphi, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
+//
+void KEDF_vW::vW_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_vW", "vw_potential");
 
     // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
-    double **tempPhi = new double* [GlobalV::NSPIN];
+    double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
@@ -113,8 +117,9 @@ void KEDF_vW::vW_potential(const double * const *pphi, ModulePW::PW_Basis *pw_rh
     }
 
     // calculate the minus \nabla^2 sqrt(rho)
-    double **LapPhi = new double* [GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is) LapPhi[is] = new double[pw_rho->nrxx];
+    double **LapPhi = new double *[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+        LapPhi[is] = new double[pw_rho->nrxx];
     this->laplacianPhi(tempPhi, LapPhi, pw_rho);
 
     // calculate potential
@@ -124,11 +129,11 @@ void KEDF_vW::vW_potential(const double * const *pphi, ModulePW::PW_Basis *pw_rh
         {
             if (pphi[is][ir] >= 0)
             {
-                rpotential(is, ir) += LapPhi[is][ir] * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+                rpotential(is, ir) += LapPhi[is][ir] * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
             }
             else
             {
-                rpotential(is, ir) += - LapPhi[is][ir] * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+                rpotential(is, ir) += -LapPhi[is][ir] * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
             }
         }
     }
@@ -141,7 +146,7 @@ void KEDF_vW::vW_potential(const double * const *pphi, ModulePW::PW_Basis *pw_rh
         {
             energy += tempPhi[0][ir] * LapPhi[0][ir];
         }
-        energy *= this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+        energy *= this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -152,7 +157,7 @@ void KEDF_vW::vW_potential(const double * const *pphi, ModulePW::PW_Basis *pw_rh
                 energy += 2 * tempPhi[is][ir] * LapPhi[is][ir];
             }
         }
-        energy *= 0.5 * this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry 
+        energy *= 0.5 * this->dV * 0.5 * this->vw_weight * 2.; // vw_weight * 2 to convert Hartree to Ry
     }
     this->vWenergy = energy;
     Parallel_Reduce::reduce_double_all(this->vWenergy);
@@ -168,10 +173,10 @@ void KEDF_vW::vW_potential(const double * const *pphi, ModulePW::PW_Basis *pw_rh
     ModuleBase::timer::tick("KEDF_vW", "vw_potential");
 }
 
-void KEDF_vW::get_stress(const double * const * pphi, ModulePW::PW_Basis *pw_rho, double inpt_vWenergy)
+void KEDF_vW::get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho, double inpt_vWenergy)
 {
     // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
-    double **tempPhi = new double* [GlobalV::NSPIN];
+    double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
@@ -202,7 +207,8 @@ void KEDF_vW::get_stress(const double * const * pphi, ModulePW::PW_Basis *pw_rho
             {
                 for (int ik = 0; ik < pw_rho->npw; ++ik)
                 {
-                    ggrecipPhi[is][ik] = - recipPhi[is][ik] * pw_rho->gcar[ik][alpha] * pw_rho->gcar[ik][beta] * pw_rho->tpiba2;
+                    ggrecipPhi[is][ik]
+                        = -recipPhi[is][ik] * pw_rho->gcar[ik][alpha] * pw_rho->gcar[ik][beta] * pw_rho->tpiba2;
                 }
                 pw_rho->recip2real(ggrecipPhi[is], ggPhi);
                 for (int ir = 0; ir < this->nx; ++ir)
@@ -211,7 +217,8 @@ void KEDF_vW::get_stress(const double * const * pphi, ModulePW::PW_Basis *pw_rho
                 }
             }
             Parallel_Reduce::reduce_double_all(this->stress(alpha, beta));
-            this->stress(alpha, beta) *= -1. * this->vw_weight * 2. / pw_rho->nxyz; // vw_weight * 2 to convert Hartree to Ry 
+            this->stress(alpha, beta)
+                *= -1. * this->vw_weight * 2. / pw_rho->nxyz; // vw_weight * 2 to convert Hartree to Ry
         }
     }
     for (int alpha = 1; alpha < 3; ++alpha)
@@ -234,7 +241,7 @@ void KEDF_vW::get_stress(const double * const * pphi, ModulePW::PW_Basis *pw_rho
 }
 
 // get minus Laplacian phi
-void KEDF_vW::laplacianPhi(const double * const * pphi, double **rLapPhi, ModulePW::PW_Basis *pw_rho)
+void KEDF_vW::laplacianPhi(const double *const *pphi, double **rLapPhi, ModulePW::PW_Basis *pw_rho)
 {
     std::complex<double> **recipPhi = new std::complex<double> *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)

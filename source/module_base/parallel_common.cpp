@@ -1,7 +1,10 @@
 #include "parallel_common.h"
 
 #include "../module_base/global_variable.h"
+
+#ifdef __MPI
 #include "mpi.h"
+#endif
 
 #include <cstring>
 
