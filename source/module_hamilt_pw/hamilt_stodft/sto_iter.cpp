@@ -391,7 +391,7 @@ double Stochastic_Iter::calne(elecstate::ElecState* pes)
     return totne;
 }
 
-void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf, ModulePW::PW_Basis_K* wfc_basis)
+void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
 {
     p_che->calcoef_real(&stofunc,&Sto_Func<double>::nroot_fd);
     for(int ik = 0; ik < GlobalC::kv.nks; ++ik)
@@ -407,7 +407,7 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf, ModulePW::PW_Basis_K* wf
 
             if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
             {
-                GlobalC::ppcell.getvnl(ik, wfc_basis, GlobalC::ppcell.vkb);
+                GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
             }
 
             GlobalC::wf.npw = GlobalC::kv.ngk[ik];

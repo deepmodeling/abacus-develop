@@ -68,7 +68,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
 		}
 
 		stoiter.itermu(iter,pes);
-		stoiter.calHsqrtchi(stowf, wfc_basis);
+		stoiter.calHsqrtchi(stowf);
 		if(skip_charge)
     	{
     	    ModuleBase::timer::tick(this->classname, "solve");

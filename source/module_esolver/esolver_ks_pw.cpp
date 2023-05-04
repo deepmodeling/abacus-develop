@@ -97,7 +97,7 @@ namespace ModuleESolver
         //=======================
         // init pseudopotential
         //=======================
-        GlobalC::ppcell.init(GlobalC::ucell.ntype);
+        GlobalC::ppcell.init(GlobalC::ucell.ntype, GlobalC::wfcpw);
 
         //=====================
         // init hamiltonian
@@ -115,7 +115,7 @@ namespace ModuleESolver
         //======================================
         // Initalize non local pseudopotential
         //======================================
-        GlobalC::ppcell.init_vnl(GlobalC::ucell, GlobalC::wfcpw);
+        GlobalC::ppcell.init_vnl(GlobalC::ucell);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         GlobalC::ppcell.cal_effective_D();
@@ -233,7 +233,7 @@ namespace ModuleESolver
         }
         else if (GlobalV::md_prec_level == 1)
         {
-            GlobalC::ppcell.init_vnl(GlobalC::ucell, GlobalC::wfcpw);
+            GlobalC::ppcell.init_vnl(GlobalC::ucell);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
@@ -241,7 +241,7 @@ namespace ModuleESolver
         }
         else if (GlobalV::md_prec_level == 0)
         {
-            GlobalC::ppcell.init_vnl(GlobalC::ucell, GlobalC::wfcpw);
+            GlobalC::ppcell.init_vnl(GlobalC::ucell);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
             GlobalC::wfcpw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, GlobalC::wfcpw->nx, GlobalC::wfcpw->ny, GlobalC::wfcpw->nz);

@@ -967,7 +967,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         if (GlobalC::ppcell.nkb > 0)
         {
             vkb = GlobalC::ppcell.get_vkb_data<FPTYPE>();
-            GlobalC::ppcell.getvnl(ctx, ik, wfc_basis, vkb);
+            GlobalC::ppcell.getvnl(ctx, ik, vkb);
         }
 
         // get becp according to wave functions and vkb

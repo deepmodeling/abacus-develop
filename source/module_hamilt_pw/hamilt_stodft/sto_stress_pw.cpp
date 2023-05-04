@@ -250,7 +250,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
         // generate vkb
 		if (GlobalC::ppcell.nkb > 0)
 		{
-			GlobalC::ppcell.getvnl(ik, wfc_basis, GlobalC::ppcell.vkb);
+			GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
 		}
 
 		// get becp according to wave functions and vkb

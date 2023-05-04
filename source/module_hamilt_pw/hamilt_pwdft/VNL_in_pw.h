@@ -39,7 +39,7 @@ public:
 	friend class wavefunc;
 	friend class Stochastic_hchi;
 
-	void init(const int ntype, const bool allocate_vkb=1);
+    void init(const int ntype, ModulePW::PW_Basis_K *wfc_basis = nullptr, const bool allocate_vkb = 1);
 
     double cell_factor; //LiuXh add 20180619
 
@@ -47,14 +47,14 @@ public:
 
 	int lmaxkb; // max angular momentum for non-local projectors
 
-	void init_vnl(UnitCell &cell, ModulePW::PW_Basis_K* wfc_basis);
+	void init_vnl(UnitCell &cell);
 
     template <typename FPTYPE, typename Device>
-    void getvnl(Device * ctx, const int &ik, ModulePW::PW_Basis_K *wfc_basis, std::complex<FPTYPE>* vkb_in)const;
+    void getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const;
 
-    void getvnl(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix& vkb_in)const;
+    void getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const;
 
-	// void getvnl_alpha(const int &ik, ModulePW::PW_Basis_K *wfc_basis);
+	// void getvnl_alpha(const int &ik);
 
 	void init_vnl_alpha(void);
 

@@ -89,7 +89,7 @@ void Stochastic_Iter::itermu(
     return;
 }
 
-void Stochastic_Iter::calHsqrtchi(Stochastic_WF &stowf, ModulePW::PW_Basis_K* wfc_basis)
+void Stochastic_Iter::calHsqrtchi(Stochastic_WF &stowf)
 {
     //do something to verify this function has been called
     stowf.nchip_max++;

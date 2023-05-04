@@ -59,7 +59,7 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 // setup lmaxkb, nhm, nkb, lmaxq 
 // allocate vkb, GlobalV::NQX, tab, tab_at
 //-----------------------------------
-void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
+void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, const bool allocate_vkb)
 {
 	ModuleBase::TITLE("pseudopot_cell_vnl", "init");
 	ModuleBase::timer::tick("ppcell_vnl", "init");
@@ -67,6 +67,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	GlobalV::ofs_running << "\n SETUP NONLOCAL PSEUDOPOTENTIALS IN PLANE WAVE BASIS" << std::endl;
 
 	int it = 0;
+	this->wfcpw = wfc_basis;
 //----------------------------------------------------------
 // MEMBER VARIABLE :
 // NAME : lmaxkb(max angular momentum,(see pseudo_h))
@@ -158,10 +159,11 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 	// dq+4)*cell_factor;
 	this->lmaxq = 2 * this->lmaxkb + 1;
 
+	std::cout<<this->wfcpw->npwk_max<<" "<<GlobalC::wf.npwx<<std::endl;
 	if (nkb > 0 && allocate_vkb )
 	{
-		vkb.create(nkb, GlobalC::wf.npwx);
-		ModuleBase::Memory::record("VNL::vkb", nkb * GlobalC::wf.npwx * sizeof(double));
+		vkb.create(nkb, this->wfcpw->npwk_max);
+		ModuleBase::Memory::record("VNL::vkb", nkb * this->wfcpw->npwk_max * sizeof(double));
 	}
 
 	//this->nqx = 10000;		// calculted in allocate_nlpot.f90
@@ -205,17 +207,17 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, s_tab, this->tab.getSize());
-            resmem_cd_op()(gpu_ctx, c_vkb, nkb * GlobalC::wf.npwx);
+            resmem_cd_op()(gpu_ctx, c_vkb, nkb * this->wfcpw->npwk_max);
         }
         else {
             resmem_dd_op()(gpu_ctx, d_tab, this->tab.getSize());
-            resmem_zd_op()(gpu_ctx, z_vkb, nkb * GlobalC::wf.npwx);
+            resmem_zd_op()(gpu_ctx, z_vkb, nkb * this->wfcpw->npwk_max);
         }
     }
     else {
         if (GlobalV::precision_flag == "single") {
             resmem_sh_op()(cpu_ctx, s_tab, this->tab.getSize());
-            resmem_ch_op()(cpu_ctx, c_vkb, nkb * GlobalC::wf.npwx);
+            resmem_ch_op()(cpu_ctx, c_vkb, nkb * this->wfcpw->npwk_max);
         }
         else {
             this->d_tab = this->tab.ptr;
@@ -234,7 +236,7 @@ void pseudopot_cell_vnl::init(const int ntype, const bool allocate_vkb)
 // Calculates beta functions (Kleinman-Bylander projectors),
 // with structure factor, for all atoms, in reciprocal space
 //----------------------------------------------------------
-void pseudopot_cell_vnl::getvnl(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix& vkb_in)const
+void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const
 {
 	if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
@@ -244,7 +246,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModulePW::PW_Basis_K *wfc_basis, 
 		return;
 	}
 
-	const int npw = wfc_basis->npwk[ik];
+	const int npw = this->wfcpw->npwk[ik];
 
 	// When the internal memory is large enough, it is better to make vkb1 be the number of pseudopot_cell_vnl.
     // We only need to initialize it once as long as the cell is unchanged.
@@ -257,7 +259,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModulePW::PW_Basis_K *wfc_basis, 
 	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
 	for (int ig = 0;ig < npw;ig++) 
 	{
-		gk[ig] = wfc_basis->getgpluskcar(ik, ig);
+		gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
 	}
 
 	ModuleBase::YlmReal::Ylm_Real(cpu_ctx, x1, npw, reinterpret_cast<double *>(gk), ylm.c);
@@ -331,7 +333,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModulePW::PW_Basis_K *wfc_basis, 
 } // end subroutine getvnl
 
 template <typename FPTYPE, typename Device>
-void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik,  ModulePW::PW_Basis_K *wfc_basis, std::complex<FPTYPE>* vkb_in)const
+void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const
 {
     if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
     ModuleBase::timer::tick("pp_cell_vnl","getvnl");
@@ -353,7 +355,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik,  ModulePW::PW_Basis
     }
 
     const int x1 = (lmaxkb + 1) * (lmaxkb + 1);
-    const int npw = wfc_basis->npwk[ik];
+    const int npw = this->wfcpw->npwk[ik];
 
     int * atom_nh = nullptr, * atom_na = nullptr, * atom_nb = nullptr, * h_atom_nh = new int[GlobalC::ucell.ntype], * h_atom_na = new int[GlobalC::ucell.ntype], * h_atom_nb = new int[GlobalC::ucell.ntype];
     for (int it = 0; it < GlobalC::ucell.ntype; it++) {
@@ -378,7 +380,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik,  ModulePW::PW_Basis
 #endif
     for (int ig = 0;ig < npw; ig++)
     {
-        _gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+        _gk[ig] = this->wfcpw->getgpluskcar(ik,ig);
     }
     if (GlobalV::device_flag == "gpu") {
         resmem_int_op()(ctx, atom_nh, GlobalC::ucell.ntype);
@@ -412,7 +414,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik,  ModulePW::PW_Basis
 
     cal_vnl_op()(
         ctx,
-        GlobalC::ucell.ntype,  npw, GlobalC::wf.npwx, this->nhm, GlobalV::NQX,
+        GlobalC::ucell.ntype,  npw, this->wfcpw->npwk_max, this->nhm, GlobalV::NQX,
         this->tab.getBound2(), this->tab.getBound3(),
         atom_na, atom_nb, atom_nh,
         static_cast<FPTYPE>(GlobalV::DQ), static_cast<FPTYPE>(GlobalC::ucell.tpiba), static_cast<std::complex<FPTYPE>>(ModuleBase::NEG_IMAG_UNIT),
@@ -436,7 +438,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik,  ModulePW::PW_Basis
     ModuleBase::timer::tick("pp_cell_vnl","getvnl");
 } // end subroutine getvnl
 
-void pseudopot_cell_vnl::init_vnl(UnitCell &cell, ModulePW::PW_Basis_K* wfc_basis)
+void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
 {
 	ModuleBase::TITLE("pseudopot_cell_vnl","init_vnl");
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");
@@ -454,7 +456,6 @@ void pseudopot_cell_vnl::init_vnl(UnitCell &cell, ModulePW::PW_Basis_K* wfc_basi
 	// For each pseudopotential we initialize the indices nhtol, nhtolm,
 	// nhtoj, indv, and if the pseudopotential is of KB type we initialize
 	// the atomic D terms
-	this->wfcpw = wfc_basis;
 	this->dvan.zero_out();
 	this->dvan_so.zero_out();//added by zhengdy-soc
 
@@ -666,7 +667,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 	return MGT.Gaunt_Coefficients(dim1, dim2, dim);
 }
 
-// void pseudopot_cell_vnl::getvnl_alpha(const int &ik, ModulePW::PW_Basis_K *wfc_basis)           // pengfei Li  2018-3-23
+// void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  2018-3-23
 // {
 // 	if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl_alpha");
 // 	ModuleBase::timer::tick("pp_cell_vnl","getvnl_alpha");
@@ -686,7 +687,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // 	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
 // 	for (ig = 0;ig < npw;ig++) 
 // 	{
-// 		gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+// 		gk[ig] = this->wfcpw->getgpluskcar(ik,ig);
 // 	}
 
 // 	vkb1_alpha = new std::complex<double>**[3];
@@ -705,7 +706,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // 		vkb_alpha[i] = new std::complex<double>*[nkb];
 // 		for(int j=0; j<nkb; j++)
 // 		{
-// 			vkb_alpha[i][j] = new std::complex<double>[GlobalC::wf.npwx];
+// 			vkb_alpha[i][j] = new std::complex<double>[this->wfcpw->npwk_max];
 // 		}
 // 	}
 	
@@ -1042,21 +1043,9 @@ std::complex<double> * pseudopot_cell_vnl::get_deeq_nc_data() const
     return this->z_deeq_nc;
 }
 
-template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU *,
-                                                                 int const &,
-                                                                 ModulePW::PW_Basis_K *,
-                                                                 std::complex<float> *) const;
-template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU *,
-                                                                  int const &,
-                                                                  ModulePW::PW_Basis_K *,
-                                                                  std::complex<double> *) const;
+template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<float>*) const;
+template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
-template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_GPU>(psi::DEVICE_GPU *,
-                                                                 int const &,
-                                                                 ModulePW::PW_Basis_K *,
-                                                                 std::complex<float> *) const;
-template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU *,
-                                                                  int const &,
-                                                                  ModulePW::PW_Basis_K *,
-                                                                  std::complex<double> *) const;
+template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<float>*) const;
+template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<double>*) const;
 #endif

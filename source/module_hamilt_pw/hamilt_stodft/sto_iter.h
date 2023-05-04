@@ -64,7 +64,7 @@ class Stochastic_Iter
     //chiallorder cost too much memories and should be cleaned after scf.
     void cleanchiallorder();
     //cal shchi = \sqrt{f(\hat{H})}|\chi>
-    void calHsqrtchi(Stochastic_WF& stowf, ModulePW::PW_Basis_K* wfc_basis);
+    void calHsqrtchi(Stochastic_WF& stowf);
     //cal Pn = \sum_\chi <\chi|Tn(\hat{h})|\chi>
     void calPn(const int& ik, Stochastic_WF& stowf);
     //cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>

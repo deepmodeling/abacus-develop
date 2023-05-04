@@ -26,10 +26,11 @@ wavefunc::~wavefunc()
 	}
 }
 
-psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks, const int npwx)
+psi::Psi<std::complex<double>>* wavefunc::allocate(const int nks, const int npwx_in)
 {	
 	ModuleBase::TITLE("wavefunc","allocate");
 
+	this->npwx = npwx_in;
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npwx",npwx);
 
 	assert(npwx > 0);
