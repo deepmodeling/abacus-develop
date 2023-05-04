@@ -16,9 +16,7 @@ class OF_Stress_PW : public Stress_Func<double>
                     UnitCell& ucell,
                     ModuleSymmetry::Symmetry& symm,
                     Structure_Factor& sf,
-                    K_Vectors& kv,
-                    ModulePW::PW_Basis_K* wfc_basis = nullptr,
-                    const psi::Psi<complex<double>>* psi_in = nullptr);
+                    K_Vectors& kv);
 
   protected:
     // call the vdw stress

@@ -104,6 +104,11 @@ void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, 
 	}
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"TOTAL NUMBER OF NONLOCAL PROJECTORS",nkb);
+	if (nkb <= 0 || !allocate_vkb)
+	{
+		ModuleBase::timer::tick("ppcell_vnl","init");
+		return;
+	}
 
 	if( this->nhm > 0 )
 	{
@@ -158,13 +163,9 @@ void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, 
 	// nqxq = ((sqrt(gcutm)+sqrt(xqq[1]*xqq[1]+xqq[2]*xqq[2]+xqq[3]*xqq[3])/
 	// dq+4)*cell_factor;
 	this->lmaxq = 2 * this->lmaxkb + 1;
-
-	std::cout<<this->wfcpw->npwk_max<<" "<<GlobalC::wf.npwx<<std::endl;
-	if (nkb > 0 && allocate_vkb )
-	{
-		vkb.create(nkb, this->wfcpw->npwk_max);
-		ModuleBase::Memory::record("VNL::vkb", nkb * this->wfcpw->npwk_max * sizeof(double));
-	}
+	int npwx = this->wfcpw->npwk_max;
+	vkb.create(nkb, npwx);
+	ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(double));
 
 	//this->nqx = 10000;		// calculted in allocate_nlpot.f90
 	//GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ); //LiuXh modify 20180515
@@ -207,17 +208,17 @@ void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, 
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, s_tab, this->tab.getSize());
-            resmem_cd_op()(gpu_ctx, c_vkb, nkb * this->wfcpw->npwk_max);
+            resmem_cd_op()(gpu_ctx, c_vkb, nkb * npwx);
         }
         else {
             resmem_dd_op()(gpu_ctx, d_tab, this->tab.getSize());
-            resmem_zd_op()(gpu_ctx, z_vkb, nkb * this->wfcpw->npwk_max);
+            resmem_zd_op()(gpu_ctx, z_vkb, nkb * npwx);
         }
     }
     else {
         if (GlobalV::precision_flag == "single") {
             resmem_sh_op()(cpu_ctx, s_tab, this->tab.getSize());
-            resmem_ch_op()(cpu_ctx, c_vkb, nkb * this->wfcpw->npwk_max);
+            resmem_ch_op()(cpu_ctx, c_vkb, nkb * npwx);
         }
         else {
             this->d_tab = this->tab.ptr;

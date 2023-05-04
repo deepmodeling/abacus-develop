@@ -1,18 +1,15 @@
 #ifndef VNL_IN_PW_H
 #define VNL_IN_PW_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
+#include "VL_in_pw.h"
 #include "module_base/complexarray.h"
 #include "module_base/complexmatrix.h"
-#include "VL_in_pw.h"
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #endif
 #include "module_basis/module_pw/pw_basis_k.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
 #include "module_psi/psi.h"

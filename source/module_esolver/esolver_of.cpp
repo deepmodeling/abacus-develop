@@ -91,10 +91,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
 
-    //=======================
-    // init pseudopotential
-    //=======================
-    GlobalC::ppcell.init(GlobalC::ucell.ntype);
 
     //=================================
     // initalize local pseudopotential

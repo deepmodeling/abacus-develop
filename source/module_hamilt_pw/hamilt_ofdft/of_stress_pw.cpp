@@ -11,9 +11,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               UnitCell& ucell,
                               ModuleSymmetry::Symmetry& symm,
                               Structure_Factor& sf,
-                              K_Vectors& kv,
-                              ModulePW::PW_Basis_K* wfc_basis,
-                              const psi::Psi<complex<double>>* psi_in)
+                              K_Vectors& kv)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
@@ -74,23 +72,12 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         sigmaxc(i, i) = -(GlobalC::en.etxc - GlobalC::en.vtxc) / ucell.omega;
     }
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        stress_mgga(sigmaxc,
-                    this->pelec->pot->get_effective_vofk(),
-                    this->pelec->wg,
-                    pelec->charge,
-                    kv,
-                    wfc_basis,
-                    psi_in);
 
     // local contribution
     stress_loc(sigmaloc, this->rhopw, sf, 1, pelec->charge);
 
     // nlcc
     stress_cc(sigmaxcc, this->rhopw, sf, 1, pelec->charge);
-
-    // nonlocal
-    stress_nl(sigmanl, this->pelec->wg, kv, symm, wfc_basis, psi_in);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
