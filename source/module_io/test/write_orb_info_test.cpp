@@ -33,24 +33,33 @@ Magnetism::~Magnetism()
 
 TEST(OrbInfo,WriteOrbInfo)
 {
-                  UnitCell* ucell = new UnitCell;
-                  UcellTestPrepare utp = UcellTestLib["Si"];
-                  ucell = utp.SetUcellInfo();
-		  ucell->set_iat2itia();
-                  std::string pp_dir = "./support/";
-                  std::ofstream ofs;
-                  ofs.open("running.log");
-                  GlobalV::global_out_dir = "./";
+    UnitCell* ucell = new UnitCell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    ucell = utp.SetUcellInfo();
+    ucell->set_iat2itia();
+    std::string pp_dir = "./support/";
+    std::ofstream ofs;
+    ofs.open("running.log");
+    GlobalV::global_out_dir = "./";
 	GlobalV::PSEUDORCUT = 15.0;
-                  GlobalV::LSPINORB = false;
+    GlobalV::LSPINORB = false;
 	GlobalV::NSPIN = 1;
-                  GlobalV::BASIS_TYPE = "pw";
-                  GlobalV::DFT_FUNCTIONAL = "default";
-                  ucell->read_cell_pseudopots(pp_dir,ofs);
-                  ModuleIO::write_orb_info(ucell);
-                  ucell->cal_nwfc(ofs);
-                  delete ucell;
-                  ofs.close();
+    GlobalV::BASIS_TYPE = "pw";
+    GlobalV::DFT_FUNCTIONAL = "default";
+    ucell->read_cell_pseudopots(pp_dir,ofs);
+    ucell->cal_nwfc(ofs);
+    ModuleIO::write_orb_info(ucell);
+    ofs.close();
+    std::ifstream ifs("Orbital");
+    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("#io    spec    l    m    z  sym"));
+    EXPECT_THAT(str, testing::HasSubstr("0      Si    0    0    1              s"));
+    EXPECT_THAT(str, testing::HasSubstr("1      Si    2    4    1            dyz"));
+    EXPECT_THAT(str, testing::HasSubstr("#sym =Symmetry name of real orbital"));
+    ifs.close();
+    delete ucell;
+    std::remove("Orbital");
+    std::remove("running.log");
 }
 
 #ifdef __MPI
