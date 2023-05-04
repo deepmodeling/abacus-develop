@@ -190,7 +190,7 @@ void ESolver_SDFT_PW::cal_Energy(double& etot)
 
 void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)
 {
-	Sto_Forces ff;
+	Sto_Forces ff(GlobalC::ucell.nat);
     ff.cal_stoforce(force,
                     this->pelec->wg,
                     pelec->charge,

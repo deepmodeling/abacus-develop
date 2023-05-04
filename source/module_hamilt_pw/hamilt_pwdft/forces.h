@@ -28,7 +28,7 @@ class Forces
      * (4) cal_nl: contribution due to the non-local pseudopotential.
      * (4) cal_scc: contributino due to incomplete SCF calculation.
      */
-    Forces(){};
+    Forces(const int nat_in):nat(nat_in){};
     ~Forces(){};
 
     void cal_force(ModuleBase::matrix& force,

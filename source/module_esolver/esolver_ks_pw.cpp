@@ -650,7 +650,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
-        Forces<double, Device> ff;
+        Forces<double, Device> ff(GlobalC::ucell.nat);
         if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?

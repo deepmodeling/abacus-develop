@@ -17,7 +17,7 @@ class Sto_Forces : public Forces<double>
      * (4) cal_nl: contribution due to the non-local pseudopotential.
      * (4) cal_scc: contributino due to incomplete SCF calculation.
      */
-    Sto_Forces(){};
+    Sto_Forces(const int nat_in):Forces(nat_in){};
     ~Sto_Forces(){};
 
     void cal_stoforce(ModuleBase::matrix& force,

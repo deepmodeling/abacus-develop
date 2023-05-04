@@ -33,7 +33,6 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
-    this->nat = GlobalC::ucell.nat;
     this->npwx = wfc_basis->npwk_max;
     this->device = psi::device::get_device_type<Device>(this->ctx);
     force.create(nat, 3);

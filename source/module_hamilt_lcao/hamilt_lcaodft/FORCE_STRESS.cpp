@@ -15,8 +15,8 @@
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
 
-Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra) :
-    RA(&ra){}
+Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) :
+    RA(&ra), f_pw(nat_in), nat(nat_in){}
 Force_Stress_LCAO::~Force_Stress_LCAO() {}
 
 void Force_Stress_LCAO::getForceStress(
@@ -240,6 +240,14 @@ void Force_Stress_LCAO::getForceStress(
 		//---------------------------------
 		//sum all parts of force!
 		//---------------------------------
+		std::cout<<foverlap(0,0)<<std::endl;
+		std::cout<<ftvnl_dphi(0,0)<<std::endl;
+		std::cout<<fvnl_dbeta(0,0)<<std::endl;
+		std::cout<<fvl_dphi(0,0)<<std::endl;
+		std::cout<<fvl_dvl(0,0)<<std::endl;
+		std::cout<<fewalds(0,0)<<std::endl;
+		std::cout<<fcc(0,0)<<std::endl;
+		std::cout<<fscc(0,0)<<std::endl;
 		for(int i=0; i<3; i++)
 		{
 			double sum = 0.0;

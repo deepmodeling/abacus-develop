@@ -684,7 +684,7 @@ void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry &symm)
 
 
 	q_pack->wf_ptr = new wavefunc();
-	q_pack->wf_ptr->allocate(q_pack->kv_ptr->nks); // mohan update 2021-02-25
+	q_pack->wf_ptr->allocate(q_pack->kv_ptr->nks, GlobalC::wfcpw->npwk_max); // mohan update 2021-02-25
 //	q_pack->wf_ptr->init(q_pack->kv_ptr->nks,q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
 	q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
 //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, GlobalV::NQX);
