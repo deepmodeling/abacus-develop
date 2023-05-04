@@ -57,7 +57,7 @@ TEST_F(Ions_Move_Methods_Test, Allocate)
 }
 
 // Test the allocate() function warning quit
-TEST_F(Ions_Move_Methods_Test, Allocate_Warning_Quit)
+TEST_F(Ions_Move_Methods_Test, AllocateWarningQuit)
 {
     GlobalV::RELAX_METHOD = "none";
     GlobalV::ofs_warning.open("log");
@@ -72,7 +72,7 @@ TEST_F(Ions_Move_Methods_Test, Allocate_Warning_Quit)
 }
 
 // Test the cal_movement() function
-TEST_F(Ions_Move_Methods_Test, Cal_Movement)
+TEST_F(Ions_Move_Methods_Test, CalMovement)
 {
     const int istep = 0;
     const int force_step = 1;
@@ -102,7 +102,7 @@ TEST_F(Ions_Move_Methods_Test, Cal_Movement)
 }
 
 // Test the cal_movement() function warning quit
-TEST_F(Ions_Move_Methods_Test, Cal_Movement_Warning_Quit)
+TEST_F(Ions_Move_Methods_Test, CalMovementWarningQuit)
 {
     const int istep = 0;
     const int force_step = 1;
@@ -121,4 +121,44 @@ TEST_F(Ions_Move_Methods_Test, Cal_Movement_Warning_Quit)
     EXPECT_THAT(output, testing::HasSubstr("the parameter GlobalV::RELAX_METHOD is not correct."));
     ifs.close();
     std::remove("log");
+}
+
+// Test the get_converged() function
+TEST_F(Ions_Move_Methods_Test, GetConverged)
+{
+    Ions_Move_Basic::converged = true;
+
+    EXPECT_EQ(imm.get_converged(), true);
+}
+
+// Test the get_ediff() function
+TEST_F(Ions_Move_Methods_Test, GetEdiff)
+{
+    Ions_Move_Basic::ediff = 1.0;
+
+    EXPECT_DOUBLE_EQ(imm.get_ediff(), 1.0);
+}
+
+// Test the get_largest_grad() function
+TEST_F(Ions_Move_Methods_Test, GetLargestGrad)
+{
+    Ions_Move_Basic::largest_grad = 2.0;
+
+    EXPECT_DOUBLE_EQ(imm.get_largest_grad(), 2.0);
+}
+
+// Test the get_trust_radius() function
+TEST_F(Ions_Move_Methods_Test, GetTrustRadius)
+{
+    Ions_Move_Basic::trust_radius = 3.0;
+
+    EXPECT_DOUBLE_EQ(imm.get_trust_radius(), 3.0);
+}
+
+// Test the get_update_iter() function
+TEST_F(Ions_Move_Methods_Test, GetUpdateIter)
+{
+    Ions_Move_Basic::update_iter = 4;
+
+    EXPECT_EQ(imm.get_update_iter(), 4);
 }

@@ -86,7 +86,7 @@ TEST_F(BFGS_Basic_Test, TestAllocateWithZeroDimension)
 }
 
 // Test function update_inverse_hessian() assert death
-TEST_F(BFGS_Basic_Test, Update_Inverse_Hessian_Death)
+TEST_F(BFGS_Basic_Test, UpdateInverseHessianDeath)
 {
     Ions_Move_Basic::dim = 0;
     double lat0 = 1.0;
@@ -94,7 +94,7 @@ TEST_F(BFGS_Basic_Test, Update_Inverse_Hessian_Death)
 }
 
 // Test function update_inverse_hessian() when sdoty = 0
-TEST_F(BFGS_Basic_Test, Update_Inverse_Hessian_Case1)
+TEST_F(BFGS_Basic_Test, UpdateInverseHessianCase1)
 {
     Ions_Move_Basic::dim = 3;
     double lat0 = 1.0;
@@ -115,7 +115,7 @@ TEST_F(BFGS_Basic_Test, Update_Inverse_Hessian_Case1)
 }
 
 // Test function update_inverse_hessian()
-TEST_F(BFGS_Basic_Test, Update_Inverse_Hessian_Case2)
+TEST_F(BFGS_Basic_Test, UpdateInverseHessianCase2)
 {
     Ions_Move_Basic::dim = 3;
     double lat0 = 1.0;
@@ -137,7 +137,7 @@ TEST_F(BFGS_Basic_Test, Update_Inverse_Hessian_Case2)
 }
 
 // Test function check_wolfe_conditions()
-TEST_F(BFGS_Basic_Test, Check_Wolfe_Conditions)
+TEST_F(BFGS_Basic_Test, CheckWolfeConditions)
 {
     Ions_Move_Basic::dim = 3;
     Ions_Move_Basic::etot = 10.0;
@@ -168,7 +168,7 @@ TEST_F(BFGS_Basic_Test, Check_Wolfe_Conditions)
 }
 
 // Test function reset_hessian()
-TEST_F(BFGS_Basic_Test, Reset_Hessian)
+TEST_F(BFGS_Basic_Test, ResetHessian)
 {
     Ions_Move_Basic::dim = 3;
     bfgs.allocate_basic();
@@ -187,7 +187,7 @@ TEST_F(BFGS_Basic_Test, Reset_Hessian)
 }
 
 // Test function save_bfgs()
-TEST_F(BFGS_Basic_Test, Save_Bfgs)
+TEST_F(BFGS_Basic_Test, SaveBfgs)
 {
     Ions_Move_Basic::dim = 2;
     bfgs.save_flag = false;
@@ -211,7 +211,7 @@ TEST_F(BFGS_Basic_Test, Save_Bfgs)
 }
 
 // Test function new_step() when update_iter == 1
-TEST_F(BFGS_Basic_Test, New_Step_Case1)
+TEST_F(BFGS_Basic_Test, NewStepCase1)
 {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::update_iter = 0;
@@ -244,7 +244,7 @@ TEST_F(BFGS_Basic_Test, New_Step_Case1)
 }
 
 // Test function new_step() when update_iter > 1
-TEST_F(BFGS_Basic_Test, New_Step_Case2)
+TEST_F(BFGS_Basic_Test, NewStepCase2)
 {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::update_iter = 2;
@@ -274,7 +274,7 @@ TEST_F(BFGS_Basic_Test, New_Step_Case2)
 }
 
 // Test function new_step() when bfgs_ndim > 1
-TEST_F(BFGS_Basic_Test, New_Step_WarningQuit)
+TEST_F(BFGS_Basic_Test, NewStepWarningQuit)
 {
     Ions_Move_Basic::dim = 2;
     bfgs.bfgs_ndim = 2;
@@ -288,7 +288,7 @@ TEST_F(BFGS_Basic_Test, New_Step_WarningQuit)
 }
 
 // Test function compute_trust_radius() case 1
-TEST_F(BFGS_Basic_Test, Compute_Trust_Radius_Case1)
+TEST_F(BFGS_Basic_Test, ComputeTrustRadiusCase1)
 {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::etot = 0.0;
@@ -316,7 +316,7 @@ TEST_F(BFGS_Basic_Test, Compute_Trust_Radius_Case1)
 }
 
 // Test function compute_trust_radius() case 2
-TEST_F(BFGS_Basic_Test, Compute_Trust_Radius_Case2)
+TEST_F(BFGS_Basic_Test, ComputeTrustRadiusCase2)
 {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::etot = 0.0;
@@ -349,7 +349,7 @@ TEST_F(BFGS_Basic_Test, Compute_Trust_Radius_Case2)
 }
 
 // Test function compute_trust_radius() warning_quit
-TEST_F(BFGS_Basic_Test, Compute_Trust_Radius_Warning_Quit)
+TEST_F(BFGS_Basic_Test, ComputeTrustRadiusWarningQuit)
 {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::etot = 0.0;

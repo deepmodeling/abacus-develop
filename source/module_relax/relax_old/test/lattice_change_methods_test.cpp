@@ -49,7 +49,7 @@ class Lattice_Change_Methods_Test : public ::testing::Test
 };
 
 // Test the allocate function
-TEST_F(Lattice_Change_Methods_Test, allocate)
+TEST_F(Lattice_Change_Methods_Test, Allocate)
 {
     lcm.allocate();
 
@@ -58,7 +58,7 @@ TEST_F(Lattice_Change_Methods_Test, allocate)
 }
 
 // Test the cal_lattice_change function
-TEST_F(Lattice_Change_Methods_Test, cal_lattice_change)
+TEST_F(Lattice_Change_Methods_Test, CalLatticeChange)
 {
     int istep = 1;
     int stress_step = 2;
@@ -76,7 +76,7 @@ TEST_F(Lattice_Change_Methods_Test, cal_lattice_change)
 }
 
 // Test the get_converged function
-TEST_F(Lattice_Change_Methods_Test, get_converged)
+TEST_F(Lattice_Change_Methods_Test, GetConverged)
 {
     lcm.get_converged();
 
@@ -85,7 +85,7 @@ TEST_F(Lattice_Change_Methods_Test, get_converged)
 }
 
 // Test the get_ediff function
-TEST_F(Lattice_Change_Methods_Test, get_ediff)
+TEST_F(Lattice_Change_Methods_Test, GetEdiff)
 {
     lcm.get_ediff();
 
@@ -94,7 +94,7 @@ TEST_F(Lattice_Change_Methods_Test, get_ediff)
 }
 
 // Test the get_largest_grad function
-TEST_F(Lattice_Change_Methods_Test, get_largest_grad)
+TEST_F(Lattice_Change_Methods_Test, GetLargestGrad)
 {
     lcm.get_largest_grad();
 

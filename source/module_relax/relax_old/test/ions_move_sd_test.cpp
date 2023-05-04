@@ -145,7 +145,7 @@ TEST_F(Ions_Move_SD_Test, TestStartNotConverged)
 }
 
 // Test function cal_tradius_sd() case 1
-TEST_F(Ions_Move_SD_Test, Cal_Tradius_Sd_Case1)
+TEST_F(Ions_Move_SD_Test, CalTradiusSdCase1)
 {
     // setup data
     Ions_Move_Basic::istep = 1;
@@ -163,7 +163,7 @@ TEST_F(Ions_Move_SD_Test, Cal_Tradius_Sd_Case1)
 }
 
 // Test function cal_tradius_sd() case 2
-TEST_F(Ions_Move_SD_Test, Cal_Tradius_Sd_Case2)
+TEST_F(Ions_Move_SD_Test, CalTradiusSdCase2)
 {
     // setup data
     Ions_Move_Basic::istep = 2;
@@ -178,7 +178,7 @@ TEST_F(Ions_Move_SD_Test, Cal_Tradius_Sd_Case2)
 }
 
 // Test function cal_tradius_sd() case 3
-TEST_F(Ions_Move_SD_Test, Cal_Tradius_Sd_Case3)
+TEST_F(Ions_Move_SD_Test, CalTradiusSdCase3)
 {
     // setup data
     Ions_Move_Basic::istep = 2;
@@ -193,7 +193,7 @@ TEST_F(Ions_Move_SD_Test, Cal_Tradius_Sd_Case3)
 }
 
 // Test function cal_tradius_sd() warning quit
-TEST_F(Ions_Move_SD_Test, Cal_Tradius_Wraning_Quit)
+TEST_F(Ions_Move_SD_Test, CalTradiusWraningQuit)
 {
     // setup data
     Ions_Move_Basic::istep = 0;

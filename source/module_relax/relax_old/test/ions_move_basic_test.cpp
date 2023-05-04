@@ -45,7 +45,7 @@ class Ions_Move_Basic_Test : public ::testing::Test
 };
 
 // Test the setup_gradient() function
-TEST_F(Ions_Move_Basic_Test, Setup_Gradient)
+TEST_F(Ions_Move_Basic_Test, SetupGradient)
 {
     // Call the function being tested
     Ions_Move_Basic::dim = 6;
@@ -67,7 +67,7 @@ TEST_F(Ions_Move_Basic_Test, Setup_Gradient)
 }
 
 // Test the move_atoms() function
-TEST_F(Ions_Move_Basic_Test, Move_Atoms)
+TEST_F(Ions_Move_Basic_Test, MoveAtoms)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
@@ -102,7 +102,7 @@ TEST_F(Ions_Move_Basic_Test, Move_Atoms)
 }
 
 // Test the check_converged() function case 1
-TEST_F(Ions_Move_Basic_Test, Check_Converged_Case1)
+TEST_F(Ions_Move_Basic_Test, CheckConvergedCase1)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
@@ -141,7 +141,7 @@ TEST_F(Ions_Move_Basic_Test, Check_Converged_Case1)
 }
 
 // Test the check_converged() function case 2
-TEST_F(Ions_Move_Basic_Test, Check_Converged_Case2)
+TEST_F(Ions_Move_Basic_Test, CheckConvergedCase2)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
@@ -179,7 +179,7 @@ TEST_F(Ions_Move_Basic_Test, Check_Converged_Case2)
 }
 
 // Test the check_converged() function case 3
-TEST_F(Ions_Move_Basic_Test, Check_Converged_Case3)
+TEST_F(Ions_Move_Basic_Test, CheckConvergedCase3)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
@@ -217,7 +217,7 @@ TEST_F(Ions_Move_Basic_Test, Check_Converged_Case3)
 }
 
 // Test the terminate() function when converged
-TEST_F(Ions_Move_Basic_Test, Terminate_Converged)
+TEST_F(Ions_Move_Basic_Test, TerminateConverged)
 {
     // Initialize data
     Ions_Move_Basic::converged = true;
@@ -242,7 +242,7 @@ TEST_F(Ions_Move_Basic_Test, Terminate_Converged)
 }
 
 // Test the terminate() function when not converged
-TEST_F(Ions_Move_Basic_Test, Terminate_Not_Converged)
+TEST_F(Ions_Move_Basic_Test, TerminateNotConverged)
 {
     // Initialize data
     Ions_Move_Basic::converged = false;
@@ -264,7 +264,7 @@ TEST_F(Ions_Move_Basic_Test, Terminate_Not_Converged)
 }
 
 // Test the setup_etot() function case 1
-TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case1)
+TEST_F(Ions_Move_Basic_Test, SetupEtotCase1)
 {
     // Initialize data
     Ions_Move_Basic::istep = 1;
@@ -284,7 +284,7 @@ TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case1)
 }
 
 // Test the setup_etot() function case 2
-TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case2)
+TEST_F(Ions_Move_Basic_Test, SetupEtotCase2)
 {
     // Initialize data
     Ions_Move_Basic::istep = 2;
@@ -304,7 +304,7 @@ TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case2)
 }
 
 // Test the setup_etot() function case 3
-TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case3)
+TEST_F(Ions_Move_Basic_Test, SetupEtotCase3)
 {
     // Initialize data
     Ions_Move_Basic::istep = 2;
@@ -324,7 +324,7 @@ TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case3)
 }
 
 // Test the setup_etot() function case 4
-TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case4)
+TEST_F(Ions_Move_Basic_Test, SetupEtotCase4)
 {
     // Initialize data
     Ions_Move_Basic::istep = 2;
@@ -344,7 +344,7 @@ TEST_F(Ions_Move_Basic_Test, Setup_Etot_Case4)
 }
 
 // Test the dot_func() function
-TEST_F(Ions_Move_Basic_Test, Dot_Func)
+TEST_F(Ions_Move_Basic_Test, DotFunc)
 {
     // Initialize data
     double dim_in = 3;

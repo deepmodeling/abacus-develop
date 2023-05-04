@@ -290,7 +290,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartNoTrial)
 }
 
 // Test function setup_cg_grad() when ncggrad is multiple of 10000
-TEST_F(Lattice_Change_CG_Test, Setup_Cg_Grad_Ncggrad_Is_Multiple_Of_10000)
+TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsMultipleOf10000)
 {
     double grad[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double grad0[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
@@ -313,7 +313,7 @@ TEST_F(Lattice_Change_CG_Test, Setup_Cg_Grad_Ncggrad_Is_Multiple_Of_10000)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 < 0.5
-TEST_F(Lattice_Change_CG_Test, Setup_Cg_Grad_Ncggrad_Is_Not_Multiple_Of_10000_Case1)
+TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsNotMultipleOf10000Case1)
 {
     double grad[9] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double grad0[9] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -336,7 +336,7 @@ TEST_F(Lattice_Change_CG_Test, Setup_Cg_Grad_Ncggrad_Is_Not_Multiple_Of_10000_Ca
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 >= 0.5
-TEST_F(Lattice_Change_CG_Test, Setup_Cg_Grad_Ncggrad_Is_Not_Multiple_Of_10000_Case2)
+TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsNotMultipleOf10000Case2)
 {
     double grad[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double grad0[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
@@ -359,7 +359,7 @@ TEST_F(Lattice_Change_CG_Test, Setup_Cg_Grad_Ncggrad_Is_Not_Multiple_Of_10000_Ca
 }
 
 // Test function third_order() case 1
-TEST_F(Lattice_Change_CG_Test, Third_Order_Case1)
+TEST_F(Lattice_Change_CG_Test, ThirdOrderCase1)
 {
     double e0 = 1.0;
     double e1 = 1.0;
@@ -374,7 +374,7 @@ TEST_F(Lattice_Change_CG_Test, Third_Order_Case1)
 }
 
 // Test function third_order() case 2
-TEST_F(Lattice_Change_CG_Test, Third_Order_Case2)
+TEST_F(Lattice_Change_CG_Test, ThirdOrderCase2)
 {
     double e0 = 1.0;
     double e1 = 1.0;
@@ -389,7 +389,7 @@ TEST_F(Lattice_Change_CG_Test, Third_Order_Case2)
 }
 
 // Test function third_order() case 3
-TEST_F(Lattice_Change_CG_Test, Third_Order_Case3)
+TEST_F(Lattice_Change_CG_Test, ThirdOrderCase3)
 {
     double e0 = 1.0;
     double e1 = 1.0;
@@ -404,7 +404,7 @@ TEST_F(Lattice_Change_CG_Test, Third_Order_Case3)
 }
 
 // Test function Brent() case 1
-TEST_F(Lattice_Change_CG_Test, Brent_Case1)
+TEST_F(Lattice_Change_CG_Test, BrentCase1)
 {
     double fa = 2.0;
     double fb = 1.0;
@@ -428,7 +428,7 @@ TEST_F(Lattice_Change_CG_Test, Brent_Case1)
 }
 
 // Test function Brent() case 2
-TEST_F(Lattice_Change_CG_Test, Brent_Case2)
+TEST_F(Lattice_Change_CG_Test, BrentCase2)
 {
     double fa = -2.0;
     double fb = 3.0;
@@ -452,7 +452,7 @@ TEST_F(Lattice_Change_CG_Test, Brent_Case2)
 }
 
 // Test function Brent() case 3
-TEST_F(Lattice_Change_CG_Test, Brent_Case3)
+TEST_F(Lattice_Change_CG_Test, BrentCase3)
 {
     double fa = 1.0;
     double fb = -3.0;
@@ -476,7 +476,7 @@ TEST_F(Lattice_Change_CG_Test, Brent_Case3)
 }
 
 // Test function Brent() case 4
-TEST_F(Lattice_Change_CG_Test, Brent_Case4)
+TEST_F(Lattice_Change_CG_Test, BrentCase4)
 {
     double fa = 2.0;
     double fb = -3.0;
@@ -500,7 +500,7 @@ TEST_F(Lattice_Change_CG_Test, Brent_Case4)
 }
 
 // Test function f_cal()
-TEST_F(Lattice_Change_CG_Test, F_cal)
+TEST_F(Lattice_Change_CG_Test, Fcal)
 {
     Lattice_Change_Basic::dim = 9;
     double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
@@ -513,7 +513,7 @@ TEST_F(Lattice_Change_CG_Test, F_cal)
 }
 
 // Test function setup_move()
-TEST_F(Lattice_Change_CG_Test, Setup_Move)
+TEST_F(Lattice_Change_CG_Test, SetupMove)
 {
     Lattice_Change_Basic::dim = 9;
     double trust_radius = 1.0;

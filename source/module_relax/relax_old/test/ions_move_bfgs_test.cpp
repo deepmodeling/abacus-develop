@@ -36,7 +36,7 @@ class Ions_Move_BFGS_Test : public ::testing::Test
 };
 
 // Test the allocate() function case 1
-TEST_F(Ions_Move_BFGS_Test, Allocate_Case1)
+TEST_F(Ions_Move_BFGS_Test, AllocateCase1)
 {
     // Initilize data
     bfgs.init_done = true;
@@ -51,7 +51,7 @@ TEST_F(Ions_Move_BFGS_Test, Allocate_Case1)
 }
 
 // Test the allocate() function case 2
-TEST_F(Ions_Move_BFGS_Test, Allocate_Case2)
+TEST_F(Ions_Move_BFGS_Test, AllocateCase2)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -66,7 +66,7 @@ TEST_F(Ions_Move_BFGS_Test, Allocate_Case2)
 }
 
 // Test the start() function case 1
-TEST_F(Ions_Move_BFGS_Test, Start_Case1)
+TEST_F(Ions_Move_BFGS_Test, StartCase1)
 {
     // Initilize data
     UnitCell ucell;
@@ -91,7 +91,7 @@ TEST_F(Ions_Move_BFGS_Test, Start_Case1)
 }
 
 // Test the start() function case 2
-TEST_F(Ions_Move_BFGS_Test, Start_Case2)
+TEST_F(Ions_Move_BFGS_Test, StartCase2)
 {
     // Initilize data
     UnitCell ucell;
@@ -117,7 +117,7 @@ TEST_F(Ions_Move_BFGS_Test, Start_Case2)
 }
 
 // Test the restart_bfgs() function case 1
-TEST_F(Ions_Move_BFGS_Test, Restart_Bfgs_Case1)
+TEST_F(Ions_Move_BFGS_Test, RestartBfgsCase1)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -156,7 +156,7 @@ TEST_F(Ions_Move_BFGS_Test, Restart_Bfgs_Case1)
 }
 
 // Test the restart_bfgs() function case 2
-TEST_F(Ions_Move_BFGS_Test, Restart_Bfgs_Case2)
+TEST_F(Ions_Move_BFGS_Test, RestartBfgsCase2)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -192,7 +192,7 @@ TEST_F(Ions_Move_BFGS_Test, Restart_Bfgs_Case2)
 }
 
 // Test the bfgs_routine() function case 1
-TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Case1)
+TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase1)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -258,7 +258,7 @@ TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Case1)
 }
 
 // Test the bfgs_routine() function case 2
-TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Case2)
+TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase2)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -318,7 +318,7 @@ TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Case2)
 }
 
 // Test the bfgs_routine() function case 3
-TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Case3)
+TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase3)
 {
     // Initilize data
     double lat0 = 1.0;
@@ -377,7 +377,7 @@ TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Case3)
 }
 
 // Test the bfgs_routine() function warning quit 1
-TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Warning_Quit1)
+TEST_F(Ions_Move_BFGS_Test, BfgsRoutineWarningQuit1)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -404,7 +404,7 @@ TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Warning_Quit1)
 }
 
 // Test the bfgs_routine() function warning quit 2
-TEST_F(Ions_Move_BFGS_Test, Bfgs_Routine_Warning_Quit2)
+TEST_F(Ions_Move_BFGS_Test, BfgsRoutineWarningQuit2)
 {
     // Initilize data
     bfgs.init_done = false;

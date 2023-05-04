@@ -36,7 +36,7 @@ class Lattice_Change_Basic_Test : public ::testing::Test
 };
 
 // Test the setup_gradient function with fixed_axes is volume
-TEST_F(Lattice_Change_Basic_Test, setup_gradient_volume)
+TEST_F(Lattice_Change_Basic_Test, SetupGradientVolume)
 {
     // Initialize variables
     ucell.lc[0] = 1;
@@ -86,7 +86,7 @@ TEST_F(Lattice_Change_Basic_Test, setup_gradient_volume)
 }
 
 // Test the setup_gradient function with fixed_axes is not volume
-TEST_F(Lattice_Change_Basic_Test, setup_gradient_none)
+TEST_F(Lattice_Change_Basic_Test, SetupGradientNone)
 {
     // Initialize variables
     ucell.lc[0] = 1;
@@ -119,7 +119,7 @@ TEST_F(Lattice_Change_Basic_Test, setup_gradient_none)
     EXPECT_DOUBLE_EQ(grad[8], -90.0);
 }
 
-TEST_F(Lattice_Change_Basic_Test, change_lattice)
+TEST_F(Lattice_Change_Basic_Test, ChangeLattice)
 {
     // Initialize variables
     ucell.lc[0] = 1;
@@ -213,7 +213,7 @@ TEST_F(Lattice_Change_Basic_Test, change_lattice)
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, but not converged
-TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case1)
+TEST_F(Lattice_Change_Basic_Test, CheckConvergedCase1)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
@@ -250,7 +250,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case1)
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1 && largest_grad == 0
-TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case2)
+TEST_F(Lattice_Change_Basic_Test, CheckConvergedCase2)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
@@ -288,7 +288,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case2)
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, and converged
-TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case3)
+TEST_F(Lattice_Change_Basic_Test, CheckConvergedCase3)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
@@ -325,7 +325,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case3)
 }
 
 // Test for check_converged when ucell.lc != 1, but not converged
-TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case4)
+TEST_F(Lattice_Change_Basic_Test, CheckConvergedCase4)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
@@ -362,7 +362,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case4)
 }
 
 // Test for check_converged when ucell.lc != 1, and largest_grad == 0
-TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case5)
+TEST_F(Lattice_Change_Basic_Test, CheckConvergedCase5)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
@@ -400,7 +400,7 @@ TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case5)
 }
 
 // Test for check_converged when ucell.lc != 1, and converged
-TEST_F(Lattice_Change_Basic_Test, Check_Converged_Case6)
+TEST_F(Lattice_Change_Basic_Test, CheckConvergedCase6)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
