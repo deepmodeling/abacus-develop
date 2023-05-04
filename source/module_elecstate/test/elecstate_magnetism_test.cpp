@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <cmath>
+#include "module_elecstate/elecstate_getters.h"
 
 /************************************************
  *  unit test of magnetism.cpp
@@ -22,9 +23,9 @@
 Charge::Charge(){}
 Charge::~Charge(){}
 
-int Magnetism::get_rhopw_nrxx() const { return 100; }
-int Magnetism::get_rhopw_nxyz() const { return 1000; }
-double Magnetism::get_ucell_omega() const { return 500.0; }
+int elecstate::get_rhopw_nrxx() { return 100; }
+int elecstate::get_rhopw_nxyz() { return 1000; }
+double elecstate::get_ucell_omega() { return 500.0; }
 
 class MagnetismTest : public ::testing::Test
 {
@@ -49,9 +50,9 @@ TEST_F(MagnetismTest, Magnetism)
 
 TEST_F(MagnetismTest, GlobalInfo)
 {
-                  EXPECT_EQ(100, magnetism->get_rhopw_nrxx());
-                  EXPECT_EQ(1000, magnetism->get_rhopw_nxyz());
-                  EXPECT_EQ(500.0, magnetism->get_ucell_omega());
+                  EXPECT_EQ(100, elecstate::get_rhopw_nrxx());
+                  EXPECT_EQ(1000, elecstate::get_rhopw_nxyz());
+                  EXPECT_EQ(500.0, elecstate::get_ucell_omega());
 }
 
 TEST_F(MagnetismTest, JudgeParallel)
@@ -72,9 +73,9 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                   chr->rho = new double*[GlobalV::NSPIN];
                   for (int i=0; i< GlobalV::NSPIN; i++)
                   {
-                                    chr->rho[i] = new double[magnetism->get_rhopw_nrxx()];
+                                    chr->rho[i] = new double[elecstate::get_rhopw_nrxx()];
                   }
-                  for (int ir=0; ir< magnetism->get_rhopw_nrxx(); ir++)
+                  for (int ir=0; ir< elecstate::get_rhopw_nrxx(); ir++)
                   {
                                     chr->rho[0][ir] = 1.00;
                                     chr->rho[1][ir] = 1.01;
@@ -102,9 +103,9 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
                     chr->rho = new double*[GlobalV::NSPIN];
                     for (int i=0; i< GlobalV::NSPIN; i++)
                     {
-                                        chr->rho[i] = new double[magnetism->get_rhopw_nrxx()];
+                                        chr->rho[i] = new double[elecstate::get_rhopw_nrxx()];
                     }
-                    for (int ir=0; ir< magnetism->get_rhopw_nrxx(); ir++)
+                    for (int ir=0; ir< elecstate::get_rhopw_nrxx(); ir++)
                     {
                                         chr->rho[0][ir] = 1.00;
                                         chr->rho[1][ir] = std::sqrt(2.0);

@@ -1,15 +1,20 @@
-#include "magnetism.h"
+#include "module_elecstate/elecstate_getters.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-int Magnetism::get_rhopw_nrxx() const
+namespace elecstate
+{
+
+int get_rhopw_nrxx()
 {
     return GlobalC::rhopw->nrxx;
 }
-int Magnetism::get_rhopw_nxyz() const
+int get_rhopw_nxyz()
 {
     return GlobalC::rhopw->nxyz;
 }
-double Magnetism::get_ucell_omega() const
+double get_ucell_omega()
 {
     return GlobalC::ucell.omega;
+}
+
 }
