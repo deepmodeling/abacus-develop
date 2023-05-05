@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 #include <set>
-#ifdef __EXX
 #include <RI/global/Tensor.h>
 using namespace std;
 
@@ -37,5 +36,4 @@ private:
 		
 	int kmesh_times = 4;
 };
-#endif
 #endif
