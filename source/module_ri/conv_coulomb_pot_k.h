@@ -20,13 +20,6 @@ public:
 		const std::map<std::string,double> &parameter,
         const double rmesh_times,
         const int& nks);
-
-	template<typename T> static T cal_orbs_ccp_rmesh(
-		const T & orbs,
-		const Ccp_Type &ccp_type,
-		const std::map<std::string,double> &parameter,
-		const double psi_threshold,
-		double &rmesh_times);
 	
 private:
 		
