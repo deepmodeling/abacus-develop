@@ -43,7 +43,7 @@ void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stres
 
 void MDdump(const int &step,
             const UnitCell &unit_in,
-            const Input &inp,
+            const MD_parameters &mdp,
             const ModuleBase::matrix &virial,
             const ModuleBase::Vector3<double> *force,
             const ModuleBase::Vector3<double> *vel);
@@ -53,7 +53,7 @@ void getMassMbl(const UnitCell &unit_in,
                 ModuleBase::Vector3<int> &frozen,
                 ModuleBase::Vector3<int> *ionmbl);
 
-double target_temp(const int &istep, const double &tfirst, const double &tlast);
+double target_temp(const int &istep, const int &nstep, const double &tfirst, const double &tlast);
 
 double current_temp(double &kinetic,
                     const int &natom,

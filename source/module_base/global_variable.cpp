@@ -57,7 +57,6 @@ bool fixed_atoms = false;
 int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;
-int MD_NSTEP = 20;
 int md_prec_level = 0;
 int SCF_NMAX = 100;
 

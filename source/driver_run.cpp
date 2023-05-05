@@ -49,7 +49,7 @@ void Driver::driver_run()
     if(GlobalV::CALCULATION == "md")
     {
         Run_MD run_md;
-        run_md.md_line(GlobalC::ucell, p_esolver);
+        run_md.md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
     }
     else // scf; cell relaxation; nscf; etc
     {

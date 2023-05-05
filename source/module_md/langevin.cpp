@@ -70,7 +70,7 @@ void Langevin::post_force()
 {
     if (GlobalV::MY_RANK == 0)
     {
-        double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
+        double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
         ModuleBase::Vector3<double> fictitious_force;
         for (int i = 0; i < ucell.nat; ++i)
         {

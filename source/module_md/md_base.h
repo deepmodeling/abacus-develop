@@ -14,44 +14,44 @@ class MDrun
      * @brief init before running md, calculate energy, force, and stress of the initial configuration.
      * @param p_esolver the energy solver used in md
      */
-    virtual void setup(ModuleESolver::ESolver *p_esolver);
+    virtual void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
 
     /**
      * @brief the first half of equation of motion, update velocities and positions
      */
-    virtual void first_half();
+    virtual void first_half(const int &my_rank);
 
     /**
      * @brief the second half of equation of motion, update velocities
      */
-    virtual void second_half();
+    virtual void second_half(const int &my_rank);
 
     /**
      * @brief perform one step update of pos due to atomic velocity
      */
-    virtual void update_pos();
+    virtual void update_pos(const int &my_rank);
 
     /**
      * @brief perform half-step update of vel due to atomic force
      */
-    virtual void update_vel(const ModuleBase::Vector3<double> *force);
+    virtual void update_vel(const ModuleBase::Vector3<double> *force, const int &my_rank);
 
     /**
      * @brief output MD information such as energy, temperature, and pressure
      * @param ofs determine the output files
      * @param cal_stress whether calculate and output stress
      */
-    virtual void outputMD(std::ofstream &ofs, bool cal_stress);
+    virtual void outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank);
 
     /**
      * @brief write the information into files used for MD restarting
      */
-    virtual void write_restart();
+    virtual void write_restart(const int &my_rank, const std::string &global_out_dir);
 
     /**
      * @brief restart MD when md_restart is true
      */
-    virtual void restart();
+    virtual void restart(const int &my_rank, const std::string &global_readin_dir);
 
     MD_parameters &mdp;
     UnitCell &ucell;

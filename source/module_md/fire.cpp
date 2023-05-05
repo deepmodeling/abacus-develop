@@ -23,58 +23,61 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver *p_ensolve)
+void FIRE::setup(ModuleESolver::ESolver *p_esolver,
+                 const int &my_rank,
+                 const std::string &global_readin_dir,
+                 const double &force_thr)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
 
-    MDrun::setup(p_ensolve);
+    MDrun::setup(p_esolver, my_rank, global_readin_dir);
 
-    check_force();
+    check_force(force_thr);
 
     ModuleBase::timer::tick("FIRE", "setup");
 }
 
-void FIRE::first_half()
+void FIRE::first_half(const int &my_rank)
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::tick("FIRE", "first_half");
 
-    MDrun::update_vel(force);
+    MDrun::update_vel(force, my_rank);
 
     check_FIRE();
 
-    MDrun::update_pos();
+    MDrun::update_pos(my_rank);
 
     ModuleBase::timer::tick("FIRE", "first_half");
 }
 
-void FIRE::second_half()
+void FIRE::second_half(const int &my_rank, const double &force_thr)
 {
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
 
-    MDrun::update_vel(force);
+    MDrun::update_vel(force, my_rank);
 
-    check_force();
+    check_force(force_thr);
 
     ModuleBase::timer::tick("FIRE", "second_half");
 }
 
-void FIRE::outputMD(std::ofstream &ofs, bool cal_stress)
+void FIRE::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
 {
-    MDrun::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress, my_rank);
 
     ofs << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
     std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
 }
 
-void FIRE::write_restart()
+void FIRE::write_restart(const int &my_rank, const std::string &global_out_dir)
 {
-    if (!GlobalV::MY_RANK)
+    if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.dat";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -89,14 +92,14 @@ void FIRE::write_restart()
 #endif
 }
 
-void FIRE::restart()
+void FIRE::restart(const int &my_rank, const std::string &global_readin_dir)
 {
     bool ok = true;
 
-    if (!GlobalV::MY_RANK)
+    if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_readin_dir << "Restart_md.dat";
+        ssc << global_readin_dir << "Restart_md.dat";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -129,7 +132,7 @@ void FIRE::restart()
 #endif
 }
 
-void FIRE::check_force()
+void FIRE::check_force(const double &force_thr)
 {
     max = 0;
 
@@ -144,7 +147,7 @@ void FIRE::check_force()
         }
     }
 
-    if (2.0 * max < GlobalV::FORCE_THR)
+    if (2.0 * max < force_thr)
     {
         stop = true;
     }
