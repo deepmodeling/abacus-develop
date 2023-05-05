@@ -125,7 +125,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-
 	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
 	EXPECT_EQ(ELEC_evolve::td_vext,false);
 	EXPECT_EQ(ELEC_evolve::out_dipole,false);
@@ -212,7 +211,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.latname="none";
@@ -228,7 +226,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
@@ -243,7 +240,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.relax_new=false;
@@ -259,7 +255,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Default();
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
