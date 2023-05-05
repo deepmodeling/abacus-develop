@@ -1,6 +1,5 @@
 INPUT_PARAMETERS
 suffix          tddft
-pseudo_dir      /home/zaotian/Lab/database/SG15_ONCV_v1.0_upf
 basis_type      lcao
 
 ecutwfc         60
