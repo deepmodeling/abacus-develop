@@ -115,7 +115,7 @@ auto LRI_CV<Tdata>::cal_datas(
 		}
 	}
 	ModuleBase::timer::tick("LRI_CV", "cal_datas");
-	return std::move(Datas);
+	return Datas;
 }
 
 
