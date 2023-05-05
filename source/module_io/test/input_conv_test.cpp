@@ -125,7 +125,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-
 	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
 	EXPECT_EQ(ELEC_evolve::td_vext,false);
 	EXPECT_EQ(ELEC_evolve::out_dipole,false);
@@ -184,6 +183,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::of_wt_beta,0.833333);
 	EXPECT_EQ(GlobalV::of_wt_rho0,1.0);
 	EXPECT_EQ(GlobalV::of_hold_rho0,false);
+	EXPECT_EQ(GlobalV::of_lkt_a,1.3);
     EXPECT_EQ(GlobalV::of_full_pw,false);
 	EXPECT_EQ(GlobalV::of_full_pw_dim,0);
 	EXPECT_EQ(GlobalV::of_read_kernel,false);
@@ -211,7 +211,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.latname="none";
@@ -227,7 +226,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
@@ -242,7 +240,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.relax_new=false;
@@ -258,7 +255,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Default();
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
