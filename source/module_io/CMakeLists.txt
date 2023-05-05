@@ -2,7 +2,6 @@ list(APPEND objects
     input.cpp
     input_conv.cpp
     bessel_basis.cpp
-    cal_test.cpp
     dos.cpp
     write_dos_pw.cpp
     nscf_band.cpp

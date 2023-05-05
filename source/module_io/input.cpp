@@ -2617,10 +2617,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         if (!this->relax_nmax)
             this->relax_nmax = 50;
     }
-    else if (calculation == "test_memory")
-    {
-        this->relax_nmax = 1;
-    }
     else if (calculation == "test_neighbour")
     {
         this->relax_nmax = 1;
@@ -3271,15 +3267,8 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "to generate descriptors, please use pw basis");
         }
     }
-    // else if (calculation == "ofdft") // sunliang added on 2022-05-05
-    // {
-    //     if (pseudo_type != "blps")
-    //     {
-    //         ModuleBase::WARNING_QUIT("Input::Check", "pseudo_type in ofdft should be set as blps");
-    //     }
-    // }
     else if (calculation != "scf" && calculation != "relax" && calculation != "cell-relax"
-             && calculation != "test_memory" && calculation != "test_neighbour")
+             && calculation != "test_neighbour")
     {
         ModuleBase::WARNING_QUIT("Input", "check 'calculation' !");
     }
@@ -3287,11 +3276,6 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "wrong 'init_chg',not 'atomic', 'file',please check");
     }
-    // xiaohui modify 2014-05-10, chg_extrap value changes to 0~7
-    // if (chg_extrap <0 ||chg_extrap > 7)
-    //{
-    //	ModuleBase::WARNING_QUIT("Input","wrong 'chg_extrap',neither 0~7.");
-    // }xiaohui modify 2015-02-01
     if (gamma_only_local == 0)
     {
         if (out_dm == 1)

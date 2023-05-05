@@ -6,7 +6,6 @@
 #include "module_hsolver/hsolver.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_basis/module_pw/pw_basis_k.h"
-#include "module_io/cal_test.h"
 #include "module_elecstate/module_charge/charge_extra.h"
 // #include "estates.h"
 // #include "h2e.h"

@@ -24,30 +24,13 @@ class Memory
     /**
      * @brief Record memory consumed during computation
      *
-     * @param class_name The name of a class
-     * @param name The name of a quantity
-     * @param n The number of the quantity
-     * @param type The type of data
-     * @param accumulate Useless, always set false
-     * @return double
-     */
-    static double record(const std::string &class_name,
-                         const std::string &name,
-                         const long &n,
-                         const std::string &type,
-                         const bool accumulate = false);
-
-    /**
-     * @brief Record memory consumed during computation
-     *
      * @param name The name of a quantity
      * @param n The number of the quantity
      * @param accumulate Useless, always set false
      */
     static void record(
       const std::string &name_in,
-      const size_t &n_in,
-      const bool accumulate = false
+      const size_t &n_in
     );
 
     static double &get_total(void)
@@ -66,31 +49,13 @@ class Memory
 
     static void print(const int find_in);
 
-    /**
-     * @brief Calculate memory requirements for various
-     * types of data
-     *
-     * @param n The number of a type of data
-     * @param type The type of data
-     * @return double
-     */
-    static double calculate_mem(const long &n, const std::string &type);
-
   private:
     static double total;
     static std::string *name;
-    static std::string *class_name;
     static double *consume;
     static int n_memory;
     static int n_now;
     static bool init_flag;
-
-    static int complex_matrix_memory; //(16 Byte)
-    static int double_memory; //(8 Byte)
-    static int int_memory; //(4 Byte)
-    static int bool_memory;
-    static int short_memory; //(2 Byte)
-    static int float_memory; //(4 Byte)
 };
 
 } // namespace ModuleBase

@@ -352,12 +352,6 @@ namespace ModuleESolver
             this->get_S();
             ModuleBase::QUIT();
         }
-        
-        if(GlobalV::CALCULATION == "test_memory")
-        {
-            Cal_Test::test_memory();
-            return;
-        }
 
         if(GlobalV::CALCULATION == "test_neighbour")
         {

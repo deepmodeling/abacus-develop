@@ -34,7 +34,7 @@ void Driver::driver_run()
 
     // 3. For these two types of calculations
     // nothing else need to be initialized
-    if(GlobalV::CALCULATION == "test_neighbour" || GlobalV::CALCULATION == "test_memory")
+    if(GlobalV::CALCULATION == "test_neighbour")
     {
         p_esolver->Run(0, GlobalC::ucell);
         ModuleBase::QUIT();

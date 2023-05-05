@@ -315,11 +315,6 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_KS_PW", "othercalculation");
         ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
-        if(GlobalV::CALCULATION == "test_memory")
-        {
-            Cal_Test::test_memory();
-            return;
-        }
 
         if (GlobalV::CALCULATION == "gen_bessel")
         {

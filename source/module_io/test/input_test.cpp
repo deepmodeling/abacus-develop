@@ -899,22 +899,15 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.relax_nmax,50);
 	//==================================================
 	// prepare default parameters for the 8th calling
-	INPUT.calculation = "test_memory";
+	INPUT.calculation = "test_neighbour";
 	// the 8th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(INPUT.relax_nmax,1);
 	//==================================================
 	// prepare default parameters for the 9th calling
-	INPUT.calculation = "test_neighbour";
-	// the 9th calling
-	INPUT.Default_2();
-	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.relax_nmax,1);
-	//==================================================
-	// prepare default parameters for the 10th calling
 	INPUT.calculation = "gen_bessel";
-	// the 10th calling
+	// the 9th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(INPUT.relax_nmax,1);
