@@ -154,7 +154,7 @@ class Absorption(Dipole, Efield):
         ax.legend()
         if x_range:
             ax.set_xlim(x_range)
-            lim_range=index[(energies>x_range[0])&(energies<x_range[1])]
+            lim_range=index[(x_data>x_range[0])&(x_data<x_range[1])]
             ax.set_ylim([0, 1.2*max(alpha[int(lim_range[0]):int(lim_range[-1])])])
         return fig, ax
 
