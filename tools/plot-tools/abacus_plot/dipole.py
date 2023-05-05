@@ -144,8 +144,6 @@ class Absorption(Dipole, Efield):
             alpha = self.alpha(direc)
             ax.plot(x_data, alpha, label=labels[direc])
             adsorption_spectra_data = np.concatenate((adsorption_spectra_data, alpha[:, np.newaxis]),axis=1)
-            if direc != directions[-1]:
-                adsorption_spectra_data = np.concatenate((adsorption_spectra_data, x_data[:, np.newaxis]),axis=1)
         np.savetxt('absorpation_spectra.dat', adsorption_spectra_data)
 
         xlabel = 'Energy (eV)' if unit == 'eV' else 'Wave Length (nm)'
