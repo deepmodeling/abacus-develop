@@ -345,6 +345,7 @@ class Input
 
     bool exx_separate_loop; // 0 or 1
     int exx_hybrid_step;
+    double exx_mixing_beta; // only for exx_separate_loop=1
 
     double exx_lambda;
 
