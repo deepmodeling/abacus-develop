@@ -15,7 +15,6 @@ using std::map;
 class Exx_Abfs
 {
 public:
-	class Util;
 	class Abfs_Index;
 	class Jle;
 	class IO;
