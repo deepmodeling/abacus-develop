@@ -383,7 +383,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0 || GlobalV::md_prec_level == 2)
     {
-        this->charge->init_rho();
+        this->charge->init_rho(strucfac);
     }
 
     // renormalize the charge density

@@ -44,11 +44,11 @@ class Charge
 
     int prenspin = 1;
 
-    void init_rho();
+    void init_rho(const ModuleBase::ComplexMatrix &strucFac);
     // mohan update 2021-02-20
     void allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in);
 
-    void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, ModulePW::PW_Basis *rho_basis) const;
+    void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, ModulePW::PW_Basis *rho_basis, const ModuleBase::ComplexMatrix &strucFac) const;
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
 

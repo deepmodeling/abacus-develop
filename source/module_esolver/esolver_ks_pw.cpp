@@ -265,7 +265,7 @@ namespace ModuleESolver
         if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
             this->CE.update_all_dis(GlobalC::ucell);
-            this->CE.extrapolate_charge(this->pelec->charge);
+            this->CE.extrapolate_charge(this->pelec->charge, &GlobalC::sf);
         }
 
         //init Hamilt, this should be allocated before each scf loop

@@ -297,7 +297,7 @@ void ESolver_OF::beforeOpt(const int istep)
     if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
     {
         CE.update_all_dis(GlobalC::ucell);
-        CE.extrapolate_charge(pelec->charge);
+        CE.extrapolate_charge(pelec->charge, &GlobalC::sf);
     }
 
     this->pelec->init_scf(istep, GlobalC::sf.strucFac);
