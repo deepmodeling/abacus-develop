@@ -152,6 +152,7 @@ abacus-plot -d -o
 ```python
 
 from abacus_plot.dipole import Dipole
+from abacus_plot.dipole import Absorption
 import matplotlib.pyplot as plt
 
 dipolefile = './SPIN1_DIPOLE'
