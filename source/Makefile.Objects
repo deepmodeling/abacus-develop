@@ -336,7 +336,6 @@ OBJS_IO=input.o\
     input_conv.o\
     berryphase.o\
     bessel_basis.o\
-    cal_test.o\
     write_dos_pw.o\
     nscf_band.o\
     dos.o\
