@@ -5,7 +5,6 @@
 #include "mpi.h"
 #endif
 #include "module_base/timer.h"
-#include "module_esolver/esolver.h"
 
 MSST::MSST(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
 {

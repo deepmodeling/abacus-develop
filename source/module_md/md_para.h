@@ -1,7 +1,7 @@
 #ifndef MD_PARAMETERS_H
 #define MD_PARAMETERS_H
 
-#include "module_base/constants.h"
+#include <string>
 
 class MD_parameters
 {

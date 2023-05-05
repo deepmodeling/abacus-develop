@@ -1,13 +1,12 @@
 #include "run_md.h"
 
+#include "fire.h"
 #include "langevin.h"
 #include "md_func.h"
+#include "module_base/timer.h"
+#include "module_io/print_info.h"
 #include "msst.h"
 #include "nhchain.h"
-#include "fire.h"
-#include "module_base/timer.h"
-#include "module_io/input.h"
-#include "module_io/print_info.h"
 #include "verlet.h"
 
 Run_MD::Run_MD()
