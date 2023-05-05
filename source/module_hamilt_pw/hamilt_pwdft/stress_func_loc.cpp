@@ -9,7 +9,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
-                                             Structure_Factor& sf,
+                                             Structure_Factor* p_sf,
                                              const bool is_pw,
                                              const Charge* const chr)
 {
@@ -70,10 +70,10 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 			{
                 if (rho_basis->ig_gge0 == ig)
                     evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
-                             * (sf.strucFac(it, ig) * conj(aux[ig])).real();
+                             * (p_sf->strucFac(it, ig) * conj(aux[ig])).real();
                 else
                     evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
-                             * (sf.strucFac(it, ig) * conj(aux[ig]) * fact).real();
+                             * (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
             }
 		}
 	}
@@ -114,7 +114,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 				for (int m = 0; m<l+1;m++)
 				{
                     local_sigma(l, m) = local_sigma(l, m)
-                                        + (conj(aux[ig]) * sf.strucFac(nt, ig)).real() * 2.0
+                                        + (conj(aux[ig]) * p_sf->strucFac(nt, ig)).real() * 2.0
                                               * dvloc[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba2
                                               * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
                 }

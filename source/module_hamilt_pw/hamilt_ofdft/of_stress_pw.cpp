@@ -9,9 +9,9 @@
 void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               ModuleBase::matrix& kinetic_stress,
                               UnitCell& ucell,
-                              ModuleSymmetry::Symmetry& symm,
-                              Structure_Factor& sf,
-                              K_Vectors& kv)
+                              ModuleSymmetry::Symmetry* p_symm,
+                              Structure_Factor* p_sf,
+                              K_Vectors* p_kv)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
@@ -74,10 +74,10 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(sigmaloc, this->rhopw, sf, 1, pelec->charge);
+    stress_loc(sigmaloc, this->rhopw, p_sf, 1, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, sf, 1, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, p_sf, 1, pelec->charge);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
@@ -94,7 +94,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        symm.stress_symmetry(sigmatot, ucell);
+        p_symm->stress_symmetry(sigmatot, ucell);
     }
 
     bool ry = false;

@@ -18,7 +18,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 	{
 		this->tab_dq.create(ntype, nbrx_nc, GlobalV::NQX);
 	}
-	gradvkb.create(3,nkb,GlobalC::wf.npwx);
+    gradvkb.create(3, nkb, this->wfcpw->npwk_max);
 
     const double pref = ModuleBase::FOUR_PI / sqrt(cell.omega);
     for (int it = 0;it < ntype;it++)  
@@ -67,7 +67,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 		return;
 	}
 
-	const int npw = GlobalC::kv.ngk[ik];
+	const int npw = this->wfcpw->npwk[ik];
 
     // When the internal memory is large enough, it is better to make tmpgradvkb and tmpvkb be the number of pseudopot_cell_vnl
     // We only need to initialize them once as long as the cell is unchanged.
@@ -147,7 +147,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 		// now add the structure factor and factor (-i)^l
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
 		{
-            std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia, this->wfcpw);
+            std::complex<double> *sk = this->psf->get_sk(ik, it, ia, this->wfcpw);
 
             for (int ih = 0;ih < nh;++ih)
 			{

@@ -67,10 +67,12 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
 
     this->Init_GlobalC(inp,ucell);//temporary
 
-	stowf.init(GlobalC::kv.nks);
-	if(INPUT.nbands_sto != 0)	Init_Sto_Orbitals(this->stowf, inp.seed_sto, GlobalC::kv.nks);
-	else						Init_Com_Orbitals(this->stowf, GlobalC::kv, GlobalC::wf.npwx);
-	for (int ik =0 ; ik < GlobalC::kv.nks; ++ik)
+    stowf.init(&GlobalC::kv, GlobalC::wfcpw->npwk_max);
+    if (INPUT.nbands_sto != 0)
+        Init_Sto_Orbitals(this->stowf, inp.seed_sto, GlobalC::kv.nks);
+    else
+        Init_Com_Orbitals(this->stowf, GlobalC::wf.npwx);
+    for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
         this->stowf.shchi[ik].create(this->stowf.nchip[ik],GlobalC::wf.npwx,false);
         if(GlobalV::NBANDS > 0)
@@ -79,9 +81,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
         }
     }
 
-    this->phsol = new hsolver::HSolverPW_SDFT(GlobalC::wfcpw, this->stowf, inp.method_sto);
-   
-
+    this->phsol = new hsolver::HSolverPW_SDFT(&GlobalC::kv, GlobalC::wfcpw, &GlobalC::wf, this->stowf, inp.method_sto);
 }
 
 void ESolver_SDFT_PW::beforescf(const int istep)
@@ -195,8 +195,8 @@ void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix &force)
                     this->pelec->wg,
                     pelec->charge,
                     GlobalC::rhopw,
-                    GlobalC::symm,
-                    GlobalC::sf,
+                    &GlobalC::symm,
+                    &GlobalC::sf,
                     &GlobalC::kv,
                     GlobalC::wfcpw,
                     this->psi,
@@ -208,9 +208,9 @@ void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix &stress)
     ss.cal_stress(stress,
                   this->pelec->wg,
                   GlobalC::rhopw,
-                  GlobalC::symm,
-                  GlobalC::sf,
-                  GlobalC::kv,
+                  &GlobalC::symm,
+                  &GlobalC::sf,
+                  &GlobalC::kv,
                   GlobalC::wfcpw,
                   this->psi,
                   this->stowf,

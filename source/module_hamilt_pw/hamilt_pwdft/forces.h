@@ -35,8 +35,8 @@ class Forces
                    const ModuleBase::matrix& wg,
                    const Charge* const chr,
                    ModulePW::PW_Basis* rho_basis,
-                   ModuleSymmetry::Symmetry& symm,
-                   Structure_Factor& sf,
+                   ModuleSymmetry::Symmetry* p_symm,
+                   Structure_Factor* p_sf,
                    K_Vectors* pkv = nullptr,
                    ModulePW::PW_Basis_K* psi_basis = nullptr,
                    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
@@ -47,11 +47,11 @@ class Forces
     static FPTYPE output_acc;
 
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
-    void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, Structure_Factor& sf);
+    void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_nl(ModuleBase::matrix& forcenl,
                       const ModuleBase::matrix& wg,
-                      K_Vectors& kv,
+                      K_Vectors* p_kv,
                       ModulePW::PW_Basis_K* psi_basis,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis);

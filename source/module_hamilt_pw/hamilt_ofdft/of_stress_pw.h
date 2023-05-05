@@ -14,9 +14,9 @@ class OF_Stress_PW : public Stress_Func<double>
     void cal_stress(ModuleBase::matrix& sigmatot,
                     ModuleBase::matrix& kinetic_stress,
                     UnitCell& ucell,
-                    ModuleSymmetry::Symmetry& symm,
-                    Structure_Factor& sf,
-                    K_Vectors& kv);
+                    ModuleSymmetry::Symmetry* p_symm,
+                    Structure_Factor* p_sf,
+                    K_Vectors* p_kv);
 
   protected:
     // call the vdw stress

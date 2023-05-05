@@ -12,11 +12,12 @@
 
 namespace hsolver {
 
-template<typename FPTYPE, typename Device>
-HSolverPW<FPTYPE, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in)
+template <typename FPTYPE, typename Device>
+HSolverPW<FPTYPE, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
 {
-    this->wfc_basis = wfc_basis_in;
     this->classname = "HSolverPW";
+    this->wfc_basis = wfc_basis_in;
+    this->pwf = pwf_in;
     this->diag_ethr = GlobalV::PW_DIAG_THR;
     /*this->init(pbas_in);*/
 }
@@ -169,7 +170,7 @@ void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHami
         {
             // generate PAOs first, then diagonalize to get
             // inital wavefunctions.
-            hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, pHamilt);
+            hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
         }
         else
         {

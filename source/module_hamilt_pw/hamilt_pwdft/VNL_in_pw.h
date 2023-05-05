@@ -36,7 +36,10 @@ public:
 	friend class wavefunc;
 	friend class Stochastic_hchi;
 
-    void init(const int ntype, ModulePW::PW_Basis_K *wfc_basis = nullptr, const bool allocate_vkb = 1);
+    void init(const int ntype,
+              Structure_Factor *psf_in,
+              ModulePW::PW_Basis_K *wfc_basis = nullptr,
+              const bool allocate_vkb = 1);
 
     double cell_factor; //LiuXh add 20180619
 
@@ -131,6 +134,7 @@ private:
     std::complex<double> * z_vkb = nullptr;
 
 	ModulePW::PW_Basis_K* wfcpw = nullptr;
+    Structure_Factor *psf = nullptr;
 };
 
 #endif // VNL_IN_PW

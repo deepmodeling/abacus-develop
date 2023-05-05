@@ -15,8 +15,8 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
                               const ModuleBase::matrix& wg,
                               const Charge* const chr,
                               ModulePW::PW_Basis* rho_basis,
-                              ModuleSymmetry::Symmetry& symm,
-                              Structure_Factor& sf,
+                              ModuleSymmetry::Symmetry* p_symm,
+                              Structure_Factor* p_sf,
                               K_Vectors* pkv,
                               ModulePW::PW_Basis_K* wfc_basis,
                               const psi::Psi<std::complex<double>>* psi_in,
@@ -33,8 +33,8 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 	ModuleBase::matrix forcenl(nat, 3);
 	ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, rho_basis, chr);
-    this->cal_force_ew(forceion, rho_basis, sf);
-    this->cal_sto_force_nl(forcenl, wg, wfc_basis, psi_in, stowf);
+    this->cal_force_ew(forceion, rho_basis, p_sf);
+    this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, psi_in, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr);
     this->cal_force_scc(forcescc, rho_basis);
 
@@ -119,8 +119,8 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 				pos[3*iat+2] = GlobalC::ucell.atoms[it].taud[ia].z;
 				for(int k=0; k<3; ++k)
 				{
-                    symm.check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                    symm.check_boundary(pos[iat * 3 + k]);
+                    p_symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                    p_symm->check_boundary(pos[iat * 3 + k]);
                 }
 				iat++;				
 			}
@@ -136,9 +136,9 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 			
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-		symm.force_symmetry(force , pos, GlobalC::ucell);
-		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
-		{
+        p_symm->force_symmetry(force, pos, GlobalC::ucell);
+        for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+        {
 			ModuleBase::Mathzone::Direct_to_Cartesian(force(iat,0),force(iat,1),force(iat,2),
                                         GlobalC::ucell.a1.x, GlobalC::ucell.a1.y, GlobalC::ucell.a1.z,
                                         GlobalC::ucell.a2.x, GlobalC::ucell.a2.y, GlobalC::ucell.a2.z,
@@ -146,10 +146,9 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
                                         d1,d2,d3);
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-		// cout << "nrotk =" << symm.nrotk << endl;
-		delete[] pos;
-		
-	}
+        // cout << "nrotk =" << p_symm->nrotk << endl;
+        delete[] pos;
+    }
 
  	GlobalV::ofs_running << setiosflags(ios::fixed) << setprecision(6) << endl;
 	if(GlobalV::TEST_FORCE)
@@ -182,7 +181,12 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     return;
 }
 
-void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, ModulePW::PW_Basis_K* wfc_basis,  const psi::Psi<complex<double>>* psi_in, Stochastic_WF& stowf)
+void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
+                                  const ModuleBase::matrix& wg,
+                                  K_Vectors* p_kv,
+                                  ModulePW::PW_Basis_K* wfc_basis,
+                                  const psi::Psi<complex<double>>* psi_in,
+                                  Stochastic_WF& stowf)
 {
 	ModuleBase::TITLE("Sto_Forces","cal_force_nl");
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
@@ -191,24 +195,25 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase:
     int* nchip = stowf.nchip;
 	if(nkb == 0) return; // mohan add 2010-07-25
 	
-	const int npwx = GlobalC::wf.npwx;
+	const int npwx = wfc_basis->npwk_max;
 	// vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
 	ModuleBase::ComplexMatrix vkb1( nkb, npwx );
 	int nksbands = psi_in->get_nbands();
 	if(GlobalV::MY_STOGROUP != 0) nksbands = 0;
     
 
-    for (int ik = 0;ik < GlobalC::kv.nks;ik++)
+    for (int ik = 0;ik < wfc_basis->nks;ik++)
     {
 		const int nstobands = nchip[ik];
 		const int nbandstot = nstobands + nksbands;
-		const int npw = GlobalC::kv.ngk[ik];
+		const int npw = wfc_basis->npwk[ik];
 
 		// dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
 		ModuleBase::ComplexArray dbecp( 3, nbandstot, nkb);
     	ModuleBase::ComplexMatrix becp( nbandstot, nkb);
-        if (GlobalV::NSPIN==2) GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
-        
+        if (GlobalV::NSPIN == 2)
+            GlobalV::CURRENT_SPIN = p_kv->isk[ik];
+
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
         {
@@ -288,8 +293,8 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl, const ModuleBase:
 			if(ib < nksbands)
 				fac = wg(ik, ib) * 2.0 * GlobalC::ucell.tpiba;
 			else
-				fac = GlobalC::kv.wk[ik] * 2.0 * GlobalC::ucell.tpiba;
-        	int iat = 0;
+                fac = p_kv->wk[ik] * 2.0 * GlobalC::ucell.tpiba;
+            int iat = 0;
         	int sum = 0;
 			for (int it=0; it< GlobalC::ucell.ntype; it++)
 			{

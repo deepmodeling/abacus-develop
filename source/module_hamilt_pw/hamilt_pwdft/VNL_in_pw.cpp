@@ -59,7 +59,10 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 // setup lmaxkb, nhm, nkb, lmaxq 
 // allocate vkb, GlobalV::NQX, tab, tab_at
 //-----------------------------------
-void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, const bool allocate_vkb)
+void pseudopot_cell_vnl::init(const int ntype,
+                              Structure_Factor *psf_in,
+                              ModulePW::PW_Basis_K *wfc_basis,
+                              const bool allocate_vkb)
 {
 	ModuleBase::TITLE("pseudopot_cell_vnl", "init");
 	ModuleBase::timer::tick("ppcell_vnl", "init");
@@ -68,12 +71,13 @@ void pseudopot_cell_vnl::init(const int ntype, ModulePW::PW_Basis_K* wfc_basis, 
 
 	int it = 0;
 	this->wfcpw = wfc_basis;
-//----------------------------------------------------------
-// MEMBER VARIABLE :
-// NAME : lmaxkb(max angular momentum,(see pseudo_h))
-//----------------------------------------------------------
-	this->lmaxkb = - 1;
-	for (it = 0;it < ntype; it++)
+    this->psf = psf_in;
+    //----------------------------------------------------------
+    // MEMBER VARIABLE :
+    // NAME : lmaxkb(max angular momentum,(see pseudo_h))
+    //----------------------------------------------------------
+    this->lmaxkb = -1;
+    for (it = 0;it < ntype; it++)
 	{
 		GlobalV::ofs_running << " " << GlobalC::ucell.atoms[it].label << " non-local projectors:" << std::endl;
 		for (int ibeta = 0; ibeta < GlobalC::ucell.atoms[it].ncpp.nbeta; ibeta++) 
@@ -269,7 +273,7 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
     using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
     std::complex<double> * sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw, "VNL::sk");
-    GlobalC::wf.get_sk(ctx, ik, this->wfcpw, sk);
+    this->psf->get_sk(ctx, ik, this->wfcpw, sk);
 
     int jkb = 0, iat = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)
@@ -409,7 +413,7 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
 
     std::complex<FPTYPE> * sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw);
-    GlobalC::wf.get_sk(ctx, ik, this->wfcpw, sk);
+    this->psf->get_sk(ctx, ik, this->wfcpw, sk);
 
     cal_vnl_op()(
         ctx,
@@ -676,7 +680,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // 		return;
 // 	}
 	
-// 	const int npw = GlobalC::kv.ngk[ik];
+// 	const int npw = this->wfcpw->npwk[ik];
 // 	int ig, ia, nb, ih, lu, mu;
 
 // 	double *vq = new double[npw];
@@ -761,9 +765,9 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // 			}
 // 		} // end nbeta
 
-// 		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
+// 		for (ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 // 		{
-// 			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,this->wfcpw);
+// 			std::complex<double> *sk = this->psf->get_sk(ik, it, ia,this->wfcpw);
 // 			for (ih = 0;ih < nh;ih++)
 // 			{
 // 				for (ig = 0;ig < npw;ig++)
@@ -771,7 +775,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // 					for(int alpha=0; alpha<3; alpha++)
 // 					{
 // 						vkb_alpha[alpha][jkb][ig] = vkb1_alpha[alpha][ih][ig] * sk [ig];
-// 					}					
+// 					}
 // 				}
 // 				++jkb;
 // 			} // end ih

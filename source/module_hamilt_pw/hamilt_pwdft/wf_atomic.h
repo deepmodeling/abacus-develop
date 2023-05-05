@@ -1,33 +1,37 @@
 #ifndef WF_ATOMIC_H
 #define WF_ATOMIC_H
 
+#include "module_base/complexmatrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/complexmatrix.h"
-#include "wf_igk.h"
-#include "module_psi/psi.h"
+#include "module_base/realarray.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_psi/psi.h"
+#include "structure_factor.h"
 
-class WF_atomic : public WF_igk
+class WF_atomic
 {
 	public:
 
     WF_atomic();
     ~WF_atomic();
+    int npwx;
+    int npw;
+    // ModuleBase::IntArray igk;
+#ifdef __CUDA
+    double *d_g2kin;
+#endif
 
-	ModuleBase::realArray table_local;//mohan add 2009-09-10
+    ModuleBase::realArray table_local;//mohan add 2009-09-10
 
-    ModuleBase::ComplexMatrix *evc = nullptr;  // wavefunctions in the PW basis
     //temporary psi for new code
     psi::Psi<std::complex<double>>* psi = nullptr;
-    void evc_transform_psi();
-    void psi_transform_evc();
 
     ModuleBase::ComplexMatrix *wanf2 = nullptr; // wannier functions in the PW basis
     
     int pw_seed; //random seed for wave functions qianrui add 2021-8-13
 
-    void init_at_1(void);// from init_at_1.f90
+    void init_at_1(Structure_Factor *sf_in); // from init_at_1.f90
 
     void print_PAOs(void)const;
 
@@ -55,12 +59,12 @@ class WF_atomic : public WF_igk
     template<typename FPTYPE>
     void random_t(std::complex<FPTYPE> *psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis);
 
-    void check_evc()const;
 #ifdef __MPI
 	void stick_to_pool(double *stick, const int &ir, double *out, ModulePW::PW_Basis_K* wfc_basis) const;
     void stick_to_pool(float *stick, const int &ir, float *out, ModulePW::PW_Basis_K* wfc_basis) const;
 #endif
-
+  private:
+    Structure_Factor *psf;
 };
 
 #endif 

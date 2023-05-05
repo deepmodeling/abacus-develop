@@ -9,9 +9,10 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
                                             const ModuleBase::matrix &wg,
-                                            K_Vectors &kv,
-											ModuleSymmetry::Symmetry& symm,
-											ModulePW::PW_Basis_K* wfc_basis,
+                                            Structure_Factor *p_sf,
+                                            K_Vectors *p_kv,
+                                            ModuleSymmetry::Symmetry *p_symm,
+                                            ModulePW::PW_Basis_K *wfc_basis,
                                             const psi::Psi<complex<FPTYPE>, Device> *psi_in)
 {
     ModuleBase::TITLE("Stress_Func", "stress_nl");
@@ -73,11 +74,15 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     {
         deeq = GlobalC::ppcell.d_deeq;
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
-        resmem_var_op()(this->ctx, gcar, 3 * kv.nks * wfc_basis->npwk_max);
-        resmem_var_op()(this->ctx, kvec_c, 3 * kv.nks);
+        resmem_var_op()(this->ctx, gcar, 3 * p_kv->nks * wfc_basis->npwk_max);
+        resmem_var_op()(this->ctx, kvec_c, 3 * p_kv->nks);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gcar, &wfc_basis->gcar[0][0], 3 * kv.nks * wfc_basis->npwk_max);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, kvec_c, &wfc_basis->kvec_c[0][0], 3 * kv.nks);
+        syncmem_var_h2d_op()(this->ctx,
+                             this->cpu_ctx,
+                             gcar,
+                             &wfc_basis->gcar[0][0],
+                             3 * p_kv->nks * wfc_basis->npwk_max);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, kvec_c, &wfc_basis->kvec_c[0][0], 3 * p_kv->nks);
         resmem_complex_op()(this->ctx, pvkb2, nkb * npwx);
         resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * npwx);
         for (int ii = 0; ii < 3; ii++)
@@ -103,11 +108,11 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
         }
     }
 
-    for (int ik = 0; ik < kv.nks; ik++)
+    for (int ik = 0; ik < p_kv->nks; ik++)
     {
         if (GlobalV::NSPIN == 2)
-            GlobalV::CURRENT_SPIN = kv.isk[ik];
-        const int npw = kv.ngk[ik];
+            GlobalV::CURRENT_SPIN = p_kv->isk[ik];
+        const int npw = p_kv->ngk[ik];
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
         {
@@ -121,14 +126,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
         // becp(nkb,nbnd): <Beta(nkb,npw)|psi(nbnd,npw)>
         // becp.zero_out();
         const std::complex<FPTYPE> *ppsi = nullptr;
-        if (psi_in != nullptr)
-        {
-            ppsi = &(psi_in[0](ik, 0, 0));
-        }
-        else
-        {
-            ppsi = &(GlobalC::wf.evc[ik](0, 0));
-        }
+        ppsi = &(psi_in[0](ik, 0, 0));
         char transa = 'C';
         char transb = 'N';
         ///
@@ -175,13 +173,13 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
         }
         for (int i = 0; i < 3; i++)
         {
-            get_dvnl1(vkb0[i], ik, i, wfc_basis);
+            get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
             if (this->device == psi::GpuDevice)
             {
                 syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, _vkb0[i], vkb0[i].c, nkb * npwx);
             }
         }
-        get_dvnl2(vkb2, ik, wfc_basis);
+        get_dvnl2(vkb2, ik, p_sf, wfc_basis);
         if (this->device == psi::GpuDevice)
         {
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, pvkb2, vkb2.c, nkb * npwx);
@@ -298,7 +296,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
 	//do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        symm.stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->stress_symmetry(sigma, GlobalC::ucell);
     } // end symmetry
 
     delete [] h_atom_nh;
@@ -327,6 +325,7 @@ template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix &vkb,
                                             const int ik,
                                             const int ipol,
+                                            Structure_Factor *p_sf,
                                             ModulePW::PW_Basis_K *wfc_basis)
 {
     if (GlobalV::test_pp)
@@ -412,7 +411,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix &vkb,
 		// now add the structure factor and factor (-i)^l
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-            std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia, wfc_basis);
+            std::complex<FPTYPE> *sk = p_sf->get_sk(ik, it, ia, wfc_basis);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
@@ -437,6 +436,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix &vkb,
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
                                             const int ik,
+                                            Structure_Factor *p_sf,
                                             ModulePW::PW_Basis_K *wfc_basis)
 {
     if (GlobalV::test_pp)
@@ -515,7 +515,7 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 		// now add the structure factor and factor (-i)^l
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
 		{
-            std::complex<FPTYPE> *sk = GlobalC::wf.get_sk(ik, it, ia, wfc_basis);
+            std::complex<FPTYPE> *sk = p_sf->get_sk(ik, it, ia, wfc_basis);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif

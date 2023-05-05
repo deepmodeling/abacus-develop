@@ -189,7 +189,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int &ik,
         for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
         {
             //OUT("I",I);
-            std::complex<double> *sk = GlobalC::wf.get_sk(ik, T, I,GlobalC::wfcpw);
+            std::complex<double> *sk = GlobalC::sf.get_sk(ik, T, I, GlobalC::wfcpw);
             for (int L=0; L< GlobalC::ucell.atoms[T].nwl+1; L++)
             {
                 GlobalV::ofs_running << " " << std::setw(5) << ik+1
@@ -268,12 +268,12 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
     {
         for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++) // 1.2
         {
-            std::complex<double> *sk1 = GlobalC::wf.get_sk(ik, T1, I1,GlobalC::wfcpw);
+            std::complex<double> *sk1 = GlobalC::sf.get_sk(ik, T1, I1, GlobalC::wfcpw);
             for (int T2=0; T2<GlobalC::ucell.ntype; T2++) // 2.1
             {
                 for (int I2=0; I2<GlobalC::ucell.atoms[T2].na; I2++) // 2.2
                 {
-                    std::complex<double> *sk2 = GlobalC::wf.get_sk(ik, T2, I2,GlobalC::wfcpw);
+                    std::complex<double> *sk2 = GlobalC::sf.get_sk(ik, T2, I2, GlobalC::wfcpw);
                     for (int l1 = 0; l1 < GlobalC::ucell.atoms[T1].nwl+1; l1++) // 1.3
                     {
                         const std::complex<double> lphase1 = normalization * pow(ModuleBase::IMAG_UNIT, l1);			// Peize Lin add normalization 2015-12-29
@@ -468,7 +468,7 @@ void Numerical_Basis::numerical_atomic_wfc(const int &ik,
         for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             //OUT("ia",ia);
-            std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
+            std::complex<double> *sk = GlobalC::sf.get_sk(ik, it, ia, GlobalC::wfcpw);
             for (int l = 0; l < GlobalC::ucell.atoms[it].nwl+1; l++)
             {
                 //OUT("l",l);

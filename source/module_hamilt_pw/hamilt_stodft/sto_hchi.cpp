@@ -16,9 +16,10 @@ Stochastic_hchi::~Stochastic_hchi()
 {
 }
 
-void Stochastic_hchi:: init(ModulePW::PW_Basis_K* wfc_basis)
+void Stochastic_hchi:: init(ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv_in)
 {
 	wfcpw = wfc_basis;
+	pkv = pkv_in;
 }
 
 
@@ -29,9 +30,9 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 	//---------------------------------------------------
 
 	const int ik = this->current_ik;
-	const int current_spin = GlobalC::kv.isk[ik];
-	const int npwx = GlobalC::wf.npwx;
-	const int npw = GlobalC::kv.ngk[ik];
+	const int current_spin = pkv->isk[ik];
+	const int npwx = this->wfcpw->npwk_max;
+	const int npw = this->wfcpw->npwk[ik];
 	const int npm = GlobalV::NPOL * m;
 	const int inc = 1;
 	const double tpiba2 = GlobalC::ucell.tpiba2;
@@ -160,8 +161,8 @@ void Stochastic_hchi:: hchi_norm(complex<double> *chig, complex<double> *hchig, 
 	this->hchi(chig,hchig,m);
 
 	const int ik = this->current_ik;
-	const int npwx = GlobalC::wf.npwx;
-	const int npw = GlobalC::kv.ngk[ik];
+	const int npwx = this->wfcpw->npwk_max;
+	const int npw = this->wfcpw->npwk[ik];
 	const double Ebar = (Emin + Emax)/2;
 	const double DeltaE = (Emax - Emin)/2;
 	for(int ib = 0 ; ib < m ; ++ib)

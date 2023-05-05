@@ -7,9 +7,9 @@ template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
                                            ModulePW::PW_Basis* rho_basis,
-                                           ModuleSymmetry::Symmetry& symm,
-                                           Structure_Factor& sf,
-                                           K_Vectors& kv,
+                                           ModuleSymmetry::Symmetry* p_symm,
+                                           Structure_Factor* p_sf,
+                                           K_Vectors* p_kv,
                                            ModulePW::PW_Basis_K* wfc_basis,
                                            const psi::Psi<complex<FPTYPE>>* psi_in,
                                            const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
@@ -18,9 +18,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
 	ModuleBase::timer::tick("Stress_PW","cal_stress");    
 
 	// total stress
-	sigmatot.create(3,3);
-	ModuleBase::matrix sigmaxc;
-	// exchange-correlation stress
+    sigmatot.create(3, 3);
+    ModuleBase::matrix sigmaxc;
+    // exchange-correlation stress
 	sigmaxc.create(3,3);
 	// hartree stress
 	ModuleBase::matrix sigmahar;
@@ -61,7 +61,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
 	}
 
 	//kinetic contribution
-    this->stress_kin(sigmakin, this->pelec->wg, symm, kv, wfc_basis, psi_in);
+    this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, psi_in);
 
     // hartree contribution
     this->stress_har(sigmahar, rho_basis, 1, pelec->charge);
@@ -81,19 +81,19 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                           this->pelec->wg,
                           this->pelec->pot->get_effective_vofk(),
                           pelec->charge,
-                          kv,
+                          p_kv,
                           wfc_basis,
                           psi_in);
     }
 
     // local contribution
-    this->stress_loc(sigmaloc, rho_basis, sf, 1, pelec->charge);
+    this->stress_loc(sigmaloc, rho_basis, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, sf, 1, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, pelec->charge);
 
     // nonlocal
-    this->stress_nl(sigmanl, this->pelec->wg, kv, symm, wfc_basis, d_psi_in);
+    this->stress_nl(sigmanl, this->pelec->wg, p_sf, p_kv, p_symm, wfc_basis, d_psi_in);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
@@ -115,7 +115,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        symm.stress_symmetry(sigmatot, GlobalC::ucell);
+        p_symm->stress_symmetry(sigmatot, GlobalC::ucell);
     }
 
 	bool ry = false;

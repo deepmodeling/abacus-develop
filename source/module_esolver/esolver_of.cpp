@@ -1087,7 +1087,7 @@ void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces<double> ff(GlobalC::ucell.nat);
     ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
-    ff.cal_force(force, placeholder_wg, pelec->charge, this->pw_rho, GlobalC::symm, GlobalC::sf);
+    ff.cal_force(force, placeholder_wg, pelec->charge, this->pw_rho, &GlobalC::symm, &GlobalC::sf);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
@@ -1133,7 +1133,7 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     }
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress, GlobalC::ucell, GlobalC::symm, GlobalC::sf, GlobalC::kv);
+    ss.cal_stress(stress, kinetic_stress, GlobalC::ucell, &GlobalC::symm, &GlobalC::sf, &GlobalC::kv);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

@@ -62,8 +62,8 @@ class Stress_Func
     //  1) the stress from the electron kinetic energy
     void stress_kin(ModuleBase::matrix& sigma,
                     const ModuleBase::matrix& wg,
-                    ModuleSymmetry::Symmetry& symm,
-                    K_Vectors& kv,
+                    ModuleSymmetry::Symmetry* p_symm,
+                    K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
                     const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // electron kinetic part in PW basis
 
@@ -82,7 +82,7 @@ class Stress_Func
     // 4) the stress from the local pseudopotentials
     void stress_loc(ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
-                    Structure_Factor& sf,
+                    Structure_Factor* p_sf,
                     const bool is_pw,
                     const Charge* const chr); // local pseudopotential part in PW or LCAO
 
@@ -101,7 +101,7 @@ class Stress_Func
     // 5) the stress from the non-linear core correction (if any)
     void stress_cc(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
-                   Structure_Factor& sf,
+                   Structure_Factor* p_sf,
                    const bool is_pw,
                    const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 
@@ -121,21 +121,23 @@ class Stress_Func
                      const ModuleBase::matrix& wg,
                      const ModuleBase::matrix& v_ofk,
                      const Charge* const chr,
-                     K_Vectors& kv,
+                     K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
                      const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // gga part in PW basis
 
     // 7) the stress from the non-local pseudopotentials
     void stress_nl(ModuleBase::matrix& sigma,
                    const ModuleBase::matrix& wg,
-                   K_Vectors& kv,
-                   ModuleSymmetry::Symmetry& symm,
+                   Structure_Factor* p_sf,
+                   K_Vectors* p_kv,
+                   ModuleSymmetry::Symmetry* p_symm,
                    ModulePW::PW_Basis_K* wfc_basis,
-                   const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // nonlocal part in PW basis
+                   const psi::Psi<complex<FPTYPE>, Device>* psi_in); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                    const int ik,
                    const int ipol,
+                   Structure_Factor* p_sf,
                    ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
     void dylmr2(const int nylm,
                 const int ngy,
@@ -144,6 +146,7 @@ class Stress_Func
                 const int ipol); // used in get_dvnl1()
     void get_dvnl2(ModuleBase::ComplexMatrix& vkb,
                    const int ik,
+                   Structure_Factor* p_sf,
                    ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
     FPTYPE Polynomial_Interpolation_nl(const ModuleBase::realArray& table,
                                        const int& dim1,

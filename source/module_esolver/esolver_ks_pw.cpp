@@ -88,7 +88,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         if(this->psi != nullptr) delete this->psi;
-        this->psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::wfcpw->npwk_max);
+        this->psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::kv.ngk.data(), GlobalC::wfcpw->npwk_max);
 
         // cout<<GlobalC::rhopw->nrxx<<endl;
         // cout<<"before ufft allocate"<<endl;
@@ -98,7 +98,7 @@ namespace ModuleESolver
         //=======================
         // init pseudopotential
         //=======================
-        GlobalC::ppcell.init(GlobalC::ucell.ntype, GlobalC::wfcpw);
+        GlobalC::ppcell.init(GlobalC::ucell.ntype, &GlobalC::sf, GlobalC::wfcpw);
 
         //=====================
         // init hamiltonian
@@ -125,7 +125,7 @@ namespace ModuleESolver
         //==================================================
         // create GlobalC::ppcell.tab_at , for trial wave functions.
         //==================================================
-        GlobalC::wf.init_at_1();
+        GlobalC::wf.init_at_1(&GlobalC::sf);
 
         //================================
         // Initial start wave functions
@@ -157,7 +157,7 @@ namespace ModuleESolver
         //init HSolver
         if(this->phsol == nullptr)
         {
-            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw, &GlobalC::wf);
         }
 
         //init ElecState,
@@ -210,10 +210,10 @@ namespace ModuleESolver
 #endif
             this->pw_wfc->setuptransform();
             for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
-            this->pw_wfc->collect_local_pw(); 
+            this->pw_wfc->collect_local_pw();
 
-            delete this->phsol;  
-            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+            delete this->phsol;
+            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw, &GlobalC::wf);
 
             delete this->pelec;  
             this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
@@ -238,7 +238,7 @@ namespace ModuleESolver
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
+            GlobalC::wf.init_at_1(&GlobalC::sf);
         }
         else if (GlobalV::md_prec_level == 0)
         {
@@ -249,7 +249,7 @@ namespace ModuleESolver
             GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
             GlobalC::wfcpw->collect_local_pw(); 
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
+            GlobalC::wf.init_at_1(&GlobalC::sf);
         }
         ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
     }
@@ -659,14 +659,14 @@ namespace ModuleESolver
                                reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
         }
         ff.cal_force(force,
-                        this->pelec->wg,
-                        this->pelec->charge,
-                        GlobalC::rhopw,
-                        GlobalC::symm,
-                        GlobalC::sf,
-                        &GlobalC::kv,
-                        GlobalC::wfcpw,
-                        this->__kspw_psi);
+                     this->pelec->wg,
+                     this->pelec->charge,
+                     GlobalC::rhopw,
+                     &GlobalC::symm,
+                     &GlobalC::sf,
+                     &GlobalC::kv,
+                     GlobalC::wfcpw,
+                     this->__kspw_psi);
     }
 
     template<typename FPTYPE, typename Device>
@@ -682,9 +682,9 @@ namespace ModuleESolver
         ss.cal_stress(stress,
                       GlobalC::ucell,
                       GlobalC::rhopw,
-                      GlobalC::symm,
-                      GlobalC::sf,
-                      GlobalC::kv,
+                      &GlobalC::symm,
+                      &GlobalC::sf,
+                      &GlobalC::kv,
                       GlobalC::wfcpw,
                       this->psi,
                       this->__kspw_psi);
@@ -827,7 +827,7 @@ namespace ModuleESolver
         if(this->phsol != nullptr)
         {
             hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
-            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr; 
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER, true);
         }
         else

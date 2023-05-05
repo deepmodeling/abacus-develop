@@ -20,10 +20,6 @@ WF_atomic::~WF_atomic()
 	{
 		std::cout << " ~WF_atomic()" << std::endl;
 	}
-    if(this->evc!=nullptr)
-    {
-        delete[] evc;
-    }
     if(this->wanf2!= nullptr)
     {
         delete[] wanf2;
@@ -39,12 +35,12 @@ WF_atomic::~WF_atomic()
 // NAME : init_at_1(init a table with the radial Fourier
 // transform of the atomic WF_atomictions)
 //==========================================================
-void WF_atomic::init_at_1(void)
+void WF_atomic::init_at_1(Structure_Factor *sf_in)
 {
     if (GlobalV::test_wf) ModuleBase::TITLE("WF_atomic","init_at_1");
     ModuleBase::timer::tick("WF_atomic","init_at_1");
-
-	GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
+    this->psf = sf_in;
+    GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
 
     this->print_PAOs();
 
@@ -211,33 +207,6 @@ void WF_atomic::print_PAOs(void)const
     return;
 }
 
-
-//===================================================================
-// This routine computes an estimate of the start_ WF_atomictions
-// from superposition of atomic WF_atomictions or random wave functions.
-//===================================================================
-// from wfcinit.f90
-
-void WF_atomic::check_evc()const
-{
-    std::cout<<"\n Check psi : \n";
-
-    for (int iw=0;iw<GlobalV::NBANDS;iw++)
-    {
-        double sum_evc = abs2_row(this->evc[0],iw);
-        ModuleBase::GlobalFunc::OUT("iw",iw);
-        ModuleBase::GlobalFunc::OUT("sum_evc",sum_evc);
-    }
-
-    for (int ik=0;ik<GlobalC::kv.nks;ik++)
-    {
-        double sum_evc = abs2(this->evc[ik]);
-        ModuleBase::GlobalFunc::OUT("ik",ik);
-        ModuleBase::GlobalFunc::OUT("sum_evc2",sum_evc);
-    }
-    //ModuleBase::QUIT();
-}
-
 void WF_atomic::atomic_wfc(const int ik,
                            const int np,
                            const int lmax_wfc,
@@ -275,7 +244,7 @@ void WF_atomic::atomic_wfc(const int ik,
         for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
         {
 			//std::cout << "\n it = " << it << " ia = " << ia << std::endl;
-            std::complex<double> *sk = this->get_sk(ik, it, ia,wfc_basis);
+            std::complex<double> *sk = this->psf->get_sk(ik, it, ia, wfc_basis);
             //-------------------------------------------------------
             // Calculate G space 3D wave functions
             //-------------------------------------------------------
@@ -559,7 +528,7 @@ template<typename FPTYPE>
 void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
 {
     assert(iw_start >= 0);
-    const int ng = GlobalC::kv.ngk[ik];
+    const int ng = wfc_basis->npwk[ik];
 #ifdef __MPI
 // #if ((defined __CUDA) || (defined __ROCM))
     // if(pw_seed > 0)//qianrui add 2021-8-13
@@ -653,7 +622,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix &psi,const int iw_start,c
 {
     assert(iw_start >= 0);
     assert(psi.nr >= iw_end);
-    const int ng = GlobalC::kv.ngk[ik];
+    const int ng = wfc_basis->npwk[ik];
 #ifdef __MPI
     if(pw_seed > 0)//qianrui add 2021-8-13
     {
@@ -726,55 +695,6 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix &psi,const int iw_start,c
 #ifdef __MPI
     }
 #endif
-
-    return;
-}
-
-void WF_atomic::evc_transform_psi()
-{
-    if(this->evc==nullptr || this->psi != nullptr)
-    {
-        //ModuleBase::WARNING_QUIT("WF_atomic","no evc or psi is not nullptr, please check!");
-        std::cout<<__FILE__<<__LINE__<<" there is no need to transform!"<<std::endl;
-        return;
-    }
-    this->psi = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, this->evc[0].nr, this->evc[0].nc, GlobalC::kv.ngk.data());
-    for(int ik = 0; ik < GlobalC::kv.nks; ++ik)
-    {
-        this->psi->fix_k(ik);
-        std::complex<double> *ppsi = this->psi->get_pointer();
-        std::complex<double> *pevc = this->evc[ik].c;
-        for(int index = 0; index < this->evc[0].nc * this->evc[0].nr; ++index)
-        {
-            ppsi[index] =  pevc[index];
-        }
-    }
-    delete[] this->evc;
-    this->evc = nullptr;
-
-    return;
-}
-
-void WF_atomic::psi_transform_evc()
-{
-    if(this->psi==nullptr || this->evc != nullptr)
-    {
-        ModuleBase::WARNING_QUIT("WF_atomic","no psi, please check!");
-    }
-    this->evc = new ModuleBase::ComplexMatrix [this->psi->get_nk()];
-    for(int ik = 0; ik < this->psi->get_nk(); ++ik)
-    {
-        this->evc[ik].create(this->psi->get_nbands(), this->psi->get_nbasis());
-        this->psi->fix_k(ik);
-        std::complex<double> *ppsi = this->psi->get_pointer();
-        std::complex<double> *pevc = this->evc[ik].c;
-        for(int index = 0; index < this->evc[ik].nc * this->evc[ik].nr; ++index)
-        {
-            pevc[index] =  ppsi[index];
-        }
-    }
-    delete this->psi;
-    this->psi = nullptr;
 
     return;
 }

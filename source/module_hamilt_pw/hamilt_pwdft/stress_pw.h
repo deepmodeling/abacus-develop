@@ -14,9 +14,9 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
                     UnitCell& ucell,
                     ModulePW::PW_Basis* rho_basis,
-                    ModuleSymmetry::Symmetry& symm,
-                    Structure_Factor& sf,
-                    K_Vectors& kv,
+                    ModuleSymmetry::Symmetry* p_symm,
+                    Structure_Factor* p_sf,
+                    K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
                     const psi::Psi<complex<FPTYPE>>* psi_in = nullptr,
                     const psi::Psi<complex<FPTYPE>, Device>* d_psi_in = nullptr);

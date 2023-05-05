@@ -6,8 +6,8 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const ModuleBase::matrix& wg,
-                                             ModuleSymmetry::Symmetry& symm,
-                                             K_Vectors& kv,
+                                             ModuleSymmetry::Symmetry* p_symm,
+                                             K_Vectors* p_kv,
                                              ModulePW::PW_Basis_K* wfc_basis,
                                              const psi::Psi<complex<FPTYPE>>* psi_in)
 {
@@ -27,10 +27,10 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	}
 		
 	int npwx=0;
-    for (int ik = 0; ik < kv.nks; ik++)
+    for (int ik = 0; ik < p_kv->nks; ik++)
     {
-        if (npwx < kv.ngk[ik])
-            npwx = kv.ngk[ik];
+        if (npwx < p_kv->ngk[ik])
+            npwx = p_kv->ngk[ik];
     }
 
     gk[0]= new FPTYPE[npwx];
@@ -38,9 +38,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	gk[2]= new FPTYPE[npwx];
 	FPTYPE factor=ModuleBase::TWO_PI/GlobalC::ucell.lat0;
 
-	for(int ik=0;ik<kv.nks;ik++)
-	{
-		npw = kv.ngk[ik];
+    for (int ik = 0; ik < p_kv->nks; ik++)
+    {
+        npw = p_kv->ngk[ik];
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -61,14 +61,8 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 				{
 					if( std::fabs(wg(ik, ibnd)) < ModuleBase::threshold_wg * wg(ik, 0) ) continue;
 					const std::complex<FPTYPE>* ppsi=nullptr;
-					if(psi_in!=nullptr)
-					{
-						ppsi = &(psi_in[0](ik, ibnd, 0));
-					}
-					else
-					{
-						ppsi = &(GlobalC::wf.evc[ik](ibnd, 0));
-					}
+					ppsi = &(psi_in[0](ik, ibnd, 0));
+					
 					FPTYPE sum = 0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:sum)
@@ -86,11 +80,11 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 		//contribution from the nonlocal part
 		   
 		//stres_us(ik, gk, npw);
-	}
-		
-	//add the US term from augmentation charge derivatives
-		
-	// addussstres(sigmanlc);
+    }
+
+    // add the US term from augmentation charge derivatives
+
+    // addussstres(sigmanlc);
 	
 	//mp_cast
 		
@@ -142,7 +136,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	//do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        symm.stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->stress_symmetry(sigma, GlobalC::ucell);
     } // end symmetry
 
     delete[] gk[0];

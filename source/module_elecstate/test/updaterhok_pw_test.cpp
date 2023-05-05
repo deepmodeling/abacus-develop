@@ -315,7 +315,7 @@ TEST_F(EState,RhoPW)
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
     // GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
     // we need to supply NBANDS here
-    psi::Psi<std::complex<double>>* psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::wfcpw->npwk_max);
+    psi::Psi<std::complex<double>>* psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::kv.ngk.data(), GlobalC::wfcpw->npwk_max);
     // std::cout<<"npwx "<<GlobalC::wfcpw->npwk_max<<std::endl;
 
     //====== read wavefunction ==========================================

@@ -26,8 +26,8 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        const ModuleBase::matrix& wg,
                                        const Charge* const chr,
                                        ModulePW::PW_Basis* rho_basis,
-                                       ModuleSymmetry::Symmetry& symm,
-                                       Structure_Factor& sf,
+                                       ModuleSymmetry::Symmetry* p_symm,
+                                       Structure_Factor* p_sf,
                                        K_Vectors* pkv,
                                        ModulePW::PW_Basis_K* wfc_basis,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
@@ -42,11 +42,11 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, rho_basis, chr);
-    this->cal_force_ew(forceion, rho_basis, sf);
+    this->cal_force_ew(forceion, rho_basis, p_sf);
     if(wfc_basis != nullptr)
     {
         this->npwx = wfc_basis->npwk_max;
-        this->cal_force_nl(forcenl, wg, *pkv, wfc_basis, psi_in);
+        this->cal_force_nl(forcenl, wg, pkv, wfc_basis, psi_in);
     }
     this->cal_force_cc(forcecc, rho_basis, chr);
     this->cal_force_scc(forcescc, rho_basis);
@@ -175,8 +175,8 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                 pos[3 * iat + 2] = GlobalC::ucell.atoms[it].taud[ia].z;
                 for (int k = 0; k < 3; ++k)
                 {
-                    symm.check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                    symm.check_boundary(pos[iat * 3 + k]);
+                    p_symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                    p_symm->check_boundary(pos[iat * 3 + k]);
                 }
                 iat++;
             }
@@ -204,7 +204,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             force(iat, 1) = d2;
             force(iat, 2) = d3;
         }
-        symm.force_symmetry(force, pos, GlobalC::ucell);
+        p_symm->force_symmetry(force, pos, GlobalC::ucell);
         for (int iat = 0; iat < this->nat; iat++)
         {
             ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0),
@@ -226,7 +226,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             force(iat, 1) = d2;
             force(iat, 2) = d3;
         }
-        // std::cout << "nrotk =" << symm.nrotk << std::endl;
+        // std::cout << "nrotk =" << p_symm->nrotk << std::endl;
         delete[] pos;
     }
 
@@ -509,7 +509,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
                                           ModulePW::PW_Basis* rho_basis,
-                                          Structure_Factor& sf)
+                                          Structure_Factor* p_sf)
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");
@@ -537,7 +537,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
             const double dzv = static_cast<double>(GlobalC::ucell.atoms[0].ncpp.zv);
             for (int ig = igb; ig < ig_end; ++ig)
             { // initialize aux
-                aux[ig] = dzv * conj(sf.strucFac(0, ig));
+                aux[ig] = dzv * conj(p_sf->strucFac(0, ig));
             }
         }
         for (int it = 1; it < GlobalC::ucell.ntype; it++)
@@ -545,7 +545,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
             const double dzv = static_cast<double>(GlobalC::ucell.atoms[it].ncpp.zv);
             for (int ig = igb; ig < ig_end; ++ig)
             { // accumulate aux
-                aux[ig] += dzv * conj(sf.strucFac(it, ig));
+                aux[ig] += dzv * conj(p_sf->strucFac(it, ig));
             }
         }
     }
@@ -898,7 +898,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                                           const ModuleBase::matrix& wg,
-                                          K_Vectors& kv,
+                                          K_Vectors* p_kv,
                                           ModulePW::PW_Basis_K* wfc_basis,
                                           const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
@@ -963,7 +963,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     for (int ik = 0; ik < wfc_basis->nks; ik++)
     {
         if (GlobalV::NSPIN == 2)
-            GlobalV::CURRENT_SPIN = kv.isk[ik];
+            GlobalV::CURRENT_SPIN = p_kv->isk[ik];
         const int nbasis = wfc_basis->npwk[ik];
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)

@@ -8,7 +8,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
                                             ModulePW::PW_Basis *rho_basis,
-                                            Structure_Factor &sf,
+                                            Structure_Factor *p_sf,
                                             const bool is_pw,
                                             const Charge *const chr)
 {
@@ -118,9 +118,9 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
 			{
                 std::complex<double> local_sigmadiag;
                 if (rho_basis->ig_gge0 == ig)
-                    local_sigmadiag = conj(psic[ig]) * sf.strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]];
+                    local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]];
                 else
-                    local_sigmadiag = conj(psic[ig]) * sf.strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
+                    local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
                 sigmadiag += local_sigmadiag.real();
             }
 			this->deriv_drhoc (
@@ -149,8 +149,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
 					for (int m = 0;m< 3;m++)
 					{
                         const std::complex<FPTYPE> t
-                            = conj(psic[ig]) * sf.strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba
-                              * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
+                            = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]]
+                              * GlobalC::ucell.tpiba * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
                         //						sigmacc [l][ m] += t.real();
                         local_sigma(l,m) += t.real();
 					}//end m

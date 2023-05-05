@@ -35,7 +35,7 @@ Stochastic_Iter::~Stochastic_Iter()
     delete[] chiallorder;
 }
 
-void Stochastic_Iter::init(int *nchip_in, const int method_in, ModulePW::PW_Basis_K *rho_basis, Stochastic_WF &stowf)
+void Stochastic_Iter::init(int *nchip_in, const int method_in, K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf)
 {
     this->nchip = nchip_in;
     this->targetne = 1;
@@ -130,9 +130,11 @@ class TestHSolverPW_SDFT : public ::testing::Test
 	public:
     ModulePW::PW_Basis_K pwbk;
     Stochastic_WF stowf;
-	hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&pwbk, stowf, 0);
+    K_Vectors kv;
+    wavefunc wf;
+    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, 0);
 
-	hamilt::Hamilt<double> hamilt_test_d;
+    hamilt::Hamilt<double> hamilt_test_d;
 
 	psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<double>> psi_test_no;

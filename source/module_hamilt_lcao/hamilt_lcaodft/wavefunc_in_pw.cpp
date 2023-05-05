@@ -275,9 +275,9 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 	{
 		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
-			int ic=0;
-			for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
+            std::complex<double> *sk = GlobalC::sf.get_sk(ik, it, ia, GlobalC::wfcpw);
+            int ic = 0;
+            for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
 				std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, L); //mohan 2010-04-19
 				for(int N=0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
@@ -479,7 +479,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 	{
 // 		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
 // 		{
-// 			std::complex<double> *skq = GlobalC::wf.get_skq(ik, it, ia, wfc_basis, q);
+// 			std::complex<double> *skq = GlobalC::sf.get_skq(ik, it, ia, wfc_basis, q);
 // 			int ic=0;
 // 			for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 // 			{
@@ -494,8 +494,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 						}
 // 						else
 // 						{
-// 						   flq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(table_local, it, ic, GlobalV::NQX, GlobalV::DQ,
-// gkq[ig].norm() * GlobalC::ucell.tpiba );
+// 						   flq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(table_local, it, ic, GlobalV::NQX,
+// GlobalV::DQ, gkq[ig].norm() * GlobalC::ucell.tpiba );
 // 						}
 // 					}
 

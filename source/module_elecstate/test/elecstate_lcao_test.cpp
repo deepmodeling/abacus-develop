@@ -42,8 +42,6 @@ wavefunc::wavefunc(){}
 wavefunc::~wavefunc(){}
 WF_atomic::WF_atomic(){}
 WF_atomic::~WF_atomic(){}
-WF_igk::WF_igk(){}
-WF_igk::~WF_igk(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
 pseudopot_cell_vl::pseudopot_cell_vl(){}

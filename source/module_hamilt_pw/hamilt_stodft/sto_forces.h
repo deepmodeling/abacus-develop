@@ -24,8 +24,8 @@ class Sto_Forces : public Forces<double>
                       const ModuleBase::matrix& wg,
                       const Charge* const chr,
                       ModulePW::PW_Basis* rho_basis,
-                      ModuleSymmetry::Symmetry& symm,
-                      Structure_Factor& sf,
+                      ModuleSymmetry::Symmetry* p_symm,
+                      Structure_Factor* p_sf,
                       K_Vectors* pkv,
                       ModulePW::PW_Basis_K* wfc_basis,
                       const psi::Psi<std::complex<double>>* psi_in,
@@ -34,6 +34,7 @@ class Sto_Forces : public Forces<double>
   private:
     void cal_sto_force_nl(ModuleBase::matrix& forcenl,
                           const ModuleBase::matrix& wg,
+                          K_Vectors* p_kv,
                           ModulePW::PW_Basis_K* wfc_basis,
                           const psi::Psi<complex<double>>* psi_in,
                           Stochastic_WF& stowf);
