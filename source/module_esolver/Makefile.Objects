@@ -396,7 +396,7 @@ OBJS_LCAO=DM_gamma.o\
       dm_2d.o\
       wavefunc_in_pw.o\
 
-OBJS_SRC_RI=conv_coulomb_pot_k.o\
+OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o \
       exx_abfs-jle.o \
       exx_abfs-io.o \
@@ -405,8 +405,7 @@ OBJS_SRC_RI=conv_coulomb_pot_k.o\
       exx_opt_orb.o \
       exx_opt_orb-print.o \
       exx_lip.o\
-
-OBJS_MODULE_RI=Matrix_Orbs11.o\
+      Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
       RI_2D_Comm.o
