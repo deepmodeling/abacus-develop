@@ -163,7 +163,14 @@ class Potential : public PotBase
         const int& precision,
         const int& hartree = 0) const;
 
-    void write_elecstat_pot(const std::string& fn, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
+    void write_elecstat_pot(
+#ifdef __MPI
+        const int& bz,
+        const int& nbz,
+#endif
+        const std::string &fn, 
+        ModulePW::PW_Basis* rho_basis, 
+        const Charge* const chr);
 
   private:
     void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff) override;
