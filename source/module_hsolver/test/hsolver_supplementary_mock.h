@@ -47,7 +47,9 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
-                        int nk_in)
+                        int nk_in,
+                        const int& nbz_in,
+                        const int& bz_in)
 {
     return;
 }
