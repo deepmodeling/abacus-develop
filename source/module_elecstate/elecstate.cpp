@@ -21,7 +21,7 @@ void ElecState::fixed_weights(const double* const ocp_kb)
 {
 
     int num = 0;
-    num = GlobalC::kv.nks * GlobalV::NBANDS;
+    num = this->klist->nks * GlobalV::NBANDS;
     if (num != GlobalV::ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
