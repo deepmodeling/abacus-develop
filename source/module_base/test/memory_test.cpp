@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include <fstream>
 #include <cstdio>
+#include "../memory.h"
 
 namespace GlobalV
 {
@@ -12,70 +13,65 @@ namespace GlobalV
  *  unit test of class Memory
  ***********************************************/
 
-/**
+/*
  * - Tested Functions:
  *   - print_all
  *     - print memory consumed (> MB) in a
  *     - std::ofstream file
- */
-
-#define private public
-#include "../memory.h"
+*/
 
 class MemoryTest : public testing::Test
 {
 protected:
-	// definition according to ../memory_psi.cpp
-	double factor = 1.0 / 1024.0 / 1024.0; // MB
-	double complex_matrix_mem = 2*sizeof(double) * factor; // byte to MB
-	double double_mem = sizeof(double) * factor;
-	double int_mem = sizeof(int) * factor;
-	double bool_mem = sizeof(bool) * factor;
-	double float_mem = sizeof(float) * factor;
-	double short_mem = sizeof(short) * factor;
-	int n = 1024;
 	// for capturing stdout
-	std::string output;
+	std::string line;
+	std::string name;
 	// for output in file
 	std::ofstream ofs;
 	std::ifstream ifs;
+	double factor = 1024*1024;
+	double value;
 	void TearDown()
 	{
 		remove("tmp");
 	}
 };
 
-TEST_F(MemoryTest, Constructor)
-{
-	EXPECT_NO_THROW(ModuleBase::Memory mem);
-}
-
 TEST_F(MemoryTest, printall)
 {
 	ofs.open("tmp");
 	// total memory is an internal parameter and added inside the class Memory
-	ModuleBase::Memory::record("Rrho",1024*1024);
-	ModuleBase::Memory::record("drho",1024*1024);
-	ModuleBase::Memory::record("evc",1024*1024);
+	ModuleBase::Memory::record("item1",10.0*factor);
+	ModuleBase::Memory::record("item1",12.0*factor);
+	ModuleBase::Memory::record("item1",8.0*factor);
+	ModuleBase::Memory::record("item2",5.0*factor);
+	ModuleBase::Memory::record("item3",15.0*factor);
+	ModuleBase::Memory::record("item4",0.8*factor);
+
 	ModuleBase::Memory::print_all(ofs);
 	ofs.close();
 	ifs.open("tmp");
-	getline(ifs,output);
-	getline(ifs,output);
-	EXPECT_THAT(output,testing::HasSubstr("MEMORY(MB)"));
+	getline(ifs,line);
+	getline(ifs,line);
+	EXPECT_THAT(line,testing::HasSubstr("NAME---------------|MEMORY(MB)--------"));
+	ifs >> name >> value;
+	EXPECT_THAT(name,testing::HasSubstr("total"));
+	EXPECT_NEAR(value,32.8,1e-8);
+	
+	ifs >> name >> value;
+	EXPECT_THAT(name,testing::HasSubstr("item3"));
+	EXPECT_NEAR(value,15.0,1e-8);
+	
+	ifs >> name >> value;
+	EXPECT_THAT(name,testing::HasSubstr("item1"));
+	EXPECT_NEAR(value,12.0,1e-8);
+	
+	ifs >> name >> value;
+	EXPECT_THAT(name,testing::HasSubstr("item2"));
+	EXPECT_NEAR(value, 5.0,1e-8);
+
+	getline(ifs,line);
+	getline(ifs,line);
+	EXPECT_THAT(line,testing::HasSubstr("< 1.0 MB has been ignored"));
 	ifs.close();
 }
-
-TEST_F(MemoryTest, finish)
-{
-	*ModuleBase::Memory::name = "tmp_name";
-	*ModuleBase::Memory::consume = 100.0;
-	ModuleBase::Memory::init_flag = true;
-	ofs.open("tmp");
-	// total memory is an internal parameter and added inside the class Memory
-	ModuleBase::Memory::record("Rrho",1024*1024);
-	EXPECT_NO_THROW(ModuleBase::Memory::finish(ofs));
-	ofs.close();
-	EXPECT_FALSE(ModuleBase::Memory::init_flag);
-}
-#undef private

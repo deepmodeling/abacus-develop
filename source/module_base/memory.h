@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <vector>
 namespace ModuleBase
 {
 
@@ -33,13 +34,6 @@ class Memory
       const size_t &n_in
     );
 
-    static double &get_total(void)
-    {
-        return total;
-    }
-
-    static void finish(std::ofstream &ofs);
-
     /**
      * @brief Print memory consumed (> 1 MB) in a file
      *
@@ -47,15 +41,12 @@ class Memory
      */
     static void print_all(std::ofstream &ofs);
 
-    static void print(const int find_in);
-
   private:
     static double total;
-    static std::string *name;
-    static double *consume;
-    static int n_memory;
-    static int n_now;
-    static bool init_flag;
+    static std::vector<std::string> name;
+    static std::vector<double> consume;
+
+    static void print(const int find_in);
 };
 
 } // namespace ModuleBase
