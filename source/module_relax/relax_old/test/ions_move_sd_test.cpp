@@ -15,7 +15,7 @@
  *   - Ions_Move_SD::cal_tradius_sd()
  */
 
-class Ions_Move_SD_Test : public ::testing::Test
+class IonsMoveSDTest : public ::testing::Test
 {
   protected:
     void SetUp() override
@@ -35,7 +35,7 @@ class Ions_Move_SD_Test : public ::testing::Test
 };
 
 // Test whether the allocate() function can correctly allocate memory space
-TEST_F(Ions_Move_SD_Test, TestAllocate)
+TEST_F(IonsMoveSDTest, TestAllocate)
 {
     Ions_Move_Basic::dim = 4;
     im_sd.allocate();
@@ -46,14 +46,14 @@ TEST_F(Ions_Move_SD_Test, TestAllocate)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(Ions_Move_SD_Test, TestAllocateWithZeroDimension)
+TEST_F(IonsMoveSDTest, TestAllocateWithZeroDimension)
 {
     Ions_Move_Basic::dim = 0;
     ASSERT_DEATH(im_sd.allocate(), "");
 }
 
 // Check that the arrays are correctly initialized to 0
-TEST_F(Ions_Move_SD_Test, TestAllocateAndInitialize)
+TEST_F(IonsMoveSDTest, TestAllocateAndInitialize)
 {
     Ions_Move_Basic::dim = 4;
     im_sd.allocate();
@@ -66,7 +66,7 @@ TEST_F(Ions_Move_SD_Test, TestAllocateAndInitialize)
 }
 
 // Test function start() when converged
-TEST_F(Ions_Move_SD_Test, TestStartConverged)
+TEST_F(IonsMoveSDTest, TestStartConverged)
 {
     // setup data
     Ions_Move_Basic::istep = 1;
@@ -103,7 +103,7 @@ TEST_F(Ions_Move_SD_Test, TestStartConverged)
 }
 
 // Test function start() when nor converged
-TEST_F(Ions_Move_SD_Test, TestStartNotConverged)
+TEST_F(IonsMoveSDTest, TestStartNotConverged)
 {
     // setup data
     Ions_Move_Basic::istep = 1;
@@ -145,7 +145,7 @@ TEST_F(Ions_Move_SD_Test, TestStartNotConverged)
 }
 
 // Test function cal_tradius_sd() case 1
-TEST_F(Ions_Move_SD_Test, CalTradiusSdCase1)
+TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
     Ions_Move_Basic::istep = 1;
@@ -163,7 +163,7 @@ TEST_F(Ions_Move_SD_Test, CalTradiusSdCase1)
 }
 
 // Test function cal_tradius_sd() case 2
-TEST_F(Ions_Move_SD_Test, CalTradiusSdCase2)
+TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 {
     // setup data
     Ions_Move_Basic::istep = 2;
@@ -178,7 +178,7 @@ TEST_F(Ions_Move_SD_Test, CalTradiusSdCase2)
 }
 
 // Test function cal_tradius_sd() case 3
-TEST_F(Ions_Move_SD_Test, CalTradiusSdCase3)
+TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 {
     // setup data
     Ions_Move_Basic::istep = 2;
@@ -193,7 +193,7 @@ TEST_F(Ions_Move_SD_Test, CalTradiusSdCase3)
 }
 
 // Test function cal_tradius_sd() warning quit
-TEST_F(Ions_Move_SD_Test, CalTradiusWraningQuit)
+TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
 {
     // setup data
     Ions_Move_Basic::istep = 0;

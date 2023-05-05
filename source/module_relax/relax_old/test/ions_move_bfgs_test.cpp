@@ -18,7 +18,7 @@
  */
 
 // Define a fixture for the tests
-class Ions_Move_BFGS_Test : public ::testing::Test
+class IonsMoveBFGSTest : public ::testing::Test
 {
   protected:
     Ions_Move_BFGS bfgs;
@@ -36,7 +36,7 @@ class Ions_Move_BFGS_Test : public ::testing::Test
 };
 
 // Test the allocate() function case 1
-TEST_F(Ions_Move_BFGS_Test, AllocateCase1)
+TEST_F(IonsMoveBFGSTest, AllocateCase1)
 {
     // Initilize data
     bfgs.init_done = true;
@@ -51,7 +51,7 @@ TEST_F(Ions_Move_BFGS_Test, AllocateCase1)
 }
 
 // Test the allocate() function case 2
-TEST_F(Ions_Move_BFGS_Test, AllocateCase2)
+TEST_F(IonsMoveBFGSTest, AllocateCase2)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -66,7 +66,7 @@ TEST_F(Ions_Move_BFGS_Test, AllocateCase2)
 }
 
 // Test the start() function case 1
-TEST_F(Ions_Move_BFGS_Test, StartCase1)
+TEST_F(IonsMoveBFGSTest, StartCase1)
 {
     // Initilize data
     UnitCell ucell;
@@ -91,7 +91,7 @@ TEST_F(Ions_Move_BFGS_Test, StartCase1)
 }
 
 // Test the start() function case 2
-TEST_F(Ions_Move_BFGS_Test, StartCase2)
+TEST_F(IonsMoveBFGSTest, StartCase2)
 {
     // Initilize data
     UnitCell ucell;
@@ -117,7 +117,7 @@ TEST_F(Ions_Move_BFGS_Test, StartCase2)
 }
 
 // Test the restart_bfgs() function case 1
-TEST_F(Ions_Move_BFGS_Test, RestartBfgsCase1)
+TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -156,7 +156,7 @@ TEST_F(Ions_Move_BFGS_Test, RestartBfgsCase1)
 }
 
 // Test the restart_bfgs() function case 2
-TEST_F(Ions_Move_BFGS_Test, RestartBfgsCase2)
+TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -192,7 +192,7 @@ TEST_F(Ions_Move_BFGS_Test, RestartBfgsCase2)
 }
 
 // Test the bfgs_routine() function case 1
-TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase1)
+TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -258,7 +258,7 @@ TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase1)
 }
 
 // Test the bfgs_routine() function case 2
-TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase2)
+TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -318,7 +318,7 @@ TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase2)
 }
 
 // Test the bfgs_routine() function case 3
-TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase3)
+TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
 {
     // Initilize data
     double lat0 = 1.0;
@@ -377,7 +377,7 @@ TEST_F(Ions_Move_BFGS_Test, BfgsRoutineCase3)
 }
 
 // Test the bfgs_routine() function warning quit 1
-TEST_F(Ions_Move_BFGS_Test, BfgsRoutineWarningQuit1)
+TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
 {
     // Initilize data
     bfgs.init_done = false;
@@ -404,7 +404,7 @@ TEST_F(Ions_Move_BFGS_Test, BfgsRoutineWarningQuit1)
 }
 
 // Test the bfgs_routine() function warning quit 2
-TEST_F(Ions_Move_BFGS_Test, BfgsRoutineWarningQuit2)
+TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
 {
     // Initilize data
     bfgs.init_done = false;

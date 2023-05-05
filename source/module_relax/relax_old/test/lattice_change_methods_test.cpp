@@ -32,7 +32,7 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 }
 
 // Define a fixture for the tests
-class Lattice_Change_Methods_Test : public ::testing::Test
+class LatticeChangeMethodsTest : public ::testing::Test
 {
   protected:
     Lattice_Change_Methods lcm;
@@ -49,7 +49,7 @@ class Lattice_Change_Methods_Test : public ::testing::Test
 };
 
 // Test the allocate function
-TEST_F(Lattice_Change_Methods_Test, Allocate)
+TEST_F(LatticeChangeMethodsTest, Allocate)
 {
     lcm.allocate();
 
@@ -58,7 +58,7 @@ TEST_F(Lattice_Change_Methods_Test, Allocate)
 }
 
 // Test the cal_lattice_change function
-TEST_F(Lattice_Change_Methods_Test, CalLatticeChange)
+TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
 {
     int istep = 1;
     int stress_step = 2;
@@ -76,7 +76,7 @@ TEST_F(Lattice_Change_Methods_Test, CalLatticeChange)
 }
 
 // Test the get_converged function
-TEST_F(Lattice_Change_Methods_Test, GetConverged)
+TEST_F(LatticeChangeMethodsTest, GetConverged)
 {
     lcm.get_converged();
 
@@ -85,7 +85,7 @@ TEST_F(Lattice_Change_Methods_Test, GetConverged)
 }
 
 // Test the get_ediff function
-TEST_F(Lattice_Change_Methods_Test, GetEdiff)
+TEST_F(LatticeChangeMethodsTest, GetEdiff)
 {
     lcm.get_ediff();
 
@@ -94,7 +94,7 @@ TEST_F(Lattice_Change_Methods_Test, GetEdiff)
 }
 
 // Test the get_largest_grad function
-TEST_F(Lattice_Change_Methods_Test, GetLargestGrad)
+TEST_F(LatticeChangeMethodsTest, GetLargestGrad)
 {
     lcm.get_largest_grad();
 

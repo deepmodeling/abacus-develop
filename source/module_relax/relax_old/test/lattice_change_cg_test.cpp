@@ -18,7 +18,7 @@
  *   - Lattice_Change_CG::third_order()
  */
 
-class Lattice_Change_CG_Test : public ::testing::Test
+class LatticeChangeCGTest : public ::testing::Test
 {
   protected:
     void SetUp() override
@@ -40,7 +40,7 @@ class Lattice_Change_CG_Test : public ::testing::Test
 };
 
 // Test whether the allocate() function can correctly allocate memory space
-TEST_F(Lattice_Change_CG_Test, TestAllocate)
+TEST_F(LatticeChangeCGTest, TestAllocate)
 {
     Lattice_Change_Basic::dim = 4;
     lc_cg.allocate();
@@ -53,14 +53,14 @@ TEST_F(Lattice_Change_CG_Test, TestAllocate)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(Lattice_Change_CG_Test, TestAllocateWithZeroDimension)
+TEST_F(LatticeChangeCGTest, TestAllocateWithZeroDimension)
 {
     Lattice_Change_Basic::dim = 0;
     ASSERT_DEATH(lc_cg.allocate(), "");
 }
 
 // Check that the arrays are correctly initialized to 0
-TEST_F(Lattice_Change_CG_Test, TestAllocateAndInitialize)
+TEST_F(LatticeChangeCGTest, TestAllocateAndInitialize)
 {
     Lattice_Change_Basic::dim = 3;
     lc_cg.allocate();
@@ -73,7 +73,7 @@ TEST_F(Lattice_Change_CG_Test, TestAllocateAndInitialize)
 }
 
 // Test function start() when converged
-TEST_F(Lattice_Change_CG_Test, TestStartConverged)
+TEST_F(LatticeChangeCGTest, TestStartConverged)
 {
     // setup data
     UnitCell ucell;
@@ -102,7 +102,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartConverged)
 }
 
 // Test function start() sd branch
-TEST_F(Lattice_Change_CG_Test, TestStartSd)
+TEST_F(LatticeChangeCGTest, TestStartSd)
 {
     // setup data
     UnitCell ucell;
@@ -130,7 +130,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartSd)
 }
 
 // Test function start() trial branch with goto
-TEST_F(Lattice_Change_CG_Test, TestStartTrialGoto)
+TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
 {
     // setup data
     UnitCell ucell;
@@ -162,7 +162,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartTrialGoto)
 }
 
 // Test function start() trial branch without goto
-TEST_F(Lattice_Change_CG_Test, TestStartTrial)
+TEST_F(LatticeChangeCGTest, TestStartTrial)
 {
     // setup data
     UnitCell ucell;
@@ -192,7 +192,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartTrial)
 }
 
 // Test function start() no trial branch with goto case 1
-TEST_F(Lattice_Change_CG_Test, TestStartNoTrialGotoCase1)
+TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
 {
     // setup data
     UnitCell ucell;
@@ -223,7 +223,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartNoTrialGotoCase1)
 }
 
 // Test function start() no trial branch with goto case 2
-TEST_F(Lattice_Change_CG_Test, TestStartNoTrialGotoCase2)
+TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
 {
     // setup data
     UnitCell ucell;
@@ -257,7 +257,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartNoTrialGotoCase2)
 }
 
 // Test function start() no trial branch without goto
-TEST_F(Lattice_Change_CG_Test, TestStartNoTrial)
+TEST_F(LatticeChangeCGTest, TestStartNoTrial)
 {
     // setup data
     UnitCell ucell;
@@ -290,7 +290,7 @@ TEST_F(Lattice_Change_CG_Test, TestStartNoTrial)
 }
 
 // Test function setup_cg_grad() when ncggrad is multiple of 10000
-TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsMultipleOf10000)
+TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsMultipleOf10000)
 {
     double grad[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double grad0[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
@@ -313,7 +313,7 @@ TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsMultipleOf10000)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 < 0.5
-TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsNotMultipleOf10000Case1)
+TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
 {
     double grad[9] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double grad0[9] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -336,7 +336,7 @@ TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsNotMultipleOf10000Case1)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 >= 0.5
-TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsNotMultipleOf10000Case2)
+TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
 {
     double grad[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double grad0[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
@@ -359,7 +359,7 @@ TEST_F(Lattice_Change_CG_Test, SetupCgGradNcggradIsNotMultipleOf10000Case2)
 }
 
 // Test function third_order() case 1
-TEST_F(Lattice_Change_CG_Test, ThirdOrderCase1)
+TEST_F(LatticeChangeCGTest, ThirdOrderCase1)
 {
     double e0 = 1.0;
     double e1 = 1.0;
@@ -374,7 +374,7 @@ TEST_F(Lattice_Change_CG_Test, ThirdOrderCase1)
 }
 
 // Test function third_order() case 2
-TEST_F(Lattice_Change_CG_Test, ThirdOrderCase2)
+TEST_F(LatticeChangeCGTest, ThirdOrderCase2)
 {
     double e0 = 1.0;
     double e1 = 1.0;
@@ -389,7 +389,7 @@ TEST_F(Lattice_Change_CG_Test, ThirdOrderCase2)
 }
 
 // Test function third_order() case 3
-TEST_F(Lattice_Change_CG_Test, ThirdOrderCase3)
+TEST_F(LatticeChangeCGTest, ThirdOrderCase3)
 {
     double e0 = 1.0;
     double e1 = 1.0;
@@ -404,7 +404,7 @@ TEST_F(Lattice_Change_CG_Test, ThirdOrderCase3)
 }
 
 // Test function Brent() case 1
-TEST_F(Lattice_Change_CG_Test, BrentCase1)
+TEST_F(LatticeChangeCGTest, BrentCase1)
 {
     double fa = 2.0;
     double fb = 1.0;
@@ -428,7 +428,7 @@ TEST_F(Lattice_Change_CG_Test, BrentCase1)
 }
 
 // Test function Brent() case 2
-TEST_F(Lattice_Change_CG_Test, BrentCase2)
+TEST_F(LatticeChangeCGTest, BrentCase2)
 {
     double fa = -2.0;
     double fb = 3.0;
@@ -452,7 +452,7 @@ TEST_F(Lattice_Change_CG_Test, BrentCase2)
 }
 
 // Test function Brent() case 3
-TEST_F(Lattice_Change_CG_Test, BrentCase3)
+TEST_F(LatticeChangeCGTest, BrentCase3)
 {
     double fa = 1.0;
     double fb = -3.0;
@@ -476,7 +476,7 @@ TEST_F(Lattice_Change_CG_Test, BrentCase3)
 }
 
 // Test function Brent() case 4
-TEST_F(Lattice_Change_CG_Test, BrentCase4)
+TEST_F(LatticeChangeCGTest, BrentCase4)
 {
     double fa = 2.0;
     double fb = -3.0;
@@ -500,7 +500,7 @@ TEST_F(Lattice_Change_CG_Test, BrentCase4)
 }
 
 // Test function f_cal()
-TEST_F(Lattice_Change_CG_Test, Fcal)
+TEST_F(LatticeChangeCGTest, Fcal)
 {
     Lattice_Change_Basic::dim = 9;
     double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
@@ -513,7 +513,7 @@ TEST_F(Lattice_Change_CG_Test, Fcal)
 }
 
 // Test function setup_move()
-TEST_F(Lattice_Change_CG_Test, SetupMove)
+TEST_F(LatticeChangeCGTest, SetupMove)
 {
     Lattice_Change_Basic::dim = 9;
     double trust_radius = 1.0;

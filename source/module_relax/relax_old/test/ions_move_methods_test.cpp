@@ -19,7 +19,7 @@
  */
 
 // Define a fixture for the tests
-class Ions_Move_Methods_Test : public ::testing::Test
+class IonsMoveMethodsTest : public ::testing::Test
 {
   protected:
     Ions_Move_Methods imm;
@@ -37,7 +37,7 @@ class Ions_Move_Methods_Test : public ::testing::Test
 };
 
 // Test the allocate() function
-TEST_F(Ions_Move_Methods_Test, Allocate)
+TEST_F(IonsMoveMethodsTest, Allocate)
 {
     GlobalV::RELAX_METHOD = "bfgs";
     imm.allocate(natom);
@@ -57,7 +57,7 @@ TEST_F(Ions_Move_Methods_Test, Allocate)
 }
 
 // Test the allocate() function warning quit
-TEST_F(Ions_Move_Methods_Test, AllocateWarningQuit)
+TEST_F(IonsMoveMethodsTest, AllocateWarningQuit)
 {
     GlobalV::RELAX_METHOD = "none";
     GlobalV::ofs_warning.open("log");
@@ -72,7 +72,7 @@ TEST_F(Ions_Move_Methods_Test, AllocateWarningQuit)
 }
 
 // Test the cal_movement() function
-TEST_F(Ions_Move_Methods_Test, CalMovement)
+TEST_F(IonsMoveMethodsTest, CalMovement)
 {
     const int istep = 0;
     const int force_step = 1;
@@ -102,7 +102,7 @@ TEST_F(Ions_Move_Methods_Test, CalMovement)
 }
 
 // Test the cal_movement() function warning quit
-TEST_F(Ions_Move_Methods_Test, CalMovementWarningQuit)
+TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
 {
     const int istep = 0;
     const int force_step = 1;
@@ -124,7 +124,7 @@ TEST_F(Ions_Move_Methods_Test, CalMovementWarningQuit)
 }
 
 // Test the get_converged() function
-TEST_F(Ions_Move_Methods_Test, GetConverged)
+TEST_F(IonsMoveMethodsTest, GetConverged)
 {
     Ions_Move_Basic::converged = true;
 
@@ -132,7 +132,7 @@ TEST_F(Ions_Move_Methods_Test, GetConverged)
 }
 
 // Test the get_ediff() function
-TEST_F(Ions_Move_Methods_Test, GetEdiff)
+TEST_F(IonsMoveMethodsTest, GetEdiff)
 {
     Ions_Move_Basic::ediff = 1.0;
 
@@ -140,7 +140,7 @@ TEST_F(Ions_Move_Methods_Test, GetEdiff)
 }
 
 // Test the get_largest_grad() function
-TEST_F(Ions_Move_Methods_Test, GetLargestGrad)
+TEST_F(IonsMoveMethodsTest, GetLargestGrad)
 {
     Ions_Move_Basic::largest_grad = 2.0;
 
@@ -148,7 +148,7 @@ TEST_F(Ions_Move_Methods_Test, GetLargestGrad)
 }
 
 // Test the get_trust_radius() function
-TEST_F(Ions_Move_Methods_Test, GetTrustRadius)
+TEST_F(IonsMoveMethodsTest, GetTrustRadius)
 {
     Ions_Move_Basic::trust_radius = 3.0;
 
@@ -156,7 +156,7 @@ TEST_F(Ions_Move_Methods_Test, GetTrustRadius)
 }
 
 // Test the get_update_iter() function
-TEST_F(Ions_Move_Methods_Test, GetUpdateIter)
+TEST_F(IonsMoveMethodsTest, GetUpdateIter)
 {
     Ions_Move_Basic::update_iter = 4;
 
