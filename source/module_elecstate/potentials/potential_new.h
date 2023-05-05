@@ -146,12 +146,22 @@ class Potential : public PotBase
     //  mohan add 2011-02-28
     //  here vh is std::complex because the array is got after std::complex FFT.
     
-    void write_potential(const int& is,
-                         const int& iter,
-                         const std::string& fn,
-                         const ModuleBase::matrix& v,
-                         const int& precision,
-                         const int& hartree = 0) const;
+    void write_potential(
+#ifdef __MPI
+		const int& bz,
+		const int& nbz,
+		const int& nplane,
+		const int& startz_current,
+#endif
+        const int& is,
+        const int& iter,
+        const std::string& fn,
+        const int& nx,
+        const int& ny,
+        const int& nz,
+        const ModuleBase::matrix& v,
+        const int& precision,
+        const int& hartree = 0) const;
 
     void write_elecstat_pot(const std::string& fn, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
 

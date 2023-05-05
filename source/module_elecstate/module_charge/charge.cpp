@@ -908,7 +908,7 @@ void Charge::non_linear_core_correction
 
 
 #ifdef __MPI
-void Charge::rho_mpi(void)
+void Charge::rho_mpi(const int& nbz, const int& bz)
 {
 	ModuleBase::TITLE("Charge","rho_mpi");
     if (GlobalV::NPROC==1) return;
@@ -934,7 +934,7 @@ void Charge::rho_mpi(void)
     //=================================================
     int *num_z = new int[GlobalV::NPROC_IN_POOL];
     ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-    for (iz=0;iz<GlobalC::bigpw->nbz;iz++)
+    for (iz=0;iz<nbz;iz++)
     {
         ip = iz % GlobalV::NPROC_IN_POOL;
         num_z[ip]++;
@@ -943,7 +943,7 @@ void Charge::rho_mpi(void)
 	// mohan update 2011-04-26
 	for(int ip=0; ip<GlobalV::NPROC_IN_POOL; ip++)
 	{
-		num_z[ip]*=GlobalC::bigpw->bz;
+		num_z[ip]*=bz;
 	}
 
     //=======================================

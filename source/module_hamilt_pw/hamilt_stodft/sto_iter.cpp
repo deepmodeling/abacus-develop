@@ -535,7 +535,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     delete[] porter;
 #ifdef __MPI
     //temporary, rho_mpi should be rewrite as a tool function! Now it only treats pes->charge->rho
-    pes->charge->rho_mpi();
+    pes->charge->rho_mpi(pes->nbz, pes->bz);
 #endif
     for (int ir = 0; ir < nrxx; ++ir)
     {

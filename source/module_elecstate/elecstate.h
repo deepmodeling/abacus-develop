@@ -24,7 +24,9 @@ class ElecState
     }
     void init_ks(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
-                      int nk_in); // number of k points
+                      int nk_in, // number of k points
+                      const int& nbz_in,
+                      const int& bz_in); 
 
     // return current electronic density rho, as a input for constructing Hamiltonian
     virtual const double *getRho(int spin) const;
@@ -91,6 +93,10 @@ class ElecState
     double ef = 0.0;
     // correction energy for metals
     double demet = 0.0;
+    // GlobalC::bigpw.nbz
+    int nbz = 0;
+    // GlobalC::bigpw.bz
+    int bz = 0;
 
     // band energy at each k point, each band.
     ModuleBase::matrix ekb;

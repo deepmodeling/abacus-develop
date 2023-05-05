@@ -76,7 +76,7 @@ class Charge
 
 	public:
 
-    void rho_mpi(void);
+    void rho_mpi(const int& nbz, const int& bz);
 
     // mohan add 2021-02-20
     int nrxx; // number of r vectors in this processor
