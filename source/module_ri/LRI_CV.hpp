@@ -8,7 +8,7 @@
 
 #include "LRI_CV.h"
 #include "LRI_CV_Tools.h"
-#include "src_ri/exx_abfs-abfs_index.h"
+#include "module_ri/exx_abfs-abfs_index.h"
 #include "RI_Util.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"

@@ -12,7 +12,7 @@
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
 #ifdef __EXX
-#include "src_ri/exx_abfs-jle.h"
+#include "module_ri/exx_abfs-jle.h"
 #endif
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"

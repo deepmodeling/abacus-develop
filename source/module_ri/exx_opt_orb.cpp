@@ -12,8 +12,8 @@
 #include "module_ri/Matrix_Orbs22.h"
 #include "module_ri/LRI_CV_Tools.h"
 
-#include "../src_ri/test_code/element_basis_index-test.h"
-#include "../src_ri/test_code/test_function.h"
+#include "../module_ri/test_code/element_basis_index-test.h"
+#include "../module_ri/test_code/test_function.h"
 
 void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 {
