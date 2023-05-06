@@ -177,7 +177,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                             const double arg = (GlobalC::kv.kvec_d[ ik ] * dR) * ModuleBase::TWO_PI;
                             double sinp, cosp;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                            std::complex<double> phase = std::complex<double>(cosp, sinp);
+                            const std::complex<double> phase = std::complex<double>(cosp, sinp);
                             int ixxx = DM_start + GlobalC::GridT.find_R2st[iat][nad];
                             
                             if(GlobalV::NSPIN!=4)
@@ -185,12 +185,14 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                                 for(int iw=0; iw<atom1->nw; iw++)
                                 {
                                     std::complex<double> *vij = pvp[GlobalC::GridT.trace_lo[start1+iw]];
-                                    int* iw2_lo = &GlobalC::GridT.trace_lo[start2];
+                                    const int* iw2_lo = &GlobalC::GridT.trace_lo[start2];
                                     // get the <phi | V | phi>(R) Hamiltonian.
-                                    double *vijR = &pvpR_reduced[0][ixxx];
+                                    const double *vijR = &pvpR_reduced[0][ixxx];
                                     for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                     {
                                         vij[iw2_lo[iw2]] += vijR[iw2] * phase; 
+                                        //if(((start1+iw == 238 ) && ( start2+iw2 == 1089 )))
+                                        //    GlobalV::ofs_running<<__FILE__<<__LINE__<<" "<<iat<<" "<<iat2<<" "<<ixxx<<" "<<start1+iw<<" "<<start2+iw2<<" "<<vijR[iw2]<<" "<<iw2_lo[iw2]<<" "<<vij[iw2_lo[iw2]]<<std::endl;
                                     }
                                     ixxx += atom2->nw;
                                 }
@@ -226,17 +228,25 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 
     // Distribution of data.
     ModuleBase::timer::tick("Gint_k","Distri");
-    std::complex<double>* tmp = new std::complex<double>[GlobalV::NLOCAL];
+    const int nlocal = GlobalV::NLOCAL;
+    std::vector<std::complex<double>> tmp(nlocal);
     const double sign_table[2] = {1.0, -1.0};
 #ifdef _OPENMP
 #pragma omp parallel
 {
 #endif
-    for (int i=0; i<GlobalV::NLOCAL; i++)
+    //loop each row with index i, than loop each col with index j 
+    for (int i=0; i<nlocal; i++)
     {
+#ifdef _OPENMP
+#pragma omp for
+#endif
+        for (int j=0; j<nlocal; j++)
+        {
+            tmp[j] = std::complex<double>(0.0, 0.0);
+        }
         int i_flag = i & 1; // i % 2 == 0
         const int mug = GlobalC::GridT.trace_lo[i];
-        const int mug0 = mug/GlobalV::NPOL;
         // if the row element is on this processor.
         if (mug >= 0)
         {
@@ -245,11 +255,9 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-                for (int j=0; j<GlobalV::NLOCAL; j++)
+                for (int j=0; j<nlocal; j++)
                 {
-                    tmp[j] = 0;
                     const int nug = GlobalC::GridT.trace_lo[j];
-                    const int nug0 = nug/GlobalV::NPOL;
                     // if the col element is on this processor.
                     if (nug >=0)
                     {
@@ -269,14 +277,14 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
             }
             else
             {
+                const int mug0 = mug/GlobalV::NPOL;
                 if (GlobalV::DOMAG)
                 {
 #ifdef _OPENMP
 #pragma omp for
 #endif
-                    for (int j=0; j<GlobalV::NLOCAL; j++)
+                    for (int j=0; j<nlocal; j++)
                     {
-                        tmp[j] = 0;
                         int j_flag = j & 1; // j % 2 == 0
                         int ij_same = i_flag ^ j_flag ? 0 : 1;
                         const int nug = GlobalC::GridT.trace_lo[j];
@@ -323,9 +331,8 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-                    for (int j=0; j<GlobalV::NLOCAL; j++)
+                    for (int j=0; j<nlocal; j++)
                     {
-                        tmp[j] = 0;
                         int j_flag = j & 1; // j % 2 == 0
                         int ij_same = i_flag ^ j_flag ? 0 : 1;
 
@@ -355,22 +362,12 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                 }
             }
         }
-        else
-        {
-#ifdef _OPENMP
-#pragma omp for
-#endif
-            for (int j=0; j<GlobalV::NLOCAL; j++)
-            {
-                tmp[j] = 0;
-            }
-        }
 #ifdef _OPENMP
 #pragma omp single
 {
 #endif
         // collect the matrix after folding.
-        Parallel_Reduce::reduce_complex_double_pool( tmp, GlobalV::NLOCAL );
+        Parallel_Reduce::reduce_complex_double_pool( tmp.data(), tmp.size() );
 #ifdef _OPENMP
 }
 #endif
@@ -382,7 +379,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-        for (int j=0; j<GlobalV::NLOCAL; j++)
+        for (int j=0; j<nlocal; j++)
         {
             if (!LM->ParaV->in_this_processor(i,j))
             {
@@ -395,7 +392,6 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
 #ifdef _OPENMP
 }
 #endif
-    delete[] tmp;
 
     // delete the tmp matrix.
     delete[] pvp;
