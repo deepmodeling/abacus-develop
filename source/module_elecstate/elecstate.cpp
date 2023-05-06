@@ -396,11 +396,11 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
                         int nk_in,
-                        const int& nbz_in,
-                        const int& bz_in)
+                        const ModulePW::PW_Basis_Big* bigpw_in)
 {
     this->charge = chg_in;
     this->klist = klist_in;
+    this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // autoset and check GlobalV::NBANDS, nelec_spin is used when NSPIN==2
@@ -408,9 +408,6 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     // initialize ekb and wg
     this->ekb.create(nk_in, GlobalV::NBANDS);
     this->wg.create(nk_in, GlobalV::NBANDS);
-
-    this->nbz = nbz_in;
-    this->bz = bz_in;
 }
 
 void ElecState::cal_nbands()

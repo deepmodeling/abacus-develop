@@ -20,7 +20,7 @@ class ElecStateLCAO : public ElecState
                   Local_Orbital_wfc* lowf_in = nullptr,
                   ModulePW::PW_Basis_Big* bigpw_in = nullptr)
     {
-        init_ks(chg_in, klist_in, nks_in, bigpw_in->nbz, bigpw_in->bz);
+        init_ks(chg_in, klist_in, nks_in, bigpw_in);
         this->loc = loc_in;
         this->uhm = uhm_in;
         this->lowf = lowf_in;
