@@ -64,8 +64,8 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 		delete[] rhogtot;
 		delete[] ig2isztot;
 	}
-	delete[] fftixy2is;
 #endif
+	delete[] fftixy2is;
 	return;
 }
 

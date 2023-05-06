@@ -276,7 +276,8 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (14.exx)"));
         EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_alpha               default #fraction of Fock exchange in hybrid functionals"));
         EXPECT_THAT(output,testing::HasSubstr("exx_hse_omega                  0.11 #range-separation parameter in HSE functional"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_step                100 #the maximal electronic iteration number in the evaluation of Fock exchange"));   
+        EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_step                100 #the maximal electronic iteration number in the evaluation of Fock exchange"));
+        EXPECT_THAT(output,testing::HasSubstr("exx_mixing_beta                0 #mixing_beta for outer-loop when exx_separate_loop=1"));   
         EXPECT_THAT(output,testing::HasSubstr("exx_lambda                     0.3 #used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method"));
         EXPECT_THAT(output,testing::HasSubstr("exx_real_number                default #exx calculated in real or complex"));
         EXPECT_THAT(output,testing::HasSubstr("exx_pca_threshold              0 #threshold to screen on-site ABFs in exx"));
@@ -294,9 +295,6 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr(""));    
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (16.tddft)"));
         EXPECT_THAT(output,testing::HasSubstr("td_force_dt                    0.02 #time of force change"));
-        EXPECT_THAT(output,testing::HasSubstr("td_val_elec_01                 1 #td_val_elec_01"));
-        EXPECT_THAT(output,testing::HasSubstr("td_val_elec_02                 1 #td_val_elec_02"));
-        EXPECT_THAT(output,testing::HasSubstr("td_val_elec_03                 1 #td_val_elec_03"));    
         EXPECT_THAT(output,testing::HasSubstr("td_vext                        0 #add extern potential or not"));
         EXPECT_THAT(output,testing::HasSubstr("td_vext_dire                                      1 #extern potential direction"));
         EXPECT_THAT(output,testing::HasSubstr("out_dipole                     0 #output dipole or not"));
@@ -330,6 +328,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("of_wt_beta                     0.833333 #parameter beta of WT KEDF"));
         EXPECT_THAT(output,testing::HasSubstr("of_wt_rho0                     1 #the average density of system, used in WT KEDF, in Bohr^-3"));
         EXPECT_THAT(output,testing::HasSubstr("of_hold_rho0                   0 #If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero"));
+        EXPECT_THAT(output,testing::HasSubstr("of_lkt_a                       1.3 #parameter a of LKT KEDF"));
         EXPECT_THAT(output,testing::HasSubstr("of_full_pw                     0 #If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used"));
         EXPECT_THAT(output,testing::HasSubstr("of_full_pw_dim                 0 #If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only"));
         EXPECT_THAT(output,testing::HasSubstr("of_read_kernel                 0 #If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF"));

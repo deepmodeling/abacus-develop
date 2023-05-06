@@ -6,7 +6,7 @@ esolver_type    sdft
 method_sto      1
 
 nbands			0
-nbands_sto		0
+nbands_sto		all
 nche_sto		120
 emax_sto		0
 emin_sto		0

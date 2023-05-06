@@ -231,6 +231,7 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -252,11 +253,9 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
+		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -313,6 +312,7 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,5./6.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a,1.3);
         EXPECT_TRUE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -568,6 +568,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,0);
@@ -589,11 +590,9 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_EQ(INPUT.td_vext,0);
         // EXPECT_EQ(INPUT.td_vext_dire,"1");
+		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		// EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -650,6 +649,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,0.833333);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,1.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a, 1.3);
         EXPECT_FALSE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -725,6 +725,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.lcao_ecut = 0;
 	INPUT.scf_thr = -1.0;
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
+	INPUT.nbndsto_str = "all";
 	// the 1st calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
@@ -747,6 +748,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.ks_solver,"scalapack_gvx");
 #endif
         EXPECT_DOUBLE_EQ(INPUT.lcao_ecut,20.0);
+	EXPECT_EQ(INPUT.nbands_sto, 0);
 	//==================================================
 	// prepare default parameters for the 2nd calling
 	INPUT.vdw_method = "d3_0";
@@ -767,7 +769,9 @@ TEST_F(InputTest, Default_2)
 	INPUT.ks_solver = "default";
 	INPUT.gamma_only_local = 1;
 	INPUT.scf_thr = -1.0;
-	// the 2nd calling
+    INPUT.nbndsto_str = "0";
+    INPUT.esolver_type = "sdft";
+    // the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(INPUT.vdw_s6,"1.0");
@@ -788,6 +792,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.by,1);
 	EXPECT_EQ(INPUT.bz,1);
 	EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+	EXPECT_EQ(INPUT.esolver_type, "ksdft");
 	//==================================================
 	// prepare default parameters for the 3rd calling
 	INPUT.vdw_method = "d3_bj";

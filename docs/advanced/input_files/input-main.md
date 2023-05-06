@@ -170,6 +170,7 @@
 		- [of\_wt\_beta](#of_wt_beta)
 		- [of\_wt\_rho0](#of_wt_rho0)
 		- [of\_hold\_rho0](#of_hold_rho0)
+		- [of\_lkt\_a](#of_lkt_a)
 		- [of\_read\_kernel](#of_read_kernel)
 		- [of\_kernel\_file](#of_kernel_file)
 		- [of\_full\_pw](#of_full_pw)
@@ -282,6 +283,7 @@
 		- [td\_edm](#td_edm)
 		- [td\_print\_eij](#td_print_eij)
 		- [td\_force\_dt](#td_force_dt)
+		- [propagator](#propagator)
 		- [td\_vext](#td_vext)
 		- [td\_vext\_dire](#td_vext_dire)
 		- [td\_stype](#td_stype)
@@ -312,9 +314,6 @@
 		- [out\_efield](#out_efield)
 		- [ocp](#ocp)
 		- [ocp\_set](#ocp_set)
-		- [td\_val\_elec\_01](#td_val_elec_01)
-		- [td\_val\_elec\_02](#td_val_elec_02)
-		- [td\_val\_elec\_03](#td_val_elec_03)
 	- [Variables useful for debugging](#variables-useful-for-debugging)
 		- [nurse](#nurse)
 		- [t\_in\_h](#t_in_h)
@@ -907,9 +906,10 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
 
 - **Type**: Integer
 - **Description**:
-  - nbands_sto>0: Number of stochastic orbitals to calculate in SDFT and MDFT.  More bands obtain more precise results or smaller stochastic errors ($ \propto 1/\sqrt{N_{\chi}}$);
-  - nbands_sto=0: Complete basis will be used to replace stochastic orbitals with the Chebyshev method (CT) and it will get the results the same as KSDFT without stochastic errors.
-  - If you want to do MDFT. [nbands](#nbands) which represents the number of KS orbitals should be set.
+  - nbands_sto > 0: This parameter determines the number of stochastic orbitals to be calculated in both SDFT and MDFT. Increasing the number of bands will result in more precise results and smaller stochastic errors ($ \propto 1/\sqrt{N_{\chi}}$);
+  If you want to perform MDFT, you should set the parameter [nbands](#nbands), which represents the number of KS orbitals.
+  - nbands_sto = 0: This means that a KSDFT calculation will be executed.
+  - nbands_sto = all: This uses all complete basis to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors
 - **Default**: 256
 
 ### nche_sto
@@ -1514,7 +1514,7 @@ Warning: this function is not robust enough for the current version. Please try 
 ### of_kinetic
 
 * **Type**: string
-* **Description**: the type of kinetic energy density functional, including tf, vw, wt, and tf+.
+* **Description**: the type of kinetic energy density functional, including tf (Thomas-Fermi), vw (von Weizsäcker), wt (Wang-Teter), tf+ (TF$\rm{\lambda}$vW), and lkt (Luo-Karasiev-Trickey).
 * **Default**: wt
 
 ### of_method
@@ -1582,6 +1582,12 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Description**: If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
 - **Default**: 0
+
+### of_lkt_a
+
+- **Type**: Double
+- **Description**: parameter a of LKT KEDF.
+- **Default**: 1.3
 
 ### of_read_kernel
 
@@ -1715,7 +1721,7 @@ These variables are relevant when using hybrid functionals
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. (Currently not used)
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
 - **Default**: 1
 
 ### exx_hybrid_step
@@ -2337,6 +2343,16 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: Time-dependent evolution force changes time step. (fs)
 - **Default**: 0.02
 
+### propagator
+
+- **Type**: Integer
+- **Description**:
+  method of propagator.
+  - 0: Crank-Nicolson.
+  - 1: 4th Taylor expansions of exponential.
+  - 2: enforced time-reversal symmetry (ETRS).
+- **Default**: 0
+
 ### td_vext
 
 - **Type**: Boolean
@@ -2601,24 +2617,6 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: string
 - **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**: none
-
-### td_val_elec_01
-
-- **Type**: Integer
-- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the first element.
-- **Default**: 1.0
-
-### td_val_elec_02
-
-- **Type**: Integer
-- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the second element.
-- **Default**: 1.0
-
-### td_val_elec_03
-
-- **Type**: Integer
-- **Description**: Only useful when calculating the dipole. Specifies the number of valence electron associated with the third element.
-- **Default**: 1.0
 
 [back to top](#full-list-of-input-keywords)
 
