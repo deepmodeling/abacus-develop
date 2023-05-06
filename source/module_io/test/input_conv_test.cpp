@@ -201,7 +201,7 @@ TEST_F(InputConvTest, ConvRelax)
 	INPUT.relax_new=false;
 	std::string output2;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"
@@ -216,7 +216,7 @@ TEST_F(InputConvTest, ConvRelax)
 	INPUT.latname="none";
 	INPUT.fixed_ibrav=1;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"
@@ -230,7 +230,7 @@ TEST_F(InputConvTest, ConvRelax)
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"
@@ -245,7 +245,7 @@ TEST_F(InputConvTest, ConvRelax)
 	INPUT.relax_new=false;
 	INPUT.fixed_axes="shape";
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"
@@ -274,7 +274,7 @@ TEST_F(InputConvTest, ConvRelax)
     INPUT.basis_type="pw";//LCAO
 	std::string output2;
 		testing::internal::CaptureStdout();
-		EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+		EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 		output2 = testing::internal::GetCapturedStdout();
 		EXPECT_THAT(output2,testing::HasSubstr("INPUT device setting does not match the request!"
 			"\n Input device = gpu"
@@ -340,7 +340,7 @@ TEST_F(InputConvTest, nspinbeta)
 	INPUT.cal_stress=true;
 	std::string output2;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"
@@ -469,7 +469,7 @@ TEST_F(InputConvTest,neighbour2  )
 	GlobalV::NPROC =2;
 	std::string output2;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"
@@ -489,7 +489,7 @@ TEST_F(InputConvTest, compile)
 	INPUT.deepks_scf=true;
 	std::string output2;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(1),"");
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 		"                         NOTICE                           \n !"

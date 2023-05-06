@@ -159,7 +159,7 @@ TEST_F(ReadPPTest, ReadUSppErr100)
 	//upf->read_pseudo_upf(ifs);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(upf->read_pseudo_upf(ifs),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening
 	// EXPECT_THAT(output,testing::HasSubstr("this function is called")); // read_pseudo_nlcc
@@ -228,7 +228,7 @@ TEST_F(ReadPPTest, HeaderErr2011)
 	//upf->read_pseudo_upf201(ifs);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("unknown pseudo type"));
 	ifs.close();
@@ -242,7 +242,7 @@ TEST_F(ReadPPTest, HeaderErr2012)
 	//upf->read_pseudo_upf201(ifs);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("ULTRASOFT PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();
@@ -256,7 +256,7 @@ TEST_F(ReadPPTest, HeaderErr2013)
 	//upf->read_pseudo_upf201(ifs);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("PAW PSEUDOPOTENTIAL IS NOT SUPPORTED"));
 	ifs.close();

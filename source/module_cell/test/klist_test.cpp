@@ -299,7 +299,7 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
 	GlobalV::KSPACING[2] = 0.07; // 0.52918/Bohr = 1/A
 	std::string k_file = "./support/KPT3";
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(kv->read_kpoints(k_file),::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(kv->read_kpoints(k_file),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	GlobalV::KSPACING[0]=0.0;
 	GlobalV::KSPACING[1]=0.0;
