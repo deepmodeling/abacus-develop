@@ -89,7 +89,7 @@ TEST(ParaGlobal, MyProd)
     EXPECT_EQ(inout[1], std::complex<double>(-3.0, -3.0));
 }
 
-TEST(ParaGlobal, init_pools)
+TEST(ParaGlobal, InitPools)
 {
     int nproc = 12;
     int kpar = 3;
