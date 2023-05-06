@@ -143,13 +143,13 @@ void RI_2D_Comm::add_Hexx(
 		{
 			if(Hk_seq[ik].empty())
 			{
-				Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+				Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 				Hk_seq[ik].emplace_back(Hk);
 			}
 			else
 			{
 				std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
-				std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+				std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 				for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 					for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
 						if(pv.in_this_processor(iwt0, iwt1))
@@ -159,7 +159,7 @@ void RI_2D_Comm::add_Hexx(
 		}
 		else if(mixing_mode == "pulay")
 		{
-			std::vector<std::vector<Tdata>> Hk_new = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			std::vector<std::vector<Tdata>> Hk_new = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 			Hk = RI_2D_Comm::pulay_mixing(pv, Hk_seq[ik], Hk_new, mixing_beta, mixing_mode);
 		}
 		else
@@ -171,13 +171,13 @@ void RI_2D_Comm::add_Hexx(
 		double mixing_beta = GlobalC::exx_info.info_global.mixing_beta_for_loop1;
 		if(Hk_seq[ik].empty())
 		{
-			Hk = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 			Hk_seq[ik].emplace_back(Hk);
 		}
 		else
 		{
 			std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
-			std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(pv, Hs, ik);
+			std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 			for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
 				for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
 					if(pv.in_this_processor(iwt0, iwt1))
@@ -203,7 +203,9 @@ void RI_2D_Comm::add_Hexx(
 }
 
 template<typename Tdata>
-std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals &pv, 
+std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(
+				const K_Vectors &kv,
+				const Parallel_Orbitals &pv, 
 				const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
 				const int ik
 				)
@@ -216,7 +218,7 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals 
 	for(size_t ir=0; ir!=GlobalV::NLOCAL; ++ir)
 		Hk[ir].resize(GlobalV::NLOCAL);
 
-	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{GlobalC::kv.isk[ik]}}, {4,{0,1,2,3}}};
+	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))
 	{
 		int is0_b, is1_b;
@@ -228,7 +230,7 @@ std::vector<std::vector<Tdata>> RI_2D_Comm::Hexxs_to_Hk(const Parallel_Orbitals 
 			{
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
-				const std::complex<double> frac = std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (GlobalC::kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)));
+				const std::complex<double> frac = std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)));
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
 				{
