@@ -341,8 +341,9 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ofs << "\n#Parameters (14.exx)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_alpha", exx_hybrid_alpha, "fraction of Fock exchange in hybrid functionals");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hse_omega", exx_hse_omega, "range-separation parameter in HSE functional");
-    //ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "0 or 1");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "if 1, a two-step method is employed, else it will start with a GGA-Loop, and then Hybrid-Loop");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_step", exx_hybrid_step, "the maximal electronic iteration number in the evaluation of Fock exchange");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_mixing_beta", exx_mixing_beta, "mixing_beta for outer-loop when exx_separate_loop=1");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_lambda", exx_lambda, "used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_real_number", exx_real_number, "exx calculated in real or complex");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_pca_threshold", exx_pca_threshold, "threshold to screen on-site ABFs in exx");

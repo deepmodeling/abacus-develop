@@ -470,6 +470,7 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
         GlobalC::exx_info.info_global.separate_loop = INPUT.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = INPUT.exx_hybrid_step;
+        GlobalC::exx_info.info_global.mixing_beta_for_loop1 = INPUT.exx_mixing_beta;
         GlobalC::exx_info.info_lip.lambda = INPUT.exx_lambda;
 
         GlobalC::exx_info.info_ri.real_number = std::stoi(INPUT.exx_real_number);
