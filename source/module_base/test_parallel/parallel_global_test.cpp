@@ -111,7 +111,8 @@ TEST(ParaGlobal, InitPools)
     EXPECT_EQ(STO_WORLD != POOL_WORLD, true);
     EXPECT_EQ(MPI_COMM_WORLD != PARAPW_WORLD, true);
 }
-TEST(ParaGlobal, divide_pools)
+
+TEST(ParaGlobal, DividePools)
 {
     int nproc = 12;
     int kpar = 3;
