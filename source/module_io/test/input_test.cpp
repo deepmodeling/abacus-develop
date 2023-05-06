@@ -66,7 +66,9 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"default");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -109,7 +111,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.nbspline,-1);
         EXPECT_FALSE(INPUT.gamma_only);
         EXPECT_FALSE(INPUT.gamma_only_local);
-        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,50.0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -131,7 +133,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.vion_in_h,1);
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
-        EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+        EXPECT_DOUBLE_EQ(INPUT.scf_thr,-1.0);
         EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
@@ -164,7 +166,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
-        EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
@@ -229,6 +231,7 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -237,7 +240,8 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_grad_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_grad_threshold,1E-1);
-        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_grad_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,1E-7);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
         EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
         EXPECT_EQ(INPUT.exx_distribute_type,"htime");
@@ -249,11 +253,9 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
+		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -310,6 +312,7 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,5./6.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a,1.3);
         EXPECT_TRUE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -326,13 +329,15 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_dt,1);
 	EXPECT_EQ(INPUT.mdp.md_dumpfreq,1);
 	EXPECT_EQ(INPUT.mdp.md_nraise,1);
+	EXPECT_EQ(INPUT.cal_syns,0);
+	EXPECT_EQ(INPUT.dmax,0.01);
 	EXPECT_EQ(INPUT.mdp.md_nstep,10);
 	EXPECT_EQ(INPUT.mdp.md_pchain,1);
 	EXPECT_EQ(INPUT.mdp.md_pcouple,"none");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,-1);
-	EXPECT_EQ(INPUT.mdp.md_pmode,"none");
+	EXPECT_EQ(INPUT.mdp.md_pmode,"iso");
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
@@ -340,10 +345,10 @@ TEST_F(InputTest, Default)
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
-	EXPECT_EQ(INPUT.mdp.md_thermostat,"nve");
+	EXPECT_EQ(INPUT.mdp.md_thermostat,"nhc");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tolerance,100);
-	EXPECT_EQ(INPUT.mdp.md_type,1);
+	EXPECT_EQ(INPUT.mdp.md_type,"nvt");
 	EXPECT_EQ(INPUT.mdp.msst_direction,2);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_qmass,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_tscale,0.01);
@@ -396,7 +401,9 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"hse");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -497,7 +504,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
-        EXPECT_EQ(INPUT.out_hs2_interval,1);
+        EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,0);
         EXPECT_EQ(INPUT.out_mat_r,0);
         EXPECT_FALSE(INPUT.out_wfc_lcao);
@@ -561,6 +568,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,0);
@@ -569,7 +577,8 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_grad_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_grad_threshold,0);
-        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_grad_threshold,0);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,0);
+        EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
         EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
         EXPECT_EQ(INPUT.exx_distribute_type,"htime");
@@ -581,11 +590,9 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_EQ(INPUT.td_vext,0);
         // EXPECT_EQ(INPUT.td_vext_dire,"1");
+		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		// EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -642,6 +649,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,0.833333);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,1.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a, 1.3);
         EXPECT_FALSE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -661,13 +669,15 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_dt,1);
 	EXPECT_EQ(INPUT.mdp.md_dumpfreq,1);
 	EXPECT_EQ(INPUT.mdp.md_nraise,1);
+	EXPECT_EQ(INPUT.cal_syns,0);
+	EXPECT_EQ(INPUT.dmax,0.01);
 	EXPECT_EQ(INPUT.mdp.md_nstep,10);
 	EXPECT_EQ(INPUT.mdp.md_pchain,1);
 	EXPECT_EQ(INPUT.mdp.md_pcouple,"none");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,-1);
-	EXPECT_EQ(INPUT.mdp.md_pmode,"none");
+	EXPECT_EQ(INPUT.mdp.md_pmode,"iso");
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
@@ -676,10 +686,10 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,0);
-	EXPECT_EQ(INPUT.mdp.md_thermostat,"nve");
+	EXPECT_EQ(INPUT.mdp.md_thermostat,"nhc");
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tolerance,100);
-	EXPECT_EQ(INPUT.mdp.md_type,1);
+	EXPECT_EQ(INPUT.mdp.md_type,"nvt");
 	EXPECT_EQ(INPUT.mdp.msst_direction,2);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_qmass,-1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_tscale,0.01);
@@ -713,7 +723,9 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.basis_type,"lcao");
 	INPUT.ks_solver = "default";
 	INPUT.lcao_ecut = 0;
+	INPUT.scf_thr = -1.0;
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
+	INPUT.nbndsto_str = "all";
 	// the 1st calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
@@ -729,12 +741,14 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.diago_proc,1);
 	EXPECT_EQ(INPUT.mem_saver,0);
 	EXPECT_EQ(INPUT.relax_nmax,1);
+	EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-7);
 #ifdef __ELPA
 	EXPECT_EQ(INPUT.ks_solver,"genelpa");
 #else
 	EXPECT_EQ(INPUT.ks_solver,"scalapack_gvx");
 #endif
         EXPECT_DOUBLE_EQ(INPUT.lcao_ecut,20.0);
+	EXPECT_EQ(INPUT.nbands_sto, 0);
 	//==================================================
 	// prepare default parameters for the 2nd calling
 	INPUT.vdw_method = "d3_0";
@@ -754,7 +768,10 @@ TEST_F(InputTest, Default_2)
 	INPUT.basis_type = "pw";
 	INPUT.ks_solver = "default";
 	INPUT.gamma_only_local = 1;
-	// the 2nd calling
+	INPUT.scf_thr = -1.0;
+    INPUT.nbndsto_str = "0";
+    INPUT.esolver_type = "sdft";
+    // the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(INPUT.vdw_s6,"1.0");
@@ -764,7 +781,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
 	EXPECT_EQ(INPUT.exx_hybrid_alpha,"1");
 	EXPECT_EQ(INPUT.exx_real_number,"0");
-        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"10");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"5");
 	EXPECT_EQ(INPUT.diago_proc,1);
 	EXPECT_EQ(INPUT.mem_saver,0);
 	EXPECT_EQ(INPUT.cal_force,1);
@@ -774,6 +791,8 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.bx,1);
 	EXPECT_EQ(INPUT.by,1);
 	EXPECT_EQ(INPUT.bz,1);
+	EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+	EXPECT_EQ(INPUT.esolver_type, "ksdft");
 	//==================================================
 	// prepare default parameters for the 3rd calling
 	INPUT.vdw_method = "d3_bj";
@@ -854,7 +873,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.mdp.md_tfreq = 0;
 	INPUT.mdp.md_pfreq = 0;
 	INPUT.mdp.md_restart = 1;
-	INPUT.mdp.md_type = 1;
+	INPUT.mdp.md_type = "npt";
 	INPUT.mdp.md_pmode = "iso";
 	// the 6th calling
 	INPUT.Default_2();
@@ -937,12 +956,12 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("please don't set diago_proc with lcao base"));
 	INPUT.diago_proc = 1;
 	//
-	INPUT.kspacing = -1;
+	INPUT.kspacing[0] = -1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("kspacing must > 0"));
-	INPUT.kspacing = 0.8;
+	INPUT.kspacing[0] = INPUT.kspacing[1] = INPUT.kspacing[2] = 0.8;
 	//
 	INPUT.nelec = -1;
 	testing::internal::CaptureStdout();
@@ -1010,7 +1029,7 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("temperature of MD calculation should be set!"));
 	INPUT.mdp.md_tfirst = 1.0;
 	//
-	INPUT.mdp.md_type = 1;
+	INPUT.mdp.md_type = "npt";
 	INPUT.mdp.md_pmode = "iso";
 	INPUT.mdp.md_pfirst = -1.0;
 	testing::internal::CaptureStdout();
@@ -1019,7 +1038,7 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("pressure of MD calculation should be set!"));
 	INPUT.mdp.md_pfirst = 1.0;
 	//
-	INPUT.mdp.md_type = 4;
+	INPUT.mdp.md_type = "msst";
 	INPUT.mdp.msst_qmass = -1.0;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
@@ -1422,4 +1441,57 @@ TEST_F(InputTest, Check)
 	*/
 }
 
+
 #undef private
+
+
+class ReadKSpacingTest : public ::testing::Test {
+protected:
+    void SetUp() 
+	{
+        // create a temporary file for testing
+        tmpfile = std::tmpnam(nullptr);
+        std::ofstream ofs(tmpfile);
+        ofs << "1.0"; // valid input
+        ofs.close();
+    }
+
+    void TearDown() override {
+        std::remove(tmpfile.c_str());
+    }
+
+    std::string tmpfile;
+};
+
+TEST_F(ReadKSpacingTest, ValidInputOneValue) {
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 1.0);
+    EXPECT_EQ(INPUT.kspacing[2], 1.0);
+}
+
+TEST_F(ReadKSpacingTest, ValidInputThreeValue) {
+	std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0 3.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 2.0);
+    EXPECT_EQ(INPUT.kspacing[2], 3.0);
+}
+
+TEST_F(ReadKSpacingTest, InvalidInput) {
+    std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+	testing::internal::CaptureStdout();
+	INPUT.read_kspacing(ifs);
+	std::string output;
+	output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(ifs.fail());
+}

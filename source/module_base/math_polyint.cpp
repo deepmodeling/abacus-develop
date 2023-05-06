@@ -54,18 +54,19 @@ double PolyInt::Polynomial_Interpolation
     assert(table_interval>0.0);
     const double position = x / table_interval;
     const int iq = static_cast<int>(position);
-    
-	if(iq>table_length-4)
-	{
-		std::cout << "\n x = " << x;
-		std::cout << "\n table_interval = " << table_interval;
-		std::cout << "\n iq=" << iq << " table_length = " << table_length << std::endl;
-        std::cout << "\n Not enough space allocated for radial FFT: try restarting with a larger cell_factor" << std::endl; //LiuXh add 20180619
-        //std::cout << "\n Now cell_factor is: " << GlobalC::ppcell.cell_factor << std::endl; //LiuXh add 20180619
-		// mohan comment out 2021-05-06
-	}
 
-	assert(iq < table_length-4);
+    if (iq > table_length - 4)
+    {
+        std::cout << "\n x = " << x;
+        std::cout << "\n table_interval = " << table_interval;
+        std::cout << "\n iq=" << iq << " table_length = " << table_length << std::endl;
+        std::cout << "\n Not enough space allocated for radial FFT." << std::endl;
+        std::cout << " It is due to the rapid change of the size of cell:" << std::endl;
+        std::cout << " Try reseting a larger cell_factor parameter in INPUT" << std::endl; // LiuXh add 20180619
+        std::cout << " Or try reseting a smaller relax_scale_force parameter in INPUT\n" << std::endl;
+        exit(0);
+    }
+
     const double x0 = position - static_cast<double>(iq);
     const double x1 = 1.0 - x0;
     const double x2 = 2.0 - x0;

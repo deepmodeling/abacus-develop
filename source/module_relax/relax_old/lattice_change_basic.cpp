@@ -1,7 +1,8 @@
 #include "lattice_change_basic.h"
 
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
@@ -16,14 +17,13 @@ double Lattice_Change_Basic::etot_p = 0.0;
 
 // double Lattice_Change_Basic::lattice_change_ini = 0.5; // default is 0.5
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.5
+std::string Lattice_Change_Basic::fixed_axes = "None";
 
-int Lattice_Change_Basic::out_stru = 0;
-
-void Lattice_Change_Basic::setup_gradient(double *lat, double *grad, ModuleBase::matrix &stress)
+void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
 
-    if (INPUT.fixed_axes == "volume")
+    if (Lattice_Change_Basic::fixed_axes == "volume")
     {
         double stress_aver = (stress(0, 0) + stress(1, 1) + stress(2, 2)) / 3.0;
         stress(0, 0) = stress(0, 0) - stress_aver;
@@ -31,29 +31,29 @@ void Lattice_Change_Basic::setup_gradient(double *lat, double *grad, ModuleBase:
         stress(2, 2) = stress(2, 2) - stress_aver;
     }
 
-    lat[0] = GlobalC::ucell.latvec.e11 * GlobalC::ucell.lat0;
-    lat[1] = GlobalC::ucell.latvec.e12 * GlobalC::ucell.lat0;
-    lat[2] = GlobalC::ucell.latvec.e13 * GlobalC::ucell.lat0;
-    lat[3] = GlobalC::ucell.latvec.e21 * GlobalC::ucell.lat0;
-    lat[4] = GlobalC::ucell.latvec.e22 * GlobalC::ucell.lat0;
-    lat[5] = GlobalC::ucell.latvec.e23 * GlobalC::ucell.lat0;
-    lat[6] = GlobalC::ucell.latvec.e31 * GlobalC::ucell.lat0;
-    lat[7] = GlobalC::ucell.latvec.e32 * GlobalC::ucell.lat0;
-    lat[8] = GlobalC::ucell.latvec.e33 * GlobalC::ucell.lat0;
+    lat[0] = ucell.latvec.e11 * ucell.lat0;
+    lat[1] = ucell.latvec.e12 * ucell.lat0;
+    lat[2] = ucell.latvec.e13 * ucell.lat0;
+    lat[3] = ucell.latvec.e21 * ucell.lat0;
+    lat[4] = ucell.latvec.e22 * ucell.lat0;
+    lat[5] = ucell.latvec.e23 * ucell.lat0;
+    lat[6] = ucell.latvec.e31 * ucell.lat0;
+    lat[7] = ucell.latvec.e32 * ucell.lat0;
+    lat[8] = ucell.latvec.e33 * ucell.lat0;
 
-    if (GlobalC::ucell.lc[0] == 1)
+    if (ucell.lc[0] == 1)
     {
         grad[0] = -(lat[0] * stress(0, 0) + lat[1] * stress(1, 0) + lat[2] * stress(2, 0));
         grad[1] = -(lat[0] * stress(0, 1) + lat[1] * stress(1, 1) + lat[2] * stress(2, 1));
         grad[2] = -(lat[0] * stress(0, 2) + lat[1] * stress(1, 2) + lat[2] * stress(2, 2));
     }
-    if (GlobalC::ucell.lc[1] == 1)
+    if (ucell.lc[1] == 1)
     {
         grad[3] = -(lat[3] * stress(0, 0) + lat[4] * stress(1, 0) + lat[5] * stress(2, 0));
         grad[4] = -(lat[3] * stress(0, 1) + lat[4] * stress(1, 1) + lat[5] * stress(2, 1));
         grad[5] = -(lat[3] * stress(0, 2) + lat[4] * stress(1, 2) + lat[5] * stress(2, 2));
     }
-    if (GlobalC::ucell.lc[2] == 1)
+    if (ucell.lc[2] == 1)
     {
         grad[6] = -(lat[6] * stress(0, 0) + lat[7] * stress(1, 0) + lat[8] * stress(2, 0));
         grad[7] = -(lat[6] * stress(0, 1) + lat[7] * stress(1, 1) + lat[8] * stress(2, 1));
@@ -67,7 +67,7 @@ void Lattice_Change_Basic::setup_gradient(double *lat, double *grad, ModuleBase:
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(double *move, double *lat)
+void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
@@ -76,105 +76,84 @@ void Lattice_Change_Basic::change_lattice(double *move, double *lat)
 
     /*
         std::cout<<" LATTICE CONSTANT  OLD:"<<std::endl;
-        std::cout<<" "<<std::setprecision(12)<<GlobalC::ucell.latvec.e11<<"   "<<GlobalC::ucell.latvec.e12<<"
-       "<<GlobalC::ucell.latvec.e13<<std::endl; std::cout<<" "<<std::setprecision(12)<<GlobalC::ucell.latvec.e21<<"
-       "<<GlobalC::ucell.latvec.e22<<"   "<<GlobalC::ucell.latvec.e23<<std::endl; std::cout<<"
-       "<<std::setprecision(12)<<GlobalC::ucell.latvec.e31<<"   "<<GlobalC::ucell.latvec.e32<<"
-       "<<GlobalC::ucell.latvec.e33<<std::endl;
+        std::cout<<" "<<std::setprecision(12)<<ucell.latvec.e11<<"   "<<ucell.latvec.e12<<"
+       "<<ucell.latvec.e13<<std::endl; std::cout<<" "<<std::setprecision(12)<<ucell.latvec.e21<<"
+       "<<ucell.latvec.e22<<"   "<<ucell.latvec.e23<<std::endl; std::cout<<"
+       "<<std::setprecision(12)<<ucell.latvec.e31<<"   "<<ucell.latvec.e32<<"
+       "<<ucell.latvec.e33<<std::endl;
     */
 
-    if (GlobalC::ucell.lc[0] != 0)
+    if (ucell.lc[0] != 0)
     {
-        GlobalC::ucell.latvec.e11 = (move[0] + lat[0]) / GlobalC::ucell.lat0;
-        GlobalC::ucell.latvec.e12 = (move[1] + lat[1]) / GlobalC::ucell.lat0;
-        GlobalC::ucell.latvec.e13 = (move[2] + lat[2]) / GlobalC::ucell.lat0;
+        ucell.latvec.e11 = (move[0] + lat[0]) / ucell.lat0;
+        ucell.latvec.e12 = (move[1] + lat[1]) / ucell.lat0;
+        ucell.latvec.e13 = (move[2] + lat[2]) / ucell.lat0;
     }
-    if (GlobalC::ucell.lc[1] != 0)
+    if (ucell.lc[1] != 0)
     {
-        GlobalC::ucell.latvec.e21 = (move[3] + lat[3]) / GlobalC::ucell.lat0;
-        GlobalC::ucell.latvec.e22 = (move[4] + lat[4]) / GlobalC::ucell.lat0;
-        GlobalC::ucell.latvec.e23 = (move[5] + lat[5]) / GlobalC::ucell.lat0;
+        ucell.latvec.e21 = (move[3] + lat[3]) / ucell.lat0;
+        ucell.latvec.e22 = (move[4] + lat[4]) / ucell.lat0;
+        ucell.latvec.e23 = (move[5] + lat[5]) / ucell.lat0;
     }
-    if (GlobalC::ucell.lc[2] != 0)
+    if (ucell.lc[2] != 0)
     {
-        GlobalC::ucell.latvec.e31 = (move[6] + lat[6]) / GlobalC::ucell.lat0;
-        GlobalC::ucell.latvec.e32 = (move[7] + lat[7]) / GlobalC::ucell.lat0;
-        GlobalC::ucell.latvec.e33 = (move[8] + lat[8]) / GlobalC::ucell.lat0;
+        ucell.latvec.e31 = (move[6] + lat[6]) / ucell.lat0;
+        ucell.latvec.e32 = (move[7] + lat[7]) / ucell.lat0;
+        ucell.latvec.e33 = (move[8] + lat[8]) / ucell.lat0;
     }
 
-    GlobalC::ucell.a1.x = GlobalC::ucell.latvec.e11;
-    GlobalC::ucell.a1.y = GlobalC::ucell.latvec.e12;
-    GlobalC::ucell.a1.z = GlobalC::ucell.latvec.e13;
-    GlobalC::ucell.a2.x = GlobalC::ucell.latvec.e21;
-    GlobalC::ucell.a2.y = GlobalC::ucell.latvec.e22;
-    GlobalC::ucell.a2.z = GlobalC::ucell.latvec.e23;
-    GlobalC::ucell.a3.x = GlobalC::ucell.latvec.e31;
-    GlobalC::ucell.a3.y = GlobalC::ucell.latvec.e32;
-    GlobalC::ucell.a3.z = GlobalC::ucell.latvec.e33;
+    ucell.a1.x = ucell.latvec.e11;
+    ucell.a1.y = ucell.latvec.e12;
+    ucell.a1.z = ucell.latvec.e13;
+    ucell.a2.x = ucell.latvec.e21;
+    ucell.a2.y = ucell.latvec.e22;
+    ucell.a2.z = ucell.latvec.e23;
+    ucell.a3.x = ucell.latvec.e31;
+    ucell.a3.y = ucell.latvec.e32;
+    ucell.a3.z = ucell.latvec.e33;
 
-    GlobalC::ucell.omega
-        = abs(GlobalC::ucell.latvec.Det()) * GlobalC::ucell.lat0 * GlobalC::ucell.lat0 * GlobalC::ucell.lat0;
+    ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
-    GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-    GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
-    GlobalC::ucell.GGT = GlobalC::ucell.G * GlobalC::ucell.GT;
-    GlobalC::ucell.invGGT = GlobalC::ucell.GGT.Inverse();
+    ucell.GT = ucell.latvec.Inverse();
+    ucell.G = ucell.GT.Transpose();
+    ucell.GGT = ucell.G * ucell.GT;
+    ucell.invGGT = ucell.GGT.Inverse();
 
 #ifdef __MPI
     // distribute lattice vectors.
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e11);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e12);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e13);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e21);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e22);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e23);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e31);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e32);
-    Parallel_Common::bcast_double(GlobalC::ucell.latvec.e33);
+    Parallel_Common::bcast_double(ucell.latvec.e11);
+    Parallel_Common::bcast_double(ucell.latvec.e12);
+    Parallel_Common::bcast_double(ucell.latvec.e13);
+    Parallel_Common::bcast_double(ucell.latvec.e21);
+    Parallel_Common::bcast_double(ucell.latvec.e22);
+    Parallel_Common::bcast_double(ucell.latvec.e23);
+    Parallel_Common::bcast_double(ucell.latvec.e31);
+    Parallel_Common::bcast_double(ucell.latvec.e32);
+    Parallel_Common::bcast_double(ucell.latvec.e33);
 
     // distribute lattice vectors.
-    Parallel_Common::bcast_double(GlobalC::ucell.a1.x);
-    Parallel_Common::bcast_double(GlobalC::ucell.a1.y);
-    Parallel_Common::bcast_double(GlobalC::ucell.a1.z);
-    Parallel_Common::bcast_double(GlobalC::ucell.a2.x);
-    Parallel_Common::bcast_double(GlobalC::ucell.a2.y);
-    Parallel_Common::bcast_double(GlobalC::ucell.a2.z);
-    Parallel_Common::bcast_double(GlobalC::ucell.a3.x);
-    Parallel_Common::bcast_double(GlobalC::ucell.a3.y);
-    Parallel_Common::bcast_double(GlobalC::ucell.a3.z);
+    Parallel_Common::bcast_double(ucell.a1.x);
+    Parallel_Common::bcast_double(ucell.a1.y);
+    Parallel_Common::bcast_double(ucell.a1.z);
+    Parallel_Common::bcast_double(ucell.a2.x);
+    Parallel_Common::bcast_double(ucell.a2.y);
+    Parallel_Common::bcast_double(ucell.a2.z);
+    Parallel_Common::bcast_double(ucell.a3.x);
+    Parallel_Common::bcast_double(ucell.a3.y);
+    Parallel_Common::bcast_double(ucell.a3.z);
 #endif
-    /*
-            std::cout<<" LATTICE CONSTANT NEW: "<<std::endl;
-            std::cout<<" "<<std::setprecision(12)<<GlobalC::ucell.latvec.e11<<"   "<<GlobalC::ucell.latvec.e12<<"
-       "<<GlobalC::ucell.latvec.e13<<std::endl; std::cout<<" "<<std::setprecision(12)<<GlobalC::ucell.latvec.e21<<"
-       "<<GlobalC::ucell.latvec.e22<<"   "<<GlobalC::ucell.latvec.e23<<std::endl; std::cout<<"
-       "<<std::setprecision(12)<<GlobalC::ucell.latvec.e31<<"   "<<GlobalC::ucell.latvec.e32<<"
-       "<<GlobalC::ucell.latvec.e33<<std::endl;
-    */
-        //--------------------------------------------
-        // Print out the structure file.
-        //--------------------------------------------
-    std::stringstream ss;
-    ss << GlobalV::global_out_dir << "STRU_ION";
-    if (out_stru == 1)
-    {
-        ss << istep;
-        GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
-    }
-    ss << "_D";    
-    GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
 
     return;
 }
 
-void Lattice_Change_Basic::check_converged(ModuleBase::matrix &stress, double *grad)
+void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
     Lattice_Change_Basic::largest_grad = 0.0;
     double stress_ii_max = 0.0;
 
-    if (GlobalC::ucell.lc[0] == 1 && GlobalC::ucell.lc[1] == 1 && GlobalC::ucell.lc[2] == 1)
+    if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
     {
         for (int i = 0; i < 3; i++)
         {
@@ -212,7 +191,7 @@ void Lattice_Change_Basic::check_converged(ModuleBase::matrix &stress, double *g
                              << std::endl;
         Lattice_Change_Basic::converged = true;
     }
-    else if (GlobalC::ucell.lc[0] == 1 && GlobalC::ucell.lc[1] == 1 && GlobalC::ucell.lc[2] == 1)
+    else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
     {
         // if(Lattice_Change_Basic::largest_grad < GlobalV::STRESS_THR)
         if (Lattice_Change_Basic::largest_grad < GlobalV::STRESS_THR && stress_ii_max < GlobalV::STRESS_THR)

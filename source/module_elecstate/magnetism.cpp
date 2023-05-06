@@ -1,7 +1,5 @@
 #include "magnetism.h"
-#ifndef __CELL
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#endif
 #include "module_base/parallel_reduce.h"
 
 Magnetism::Magnetism()
@@ -16,7 +14,6 @@ Magnetism::~Magnetism()
     delete[] this->start_magnetization;
 }
 
-#ifndef __CELL
 void Magnetism::compute_magnetization(const Charge* const chr, double* nelec_spin)
 {
     if (GlobalV::NSPIN==2)
@@ -82,4 +79,3 @@ bool Magnetism::judge_parallel(double a[3], ModuleBase::Vector3<double> b)
    jp = (fabs(cross)<1e-6);
    return jp;
 }
-#endif

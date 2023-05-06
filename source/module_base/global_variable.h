@@ -22,7 +22,7 @@ extern int NBANDS;
 extern int NBANDS_ISTATE; // 1.05 // mohan add 2011-03-22
 extern int NLOCAL; // 1.1 // mohan add 2009-05-29
 
-extern double KSPACING;
+extern double KSPACING[3];
 extern double MIN_DIST_COEF;
 
 extern double PSEUDORCUT;
@@ -108,7 +108,7 @@ extern int ocp;
 extern std::string ocp_set;
 extern std::vector<double> ocp_kb;
 // extern double ocp_kb[10000];
-extern int out_mul; // qifeng add 2019/9/10
+extern bool out_mul; // qifeng add 2019/9/10
 //========================================================================
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
@@ -261,6 +261,7 @@ extern double of_wt_alpha;   // parameter alpha of WT KEDF
 extern double of_wt_beta;    // parameter beta of WT KEDF
 extern double of_wt_rho0;    // set the average density of system, in Bohr^-3
 extern bool of_hold_rho0;   // If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero.
+extern double of_lkt_a;    // parameter a of LKT KEDF
 extern bool of_full_pw;     // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used.
 extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
 extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
@@ -283,6 +284,7 @@ extern int out_chg;
 
 extern double nelec;
 extern bool out_bandgap;
+extern int out_interval;
 
 } // namespace GlobalV
 #endif

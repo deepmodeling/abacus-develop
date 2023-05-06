@@ -22,7 +22,7 @@ int NBANDS = 0;
 int NBANDS_ISTATE = 0; // default number.
 int NLOCAL = 0; // total number of local basis.
 
-double KSPACING = 0.0;
+double  KSPACING[3] = {0.0,0.0,0.0};
 double MIN_DIST_COEF = 0.2;
 
 double PSEUDORCUT;
@@ -97,7 +97,7 @@ std::string ocp_set = "none";
 std::vector<double> ocp_kb;
 // int ocp_n=0;
 // double ocp_kb[10000];
-int out_mul = 0; // qifeng add 2019/9/10
+bool out_mul = false; // qifeng add 2019/9/10
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
@@ -233,6 +233,7 @@ double of_wt_alpha = 5./6.;
 double of_wt_beta = 5./6.;
 double of_wt_rho0 = 0.;
 bool of_hold_rho0 = false;
+double of_lkt_a = 1.3;
 bool of_full_pw = true;
 int of_full_pw_dim = 0;
 bool of_read_kernel = false;
@@ -254,4 +255,5 @@ std::string init_chg = "";
 int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
+int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 } // namespace GlobalV

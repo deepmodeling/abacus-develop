@@ -74,7 +74,7 @@ void ORB_table_phi::allocate
 	// calculated from input parameters
 	this->nlm = (2*lmax+1) * (2*lmax+1);
 	this->Rmesh = static_cast<int>( Rmax/dr ) + 4;
-	if(Rmesh%2==0) 
+	if(Rmesh%2==0)
 	{
 		++Rmesh;
 	}
@@ -110,7 +110,7 @@ int ORB_table_phi::get_rmesh(const double &R1, const double &R2) const
 	//mohan update 2009-09-08 +1 ==> +5
 	//considering interpolation or so on...
 	if (rmesh % 2 == 0) rmesh ++;
-	
+
 	if(rmesh <= 0)
 	{
 		//GlobalV::ofs_warning << "\n R1 = " << R1 << " R2 = " << R2;
@@ -172,7 +172,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 			}
 			break;
 	}
-	
+
 	std::vector<double> k1_dot_k2_dot_kpoint(kmesh);
 	for (int ik = 0; ik < kmesh; ik++)
 	{
@@ -181,11 +181,11 @@ void ORB_table_phi::cal_ST_Phi12_R
 
 	//Drs
 	//djl = (l*j(l-1) - (l+1)j(l+1))/(2l+1)
-	
+
 	//previous version
-	
+
 	//double* integrated_func = new double[kmesh];
-	
+
 	int ll;
 	if(l==0) ll=0;
 	else 	 ll=l-1;
@@ -193,7 +193,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[ll];
 	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
 	const std::vector<std::vector<double>> &jlp1 = pSB->get_jlx()[l+1];
-	
+
 #ifdef _OPENMP
 	#pragma omp parallel for schedule(static)
 #endif
@@ -210,7 +210,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 
 		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), dk, temp);
 		rs[ir] = temp * ModuleBase::FOUR_PI ;
-		
+
 		// Peize Lin accelerate 2017-10-02
 		const std::vector<double> &jlm1_r = jlm1[ir];
 		const std::vector<double> &jlp1_r = jlp1[ir];
@@ -242,12 +242,12 @@ void ORB_table_phi::cal_ST_Phi12_R
 	{
 		std::vector<double> integrated_func(kmesh);
 		double temp = 0.0;
-	
+
 		for (int ik = 0; ik < kmesh; ik++)
 		{
 			integrated_func[ik] = k1_dot_k2[ik] * std::pow (kpoint[ik], l);
 		}
-		
+
 		ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), kab, temp);
 		rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac (2*l+1) * temp;
 	}
@@ -306,7 +306,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 			}
 			break;
 	}
-	
+
 	std::vector<double> k1_dot_k2_dot_kpoint(kmesh);
 	for (int ik = 0; ik < kmesh; ik++)
 	{
@@ -314,18 +314,18 @@ void ORB_table_phi::cal_ST_Phi12_R
 	}
 
 	std::vector<double> integrated_func(kmesh);
-	
+
 	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[l-1];
 	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
 	const std::vector<std::vector<double>> &jlp1 = pSB->get_jlx()[l+1];
-	
+
 	for( const size_t &ir : radials )
 	{
 		// if(rs[ir])  => rs[ir]  has been calculated
 		// if(drs[ir]) => drs[ir] has been calculated
 		// Actually, if(ir[ir]||dr[ir]) is enough. Double insurance for the sake of avoiding numerical errors
-		if( rs[ir] && drs[ir] )	continue;			
-		
+		if( rs[ir] && drs[ir] )	continue;
+
 		const std::vector<double> &jl_r = jl[ir];
 		for (int ik=0; ik<kmesh; ++ik)
 		{
@@ -335,7 +335,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 
 		ModuleBase::Integral::Simpson_Integral(kmesh,ModuleBase::GlobalFunc::VECTOR_TO_PTR(integrated_func),dk,temp);
 		rs[ir] = temp * ModuleBase::FOUR_PI ;
-		
+
 		const std::vector<double> &jlm1_r = jlm1[ir];
 		const std::vector<double> &jlp1_r = jlp1[ir];
 		const double fac = l/(l+1.0);
@@ -376,9 +376,9 @@ void ORB_table_phi::cal_ST_Phi12_R
 			rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac (2*l+1) * temp;
 		}
 	}
-	
+
 	ModuleBase::timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
-	
+
 	return;
 }
 
@@ -426,15 +426,15 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 			//remain to be modified
 			//??????
 			const int lmax_now = std::max( Lmax1, Lmax2 );
-			
+
 
 			///////////////////////////////////
 			// mohan add 2011-03-07
-			// I think the lmax_now should be judged from two 
+			// I think the lmax_now should be judged from two
 			// orbitals, not atom type!!!!!!!!!!!!!
 			// there are space that can imporve the efficiency.
 			//////////////////////////////////
-			
+
 			const int L2plus1 =  2*lmax_now + 1;
 
 			const int nchi1 = orb.Phi[T1].getTotal_nchi();
@@ -456,15 +456,8 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 			const int rmesh = this->get_rmesh( Rcut1, Rcut2);
 			assert( rmesh < this->Rmesh );
 #ifdef __ORBITAL
-    		std::stringstream ss1;
-    		ss1 << "./Table_SR0";
-		    std::string command1 = "test -d " + ss1.str() + " || mkdir " + ss1.str();
-   			std::system( command1.c_str() );
-
-    		std::stringstream ss2;
-    		ss2 << "./Table_TR0";
-		    std::string command2 = "test -d " + ss2.str() + " || mkdir " + ss2.str();
-   			std::system( command2.c_str() );
+			ModuleBase::GlobalFunc::MAKE_DIR("Table_SR0");
+			ModuleBase::GlobalFunc::MAKE_DIR("Table_TR0");
 #endif
 			for (int L1 = 0; L1 < Lmax1 + 1; L1++)
 			{
@@ -473,10 +466,10 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 					for (int L2 = 0; L2 < Lmax2 + 1; L2 ++)
 					{
 						for (int N2 = 0; N2 < orb.Phi[T2].getNchi(L2); N2++)
-						{		
+						{
 							// get the second index.
 							const int Opair = this->OV_Opair(Tpair,L1,L2,N1,N2);
-							
+
 							// init 3rd dimension
 							for(int ir = 0; ir < 2; ir++)
 							{
@@ -487,7 +480,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 							//L=|L1-L2|,|L1-L2|+2,...,L1+L2
 							const int SL = abs(L1-L2);
 							const int AL = L1+L2;
-							
+
 							for (int L=0; L < L2plus1 ; L++)
 							{
 								//Allocation
@@ -497,10 +490,10 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 								Table_TR[1][Tpair][Opair][L] = new double[rmesh];
 
 								memory_cost += rmesh * 4;
-									
+
 								//for those L whose Gaunt Coefficients = 0, we
 								//assign every element in Table_SR or Table_TR as zero
-								if ((L > AL) || (L < SL) || ((L-SL) % 2 == 1)) 
+								if ((L > AL) || (L < SL) || ((L-SL) % 2 == 1))
 								{
 									ModuleBase::GlobalFunc::ZEROS (Table_SR[0][Tpair][Opair][L], rmesh);
 									ModuleBase::GlobalFunc::ZEROS (Table_SR[1][Tpair][Opair][L], rmesh);
@@ -509,15 +502,15 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 
 									continue;
 								}
-								
-								this->cal_ST_Phi12_R(1,L, 
+
+								this->cal_ST_Phi12_R(1,L,
 										orb.Phi[T1].PhiLN(L1,N1),
 										orb.Phi[T2].PhiLN(L2,N2),
 										rmesh,
 										Table_SR[0][Tpair][Opair][L],
 										Table_SR[1][Tpair][Opair][L]);
 
-								this->cal_ST_Phi12_R(2,L, 
+								this->cal_ST_Phi12_R(2,L,
 										orb.Phi[T1].PhiLN(L1,N1),
 										orb.Phi[T2].PhiLN(L2,N2),
 										rmesh,
@@ -525,8 +518,8 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 										Table_TR[1][Tpair][Opair][L]);
 
 #ifdef __ORBITAL
-								int plot_length = 20;						
-		
+								int plot_length = 20;
+
 								std::stringstream ss_sr;
 								ss_sr << "Table_SR0/"<<Tpair<<Opair<<L<<".dat";
 								std::string filename1 = ss_sr.str();
@@ -556,7 +549,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 void ORB_table_phi::Destroy_Table(LCAO_Orbitals &orb)
 {
 	if(!overlap_table_allocated && !kinetic_table_allocated) return;
-	
+
 	const int ntype = orb.get_ntype();
 	int dim1 = 0;
 	for (int ir = 0; ir < 2; ir++)
@@ -571,7 +564,7 @@ void ORB_table_phi::Destroy_Table(LCAO_Orbitals &orb)
 				const int Lmax2 = orb.Phi[T2].getLmax();
 				const int lmax_now = std::max(Lmax1, Lmax2);
 				const int pairs = orb.Phi[T1].getTotal_nchi() * orb.Phi[T2].getTotal_nchi();
-				
+
 				for (int dim2 = 0; dim2 < pairs; dim2++)
 				{
 					for (int L = 0; L < 2*lmax_now + 1; L++)
@@ -686,9 +679,9 @@ void ORB_table_phi::init_OV_Tpair(LCAO_Orbitals &orb)
 			/// (1) pairs about atom types
 			//liaochen modify 2010/8/4
 			///index for T1>T2 is also needed
-            this->OV_Tpair(T2, T1) = index;						
+            this->OV_Tpair(T2, T1) = index;
 			this->OV_Tpair(T1, T2) = this->OV_Tpair(T2, T1);
-            
+
 			++index;
 			/// (2) pairs about lmax
 			this->OV_L2plus1(T1,T2) = max(orb.Phi[T1].getLmax(), orb.Phi[T2].getLmax() )*2+1;
@@ -702,7 +695,7 @@ void ORB_table_phi::init_OV_Tpair(LCAO_Orbitals &orb)
 
 void ORB_table_phi::init_OV_Opair(LCAO_Orbitals &orb)
 {
-    const int lmax = orb.get_lmax(); 
+    const int lmax = orb.get_lmax();
     const int nchimax = orb.get_nchimax();
 	assert(lmax+1 > 0);
 	assert(nchimax > 0);
@@ -739,9 +732,9 @@ void ORB_table_phi::init_OV_Opair(LCAO_Orbitals &orb)
 
 // Peize Lin update 2016-01-26
 void ORB_table_phi::init_Lmax (
-	const int orb_num, 
-	const int mode, 
-	int &Lmax_used, 
+	const int orb_num,
+	const int mode,
+	int &Lmax_used,
 	int &Lmax,
 	const int &Lmax_exx,
 	const LCAO_Orbitals &orb,
@@ -775,9 +768,9 @@ void ORB_table_phi::init_Lmax (
 		Lmax = std::max(Lmax, orb.get_lmax_d());
 	};
 
-	
+
 	Lmax = -1;
-	
+
 	switch( orb_num )
 	{
 		case 2:
@@ -839,9 +832,9 @@ void ORB_table_phi::init_Lmax (
 
 // Peize Lin update 2016-01-26
 void ORB_table_phi::init_Table_Spherical_Bessel (
-	const int orb_num, 
-	const int mode, 
-	int &Lmax_used, 
+	const int orb_num,
+	const int mode,
+	int &Lmax_used,
 	int &Lmax,
 	const int &Lmax_exx,
 	const LCAO_Orbitals &orb,
@@ -865,7 +858,7 @@ void ORB_table_phi::init_Table_Spherical_Bessel (
 		ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool.push_back({});
 		pSB = &ModuleBase::Sph_Bessel_Recursive_Pool::D2::sb_pool.back();
 	}
-	
+
 	pSB->set_dx( this->dr * this->dk );
 	pSB->cal_jlx( Lmax_used, this->Rmesh, this->kmesh );
 
@@ -885,4 +878,3 @@ void ORB_table_phi::plot_table(
 		ofs<<setw(4) << ir << "  " << column[ir]<<std::endl;
 	}
 }
-

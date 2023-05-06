@@ -1,0 +1,6 @@
+Requriements:
+    numpy
+
+This Python script can be used to calculate the average electrostatic potential stored in an ElecStaticPot.cube file. 
+Simply enter the path containing ElecStaticPot.cube, and run the script using 'python path-to-tools/aveElecStatPot.py'. 
+The output file, ElecStaticPot_AVE, will be generated in the same directory.

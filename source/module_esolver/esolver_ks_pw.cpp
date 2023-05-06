@@ -239,7 +239,7 @@ namespace ModuleESolver
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
             GlobalC::wf.init_at_1();
         }
-        else
+        else if (GlobalV::md_prec_level == 0)
         {
             GlobalC::ppcell.init_vnl(GlobalC::ucell);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
@@ -620,9 +620,9 @@ namespace ModuleESolver
 		{
 			std::stringstream ssp;
 			std::stringstream ssp_ave;
-			ssp << GlobalV::global_out_dir << "ElecStaticPot";
-			ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-			this->pelec->pot->write_elecstat_pot(ssp.str(), ssp_ave.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
+			ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
+			// ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
+			this->pelec->pot->write_elecstat_pot(ssp.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
 		}
 
         if (GlobalV::OUT_LEVEL != "m")

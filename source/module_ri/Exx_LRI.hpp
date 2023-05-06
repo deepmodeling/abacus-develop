@@ -10,9 +10,9 @@
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
 #include "src_ri/exx_abfs-construct_orbs.h"
-#include "src_ri/exx_abfs-util.h"
 #include "src_ri/exx_abfs-io.h"
 #include "src_ri/conv_coulomb_pot_k.h"
+#include "src_ri/conv_coulomb_pot_k-template.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "src_ri/serialization_cereal.h"
@@ -26,7 +26,7 @@
 #include <string>
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
+void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 {
 	ModuleBase::TITLE("Exx_LRI","init");
 	ModuleBase::timer::tick("Exx_LRI", "init");
@@ -47,8 +47,10 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 //		Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
 //	}
 
+	this->Hk_seq.resize(GlobalC::kv.nks);
 
-	this->mpi_comm = mpi_comm_in;
+    this->mpi_comm = mpi_comm_in;
+    this->p_kv = &kv_in;
 
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( GlobalC::ORB, this->info.kmesh_times );
 
@@ -78,7 +80,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
 				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
 		}
 	};
-	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times );
+	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp( this->abfs, info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times,  p_kv->nks );
 
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -112,7 +114,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
-	const std::array<Tcell,Ndim> period = {GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]};
+	const std::array<Tcell,Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
@@ -125,6 +127,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		Vs = this->cv.cal_Vs(
 			list_As_Vs.first, list_As_Vs.second[0],
 			{{"writable_Vws",true}});
+	this->cv.Vws = LRI_CV_Tools::get_CVws(Vs);
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
 	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
@@ -133,6 +136,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 			dVs = this->cv.cal_dVs(
 				list_As_Vs.first, list_As_Vs.second[0],
 				{{"writable_dVws",true}});
+		this->cv.dVws = LRI_CV_Tools::get_dCVws(dVs);
 		this->exx_lri.set_dVs(std::move(dVs), this->info.V_grad_threshold);
 	}
 
@@ -146,11 +150,13 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 			{{"cal_dC",GlobalV::CAL_FORCE||GlobalV::CAL_STRESS},
 			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
+	this->cv.Cws = LRI_CV_Tools::get_CVws(Cs);
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
 	if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
 	{
 		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
+		this->cv.dCws = LRI_CV_Tools::get_dCVws(dCs);
 		this->exx_lri.set_dCs(std::move(dCs), this->info.C_grad_threshold);
 	}
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
@@ -166,8 +172,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 
 	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> Ds =
 		GlobalV::GAMMA_ONLY_LOCAL
-		? RI_2D_Comm::split_m2D_ktoR<Tdata>(loc.dm_gamma, pv)
-		: RI_2D_Comm::split_m2D_ktoR<Tdata>(loc.dm_k, pv);
+		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, loc.dm_gamma, pv)
+		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, loc.dm_k, pv);
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
@@ -237,7 +243,7 @@ void Exx_LRI<Tdata>::cal_exx_force()
 	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
 		
-	this->exx_lri.set_csm_threshold(this->info.cauchy_grad_threshold);
+	this->exx_lri.set_csm_threshold(this->info.cauchy_force_threshold);
 
 	this->force_exx.create(GlobalC::ucell.nat, Ndim);
 	for(int is=0; is<GlobalV::NSPIN; ++is)
@@ -261,7 +267,7 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::TITLE("Exx_LRI","cal_exx_stress");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 		
-	this->exx_lri.set_csm_threshold(this->info.cauchy_grad_threshold);
+	this->exx_lri.set_csm_threshold(this->info.cauchy_stress_threshold);
 
 	this->stress_exx.create(Ndim, Ndim);
 	for(int is=0; is<GlobalV::NSPIN; ++is)

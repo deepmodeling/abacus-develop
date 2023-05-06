@@ -6,7 +6,7 @@ Solid-liquid interfaces are ubiquitous in nature and frequently encountered and 
 
 Implicit solvation model is a well-developed method to deal with solvation effects, which has been widely used in finite and periodic systems. This approach treats the solvent as a continuous medium instead of individual “explicit” solvent molecules, which means that the solute embedded in an implicit solvent, and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath. Compared to the “explicit” method, such implicit solvation model can provide qualitatively correct results with much less computational cost, which is particularly suited for large and complex systems. The implicit solvation model implemented in ABACUS follows the [methodology](https://aip.scitation.org/doi/10.1063/1.4865107) developed by Mathew, Sundararaman, Letchworth-Weaver, Arias, and Hennig in 2014. 
 
-Input parameters that control the implicit solvation model are listed as follows with detailed explaination and recommended values provided on this [webpage](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#implicit-solvation-model):
+Input parameters that control the implicit solvation model are listed as follows with detailed explaination and recommended values provided on this [webpage](https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#implicit-solvation-model):
 
 ```
 INPUT_PARAMETERS
@@ -24,7 +24,7 @@ Example of running DFT calculation with the implicit solvation model is provided
 A saw-like potential simulating an electric field
 can be added to the bare ionic potential, which is a simplified simulation to the field-effect measurements, in which the system is separated from the gate electrode by a dielectric such as silicon oxide.
 
-Whether to apply the external field is controlled via the keyword `efield_flag` in `INPUT` (setting to 1 to turn on the field). Related keywords that control the external field are listed as follows with detailed explaination provided [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#electric-field-and-dipole-correction):
+Whether to apply the external field is controlled via the keyword `efield_flag` in `INPUT` (setting to 1 to turn on the field). Related keywords that control the external field are listed as follows with detailed explaination provided [here](https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#electric-field-and-dipole-correction):
 ```
 INPUT_PARAMETERS
 efield_flag        1
@@ -38,7 +38,7 @@ Example of running DFT calculation with added external electric field is provide
 
 
 ## Dipole Correction
-A dipole correction can be added to the bare ionic potential, which can compensate for the artificial dipole field within the context of a periodic supercell calculation. The dipole correction implemented in ABACUS follows the [methodology](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.59.12301) proposed by Bengtsson in 1999. This correction must be used ONLY in a slab geometry, for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE. Note that the common input parameters shared between the external electric field and dipole correction, with detailed explaination provided [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#electric-field-and-dipole-correction). The following keywords settings add dipole correction only without applying any external electric field:
+A dipole correction can be added to the bare ionic potential, which can compensate for the artificial dipole field within the context of a periodic supercell calculation. The dipole correction implemented in ABACUS follows the [methodology](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.59.12301) proposed by Bengtsson in 1999. This correction must be used ONLY in a slab geometry, for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE. Note that the common input parameters shared between the external electric field and dipole correction, with detailed explaination provided [here](https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#electric-field-and-dipole-correction). The following keywords settings add dipole correction only without applying any external electric field:
 ```
 INPUT_PARAMETERS
 efield_flag        1
@@ -69,7 +69,7 @@ To run any of the two cases, users may enter the directory, copy the correspondi
 
 Modeling a constant-potential electronchemcial surface reaction requires adjustment of electron numbers in a simulation cell. At the mean time, we need to maintain the supercell's neutrality due to the periodic boundary condition. A distribution of compensating charge thus needs to be implemented in the vacuum region of surface models when extra electrons are added/extracted from the system.
 
-The compensating charge implemented in ABACUS follows the [methodology](http://dx.doi.org/10.1103/PhysRevB.89.245406) developed by Brumme, Calandra, and Mauri in 2014. Input parameters that control the compensating charge are listed as follows with detailed explaination provided [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#gate-field-compensating-charge): 
+The compensating charge implemented in ABACUS follows the [methodology](http://dx.doi.org/10.1103/PhysRevB.89.245406) developed by Brumme, Calandra, and Mauri in 2014. Input parameters that control the compensating charge are listed as follows with detailed explaination provided [here](https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#gate-field-compensating-charge): 
 
 ```
 INPUT_PARAMETERS

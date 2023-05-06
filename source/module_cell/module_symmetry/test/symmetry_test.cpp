@@ -21,6 +21,10 @@
  *     gives the right result;
  * 2. function: `atom_ordering_new:
  * test the new atom-sort algorithm gives the right result;
+ *3. function: `pricell`:
+ * test if the number of primitive cells are right, 
+ * using cases whose space group
+ * is different from its point group.
  ***********************************************/
 
 // mock the useless functions
@@ -93,6 +97,7 @@ struct stru_
     std::string space_group;
     std::vector<double> cell;
     std::vector<atomtype_> all_type;
+    std::string coordtype; // caltesian or direct
 };
 
 std::vector<stru_> stru_lib{
@@ -104,7 +109,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{2,
           "O_h",
           "m-3m",
@@ -113,7 +118,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{3,
           "O_h",
           "m-3m",
@@ -122,7 +127,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{4,
           "D_6h",
           "6/mmm",
@@ -131,7 +136,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{5,
           "D_4h",
           "4/mmm",
@@ -140,7 +145,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{6,
           "D_4h",
           "4/mmm",
@@ -149,7 +154,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{7,
           "D_3d",
           "-3m",
@@ -166,7 +171,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {-0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{8,
           "D_2h",
           "mmm",
@@ -175,7 +180,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{9,
           "D_2h",
           "mmm",
@@ -184,7 +189,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{10,
           "D_2h",
           "mmm",
@@ -193,7 +198,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{11,
           "D_2h",
           "mmm",
@@ -202,7 +207,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
     stru_{12,
           "C_2h",
           "2/m",
@@ -211,7 +216,7 @@ std::vector<stru_> stru_lib{
           std::vector<atomtype_>{atomtype_{"C",
                                            std::vector<std::vector<double>>{
                                                {0., 0., 0.},
-                                           }}}},
+                                           }}}, "C"},
    stru_{13,
          "C_2h",
          "2/m",
@@ -220,7 +225,7 @@ std::vector<stru_> stru_lib{
          std::vector<atomtype_>{atomtype_{"C",
                                           std::vector<std::vector<double>>{
                                               {0., 0., 0.},
-                                          }}}},
+                                          }}}, "C"},
    stru_{14,
          "S_2",
          "-1",
@@ -229,7 +234,7 @@ std::vector<stru_> stru_lib{
          std::vector<atomtype_>{atomtype_{"C",
                                           std::vector<std::vector<double>>{
                                               {0., 0., 0.},
-                                          }}}},
+                                          }}}, "C"},
 
 };
 
@@ -269,22 +274,45 @@ class SymmetryTest : public testing::Test
             for (int j = 0; j < ucell.atoms[i].na; j++)
             {
                 std::vector<double> this_atom = coord[i].coordinate[j];
-                ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
-                ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
-                                                          ucell.atoms[i].tau[j].y,
-                                                          ucell.atoms[i].tau[j].z,
-                                                          ucell.a1.x,
-                                                          ucell.a1.y,
-                                                          ucell.a1.z,
-                                                          ucell.a2.x,
-                                                          ucell.a2.y,
-                                                          ucell.a2.z,
-                                                          ucell.a3.x,
-                                                          ucell.a3.y,
-                                                          ucell.a3.z,
-                                                          ucell.atoms[i].taud[j].x,
-                                                          ucell.atoms[i].taud[j].y,
-                                                          ucell.atoms[i].taud[j].z);
+                if (stru.coordtype == "C")
+                {
+                    ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
+                    ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
+                                                            ucell.atoms[i].tau[j].y,
+                                                            ucell.atoms[i].tau[j].z,
+                                                            ucell.a1.x,
+                                                            ucell.a1.y,
+                                                            ucell.a1.z,
+                                                            ucell.a2.x,
+                                                            ucell.a2.y,
+                                                            ucell.a2.z,
+                                                            ucell.a3.x,
+                                                            ucell.a3.y,
+                                                            ucell.a3.z,
+                                                            ucell.atoms[i].taud[j].x,
+                                                            ucell.atoms[i].taud[j].y,
+                                                            ucell.atoms[i].taud[j].z);
+                }
+                else
+                {
+                    ucell.atoms[i].taud[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
+                    ModuleBase::Mathzone::Direct_to_Cartesian(ucell.atoms[i].taud[j].x,
+                                                            ucell.atoms[i].taud[j].y,
+                                                            ucell.atoms[i].taud[j].z,
+                                                            ucell.a1.x,
+                                                            ucell.a1.y,
+                                                            ucell.a1.z,
+                                                            ucell.a2.x,
+                                                            ucell.a2.y,
+                                                            ucell.a2.z,
+                                                            ucell.a3.x,
+                                                            ucell.a3.y,
+                                                            ucell.a3.z,
+                                                            ucell.atoms[i].tau[j].x,
+                                                            ucell.atoms[i].tau[j].y,
+                                                            ucell.atoms[i].tau[j].z);
+                }
+
             }
             ucell.nat += ucell.atoms[i].na;
         }
@@ -491,8 +519,8 @@ TEST_F(SymmetryTest, AtomOrderingNew)
 
     //2. Special Case Test
     //(1). z-to-x
-    new_pos[0]=0.0; new_pos[1]=1/3; new_pos[2]=0.1;
-    new_pos[3]=symm.epsilon*0.9; new_pos[4]=1/3; new_pos[5]=0.0;
+    new_pos[0]=0.0; new_pos[1]=1./3.; new_pos[2]=0.1;
+    new_pos[3]=symm.epsilon*0.9; new_pos[4]=1./3.; new_pos[5]=0.0;
     symm.test_atom_ordering(new_pos, 2, subindex);
     EXPECT_NEAR(new_pos[5], 0.1, DOUBLETHRESHOLD);
     EXPECT_NEAR(new_pos[2], 0.0, DOUBLETHRESHOLD);
@@ -503,7 +531,163 @@ TEST_F(SymmetryTest, AtomOrderingNew)
 
 }
 
-int main(int argc, char **argv)
+// test cases for space group and primitive cell analysis
+// ibrav here means the number of primitive cells 
+std::vector<stru_> supercell_lib{
+    // bcc, 2 primitive cells
+    stru_{2,
+        "O_h",
+        "",
+        "O_h",
+        std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0., 0.}, {0.5, 0.5, 0.5},
+    }}}, "D"},
+    // bct, 2
+    stru_{2,
+        "D_4h",
+        "",
+        "D_4h",
+        std::vector<double>{1.2, 0., 0., 0., 1., 0., 0., 0., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0., 0.}, {0.5, 0.5, 0.5},
+    }}} , "D"},
+    //bct, 2
+    stru_{2,
+        "D_2h",
+        "",
+        "D_2h",
+        std::vector<double>{1.2, 0., 0., 0., 1.1, 0., 0., 0., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0., 0.}, {0.5, 0.5, 0.5},
+    }}} , "D"},
+    //fcc, 4
+    stru_{4,
+        "O_h",
+        "",
+        "O_h",
+        std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0., 0.}, {0.5, 0.5, 0.},{0.5, 0., 0.5},{0., 0.5, 0.5},
+    }}} , "D"},
+    //fco, 4
+    stru_{4,
+        "D_2h",
+        "",
+        "D_2h",
+        std::vector<double>{1.2, 0., 0., 0., 1.1, 0., 0., 0., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0., 0.}, {0.5, 0.5, 0.},{0.5, 0., 0.5},{0., 0.5, 0.5},
+    }}} , "D"},
+    //3 in x
+    stru_{3,
+        "C_1h",
+        "",
+        "D_2h",
+        std::vector<double>{3., -3., -3., -1., 1., -1., -1., -1., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0.1, 0.5}, {1./3., 0.1, 0.5},{2./3., 0.1, 0.5},
+    }}} , "D"},
+    //3 in y
+    stru_{3,
+        "C_1h",
+        "",
+        "D_2h",
+        std::vector<double>{1., -1., -1., -3., 3., -3., -1., -1., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0.4, 0., 0.1}, {0.4, 1./3., 0.1},{0.4, 2./3., 0.1},
+    }}} , "D"},
+    //3 in z
+    stru_{3,
+        "C_1h",
+        "",
+        "D_2h",
+        std::vector<double>{1., -1., -1., -1., 1., -1., -3., -3., 3.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0.3, 0.1, 0.}, {0.3, 0.1, 1./3.},{0.3, 0.1, 2./3.},
+    }}} , "D"},
+    //6 in xy
+    stru_{6,
+        "C_1",
+        "",
+        "S_2",
+        std::vector<double>{2., -2., -2., -3., 3., -3., -1., -1., 1.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0., 0.1}, {0., 1./3., 0.1},{0., 2./3., 0.1},{0.5, 0., 0.1}, {0.5, 1./3., 0.1},{0.5, 2./3., 0.1},
+    }}} , "D"},
+    //6 in yz
+    stru_{6,
+        "C_1",
+        "",
+        "S_2",
+        std::vector<double>{1., -1., -1., -2., 2., -2., -3., -3., 3.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0.1, 0., 0.}, {0.1, 0., 1./3.},{0.1, 0., 2./3.},{0.1, 0.5, 0.}, {0.1, 0.5, 1./3.},{0.1, 0.5, 2./3.},
+    }}} , "D"},
+    //6 in zx
+    stru_{6,
+        "C_1",
+        "",
+        "S_2",
+        std::vector<double>{3., -3., -3., -1., 1., -1., -2., -2., 2.},
+        std::vector<atomtype_>{atomtype_{"C",
+        std::vector<std::vector<double>>{
+            {0., 0.1, 0.}, {1./3., 0.1, 0.},{2./3., 0.1, 0.},  {0., 0.1, 0.5}, {1./3., 0.1, 0.5},{2./3., 0.1, 0.5},
+    }}} , "D"},
+    //hex: 3 in a1 - 231
+    stru_{3,
+        "C_1h",
+        "",
+        "C_2v",
+        std::vector<double>{0., 1.59516, 2.76289, 20., 0., 0., 0., 9.57096, 0.},
+        std::vector<atomtype_>{atomtype_{"Mo",
+        std::vector<std::vector<double>>{
+            {2./3., 0.1859875, 0.22222222}, {2./3., 0.1859875, 0.55555555},{2./3., 0.1859875, 0.88888888},
+    }},
+        atomtype_{"S",
+        std::vector<std::vector<double>>{
+            {1./3., 0.2642317, 0.11111111}, {1./3., 0.1077433, 0.11111111},{1./3., 0.2642317, 0.44444444},
+            {1./3., 0.1077433, 0.44444444}, {1./3., 0.2642317, 0.77777777},{1./3., 0.1077433, 0.77777777},
+    }}}
+    , "D"},
+};
+
+
+TEST_F(SymmetryTest, SG_Pricell)
+{
+    for (int stru = 0; stru < supercell_lib.size(); stru++)
+    {
+        ModuleSymmetry::Symmetry symm;
+        symm.epsilon = 1e-5;
+        construct_ucell(supercell_lib[stru]);
+        symm.analy_sys(ucell, ofs_running);
+
+        std::string ref_point_group = supercell_lib[stru].point_group;
+        std::string cal_point_group = symm.pgname;
+        std::string ref_space_group = supercell_lib[stru].space_group;
+        std::string cal_space_group = symm.spgname;
+        
+        int ref_ncells = supercell_lib[stru].ibrav;
+        EXPECT_EQ(symm.ncell, ref_ncells);
+        EXPECT_EQ(cal_point_group, ref_point_group);
+        EXPECT_EQ(cal_space_group, ref_space_group);
+
+        ClearUcell();
+    }
+}
+
+
+int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);

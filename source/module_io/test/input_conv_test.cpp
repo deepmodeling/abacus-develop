@@ -39,7 +39,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalC::ucell.lc[0],1);
 	EXPECT_EQ(GlobalC::ucell.lc[1],1);
 	EXPECT_EQ(GlobalC::ucell.lc[2],1);
-	EXPECT_EQ(GlobalV::KSPACING,0.0);
+	EXPECT_EQ(GlobalV::KSPACING[0],0.0);
+	EXPECT_EQ(GlobalV::KSPACING[1],0.0);
+	EXPECT_EQ(GlobalV::KSPACING[2],0.0);
 	EXPECT_DOUBLE_EQ(GlobalV::MIN_DIST_COEF,0.2);
 	EXPECT_EQ(GlobalV::NBANDS,8);
 	EXPECT_EQ(GlobalC::wf.pw_seed,1);
@@ -70,7 +72,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_rmin,0.00001);
 	EXPECT_EQ(Ions_Move_Basic::relax_bfgs_init,0.5);
 	EXPECT_EQ(Ions_Move_Basic::out_stru,0);
-	EXPECT_EQ(Lattice_Change_Basic::out_stru,0);
+    EXPECT_EQ(Lattice_Change_Basic::fixed_axes,"None");
 	EXPECT_EQ(GlobalV::CAL_STRESS,0);
 	EXPECT_EQ(GlobalV::RELAX_METHOD,"cg");
 	EXPECT_DOUBLE_EQ(GlobalV::relax_scale_force,0.5);
@@ -123,11 +125,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-	
 	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_01,1);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_02,1);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_03,1);
 	EXPECT_EQ(ELEC_evolve::td_vext,false);
 	EXPECT_EQ(ELEC_evolve::out_dipole,false);
 	EXPECT_EQ(ELEC_evolve::out_efield,false);
@@ -160,7 +158,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ( hsolver::HSolverLCAO::out_mat_hsR,false);
 	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_t,false);
 	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_dh,INPUT.out_mat_dh);
-	EXPECT_EQ(hsolver::HSolverLCAO::out_hsR_interval,1);
+	EXPECT_EQ(GlobalV::out_interval,1);
 	EXPECT_EQ(elecstate::ElecStateLCAO::out_wfc_lcao,false);
 	EXPECT_EQ(GlobalC::en.dos_emin_ev,-15);
 	EXPECT_EQ(GlobalC::en.dos_emax_ev,15);
@@ -185,6 +183,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::of_wt_beta,0.833333);
 	EXPECT_EQ(GlobalV::of_wt_rho0,1.0);
 	EXPECT_EQ(GlobalV::of_hold_rho0,false);
+	EXPECT_EQ(GlobalV::of_lkt_a,1.3);
     EXPECT_EQ(GlobalV::of_full_pw,false);
 	EXPECT_EQ(GlobalV::of_full_pw_dim,0);
 	EXPECT_EQ(GlobalV::of_read_kernel,false);
@@ -212,7 +211,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.latname="none";
@@ -228,7 +226,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
@@ -243,7 +240,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.relax_new=false;
@@ -259,7 +255,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-	
 	INPUT.Default();
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
@@ -381,7 +376,7 @@ TEST_F(InputConvTest,restart_save )
 	int a=access(GlobalC::restart.folder.c_str(),0);
 	EXPECT_EQ(a,0);
 	EXPECT_EQ(GlobalC::restart.info_save.save_charge,true);
-	EXPECT_EQ(GlobalC::restart.info_save.save_H,true);	
+	EXPECT_EQ(GlobalC::restart.info_save.save_H,true);
 }
 
 TEST_F(InputConvTest,restart_save2 )
@@ -390,7 +385,7 @@ TEST_F(InputConvTest,restart_save2 )
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	INPUT.restart_save=true;
-	INPUT.dft_functional == "default";
+	INPUT.dft_functional = "default";
 	Input_Conv::Convert();
 	EXPECT_EQ(GlobalC::restart.info_save.save_charge,true);
 }
@@ -401,7 +396,7 @@ TEST_F(InputConvTest, restart_load)
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	INPUT.restart_load=true;
-	INPUT.dft_functional == "hf";
+	INPUT.dft_functional = "hf";
 	Input_Conv::Convert();
 	EXPECT_EQ( GlobalC::restart.folder,GlobalV::global_readin_dir + "restart/");
 	EXPECT_EQ(GlobalC::restart.info_load.load_charge,true);

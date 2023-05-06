@@ -12,7 +12,7 @@ kpar            2
 bndpar          1
 
 nbands			3
-nbands_sto		0
+nbands_sto		all
 
 nche_sto		120
 seed_sto        20000

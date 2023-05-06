@@ -9,7 +9,7 @@ symmetry		0
 pseudo_dir	../../PP_ORB
 
 nbands			0
-nbands_sto		0
+nbands_sto		all
 
 nche_sto		90
 seed_sto        20000
