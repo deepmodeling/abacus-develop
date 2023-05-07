@@ -240,14 +240,6 @@ void Force_Stress_LCAO::getForceStress(
 		//---------------------------------
 		//sum all parts of force!
 		//---------------------------------
-		std::cout<<foverlap(0,0)<<std::endl;
-		std::cout<<ftvnl_dphi(0,0)<<std::endl;
-		std::cout<<fvnl_dbeta(0,0)<<std::endl;
-		std::cout<<fvl_dphi(0,0)<<std::endl;
-		std::cout<<fvl_dvl(0,0)<<std::endl;
-		std::cout<<fewalds(0,0)<<std::endl;
-		std::cout<<fcc(0,0)<<std::endl;
-		std::cout<<fscc(0,0)<<std::endl;
 		for(int i=0; i<3; i++)
 		{
 			double sum = 0.0;
