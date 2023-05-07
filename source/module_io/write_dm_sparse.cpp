@@ -18,89 +18,6 @@ void ModuleIO::write_dm1(const int &is, const int &istep, double** dm2d, const P
     ModuleBase::timer::tick("ModuleIO","write_dm");
 }
 
-inline void output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const Parallel_Orbitals &pv)
-{
-    double *line = nullptr;
-    std::vector<int> indptr;
-    indptr.reserve(GlobalV::NLOCAL + 1);
-    indptr.push_back(0);
-
-    std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << "temp_sparse_indices.dat";
-    std::ofstream ofs_tem1;
-    std::ifstream ifs_tem1;
-
-    if (GlobalV::DRANK == 0)
-    {
-        ofs_tem1.open(tem1.str().c_str());
-    }
-
-    line = new double[GlobalV::NLOCAL];
-    for(int row = 0; row < GlobalV::NLOCAL; ++row)
-    {
-        // line = new double[GlobalV::NLOCAL];
-        ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
-
-        if(pv.trace_loc_row[row] >= 0)
-        {
-            auto iter = XR.find(row);
-            if (iter != XR.end())
-            {
-                for (auto &value : iter->second)
-                {
-                    line[value.first] = value.second;
-                }
-            }
-        }
-
-        Parallel_Reduce::reduce_double_all(line, GlobalV::NLOCAL);
-
-        if(GlobalV::DRANK == 0)
-        {
-            int nonzeros_count = 0;
-            for (int col = 0; col < GlobalV::NLOCAL; ++col)
-            {
-                if (std::abs(line[col]) > sparse_threshold)
-                {
-                    ofs << " " << fixed << scientific << std::setprecision(8) << line[col];
-                    ofs_tem1 << " " << col;
-
-                    nonzeros_count++;
-                }
-
-            }
-            nonzeros_count += indptr.back();
-            indptr.push_back(nonzeros_count);
-        }
-
-        // delete[] line;
-        // line = nullptr;
-
-    }
-
-    delete[] line;
-    line = nullptr;
-
-    if (GlobalV::DRANK == 0)
-    {
-        ofs << std::endl;
-        ofs_tem1 << std::endl;
-        ofs_tem1.close();
-        ifs_tem1.open(tem1.str().c_str());
-        ofs << ifs_tem1.rdbuf();
-        ifs_tem1.close();
-        for (auto &i : indptr)
-        {
-            ofs << " " << i;
-        }
-        ofs << std::endl;
-        
-        std::remove(tem1.str().c_str());
-
-    }
-
-}
-
 void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbitals* ParaV,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
@@ -309,7 +226,7 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
 
         if (DMR_nonzero_num[count] != 0)
         {
-            output_single_R(g1, DMR_sparse[R_coor], sparse_threshold, *ParaV);
+            ModuleIO::output_single_R(g1, DMR_sparse[R_coor], sparse_threshold,false, *ParaV);
         }
 
         count++;

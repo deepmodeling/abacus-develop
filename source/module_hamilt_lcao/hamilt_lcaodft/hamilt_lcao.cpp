@@ -240,7 +240,14 @@ HamiltLCAO<T>::HamiltLCAO(
         &(LM_in->SlocR),
         &(LM_in->Sloc2)
     );
-    this->ops->add(overlap);
+    if(this->ops == nullptr)
+    {
+        this->ops = overlap;
+    }
+    else
+    {
+        this->ops->add(overlap);
+    }
 
     // kinetic term (<psi|T|psi>),
     // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2

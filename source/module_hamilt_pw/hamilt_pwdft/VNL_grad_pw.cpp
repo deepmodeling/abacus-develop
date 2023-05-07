@@ -18,7 +18,7 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 	{
 		this->tab_dq.create(ntype, nbrx_nc, GlobalV::NQX);
 	}
-	gradvkb.create(3,nkb,GlobalC::wf.npwx);
+    gradvkb.create(3, nkb, this->wfcpw->npwk_max);
 
     const double pref = ModuleBase::FOUR_PI / sqrt(cell.omega);
     for (int it = 0;it < ntype;it++)  
@@ -67,7 +67,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 		return;
 	}
 
-	const int npw = GlobalC::kv.ngk[ik];
+	const int npw = this->wfcpw->npwk[ik];
 
     // When the internal memory is large enough, it is better to make tmpgradvkb and tmpvkb be the number of pseudopot_cell_vnl
     // We only need to initialize them once as long as the cell is unchanged.
@@ -84,7 +84,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 	ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
 	for (int ig = 0;ig < npw;ig++) 
 	{
-		gk[ig] = GlobalC::wfcpw->getgpluskcar(ik,ig);
+		gk[ig] = this->wfcpw->getgpluskcar(ik,ig);
 	}
 
 	ModuleBase::YlmReal::grad_Ylm_Real(x1, npw, gk, ylm, dylm[0], dylm[1], dylm[2]);
@@ -111,6 +111,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 			    }
                 nb0 = nb;
             }
+			double lmmat[9] = {0, 0, 1, -1, 0, 0, 0, -1, 0};
             for(int id = 0; id < 3; ++id)
             {
                 const int lm = static_cast<int>( nhtolm(it, ih) );
@@ -119,12 +120,25 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
                     ModuleBase::Vector3<double> gg = gk[ig];
                     double ggnorm = gg.norm();
 					if(ggnorm < 1e-8)
-						tmpgradvkb(id, ih, ig) = 0.0;
+					{
+						if(lm == 0 || lm > 3)
+						{
+							tmpgradvkb(id, ih, ig) = 0.0;
+						}
+						else//lm = 1,2,3;  l = 1
+						{
+							//q \to 0 : \nabla(f(q)Y(\hat{q})) = f(q)/q*sqrt(3/4/pi)*vec(-delta(lm,2), -delta(lm,3), delta(lm,1))
+							// tmpgradvkb(id, ih, ig) = 0.0;
+							tmpgradvkb(id, ih, ig) = dvq[ig] * sqrt(3.0/4.0/M_PI) * lmmat[(lm-1)*3 + id];
+						}
+					}
 					else
-
-			    		tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq [ig] * gg[id] / ggnorm 
-												+ dylm[id](lm, ig)/GlobalC::wfcpw->tpiba * vq [ig];//note: dylm/d(tpiba * gx) = 1/tpiba * dylm/dgx
-                    tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
+					{
+                        tmpgradvkb(id, ih, ig) = ylm(lm, ig) * dvq[ig] * gg[id] / ggnorm
+                                                 + dylm[id](lm, ig) / this->wfcpw->tpiba
+                                                       * vq[ig]; // note: dylm/d(tpiba * gx) = 1/tpiba * dylm/dgx
+                    }
+					tmpvkb(ih, ig) = ylm(lm,ig) * vq[ig];
 			    }
             }
         }
@@ -133,8 +147,8 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 		// now add the structure factor and factor (-i)^l
 		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
 		{
-			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia,GlobalC::wfcpw);
-			
+            std::complex<double> *sk = this->psf->get_sk(ik, it, ia, this->wfcpw);
+
             for (int ih = 0;ih < nh;++ih)
 			{
 				std::complex<double> pref = pow( ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih));
@@ -145,9 +159,11 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					for (int ig = 0;ig < npw;++ig)
 					{
                 	    std::complex<double> skig = sk[ig];
-						std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * GlobalC::wfcpw->lat0) * skig;
                 	    pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
-						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;;
+						// std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * this->wfcpw->lat0) * skig;
+						// pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;
+						// The second term will be eliminate when doing <psi|beta>Dij<beta|psi> or we can say (\nabla_q+\nabla_q')S(q'-q) = 0
+						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;
 					}
 				} //end id
 				++jkb;

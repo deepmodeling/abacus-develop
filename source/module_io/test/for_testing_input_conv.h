@@ -23,21 +23,18 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_io/berryphase.h"
+#include "module_md/md_func.h"
 
 bool berryphase::berry_phase_flag=false;
 int elecstate::ElecStateLCAO::out_wfc_lcao = 0;
 bool elecstate::ElecStateLCAO::need_psi_grid = 1;
 int hsolver::HSolverLCAO::out_mat_hs = 0;
 int hsolver::HSolverLCAO::out_mat_hsR = 0;
-int hsolver::HSolverLCAO::out_hsR_interval = 1;
 int hsolver::HSolverLCAO::out_mat_t = 0;
 int hsolver::HSolverLCAO::out_mat_dh = 0;
 int Local_Orbital_Charge::out_dm = 0;
 int Local_Orbital_Charge::out_dm1 = 0;
 double ELEC_evolve::td_force_dt;
-int ELEC_evolve::td_val_elec_01;
-int ELEC_evolve::td_val_elec_02;
-int ELEC_evolve::td_val_elec_03;
 bool ELEC_evolve::td_vext;
 std::vector<int> ELEC_evolve::td_vext_dire_case;
 bool ELEC_evolve::out_dipole;
@@ -61,8 +58,8 @@ double Ions_Move_Basic::relax_bfgs_rmax = -1.0;
 double Ions_Move_Basic::relax_bfgs_rmin = -1.0;
 double Ions_Move_Basic::relax_bfgs_init = -1.0;
 int Ions_Move_Basic::out_stru=0;
-int Lattice_Change_Basic::out_stru = 0;
 double Ions_Move_CG::RELAX_CG_THR =-1.0;
+std::string Lattice_Change_Basic::fixed_axes = "None";
 int ModuleSymmetry::Symmetry::symm_flag=0;
 
 Charge_Mixing::Charge_Mixing(){}
@@ -82,9 +79,9 @@ Structure_Factor::~Structure_Factor(){}
 ModuleSymmetry::Symmetry::Symmetry(){}
 ModuleSymmetry::Symmetry::~Symmetry(){}
 ModuleSymmetry::Symmetry_Basic::Symmetry_Basic(){}
-ModuleSymmetry::Symmetry_Basic::~Symmetry_Basic(){}
-WF_igk::WF_igk(){}
-WF_igk::~WF_igk(){}
+ModuleSymmetry::Symmetry_Basic::~Symmetry_Basic()
+{
+}
 WF_atomic::WF_atomic(){}
 WF_atomic::~WF_atomic(){}
 wavefunc::wavefunc(){}
@@ -111,7 +108,6 @@ UnitCell::UnitCell(){
 	
 	itia2iat.create(1, 1);
 	lc = new int[3];
-	itiaiw2iwt.create(1, 1, 1);
 	
 	latvec = ModuleBase::Matrix3();
 	latvec_supercell = ModuleBase::Matrix3();
@@ -242,6 +238,11 @@ void UnitCell::setup(const std::string &latname_in,
 	return;
 }
 void Structure_Factor::set(const int&){return;}
+
+namespace MD_func
+{
+    double current_step(const int& my_rank, const std::string& file_dir){return 0;}
+}
 
 namespace GlobalC
 {

@@ -16,7 +16,7 @@ cal_stress          1
 
 #Parameters (MD)
 md_nstep            5
-md_type             1
+md_type             npt
 md_dt               1
 md_tchain           3
 md_tfirst           300

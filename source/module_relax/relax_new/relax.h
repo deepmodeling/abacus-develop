@@ -15,7 +15,7 @@ class Relax
     ~Relax(){};
 
     //prepare for relaxation
-    void init_relax(const int nat_in, const int out_stru_in);
+    void init_relax(const int nat_in);
     //perform a single relaxation step
     bool relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in);
 
@@ -42,7 +42,6 @@ class Relax
     void move_cell_ions(const bool is_new_dir);
 
     int nat; // number of atoms
-    int out_stru;
     bool ltrial; // if last step is trial step
 
     double step_size;
@@ -79,7 +78,7 @@ class Relax
     double gr_sr; //cross product between search direction and gradient
     double e1ord1, e1ord2, e2ord, e2ord2;
     double dmove,dmovel,dmoveh;
-    double etot;
+    double etot, etot_p;
     double force_thr_eva;
 
     bool brent_done; //if brent line search is finished

@@ -1,26 +1,22 @@
 #ifndef IONS_MOVE_BFGS_H
 #define IONS_MOVE_BFGS_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
 #include "bfgs_basic.h"
+#include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
 class Ions_Move_BFGS : public BFGS_Basic
 {
-public:
-	Ions_Move_BFGS();
-	~Ions_Move_BFGS();
-	
-	void allocate(void);
-	void start(const ModuleBase::matrix& force,  const double &energy_in);
+  public:
+    Ions_Move_BFGS();
+    ~Ions_Move_BFGS();
 
-	private:
+    void allocate(void);
+    void start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in);
 
-	bool init_done;
-	void bfgs_routine(void);
-	void terminate_bfgs(void);
-	void restart_bfgs(void);
-
+  private:
+    bool init_done;
+    void bfgs_routine(const double& lat0);
+    void restart_bfgs(const double& lat0);
 };
 
 #endif

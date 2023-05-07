@@ -1,8 +1,12 @@
 #pragma once
 
+#include <elpa/elpa_version.h>
+
+#if ELPA_API_VERSION >= 20221101
+#include <elpa/elpa.h>
+#else
 extern "C"
 {
-#include <elpa/elpa_version.h>
 #include <limits.h>
 
     struct elpa_struct;
@@ -24,6 +28,5 @@ extern "C"
     const char *elpa_strerr(int elpa_error);
 }
 
-#define complex _Complex
 #include "elpa_generic.hpp" // This is a wrapper for `elpa/elpa_generic.h`.
-#undef complex
+#endif

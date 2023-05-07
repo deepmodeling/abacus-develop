@@ -3,7 +3,9 @@
 // DATE : 2009-11-08
 //==========================================================
 #include "parallel_global.h"
+#ifdef __MPI
 #include "mpi.h"
+#endif
 #include "parallel_common.h"
 #include "parallel_reduce.h"
 #include "../module_base/global_function.h"

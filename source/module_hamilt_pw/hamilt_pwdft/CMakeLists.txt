@@ -24,8 +24,8 @@ list(APPEND objects
     VNL_grad_pw.cpp
     wavefunc.cpp
     wf_atomic.cpp
-    wf_igk.cpp
     structure_factor.cpp
+    structure_factor_k.cpp
     soc.cpp
     global.cpp
     parallel_grid.cpp
@@ -42,5 +42,6 @@ if(ENABLE_COVERAGE)
 endif()
 
 if (BUILD_TESTING)
+    add_subdirectory(test)
     add_subdirectory(kernels/test)
 endif()

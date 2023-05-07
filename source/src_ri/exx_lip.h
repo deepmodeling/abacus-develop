@@ -10,6 +10,7 @@
 #include "module_hamilt_general/module_xc/exx_info.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
+#include "module_cell/module_symmetry/symmetry.h"
 
 class K_Vectors;
 class wavefunc;
@@ -23,16 +24,19 @@ public:
 
 	const Exx_Info::Exx_Info_Lip &info;
 
-	void init(
+	void init(ModuleSymmetry::Symmetry &symm,
 		K_Vectors *kv_ptr_in, 
 		wavefunc *wf_ptr_in, 
 		ModulePW::PW_Basis_K *wfc_basis_in, 
 		ModulePW::PW_Basis *rho_basis_in, 
 		UnitCell *ucell_ptr_in,
 		const elecstate::ElecState* pelec_in);
-	void cal_exx();
-	const std::complex<double> * const * const * get_exx_matrix() const { return exx_matrix; }
-	double get_exx_energy() const { return exx_energy; }
+    // void cal_exx(const int& nks);
+    const std::complex<double> *const *const *get_exx_matrix() const
+    {
+        return exx_matrix;
+    }
+    double get_exx_energy() const { return exx_energy; }
 
 	void write_q_pack() const;
 
@@ -67,15 +71,15 @@ private:
 
 	void wf_wg_cal();
 	void phi_cal(k_package *kq_pack, int ikq);
-	void psi_cal();
-	void judge_singularity( int ik);
+    // void psi_cal();
+    void judge_singularity( int ik);
 	void qkg2_exp(int ik, int iq);
 	void b_cal(int ik, int iq, int ib);
 	void sum3_cal(int iq, int ib);
 	void b_sum(int iq, int ib);
 	void sum_all(int ik);
 	void exx_energy_cal();
-	void read_q_pack();
+	void read_q_pack(const ModuleSymmetry::Symmetry &symm);
 	
 public:
 

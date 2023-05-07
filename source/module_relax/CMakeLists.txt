@@ -3,7 +3,6 @@ add_library(
     OBJECT
 
     relax_driver.cpp
-    variable_cell.cpp
 
     relax_new/relax.cpp
     relax_new/line_search.cpp
@@ -26,4 +25,8 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(relax_new/test)
+endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(relax_old/test)
 endif()

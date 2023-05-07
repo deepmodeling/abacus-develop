@@ -3,6 +3,7 @@
 
 #include "../module_base/matrix.h"
 #include "../module_base/element_basis_index.h"
+#include "module_cell/klist.h"
 #include <vector>
 #include <map>
 #include <set>
@@ -11,7 +12,7 @@ using namespace std;
 class Exx_Opt_Orb
 {
 public:
-	void generate_matrix() const;
+	void generate_matrix(const K_Vectors &kv) const;
 private:
 	std::vector<std::vector<ModuleBase::matrix>> cal_I( 
 		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> &ms, 
@@ -21,8 +22,9 @@ private:
 		const std::vector<ModuleBase::matrix> & m_left, 
 		const std::vector<std::vector<ModuleBase::matrix>> & m_middle, 
 		const std::vector<ModuleBase::matrix> & m_right ) const;
-	void print_matrix(
-		const std::string &file_name,
+    void print_matrix(
+        const K_Vectors &kv,
+        const std::string& file_name,
 		const std::vector<ModuleBase::matrix> &matrix_Q, 
 		const std::vector<std::vector<ModuleBase::matrix>> &matrix_S,
 		const ModuleBase::matrix &matrix_V,

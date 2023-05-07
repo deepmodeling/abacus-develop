@@ -1,27 +1,58 @@
 ---
+Language:        Cpp
 BasedOnStyle: Microsoft
-AccessModifierOffset: '-2'
-AlignAfterOpenBracket: Align
-AlignConsecutiveMacros: 'true'
-AlignEscapedNewlines: Left
-AlignOperands: 'true'
-AlignTrailingComments: 'false'
+
+AlignArrayOfStructures: Left
+AlwaysBreakTemplateDeclarations: Yes
+
 AllowAllArgumentsOnNextLine: 'false'
 AllowAllParametersOfDeclarationOnNextLine: 'false'
 BinPackArguments: 'false'
 BinPackParameters: 'false'
+
 BreakBeforeBinaryOperators: All
 BreakBeforeTernaryOperators: 'true'
+
 Cpp11BracedListStyle: 'true'
 DerivePointerAlignment: 'true'
 FixNamespaceComments: 'true'
-IncludeBlocks: Regroup
+
+# About include
+IncludeBlocks:   Regroup
+IncludeCategories:
+  - Regex:           '^<ext/.*\.h>'
+    Priority:        2
+    SortPriority:    0
+    CaseSensitive:   false
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+    SortPriority:    0
+    CaseSensitive:   false
+  - Regex:           '^<.*'
+    Priority:        2
+    SortPriority:    0
+    CaseSensitive:   false
+  - Regex:           '.*'
+    Priority:        3
+    SortPriority:    0
+    CaseSensitive:   false
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+IncludeIsMainSourceRegex: ''
+
 IndentWidth: '4'
-Language: Cpp
-PointerAlignment: Right
+IndentWrappedFunctionNames: true
+
+# About Point
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+PackConstructorInitializers: NextLine
+
 ReflowComments: 'true'
 SortIncludes: 'true'
 SortUsingDeclarations: 'true'
+
+# About space
 SpaceAfterCStyleCast: 'false'
 SpaceAfterLogicalNot: 'false'
 SpaceBeforeRangeBasedForLoopColon: 'false'
@@ -31,6 +62,7 @@ SpacesInCStyleCastParentheses: 'false'
 SpacesInContainerLiterals: 'false'
 SpacesInParentheses: 'false'
 SpacesInSquareBrackets: 'false'
+
 Standard: Cpp11
 TabWidth: '4'
 UseTab: Never

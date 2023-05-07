@@ -255,6 +255,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 }
 
 void Exx_Abfs::IO::print_matrix( 
+        const K_Vectors &kv,
 		const std::string &file_name_prefix, 
 		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<ModuleBase::matrix>>>>> &matrixes_Q, 
 		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> &matrixes_S,
@@ -326,7 +327,7 @@ void Exx_Abfs::IO::print_matrix(
 
 		ofs << Exx_Abfs::Jle::Lmax << " lmax" << std::endl;
 
-		ofs << GlobalC::kv.nkstot << " nks" << std::endl;
+		ofs << kv.nkstot << " nks" << std::endl;
 		ofs	<< index_lcaos[TA].count_size * index_lcaos[TB].count_size << " nbands" << std::endl;
 		
 		auto cal_sum_M = [&range_jles](size_t T) -> size_t
@@ -345,10 +346,10 @@ void Exx_Abfs::IO::print_matrix(
 		ofs	<< ecut_numberA << " ne" << std::endl;
 		
 		ofs << "<WEIGHT_OF_KPOINTS>" << std::endl;
-		for( int ik=0; ik!=GlobalC::kv.nkstot; ++ik )		
+		for( int ik=0; ik!=kv.nkstot; ++ik )		
 		{
-			ofs << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z;
-			ofs << " " << GlobalC::kv.wk[ik] * 0.5 << std::endl;
+			ofs << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z;
+			ofs << " " << kv.wk[ik] * 0.5 << std::endl;
 		}
 		ofs << "</WEIGHT_OF_KPOINTS>" << std::endl;
 
@@ -363,7 +364,7 @@ void Exx_Abfs::IO::print_matrix(
 
 		ofs<< "<OVERLAP_Q>" << std::endl;
 		
-		for( int ik=0; ik!=GlobalC::kv.nkstot; ++ik )
+		for( int ik=0; ik!=kv.nkstot; ++ik )
 			for( size_t LA=0; LA!=range_lcaos[TA].size(); ++LA )
 				for( size_t NA=0; NA!=range_lcaos[TA][LA].N; ++NA )
 					for( size_t MA=0; MA!=range_lcaos[TA][LA].M; ++MA )
@@ -444,7 +445,7 @@ void Exx_Abfs::IO::print_matrix(
 		
 		ofs<< "<OVERLAP_Sq>" <<std::endl;
 		
-		for( int ik=0; ik!=GlobalC::kv.nkstot; ++ik )
+		for( int ik=0; ik!=kv.nkstot; ++ik )
 		{
 			if( TA==TB && IA==IB )
 			{
@@ -470,7 +471,7 @@ void Exx_Abfs::IO::print_matrix(
 		
 		const ModuleBase::matrix & matrix_V = matrixes_V.at(TA).at(IA).at(TB).at(IB);
 		
-		for( int ik=0; ik!=GlobalC::kv.nkstot; ++ik )
+		for( int ik=0; ik!=kv.nkstot; ++ik )
 	//		for ib = 0 to GlobalV::NBANDS
 			for( size_t LA=0; LA!=range_lcaos[TA].size(); ++LA )
 				for( size_t NA=0; NA!=range_lcaos[TA][LA].N; ++NA )

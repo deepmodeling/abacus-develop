@@ -24,16 +24,19 @@ Stochastic_WF::~Stochastic_WF()
     delete[] nchip;
 }
 
-void Stochastic_WF::init(const int nks_in)
+void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
 {
-    chi0 = new ModuleBase::ComplexMatrix[nks_in];
-    shchi = new ModuleBase::ComplexMatrix[nks_in];
-    chiortho = new ModuleBase::ComplexMatrix[nks_in];
-    nchip = new int[nks_in];
-    this->nks = nks_in;
-    if (nks_in <= 0)
+    this->nks = p_kv->nks;
+    this->ngk = p_kv->ngk.data();
+    this->npwx = npwx_in;
+    chi0 = new ModuleBase::ComplexMatrix[nks];
+    shchi = new ModuleBase::ComplexMatrix[nks];
+    chiortho = new ModuleBase::ComplexMatrix[nks];
+    nchip = new int[nks];
+    
+    if (nks <= 0)
     {
-        ModuleBase::WARNING_QUIT("Stochastic_WF", "nks_in <=0!");
+        ModuleBase::WARNING_QUIT("Stochastic_WF", "nks <=0!");
     }
 }
 
@@ -67,7 +70,7 @@ void Init_Sto_Orbitals
         igroup = GlobalV::NSTOGROUP - GlobalV::MY_STOGROUP - 1;
     }
     const int nchi = INPUT.nbands_sto;
-    const int ndim = GlobalC::wf.npwx;
+    const int ndim = stowf.npwx;
     const int ngroup = GlobalV::NSTOGROUP;
     if (ngroup <= 0)
     {
@@ -147,8 +150,7 @@ void Update_Sto_Orbitals
 #ifdef __MPI
 void Init_Com_Orbitals
 (
-    Stochastic_WF& stowf, 
-    K_Vectors& kv,
+    Stochastic_WF& stowf,
     const int ndim  // GlobalC variables are deleted and become an input parameter
 )
 {
@@ -164,7 +166,7 @@ void Init_Com_Orbitals
     {
         igroup = GlobalV::NSTOGROUP - GlobalV::MY_STOGROUP - 1;
     }
-    const int nks = kv.nks;
+    const int nks = stowf.nks;
     const int ngroup = GlobalV::NSTOGROUP;
     const int n_in_pool = GlobalV::NPROC_IN_POOL;
     const int i_in_group = GlobalV::RANK_IN_STOGROUP;
@@ -176,7 +178,7 @@ void Init_Com_Orbitals
         int* npwip = new int[n_in_pool];
         int* rec = new int[n_in_pool];
         int* displ = new int[n_in_pool];
-        const int npw = kv.ngk[ik];
+        const int npw = stowf.ngk[ik];
         totnpw[ik] = 0;
 
         for (int i_in_p = 0; i_in_p < n_in_pool; ++i_in_p)
@@ -238,16 +240,16 @@ void Init_Com_Orbitals
 void Init_Com_Orbitals
 (
     Stochastic_WF& stowf, 
-    K_Vectors& kv,
     const int ndim // GlobalC variables are deleted and become an input parameter
 )
 {
-    for (int ik = 0; ik < kv.nks; ++ik)
+    for (int ik = 0; ik < stowf.nks; ++ik)
     {
+        const int npw = stowf.ngk[ik];
         stowf.nchip[ik] = ndim;
         stowf.chi0[ik].create(stowf.nchip[ik], ndim, true);
         stowf.nchip_max = ndim;
-        for (int ichi = 0; ichi < kv.ngk[ik]; ++ichi)
+        for (int ichi = 0; ichi < npw; ++ichi)
         {
             stowf.chi0[ik](ichi, ichi) = 1;
         }

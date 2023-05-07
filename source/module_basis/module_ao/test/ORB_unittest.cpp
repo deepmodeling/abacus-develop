@@ -29,6 +29,7 @@ void test_orb::TearDown()
 		nproj[i] = 0;
 	ooo.clear_after_ions(OGT, ORB, 0, nproj);
 	delete[] nproj;
+    delete[] orbital_fn;
 	return;
 }
 
@@ -74,6 +75,9 @@ void test_orb::set_orbs()
 		ofs_running,
 		ORB,
 		ntype_read,
+        "./",
+        orbital_fn,
+        descriptor_file,
 		lmax,
 		lcao_ecut,
 		lcao_dk,
@@ -110,15 +114,15 @@ void test_orb::set_files()
 	std::ifstream ifs((this->case_dir + "STRU"),std::ios::in);
 
 	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs,"NUMERICAL_ORBITAL");
-	ORB.read_in_flag = true;
+
+    orbital_fn = new string [ntype_read];
 
 	for(int it=0;it<ntype_read;it++)
 	{
-		std::string ofile;
-		ifs >> ofile;
-		ORB.orbital_file.push_back(ofile);
+		ifs >> orbital_fn[it];
+		ORB.orbital_file.push_back(orbital_fn[it]);
 
-		std::cout << "Numerical orbital file : " << ofile << std::endl;
+		std::cout << "Numerical orbital file : " << orbital_fn[it] << std::endl;
 	}
 	
 	return;

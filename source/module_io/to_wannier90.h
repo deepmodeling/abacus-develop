@@ -72,9 +72,9 @@ class toWannier90
     void init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi = nullptr);
     void read_nnkp();
     void outEIG(const ModuleBase::matrix& ekb);
-    void cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw);
+    void cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis_K* wfc_basis);
     void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw);
-    void produce_trial_in_pw(const int &ik, ModuleBase::ComplexMatrix &trial_orbitals_k);
+    void produce_trial_in_pw(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix &trial_orbitals_k);
     void get_trial_orbitals_lm_k(const int wannier_index,
                                  const int orbital_L,
                                  const int orbital_m,

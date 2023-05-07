@@ -6,24 +6,35 @@
 
 class Lattice_Change_Methods
 {
-	public:
+  public:
+    Lattice_Change_Methods();
 
-	Lattice_Change_Methods();
+    ~Lattice_Change_Methods();
 
-	~Lattice_Change_Methods();
+    void allocate(void);
 
-	void allocate(void);
+    void cal_lattice_change(const int &istep,
+                            const int &stress_step,
+                            const ModuleBase::matrix &stress,
+                            const double &etot,
+                            UnitCell &ucell);
 
-	void cal_lattice_change(const int &istep, const int &stress_step, const ModuleBase::matrix &stress, const double &etot);
+    bool get_converged(void) const
+    {
+        return Lattice_Change_Basic::converged;
+    }
 
-	bool get_converged(void)const {return Lattice_Change_Basic::converged;}
+    double get_ediff(void) const
+    {
+        return Lattice_Change_Basic::ediff;
+    }
 
-	double get_ediff(void)const {return Lattice_Change_Basic::ediff;}
+    double get_largest_grad(void) const
+    {
+        return Lattice_Change_Basic::largest_grad;
+    }
 
-	double get_largest_grad(void)const {return Lattice_Change_Basic::largest_grad;}
-
-	private:
-
-	Lattice_Change_CG lccg;
+  private:
+    Lattice_Change_CG lccg;
 };
 #endif

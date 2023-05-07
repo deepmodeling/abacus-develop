@@ -13,8 +13,6 @@
 
 using namespace hsolver;
 
-template <typename FPTYPE, typename Device> int DiagoDavid<FPTYPE, Device>::PW_DIAG_NDIM = 4;
-
 template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::DiagoDavid(const FPTYPE* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
@@ -218,7 +216,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
                                       this->n_band,        // n: col of B,C
                                       nbase,               // k: col of A, row of B
                                       this->one,
-                                      basis.get_pointer(), // A dim * nbase 
+                                      basis.get_pointer(), // A dim * nbase
                                       this->dim,
                                       this->vcc,           // B nbase * n_band
                                       this->nbase_x,
@@ -659,9 +657,9 @@ void DiagoDavid<FPTYPE, Device>::refresh(const int& dim,
                               nbase,                // k: col of A, row of B
                               this->one,
                               this->hphi,           // A dim * nbase
-                              this->dim,          
+                              this->dim,
                               this->vcc,            // B nbase * nband
-                              this->nbase_x, 
+                              this->nbase_x,
                               this->zero,
                               basis.get_pointer(),  // C dim * nband
                               this->dim
