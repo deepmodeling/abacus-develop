@@ -9,7 +9,7 @@ class MSST : public MDrun
     MSST(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~MSST();
 
-    void setup(ModuleESolver::ESolver *p_ensolve);
+    void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
     void first_half(const int &my_rank, std::ofstream &ofs);
     void second_half(const int &my_rank);
     void outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank);

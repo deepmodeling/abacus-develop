@@ -59,7 +59,7 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const s
     ucell.ionic_position_updated = true;
 }
 
-void MDrun::first_half(const int &my_rank)
+void MDrun::first_half(const int &my_rank, std::ofstream &ofs)
 {
     update_vel(force, my_rank);
     update_pos(my_rank);

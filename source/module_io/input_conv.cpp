@@ -204,6 +204,7 @@ void Input_Conv::Convert(void)
 
     GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;
+    INPUT.mdp.force_thr = INPUT.force_thr;
 
     GlobalV::STRESS_THR = INPUT.stress_thr;
     GlobalV::PRESS1 = INPUT.press1;

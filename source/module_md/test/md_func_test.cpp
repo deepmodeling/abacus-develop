@@ -206,7 +206,7 @@ TEST_F(MD_func_test, MDdump)
     ifs.close();
 
     // append
-    MD_func::MDdump(1, ucell, INPUT, virial, force, vel);
+    MD_func::MDdump(1, ucell, INPUT.mdp, virial, force, vel);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));

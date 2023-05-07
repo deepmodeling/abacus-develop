@@ -10,7 +10,7 @@ class Verlet : public MDrun
     ~Verlet();
 
     void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
-    void first_half(const int &my_rank);
+    void first_half(const int &my_rank, std::ofstream &ofs);
     void second_half(const int &my_rank);
     void apply_thermostat(const int &my_rank);
     void thermalize(const int &nraise, const double &current_temp, const double &target_temp);

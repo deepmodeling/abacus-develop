@@ -52,6 +52,8 @@ class MD_parameters
         dump_force = true;
         dump_vel = true;
         dump_virial = true;
+
+        force_thr = 1.0e-3;
     };
     ~MD_parameters(){};
 
@@ -100,6 +102,8 @@ class MD_parameters
     bool dump_force;  // output atomic forces into the file MD_dump or not. liuyu 2023-03-01
     bool dump_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
     bool dump_virial; // output lattice virial into the file MD_dump or not. liuyu 2023-03-01
+
+    double force_thr;
 };
 
 #endif

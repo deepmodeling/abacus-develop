@@ -102,7 +102,7 @@ void MSST::first_half(const int &my_rank, std::ofstream &ofs)
     }
 
     // propagate velocities 1/2 step using the new velocity sum
-    propagate_vel();
+    propagate_vel(my_rank);
 
     // propagate volume 1/2 step
     vol = ucell.omega + omega[sd] * dthalf;

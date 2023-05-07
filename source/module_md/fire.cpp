@@ -23,22 +23,19 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver *p_esolver,
-                 const int &my_rank,
-                 const std::string &global_readin_dir,
-                 const double &force_thr)
+void FIRE::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
 
     MDrun::setup(p_esolver, my_rank, global_readin_dir);
 
-    check_force(force_thr);
+    check_force();
 
     ModuleBase::timer::tick("FIRE", "setup");
 }
 
-void FIRE::first_half(const int &my_rank)
+void FIRE::first_half(const int &my_rank, std::ofstream &ofs)
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::tick("FIRE", "first_half");
@@ -52,14 +49,14 @@ void FIRE::first_half(const int &my_rank)
     ModuleBase::timer::tick("FIRE", "first_half");
 }
 
-void FIRE::second_half(const int &my_rank, const double &force_thr)
+void FIRE::second_half(const int &my_rank)
 {
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
 
     MDrun::update_vel(force, my_rank);
 
-    check_force(force_thr);
+    check_force();
 
     ModuleBase::timer::tick("FIRE", "second_half");
 }
@@ -132,7 +129,7 @@ void FIRE::restart(const int &my_rank, const std::string &global_readin_dir)
 #endif
 }
 
-void FIRE::check_force(const double &force_thr)
+void FIRE::check_force()
 {
     max = 0;
 
@@ -147,7 +144,7 @@ void FIRE::check_force(const double &force_thr)
         }
     }
 
-    if (2.0 * max < force_thr)
+    if (2.0 * max < mdp.force_thr)
     {
         stop = true;
     }

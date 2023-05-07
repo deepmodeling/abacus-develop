@@ -54,12 +54,12 @@ void Run_MD::md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver, MD_pa
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver);
+            mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
         }
         else
         {
             Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
-            mdrun->first_half(GlobalV::MY_RANK);
+            mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
 
             // update force and virial due to the update of atom positions
             MD_func::force_virial(p_esolver, mdrun->step_, mdrun->ucell, mdrun->potential, mdrun->force, mdrun->virial);

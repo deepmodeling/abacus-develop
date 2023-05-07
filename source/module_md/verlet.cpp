@@ -16,12 +16,12 @@ void Verlet::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const 
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::tick("Verlet", "setup");
 
-    MDrun::setup(p_ensolve);
+    MDrun::setup(p_esolver, my_rank, global_readin_dir);
 
     ModuleBase::timer::tick("Verlet", "setup");
 }
 
-void Verlet::first_half(const int &my_rank)
+void Verlet::first_half(const int &my_rank, std::ofstream &ofs)
 {
     ModuleBase::TITLE("Verlet", "first_half");
     ModuleBase::timer::tick("Verlet", "first_half");

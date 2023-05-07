@@ -13,26 +13,34 @@ class MDrun
     /**
      * @brief init before running md, calculate energy, force, and stress of the initial configuration.
      * @param p_esolver the energy solver used in md
+     * @param my_rank MPI rank of the processer
+     * @param global_readin_dir directory of files for reading
      */
     virtual void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
 
     /**
      * @brief the first half of equation of motion, update velocities and positions
+     * @param my_rank MPI rank of the processer
+     * @param ofs determine the output files
      */
-    virtual void first_half(const int &my_rank);
+    virtual void first_half(const int &my_rank, std::ofstream &ofs);
 
     /**
      * @brief the second half of equation of motion, update velocities
+     * @param my_rank MPI rank of the processer
      */
     virtual void second_half(const int &my_rank);
 
     /**
      * @brief perform one step update of pos due to atomic velocity
+     * @param my_rank MPI rank of the processer
      */
     virtual void update_pos(const int &my_rank);
 
     /**
      * @brief perform half-step update of vel due to atomic force
+     * @param force atomic forces
+     * @param my_rank MPI rank of the processer
      */
     virtual void update_vel(const ModuleBase::Vector3<double> *force, const int &my_rank);
 
@@ -40,16 +48,21 @@ class MDrun
      * @brief output MD information such as energy, temperature, and pressure
      * @param ofs determine the output files
      * @param cal_stress whether calculate and output stress
+     * @param my_rank MPI rank of the processer
      */
     virtual void outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank);
 
     /**
      * @brief write the information into files used for MD restarting
+     * @param my_rank MPI rank of the processer
+     * @param global_out_dir directory of output files
      */
     virtual void write_restart(const int &my_rank, const std::string &global_out_dir);
 
     /**
      * @brief restart MD when md_restart is true
+     * @param my_rank MPI rank of the processer
+     * @param global_readin_dir directory of files for reading
      */
     virtual void restart(const int &my_rank, const std::string &global_readin_dir);
 

@@ -17,53 +17,53 @@ Langevin::~Langevin()
     delete[] total_force;
 }
 
-void Langevin::setup(ModuleESolver::ESolver *p_ensolve)
+void Langevin::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir)
 {
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::tick("Langevin", "setup");
 
-    MDrun::setup(p_ensolve);
+    MDrun::setup(p_esolver, my_rank, global_readin_dir);
 
     post_force();
 
     ModuleBase::timer::tick("Langevin", "setup");
 }
 
-void Langevin::first_half()
+void Langevin::first_half(const int &my_rank, std::ofstream &ofs)
 {
     ModuleBase::TITLE("Langevin", "first_half");
     ModuleBase::timer::tick("Langevin", "first_half");
 
-    MDrun::update_vel(total_force);
-    MDrun::update_pos();
+    MDrun::update_vel(total_force, my_rank);
+    MDrun::update_pos(my_rank);
 
     ModuleBase::timer::tick("Langevin", "first_half");
 }
 
-void Langevin::second_half()
+void Langevin::second_half(const int &my_rank)
 {
     ModuleBase::TITLE("Langevin", "second_half");
     ModuleBase::timer::tick("Langevin", "second_half");
 
     post_force();
-    MDrun::update_vel(total_force);
+    MDrun::update_vel(total_force, my_rank);
 
     ModuleBase::timer::tick("Langevin", "second_half");
 }
 
-void Langevin::outputMD(std::ofstream &ofs, bool cal_stress)
+void Langevin::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
 {
-    MDrun::outputMD(ofs, cal_stress);
+    MDrun::outputMD(ofs, cal_stress, my_rank);
 }
 
-void Langevin::write_restart()
+void Langevin::write_restart(const int &my_rank, const std::string &global_out_dir)
 {
-    MDrun::write_restart();
+    MDrun::write_restart(my_rank, global_out_dir);
 }
 
-void Langevin::restart()
+void Langevin::restart(const int &my_rank, const std::string &global_readin_dir)
 {
-    MDrun::restart();
+    MDrun::restart(my_rank, global_readin_dir);
 }
 
 void Langevin::post_force()
