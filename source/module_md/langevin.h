@@ -3,12 +3,13 @@
 
 #include "md_base.h"
 
-class Langevin : public MDrun
+class Langevin : public MD_base
 {
   public:
     Langevin(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~Langevin();
 
+  private:
     void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
     void first_half(const int &my_rank, std::ofstream &ofs);
     void second_half(const int &my_rank);

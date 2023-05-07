@@ -3,7 +3,7 @@
 #include "md_func.h"
 #include "module_base/timer.h"
 
-Verlet::Verlet(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
+Verlet::Verlet(MD_parameters &MD_para_in, UnitCell &unit_in) : MD_base(MD_para_in, unit_in)
 {
 }
 
@@ -16,7 +16,7 @@ void Verlet::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const 
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::tick("Verlet", "setup");
 
-    MDrun::setup(p_esolver, my_rank, global_readin_dir);
+    MD_base::setup(p_esolver, my_rank, global_readin_dir);
 
     ModuleBase::timer::tick("Verlet", "setup");
 }
@@ -26,8 +26,8 @@ void Verlet::first_half(const int &my_rank, std::ofstream &ofs)
     ModuleBase::TITLE("Verlet", "first_half");
     ModuleBase::timer::tick("Verlet", "first_half");
 
-    MDrun::update_vel(force, my_rank);
-    MDrun::update_pos(my_rank);
+    MD_base::update_vel(force, my_rank);
+    MD_base::update_pos(my_rank);
 
     ModuleBase::timer::tick("Verlet", "first_half");
 }
@@ -37,7 +37,7 @@ void Verlet::second_half(const int &my_rank)
     ModuleBase::TITLE("Verlet", "second_half");
     ModuleBase::timer::tick("Verlet", "second_half");
 
-    MDrun::update_vel(force, my_rank);
+    MD_base::update_vel(force, my_rank);
     apply_thermostat(my_rank);
 
     ModuleBase::timer::tick("Verlet", "second_half");
@@ -122,15 +122,15 @@ void Verlet::thermalize(const int &nraise, const double &current_temp, const dou
 
 void Verlet::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
 {
-    MDrun::outputMD(ofs, cal_stress, my_rank);
+    MD_base::outputMD(ofs, cal_stress, my_rank);
 }
 
 void Verlet::write_restart(const int &my_rank, const std::string &global_out_dir)
 {
-    MDrun::write_restart(my_rank, global_out_dir);
+    MD_base::write_restart(my_rank, global_out_dir);
 }
 
 void Verlet::restart(const int &my_rank, const std::string &global_readin_dir)
 {
-    MDrun::restart(my_rank, global_readin_dir);
+    MD_base::restart(my_rank, global_readin_dir);
 }

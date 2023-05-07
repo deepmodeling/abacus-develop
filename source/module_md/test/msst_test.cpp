@@ -1,3 +1,5 @@
+#define private public
+#define protected public
 #include "module_md/msst.h"
 
 #include "gmock/gmock.h"
@@ -35,7 +37,7 @@
 class MSST_test : public testing::Test
 {
   protected:
-    MDrun *mdrun;
+    MD_base *mdrun;
     UnitCell ucell;
 
     void SetUp()

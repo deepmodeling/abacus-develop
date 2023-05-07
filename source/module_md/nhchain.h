@@ -3,12 +3,13 @@
 
 #include "md_base.h"
 
-class Nose_Hoover : public MDrun
+class Nose_Hoover : public MD_base
 {
   public:
     Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~Nose_Hoover();
 
+  private:
     void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
     void first_half(const int &my_rank, std::ofstream &ofs);
     void second_half(const int &my_rank);

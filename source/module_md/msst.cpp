@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-MSST::MSST(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
+MSST::MSST(MD_parameters &MD_para_in, UnitCell &unit_in) : MD_base(MD_para_in, unit_in)
 {
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
@@ -36,7 +36,7 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const st
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::tick("MSST", "setup");
 
-    MDrun::setup(p_esolver, my_rank, global_readin_dir);
+    MD_base::setup(p_esolver, my_rank, global_readin_dir);
     ucell.cell_parameter_updated = true;
 
     int sd = mdp.msst_direction;
@@ -111,7 +111,7 @@ void MSST::first_half(const int &my_rank, std::ofstream &ofs)
     rescale(ofs, vol);
 
     // propagate atom positions 1 time step
-    MDrun::update_pos(my_rank);
+    MD_base::update_pos(my_rank);
 
     // propagate volume 1/2 step
     vol = ucell.omega + omega[sd] * dthalf;
@@ -149,7 +149,7 @@ void MSST::second_half(const int &my_rank)
 
 void MSST::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
 {
-    MDrun::outputMD(ofs, cal_stress, my_rank);
+    MD_base::outputMD(ofs, cal_stress, my_rank);
 }
 
 void MSST::write_restart(const int &my_rank, const std::string &global_out_dir)

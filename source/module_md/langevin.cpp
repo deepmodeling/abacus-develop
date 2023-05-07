@@ -4,7 +4,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 
-Langevin::Langevin(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
+Langevin::Langevin(MD_parameters &MD_para_in, UnitCell &unit_in) : MD_base(MD_para_in, unit_in)
 {
     // convert to a.u. unit
     mdp.md_damp /= ModuleBase::AU_to_FS;
@@ -22,7 +22,7 @@ void Langevin::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, cons
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::tick("Langevin", "setup");
 
-    MDrun::setup(p_esolver, my_rank, global_readin_dir);
+    MD_base::setup(p_esolver, my_rank, global_readin_dir);
 
     post_force();
 
@@ -34,8 +34,8 @@ void Langevin::first_half(const int &my_rank, std::ofstream &ofs)
     ModuleBase::TITLE("Langevin", "first_half");
     ModuleBase::timer::tick("Langevin", "first_half");
 
-    MDrun::update_vel(total_force, my_rank);
-    MDrun::update_pos(my_rank);
+    MD_base::update_vel(total_force, my_rank);
+    MD_base::update_pos(my_rank);
 
     ModuleBase::timer::tick("Langevin", "first_half");
 }
@@ -46,24 +46,24 @@ void Langevin::second_half(const int &my_rank)
     ModuleBase::timer::tick("Langevin", "second_half");
 
     post_force();
-    MDrun::update_vel(total_force, my_rank);
+    MD_base::update_vel(total_force, my_rank);
 
     ModuleBase::timer::tick("Langevin", "second_half");
 }
 
 void Langevin::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
 {
-    MDrun::outputMD(ofs, cal_stress, my_rank);
+    MD_base::outputMD(ofs, cal_stress, my_rank);
 }
 
 void Langevin::write_restart(const int &my_rank, const std::string &global_out_dir)
 {
-    MDrun::write_restart(my_rank, global_out_dir);
+    MD_base::write_restart(my_rank, global_out_dir);
 }
 
 void Langevin::restart(const int &my_rank, const std::string &global_readin_dir)
 {
-    MDrun::restart(my_rank, global_readin_dir);
+    MD_base::restart(my_rank, global_readin_dir);
 }
 
 void Langevin::post_force()

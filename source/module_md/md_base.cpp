@@ -6,7 +6,7 @@
 #endif
 #include "module_io/print_info.h"
 
-MDrun::MDrun(MD_parameters &MD_para_in, UnitCell &unit_in) : mdp(MD_para_in), ucell(unit_in)
+MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
 {
     if (mdp.md_seed >= 0)
     {
@@ -35,7 +35,7 @@ MDrun::MDrun(MD_parameters &MD_para_in, UnitCell &unit_in) : mdp(MD_para_in), uc
     MD_func::InitVel(ucell, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
 }
 
-MDrun::~MDrun()
+MD_base::~MD_base()
 {
     delete[] allmass;
     delete[] pos;
@@ -44,7 +44,7 @@ MDrun::~MDrun()
     delete[] force;
 }
 
-void MDrun::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir)
+void MD_base::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
 {
     if (mdp.md_restart)
     {
@@ -59,18 +59,18 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const s
     ucell.ionic_position_updated = true;
 }
 
-void MDrun::first_half(const int &my_rank, std::ofstream &ofs)
+void MD_base::first_half(const int& my_rank, std::ofstream& ofs)
 {
     update_vel(force, my_rank);
     update_pos(my_rank);
 }
 
-void MDrun::second_half(const int &my_rank)
+void MD_base::second_half(const int& my_rank)
 {
     update_vel(force, my_rank);
 }
 
-void MDrun::update_pos(const int &my_rank)
+void MD_base::update_pos(const int& my_rank)
 {
     if (my_rank == 0)
     {
@@ -98,7 +98,7 @@ void MDrun::update_pos(const int &my_rank)
     ucell.update_pos_taud(pos);
 }
 
-void MDrun::update_vel(const ModuleBase::Vector3<double> *force, const int &my_rank)
+void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my_rank)
 {
     if (my_rank == 0)
     {
@@ -119,7 +119,7 @@ void MDrun::update_vel(const ModuleBase::Vector3<double> *force, const int &my_r
 #endif
 }
 
-void MDrun::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
+void MD_base::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
     if (my_rank)
         return;
@@ -183,7 +183,7 @@ void MDrun::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_r
     ofs << std::endl;
 }
 
-void MDrun::write_restart(const int &my_rank, const std::string &global_out_dir)
+void MD_base::write_restart(const int& my_rank, const std::string& global_out_dir)
 {
     if (!my_rank)
     {
@@ -199,7 +199,7 @@ void MDrun::write_restart(const int &my_rank, const std::string &global_out_dir)
 #endif
 }
 
-void MDrun::restart(const int &my_rank, const std::string &global_readin_dir)
+void MD_base::restart(const int& my_rank, const std::string& global_readin_dir)
 {
     step_rst_ = MD_func::current_step(my_rank, global_readin_dir);
 }
