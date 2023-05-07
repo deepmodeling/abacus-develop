@@ -1,11 +1,11 @@
-#define private public
-#define protected public
-#include "module_md/nhchain.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/nhchain.h"
 
 #define doublethreshold 1e-12
 
@@ -37,7 +37,7 @@
 class NHC_test : public testing::Test
 {
   protected:
-    MD_base *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -45,7 +45,7 @@ class NHC_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         INPUT.mdp.md_type = "npt";
@@ -108,7 +108,8 @@ TEST_F(NHC_test, first_half)
 TEST_F(NHC_test, second_half)
 {
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00023793503786683287, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.0001777972998948069, doublethreshold);
@@ -140,7 +141,8 @@ TEST_F(NHC_test, second_half)
 TEST_F(NHC_test, write_restart)
 {
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
@@ -173,7 +175,7 @@ TEST_F(NHC_test, restart)
     mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
-    Nose_Hoover *nhc = dynamic_cast<Nose_Hoover *>(mdrun);
+    Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(mdrun->mdp.md_tchain, 4);
     EXPECT_EQ(mdrun->mdp.md_pchain, 4);

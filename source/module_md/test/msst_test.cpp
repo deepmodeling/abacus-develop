@@ -1,11 +1,11 @@
-#define private public
-#define protected public
-#include "module_md/msst.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/msst.h"
 
 #define doublethreshold 1e-12
 
@@ -37,7 +37,7 @@
 class MSST_test : public testing::Test
 {
   protected:
-    MD_base *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -45,7 +45,7 @@ class MSST_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new MSST(INPUT.mdp, ucell);
@@ -131,7 +131,8 @@ TEST_F(MSST_test, first_half)
 TEST_F(MSST_test, second_half)
 {
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(ucell.lat0, 1.0, doublethreshold);
     EXPECT_NEAR(ucell.lat0_angstrom, 0.52917700000000001, doublethreshold);
@@ -201,7 +202,7 @@ TEST_F(MSST_test, restart)
     mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
-    MSST *msst = dynamic_cast<MSST *>(mdrun);
+    MSST* msst = dynamic_cast<MSST*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(msst->omega[mdrun->mdp.msst_direction], -0.00977662);
     EXPECT_EQ(msst->e0, -0.00768262);

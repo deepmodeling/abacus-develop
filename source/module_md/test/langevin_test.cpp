@@ -1,11 +1,11 @@
-#define private public
-#define protected public
-#include "module_md/langevin.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/langevin.h"
 
 #define doublethreshold 1e-12
 
@@ -37,7 +37,7 @@
 class Langevin_test : public testing::Test
 {
   protected:
-    MD_base *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -45,7 +45,7 @@ class Langevin_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new Langevin(INPUT.mdp, ucell);
@@ -106,7 +106,8 @@ TEST_F(Langevin_test, first_half)
 TEST_F(Langevin_test, second_half)
 {
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00066954020090275205, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 3.3862365219131354e-05, doublethreshold);

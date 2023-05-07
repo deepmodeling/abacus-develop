@@ -1,11 +1,11 @@
-#define private public
-#define protected public
-#include "module_md/verlet.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/verlet.h"
 
 #define doublethreshold 1e-12
 
@@ -37,7 +37,7 @@
 class Verlet_test : public testing::Test
 {
   protected:
-    MD_base *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -45,7 +45,7 @@ class Verlet_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new Verlet(INPUT.mdp, ucell);
@@ -107,7 +107,8 @@ TEST_F(Verlet_test, NVE)
 {
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
     mdrun->mdp.md_type = "nve";
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
@@ -141,7 +142,8 @@ TEST_F(Verlet_test, Anderson)
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "anderson";
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
@@ -175,7 +177,8 @@ TEST_F(Verlet_test, Berendsen)
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "berendsen";
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
@@ -209,7 +212,8 @@ TEST_F(Verlet_test, rescaling)
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "rescaling";
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
@@ -243,7 +247,8 @@ TEST_F(Verlet_test, rescale_v)
     mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "rescale_v";
-    mdrun->second_half(GlobalV::MY_RANK);;
+    mdrun->second_half(GlobalV::MY_RANK);
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);

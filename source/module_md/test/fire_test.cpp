@@ -1,11 +1,11 @@
-#define private public
-#define protected public
-#include "module_md/fire.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/fire.h"
 
 #define doublethreshold 1e-12
 
@@ -37,7 +37,7 @@
 class FIREtest : public testing::Test
 {
   protected:
-    MD_base *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -45,7 +45,7 @@ class FIREtest : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new FIRE(INPUT.mdp, ucell);
@@ -161,7 +161,7 @@ TEST_F(FIREtest, Restart)
     mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
-    FIRE *fire = dynamic_cast<FIRE *>(mdrun);
+    FIRE* fire = dynamic_cast<FIRE*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(fire->alpha, 0.1);
     EXPECT_EQ(fire->negative_count, 0);
