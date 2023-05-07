@@ -369,6 +369,7 @@ void Input::Default(void)
 
     exx_separate_loop = true;
     exx_hybrid_step = 100;
+    exx_mixing_beta = 0.0;
 
     exx_lambda = 0.3;
 
@@ -1801,6 +1802,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, exx_hybrid_step);
         }
+        else if (strcmp("exx_mixing_beta", word) == 0)
+        {
+            read_value(ifs, exx_mixing_beta);
+        }
         else if (strcmp("exx_lambda", word) == 0)
         {
             read_value(ifs, exx_lambda);
@@ -3044,6 +3049,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(exx_separate_loop);
     Parallel_Common::bcast_int(exx_hybrid_step);
     Parallel_Common::bcast_double(exx_lambda);
+    Parallel_Common::bcast_double(exx_mixing_beta);
     Parallel_Common::bcast_string(exx_real_number);
     Parallel_Common::bcast_double(exx_pca_threshold);
     Parallel_Common::bcast_double(exx_c_threshold);

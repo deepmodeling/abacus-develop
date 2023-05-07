@@ -38,8 +38,6 @@ UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
 Parallel_Grid::Parallel_Grid(){}
 Parallel_Grid::~Parallel_Grid(){}
-WF_igk::WF_igk(){}
-WF_igk::~WF_igk(){}
 WF_atomic::WF_atomic(){}
 WF_atomic::~WF_atomic(){}
 wavefunc::wavefunc(){}
@@ -91,10 +89,9 @@ Input INPUT;
 void Restart::load_disk(const std::string mode, const int i, double** rho) const {}
 
 
-psi::Psi<complex<double>>* wavefunc::allocate(const int nks)
+psi::Psi<complex<double>>* wavefunc::allocate(const int nks, const int* ngk, const int npwx)
 {
-	this->npwx = GlobalC::wfcpw->npwk_max;
-	psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(nks, GlobalV::NBANDS,npwx, nullptr);
+	psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(nks, GlobalV::NBANDS,npwx, ngk);
 	return psi;
 }
 

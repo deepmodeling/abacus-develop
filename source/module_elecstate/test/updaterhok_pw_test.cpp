@@ -315,8 +315,8 @@ TEST_F(EState,RhoPW)
     GlobalC::CHR.allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
     // GlobalC::pot.allocate(GlobalC::rhopw->nrxx);
     // we need to supply NBANDS here
-    psi::Psi<std::complex<double>>* psi = GlobalC::wf.allocate(GlobalC::kv.nks);
-    // std::cout<<"npwx "<<GlobalC::wf.npwx<<std::endl;
+    psi::Psi<std::complex<double>>* psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::kv.ngk.data(), GlobalC::wfcpw->npwk_max);
+    // std::cout<<"npwx "<<GlobalC::wfcpw->npwk_max<<std::endl;
 
     //====== read wavefunction ==========================================
     std::stringstream ssw;
@@ -334,12 +334,12 @@ TEST_F(EState,RhoPW)
     }
 
     // copy data from old wf.evc to new evc(an object of Psi)
-    evc.resize(GlobalC::kv.nks,GlobalV::NBANDS,GlobalC::wf.npwx);
+    evc.resize(GlobalC::kv.nks, GlobalV::NBANDS, GlobalC::wfcpw->npwk_max);
     evc.fix_k(0);
     for(int i=0;i<GlobalV::NBANDS;i++)
     {
-	    for(int j=0;j<GlobalC::wf.npwx;j++)
-            {
+        for (int j = 0; j < GlobalC::wfcpw->npwk_max; j++)
+        {
 		    evc(i,j) = psi[0](i,j);
 	    }
     }

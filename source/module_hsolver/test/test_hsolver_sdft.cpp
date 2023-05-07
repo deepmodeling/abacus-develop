@@ -35,7 +35,7 @@ Stochastic_Iter::~Stochastic_Iter()
     delete[] chiallorder;
 }
 
-void Stochastic_Iter::init(const int dim, int* nchip_in, const int method_in, Stochastic_WF& stowf)
+void Stochastic_Iter::init(int *nchip_in, const int method_in, K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf)
 {
     this->nchip = nchip_in;
     this->targetne = 1;
@@ -99,7 +99,8 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF &stowf)
 void Stochastic_Iter::sum_stoband(
     Stochastic_WF &stowf, 
     elecstate::ElecState *pes, 
-    hamilt::Hamilt<double, psi::DEVICE_CPU> *pHamilt
+    hamilt::Hamilt<double, psi::DEVICE_CPU> *pHamilt,
+    ModulePW::PW_Basis_K* wfc_basis
 )
 {
     //do something to verify this function has been called
@@ -129,9 +130,11 @@ class TestHSolverPW_SDFT : public ::testing::Test
 	public:
     ModulePW::PW_Basis_K pwbk;
     Stochastic_WF stowf;
-	hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&pwbk, stowf, 0);
+    K_Vectors kv;
+    wavefunc wf;
+    hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, &pwbk, &wf, stowf, 0);
 
-	hamilt::Hamilt<double> hamilt_test_d;
+    hamilt::Hamilt<double> hamilt_test_d;
 
 	psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<double>> psi_test_no;
@@ -166,7 +169,8 @@ TEST_F(TestHSolverPW_SDFT, solve)
 	this->hs_d.solve(
         &hamilt_test_d, 
         psi_test_cd, 
-        &elecstate_test, 
+        &elecstate_test,
+        &pwbk, 
         stowf, 
         istep, 
         iter, 
@@ -249,6 +253,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
         &hamilt_test_d, 
         psi_test_no, 
         &elecstate_test, 
+        &pwbk,
         stowf, 
         istep, 
         iter, 
@@ -272,6 +277,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
         &hamilt_test_d, 
         psi_test_no, 
         &elecstate_test, 
+        &pwbk,
         stowf, 
         istep, 
         iter, 

@@ -230,7 +230,7 @@ void ESolver_KS_LCAO::cal_Energy(double& etot)
 
 void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
 {
-    Force_Stress_LCAO FSL(this->RA);
+    Force_Stress_LCAO FSL(this->RA, GlobalC::ucell.nat);
     FSL.getForceStress(GlobalV::CAL_FORCE,
                        GlobalV::CAL_STRESS,
                        GlobalV::TEST_FORCE,

@@ -1,38 +1,39 @@
 #include "esolver_ks_pw.h"
+
 #include <iostream>
-#include "module_io/write_wfc_pw.h"
+
+#include "module_io/nscf_band.h"
 #include "module_io/write_dos_pw.h"
 #include "module_io/write_istate_info.h"
-#include "module_io/nscf_band.h"
+#include "module_io/write_wfc_pw.h"
 
 //--------------temporary----------------------------
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_io/print_info.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_elecstate/occupy.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/print_info.h"
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
 #include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
-#include "module_hsolver/hsolver_pw.h"
+#include "module_base/memory.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_base/memory.h"
-
-#include "module_io/write_wfc_r.h"
-#include "module_io/winput.h"
-#include "module_io/numerical_descriptor.h"
-#include "module_io/numerical_basis.h"
-#include "module_io/to_wannier90.h"
-#include "module_io/berryphase.h"
-#include "module_io/rho_io.h"
-#include "module_psi/kernels/device.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_io/berryphase.h"
+#include "module_io/numerical_basis.h"
+#include "module_io/numerical_descriptor.h"
+#include "module_io/rho_io.h"
+#include "module_io/to_wannier90.h"
+#include "module_io/winput.h"
+#include "module_io/write_wfc_r.h"
+#include "module_psi/kernels/device.h"
 
 namespace ModuleESolver
 {
@@ -87,7 +88,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         if(this->psi != nullptr) delete this->psi;
-        this->psi = GlobalC::wf.allocate(GlobalC::kv.nks);
+        this->psi = GlobalC::wf.allocate(GlobalC::kv.nks, GlobalC::kv.ngk.data(), GlobalC::wfcpw->npwk_max);
 
         // cout<<GlobalC::rhopw->nrxx<<endl;
         // cout<<"before ufft allocate"<<endl;
@@ -97,7 +98,7 @@ namespace ModuleESolver
         //=======================
         // init pseudopotential
         //=======================
-        GlobalC::ppcell.init(GlobalC::ucell.ntype);
+        GlobalC::ppcell.init(GlobalC::ucell.ntype, &GlobalC::sf, GlobalC::wfcpw);
 
         //=====================
         // init hamiltonian
@@ -124,7 +125,7 @@ namespace ModuleESolver
         //==================================================
         // create GlobalC::ppcell.tab_at , for trial wave functions.
         //==================================================
-        GlobalC::wf.init_at_1();
+        GlobalC::wf.init_at_1(&GlobalC::sf);
 
         //================================
         // Initial start wave functions
@@ -132,7 +133,7 @@ namespace ModuleESolver
         if (GlobalV::NBANDS != 0 || GlobalV::ESOLVER_TYPE != "sdft")
         // qianrui add temporarily. In the future, wfcinit() should be compatible with cases when NBANDS=0
         {
-            GlobalC::wf.wfcinit(this->psi);
+            GlobalC::wf.wfcinit(this->psi, GlobalC::wfcpw);
         }
 
         // denghui added 20221116
@@ -156,7 +157,7 @@ namespace ModuleESolver
         //init HSolver
         if(this->phsol == nullptr)
         {
-            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw, &GlobalC::wf);
         }
 
         //init ElecState,
@@ -209,10 +210,10 @@ namespace ModuleESolver
 #endif
             this->pw_wfc->setuptransform();
             for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
-            this->pw_wfc->collect_local_pw(); 
+            this->pw_wfc->collect_local_pw();
 
-            delete this->phsol;  
-            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw);
+            delete this->phsol;
+            this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw, &GlobalC::wf);
 
             delete this->pelec;  
             this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
@@ -237,7 +238,7 @@ namespace ModuleESolver
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
+            GlobalC::wf.init_at_1(&GlobalC::sf);
         }
         else if (GlobalV::md_prec_level == 0)
         {
@@ -248,7 +249,7 @@ namespace ModuleESolver
             GlobalC::wfcpw->initparameters(false, INPUT.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
             GlobalC::wfcpw->collect_local_pw(); 
             GlobalC::wf.init_after_vc(GlobalC::kv.nks);
-            GlobalC::wf.init_at_1();
+            GlobalC::wf.init_at_1(&GlobalC::sf);
         }
         ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
     }
@@ -279,7 +280,7 @@ namespace ModuleESolver
         //allocate HamiltPW
         if(this->p_hamilt == nullptr)
         {
-            this->p_hamilt = new hamilt::HamiltPW<FPTYPE, Device>(this->pelec->pot);
+            this->p_hamilt = new hamilt::HamiltPW<FPTYPE, Device>(this->pelec->pot, GlobalC::wfcpw, &GlobalC::kv);
         }
 
         //----------------------------------------------------------
@@ -650,14 +651,22 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS_PW<FPTYPE, Device>::cal_Force(ModuleBase::matrix& force)
     {
-        Forces<double, Device> ff;
+        Forces<double, Device> ff(GlobalC::ucell.nat);
         if (this->__kspw_psi != nullptr) this->__kspw_psi = nullptr;
         if (this->__kspw_psi == nullptr) {
             this->__kspw_psi = GlobalV::precision_flag == "single" ?
                                new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
                                reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
         }
-        ff.init(force, this->pelec->wg, this->pelec->charge, this->__kspw_psi);
+        ff.cal_force(force,
+                     this->pelec->wg,
+                     this->pelec->charge,
+                     GlobalC::rhopw,
+                     &GlobalC::symm,
+                     &GlobalC::sf,
+                     &GlobalC::kv,
+                     GlobalC::wfcpw,
+                     this->__kspw_psi);
     }
 
     template<typename FPTYPE, typename Device>
@@ -670,7 +679,15 @@ namespace ModuleESolver
                              new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0]) :
                              reinterpret_cast<psi::Psi<std::complex<double>, Device> *> (this->kspw_psi);
         }
-        ss.cal_stress(stress, this->psi, this->__kspw_psi);
+        ss.cal_stress(stress,
+                      GlobalC::ucell,
+                      GlobalC::rhopw,
+                      &GlobalC::symm,
+                      &GlobalC::sf,
+                      &GlobalC::kv,
+                      GlobalC::wfcpw,
+                      this->psi,
+                      this->__kspw_psi);
 
         //external stress
         double unit_transform = 0.0;
@@ -810,7 +827,7 @@ namespace ModuleESolver
         if(this->phsol != nullptr)
         {
             hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
-            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr; 
+            hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER, true);
         }
         else

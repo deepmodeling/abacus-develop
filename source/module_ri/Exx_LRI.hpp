@@ -47,6 +47,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 //		Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
 //	}
 
+	this->Hk_seq.resize(GlobalC::kv.nks);
 
     this->mpi_comm = mpi_comm_in;
     this->p_kv = &kv_in;

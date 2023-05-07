@@ -78,11 +78,26 @@ Stochastic_WF::~Stochastic_WF()
     delete[] nchip;
 }
 
-void Stochastic_WF::init(const int nks_in)
+void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
 {
     /*chi0 = new ModuleBase::ComplexMatrix[nks_in];
     shchi = new ModuleBase::ComplexMatrix[nks_in];
     chiortho = new ModuleBase::ComplexMatrix[nks_in];
     nchip = new int[nks_in];
     this->nks = nks_in;*/
+}
+
+K_Vectors::K_Vectors(){}
+K_Vectors::~K_Vectors(){}
+wavefunc::wavefunc()
+{
+}
+wavefunc::~wavefunc()
+{
+}
+WF_atomic::WF_atomic()
+{
+}
+WF_atomic::~WF_atomic()
+{
 }

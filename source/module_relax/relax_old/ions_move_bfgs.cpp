@@ -295,7 +295,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
 
     if (norm < 1.0e-16)
     {
-        ModuleBase::WARNING_QUIT("Ions_Move_BFGS", "'BFGS: move-length unreasonably short");
+        ModuleBase::WARNING_QUIT("Ions_Move_BFGS", "BFGS: move-length unreasonably short");
     }
     else
     {
