@@ -130,3 +130,9 @@ if(ENABLE_COVERAGE)
   add_coverage(base_serial)
   add_coverage(planewave_serial)
 endif()
+
+AddTest(
+  TARGET Elecstate_Magnetism
+  LIBS ${math_libs} base device
+  SOURCES elecstate_magnetism_test.cpp ../magnetism.cpp
+)

@@ -11,7 +11,7 @@ template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class HamiltPW : public Hamilt<FPTYPE, Device>
 {
   public:
-    HamiltPW(elecstate::Potential* pot_in);
+    HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv);
     template<typename T_in, typename Device_in = Device>
     explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
     ~HamiltPW();
