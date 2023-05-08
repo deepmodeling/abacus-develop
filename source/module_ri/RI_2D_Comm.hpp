@@ -134,6 +134,9 @@ void RI_2D_Comm::add_Hexx(
 	// 	}
 	// }
 	std::vector<std::vector<Tdata>> Hk;
+	Hk.resize(GlobalV::NLOCAL);
+	for(size_t ir=0; ir!=GlobalV::NLOCAL; ++ir)
+		Hk[ir].resize(GlobalV::NLOCAL);
 
 	if(GlobalC::exx_info.info_global.separate_loop == 0)
 	{
