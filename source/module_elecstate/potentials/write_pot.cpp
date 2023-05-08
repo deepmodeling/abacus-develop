@@ -37,7 +37,7 @@ void Potential::write_potential(
     }
     else if (is == 1)
     {
-        temp_v = &(v.c[GlobalC::rhopw->nxyz]);
+        temp_v = &(v.c[nx * ny * nz]);
     }
 
     double ef_tmp = 0.;
