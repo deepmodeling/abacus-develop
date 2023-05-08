@@ -12,4 +12,10 @@ const double get_ucell_omega();
 // get dftu energy
 const double get_dftu_energy();
 #endif
+#ifdef __DEEPKS
+// get lcao deepks E_delta
+const double get_lcao_deepks_E_delta();
+// get lcao deepks e_delta_band
+const double get_lcao_deepks_e_delta_band();
+#endif
 }

@@ -1,29 +1,25 @@
+#include "energy.h"
+
+#include <vector>
+
+#include "elecstate_getters.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#include "energy.h"
 #include "module_base/mymath.h"
+#include "module_base/parallel_reduce.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
-#include <vector>
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
 #include <sys/time.h>
-#ifdef __LCAO
-#include "module_hamilt_lcao/module_dftu/dftu.h"  //Quxin adds for DFT+U on 20201029
-#endif
-//new
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+// new
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
-#include "module_elecstate/potentials/gatefield.h"    // liuyu add 2022-09-13
+#include "module_elecstate/potentials/gatefield.h" // liuyu add 2022-09-13
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
-#ifdef __DEEPKS
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#endif
-
 
 energy::energy()
 {
@@ -67,10 +63,11 @@ void energy::calculate_harris()
     }
 #endif
 #ifdef __DEEPKS
-	if (GlobalV::deepks_scf)
-	{
-		this->etot_harris += GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
-	}
+    if (GlobalV::deepks_scf)
+    {
+        this->etot_harris += elecstate::get_lcao_deepks_E_delta()
+                             - elecstate::get_lcao_deepks_e_delta_band(); // Energy correction from DeepKS
+    }
 #endif
 
 	return;
@@ -119,10 +116,11 @@ void energy::calculate_etot(void)
     }
 #endif
 #ifdef __DEEPKS
-	if (GlobalV::deepks_scf)
-	{
-		this->etot += GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
-	}
+    if (GlobalV::deepks_scf)
+    {
+    this->etot += elecstate::get_lcao_deepks_E_delta()
+                  - elecstate::get_lcao_deepks_e_delta_band(); // Energy correction from DeepKS
+    }
 #endif
 	return;
 }
@@ -186,7 +184,7 @@ void energy::print_etot(
 #ifdef __DEEPKS
         if (GlobalV::deepks_scf)	//caoyu add 2021-08-10
         {
-            this->print_format("E_DeePKS", GlobalC::ld.E_delta);
+            this->print_format("E_DeePKS", elecstate::get_lcao_deepks_E_delta());
         }
 #endif
     }
