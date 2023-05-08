@@ -39,7 +39,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalC::ucell.lc[0],1);
 	EXPECT_EQ(GlobalC::ucell.lc[1],1);
 	EXPECT_EQ(GlobalC::ucell.lc[2],1);
-	EXPECT_EQ(GlobalV::KSPACING,0.0);
+	EXPECT_EQ(GlobalV::KSPACING[0],0.0);
+	EXPECT_EQ(GlobalV::KSPACING[1],0.0);
+	EXPECT_EQ(GlobalV::KSPACING[2],0.0);
 	EXPECT_DOUBLE_EQ(GlobalV::MIN_DIST_COEF,0.2);
 	EXPECT_EQ(GlobalV::NBANDS,8);
 	EXPECT_EQ(GlobalC::wf.pw_seed,1);
@@ -70,6 +72,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_rmin,0.00001);
 	EXPECT_EQ(Ions_Move_Basic::relax_bfgs_init,0.5);
 	EXPECT_EQ(Ions_Move_Basic::out_stru,0);
+    EXPECT_EQ(Lattice_Change_Basic::fixed_axes,"None");
 	EXPECT_EQ(GlobalV::CAL_STRESS,0);
 	EXPECT_EQ(GlobalV::RELAX_METHOD,"cg");
 	EXPECT_DOUBLE_EQ(GlobalV::relax_scale_force,0.5);
@@ -122,11 +125,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-
 	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_01,1);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_02,1);
-	EXPECT_EQ(ELEC_evolve::td_val_elec_03,1);
 	EXPECT_EQ(ELEC_evolve::td_vext,false);
 	EXPECT_EQ(ELEC_evolve::out_dipole,false);
 	EXPECT_EQ(ELEC_evolve::out_efield,false);
@@ -137,9 +136,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::out_mul,0);
 	EXPECT_EQ(GlobalC::ppcell.cell_factor,1.2);
 	EXPECT_EQ(GlobalV::SCF_NMAX,50);
-	EXPECT_EQ(GlobalV::RELAX_NMAX,1);
-	EXPECT_EQ(GlobalV::MD_NSTEP,10);
-	EXPECT_EQ(GlobalV::OUT_FREQ_ELEC,0);
+    EXPECT_EQ(GlobalV::RELAX_NMAX, 1);
+    EXPECT_EQ(GlobalV::OUT_FREQ_ELEC,0);
 	EXPECT_EQ(GlobalV::OUT_FREQ_ION,0);
 	EXPECT_EQ(GlobalV::init_chg,"atomic");
 	EXPECT_EQ(GlobalV::chg_extrap,"atomic");
@@ -184,6 +182,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::of_wt_beta,0.833333);
 	EXPECT_EQ(GlobalV::of_wt_rho0,1.0);
 	EXPECT_EQ(GlobalV::of_hold_rho0,false);
+	EXPECT_EQ(GlobalV::of_lkt_a,1.3);
     EXPECT_EQ(GlobalV::of_full_pw,false);
 	EXPECT_EQ(GlobalV::of_full_pw_dim,0);
 	EXPECT_EQ(GlobalV::of_read_kernel,false);
@@ -211,7 +210,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.latname="none";
@@ -227,7 +225,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
@@ -242,7 +239,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.relax_new=false;
@@ -258,7 +254,6 @@ TEST_F(InputConvTest, ConvRelax)
 		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
 		"---------------------------------------------------------------------------------\n See output information in : \n"
 		));
-
 	INPUT.Default();
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";

@@ -90,7 +90,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
                                                    GlobalC::kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
-                                                   &(this->LOWF));
+                                                   &(this->LOWF),
+                                                   GlobalC::bigpw);
     }
 
     //------------------init Basis_lcao----------------------
@@ -139,9 +140,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD);
+                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD);
+                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, GlobalC::kv);
         }
     }
 #endif
@@ -230,7 +231,7 @@ void ESolver_KS_LCAO::cal_Energy(double& etot)
 
 void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
 {
-    Force_Stress_LCAO FSL(this->RA);
+    Force_Stress_LCAO FSL(this->RA, GlobalC::ucell.nat);
     FSL.getForceStress(GlobalV::CAL_FORCE,
                        GlobalV::CAL_STRESS,
                        GlobalV::TEST_FORCE,
@@ -973,7 +974,21 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            this->pelec->pot->write_potential(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                is,
+                0,
+                ssp.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(),
+                precision);
         }
     }
     else if (GlobalV::out_pot == 2)
@@ -982,9 +997,14 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
         // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(ssp.str(),
-                                             GlobalC::rhopw,
-                                             pelec->charge); // output 'Hartree + local pseudopot'
+        this->pelec->pot->write_elecstat_pot(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+#endif
+                ssp.str(),
+                this->pw_rho,
+                pelec->charge); // output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)
@@ -1179,8 +1199,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, this->LOC, *this->LOWF.ParaV);
-        rpa_lri_double.init(MPI_COMM_WORLD);
+        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, GlobalC::kv, this->LOC, *this->LOWF.ParaV);
+        rpa_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
     }
 #endif

@@ -10,7 +10,6 @@
 using std::vector;
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/global_function.h"
 
 /**
  * CLASS Num_orbital_lm

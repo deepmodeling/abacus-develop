@@ -73,7 +73,9 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"default");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -87,10 +89,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.symmetry,0);
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
-        EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_TRUE(INPUT.dump_force);
-        EXPECT_TRUE(INPUT.dump_vel);
-        EXPECT_TRUE(INPUT.dump_virial);
+        EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -235,6 +234,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+        EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -256,11 +256,9 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
+        EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -317,6 +315,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,5./6.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a,1.3);
         EXPECT_TRUE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -356,6 +355,9 @@ TEST_F(InputParaTest,Bcast)
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	    EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+        EXPECT_TRUE(INPUT.mdp.dump_force);
+        EXPECT_TRUE(INPUT.mdp.dump_vel);
+        EXPECT_TRUE(INPUT.mdp.dump_virial);
         EXPECT_FALSE(INPUT.mixing_tau);
         EXPECT_FALSE(INPUT.mixing_dftu);
         EXPECT_EQ(INPUT.out_bandgap,0);

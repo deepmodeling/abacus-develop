@@ -66,7 +66,9 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"default");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -81,10 +83,7 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.0);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
-        EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_TRUE(INPUT.dump_force);
-        EXPECT_TRUE(INPUT.dump_vel);
-        EXPECT_TRUE(INPUT.dump_virial);
+        EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -229,6 +228,7 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -250,11 +250,9 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_FALSE(INPUT.td_vext);
         EXPECT_EQ(INPUT.td_vext_dire,"1");
+		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -311,6 +309,7 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,5./6.);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,0.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a,1.3);
         EXPECT_TRUE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -353,6 +352,9 @@ TEST_F(InputTest, Default)
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+    EXPECT_TRUE(INPUT.mdp.dump_force);
+    EXPECT_TRUE(INPUT.mdp.dump_vel);
+    EXPECT_TRUE(INPUT.mdp.dump_virial);
 }
 
 TEST_F(InputTest, Read)
@@ -399,7 +401,9 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
-        EXPECT_DOUBLE_EQ(INPUT.kspacing,0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
         EXPECT_EQ(INPUT.dft_functional,"hse");
         EXPECT_DOUBLE_EQ(INPUT.xc_temperature,0.0);
@@ -413,10 +417,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.symmetry,1);
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
-        EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_FALSE(INPUT.dump_force);
-        EXPECT_FALSE(INPUT.dump_vel);
-        EXPECT_FALSE(INPUT.dump_virial);
+        EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_NEAR(INPUT.force_thr,1.0e-3,1.0e-7);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -564,6 +565,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,0);
@@ -585,11 +587,9 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.soc_lambda,1.0);
         EXPECT_EQ(INPUT.input_error,0);
         EXPECT_DOUBLE_EQ(INPUT.td_force_dt,0.02);
-        EXPECT_EQ(INPUT.td_val_elec_01,1);
-        EXPECT_EQ(INPUT.td_val_elec_02,1);
-        EXPECT_EQ(INPUT.td_val_elec_03,1);
         EXPECT_EQ(INPUT.td_vext,0);
         // EXPECT_EQ(INPUT.td_vext_dire,"1");
+		EXPECT_EQ(INPUT.propagator,0);
 		EXPECT_EQ(INPUT.td_stype,0);
 		// EXPECT_EQ(INPUT.td_ttype,"0");
 		EXPECT_EQ(INPUT.td_tstart,1);
@@ -646,6 +646,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.of_wt_beta,0.833333);
         EXPECT_DOUBLE_EQ(INPUT.of_wt_rho0,1.);
         EXPECT_FALSE(INPUT.of_hold_rho0);
+        EXPECT_DOUBLE_EQ(INPUT.of_lkt_a, 1.3);
         EXPECT_FALSE(INPUT.of_full_pw);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
@@ -692,6 +693,9 @@ TEST_F(InputTest, Read)
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+    EXPECT_FALSE(INPUT.mdp.dump_force);
+    EXPECT_FALSE(INPUT.mdp.dump_vel);
+    EXPECT_FALSE(INPUT.mdp.dump_virial);
 }
 
 TEST_F(InputTest, Default_2)
@@ -721,6 +725,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.lcao_ecut = 0;
 	INPUT.scf_thr = -1.0;
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
+	INPUT.nbndsto_str = "all";
 	// the 1st calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
@@ -743,6 +748,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.ks_solver,"scalapack_gvx");
 #endif
         EXPECT_DOUBLE_EQ(INPUT.lcao_ecut,20.0);
+	EXPECT_EQ(INPUT.nbands_sto, 0);
 	//==================================================
 	// prepare default parameters for the 2nd calling
 	INPUT.vdw_method = "d3_0";
@@ -763,7 +769,9 @@ TEST_F(InputTest, Default_2)
 	INPUT.ks_solver = "default";
 	INPUT.gamma_only_local = 1;
 	INPUT.scf_thr = -1.0;
-	// the 2nd calling
+    INPUT.nbndsto_str = "0";
+    INPUT.esolver_type = "sdft";
+    // the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(INPUT.vdw_s6,"1.0");
@@ -784,6 +792,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.by,1);
 	EXPECT_EQ(INPUT.bz,1);
 	EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+	EXPECT_EQ(INPUT.esolver_type, "ksdft");
 	//==================================================
 	// prepare default parameters for the 3rd calling
 	INPUT.vdw_method = "d3_bj";
@@ -947,12 +956,12 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("please don't set diago_proc with lcao base"));
 	INPUT.diago_proc = 1;
 	//
-	INPUT.kspacing = -1;
+	INPUT.kspacing[0] = -1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("kspacing must > 0"));
-	INPUT.kspacing = 0.8;
+	INPUT.kspacing[0] = INPUT.kspacing[1] = INPUT.kspacing[2] = 0.8;
 	//
 	INPUT.nelec = -1;
 	testing::internal::CaptureStdout();
@@ -1432,4 +1441,57 @@ TEST_F(InputTest, Check)
 	*/
 }
 
+
 #undef private
+
+
+class ReadKSpacingTest : public ::testing::Test {
+protected:
+    void SetUp() 
+	{
+        // create a temporary file for testing
+        tmpfile = std::tmpnam(nullptr);
+        std::ofstream ofs(tmpfile);
+        ofs << "1.0"; // valid input
+        ofs.close();
+    }
+
+    void TearDown() override {
+        std::remove(tmpfile.c_str());
+    }
+
+    std::string tmpfile;
+};
+
+TEST_F(ReadKSpacingTest, ValidInputOneValue) {
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 1.0);
+    EXPECT_EQ(INPUT.kspacing[2], 1.0);
+}
+
+TEST_F(ReadKSpacingTest, ValidInputThreeValue) {
+	std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0 3.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+    EXPECT_NO_THROW(INPUT.read_kspacing(ifs));
+    EXPECT_EQ(INPUT.kspacing[0], 1.0);
+    EXPECT_EQ(INPUT.kspacing[1], 2.0);
+    EXPECT_EQ(INPUT.kspacing[2], 3.0);
+}
+
+TEST_F(ReadKSpacingTest, InvalidInput) {
+    std::ofstream ofs(tmpfile);
+    ofs << "1.0 2.0"; // invalid input
+    ofs.close();
+
+    std::ifstream ifs(tmpfile);
+	testing::internal::CaptureStdout();
+	INPUT.read_kspacing(ifs);
+	std::string output;
+	output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(ifs.fail());
+}

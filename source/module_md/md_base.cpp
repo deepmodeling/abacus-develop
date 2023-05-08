@@ -4,11 +4,9 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "module_base/timer.h"
-#include "module_esolver/esolver.h"
 #include "module_io/print_info.h"
 
-MDrun::MDrun(MD_parameters &MD_para_in, UnitCell &unit_in) : mdp(MD_para_in), ucell(unit_in)
+MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
 {
     if (mdp.md_seed >= 0)
     {
@@ -37,7 +35,7 @@ MDrun::MDrun(MD_parameters &MD_para_in, UnitCell &unit_in) : mdp(MD_para_in), uc
     MD_func::InitVel(ucell, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
 }
 
-MDrun::~MDrun()
+MD_base::~MD_base()
 {
     delete[] allmass;
     delete[] pos;
@@ -46,11 +44,11 @@ MDrun::~MDrun()
     delete[] force;
 }
 
-void MDrun::setup(ModuleESolver::ESolver *p_esolver)
+void MD_base::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
 {
     if (mdp.md_restart)
     {
-        restart();
+        restart(my_rank, global_readin_dir);
     }
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
@@ -61,20 +59,20 @@ void MDrun::setup(ModuleESolver::ESolver *p_esolver)
     ucell.ionic_position_updated = true;
 }
 
-void MDrun::first_half()
+void MD_base::first_half(const int& my_rank, std::ofstream& ofs)
 {
-    update_vel(force);
-    update_pos();
+    update_vel(force, my_rank);
+    update_pos(my_rank);
 }
 
-void MDrun::second_half()
+void MD_base::second_half(const int& my_rank)
 {
-    update_vel(force);
+    update_vel(force, my_rank);
 }
 
-void MDrun::update_pos()
+void MD_base::update_pos(const int& my_rank)
 {
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank == 0)
     {
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -100,9 +98,9 @@ void MDrun::update_pos()
     ucell.update_pos_taud(pos);
 }
 
-void MDrun::update_vel(const ModuleBase::Vector3<double> *force)
+void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my_rank)
 {
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank == 0)
     {
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -121,9 +119,9 @@ void MDrun::update_vel(const ModuleBase::Vector3<double> *force)
 #endif
 }
 
-void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
+void MD_base::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
-    if (GlobalV::MY_RANK)
+    if (my_rank)
         return;
 
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
@@ -185,12 +183,12 @@ void MDrun::outputMD(std::ofstream &ofs, bool cal_stress)
     ofs << std::endl;
 }
 
-void MDrun::write_restart()
+void MD_base::write_restart(const int& my_rank, const std::string& global_out_dir)
 {
-    if (!GlobalV::MY_RANK)
+    if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.dat";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -201,7 +199,7 @@ void MDrun::write_restart()
 #endif
 }
 
-void MDrun::restart()
+void MD_base::restart(const int& my_rank, const std::string& global_readin_dir)
 {
-    step_rst_ = MD_func::current_step(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+    step_rst_ = MD_func::current_step(my_rank, global_readin_dir);
 }

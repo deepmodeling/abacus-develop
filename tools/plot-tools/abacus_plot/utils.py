@@ -22,6 +22,7 @@ def remove_empty(a: list) -> list:
     while [] in a:
         a.remove([])
 
+
 def handle_data(data):
     data.remove('')
 
@@ -30,6 +31,7 @@ def handle_data(data):
         remove_empty(elist)  # `list` will be modified in function
         return elist
     return list(map(handle_elem, data))
+
 
 def skip_notes(line: str) -> str:
     """Delete comments lines with '#' or '//'
@@ -332,9 +334,10 @@ def parse_projected_data(orbitals, species: Union[Sequence[Any], Dict[Any, List[
 
         return data, totnum
 
+
 def key2int(species):
     """Convert keys of dict in str type to int"""
-    
+
     new_species = {}
     if isinstance(species, dict):
         elements = list(map(int, species.keys()))
@@ -352,5 +355,5 @@ def key2int(species):
                 new_species[elem] = []
                 for l_index in l[i]:
                     new_species[elem].append(int(l_index))
-    
+
     return new_species

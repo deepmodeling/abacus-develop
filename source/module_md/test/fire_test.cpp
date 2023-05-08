@@ -1,9 +1,11 @@
-#include "module_md/fire.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/fire.h"
 
 #define doublethreshold 1e-12
 
@@ -32,10 +34,10 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class FIRE_test : public testing::Test
+class FIREtest : public testing::Test
 {
   protected:
-    MDrun *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -43,11 +45,11 @@ class FIRE_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new FIRE(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver);
+        mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -56,7 +58,7 @@ class FIRE_test : public testing::Test
     }
 };
 
-TEST_F(FIRE_test, setup)
+TEST_F(FIREtest, Setup)
 {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
@@ -70,9 +72,9 @@ TEST_F(FIRE_test, setup)
     EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
-TEST_F(FIRE_test, first_half)
+TEST_F(FIREtest, FirstHalf)
 {
-    mdrun->first_half();
+    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00045447059554315662, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00032646833232493271, doublethreshold);
@@ -101,10 +103,10 @@ TEST_F(FIRE_test, first_half)
     EXPECT_NEAR(mdrun->vel[3].z, -2.5498181033639999e-05, doublethreshold);
 }
 
-TEST_F(FIRE_test, second_half)
+TEST_F(FIREtest, SecondHalf)
 {
-    mdrun->first_half();
-    mdrun->second_half();
+    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->second_half(GlobalV::MY_RANK);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00045447059554315662, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00032646833232493271, doublethreshold);
@@ -133,11 +135,11 @@ TEST_F(FIRE_test, second_half)
     EXPECT_NEAR(mdrun->vel[3].z, -2.5498181033639999e-05, doublethreshold);
 }
 
-TEST_F(FIRE_test, write_restart)
+TEST_F(FIREtest, WriteRestart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart();
+    mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -154,12 +156,12 @@ TEST_F(FIRE_test, write_restart)
     ifs.close();
 }
 
-TEST_F(FIRE_test, restart)
+TEST_F(FIREtest, Restart)
 {
-    mdrun->restart();
+    mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
-    FIRE *fire = dynamic_cast<FIRE *>(mdrun);
+    FIRE* fire = dynamic_cast<FIRE*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(fire->alpha, 0.1);
     EXPECT_EQ(fire->negative_count, 0);
@@ -167,10 +169,10 @@ TEST_F(FIRE_test, restart)
     EXPECT_EQ(mdrun->mdp.md_dt, 41.3414);
 }
 
-TEST_F(FIRE_test, outputMD)
+TEST_F(FIREtest, OutputMD)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true);
+    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
     ofs.close();
 
     std::ifstream ifs("running.log");

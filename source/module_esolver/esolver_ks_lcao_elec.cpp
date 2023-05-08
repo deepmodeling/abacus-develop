@@ -275,7 +275,7 @@ namespace ModuleESolver
         if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
             CE.update_all_dis(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
+            CE.extrapolate_charge(pelec->charge, &(GlobalC::sf));
         }
 
         //----------------------------------------------------------
@@ -321,7 +321,7 @@ namespace ModuleESolver
 		{
 			//program should be stopped after this judgement
 			Exx_Opt_Orb exx_opt_orb;
-			exx_opt_orb.generate_matrix();
+			exx_opt_orb.generate_matrix(GlobalC::kv);
 			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 			return;
 		}

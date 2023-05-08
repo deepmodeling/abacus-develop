@@ -1,7 +1,8 @@
 #include "bfgs_basic.h"
 
 #include "ions_move_basic.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 using namespace Ions_Move_Basic;
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
@@ -60,7 +61,7 @@ void BFGS_Basic::allocate_basic(void)
     return;
 }
 
-void BFGS_Basic::update_inverse_hessian(void)
+void BFGS_Basic::update_inverse_hessian(const double &lat0)
 {
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
@@ -74,8 +75,8 @@ void BFGS_Basic::update_inverse_hessian(void)
     {
         //      s[i] = this->pos[i] - this->pos_p[i];
         //		mohan update 2010-07-27
-        s[i] = this->check_move(pos[i], pos_p[i]);
-        s[i] *= GlobalC::ucell.lat0;
+        s[i] = this->check_move(lat0, pos[i], pos_p[i]);
+        s[i] *= lat0;
 
         y[i] = this->grad[i] - this->grad_p[i];
     }
@@ -213,7 +214,7 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(void)
+void BFGS_Basic::new_step(const double &lat0)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -242,7 +243,7 @@ void BFGS_Basic::new_step(void)
     else if (Ions_Move_Basic::update_iter > 1)
     {
         this->check_wolfe_conditions();
-        this->update_inverse_hessian();
+        this->update_inverse_hessian(lat0);
     }
 
     //--------------------------------------------------------------------
@@ -391,12 +392,12 @@ void BFGS_Basic::compute_trust_radius(void)
     return;
 }
 
-double BFGS_Basic::check_move(const double &pos, const double &pos_p)
+double BFGS_Basic::check_move(const double &lat0, const double &pos, const double &pos_p)
 {
     // this must be careful.
-    // unit is GlobalC::ucell.lat0.
-    assert(GlobalC::ucell.lat0 > 0.0);
-    const double direct_move = (pos - pos_p) / GlobalC::ucell.lat0;
+    // unit is ucell.lat0.
+    assert(lat0 > 0.0);
+    const double direct_move = (pos - pos_p) / lat0;
     double shortest_move = direct_move;
     for (int cell = -1; cell <= 1; ++cell)
     {

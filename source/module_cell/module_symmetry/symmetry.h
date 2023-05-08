@@ -62,7 +62,7 @@ public:
 	int nop;	//the number of point group operations of the pure bravais lattice without basis
 	int s_flag;	//whether the current matrix is one of all space group operations
 	int nrot;	//the number of pure point group rotations
-	int nrotk; 	//the number of all space group operations
+	int nrotk=-1; 	//the number of all space group operations
 	int pgnumber;	//the serial number of point group
 	int spgnumber;	//the serial number of point group in space group
 	std::string pgname;	//the Schoenflies name of the point group R in {R|0}

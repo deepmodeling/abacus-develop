@@ -22,7 +22,7 @@ int NBANDS = 0;
 int NBANDS_ISTATE = 0; // default number.
 int NLOCAL = 0; // total number of local basis.
 
-double KSPACING = 0.0;
+double  KSPACING[3] = {0.0,0.0,0.0};
 double MIN_DIST_COEF = 0.2;
 
 double PSEUDORCUT;
@@ -57,7 +57,6 @@ bool fixed_atoms = false;
 int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;
-int MD_NSTEP = 20;
 int md_prec_level = 0;
 int SCF_NMAX = 100;
 
@@ -233,6 +232,7 @@ double of_wt_alpha = 5./6.;
 double of_wt_beta = 5./6.;
 double of_wt_rho0 = 0.;
 bool of_hold_rho0 = false;
+double of_lkt_a = 1.3;
 bool of_full_pw = true;
 int of_full_pw_dim = 0;
 bool of_read_kernel = false;

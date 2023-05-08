@@ -98,3 +98,13 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp
 )
+
+AddTest(
+  TARGET io_write_orb_info
+  LIBS ${math_libs} base device
+  SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp ../../module_cell/unitcell.cpp
+	../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
+	../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
+	../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
+	../../module_cell/read_pp_blps.cpp
+)

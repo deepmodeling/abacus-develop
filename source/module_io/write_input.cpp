@@ -1,6 +1,7 @@
 #include "module_io/input.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
+#include "module_base/constants.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 
 void Input::Print(const std::string &fn) const
 {
@@ -49,7 +50,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,"esolver_type",esolver_type,"the energy solver: ksdft, sdft, ofdft, tddft, lj, dp");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
-    ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing, "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
+    std::stringstream kspacing_ss;
+    for(int i=0;i<3;i++){kspacing_ss << kspacing[i] << " ";}
+    ModuleBase::GlobalFunc::OUTP(ofs, "kspacing", kspacing_ss.str(),  "unit in 1/bohr, should be > 0, default is 0 which means read KPT file");
     ModuleBase::GlobalFunc::OUTP(ofs, "min_dist_coef", min_dist_coef, "factor related to the allowed minimum distance between two atoms");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands", nbands, "number of bands");
     ModuleBase::GlobalFunc::OUTP(ofs, "nbands_sto", nbands_sto, "number of stochastic bands");
@@ -273,9 +276,18 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfirst",mdp.md_pfirst,"initial target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_plast",mdp.md_plast,"final target pressure");
     ModuleBase::GlobalFunc::OUTP(ofs,"md_pfreq",mdp.md_pfreq,"oscillation frequency, used to determine qmass of thermostats coupled with barostat");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dump_force", dump_force, "output atomic forces into the file MD_dump or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dump_vel", dump_vel, "output atomic velocities into the file MD_dump or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "dump_virial", dump_virial, "output lattice virial into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "dump_force",
+                                 mdp.dump_force,
+                                 "output atomic forces into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "dump_vel",
+                                 mdp.dump_vel,
+                                 "output atomic velocities into the file MD_dump or not");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "dump_virial",
+                                 mdp.dump_virial,
+                                 "output lattice virial into the file MD_dump or not");
 
     ofs << "\n#Parameters (10.Electric field and dipole correction)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs,"efield_flag",efield_flag,"add electric field");
@@ -339,8 +351,9 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ofs << "\n#Parameters (14.exx)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_alpha", exx_hybrid_alpha, "fraction of Fock exchange in hybrid functionals");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hse_omega", exx_hse_omega, "range-separation parameter in HSE functional");
-    //ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "0 or 1");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_separate_loop", exx_separate_loop, "if 1, a two-step method is employed, else it will start with a GGA-Loop, and then Hybrid-Loop");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_hybrid_step", exx_hybrid_step, "the maximal electronic iteration number in the evaluation of Fock exchange");
+    ModuleBase::GlobalFunc::OUTP(ofs, "exx_mixing_beta", exx_mixing_beta, "mixing_beta for outer-loop when exx_separate_loop=1");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_lambda", exx_lambda, "used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_real_number", exx_real_number, "exx calculated in real or complex");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_pca_threshold", exx_pca_threshold, "threshold to screen on-site ABFs in exx");
@@ -362,9 +375,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_01", td_val_elec_01, "td_val_elec_01");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_02", td_val_elec_02, "td_val_elec_02");
-    ModuleBase::GlobalFunc::OUTP(ofs, "td_val_elec_03", td_val_elec_03, "td_val_elec_03");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext", td_vext, "add extern potential or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext_dire", td_vext_dire, "extern potential direction");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
@@ -401,6 +411,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_beta", of_wt_beta, "parameter beta of WT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_wt_rho0", of_wt_rho0, "the average density of system, used in WT KEDF, in Bohr^-3");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_hold_rho0", of_hold_rho0, "If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automaticly if of_wt_rho0 is not zero");
+    ModuleBase::GlobalFunc::OUTP(ofs, "of_lkt_a", of_lkt_a, "parameter a of LKT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw", of_full_pw, "If set to 1, ecut will be ignored when collect planewaves, so that all planewaves will be used");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_full_pw_dim", of_full_pw_dim, "If of_full_pw = true, dimention of FFT is testricted to be (0) either odd or even; (1) odd only; (2) even only");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_read_kernel", of_read_kernel, "If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF");

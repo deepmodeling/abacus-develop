@@ -5,6 +5,7 @@
 // #include "global.h"
 #include "module_io/input.h"
 
+#include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -141,6 +142,7 @@ void Input::Default(void)
     ntype = 0;
     nbands = 0;
     nbands_sto = 256;
+    nbndsto_str = "256";
     nbands_istate = 5;
     pw_seed = 1;
     emin_sto = 0.0;
@@ -166,7 +168,7 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
-    kspacing = 0.0;
+    for(int i=0;i<3;i++){kspacing[i] = 0;}
     min_dist_coef = 0.2;
     //----------------------------------------------------------
     // electrons / spin
@@ -188,9 +190,6 @@ void Input::Default(void)
     ref_cell_factor = 1.0;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
     cal_force = 0;
-    dump_force = true;
-    dump_vel = true;
-    dump_virial = true;
     force_thr = 1.0e-3;
     force_thr_ev2 = 0;
     stress_thr = 1.0e-2; // LiuXh add 20180515
@@ -370,6 +369,7 @@ void Input::Default(void)
 
     exx_separate_loop = true;
     exx_hybrid_step = 100;
+    exx_mixing_beta = 0.0;
 
     exx_lambda = 0.3;
 
@@ -405,11 +405,10 @@ void Input::Default(void)
     // tddft
     //----------------------------------------------------------
     td_force_dt = 0.02;
-    td_val_elec_01 = 1;
-    td_val_elec_02 = 1;
-    td_val_elec_03 = 1;
     td_vext = false;
     td_vext_dire = "1";
+
+    propagator = 0;
 
     out_dipole = false;
     out_efield = false;
@@ -541,6 +540,7 @@ void Input::Default(void)
     of_wt_beta = 5. / 6.;
     of_wt_rho0 = 0.;
     of_hold_rho0 = false;
+    of_lkt_a = 1.3;
     of_full_pw = true;
     of_full_pw_dim = 0;
     of_read_kernel = false;
@@ -684,11 +684,16 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("nbands_sto", word) == 0) // number of stochastic bands
         {
-            read_value(ifs, nbands_sto);
+            std::string nbsto_str;
+            read_value(ifs, nbndsto_str);
+            if (nbndsto_str != "all")
+            {
+                nbands_sto = std::stoi(nbndsto_str);
+            }
         }
         else if (strcmp("kspacing", word) == 0)
         {
-            read_value(ifs, kspacing);
+            read_kspacing(ifs);
         }
         else if (strcmp("min_dist_coef", word) == 0)
         {
@@ -858,18 +863,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cal_force", word) == 0)
         {
             read_bool(ifs, cal_force);
-        }
-        else if (strcmp("dump_force", word) == 0)
-        {
-            read_bool(ifs, dump_force);
-        }
-        else if (strcmp("dump_vel", word) == 0)
-        {
-            read_bool(ifs, dump_vel);
-        }
-        else if (strcmp("dump_virial", word) == 0)
-        {
-            read_bool(ifs, dump_virial);
         }
         else if (strcmp("force_thr", word) == 0)
         {
@@ -1456,6 +1449,18 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.pot_file);
         }
+        else if (strcmp("dump_force", word) == 0)
+        {
+            read_bool(ifs, mdp.dump_force);
+        }
+        else if (strcmp("dump_vel", word) == 0)
+        {
+            read_bool(ifs, mdp.dump_vel);
+        }
+        else if (strcmp("dump_virial", word) == 0)
+        {
+            read_bool(ifs, mdp.dump_virial);
+        }
         //----------------------------------------------------------
         // efield and dipole correction
         // Yu Liu add 2022-05-18
@@ -1524,18 +1529,6 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_force_dt);
         }
-        else if (strcmp("td_val_elec_01", word) == 0)
-        {
-            read_value(ifs, td_val_elec_01);
-        }
-        else if (strcmp("td_val_elec_02", word) == 0)
-        {
-            read_value(ifs, td_val_elec_02);
-        }
-        else if (strcmp("td_val_elec_03", word) == 0)
-        {
-            read_value(ifs, td_val_elec_03);
-        }
         else if (strcmp("td_vext", word) == 0)
         {
             read_value(ifs, td_vext);
@@ -1559,6 +1552,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("td_edm", word) == 0)
         {
             read_value(ifs, td_edm);
+        }
+        else if (strcmp("propagator", word) == 0)
+        {
+            read_value(ifs, propagator);
         }
         else if (strcmp("td_stype", word) == 0)
         {
@@ -1805,6 +1802,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, exx_hybrid_step);
         }
+        else if (strcmp("exx_mixing_beta", word) == 0)
+        {
+            read_value(ifs, exx_mixing_beta);
+        }
         else if (strcmp("exx_lambda", word) == 0)
         {
             read_value(ifs, exx_lambda);
@@ -2000,6 +2001,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("of_hold_rho0", word) == 0)
         {
             read_bool(ifs, of_hold_rho0);
+        }
+        else if (strcmp("of_lkt_a", word) == 0)
+        {
+            read_value(ifs, of_lkt_a);
         }
         else if (strcmp("of_full_pw", word) == 0)
         {
@@ -2423,6 +2428,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             vdw_cutoff_radius = "95";
         }
     }
+
+    if (nbndsto_str == "all")
+    {
+        nbands_sto = 0;
+    }
+    else if (nbndsto_str == "0" && esolver_type == "sdft")
+    {
+        esolver_type = "ksdft";
+    }
     if (esolver_type != "sdft")
         bndpar = 1;
     if (bndpar > GlobalV::NPROC)
@@ -2731,7 +2745,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
-    Parallel_Common::bcast_double(kspacing);
+    for(int i=0;i<3;i++)
+    {Parallel_Common::bcast_double(kspacing[i]);}
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
@@ -2774,9 +2789,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(ref_cell_factor);
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
     Parallel_Common::bcast_bool(cal_force);
-    Parallel_Common::bcast_bool(dump_force);
-    Parallel_Common::bcast_bool(dump_vel);
-    Parallel_Common::bcast_bool(dump_virial);
     Parallel_Common::bcast_double(force_thr);
     Parallel_Common::bcast_double(force_thr_ev2);
     Parallel_Common::bcast_double(stress_thr); // LiuXh add 20180515
@@ -2931,6 +2943,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_pfirst);
     Parallel_Common::bcast_double(mdp.md_plast);
     Parallel_Common::bcast_double(mdp.md_pfreq);
+    Parallel_Common::bcast_bool(mdp.dump_force);
+    Parallel_Common::bcast_bool(mdp.dump_vel);
+    Parallel_Common::bcast_bool(mdp.dump_virial);
     // Yu Liu add 2022-05-18
     Parallel_Common::bcast_bool(efield_flag);
     Parallel_Common::bcast_bool(dip_cor_flag);
@@ -2981,12 +2996,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int(vdw_cutoff_period.y);
     Parallel_Common::bcast_int(vdw_cutoff_period.z);
     // Fuxiang He add 2016-10-26
-    Parallel_Common::bcast_int(td_val_elec_01);
-    Parallel_Common::bcast_int(td_val_elec_02);
-    Parallel_Common::bcast_int(td_val_elec_03);
     Parallel_Common::bcast_double(td_force_dt);
     Parallel_Common::bcast_bool(td_vext);
     Parallel_Common::bcast_string(td_vext_dire);
+    Parallel_Common::bcast_int(propagator);
     Parallel_Common::bcast_int(td_stype);
     Parallel_Common::bcast_string(td_ttype);
     Parallel_Common::bcast_int(td_tstart);
@@ -3036,6 +3049,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(exx_separate_loop);
     Parallel_Common::bcast_int(exx_hybrid_step);
     Parallel_Common::bcast_double(exx_lambda);
+    Parallel_Common::bcast_double(exx_mixing_beta);
     Parallel_Common::bcast_string(exx_real_number);
     Parallel_Common::bcast_double(exx_pca_threshold);
     Parallel_Common::bcast_double(exx_c_threshold);
@@ -3116,6 +3130,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(of_wt_beta);
     Parallel_Common::bcast_double(of_wt_rho0);
     Parallel_Common::bcast_bool(of_hold_rho0);
+    Parallel_Common::bcast_double(of_lkt_a);
     Parallel_Common::bcast_bool(of_full_pw);
     Parallel_Common::bcast_int(of_full_pw_dim);
     Parallel_Common::bcast_bool(of_read_kernel);
@@ -3163,8 +3178,20 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
-    if (kspacing < 0.0)
+    int kspacing_zero_num = 0;
+    for (int i=0;i<3;i++){
+        if (kspacing[i] < 0.0)
+        {
+            ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
+        }
+        else if (kspacing[i] == 0.0)
+        {
+            kspacing_zero_num++;
+        }
+    }
+    if (kspacing_zero_num > 0 && kspacing_zero_num < 3)
     {
+        std::cout << "kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl;
         ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
     }
 

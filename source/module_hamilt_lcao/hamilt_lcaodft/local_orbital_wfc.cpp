@@ -105,7 +105,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 		{
             GlobalV::ofs_running << " Read in wave functions " << ik + 1 << std::endl;
             std::complex<double>** ctot;
-            error = ModuleIO::read_wfc_nao_complex(ctot, ik, this->ParaV, psi, pelec);
+            error = ModuleIO::read_wfc_nao_complex(ctot, ik, GlobalC::kv.kvec_c[ik], this->ParaV, psi, pelec);
 #ifdef __MPI
             Parallel_Common::bcast_int(error);
 #endif

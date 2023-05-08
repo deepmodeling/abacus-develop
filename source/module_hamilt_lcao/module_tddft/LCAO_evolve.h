@@ -22,7 +22,10 @@ class Evolve_LCAO_Matrix
                                hamilt::Hamilt<double>* p_hamilt,
                                psi::Psi<std::complex<double>>* psi_k,
                                psi::Psi<std::complex<double>>* psi_k_laststep,
-                               double* ekb) const;
+                               std::complex<double>* H_laststep,
+                               double* ekb,
+                               int htype,
+                               int propagator) const;
 
   private:
     // LCAO_Matrix* LM;
@@ -38,15 +41,42 @@ class Evolve_LCAO_Matrix
                   const int nband,
                   const int nlocal,         
                   const std::complex<double>* psi_k_laststep,
+                  const std::complex<double>* H_laststep,
                   hamilt::Hamilt<double>* p_hamilt,
                   std::complex<double>* psi_k,
-                  double* ekb) const;
+                  double* ekb,
+                  int htype,
+                  int propagator) const;
 
-    void compute_U_operator(
+    void half_Hmatrix(
+                  const int nband,
+                  const int nlocal,     
+                  std::complex<double>* Htmp,
+                  const std::complex<double>* H_laststep,
+                  const int print_matrix) const;
+
+    void compute_U_operator_CN2(
                   const int nband,
                   const int nlocal,     
                   const std::complex<double>* Stmp,
                   const std::complex<double>* Htmp,
+                  std::complex<double>* U_operator,
+                  const int print_matrix) const;
+
+    void compute_U_operator_taylor(
+                  const int nband,
+                  const int nlocal,     
+                  const std::complex<double>* Stmp,
+                  const std::complex<double>* Htmp,
+                  std::complex<double>* U_operator,
+                  const int print_matrix) const;
+    
+    void compute_U_operator_etrs(
+                  const int nband,
+                  const int nlocal,     
+                  const std::complex<double>* Stmp,
+                  const std::complex<double>* Htmp,
+                  const std::complex<double>* H_laststep,
                   std::complex<double>* U_operator,
                   const int print_matrix) const;
 
@@ -55,7 +85,8 @@ class Evolve_LCAO_Matrix
                   const int nlocal,     
                   const std::complex<double>* U_operator,
                   const std::complex<double>* psi_k_laststep,
-                  std::complex<double>* psi_k) const;
+                  std::complex<double>* psi_k,
+                  const int print_matrix) const;
 
     void norm_wfc(
                   const int nband,

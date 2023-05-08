@@ -173,8 +173,14 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 	//--------------------------------------
 	//-              PP_LOCAL              - 
 	//--------------------------------------
-	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL");
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, word);    // type size columns
+	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL"))
+	{
+		ifs.ignore(150, '>'); // skip type, size, columns and so on.
+	}
+	else
+	{
+		ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");	
+	}
 	delete[] vloc;
 	this->vloc = new double[mesh];
 	ModuleBase::GlobalFunc::ZEROS(vloc, mesh);
@@ -198,6 +204,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 	{
 		ifs >> word; //number of beta
 		this->getnameval(ifs, nparameter, name, val);
+		bool read_cutoff_radius_index = false;
 		for(int ip = 0 ; ip < nparameter; ++ip)
 		{
 			if(name[ip]=="type"){}
@@ -210,6 +217,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 			}
 			else if(name[ip]=="cutoff_radius_index"){
 				kkbeta[ib] = atoi (val[ip].c_str());
+				read_cutoff_radius_index = true;
 			}
 			else if(name[ip]=="cutoff_radius"){}
 			else if(name[ip]=="ultrasoft_cutoff_radius"){}
@@ -218,6 +226,10 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 				std::string warningstr = name[ip] + " is not read in. Please add this parameter in read_pp_upf201.cpp if needed.";
 				ModuleBase::WARNING("PP_BETA reading", warningstr);
 			}
+		}
+		if(!read_cutoff_radius_index) // if cutoff_radius_index is not set in pp, we set it as mesh.
+		{
+			kkbeta[ib] = mesh;
 		}
 		for (int ir=0;ir<mesh;ir++)
 		{

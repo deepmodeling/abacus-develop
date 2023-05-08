@@ -89,8 +89,17 @@ void K_Vectors::set(
     //if symm_flag is not set, only time-reversal symmetry would be considered.
     if(!berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != -1)
     {
-        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell);
-        if(ModuleSymmetry::Symmetry::symm_flag || is_mp)
+        bool match = true;
+        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
+#ifdef __MPI
+	    Parallel_Common::bcast_bool(match);
+#endif
+        if (!match)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors:ibz_kpoint",
+            "Symmetry operation in reciprocal lattice cannot match the equivalent k-points. Maybe a larger (coarser) `symmetry_prec` is needed?  ");
+        }
+        if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
             this->update_use_ibz();
             this->nks = this->nkstot = this->nkstot_ibz;
@@ -175,16 +184,19 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 		ofs << "1 1 1 0 0 0" << std::endl;
 		ofs.close();
 	}
-    else if (GlobalV::KSPACING > 0.0)
+    else if (GlobalV::KSPACING[0] > 0.0)
     {
+        if (GlobalV::KSPACING[1] <= 0 || GlobalV::KSPACING[2] <= 0){
+            ModuleBase::WARNING_QUIT("K_Vectors","kspacing shold > 0");
+        };
         //number of K points = max(1,int(|bi|/KSPACING+1))
         ModuleBase::Matrix3 btmp = GlobalC::ucell.G;
         double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
-        int nk1 = max(1,static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING / GlobalC::ucell.lat0 + 1));
-        int nk2 = max(1,static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING / GlobalC::ucell.lat0 + 1));
-        int nk3 = max(1,static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING / GlobalC::ucell.lat0 + 1));
+        int nk1 = max(1,static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING[0] / GlobalC::ucell.lat0 + 1));
+        int nk2 = max(1,static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING[1] / GlobalC::ucell.lat0 + 1));
+        int nk3 = max(1,static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING[2] / GlobalC::ucell.lat0 + 1));
 
         GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
 		std::ofstream ofs(fn.c_str());
@@ -544,9 +556,9 @@ void K_Vectors::update_use_ibz( void )
     return;
 }
 
-void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt, const UnitCell &ucell)
+void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt, const UnitCell &ucell, bool& match)
 {
-    if (GlobalV::MY_RANK!=0) return;
+    if (GlobalV::MY_RANK != 0) return;
     ModuleBase::TITLE("K_Vectors", "ibz_kpoint");
 
     // k-lattice: "pricell" of reciprocal space
@@ -610,17 +622,12 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         };
         for(int i=0;i<symm.nrotk;++i)
         {
-            bool match = false;
+            match = false;
             for(int j=0;j<bnop;++j) 
             {
                 if (matequal(symm.kgmatrix[i], bsymop[j])) {match=true; break;}
             }
-            if(!match) 
-            {
-                std::cout<<"match failed:"<<std::endl;
-                ModuleBase::WARNING_QUIT("K_Vectors:ibz_kpoint", 
-                "symmetry operation of reciprocal lattice is wrong! ");
-            }
+            if (!match) return;
         }
         nrotkm = symm.nrotk;// change if inv not included
         for (int i = 0; i < nrotkm; ++i)

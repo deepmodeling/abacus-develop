@@ -21,7 +21,7 @@ void ElecState::fixed_weights(const double* const ocp_kb)
 {
 
     int num = 0;
-    num = GlobalC::kv.nks * GlobalV::NBANDS;
+    num = this->klist->nks * GlobalV::NBANDS;
     if (num != GlobalV::ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
@@ -383,7 +383,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0 || GlobalV::md_prec_level == 2)
     {
-        this->charge->init_rho();
+        this->charge->init_rho(strucfac);
     }
 
     // renormalize the charge density
@@ -395,10 +395,12 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
-                        int nk_in)
+                        int nk_in,
+                        const ModulePW::PW_Basis_Big* bigpw_in)
 {
     this->charge = chg_in;
     this->klist = klist_in;
+    this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // autoset and check GlobalV::NBANDS, nelec_spin is used when NSPIN==2

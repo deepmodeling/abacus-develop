@@ -18,9 +18,10 @@ class ElecStateLCAO_TDDFT : public ElecStateLCAO
                         int nks_in = 1,
                         Local_Orbital_Charge* loc_in = nullptr,
                         LCAO_Hamilt* uhm_in = nullptr,
-                        Local_Orbital_wfc* lowf_in = nullptr)
+                        Local_Orbital_wfc* lowf_in = nullptr,
+                        ModulePW::PW_Basis_Big* bigpw_in = nullptr)
     {
-        init_ks(chg_in, klist_in, nks_in);
+        init_ks(chg_in, klist_in, nks_in, bigpw_in);
         this->loc = loc_in;
         this->uhm = uhm_in;
         this->lowf = lowf_in;

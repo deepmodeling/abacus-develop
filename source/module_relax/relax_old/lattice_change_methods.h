@@ -16,7 +16,8 @@ class Lattice_Change_Methods
     void cal_lattice_change(const int &istep,
                             const int &stress_step,
                             const ModuleBase::matrix &stress,
-                            const double &etot);
+                            const double &etot,
+                            UnitCell &ucell);
 
     bool get_converged(void) const
     {
