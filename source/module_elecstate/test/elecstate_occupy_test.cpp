@@ -34,7 +34,9 @@ protected:
 TEST_F(OccupyTest, Occupy)
 {
   EXPECT_EQ(occupy.use_gaussian_broadening, false);
+  EXPECT_FALSE(occupy.gauss());
   EXPECT_EQ(occupy.fixed_occupations, false);
+  EXPECT_FALSE(occupy.fix());
   EXPECT_EQ(occupy.gaussian_type, 0);
   EXPECT_DOUBLE_EQ(occupy.gaussian_parameter, 0.01);
 }
