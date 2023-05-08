@@ -163,7 +163,7 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), GlobalC::bigpw);
         }
 
         // Inititlize the charge density.
@@ -216,7 +216,7 @@ namespace ModuleESolver
             this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw, &GlobalC::wf);
 
             delete this->pelec;  
-            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)));
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), GlobalC::bigpw);
 
             this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
 
@@ -266,7 +266,7 @@ namespace ModuleESolver
         if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
             this->CE.update_all_dis(GlobalC::ucell);
-            this->CE.extrapolate_charge(this->pelec->charge);
+            this->CE.extrapolate_charge(this->pelec->charge, &GlobalC::sf);
         }
 
         //init Hamilt, this should be allocated before each scf loop
@@ -544,7 +544,21 @@ namespace ModuleESolver
                 int precision = 3; // be consistent with esolver_ks_lcao.cpp
                 std::stringstream ssp;
                 ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-                this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+                this->pelec->pot->write_potential(
+#ifdef __MPI
+                    GlobalC::bigpw->bz,
+                    GlobalC::bigpw->nbz,
+                    this->pw_rho->nplane,
+                    this->pw_rho->startz_current,
+#endif
+                    is,
+                    0,
+                    ssp.str(),
+                    this->pw_rho->nx,
+                    this->pw_rho->ny,
+                    this->pw_rho->nz,
+                    this->pelec->pot->get_effective_v(),
+                    precision);
             }
         }
 
@@ -623,7 +637,14 @@ namespace ModuleESolver
 			std::stringstream ssp_ave;
 			ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
 			// ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-			this->pelec->pot->write_elecstat_pot(ssp.str(), GlobalC::rhopw, this->pelec->charge); //output 'Hartree + local pseudopot'
+			this->pelec->pot->write_elecstat_pot(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+#endif
+                ssp.str(), 
+                GlobalC::rhopw, 
+                this->pelec->charge); //output 'Hartree + local pseudopot'
 		}
 
         if (GlobalV::OUT_LEVEL != "m")

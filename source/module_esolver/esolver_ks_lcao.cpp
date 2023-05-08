@@ -90,7 +90,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
                                                    GlobalC::kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
-                                                   &(this->LOWF));
+                                                   &(this->LOWF),
+                                                   GlobalC::bigpw);
     }
 
     //------------------init Basis_lcao----------------------
@@ -973,7 +974,21 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            this->pelec->pot->write_potential(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                is,
+                0,
+                ssp.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(),
+                precision);
         }
     }
     else if (GlobalV::out_pot == 2)
@@ -982,9 +997,14 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
         // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(ssp.str(),
-                                             GlobalC::rhopw,
-                                             pelec->charge); // output 'Hartree + local pseudopot'
+        this->pelec->pot->write_elecstat_pot(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+#endif
+                ssp.str(),
+                this->pw_rho,
+                pelec->charge); // output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)

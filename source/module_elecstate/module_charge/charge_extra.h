@@ -2,6 +2,7 @@
 #define CHARGE_EXTRA_H
 
 #include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "charge.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ class Charge_Extra
     //But after ucell and Esolver are fully decoupled
     //Init_CE will be removed and everything put back in the constructor
     void Init_CE();
-    void extrapolate_charge(Charge* chr);
+    void extrapolate_charge(Charge* chr, Structure_Factor* sf);
     void update_all_dis(const UnitCell& ucell);
 
     private:
