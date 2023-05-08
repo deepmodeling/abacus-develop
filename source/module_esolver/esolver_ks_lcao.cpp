@@ -1322,6 +1322,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         }
         else
         {
+            iter = 0;
             // update exx and redo scf
             if (two_level_step == 0)
             {
@@ -1334,7 +1335,6 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
                 GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
             else
                 GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
-            iter = 0;
             std::cout << " Updating EXX and rerun SCF" << std::endl;
             this->two_level_step++;
             return false;
