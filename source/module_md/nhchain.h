@@ -3,18 +3,19 @@
 
 #include "md_base.h"
 
-class Nose_Hoover : public MDrun
+class Nose_Hoover : public MD_base
 {
   public:
     Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~Nose_Hoover();
 
-    void setup(ModuleESolver::ESolver *p_ensolve);
-    void first_half();
-    void second_half();
-    void outputMD(std::ofstream &ofs, bool cal_stress);
-    void write_restart();
-    void restart();
+  private:
+    void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
+    void first_half(const int &my_rank, std::ofstream &ofs);
+    void second_half(const int &my_rank);
+    void outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank);
+    void write_restart(const int &my_rank, const std::string &global_out_dir);
+    void restart(const int &my_rank, const std::string &global_readin_dir);
 
     // perform half-step update of thermostats coupled with particles
     void particle_thermo();
@@ -35,7 +36,7 @@ class Nose_Hoover : public MDrun
     void couple_stress();
 
     // perform half-step update of volume
-    void update_volume();
+    void update_volume(std::ofstream &ofs);
 
     const int nc_tchain = 1;
     const int nc_pchain = 1;

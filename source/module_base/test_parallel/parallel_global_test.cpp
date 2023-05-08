@@ -17,6 +17,9 @@
  *   used in David diagonalization in pw basis 
  *   calculation.
  *   ii. Parallel_Global::split_grid_world()
+ *   iii. Parallel_Global::MyProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr);
+ *   iv. Parallel_Global::init_pools();
+ *   v. Parallel_Global::divide_pools(void);
  */
 
 TEST(ParaGlobal,SplitGrid)
@@ -72,6 +75,64 @@ TEST(ParaGlobal,SplitDiag)
 	}
 	//std::cout<<GlobalV::MY_RANK<<" "<<GlobalV::NPROC<<" ";
 	//std::cout<<GlobalV::DRANK<<" "<<GlobalV::DSIZE<<std::endl;
+}
+
+TEST(ParaGlobal, MyProd)
+{
+    std::complex<double> in[2] = {std::complex<double>(1.0, 2.0), std::complex<double>(-1, -2)};
+    std::complex<double> inout[2] = {std::complex<double>(2.0, 1.0), std::complex<double>(-2, -1)};
+
+    int len = 2;
+    MPI_Datatype dptr = MPI_DOUBLE_COMPLEX;
+    Parallel_Global::myProd(in, inout, &len, &dptr);
+    EXPECT_EQ(inout[0], std::complex<double>(3.0, 3.0));
+    EXPECT_EQ(inout[1], std::complex<double>(-3.0, -3.0));
+}
+
+TEST(ParaGlobal, InitPools)
+{
+    int nproc = 12;
+    int kpar = 3;
+    int stogroup = 3;
+    int myrank = 5;
+    GlobalV::NPROC = nproc;
+    GlobalV::KPAR = kpar;
+    GlobalV::NSTOGROUP = stogroup;
+    GlobalV::MY_RANK = myrank;
+
+    Parallel_Global::init_pools();
+    EXPECT_EQ(GlobalV::NPROC_IN_STOGROUP, 4);
+    EXPECT_EQ(GlobalV::MY_STOGROUP, 1);
+    EXPECT_EQ(GlobalV::RANK_IN_STOGROUP, 1);
+    EXPECT_EQ(GlobalV::MY_POOL, 0);
+    EXPECT_EQ(GlobalV::RANK_IN_POOL, 1);
+    EXPECT_EQ(GlobalV::NPROC_IN_POOL, 2);
+    EXPECT_EQ(MPI_COMM_WORLD != STO_WORLD, true);
+    EXPECT_EQ(STO_WORLD != POOL_WORLD, true);
+    EXPECT_EQ(MPI_COMM_WORLD != PARAPW_WORLD, true);
+}
+
+TEST(ParaGlobal, DividePools)
+{
+    int nproc = 12;
+    int kpar = 3;
+    int stogroup = 3;
+    int myrank = 5;
+    GlobalV::NPROC = nproc;
+    GlobalV::KPAR = kpar;
+    GlobalV::NSTOGROUP = stogroup;
+    GlobalV::MY_RANK = myrank;
+
+    Parallel_Global::divide_pools();
+    EXPECT_EQ(GlobalV::NPROC_IN_STOGROUP, 4);
+    EXPECT_EQ(GlobalV::MY_STOGROUP, 1);
+    EXPECT_EQ(GlobalV::RANK_IN_STOGROUP, 1);
+    EXPECT_EQ(GlobalV::MY_POOL, 0);
+    EXPECT_EQ(GlobalV::RANK_IN_POOL, 1);
+    EXPECT_EQ(GlobalV::NPROC_IN_POOL, 2);
+    EXPECT_EQ(MPI_COMM_WORLD != STO_WORLD, true);
+    EXPECT_EQ(STO_WORLD != POOL_WORLD, true);
+    EXPECT_EQ(MPI_COMM_WORLD != PARAPW_WORLD, true);
 }
 
 int main(int argc, char **argv)

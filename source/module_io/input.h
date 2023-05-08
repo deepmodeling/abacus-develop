@@ -1,12 +1,13 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "module_base/vector3.h"
-#include "module_md/md_para.h"
-
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
+
+#include "module_base/vector3.h"
+#include "module_md/md_para.h"
 
 using namespace std;
 
@@ -45,8 +46,7 @@ class Input
     int nbands_istate; // number of bands around fermi level for istate calculation.
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
-    bool init_vel; // read velocity from STRU or not  liuyu 2021-07-14
-    bool dump_vel;    // output atomic velocities into the file MD_dump or not. liuyu 2023-03-01
+    bool init_vel;             // read velocity from STRU or not  liuyu 2021-07-14
     double ref_cell_factor;    // construct a reference cell bigger than the initial cell  liuyu 2023-03-21
 
     /* symmetry level: 
@@ -110,7 +110,6 @@ class Input
     // Forces
     //==========================================================
     bool cal_force;
-    bool dump_force;    // output atomic forces into the file MD_dump or not. liuyu 2023-03-01
     double force_thr; // threshold of force in unit (Ry/Bohr)
     double force_thr_ev2; // invalid force threshold, mohan add 2011-04-17
 
@@ -122,7 +121,6 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
-    bool dump_virial;    // output lattice virial into the file MD_dump or not. liuyu 2023-03-01
 
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname

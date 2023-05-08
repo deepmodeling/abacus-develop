@@ -3,22 +3,23 @@
 
 #include "md_base.h"
 
-class MSST : public MDrun
+class MSST : public MD_base
 {
   public:
     MSST(MD_parameters &MD_para_in, UnitCell &unit_in);
     ~MSST();
 
-    void setup(ModuleESolver::ESolver *p_ensolve);
-    void first_half();
-    void second_half();
-    void outputMD(std::ofstream &ofs, bool cal_stress);
-    void write_restart();
-    void restart();
+  private:
+    void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
+    void first_half(const int &my_rank, std::ofstream &ofs);
+    void second_half(const int &my_rank);
+    void outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank);
+    void write_restart(const int &my_rank, const std::string &global_out_dir);
+    void restart(const int &my_rank, const std::string &global_readin_dir);
     double extra_term();
     double vel_sum();
-    void rescale(double volume);
-    void propagate_vel();
+    void rescale(std::ofstream &ofs, const double &volume);
+    void propagate_vel(const int &my_rank);
     void propagate_voldot();
 
     ModuleBase::Vector3<double> *old_v;

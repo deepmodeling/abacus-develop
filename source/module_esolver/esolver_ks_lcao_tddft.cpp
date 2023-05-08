@@ -70,7 +70,8 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
                                                          GlobalC::kv.nks,
                                                          &(this->LOC),
                                                          &(this->UHM),
-                                                         &(this->LOWF));
+                                                         &(this->LOWF),
+                                                         GlobalC::bigpw);
     }
 
     //------------------init Basis_lcao----------------------
@@ -509,7 +510,21 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            this->pelec->pot->write_potential(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                is,
+                0,
+                ssp.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(),
+                precision);
         }
     }
 

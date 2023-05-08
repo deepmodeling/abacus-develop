@@ -1,11 +1,10 @@
 #ifndef PLANEWAVE_H
 #define PLANEWAVE_H
 
-#include "module_cell/unitcell.h"
 #include "module_base/complexmatrix.h"
-#include "module_basis/module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis_k.h"
+#include "module_cell/unitcell.h"
 #include "module_psi/psi.h"
-
 using namespace std;
 
 class Structure_Factor
@@ -41,8 +40,18 @@ public:
     template <typename FPTYPE> std::complex<FPTYPE> * get_eigts2_data() const;
     template <typename FPTYPE> std::complex<FPTYPE> * get_eigts3_data() const;
 
-private:
+  public:
+    // sf with k points
+    std::complex<double>* get_sk(const int ik, const int it, const int ia, ModulePW::PW_Basis_K* wfc_basis) const;
+    template <typename FPTYPE, typename Device>
+    void get_sk(Device* ctx, const int ik, ModulePW::PW_Basis_K* wfc_basis, std::complex<FPTYPE>* sk) const;
+    std::complex<double>* get_skq(int ik,
+                                  int it,
+                                  int ia,
+                                  ModulePW::PW_Basis_K* wfc_basis,
+                                  ModuleBase::Vector3<double> q);
 
+  private:
     std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;
     std::complex<double> * z_eigts1 = nullptr, * z_eigts2 = nullptr, * z_eigts3 = nullptr;
 

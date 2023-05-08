@@ -574,7 +574,7 @@ template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
     return;
 }
 
-template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in)
+template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->ops = new OperatorMock_d;
 }
@@ -589,7 +589,7 @@ template<> void hamilt::HamiltPW<float>::updateHk(const int ik)
     return;
 }
 
-template<> hamilt::HamiltPW<float>::HamiltPW(elecstate::Potential* pot_in)
+template<> hamilt::HamiltPW<float>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->ops = new OperatorMock_f;
 }

@@ -7,9 +7,18 @@
 namespace elecstate
 {
 void Potential::write_potential(
+#ifdef __MPI
+    const int& bz,
+    const int& nbz,
+    const int& nplane,
+    const int& startz_current,
+#endif
 	const int &is, 
 	const int &iter, 
 	const std::string &fn, 
+    const int& nx,
+    const int& ny,
+    const int& nz,
 	const ModuleBase::matrix &v, 
 	const int &precision, 
 	const int &hartree)const
@@ -35,19 +44,19 @@ void Potential::write_potential(
     int out_fermi = 0;
     ModuleIO::write_cube(
 #ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
+                bz,
+                nbz,
+                nplane,
+                startz_current,
 #endif
                 temp_v,
                 is,
                 GlobalV::NSPIN,
                 iter,
                 fn,
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
+                nx,
+                ny,
+                nz,
                 ef_tmp,
                 &(GlobalC::ucell),
                 precision,
@@ -58,7 +67,14 @@ void Potential::write_potential(
 }
 
 
-void Potential::write_elecstat_pot(const std::string &fn, ModulePW::PW_Basis* rho_basis, const Charge* const chr)
+void Potential::write_elecstat_pot(
+#ifdef __MPI
+    const int& bz,
+    const int& nbz,
+#endif
+    const std::string &fn, 
+    ModulePW::PW_Basis* rho_basis, 
+    const Charge* const chr)
 {
     ModuleBase::TITLE("Potential","write_elecstat_pot");
     ModuleBase::timer::tick("Potential","write_elecstat_pot");
@@ -139,19 +155,19 @@ void Potential::write_elecstat_pot(const std::string &fn, ModulePW::PW_Basis* rh
     int out_fermi = 0;
     ModuleIO::write_cube(
 #ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
+                bz,
+                nbz,
+                rho_basis->nplane,
+                rho_basis->startz_current,
 #endif
                 v_elecstat,
                 is,
                 GlobalV::NSPIN,
                 0,
                 fn,
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
+                rho_basis->nx,
+                rho_basis->ny,
+                rho_basis->nz,
                 ef_tmp,
                 &(GlobalC::ucell),
                 precision,

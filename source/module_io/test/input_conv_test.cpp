@@ -136,9 +136,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::out_mul,0);
 	EXPECT_EQ(GlobalC::ppcell.cell_factor,1.2);
 	EXPECT_EQ(GlobalV::SCF_NMAX,50);
-	EXPECT_EQ(GlobalV::RELAX_NMAX,1);
-	EXPECT_EQ(GlobalV::MD_NSTEP,10);
-	EXPECT_EQ(GlobalV::OUT_FREQ_ELEC,0);
+    EXPECT_EQ(GlobalV::RELAX_NMAX, 1);
+    EXPECT_EQ(GlobalV::OUT_FREQ_ELEC,0);
 	EXPECT_EQ(GlobalV::OUT_FREQ_ION,0);
 	EXPECT_EQ(GlobalV::init_chg,"atomic");
 	EXPECT_EQ(GlobalV::chg_extrap,"atomic");

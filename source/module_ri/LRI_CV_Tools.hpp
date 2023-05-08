@@ -234,7 +234,7 @@ LRI_CV_Tools::change_order(std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> 
 	std::array<std::map<TkeyA,std::map<TkeyB,Tvalue>>,N> ds;
 	for(auto &ds_A : ds_in)
 		for(auto &ds_B : ds_A.second)
-			for(int ix=0; ix<3; ++ix)
+			for(int ix=0; ix<N; ++ix)
 				ds[ix][ds_A.first][ds_B.first] = std::move(ds_B.second[ix]);
 	return ds;
 }
