@@ -231,7 +231,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
-    CE.Init_CE();
+    CE.Init_CE(this->pw_rho->nrxx);
 }
 
 void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
