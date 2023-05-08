@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-FIRE::FIRE(MD_parameters &MD_para_in, UnitCell &unit_in) : MD_base(MD_para_in, unit_in)
+FIRE::FIRE(MD_parameters& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     dt_max = -1.0;
     alpha_start = 0.10;
@@ -23,7 +23,7 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir)
+void FIRE::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
@@ -35,7 +35,7 @@ void FIRE::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const st
     ModuleBase::timer::tick("FIRE", "setup");
 }
 
-void FIRE::first_half(const int &my_rank, std::ofstream &ofs)
+void FIRE::first_half(const int& my_rank, std::ofstream& ofs)
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::tick("FIRE", "first_half");
@@ -49,7 +49,7 @@ void FIRE::first_half(const int &my_rank, std::ofstream &ofs)
     ModuleBase::timer::tick("FIRE", "first_half");
 }
 
-void FIRE::second_half(const int &my_rank)
+void FIRE::second_half(const int& my_rank)
 {
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
@@ -61,7 +61,7 @@ void FIRE::second_half(const int &my_rank)
     ModuleBase::timer::tick("FIRE", "second_half");
 }
 
-void FIRE::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
+void FIRE::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
     MD_base::outputMD(ofs, cal_stress, my_rank);
 
@@ -69,7 +69,7 @@ void FIRE::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_ra
     std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
 }
 
-void FIRE::write_restart(const int &my_rank, const std::string &global_out_dir)
+void FIRE::write_restart(const int& my_rank, const std::string& global_out_dir)
 {
     if (!my_rank)
     {
@@ -89,7 +89,7 @@ void FIRE::write_restart(const int &my_rank, const std::string &global_out_dir)
 #endif
 }
 
-void FIRE::restart(const int &my_rank, const std::string &global_readin_dir)
+void FIRE::restart(const int& my_rank, const std::string& global_readin_dir)
 {
     bool ok = true;
 

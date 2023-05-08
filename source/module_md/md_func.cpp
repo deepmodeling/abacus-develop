@@ -36,7 +36,7 @@ double gaussrand()
     return X;
 }
 
-double GetAtomKE(const int &numIon, const ModuleBase::Vector3<double> *vel, const double *allmass)
+double GetAtomKE(const int& numIon, const ModuleBase::Vector3<double>* vel, const double* allmass)
 {
     double ke = 0;
 
@@ -48,11 +48,11 @@ double GetAtomKE(const int &numIon, const ModuleBase::Vector3<double> *vel, cons
     return ke;
 }
 
-void compute_stress(const UnitCell &unit_in,
-                    const ModuleBase::Vector3<double> *vel,
-                    const double *allmass,
-                    const ModuleBase::matrix &virial,
-                    ModuleBase::matrix &stress)
+void compute_stress(const UnitCell& unit_in,
+                    const ModuleBase::Vector3<double>* vel,
+                    const double* allmass,
+                    const ModuleBase::matrix& virial,
+                    ModuleBase::matrix& stress)
 {
     //--------------------------------------------------------------------------------------------
     // DESCRIPTION:
@@ -76,7 +76,7 @@ void compute_stress(const UnitCell &unit_in,
 }
 
 // Read Velocity from STRU liuyu 2021-09-24
-void ReadVel(const UnitCell &unit_in, ModuleBase::Vector3<double> *vel)
+void ReadVel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
 {
     int iat = 0;
     for (int it = 0; it < unit_in.ntype; ++it)
@@ -97,13 +97,13 @@ void ReadVel(const UnitCell &unit_in, ModuleBase::Vector3<double> *vel)
 }
 
 // Initial velocity randomly
-void RandomVel(const int &numIon,
-               const double &temperature,
-               const double *allmass,
-               const int &frozen_freedom,
+void RandomVel(const int& numIon,
+               const double& temperature,
+               const double* allmass,
+               const int& frozen_freedom,
                const ModuleBase::Vector3<int> frozen,
-               const ModuleBase::Vector3<int> *ionmbl,
-               ModuleBase::Vector3<double> *vel)
+               const ModuleBase::Vector3<int>* ionmbl,
+               ModuleBase::Vector3<double>* vel)
 {
     if (!GlobalV::MY_RANK)
     {
@@ -164,12 +164,12 @@ void RandomVel(const int &numIon,
     return;
 }
 
-void InitVel(const UnitCell &unit_in,
-             const double &temperature,
-             double *allmass,
-             int &frozen_freedom,
-             ModuleBase::Vector3<int> *ionmbl,
-             ModuleBase::Vector3<double> *vel)
+void InitVel(const UnitCell& unit_in,
+             const double& temperature,
+             double* allmass,
+             int& frozen_freedom,
+             ModuleBase::Vector3<int>* ionmbl,
+             ModuleBase::Vector3<double>* vel)
 {
     ModuleBase::Vector3<int> frozen;
     getMassMbl(unit_in, allmass, frozen, ionmbl);
@@ -193,12 +193,12 @@ void InitVel(const UnitCell &unit_in,
 }
 
 // calculate potential, force and virial
-void force_virial(ModuleESolver::ESolver *p_esolver,
-                  const int &istep,
-                  UnitCell &unit_in,
-                  double &potential,
-                  ModuleBase::Vector3<double> *force,
-                  ModuleBase::matrix &virial)
+void force_virial(ModuleESolver::ESolver* p_esolver,
+                  const int& istep,
+                  UnitCell& unit_in,
+                  double& potential,
+                  ModuleBase::Vector3<double>* force,
+                  ModuleBase::matrix& virial)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
@@ -231,7 +231,7 @@ void force_virial(ModuleESolver::ESolver *p_esolver,
     ModuleBase::timer::tick("MD_func", "force_virial");
 }
 
-void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stress)
+void outStress(const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
 {
     double stress_scalar = 0.0, virial_scalar = 0.0;
     for (int i = 0; i < 3; i++)
@@ -257,12 +257,12 @@ void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stres
     GlobalV::ofs_running << std::setiosflags(ios::left);
 }
 
-void MDdump(const int &step,
-            const UnitCell &unit_in,
-            const MD_parameters &mdp,
-            const ModuleBase::matrix &virial,
-            const ModuleBase::Vector3<double> *force,
-            const ModuleBase::Vector3<double> *vel)
+void MDdump(const int& step,
+            const UnitCell& unit_in,
+            const MD_parameters& mdp,
+            const ModuleBase::matrix& virial,
+            const ModuleBase::Vector3<double>* force,
+            const ModuleBase::Vector3<double>* vel)
 {
     if (GlobalV::MY_RANK)
         return;
@@ -344,10 +344,10 @@ void MDdump(const int &step,
     ofs.close();
 }
 
-void getMassMbl(const UnitCell &unit_in,
-                double *allmass,
-                ModuleBase::Vector3<int> &frozen,
-                ModuleBase::Vector3<int> *ionmbl)
+void getMassMbl(const UnitCell& unit_in,
+                double* allmass,
+                ModuleBase::Vector3<int>& frozen,
+                ModuleBase::Vector3<int>* ionmbl)
 {
     // some prepared information
     // mass and degree of freedom
@@ -371,17 +371,17 @@ void getMassMbl(const UnitCell &unit_in,
     }
 }
 
-double target_temp(const int &istep, const int &nstep, const double &tfirst, const double &tlast)
+double target_temp(const int& istep, const int& nstep, const double& tfirst, const double& tlast)
 {
     double delta = static_cast<double>(istep) / nstep;
     return tfirst + delta * (tlast - tfirst);
 }
 
-double current_temp(double &kinetic,
-                    const int &natom,
-                    const int &frozen_freedom,
-                    const double *allmass,
-                    const ModuleBase::Vector3<double> *vel)
+double current_temp(double& kinetic,
+                    const int& natom,
+                    const int& frozen_freedom,
+                    const double* allmass,
+                    const ModuleBase::Vector3<double>* vel)
 {
     if (3 * natom == frozen_freedom)
     {
@@ -394,10 +394,10 @@ double current_temp(double &kinetic,
     }
 }
 
-void temp_vector(const int &natom,
-                 const ModuleBase::Vector3<double> *vel,
-                 const double *allmass,
-                 ModuleBase::matrix &t_vector)
+void temp_vector(const int& natom,
+                 const ModuleBase::Vector3<double>* vel,
+                 const double* allmass,
+                 ModuleBase::matrix& t_vector)
 {
     t_vector.create(3, 3);
 
@@ -416,7 +416,7 @@ void temp_vector(const int &natom,
 // liuyu add 2023-04-16
 // determine thr current MD step according to Restart_md.dat if md_restart is true,
 // then STRU_MD_$step will be read directly instead of STRU
-double current_step(const int &my_rank, const std::string &file_dir)
+double current_step(const int& my_rank, const std::string& file_dir)
 {
     bool ok = true;
     int step = 0;
