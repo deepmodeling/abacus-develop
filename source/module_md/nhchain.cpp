@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MD_base(MD_para_in, unit_in)
+Nose_Hoover::Nose_Hoover(MD_parameters& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     mdp.md_pfirst /= unit_transform;
@@ -147,7 +147,7 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir)
+void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::tick("Nose_Hoover", "setup");
@@ -204,7 +204,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, c
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 }
 
-void Nose_Hoover::first_half(const int &my_rank, std::ofstream &ofs)
+void Nose_Hoover::first_half(const int& my_rank, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
@@ -261,7 +261,7 @@ void Nose_Hoover::first_half(const int &my_rank, std::ofstream &ofs)
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 }
 
-void Nose_Hoover::second_half(const int &my_rank)
+void Nose_Hoover::second_half(const int& my_rank)
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
@@ -302,12 +302,12 @@ void Nose_Hoover::second_half(const int &my_rank)
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 }
 
-void Nose_Hoover::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
+void Nose_Hoover::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
     MD_base::outputMD(ofs, cal_stress, my_rank);
 }
 
-void Nose_Hoover::write_restart(const int &my_rank, const std::string &global_out_dir)
+void Nose_Hoover::write_restart(const int& my_rank, const std::string& global_out_dir)
 {
     if (!my_rank)
     {
@@ -356,7 +356,7 @@ void Nose_Hoover::write_restart(const int &my_rank, const std::string &global_ou
 #endif
 }
 
-void Nose_Hoover::restart(const int &my_rank, const std::string &global_readin_dir)
+void Nose_Hoover::restart(const int& my_rank, const std::string& global_readin_dir)
 {
     bool ok = true;
     bool ok2 = true;
@@ -703,7 +703,7 @@ void Nose_Hoover::vel_baro()
     }
 }
 
-void Nose_Hoover::update_volume(std::ofstream &ofs)
+void Nose_Hoover::update_volume(std::ofstream& ofs)
 {
     double factor;
 
