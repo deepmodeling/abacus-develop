@@ -47,4 +47,25 @@ const double get_solvent_model_Acav()
 {
     return GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
 }
+const double get_tot_magnetization()
+{
+    return GlobalC::ucell.magnet.tot_magnetization;
 }
+const double get_abs_magnetization()
+{
+    return GlobalC::ucell.magnet.abs_magnetization;
+}
+const double get_tot_magnetization_nc_x()
+{
+    return GlobalC::ucell.magnet.tot_magnetization_nc[0];
+}
+const double get_tot_magnetization_nc_y()
+{
+    return GlobalC::ucell.magnet.tot_magnetization_nc[1];
+}
+const double get_tot_magnetization_nc_z()
+{
+    return GlobalC::ucell.magnet.tot_magnetization_nc[2];
+}
+
+} // namespace elecstate

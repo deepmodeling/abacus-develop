@@ -280,16 +280,16 @@ void energy::print_etot(
 				if(GlobalV::NSPIN==2)
 				{
 					std::cout << std::setprecision(2);
-					std::cout<<std::setw(10)<<GlobalC::ucell.magnet.tot_magnetization;
-					std::cout<<std::setw(10)<<GlobalC::ucell.magnet.abs_magnetization;
+					std::cout<<std::setw(10)<<elecstate::get_tot_magnetization();
+					std::cout<<std::setw(10)<<elecstate::get_abs_magnetization();
 				}
 				else if(GlobalV::NSPIN==4 && GlobalV::NONCOLIN)
 				{
 					std::cout << std::setprecision(2);
-					std::cout<<std::setw(10)<<GlobalC::ucell.magnet.tot_magnetization_nc[0]
-					<<std::setw(10)<<GlobalC::ucell.magnet.tot_magnetization_nc[1]
-					<<std::setw(10)<<GlobalC::ucell.magnet.tot_magnetization_nc[2];
-					std::cout<<std::setw(10)<<GlobalC::ucell.magnet.abs_magnetization;
+					std::cout<<std::setw(10)<<elecstate::get_tot_magnetization_nc_x()
+					<<std::setw(10)<<elecstate::get_tot_magnetization_nc_y()
+					<<std::setw(10)<<elecstate::get_tot_magnetization_nc_z();
+					std::cout<<std::setw(10)<<elecstate::get_abs_magnetization();
 				}
 				if(scf_thr>1.0)
 				{
@@ -322,8 +322,8 @@ void energy::print_etot(
 			if(GlobalV::NSPIN==2)
 			{
 				std::cout << std::setprecision(2);
-				std::cout<<std::setw(10)<<GlobalC::ucell.magnet.tot_magnetization;
-				std::cout<<std::setw(10)<<GlobalC::ucell.magnet.abs_magnetization;
+				std::cout<<std::setw(10)<<elecstate::get_tot_magnetization();
+				std::cout<<std::setw(10)<<elecstate::get_abs_magnetization();
 			}
 			std::cout << std::setprecision(6);
 			std::cout << std::setw(15) << this->etot*ModuleBase::Ry_to_eV;

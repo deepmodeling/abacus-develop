@@ -22,4 +22,9 @@ const double get_lcao_deepks_e_delta_band();
 const double get_solvent_model_Ael();
 // get solvent model Acav
 const double get_solvent_model_Acav();
+const double get_tot_magnetization();
+const double get_abs_magnetization();
+const double get_tot_magnetization_nc_x();
+const double get_tot_magnetization_nc_y();
+const double get_tot_magnetization_nc_z();
 }
