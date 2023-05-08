@@ -25,9 +25,12 @@ class Stochastic_Iter
     Stochastic_Iter();
     ~Stochastic_Iter();
 
-    void init(const int, int* nchip_in, const int method_in, Stochastic_WF& stowf);
-    
-    void sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<double>* pHamilt);
+    void init(int* nchip_in, const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf);
+
+    void sum_stoband(Stochastic_WF& stowf,
+                     elecstate::ElecState* pes,
+                     hamilt::Hamilt<double>* pHamilt,
+                     ModulePW::PW_Basis_K* wfc_basis);
 
     double calne(elecstate::ElecState* pes);
 
@@ -68,6 +71,8 @@ class Stochastic_Iter
     void calTnchi_ik(const int& ik, Stochastic_WF& stowf);
     //cal v^T*M*v
     double vTMv(const double *v, const double * M, const int n);
+  private:
+    K_Vectors* pkv;
 
 };
 

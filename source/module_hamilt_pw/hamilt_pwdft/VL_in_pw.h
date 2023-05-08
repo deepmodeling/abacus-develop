@@ -22,13 +22,13 @@ private:
 
 	double *zp;   // (npsx),the charge of the pseudopotential
 
-	void allocate(void);
+	void allocate(const int ngg);
 
 	// generate vloc for a particular atom type.
 	void vloc_of_g( const int &msh, const double *rab, const double *r, const double *vloc_at,
 	               const double &zp, double *vloc, ModulePW::PW_Basis* rho_basis) const;
 
-	void print_vloc(void) const;
+	void print_vloc(ModulePW::PW_Basis* rho_basis) const;
 
 };
 

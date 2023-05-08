@@ -204,6 +204,7 @@ void Input_Conv::Convert(void)
 
     GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;
+    INPUT.mdp.force_thr = INPUT.force_thr;
 
     GlobalV::STRESS_THR = INPUT.stress_thr;
     GlobalV::PRESS1 = INPUT.press1;
@@ -531,7 +532,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::SCF_NMAX = INPUT.scf_nmax;
     GlobalV::RELAX_NMAX = INPUT.relax_nmax;
-    GlobalV::MD_NSTEP = INPUT.mdp.md_nstep;
     GlobalV::md_prec_level = INPUT.mdp.md_prec_level;
 
     //----------------------------------------------------------

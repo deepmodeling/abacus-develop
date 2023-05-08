@@ -31,9 +31,12 @@ public:
 		ModulePW::PW_Basis *rho_basis_in, 
 		UnitCell *ucell_ptr_in,
 		const elecstate::ElecState* pelec_in);
-	void cal_exx(const int& nks);
-	const std::complex<double> * const * const * get_exx_matrix() const { return exx_matrix; }
-	double get_exx_energy() const { return exx_energy; }
+    // void cal_exx(const int& nks);
+    const std::complex<double> *const *const *get_exx_matrix() const
+    {
+        return exx_matrix;
+    }
+    double get_exx_energy() const { return exx_energy; }
 
 	void write_q_pack() const;
 
@@ -68,8 +71,8 @@ private:
 
 	void wf_wg_cal();
 	void phi_cal(k_package *kq_pack, int ikq);
-	void psi_cal();
-	void judge_singularity( int ik);
+    // void psi_cal();
+    void judge_singularity( int ik);
 	void qkg2_exp(int ik, int iq);
 	void b_cal(int ik, int iq, int ib);
 	void sum3_cal(int iq, int ib);

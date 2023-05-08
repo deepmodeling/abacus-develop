@@ -182,18 +182,28 @@ namespace hamilt
 {
 
 template <>
-void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<float>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<float, psi::DEVICE_CPU>* phm_in)
+void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<float>, psi::DEVICE_CPU>& wvf,
+                        ModulePW::PW_Basis_K* wfc_basis,
+                        wavefunc* p_wf,
+                        hamilt::Hamilt<float, psi::DEVICE_CPU>* phm_in)
 {
-    for(int i=0;i<wvf.size();i++)
+    for (int i = 0; i < wvf.size(); i++)
     {
-        wvf.get_pointer()[i] = std::complex<float>( (float)i+1, 0) ;
+        wvf.get_pointer()[i] = std::complex<float>((float)i + 1, 0);
     }
 }
 
 template <>
-void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx, const int &ik, psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf, hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
+void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<double>, psi::DEVICE_CPU>& wvf,
+                        ModulePW::PW_Basis_K* wfc_basis,
+                        wavefunc* p_wf,
+                        hamilt::Hamilt<double, psi::DEVICE_CPU>* phm_in)
 {
-    for(int i=0;i<wvf.size();i++)
+    for (int i = 0; i < wvf.size(); i++)
     {
         wvf.get_pointer()[i] = std::complex<double>( (double)i+1, 0) ;
     }

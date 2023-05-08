@@ -513,7 +513,7 @@ void energy::cal_bandgap(const elecstate::ElecState* pelec)
 		return;
 	}
 	int nbands = GlobalV::NBANDS;
-	int nks = GlobalC::kv.nks;
+	int nks = pelec->klist->nks;
 	double homo = pelec->ekb(0,0);
 	double lumo = pelec->ekb(0,nbands-1);
 	for (int ib=0; ib<nbands; ib++)
@@ -542,7 +542,7 @@ void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
 		return;
 	}
 	int nbands = GlobalV::NBANDS;
-	int nks = GlobalC::kv.nks;
+	int nks = pelec->klist->nks;
 	double homo_up = pelec->ekb(0,0);
 	double lumo_up = pelec->ekb(0,nbands-1);
 	double homo_dw = pelec->ekb(0,0);

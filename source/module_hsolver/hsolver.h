@@ -1,13 +1,14 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
+#include <complex>
+
 #include "diagh.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_psi/psi.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-
-#include <complex>
+#include "module_psi/psi.h"
 
 namespace hsolver
 {
@@ -31,40 +32,33 @@ class HSolver
         Input &in )=0;*/
 
     // solve Hamiltonian to electronic density in ElecState
-    virtual void solve
-    (
-        hamilt::Hamilt<FPTYPE, Device>* phm,
-        psi::Psi<std::complex<FPTYPE>, Device>& ppsi, 
-        elecstate::ElecState* pes, 
-        const std::string method, 
-        const bool skip_charge=false
-    )
-    {
-        return;
-    }
-    virtual void solve
-    (
-        hamilt::Hamilt<FPTYPE, Device>* phm,
-        psi::Psi<FPTYPE, Device>& ppsi, 
-        elecstate::ElecState* pes, 
-        const std::string method, 
-        const bool skip_charge=false
-    )
+    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
+                       psi::Psi<std::complex<FPTYPE>, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       const std::string method,
+                       const bool skip_charge = false)
     {
         return;
     }
 
-    virtual void solve
-    (
-        hamilt::Hamilt<FPTYPE, Device>* phm,
-        psi::Psi<std::complex<FPTYPE>, Device>& ppsi, 
-        elecstate::ElecState* pes, 
-        Stochastic_WF& stowf,
-        const int istep,
-        const int iter,
-        const std::string method, 
-        const bool skip_charge=false
-    )
+    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
+                       psi::Psi<FPTYPE, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       const std::string method,
+                       const bool skip_charge = false)
+    {
+        return;
+    }
+
+    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
+                       psi::Psi<std::complex<FPTYPE>, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       ModulePW::PW_Basis_K* wfc_basis,
+                       Stochastic_WF& stowf,
+                       const int istep,
+                       const int iter,
+                       const std::string method,
+                       const bool skip_charge = false)
     {
         return;
     }

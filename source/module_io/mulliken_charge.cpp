@@ -15,6 +15,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/name_angular.h"
 #include "module_base/scalapack_connector.h"
 #include "write_orb_info.h"
 
@@ -322,7 +323,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
                         if (GlobalV::NSPIN==1)
                         {
                             double spin1 = ModuleIO::output_cut(AorbMulP[0][i][num]);
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
+                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                         }
                         else if (GlobalV::NSPIN==2)
@@ -331,7 +332,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
                             double spin2 = ModuleIO::output_cut(AorbMulP[1][i][num]);
                             double sum = ModuleIO::output_cut(spin1 + spin2);
                             double diff = ModuleIO::output_cut(spin1 - spin2);
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
+                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                             sum_m[1] += AorbMulP[1][i][num];
                         }
@@ -343,7 +344,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
                                 spin[j] = ModuleIO::output_cut(AorbMulP[j][i][num]);
                                 sum_m[j] += AorbMulP[j][i][num];
                             } 
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
+                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
                         }
                         num++;
                     }
@@ -429,6 +430,6 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
             os << std::endl <<std::endl;
         }
         os.close();
-        ModuleIO::write_orb_info();
+        ModuleIO::write_orb_info(&(GlobalC::ucell));
     }
 }

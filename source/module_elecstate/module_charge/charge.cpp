@@ -151,14 +151,14 @@ void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_i
     return;
 }
 
-void Charge::init_rho()
+void Charge::init_rho(const ModuleBase::ComplexMatrix &strucFac)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", GlobalV::init_chg);
 
     std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
     if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
     {
-        this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, GlobalC::rhopw);
+        this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, GlobalC::rhopw, strucFac);
     }
     else if (GlobalV::init_chg == "file")
     {
@@ -338,7 +338,7 @@ void Charge::renormalize_rho(void)
 // rho_at (read from pseudopotential files)
 // allocate work space (psic must already be allocated)
 //-------------------------------------------------------
-void Charge::atomic_rho(const int spin_number_need, const double& omega, double** rho_in, ModulePW::PW_Basis* rho_basis)const		// Peize Lin refactor 2021.04.08
+void Charge::atomic_rho(const int spin_number_need, const double& omega, double** rho_in, ModulePW::PW_Basis* rho_basis, const ModuleBase::ComplexMatrix &strucFac)const		// Peize Lin refactor 2021.04.08
 {
     ModuleBase::TITLE("Charge","atomic_rho");
     ModuleBase::timer::tick("Charge","atomic_rho");
@@ -483,7 +483,7 @@ void Charge::atomic_rho(const int spin_number_need, const double& omega, double*
 #endif
 					for (int ig=0; ig< rho_basis->npw ;ig++)
 					{
-						rho_g3d(0, ig) += GlobalC::sf.strucFac(it, ig) * rho_lgl[ rho_basis->ig2igg[ig] ];
+						rho_g3d(0, ig) += strucFac(it, ig) * rho_lgl[ rho_basis->ig2igg[ig] ];
 					}
 				}
 				// mohan add 2011-06-14, initialize the charge density according to each atom 
@@ -496,7 +496,7 @@ void Charge::atomic_rho(const int spin_number_need, const double& omega, double*
 #endif
 						for (int ig = 0; ig < rho_basis->npw ; ig++)
 						{
-							const std::complex<double> swap = GlobalC::sf.strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
+							const std::complex<double> swap = strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
 							const double up = 0.5 * ( 1 + GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv );
 							const double dw = 0.5 * ( 1 - GlobalC::ucell.magnet.start_magnetization[it] / atom->ncpp.zv );
 							rho_g3d(0, ig) += swap * up;
@@ -548,7 +548,7 @@ void Charge::atomic_rho(const int spin_number_need, const double& omega, double*
 #endif
 						for (int ig = 0; ig < rho_basis->npw ; ig++)
 						{
-							const std::complex<double> swap = GlobalC::sf.strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
+							const std::complex<double> swap = strucFac(it, ig)* rho_lgl[rho_basis->ig2igg[ig]];
 							rho_g3d(0, ig) += swap ;
 							if(GlobalV::DOMAG)
 							{//will not be used now, will be deleted later
@@ -908,7 +908,7 @@ void Charge::non_linear_core_correction
 
 
 #ifdef __MPI
-void Charge::rho_mpi(void)
+void Charge::rho_mpi(const int& nbz, const int& bz)
 {
 	ModuleBase::TITLE("Charge","rho_mpi");
     if (GlobalV::NPROC==1) return;
@@ -934,7 +934,7 @@ void Charge::rho_mpi(void)
     //=================================================
     int *num_z = new int[GlobalV::NPROC_IN_POOL];
     ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-    for (iz=0;iz<GlobalC::bigpw->nbz;iz++)
+    for (iz=0;iz<nbz;iz++)
     {
         ip = iz % GlobalV::NPROC_IN_POOL;
         num_z[ip]++;
@@ -943,7 +943,7 @@ void Charge::rho_mpi(void)
 	// mohan update 2011-04-26
 	for(int ip=0; ip<GlobalV::NPROC_IN_POOL; ip++)
 	{
-		num_z[ip]*=GlobalC::bigpw->bz;
+		num_z[ip]*=bz;
 	}
 
     //=======================================

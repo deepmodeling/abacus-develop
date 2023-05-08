@@ -259,7 +259,7 @@ void outStress(const ModuleBase::matrix &virial, const ModuleBase::matrix &stres
 
 void MDdump(const int &step,
             const UnitCell &unit_in,
-            const Input &inp,
+            const MD_parameters &mdp,
             const ModuleBase::matrix &virial,
             const ModuleBase::Vector3<double> *force,
             const ModuleBase::Vector3<double> *vel)
@@ -294,7 +294,7 @@ void MDdump(const int &step,
     ofs << "  " << unit_in.latvec.e21 << "  " << unit_in.latvec.e22 << "  " << unit_in.latvec.e23 << std::endl;
     ofs << "  " << unit_in.latvec.e31 << "  " << unit_in.latvec.e32 << "  " << unit_in.latvec.e33 << std::endl;
 
-    if (GlobalV::CAL_STRESS && inp.dump_virial)
+    if (GlobalV::CAL_STRESS && mdp.dump_virial)
     {
         ofs << "VIRIAL (kbar)" << std::endl;
         for (int i = 0; i < 3; ++i)
@@ -305,11 +305,11 @@ void MDdump(const int &step,
     }
 
     ofs << "INDEX    LABEL    POSITION (Angstrom)";
-    if (inp.dump_force)
+    if (mdp.dump_force)
     {
         ofs << "    FORCE (eV/Angstrom)";
     }
-    if (inp.dump_vel)
+    if (mdp.dump_vel)
     {
         ofs << "    VELOCITY (Angstrom/fs)";
     }
@@ -323,13 +323,13 @@ void MDdump(const int &step,
             ofs << "  " << index << "  " << unit_in.atom_label[it] << "  " << unit_in.atoms[it].tau[ia].x * unit_pos
                 << "  " << unit_in.atoms[it].tau[ia].y * unit_pos << "  " << unit_in.atoms[it].tau[ia].z * unit_pos;
 
-            if (inp.dump_force)
+            if (mdp.dump_force)
             {
                 ofs << "  " << force[index].x * unit_force << "  " << force[index].y * unit_force << "  "
                     << force[index].z * unit_force;
             }
 
-            if (inp.dump_vel)
+            if (mdp.dump_vel)
             {
                 ofs << "  " << vel[index].x * unit_vel << "  " << vel[index].y * unit_vel << "  "
                     << vel[index].z * unit_vel;
@@ -371,9 +371,9 @@ void getMassMbl(const UnitCell &unit_in,
     }
 }
 
-double target_temp(const int &istep, const double &tfirst, const double &tlast)
+double target_temp(const int &istep, const int &nstep, const double &tfirst, const double &tlast)
 {
-    double delta = (double)(istep) / GlobalV::MD_NSTEP;
+    double delta = static_cast<double>(istep) / nstep;
     return tfirst + delta * (tlast - tfirst);
 }
 
