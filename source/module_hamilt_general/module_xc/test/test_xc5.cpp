@@ -42,9 +42,7 @@ class XCTest_VXC : public testing::Test
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
-
-            chr.set_rhopw(&(rhopw));
-
+            
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -56,6 +54,7 @@ class XCTest_VXC : public testing::Test
             ucell.cal_ux();
             ucell.omega = 1;
 
+            chr.rhopw = &(rhopw);
             chr.rho = new double*[4];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
@@ -175,8 +174,6 @@ class XCTest_VXC_Libxc : public testing::Test
             UnitCell ucell;
             Charge chr;
 
-            chr.set_rhopw(&(rhopw));
-
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -188,6 +185,7 @@ class XCTest_VXC_Libxc : public testing::Test
             ucell.cal_ux();
             ucell.omega = 1;
 
+            chr.rhopw = &(rhopw);
             chr.rho = new double*[4];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
@@ -303,8 +301,6 @@ class XCTest_VXC_meta : public testing::Test
             UnitCell ucell;
             Charge chr;
 
-            chr.set_rhopw(&(rhopw));
-
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -316,6 +312,7 @@ class XCTest_VXC_meta : public testing::Test
             ucell.cal_ux();
             ucell.omega = 1;
 
+            chr.rhopw = &(rhopw);
             chr.rho = new double*[2];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
