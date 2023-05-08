@@ -276,8 +276,7 @@ void energy::print_etot(
 		{
 			if(GlobalV::MY_RANK==0)
 			{
-				printf( "\e[36m%-15f\e[0m", GlobalC::en.etot);
-				//printf( "[36m%-15f[0m", GlobalC::en.etot);
+				printf( "\e[36m%-15f\e[0m", this->etot);
 				if(GlobalV::NSPIN==2)
 				{
 					std::cout << std::setprecision(2);
@@ -305,12 +304,11 @@ void energy::print_etot(
 					//printf( "[32m%-14e[0m", scf_thr);
 				}
 				// 34 is blue
-				printf( "\e[36m%-15f\e[0m", GlobalC::en.etot*ModuleBase::Ry_to_eV);
-				//printf( "[36m%-15f[0m", GlobalC::en.etot*ModuleBase::Ry_to_eV);
+				printf( "\e[36m%-15f\e[0m", this->etot*ModuleBase::Ry_to_eV);
 				std::cout << std::setprecision(3);
-	//			std::cout << std::setw(11) << GlobalC::en.eband;
+	//			std::cout << std::setw(11) << this->eband;
 	//			std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
-	//			std::cout << std::setw(11) << GlobalC::en.etxc - GlobalC::en.etxcc;
+	//			std::cout << std::setw(11) << this->etxc - this->etxcc;
 				std::cout << std::resetiosflags(ios::scientific);
 
 				std::cout << std::setw(11) << duration;
@@ -320,7 +318,7 @@ void energy::print_etot(
 		else
 		{
 			std::cout << std::setprecision(prec);
-			//std::cout << std::setw(15) << GlobalC::en.etot;
+			//std::cout << std::setw(15) << this->etot;
 			if(GlobalV::NSPIN==2)
 			{
 				std::cout << std::setprecision(2);
@@ -328,8 +326,8 @@ void energy::print_etot(
 				std::cout<<std::setw(10)<<GlobalC::ucell.magnet.abs_magnetization;
 			}
 			std::cout << std::setprecision(6);
-			std::cout << std::setw(15) << GlobalC::en.etot*ModuleBase::Ry_to_eV;
-                        std::cout << std::setw(15) << (GlobalC::en.etot - GlobalC::en.etot_old) *ModuleBase::Ry_to_eV;  //pengfei Li added 2015-1-31
+			std::cout << std::setw(15) << this->etot*ModuleBase::Ry_to_eV;
+                        std::cout << std::setw(15) << (this->etot - this->etot_old) *ModuleBase::Ry_to_eV;  //pengfei Li added 2015-1-31
                         std::cout << std::setprecision(3);
                         std::cout << std::setw(11) << scf_thr;
 			std::cout << std::setprecision(3);
