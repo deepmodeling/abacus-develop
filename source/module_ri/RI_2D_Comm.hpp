@@ -173,7 +173,6 @@ void RI_2D_Comm::add_Hexx(
 	else if(GlobalC::exx_info.info_global.separate_loop == 1)
 	{
 		double mixing_beta = GlobalC::exx_info.info_global.mixing_beta_for_loop1;
-		Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 		if (iter == 0)
 		{
 			if(Hk_seq[ik].empty())
@@ -193,7 +192,7 @@ void RI_2D_Comm::add_Hexx(
 			}
 		}
 		else
-			Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
+			Hk = Hk_seq[ik][0];
 	}
 
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
