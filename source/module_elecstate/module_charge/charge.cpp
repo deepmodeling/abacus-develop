@@ -45,6 +45,11 @@ Charge::~Charge()
     this->destroy();
 }
 
+void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
+{
+	this->rhopw = rhopw_in;
+}
+
 void Charge::destroy()
 {
     if(allocate_rho || allocate_rho_final_scf) //LiuXh add 20180619

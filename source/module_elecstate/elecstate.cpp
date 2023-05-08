@@ -396,10 +396,12 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
                         int nk_in,
+                        ModulePW::PW_Basis* rhopw_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)
 {
     this->charge = chg_in;
     this->klist = klist_in;
+    this->charge->set_rhopw(rhopw_in);
     this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();

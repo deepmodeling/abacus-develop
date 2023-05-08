@@ -1,6 +1,6 @@
 #include "surchem.h"
 
-double surchem::cal_Ael(const UnitCell &cell, ModulePW::PW_Basis *rho_basis)
+double surchem::cal_Ael(const UnitCell &cell, const ModulePW::PW_Basis *rho_basis)
 {
     double Ael = 0.0;
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
@@ -13,7 +13,7 @@ double surchem::cal_Ael(const UnitCell &cell, ModulePW::PW_Basis *rho_basis)
     return Ael;
 }
 
-double surchem::cal_Acav(const UnitCell &cell, ModulePW::PW_Basis *rho_basis)
+double surchem::cal_Acav(const UnitCell &cell, const ModulePW::PW_Basis *rho_basis)
 {
     double Acav = 0.0;
     Acav = GlobalV::tau * qs;

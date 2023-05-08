@@ -108,7 +108,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 
     if(this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecState((Charge*)(&chr));
+        this->pelec = new elecstate::ElecState((Charge*)(&chr), GlobalC::bigpw);
     }
 
     this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
@@ -482,7 +482,7 @@ void ESolver_OF::solveV()
 //                 ptempRho->rho[0][ir] = ptempPhi[0][ir] * ptempPhi[0][ir];
 //             }
 //             this->caldEdtheta(ptempPhi, ptempRho, this->theta, dEdtheta);
-//             GlobalC::en.calculate_etot();
+//             GlobalC::en.calculate_etot(this->pw_rho);
 //             E = GlobalC::en.etot;
 //             double eKE = 0.;
 //             double ePP = 0.;
@@ -508,7 +508,7 @@ void ESolver_OF::solveV()
         while (true)
         {
             // update energy
-            GlobalC::en.calculate_etot();
+            GlobalC::en.calculate_etot(this->pw_rho);
             E = GlobalC::en.etot;
             eKE = this->kineticEnergy();
             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->nrxx, this->dV);
@@ -596,7 +596,7 @@ void ESolver_OF::solveV()
     //         numDC = 0;
     //         while(true)
     //         {
-    //             GlobalC::en.calculate_etot();
+    //             GlobalC::en.calculate_etot(this->pw_rho);
     //             E = GlobalC::en.etot;
     //             eKE = this->kineticEnergy();
     //             ePP = 0.;
@@ -1081,7 +1081,7 @@ double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
 // =====================================================================
 void ESolver_OF::cal_Energy(double& etot)
 {
-    GlobalC::en.calculate_etot();
+    GlobalC::en.calculate_etot(this->pw_rho);
     double eKE = this->kineticEnergy(); // kinetic energy
     double ePP = 0.;                    // electron-ion interaction energy
     for (int is = 0; is < GlobalV::NSPIN; ++is)

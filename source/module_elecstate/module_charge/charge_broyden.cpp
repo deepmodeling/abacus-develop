@@ -29,7 +29,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 #endif
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
+			for(int ig = 0 ; ig < this->rhopw->npw; ++ig)
 			{
 				dF[ipos][is][ig] -= chr->rhog[is][ig];
 				dn[ipos][is][ig] -= chr->rhog_save[is][ig];
@@ -41,7 +41,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 #endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
+		for(int ig = 0 ; ig < this->rhopw->npw; ++ig)
 		{
 			dF[mixing_ndim][is][ig] = chr->rhog[is][ig];
 			dn[mixing_ndim][is][ig] = chr->rhog_save[is][ig];
@@ -93,7 +93,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 #endif
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
+				for(int ig = 0 ; ig < this->rhopw->npw; ++ig)
 				{
 					chr->rhog[is][ig] -= gamma0 * dF[i][is][ig];
 					chr->rhog_save[is][ig] -= gamma0 * dn[i][is][ig];
@@ -111,7 +111,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 #endif
 	for(int is=0; is<GlobalV::NSPIN; is++)
 	{
-		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
+		for(int ig = 0 ; ig < this->rhopw->npw; ++ig)
 		{
 			dF[inext][is][ig] = dF[mixing_ndim][is][ig];
 			dn[inext][is][ig] = dn[mixing_ndim][is][ig];
@@ -124,11 +124,11 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
-		for(int ig = 0 ; ig < GlobalC::rhopw->npw; ++ig)
+		for(int ig = 0 ; ig < this->rhopw->npw; ++ig)
 		{
 			chr->rhog_save[is][ig] += mixing_beta * chr->rhog[is][ig];
 		}
-		GlobalC::rhopw->recip2real( chr->rhog_save[is], chr->rho[is]);
+		this->rhopw->recip2real( chr->rhog_save[is], chr->rho[is]);
 	}
 	ModuleBase::timer::tick("Charge", "Broyden_mixing");
 	return;
@@ -148,12 +148,12 @@ void Charge_Mixing::allocate_Broyden()
 			dn[i] = new std::complex<double>*[GlobalV::NSPIN]; 
 			for (int is=0; is<GlobalV::NSPIN; is++)
 			{
-				dF[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
-				dn[i][is] = new std::complex<double>[GlobalC::rhopw->npw];
+				dF[i][is] = new std::complex<double>[this->rhopw->npw];
+				dn[i][is] = new std::complex<double>[this->rhopw->npw];
 			}
 		}
-		ModuleBase::Memory::record("ChgMix::dF", sizeof(std::complex<double>) * GlobalV::NSPIN*npdim*GlobalC::rhopw->npw);
-		ModuleBase::Memory::record("ChgMix::dn", sizeof(std::complex<double>) * GlobalV::NSPIN*npdim*GlobalC::rhopw->npw);
+		ModuleBase::Memory::record("ChgMix::dF", sizeof(std::complex<double>) * GlobalV::NSPIN*npdim*this->rhopw->npw);
+		ModuleBase::Memory::record("ChgMix::dn", sizeof(std::complex<double>) * GlobalV::NSPIN*npdim*this->rhopw->npw);
 		this->initb = true;
 	}
 

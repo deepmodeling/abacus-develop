@@ -75,9 +75,16 @@ class energy
     // at first order in the charge density difference \delta
     // rho
     //=========================================================
-	void calculate_etot(void);
-	void print_etot(const bool converged, const int &iter,
-	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
+	void calculate_etot(const ModulePW::PW_Basis* rhopw);
+	void print_etot(
+		const ModulePW::PW_Basis* rhopw, 
+		const bool converged, 
+		const int &iter,
+		const double &scf_thr, 
+		const double &duration, 
+		const double &pw_diag_thr=0, 
+		const double &avg_iter=0, 
+		bool print = true);
 
 	void print_format(const std::string &name, const double &value);
 
