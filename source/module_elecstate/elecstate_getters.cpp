@@ -16,5 +16,10 @@ const double get_ucell_omega()
 {
     return GlobalC::ucell.omega;
 }
-
+#ifdef __LCAO
+const double get_dftu_energy()
+{
+    return GlobalC::dftu.get_energy();
+}
+#endif
 }

@@ -61,10 +61,10 @@ void energy::calculate_harris()
 	+ evdw;  						// Peize Lin add evdw 2021.03.09
 
 #ifdef __LCAO
-	if(GlobalV::dft_plus_u)
-	{
-		this->etot_harris += GlobalC::dftu.get_energy();  //Energy correction from DFT+U; Quxin adds on 20201029
-	}
+    if (GlobalV::dft_plus_u)
+    {
+        this->etot_harris += elecstate::get_dftu_energy(); // Energy correction from DFT+U; Quxin adds on 20201029
+    }
 #endif
 #ifdef __DEEPKS
 	if (GlobalV::deepks_scf)
@@ -114,9 +114,9 @@ void energy::calculate_etot(void)
 
 #ifdef __LCAO
     if(GlobalV::dft_plus_u)
-	{
-		this->etot += GlobalC::dftu.get_energy();
-	}
+    {
+    this->etot += elecstate::get_dftu_energy(); // Energy correction from DFT+U; Quxin adds on 20201029
+    }
 #endif
 #ifdef __DEEPKS
 	if (GlobalV::deepks_scf)

@@ -8,5 +8,8 @@ const int get_rhopw_nrxx();
 const int get_rhopw_nxyz();
 // get the value of GlobalC::ucell.omega
 const double get_ucell_omega();
-
+#ifdef __LCAO
+// get dftu energy
+const double get_dftu_energy();
+#endif
 }
