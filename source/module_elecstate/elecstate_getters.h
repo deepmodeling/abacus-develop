@@ -27,4 +27,23 @@ const double get_abs_magnetization();
 const double get_tot_magnetization_nc_x();
 const double get_tot_magnetization_nc_y();
 const double get_tot_magnetization_nc_z();
-}
+#ifdef __EXX
+#ifdef __LCAO
+// get exx_lip exx_energy
+const double get_exx_lip_exx_energy();
+// get exx_info.info_ri.real_number
+const bool get_exx_info_ri_real_number();
+// get exx_lri_double.Eexx
+template<typename Tdata>
+const Tdata get_exx_lri_double_Eexx();
+// get exx_lri_complex.Eexx
+template<typename Tdata>
+const Tdata get_exx_lri_complex_Eexx();
+// get exx_info.info_global.cal_exx
+const bool get_exx_info_global_cal_exx();
+// get exx_info.info_global.hybrid_alpha
+const double get_exx_info_global_hybrid_alpha();
+#endif // __LCAO
+#endif // __EXX
+
+} // namespace elecstate

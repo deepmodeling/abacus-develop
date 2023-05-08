@@ -1,4 +1,6 @@
 #include "module_elecstate/elecstate_getters.h"
+
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __LCAO
 #include "module_hamilt_lcao/module_dftu/dftu.h" //Quxin adds for DFT+U on 20201029
@@ -67,5 +69,35 @@ const double get_tot_magnetization_nc_z()
 {
     return GlobalC::ucell.magnet.tot_magnetization_nc[2];
 }
+#ifdef __EXX
+#ifdef __LCAO
+const double get_exx_lip_exx_energy()
+{
+    return GlobalC::exx_lip.get_exx_energy();
+}
+const bool get_exx_info_ri_real_number()
+{
+    return GlobalC::exx_info.info_ri.real_number;
+}
+template<typename Tdata>
+const Tdata get_exx_lri_double_Eexx()
+{
+    return GlobalC::exx_lri_double.Eexx;
+}
+template<typename Tdata>
+const Tdata get_exx_lri_complex_Eexx()
+{
+    return GlobalC::exx_lri_complex.Eexx;
+}
+const bool get_exx_info_global_cal_exx()
+{
+    return GlobalC::exx_info.info_global.cal_exx;
+}
+const double get_exx_info_global_hybrid_alpha()
+{
+    return GlobalC::exx_info.info_global.hybrid_alpha;
+}
+#endif // __LCAO
+#endif // __EXX
 
 } // namespace elecstate

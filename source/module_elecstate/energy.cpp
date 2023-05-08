@@ -1,15 +1,11 @@
 #include "energy.h"
-
 #include <vector>
-
 #include "elecstate_getters.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/mymath.h"
 #include "module_base/parallel_reduce.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -375,7 +371,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
 
-	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	for (int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 	{
 		deband_aux -= pelec->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -388,8 +384,8 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 	{
 		v_eff = pelec->pot->get_effective_v(1);
 		v_ofk = pelec->pot->get_effective_vofk(1);
-		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-		{
+        for (int ir = 0; ir < elecstate::get_rhopw_nrxx(); ir++)
+        {
 			deband_aux -= pelec->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
@@ -402,8 +398,8 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 		for(int is = 1;is<4;is++)
 		{
 			v_eff = pelec->pot->get_effective_v(is);
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
-			{
+            for (int ir = 0; ir < elecstate::get_rhopw_nrxx(); ir++)
+            {
 				deband_aux -= pelec->charge->rho[is][ir] * v_eff[ir];
 			}
 		}
@@ -415,10 +411,10 @@ double energy::delta_e(const elecstate::ElecState* pelec)
     deband0 = deband_aux;
 #endif
 
-    deband0 *= GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
+    deband0 *= elecstate::get_ucell_omega() / elecstate::get_rhopw_nxyz();
 
-	// \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
-	deband0 -= 2*exx;				// Peize Lin add 2017-10-16
+    // \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
+    deband0 -= 2*exx;				// Peize Lin add 2017-10-16
 
     return deband0;
 } // end subroutine delta_e
@@ -444,7 +440,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
 
-	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	for (int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 	{
 		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -460,7 +456,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 		{
 			v_ofk = pelec->pot->get_effective_vofk(1);
 		}
-		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		for (int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 		{
 			this->descf -= ( pelec->charge->rho[1][ir] - pelec->charge->rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -474,7 +470,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 		for(int is = 1;is<4;is++)
 		{
 			v_eff = pelec->pot->get_effective_v(is);
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			for(int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 			{
 				this->descf -= ( pelec->charge->rho[is][ir] - pelec->charge->rho_save[is][ir] ) * v_eff[ir];
 			}
@@ -483,7 +479,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 
     Parallel_Reduce::reduce_double_pool( descf );
 
-    this->descf *= GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
+    this->descf *= elecstate::get_ucell_omega() / elecstate::get_rhopw_nxyz();
     return;
 }
 
@@ -553,7 +549,7 @@ void energy::cal_bandgap_updw(const elecstate::ElecState* pelec)
             {
                 lumo_up = pelec->ekb(ik,ib);
             }
-			if (!(pelec->ekb(ik,ib) - this->ef_dw > 1e-5) && homo_dw < pelec->ekb(ik,ib))
+            if (!(pelec->ekb(ik,ib) - this->ef_dw > 1e-5) && homo_dw < pelec->ekb(ik,ib))
             {
                 homo_dw = pelec->ekb(ik,ib);
             }
@@ -599,23 +595,23 @@ void energy::set_exx()
 	{
 		if("lcao_in_pw"==GlobalV::BASIS_TYPE)
 		{
-			return GlobalC::exx_lip.get_exx_energy();
+			return elecstate::get_exx_lip_exx_energy();
 		}
 		else if("lcao"==GlobalV::BASIS_TYPE)
 		{
-			if(GlobalC::exx_info.info_ri.real_number)
-				return GlobalC::exx_lri_double.Eexx;
+			if(elecstate::get_exx_info_ri_real_number())
+				return elecstate::get_exx_lri_double_Eexx();
 			else
-				return std::real(GlobalC::exx_lri_complex.Eexx);
+				return std::real(elecstate::get_exx_lri_complex_Eexx());
 		}
 		else
 		{
 			throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 		}
 	};
-	if( GlobalC::exx_info.info_global.cal_exx )
+	if( elecstate::get_exx_info_global_cal_exx() )
 	{
-		this->exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_energy();
+		this->exx = elecstate::get_exx_info_global_hybrid_alpha() * exx_energy();
 	}
 
 	return;
