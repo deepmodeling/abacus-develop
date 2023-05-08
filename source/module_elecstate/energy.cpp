@@ -19,7 +19,6 @@
 #include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
 #include "module_elecstate/potentials/gatefield.h" // liuyu add 2022-09-13
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
-#include "module_hamilt_general/module_surchem/surchem.h"
 
 energy::energy()
 {
@@ -87,11 +86,10 @@ void energy::calculate_etot(void)
 	+ elecstate::Efield::etotefield
     + elecstate::Gatefield::etotgatefield
 	+ evdw;							// Peize Lin add evdw 2021.03.09
-	if (GlobalV::imp_sol)
+    if (GlobalV::imp_sol)
     {
-	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw)
-				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
-	}
+        this->etot += elecstate::get_solvent_model_Ael() + elecstate::get_solvent_model_Acav();
+    }
 
     //Quxin adds for DFT+U energy correction on 20201029
 
@@ -167,8 +165,8 @@ void energy::print_etot(
         this->print_format("E_exx", exx);
         if (GlobalV::imp_sol)
         {
-            esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw);
-            esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
+            esol_el = elecstate::get_solvent_model_Ael();
+            esol_cav = elecstate::get_solvent_model_Acav();
             this->print_format("E_sol_el", esol_el);
             this->print_format("E_sol_cav", esol_cav);
         }

@@ -6,6 +6,7 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
+#include "module_hamilt_general/module_surchem/surchem.h"
 
 namespace elecstate
 {
@@ -38,4 +39,12 @@ const double get_lcao_deepks_e_delta_band()
     return GlobalC::ld.e_delta_band;
 }
 #endif
+const double get_solvent_model_Ael()
+{
+    return GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw);
+}
+const double get_solvent_model_Acav()
+{
+    return GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
+}
 }
