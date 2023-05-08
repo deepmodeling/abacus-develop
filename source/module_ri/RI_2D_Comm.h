@@ -44,7 +44,8 @@ namespace RI_2D_Comm
 		const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
 		const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm,
-		std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq);
+		std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq,
+		int &iter);
 
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(

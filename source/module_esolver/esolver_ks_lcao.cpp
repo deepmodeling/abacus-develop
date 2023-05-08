@@ -1248,7 +1248,8 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             hamilt::Operator<double>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
+                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(iter,
+                                                                        &LM,
                                                                         nullptr, // no explicit call yet
                                                                         &(LM.Hloc));
             p_hamilt->opsd->add(exx);
@@ -1256,7 +1257,8 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         else
         {
             hamilt::Operator<std::complex<double>>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&LM,
+                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(iter,
+                                                                                      &LM,
                                                                                       nullptr, // no explicit call yet
                                                                                       &(LM.Hloc2));
             p_hamilt->ops->add(exx);

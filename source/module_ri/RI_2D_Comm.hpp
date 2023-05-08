@@ -90,8 +90,9 @@ void RI_2D_Comm::add_Hexx(
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
 	const Parallel_Orbitals &pv,
 	LCAO_Matrix &lm,
-	std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq
-	)
+	std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq,
+	int &iter
+)
 {
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
@@ -172,21 +173,27 @@ void RI_2D_Comm::add_Hexx(
 	else if(GlobalC::exx_info.info_global.separate_loop == 1)
 	{
 		double mixing_beta = GlobalC::exx_info.info_global.mixing_beta_for_loop1;
-		if(Hk_seq[ik].empty())
+		Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
+		if (iter == 0)
 		{
-			Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
-			Hk_seq[ik].emplace_back(Hk);
+			if(Hk_seq[ik].empty())
+			{
+				Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
+				Hk_seq[ik].emplace_back(Hk);
+			}
+			else
+			{
+				std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
+				std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
+				for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
+					for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
+						if(pv.in_this_processor(iwt0, iwt1))
+							Hk[iwt0][iwt1] = (1-mixing_beta) * Hk_seq_tmp[iwt0][iwt1] + mixing_beta * Hk_tmp[iwt0][iwt1];
+				Hk_seq[ik][0] = Hk;
+			}
 		}
 		else
-		{
-			std::vector<std::vector<Tdata>> Hk_seq_tmp = Hk_seq[ik][0];
-			std::vector<std::vector<Tdata>> Hk_tmp = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
-			for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)
-				for(size_t iwt1=0; iwt1!=GlobalV::NLOCAL; ++iwt1)
-					if(pv.in_this_processor(iwt0, iwt1))
-						Hk[iwt0][iwt1] = (1-mixing_beta) * Hk_seq_tmp[iwt0][iwt1] + mixing_beta * Hk_tmp[iwt0][iwt1];
-			Hk_seq[ik][0] = Hk;
-		}
+			Hk = RI_2D_Comm::Hexxs_to_Hk(kv, pv, Hs, ik);
 	}
 
 	for(size_t iwt0=0; iwt0!=GlobalV::NLOCAL; ++iwt0)

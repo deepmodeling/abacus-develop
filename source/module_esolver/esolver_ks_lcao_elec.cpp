@@ -469,6 +469,7 @@ namespace ModuleESolver
             {
                 hamilt::Operator<double>* exx
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(
+                        0,
                         &LM,
                         nullptr, //no explicit call yet
                         &(LM.Hloc)
@@ -479,6 +480,7 @@ namespace ModuleESolver
             {
                 hamilt::Operator<std::complex<double>>* exx
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
+                        0,
                         &LM,
                         nullptr, //no explicit call yet
                         &(LM.Hloc2)

@@ -20,9 +20,10 @@ class OperatorEXX<OperatorLCAO<T>> : public OperatorLCAO<T>
     public:
 
     OperatorEXX<OperatorLCAO<T>>(
+        int iter_in,
         LCAO_Matrix* LM_in,
         std::vector<double>* HR_pointer_in,
-        std::vector<T>* HK_pointer_in):HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
+        std::vector<T>* HK_pointer_in):iter(iter_in),HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
     {
         this->LM = LM_in;
         this->cal_type = lcao_exx;
@@ -33,6 +34,8 @@ class OperatorEXX<OperatorLCAO<T>> : public OperatorLCAO<T>
     virtual void contributeHk(int ik) override;
 
     private:
+
+    int iter;
 
     std::vector<double>* HR_pointer = nullptr;
 
