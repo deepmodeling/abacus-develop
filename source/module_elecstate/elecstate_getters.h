@@ -1,4 +1,5 @@
 #include <complex>
+#include <string>
 // Description: Getters for elecstate module
 namespace elecstate
 {
@@ -9,6 +10,18 @@ const int get_rhopw_nrxx();
 const int get_rhopw_nxyz();
 // get the value of GlobalC::ucell.omega
 const double get_ucell_omega();
+// get the value of H_Ewald_pw::ewald_energy
+const double get_ewald_energy();
+// get the value of H_Hartree_pw::hartree_energy
+const double get_hartree_energy();
+// get the value of Efield::etotefield
+const double get_etot_efield();
+// get the value of Gatefield::etotgatefield
+const double get_etot_gatefield();
+// get the value of XC_Functional::get_func_type()
+const int get_xc_functional_type();
+// get the value of INPUT::vdw_method
+const std::string get_input_vdw_method();
 #ifdef __LCAO
 // get dftu energy
 const double get_dftu_energy();

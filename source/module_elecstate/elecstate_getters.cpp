@@ -8,7 +8,13 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
+#include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
+#include "module_elecstate/potentials/gatefield.h" // liuyu add 2022-09-13
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_io/input.h"
 
 namespace elecstate
 {
@@ -24,6 +30,30 @@ const int get_rhopw_nxyz()
 const double get_ucell_omega()
 {
     return GlobalC::ucell.omega;
+}
+const double get_ewald_energy()
+{
+    return H_Ewald_pw::ewald_energy;
+}
+const double get_hartree_energy()
+{
+    return H_Hartree_pw::hartree_energy;
+}
+const double get_etot_efield()
+{
+    return Efield::etotefield;
+}
+const double get_etot_gatefield()
+{
+    return Gatefield::etotgatefield;
+}
+const int get_xc_functional_type()
+{
+    return XC_Functional::get_func_type();
+}
+const std::string get_input_vdw_method()
+{
+    return INPUT.vdw_method;
 }
 #ifdef __LCAO
 const double get_dftu_energy()

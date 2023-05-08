@@ -10,28 +10,22 @@
 #include "mpi.h"
 #endif
 #include <sys/time.h>
-// new
-#include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "module_elecstate/potentials/efield.h"    // liuyu add 2022-05-06
-#include "module_elecstate/potentials/gatefield.h" // liuyu add 2022-09-13
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 
 energy::energy()
 {
     // the maximum number of R vectors included in r
     // the square of the electron charge (Ry atomic units)
     this->etot   = 0;          // the total energy of the solid
-	this->etot_harris = 0;	   // total energy of harris functional
+    this->etot_harris = 0;     // total energy of harris functional
     this->eband  = 0;          // the band energy
     this->deband = 0;          // correction for variational energy
-	this->deband_harris = 0;   // harris energy
+    this->deband_harris = 0;   // harris energy
     this->etxcc  = 0;          // the nlcc exchange and correlation
-	this->exx    = 0;          // the exact exchange energy.
-
+    this->exx = 0;             // the exact exchange energy.
     this->demet  = 0;          // correction for metals
     this->ef     = 0;          // the fermi energy
-	this->esol_el = 0;		   // the implicit solvation energy Ael
-	this->esol_cav = 0;		   // the implicit solvation energy Acav
+    this->esol_el = 0;         // the implicit solvation energy Ael
+    this->esol_cav = 0;        // the implicit solvation energy Acav
 }
 
 energy::~energy()
@@ -43,12 +37,12 @@ void energy::calculate_harris()
 //	ModuleBase::TITLE("energy","calculate_harris");
 	this->etot_harris = eband + deband_harris
 	+ (etxc - etxcc)
-	+ H_Ewald_pw::ewald_energy
-	+ elecstate::H_Hartree_pw::hartree_energy
+	+ elecstate::get_ewald_energy()
+	+ elecstate::get_hartree_energy()
 	+ demet
 	+ exx
-	+ elecstate::Efield::etotefield
-	+ elecstate::Gatefield::etotgatefield
+	+ elecstate::get_etot_efield()
+	+ elecstate::get_etot_gatefield()
 	+ evdw;  						// Peize Lin add evdw 2021.03.09
 
 #ifdef __LCAO
@@ -74,13 +68,13 @@ void energy::calculate_etot(void)
 	//std::cout << "\n demet in etot = " << demet << std::endl;
 	this->etot = eband + deband
 	+ (etxc - etxcc)
-	+ H_Ewald_pw::ewald_energy
-	+ elecstate::H_Hartree_pw::hartree_energy
+	+ elecstate::get_ewald_energy()
+	+ elecstate::get_hartree_energy()
 	+ demet
 	+ descf
 	+ exx
-	+ elecstate::Efield::etotefield
-    + elecstate::Gatefield::etotgatefield
+	+ elecstate::get_etot_efield()
+	+ elecstate::get_etot_gatefield()
 	+ evdw;							// Peize Lin add evdw 2021.03.09
     if (GlobalV::imp_sol)
     {
@@ -94,12 +88,12 @@ void energy::calculate_etot(void)
 	// std::cout << " eband=" << eband << std::endl;
 	// std::cout << " deband=" << deband << std::endl;
 	// std::cout << " etxc-etxcc=" <<etxc-etxcc << std::endl;
-	// std::cout << " ewld=" << H_Ewald_pw::ewald_energy << std::endl;
-	// std::cout << " ehart=" << H_Hartree_pw::hartree_energy << std::endl;
+	// std::cout << " ewld=" << elecstate::get_ewald_energy() << std::endl;
+	// std::cout << " ehart=" << elecstate::get_hartree_energy() << std::endl;
 	// std::cout << " demet=" << demet << std::endl;
 	// std::cout << " descf=" << descf << std::endl;
 	// std::cout << " exx=" << exx << std::endl;
-	// std::cout << " efiled=" << Efield::etotefield << std::endl;
+	// std::cout << " efiled=" << elecstate::get_etot_efield() << std::endl;
 	// std::cout << " total= "<<etot<<std::endl;
 	// std::cout << " fermienergy= "<<ef<<std::endl;
 
@@ -145,16 +139,16 @@ void energy::print_etot(
         this->print_format("E_Harris", etot_harris);
         this->print_format("E_band", eband);
         this->print_format("E_one_elec", eband + deband);
-        this->print_format("E_Hartree", elecstate::H_Hartree_pw::hartree_energy);
+        this->print_format("E_Hartree", elecstate::get_hartree_energy());
         this->print_format("E_xc", etxc - etxcc);
-        this->print_format("E_Ewald", H_Ewald_pw::ewald_energy);
+        this->print_format("E_Ewald", elecstate::get_ewald_energy());
         this->print_format("E_demet", demet); //mohan add 2011-12-02
         this->print_format("E_descf", descf);
-        if (INPUT.vdw_method == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
+        if (elecstate::get_input_vdw_method() == "d2") 				//Peize Lin add 2014-04, update 2021-03-09
         {
             this->print_format("E_vdwD2", evdw);
         }
-        else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
+        else if (elecstate::get_input_vdw_method() == "d3_0" || elecstate::get_input_vdw_method() == "d3_bj")					//jiyy add 2019-05, update 2021-05-02
         {
             this->print_format("E_vdwD3", evdw);
         }
@@ -168,11 +162,11 @@ void energy::print_etot(
         }
         if(GlobalV::EFIELD_FLAG)
         {
-            this->print_format("E_efield", elecstate::Efield::etotefield);
+            this->print_format("E_efield", elecstate::get_etot_efield());
         }
         if(GlobalV::GATE_FLAG)
         {
-            this->print_format("E_gatefield", elecstate::Gatefield::etotgatefield);
+            this->print_format("E_gatefield", elecstate::get_etot_gatefield());
         }
 
 #ifdef __DEEPKS
@@ -303,7 +297,7 @@ void energy::print_etot(
 				printf( "\e[36m%-15f\e[0m", this->etot*ModuleBase::Ry_to_eV);
 				std::cout << std::setprecision(3);
 	//			std::cout << std::setw(11) << this->eband;
-	//			std::cout << std::setw(11) << H_Hartree_pw::hartree_energy;
+	//			std::cout << std::setw(11) << elecstate::get_hartree_energy();
 	//			std::cout << std::setw(11) << this->etxc - this->etxcc;
 				std::cout << std::resetiosflags(ios::scientific);
 
@@ -366,7 +360,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 	const double* v_eff = pelec->pot->get_effective_v(0);
 	const double* v_fixed = pelec->pot->get_fixed_v();
 	const double* v_ofk = nullptr;
-	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 	{
 		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
@@ -374,7 +368,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 	for (int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 	{
 		deband_aux -= pelec->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 		{
 			deband_aux -= pelec->charge->kin_r[0][ir] * v_ofk[ir];
 		}
@@ -387,7 +381,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
         for (int ir = 0; ir < elecstate::get_rhopw_nrxx(); ir++)
         {
 			deband_aux -= pelec->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
-			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+			if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 			{
 				deband_aux -= pelec->charge->kin_r[1][ir] * v_ofk[ir];
 			}
@@ -435,7 +429,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 	const double* v_eff = pelec->pot->get_effective_v(0);
 	const double* v_fixed = pelec->pot->get_fixed_v();
 	const double* v_ofk = nullptr;
-	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+	if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 	{
 		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
@@ -443,7 +437,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 	for (int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 	{
 		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 		{
 			this->descf -= ( pelec->charge->kin_r[0][ir] - pelec->charge->kin_r_save[0][ir] ) * v_ofk[ir];
 		}
@@ -452,14 +446,14 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 	if (GlobalV::NSPIN==2)
 	{
 		v_eff = pelec->pot->get_effective_v(1);
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+		if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 		{
 			v_ofk = pelec->pot->get_effective_vofk(1);
 		}
 		for (int ir=0; ir<elecstate::get_rhopw_nrxx(); ir++)
 		{
 			this->descf -= ( pelec->charge->rho[1][ir] - pelec->charge->rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
-			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+			if(elecstate::get_xc_functional_type() == 3 || elecstate::get_xc_functional_type() == 5)
 			{
 				this->descf -= ( pelec->charge->kin_r[1][ir] - pelec->charge->kin_r_save[1][ir] ) * v_ofk[ir];
 			}
