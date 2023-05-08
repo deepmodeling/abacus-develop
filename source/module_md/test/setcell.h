@@ -23,7 +23,7 @@ Magnetism::~Magnetism()
 class Setcell
 {
   public:
-    static void setupcell(UnitCell &ucell)
+    static void setupcell(UnitCell& ucell)
     {
         ucell.ntype = 1;
 
@@ -106,7 +106,7 @@ class Setcell
         ucell.set_iat2itia();
     };
 
-    static void neighbor(Grid_Driver &grid_neigh, UnitCell &ucell)
+    static void neighbor(Grid_Driver& grid_neigh, UnitCell& ucell)
     {
         GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
         INPUT.mdp.lj_rcut = 8.5 * ModuleBase::ANGSTROM_AU;

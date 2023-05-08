@@ -16,20 +16,20 @@ class MD_base
      * @param my_rank MPI rank of the processer
      * @param global_readin_dir directory of files for reading
      */
-    virtual void setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir);
+    virtual void setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir);
 
     /**
      * @brief the first half of equation of motion, update velocities and positions
      * @param my_rank MPI rank of the processer
      * @param ofs determine the output files
      */
-    virtual void first_half(const int &my_rank, std::ofstream &ofs);
+    virtual void first_half(const int& my_rank, std::ofstream& ofs);
 
     /**
      * @brief the second half of equation of motion, update velocities
      * @param my_rank MPI rank of the processer
      */
-    virtual void second_half(const int &my_rank);
+    virtual void second_half(const int& my_rank);
 
     /**
      * @brief output MD information such as energy, temperature, and pressure
@@ -37,14 +37,14 @@ class MD_base
      * @param cal_stress whether calculate and output stress
      * @param my_rank MPI rank of the processer
      */
-    virtual void outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank);
+    virtual void outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank);
 
     /**
      * @brief write the information into files used for MD restarting
      * @param my_rank MPI rank of the processer
      * @param global_out_dir directory of output files
      */
-    virtual void write_restart(const int &my_rank, const std::string &global_out_dir);
+    virtual void write_restart(const int& my_rank, const std::string& global_out_dir);
 
   protected:
     /**
@@ -69,16 +69,16 @@ class MD_base
 
     // All parameters are in a.u. unit.
   public:
-    bool stop;           // MD stop or not
-    double t_current;    // current temperature
-    int step_;           // the MD step finished in current calculation
-    int step_rst_;       // the MD step finished in previous calculations
-    int frozen_freedom_; // the fixed freedom of the system
-    double *allmass;                    // atom mass
-    ModuleBase::Vector3<double> *pos;   // atom displacements  liuyu modify 2023-03-22
-    ModuleBase::Vector3<double> *vel;   // atom velocity
-    ModuleBase::Vector3<int> *ionmbl;   // atom is frozen or not
-    ModuleBase::Vector3<double> *force; // force of each atom
+    bool stop;                          // MD stop or not
+    double t_current;                   // current temperature
+    int step_;                          // the MD step finished in current calculation
+    int step_rst_;                      // the MD step finished in previous calculations
+    int frozen_freedom_;                // the fixed freedom of the system
+    double* allmass;                    // atom mass
+    ModuleBase::Vector3<double>* pos;   // atom displacements  liuyu modify 2023-03-22
+    ModuleBase::Vector3<double>* vel;   // atom velocity
+    ModuleBase::Vector3<int>* ionmbl;   // atom is frozen or not
+    ModuleBase::Vector3<double>* force; // force of each atom
     ModuleBase::matrix virial;          // virial for this lattice
     ModuleBase::matrix stress;          // stress for this lattice
     double potential;                   // potential energy
