@@ -80,9 +80,11 @@ void Charge::destroy()
     }
 }
 
-void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in)
+void Charge::allocate(const int &nspin_in)
 {
     ModuleBase::TITLE("Charge","allocate");
+	this->nrxx = this->rhopw->nrxx;
+	this->ngmc = this->rhopw->npw;
 
     if(allocate_rho == true)
     {
@@ -94,8 +96,6 @@ void Charge::allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_i
 
 	//  mohan add 2021-02-20
 	this->nspin = nspin_in;
-	this->nrxx = nrxx_in;
-	this->ngmc = ngmc_in;
 
     if (GlobalV::test_charge > 1)
     {

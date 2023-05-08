@@ -48,7 +48,7 @@ class Charge
 
     void init_rho(const ModuleBase::ComplexMatrix &strucFac);
     // mohan update 2021-02-20
-    void allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in);
+    void allocate(const int &nspin_in);
 
     void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, const ModuleBase::ComplexMatrix &strucFac) const;
 

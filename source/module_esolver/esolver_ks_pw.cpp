@@ -167,7 +167,7 @@ namespace ModuleESolver
         }
 
         // Inititlize the charge density.
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        this->pelec->charge->allocate(GlobalV::NSPIN);
 
         // Initialize the potential.
         if(this->pelec->pot == nullptr)
@@ -218,7 +218,7 @@ namespace ModuleESolver
             delete this->pelec;  
             this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), this->pw_rho, GlobalC::bigpw);
 
-            this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+            this->pelec->charge->allocate(GlobalV::NSPIN);
 
             delete this->pelec->pot;
             this->pelec->pot = new elecstate::Potential(
