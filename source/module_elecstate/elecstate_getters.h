@@ -34,11 +34,9 @@ const double get_exx_lip_exx_energy();
 // get exx_info.info_ri.real_number
 const bool get_exx_info_ri_real_number();
 // get exx_lri_double.Eexx
-template<typename Tdata>
-const Tdata get_exx_lri_double_Eexx();
+const double get_exx_lri_double_Eexx();
 // get exx_lri_complex.Eexx
-template<typename Tdata>
-const Tdata get_exx_lri_complex_Eexx();
+const std::complex<double> get_exx_lri_complex_Eexx();
 // get exx_info.info_global.cal_exx
 const bool get_exx_info_global_cal_exx();
 // get exx_info.info_global.hybrid_alpha

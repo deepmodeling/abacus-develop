@@ -9,6 +9,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_hamilt_general/module_surchem/surchem.h"
+#include <complex>
 
 namespace elecstate
 {
@@ -79,13 +80,11 @@ const bool get_exx_info_ri_real_number()
 {
     return GlobalC::exx_info.info_ri.real_number;
 }
-template<typename Tdata>
-const Tdata get_exx_lri_double_Eexx()
+const double get_exx_lri_double_Eexx()
 {
     return GlobalC::exx_lri_double.Eexx;
 }
-template<typename Tdata>
-const Tdata get_exx_lri_complex_Eexx()
+const std::complex<double> get_exx_lri_complex_Eexx()
 {
     return GlobalC::exx_lri_complex.Eexx;
 }
