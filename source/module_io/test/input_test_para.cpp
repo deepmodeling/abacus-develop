@@ -89,10 +89,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.symmetry,0);
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
-        EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_TRUE(INPUT.dump_force);
-        EXPECT_TRUE(INPUT.dump_vel);
-        EXPECT_TRUE(INPUT.dump_virial);
+        EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -237,6 +234,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+        EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -357,6 +355,9 @@ TEST_F(InputParaTest,Bcast)
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	    EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	    EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+        EXPECT_TRUE(INPUT.mdp.dump_force);
+        EXPECT_TRUE(INPUT.mdp.dump_vel);
+        EXPECT_TRUE(INPUT.mdp.dump_virial);
         EXPECT_FALSE(INPUT.mixing_tau);
         EXPECT_FALSE(INPUT.mixing_dftu);
         EXPECT_EQ(INPUT.out_bandgap,0);

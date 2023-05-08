@@ -440,8 +440,10 @@ OBJS_SRCPW=H_Ewald_pw.o\
     vnl_op.o\
     global.o\
     magnetism.o\
+    elecstate_getters.o\
     occupy.o\
     structure_factor.o\
+    structure_factor_k.o\
     soc.o\
     sto_iter.o\
     sto_hchi.o\
@@ -464,7 +466,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
-    wf_igk.o\
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

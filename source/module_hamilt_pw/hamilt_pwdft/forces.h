@@ -4,18 +4,21 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
-#include "module_basis/module_pw/pw_basis.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_psi/psi.h"
-#include "module_psi/kernels/memory_op.h"
+#include "module_basis/module_pw/pw_basis_k.h"
+#include "module_cell/klist.h"
+#include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_psi/kernels/memory_op.h"
+#include "module_psi/psi.h"
+#include "structure_factor.h"
 
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Forces
 {
-public:
-	friend class Force_Stress_LCAO;
+  public:
+    friend class Force_Stress_LCAO;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
      * is computed from 4 main parts
@@ -25,28 +28,40 @@ public:
      * (4) cal_nl: contribution due to the non-local pseudopotential.
      * (4) cal_scc: contributino due to incomplete SCF calculation.
      */
-    Forces() {};
-    ~Forces() {};
+    Forces(const int nat_in):nat(nat_in){};
+    ~Forces(){};
 
-    void init(ModuleBase::matrix& force, const ModuleBase::matrix& wg, const Charge* const chr, const psi::Psi<std::complex<FPTYPE>, Device>* psi_in=nullptr);
+    void cal_force(ModuleBase::matrix& force,
+                   const ModuleBase::matrix& wg,
+                   const Charge* const chr,
+                   ModulePW::PW_Basis* rho_basis,
+                   ModuleSymmetry::Symmetry* p_symm,
+                   Structure_Factor* p_sf,
+                   K_Vectors* pkv = nullptr,
+                   ModulePW::PW_Basis_K* psi_basis = nullptr,
+                   const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
 
-protected:
-
+  protected:
     int nat = 0;
-	static FPTYPE output_acc;
+    int npwx = 0;
+    static FPTYPE output_acc;
 
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
-    void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis);
+    void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
-    void cal_force_nl(ModuleBase::matrix& forcenl, const ModuleBase::matrix& wg, const psi::Psi<std::complex<FPTYPE>, Device>* psi_in=nullptr);
+    void cal_force_nl(ModuleBase::matrix& forcenl,
+                      const ModuleBase::matrix& wg,
+                      K_Vectors* p_kv,
+                      ModulePW::PW_Basis_K* psi_basis,
+                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis);
 
-    static void print( const std::string &name, const ModuleBase::matrix &f, bool rv=true );
-    static void print_to_files( std::ofstream &ofs, const std::string &name, const ModuleBase::matrix &f );
+    static void print(const std::string& name, const ModuleBase::matrix& f, bool rv = true);
+    static void print_to_files(std::ofstream& ofs, const std::string& name, const ModuleBase::matrix& f);
 
-private:
-    Device * ctx = {};
-    psi::DEVICE_CPU * cpu_ctx = {};
+  private:
+    Device* ctx = {};
+    psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
     using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
     using cal_vkb1_nl_op = hamilt::cal_vkb1_nl_op<FPTYPE, Device>;
@@ -67,7 +82,6 @@ private:
     using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
     using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
     using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
-
 };
 
 #endif

@@ -15,8 +15,8 @@
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
 
-Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra) :
-    RA(&ra){}
+Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) :
+    RA(&ra), f_pw(nat_in), nat(nat_in){}
 Force_Stress_LCAO::~Force_Stress_LCAO() {}
 
 void Force_Stress_LCAO::getForceStress(
@@ -511,6 +511,10 @@ void Force_Stress_LCAO::getForceStress(
 		}
 
 #ifdef __DEEPKS
+		if (GlobalV::deepks_out_labels) //not parallelized yet
+        {
+			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_base;
+		}
 		if (GlobalV::deepks_scf)
 		{
 			for (int i=0; i<3; i++)
@@ -523,7 +527,6 @@ void Force_Stress_LCAO::getForceStress(
 		}
 		if (GlobalV::deepks_out_labels) //not parallelized yet
         {
-			GlobalC::ld.save_npy_s(scs, "s_base.npy", GlobalC::ucell.omega); //change to energy unit Ry when printing, S_base;
 			// wenfei add 2021/11/2
 			if (GlobalV::deepks_scf)
 			{
@@ -629,8 +632,9 @@ void Force_Stress_LCAO::calForcePwPart(
 	//--------------------------------------------------------
 	// ewald force: use plane wave only.
 	//--------------------------------------------------------
-	f_pw.cal_force_ew (fewalds,  GlobalC::rhopw); //remain problem
-	//--------------------------------------------------------
+    f_pw.cal_force_ew(fewalds, GlobalC::rhopw, &GlobalC::sf); // remain problem
+
+    //--------------------------------------------------------
 	// force due to core correlation.
 	//--------------------------------------------------------
 	f_pw.cal_force_cc(fcc, GlobalC::rhopw, chr);
@@ -729,25 +733,24 @@ void Force_Stress_LCAO::calStressPwPart(
 	// local pseudopotential stress:
 	// use charge density; plane wave; local pseudopotential;
 	//--------------------------------------------------------
-    sc_pw.stress_loc (sigmadvl, GlobalC::rhopw, 0, chr);
+    sc_pw.stress_loc(sigmadvl, GlobalC::rhopw, &GlobalC::sf, 0, chr);
 
-	//--------------------------------------------------------
-	//hartree term
-	//--------------------------------------------------------
-	sc_pw.stress_har (sigmahar, GlobalC::rhopw, 0, chr);
+    //--------------------------------------------------------
+    // hartree term
+    //--------------------------------------------------------
+    sc_pw.stress_har(sigmahar, GlobalC::rhopw, 0, chr);
 
-	//--------------------------------------------------------
-	// ewald stress: use plane wave only.
-	//--------------------------------------------------------
-    sc_pw.stress_ewa (sigmaewa,  GlobalC::rhopw, 0); //remain problem
+    //--------------------------------------------------------
+    // ewald stress: use plane wave only.
+    //--------------------------------------------------------
+    sc_pw.stress_ewa(sigmaewa, GlobalC::rhopw, 0); // remain problem
 
+    //--------------------------------------------------------
+    // stress due to core correlation.
+    //--------------------------------------------------------
+    sc_pw.stress_cc(sigmacc, GlobalC::rhopw, &GlobalC::sf, 0, chr);
 
-	//--------------------------------------------------------
-	// stress due to core correlation.
-	//--------------------------------------------------------
-	sc_pw.stress_cc(sigmacc,  GlobalC::rhopw, 0, chr);
-
-	//--------------------------------------------------------
+    //--------------------------------------------------------
 	// stress due to self-consistent charge.
 	//--------------------------------------------------------
 	for(int i=0;i<3;i++)
@@ -755,9 +758,9 @@ void Force_Stress_LCAO::calStressPwPart(
 		sigmaxc(i,i) =  -(GlobalC::en.etxc) / GlobalC::ucell.omega;
 	}
 	//Exchange-correlation for PBE
-	sc_pw.stress_gga(sigmaxc, chr);
+    sc_pw.stress_gga(sigmaxc, GlobalC::rhopw, chr);
 
-	return;
+    return;
 }
 
 #include "module_base/mathzone.h"

@@ -3,6 +3,7 @@
 
 #include "hsolver.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 
 namespace hsolver {
 
@@ -10,7 +11,7 @@ template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class HSolverPW: public HSolver<FPTYPE, Device>
 {
   public:
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in);
+    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
 
     /*void init(
         const Basis* pbas
@@ -19,7 +20,11 @@ class HSolverPW: public HSolver<FPTYPE, Device>
     void update(//Input &in
     ) override;*/
 
-    void solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
+    void solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+               psi::Psi<std::complex<FPTYPE>, Device>& psi,
+               elecstate::ElecState* pes,
+               const std::string method_in,
+               const bool skip_charge) override;
 
     virtual FPTYPE cal_hsolerror() override;
     virtual FPTYPE set_diagethr(const int istep, const int iter, const FPTYPE drho) override;
@@ -29,9 +34,12 @@ class HSolverPW: public HSolver<FPTYPE, Device>
     void endDiagh();
     void hamiltSolvePsiK(hamilt::Hamilt<FPTYPE, Device>* hm, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue);
 
-    void updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt, psi::Psi<std::complex<FPTYPE>, Device>& psi, const int ik);
+    void updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
+                    psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                    const int ik);
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
+    wavefunc* pwf = nullptr;
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<FPTYPE> &h_diag, const int ik, const int npw);

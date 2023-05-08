@@ -30,7 +30,6 @@ class Ions_Move_CG
                        const int &ncggrad,
                        int &flag); // LiuXh fix bug of lpf, 20180515
     void setup_move(double *move, double *cg_gradn, const double &trust_radius);
-    void setup_etot_cg(const double &energy_in, const bool sd, const bool trial);
     void Brent(double &fa, double &fb, double &fc, double &xa, double &xb, double &xc, double &best_x, double &xpt);
     void f_cal(const double *g0, const double *g1, const int &dim, double &f_value);
     void third_order(const double &e0,

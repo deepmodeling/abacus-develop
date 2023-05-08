@@ -204,6 +204,7 @@ void Input_Conv::Convert(void)
 
     GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;
+    INPUT.mdp.force_thr = INPUT.force_thr;
 
     GlobalV::STRESS_THR = INPUT.stress_thr;
     GlobalV::PRESS1 = INPUT.press1;
@@ -470,6 +471,7 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
         GlobalC::exx_info.info_global.separate_loop = INPUT.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = INPUT.exx_hybrid_step;
+        GlobalC::exx_info.info_global.mixing_beta_for_loop1 = INPUT.exx_mixing_beta;
         GlobalC::exx_info.info_lip.lambda = INPUT.exx_lambda;
 
         GlobalC::exx_info.info_ri.real_number = std::stoi(INPUT.exx_real_number);
@@ -530,7 +532,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::SCF_NMAX = INPUT.scf_nmax;
     GlobalV::RELAX_NMAX = INPUT.relax_nmax;
-    GlobalV::MD_NSTEP = INPUT.mdp.md_nstep;
     GlobalV::md_prec_level = INPUT.mdp.md_prec_level;
 
     //----------------------------------------------------------

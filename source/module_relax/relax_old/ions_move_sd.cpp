@@ -26,6 +26,8 @@ void Ions_Move_SD::allocate(void)
     delete[] pos_saved;
     this->grad_saved = new double[dim];
     this->pos_saved = new double[dim];
+    ModuleBase::GlobalFunc::ZEROS(grad_saved, dim);
+    ModuleBase::GlobalFunc::ZEROS(pos_saved, dim);
 }
 
 void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in)

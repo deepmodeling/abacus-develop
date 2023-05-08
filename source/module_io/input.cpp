@@ -5,6 +5,7 @@
 // #include "global.h"
 #include "module_io/input.h"
 
+#include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -189,9 +190,6 @@ void Input::Default(void)
     ref_cell_factor = 1.0;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
     cal_force = 0;
-    dump_force = true;
-    dump_vel = true;
-    dump_virial = true;
     force_thr = 1.0e-3;
     force_thr_ev2 = 0;
     stress_thr = 1.0e-2; // LiuXh add 20180515
@@ -371,6 +369,7 @@ void Input::Default(void)
 
     exx_separate_loop = true;
     exx_hybrid_step = 100;
+    exx_mixing_beta = 0.0;
 
     exx_lambda = 0.3;
 
@@ -864,18 +863,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cal_force", word) == 0)
         {
             read_bool(ifs, cal_force);
-        }
-        else if (strcmp("dump_force", word) == 0)
-        {
-            read_bool(ifs, dump_force);
-        }
-        else if (strcmp("dump_vel", word) == 0)
-        {
-            read_bool(ifs, dump_vel);
-        }
-        else if (strcmp("dump_virial", word) == 0)
-        {
-            read_bool(ifs, dump_virial);
         }
         else if (strcmp("force_thr", word) == 0)
         {
@@ -1462,6 +1449,18 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mdp.pot_file);
         }
+        else if (strcmp("dump_force", word) == 0)
+        {
+            read_bool(ifs, mdp.dump_force);
+        }
+        else if (strcmp("dump_vel", word) == 0)
+        {
+            read_bool(ifs, mdp.dump_vel);
+        }
+        else if (strcmp("dump_virial", word) == 0)
+        {
+            read_bool(ifs, mdp.dump_virial);
+        }
         //----------------------------------------------------------
         // efield and dipole correction
         // Yu Liu add 2022-05-18
@@ -1802,6 +1801,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("exx_hybrid_step", word) == 0)
         {
             read_value(ifs, exx_hybrid_step);
+        }
+        else if (strcmp("exx_mixing_beta", word) == 0)
+        {
+            read_value(ifs, exx_mixing_beta);
         }
         else if (strcmp("exx_lambda", word) == 0)
         {
@@ -2786,9 +2789,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(ref_cell_factor);
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
     Parallel_Common::bcast_bool(cal_force);
-    Parallel_Common::bcast_bool(dump_force);
-    Parallel_Common::bcast_bool(dump_vel);
-    Parallel_Common::bcast_bool(dump_virial);
     Parallel_Common::bcast_double(force_thr);
     Parallel_Common::bcast_double(force_thr_ev2);
     Parallel_Common::bcast_double(stress_thr); // LiuXh add 20180515
@@ -2943,6 +2943,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mdp.md_pfirst);
     Parallel_Common::bcast_double(mdp.md_plast);
     Parallel_Common::bcast_double(mdp.md_pfreq);
+    Parallel_Common::bcast_bool(mdp.dump_force);
+    Parallel_Common::bcast_bool(mdp.dump_vel);
+    Parallel_Common::bcast_bool(mdp.dump_virial);
     // Yu Liu add 2022-05-18
     Parallel_Common::bcast_bool(efield_flag);
     Parallel_Common::bcast_bool(dip_cor_flag);
@@ -3046,6 +3049,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(exx_separate_loop);
     Parallel_Common::bcast_int(exx_hybrid_step);
     Parallel_Common::bcast_double(exx_lambda);
+    Parallel_Common::bcast_double(exx_mixing_beta);
     Parallel_Common::bcast_string(exx_real_number);
     Parallel_Common::bcast_double(exx_pca_threshold);
     Parallel_Common::bcast_double(exx_c_threshold);

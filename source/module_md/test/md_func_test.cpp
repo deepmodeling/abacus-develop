@@ -45,11 +45,11 @@ class MD_func_test : public testing::Test
 {
   protected:
     UnitCell ucell;
-    double *allmass;                    // atom mass
-    ModuleBase::Vector3<double> *pos;   // atom position
-    ModuleBase::Vector3<double> *vel;   // atom velocity
-    ModuleBase::Vector3<int> *ionmbl;   // atom is frozen or not
-    ModuleBase::Vector3<double> *force; // atom force
+    double* allmass;                    // atom mass
+    ModuleBase::Vector3<double>* pos;   // atom position
+    ModuleBase::Vector3<double>* vel;   // atom velocity
+    ModuleBase::Vector3<int>* ionmbl;   // atom is frozen or not
+    ModuleBase::Vector3<double>* force; // atom force
     ModuleBase::matrix virial;          // virial for this lattice
     ModuleBase::matrix stress;          // stress for this lattice
     double potential;                   // potential energy
@@ -160,7 +160,7 @@ TEST_F(MD_func_test, compute_stress)
 
 TEST_F(MD_func_test, MDdump)
 {
-    MD_func::MDdump(0, ucell, INPUT, virial, force, vel);
+    MD_func::MDdump(0, ucell, INPUT.mdp, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -206,7 +206,7 @@ TEST_F(MD_func_test, MDdump)
     ifs.close();
 
     // append
-    MD_func::MDdump(1, ucell, INPUT, virial, force, vel);
+    MD_func::MDdump(1, ucell, INPUT.mdp, virial, force, vel);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));

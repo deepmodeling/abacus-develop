@@ -1,21 +1,19 @@
 #include "esolver_of.h"
+
 #include "module_io/rho_io.h"
 
 //-----------temporary-------------------------
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/memory.h"
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_io/print_info.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/print_info.h"
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
 #include "module_hamilt_pw/hamilt_ofdft/of_stress_pw.h"
 //---------------------------------------------------
-#include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 
 namespace ModuleESolver
@@ -93,10 +91,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
 
-    //=======================
-    // init pseudopotential
-    //=======================
-    GlobalC::ppcell.init(GlobalC::ucell.ntype);
 
     //=================================
     // initalize local pseudopotential
@@ -297,7 +291,7 @@ void ESolver_OF::beforeOpt(const int istep)
     if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
     {
         CE.update_all_dis(GlobalC::ucell);
-        CE.extrapolate_charge(pelec->charge);
+        CE.extrapolate_charge(pelec->charge, &(GlobalC::sf));
     }
 
     this->pelec->init_scf(istep, GlobalC::sf.strucFac);
@@ -936,7 +930,21 @@ void ESolver_OF::afterOpt()
             int precision = 3; // be consistent with esolver_ks_lcao.cpp
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            this->pelec->pot->write_potential(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                is,
+                0,
+                ssp.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(),
+                precision);
         }
     }
 }
@@ -1091,9 +1099,9 @@ void ESolver_OF::cal_Energy(double& etot)
 
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
-    Forces<double> ff;
+    Forces<double> ff(GlobalC::ucell.nat);
     ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
-    ff.init(force, placeholder_wg, pelec->charge);
+    ff.cal_force(force, placeholder_wg, pelec->charge, this->pw_rho, &GlobalC::symm, &GlobalC::sf);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
@@ -1138,8 +1146,8 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
         kinetic_stress += this->lkt.stress + this->vw.stress;
     }
 
-    OF_Stress_PW ss(this->pelec);
-    ss.cal_stress(stress, kinetic_stress);
+    OF_Stress_PW ss(this->pelec, this->pw_rho);
+    ss.cal_stress(stress, kinetic_stress, GlobalC::ucell, &GlobalC::symm, &GlobalC::sf, &GlobalC::kv);
 }
 
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt

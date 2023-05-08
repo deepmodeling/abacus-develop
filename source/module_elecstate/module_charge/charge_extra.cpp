@@ -79,7 +79,7 @@ void Charge_Extra::Init_CE()
     beta  = 0.0;
 }
 
-void Charge_Extra::extrapolate_charge(Charge* chr)
+void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
     //-------------------------------------------------------
@@ -105,7 +105,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
     rho_extr = min(istep, pot_order);
     if(rho_extr == 0)
     {
-        GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+        sf->setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
         GlobalV::ofs_running << " charge density from previous step !" << std::endl;
         return;
     }
@@ -120,7 +120,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
         
         ModuleBase::GlobalFunc::ZEROS(rho_atom[is], GlobalC::rhopw->nrxx);
     }
-    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, GlobalC::rhopw);
+    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, GlobalC::rhopw, sf->strucFac);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
@@ -205,7 +205,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
         delete[] delta_rho3;
     }
 
-    GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+    sf->setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
     ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id)
     {
         int irbeg, irlen;
@@ -215,7 +215,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr)
             ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
         }
     });
-    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, GlobalC::rhopw);
+    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, GlobalC::rhopw, sf->strucFac);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
