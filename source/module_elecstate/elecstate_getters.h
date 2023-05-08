@@ -1,3 +1,4 @@
+#include <complex>
 // Description: Getters for elecstate module
 namespace elecstate
 {

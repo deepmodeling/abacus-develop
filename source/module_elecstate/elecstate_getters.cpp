@@ -9,7 +9,6 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_hamilt_general/module_surchem/surchem.h"
-#include <complex>
 
 namespace elecstate
 {
