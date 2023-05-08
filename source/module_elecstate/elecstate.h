@@ -14,9 +14,11 @@ class ElecState
   public:
     ElecState(){}
     ElecState(Charge* charge_in,
+              ModulePW::PW_Basis* rhopw_in,
               ModulePW::PW_Basis_Big* bigpw_in)
     {
         this->charge = charge_in;
+        this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
     }
     virtual ~ElecState()

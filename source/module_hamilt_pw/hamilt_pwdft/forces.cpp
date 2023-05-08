@@ -825,8 +825,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                             GlobalC::ucell.atoms[it].ncpp.r,
                                             GlobalC::ucell.atoms[it].ncpp.rab,
                                             GlobalC::ucell.atoms[it].ncpp.rho_atc,
-                                            rhocg,
-                                            rho_basis);
+                                            rhocg);
 #ifdef _OPENMP
 #pragma omp parallel
             {

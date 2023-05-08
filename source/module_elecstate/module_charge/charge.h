@@ -50,7 +50,7 @@ class Charge
     // mohan update 2021-02-20
     void allocate(const int &nspin_in, const int &nrxx_in, const int &ngmc_in);
 
-    void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, ModulePW::PW_Basis *rho_basis, const ModuleBase::ComplexMatrix &strucFac) const;
+    void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, const ModuleBase::ComplexMatrix &strucFac) const;
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
 
@@ -68,8 +68,7 @@ class Charge
         const double *r,
         const double *rab,
         const double *rhoc,
-        double *rhocg,
-        ModulePW::PW_Basis* rho_basis
+        double *rhocg
     ) const;
 
 	double check_ne(const double *rho_in) const;

@@ -106,8 +106,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
 				GlobalC::ucell.atoms[nt].ncpp.r,
 				GlobalC::ucell.atoms[nt].ncpp.rab,
 				GlobalC::ucell.atoms[nt].ncpp.rho_atc,
-				rhocg,
-				rho_basis);
+				rhocg);
 
 
 			//diagonal term 
