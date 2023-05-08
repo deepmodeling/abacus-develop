@@ -31,11 +31,11 @@ const double get_dftu_energy()
 #ifdef __DEEPKS
 const double get_lcao_deepks_E_delta()
 {
-    return GlobalC::ld.E_delta();
+    return GlobalC::ld.E_delta;
 }
 const double get_lcao_deepks_e_delta_band()
 {
-    return GlobalC::ld.e_delta_band();
+    return GlobalC::ld.e_delta_band;
 }
 #endif
 }
