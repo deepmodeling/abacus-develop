@@ -7,7 +7,7 @@
 
 unkOverlap_lcao::unkOverlap_lcao()
 {
-	allocate_flag = false;
+    allocate_flag = false;
     /*
     const int kpoints_number = p_kv->nkstot;
     lcao_wfc_global = new std::complex<double>**[kpoints_number];
@@ -33,26 +33,26 @@ unkOverlap_lcao::unkOverlap_lcao()
 
 unkOverlap_lcao::~unkOverlap_lcao()
 {
-	if(allocate_flag)
-	{
+    if (allocate_flag)
+    {
         for (int ik = 0; ik < this->kpoints_number; ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-				delete lcao_wfc_global[ik][ib];
-			}
-			delete lcao_wfc_global[ik];
+                delete lcao_wfc_global[ik][ib];
+            }
+            delete lcao_wfc_global[ik];
         }
         delete lcao_wfc_global;
 
         for(int iw = 0; iw < GlobalV::NLOCAL; iw++)
-		{
-			delete cal_tag[iw];
-		}
-		delete cal_tag;
-	}
-	
-	//GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
+        {
+            delete cal_tag[iw];
+        }
+        delete cal_tag;
+    }
+
+    // GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
 }
 
 void unkOverlap_lcao::init(std::complex<double>*** wfc_k_grid, const int nkstot)
