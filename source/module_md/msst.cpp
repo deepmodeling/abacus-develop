@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-MSST::MSST(MD_parameters &MD_para_in, UnitCell &unit_in) : MD_base(MD_para_in, unit_in)
+MSST::MSST(MD_parameters& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
@@ -31,7 +31,7 @@ MSST::~MSST()
     delete[] old_v;
 }
 
-void MSST::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const std::string &global_readin_dir)
+void MSST::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::tick("MSST", "setup");
@@ -69,7 +69,7 @@ void MSST::setup(ModuleESolver::ESolver *p_esolver, const int &my_rank, const st
     ModuleBase::timer::tick("MSST", "setup");
 }
 
-void MSST::first_half(const int &my_rank, std::ofstream &ofs)
+void MSST::first_half(const int& my_rank, std::ofstream& ofs)
 {
     ModuleBase::TITLE("MSST", "first_half");
     ModuleBase::timer::tick("MSST", "first_half");
@@ -122,7 +122,7 @@ void MSST::first_half(const int &my_rank, std::ofstream &ofs)
     ModuleBase::timer::tick("MSST", "first_half");
 }
 
-void MSST::second_half(const int &my_rank)
+void MSST::second_half(const int& my_rank)
 {
     ModuleBase::TITLE("MSST", "second_half");
     ModuleBase::timer::tick("MSST", "second_half");
@@ -147,12 +147,12 @@ void MSST::second_half(const int &my_rank)
     ModuleBase::timer::tick("MSST", "second_half");
 }
 
-void MSST::outputMD(std::ofstream &ofs, const bool &cal_stress, const int &my_rank)
+void MSST::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
     MD_base::outputMD(ofs, cal_stress, my_rank);
 }
 
-void MSST::write_restart(const int &my_rank, const std::string &global_out_dir)
+void MSST::write_restart(const int& my_rank, const std::string& global_out_dir)
 {
     if (!my_rank)
     {
@@ -174,7 +174,7 @@ void MSST::write_restart(const int &my_rank, const std::string &global_out_dir)
 #endif
 }
 
-void MSST::restart(const int &my_rank, const std::string &global_readin_dir)
+void MSST::restart(const int& my_rank, const std::string& global_readin_dir)
 {
     bool ok = true;
 
@@ -232,7 +232,7 @@ double MSST::vel_sum()
     return vsum;
 }
 
-void MSST::rescale(std::ofstream &ofs, const double &volume)
+void MSST::rescale(std::ofstream& ofs, const double& volume)
 {
     int sd = mdp.msst_direction;
 
@@ -256,7 +256,7 @@ void MSST::rescale(std::ofstream &ofs, const double &volume)
     }
 }
 
-void MSST::propagate_vel(const int &my_rank)
+void MSST::propagate_vel(const int& my_rank)
 {
     if (my_rank == 0)
     {

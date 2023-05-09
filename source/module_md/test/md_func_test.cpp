@@ -45,11 +45,11 @@ class MD_func_test : public testing::Test
 {
   protected:
     UnitCell ucell;
-    double *allmass;                    // atom mass
-    ModuleBase::Vector3<double> *pos;   // atom position
-    ModuleBase::Vector3<double> *vel;   // atom velocity
-    ModuleBase::Vector3<int> *ionmbl;   // atom is frozen or not
-    ModuleBase::Vector3<double> *force; // atom force
+    double* allmass;                    // atom mass
+    ModuleBase::Vector3<double>* pos;   // atom position
+    ModuleBase::Vector3<double>* vel;   // atom velocity
+    ModuleBase::Vector3<int>* ionmbl;   // atom is frozen or not
+    ModuleBase::Vector3<double>* force; // atom force
     ModuleBase::matrix virial;          // virial for this lattice
     ModuleBase::matrix stress;          // stress for this lattice
     double potential;                   // potential energy
