@@ -49,7 +49,7 @@ class FIREtest : public testing::Test
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new FIRE(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -74,7 +74,7 @@ TEST_F(FIREtest, Setup)
 
 TEST_F(FIREtest, FirstHalf)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00045447059554315662, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00032646833232493271, doublethreshold);
@@ -105,8 +105,8 @@ TEST_F(FIREtest, FirstHalf)
 
 TEST_F(FIREtest, SecondHalf)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->first_half(GlobalV::ofs_running);
+    mdrun->second_half();
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00045447059554315662, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00032646833232493271, doublethreshold);
@@ -139,7 +139,7 @@ TEST_F(FIREtest, WriteRestart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+    mdrun->write_restart(GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -158,7 +158,7 @@ TEST_F(FIREtest, WriteRestart)
 
 TEST_F(FIREtest, Restart)
 {
-    mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+    mdrun->restart(GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
     FIRE* fire = dynamic_cast<FIRE*>(mdrun);
@@ -172,7 +172,7 @@ TEST_F(FIREtest, Restart)
 TEST_F(FIREtest, PrintMD)
 {
     std::ofstream ofs("running.log");
-    mdrun->print_md(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true);
     ofs.close();
 
     std::ifstream ifs("running.log");

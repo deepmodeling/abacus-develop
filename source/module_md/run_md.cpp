@@ -49,12 +49,12 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+            mdrun->setup(p_esolver, GlobalV::global_readin_dir);
         }
         else
         {
             Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
-            mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+            mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions
             MD_func::force_virial(p_esolver,
@@ -65,7 +65,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
                                   md_para.cal_stress,
                                   mdrun->virial);
 
-            mdrun->second_half(GlobalV::MY_RANK);
+            mdrun->second_half();
 
             MD_func::compute_stress(unit_in,
                                     mdrun->vel,
@@ -82,7 +82,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
 
         if ((mdrun->step_ + mdrun->step_rst_) % md_para.md_dumpfreq == 0)
         {
-            mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS, GlobalV::MY_RANK);
+            mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                GlobalV::global_out_dir,
@@ -99,7 +99,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
             std::stringstream file;
             file << GlobalV::global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
             unit_in.print_stru_file(file.str(), 1, 1);
-            mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+            mdrun->write_restart(GlobalV::global_out_dir);
         }
 
         mdrun->step_++;

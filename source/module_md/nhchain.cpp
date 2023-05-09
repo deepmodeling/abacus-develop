@@ -147,12 +147,12 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
+void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 
-    MD_base::setup(p_esolver, my_rank, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir);
     if (mdp.md_type == "npt")
     {
         ucell.cell_parameter_updated = true;
@@ -204,7 +204,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, c
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 }
 
-void Nose_Hoover::first_half(const int& my_rank, std::ofstream& ofs)
+void Nose_Hoover::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
@@ -241,7 +241,7 @@ void Nose_Hoover::first_half(const int& my_rank, std::ofstream& ofs)
     }
 
     /// perform half-step update of vel due to atomic force
-    MD_base::update_vel(force, my_rank);
+    MD_base::update_vel(force);
 
     if (npt_flag)
     {
@@ -250,7 +250,7 @@ void Nose_Hoover::first_half(const int& my_rank, std::ofstream& ofs)
     }
 
     /// perform one step update of pos due to atomic velocity
-    MD_base::update_pos(my_rank);
+    MD_base::update_pos();
 
     if (npt_flag)
     {
@@ -261,13 +261,13 @@ void Nose_Hoover::first_half(const int& my_rank, std::ofstream& ofs)
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 }
 
-void Nose_Hoover::second_half(const int& my_rank)
+void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 
     /// perform half-step update of vel due to atomic force
-    MD_base::update_vel(force, my_rank);
+    MD_base::update_vel(force);
 
     if (npt_flag)
     {
@@ -302,14 +302,14 @@ void Nose_Hoover::second_half(const int& my_rank)
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 }
 
-void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    MD_base::print_md(ofs, cal_stress, my_rank);
+    MD_base::print_md(ofs, cal_stress);
 }
 
-void Nose_Hoover::write_restart(const int& my_rank, const std::string& global_out_dir)
+void Nose_Hoover::write_restart(const std::string& global_out_dir)
 {
-    if (!my_rank)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.dat";
@@ -356,13 +356,13 @@ void Nose_Hoover::write_restart(const int& my_rank, const std::string& global_ou
 #endif
 }
 
-void Nose_Hoover::restart(const int& my_rank, const std::string& global_readin_dir)
+void Nose_Hoover::restart(const std::string& global_readin_dir)
 {
     bool ok = true;
     bool ok2 = true;
     bool ok3 = true;
 
-    if (!my_rank)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
         ssc << global_readin_dir << "Restart_md.dat";

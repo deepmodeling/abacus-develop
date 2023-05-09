@@ -44,11 +44,11 @@ MD_base::~MD_base()
     delete[] force;
 }
 
-void MD_base::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
+void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     if (mdp.md_restart)
     {
-        restart(my_rank, global_readin_dir);
+        restart(global_readin_dir);
     }
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
@@ -59,20 +59,20 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const
     ucell.ionic_position_updated = true;
 }
 
-void MD_base::first_half(const int& my_rank, std::ofstream& ofs)
+void MD_base::first_half(std::ofstream& ofs)
 {
-    update_vel(force, my_rank);
-    update_pos(my_rank);
+    update_vel(force);
+    update_pos();
 }
 
-void MD_base::second_half(const int& my_rank)
+void MD_base::second_half()
 {
-    update_vel(force, my_rank);
+    update_vel(force);
 }
 
-void MD_base::update_pos(const int& my_rank)
+void MD_base::update_pos()
 {
-    if (my_rank == 0)
+    if (mdp.my_rank == 0)
     {
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -98,9 +98,9 @@ void MD_base::update_pos(const int& my_rank)
     ucell.update_pos_taud(pos);
 }
 
-void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my_rank)
+void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 {
-    if (my_rank == 0)
+    if (mdp.my_rank == 0)
     {
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -119,9 +119,9 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my
 #endif
 }
 
-void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    if (my_rank)
+    if (mdp.my_rank)
         return;
 
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
@@ -183,9 +183,9 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my
     ofs << std::endl;
 }
 
-void MD_base::write_restart(const int& my_rank, const std::string& global_out_dir)
+void MD_base::write_restart(const std::string& global_out_dir)
 {
-    if (!my_rank)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.dat";
@@ -199,7 +199,7 @@ void MD_base::write_restart(const int& my_rank, const std::string& global_out_di
 #endif
 }
 
-void MD_base::restart(const int& my_rank, const std::string& global_readin_dir)
+void MD_base::restart(const std::string& global_readin_dir)
 {
-    step_rst_ = MD_func::current_step(my_rank, global_readin_dir);
+    step_rst_ = MD_func::current_step(mdp.my_rank, global_readin_dir);
 }

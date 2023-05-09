@@ -23,55 +23,55 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
+void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
 
-    MD_base::setup(p_esolver, my_rank, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir);
 
     check_force();
 
     ModuleBase::timer::tick("FIRE", "setup");
 }
 
-void FIRE::first_half(const int& my_rank, std::ofstream& ofs)
+void FIRE::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::tick("FIRE", "first_half");
 
-    MD_base::update_vel(force, my_rank);
+    MD_base::update_vel(force);
 
     check_fire();
 
-    MD_base::update_pos(my_rank);
+    MD_base::update_pos();
 
     ModuleBase::timer::tick("FIRE", "first_half");
 }
 
-void FIRE::second_half(const int& my_rank)
+void FIRE::second_half()
 {
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
 
-    MD_base::update_vel(force, my_rank);
+    MD_base::update_vel(force);
 
     check_force();
 
     ModuleBase::timer::tick("FIRE", "second_half");
 }
 
-void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    MD_base::print_md(ofs, cal_stress, my_rank);
+    MD_base::print_md(ofs, cal_stress);
 
     ofs << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
     std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
 }
 
-void FIRE::write_restart(const int& my_rank, const std::string& global_out_dir)
+void FIRE::write_restart(const std::string& global_out_dir)
 {
-    if (!my_rank)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.dat";
@@ -89,11 +89,11 @@ void FIRE::write_restart(const int& my_rank, const std::string& global_out_dir)
 #endif
 }
 
-void FIRE::restart(const int& my_rank, const std::string& global_readin_dir)
+void FIRE::restart(const std::string& global_readin_dir)
 {
     bool ok = true;
 
-    if (!my_rank)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
         ssc << global_readin_dir << "Restart_md.dat";

@@ -14,19 +14,18 @@ class Verlet : public MD_base
     ~Verlet();
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir);
-    void first_half(const int& my_rank, std::ofstream& ofs);
-    void second_half(const int& my_rank);
-    void restart(const int& my_rank, const std::string& global_readin_dir);
-    void print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank);
-    void write_restart(const int& my_rank, const std::string& global_out_dir);
+    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void first_half(std::ofstream& ofs);
+    void second_half();
+    void restart(const std::string& global_readin_dir);
+    void print_md(std::ofstream& ofs, const bool& cal_stress);
+    void write_restart(const std::string& global_out_dir);
 
     /**
      * @brief apply specifical thermostats according to the input para
      *
-     * @param my_rank MPI rank of the processor
      */
-    void apply_thermostat(const int& my_rank);
+    void apply_thermostat();
 
     /**
      * @brief rescale atomic velocities
