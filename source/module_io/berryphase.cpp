@@ -39,10 +39,10 @@ void berryphase::get_occupation_bands()
 }
 
 #ifdef __LCAO
-void berryphase::lcao_init()
+void berryphase::lcao_init(const K_Vectors* p_kv)
 {
 	ModuleBase::TITLE("berryphase","lcao_init");
-	lcao_method.init(this->lowf->wfc_k_grid);
+	lcao_method.init(this->lowf->wfc_k_grid, p_kv->nkstot);
 	lcao_method.cal_R_number();
 	lcao_method.cal_orb_overlap();
 	return;
@@ -328,7 +328,7 @@ double berryphase::stringPhase(int index_str, int nbands, const psi::Psi<std::co
 			if(GlobalV::NSPIN!=4)
 			{
 				//std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
-				zeta = zeta * lcao_method.det_berryphase(ik_1,ik_2,dk,nbands, *this->lowf, psi_in);
+				zeta = zeta * lcao_method.det_berryphase(ik_1,ik_2,dk,nbands, *this->lowf, psi_in, p_kv);
 				// test by jingan
 				//GlobalV::ofs_running << "methon 1: det = " << my_det << std::endl;
 				// test by jingan
@@ -346,7 +346,7 @@ double berryphase::stringPhase(int index_str, int nbands, const psi::Psi<std::co
 				for (int nb = 0; nb < nbands; nb++)
 				{
 					
-					mat(nb, mb) = lcao_method.unkdotp_LCAO(ik_1,ik_2,nb,mb,dk);
+					mat(nb, mb) = lcao_method.unkdotp_LCAO(ik_1,ik_2,nb,mb,dk,p_kv);
 				}
 			}
 			
@@ -453,7 +453,7 @@ void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* 
 {	
 	get_occupation_bands();
 #ifdef __LCAO	
-	if( GlobalV::BASIS_TYPE == "lcao" ) this->lcao_init();
+	if( GlobalV::BASIS_TYPE == "lcao" ) this->lcao_init(p_kv);
 #endif
 	
 	GlobalV::ofs_running << "\n\n\n\n";

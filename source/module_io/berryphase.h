@@ -35,7 +35,7 @@ public:
 
 	void get_occupation_bands();
 
-	void lcao_init();
+	void lcao_init(const K_Vectors* p_kv);
 
 	void set_kpoints(const K_Vectors* p_kv, const int direction);
 
