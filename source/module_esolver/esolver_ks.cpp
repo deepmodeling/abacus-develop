@@ -310,7 +310,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const FPTYPE drho, const FPTYPE duration, const FPTYPE ethr)
     {
-        GlobalC::en.print_etot(this->pw_rho, this->conv_elec, iter, drho, duration, ethr);
+        GlobalC::en.print_etot(this->pw_rho->nrxx, this->pw_rho->nxyz, this->conv_elec, iter, drho, duration, ethr);
     }
 
     template<typename FPTYPE, typename Device>

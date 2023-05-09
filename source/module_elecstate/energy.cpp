@@ -76,7 +76,7 @@ void energy::calculate_harris()
 	return;
 }
 
-void energy::calculate_etot(const ModulePW::PW_Basis* rhopw)
+void energy::calculate_etot(const int& nrxx, const int& nxyz)
 {
 	ModuleBase::TITLE("energy","calculate_etot");
 	//std::cout << "\n demet in etot = " << demet << std::endl;
@@ -92,8 +92,8 @@ void energy::calculate_etot(const ModulePW::PW_Basis* rhopw)
 	+ evdw;							// Peize Lin add evdw 2021.03.09
 	if (GlobalV::imp_sol)
     {
-	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, rhopw)
-				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, rhopw);
+	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, nrxx, nxyz)
+				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, nxyz);
 	}
 
     //Quxin adds for DFT+U energy correction on 20201029
@@ -128,7 +128,8 @@ void energy::calculate_etot(const ModulePW::PW_Basis* rhopw)
 }
 
 void energy::print_etot(
-	const ModulePW::PW_Basis* rhopw,
+	const int& nrxx,
+	const int& nxyz,
 	const bool converged,
 	const int &iter_in,
 	const double &scf_thr,
@@ -170,8 +171,8 @@ void energy::print_etot(
         this->print_format("E_exx", exx);
         if (GlobalV::imp_sol)
         {
-            esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, rhopw);
-            esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, rhopw);
+            esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, nrxx, nxyz);
+            esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, nxyz);
             this->print_format("E_sol_el", esol_el);
             this->print_format("E_sol_cav", esol_cav);
         }

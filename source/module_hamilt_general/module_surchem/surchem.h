@@ -62,9 +62,9 @@ class surchem
                                complex<double> *PS_TOTN,
                                int nspin);
 
-    double cal_Ael(const UnitCell &cell, const ModulePW::PW_Basis *rho_basis);
+    double cal_Ael(const UnitCell &cell, const int& nrxx, const int& nxyz);
 
-    double cal_Acav(const UnitCell &cell, const ModulePW::PW_Basis *rho_basis);
+    double cal_Acav(const UnitCell &cell, const int& nxyz);
 
     void cal_Acomp(const UnitCell &cell,
                    ModulePW::PW_Basis *rho_basis,

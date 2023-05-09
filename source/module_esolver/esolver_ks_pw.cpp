@@ -457,7 +457,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::eachiterfinish(const int iter)
     {
         //print_eigenvalue(GlobalV::ofs_running);
-        GlobalC::en.calculate_etot(this->pw_rho);
+        GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
         //We output it for restarting the scf.
         bool print = false;
         if (this->out_freq_elec && iter % this->out_freq_elec == 0)

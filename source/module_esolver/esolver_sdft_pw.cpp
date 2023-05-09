@@ -93,7 +93,7 @@ void ESolver_SDFT_PW::beforescf(const int istep)
 void ESolver_SDFT_PW::eachiterfinish(int iter)
 {
 	//this->pelec->print_eigenvalue(GlobalV::ofs_running);
-    GlobalC::en.calculate_etot(this->pw_rho);
+    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
 }
 void ESolver_SDFT_PW::afterscf(const int istep)
 {

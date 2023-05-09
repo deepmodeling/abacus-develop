@@ -838,7 +838,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     }
 
     // (11) calculate the total energy.
-    GlobalC::en.calculate_etot(this->pw_rho);
+    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
 }
 
 void ESolver_KS_LCAO::afterscf(const int istep)
