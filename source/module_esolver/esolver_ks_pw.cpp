@@ -938,7 +938,7 @@ namespace ModuleESolver
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp;
-            bp.Macroscopic_polarization(this->psi);
+            bp.Macroscopic_polarization(this->psi,&(GlobalC::kv));
         }
 
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");

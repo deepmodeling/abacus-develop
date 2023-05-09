@@ -36,13 +36,13 @@ public:
 
 	void lcao_init();
 
-	void set_kpoints(const int direction);
+	void set_kpoints(const K_Vectors* p_kv, const int direction);
 
-	double stringPhase(int index_str, int nbands, const psi::Psi<std::complex<double>>* psi_in);
+	double stringPhase(int index_str, int nbands, const psi::Psi<std::complex<double>>* psi_in, const K_Vectors* p_kv);
 
-	void Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot, const psi::Psi<std::complex<double>>* psi_in);
+	void Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot, const psi::Psi<std::complex<double>>* psi_in, const K_Vectors* p_kv);
 
-	void Macroscopic_polarization(const psi::Psi<std::complex<double>>* psi_in);
+	void Macroscopic_polarization(const psi::Psi<std::complex<double>>* psi_in, const K_Vectors* p_kv);
 
 	std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
 	
