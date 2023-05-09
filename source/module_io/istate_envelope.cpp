@@ -138,7 +138,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
     }
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
+        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, &(GlobalC::kv));
     }
 
     delete[] bands_picked;
@@ -270,7 +270,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
+            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, &(GlobalC::kv));
         }
     }
 

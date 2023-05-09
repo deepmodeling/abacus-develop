@@ -833,7 +833,7 @@ namespace ModuleESolver
 
         if(GlobalC::wf.out_wfc_r == 1)				// Peize Lin add 2021.11.21
         {
-            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true);
+            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true, &(GlobalC::kv));
         }	
 
         if(INPUT.cal_cond)
