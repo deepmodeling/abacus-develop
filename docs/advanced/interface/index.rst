@@ -14,3 +14,4 @@ Interfaces to Other Softwares
    Wannier90
    ase
    pyatb
+   ShengBTE
