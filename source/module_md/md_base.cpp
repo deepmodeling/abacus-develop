@@ -6,7 +6,7 @@
 #endif
 #include "module_io/print_info.h"
 
-MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
+MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
 {
     if (mdp.md_seed >= 0)
     {
@@ -23,7 +23,7 @@ MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in)
     virial.create(3, 3);
     stress.create(3, 3);
 
-    // convert to a.u. unit
+    /// convert to a.u. unit
     mdp.md_dt /= ModuleBase::AU_to_FS;
     mdp.md_tfirst /= ModuleBase::Hartree_to_K;
     mdp.md_tlast /= ModuleBase::Hartree_to_K;
@@ -32,7 +32,7 @@ MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in)
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::InitVel(ucell, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
+    MD_func::init_vel(ucell, mdp.md_tfirst, mdp.my_rank, allmass, frozen_freedom_, ionmbl, vel);
 }
 
 MD_base::~MD_base()
@@ -53,8 +53,8 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
 
-    MD_func::force_virial(p_esolver, step_, ucell, potential, force, virial);
-    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
+    MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     ucell.ionic_position_updated = true;
 }
@@ -119,7 +119,7 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my
 #endif
 }
 
-void MD_base::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
     if (my_rank)
         return;
@@ -177,7 +177,7 @@ void MD_base::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my
         << std::endl;
     if (cal_stress)
     {
-        MD_func::outStress(virial, stress);
+        MD_func::print_stress(ofs, virial, stress);
     }
     ofs << std::endl;
     ofs << std::endl;

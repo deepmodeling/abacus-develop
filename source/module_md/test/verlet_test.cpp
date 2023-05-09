@@ -30,7 +30,7 @@
  *   - verlet::restart
  *     - restart MD when md_restart is true
  *
- *   - verlet::outputMD
+ *   - verlet::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -298,10 +298,10 @@ TEST_F(Verlet_test, restart)
     EXPECT_EQ(mdrun->step_rst_, 3);
 }
 
-TEST_F(Verlet_test, outputMD)
+TEST_F(Verlet_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true, GlobalV::MY_RANK);
     ofs.close();
 
     std::ifstream ifs("running.log");

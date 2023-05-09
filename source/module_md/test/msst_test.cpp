@@ -30,7 +30,7 @@
  *   - MSST::restart
  *     - restart MD when md_restart is true
  *
- *   - MSST::outputMD
+ *   - MSST::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -211,10 +211,10 @@ TEST_F(MSST_test, restart)
     EXPECT_EQ(msst->lag_pos, 0);
 }
 
-TEST_F(MSST_test, outputMD)
+TEST_F(MSST_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true, GlobalV::MY_RANK);
     ofs.close();
 
     std::ifstream ifs("running.log");

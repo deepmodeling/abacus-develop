@@ -30,7 +30,7 @@
  *   - Nose_Hoover::restart
  *     - restart MD when md_restart is true
  *
- *   - Nose_Hoover::outputMD
+ *   - Nose_Hoover::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -203,10 +203,10 @@ TEST_F(NHC_test, restart)
     EXPECT_EQ(nhc->v_peta[3], 3.60329);
 }
 
-TEST_F(NHC_test, outputMD)
+TEST_F(NHC_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true, GlobalV::MY_RANK);
     ofs.close();
 
     std::ifstream ifs("running.log");

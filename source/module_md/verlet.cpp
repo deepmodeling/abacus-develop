@@ -3,7 +3,7 @@
 #include "md_func.h"
 #include "module_base/timer.h"
 
-Verlet::Verlet(MD_parameters& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+Verlet::Verlet(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
 }
 
@@ -120,9 +120,9 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
     }
 }
 
-void Verlet::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
-    MD_base::outputMD(ofs, cal_stress, my_rank);
+    MD_base::print_md(ofs, cal_stress, my_rank);
 }
 
 void Verlet::write_restart(const int& my_rank, const std::string& global_out_dir)

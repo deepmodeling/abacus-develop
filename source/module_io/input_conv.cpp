@@ -204,7 +204,6 @@ void Input_Conv::Convert(void)
 
     GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;
-    INPUT.mdp.force_thr = INPUT.force_thr;
 
     GlobalV::STRESS_THR = INPUT.stress_thr;
     GlobalV::PRESS1 = INPUT.press1;
@@ -364,6 +363,13 @@ void Input_Conv::Convert(void)
     elecstate::Gatefield::block_down = INPUT.block_down;
     elecstate::Gatefield::block_up = INPUT.block_up;
     elecstate::Gatefield::block_height = INPUT.block_height;
+
+    //----------------------------------------------------------
+    // Yu Liu add 2023-05-09
+    //----------------------------------------------------------
+    INPUT.mdp.force_thr = GlobalV::FORCE_THR;
+    INPUT.mdp.my_rank = GlobalV::MY_RANK;
+    INPUT.mdp.cal_stress = GlobalV::CAL_STRESS;
 
 //----------------------------------------------------------
 // Fuxiang He add 2016-10-26

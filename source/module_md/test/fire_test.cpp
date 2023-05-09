@@ -30,7 +30,7 @@
  *   - FIRE::restart
  *     - restart MD when md_restart is true
  *
- *   - FIRE::outputMD
+ *   - FIRE::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -169,10 +169,10 @@ TEST_F(FIREtest, Restart)
     EXPECT_EQ(mdrun->mdp.md_dt, 41.3414);
 }
 
-TEST_F(FIREtest, OutputMD)
+TEST_F(FIREtest, PrintMD)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true, GlobalV::MY_RANK);
     ofs.close();
 
     std::ifstream ifs("running.log");
@@ -199,9 +199,10 @@ TEST_F(FIREtest, OutputMD)
         output_str,
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    getline(ifs, output_str);
+    for (int i = 0; i < 10; ++i)
+    {
+        getline(ifs, output_str);
+    }
     EXPECT_THAT(output_str, testing::HasSubstr(" LARGEST GRAD (eV/A)  : 0.049479926"));
     ifs.close();
     remove("running.log");

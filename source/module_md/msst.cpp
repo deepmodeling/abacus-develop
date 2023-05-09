@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-MSST::MSST(MD_parameters& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+MSST::MSST(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
@@ -62,7 +62,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const st
             }
         }
 
-        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+        MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
         t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     }
 
@@ -79,44 +79,44 @@ void MSST::first_half(const int& my_rank, std::ofstream& ofs)
     double vol;
     energy_ = potential + kinetic;
 
-    // propagate the time derivative of volume 1/2 step
+    /// propagate the time derivative of volume 1/2 step
     propagate_voldot();
 
     vsum = vel_sum();
 
-    // save the velocities
+    /// save the velocities
     for (int i = 0; i < ucell.nat; ++i)
     {
         old_v[i] = vel[i];
     }
 
-    // propagate velocity sum 1/2 step by temporarily propagating the velocities
+    /// propagate velocity sum 1/2 step by temporarily propagating the velocities
     propagate_vel(my_rank);
 
     vsum = vel_sum();
 
-    // reset the velocities
+    /// reset the velocities
     for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i] = old_v[i];
     }
 
-    // propagate velocities 1/2 step using the new velocity sum
+    /// propagate velocities 1/2 step using the new velocity sum
     propagate_vel(my_rank);
 
-    // propagate volume 1/2 step
+    /// propagate volume 1/2 step
     vol = ucell.omega + omega[sd] * dthalf;
 
-    // rescale positions and change box size
+    /// rescale positions and change box size
     rescale(ofs, vol);
 
-    // propagate atom positions 1 time step
+    /// propagate atom positions 1 time step
     MD_base::update_pos(my_rank);
 
-    // propagate volume 1/2 step
+    /// propagate volume 1/2 step
     vol = ucell.omega + omega[sd] * dthalf;
 
-    // rescale positions and change box size
+    /// rescale positions and change box size
     rescale(ofs, vol);
 
     ModuleBase::timer::tick("MSST", "first_half");
@@ -131,25 +131,25 @@ void MSST::second_half(const int& my_rank)
     const double dthalf = 0.5 * mdp.md_dt;
     energy_ = potential + kinetic;
 
-    // propagate velocities 1/2 step
+    /// propagate velocities 1/2 step
     propagate_vel(my_rank);
 
     vsum = vel_sum();
-    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
-    // propagate the time derivative of volume 1/2 step
+    /// propagate the time derivative of volume 1/2 step
     propagate_voldot();
 
-    // calculate Lagrangian position
+    /// calculate Lagrangian position
     lag_pos -= mdp.msst_vel * ucell.omega / v0 * mdp.md_dt;
 
     ModuleBase::timer::tick("MSST", "second_half");
 }
 
-void MSST::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void MSST::print_md(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
 {
-    MD_base::outputMD(ofs, cal_stress, my_rank);
+    MD_base::print_md(ofs, cal_stress, my_rank);
 }
 
 void MSST::write_restart(const int& my_rank, const std::string& global_out_dir)
@@ -215,11 +215,6 @@ void MSST::restart(const int& my_rank, const std::string& global_readin_dir)
 #endif
 }
 
-double MSST::extra_term()
-{
-    return 0;
-}
-
 double MSST::vel_sum()
 {
     double vsum = 0;
@@ -240,19 +235,13 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
-    // ucell.latvec.e11 *= 1.01;
-    // ucell.latvec.e22 *= 1.01;
-    // ucell.latvec.e33 *= 1.01;
 
     ucell.setup_cell_after_vc(ofs);
 
-    // rescale velocity
+    /// rescale velocity
     for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i][sd] *= dilation[sd];
-        // vel[i][0] = 0;
-        // vel[i][1] = 0;
-        // vel[i][2] = 0;
     }
 }
 
@@ -302,13 +291,13 @@ void MSST::propagate_voldot()
     double const_A = totmass * (p_current - p0 - p_msst) / mdp.msst_qmass;
     double const_B = totmass * mdp.msst_vis / (mdp.msst_qmass * ucell.omega);
 
-    // prevent the increase of volume
+    /// prevent the increase of volume
     if (ucell.omega > v0 && const_A > 0)
     {
         const_A = -const_A;
     }
 
-    // avoid singularity at B = 0 with Taylor expansion
+    /// avoid singularity at B = 0 with Taylor expansion
     double fac = const_B * dthalf;
     if (fac > 1e-6)
     {
