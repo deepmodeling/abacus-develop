@@ -57,7 +57,7 @@ void berryphase::set_kpoints(const K_Vectors* p_kv, const int direction)
 	const int mp_x = p_kv->nmp[0]; // no. of kpoints along x
 	const int mp_y = p_kv->nmp[1]; // no. of kpoints along y
 	const int mp_z = p_kv->nmp[2]; // no. of kpoints along z
-	const int num_k = int(p_kv.nkstot/2);	
+	const int num_k = int(p_kv->nkstot/2);	
 
 	if( direction == 1 ) // x direction calculation
 	{
