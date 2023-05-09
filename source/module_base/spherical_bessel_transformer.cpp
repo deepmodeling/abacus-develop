@@ -7,6 +7,12 @@
 
 namespace ModuleBase {
 
+    SphericalBesselTransformer::~SphericalBesselTransformer() {
+        fftw_destroy_plan(rfft_plan_);
+        fftw_free(f_);
+    }
+
+
     int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(bool get_sine, int l, int n) {
         /* 
          * The sin & cos coefficients follow the same recurrence relation
@@ -99,7 +105,7 @@ namespace ModuleBase {
     
             rfft_in_place();
 
-            // adding up the series by ( ... ( ( g0/y + g1 )/y + g2 )/y + ... + gl )/y
+            // summing up the series by ( ... ( ( g0/y + g1 )/y + g2 )/y + ... + gl )/y
             // out[0] is handled independently
             for (int j = 1; j <= n; ++j) {
                 out_tmp[j] = ( out_tmp[j] + ( flag ? -f_[j][1] : f_[j][0] ) ) / (j*dy);
@@ -127,24 +133,25 @@ namespace ModuleBase {
 
     void SphericalBesselTransformer::rfft_prepare(int sz) {
         if ( sz != sz_planned_ ) {
-            rfft_clean();
+            // if a new FFT size is requested,
+            // reallocate the buffer and recreate the plan.
+            fftw_free(f_);
             f_ = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * (sz/2+1) );
             sz_planned_ = sz;
+            fftw_destroy_plan(rfft_plan_);
+            rfft_plan_ = fftw_plan_dft_r2c_1d(sz, &f_[0][0], f_, fftw_plan_flag_);
+        } else if ( !rfft_plan_ ) {
+            // if the existing buffer has the right size but no plan is available
             rfft_plan_ = fftw_plan_dft_r2c_1d(sz, &f_[0][0], f_, fftw_plan_flag_);
         }
     }
     
 
-    void SphericalBesselTransformer::rfft_clean() {
-        fftw_free(f_);
-        sz_planned_ = -1;
-        fftw_destroy_plan(rfft_plan_);
-    }
-
-
-    void SphericalBesselTransformer::set_plan_flag(unsigned new_flag) {
+    void SphericalBesselTransformer::set_fftw_plan_flag(unsigned new_flag) {
+        assert( new_flag == FFTW_ESTIMATE || new_flag == FFTW_MEASURE );
         if ( new_flag != fftw_plan_flag_ ) {
-            rfft_clean();
+            fftw_destroy_plan(rfft_plan_);
+            rfft_plan_ = nullptr;
             fftw_plan_flag_ = new_flag;
         }
     }

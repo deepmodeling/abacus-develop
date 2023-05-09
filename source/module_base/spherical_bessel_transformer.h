@@ -5,151 +5,164 @@
 
 namespace ModuleBase {
 
-    /* 
-     * A class to perform spherical Bessel transforms.
-     *
-     *
-     * The spherical Bessel transform of a function F(x) is defined as
+    //! A class to perform spherical Bessel transforms.
+    /*! 
+     *  The spherical Bessel transform of a function F(x) is defined as
      *
      *                               / +inf     2           
      *          G(y) = sqrt(2/pi) *  |      dx x  F(x) j (x)
      *                               /  0               l
      *
-     * where j (x) is the l-th order spherical Bessel funciton of the first kind. 
-     *        l
+     *  where
      *
-     * This class interprets the input array as
+     *          j (x) 
+     *           l
+     *
+     *  is the l-th order spherical Bessel funciton of the first kind. 
+     *
+     *  This class interprets the input array as
+     *
      *                   p
-     *          in[i] = x [i] F(x[i])   (p is an input argument)
+     *          in[i] = x [i] F(x[i])   (p being an input argument)
      *
-     * and, on finish, fills the output array with 
+     *  and, on finish, fills the output array with 
      *
      *          out[j] = G(y[j])
      *
-     * Currently the supported grids must follow
+     *  Currently the supported grids must satisfy
      *
      *          x[i] = i*dx             i = 0, 1, 2, ..., N
      *          y[j] = j*pi/(N*dx)      j = 0, 1, 2, ..., N
      *
-     * That is, the input grid must be uniform and starts from 0, and there is no 
-     * freedom to choose the output grid once the input grid is specified.
+     *  That is, the input grid must be uniform and starts from 0, and there is no 
+     *  freedom to choose the output grid once the input grid is specified.
      *
      *
-     * Usage:
+     *  Usage:
      *
-     * SphericalBesselTransformer sbt;
+     *      SphericalBesselTransformer sbt;
      *
-     * // This flag will optimize the transforms at the cost of introducing large 
-     * // overhead during planning the FFTs. Alternatively, one may use FFTW_ESTIMATE,
-     * // which leads to less optimized transforms and much less overhead (or simply 
-     * // skip this step as FFTW_ESTIMATE is used by default).
-     * sbt.set_plan_flag(FFTW_MEASURE)
+     *      // Default FFTW planner flag is FFTW_ESTIMATE
+     *      // which is suitable for handling tasks of different sizes.
+     *      sbt.radrfft(0, 2000, ...);
+     *      sbt.radrfft(1, 3000, ...);
+     *      sbt.radrfft(2, 4000, ...);
      *
-     * // FFTW plan is created first and reused for consecutive same-sized transforms
-     * sbt.radrfft(0, 1000, ...);
-     * sbt.radrfft(1, 1000, ...);
-     * sbt.radrfft(2, 1000, ...);
+     *      // The following flag leads to optimized FFT algorithms at the cost of 
+     *      // introducing large overhead during planning the FFTs.
+     *      sbt.set_fftw_plan_flag(FFTW_MEASURE)
      *
-     * // FFTW plan has to be re-created for a new size
-     * sbt.radrfft(0, 2000, ...);
+     *      // FFTW plan is created at the first run
+     *      // and reused for consecutive same-sized transforms.
+     *      sbt.radrfft(0, 5000, ...);
+     *      sbt.radrfft(1, 5000, ...);
+     *      sbt.radrfft(2, 5000, ...);
      *                                                                              */
     class SphericalBesselTransformer {
     
     public:
 
         SphericalBesselTransformer() {};
-        ~SphericalBesselTransformer() { rfft_clean(); }
+        ~SphericalBesselTransformer();
 
         SphericalBesselTransformer(SphericalBesselTransformer const&) = delete;
         SphericalBesselTransformer& operator=(SphericalBesselTransformer const&) = delete;
     
-        /* 
-         * Performs an l-th order spherical Bessel transform via real-input fast Fourier transforms. 
-         *
-         * This function computes the spherical Bessel transform F(x) -> G(y) with input values
+        //! Performs an l-th order spherical Bessel transform via real-input fast Fourier transforms.  
+        /*! 
+         *  This function computes the spherical Bessel transform F(x) -> G(y) with input values
          *
          *                   p
-         *          in[i] = x [i] F(x[i]) 
+         *          in[i] = x [i] F(x[i])
          *
-         * where p is an arbitrary integer, and
+         *  where p is an arbitrary integer, and
          *
          *                     cutoff
          *          x[i] = i * -------          i = 0, 1, 2,..., ngrid-1.
          *                     ngrid-1
          * 
-         * On exit, out[j] = G(y[j]) where
+         *  On finish, out[j] = G(y[j]) where
          *
          *                      pi
          *          y[j] = j * ------           j = 0, 1, 2,..., ngrid-1.
          *                     cutoff
          *
          *
-         * Caveats:
-         *
-         * 1. This function does not allocate memory for output array; it must be pre-allocated.
-         * 2. F(x) is supposed to be exactly zero at and after cutoff. Results would not make
-         *    sense if input is truncated at a place where F(x) is still significantly non-zero.
+         *  @note   This function does not allocate memory for output; it must be pre-allocated.
+         *  @note   F(x) is supposed to be exactly zero at and after cutoff. Results would make
+         *          no sense if the input is truncated at a place where F(x) is still significantly
+         *          non-zero.
          *                                                                                      */
         void radrfft(
-                int l,
-                int ngrid,
-                double cutoff,
-                double* in,
-                double* out,
-                int p = 0
+                int l,          //!< [in] order of the transform
+                int ngrid,      //!< [in] size of the input array
+                double cutoff,  //!< [in] cutoff distance of input values
+                double* in,     //!< [in] input values
+                double* out,    //!< [out] transformed values
+                int p = 0       //!< [in] exponent of the pre-multiplied power term in input values
         );
 
-
-        /* 
-         * Sets the FFTW planner flag.
+        //! Sets the FFTW planner flag.
+        /*! 
+         *  Recommended flags include FFTW_MEASURE and FFTW_ESTIMATE. 
          *
-         * Saved fftw_plan will be destroyed if it was created with a flag other than new_flag.
+         *  FFTW_MEASURE leads to optimized FFT algorithm at the cost of large overhead,
+         *  which is suitable for performing many consecutive transforms of the same size.
+         *
+         *  FFTW_ESTIMATE leads to less optimized FFT algorithm with much less overhead, 
+         *  which is suitable for isolated tasks.
+         *
+         *  @note   Saved fftw_plan will be immediately destroyed if it was created with 
+         *          a flag other than new_flag.
          *                                                                                      */
-        void set_plan_flag(unsigned new_flag);
+        void set_fftw_plan_flag(unsigned new_flag /*!< [in] FFTW planner flag */);
     
 
     private:
     
-        /* Buffers for in-place real-input FFT (interpreted as double* on input) */
+        //! Internal buffer used for in-place real-input FFT (interpreted as double* on input)
         fftw_complex* f_ = nullptr;
     
-        /* FFTW plan saved for reuse */
+        //! FFTW plan saved for reuse
         fftw_plan rfft_plan_ = nullptr;
 
-        /* Size of the planned rFFT */
+        //! Size of the planned FFT
         int sz_planned_ = -1;
 
-        /* Planner flag used to create rfft_plan_ */
+        //! Planner flag used to create rfft_plan_
         unsigned fftw_plan_flag_ = FFTW_ESTIMATE;
     
-        /* Applies an in-place 1-d real-input discrete Fourier transform to f_ */
+        //! Applies an in-place 1-d real-input discrete Fourier transform to the internal buffer
         void rfft_in_place();
     
-        /* Buffer (f_) allocation and plan creation for an N-element real-input FFT */
-        void rfft_prepare(int N);
+        //! Buffer allocation and plan creation for a real-input FFT
+        void rfft_prepare(int N /*!< [in] size of the FFT to plan ahead */);
 
-        /* Buffer deallocation and plan destruction */
-        void rfft_clean();
-    
-        /* 
-         * Returns the polynomial coefficient of the n-th power term in the sin+cos
-         * representation of the l-th order spherical Bessel functions of the first kind.
+
+        //! Polynomial coefficients in the sin & cos expression of the spherical Bessel function.
+        /*! 
+         *  The l-th order spherical Bessel function of the first kind can be expressed as
          *
-         * The l-th order spherical Bessel function of the first kind can be expressed as
+         *                          sin(x)*P(x) + cos(x)*Q(x)
+         *                  j (x) = -------------------------
+         *                   l               l+1
+         *                                  x
          *
-         *                  sin(x)*P(x) + cos(x)*Q(x)
-         *          j (x) = --------------------------
-         *           l               l+1
-         *                          x
+         *  where P(x) and Q(x) are polynomials of degree no more than l. This function 
+         *  returns the coefficients within those polynomials.
          *
-         * where P(x) and Q(x) are polynomials of order no more than l. This function returns
-         * the coefficients within those polynomials.
          *
-         * Caveats:
-         * 1. Coefficients grow very quickly as l increases. Currently l is capped at 10 since
-         * Some coefficients exceed INT_MAX (2^31-1) for l >= 11.
+         *  @note   Coefficients grow very quickly as l increases. Currently l is capped at 10 
+         *          since some coefficients exceed INT_MAX (2^31-1) for l >= 11.
+         *
+         *  @return The polynomial coefficient of the n-th power term in the sin & cos expression
+         *          of the l-th order spherical Bessel functions of the first kind.
          *                                                                                      */
-        int spherical_bessel_sincos_polycoef(bool get_sine, int l, int n);
+        int spherical_bessel_sincos_polycoef(
+                bool get_sine,  //!< [in] specifies if the returned coefficient is associated with sine
+                int l,          //!< [in] order of the spherical Bessel function
+                int n           //!< [in] degree of the polynomial term whose coefficient is computed
+        );
     
     };
 }

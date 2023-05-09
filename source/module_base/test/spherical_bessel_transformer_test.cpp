@@ -10,36 +10,38 @@ using ModuleBase::PI;
 using ModuleBase::SphericalBesselTransformer;
 
 /***********************************************************
- *      Unit test of class "SphericalBesselTransform"
+ *      Unit test of class SphericalBesselTransform
  ***********************************************************/
 
-/* Tested functions:
+/*! Tested functions:
  *
- * - radrfft
- *   Performs a spherical Bessel transform via fast Fourier transform.
+ *  - radrfft
+ *      - Performs a spherical Bessel transform via fast 
+ *        Fourier transforms.
  *
- * - set_plan_flag
- *   Sets the planner flag for FFTW plan creation.
+ *  - set_fftw_plan_flag
+ *      - Sets the planner flag for FFTW plan creation.
  *
- ***********************************************************/
+ *                                                          */
 
 class SphericalBesselTransformTest: public ::testing::Test {
 
 protected:
+    /// allocate buffers
     void SetUp();
+
+    /// deallocate buffers
     void TearDown();
 
-    // get the maximum absolute element-wise difference between two arrays
+    /// Gets the maximum absolute element-wise difference between two arrays
     double max_diff(int sz, double* arr1, double* arr2);
 
-    // array buffer
-    int sz_max = 10000;
-    double* f = nullptr;
-    double* g = nullptr;
-    double* g_ref = nullptr;
+    int sz_max = 10000;     ///< size of each buffer
+    double* f = nullptr;    ///< buffer for input array
+    double* g = nullptr;    ///< buffer for output array
+    double* g_ref = nullptr;///< buffer for reference array
 
-    // tolerance for element-wise numerical error
-    double tol = 1e-9;
+    double tol = 1e-9;      ///< tolerance for element-wise numerical error
 };
 
 
@@ -139,7 +141,7 @@ TEST_F(SphericalBesselTransformTest, ImplicitExponent) {
     double pref = std::sqrt(2./PI);
 
     SphericalBesselTransformer sbt;
-    sbt.set_plan_flag(FFTW_MEASURE);
+    sbt.set_fftw_plan_flag(FFTW_MEASURE);
 
     for (int i = 0; i != sz; ++i) {
         double k = dk*i;
@@ -169,7 +171,7 @@ TEST_F(SphericalBesselTransformTest, VariableSize) {
     double pref = std::sqrt(2./PI);
 
     SphericalBesselTransformer sbt;
-    sbt.set_plan_flag(FFTW_ESTIMATE);
+    sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
 
     for (int sz = 5000; sz <= sz_max; sz += 1000) {
 
