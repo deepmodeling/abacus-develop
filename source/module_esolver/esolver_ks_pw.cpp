@@ -747,13 +747,13 @@ namespace ModuleESolver
         int nspin0=1;
         if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
-        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,GlobalC::kv,&(GlobalC::Pkpoints));
         // compute density of states
         if (GlobalC::en.out_dos)
         {
             ModuleIO::write_dos_pw(this->pelec->ekb,
                 this->pelec->wg,
-                &(GlobalC::kv),
+                GlobalC::kv,
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.bcoeff);
@@ -785,7 +785,7 @@ namespace ModuleESolver
                 std::stringstream ss2;
                 ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
                 GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-                ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, GlobalC::en.ef*0, this->pelec->ekb,&(GlobalC::kv),&(GlobalC::Pkpoints));
+                ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, GlobalC::en.ef*0, this->pelec->ekb,GlobalC::kv,&(GlobalC::Pkpoints));
             }
         }
 
@@ -938,7 +938,7 @@ namespace ModuleESolver
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp;
-            bp.Macroscopic_polarization(this->psi,&(GlobalC::kv));
+            bp.Macroscopic_polarization(this->psi,GlobalC::kv);
         }
 
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");

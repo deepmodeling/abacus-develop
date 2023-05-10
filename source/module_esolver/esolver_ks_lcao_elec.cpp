@@ -584,7 +584,7 @@ namespace ModuleESolver
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
-            bp.Macroscopic_polarization(this->psi,&(GlobalC::kv));
+            bp.Macroscopic_polarization(this->psi,GlobalC::kv);
         }
 
         //below is for DeePKS NSCF calculation

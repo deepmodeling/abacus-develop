@@ -58,7 +58,7 @@ class unkOverlap_lcao
                                       const int iband_L,
                                       const int iband_R,
                                       const ModuleBase::Vector3<double> dk,
-                                      const K_Vectors* p_kv);
+                                      const K_Vectors& kv);
     void cal_R_number();
     void cal_orb_overlap();
     void get_lcao_wfc_global_ik(std::complex<double>** ctot, std::complex<double>** cc);
@@ -67,16 +67,16 @@ class unkOverlap_lcao
                                  const ModuleBase::Vector3<double> dk,
                                  std::complex<double>*& midmatrix,
                                  const Parallel_Orbitals& pv,
-                                 const K_Vectors* p_kv);
+                                 const K_Vectors& kv);
     std::complex<double> det_berryphase(const int ik_L,
                                         const int ik_R,
                                         const ModuleBase::Vector3<double> dk,
                                         const int occ_bands,
                                         Local_Orbital_wfc& lowf,
                                         const psi::Psi<std::complex<double>>* psi_in,
-                                        const K_Vectors* p_kv);
+                                        const K_Vectors& kv);
 
-    void test(std::complex<double>*** wfc_k_grid, const K_Vectors* p_kv);
+    void test(std::complex<double>*** wfc_k_grid, const K_Vectors& kv);
 };
 
 

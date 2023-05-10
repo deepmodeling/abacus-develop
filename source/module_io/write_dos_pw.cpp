@@ -5,7 +5,7 @@
 
 void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 	const ModuleBase::matrix &wg,
-	const K_Vectors* kv,
+	const K_Vectors& kv,
 	const double &dos_edelta_ev,
 	const double &dos_scale,
 	const double &bcoeff)
@@ -19,7 +19,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 	//find energy range
 	double emax = ekb(0, 0);
 	double emin = ekb(0, 0);
-	for(int ik=0; ik<kv->nks; ++ik)
+	for(int ik=0; ik<kv.nks; ++ik)
 	{
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
 		{
@@ -71,10 +71,10 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix &ekb,
 			emax,
 			emin,
 			bcoeff,
-			kv->nks,
-			kv->nkstot,
-			kv->wk,
-			kv->isk,
+			kv.nks,
+			kv.nkstot,
+			kv.wk,
+			kv.isk,
 			GlobalV::NBANDS,
 			ekb,
 			wg);
