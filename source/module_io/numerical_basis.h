@@ -29,7 +29,7 @@ class Numerical_Basis
     ~Numerical_Basis();
 
     void start_from_file_k(const int &ik, ModuleBase::ComplexMatrix &psi);
-    void output_overlap(const psi::Psi<std::complex<double>>& psi, const K_Vectors* p_kv);
+    void output_overlap(const psi::Psi<std::complex<double>>& psi, const K_Vectors& kv);
 
   private:
     bool init_label = false;
@@ -52,7 +52,7 @@ class Numerical_Basis
     static ModuleBase::matrix cal_overlap_V(ModulePW::PW_Basis_K* wfc_basis,
                                             const psi::Psi<std::complex<double>>& psi,
                                             const double derivative_order,
-                                            const K_Vectors* p_kv);
+                                            const K_Vectors& kv);
 
     ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk) const;
 
@@ -61,18 +61,18 @@ class Numerical_Basis
     static std::vector<double> cal_gpow(const std::vector<ModuleBase::Vector3<double>> &gk,
                                         const double derivative_order);
 
-    static void output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors* p_kv);
+    static void output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv);
 
-    static void output_k(std::ofstream& ofs, const K_Vectors* p_kv);
+    static void output_k(std::ofstream& ofs, const K_Vectors& kv);
 
     static void output_overlap_Q(std::ofstream& ofs,
                                  const std::vector<ModuleBase::ComplexArray>& overlap_Q,
-                                 const K_Vectors* p_kv);
+                                 const K_Vectors& kv);
 
     static void output_overlap_Sq(const std::string& name,
                                   std::ofstream& ofs,
                                   const std::vector<ModuleBase::ComplexArray>& overlap_Sq,
-                                  const K_Vectors* p_kv);
+                                  const K_Vectors& kv);
 
     static void output_overlap_V(std::ofstream &ofs, const ModuleBase::matrix &overlap_V);
 };

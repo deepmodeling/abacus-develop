@@ -71,9 +71,10 @@ class toWannier90
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
     void init_wannier(const ModuleBase::matrix& ekb,
-                      const psi::Psi<std::complex<double>>* psi = nullptr,
-                      const K_Vectors* p_kv = nullptr);
-    void read_nnkp(const K_Vectors* p_kv);
+                      const K_Vectors& kv,
+                      const psi::Psi<std::complex<double>>* psi = nullptr
+                      );
+    void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis_K* wfc_basis);
     void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw);
@@ -107,7 +108,7 @@ class toWannier90
     // const ModuleBase::Vector3<double> G);
 
     void lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital_in_G);
-    void getUnkFromLcao(const K_Vectors* p_kv);
+    void getUnkFromLcao(const K_Vectors& kv);
     void get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc);
 
   private:

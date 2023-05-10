@@ -577,7 +577,7 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(this->pelec->ekb, nullptr, &(GlobalC::kv));
+            myWannier.init_wannier(this->pelec->ekb, GlobalC::kv, nullptr);
         }
 
         // add by jingan

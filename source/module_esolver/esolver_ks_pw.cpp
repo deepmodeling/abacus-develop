@@ -826,7 +826,7 @@ namespace ModuleESolver
             if ( winput::out_spillage <= 2 )
             {
                 Numerical_Basis numerical_basis;
-                numerical_basis.output_overlap(this->psi[0], &(GlobalC::kv));
+                numerical_basis.output_overlap(this->psi[0], GlobalC::kv);
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"BASIS OVERLAP (Q and S) GENERATION.");
             }
         }
@@ -928,7 +928,7 @@ namespace ModuleESolver
         if(INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot,GlobalC::ucell.G);
-            myWannier.init_wannier(this->pelec->ekb, this->psi, &(GlobalC::kv));
+            myWannier.init_wannier(this->pelec->ekb, GlobalC::kv, this->psi);
         }
 
         //=======================================================
