@@ -28,8 +28,8 @@ class Numerical_Basis
     Numerical_Basis();
     ~Numerical_Basis();
 
-    void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor* p_sf);
-    void output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor* p_sf);
+    void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf);
+    void output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf);
 
   private:
     bool init_label = false;
@@ -42,19 +42,19 @@ class Numerical_Basis
     void numerical_atomic_wfc(const int& ik,
                               ModulePW::PW_Basis_K* wfc_basis,
                               ModuleBase::ComplexMatrix& psi,
-                              const Structure_Factor* p_sf);
+                              const Structure_Factor& sf);
 
     ModuleBase::ComplexArray cal_overlap_Q(const int& ik,
                                            const int& np,
                                            ModulePW::PW_Basis_K* wfc_basis,
                                            const psi::Psi<std::complex<double>>& psi,
                                            const double derivative_order,
-                                           const Structure_Factor* p_sf) const;
+                                           const Structure_Factor& sf) const;
 
     ModuleBase::ComplexArray cal_overlap_Sq(const int& ik,
                                             const int& np,
                                             const double derivative_order,
-                                            const Structure_Factor* p_sf) const;
+                                            const Structure_Factor& sf) const;
 
     static ModuleBase::matrix cal_overlap_V(ModulePW::PW_Basis_K *wfc_basis,
                                             const psi::Psi<std::complex<double>> &psi,
