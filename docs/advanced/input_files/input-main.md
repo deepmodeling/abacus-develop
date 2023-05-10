@@ -1055,8 +1055,8 @@ These variables are used to control the geometry relaxation.
 ### stress_thr
 
 - **Type**: Real
-- **Description**: The threshold of the stress convergence, it indicates the largest stress among all the directions, the unit is KBar,
-- **Default**: 0.01
+- **Description**: The threshold of the stress convergence, it indicates the largest component of the stress tensor, the unit is kbar,
+- **Default**: 0.5
 
 ### press1, press2, press3
 
