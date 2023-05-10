@@ -24,13 +24,15 @@
 #endif
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_psi/kernels/device.h"
 #include "module_md/md_func.h"
+#include "module_psi/kernels/device.h"
 
-template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
+template <typename T>
+void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
@@ -378,6 +380,7 @@ void Input_Conv::Convert(void)
     Evolve_elec::out_efield = INPUT.out_efield;
     Evolve_elec::td_print_eij = INPUT.td_print_eij;
     Evolve_elec::td_edm = INPUT.td_edm;
+    elecstate::H_TDDFT_pw::read_parameters(&INPUT);
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11
