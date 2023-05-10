@@ -803,7 +803,7 @@ void toWannier90::produce_trial_in_pw(const psi::Psi<std::complex<double>>& wfc_
         }
     }
 
-    const int npw = wfc_pw.get_ngk(ik);
+    const int npw = wfc_basis->npwk[ik];
     const int npwx = GlobalC::wf.npwx;
     const int total_lm = 16;
     ModuleBase::matrix ylm(total_lm, npw);
