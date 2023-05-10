@@ -1251,7 +1251,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC);
+            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, &(GlobalC::kv));
         }
     } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 
