@@ -39,10 +39,10 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     ESolver_KS::Init(inp,ucell);
 
     
-    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)), GlobalC::bigpw);
+    this->pelec = new elecstate::ElecStatePW_SDFT( GlobalC::wfcpw, &(chr), (K_Vectors*)(&(GlobalC::kv)), this->pw_rho, GlobalC::bigpw);
 
     // Inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    this->pelec->charge->allocate(GlobalV::NSPIN);
 
     // Initializee the potential.
     if(this->pelec->pot == nullptr)
@@ -93,7 +93,7 @@ void ESolver_SDFT_PW::beforescf(const int istep)
 void ESolver_SDFT_PW::eachiterfinish(int iter)
 {
 	//this->pelec->print_eigenvalue(GlobalV::ofs_running);
-    GlobalC::en.calculate_etot();
+    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
 }
 void ESolver_SDFT_PW::afterscf(const int istep)
 {

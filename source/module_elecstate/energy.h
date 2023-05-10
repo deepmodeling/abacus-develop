@@ -75,9 +75,18 @@ class energy
     // at first order in the charge density difference \delta
     // rho
     //=========================================================
-	void calculate_etot(void);
-	void print_etot(const bool converged, const int &iter,
-	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
+	void calculate_etot(const int& nrxx, 	// num. of real space grids on current core
+						const int& nxyz		// total num. of real space grids
+	);
+	void print_etot(const int& nrxx,		// num. of real space grids on current core
+					const int& nxyz,		// total num. of real space grids
+					const bool converged, 
+					const int &iter,
+					const double &scf_thr, 
+					const double &duration, 
+					const double &pw_diag_thr=0, 
+					const double &avg_iter=0, 
+					bool print = true);
 
 	void print_format(const std::string &name, const double &value);
 

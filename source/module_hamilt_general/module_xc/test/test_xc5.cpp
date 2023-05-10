@@ -42,7 +42,7 @@ class XCTest_VXC : public testing::Test
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
-
+            
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -54,6 +54,7 @@ class XCTest_VXC : public testing::Test
             ucell.cal_ux();
             ucell.omega = 1;
 
+            chr.rhopw = &(rhopw);
             chr.rho = new double*[4];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
@@ -83,14 +84,14 @@ class XCTest_VXC : public testing::Test
 
             GlobalV::NSPIN = 1;
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&rhopw,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             GlobalV::NSPIN = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&rhopw,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -98,7 +99,7 @@ class XCTest_VXC : public testing::Test
             GlobalV::NSPIN = 4;
             GlobalV::DOMAG = true;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&rhopw,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
             et4 = std::get<0>(etxc_vtxc_v);
             vt4 = std::get<1>(etxc_vtxc_v);
             v4  = std::get<2>(etxc_vtxc_v);
@@ -184,6 +185,7 @@ class XCTest_VXC_Libxc : public testing::Test
             ucell.cal_ux();
             ucell.omega = 1;
 
+            chr.rhopw = &(rhopw);
             chr.rho = new double*[4];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
@@ -213,14 +215,14 @@ class XCTest_VXC_Libxc : public testing::Test
 
             GlobalV::NSPIN = 1;
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&rhopw,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             GlobalV::NSPIN = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&rhopw,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -228,7 +230,7 @@ class XCTest_VXC_Libxc : public testing::Test
             GlobalV::NSPIN = 4;
             GlobalV::DOMAG = true;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&rhopw,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
             et4 = std::get<0>(etxc_vtxc_v);
             vt4 = std::get<1>(etxc_vtxc_v);
             v4  = std::get<2>(etxc_vtxc_v);
@@ -310,6 +312,7 @@ class XCTest_VXC_meta : public testing::Test
             ucell.cal_ux();
             ucell.omega = 1;
 
+            chr.rhopw = &(rhopw);
             chr.rho = new double*[2];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
@@ -349,7 +352,7 @@ class XCTest_VXC_meta : public testing::Test
 
             GlobalV::NSPIN = 1;
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc_meta(rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,&rhopw);
+                = XC_Functional::v_xc_meta(rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
@@ -357,7 +360,7 @@ class XCTest_VXC_meta : public testing::Test
 
             GlobalV::NSPIN = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc_meta(rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,&rhopw);
+                = XC_Functional::v_xc_meta(rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);

@@ -163,11 +163,11 @@ namespace ModuleESolver
         //init ElecState,
         if(this->pelec == nullptr)
         {
-            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), GlobalC::bigpw);
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), this->pw_rho, GlobalC::bigpw);
         }
 
         // Inititlize the charge density.
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        this->pelec->charge->allocate(GlobalV::NSPIN);
 
         // Initialize the potential.
         if(this->pelec->pot == nullptr)
@@ -216,9 +216,9 @@ namespace ModuleESolver
             this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(GlobalC::wfcpw, &GlobalC::wf);
 
             delete this->pelec;  
-            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), GlobalC::bigpw);
+            this->pelec = new elecstate::ElecStatePW<FPTYPE, Device>( GlobalC::wfcpw, &(this->chr), (K_Vectors*)(&(GlobalC::kv)), this->pw_rho, GlobalC::bigpw);
 
-            this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+            this->pelec->charge->allocate(GlobalV::NSPIN);
 
             delete this->pelec->pot;
             this->pelec->pot = new elecstate::Potential(
@@ -457,7 +457,7 @@ namespace ModuleESolver
     void ESolver_KS_PW<FPTYPE, Device>::eachiterfinish(const int iter)
     {
         //print_eigenvalue(GlobalV::ofs_running);
-        GlobalC::en.calculate_etot();
+        GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
         //We output it for restarting the scf.
         bool print = false;
         if (this->out_freq_elec && iter % this->out_freq_elec == 0)

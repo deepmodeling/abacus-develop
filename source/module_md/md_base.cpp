@@ -6,7 +6,7 @@
 #endif
 #include "module_io/print_info.h"
 
-MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
+MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
 {
     if (mdp.md_seed >= 0)
     {
@@ -23,7 +23,7 @@ MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in)
     virial.create(3, 3);
     stress.create(3, 3);
 
-    // convert to a.u. unit
+    /// convert to a.u. unit
     mdp.md_dt /= ModuleBase::AU_to_FS;
     mdp.md_tfirst /= ModuleBase::Hartree_to_K;
     mdp.md_tlast /= ModuleBase::Hartree_to_K;
@@ -32,7 +32,7 @@ MD_base::MD_base(MD_parameters& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in)
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::InitVel(ucell, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
+    MD_func::init_vel(ucell, mdp.md_tfirst, mdp.my_rank, allmass, frozen_freedom_, ionmbl, vel);
 }
 
 MD_base::~MD_base()
@@ -44,35 +44,35 @@ MD_base::~MD_base()
     delete[] force;
 }
 
-void MD_base::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
+void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     if (mdp.md_restart)
     {
-        restart(my_rank, global_readin_dir);
+        restart(global_readin_dir);
     }
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
 
-    MD_func::force_virial(p_esolver, step_, ucell, potential, force, virial);
-    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
+    MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     ucell.ionic_position_updated = true;
 }
 
-void MD_base::first_half(const int& my_rank, std::ofstream& ofs)
+void MD_base::first_half(std::ofstream& ofs)
 {
-    update_vel(force, my_rank);
-    update_pos(my_rank);
+    update_vel(force);
+    update_pos();
 }
 
-void MD_base::second_half(const int& my_rank)
+void MD_base::second_half()
 {
-    update_vel(force, my_rank);
+    update_vel(force);
 }
 
-void MD_base::update_pos(const int& my_rank)
+void MD_base::update_pos()
 {
-    if (my_rank == 0)
+    if (mdp.my_rank == 0)
     {
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -98,9 +98,9 @@ void MD_base::update_pos(const int& my_rank)
     ucell.update_pos_taud(pos);
 }
 
-void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my_rank)
+void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 {
-    if (my_rank == 0)
+    if (mdp.my_rank == 0)
     {
         for (int i = 0; i < ucell.nat; ++i)
         {
@@ -119,9 +119,9 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force, const int& my
 #endif
 }
 
-void MD_base::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    if (my_rank)
+    if (mdp.my_rank)
         return;
 
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
@@ -177,15 +177,15 @@ void MD_base::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my
         << std::endl;
     if (cal_stress)
     {
-        MD_func::outStress(virial, stress);
+        MD_func::print_stress(ofs, virial, stress);
     }
     ofs << std::endl;
     ofs << std::endl;
 }
 
-void MD_base::write_restart(const int& my_rank, const std::string& global_out_dir)
+void MD_base::write_restart(const std::string& global_out_dir)
 {
-    if (!my_rank)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.dat";
@@ -199,7 +199,7 @@ void MD_base::write_restart(const int& my_rank, const std::string& global_out_di
 #endif
 }
 
-void MD_base::restart(const int& my_rank, const std::string& global_readin_dir)
+void MD_base::restart(const std::string& global_readin_dir)
 {
-    step_rst_ = MD_func::current_step(my_rank, global_readin_dir);
+    step_rst_ = MD_func::current_step(mdp.my_rank, global_readin_dir);
 }

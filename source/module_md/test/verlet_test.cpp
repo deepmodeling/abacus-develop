@@ -30,7 +30,7 @@
  *   - verlet::restart
  *     - restart MD when md_restart is true
  *
- *   - verlet::outputMD
+ *   - verlet::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -49,7 +49,7 @@ class Verlet_test : public testing::Test
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new Verlet(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -74,7 +74,7 @@ TEST_F(Verlet_test, setup)
 
 TEST_F(Verlet_test, first_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
@@ -105,9 +105,9 @@ TEST_F(Verlet_test, first_half)
 
 TEST_F(Verlet_test, NVE)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
     mdrun->mdp.md_type = "nve";
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -139,10 +139,10 @@ TEST_F(Verlet_test, NVE)
 
 TEST_F(Verlet_test, Anderson)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "anderson";
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -174,10 +174,10 @@ TEST_F(Verlet_test, Anderson)
 
 TEST_F(Verlet_test, Berendsen)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "berendsen";
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -209,10 +209,10 @@ TEST_F(Verlet_test, Berendsen)
 
 TEST_F(Verlet_test, rescaling)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "rescaling";
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -244,10 +244,10 @@ TEST_F(Verlet_test, rescaling)
 
 TEST_F(Verlet_test, rescale_v)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
     mdrun->mdp.md_type = "nvt";
     mdrun->mdp.md_thermostat = "rescale_v";
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -281,7 +281,7 @@ TEST_F(Verlet_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+    mdrun->write_restart(GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -292,16 +292,16 @@ TEST_F(Verlet_test, write_restart)
 
 TEST_F(Verlet_test, restart)
 {
-    mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+    mdrun->restart(GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
 }
 
-TEST_F(Verlet_test, outputMD)
+TEST_F(Verlet_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true);
     ofs.close();
 
     std::ifstream ifs("running.log");

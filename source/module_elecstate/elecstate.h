@@ -13,7 +13,14 @@ class ElecState
 {
   public:
     ElecState(){}
-    ElecState(Charge* charge_in){this->charge = charge_in;}
+    ElecState(Charge* charge_in,
+              ModulePW::PW_Basis* rhopw_in,
+              ModulePW::PW_Basis_Big* bigpw_in)
+    {
+        this->charge = charge_in;
+        this->charge->set_rhopw(rhopw_in);
+        this->bigpw = bigpw_in;
+    }
     virtual ~ElecState()
     {
         if(this->pot != nullptr) 
@@ -25,6 +32,7 @@ class ElecState
     void init_ks(Charge *chg_in, // pointer for class Charge
                       const K_Vectors *klist_in,
                       int nk_in, // number of k points
+                      ModulePW::PW_Basis* rhopw_in,
                       const ModulePW::PW_Basis_Big* bigpw_in); 
 
     // return current electronic density rho, as a input for constructing Hamiltonian
