@@ -5,7 +5,7 @@
 #include "module_base/gram_schmidt_orth.h"
 #include "module_base/gram_schmidt_orth-inl.h"
 
-#include "src_ri/test_code/exx_abfs-construct_orbs-test.h"		// Peize Lin test
+#include "module_ri/test_code/exx_abfs-construct_orbs-test.h"		// Peize Lin test
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::change_orbs(
@@ -110,20 +110,6 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		&&abfs_same_atom_pca = orbital( abfs_same_atom_pca_psi, orbs, 1 );
 	return abfs_same_atom_pca;
-}
-
-std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::orth_orbs(
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
-	const double norm_threshold )
-{
-	ModuleBase::TITLE("Exx_Abfs::Construct_Orbs::orth_orbs");
-	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		orbs_psi = get_psi( orbs );
-	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		orbs_psi_orth = orth( orbs_psi, orbs, norm_threshold );
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		orbs_new = orbital( orbs_psi_orth, orbs, 1 );
-	return orbs_new;
 }
 
 /*
@@ -277,7 +263,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 	if(times_threshold>1)
 		return std::vector<std::vector<std::vector<std::vector<double>>>>(abfs.size());
 
-	const std::vector<std::vector<std::pair<std::vector<double>,ModuleBase::matrix>>> && eig = Exx_Abfs::PCA::cal_PCA( orbs, abfs, kmesh_times_mot );
+	const std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> && eig = Exx_Abfs::PCA::cal_PCA( orbs, abfs, kmesh_times_mot );
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>> && psis = get_psi( abfs );
 	std::vector<std::vector<std::vector<std::vector<double>>>> psis_new( psis.size() );
@@ -302,7 +288,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 			for( size_t L=0; L!=eig[T].size(); ++L )
 			{
 				const std::vector<double> &eig_value = eig[T][L].first;
-				const ModuleBase::matrix &eig_vec = eig[T][L].second;
+				const RI::Tensor<double> &eig_vec = eig[T][L].second;
 				for( size_t M=0; M!=eig_value.size(); ++M )
 				{
 					if( eig_value[M] > eig_value_threshold )

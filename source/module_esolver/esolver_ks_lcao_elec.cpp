@@ -10,8 +10,11 @@
 #include "module_io/istate_envelope.h"
 #include "module_io/write_HS_R.h"
 //
-#include "src_ri/exx_abfs-jle.h"
-#include "src_ri/exx_opt_orb.h"
+#ifdef __EXX
+#include "module_ri/exx_abfs-jle.h"
+#include "module_ri/exx_opt_orb.h"
+#endif
+
 #include "module_io/berryphase.h"
 #include "module_io/to_wannier90.h"
 #include "module_base/timer.h"

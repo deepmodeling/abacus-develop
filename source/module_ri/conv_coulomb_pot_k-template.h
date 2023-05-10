@@ -5,23 +5,7 @@
 #include <vector>
 #include <cmath>
 
-#include "../src_ri/test_code/exx_abfs-construct_orbs-test.h"
-
-template<typename T>
-T Conv_Coulomb_Pot_K::cal_orbs_ccp_rmesh(
-	const T & orbs,
-	const Ccp_Type &ccp_type,
-	const std::map<std::string,double> &parameter,
-	const double psi_threshold,
-	double &rmesh_times)
-{
-	const double rmesh_times_trial = 10;						// Peize Lin test
-	const T orbs_ccp_trial = cal_orbs_ccp(orbs, ccp_type, parameter, rmesh_times_trial);
-	rmesh_times = std::max(1.0, get_rmesh_proportion(orbs_ccp_trial, psi_threshold) * rmesh_times_trial);
-	const T orbs_ccp = cal_orbs_ccp(orbs, ccp_type, parameter, rmesh_times);
-	return orbs_ccp;
-}
-
+#include "../module_ri/test_code/exx_abfs-construct_orbs-test.h"
 
 
 template< typename T >

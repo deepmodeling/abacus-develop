@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <RI/global/Tensor.h>
 using namespace std;
 
 class Exx_Opt_Orb
@@ -14,20 +15,20 @@ class Exx_Opt_Orb
 public:
 	void generate_matrix(const K_Vectors &kv) const;
 private:
-	std::vector<std::vector<ModuleBase::matrix>> cal_I( 
-		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> &ms, 
+	std::vector<std::vector<RI::Tensor<double>>> cal_I( 
+		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> &ms, 
 		const size_t TA, const size_t IA, const size_t TB, const size_t IB ) const;
-	ModuleBase::matrix cal_proj( 
-		const ModuleBase::matrix & m_big, 
-		const std::vector<ModuleBase::matrix> & m_left, 
-		const std::vector<std::vector<ModuleBase::matrix>> & m_middle, 
-		const std::vector<ModuleBase::matrix> & m_right ) const;
+	RI::Tensor<double> cal_proj( 
+		const RI::Tensor<double> & m_big, 
+		const std::vector<RI::Tensor<double>> & m_left, 
+		const std::vector<std::vector<RI::Tensor<double>>> & m_middle, 
+		const std::vector<RI::Tensor<double>> & m_right ) const;
     void print_matrix(
         const K_Vectors &kv,
         const std::string& file_name,
-		const std::vector<ModuleBase::matrix> &matrix_Q, 
-		const std::vector<std::vector<ModuleBase::matrix>> &matrix_S,
-		const ModuleBase::matrix &matrix_V,
+		const std::vector<RI::Tensor<double>> &matrix_Q, 
+		const std::vector<std::vector<RI::Tensor<double>>> &matrix_S,
+		const RI::Tensor<double> &matrix_V,
 		const size_t TA, const size_t IA, const size_t TB, const size_t IB,
 		const ModuleBase::Element_Basis_Index::Range &range_jles, 
 		const ModuleBase::Element_Basis_Index::IndexLNM &index_jles) const;
@@ -35,5 +36,4 @@ private:
 		
 	int kmesh_times = 4;
 };
-
 #endif
