@@ -1,0 +1,26 @@
+INPUT_PARAMETERS
+#Parameters     (General)
+suffix          DIA-50
+
+calculation     scf
+esolver_type    ksdft
+pseudo_dir      ./
+orbital_dir     ./
+nbands          45
+symmetry        1
+cal_force       1
+cal_stress      1
+
+#Parameters (Accuracy)
+ecutwfc         100
+scf_thr         1e-6
+scf_nmax        100
+basis_type      lcao
+ks_solver       genelpa
+gamma_only      0
+smearing_method gauss
+smearing_sigma  0.01
+mixing_type     pulay
+mixing_beta     0.7
+
+stru_file       STRU-001

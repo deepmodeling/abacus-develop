@@ -12,12 +12,12 @@
 namespace Run_MD
 {
 
-void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_parameters& md_para)
+void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_para)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::tick("Run_MD", "md_line");
 
-    // determine the md_type
+    /// determine the md_type
     MD_base* mdrun;
     if (md_para.md_type == "fire")
     {
@@ -44,24 +44,35 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_parameters
         ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
     }
 
-    // md cycle
+    /// md cycle
     while ((mdrun->step_ + mdrun->step_rst_) <= md_para.md_nstep && !mdrun->stop)
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+            mdrun->setup(p_esolver, GlobalV::global_readin_dir);
         }
         else
         {
             Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
-            mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+            mdrun->first_half(GlobalV::ofs_running);
 
-            // update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver, mdrun->step_, unit_in, mdrun->potential, mdrun->force, mdrun->virial);
+            /// update force and virial due to the update of atom positions
+            MD_func::force_virial(p_esolver,
+                                  mdrun->step_,
+                                  unit_in,
+                                  mdrun->potential,
+                                  mdrun->force,
+                                  md_para.cal_stress,
+                                  mdrun->virial);
 
-            mdrun->second_half(GlobalV::MY_RANK);
+            mdrun->second_half();
 
-            MD_func::compute_stress(unit_in, mdrun->vel, mdrun->allmass, mdrun->virial, mdrun->stress);
+            MD_func::compute_stress(unit_in,
+                                    mdrun->vel,
+                                    mdrun->allmass,
+                                    md_para.cal_stress,
+                                    mdrun->virial,
+                                    mdrun->stress);
             mdrun->t_current = MD_func::current_temp(mdrun->kinetic,
                                                      unit_in.nat,
                                                      mdrun->frozen_freedom_,
@@ -71,9 +82,15 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_parameters
 
         if ((mdrun->step_ + mdrun->step_rst_) % md_para.md_dumpfreq == 0)
         {
-            mdrun->outputMD(GlobalV::ofs_running, GlobalV::CAL_STRESS, GlobalV::MY_RANK);
+            mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
 
-            MD_func::MDdump(mdrun->step_ + mdrun->step_rst_, unit_in, md_para, mdrun->virial, mdrun->force, mdrun->vel);
+            MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
+                               GlobalV::global_out_dir,
+                               unit_in,
+                               md_para,
+                               mdrun->virial,
+                               mdrun->force,
+                               mdrun->vel);
         }
 
         if ((mdrun->step_ + mdrun->step_rst_) % md_para.md_restartfreq == 0)
@@ -82,7 +99,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_parameters
             std::stringstream file;
             file << GlobalV::global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
             unit_in.print_stru_file(file.str(), 1, 1);
-            mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+            mdrun->write_restart(GlobalV::global_out_dir);
         }
 
         mdrun->step_++;

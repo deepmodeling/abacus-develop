@@ -279,7 +279,7 @@ class Input
     // molecular dynamics
     // added by Daye Zheng
     //==========================================================
-    MD_parameters mdp;
+    MD_para mdp;
 
     //==========================================================
     // efield and dipole correction
