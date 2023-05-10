@@ -30,7 +30,7 @@
  *   - Nose_Hoover::restart
  *     - restart MD when md_restart is true
  *
- *   - Nose_Hoover::outputMD
+ *   - Nose_Hoover::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -51,7 +51,7 @@ class NHC_test : public testing::Test
         INPUT.mdp.md_type = "npt";
         INPUT.mdp.md_pmode = "tri";
         mdrun = new Nose_Hoover(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -76,7 +76,7 @@ TEST_F(NHC_test, setup)
 
 TEST_F(NHC_test, first_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00023793471204889866, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00017779705725471447, doublethreshold);
@@ -107,8 +107,8 @@ TEST_F(NHC_test, first_half)
 
 TEST_F(NHC_test, second_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->first_half(GlobalV::ofs_running);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00023793503786683287, doublethreshold);
@@ -140,12 +140,12 @@ TEST_F(NHC_test, second_half)
 
 TEST_F(NHC_test, write_restart)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->first_half(GlobalV::ofs_running);
+    mdrun->second_half();
     ;
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+    mdrun->write_restart(GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -172,7 +172,7 @@ TEST_F(NHC_test, write_restart)
 
 TEST_F(NHC_test, restart)
 {
-    mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+    mdrun->restart(GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
     Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
@@ -203,10 +203,10 @@ TEST_F(NHC_test, restart)
     EXPECT_EQ(nhc->v_peta[3], 3.60329);
 }
 
-TEST_F(NHC_test, outputMD)
+TEST_F(NHC_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true);
     ofs.close();
 
     std::ifstream ifs("running.log");
