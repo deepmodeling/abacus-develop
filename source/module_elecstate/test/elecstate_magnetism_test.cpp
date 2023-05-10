@@ -1,6 +1,7 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include <cmath>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "module_elecstate/elecstate_getters.h"
 
 /************************************************
@@ -20,34 +21,14 @@
 #define private public
 #include "module_elecstate/magnetism.h"
 
-Charge::Charge(){}
-Charge::~Charge(){}
-ModulePW::PW_Basis::PW_Basis()
+Charge::Charge()
 {
 }
-ModulePW::PW_Basis::~PW_Basis()
+Charge::~Charge()
 {
-}
-ModulePW::FFT::FFT()
-{
-}
-ModulePW::FFT::~FFT()
-{
-}
-void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, double)
-{
-    return;
-}
-void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int)
-{
-    return;
-}
-void ModulePW::PW_Basis::distribute_r()
-{
-    return;
 }
 
-const double elecstate::get_ucell_omega()
+double elecstate::get_ucell_omega()
 {
     return 500.0;
 }
@@ -89,76 +70,70 @@ TEST_F(MagnetismTest, JudgeParallel)
 
 TEST_F(MagnetismTest, ComputeMagnetizationS2)
 {
-    GlobalV::NSPIN = 2;
-    GlobalV::TWO_EFERMI = false;
-    GlobalV::nelec = 10.0;
-    ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
-    rhopw->nrxx = 100;
-    rhopw->nxyz = 1000;
-    Charge* chr = new Charge;
-    chr->rhopw = rhopw;
-    chr->nrxx = 100;
-    chr->rho = new double*[GlobalV::NSPIN];
-    for (int i = 0; i < GlobalV::NSPIN; i++)
-    {
-        chr->rho[i] = new double[chr->nrxx];
-    }
-    for (int ir = 0; ir < chr->nrxx; ir++)
-    {
-        chr->rho[0][ir] = 1.00;
-        chr->rho[1][ir] = 1.01;
-    }
-    double* nelec_spin = new double[2];
-    magnetism->compute_magnetization(chr, nelec_spin);
-    EXPECT_DOUBLE_EQ(-0.5, magnetism->tot_magnetization);
-    EXPECT_DOUBLE_EQ(0.5, magnetism->abs_magnetization);
-    EXPECT_DOUBLE_EQ(4.75, nelec_spin[0]);
-    EXPECT_DOUBLE_EQ(5.25, nelec_spin[1]);
-    delete[] nelec_spin;
-    for (int i = 0; i < GlobalV::NSPIN; i++)
-    {
-        delete[] chr->rho[i];
-    }
-    delete[] chr->rho;
-    delete chr;
-    delete rhopw;
+                  GlobalV::NSPIN = 2;
+                  GlobalV::TWO_EFERMI = false;
+                  GlobalV::nelec = 10.0;
+
+                  Charge* chr = new Charge;
+                  chr->nrxx = 100;
+                  chr->nxyz = 1000;
+                  chr->rho = new double*[GlobalV::NSPIN];
+                  for (int i=0; i< GlobalV::NSPIN; i++)
+                  {
+                                    chr->rho[i] = new double[chr->nrxx];
+                  }
+                  for (int ir=0; ir< chr->nrxx; ir++)
+                  {
+                                    chr->rho[0][ir] = 1.00;
+                                    chr->rho[1][ir] = 1.01;
+                  }
+                  double* nelec_spin = new double[2];
+                  magnetism->compute_magnetization(chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
+                  EXPECT_DOUBLE_EQ(-0.5, magnetism->tot_magnetization);
+                  EXPECT_DOUBLE_EQ(0.5, magnetism->abs_magnetization);
+                  EXPECT_DOUBLE_EQ(4.75, nelec_spin[0]);
+                  EXPECT_DOUBLE_EQ(5.25, nelec_spin[1]);
+                  delete[] nelec_spin;
+                  for (int i=0; i< GlobalV::NSPIN; i++)
+                  {
+                                    delete[] chr->rho[i];
+                  }
+                  delete[] chr->rho;
+                  delete chr;
 }
 
 TEST_F(MagnetismTest, ComputeMagnetizationS4)
 {
-    GlobalV::NSPIN = 4;
-    ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis;
-    rhopw->nrxx = 100;
-    rhopw->nxyz = 1000;
-    Charge* chr = new Charge;
-    chr->rhopw = rhopw;
-    chr->rho = new double*[GlobalV::NSPIN];
-    chr->nrxx = 100;
-    for (int i = 0; i < GlobalV::NSPIN; i++)
-    {
-        chr->rho[i] = new double[chr->nrxx];
-    }
-    for (int ir = 0; ir < chr->nrxx; ir++)
-    {
-        chr->rho[0][ir] = 1.00;
-        chr->rho[1][ir] = std::sqrt(2.0);
-        chr->rho[2][ir] = 1.00;
-        chr->rho[3][ir] = 1.00;
-    }
-    double* nelec_spin = new double[4];
-    magnetism->compute_magnetization(chr, nelec_spin);
-    EXPECT_DOUBLE_EQ(100.0, magnetism->abs_magnetization);
-    EXPECT_DOUBLE_EQ(50.0 * std::sqrt(2.0), magnetism->tot_magnetization_nc[0]);
-    EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[1]);
-    EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[2]);
-    delete[] nelec_spin;
-    for (int i = 0; i < GlobalV::NSPIN; i++)
-    {
-        delete[] chr->rho[i];
-    }
-    delete[] chr->rho;
-    delete chr;
-    delete rhopw;
+                    GlobalV::NSPIN = 4;
+
+                    Charge* chr = new Charge;
+                    chr->rho = new double*[GlobalV::NSPIN];
+                    chr->nrxx = 100;
+                    chr->nxyz = 1000;
+                    for (int i=0; i< GlobalV::NSPIN; i++)
+                    {
+                                        chr->rho[i] = new double[chr->nrxx];
+                    }
+                    for (int ir=0; ir< chr->nrxx; ir++)
+                    {
+                                        chr->rho[0][ir] = 1.00;
+                                        chr->rho[1][ir] = std::sqrt(2.0);
+                                        chr->rho[2][ir] = 1.00;
+                                        chr->rho[3][ir] = 1.00;
+                    }
+                    double* nelec_spin = new double[4];
+                    magnetism->compute_magnetization(chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
+                    EXPECT_DOUBLE_EQ(100.0, magnetism->abs_magnetization);
+                    EXPECT_DOUBLE_EQ(50.0*std::sqrt(2.0), magnetism->tot_magnetization_nc[0]);
+                    EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[1]);
+                    EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[2]);
+                    delete[] nelec_spin;
+                    for (int i=0; i< GlobalV::NSPIN; i++)
+                    {
+                                        delete[] chr->rho[i];
+                    }
+                    delete[] chr->rho;
+                    delete chr;
 }
 
 #ifdef __MPI
