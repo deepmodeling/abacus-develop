@@ -84,6 +84,7 @@ void Charge::allocate(const int &nspin_in)
 {
     ModuleBase::TITLE("Charge","allocate");
 	this->nrxx = this->rhopw->nrxx;
+	this->nxyz = this->rhopw->nxyz;
 	this->ngmc = this->rhopw->npw;
 
     if(allocate_rho == true)

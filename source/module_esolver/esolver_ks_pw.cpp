@@ -428,7 +428,7 @@ namespace ModuleESolver
         }
 
         // compute magnetization, only for LSDA(spin==2)
-        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge, this->pelec->nelec_spin.data());
+        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz, this->pelec->charge->rho, this->pelec->nelec_spin.data());
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
