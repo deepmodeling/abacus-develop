@@ -1,6 +1,7 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include <cmath>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "module_elecstate/elecstate_getters.h"
 
 /************************************************
@@ -18,14 +19,32 @@
 */
 
 #define private public
+namespace ModulePW
+{
+class PW_Basis
+{
+  public:
+    PW_Basis(){};
+    ~PW_Basis(){};
+    int nxyz;
+    int nrxx;
+};
+} // namespace ModulePW
+#define PW_BASIS_BIG_H
+#define PWBASIS_H
 #include "module_elecstate/magnetism.h"
 
-ModulePW::PW_Basis::PW_Basis(){}
-ModulePW::FFT::FFT(){}
-Charge::Charge(){}
-Charge::~Charge(){}
+Charge::Charge()
+{
+}
+Charge::~Charge()
+{
+}
 
-const double elecstate::get_ucell_omega() { return 500.0; }
+double elecstate::get_ucell_omega()
+{
+    return 500.0;
+}
 
 class MagnetismTest : public ::testing::Test
 {
