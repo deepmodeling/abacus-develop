@@ -341,7 +341,7 @@ void ESolver_KS_LCAO::postprocess()
                                  GlobalC::en.dos_edelta_ev,
                                  GlobalC::en.dos_scale,
                                  GlobalC::en.bcoeff,
-                                 &(GlobalC::kv));
+                                 GlobalC::kv);
 
         if (GlobalC::en.out_dos == 3)
         {

@@ -32,7 +32,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                               const double& dos_edelta_ev,
                               const double& dos_scale,
                               const double& bcoeff,
-                              const K_Vectors* p_kv)
+                              const K_Vectors& kv)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
@@ -45,7 +45,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
     double emin = ekb(0, 0);
-    for (int ik = 0; ik < p_kv->nks; ++ik)
+    for (int ik = 0; ik < kv.nks; ++ik)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
         {
@@ -127,7 +127,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                     double en0 = ekb(0, i) * ModuleBase::Ry_to_eV;
                     double de = en - en0;
                     double de2 = 0.5 * de * de;
-                    Gauss[n] = p_kv->wk[0] * exp(-de2 / a / a) / b;
+                    Gauss[n] = kv.wk[0] * exp(-de2 / a / a) / b;
                 }
 
                 const int NB = i + 1;
@@ -196,10 +196,10 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
             Mulk.resize(1);
             Mulk[0].create(pv->ncol, pv->nrow);
 
-            for (int ik = 0; ik < p_kv->nks; ik++)
+            for (int ik = 0; ik < kv.nks; ik++)
             {
 
-                if (is == p_kv->isk[ik])
+                if (is == kv.isk[ik])
                 {
                     uhm.LM->allocate_HS_k(pv->nloc);
                     uhm.LM->zeros_HSk('S');
@@ -225,7 +225,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                             double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
                             double de = en - en0;
                             double de2 = 0.5 * de * de;
-                            Gauss[n] = p_kv->wk[ik] * exp(-de2 / a / a) / b;
+                            Gauss[n] = kv.wk[ik] * exp(-de2 / a / a) / b;
                         }
 
                         const int NB = i + 1;
@@ -429,10 +429,10 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                            emax,
                            emin,
                            bcoeff,
-                           p_kv->nks,
-                           p_kv->nkstot,
-                           p_kv->wk,
-                           p_kv->isk,
+                           kv.nks,
+                           kv.nkstot,
+                           kv.wk,
+                           kv.isk,
                            GlobalV::NBANDS,
                            ekb,
                            wg);

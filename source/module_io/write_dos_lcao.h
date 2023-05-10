@@ -8,14 +8,14 @@
 namespace ModuleIO
 {
 	/// @brief calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
-	void write_dos_lcao(const psi::Psi<double> *psid,
-		const psi::Psi<std::complex<double>> *psi,
-		LCAO_Hamilt &uhm,
-		const ModuleBase::matrix &ekb,
-		const ModuleBase::matrix &wg,
-		const double &dos_edelta_ev,
-		const double &dos_scale,
-		const double &bcoeff,
-		const K_Vectors* p_kv);
+void write_dos_lcao(const psi::Psi<double>* psid,
+                    const psi::Psi<std::complex<double>>* psi,
+                    LCAO_Hamilt& uhm,
+                    const ModuleBase::matrix& ekb,
+                    const ModuleBase::matrix& wg,
+                    const double& dos_edelta_ev,
+                    const double& dos_scale,
+                    const double& bcoeff,
+                    const K_Vectors& p_kv);
 }
 #endif
