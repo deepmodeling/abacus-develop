@@ -114,7 +114,7 @@ void DFTU::write_occup_m(std::ofstream &ofs)
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    ofs <<  std::setw(12) << std::setprecision(8) 
+                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
                                         << locale[iat][l][n][is](m0, m1);
                                 }
                                 ofs << std::endl;
@@ -134,7 +134,7 @@ void DFTU::write_occup_m(std::ofstream &ofs)
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
-                                        ofs <<  std::setw(12) << std::setprecision(8) 
+                                        ofs << std::setw(12) << std::setprecision(8) << std::fixed
                                             << locale[iat][l][n][0](m0_all, m1_all);
                                     }
                                 }
