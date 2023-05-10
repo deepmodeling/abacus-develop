@@ -11,7 +11,7 @@ namespace ModuleIO
             const int &istep,
             const ModuleBase::matrix& v_eff,
             LCAO_Hamilt &UHM,
-            const K_Vectors* p_kv,
+            const K_Vectors& kv,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",
@@ -22,7 +22,7 @@ namespace ModuleIO
             const int &istep,
             const ModuleBase::matrix& v_eff,
             LCAO_Hamilt &UHM,
-            const K_Vectors* p_kv,
+            const K_Vectors& kv,
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);
 
