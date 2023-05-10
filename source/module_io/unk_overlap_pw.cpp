@@ -165,7 +165,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R
 
 }
 
-//translate: here G is in direct coordinate
+//here G is in direct coordinate
 std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_R, const int iband_L, const int iband_R, const psi::Psi<std::complex<double>> *evc, const ModuleBase::Vector3<double> G)
 {
 	// (1) set value
