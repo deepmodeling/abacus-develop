@@ -326,7 +326,7 @@ namespace ModuleESolver
         {
             // caoyu add 2020-11-24, mohan updat 2021-01-03
             Numerical_Descriptor nc;
-            nc.output_descriptor(this->psi[0], INPUT.bessel_descriptor_lmax, INPUT.bessel_descriptor_rcut, INPUT.bessel_descriptor_tolerence);
+            nc.output_descriptor(this->psi[0], INPUT.bessel_descriptor_lmax, INPUT.bessel_descriptor_rcut, INPUT.bessel_descriptor_tolerence, GlobalC::kv.nks);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"GENERATE DESCRIPTOR FOR DEEPKS");
             return;
         }
