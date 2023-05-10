@@ -407,9 +407,9 @@ void toWannier90::writeUNK(const psi::Psi<std::complex<double>> &wfc_pw)
             ModuleBase::GlobalFunc::ZEROS(porter, GlobalC::rhopw->nrxx);
             for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
             {
-                porter[GlobalC::sf.ig2fftw[GlobalC::wf.igk(ik, ig)]] = wfc_pw[ik](ib, ig);
+                porter[sf.ig2fftw[GlobalC::wf.igk(ik, ig)]] = wfc_pw[ik](ib, ig);
             }
-            GlobalC::sf.FFT_wfc.FFT3D(porter, 1);
+            sf.FFT_wfc.FFT3D(porter, 1);
 
             for(int k=0; k<GlobalC::rhopw->nz; k++)
             {
