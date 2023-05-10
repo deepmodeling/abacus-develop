@@ -1,10 +1,16 @@
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "occupy.h"
+
+#include "module_base/constants.h"
 #include "module_base/mymath.h"
 #include "module_base/parallel_reduce.h"
+#include "module_elecstate/elecstate_getters.h"
 
-Occupy::Occupy(){}
-Occupy::~Occupy(){}
+Occupy::Occupy()
+{
+}
+Occupy::~Occupy()
+{
+}
 
 //===========================================================
 // Four smearing methods:
@@ -15,14 +21,13 @@ Occupy::~Occupy(){}
 //===========================================================
 
 bool Occupy::use_gaussian_broadening = false;
-int Occupy::gaussian_type;
-double Occupy::gaussian_parameter;
+int Occupy::gaussian_type = 0;
+double Occupy::gaussian_parameter = 0.01;
 bool Occupy::fixed_occupations = false;
 
-
-void Occupy::decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma)
+void Occupy::decision(const std::string &name, const std::string &smearing_method, const double &smearing_sigma)
 {
-	ModuleBase::TITLE("Occupy","decision");
+    ModuleBase::TITLE("Occupy", "decision");
     use_gaussian_broadening = false;
     fixed_occupations = false;
 
@@ -31,47 +36,48 @@ void Occupy::decision(const std::string &name,const std::string &smearing_method
 
     if (name == "fixed")
     {
-        if ( gaussian_parameter!=0.0 )
+        if (gaussian_parameter != 0.0)
         {
-            ModuleBase::WARNING("smearing_decision","Fixed occupations,gauss broadening ignored");
-            ModuleBase::GlobalFunc::AUTO_SET("gaussian_parameter",0.0);
+            ModuleBase::WARNING("smearing_decision", "Fixed occupations,gauss broadening ignored");
+            ModuleBase::GlobalFunc::AUTO_SET("gaussian_parameter", 0.0);
             gaussian_parameter = 0.0;
         }
     }
     else if (name == "smearing" && smearing_method == "fixed")
     {
-        if ( gaussian_parameter!=0.0 )
+        if (gaussian_parameter != 0.0)
         {
-            ModuleBase::WARNING("smearing_decision","Fixed occupations,gauss broadening ignored");
-            ModuleBase::GlobalFunc::AUTO_SET("gaussian_parameter",0.0);
+            ModuleBase::WARNING("smearing_decision", "Fixed occupations,gauss broadening ignored");
+            ModuleBase::GlobalFunc::AUTO_SET("gaussian_parameter", 0.0);
             gaussian_parameter = 0.0;
         }
     }
 
-	// there are four types of smearing methods:
-	// (1) gaussian
-	// (2) methfessel-paxton
-	// (3) Marzari-Vanderbilt
-	// (4) Fermi-Dirac
+    // there are four types of smearing methods:
+    // (1) gaussian
+    // (2) methfessel-paxton
+    // (3) Marzari-Vanderbilt
+    // (4) Fermi-Dirac
     else if (name == "smearing")
     {
         use_gaussian_broadening = true;
-        if ( gaussian_parameter == 0.0)
+        if (gaussian_parameter == 0.0)
         {
-            ModuleBase::WARNING_QUIT("smearing_decision",
-                         "Smearing requires gaussian broadening,but gaussian_parameter = 0(default value = 0.1)");
+            ModuleBase::WARNING_QUIT(
+                "smearing_decision",
+                "Smearing requires gaussian broadening,but gaussian_parameter = 0(default value = 0.01)");
         }
-        if ( smearing_method == "gaussian" || smearing_method == "gauss")
+        if (smearing_method == "gaussian" || smearing_method == "gauss")
         {
             gaussian_type = 0; //  0: gaussian
         }
-        else if (smearing_method == "methfessel-paxton" || smearing_method ==  "mp")
+        else if (smearing_method == "methfessel-paxton" || smearing_method == "mp")
         {
-            gaussian_type = 1;  // >0 Methfessel-Paxton method.
+            gaussian_type = 1; // >0 Methfessel-Paxton method.
         }
-        else if (smearing_method ==  "mp2")
+        else if (smearing_method == "mp2")
         {
-            gaussian_type = 2;  // 2nd Methfessel-Paxton method.
+            gaussian_type = 2; // 2nd Methfessel-Paxton method.
         }
 
         else if (smearing_method == "marzari-vanderbilt" || smearing_method == "cold" || smearing_method == "mv")
@@ -85,7 +91,7 @@ void Occupy::decision(const std::string &name,const std::string &smearing_method
     }
     else if (name == "tetrahedra")
     {
-        ModuleBase::WARNING_QUIT("occupy","not implemented yet!");
+        ModuleBase::WARNING_QUIT("occupy", "not implemented yet!");
     }
     else if (name == "from_input")
     {
@@ -93,189 +99,180 @@ void Occupy::decision(const std::string &name,const std::string &smearing_method
     }
     else
     {
-        ModuleBase::WARNING_QUIT("occupy_decision","occupations, not implemented");
+        ModuleBase::WARNING_QUIT("occupy_decision", "occupations, not implemented");
     }
     return;
 }
-
 
 //=============================================================
 // calculates weights for semiconductors and insulators
 // (bands are either empty or filled)
 //=============================================================
-void Occupy::iweights
-(
-    const int nks, //number of k points.
-    const std::vector<double> &wk,//weight of each k point (consider symmetry).
-    const int nband,//number of bands.
-    const double &nelec, //number of electrons for this spin direction.
-    double **ekb,//the array save the band energy.
-    double &ef,//output: the highest occupied Kohn-Sham level.
-    ModuleBase::matrix &wg,//output: weight for each k, each band.
-    const int &is,//the spin index now.
-    const std::vector<int> &isk//distinguish k point belong to which spin.
+void Occupy::iweights(const int nks,                 // number of k points.
+                      const std::vector<double> &wk, // weight of each k point (consider symmetry).
+                      const int nband,               // number of bands.
+                      const double &nelec,           // number of electrons for this spin direction.
+                      double **ekb,                  // the array save the band energy.
+                      double &ef,                    // output: the highest occupied Kohn-Sham level.
+                      ModuleBase::matrix &wg,        // output: weight for each k, each band.
+                      const int &is,                 // the spin index now.
+                      const std::vector<int> &isk    // distinguish k point belong to which spin.
 )
 {
-	assert(is<2); //not include non-collinear yet!
-	double degspin;
-	bool conv = false;          // pengfei 2017-04-04
+    assert(is < 2); // not include non-collinear yet!
+    double degspin;
+    bool conv = false; // pengfei 2017-04-04
 
-	degspin = (GlobalV::NSPIN == 2)? 1.0 : 2.0;
-	if(GlobalV::NSPIN == 4)degspin = 1.0;//added by zhengdy-soc
+    degspin = (GlobalV::NSPIN == 2) ? 1.0 : 2.0;
+    if (GlobalV::NSPIN == 4)
+        degspin = 1.0; // added by zhengdy-soc
 
-	assert( degspin > 0.0);
-	double ib_min = nelec/degspin;
+    assert(degspin > 0.0);
+    double ib_min = nelec / degspin;
 
-	int ib_min1 = ( ib_min - int(ib_min) == 0) ? int(ib_min) : int(ib_min) + 1;
+    int ib_min1 = (ib_min - int(ib_min) == 0) ? int(ib_min) : int(ib_min) + 1;
 
-	for(int ik=0; ik<nks && !conv; ik++)
-	{
-		for(int ib=0; ib<nband && !conv; ib++)
-		{
-			//std::cout << " ekb=" << ekb[ik][ib] << std::endl;
-			int count =0;
-			ef = ekb[ik][ib];
-			for(int ik1=0; ik1<nks; ik1++)
-			{
-				for(int ib1=0; ib1<nband; ib1++)
-				{
-					if( ekb[ik1][ib1] < ef || ekb[ik1][ib1] == ef )
-					{
-						count++;
-					}
-				}
-			}
-
-			if( (GlobalV::NSPIN == 2 && count == ib_min1 * nks/2)
-				|| (GlobalV::NSPIN == 1 && count == ib_min1 * nks)
-				|| ((GlobalV::NSPIN == 4) && count == ib_min1 * nks))
-			{
-				conv = true;
-			}
-		}
-	}
-
-
-	for(int ik=0; ik<nks; ik++)
-	{
-		for(int ib=0; ib<nband; ib++)
-		{
-			if (ekb[ik][ib] < ef)
-			{
-				wg(ik,ib) =  wk[ik];
-			}
-			else if(ekb[ik][ib] == ef)
-			{
-				wg(ik,ib) =  wk[ik] * ( ib_min + 1.0 - double(ib_min1));
-			}
-			else
-			{
-				wg(ik,ib) = 0.0;
-			}
-		}
-	}
-
-    if(conv == false && GlobalC::en.iter == 2)
+    for (int ik = 0; ik < nks && !conv; ik++)
     {
-       ModuleBase::WARNING_QUIT("Occupied","not converged, change 'smearing' method.");
+        for (int ib = 0; ib < nband && !conv; ib++)
+        {
+            // std::cout << " ekb=" << ekb[ik][ib] << std::endl;
+            int count = 0;
+            ef = ekb[ik][ib];
+            for (int ik1 = 0; ik1 < nks; ik1++)
+            {
+                for (int ib1 = 0; ib1 < nband; ib1++)
+                {
+                    if (ekb[ik1][ib1] < ef || ekb[ik1][ib1] == ef)
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            if ((GlobalV::NSPIN == 2 && count == ib_min1 * nks / 2) || (GlobalV::NSPIN == 1 && count == ib_min1 * nks)
+                || ((GlobalV::NSPIN == 4) && count == ib_min1 * nks))
+            {
+                conv = true;
+            }
+        }
+    }
+
+    for (int ik = 0; ik < nks; ik++)
+    {
+        for (int ib = 0; ib < nband; ib++)
+        {
+            if (ekb[ik][ib] < ef)
+            {
+                wg(ik, ib) = wk[ik];
+            }
+            else if (ekb[ik][ib] == ef)
+            {
+                wg(ik, ib) = wk[ik] * (ib_min + 1.0 - double(ib_min1));
+            }
+            else
+            {
+                wg(ik, ib) = 0.0;
+            }
+        }
+    }
+
+    if (conv == false && elecstate::get_en_iter() == 2)
+    {
+        ModuleBase::WARNING_QUIT("Occupied", "not converged, change 'smearing' method.");
     }
 
     return;
-}// end subroutine iweights
-
+} // end subroutine iweights
 
 //==========================================================
 // calculates weights with the gaussian spreading technique
 //==========================================================
-void Occupy::gweights(
-    const int nks,//number of k points.
-    const std::vector<double> &wk,//weight of each k point(symmetry considered).
-    const int nband,//number of bands.
-    const double &nelec,//number of electrons.
-    const double &smearing_sigma,//parameter input by user.
-    const int ngauss,//which type of smearing.
-    double **ekb,//save the band energy.
-    double &ef,//ouput: fermi level
-    double &demet,//output: energy correction for metal
-    ModuleBase::matrix &wg,//output: weight of each band at each k point.
-	const int &is, // spin
-	const std::vector<int> &isk) // array to point out each k belong to which spin
+void Occupy::gweights(const int nks,                 // number of k points.
+                      const std::vector<double> &wk, // weight of each k point(symmetry considered).
+                      const int nband,               // number of bands.
+                      const double &nelec,           // number of electrons.
+                      const double &smearing_sigma,  // parameter input by user.
+                      const int ngauss,              // which type of smearing.
+                      double **ekb,                  // save the band energy.
+                      double &ef,                    // ouput: fermi level
+                      double &demet,                 // output: energy correction for metal
+                      ModuleBase::matrix &wg,        // output: weight of each band at each k point.
+                      const int &is,                 // spin
+                      const std::vector<int> &isk)   // array to point out each k belong to which spin
 {
-	//ModuleBase::TITLE("Occupy","gweights");
+    // ModuleBase::TITLE("Occupy","gweights");
     //===============================
-    // Calculate the Fermi energy ef
+    //  Calculate the Fermi energy ef
     //===============================
-    // call efermig
-    Occupy::efermig(ekb, GlobalV::NBANDS, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
+    //  call efermig
+    Occupy::efermig(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
     demet = 0.0;
 
-    for (int ik = 0;ik < nks;ik++)
+    for (int ik = 0; ik < nks; ik++)
     {
-		// mohan add 2011-04-03
-		if(is!=-1 && is!=isk[ik]) continue;
+        // mohan add 2011-04-03
+        if (is != -1 && is != isk[ik])
+            continue;
 
-		for (int ib = 0;ib < GlobalV::NBANDS;ib++)
-		{
-			//================================
-			// Calculate the gaussian weights
-			//================================
-			// call wgauss
-			wg(ik, ib) = wk [ik] * Occupy::wgauss( (ef - ekb[ik][ib] )/ smearing_sigma, ngauss);
+        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        {
+            //================================
+            // Calculate the gaussian weights
+            //================================
+            // call wgauss
+            wg(ik, ib) = wk[ik] * Occupy::wgauss((ef - ekb[ik][ib]) / smearing_sigma, ngauss);
 
-			//====================================================================
-			// The correct form of the band energy is  \int e n(e) de   for e<ef
-			// demet is the correction to add to the sum of eigenvalues
-			//====================================================================
-			// Mohan fix bug 2010-1-9
-			// call w1gauss
-			demet += wk [ik] * smearing_sigma * Occupy::w1gauss((ef - ekb[ik][ib]) / smearing_sigma, ngauss);
-		}
-	}
+            //====================================================================
+            // The correct form of the band energy is  \int e n(e) de   for e<ef
+            // demet is the correction to add to the sum of eigenvalues
+            //====================================================================
+            // Mohan fix bug 2010-1-9
+            // call w1gauss
+            demet += wk[ik] * smearing_sigma * Occupy::w1gauss((ef - ekb[ik][ib]) / smearing_sigma, ngauss);
+        }
+    }
 
     return;
 } // end subroutine gweights
 
-
-void Occupy::efermig
-(
-    double **ekb,
-    const int nband,
-    const int nks,
-    const double &nelec,
-    const std::vector<double> &wk,
-    const double &smearing_sigma,
-    const int ngauss,
-    double &ef,
-	const int &is,
-	const std::vector<int> &isk
-)
+void Occupy::efermig(double **ekb,
+                     const int nband,
+                     const int nks,
+                     const double &nelec,
+                     const std::vector<double> &wk,
+                     const double &smearing_sigma,
+                     const int ngauss,
+                     double &ef,
+                     const int &is,
+                     const std::vector<int> &isk)
 {
-	//ModuleBase::TITLE("Occupy","efermig");
+    // ModuleBase::TITLE("Occupy","efermig");
     //==================================================================
-    // Finds the Fermi energy - Gaussian Broadening (Methfessel-Paxton)
+    //  Finds the Fermi energy - Gaussian Broadening (Methfessel-Paxton)
     //==================================================================
-    //find bounds for the Fermi energy. Very safe choice!
+    // find bounds for the Fermi energy. Very safe choice!
     const int maxiter = 300;
     const double eps = 1.0e-10;
 
-	/*
-	for(int ik=0; ik<nks; ik++)
-	{
-		for(int i=0; i<nband; i++)
-		{
-			std::cout << " ib=" << i << " ekb=" << ekb[ik][i] << std::endl;
-		}
-	}
-	*/
+    /*
+    for(int ik=0; ik<nks; ik++)
+    {
+        for(int i=0; i<nband; i++)
+        {
+            std::cout << " ib=" << i << " ekb=" << ekb[ik][i] << std::endl;
+        }
+    }
+    */
 
-	// the first 0 stands for the first k point.
+    // the first 0 stands for the first k point.
     double elw = ekb[0][0];
-    double eup = ekb[0][nband-1];
+    double eup = ekb[0][nband - 1];
 
-    for (int ik = 1;ik < nks;ik++) // do ik = 2, nks
+    for (int ik = 1; ik < nks; ik++) // do ik = 2, nks
     {
         elw = std::min(elw, ekb[ik][0]);
-        eup = std::max(eup, ekb[ik][nband-1]);
+        eup = std::max(eup, ekb[ik][nband - 1]);
     }
 
     eup += 2 * smearing_sigma;
@@ -283,33 +280,33 @@ void Occupy::efermig
 
 #ifdef __MPI
     // find min and max across pools
-	Parallel_Reduce::gather_max_double_all( eup );
-	Parallel_Reduce::gather_min_double_all( elw );
+    Parallel_Reduce::gather_max_double_all(eup);
+    Parallel_Reduce::gather_min_double_all(elw);
 
 #endif
     //=================
-    //Bisection method
+    // Bisection method
     //=================
     // call sumkg
     int changetime = 0;
-    sumkg:
+sumkg:
 
     const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
     const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
 
-    if(changetime > 1000)
+    if (changetime > 1000)
     {
         std::cout << " SOMETHING WRONG: " << std::endl;
-		std::cout << " is = " << is << std::endl;
-		std::cout << " eup = " << eup << std::endl;
-		std::cout << " elw = " << elw << std::endl;
-		std::cout << " nband = " << nband << std::endl;
-		std::cout << " nelec = " << nelec << std::endl;
-		std::cout << " sumkup = " << sumkup << std::endl;
-		std::cout << " sumklw = " << sumklw << std::endl;
-		std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
-		std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
-		ModuleBase::WARNING_QUIT("Occupy::efermig","ERROS in SMEARING");
+        std::cout << " is = " << is << std::endl;
+        std::cout << " eup = " << eup << std::endl;
+        std::cout << " elw = " << elw << std::endl;
+        std::cout << " nband = " << nband << std::endl;
+        std::cout << " nelec = " << nelec << std::endl;
+        std::cout << " sumkup = " << sumkup << std::endl;
+        std::cout << " sumklw = " << sumklw << std::endl;
+        std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
+        std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
+        ModuleBase::WARNING_QUIT("Occupy::efermig", "ERROS in SMEARING");
     }
     else if ((sumkup - nelec) < -eps)
     {
@@ -317,14 +314,14 @@ void Occupy::efermig
         ++changetime;
         goto sumkg;
     }
-    else if((sumklw - nelec) > eps)
+    else if ((sumklw - nelec) > eps)
     {
         elw -= 2 * smearing_sigma;
         ++changetime;
         goto sumkg;
     }
 
-    for (int i = 0;i < maxiter;i++)
+    for (int i = 0; i < maxiter; i++)
     {
         //======================
         // change ef value
@@ -336,7 +333,7 @@ void Occupy::efermig
         {
             return;
         }
-        else if ((sumkmid -nelec) < -eps )
+        else if ((sumkmid - nelec) < -eps)
         {
             elw = ef;
         }
@@ -348,75 +345,72 @@ void Occupy::efermig
     return;
 } // end function efermig
 
-
 //===================================================================
 // This function computes the number of states under a given energy e
 //===================================================================
-double Occupy::sumkg(
-	double** ekb,
-	const int nband,
-	const int nks,
-	const std::vector<double> &wk,
-	const double &smearing_sigma,
-	const int ngauss,
-	const double &e,
-	const int &is,
-	const std::vector<int> &isk
-)
+double Occupy::sumkg(double **ekb,
+                     const int nband,
+                     const int nks,
+                     const std::vector<double> &wk,
+                     const double &smearing_sigma,
+                     const int ngauss,
+                     const double &e,
+                     const int &is,
+                     const std::vector<int> &isk)
 {
-	//ModuleBase::TITLE("Occupy","sumkg");
+    // ModuleBase::TITLE("Occupy","sumkg");
     double sum2 = 0.0;
-    for (int ik = 0;ik < nks; ik++)
-	{
-		if(is!=-1 && is!=isk[ik]) continue;
+    for (int ik = 0; ik < nks; ik++)
+    {
+        if (is != -1 && is != isk[ik])
+            continue;
 
-		double sum1 = 0.0;
-		for (int ib = 0;ib < GlobalV::NBANDS; ib++)
-		{
-			//===========================
-			// call wgauss
-			//===========================
-			sum1 += Occupy::wgauss(  (e - ekb[ik][ib]) / smearing_sigma, ngauss);
-		}
-		sum2 += wk [ik] * sum1;
-	}
+        double sum1 = 0.0;
+        for (int ib = 0; ib < nband; ib++)
+        {
+            //===========================
+            // call wgauss
+            //===========================
+            sum1 += Occupy::wgauss((e - ekb[ik][ib]) / smearing_sigma, ngauss);
+        }
+        sum2 += wk[ik] * sum1;
+    }
 
-	//GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
+    // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
 
 #ifdef __MPI
-	Parallel_Reduce::reduce_double_allpool(sum2);
+    Parallel_Reduce::reduce_double_allpool(sum2);
 #endif
 
-	//GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
+    // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
 
     return sum2;
 } // end function sumkg
 
-
-double Occupy::wgauss(const double &x,const int n)
+double Occupy::wgauss(const double &x, const int n)
 {
-	//ModuleBase::TITLE("Occupy","wgauss");
+    // ModuleBase::TITLE("Occupy","wgauss");
     //=====================================================================
-    // This function computes the approximate theta function for the
-    // iven order n, at the point x.
-    // --> (n>=0) : Methfessel-Paxton case. See PRB 40, 3616 (1989).
-    // --> (n=-1 ): Cold smearing
-    //              (Marzari-Vanderbilt). See PRL 82, 3296 (1999)
-    //       1/2*erf(x-1/sqrt(2)) + 1/sqrt(2*pi)*exp(-(x-1/sqrt(2))**2) + 1/2
-    // --> (n=-99): Fermi-Dirac case: 1.0/(1.0+exp(-x)).
+    //  This function computes the approximate theta function for the
+    //  iven order n, at the point x.
+    //  --> (n>=0) : Methfessel-Paxton case. See PRB 40, 3616 (1989).
+    //  --> (n=-1 ): Cold smearing
+    //               (Marzari-Vanderbilt). See PRL 82, 3296 (1999)
+    //        1/2*erf(x-1/sqrt(2)) + 1/sqrt(2*pi)*exp(-(x-1/sqrt(2))**2) + 1/2
+    //  --> (n=-99): Fermi-Dirac case: 1.0/(1.0+exp(-x)).
     //=====================================================================
     //============================
-    // The value of this function
+    //  The value of this function
     //============================
     double wga = 0.0;
     const double maxarg = 200.0;
 
-	//===========================
+    //===========================
     // Fermi-Dirac(fd) smearing
     //===========================
-    if (n ==  - 99)
+    if (n == -99)
     {
-        if (x < - maxarg)
+        if (x < -maxarg)
         {
             wga = 0.0;
         }
@@ -434,49 +428,48 @@ double Occupy::wgauss(const double &x,const int n)
     //===================
     // Cold smearing(mv)
     //===================
-    if (n == - 1)
+    if (n == -1)
     {
         const double xp = x - 1.00 / ModuleBase::SQRT2;
         const double arg = std::min(maxarg, xp * xp);
-        wga = 0.50 * erf(xp) + 1.00 / sqrt( ModuleBase::TWO_PI ) * std::exp(- arg) + 0.50;
+        wga = 0.50 * erf(xp) + 1.00 / sqrt(ModuleBase::TWO_PI) * std::exp(-arg) + 0.50;
         return wga;
     }
 
-	//====================
+    //====================
     // Methfessel-Paxton       //pengfei 2014-10-13
     //====================
     wga = 0.5 * (1 - erf(-x));
-    //wga = gauss_freq(x * ModuleBase::SQRT2);
+    // wga = gauss_freq(x * ModuleBase::SQRT2);
     //	std::cout<<"\n x="<<x<<" wga="<<wga;
     if (n == 0)
     {
         return wga;
     }
 
-    //double hd = 0.0;
+    // double hd = 0.0;
 
     int ni = 0;
     const double arg = std::min(maxarg, x * x);
-    double hp = std::exp(- arg);
+    double hp = std::exp(-arg);
     double h0 = 1.00;
     double h1 = -2.00 * x;
     double a = 1.0 / sqrt(ModuleBase::PI);
-    for (int i = 0;i < n;i++)
+    for (int i = 0; i < n; i++)
     {
-        a = - a / ( static_cast<double>(i+1) * 4.00);
+        a = -a / (static_cast<double>(i + 1) * 4.00);
         wga = wga + a * h1 * hp;
         ++ni;
-        //std::cout << " wga = " <<wga<<std::endl;
-        h0 = 2.00 * (-x) * h1 - 2.00 * static_cast<double>(ni) * h0 ;
+        // std::cout << " wga = " <<wga<<std::endl;
+        h0 = 2.00 * (-x) * h1 - 2.00 * static_cast<double>(ni) * h0;
         ++ni;
 
-        h1 = 2.00 * (-x) * h0 - 2.00 * static_cast<double>(ni) * h1 ;
+        h1 = 2.00 * (-x) * h0 - 2.00 * static_cast<double>(ni) * h1;
     }
     return wga;
 } // end function wgauss
 
-
-double Occupy::w1gauss(const double &x,const int n)
+double Occupy::w1gauss(const double &x, const int n)
 {
     //========================================================================
     //    w1gauss(x,n) = \int_{-\infty}^x   y delta(y) dy
@@ -496,11 +489,11 @@ double Occupy::w1gauss(const double &x,const int n)
     //=======================
     // Fermi-Dirac smearing
     //=======================
-    if (n ==  - 99)
+    if (n == -99)
     {
         if (abs(x) <= 36.0)
         {
-            const double f = 1.00 / (1.00 + exp(- x));
+            const double f = 1.00 / (1.00 + exp(-x));
             const double onemf = 1.00 - f;
             w1 = f * log(f) + onemf * log(onemf);
             //==================================================
@@ -520,61 +513,60 @@ double Occupy::w1gauss(const double &x,const int n)
     // Cold smearing
     //===============
 
-    if (n == - 1)
+    if (n == -1)
     {
         const double xp = x - 1.00 / ModuleBase::SQRT2;
-        const double arg = std::min(200.0, xp*xp);
-        w1 = 1.00 / sqrt(ModuleBase::TWO_PI) * xp * std::exp(- arg);
+        const double arg = std::min(200.0, xp * xp);
+        w1 = 1.00 / sqrt(ModuleBase::TWO_PI) * xp * std::exp(-arg);
         return w1;
     }
 
-
-	//====================
+    //====================
     // Methfessel-Paxton
     //====================
     const double arg = std::min(200.0, x * x);
-    w1 = - 0.50 * std::exp(- arg) / sqrt(ModuleBase::PI);
+    w1 = -0.50 * std::exp(-arg) / sqrt(ModuleBase::PI);
 
-	//std::cout << "\n x=" << x << " w1=" << w1;
-    if (n == 0)//specific case : gaussian smearing.
+    // std::cout << "\n x=" << x << " w1=" << w1;
+    if (n == 0) // specific case : gaussian smearing.
     {
         return w1;
     }
 
-/*    double hd = 0.0;
-    double hp = exp(- arg);
-    int ni = 0;
-    double a = 1.0 / sqrt(ModuleBase::PI);
+    /*    double hd = 0.0;
+        double hp = exp(- arg);
+        int ni = 0;
+        double a = 1.0 / sqrt(ModuleBase::PI);
 
-    for (int i = 0;i < n;i++)
-    {
-        hd = 2.00 * x * hp - 2.00 * static_cast<double>(ni) * hd;//dble(ni)
-        ni ++;
-        const double hpm1 = hp;
-        hp = 2.00 * x * hd - 2.00 * static_cast<double>(ni) * hp;//dble(ni)
-        ni ++;
-		// mohan fixed bug 2010-1-10
-		// description of bug: i should not be 0.
-        a = - a / ( static_cast<double>(i+1) * 4.00);//dble(i)
-        std::cout << " w1 == "<<w1<<std::endl;
-        w1 -= a * (0.50 * hp + static_cast<double>(ni) * hpm1);//dble(ni)
-        std::cout << " w1 == "<<w1<<std::endl;
-    }*/
+        for (int i = 0;i < n;i++)
+        {
+            hd = 2.00 * x * hp - 2.00 * static_cast<double>(ni) * hd;//dble(ni)
+            ni ++;
+            const double hpm1 = hp;
+            hp = 2.00 * x * hd - 2.00 * static_cast<double>(ni) * hp;//dble(ni)
+            ni ++;
+            // mohan fixed bug 2010-1-10
+            // description of bug: i should not be 0.
+            a = - a / ( static_cast<double>(i+1) * 4.00);//dble(i)
+            std::cout << " w1 == "<<w1<<std::endl;
+            w1 -= a * (0.50 * hp + static_cast<double>(ni) * hpm1);//dble(ni)
+            std::cout << " w1 == "<<w1<<std::endl;
+        }*/
 
     int ni = 0;
-    double hp = std::exp(- arg);
+    double hp = std::exp(-arg);
     double h0 = 1.00;
     double h1 = 2.00 * x;
     double a = 1.0 / sqrt(ModuleBase::PI);
-    for (int i = 0;i < n;i++)
+    for (int i = 0; i < n; i++)
     {
-        a = - a / ( static_cast<double>(i+1) * 4.00);
+        a = -a / (static_cast<double>(i + 1) * 4.00);
         ni++;
         const double h0m1 = h0;
-        h0 =  2.00 * x * h1 - 2.00 * static_cast<double>(ni) * h0 ;
+        h0 = 2.00 * x * h1 - 2.00 * static_cast<double>(ni) * h0;
         ni++;
-        h1 = 2.00 * x * h0 - 2.00 * static_cast<double>(ni) * h1 ;
-        w1 = w1 - a * ( 0.50 * h0 + static_cast<double>(ni) * h0m1 ) * hp ;
+        h1 = 2.00 * x * h0 - 2.00 * static_cast<double>(ni) * h1;
+        w1 = w1 - a * (0.50 * h0 + static_cast<double>(ni) * h0m1) * hp;
     }
 
     return w1;
@@ -582,7 +574,8 @@ double Occupy::w1gauss(const double &x,const int n)
 
 /*
 void Occupy::tweights(const int nks,const int nspin,const int nband,const double &nelec,
-                      const int ntetra,const ModuleBase::matrix &tetra, double **ekb, double &ef, ModuleBase::matrix &wg)
+                      const int ntetra,const ModuleBase::matrix &tetra, double **ekb, double &ef, ModuleBase::matrix
+&wg)
 {
     //===================================================================
     // calculates weights with the tetrahedron method (Bloechl version)
@@ -592,7 +585,7 @@ void Occupy::tweights(const int nks,const int nspin,const int nband,const double
     double e1, e2, e3, e4, c1, c2, c3, c4, dosef;
     int ik, ibnd, nt, nk, ns, i, kp1, kp2, kp3, kp4;
 
-	double etetra[4];
+    double etetra[4];
     int itetra[4];
 
     // Calculate the Fermi energy ef
@@ -820,8 +813,8 @@ void Occupy::efermit(double** ekb,const int nband,const int nks,const double &ne
     const double sumkup = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, eup);
     const double sumklw = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, elw);
 
-	GlobalV::ofs_running << "\n sumkup = " << sumkup;
-	GlobalV::ofs_running << "\n sumklw = " << sumklw << std::endl;
+    GlobalV::ofs_running << "\n sumkup = " << sumkup;
+    GlobalV::ofs_running << "\n sumklw = " << sumklw << std::endl;
 
     if ((sumkup - nelec) < - eps || (sumklw - nelec) > eps)
     {

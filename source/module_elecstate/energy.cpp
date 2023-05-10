@@ -76,7 +76,7 @@ void energy::calculate_harris()
 	return;
 }
 
-void energy::calculate_etot(void)
+void energy::calculate_etot(const int& nrxx, const int& nxyz)
 {
 	ModuleBase::TITLE("energy","calculate_etot");
 	//std::cout << "\n demet in etot = " << demet << std::endl;
@@ -92,8 +92,8 @@ void energy::calculate_etot(void)
 	+ evdw;							// Peize Lin add evdw 2021.03.09
 	if (GlobalV::imp_sol)
     {
-	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw)
-				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
+	this->etot += GlobalC::solvent_model.cal_Ael(GlobalC::ucell, nrxx, nxyz)
+				 + GlobalC::solvent_model.cal_Acav(GlobalC::ucell, nxyz);
 	}
 
     //Quxin adds for DFT+U energy correction on 20201029
@@ -128,6 +128,8 @@ void energy::calculate_etot(void)
 }
 
 void energy::print_etot(
+	const int& nrxx,
+	const int& nxyz,
 	const bool converged,
 	const int &iter_in,
 	const double &scf_thr,
@@ -169,8 +171,8 @@ void energy::print_etot(
         this->print_format("E_exx", exx);
         if (GlobalV::imp_sol)
         {
-            esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, GlobalC::rhopw);
-            esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, GlobalC::rhopw);
+            esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, nrxx, nxyz);
+            esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, nxyz);
             this->print_format("E_sol_el", esol_el);
             this->print_format("E_sol_cav", esol_cav);
         }
@@ -381,7 +383,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
 
-	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	for (int ir = 0; ir < pelec->charge->rhopw->nrxx; ir++)
 	{
 		deband_aux -= pelec->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -394,7 +396,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 	{
 		v_eff = pelec->pot->get_effective_v(1);
 		v_ofk = pelec->pot->get_effective_vofk(1);
-		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		for (int ir = 0; ir < pelec->charge->rhopw->nrxx; ir++)
 		{
 			deband_aux -= pelec->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -408,7 +410,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
 		for(int is = 1;is<4;is++)
 		{
 			v_eff = pelec->pot->get_effective_v(is);
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			for(int ir = 0; ir < pelec->charge->rhopw->nrxx; ir++)
 			{
 				deband_aux -= pelec->charge->rho[is][ir] * v_eff[ir];
 			}
@@ -421,7 +423,7 @@ double energy::delta_e(const elecstate::ElecState* pelec)
     deband0 = deband_aux;
 #endif
 
-    deband0 *= GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
+    deband0 *= GlobalC::ucell.omega / pelec->charge->rhopw->nxyz;
 
 	// \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
 	deband0 -= 2*exx;				// Peize Lin add 2017-10-16
@@ -450,7 +452,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 		v_ofk = pelec->pot->get_effective_vofk(0);
 	}
 
-	for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+	for (int ir=0; ir<pelec->charge->rhopw->nrxx; ir++)
 	{
 		this->descf -= ( pelec->charge->rho[0][ir] - pelec->charge->rho_save[0][ir] ) * (v_eff[ir] - v_fixed[ir]);
 		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -466,7 +468,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 		{
 			v_ofk = pelec->pot->get_effective_vofk(1);
 		}
-		for (int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+		for (int ir=0; ir<pelec->charge->rhopw->nrxx; ir++)
 		{
 			this->descf -= ( pelec->charge->rho[1][ir] - pelec->charge->rho_save[1][ir] ) * (v_eff[ir] - v_fixed[ir]);
 			if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -480,7 +482,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 		for(int is = 1;is<4;is++)
 		{
 			v_eff = pelec->pot->get_effective_v(is);
-			for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+			for(int ir=0; ir<pelec->charge->rhopw->nrxx; ir++)
 			{
 				this->descf -= ( pelec->charge->rho[is][ir] - pelec->charge->rho_save[is][ir] ) * v_eff[ir];
 			}
@@ -489,7 +491,7 @@ void energy::delta_escf(const elecstate::ElecState* pelec)
 
     Parallel_Reduce::reduce_double_pool( descf );
 
-    this->descf *= GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
+    this->descf *= GlobalC::ucell.omega / pelec->charge->rhopw->nxyz;
     return;
 }
 

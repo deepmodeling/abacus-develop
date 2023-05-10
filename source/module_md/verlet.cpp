@@ -3,7 +3,7 @@
 #include "md_func.h"
 #include "module_base/timer.h"
 
-Verlet::Verlet(MD_parameters& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+Verlet::Verlet(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
 }
 
@@ -11,39 +11,39 @@ Verlet::~Verlet()
 {
 }
 
-void Verlet::setup(ModuleESolver::ESolver* p_esolver, const int& my_rank, const std::string& global_readin_dir)
+void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::tick("Verlet", "setup");
 
-    MD_base::setup(p_esolver, my_rank, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir);
 
     ModuleBase::timer::tick("Verlet", "setup");
 }
 
-void Verlet::first_half(const int& my_rank, std::ofstream& ofs)
+void Verlet::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Verlet", "first_half");
     ModuleBase::timer::tick("Verlet", "first_half");
 
-    MD_base::update_vel(force, my_rank);
-    MD_base::update_pos(my_rank);
+    MD_base::update_vel(force);
+    MD_base::update_pos();
 
     ModuleBase::timer::tick("Verlet", "first_half");
 }
 
-void Verlet::second_half(const int& my_rank)
+void Verlet::second_half()
 {
     ModuleBase::TITLE("Verlet", "second_half");
     ModuleBase::timer::tick("Verlet", "second_half");
 
-    MD_base::update_vel(force, my_rank);
-    apply_thermostat(my_rank);
+    MD_base::update_vel(force);
+    apply_thermostat();
 
     ModuleBase::timer::tick("Verlet", "second_half");
 }
 
-void Verlet::apply_thermostat(const int& my_rank)
+void Verlet::apply_thermostat()
 {
     double t_target = 0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
@@ -69,7 +69,7 @@ void Verlet::apply_thermostat(const int& my_rank)
     }
     else if (mdp.md_thermostat == "anderson")
     {
-        if (my_rank == 0)
+        if (mdp.my_rank == 0)
         {
             double deviation;
             for (int i = 0; i < ucell.nat; ++i)
@@ -120,17 +120,17 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
     }
 }
 
-void Verlet::outputMD(std::ofstream& ofs, const bool& cal_stress, const int& my_rank)
+void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    MD_base::outputMD(ofs, cal_stress, my_rank);
+    MD_base::print_md(ofs, cal_stress);
 }
 
-void Verlet::write_restart(const int& my_rank, const std::string& global_out_dir)
+void Verlet::write_restart(const std::string& global_out_dir)
 {
-    MD_base::write_restart(my_rank, global_out_dir);
+    MD_base::write_restart(global_out_dir);
 }
 
-void Verlet::restart(const int& my_rank, const std::string& global_readin_dir)
+void Verlet::restart(const std::string& global_readin_dir)
 {
-    MD_base::restart(my_rank, global_readin_dir);
+    MD_base::restart(global_readin_dir);
 }

@@ -91,6 +91,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF),
+                                                   this->pw_rho,
                                                    GlobalC::bigpw);
     }
 
@@ -166,7 +167,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     }
 
     // Inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    this->pelec->charge->allocate(GlobalV::NSPIN);
 
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
@@ -203,11 +204,11 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;  
-        this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF));
+        this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF), this->pw_rho, GlobalC::bigpw);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        this->pelec->charge->allocate(GlobalV::NSPIN);
 
         if(this->pelec->pot != nullptr)
         {
@@ -837,7 +838,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     }
 
     // (11) calculate the total energy.
-    GlobalC::en.calculate_etot();
+    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
 }
 
 void ESolver_KS_LCAO::afterscf(const int istep)

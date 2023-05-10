@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-calculation     scf
+calculation     nscf
 esolver_type    sdft
 method_sto      1
 
@@ -18,8 +18,6 @@ bndpar          2
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr			1e-6
-scf_nmax	    0
 read_file_dir 		./
 init_chg        file
 

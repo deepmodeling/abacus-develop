@@ -1,0 +1,28 @@
+&allocations
+    nelements=1   
+    natoms=2    
+    ngrid(:)=10 10 10  
+&end
+&crystal
+    lfactor=0.100000 
+    lattvec(:,1)=0 2.81594778072 2.81594778072
+    lattvec(:,2)=2.81594778072 0 2.81594778072
+    lattvec(:,3)=2.81594778072 2.81594778072 0
+    elements="Si"   
+    types=1 1
+    positions(:,1)=0.8750000000000000  0.8750000000000000  0.8750000000000000 
+    positions(:,2)=0.1250000000000000  0.1250000000000000  0.1250000000000000
+    scell(:)=2 2 2
+&end
+&parameters
+        !T=300,
+        T_min=200
+        T_max=500
+        T_step=50
+        scalebroad=1.0
+&end
+&flags
+        !espresso=.true.
+        nonanalytic=.true.,
+        isotopes=.true.
+&end

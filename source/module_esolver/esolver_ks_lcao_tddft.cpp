@@ -65,12 +65,13 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(chr),
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
                                                          &(GlobalC::kv),
                                                          GlobalC::kv.nks,
                                                          &(this->LOC),
                                                          &(this->UHM),
                                                          &(this->LOWF),
+                                                         this->pw_rho,
                                                          GlobalC::bigpw);
     }
 
@@ -100,7 +101,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     }
 
     // Inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    this->pelec->charge->allocate(GlobalV::NSPIN);
 
     // Initializee the potential.
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
