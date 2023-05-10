@@ -46,6 +46,11 @@ void DFTU::init(UnitCell& cell, // unitcell class
 {
     ModuleBase::TITLE("DFTU", "init");
 
+#ifndef __MPI
+    std::cout << "DFT+U module is only accessible in mpi versioin" << std::endl;
+    exit(0);
+#endif
+
     this->LM = &lm;
 
     // needs reconstructions in future

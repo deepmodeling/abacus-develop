@@ -567,8 +567,7 @@ endif()
 
 if (ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME}
-          ri
-          libri)
+          ri)
 endif()
 
 if (ENABLE_CONTAINER)
