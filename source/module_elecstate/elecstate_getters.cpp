@@ -8,9 +8,5 @@ const double get_ucell_omega()
 {
     return GlobalC::ucell.omega;
 }
-const int get_en_iter()
-{
-    return GlobalC::en.iter;
-}
 
-} // namespace elecstate
+}
