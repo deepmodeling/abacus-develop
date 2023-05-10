@@ -57,7 +57,7 @@ namespace elecstate
 class PotEfield : public PotBase
 {
   public:
-    PotEfield(const const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, bool dipole) : ucell_(ucell_in)
+    PotEfield(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, bool dipole) : ucell_(ucell_in)
     {
         this->rho_basis_ = rho_basis_in;
         if (!dipole)
