@@ -1,7 +1,12 @@
 if(ENABLE_LCAO)
     list(APPEND objects
-        ELEC_evolve.cpp
-        LCAO_evolve.cpp
+        evolve_elec.cpp
+        evolve_psi.cpp
+        bandenergy.cpp
+        middle_hamilt.cpp
+        norm_psi.cpp
+        propagator.cpp
+        upsi.cpp
     )
 
     add_library(

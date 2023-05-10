@@ -15,12 +15,12 @@
 #include "src_ri/exx_abfs-jle.h"
 #endif
 #ifdef __LCAO
+#include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
-#include "module_basis/module_ao/ORB_read.h"
+#include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #endif
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -368,16 +368,16 @@ void Input_Conv::Convert(void)
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    ELEC_evolve::td_force_dt = INPUT.td_force_dt;
-    ELEC_evolve::td_vext = INPUT.td_vext;
-    if (ELEC_evolve::td_vext)
+    Evolve_elec::td_force_dt = INPUT.td_force_dt;
+    Evolve_elec::td_vext = INPUT.td_vext;
+    if (Evolve_elec::td_vext)
     {
-        parse_expression(INPUT.td_vext_dire, ELEC_evolve::td_vext_dire_case);
+        parse_expression(INPUT.td_vext_dire, Evolve_elec::td_vext_dire_case);
     }
-    ELEC_evolve::out_dipole = INPUT.out_dipole;
-    ELEC_evolve::out_efield = INPUT.out_efield ;
-    ELEC_evolve::td_print_eij = INPUT.td_print_eij;
-    ELEC_evolve::td_edm = INPUT.td_edm;
+    Evolve_elec::out_dipole = INPUT.out_dipole;
+    Evolve_elec::out_efield = INPUT.out_efield;
+    Evolve_elec::td_print_eij = INPUT.td_print_eij;
+    Evolve_elec::td_edm = INPUT.td_edm;
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11

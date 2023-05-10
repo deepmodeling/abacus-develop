@@ -2,7 +2,7 @@
 
 #include "module_base/constants.h"
 #include "module_base/timer.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
 #include "module_io/input_conv.h"
@@ -27,7 +27,7 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     read_parameters(&INPUT);
 
     // judgement to skip vext
-    if (!ELEC_evolve::td_vext || istep > tend || istep < tstart)
+    if (!Evolve_elec::td_vext || istep > tend || istep < tstart)
     {
         return;
     }
@@ -37,12 +37,12 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
 
     int count = 0;
 
-    for (auto direc: ELEC_evolve::td_vext_dire_case)
+    for (auto direc: Evolve_elec::td_vext_dire_case)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count]);
 
-        if (ELEC_evolve::out_efield && GlobalV::MY_RANK == 0)
+        if (Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_" << count << ".dat";
