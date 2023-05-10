@@ -15,7 +15,7 @@ SphericalBesselTransformer::~SphericalBesselTransformer()
     fftw_free(f_);
 }
 
-int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(bool get_sine, int l, int n)
+int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(const bool get_sine, const int l, const int n)
 {
     /*
      * The sin & cos coefficients follow the same recurrence relation
@@ -65,16 +65,21 @@ int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(bool get_sine, 
            - (n >= 2 ? spherical_bessel_sincos_polycoef(get_sine, l - 2, n - 2) : 0);
 }
 
-void SphericalBesselTransformer::radrfft(int l, int ngrid, double cutoff, double* in, double* out, int p)
+void SphericalBesselTransformer::radrfft(const int l,
+                                         const int ngrid,
+                                         const double cutoff,
+                                         const double* const in,
+                                         double* const out,
+                                         const int p)
 {
     /*
      * An l-th order spherical Bessel transform F(x) -> G(y) can be expressed in terms of Fourier transforms:
      *
-     *          l
-     *          --     1        / +inf            -iyx
+     *           l
+     *          ---    1        / +inf            -iyx
      * G(y) =   \   -------  Re |      dr f(n,x) e
      *          /     l+1-n     / -inf
-     *          --   y
+     *          ---  y
      *          n=0
      *
      * where
@@ -160,7 +165,7 @@ void SphericalBesselTransformer::rfft_in_place()
     fftw_execute(rfft_plan_);
 }
 
-void SphericalBesselTransformer::rfft_prepare(int sz)
+void SphericalBesselTransformer::rfft_prepare(const int sz)
 {
     if (sz != sz_planned_)
     {
@@ -174,12 +179,12 @@ void SphericalBesselTransformer::rfft_prepare(int sz)
     }
     else if (!rfft_plan_)
     {
-        // if the existing buffer has the right size but no plan is available
+        // if the existing buffer already has the requested size but no plan is available
         rfft_plan_ = fftw_plan_dft_r2c_1d(sz, &f_[0][0], f_, fftw_plan_flag_);
     }
 }
 
-void SphericalBesselTransformer::set_fftw_plan_flag(unsigned new_flag)
+void SphericalBesselTransformer::set_fftw_plan_flag(const unsigned new_flag)
 {
     assert(new_flag == FFTW_ESTIMATE || new_flag == FFTW_MEASURE);
     if (new_flag != fftw_plan_flag_)

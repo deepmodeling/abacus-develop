@@ -94,12 +94,12 @@ class SphericalBesselTransformer
      *          no sense if the input is truncated at a place where F(x) is still significantly
      *          non-zero.
      *                                                                                      */
-    void radrfft(int l,         //!< [in] order of the transform
-                 int ngrid,     //!< [in] size of the input array
-                 double cutoff, //!< [in] cutoff distance of input values
-                 double* in,    //!< [in] input values
-                 double* out,   //!< [out] transformed values
-                 int p = 0      //!< [in] exponent of the pre-multiplied power term in input values
+    void radrfft(const int l,            //!< [in] order of the transform
+                 const int ngrid,        //!< [in] size of the input array
+                 const double cutoff,    //!< [in] cutoff distance of input values
+                 const double* const in, //!< [in] input values
+                 double* const out,      //!< [out] transformed values
+                 const int p = 0         //!< [in] exponent of the pre-multiplied power term in input values
     );
 
     //! Sets the FFTW planner flag.
@@ -115,7 +115,7 @@ class SphericalBesselTransformer
      *  @note   Saved fftw_plan will be immediately destroyed if it was created with
      *          a flag other than new_flag.
      *                                                                                      */
-    void set_fftw_plan_flag(unsigned new_flag /*!< [in] FFTW planner flag */);
+    void set_fftw_plan_flag(const unsigned new_flag /*!< [in] FFTW planner flag */);
 
   private:
     //! Internal buffer used for in-place real-input FFT (interpreted as double* on input)
@@ -134,7 +134,7 @@ class SphericalBesselTransformer
     void rfft_in_place();
 
     //! Buffer allocation and plan creation for a real-input FFT
-    void rfft_prepare(int N /*!< [in] size of the FFT to plan ahead */);
+    void rfft_prepare(const int N /*!< [in] size of the FFT to plan ahead */);
 
     //! Polynomial coefficients in the sin & cos expression of the spherical Bessel function.
     /*!
@@ -156,9 +156,9 @@ class SphericalBesselTransformer
      *          of the l-th order spherical Bessel functions of the first kind.
      *                                                                                      */
     int spherical_bessel_sincos_polycoef(
-        bool get_sine, //!< [in] specifies if the returned coefficient is associated with sine
-        int l,         //!< [in] order of the spherical Bessel function
-        int n          //!< [in] degree of the polynomial term whose coefficient is computed
+        const bool get_sine, //!< [in] specifies if the returned coefficient is associated with sine
+        const int l,         //!< [in] order of the spherical Bessel function
+        const int n          //!< [in] degree of the polynomial term whose coefficient is computed
     );
 
 }; // class SphericalBesselTransformer

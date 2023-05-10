@@ -36,7 +36,7 @@ class SphericalBesselTransformTest : public ::testing::Test
     void TearDown();
 
     /// Gets the maximum absolute element-wise difference between two arrays
-    double max_diff(int sz, double* arr1, double* arr2);
+    double max_diff(const int sz, const double* const arr1, const double* const arr2);
 
     int sz_max = 10000;      ///< size of each buffer
     double* f = nullptr;     ///< buffer for input array
@@ -60,7 +60,7 @@ void SphericalBesselTransformTest::TearDown()
     delete[] g_ref;
 }
 
-double SphericalBesselTransformTest::max_diff(int sz, double* arr1, double* arr2)
+double SphericalBesselTransformTest::max_diff(const int sz, const double* const arr1, const double* const arr2)
 {
     double diff = 0.0;
     double tmp = 0.0;
@@ -82,9 +82,9 @@ TEST_F(SphericalBesselTransformTest, BasicFunctionality)
      * transforms of r*exp(-r) and compares the results with analytic
      * expressions:
      *
-     * zeroth:  sqrt(2/pi) * 2(3-k^2) / (k^2+1)^3.
-     * first :  sqrt(2/pi) *    8k    / (k^2+1)^3.
-     * second:  sqrt(2/pi) *    8k^2  / (k^2+1)^3.
+     * zeroth:  2*sqrt(2/pi) * (3-k^2) / (k^2+1)^3.
+     * first :  2*sqrt(2/pi) *   4k    / (k^2+1)^3.
+     * second:  2*sqrt(2/pi) *   4k^2  / (k^2+1)^3.
      *                                                              */
     int sz = 10000;
     assert(sz <= sz_max);
@@ -92,7 +92,7 @@ TEST_F(SphericalBesselTransformTest, BasicFunctionality)
     double dr = 0.01;
     double rcut = dr * (sz - 1);
     double dk = PI / rcut;
-    double pref = std::sqrt(2. / PI);
+    double pref = std::sqrt(2. / PI) * 2.;
 
     SphericalBesselTransformer sbt;
 
@@ -106,7 +106,7 @@ TEST_F(SphericalBesselTransformTest, BasicFunctionality)
     for (int i = 0; i != sz; ++i)
     {
         double k = dk * i;
-        g_ref[i] = pref * 2.0 * (3.0 - k * k) / std::pow(k * k + 1, 3);
+        g_ref[i] = pref * (3.0 - k * k) / std::pow(k * k + 1, 3);
     }
     sbt.radrfft(0, sz, rcut, f, g, 0);
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
@@ -115,7 +115,7 @@ TEST_F(SphericalBesselTransformTest, BasicFunctionality)
     for (int i = 0; i != sz; ++i)
     {
         double k = dk * i;
-        g_ref[i] = pref * 8.0 * k / std::pow(k * k + 1, 3);
+        g_ref[i] = pref * 4.0 * k / std::pow(k * k + 1, 3);
     }
     sbt.radrfft(1, sz, rcut, f, g, 0);
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
@@ -124,7 +124,7 @@ TEST_F(SphericalBesselTransformTest, BasicFunctionality)
     for (int i = 0; i != sz; ++i)
     {
         double k = dk * i;
-        g_ref[i] = pref * 8.0 * k * k / std::pow(k * k + 1, 3);
+        g_ref[i] = pref * 4.0 * k * k / std::pow(k * k + 1, 3);
     }
     sbt.radrfft(2, sz, rcut, f, g, 0);
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
@@ -136,9 +136,9 @@ TEST_F(SphericalBesselTransformTest, ImplicitExponent)
      * Computes the second order spherical Bessel transform of
      * r^2*exp(-r) with input given as r^(p+2)*exp(-r) instead of
      * bare r^2*exp(-r). Compares the results with the analytic
-     * expressions:
+     * expression:
      *
-     *      sqrt(2/pi) * 48k^2  / (k^2+1)^4.
+     *      48*sqrt(2/pi) * k^2  / (k^2+1)^4.
      *                                                          */
     int sz = 5000;
     assert(sz <= sz_max);
@@ -146,7 +146,7 @@ TEST_F(SphericalBesselTransformTest, ImplicitExponent)
     double dr = 0.02;
     double rcut = dr * (sz - 1);
     double dk = PI / rcut;
-    double pref = std::sqrt(2. / PI);
+    double pref = std::sqrt(2. / PI) * 48.;
 
     SphericalBesselTransformer sbt;
     sbt.set_fftw_plan_flag(FFTW_MEASURE);
@@ -154,7 +154,7 @@ TEST_F(SphericalBesselTransformTest, ImplicitExponent)
     for (int i = 0; i != sz; ++i)
     {
         double k = dk * i;
-        g_ref[i] = pref * 48.0 * k * k / std::pow(k * k + 1, 4);
+        g_ref[i] = pref * k * k / std::pow(k * k + 1, 4);
     }
 
     for (int p = -2; p <= 5; ++p)
@@ -174,12 +174,12 @@ TEST_F(SphericalBesselTransformTest, VariableSize)
     /*
      * Computes the second order spherical Bessel transform of
      * r^2*exp(-r) with various input sizes. Compares the results
-     * with the analytic expressions:
+     * with the analytic expression:
      *
-     *      sqrt(2/pi) * 48k^2  / (k^2+1)^4.
+     *      48*sqrt(2/pi) * k^2  / (k^2+1)^4.
      *                                                          */
     double dr = 0.02;
-    double pref = std::sqrt(2. / PI);
+    double pref = std::sqrt(2. / PI) * 48.;
 
     SphericalBesselTransformer sbt;
     sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
@@ -191,18 +191,51 @@ TEST_F(SphericalBesselTransformTest, VariableSize)
         for (int i = 0; i != sz; ++i)
         {
             double r = i * dr;
-            f[i] = std::pow(r, 2) * std::exp(-r);
+            f[i] = r * r * std::exp(-r);
         }
 
         double dk = PI / rcut;
         for (int i = 0; i != sz; ++i)
         {
             double k = dk * i;
-            g_ref[i] = pref * 48.0 * k * k / std::pow(k * k + 1, 4);
+            g_ref[i] = pref * k * k / std::pow(k * k + 1, 4);
         }
         sbt.radrfft(2, sz, rcut, f, g, 0);
         EXPECT_LT(max_diff(sz, g_ref, g), tol);
     }
+}
+
+TEST_F(SphericalBesselTransformTest, InPlace)
+{
+    /*
+     * Performs an in-place second order spherical Bessel transform
+     * on r^2*exp(-r^2). Compares the results with the analytic
+     * expression:
+     *
+     *      sqrt(2)/16 * k^2 * exp(-k^2/4)
+     *                                                          */
+    double dr = 0.02;
+    double pref = std::sqrt(2.) / 16.;
+
+    SphericalBesselTransformer sbt;
+    sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
+
+    double sz = 10000;
+    double rcut = dr * (sz - 1);
+    for (int i = 0; i != sz; ++i)
+    {
+        double r = i * dr;
+        f[i] = r * r * std::exp(-r * r);
+    }
+
+    double dk = PI / rcut;
+    for (int i = 0; i != sz; ++i)
+    {
+        double k = dk * i;
+        g_ref[i] = pref * k * k * std::exp(-k * k / 4);
+    }
+    sbt.radrfft(2, sz, rcut, f, f, 0);
+    EXPECT_LT(max_diff(sz, g_ref, f), tol);
 }
 
 int main(int argc, char** argv)
