@@ -1,6 +1,7 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include <cmath>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "module_elecstate/elecstate_getters.h"
 
 /************************************************
@@ -20,10 +21,17 @@
 #define private public
 #include "module_elecstate/magnetism.h"
 
-Charge::Charge(){}
-Charge::~Charge(){}
+Charge::Charge()
+{
+}
+Charge::~Charge()
+{
+}
 
-const double elecstate::get_ucell_omega() { return 500.0; }
+double elecstate::get_ucell_omega()
+{
+    return 500.0;
+}
 
 class MagnetismTest : public ::testing::Test
 {
@@ -65,8 +73,10 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                   GlobalV::NSPIN = 2;
                   GlobalV::TWO_EFERMI = false;
                   GlobalV::nelec = 10.0;
+
                   Charge* chr = new Charge;
                   chr->nrxx = 100;
+                  chr->nxyz = 1000;
                   chr->rho = new double*[GlobalV::NSPIN];
                   for (int i=0; i< GlobalV::NSPIN; i++)
                   {
@@ -78,7 +88,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                                     chr->rho[1][ir] = 1.01;
                   }
                   double* nelec_spin = new double[2];
-                  magnetism->compute_magnetization(chr, nelec_spin);
+                  magnetism->compute_magnetization(chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
                   EXPECT_DOUBLE_EQ(-0.5, magnetism->tot_magnetization);
                   EXPECT_DOUBLE_EQ(0.5, magnetism->abs_magnetization);
                   EXPECT_DOUBLE_EQ(4.75, nelec_spin[0]);
@@ -96,9 +106,11 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
 TEST_F(MagnetismTest, ComputeMagnetizationS4)
 {
                     GlobalV::NSPIN = 4;
+
                     Charge* chr = new Charge;
                     chr->rho = new double*[GlobalV::NSPIN];
-                    chr->nrxx =
+                    chr->nrxx = 100;
+                    chr->nxyz = 1000;
                     for (int i=0; i< GlobalV::NSPIN; i++)
                     {
                                         chr->rho[i] = new double[chr->nrxx];
@@ -111,7 +123,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
                                         chr->rho[3][ir] = 1.00;
                     }
                     double* nelec_spin = new double[4];
-                    magnetism->compute_magnetization(chr, nelec_spin);
+                    magnetism->compute_magnetization(chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
                     EXPECT_DOUBLE_EQ(100.0, magnetism->abs_magnetization);
                     EXPECT_DOUBLE_EQ(50.0*std::sqrt(2.0), magnetism->tot_magnetization_nc[0]);
                     EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[1]);

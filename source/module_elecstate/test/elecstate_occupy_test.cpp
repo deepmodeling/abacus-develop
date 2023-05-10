@@ -16,7 +16,7 @@
 
 int a = 0;
 
-const int elecstate::get_en_iter()
+int elecstate::get_en_iter()
 {
     return a;
 }

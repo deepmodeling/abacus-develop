@@ -283,7 +283,7 @@ void ESolver_SDFT_PW::nscf()
     std::cout << " DIGA_THR          : " << diag_thr << std::endl;
     this->beforescf(istep);
     this->hamilt2density(istep, iter, diag_thr);
-    GlobalC::en.calculate_etot();
+    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
     ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
     return;
 }
