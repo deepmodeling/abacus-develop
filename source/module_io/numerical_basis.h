@@ -38,18 +38,18 @@ class Numerical_Basis
     std::vector<ModuleBase::IntArray> mu_index;
     static std::vector<ModuleBase::IntArray> init_mu_index(void);
 
-    void numerical_atomic_wfc(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix &psi);
+    void numerical_atomic_wfc(const int& ik, const ModulePW::PW_Basis_K* wfc_basis, ModuleBase::ComplexMatrix& psi);
 
-    ModuleBase::ComplexArray cal_overlap_Q(const int &ik,
-                                           const int &np,
-                                           ModulePW::PW_Basis_K *wfc_basis,
-                                           const psi::Psi<std::complex<double>> &psi,
+    ModuleBase::ComplexArray cal_overlap_Q(const int& ik,
+                                           const int& np,
+                                           const ModulePW::PW_Basis_K* wfc_basis,
+                                           const psi::Psi<std::complex<double>>& psi,
                                            const double derivative_order) const;
 
     ModuleBase::ComplexArray cal_overlap_Sq(const int &ik, const int &np, const double derivative_order) const;
 
-    static ModuleBase::matrix cal_overlap_V(ModulePW::PW_Basis_K *wfc_basis,
-                                            const psi::Psi<std::complex<double>> &psi,
+    static ModuleBase::matrix cal_overlap_V(const ModulePW::PW_Basis_K* wfc_basis,
+                                            const psi::Psi<std::complex<double>>& psi,
                                             const double derivative_order);
 
     ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk) const;

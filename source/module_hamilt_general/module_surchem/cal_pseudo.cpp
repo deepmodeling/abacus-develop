@@ -3,7 +3,7 @@
 
 // atom_in surchem::GetAtom;
 
-void surchem::gauss_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, complex<double> *N)
+void surchem::gauss_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* N)
 {
     GlobalC::sf.setup_structure_factor(&GlobalC::ucell, rho_basis); // call strucFac(ntype,ngmc)
     for (int it = 0; it < cell.ntype; it++)
@@ -32,7 +32,10 @@ void surchem::gauss_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, 
     }
 }
 
-void surchem::cal_pseudo(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, const complex<double> *Porter_g, complex<double> *PS_TOTN)
+void surchem::cal_pseudo(const UnitCell& cell,
+                         const ModulePW::PW_Basis* rho_basis,
+                         const complex<double>* Porter_g,
+                         complex<double>* PS_TOTN)
 {
     complex<double> *N = new complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(N, rho_basis->npw);

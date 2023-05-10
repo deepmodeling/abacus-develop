@@ -101,17 +101,47 @@ private:
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 
   public:
-    template <typename FPTYPE> void real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    template <typename FPTYPE> void real2recip(const std::complex<FPTYPE>* in, std::complex<FPTYPE>* out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE>* in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE>
+    void real2recip(const FPTYPE* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void real2recip(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void recip2real(const std::complex<FPTYPE>* in,
+                    FPTYPE* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE>
+    void recip2real(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
     template <typename FPTYPE, typename Device>
-    void real_to_recip(const Device *ctx, const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
+    void real_to_recip(const Device* ctx,
+                       const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
     template <typename FPTYPE, typename Device>
-    void recip_to_real(const Device *ctx, const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const int ik, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
+    void recip_to_real(const Device* ctx,
+                       const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
-public:
+  public:
     //operator:
     //get (G+K)^2:
     double& getgk2(const int ik, const int igl) const;

@@ -6,11 +6,11 @@
 
 #include <cmath>
 
-ModuleBase::matrix surchem::v_correction(const UnitCell &cell,
-                                         ModulePW::PW_Basis *rho_basis,
-                                         const int &nspin,
-                                         const double *const *const rho,
-                                         const double * vlocal)
+ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
+                                         const ModulePW::PW_Basis* rho_basis,
+                                         const int& nspin,
+                                         const double* const* const rho,
+                                         const double* vlocal)
 {
     ModuleBase::TITLE("surchem", "v_correction");
     ModuleBase::timer::tick("surchem", "v_correction");

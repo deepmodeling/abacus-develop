@@ -17,8 +17,7 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 	delete[] zp;
 }
 
-
-void pseudopot_cell_vl::init_vloc(ModuleBase::matrix &vloc_in, ModulePW::PW_Basis* rho_basis)
+void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::PW_Basis* rho_basis)
 {
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
 
@@ -106,13 +105,13 @@ void pseudopot_cell_vl::allocate(const int ngg)
 
 
 // Here we always have numeric form, i.e. numeric=ture
-void pseudopot_cell_vl::vloc_of_g(
-		const int& msh, 
-		const double *rab, 
-		const double *r, 
-		const double *vloc_at, 
-		const double &zp_in, 
-		double *vloc_1d, ModulePW::PW_Basis* rho_basis) const
+void pseudopot_cell_vl::vloc_of_g(const int& msh,
+                                  const double* rab,
+                                  const double* r,
+                                  const double* vloc_at,
+                                  const double& zp_in,
+                                  double* vloc_1d,
+                                  const ModulePW::PW_Basis* rho_basis) const
 {
 	//----------------------------------------------------------------
 	//    This routine computes the Fourier transform of the local
@@ -220,8 +219,7 @@ void pseudopot_cell_vl::vloc_of_g(
 	return;
 } // end subroutine vloc_of_g
 
-
-void pseudopot_cell_vl::print_vloc(ModulePW::PW_Basis* rho_basis)const
+void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
 {
 	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
 	bool check_vl = GlobalV::out_element_info;

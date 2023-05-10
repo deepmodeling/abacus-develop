@@ -150,10 +150,10 @@ void Numerical_Basis::output_overlap( const psi::Psi<std::complex<double>> &psi)
     return;
 }
 
-ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int &ik,
-                                                        const int &np,
-                                                        ModulePW::PW_Basis_K *wfc_basis,
-                                                        const psi::Psi<std::complex<double>> &psi,
+ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
+                                                        const int& np,
+                                                        const ModulePW::PW_Basis_K* wfc_basis,
+                                                        const psi::Psi<std::complex<double>>& psi,
                                                         const double derivative_order) const
 {
     ModuleBase::TITLE("Numerical_Basis","cal_overlap_Q");
@@ -347,8 +347,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
 }
 
 // Peize Lin add for dpsi 2020.04.23
-ModuleBase::matrix Numerical_Basis::cal_overlap_V(ModulePW::PW_Basis_K *wfc_basis,
-                                                  const psi::Psi<std::complex<double>> &psi,
+ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wfc_basis,
+                                                  const psi::Psi<std::complex<double>>& psi,
                                                   const double derivative_order)
 {
     ModuleBase::matrix overlap_V(GlobalC::kv.nks, GlobalV::NBANDS);
@@ -447,9 +447,9 @@ std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
     return mu_index_;
 }
 
-void Numerical_Basis::numerical_atomic_wfc(const int &ik,
-                                           ModulePW::PW_Basis_K *wfc_basis,
-                                           ModuleBase::ComplexMatrix &psi)
+void Numerical_Basis::numerical_atomic_wfc(const int& ik,
+                                           const ModulePW::PW_Basis_K* wfc_basis,
+                                           ModuleBase::ComplexMatrix& psi)
 {
     ModuleBase::TITLE("Numerical_Basis", "numerical_atomic_wfc");
     const int np = wfc_basis->npwk[ik];

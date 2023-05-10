@@ -31,35 +31,38 @@ class surchem
     void allocate(const int &nrxx, const int &nspin);
     void clear();
 
-    void cal_epsilon(ModulePW::PW_Basis *rho_basis, const double *PS_TOTN_real, double *epsilon, double *epsilon0);
+    void cal_epsilon(const ModulePW::PW_Basis* rho_basis,
+                     const double* PS_TOTN_real,
+                     double* epsilon,
+                     double* epsilon0);
 
-    void cal_pseudo(const UnitCell &cell,
-                    ModulePW::PW_Basis *rho_basis,
-                    const complex<double> *Porter_g,
-                    complex<double> *PS_TOTN);
+    void cal_pseudo(const UnitCell& cell,
+                    const ModulePW::PW_Basis* rho_basis,
+                    const complex<double>* Porter_g,
+                    complex<double>* PS_TOTN);
 
-    void gauss_charge(const UnitCell &cell, ModulePW::PW_Basis *rho_basis, complex<double> *N);
+    void gauss_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* N);
 
-    void cal_totn(const UnitCell &cell,
-                  ModulePW::PW_Basis *rho_basis,
-                  const complex<double> *Porter_g,
-                  complex<double> *N,
-                  complex<double> *TOTN,
-                  const double * vlocal);
-    void createcavity(const UnitCell &ucell,
-                      ModulePW::PW_Basis *rho_basis,
-                      const complex<double> *PS_TOTN,
-                      double *vwork);
+    void cal_totn(const UnitCell& cell,
+                  const ModulePW::PW_Basis* rho_basis,
+                  const complex<double>* Porter_g,
+                  complex<double>* N,
+                  complex<double>* TOTN,
+                  const double* vlocal);
+    void createcavity(const UnitCell& ucell,
+                      const ModulePW::PW_Basis* rho_basis,
+                      const complex<double>* PS_TOTN,
+                      double* vwork);
 
-    ModuleBase::matrix cal_vcav(const UnitCell &ucell,
-                                ModulePW::PW_Basis *rho_basis,
-                                complex<double> *PS_TOTN,
+    ModuleBase::matrix cal_vcav(const UnitCell& ucell,
+                                const ModulePW::PW_Basis* rho_basis,
+                                complex<double>* PS_TOTN,
                                 int nspin);
 
-    ModuleBase::matrix cal_vel(const UnitCell &cell,
-                               ModulePW::PW_Basis *rho_basis,
-                               complex<double> *TOTN,
-                               complex<double> *PS_TOTN,
+    ModuleBase::matrix cal_vel(const UnitCell& cell,
+                               const ModulePW::PW_Basis* rho_basis,
+                               complex<double>* TOTN,
+                               complex<double>* PS_TOTN,
                                int nspin);
 
     double cal_Ael(const UnitCell &cell, 
@@ -71,44 +74,44 @@ class surchem
                     const int& nxyz   // total num. of real space grids
     );
 
-    void cal_Acomp(const UnitCell &cell,
-                   ModulePW::PW_Basis *rho_basis,
-                   const double *const *const rho,
-                   vector<double> &res);
+    void cal_Acomp(const UnitCell& cell,
+                   const ModulePW::PW_Basis* rho_basis,
+                   const double* const* const rho,
+                   vector<double>& res);
 
-    void minimize_cg(const UnitCell &ucell,
-                     ModulePW::PW_Basis *rho_basis,
-                     double *d_eps,
-                     const complex<double> *tot_N,
-                     complex<double> *phi,
-                     int &ncgsol);
+    void minimize_cg(const UnitCell& ucell,
+                     const ModulePW::PW_Basis* rho_basis,
+                     double* d_eps,
+                     const complex<double>* tot_N,
+                     complex<double>* phi,
+                     int& ncgsol);
 
-    void Leps2(const UnitCell &ucell,
-               ModulePW::PW_Basis *rho_basis,
-               complex<double> *phi,
-               double *epsilon, // epsilon from shapefunc, dim=nrxx
-               complex<double> *gradphi_x, // dim=ngmc
-               complex<double> *gradphi_y,
-               complex<double> *gradphi_z,
-               complex<double> *phi_work,
-               complex<double> *lp);
+    void Leps2(const UnitCell& ucell,
+               const ModulePW::PW_Basis* rho_basis,
+               complex<double>* phi,
+               double* epsilon,            // epsilon from shapefunc, dim=nrxx
+               complex<double>* gradphi_x, // dim=ngmc
+               complex<double>* gradphi_y,
+               complex<double>* gradphi_z,
+               complex<double>* phi_work,
+               complex<double>* lp);
 
-    ModuleBase::matrix v_correction(const UnitCell &cell,
-                                    ModulePW::PW_Basis *rho_basis,
-                                    const int &nspin,
-                                    const double *const *const rho,
-                                    const double * vlocal);
+    ModuleBase::matrix v_correction(const UnitCell& cell,
+                                    const ModulePW::PW_Basis* rho_basis,
+                                    const int& nspin,
+                                    const double* const* const rho,
+                                    const double* vlocal);
 
-    void test_V_to_N(ModuleBase::matrix &v,
-                     const UnitCell &cell,
-                     ModulePW::PW_Basis *rho_basis,
-                     const double *const *const rho);
+    void test_V_to_N(ModuleBase::matrix& v,
+                     const UnitCell& cell,
+                     const ModulePW::PW_Basis* rho_basis,
+                     const double* const* const rho);
 
-    void cal_force_sol(const UnitCell &cell, ModulePW::PW_Basis *rho_basis, ModuleBase::matrix &forcesol);
+    void cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol);
 
-    void get_totn_reci(const UnitCell &cell, ModulePW::PW_Basis *rho_basis, complex<double> *totn_reci);
+    void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* totn_reci);
 
-    void induced_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, double *induced_rho);
+    void induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho);
 
   private:
 };

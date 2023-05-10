@@ -210,11 +210,11 @@ void WF_atomic::print_PAOs(void)const
 void WF_atomic::atomic_wfc(const int ik,
                            const int np,
                            const int lmax_wfc,
-                           ModulePW::PW_Basis_K *wfc_basis,
-                           ModuleBase::ComplexMatrix &wfcatom,
-                           const ModuleBase::realArray &table_q,
-                           const int &table_dimension,
-                           const double &dq) const
+                           const ModulePW::PW_Basis_K* wfc_basis,
+                           ModuleBase::ComplexMatrix& wfcatom,
+                           const ModuleBase::realArray& table_q,
+                           const int& table_dimension,
+                           const double& dq) const
 {
     if (GlobalV::test_wf>3) ModuleBase::TITLE("WF_atomic","atomic_wfc");
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
@@ -454,7 +454,7 @@ void WF_atomic::atomic_wfc(const int ik,
 } // end subroutine atomic_wfc
 
 #ifdef __MPI
-void WF_atomic::stick_to_pool(float *stick, const int &ir, float *out, ModulePW::PW_Basis_K* wfc_basis) const
+void WF_atomic::stick_to_pool(float* stick, const int& ir, float* out, const ModulePW::PW_Basis_K* wfc_basis) const
 {	
 	MPI_Status ierror;
     const int is = this->irindex[ir];
@@ -483,7 +483,7 @@ void WF_atomic::stick_to_pool(float *stick, const int &ir, float *out, ModulePW:
 
 	return;	
 }
-void WF_atomic::stick_to_pool(double *stick, const int &ir, double *out, ModulePW::PW_Basis_K* wfc_basis) const
+void WF_atomic::stick_to_pool(double* stick, const int& ir, double* out, const ModulePW::PW_Basis_K* wfc_basis) const
 {	
 	MPI_Status ierror;
     const int is = this->irindex[ir];
@@ -514,18 +514,30 @@ void WF_atomic::stick_to_pool(double *stick, const int &ir, double *out, ModuleP
 }
 #endif
 
-void WF_atomic::random(std::complex<double> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
+void WF_atomic::random(std::complex<double>* psi,
+                       const int iw_start,
+                       const int iw_end,
+                       const int ik,
+                       const ModulePW::PW_Basis_K* wfc_basis)
 {
     this->random_t(psi, iw_start, iw_end, ik, wfc_basis);
 }
 
-void WF_atomic::random(std::complex<float> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
+void WF_atomic::random(std::complex<float>* psi,
+                       const int iw_start,
+                       const int iw_end,
+                       const int ik,
+                       const ModulePW::PW_Basis_K* wfc_basis)
 {
     this->random_t(psi, iw_start, iw_end, ik, wfc_basis);
 }
 
-template<typename FPTYPE>
-void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)
+template <typename FPTYPE>
+void WF_atomic::random_t(std::complex<FPTYPE>* psi,
+                         const int iw_start,
+                         const int iw_end,
+                         const int ik,
+                         const ModulePW::PW_Basis_K* wfc_basis)
 {
     assert(iw_start >= 0);
     const int ng = wfc_basis->npwk[ik];
@@ -618,7 +630,11 @@ void WF_atomic::random_t(std::complex<FPTYPE> *psi, const int iw_start,const int
 #endif // __MPI
 }
 
-void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix &psi,const int iw_start,const int iw_end,const int ik, ModulePW::PW_Basis_K* wfc_basis)const
+void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
+                             const int iw_start,
+                             const int iw_end,
+                             const int ik,
+                             const ModulePW::PW_Basis_K* wfc_basis) const
 {
     assert(iw_start >= 0);
     assert(psi.nr >= iw_end);
