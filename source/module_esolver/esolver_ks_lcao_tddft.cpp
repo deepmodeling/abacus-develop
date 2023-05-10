@@ -284,7 +284,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
+    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz, this->pelec->charge->rho, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
