@@ -10,6 +10,6 @@ AddTest(
 
 AddTest(
   TARGET surchem_cal_epsilon
-  LIBS ${math_libs} planewave device
+  LIBS ${math_libs} planewave device base
   SOURCES cal_epsilon_test.cpp  ../cal_epsilon.cpp ../surchem.cpp 
 )
