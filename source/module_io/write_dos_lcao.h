@@ -16,6 +16,6 @@ void write_dos_lcao(const psi::Psi<double>* psid,
                     const double& dos_edelta_ev,
                     const double& dos_scale,
                     const double& bcoeff,
-                    const K_Vectors& p_kv);
+                    const K_Vectors& kv);
 }
 #endif

@@ -21,11 +21,16 @@ public:
                Gint_Gamma& gg,
                int& out_wfc_pw,
                int& out_wfc_r,
-               const K_Vectors* p_kv);
+               const K_Vectors& kv);
     /// for multi-k
-    void begin(const psi::Psi<std::complex<double>>* psi, Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wfc_pw, int& out_wfc_r, const K_Vectors* p_kv);
+    void begin(const psi::Psi<std::complex<double>>* psi,
+               Local_Orbital_wfc& lowf,
+               Gint_k& gk,
+               int& out_wfc_pw,
+               int& out_wfc_r,
+               const K_Vectors& kv);
 
-private:
+  private:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 

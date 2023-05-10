@@ -528,7 +528,7 @@ namespace ModuleESolver
                 ssw << GlobalV::global_out_dir << "WAVEFUNC";
                 // mohan update 2011-02-21
                 //qianrui update 2020-10-17
-                ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+                ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
         }
@@ -619,7 +619,7 @@ namespace ModuleESolver
         {
             std::stringstream ssw;
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
-            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], GlobalC::kv, GlobalC::wfcpw);
         }
         if (this->conv_elec)
         {
@@ -833,7 +833,7 @@ namespace ModuleESolver
 
         if(GlobalC::wf.out_wfc_r == 1)				// Peize Lin add 2021.11.21
         {
-            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true, &(GlobalC::kv));
+            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true, GlobalC::kv);
         }	
 
         if(INPUT.cal_cond)

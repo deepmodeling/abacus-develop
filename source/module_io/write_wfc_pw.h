@@ -6,8 +6,10 @@
 
 namespace ModuleIO
 {
-	void write_wfc_pw( const std::string &fn, const psi::Psi<std::complex<double>> &psi, const K_Vectors* p_kv, 
-                    const ModulePW::PW_Basis_K *wfc_basis);
+void write_wfc_pw(const std::string& fn,
+                  const psi::Psi<std::complex<double>>& psi,
+                  const K_Vectors& kv,
+                  const ModulePW::PW_Basis_K* wfc_basis);
 }
 
 #endif

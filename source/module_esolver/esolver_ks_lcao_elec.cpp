@@ -405,9 +405,9 @@ namespace ModuleESolver
                           this->UHM.GG,
                           INPUT.out_wfc_pw,
                           GlobalC::wf.out_wfc_r,
-                          &(GlobalC::kv));
+                          GlobalC::kv);
             else
-                IEP.begin(this->psi, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, &(GlobalC::kv));
+                IEP.begin(this->psi, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
         }
         else
         {

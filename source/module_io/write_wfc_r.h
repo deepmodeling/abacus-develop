@@ -27,7 +27,7 @@ namespace ModuleIO
 void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
                    const std::string& folder_name,
                    const bool& square,
-                   const K_Vectors* p_kv);
+                   const K_Vectors& kv);
 
 // Input: wfc_g(ib,ig)
 // Output: wfc_r[ir]
