@@ -574,10 +574,6 @@ void wavefunc::wfcinit_k(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Ba
         }
 #endif
     }
-    if(GlobalV::CALCULATION=="nscf")
-	{
-		return;
-	}
 	return;
 }
 

@@ -30,7 +30,7 @@
  *   - Langevin::restart
  *     - restart MD when md_restart is true
  *
- *   - Langevin::outputMD
+ *   - Langevin::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -49,7 +49,7 @@ class Langevin_test : public testing::Test
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new Langevin(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -74,7 +74,7 @@ TEST_F(Langevin_test, setup)
 
 TEST_F(Langevin_test, first_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00042883345359910814, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00016393608896004904, doublethreshold);
@@ -105,8 +105,8 @@ TEST_F(Langevin_test, first_half)
 
 TEST_F(Langevin_test, second_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->first_half(GlobalV::ofs_running);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00066954020090275205, doublethreshold);
@@ -140,7 +140,7 @@ TEST_F(Langevin_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+    mdrun->write_restart(GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -151,16 +151,16 @@ TEST_F(Langevin_test, write_restart)
 
 TEST_F(Langevin_test, restart)
 {
-    mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+    mdrun->restart(GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
 }
 
-TEST_F(Langevin_test, outputMD)
+TEST_F(Langevin_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true);
     ofs.close();
 
     std::ifstream ifs("running.log");

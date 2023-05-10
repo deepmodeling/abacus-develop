@@ -9,7 +9,7 @@
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/energy.h"
 #ifdef __EXX
-#include "src_ri/exx_lip.h"
+#include "module_ri/exx_lip.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
 #endif
 #include "module_cell/klist.h"

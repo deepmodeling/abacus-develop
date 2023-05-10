@@ -722,7 +722,7 @@ calculations.
   For plane-wave basis,
 
   - cg: cg method.
-  - dav: the Davidson algorithm. (Currently not working with Intel MKL library).
+  - dav: the Davidson algorithm.
 
   For atomic orbitals basis,
 
@@ -890,7 +890,7 @@ calculations.
 
 ## Electronic structure (SDFT)
 
-These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
+These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" calculation are supported.
 
 ### method_sto
 

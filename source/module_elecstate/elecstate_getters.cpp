@@ -4,17 +4,13 @@
 namespace elecstate
 {
 
-const int get_rhopw_nrxx()
-{
-    return GlobalC::rhopw->nrxx;
-}
-const int get_rhopw_nxyz()
-{
-    return GlobalC::rhopw->nxyz;
-}
-const double get_ucell_omega()
+double get_ucell_omega()
 {
     return GlobalC::ucell.omega;
 }
-
+int get_en_iter()
+{
+    return GlobalC::en.iter;
 }
+
+} // namespace elecstate

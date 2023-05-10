@@ -30,7 +30,7 @@
  *   - MSST::restart
  *     - restart MD when md_restart is true
  *
- *   - MSST::outputMD
+ *   - MSST::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
@@ -49,7 +49,7 @@ class MSST_test : public testing::Test
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new MSST(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -86,7 +86,7 @@ TEST_F(MSST_test, setup)
 
 TEST_F(MSST_test, first_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
+    mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(ucell.lat0, 1.0, doublethreshold);
     EXPECT_NEAR(ucell.lat0_angstrom, 0.52917700000000001, doublethreshold);
@@ -130,8 +130,8 @@ TEST_F(MSST_test, first_half)
 
 TEST_F(MSST_test, second_half)
 {
-    mdrun->first_half(GlobalV::MY_RANK, GlobalV::ofs_running);
-    mdrun->second_half(GlobalV::MY_RANK);
+    mdrun->first_half(GlobalV::ofs_running);
+    mdrun->second_half();
     ;
 
     EXPECT_NEAR(ucell.lat0, 1.0, doublethreshold);
@@ -178,7 +178,7 @@ TEST_F(MSST_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::MY_RANK, GlobalV::global_out_dir);
+    mdrun->write_restart(GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -199,7 +199,7 @@ TEST_F(MSST_test, write_restart)
 
 TEST_F(MSST_test, restart)
 {
-    mdrun->restart(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+    mdrun->restart(GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
     MSST* msst = dynamic_cast<MSST*>(mdrun);
@@ -211,10 +211,10 @@ TEST_F(MSST_test, restart)
     EXPECT_EQ(msst->lag_pos, 0);
 }
 
-TEST_F(MSST_test, outputMD)
+TEST_F(MSST_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true, GlobalV::MY_RANK);
+    mdrun->print_md(ofs, true);
     ofs.close();
 
     std::ifstream ifs("running.log");

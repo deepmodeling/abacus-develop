@@ -23,7 +23,7 @@ class Charge_Extra
     //This is a temporary solution by delaying the allocation
     //But after ucell and Esolver are fully decoupled
     //Init_CE will be removed and everything put back in the constructor
-    void Init_CE();
+    void Init_CE(const int& nrxx);
     void extrapolate_charge(Charge* chr, Structure_Factor* sf);
     void update_all_dis(const UnitCell& ucell);
 

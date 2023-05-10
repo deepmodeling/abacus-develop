@@ -35,6 +35,7 @@ namespace ModuleESolver
         GlobalC::wfcpw = this->pw_wfc; //Temporary
         ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
         tmp->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
+        GlobalC::CHR_MIX.set_rhopw(this->pw_rho);
     }
 
     template<typename FPTYPE, typename Device>
@@ -99,7 +100,7 @@ namespace ModuleESolver
         GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
 
         // Initialize charge extrapolation
-        CE.Init_CE();
+        CE.Init_CE(this->pw_rho->nrxx);
     }
 
     template<typename FPTYPE, typename Device>
@@ -309,7 +310,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const FPTYPE drho, const FPTYPE duration, const FPTYPE ethr)
     {
-        GlobalC::en.print_etot(this->conv_elec, iter, drho, duration, ethr);
+        GlobalC::en.print_etot(this->pw_rho->nrxx, this->pw_rho->nxyz, this->conv_elec, iter, drho, duration, ethr);
     }
 
     template<typename FPTYPE, typename Device>

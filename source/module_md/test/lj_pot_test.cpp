@@ -18,7 +18,7 @@
 class LJ_pot_test : public testing::Test
 {
   protected:
-    ModuleBase::Vector3<double> *force;
+    ModuleBase::Vector3<double>* force;
     ModuleBase::matrix stress;
     double potential;
     int natom;
@@ -34,9 +34,9 @@ class LJ_pot_test : public testing::Test
 
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
-        MD_func::force_virial(p_esolver, 0, ucell, potential, force, stress);
+        MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     }
 
     void TearDown()
