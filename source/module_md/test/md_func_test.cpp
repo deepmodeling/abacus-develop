@@ -16,22 +16,22 @@
  *   - MD_func::gaussrand
  *     - genarate Gaussian random number
  *
- *   - MD_func::RandomVel
+ *   - MD_func::rand_vel
  *     - initialize atomic velocity randomly
  *
- *   - MD_func::getMassMbl
+ *   - MD_func::get_mass_mbl
  *     - initialize atomic mass and degree of freedom
  *
- *   - MD_func::ReadVel
+ *   - MD_func::read_vel
  *     - read atomic velocity from STRU
  *
  *   - MD_func::compute_stress
  *     - calculate the contribution of classical kinetic energy of atoms to stress
  *
- *   - MD_func::MDdump
+ *   - MD_func::dump_info
  *     - output MD dump information
  *
- *   - MD_func::outStress
+ *   - MD_func::print_stress
  *     - output stress
  *
  *   - MD_func::current_step
@@ -92,7 +92,7 @@ TEST_F(MD_func_test, randomvel)
 {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::InitVel(ucell, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, temperature, GlobalV::MY_RANK, allmass, frozen_freedom, ionmbl, vel);
 
     EXPECT_NEAR(vel[0].x, 9.9105892783200826e-06, doublethreshold);
     EXPECT_NEAR(vel[0].y, -3.343699576563167e-05, doublethreshold);
@@ -112,7 +112,7 @@ TEST_F(MD_func_test, getmassmbl)
 {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::InitVel(ucell, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, temperature, GlobalV::MY_RANK, allmass, frozen_freedom, ionmbl, vel);
 
     for (int i = 0; i < natom; ++i)
     {
@@ -127,7 +127,7 @@ TEST_F(MD_func_test, getmassmbl)
 
 TEST_F(MD_func_test, readvel)
 {
-    MD_func::ReadVel(ucell, vel);
+    MD_func::read_vel(ucell, vel);
 
     EXPECT_DOUBLE_EQ(vel[0].x, -0.0001320807363640);
     EXPECT_DOUBLE_EQ(vel[0].y, 7.13429429835e-05);
@@ -145,8 +145,8 @@ TEST_F(MD_func_test, readvel)
 
 TEST_F(MD_func_test, compute_stress)
 {
-    MD_func::InitVel(ucell, temperature, allmass, frozen_freedom, ionmbl, vel);
-    MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+    MD_func::init_vel(ucell, temperature, GlobalV::MY_RANK, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
     EXPECT_DOUBLE_EQ(stress(0, 0), 5.2064533063673623e-06);
     EXPECT_DOUBLE_EQ(stress(0, 1), -1.6467487572445481e-06);
     EXPECT_DOUBLE_EQ(stress(0, 2), 1.5039983732220751e-06);
@@ -158,9 +158,9 @@ TEST_F(MD_func_test, compute_stress)
     EXPECT_DOUBLE_EQ(stress(2, 2), 9.6330189688582584e-07);
 }
 
-TEST_F(MD_func_test, MDdump)
+TEST_F(MD_func_test, dump_info)
 {
-    MD_func::MDdump(0, ucell, INPUT.mdp, virial, force, vel);
+    MD_func::dump_info(0, GlobalV::global_out_dir, ucell, INPUT.mdp, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -206,7 +206,7 @@ TEST_F(MD_func_test, MDdump)
     ifs.close();
 
     // append
-    MD_func::MDdump(1, ucell, INPUT.mdp, virial, force, vel);
+    MD_func::dump_info(1, GlobalV::global_out_dir, ucell, INPUT.mdp, virial, force, vel);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));
@@ -295,10 +295,10 @@ TEST_F(MD_func_test, MDdump)
     remove("MD_dump");
 }
 
-TEST_F(MD_func_test, outStress)
+TEST_F(MD_func_test, print_stress)
 {
     GlobalV::ofs_running.open("running.log");
-    MD_func::outStress(virial, stress);
+    MD_func::print_stress(GlobalV::ofs_running, virial, stress);
 
     std::ifstream ifs("running.log");
     std::string output_str;

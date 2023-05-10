@@ -766,7 +766,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
-            = XC_Functional::v_xc_meta(rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr, rho_basis);
+            = XC_Functional::v_xc_meta(rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -779,7 +779,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     {
         if (GlobalV::NSPIN == 4)
             GlobalC::ucell.cal_ux();
-        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, rho_basis, &GlobalC::ucell);
+        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
 
         GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
         GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
@@ -825,8 +825,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                             GlobalC::ucell.atoms[it].ncpp.r,
                                             GlobalC::ucell.atoms[it].ncpp.rab,
                                             GlobalC::ucell.atoms[it].ncpp.rho_atc,
-                                            rhocg,
-                                            rho_basis);
+                                            rhocg);
 #ifdef _OPENMP
 #pragma omp parallel
             {

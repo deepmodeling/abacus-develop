@@ -36,7 +36,7 @@ class LJ_pot_test : public testing::Test
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
-        MD_func::force_virial(p_esolver, 0, ucell, potential, force, stress);
+        MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     }
 
     void TearDown()

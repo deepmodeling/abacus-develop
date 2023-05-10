@@ -74,6 +74,7 @@ public:
         if (this->mu != NULL) delete[] this->mu;
         if (this->task != NULL) delete[] this->task;
         if (this->opt_cg_mag != NULL) delete this->opt_cg_mag;
+        delete this->ptempRho;
     }
 
     virtual void Init(Input &inp, UnitCell &ucell) override;
@@ -131,6 +132,8 @@ private:
     int tnSpinFlag = -1;                        // spin flag used in calV, which will be called by opt_tn
     int maxDCsrch = 200;                        // max no. of line search
     int flag = -1;                              // flag of TN
+
+    Charge* ptempRho = nullptr;                 // used in line search
 
     // // test rho convergence criterion
     // double *pdeltaRhoHar = NULL; // 4pi*rhog/k^2

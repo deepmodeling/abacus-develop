@@ -23,8 +23,6 @@
 Charge::Charge(){}
 Charge::~Charge(){}
 
-const int elecstate::get_rhopw_nrxx() { return 100; }
-const int elecstate::get_rhopw_nxyz() { return 1000; }
 const double elecstate::get_ucell_omega() { return 500.0; }
 
 class MagnetismTest : public ::testing::Test
@@ -50,8 +48,6 @@ TEST_F(MagnetismTest, Magnetism)
 
 TEST_F(MagnetismTest, GlobalInfo)
 {
-                  EXPECT_EQ(100, elecstate::get_rhopw_nrxx());
-                  EXPECT_EQ(1000, elecstate::get_rhopw_nxyz());
                   EXPECT_EQ(500.0, elecstate::get_ucell_omega());
 }
 
@@ -70,12 +66,13 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                   GlobalV::TWO_EFERMI = false;
                   GlobalV::nelec = 10.0;
                   Charge* chr = new Charge;
+                  chr->nrxx = 100;
                   chr->rho = new double*[GlobalV::NSPIN];
                   for (int i=0; i< GlobalV::NSPIN; i++)
                   {
-                                    chr->rho[i] = new double[elecstate::get_rhopw_nrxx()];
+                                    chr->rho[i] = new double[chr->nrxx];
                   }
-                  for (int ir=0; ir< elecstate::get_rhopw_nrxx(); ir++)
+                  for (int ir=0; ir< chr->nrxx; ir++)
                   {
                                     chr->rho[0][ir] = 1.00;
                                     chr->rho[1][ir] = 1.01;
@@ -101,11 +98,12 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
                     GlobalV::NSPIN = 4;
                     Charge* chr = new Charge;
                     chr->rho = new double*[GlobalV::NSPIN];
+                    chr->nrxx =
                     for (int i=0; i< GlobalV::NSPIN; i++)
                     {
-                                        chr->rho[i] = new double[elecstate::get_rhopw_nrxx()];
+                                        chr->rho[i] = new double[chr->nrxx];
                     }
-                    for (int ir=0; ir< elecstate::get_rhopw_nrxx(); ir++)
+                    for (int ir=0; ir< chr->nrxx; ir++)
                     {
                                         chr->rho[0][ir] = 1.00;
                                         chr->rho[1][ir] = std::sqrt(2.0);

@@ -36,11 +36,11 @@ double gaussrand()
     return X;
 }
 
-double GetAtomKE(const int& numIon, const ModuleBase::Vector3<double>* vel, const double* allmass)
+double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass)
 {
     double ke = 0;
 
-    for (int ion = 0; ion < numIon; ++ion)
+    for (int ion = 0; ion < natom; ++ion)
     {
         ke += 0.5 * allmass[ion] * vel[ion].norm2();
     }
@@ -51,15 +51,11 @@ double GetAtomKE(const int& numIon, const ModuleBase::Vector3<double>* vel, cons
 void compute_stress(const UnitCell& unit_in,
                     const ModuleBase::Vector3<double>* vel,
                     const double* allmass,
+                    const bool& cal_stress,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress)
 {
-    //--------------------------------------------------------------------------------------------
-    // DESCRIPTION:
-    //   This function calculates the contribution of classical kinetic energy of atoms to stress.
-    //--------------------------------------------------------------------------------------------
-
-    if (GlobalV::CAL_STRESS)
+    if (cal_stress)
     {
         ModuleBase::matrix t_vector;
 
@@ -75,8 +71,7 @@ void compute_stress(const UnitCell& unit_in,
     }
 }
 
-// Read Velocity from STRU liuyu 2021-09-24
-void ReadVel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
+void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
 {
     int iat = 0;
     for (int it = 0; it < unit_in.ntype; ++it)
@@ -96,20 +91,20 @@ void ReadVel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
     assert(iat == unit_in.nat);
 }
 
-// Initial velocity randomly
-void RandomVel(const int& numIon,
-               const double& temperature,
-               const double* allmass,
-               const int& frozen_freedom,
-               const ModuleBase::Vector3<int> frozen,
-               const ModuleBase::Vector3<int>* ionmbl,
-               ModuleBase::Vector3<double>* vel)
+void rand_vel(const int& natom,
+              const double& temperature,
+              const double* allmass,
+              const int& frozen_freedom,
+              const ModuleBase::Vector3<int> frozen,
+              const ModuleBase::Vector3<int>* ionmbl,
+              const int& my_rank,
+              ModuleBase::Vector3<double>* vel)
 {
-    if (!GlobalV::MY_RANK)
+    if (!my_rank)
     {
         double tot_mass = 0;
         ModuleBase::Vector3<double> tot_momentum;
-        for (int i = 0; i < numIon; i++)
+        for (int i = 0; i < natom; i++)
         {
             tot_mass += allmass[i];
             double sigma = sqrt(temperature / allmass[i]);
@@ -135,7 +130,7 @@ void RandomVel(const int& numIon,
         {
             if (frozen[k] == 0)
             {
-                for (int i = 0; i < numIon; i++)
+                for (int i = 0; i < natom; i++)
                 {
                     vel[i][k] -= tot_momentum[k] / tot_mass;
                 }
@@ -143,36 +138,37 @@ void RandomVel(const int& numIon,
         }
 
         double factor;
-        if (3 * numIon == frozen_freedom || temperature == 0)
+        if (3 * natom == frozen_freedom || temperature == 0)
         {
             factor = 0;
         }
         else
         {
-            factor = 0.5 * (3 * numIon - frozen_freedom) * temperature / GetAtomKE(numIon, vel, allmass);
+            factor = 0.5 * (3 * natom - frozen_freedom) * temperature / kinetic_energy(natom, vel, allmass);
         }
 
-        for (int i = 0; i < numIon; i++)
+        for (int i = 0; i < natom; i++)
         {
             vel[i] = vel[i] * sqrt(factor);
         }
     }
 
 #ifdef __MPI
-    MPI_Bcast(vel, numIon * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(vel, natom * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
     return;
 }
 
-void InitVel(const UnitCell& unit_in,
-             const double& temperature,
-             double* allmass,
-             int& frozen_freedom,
-             ModuleBase::Vector3<int>* ionmbl,
-             ModuleBase::Vector3<double>* vel)
+void init_vel(const UnitCell& unit_in,
+              const double& temperature,
+              const int& my_rank,
+              double* allmass,
+              int& frozen_freedom,
+              ModuleBase::Vector3<int>* ionmbl,
+              ModuleBase::Vector3<double>* vel)
 {
     ModuleBase::Vector3<int> frozen;
-    getMassMbl(unit_in, allmass, frozen, ionmbl);
+    get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
     if (frozen.x == 0)
         ++frozen_freedom;
@@ -183,21 +179,21 @@ void InitVel(const UnitCell& unit_in,
 
     if (unit_in.init_vel)
     {
-        ReadVel(unit_in, vel);
+        read_vel(unit_in, vel);
     }
     else
     {
-        RandomVel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, vel);
+        rand_vel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, my_rank, vel);
     }
     std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
 }
 
-// calculate potential, force and virial
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
                   UnitCell& unit_in,
                   double& potential,
                   ModuleBase::Vector3<double>* force,
+                  const bool& cal_stress,
                   ModuleBase::matrix& virial)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
@@ -210,12 +206,12 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::matrix force_temp(unit_in.nat, 3);
     p_esolver->cal_Force(force_temp);
 
-    if (GlobalV::CAL_STRESS)
+    if (cal_stress)
     {
         p_esolver->cal_Stress(virial);
     }
 
-    // convert Rydberg to Hartree
+    /// convert Rydberg to Hartree
     potential *= 0.5;
     force_temp *= 0.5;
     virial *= 0.5;
@@ -231,7 +227,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::timer::tick("MD_func", "force_virial");
 }
 
-void outStress(const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
+void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
 {
     double stress_scalar = 0.0, virial_scalar = 0.0;
     for (int i = 0; i < 3; i++)
@@ -240,35 +236,34 @@ void outStress(const ModuleBase::matrix& virial, const ModuleBase::matrix& stres
         virial_scalar += virial(i, i) / 3;
     }
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    GlobalV::ofs_running << "Virtual Pressure is " << stress_scalar * unit_transform << " kbar " << std::endl;
-    GlobalV::ofs_running << "Virial Term is " << virial_scalar * unit_transform << " kbar " << std::endl;
-    GlobalV::ofs_running << "Kinetic Term is " << (stress_scalar - virial_scalar) * unit_transform << " kbar "
-                         << std::endl;
+    ofs << "Virtual Pressure is " << stress_scalar * unit_transform << " kbar " << std::endl;
+    ofs << "Virial Term is " << virial_scalar * unit_transform << " kbar " << std::endl;
+    ofs << "Kinetic Term is " << (stress_scalar - virial_scalar) * unit_transform << " kbar " << std::endl;
 
-    GlobalV::ofs_running.unsetf(ios::fixed);
-    GlobalV::ofs_running << std::setprecision(8) << std::endl;
+    ofs.unsetf(ios::fixed);
+    ofs << std::setprecision(8) << std::endl;
     ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
     for (int i = 0; i < 3; i++)
     {
-        GlobalV::ofs_running << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15)
-                             << stress(i, 1) * unit_transform << std::setw(15) << stress(i, 2) * unit_transform
-                             << std::endl;
+        ofs << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15) << stress(i, 1) * unit_transform
+            << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
     }
-    GlobalV::ofs_running << std::setiosflags(ios::left);
+    ofs << std::setiosflags(ios::left);
 }
 
-void MDdump(const int& step,
-            const UnitCell& unit_in,
-            const MD_parameters& mdp,
-            const ModuleBase::matrix& virial,
-            const ModuleBase::Vector3<double>* force,
-            const ModuleBase::Vector3<double>* vel)
+void dump_info(const int& step,
+               const std::string& global_out_dir,
+               const UnitCell& unit_in,
+               const MD_para& mdp,
+               const ModuleBase::matrix& virial,
+               const ModuleBase::Vector3<double>* force,
+               const ModuleBase::Vector3<double>* vel)
 {
-    if (GlobalV::MY_RANK)
+    if (mdp.my_rank)
         return;
 
     std::stringstream file;
-    file << GlobalV::global_out_dir << "MD_dump";
+    file << global_out_dir << "MD_dump";
     std::ofstream ofs;
     if (step == 0)
     {
@@ -279,10 +274,10 @@ void MDdump(const int& step,
         ofs.open(file.str(), ios::app);
     }
 
-    const double unit_pos = unit_in.lat0 / ModuleBase::ANGSTROM_AU;                                  // Angstrom
-    const double unit_vel = 1.0 / ModuleBase::ANGSTROM_AU / ModuleBase::AU_to_FS;                    // Angstrom/fs
-    const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8; // kBar
-    const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;                   // eV/Angstrom
+    const double unit_pos = unit_in.lat0 / ModuleBase::ANGSTROM_AU;                                  ///< Angstrom
+    const double unit_vel = 1.0 / ModuleBase::ANGSTROM_AU / ModuleBase::AU_to_FS;                    ///< Angstrom/fs
+    const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8; ///< kBar
+    const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;                   ///< eV/Angstrom
 
     ofs << "MDSTEP:  " << step << std::endl;
     ofs << std::setprecision(12) << std::setiosflags(ios::fixed);
@@ -294,7 +289,7 @@ void MDdump(const int& step,
     ofs << "  " << unit_in.latvec.e21 << "  " << unit_in.latvec.e22 << "  " << unit_in.latvec.e23 << std::endl;
     ofs << "  " << unit_in.latvec.e31 << "  " << unit_in.latvec.e32 << "  " << unit_in.latvec.e33 << std::endl;
 
-    if (GlobalV::CAL_STRESS && mdp.dump_virial)
+    if (mdp.cal_stress && mdp.dump_virial)
     {
         ofs << "VIRIAL (kbar)" << std::endl;
         for (int i = 0; i < 3; ++i)
@@ -344,13 +339,11 @@ void MDdump(const int& step,
     ofs.close();
 }
 
-void getMassMbl(const UnitCell& unit_in,
-                double* allmass,
-                ModuleBase::Vector3<int>& frozen,
-                ModuleBase::Vector3<int>* ionmbl)
+void get_mass_mbl(const UnitCell& unit_in,
+                  double* allmass,
+                  ModuleBase::Vector3<int>& frozen,
+                  ModuleBase::Vector3<int>* ionmbl)
 {
-    // some prepared information
-    // mass and degree of freedom
     int ion = 0;
     frozen.set(0, 0, 0);
     for (int it = 0; it < unit_in.ntype; it++)
@@ -389,7 +382,7 @@ double current_temp(double& kinetic,
     }
     else
     {
-        kinetic = GetAtomKE(natom, vel, allmass);
+        kinetic = kinetic_energy(natom, vel, allmass);
         return 2 * kinetic / (3 * natom - frozen_freedom);
     }
 }
@@ -413,9 +406,6 @@ void temp_vector(const int& natom,
     }
 }
 
-// liuyu add 2023-04-16
-// determine thr current MD step according to Restart_md.dat if md_restart is true,
-// then STRU_MD_$step will be read directly instead of STRU
 double current_step(const int& my_rank, const std::string& file_dir)
 {
     bool ok = true;

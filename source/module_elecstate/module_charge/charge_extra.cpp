@@ -29,7 +29,7 @@ Charge_Extra::~Charge_Extra()
     }
 }
 
-void Charge_Extra::Init_CE()
+void Charge_Extra::Init_CE(const int& nrxx)
 {
     if(GlobalV::chg_extrap == "none")
     {
@@ -58,10 +58,10 @@ void Charge_Extra::Init_CE()
         delta_rho2 = new double*[GlobalV::NSPIN];
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
-            delta_rho1[is] = new double[GlobalC::rhopw->nrxx];
-            delta_rho2[is] = new double[GlobalC::rhopw->nrxx];
-            ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], GlobalC::rhopw->nrxx);
-            ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], GlobalC::rhopw->nrxx);
+            delta_rho1[is] = new double[nrxx];
+            delta_rho2[is] = new double[nrxx];
+            ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], nrxx);
+            ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], nrxx);
         }
     }
 
@@ -105,7 +105,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
     rho_extr = min(istep, pot_order);
     if(rho_extr == 0)
     {
-        sf->setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+        sf->setup_structure_factor(&GlobalC::ucell, chr->rhopw);
         GlobalV::ofs_running << " charge density from previous step !" << std::endl;
         return;
     }
@@ -116,17 +116,17 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
     double** rho_atom = new double*[GlobalV::NSPIN];
     for(int is=0; is<GlobalV::NSPIN; is++)
     {
-        rho_atom[is] = new double[GlobalC::rhopw->nrxx];
+        rho_atom[is] = new double[chr->rhopw->nrxx];
         
-        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], GlobalC::rhopw->nrxx);
+        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
     }
-    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, GlobalC::rhopw, sf->strucFac);
+    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
     for(int is=0; is<GlobalV::NSPIN; is++)
     {
-        for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+        for(int ir=0; ir<chr->rhopw->nrxx; ir++)
         {
             chr->rho[is][ir] -= rho_atom[is][ir];
             if(GlobalC::ucell.cell_parameter_updated)
@@ -147,7 +147,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
 #endif
             for(int is=0; is<GlobalV::NSPIN; is++)
             {
-                for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+                for(int ir=0; ir<chr->rhopw->nrxx; ir++)
                 {
                     delta_rho1[is][ir] = chr->rho[is][ir];
                 }
@@ -163,7 +163,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
 #endif
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
-            for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+            for(int ir=0; ir<chr->rhopw->nrxx; ir++)
             {
                 delta_rho2[is][ir] = delta_rho1[is][ir];
                 delta_rho1[is][ir] = chr->rho[is][ir];
@@ -181,14 +181,14 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
         double **delta_rho3 = new double*[GlobalV::NSPIN];
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
-            delta_rho3[is] = new double[GlobalC::rhopw->nrxx];
+            delta_rho3[is] = new double[chr->rhopw->nrxx];
         }
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 64)
 #endif
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
-            for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+            for(int ir=0; ir<chr->rhopw->nrxx; ir++)
             {
                 delta_rho3[is][ir] = delta_rho2[is][ir];
                 delta_rho2[is][ir] = delta_rho1[is][ir];
@@ -205,23 +205,23 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
         delete[] delta_rho3;
     }
 
-    sf->setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+    sf->setup_structure_factor(&GlobalC::ucell, chr->rhopw);
     ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id)
     {
         int irbeg, irlen;
-        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, GlobalC::rhopw->nrxx, 512, irbeg, irlen);
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, chr->rhopw->nrxx, 512, irbeg, irlen);
         for(int is=0; is<GlobalV::NSPIN; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
         }
     });
-    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, GlobalC::rhopw, sf->strucFac);
+    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, sf->strucFac);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
     for(int is=0; is<GlobalV::NSPIN; is++)
     {
-        for(int ir=0; ir<GlobalC::rhopw->nrxx; ir++)
+        for(int ir=0; ir<chr->rhopw->nrxx; ir++)
         {
             if(GlobalC::ucell.cell_parameter_updated)
             {
