@@ -21,6 +21,7 @@
 #include "module_elecstate/magnetism.h"
 
 ModulePW::PW_Basis::PW_Basis(){}
+ModulePW::FFT::FFT(){}
 Charge::Charge(){}
 Charge::~Charge(){}
 
