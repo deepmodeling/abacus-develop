@@ -81,6 +81,7 @@ class Charge
 
     // mohan add 2021-02-20
     int nrxx; // number of r vectors in this processor
+    int nxyz; // total nuber of r vectors
     int ngmc; // number of g vectors in this processor
     int nspin; // number of spins
     ModulePW::PW_Basis* rhopw = nullptr;
