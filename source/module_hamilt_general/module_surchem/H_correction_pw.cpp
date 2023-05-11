@@ -39,7 +39,7 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
 
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
 
-    v += cal_vel(cell, rho_basis, TOTN, PS_TOTN, nspin);
+    v += cal_vel(cell, rho_basis, TOTN, PS_TOTN, nspin, GlobalC::rhopw);
     v += cal_vcav(cell, rho_basis, PS_TOTN, nspin);
 
     delete[] Porter;
