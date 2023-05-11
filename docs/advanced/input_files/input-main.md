@@ -386,7 +386,7 @@ These variables are used to control general system parameters.
   - sdft: [stochastic density functional theory](#electronic-structure-sdft);
   - tddft: real-time time-dependent density functional theory (TDDFT);
   - lj: Leonard Jones potential;
-  - dp: DeeP potential;
+  - dp: DeeP potential, see details in [md.md](../md.md#dpmd);
 - **Default**: ksdft
 
 ### symmetry
