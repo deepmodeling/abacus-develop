@@ -1,10 +1,11 @@
 #include "istate_envelope.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/rho_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
-#include "module_io/rho_io.h"
 
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {pes = pes_in;}
@@ -12,8 +13,12 @@ IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 IState_Envelope::~IState_Envelope()
 {}
 
-
-void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& lowf, Gint_Gamma& gg, int& out_wfc_pw, int& out_wfc_r)
+void IState_Envelope::begin(const psi::Psi<double>* psid,
+                            const ModulePW::PW_Basis* rhopw,
+                            Local_Orbital_wfc& lowf,
+                            Gint_Gamma& gg,
+                            int& out_wfc_pw,
+                            int& out_wfc_r)
 {
     ModuleBase::TITLE("IState_Envelope", "begin");
 
@@ -106,17 +111,17 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
+                    rhopw->nplane,
+                    rhopw->startz_current,
 #endif
                     pes->charge->rho_save[is],
                     is,
                     GlobalV::NSPIN,
                     0,
                     ss.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
+                    rhopw->nx,
+                    rhopw->ny,
+                    rhopw->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     3);
@@ -151,7 +156,12 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
     return;
 }
 
-void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wf, int& out_wf_r)
+void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
+                            const ModulePW::PW_Basis* rhopw,
+                            Local_Orbital_wfc& lowf,
+                            Gint_k& gk,
+                            int& out_wf,
+                            int& out_wf_r)
 {
     ModuleBase::TITLE("IState_Envelope", "begin");
 
@@ -233,17 +243,17 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
 #ifdef __MPI
                     GlobalC::bigpw->bz,
                     GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
+                    rhopw->nplane,
+                    rhopw->startz_current,
 #endif
                     pes->charge->rho[ispin],
                     ispin,
                     GlobalV::NSPIN,
                     0,
                     ss.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
+                    rhopw->nx,
+                    rhopw->ny,
+                    rhopw->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     3);

@@ -17,7 +17,7 @@ IState_Charge::IState_Charge(
 IState_Charge::~IState_Charge(){}
 
 
-void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
+void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec, const ModulePW::PW_Basis* rhopw)
 {
 	ModuleBase::TITLE("IState_Charge","begin");
 
@@ -127,7 +127,7 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			// (2) zero out of charge density array. 
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
-				ModuleBase::GlobalFunc::ZEROS( pelec->charge->rho[is], GlobalC::rhopw->nrxx );
+				ModuleBase::GlobalFunc::ZEROS( pelec->charge->rho[is], rhopw->nrxx );
 			}
 			
 			// (3) calculate charge density for a particular 
@@ -146,17 +146,17 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 #ifdef __MPI
 				    GlobalC::bigpw->bz,
 				    GlobalC::bigpw->nbz,
-				    GlobalC::rhopw->nplane,
-				    GlobalC::rhopw->startz_current,
+				    rhopw->nplane,
+				    rhopw->startz_current,
 #endif
 				    pelec->charge->rho_save[is],
 				    is,
 				    GlobalV::NSPIN,
 				    0,
 				    ssc.str(),
-				    GlobalC::rhopw->nx,
-				    GlobalC::rhopw->ny,
-				    GlobalC::rhopw->nz,
+				    rhopw->nx,
+				    rhopw->ny,
+				    rhopw->nz,
 				    ef_tmp,
 				    &(GlobalC::ucell));
 			}

@@ -15,11 +15,21 @@ public:
     ~IState_Envelope();
 
     /// for gamma_only
-    void begin(const psi::Psi<double>* psid, Local_Orbital_wfc& lowf, Gint_Gamma& gg, int& out_wfc_pw, int& out_wfc_r);
+    void begin(const psi::Psi<double>* psid,
+               const ModulePW::PW_Basis* rhopw,
+               Local_Orbital_wfc& lowf,
+               Gint_Gamma& gg,
+               int& out_wfc_pw,
+               int& out_wfc_r);
     /// for multi-k
-    void begin(const psi::Psi<std::complex<double>>* psi, Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wfc_pw, int& out_wfc_r);
+    void begin(const psi::Psi<std::complex<double>>* psi,
+               const ModulePW::PW_Basis* rhopw,
+               Local_Orbital_wfc& lowf,
+               Gint_k& gk,
+               int& out_wfc_pw,
+               int& out_wfc_r);
 
-private:
+  private:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 
