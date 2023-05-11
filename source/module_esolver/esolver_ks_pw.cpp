@@ -318,7 +318,7 @@ namespace ModuleESolver
         ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
         if(GlobalV::CALCULATION == "test_memory")
         {
-            Cal_Test::test_memory();
+            Cal_Test::test_memory(this->pw_rho);
             return;
         }
 

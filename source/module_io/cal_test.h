@@ -1,9 +1,10 @@
 #ifndef CAL_TEST_H
 #define CAL_TEST_H
+#include "module_basis/module_pw/pw_basis.h"
 
 namespace Cal_Test
 {
-	void test_memory(void);
+	void test_memory(const ModulePW::PW_Basis* rhopw);
 	int cal_np(const double &ggcut, const int &n1, const int &n2, const int &n3);
 	void print_mem(const int &nproc);
 

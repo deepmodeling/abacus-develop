@@ -358,7 +358,7 @@ namespace ModuleESolver
         
         if(GlobalV::CALCULATION == "test_memory")
         {
-            Cal_Test::test_memory();
+            Cal_Test::test_memory(this->pw_rho);
             return;
         }
 
