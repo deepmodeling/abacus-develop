@@ -228,7 +228,7 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
-		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,1.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -565,7 +565,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
-		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,1.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,0);
