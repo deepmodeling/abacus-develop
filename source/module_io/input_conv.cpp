@@ -389,7 +389,6 @@ void Input_Conv::Convert(void)
     Evolve_elec::out_efield = INPUT.out_efield;
     Evolve_elec::td_print_eij = INPUT.td_print_eij;
     Evolve_elec::td_edm = INPUT.td_edm;
-    elecstate::H_TDDFT_pw::read_parameters(&INPUT);
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11

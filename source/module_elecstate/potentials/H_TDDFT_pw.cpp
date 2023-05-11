@@ -70,6 +70,8 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     // time evolve
     H_TDDFT_pw::istep++;
 
+    read_parameters(&INPUT);
+
     // judgement to skip vext
     if (!Evolve_elec::td_vext || istep > tend || istep < tstart)
     {
