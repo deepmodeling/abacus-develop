@@ -102,7 +102,10 @@ HamiltLCAO<T>::HamiltLCAO(
         {
             pot_register_in.push_back("gatefield");
         }
-        pot_register_in.push_back("tddft");
+        if (GlobalV::ESOLVER_TYPE == "tddft")
+        {
+            pot_register_in.push_back("tddft");
+        }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)
         {
@@ -199,7 +202,10 @@ HamiltLCAO<T>::HamiltLCAO(
         {
             pot_register_in.push_back("gatefield");
         }
-        pot_register_in.push_back("tddft");
+        if (GlobalV::ESOLVER_TYPE == "tddft")
+        {
+            pot_register_in.push_back("tddft");
+        }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)
         {
