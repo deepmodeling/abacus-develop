@@ -12,8 +12,12 @@ IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 IState_Envelope::~IState_Envelope()
 {}
 
-
-void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& lowf, Gint_Gamma& gg, int& out_wfc_pw, int& out_wfc_r)
+void IState_Envelope::begin(const psi::Psi<double>* psid,
+                            Local_Orbital_wfc& lowf,
+                            Gint_Gamma& gg,
+                            int& out_wfc_pw,
+                            int& out_wfc_r,
+                            const K_Vectors& kv)
 {
     ModuleBase::TITLE("IState_Envelope", "begin");
 
@@ -72,7 +76,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
 
     if (out_wfc_pw || out_wfc_r)
     {
-        pw_wfc_g.resize(1, GlobalV::NBANDS, GlobalC::kv.ngk[0]);
+        pw_wfc_g.resize(1, GlobalV::NBANDS, kv.ngk[0]);
     }
 
 
@@ -134,11 +138,11 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
         ssw << GlobalV::global_out_dir << "WAVEFUNC";
         std::cout << " write G-space wavefunction into \"" <<
             GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-        ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
+        ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, GlobalC::wfcpw);
     }
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
+        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, kv);
     }
 
     delete[] bands_picked;
@@ -151,7 +155,12 @@ void IState_Envelope::begin(const psi::Psi<double>* psid, Local_Orbital_wfc& low
     return;
 }
 
-void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wf, int& out_wf_r)
+void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
+                            Local_Orbital_wfc& lowf,
+                            Gint_k& gk,
+                            int& out_wf,
+                            int& out_wf_r,
+                            const K_Vectors& kv)
 {
     ModuleBase::TITLE("IState_Envelope", "begin");
 
@@ -194,11 +203,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
     }
 
     //for pw-wfc in G space
-    psi::Psi<std::complex<double>> pw_wfc_g(GlobalC::kv.ngk.data());
+    psi::Psi<std::complex<double>> pw_wfc_g(kv.ngk.data());
 
     if (out_wf || out_wf_r)
     {
-        pw_wfc_g.resize(GlobalC::kv.nks, GlobalV::NBANDS, GlobalC::wf.npwx);
+        pw_wfc_g.resize(kv.nks, GlobalV::NBANDS, GlobalC::wf.npwx);
     }
 
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -206,9 +215,9 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
         if (bands_picked[ib])
         {
             const int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
-            for (int ik = 0; ik < GlobalC::kv.nks; ++ik)    //the loop of nspin0 is included
+            for (int ik = 0; ik < kv.nks; ++ik)    //the loop of nspin0 is included
             {
-                const int ispin = GlobalC::kv.isk[ik];
+                const int ispin = kv.isk[ik];
                 ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[ispin], GlobalC::wfcpw->nrxx);
                 std::cout << " Perform envelope function for kpoint " << ik << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
@@ -266,11 +275,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi, Local_Orb
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
             std::cout << " write G-space wavefunction into \"" <<
                 GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, &GlobalC::kv, GlobalC::wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, GlobalC::wfcpw);
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false);
+            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, kv);
         }
     }
 

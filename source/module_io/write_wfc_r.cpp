@@ -16,7 +16,7 @@ namespace ModuleIO
 	// write ||wfc_r|| for all k-points and all bands
 	// Input: wfc_g(ik, ib, ig)
 	// loop order is for(z){for(y){for(x)}}
-	void write_psi_r_1(const psi::Psi<std::complex<double>> &wfc_g, const std::string &folder_name, const bool& square)
+	void write_psi_r_1(const psi::Psi<std::complex<double>> &wfc_g, const std::string &folder_name, const bool& square,const K_Vectors& kv)
 	{
 		ModuleBase::TITLE("ModuleIO", "write_psi_r_1");
 		ModuleBase::timer::tick("ModuleIO", "write_psi_r_1");
@@ -31,7 +31,7 @@ namespace ModuleIO
 			wfc_g.fix_k(ik);
 			const int ik_out = (GlobalV::NSPIN!=2)
 				? ik + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL]
-				: ik - GlobalC::kv.nks/2*GlobalC::kv.isk[ik] + GlobalC::kv.nkstot/2*GlobalC::kv.isk[ik] + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
+				: ik - kv.nks/2*kv.isk[ik] + kv.nkstot/2*kv.isk[ik] + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
 			for(int ib=0; ib<wfc_g.get_nbands(); ++ib)
 			{
 				const std::vector<std::complex<double>> wfc_r = cal_wfc_r(wfc_g, ik, ib);

@@ -44,9 +44,11 @@ toWannier90::~toWannier90()
     delete[] tag_cal_band;
 }
 
-void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi)
+void toWannier90::init_wannier(const ModuleBase::matrix& ekb,
+                               const K_Vectors& kv,
+                               const psi::Psi<std::complex<double>>* psi)
 {
-    this->read_nnkp();
+    this->read_nnkp(kv);
 
     if (GlobalV::NSPIN == 2)
     {
@@ -71,7 +73,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std
 #ifdef __LCAO
     else if (GlobalV::BASIS_TYPE == "lcao")
     {
-        getUnkFromLcao();
+        getUnkFromLcao(kv);
         cal_Amn(this->unk_inLcao[0], GlobalC::wfcpw);
         cal_Mmn(this->unk_inLcao[0]);
         writeUNK(this->unk_inLcao[0]);
@@ -91,7 +93,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std
         }
         else if(GlobalV::BASIS_TYPE == "lcao")
         {
-            getUnkFromLcao();
+            getUnkFromLcao(kv);
             cal_Amn(this->unk_inLcao);
             cal_Mmn(this->unk_inLcao);
             writeUNK(this->unk_inLcao);
@@ -101,7 +103,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std
     */
 }
 
-void toWannier90::read_nnkp()
+void toWannier90::read_nnkp(const K_Vectors& kv)
 {
     // read *.nnkp file
 
@@ -178,27 +180,27 @@ void toWannier90::read_nnkp()
     {
         int numkpt_nnkp;
         ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, numkpt_nnkp);
-        if ((GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4) && numkpt_nnkp != GlobalC::kv.nkstot)
+        if ((GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4) && numkpt_nnkp != kv.nkstot)
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
-        else if (GlobalV::NSPIN == 2 && numkpt_nnkp != (GlobalC::kv.nkstot / 2))
+        else if (GlobalV::NSPIN == 2 && numkpt_nnkp != (kv.nkstot / 2))
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
 
         ModuleBase::Vector3<double> *kpoints_direct_nnkp = new ModuleBase::Vector3<double>[numkpt_nnkp];
         for (int ik = 0; ik < numkpt_nnkp; ik++)
         {
             nnkp_read >> kpoints_direct_nnkp[ik].x >> kpoints_direct_nnkp[ik].y >> kpoints_direct_nnkp[ik].z;
-            if (abs(kpoints_direct_nnkp[ik].x - GlobalC::kv.kvec_d[ik].x) > 1.0e-4)
+            if (abs(kpoints_direct_nnkp[ik].x - kv.kvec_d[ik].x) > 1.0e-4)
                 ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
-            if (abs(kpoints_direct_nnkp[ik].y - GlobalC::kv.kvec_d[ik].y) > 1.0e-4)
+            if (abs(kpoints_direct_nnkp[ik].y - kv.kvec_d[ik].y) > 1.0e-4)
                 ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
-            if (abs(kpoints_direct_nnkp[ik].z - GlobalC::kv.kvec_d[ik].z) > 1.0e-4)
+            if (abs(kpoints_direct_nnkp[ik].z - kv.kvec_d[ik].z) > 1.0e-4)
                 ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
         }
 
         delete[] kpoints_direct_nnkp;
 
         ModuleBase::Vector3<double> my_gamma_point(0.0, 0.0, 0.0);
-        // if( (GlobalC::kv.nkstot == 1) && (GlobalC::kv.kvec_d[0] == my_gamma_point) ) gamma_only_wannier = true;
+        // if( (kv.nkstot == 1) && (kv.kvec_d[0] == my_gamma_point) ) gamma_only_wannier = true;
     }
 
     if (GlobalV::NSPIN != 4)
@@ -243,9 +245,9 @@ void toWannier90::read_nnkp()
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "nnkpts"))
     {
         ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, nntot);
-        nnlist.resize(GlobalC::kv.nkstot);
-        nncell.resize(GlobalC::kv.nkstot);
-        for (int ik = 0; ik < GlobalC::kv.nkstot; ik++)
+        nnlist.resize(kv.nkstot);
+        nncell.resize(kv.nkstot);
+        for (int ik = 0; ik < kv.nkstot; ik++)
         {
             nnlist[ik].resize(nntot);
             nncell[ik].resize(nntot);
@@ -253,9 +255,9 @@ void toWannier90::read_nnkp()
 
         int numkpt_nnkp;
         if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
-            numkpt_nnkp = GlobalC::kv.nkstot;
+            numkpt_nnkp = kv.nkstot;
         else if (GlobalV::NSPIN == 2)
-            numkpt_nnkp = GlobalC::kv.nkstot / 2;
+            numkpt_nnkp = kv.nkstot / 2;
         else
             throw std::runtime_error("numkpt_nnkp uninitialized in " + ModuleBase::GlobalFunc::TO_STRING(__FILE__)
                                      + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
@@ -405,7 +407,7 @@ void toWannier90::writeUNK(const psi::Psi<std::complex<double>> &wfc_pw)
             //std::complex<double> *porter = GlobalC::UFFT.porter;
             //  u_k in real space
             ModuleBase::GlobalFunc::ZEROS(porter, GlobalC::rhopw->nrxx);
-            for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
+            for (int ig = 0; ig < wfc_pw.get_ngk(ik); ig++)
             {
                 porter[sf.ig2fftw[GlobalC::wf.igk(ik, ig)]] = wfc_pw[ik](ib, ig);
             }
@@ -623,7 +625,7 @@ void toWannier90::cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW
     for (int ik = 0; ik < cal_num_kpts; ik++)
     {
         trial_orbitals[ik].create(num_wannier, pwNumberMax);
-        produce_trial_in_pw(ik, wfc_basis, trial_orbitals[ik]);
+        produce_trial_in_pw(wfc_pw, ik, wfc_basis, trial_orbitals[ik]);
     }
 
     // test by jingan
@@ -775,7 +777,10 @@ void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw)
         mmn_file.close();
 }
 
-void toWannier90::produce_trial_in_pw(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix &trial_orbitals_k)
+void toWannier90::produce_trial_in_pw(const psi::Psi<std::complex<double>>& wfc_pw,
+                                      const int& ik,
+                                      ModulePW::PW_Basis_K* wfc_basis,
+                                      ModuleBase::ComplexMatrix& trial_orbitals_k)
 {
 
     for (int i = 0; i < num_wannier; i++)
@@ -798,7 +803,7 @@ void toWannier90::produce_trial_in_pw(const int &ik, ModulePW::PW_Basis_K *wfc_b
         }
     }
 
-    const int npw = GlobalC::kv.ngk[ik];
+    const int npw = wfc_basis->npwk[ik];
     const int npwx = GlobalC::wf.npwx;
     const int total_lm = 16;
     ModuleBase::matrix ylm(total_lm, npw);
@@ -1543,7 +1548,7 @@ void toWannier90::ToRealSpace(const int &ik,
     ModuleBase::GlobalFunc::ZEROS(psir, GlobalC::wfcpw->nrxx);
     ModuleBase::GlobalFunc::ZEROS(phase, GlobalC::wfcpw->nrxx);
 
-    for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
+    for (int ig = 0; ig < psi->get_ngk(ik); ig++)
     {
         psir[GlobalC::wfcpw->ng2fftw[GlobalC::wf.igk(ik, ig)]] = evc[ik](ib, ig);
     }
@@ -1574,7 +1579,7 @@ std::complex<double> toWannier90::unkdotb(const std::complex<double> *psir,
                                           const ModuleBase::ComplexMatrix *wfc_pw)
 {
     std::complex<double> result(0.0, 0.0);
-    int knumber = GlobalC::kv.ngk[ikb];
+    int knumber = psi->get_ngk(ikb);
     std::complex<double> *porter = GlobalC::UFFT.porter;
     ModuleBase::GlobalFunc::ZEROS(porter, GlobalC::wfcpw->nrxx);
     for (int ir = 0; ir < GlobalC::wfcpw->nrxx; ir++)
@@ -1625,7 +1630,7 @@ std::complex<double> toWannier90::unkdotkb(const int &ik,
 
     std::complex<double> result_tem(0.0, 0.0);
 
-    for (int ig = 0; ig < GlobalC::kv.ngk[ikb]; ig++)
+    for (int ig = 0; ig < wfc_pw.get_ngk(ikb); ig++)
     {
         result_tem = result_tem + conj(psir[ig]) * wfc_pw(ikb, iband_R, ig);
     }
@@ -1652,7 +1657,7 @@ std::complex<double> toWannier90::gamma_only_cal(const int &ib_L,
     ModuleBase::GlobalFunc::ZEROS(psir, GlobalC::wfcpw->nrxx);
     ModuleBase::GlobalFunc::ZEROS(psir_2, GlobalC::wfcpw->nrxx);
 
-    for (int ig = 0; ig < GlobalC::kv.ngk[0]; ig++)
+    for (int ig = 0; ig < psi->get_ngk(0); ig++)
     {
         // psir[ GlobalC::wfcpw->ng2fftw[ GlobalC::wf.igk(0,ig) ] ] = wfc_pw[0](ib_L, ig);
         psir[GlobalC::wfcpw->ng2fftw[GlobalC::wf.igk(0, ig)]] = std::complex<double>(abs(wfc_pw[0](ib_L, ig)), 0.0);
@@ -1686,7 +1691,7 @@ std::complex<double> toWannier90::gamma_only_cal(const int &ib_L,
 
     std::complex<double> result(0.0, 0.0);
 
-    for (int ig = 0; ig < GlobalC::kv.ngk[0]; ig++)
+    for (int ig = 0; ig < psi->get_ngk(0); ig++)
     {
         // result = result + conj(psir_2[ GlobalC::wfcpw->ng2fftw[GlobalC::wf.igk(0,ig)] ]) * wfc_pw[0](ib_R,ig) + psir[
 GlobalC::wfcpw->ng2fftw[ GlobalC::wf.igk(0,ig)] ] * conj(wfc_pw[0](ib_R,ig));
@@ -1710,7 +1715,7 @@ void toWannier90::lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital
     Wavefunc_in_pw::produce_local_basis_in_pw(ik, GlobalC::wfcpw, orbital_in_G, this->table_local);
 }
 
-void toWannier90::getUnkFromLcao()
+void toWannier90::getUnkFromLcao(const K_Vectors& kv)
 {
     std::complex<double> ***lcao_wfc_global = new std::complex<double> **[num_kpts];
     for (int ik = 0; ik < num_kpts; ik++)
@@ -1735,7 +1740,7 @@ void toWannier90::getUnkFromLcao()
 
         get_lcao_wfc_global_ik(lcao_wfc_global[ik], this->wfc_k_grid[ik]);
 
-        int npw = GlobalC::kv.ngk[ik];
+        int npw = kv.ngk[ik];
         orbital_in_G[ik].create(GlobalV::NLOCAL, npw);
         this->lcao2pw_basis(ik, orbital_in_G[ik]);
     }
@@ -1744,7 +1749,7 @@ void toWannier90::getUnkFromLcao()
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
+            for (int ig = 0; ig < kv.ngk[ik]; ig++)
             {
                 for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
                 {
@@ -1759,7 +1764,7 @@ void toWannier90::getUnkFromLcao()
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             std::complex<double> anorm(0.0, 0.0);
-            for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
+            for (int ig = 0; ig < kv.ngk[ik]; ig++)
             {
                 anorm = anorm + conj(unk_inLcao[0](ik, ib, ig)) * unk_inLcao[0](ik, ib, ig);
             }
@@ -1769,14 +1774,14 @@ void toWannier90::getUnkFromLcao()
             MPI_Allreduce(&anorm, &anorm_tem, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
 
-            for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
+            for (int ig = 0; ig < kv.ngk[ik]; ig++)
             {
                 unk_inLcao[0](ik, ib, ig) = unk_inLcao[0](ik, ib, ig) / sqrt(anorm_tem);
             }
         }
     }
 
-    for (int ik = 0; ik < GlobalC::kv.nkstot; ik++)
+    for (int ik = 0; ik < kv.nkstot; ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
