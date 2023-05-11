@@ -98,7 +98,8 @@ class surchem
                                     ModulePW::PW_Basis* rho_basis,
                                     const int& nspin,
                                     const double* const* const rho,
-                                    const double* vlocal);
+                                    const double* vlocal,
+                                    Structure_Factor* sf);
 
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,
