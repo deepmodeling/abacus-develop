@@ -610,7 +610,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         ModuleBase::Matrix3 bsymop[48];
         int bnop=0;
         symm.setgroup(bsymop, bnop, bbrav);
-        ModuleBase::Matrix3 b_optlat(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
+        ModuleBase::Matrix3 b_optlat = symm.optlat.Inverse().Transpose();
         //symm.gmatrix_convert_int(bsymop, bsymop, bnop, b_optlat, ucell.G);
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat, ucell.G);
         //check if all the kgmatrix are in bsymop
