@@ -24,12 +24,12 @@ std::complex<double> unkOverlap_pw::unkdotp_G(const int ik_L, const int ik_R, co
 	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw);
 	
 
-	for (int igl = 0; igl < GlobalC::kv.ngk[ik_L]; igl++)
+	for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
 	{
 		unk_L[GlobalC::wfcpw->getigl2ig(ik_L,igl)] = evc[0](ik_L, iband_L, igl);
 	}
 	
-	for (int igl = 0; igl < GlobalC::kv.ngk[ik_R]; igl++)
+	for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
 	{
 		unk_R[GlobalC::wfcpw->getigl2ig(ik_L,igl)] = evc[0](ik_R, iband_R, igl);
 	}
@@ -94,7 +94,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const int ik_L, const int ik_R, c
 	GlobalC::wfcpw->real2recip(psi_r, psi_r, ik_L);
 	
 
-	for(int ig = 0; ig < GlobalC::kv.ngk[ik_R]; ig++)
+	for(int ig = 0; ig < evc->get_ngk(ik_R); ig++)
 	{
 		result = result + conj( psi_r[ig] ) * evc[0](ik_R, iband_R, ig);
 	}
@@ -128,12 +128,12 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R
 	
 	for(int i = 0; i < GlobalV::NPOL; i++)
 	{
-		for (int igl = 0; igl < GlobalC::kv.ngk[ik_L]; igl++)
+		for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
 		{
 			unk_L[GlobalC::wfcpw->getigl2ig(ik_L,igl)+i*number_pw] = evc[0](ik_L, iband_L, igl+i*GlobalC::wf.npwx);
 		}
 	
-		for (int igl = 0; igl < GlobalC::kv.ngk[ik_R]; igl++)
+		for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
 		{
 			unk_R[GlobalC::wfcpw->getigl2ig(ik_L,igl)+i*number_pw] = evc[0](ik_R, iband_R, igl+i*GlobalC::wf.npwx);
 		}
@@ -203,7 +203,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_
 	
 	for(int i = 0; i < GlobalV::NPOL; i++)
 	{
-		for(int ig = 0; ig < GlobalC::kv.ngk[ik_R]; ig++)
+		for(int ig = 0; ig < evc->get_ngk(ik_R); ig++)
 		{
 			if( i == 0 ) result = result + conj( psi_up[ig] ) * evc[0](ik_R, iband_R, ig);
 			if( i == 1 ) result = result + conj( psi_down[ig] ) * evc[0](ik_R, iband_R, ig + npwx);

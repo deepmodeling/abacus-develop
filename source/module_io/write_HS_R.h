@@ -2,6 +2,7 @@
 #define WRITE_HS_R_H
 
 #include "module_base/matrix.h"
+#include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 
 namespace ModuleIO
@@ -10,6 +11,7 @@ namespace ModuleIO
             const int &istep,
             const ModuleBase::matrix& v_eff,
             LCAO_Hamilt &UHM,
+            const K_Vectors& kv,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",
@@ -20,6 +22,7 @@ namespace ModuleIO
             const int &istep,
             const ModuleBase::matrix& v_eff,
             LCAO_Hamilt &UHM,
+            const K_Vectors& kv,
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);
 

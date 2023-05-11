@@ -24,7 +24,7 @@ Numerical_Descriptor::~Numerical_Descriptor()
 }
 
 
-void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in)
+void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in, const int nks_in)
 {
 	ModuleBase::TITLE("Numerical_Descriptor","output_descriptor");
 	ModuleBase::GlobalFunc::NEW_PART("DeepKS descriptor: D_{Inl}");
@@ -40,7 +40,7 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 	this->lmax = lmax_in;
 	assert(lmax>=0);
 
-    const int nks = GlobalC::kv.nks;
+    const int nks = nks_in;
     int ne = 0; 
 	
 	// Peize Lin change 2022.12.15
@@ -100,7 +100,7 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
     // nks now is the reduced k-points.
     for (int ik=0; ik<nks; ik++)
     {
-        const int npw= GlobalC::kv.ngk[ik];
+        const int npw= p_kv->ngk[ik];
 		GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
 		GlobalV::ofs_running << " Print the overlap matrixs Q and S for this kpoint";
         GlobalV::ofs_running << "\n " << std::setw(8) << "ik" << std::setw(8) << "npw";

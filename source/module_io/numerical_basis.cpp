@@ -51,7 +51,7 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
 }
 
 // The function is called in run_fp.cpp.
-void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf)
+void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv)
 {
     ModuleBase::TITLE("Numerical_Basis","output_overlap");
     ModuleBase::GlobalFunc::NEW_PART("Overlap Data For Spillage Minimization");
@@ -88,20 +88,20 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         }
 
         // OVERLAP : < J_mu | Psi >
-        std::vector<ModuleBase::ComplexArray> overlap_Q(GlobalC::kv.nks);
+        std::vector<ModuleBase::ComplexArray> overlap_Q(kv.nks);
 
         // OVERLAP : < J_mu | J_nu >
-        std::vector<ModuleBase::ComplexArray> overlap_Sq(GlobalC::kv.nks);
+        std::vector<ModuleBase::ComplexArray> overlap_Sq(kv.nks);
 
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of k points", GlobalC::kv.nks);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "number of k points", kv.nks);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of bands", GlobalV::NBANDS);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of local orbitals", GlobalV::NLOCAL);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of eigenvalues of Jl(x)", this->bessel_basis.get_ecut_number());
 
         // nks now is the reduced k-points.
-        for (int ik=0; ik<GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
-            const int npw= GlobalC::kv.ngk[ik];
+            const int npw = kv.ngk[ik];
             GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
             GlobalV::ofs_running << " Print the overlap matrixs Q and S for this kpoint" << std::endl;
             GlobalV::ofs_running << std::setw(8) << "ik" << std::setw(8) << "npw" << std::endl;
@@ -122,10 +122,13 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
             }
         }
 
-        const ModuleBase::matrix overlap_V = this->cal_overlap_V(GlobalC::wfcpw, psi, static_cast<double>(derivative_order));		// Peize Lin add 2020.04.23
+        const ModuleBase::matrix overlap_V = this->cal_overlap_V(GlobalC::wfcpw,
+                                                                 psi,
+                                                                 static_cast<double>(derivative_order),
+                                                                 kv); // Peize Lin add 2020.04.23
 
-    #ifdef __MPI
-        for (int ik=0; ik<GlobalC::kv.nks; ik++)
+#ifdef __MPI
+        for (int ik = 0; ik < kv.nks; ik++)
         {
             Parallel_Reduce::reduce_complex_double_pool( overlap_Q[ik].ptr, overlap_Q[ik].getSize() );
             Parallel_Reduce::reduce_complex_double_pool( overlap_Sq[ik].ptr, overlap_Sq[ik].getSize() );
@@ -133,18 +136,18 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         Parallel_Reduce::reduce_double_pool(overlap_V.c, overlap_V.nr*overlap_V.nc);		// Peize Lin add 2020.04.23
     #endif
 
-        this->output_info( ofs, bessel_basis );
+        this->output_info(ofs, bessel_basis, kv);
 
-        this->output_k( ofs );
+        this->output_k(ofs, kv);
 
-        this->output_overlap_Q( ofs, overlap_Q );
+        this->output_overlap_Q(ofs, overlap_Q, kv);
 
         if (winput::out_spillage == 2)
         {
-            this->output_overlap_Sq(ss.str(), ofs, overlap_Sq);
+            this->output_overlap_Sq(ss.str(), ofs, overlap_Sq, kv);
         }
 
-        this->output_overlap_V(ofs, overlap_V);		// Peize Lin add 2020.04.23
+        this->output_overlap_V(ofs, overlap_V); // Peize Lin add 2020.04.23
 
         if (GlobalV::MY_RANK==0) ofs.close();
     }
@@ -349,22 +352,23 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
 }
 
 // Peize Lin add for dpsi 2020.04.23
-ModuleBase::matrix Numerical_Basis::cal_overlap_V(ModulePW::PW_Basis_K *wfc_basis,
-                                                  const psi::Psi<std::complex<double>> &psi,
-                                                  const double derivative_order)
+ModuleBase::matrix Numerical_Basis::cal_overlap_V(ModulePW::PW_Basis_K* wfc_basis,
+                                                  const psi::Psi<std::complex<double>>& psi,
+                                                  const double derivative_order,
+                                                  const K_Vectors& kv)
 {
-    ModuleBase::matrix overlap_V(GlobalC::kv.nks, GlobalV::NBANDS);
-    for(int ik=0; ik<GlobalC::kv.nks; ++ik)
-	{
-        std::vector<ModuleBase::Vector3<double>> gk(GlobalC::kv.ngk[ik]);
+    ModuleBase::matrix overlap_V(kv.nks, GlobalV::NBANDS);
+    for (int ik = 0; ik < kv.nks; ++ik)
+    {
+        std::vector<ModuleBase::Vector3<double>> gk(kv.ngk[ik]);
         for (int ig=0; ig<gk.size(); ig++)
             gk[ig] = wfc_basis->getgpluskcar(ik,ig);
 
         const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
-			for(int ig=0; ig<GlobalC::kv.ngk[ik]; ++ig)
-				overlap_V(ik,ib)+= norm(psi(ik,ib,ig)) * gpow[ig];
+            for (int ig = 0; ig < kv.ngk[ik]; ++ig)
+                overlap_V(ik,ib)+= norm(psi(ik,ib,ig)) * gpow[ig];
 	}
 	return overlap_V;
 }
@@ -502,9 +506,7 @@ void Numerical_Basis::numerical_atomic_wfc(const int& ik,
     }
 }
 
-void Numerical_Basis::output_info(
-    std::ofstream &ofs,
-    const Bessel_Basis &bessel_basis)
+void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv)
 {
     // only print out to the information by the first processor
     if (GlobalV::MY_RANK==0)
@@ -551,15 +553,14 @@ void Numerical_Basis::output_info(
 
     if (GlobalV::MY_RANK==0)
     {
-        ofs << GlobalC::kv.nkstot << " nks" << std::endl;
+        ofs << kv.nkstot << " nks" << std::endl;
         ofs << GlobalV::NBANDS << " nbands" << std::endl;
         ofs << GlobalV::NLOCAL << " nwfc" << std::endl;
         ofs << bessel_basis.get_ecut_number() << " ne " << std::endl;
     }
 }
 
-void Numerical_Basis::output_k(
-    std::ofstream &ofs)
+void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
 {
     // (1)
     if (GlobalV::MY_RANK==0)
@@ -568,7 +569,7 @@ void Numerical_Basis::output_k(
     }
 
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
-    int nkstot = GlobalC::kv.nkstot;
+    int nkstot = kv.nkstot;
 
     // (2)
     for (int ik=0; ik<nkstot; ik++)
@@ -585,10 +586,10 @@ void Numerical_Basis::output_k(
             {
                 if (pool==0)
                 {
-                    kx = GlobalC::kv.kvec_c[ik].x;
-                    ky = GlobalC::kv.kvec_c[ik].y;
-                    kz = GlobalC::kv.kvec_c[ik].z;
-                    wknow = GlobalC::kv.wk[ik];
+                    kx = kv.kvec_c[ik].x;
+                    ky = kv.kvec_c[ik].y;
+                    kz = kv.kvec_c[ik].z;
+                    wknow = kv.wk[ik];
                 }
                 else
                 {
@@ -603,10 +604,10 @@ void Numerical_Basis::output_k(
             {
                 if (GlobalV::MY_POOL == pool)
                 {
-                    MPI_Send(&GlobalC::kv.kvec_c[iknow].x, 1, MPI_DOUBLE, 0, ik*4, MPI_COMM_WORLD);
-                    MPI_Send(&GlobalC::kv.kvec_c[iknow].y, 1, MPI_DOUBLE, 0, ik*4+1, MPI_COMM_WORLD);
-                    MPI_Send(&GlobalC::kv.kvec_c[iknow].z, 1, MPI_DOUBLE, 0, ik*4+2, MPI_COMM_WORLD);
-                    MPI_Send(&GlobalC::kv.wk[iknow], 1, MPI_DOUBLE, 0, ik*4+3, MPI_COMM_WORLD);
+                    MPI_Send(&kv.kvec_c[iknow].x, 1, MPI_DOUBLE, 0, ik * 4, MPI_COMM_WORLD);
+                    MPI_Send(&kv.kvec_c[iknow].y, 1, MPI_DOUBLE, 0, ik * 4 + 1, MPI_COMM_WORLD);
+                    MPI_Send(&kv.kvec_c[iknow].z, 1, MPI_DOUBLE, 0, ik * 4 + 2, MPI_COMM_WORLD);
+                    MPI_Send(&kv.wk[iknow], 1, MPI_DOUBLE, 0, ik * 4 + 3, MPI_COMM_WORLD);
                 }
             }
         }
@@ -615,10 +616,10 @@ void Numerical_Basis::output_k(
 #else
         if (GlobalV::MY_RANK==0)
         {
-            kx = GlobalC::kv.kvec_c[ik].x;
-            ky = GlobalC::kv.kvec_c[ik].y;
-            kz = GlobalC::kv.kvec_c[ik].z;
-            wknow = GlobalC::kv.wk[ik];
+            kx = kv.kvec_c[ik].x;
+            ky = kv.kvec_c[ik].y;
+            kz = kv.kvec_c[ik].z;
+            wknow = kv.wk[ik];
         }
 #endif
 
@@ -635,9 +636,9 @@ void Numerical_Basis::output_k(
     }
 }
 
-void Numerical_Basis::output_overlap_Q(
-    std::ofstream &ofs,
-    const std::vector<ModuleBase::ComplexArray> &overlap_Q)
+void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
+                                       const std::vector<ModuleBase::ComplexArray>& overlap_Q,
+                                       const K_Vectors& kv)
 {
     // (3)
     if (GlobalV::MY_RANK==0)
@@ -660,9 +661,12 @@ void Numerical_Basis::output_overlap_Q(
     // Copy to overlap_Q_k for Pkpoints.pool_collection temporaly.
     // It's better to refactor to Pkpoints.pool_collection(overlap_Q) in the future.
     // Peize Lin comments 2021.07.25
-    assert(GlobalC::kv.nks>0);
-    ModuleBase::ComplexArray overlap_Q_k(GlobalC::kv.nks, overlap_Q[0].getBound1(), overlap_Q[0].getBound2(), overlap_Q[0].getBound3());
-    for(int ik=0; ik<GlobalC::kv.nks; ++ik)
+    assert(kv.nks > 0);
+    ModuleBase::ComplexArray overlap_Q_k(kv.nks,
+                                         overlap_Q[0].getBound1(),
+                                         overlap_Q[0].getBound2(),
+                                         overlap_Q[0].getBound3());
+    for (int ik = 0; ik < kv.nks; ++ik)
     {
         std::memcpy(
             overlap_Q_k.ptr + ik*overlap_Q[ik].getSize(),
@@ -671,7 +675,7 @@ void Numerical_Basis::output_overlap_Q(
     }
 
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
-    int nkstot = GlobalC::kv.nkstot;
+    int nkstot = kv.nkstot;
     int count = 0;
     for (int ik=0; ik<nkstot; ik++)
     {
@@ -703,10 +707,10 @@ void Numerical_Basis::output_overlap_Q(
     }
 }
 
-void Numerical_Basis::output_overlap_Sq(
-    const std::string &name,
-    std::ofstream &ofs,
-    const std::vector<ModuleBase::ComplexArray> &overlap_Sq)
+void Numerical_Basis::output_overlap_Sq(const std::string& name,
+                                        std::ofstream& ofs,
+                                        const std::vector<ModuleBase::ComplexArray>& overlap_Sq,
+                                        const K_Vectors& kv)
 {
     if (GlobalV::MY_RANK==0)
     {
@@ -717,7 +721,7 @@ void Numerical_Basis::output_overlap_Sq(
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
     int ispin = 1;
     if(GlobalV::NSPIN == 2) ispin = 2;
-    int nkstot = GlobalC::kv.nkstot / ispin;
+    int nkstot = kv.nkstot / ispin;
     int count = 0;
     for(int is = 0; is<ispin; is++)
     {

@@ -326,7 +326,7 @@ namespace ModuleESolver
         {
             // caoyu add 2020-11-24, mohan updat 2021-01-03
             Numerical_Descriptor nc;
-            nc.output_descriptor(this->psi[0], INPUT.bessel_descriptor_lmax, INPUT.bessel_descriptor_rcut, INPUT.bessel_descriptor_tolerence);
+            nc.output_descriptor(this->psi[0], INPUT.bessel_descriptor_lmax, INPUT.bessel_descriptor_rcut, INPUT.bessel_descriptor_tolerence, GlobalC::kv.nks);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"GENERATE DESCRIPTOR FOR DEEPKS");
             return;
         }
@@ -528,7 +528,7 @@ namespace ModuleESolver
                 ssw << GlobalV::global_out_dir << "WAVEFUNC";
                 // mohan update 2011-02-21
                 //qianrui update 2020-10-17
-                ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+                ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], GlobalC::kv, GlobalC::wfcpw);
                 //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave functions into file WAVEFUNC.dat");
             }
         }
@@ -619,7 +619,7 @@ namespace ModuleESolver
         {
             std::stringstream ssw;
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
-            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], &GlobalC::kv, GlobalC::wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], GlobalC::kv, GlobalC::wfcpw);
         }
         if (this->conv_elec)
         {
@@ -747,13 +747,13 @@ namespace ModuleESolver
         int nspin0=1;
         if(GlobalV::NSPIN==2) nspin0=2;
         //print occupation in istate.info
-        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,&(GlobalC::kv),&(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb,this->pelec->wg,GlobalC::kv,&(GlobalC::Pkpoints));
         // compute density of states
         if (GlobalC::en.out_dos)
         {
             ModuleIO::write_dos_pw(this->pelec->ekb,
                 this->pelec->wg,
-                &(GlobalC::kv),
+                GlobalC::kv,
                 GlobalC::en.dos_edelta_ev,
                 GlobalC::en.dos_scale,
                 GlobalC::en.bcoeff);
@@ -785,7 +785,7 @@ namespace ModuleESolver
                 std::stringstream ss2;
                 ss2 << GlobalV::global_out_dir << "BANDS_" << is+1 << ".dat";
                 GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-                ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, GlobalC::en.ef*0, this->pelec->ekb,&(GlobalC::kv),&(GlobalC::Pkpoints));
+                ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, GlobalC::en.ef*0, this->pelec->ekb,GlobalC::kv,&(GlobalC::Pkpoints));
             }
         }
 
@@ -826,14 +826,14 @@ namespace ModuleESolver
             if ( winput::out_spillage <= 2 )
             {
                 Numerical_Basis numerical_basis;
-                numerical_basis.output_overlap(this->psi[0],GlobalC::sf);
+                numerical_basis.output_overlap(this->psi[0],GlobalC::sf,GlobalC::kv);
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"BASIS OVERLAP (Q and S) GENERATION.");
             }
         }
 
         if(GlobalC::wf.out_wfc_r == 1)				// Peize Lin add 2021.11.21
         {
-            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true);
+            ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true, GlobalC::kv);
         }	
 
         if(INPUT.cal_cond)
@@ -928,7 +928,7 @@ namespace ModuleESolver
         if(INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot,GlobalC::ucell.G);
-            myWannier.init_wannier(this->pelec->ekb, this->psi);
+            myWannier.init_wannier(this->pelec->ekb, GlobalC::kv, this->psi);
         }
 
         //=======================================================
@@ -938,7 +938,7 @@ namespace ModuleESolver
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp;
-            bp.Macroscopic_polarization(this->psi);
+            bp.Macroscopic_polarization(this->psi,GlobalC::kv);
         }
 
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");

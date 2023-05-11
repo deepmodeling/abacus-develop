@@ -63,7 +63,7 @@ TEST_F(DosPWTest,Dos1)
 	GlobalV::NBANDS = dosp.nbands;
 	ModuleIO::write_dos_pw(dosp.ekb,
 			dosp.wg,
-			kv,
+			*kv,
 			dosp.de_ev,
 			dos_scale,
 			dosp.bcoeff);
@@ -113,7 +113,7 @@ TEST_F(DosPWTest,Dos2)
 	GlobalV::NBANDS = dosp.nbands;
 	ModuleIO::write_dos_pw(dosp.ekb,
 			dosp.wg,
-			kv,
+			*kv,
 			dosp.de_ev,
 			dos_scale,
 			dosp.bcoeff);
