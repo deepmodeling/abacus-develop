@@ -3,9 +3,12 @@
 
 // atom_in surchem::GetAtom;
 
-void surchem::gauss_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, complex<double> *N)
+void surchem::gauss_charge(const UnitCell& cell,
+                           ModulePW::PW_Basis* rho_basis,
+                           complex<double>* N,
+                           Structure_Factor* sf)
 {
-    GlobalC::sf.setup_structure_factor(&GlobalC::ucell, rho_basis); // call strucFac(ntype,ngmc)
+    sf->setup_structure_factor(&GlobalC::ucell, rho_basis); // call strucFac(ntype,ngmc)
     for (int it = 0; it < cell.ntype; it++)
     {
         double RCS = GetAtom.atom_RCS[cell.atoms[it].ncpp.psd];
@@ -19,10 +22,10 @@ void surchem::gauss_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, 
             gg = gg * cell.tpiba2;
 
             N[ig].real(N[ig].real()
-                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * GlobalC::sf.strucFac(it, ig).real()
+                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * sf->strucFac(it, ig).real()
                              * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
             N[ig].imag(N[ig].imag()
-                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * GlobalC::sf.strucFac(it, ig).imag()
+                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * sf->strucFac(it, ig).imag()
                              * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
         }
     }
@@ -32,13 +35,13 @@ void surchem::gauss_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, 
     }
 }
 
-void surchem::cal_pseudo(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, const complex<double> *Porter_g, complex<double> *PS_TOTN)
+void surchem::cal_pseudo(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, const complex<double> *Porter_g, complex<double> *PS_TOTN, Structure_Factor* sf)
 {
     complex<double> *N = new complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(N, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN, rho_basis->npw);
 
-    gauss_charge(cell, rho_basis, N);
+    gauss_charge(cell, rho_basis, N, sf);
 
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {

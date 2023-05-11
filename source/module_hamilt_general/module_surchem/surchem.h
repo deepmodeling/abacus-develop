@@ -36,9 +36,10 @@ class surchem
     void cal_pseudo(const UnitCell &cell,
                     ModulePW::PW_Basis *rho_basis,
                     const complex<double> *Porter_g,
-                    complex<double> *PS_TOTN);
+                    complex<double> *PS_TOTN,
+                    Structure_Factor* sf);
 
-    void gauss_charge(const UnitCell &cell, ModulePW::PW_Basis *rho_basis, complex<double> *N);
+    void gauss_charge(const UnitCell &cell, ModulePW::PW_Basis *rho_basis, complex<double> *N, Structure_Factor* sf);
 
     void cal_totn(const UnitCell &cell,
                   ModulePW::PW_Basis *rho_basis,

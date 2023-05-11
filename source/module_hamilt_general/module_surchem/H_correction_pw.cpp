@@ -34,7 +34,7 @@ ModuleBase::matrix surchem::v_correction(const UnitCell &cell,
 
     cal_totn(cell, rho_basis, Porter_g, N, TOTN, vlocal);
 
-    cal_pseudo(cell, rho_basis, Porter_g, PS_TOTN);
+    cal_pseudo(cell, rho_basis, Porter_g, PS_TOTN, &GlobalC::sf);
 
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
 
