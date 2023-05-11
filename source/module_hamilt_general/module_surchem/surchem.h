@@ -100,7 +100,8 @@ class surchem
                                     const int& nspin,
                                     const double* const* const rho,
                                     const double* vlocal,
-                                    Structure_Factor* sf);
+                                    Structure_Factor* sf,
+                                    ModulePW::PW_Basis* rhopw);
 
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,
