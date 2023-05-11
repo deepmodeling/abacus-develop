@@ -1,6 +1,7 @@
 #include "surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+
 // atom_in surchem::GetAtom;
 
 void surchem::gauss_charge(const UnitCell& cell,
@@ -22,11 +23,11 @@ void surchem::gauss_charge(const UnitCell& cell,
             gg = gg * cell.tpiba2;
 
             N[ig].real(N[ig].real()
-                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * sf->strucFac(it, ig).real()
-                             * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
+                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv)
+                             * sf->strucFac(it, ig).real() * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
             N[ig].imag(N[ig].imag()
-                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv) * sf->strucFac(it, ig).imag()
-                             * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
+                       + (GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv)
+                             * sf->strucFac(it, ig).imag() * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));
         }
     }
     for (int ig = 0; ig < rho_basis->npw; ig++)
@@ -35,9 +36,13 @@ void surchem::gauss_charge(const UnitCell& cell,
     }
 }
 
-void surchem::cal_pseudo(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, const complex<double> *Porter_g, complex<double> *PS_TOTN, Structure_Factor* sf)
+void surchem::cal_pseudo(const UnitCell& cell,
+                         ModulePW::PW_Basis* rho_basis,
+                         const complex<double>* Porter_g,
+                         complex<double>* PS_TOTN,
+                         Structure_Factor* sf)
 {
-    complex<double> *N = new complex<double>[rho_basis->npw];
+    complex<double>* N = new complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(N, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN, rho_basis->npw);
 
