@@ -120,7 +120,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
 }
 
 ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
-    LCAO_Hamilt &uhm
+    LCAO_Hamilt &uhm, const K_Vectors& kv
 )
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken_k");
@@ -133,7 +133,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
     MecMulP.create(GlobalV::NSPIN, nlocal);
     orbMulP.create(GlobalV::NSPIN, nlocal);
 
-    for(size_t ik = 0; ik != GlobalC::kv.nks; ++ik)
+    for(size_t ik = 0; ik != kv.nks; ++ik)
     {
         uhm.LM->zeros_HSk('S');
 		uhm.LM->folding_fixedH(ik);
@@ -167,7 +167,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
                 uhm.LM->ParaV->desc);
         if(GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
         {
-            const int spin = GlobalC::kv.isk[ik];
+            const int spin = kv.isk[ik];
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
                 if(uhm.LM->ParaV->in_this_processor(i, i))
                 {
@@ -251,7 +251,7 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
+void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc, const K_Vectors& kv)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
@@ -259,7 +259,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
     if(GlobalV::GAMMA_ONLY_LOCAL)
         orbMulP = ModuleIO::cal_mulliken(loc.dm_gamma, uhm);
     else
-        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, uhm);
+        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, uhm, kv);
 
     std::vector<std::vector<std::vector<double>>> AorbMulP = ModuleIO::convert(orbMulP);
 

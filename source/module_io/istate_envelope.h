@@ -1,12 +1,13 @@
 #ifndef ISTATE_ENVELOPE_H
 #define ISTATE_ENVELOPE_H
+#include "module_basis/module_pw/pw_basis_k.h"
+#include "module_cell/klist.h"
+#include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_elecstate/elecstate.h"
 
 class IState_Envelope
 {
@@ -15,11 +16,21 @@ public:
     ~IState_Envelope();
 
     /// for gamma_only
-    void begin(const psi::Psi<double>* psid, Local_Orbital_wfc& lowf, Gint_Gamma& gg, int& out_wfc_pw, int& out_wfc_r);
+    void begin(const psi::Psi<double>* psid,
+               Local_Orbital_wfc& lowf,
+               Gint_Gamma& gg,
+               int& out_wfc_pw,
+               int& out_wfc_r,
+               const K_Vectors& kv);
     /// for multi-k
-    void begin(const psi::Psi<std::complex<double>>* psi, Local_Orbital_wfc& lowf, Gint_k& gk, int& out_wfc_pw, int& out_wfc_r);
+    void begin(const psi::Psi<std::complex<double>>* psi,
+               Local_Orbital_wfc& lowf,
+               Gint_k& gk,
+               int& out_wfc_pw,
+               int& out_wfc_r,
+               const K_Vectors& kv);
 
-private:
+  private:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 

@@ -156,7 +156,8 @@ class Test_RELAX : public testing::Test
             int nstep = 66;
             int nat = 5;
             double energy;
-            
+            GlobalV::STRESS_THR = 0.01;
+
             this->setup_cell();
 
             ModuleBase::matrix force_in, stress_in;

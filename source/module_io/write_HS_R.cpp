@@ -1,20 +1,20 @@
 #include "write_HS_R.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "write_HS_sparse.h"
+
 #include "module_base/timer.h"
+#include "write_HS_sparse.h"
 
 // if 'binary=true', output binary file.
 // The 'sparse_threshold' is the accuracy of the sparse matrix. 
 // If the absolute value of the matrix element is less than or equal to the 'sparse_threshold', it will be ignored.
-void ModuleIO::output_HS_R(
-    const int &istep,
-    const ModuleBase::matrix& v_eff,
-    LCAO_Hamilt &UHM,
-    const std::string &SR_filename,
-    const std::string &HR_filename_up,
-    const std::string HR_filename_down,
-    const bool &binary, 
-    const double &sparse_threshold)
+void ModuleIO::output_HS_R(const int& istep,
+                           const ModuleBase::matrix& v_eff,
+                           LCAO_Hamilt& UHM,
+                           const K_Vectors& kv,
+                           const std::string& SR_filename,
+                           const std::string& HR_filename_up,
+                           const std::string HR_filename_down,
+                           const bool& binary,
+                           const double& sparse_threshold)
 {
     ModuleBase::TITLE("ModuleIO","output_HS_R"); 
     ModuleBase::timer::tick("ModuleIO","output_HS_R"); 
@@ -27,13 +27,13 @@ void ModuleIO::output_HS_R(
     else if(GlobalV::NSPIN==2)
     {
         // jingan add 2021-6-4
-        for(int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
-            if(ik == 0 || ik == GlobalC::kv.nks/2)
+            if (ik == 0 || ik == kv.nks / 2)
             {
                 if(GlobalV::NSPIN == 2)
                 {
-                    GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+                    GlobalV::CURRENT_SPIN = kv.isk[ik];
                 }
 
                 const double* vr_eff1 = &(v_eff(GlobalV::CURRENT_SPIN, 0));
@@ -64,12 +64,12 @@ void ModuleIO::output_HS_R(
     return;
 }
 
-void ModuleIO::output_dH_R(
-    const int &istep,
-    const ModuleBase::matrix& v_eff,
-    LCAO_Hamilt &UHM,
-    const bool &binary, 
-    const double &sparse_threshold)
+void ModuleIO::output_dH_R(const int& istep,
+                           const ModuleBase::matrix& v_eff,
+                           LCAO_Hamilt& UHM,
+                           const K_Vectors& kv,
+                           const bool& binary,
+                           const double& sparse_threshold)
 {
     ModuleBase::TITLE("ModuleIO","output_dH_R"); 
     ModuleBase::timer::tick("ModuleIO","output_dH_R"); 
@@ -81,13 +81,13 @@ void ModuleIO::output_dH_R(
     }
     else if(GlobalV::NSPIN==2)
     {
-        for(int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
-            if(ik == 0 || ik == GlobalC::kv.nks/2)
+            if (ik == 0 || ik == kv.nks / 2)
             {
                 if(GlobalV::NSPIN == 2)
                 {
-                    GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+                    GlobalV::CURRENT_SPIN = kv.isk[ik];
                 }
 
                 const double* vr_eff1 = &(v_eff(GlobalV::CURRENT_SPIN, 0));
