@@ -10,8 +10,11 @@
 #include "module_io/istate_envelope.h"
 #include "module_io/write_HS_R.h"
 //
-#include "src_ri/exx_abfs-jle.h"
-#include "src_ri/exx_opt_orb.h"
+#ifdef __EXX
+#include "module_ri/exx_abfs-jle.h"
+#include "module_ri/exx_opt_orb.h"
+#endif
+
 #include "module_io/berryphase.h"
 #include "module_io/to_wannier90.h"
 #include "module_base/timer.h"
@@ -275,7 +278,7 @@ namespace ModuleESolver
         if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
             CE.update_all_dis(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge);
+            CE.extrapolate_charge(pelec->charge, &(GlobalC::sf));
         }
 
         //----------------------------------------------------------
@@ -397,9 +400,14 @@ namespace ModuleESolver
         {
             IState_Envelope IEP(this->pelec);
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                IEP.begin(this->psid, this->LOWF, this->UHM.GG, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r);
+                IEP.begin(this->psid,
+                          this->LOWF,
+                          this->UHM.GG,
+                          INPUT.out_wfc_pw,
+                          GlobalC::wf.out_wfc_r,
+                          GlobalC::kv);
             else
-                IEP.begin(this->psi, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r);
+                IEP.begin(this->psi, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
         }
         else
         {
@@ -569,14 +577,14 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(this->pelec->ekb, nullptr);
+            myWannier.init_wannier(this->pelec->ekb, GlobalC::kv, nullptr);
         }
 
         // add by jingan
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
-            bp.Macroscopic_polarization(this->psi);
+            bp.Macroscopic_polarization(this->psi,GlobalC::kv);
         }
 
         //below is for DeePKS NSCF calculation

@@ -65,12 +65,14 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(chr),
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
                                                          &(GlobalC::kv),
                                                          GlobalC::kv.nks,
                                                          &(this->LOC),
                                                          &(this->UHM),
-                                                         &(this->LOWF));
+                                                         &(this->LOWF),
+                                                         this->pw_rho,
+                                                         GlobalC::bigpw);
     }
 
     //------------------init Basis_lcao----------------------
@@ -99,7 +101,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     }
 
     // Inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    this->pelec->charge->allocate(GlobalV::NSPIN);
 
     // Initializee the potential.
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
@@ -201,8 +203,16 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
         }
     }
 
+<<<<<<< HEAD
     // compute magnetization, only for spin==2
     GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
+=======
+    // (6) compute magnetization, only for spin==2
+    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
+                                                this->pelec->charge->nxyz,
+                                                this->pelec->charge->rho,
+                                                pelec->nelec_spin.data());
+>>>>>>> 51d94c7bad2beb01a4d553221f6b5d6d2b8d39ef
 
     // calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);

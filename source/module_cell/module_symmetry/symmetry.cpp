@@ -1939,11 +1939,11 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
     ModuleBase::TITLE("Symmetry","hermite_normal_form");
     // check the non-singularity and integer elements of s
     assert(!equal(s3.Det(), 0.0));
-    auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
-    ModuleBase::matrix s=s3.to_matrix();
+    auto near_equal = [this] (double x, double y) {return fabs(x-y) < 10*epsilon;};
+    ModuleBase::matrix s = s3.to_matrix();
     for (int i=0;i<3;++i)
         for(int j=0;j<3;++j)
-            assert(equal(s(i, j), round(s(i, j))));
+            assert(near_equal(s(i, j), std::round(s(i, j))));
 
     // convert Matrix3 to matrix
     ModuleBase::matrix h=s, b(3, 3, true);

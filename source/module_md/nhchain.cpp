@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
+Nose_Hoover::Nose_Hoover(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     mdp.md_pfirst /= unit_transform;
@@ -18,7 +18,7 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
         ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC !!! ");
     }
 
-    // init NPT related variables
+    /// init NPT related variables
     for (int i = 0; i < 6; ++i)
     {
         pstart[i] = pstop[i] = pfreq[i] = p_target[i] = pflag[i] = 0;
@@ -26,7 +26,7 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
 
     if (mdp.md_type == "npt")
     {
-        // determine the NPT methods
+        /// determine the NPT methods
         if (mdp.md_pmode == "iso")
         {
             mdp.md_pcouple = "xyz";
@@ -46,13 +46,13 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
             pfreq[0] = pfreq[1] = pfreq[2] = mdp.md_pfreq;
             pflag[0] = pflag[1] = pflag[2] = 1;
         }
-        //------------------------------------------------------
-        // The lattice must be lower-triangular under tri mode.
-        // e11  0    0
-        // e21  e22  0
-        // e31  e32  e33
-        // Under Voigt notation, xx, yy, zz, yz, xz, xy.
-        //------------------------------------------------------
+        /**
+         * The lattice must be lower-triangular under tri mode.
+         * e11  0    0
+         * e21  e22  0
+         * e31  e32  e33
+         * Under Voigt notation, xx, yy, zz, yz, xz, xy.
+         */
         else if (mdp.md_pmode == "tri")
         {
             if (ucell.latvec.e12 || ucell.latvec.e13 || ucell.latvec.e23)
@@ -75,7 +75,7 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
         }
     }
 
-    // determine whether NPT ensemble
+    /// determine whether NPT ensemble
     npt_flag = 0;
     for (int i = 0; i < 6; ++i)
     {
@@ -85,7 +85,7 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
 
     tdof = 3 * ucell.nat - frozen_freedom_;
 
-    // allocate thermostats coupled with particles
+    /// allocate thermostats coupled with particles
     mass_eta = new double[mdp.md_tchain];
     eta = new double[mdp.md_tchain];
     v_eta = new double[mdp.md_tchain + 1];
@@ -97,7 +97,7 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
         eta[i] = v_eta[i] = g_eta[i] = 0;
     }
 
-    // allocate barostat and thermostats coupled with barostat
+    /// allocate barostat and thermostats coupled with barostat
     if (npt_flag)
     {
         for (int i = 0; i < 6; ++i)
@@ -120,7 +120,7 @@ Nose_Hoover::Nose_Hoover(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(M
         }
     }
 
-    // w[0] = 1;
+    /// w[0] = 1;
 
     w[0] = 0.784513610477560;
     w[6] = 0.784513610477560;
@@ -147,21 +147,21 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
+void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 
-    MDrun::setup(p_ensolve);
+    MD_base::setup(p_esolver, global_readin_dir);
     if (mdp.md_type == "npt")
     {
         ucell.cell_parameter_updated = true;
     }
 
-    // determine target temperature
-    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
+    /// determine target temperature
+    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
 
-    // init thermostats coupled with particles
+    /// init thermostats coupled with particles
     mass_eta[0] = tdof * t_target / mdp.md_tfreq / mdp.md_tfreq;
     for (int m = 1; m < mdp.md_tchain; ++m)
     {
@@ -169,16 +169,16 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
         g_eta[m] = (mass_eta[m - 1] * v_eta[m - 1] * v_eta[m - 1] - t_target) / mass_eta[m];
     }
 
-    // NPT ensemble
+    /// NPT ensemble
     if (npt_flag)
     {
-        // determine target stress
+        /// determine target stress
         target_stress();
 
-        // couple stress component due to md_pcouple
+        /// couple stress component due to md_pcouple
         couple_stress();
 
-        // init barostat
+        /// init barostat
         double nkt = (ucell.nat + 1) * t_target;
 
         for (int i = 0; i < 6; ++i)
@@ -189,7 +189,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
             }
         }
 
-        // init thermostats coupled with barostat
+        /// init thermostats coupled with barostat
         if (mdp.md_pchain)
         {
             mass_peta[0] = t_target / mdp.md_pfreq / mdp.md_pfreq;
@@ -204,58 +204,58 @@ void Nose_Hoover::setup(ModuleESolver::ESolver *p_ensolve)
     ModuleBase::timer::tick("Nose_Hoover", "setup");
 }
 
-void Nose_Hoover::first_half()
+void Nose_Hoover::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
 
-    // update thermostats coupled with barostat if NPT ensemble
+    /// update thermostats coupled with barostat if NPT ensemble
     if (npt_flag && mdp.md_pchain)
     {
         baro_thermo();
     }
 
-    // update target T
-    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_tfirst, mdp.md_tlast);
+    /// update target T
+    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
 
-    // update thermostats coupled with particles
+    /// update thermostats coupled with particles
     particle_thermo();
 
     if (npt_flag)
     {
-        // update temperature and stress due to velocity rescaling
+        /// update temperature and stress due to velocity rescaling
         t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
-        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+        MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress,virial, stress);
 
-        // couple stress component due to md_pcouple
+        /// couple stress component due to md_pcouple
         couple_stress();
 
-        // determine target stress
+        /// determine target stress
         target_stress();
 
-        // update v_omega
+        /// update v_omega
         update_baro();
 
-        // update vel due to barostat
+        /// update vel due to barostat
         vel_baro();
     }
 
-    // perform half-step update of vel due to atomic force
-    MDrun::update_vel(force);
+    /// perform half-step update of vel due to atomic force
+    MD_base::update_vel(force);
 
     if (npt_flag)
     {
-        // perform half-step update of volume
-        update_volume();
+        /// perform half-step update of volume
+        update_volume(ofs);
     }
 
-    // perform one step update of pos due to atomic velocity
-    MDrun::update_pos();
+    /// perform one step update of pos due to atomic velocity
+    MD_base::update_pos();
 
     if (npt_flag)
     {
-        // perform half-step update of volume
-        update_volume();
+        /// perform half-step update of volume
+        update_volume(ofs);
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
@@ -266,34 +266,34 @@ void Nose_Hoover::second_half()
     ModuleBase::TITLE("Nose_Hoover", "second_half");
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 
-    // perform half-step update of vel due to atomic force
-    MDrun::update_vel(force);
+    /// perform half-step update of vel due to atomic force
+    MD_base::update_vel(force);
 
     if (npt_flag)
     {
-        // update vel due to barostat
+        /// update vel due to barostat
         vel_baro();
     }
 
-    // update temperature and kinetic energy due to velocity rescaling
+    /// update temperature and kinetic energy due to velocity rescaling
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     if (npt_flag)
     {
-        // update stress due to velocity rescaling
-        MD_func::compute_stress(ucell, vel, allmass, virial, stress);
+        /// update stress due to velocity rescaling
+        MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress,virial, stress);
 
-        // couple stress component due to md_pcouple
+        /// couple stress component due to md_pcouple
         couple_stress();
 
-        // update v_omega
+        /// update v_omega
         update_baro();
     }
 
-    // update thermostats coupled with particles
+    /// update thermostats coupled with particles
     particle_thermo();
 
-    // update thermostats coupled with barostat if NPT ensemble
+    /// update thermostats coupled with barostat if NPT ensemble
     if (npt_flag && mdp.md_pchain)
     {
         baro_thermo();
@@ -302,17 +302,17 @@ void Nose_Hoover::second_half()
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
 }
 
-void Nose_Hoover::outputMD(std::ofstream &ofs, bool cal_stress)
+void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    MDrun::outputMD(ofs, cal_stress);
+    MD_base::print_md(ofs, cal_stress);
 }
 
-void Nose_Hoover::write_restart()
+void Nose_Hoover::write_restart(const std::string& global_out_dir)
 {
-    if (!GlobalV::MY_RANK)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.dat";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -328,7 +328,7 @@ void Nose_Hoover::write_restart()
         }
         file << std::endl;
 
-        // npt
+        /// npt
         if (npt_flag)
         {
             for (int i = 0; i < 6; ++i)
@@ -356,16 +356,16 @@ void Nose_Hoover::write_restart()
 #endif
 }
 
-void Nose_Hoover::restart()
+void Nose_Hoover::restart(const std::string& global_readin_dir)
 {
     bool ok = true;
     bool ok2 = true;
     bool ok3 = true;
 
-    if (!GlobalV::MY_RANK)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_readin_dir << "Restart_md.dat";
+        ssc << global_readin_dir << "Restart_md.dat";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -395,7 +395,7 @@ void Nose_Hoover::restart()
                 }
             }
 
-            // npt
+            /// npt
             if (npt_flag)
             {
                 for (int i = 0; i < 6; ++i)
@@ -460,14 +460,14 @@ void Nose_Hoover::restart()
 
 void Nose_Hoover::particle_thermo()
 {
-    // update mass_eta
+    /// update mass_eta
     mass_eta[0] = tdof * t_target / mdp.md_tfreq / mdp.md_tfreq;
     for (int m = 1; m < mdp.md_tchain; ++m)
     {
         mass_eta[m] = t_target / mdp.md_tfreq / mdp.md_tfreq;
     }
 
-    // propogate g_eta
+    /// propogate g_eta
     if (mass_eta[0] > 0)
     {
         g_eta[0] = (2 * kinetic - tdof * t_target) / mass_eta[0];
@@ -477,7 +477,7 @@ void Nose_Hoover::particle_thermo()
         g_eta[0] = 0;
     }
 
-    // integrate loop
+    /// integrate loop
     double factor;
     double scale = 1.0;
     double KE = kinetic;
@@ -487,7 +487,7 @@ void Nose_Hoover::particle_thermo()
         {
             double delta = w[j] * mdp.md_dt / nc_tchain;
 
-            // propogate v_eta
+            /// propogate v_eta
             for (int m = mdp.md_tchain - 1; m >= 0; --m)
             {
                 factor = exp(-v_eta[m + 1] * delta / 8.0);
@@ -496,13 +496,13 @@ void Nose_Hoover::particle_thermo()
                 v_eta[m] *= factor;
             }
 
-            // propogate eta
+            /// propogate eta
             for (int m = 0; m < mdp.md_tchain; ++m)
             {
                 eta[m] += v_eta[m] * delta / 2.0;
             }
 
-            // update rescale factor of particle velocity
+            /// update rescale factor of particle velocity
             scale *= exp(-v_eta[0] * delta / 2.0);
             if (!isfinite(scale))
             {
@@ -510,7 +510,7 @@ void Nose_Hoover::particle_thermo()
             }
             KE = kinetic * scale * scale;
 
-            // propogate g_eta
+            /// propogate g_eta
             if (mass_eta[0] > 0)
             {
                 g_eta[0] = (2 * KE - tdof * t_target) / mass_eta[0];
@@ -520,7 +520,7 @@ void Nose_Hoover::particle_thermo()
                 g_eta[0] = 0;
             }
 
-            // propogate v_eta
+            /// propogate v_eta
             v_eta[0] *= factor;
             v_eta[0] += g_eta[0] * delta / 4.0;
             v_eta[0] *= factor;
@@ -536,7 +536,7 @@ void Nose_Hoover::particle_thermo()
         }
     }
 
-    // rescale velocity due to thermostats
+    /// rescale velocity due to thermostats
     for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i] *= scale;
@@ -545,10 +545,10 @@ void Nose_Hoover::particle_thermo()
 
 void Nose_Hoover::baro_thermo()
 {
-    // the freedom of lattice
+    /// the freedom of lattice
     int pdof = npt_flag;
 
-    // update kenetic energy of lattice
+    /// update kenetic energy of lattice
     double ke_omega = 0;
     for (int i = 0; i < 6; ++i)
     {
@@ -558,7 +558,7 @@ void Nose_Hoover::baro_thermo()
         }
     }
 
-    // update force
+    /// update force
     double lkt_press = t_target;
     if (mdp.md_pmode != "iso")
     {
@@ -566,7 +566,7 @@ void Nose_Hoover::baro_thermo()
     }
     g_peta[0] = (ke_omega - lkt_press) / mass_peta[0];
 
-    // integrate loop
+    /// integrate loop
     double factor;
     double scale = 1.0;
     double kecurrent = ke_omega;
@@ -576,7 +576,7 @@ void Nose_Hoover::baro_thermo()
         {
             double delta = w[j] * mdp.md_dt / nc_pchain;
 
-            // propogate v_peta
+            /// propogate v_peta
             for (int m = mdp.md_pchain - 1; m >= 0; --m)
             {
                 factor = exp(-v_peta[m + 1] * delta / 8.0);
@@ -585,20 +585,20 @@ void Nose_Hoover::baro_thermo()
                 v_peta[m] *= factor;
             }
 
-            // propogate peta
+            /// propogate peta
             for (int m = 0; m < mdp.md_pchain; ++m)
             {
                 peta[m] += v_peta[m] * delta / 2.0;
             }
 
-            // update rescale factor of lattice velocity
+            /// update rescale factor of lattice velocity
             scale *= exp(-v_peta[0] * delta / 2.0);
             kecurrent = ke_omega * scale * scale;
 
-            // propogate g_peta
+            /// propogate g_peta
             g_peta[0] = (kecurrent - lkt_press) / mass_peta[0];
 
-            // propogate v_peta
+            /// propogate v_peta
             v_peta[0] *= factor;
             v_peta[0] += g_peta[0] * delta / 4.0;
             v_peta[0] *= factor;
@@ -614,7 +614,7 @@ void Nose_Hoover::baro_thermo()
         }
     }
 
-    // rescale lattice due to thermostats
+    /// rescale lattice due to thermostats
     for (int i = 0; i < 6; ++i)
     {
         if (pflag[i])
@@ -686,7 +686,7 @@ void Nose_Hoover::vel_baro()
             vel[i][j] *= factor[j];
         }
 
-        // Note: I am not sure whether fixed atoms should update here
+        /// Note: I am not sure whether fixed atoms should update here
         if (ionmbl[i][0])
         {
             vel[i][0] -= (vel[i][1] * v_omega[5] + vel[i][2] * v_omega[4]) * mdp.md_dt / 2;
@@ -703,11 +703,11 @@ void Nose_Hoover::vel_baro()
     }
 }
 
-void Nose_Hoover::update_volume()
+void Nose_Hoover::update_volume(std::ofstream& ofs)
 {
     double factor;
 
-    // tri mode, off-diagonal components, first half
+    /// tri mode, off-diagonal components, first half
     if (pflag[4])
     {
         factor = exp(v_omega[0] * mdp.md_dt / 16);
@@ -740,7 +740,7 @@ void Nose_Hoover::update_volume()
         ucell.latvec.e31 *= factor;
     }
 
-    // Diagonal components
+    /// Diagonal components
     if (mdp.md_prec_level == 1)
     {
         factor = exp(v_omega[0] * mdp.md_dt / 2);
@@ -767,7 +767,7 @@ void Nose_Hoover::update_volume()
         }
     }
 
-    // tri mode, off-diagonal components, second half
+    /// tri mode, off-diagonal components, second half
     if (pflag[4])
     {
         factor = exp(v_omega[0] * mdp.md_dt / 16);
@@ -800,13 +800,13 @@ void Nose_Hoover::update_volume()
         ucell.latvec.e31 *= factor;
     }
 
-    // reset ucell and pos due to change of lattice
-    ucell.setup_cell_after_vc(GlobalV::ofs_running);
+    /// reset ucell and pos due to change of lattice
+    ucell.setup_cell_after_vc(ofs);
 }
 
 void Nose_Hoover::target_stress()
 {
-    double delta = (double)(step_ + step_rst_) / GlobalV::MD_NSTEP;
+    double delta = static_cast<double>(step_ + step_rst_) / mdp.md_nstep;
 
     p_hydro = 0;
     for (int i = 0; i < 3; ++i)

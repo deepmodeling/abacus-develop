@@ -62,9 +62,14 @@ class surchem
                                complex<double> *PS_TOTN,
                                int nspin);
 
-    double cal_Ael(const UnitCell &cell, ModulePW::PW_Basis *rho_basis);
+    double cal_Ael(const UnitCell &cell, 
+                   const int& nrxx, // num. of real space grids on current core
+                   const int& nxyz  // total num. of real space grids
+    );
 
-    double cal_Acav(const UnitCell &cell, ModulePW::PW_Basis *rho_basis);
+    double cal_Acav(const UnitCell &cell, 
+                    const int& nxyz   // total num. of real space grids
+    );
 
     void cal_Acomp(const UnitCell &cell,
                    ModulePW::PW_Basis *rho_basis,

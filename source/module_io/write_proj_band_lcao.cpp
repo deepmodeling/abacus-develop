@@ -10,7 +10,7 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     const psi::Psi<std::complex<double>> *psi,
     LCAO_Hamilt& uhm,
     const elecstate::ElecState* pelec,
-    const K_Vectors* kv,
+    const K_Vectors& kv,
     const UnitCell &ucell,
     const LCAO_Orbitals &ORB,
     Grid_Driver &GridD)
@@ -26,11 +26,11 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     int nks = 0;
     if (nspin0 == 1)
     {
-        nks = kv->nkstot;
+        nks = kv.nkstot;
     }
     else if (nspin0 == 2)
     {
-        nks = kv->nkstot / 2;
+        nks = kv.nkstot / 2;
     }
 
     ModuleBase::ComplexMatrix weightk;
@@ -44,9 +44,9 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     }
     else
     {
-        NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv->nks;
-        weightk.create(kv->nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
-        weight.create(kv->nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
+        NUM = GlobalV::NLOCAL * GlobalV::NBANDS * kv.nks;
+        weightk.create(kv.nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
+        weight.create(kv.nks, GlobalV::NBANDS * GlobalV::NLOCAL, true);
     }
 
     for (int is = 0; is < nspin0; is++)
@@ -123,10 +123,10 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
             Mulk.resize(1);
             Mulk[0].create(pv->ncol, pv->nrow);
 
-            for (int ik = 0; ik < kv->nks; ik++)
+            for (int ik = 0; ik < kv.nks; ik++)
             {
 
-                if (is == kv->isk[ik])
+                if (is == kv.isk[ik])
                 {
                     uhm.LM->allocate_HS_k(pv->nloc);
                     uhm.LM->zeros_HSk('S');
@@ -300,7 +300,7 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
             out.close();
         }
     } // is
-    ModuleIO::write_orb_info();
+    ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
     return;

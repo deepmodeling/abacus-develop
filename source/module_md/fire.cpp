@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-FIRE::FIRE(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, unit_in)
+FIRE::FIRE(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     dt_max = -1.0;
     alpha_start = 0.10;
@@ -15,7 +15,7 @@ FIRE::FIRE(MD_parameters &MD_para_in, UnitCell &unit_in) : MDrun(MD_para_in, uni
     finc = 1.1;
     fdec = 0.5;
     f_alpha = 0.99;
-    N_min = 4;
+    n_min = 4;
     negative_count = 0;
 }
 
@@ -23,28 +23,28 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver *p_ensolve)
+void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::tick("FIRE", "setup");
 
-    MDrun::setup(p_ensolve);
+    MD_base::setup(p_esolver, global_readin_dir);
 
     check_force();
 
     ModuleBase::timer::tick("FIRE", "setup");
 }
 
-void FIRE::first_half()
+void FIRE::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("FIRE", "first_half");
     ModuleBase::timer::tick("FIRE", "first_half");
 
-    MDrun::update_vel(force);
+    MD_base::update_vel(force);
 
-    check_FIRE();
+    check_fire();
 
-    MDrun::update_pos();
+    MD_base::update_pos();
 
     ModuleBase::timer::tick("FIRE", "first_half");
 }
@@ -54,27 +54,27 @@ void FIRE::second_half()
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
 
-    MDrun::update_vel(force);
+    MD_base::update_vel(force);
 
     check_force();
 
     ModuleBase::timer::tick("FIRE", "second_half");
 }
 
-void FIRE::outputMD(std::ofstream &ofs, bool cal_stress)
+void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    MDrun::outputMD(ofs, cal_stress);
+    MD_base::print_md(ofs, cal_stress);
 
     ofs << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
     std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
 }
 
-void FIRE::write_restart()
+void FIRE::write_restart(const std::string& global_out_dir)
 {
-    if (!GlobalV::MY_RANK)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.dat";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -89,14 +89,14 @@ void FIRE::write_restart()
 #endif
 }
 
-void FIRE::restart()
+void FIRE::restart(const std::string& global_readin_dir)
 {
     bool ok = true;
 
-    if (!GlobalV::MY_RANK)
+    if (!mdp.my_rank)
     {
         std::stringstream ssc;
-        ssc << GlobalV::global_readin_dir << "Restart_md.dat";
+        ssc << global_readin_dir << "Restart_md.dat";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -144,20 +144,21 @@ void FIRE::check_force()
         }
     }
 
-    if (2.0 * max < GlobalV::FORCE_THR)
+    if (2.0 * max < mdp.force_thr)
     {
         stop = true;
     }
 }
 
-void FIRE::check_FIRE()
+void FIRE::check_fire()
 {
     double P = 0;
     double sumforce = 0;
     double normvel = 0;
 
+    /// initial dt_max
     if (dt_max < 0)
-        dt_max = 2.5 * mdp.md_dt; // initial dt_max
+        dt_max = 2.5 * mdp.md_dt;
 
     for (int i = 0; i < ucell.nat; ++i)
     {
@@ -180,7 +181,7 @@ void FIRE::check_FIRE()
     if (P > 0)
     {
         negative_count++;
-        if (negative_count >= N_min)
+        if (negative_count >= n_min)
         {
             mdp.md_dt = min(mdp.md_dt * finc, dt_max);
             alpha *= f_alpha;

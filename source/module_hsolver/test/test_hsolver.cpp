@@ -49,6 +49,8 @@ class TestHSolver : public ::testing::Test
 	
 	elecstate::ElecState elecstate_test;
 
+	ModulePW::PW_Basis_K* wfcpw;
+
 	std::string method_test = "none";
 
 	ofstream temp_ofs;
@@ -64,8 +66,8 @@ TEST_F(TestHSolver, solve)
 	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, true);
 	hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, method_test, true);
 	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, true);
-	hs_f.solve(&hamilt_test_f, psi_test_cf, &elecstate_test, stowf_test, 0, 0, method_test, true);
-	hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, stowf_test, 0, 0, method_test, true);
+	hs_f.solve(&hamilt_test_f, psi_test_cf, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
+	hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
 	EXPECT_EQ(hs_f.classname, "none");
 	EXPECT_EQ(hs_d.classname, "none");
 	EXPECT_EQ(hs_f.method, "none");

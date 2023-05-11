@@ -11,7 +11,7 @@ void ModuleIO::nscf_band(
 	const int &nband,
 	const double &fermie,
 	const ModuleBase::matrix& ekb,
-	const K_Vectors* kv,
+	const K_Vectors& kv,
 	const Parallel_Kpoints* Pkpoints)
 {
 	ModuleBase::TITLE("ModuleIO","nscf_band");
@@ -32,13 +32,13 @@ void ModuleIO::nscf_band(
 	{
 		if (ik>0)
 		{
-			auto delta=kv->kvec_c[ik]-kv->kvec_c[ik-1];
+			auto delta=kv.kvec_c[ik]-kv.kvec_c[ik-1];
 			klength[ik] = klength[ik-1] + delta.norm();
 		}
 		if ( GlobalV::MY_POOL == Pkpoints->whichpool[ik] )
 		{
 			const int ik_now = ik - Pkpoints->startk_pool[GlobalV::MY_POOL];
-			if( kv->isk[ik_now+is*nks] == is )
+			if( kv.isk[ik_now+is*nks] == is )
 			{ 
 				if ( GlobalV::RANK_IN_POOL == 0)
 				{
@@ -87,7 +87,7 @@ void ModuleIO::nscf_band(
 	std::ofstream ofs(out_band_dir.c_str());
 	for(int ik=0;ik<nks;ik++)
 	{
-		if( kv->isk[ik] == is)
+		if( kv.isk[ik] == is)
 		{
 			ofs<<std::setw(12)<<ik + 1;
 			for(int ibnd = 0; ibnd < nband; ibnd++)

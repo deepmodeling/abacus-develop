@@ -1,7 +1,7 @@
 #include "module_base/abfs-vector3_order.h"
 #include "module_base/vector3.h"
 #include "gtest/gtest.h"
-#include "src_ri/abfs.h"
+#include "module_ri/abfs.h"
 
 /************************************************
  *  unit test of functions in class Abfs::vector3_order

@@ -57,7 +57,6 @@ bool fixed_atoms = false;
 int OUT_FREQ_ELEC = 0;
 int OUT_FREQ_ION = 0;
 int RELAX_NMAX = 20;
-int MD_NSTEP = 20;
 int md_prec_level = 0;
 int SCF_NMAX = 100;
 
@@ -90,7 +89,7 @@ int VNL_IN_H = 1;
 int VH_IN_H = 1;
 int VION_IN_H = 1;
 int ZEEMAN_IN_H = 1;
-double STRESS_THR = 1.0e-2; // LiuXh add 20180515
+double STRESS_THR = 0.5; // LiuXh add 20180515 liuyu update 2023-05-10
 
 int ocp = 0;
 std::string ocp_set = "none";

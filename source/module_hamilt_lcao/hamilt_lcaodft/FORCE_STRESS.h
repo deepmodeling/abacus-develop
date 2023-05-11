@@ -20,7 +20,7 @@ class Force_Stress_LCAO
 
 	public :
 	
-	Force_Stress_LCAO (Record_adj &ra);
+	Force_Stress_LCAO (Record_adj &ra, const int nat_in);
     ~Force_Stress_LCAO();
 
 	void getForceStress(
@@ -38,6 +38,7 @@ class Force_Stress_LCAO
 
 private:
     
+	int nat;
     Record_adj* RA;
 	Force_LCAO_k flk;
 //	Force_LCAO_gamma flg;

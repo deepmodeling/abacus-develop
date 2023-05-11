@@ -1,16 +1,23 @@
-#ifndef RUN_MD_CLASSIC_H
-#define RUN_MD_CLASSIC_H
+#ifndef RUN_MD_H
+#define RUN_MD_H
 
-#include "module_cell/unitcell.h"
+#include "md_para.h"
 #include "module_esolver/esolver.h"
 
-class Run_MD
+/**
+ * @brief the md loop line
+ *
+ */
+namespace Run_MD
 {
-  public:
-    Run_MD();
-    ~Run_MD();
-
-    void md_line(UnitCell &unit_in, ModuleESolver::ESolver *p_esolver);
-};
+/**
+ * @brief the md loop line
+ *
+ * @param unit_in unitcell information
+ * @param p_esolver energy solver
+ * @param md_para input parameters used in md
+ */
+void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_para);
+} // namespace Run_MD
 
 #endif

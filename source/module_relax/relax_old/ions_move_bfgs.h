@@ -16,7 +16,6 @@ class Ions_Move_BFGS : public BFGS_Basic
   private:
     bool init_done;
     void bfgs_routine(const double& lat0);
-    void terminate_bfgs(void);
     void restart_bfgs(const double& lat0);
 };
 

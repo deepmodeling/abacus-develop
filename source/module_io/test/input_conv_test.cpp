@@ -60,8 +60,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::CURRENT_SPIN,0);
 	EXPECT_EQ(GlobalV::CAL_FORCE,0);
 	EXPECT_NEAR(GlobalV::FORCE_THR,0.001,0.0000001);
-	EXPECT_DOUBLE_EQ(GlobalV::STRESS_THR,0.01);
-	EXPECT_EQ(GlobalV::PRESS1,0);
+    EXPECT_DOUBLE_EQ(GlobalV::STRESS_THR, 0.01);
+    EXPECT_EQ(GlobalV::PRESS1,0);
 	EXPECT_EQ(GlobalV::PRESS2,0);
 	EXPECT_EQ(GlobalV::PRESS3,0);
 	EXPECT_EQ(GlobalV::out_element_info,0);
@@ -136,9 +136,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::out_mul,0);
 	EXPECT_EQ(GlobalC::ppcell.cell_factor,1.2);
 	EXPECT_EQ(GlobalV::SCF_NMAX,50);
-	EXPECT_EQ(GlobalV::RELAX_NMAX,1);
-	EXPECT_EQ(GlobalV::MD_NSTEP,10);
-	EXPECT_EQ(GlobalV::OUT_FREQ_ELEC,0);
+    EXPECT_EQ(GlobalV::RELAX_NMAX, 1);
+    EXPECT_EQ(GlobalV::OUT_FREQ_ELEC,0);
 	EXPECT_EQ(GlobalV::OUT_FREQ_ION,0);
 	EXPECT_EQ(GlobalV::init_chg,"atomic");
 	EXPECT_EQ(GlobalV::chg_extrap,"atomic");

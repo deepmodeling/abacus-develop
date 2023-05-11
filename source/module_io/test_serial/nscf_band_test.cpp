@@ -81,7 +81,7 @@ protected:
 TEST_F(BandTest, nscf_band)
 {
     // Call the function to be tested
-    ModuleIO::nscf_band(is, out_band_dir, nks, nband, fermie, ekb, kv, Pkpoints);
+    ModuleIO::nscf_band(is, out_band_dir, nks, nband, fermie, ekb, *kv, Pkpoints);
 
     // Check the output file
     std::ifstream ifs(out_band_dir);

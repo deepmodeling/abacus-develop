@@ -12,7 +12,7 @@
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
 #ifdef __EXX
-#include "src_ri/exx_abfs-jle.h"
+#include "module_ri/exx_abfs-jle.h"
 #endif
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
@@ -107,7 +107,9 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
             convert >> occ;
             vec.emplace_back(occ);
         }
+        regfree(&sub_reg);
     }
+    regfree(&reg);
 }
 
 void Input_Conv::Convert(void)
@@ -366,6 +368,13 @@ void Input_Conv::Convert(void)
     elecstate::Gatefield::block_up = INPUT.block_up;
     elecstate::Gatefield::block_height = INPUT.block_height;
 
+    //----------------------------------------------------------
+    // Yu Liu add 2023-05-09
+    //----------------------------------------------------------
+    INPUT.mdp.force_thr = GlobalV::FORCE_THR;
+    INPUT.mdp.my_rank = GlobalV::MY_RANK;
+    INPUT.mdp.cal_stress = GlobalV::CAL_STRESS;
+
 //----------------------------------------------------------
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
@@ -473,6 +482,7 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.hse_omega = INPUT.exx_hse_omega;
         GlobalC::exx_info.info_global.separate_loop = INPUT.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = INPUT.exx_hybrid_step;
+        GlobalC::exx_info.info_global.mixing_beta_for_loop1 = INPUT.exx_mixing_beta;
         GlobalC::exx_info.info_lip.lambda = INPUT.exx_lambda;
 
         GlobalC::exx_info.info_ri.real_number = std::stoi(INPUT.exx_real_number);
@@ -533,7 +543,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalV::SCF_NMAX = INPUT.scf_nmax;
     GlobalV::RELAX_NMAX = INPUT.relax_nmax;
-    GlobalV::MD_NSTEP = INPUT.mdp.md_nstep;
     GlobalV::md_prec_level = INPUT.mdp.md_prec_level;
 
     //----------------------------------------------------------

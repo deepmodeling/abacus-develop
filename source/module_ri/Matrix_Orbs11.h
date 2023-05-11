@@ -61,6 +61,11 @@ public:
 		const ModuleBase::Element_Basis_Index::IndexLNM &index_B,
 		const Matrix_Order &matrix_order) const;
 
+	template<typename Tdata>
+	std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<Tdata>>>>> cal_overlap_matrix_all(
+		const ModuleBase::Element_Basis_Index::IndexLNM &index_r,
+        const ModuleBase::Element_Basis_Index::IndexLNM& index_c) const;
+    
 private:
 	ORB_table_phi MOT;
 	ORB_gaunt_table MGT;

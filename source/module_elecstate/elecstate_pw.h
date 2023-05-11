@@ -16,7 +16,9 @@ class ElecStatePW : public ElecState
     ElecStatePW(
       ModulePW::PW_Basis_K *wfc_basis_in, 
       Charge* chg_in, 
-      K_Vectors *pkv_in
+      K_Vectors *pkv_in,
+      ModulePW::PW_Basis* rhopw_in,
+      ModulePW::PW_Basis_Big* bigpw_in
     );
     // void init(Charge* chg_in):charge(chg_in){} override;
 

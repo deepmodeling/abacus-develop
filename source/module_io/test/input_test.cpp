@@ -83,13 +83,10 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.0);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
-        EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_TRUE(INPUT.dump_force);
-        EXPECT_TRUE(INPUT.dump_vel);
-        EXPECT_TRUE(INPUT.dump_virial);
+        EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
-        EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
+        EXPECT_DOUBLE_EQ(INPUT.stress_thr, 0.5);
         EXPECT_DOUBLE_EQ(INPUT.press1,0.0);
         EXPECT_DOUBLE_EQ(INPUT.press2,0.0);
         EXPECT_DOUBLE_EQ(INPUT.press3,0.0);
@@ -231,6 +228,7 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -354,6 +352,9 @@ TEST_F(InputTest, Default)
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+    EXPECT_TRUE(INPUT.mdp.dump_force);
+    EXPECT_TRUE(INPUT.mdp.dump_vel);
+    EXPECT_TRUE(INPUT.mdp.dump_virial);
 }
 
 TEST_F(InputTest, Read)
@@ -416,10 +417,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.symmetry,1);
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
-        EXPECT_EQ(INPUT.cal_force,0);
-        EXPECT_FALSE(INPUT.dump_force);
-        EXPECT_FALSE(INPUT.dump_vel);
-        EXPECT_FALSE(INPUT.dump_virial);
+        EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_NEAR(INPUT.force_thr,1.0e-3,1.0e-7);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
         EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
@@ -567,6 +565,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,0);
@@ -694,6 +693,9 @@ TEST_F(InputTest, Read)
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vel,0);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.msst_vis,0);
 	EXPECT_EQ(INPUT.mdp.pot_file,"graph.pb");
+    EXPECT_FALSE(INPUT.mdp.dump_force);
+    EXPECT_FALSE(INPUT.mdp.dump_vel);
+    EXPECT_FALSE(INPUT.mdp.dump_virial);
 }
 
 TEST_F(InputTest, Default_2)

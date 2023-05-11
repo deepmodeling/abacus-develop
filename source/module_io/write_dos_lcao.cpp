@@ -12,26 +12,27 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
+#include <vector>
+
 #include "module_base/blas_connector.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
-#include "module_base/scalapack_connector.h"
 #include "module_base/parallel_reduce.h"
-
-#include <vector>
+#include "module_base/scalapack_connector.h"
 #ifdef __MPI
 #include <mpi.h>
 #endif
 #include <sys/time.h>
 
 void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
-        const psi::Psi<std::complex<double>>* psi,
-        LCAO_Hamilt& uhm,
-        const ModuleBase::matrix &ekb,
-		const ModuleBase::matrix &wg,
-		const double &dos_edelta_ev,
-		const double &dos_scale,
-        const double &bcoeff)
+                              const psi::Psi<std::complex<double>>* psi,
+                              LCAO_Hamilt& uhm,
+                              const ModuleBase::matrix& ekb,
+                              const ModuleBase::matrix& wg,
+                              const double& dos_edelta_ev,
+                              const double& dos_scale,
+                              const double& bcoeff,
+                              const K_Vectors& kv)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
@@ -44,7 +45,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
     double emin = ekb(0, 0);
-    for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+    for (int ik = 0; ik < kv.nks; ++ik)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
         {
@@ -126,7 +127,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                     double en0 = ekb(0, i) * ModuleBase::Ry_to_eV;
                     double de = en - en0;
                     double de2 = 0.5 * de * de;
-                    Gauss[n] = GlobalC::kv.wk[0] * exp(-de2 / a / a) / b;
+                    Gauss[n] = kv.wk[0] * exp(-de2 / a / a) / b;
                 }
 
                 const int NB = i + 1;
@@ -195,10 +196,10 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
             Mulk.resize(1);
             Mulk[0].create(pv->ncol, pv->nrow);
 
-            for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+            for (int ik = 0; ik < kv.nks; ik++)
             {
 
-                if (is == GlobalC::kv.isk[ik])
+                if (is == kv.isk[ik])
                 {
                     uhm.LM->allocate_HS_k(pv->nloc);
                     uhm.LM->zeros_HSk('S');
@@ -224,7 +225,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                             double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
                             double de = en - en0;
                             double de2 = 0.5 * de * de;
-                            Gauss[n] = GlobalC::kv.wk[ik] * exp(-de2 / a / a) / b;
+                            Gauss[n] = kv.wk[ik] * exp(-de2 / a / a) / b;
                         }
 
                         const int NB = i + 1;
@@ -409,7 +410,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
             out << "</pdos>" << std::endl;
             out.close();
         }
-        ModuleIO::write_orb_info();
+        ModuleIO::write_orb_info(&(GlobalC::ucell));
     }
     delete[] pdos;
 
@@ -428,10 +429,10 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                            emax,
                            emin,
                            bcoeff,
-                           GlobalC::kv.nks,
-                           GlobalC::kv.nkstot,
-                           GlobalC::kv.wk,
-                           GlobalC::kv.isk,
+                           kv.nks,
+                           kv.nkstot,
+                           kv.wk,
+                           kv.isk,
                            GlobalV::NBANDS,
                            ekb,
                            wg);

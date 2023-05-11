@@ -8,12 +8,14 @@
 #include "mpi.h"
 #endif
 
-void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex<double>> &psi,
-                        const K_Vectors* p_kv, const ModulePW::PW_Basis_K *wfc_basis)
+void ModuleIO::write_wfc_pw(const std::string& fn,
+                            const psi::Psi<std::complex<double>>& psi,
+                            const K_Vectors& kv,
+                            const ModulePW::PW_Basis_K* wfc_basis)
 {
-    ModuleBase::TITLE("ModuleIO","write_wfc_pw"); 
-    const int nkstot = p_kv->nkstot;
-    const int nks = p_kv->nks;
+    ModuleBase::TITLE("ModuleIO","write_wfc_pw");
+    const int nkstot = kv.nkstot;
+    const int nks = kv.nks;
 
     std::string * wfilename;
     wfilename = new std::string[nkstot];
@@ -60,14 +62,14 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                 int ikngtot=0; //ikngtot: the total number of plane waves of ikpoint
                 int ikstot=0;//ikstot : the index within all k-points
 #ifdef __MPI
-                MPI_Allreduce(&p_kv->ngk[ik],&ikngtot,1,MPI_INT,MPI_SUM,POOL_WORLD);
-                
+                MPI_Allreduce(&kv.ngk[ik], &ikngtot, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+
                 // ikstot=GlobalC::Pkpoints.startk_pool[ip]+ik;
                 // In the future, Pkpoints should be moved into Klist
                 // To avoid GlobalC, we use getik_global instead
-                ikstot = p_kv->getik_global(ik);
+                ikstot = kv.getik_global(ik);
 #else
-                ikngtot=p_kv->ngk[ik];
+                ikngtot = kv.ngk[ik];
                 ikstot=ik;
 #endif
 #ifdef __MPI
@@ -88,9 +90,11 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                             ofs2<<std::setw(10)<<"Kpoint"<<std::setw(10)<<"nKpoint"<<std::setw(10)<<"kv.x"<<std::setw(10)
                             <<"kv.y"<<std::setw(10)<<"kv.z"<<std::setw(10)<<"weight"<<std::setw(10)
                             <<"ngtot"<<std::setw(10)<<"nband"<<std::setw(10)<<"ecut"<<std::setw(10)<<"lat0"<<std::setw(10)<<"2pi/lat0"<<std::endl;
-                            ofs2<<std::setw(10)<<ikstot+1<<std::setw(10)<<nkstot<<std::setw(10)<<p_kv->kvec_c[ik].x<<std::setw(10)
-                            <<p_kv->kvec_c[ik].y<<std::setw(10)<<p_kv->kvec_c[ik].z<<std::setw(10)<<p_kv->wk[ik]<<std::setw(10)
-                            <<ikngtot<<std::setw(10)<<GlobalV::NBANDS<<std::setw(10)<<INPUT.ecutwfc<<std::setw(10)<<wfc_basis->lat0<<std::setw(10)<<wfc_basis->tpiba<<std::endl;
+                            ofs2 << std::setw(10) << ikstot + 1 << std::setw(10) << nkstot << std::setw(10)
+                                 << kv.kvec_c[ik].x << std::setw(10) << kv.kvec_c[ik].y << std::setw(10)
+                                 << kv.kvec_c[ik].z << std::setw(10) << kv.wk[ik] << std::setw(10) << ikngtot
+                                 << std::setw(10) << GlobalV::NBANDS << std::setw(10) << INPUT.ecutwfc << std::setw(10)
+                                 << wfc_basis->lat0 << std::setw(10) << wfc_basis->tpiba << std::endl;
                             ofs2<<"\n<Reciprocal Lattice Vector>"<<std::endl;
                             ofs2<<std::setw(10)<<wfc_basis->G.e11<<std::setw(10)<<wfc_basis->G.e12<<std::setw(10)<<wfc_basis->G.e13<<std::endl;
                             ofs2<<std::setw(10)<<wfc_basis->G.e21<<std::setw(10)<<wfc_basis->G.e22<<std::setw(10)<<wfc_basis->G.e23<<std::endl;
@@ -98,8 +102,8 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                             ofs2<<"<Reciprocal Lattice Vector>\n"<<std::endl;
                             ofs2<<"<G vectors>"<<std::endl;
                         }
-                        for (int ig=0; ig<p_kv->ngk[ik]; ig++)
-					    {
+                        for (int ig = 0; ig < kv.ngk[ik]; ig++)
+                        {
                             ofs2<<std::setw(10)<<wfc_basis->getgcar(ik,ig).x<<std::setw(10)<<wfc_basis->getgcar(ik,ig).y<<std::setw(10)<<wfc_basis->getgcar(ik,ig).z<<std::endl;
 						}
                         if(id==GlobalV::NPROC_IN_POOL-1)
@@ -113,9 +117,9 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                         Binstream wfs2( wfilename[ikstot],"a");
                         if(id==0)
                         {
-                            wfs2<<int(72)<<ikstot+1<<nkstot<<p_kv->kvec_c[ik].x
-                                <<p_kv->kvec_c[ik].y<<p_kv->kvec_c[ik].z<<p_kv->wk[ik]
-                                <<ikngtot<<GlobalV::NBANDS<<INPUT.ecutwfc<<wfc_basis->lat0<<wfc_basis->tpiba<<72; //4 int + 7 double is 72B
+                            wfs2 << int(72) << ikstot + 1 << nkstot << kv.kvec_c[ik].x << kv.kvec_c[ik].y
+                                 << kv.kvec_c[ik].z << kv.wk[ik] << ikngtot << GlobalV::NBANDS << INPUT.ecutwfc
+                                 << wfc_basis->lat0 << wfc_basis->tpiba << 72; // 4 int + 7 double is 72B
                             wfs2<<72<<wfc_basis->G.e11<<wfc_basis->G.e12<<wfc_basis->G.e13
                                     <<wfc_basis->G.e21<<wfc_basis->G.e22<<wfc_basis->G.e23
                                     <<wfc_basis->G.e31<<wfc_basis->G.e32<<wfc_basis->G.e33<<72; //9 double is 72B
@@ -124,9 +128,9 @@ void ModuleIO::write_wfc_pw(  const std::string &fn, const psi::Psi<std::complex
                         {
                             wfs2<<ikngtot*8*3;
                         }
-                         
-                        for (int ig=0; ig<p_kv->ngk[ik]; ig++)
-					    {
+
+                        for (int ig = 0; ig < kv.ngk[ik]; ig++)
+                        {
                             wfs2<<wfc_basis->getgcar(ik,ig).x<<wfc_basis->getgcar(ik,ig).y<<wfc_basis->getgcar(ik,ig).z;
 						}
                         if(id==GlobalV::NPROC_IN_POOL-1)

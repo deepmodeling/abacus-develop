@@ -90,7 +90,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
                                                    GlobalC::kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
-                                                   &(this->LOWF));
+                                                   &(this->LOWF),
+                                                   this->pw_rho,
+                                                   GlobalC::bigpw);
     }
 
     //------------------init Basis_lcao----------------------
@@ -165,7 +167,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     }
 
     // Inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    this->pelec->charge->allocate(GlobalV::NSPIN);
 
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
@@ -202,11 +204,11 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;  
-        this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF));
+        this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF), this->pw_rho, GlobalC::bigpw);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
-        this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+        this->pelec->charge->allocate(GlobalV::NSPIN);
 
         if(this->pelec->pot != nullptr)
         {
@@ -230,7 +232,7 @@ void ESolver_KS_LCAO::cal_Energy(double& etot)
 
 void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
 {
-    Force_Stress_LCAO FSL(this->RA);
+    Force_Stress_LCAO FSL(this->RA, GlobalC::ucell.nat);
     FSL.getForceStress(GlobalV::CAL_FORCE,
                        GlobalV::CAL_STRESS,
                        GlobalV::TEST_FORCE,
@@ -282,7 +284,7 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, &(GlobalC::kv), &(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
     }
 
     int nspin0 = 1;
@@ -312,7 +314,7 @@ void ESolver_KS_LCAO::postprocess()
                                 GlobalV::NBANDS,
                                 GlobalC::en.ef * 0,
                                 this->pelec->ekb,
-                                &(GlobalC::kv),
+                                GlobalC::kv,
                                 &(GlobalC::Pkpoints));
         }
     } // out_band
@@ -323,7 +325,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->psi,
                                        this->UHM,
                                        this->pelec,
-                                       &(GlobalC::kv),
+                                       GlobalC::kv,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
                                        GlobalC::GridD);
@@ -338,7 +340,8 @@ void ESolver_KS_LCAO::postprocess()
                                  this->pelec->wg,
                                  GlobalC::en.dos_edelta_ev,
                                  GlobalC::en.dos_scale,
-                                 GlobalC::en.bcoeff);
+                                 GlobalC::en.bcoeff,
+                                 GlobalC::kv);
 
         if (GlobalC::en.out_dos == 3)
         {
@@ -350,7 +353,7 @@ void ESolver_KS_LCAO::postprocess()
                                              GlobalC::kv.nks,
                                              GlobalV::NBANDS,
                                              GlobalC::en.ef,
-                                             &(GlobalC::kv),
+                                             GlobalC::kv,
                                              &(GlobalC::Pkpoints),
                                              &(GlobalC::ucell),
                                              this->pelec->ekb);
@@ -637,7 +640,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
+    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz, this->pelec->charge->rho, this->pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
@@ -836,7 +839,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     }
 
     // (11) calculate the total energy.
-    GlobalC::en.calculate_etot();
+    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
 }
 
 void ESolver_KS_LCAO::afterscf(const int istep)
@@ -973,7 +976,21 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            this->pelec->pot->write_potential(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                is,
+                0,
+                ssp.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(),
+                precision);
         }
     }
     else if (GlobalV::out_pot == 2)
@@ -982,9 +999,14 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
         // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(ssp.str(),
-                                             GlobalC::rhopw,
-                                             pelec->charge); // output 'Hartree + local pseudopot'
+        this->pelec->pot->write_elecstat_pot(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+#endif
+                ssp.str(),
+                this->pw_rho,
+                pelec->charge); // output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)
@@ -1188,7 +1210,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         } // LiuXh add 2019-07-15
     }
 
@@ -1204,7 +1229,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         } // LiuXh add 2019-07-15
     }
 
@@ -1229,7 +1257,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC);
+            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, GlobalC::kv);
         }
     } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 
