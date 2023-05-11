@@ -481,7 +481,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             std::stringstream ss_dipole;
             ss_dipole << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
-            ModuleIO::write_dipole(pelec->charge->rho_save[is], is, istep, ss_dipole.str());
+            ModuleIO::write_dipole(pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
         }
 
         std::stringstream ssd;
