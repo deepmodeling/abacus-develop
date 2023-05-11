@@ -284,7 +284,7 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, &(GlobalC::kv), &(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
     }
 
     int nspin0 = 1;
@@ -314,7 +314,7 @@ void ESolver_KS_LCAO::postprocess()
                                 GlobalV::NBANDS,
                                 GlobalC::en.ef * 0,
                                 this->pelec->ekb,
-                                &(GlobalC::kv),
+                                GlobalC::kv,
                                 &(GlobalC::Pkpoints));
         }
     } // out_band
@@ -325,7 +325,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->psi,
                                        this->UHM,
                                        this->pelec,
-                                       &(GlobalC::kv),
+                                       GlobalC::kv,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
                                        GlobalC::GridD);
@@ -340,7 +340,8 @@ void ESolver_KS_LCAO::postprocess()
                                  this->pelec->wg,
                                  GlobalC::en.dos_edelta_ev,
                                  GlobalC::en.dos_scale,
-                                 GlobalC::en.bcoeff);
+                                 GlobalC::en.bcoeff,
+                                 GlobalC::kv);
 
         if (GlobalC::en.out_dos == 3)
         {
@@ -352,7 +353,7 @@ void ESolver_KS_LCAO::postprocess()
                                              GlobalC::kv.nks,
                                              GlobalV::NBANDS,
                                              GlobalC::en.ef,
-                                             &(GlobalC::kv),
+                                             GlobalC::kv,
                                              &(GlobalC::Pkpoints),
                                              &(GlobalC::ucell),
                                              this->pelec->ekb);
@@ -1209,7 +1210,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         } // LiuXh add 2019-07-15
     }
 
@@ -1225,7 +1229,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         } // LiuXh add 2019-07-15
     }
 
@@ -1250,7 +1257,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC);
+            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, GlobalC::kv);
         }
     } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 

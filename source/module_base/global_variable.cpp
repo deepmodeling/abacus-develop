@@ -89,7 +89,7 @@ int VNL_IN_H = 1;
 int VH_IN_H = 1;
 int VION_IN_H = 1;
 int ZEEMAN_IN_H = 1;
-double STRESS_THR = 1.0e-2; // LiuXh add 20180515
+double STRESS_THR = 0.5; // LiuXh add 20180515 liuyu update 2023-05-10
 
 int ocp = 0;
 std::string ocp_set = "none";

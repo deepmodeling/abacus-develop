@@ -482,19 +482,26 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			ModuleBase::GlobalFunc::OUT(ofs_running,"number of atom for this type",na);
 
 			this->nat += na;
-			if (na <= 0) 
-			{
-				ModuleBase::WARNING("read_atom_positions"," atom number < 0.");
-				return 0;
-			}
-			if (na > 0)
-			{
-       			delete[] atoms[it].tau;
-				delete[] atoms[it].dis;
-				delete[] atoms[it].taud;
-				delete[] atoms[it].vel;
-       			delete[] atoms[it].mbl;
-				delete[] atoms[it].mag;
+
+            /**
+             * liuyu update 2023-05-11
+             * In order to employ the DP model as esolver,
+             * all atom types must be specified in the `STRU` in the order consistent with that of the DP model,
+             * even if the number of atoms is zero!
+             */
+            if (na < 0)
+            {
+                ModuleBase::WARNING("read_atom_positions", " atom number < 0.");
+                return 0;
+            }
+            if (na > 0)
+            {
+                delete[] atoms[it].tau;
+                delete[] atoms[it].dis;
+                delete[] atoms[it].taud;
+                delete[] atoms[it].vel;
+                delete[] atoms[it].mbl;
+                delete[] atoms[it].mag;
                 delete[] atoms[it].angle1;
                 delete[] atoms[it].angle2;
                 delete[] atoms[it].m_loc_;
@@ -749,14 +756,14 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					}
                     atoms[it].dis[ia].set(0, 0, 0);
 				}//endj
-			}// end na
-			//reset some useless parameters
-			if(set_element_mag_zero)
-			{
-				magnet.start_magnetization[it] = 0.0;
-			}
-		}//end for ntype
-	}// end scan_begin
+            }    // end na
+            // reset some useless parameters
+            if (set_element_mag_zero)
+            {
+                magnet.start_magnetization[it] = 0.0;
+            }
+        } // end for ntype
+    }     // end scan_begin
 
 //check if any atom can move in MD
 	if(!this->if_atoms_can_move() && GlobalV::CALCULATION=="md" && GlobalV::ESOLVER_TYPE!="tddft")
