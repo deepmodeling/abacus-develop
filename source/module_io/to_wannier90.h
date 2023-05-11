@@ -3,19 +3,20 @@
 
 #include <iostream>
 using namespace std;
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <vector>
+
 #include "module_base/complexmatrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
+#include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_psi/psi.h"
-
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <vector>
 
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
@@ -69,12 +70,18 @@ class toWannier90
     // void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell,
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
-    void init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi = nullptr);
-    void read_nnkp();
+    void init_wannier(const ModuleBase::matrix& ekb,
+                      const K_Vectors& kv,
+                      const psi::Psi<std::complex<double>>* psi = nullptr
+                      );
+    void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis_K* wfc_basis);
     void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw);
-    void produce_trial_in_pw(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix &trial_orbitals_k);
+    void produce_trial_in_pw(const psi::Psi<std::complex<double>>& wfc_pw,
+                             const int& ik,
+                             ModulePW::PW_Basis_K* wfc_basis,
+                             ModuleBase::ComplexMatrix& trial_orbitals_k);
     void get_trial_orbitals_lm_k(const int wannier_index,
                                  const int orbital_L,
                                  const int orbital_m,
@@ -101,7 +108,7 @@ class toWannier90
     // const ModuleBase::Vector3<double> G);
 
     void lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital_in_G);
-    void getUnkFromLcao();
+    void getUnkFromLcao(const K_Vectors& kv);
     void get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc);
 
   private:

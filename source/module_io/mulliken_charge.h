@@ -5,12 +5,13 @@
 #include "module_base/complexmatrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+#include "module_cell/klist.h"
 
 // by qifeng, refactor by jiyy 2023-02-25
 // convert to namespace, liuyu 2023-04-18
 namespace ModuleIO
 {
-	void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc);
+	void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc, const K_Vectors& kv);
 
     /* 
     1. cal_mulliken:    for gamma-only
@@ -27,7 +28,7 @@ namespace ModuleIO
     );
 
     ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
-        LCAO_Hamilt &uhm
+        LCAO_Hamilt &uhm, const K_Vectors& kv
     );
 
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);

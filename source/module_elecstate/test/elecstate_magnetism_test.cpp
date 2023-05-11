@@ -35,7 +35,7 @@ double elecstate::get_ucell_omega()
 
 class MagnetismTest : public ::testing::Test
 {
-protected:
+  protected:
     Magnetism* magnetism;
     virtual void SetUp()
     {
@@ -49,23 +49,23 @@ protected:
 
 TEST_F(MagnetismTest, Magnetism)
 {
-                  EXPECT_EQ(0.0, magnetism->tot_magnetization);
-                  EXPECT_EQ(0.0, magnetism->abs_magnetization);
-                  EXPECT_EQ(nullptr, magnetism->start_magnetization);
+    EXPECT_EQ(0.0, magnetism->tot_magnetization);
+    EXPECT_EQ(0.0, magnetism->abs_magnetization);
+    EXPECT_EQ(nullptr, magnetism->start_magnetization);
 }
 
 TEST_F(MagnetismTest, GlobalInfo)
 {
-                  EXPECT_EQ(500.0, elecstate::get_ucell_omega());
+    EXPECT_EQ(500.0, elecstate::get_ucell_omega());
 }
 
 TEST_F(MagnetismTest, JudgeParallel)
 {
-                  double a[3] = {1.0, 0.0, 0.0};
-                  ModuleBase::Vector3<double> b(1.0, 0.0, 0.0);
-                  EXPECT_TRUE(magnetism->judge_parallel(a, b));
-                  b = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
-                  EXPECT_FALSE(magnetism->judge_parallel(a, b));
+    double a[3] = {1.0, 0.0, 0.0};
+    ModuleBase::Vector3<double> b(1.0, 0.0, 0.0);
+    EXPECT_TRUE(magnetism->judge_parallel(a, b));
+    b = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
+    EXPECT_FALSE(magnetism->judge_parallel(a, b));
 }
 
 TEST_F(MagnetismTest, ComputeMagnetizationS2)
@@ -102,7 +102,6 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                   delete chr;
 }
 
-
 TEST_F(MagnetismTest, ComputeMagnetizationS4)
 {
                     GlobalV::NSPIN = 4;
@@ -136,7 +135,6 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
                     delete[] chr->rho;
                     delete chr;
 }
-
 
 #ifdef __MPI
 #include <mpi.h>
