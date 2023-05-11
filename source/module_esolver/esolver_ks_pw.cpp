@@ -826,7 +826,7 @@ namespace ModuleESolver
             if ( winput::out_spillage <= 2 )
             {
                 Numerical_Basis numerical_basis;
-                numerical_basis.output_overlap(this->psi[0]);
+                numerical_basis.output_overlap(this->psi[0],GlobalC::sf);
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"BASIS OVERLAP (Q and S) GENERATION.");
             }
         }

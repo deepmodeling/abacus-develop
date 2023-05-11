@@ -165,8 +165,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R
 
 }
 
-
-//这里G矢量是direct坐标
+//here G is in direct coordinate
 std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_R, const int iband_L, const int iband_R, const psi::Psi<std::complex<double>> *evc, const ModuleBase::Vector3<double> G)
 {
 	// (1) set value
@@ -226,21 +225,3 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_
 	delete[] psi_down;
     return result;
 }
-
-// void unkOverlap_pw::test_for_unkOverlap_pw()
-// {
-	
-// 	const int number_pw = GlobalC::sf.ngmw;
-// 	GlobalV::ofs_running << "the GlobalC::sf.ngmw is " << number_pw << std::endl;
-// 	std::complex<double> *unk_L = new std::complex<double>[number_pw];
-// 	for (int ig = 0; ig < GlobalC::kv.ngk[0]; ig++)
-// 	{
-// 		unk_L[GlobalC::wf.igk(0,ig)] = GlobalC::wf.evc[0](0, ig);
-// 	}
-// 	for (int ig = 0; ig < GlobalC::sf.ngmw; ig++)
-// 	{
-// 		GlobalV::ofs_running << GlobalC::sf.gdirect[ig].x << "," << GlobalC::sf.gdirect[ig].y << "," << GlobalC::sf.gdirect[ig].z << "  = " << unk_L[ig] << std::endl;
-// 	}	
-	
-// }
-

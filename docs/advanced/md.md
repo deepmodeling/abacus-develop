@@ -2,7 +2,7 @@
 
 Molecular dynamics (MD) is a computer simulation method for analyzing the physical movements of atoms and molecules. The atoms and molecules are allowed to interact for a fixed period of time, giving a view of the dynamic "evolution" of the system. In the most common version, the trajectories of atoms and molecules are determined by numerically solving Newton's equations of motion for a system of interacting particles, where forces between the particles and their potential energies are calculated using first-principles calculations (first-principles molecular dynamics, FPMD), or interatomic potentials and molecular mechanics force fields (classical molecular dynamics, CMD).
 
-By setting `calculation` to be `md`, ABACUS currently provides several different MD evolution methods, which is specified by keyword `md_type` in the `INPUT` file:
+By setting [calculation](./input_files/input-main.md#calculation) to be `md`, ABACUS currently provides several different MD evolution methods, which is specified by keyword [md_type](./input_files/input-main.md#md_type) in the `INPUT` file:
 
   - fire: a MD-based relaxation algorithm, see [details](#fire) here
   - nve: NVE ensemble with velocity Verlet algorithm
@@ -11,7 +11,7 @@ By setting `calculation` to be `md`, ABACUS currently provides several different
   - langevin: NVT ensemble with Langevin thermostat
   - msst: MSST method
 
-When `md_type` is set to nvt, `md_thermostat` is used to specify the temperature control method used in NVT ensemble.
+When [md_type](./input_files/input-main.md#md_type) is set to nvt, [md_thermostat](./input_files/input-main.md#md_thermostat) is used to specify the temperature control method used in NVT ensemble.
 
   - nhc: Nose-Hoover chain
   - anderson: Anderson thermostat
@@ -19,7 +19,7 @@ When `md_type` is set to nvt, `md_thermostat` is used to specify the temperature
   - rescaling: velocity Rescaling method 1
   - rescale_v: velocity Rescaling method 2
 
-When `md_type` is set to npt, `md_pmode` is used to specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+When [md_type](./input_files/input-main.md#md_type) is set to npt, [md_pmode](./input_files/input-main.md#md_pmode) is used to specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
 
   - iso: isotropic cell fluctuations
   - aniso: anisotropic cell fluctuations
@@ -27,12 +27,9 @@ When `md_type` is set to npt, `md_pmode` is used to specify the cell fluctuation
 
 Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.md#molecular-dynamics) to control relevant parmeters used in MD simulations.
 
-To employ CMD calculations, `esolver_type` should be set to be `lj` or `dp`.
-If DP model is selected, the filename of DP model is specified by keyword `pot_file`.
+The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
 
-The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword `dump_force`, `dump_vel`, and `dump_virial`, respectively.
-
-[Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Sn64) of MD simulations are also provided.
+[Examples](../../examples/md/lcao_gammaonly_Si8/) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
 
@@ -77,11 +74,55 @@ Reset the temperature of a group of atoms by using a [Berendsen thermostat](http
 
 ## Rescaling
 
-Reset the temperature of a group of atoms by explicitly rescaling their velocities. Velocities are rescaled if the current and target temperature differ more than `md_tolerance` (Kelvin).
+Reset the temperature of a group of atoms by explicitly rescaling their velocities. Velocities are rescaled if the current and target temperature differ more than [md_tolerance](./input_files/input-main.md#md_tolerance) (Kelvin).
 
 ## Rescale_v
 
-Reset the temperature of a group of atoms by explicitly rescaling their velocities. Every `md_nraise` steps the current temperature is rescaled to target temperature.
+Reset the temperature of a group of atoms by explicitly rescaling their velocities. Every [md_nraise](./input_files/input-main.md#md_nraise) steps the current temperature is rescaled to target temperature.
 
 ## MSST
 ABACUS performs the [Multi-Scale Shock Technique (MSST) integration](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.90.235503) to update positions and velocities each timestep to mimic a compressive shock wave passing over the system. The MSST varies the cell volume and temperature in such a way as to restrain the system to the shock Hugoniot and the Rayleigh line. These restraints correspond to the macroscopic conservation laws dictated by a shock front.
+
+## DPMD
+Compiling ABACUS with [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit), MD calculations based on machine learning DP model is enabled.
+
+To employ DPMD calculations, [esolver_type](./input_files/input-main.md#esolver_type) should be set to `dp`.
+And the filename of DP model is specified by keyword [pot_file](./input_files/input-main.md#pot_file).
+
+> Note that all atom types must be specified in the `STRU` in the order consistent with that of the DP model, even if the number of atoms is zero!
+
+For example, there is a Al-Cu-Mg ternary-alloy DP model, but the simulated cell is a Al-Cu binary alloy. Then the `STRU` should be written as follows:
+
+```
+ATOMIC_SPECIES
+Al  26.982
+Cu  63.546
+Mg  24.305
+
+LATTICE_CONSTANT
+1.889727000000
+
+LATTICE_VECTORS
+4.0  0.0  0.0
+0.0  4.0  0.0
+0.0  0.0  4.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+Al
+0
+2
+0.0  0.0  0.0
+0.5  0.5  0.0
+
+Cu
+0
+2
+0.5  0.0  0.5
+0.0  0.5  0.5
+
+Mg
+0
+0
+```
