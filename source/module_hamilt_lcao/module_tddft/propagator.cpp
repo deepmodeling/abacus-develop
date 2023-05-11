@@ -7,6 +7,8 @@
 #include "module_base/scalapack_connector.h"
 #include "module_io/input.h"
 
+namespace module_tddft
+{
 Propagator::~Propagator()
 {
 }
@@ -615,3 +617,4 @@ void Propagator::compute_propagator_etrs(const int nband,
 }
 
 #endif
+} // namespace module_tddft

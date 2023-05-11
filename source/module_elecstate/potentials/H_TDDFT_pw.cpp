@@ -73,7 +73,7 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     read_parameters(&INPUT);
 
     // judgement to skip vext
-    if (!Evolve_elec::td_vext || istep > tend || istep < tstart)
+    if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
     {
         return;
     }
@@ -87,12 +87,12 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     trigo_count = 0;
     heavi_count = 0;
 
-    for (auto direc: Evolve_elec::td_vext_dire_case)
+    for (auto direc: module_tddft::Evolve_elec::td_vext_dire_case)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count]);
 
-        if (Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
+        if (module_tddft::Evolve_elec::out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
             as << GlobalV::global_out_dir << "efield_" << count << ".dat";

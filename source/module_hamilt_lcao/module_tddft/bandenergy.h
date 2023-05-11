@@ -3,6 +3,8 @@
 
 #include "module_basis/module_ao/parallel_orbitals.h"
 
+namespace module_tddft
+{
 #ifdef __MPI
 void compute_ekb(const Parallel_Orbitals* pv,
                  const int nband,
@@ -11,5 +13,5 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const std::complex<double>* psi_k,
                  double* ekb);
 #endif
-
+} // namespace module_tddft
 #endif

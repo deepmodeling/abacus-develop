@@ -8,6 +8,8 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+namespace module_tddft
+{
 Evolve_elec::Evolve_elec(){};
 Evolve_elec::~Evolve_elec(){};
 
@@ -79,3 +81,4 @@ void Evolve_elec::solve_psi(const int& istep,
     ModuleBase::timer::tick("Evolve_elec", "evolve_psi");
     return;
 }
+} // namespace module_tddft

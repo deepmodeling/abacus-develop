@@ -379,16 +379,16 @@ void Input_Conv::Convert(void)
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    Evolve_elec::td_force_dt = INPUT.td_force_dt;
-    Evolve_elec::td_vext = INPUT.td_vext;
-    if (Evolve_elec::td_vext)
+    module_tddft::Evolve_elec::td_force_dt = INPUT.td_force_dt;
+    module_tddft::Evolve_elec::td_vext = INPUT.td_vext;
+    if (module_tddft::Evolve_elec::td_vext)
     {
-        parse_expression(INPUT.td_vext_dire, Evolve_elec::td_vext_dire_case);
+        parse_expression(INPUT.td_vext_dire, module_tddft::Evolve_elec::td_vext_dire_case);
     }
-    Evolve_elec::out_dipole = INPUT.out_dipole;
-    Evolve_elec::out_efield = INPUT.out_efield;
-    Evolve_elec::td_print_eij = INPUT.td_print_eij;
-    Evolve_elec::td_edm = INPUT.td_edm;
+    module_tddft::Evolve_elec::out_dipole = INPUT.out_dipole;
+    module_tddft::Evolve_elec::out_efield = INPUT.out_efield;
+    module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
+    module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11

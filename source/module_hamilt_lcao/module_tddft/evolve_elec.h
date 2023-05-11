@@ -16,6 +16,8 @@
 // k is the index for the points in the first Brillouin zone
 //-----------------------------------------------------------
 
+namespace module_tddft
+{
 class Evolve_elec
 {
 
@@ -49,5 +51,5 @@ class Evolve_elec
                           int htype,
                           int propagator);
 };
-
+} // namespace module_tddft
 #endif

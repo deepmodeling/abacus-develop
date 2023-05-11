@@ -3,6 +3,8 @@
 
 #include "module_basis/module_ao/parallel_orbitals.h"
 
+namespace module_tddft
+{
 #ifdef __MPI
 void upsi(const Parallel_Orbitals* pv,
           const int nband,
@@ -13,5 +15,6 @@ void upsi(const Parallel_Orbitals* pv,
           const int print_matrix);
 
 #endif
+} // namespace module_tddft
 
 #endif

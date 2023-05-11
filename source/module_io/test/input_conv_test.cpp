@@ -125,12 +125,12 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-    EXPECT_EQ(Evolve_elec::td_force_dt, 0.02);
-    EXPECT_EQ(Evolve_elec::td_vext, false);
-    EXPECT_EQ(Evolve_elec::out_dipole, false);
-    EXPECT_EQ(Evolve_elec::out_efield, false);
-    EXPECT_EQ(Evolve_elec::td_print_eij, -1.0);
-    EXPECT_EQ(Evolve_elec::td_edm, 0);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_force_dt, 0.02);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_vext, false);
+    EXPECT_EQ(module_tddft::Evolve_elec::out_dipole, false);
+    EXPECT_EQ(module_tddft::Evolve_elec::out_efield, false);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_print_eij, -1.0);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_edm, 0);
     EXPECT_EQ(GlobalV::ocp,false);
 	EXPECT_EQ(GlobalV::ocp_set,INPUT.ocp_set);
 	EXPECT_EQ(GlobalV::out_mul,0);
@@ -515,9 +515,9 @@ TEST_F(InputConvTest,parse )
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
-    Evolve_elec::td_vext = true;
+    module_tddft::Evolve_elec::td_vext = true;
     Input_Conv::Convert();
-    EXPECT_EQ(Evolve_elec::td_vext_dire_case.size(), 0);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_vext_dire_case.size(), 0);
 }
 
 TEST_F(InputConvTest,parse2 )

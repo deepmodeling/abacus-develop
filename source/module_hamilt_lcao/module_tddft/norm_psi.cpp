@@ -6,6 +6,8 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 
+namespace module_tddft
+{
 #ifdef __MPI
 
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
@@ -206,3 +208,4 @@ void norm_psi(const Parallel_Orbitals* pv,
     delete[] Cij;
 }
 #endif
+} // namespace module_tddft

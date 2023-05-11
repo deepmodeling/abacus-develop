@@ -4,6 +4,8 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
+namespace module_tddft
+{
 void evolve_psi(const int nband,
                 const int nlocal,
                 const Parallel_Orbitals* pv,
@@ -14,5 +16,6 @@ void evolve_psi(const int nband,
                 double* ekb,
                 int htype,
                 int propagator);
+}
 
 #endif

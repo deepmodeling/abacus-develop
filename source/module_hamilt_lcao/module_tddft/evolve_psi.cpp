@@ -13,6 +13,8 @@
 #include "propagator.h"
 #include "upsi.h"
 
+namespace module_tddft
+{
 void evolve_psi(const int nband,
                 const int nlocal,
                 const Parallel_Orbitals* pv,
@@ -100,3 +102,4 @@ void evolve_psi(const int nband,
 
     return;
 }
+} // namespace module_tddft

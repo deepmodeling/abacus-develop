@@ -3,6 +3,8 @@
 
 #include "module_basis/module_ao/parallel_orbitals.h"
 
+namespace module_tddft
+{
 class Propagator
 {
   public:
@@ -53,5 +55,6 @@ class Propagator
                                  const int print_matrix) const;
 #endif
 };
+} // namespace module_tddft
 
 #endif

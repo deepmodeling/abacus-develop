@@ -120,17 +120,17 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     if (GlobalV::ESOLVER_TYPE == "tddft" && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
     {
-        Evolve_elec::solve_psi(istep,
-                               GlobalV::NBANDS,
-                               GlobalV::NLOCAL,
-                               this->p_hamilt,
-                               this->LOWF,
-                               this->psi,
-                               this->psi_laststep,
-                               this->Hk_laststep,
-                               this->pelec_td->ekb,
-                               td_htype,
-                               INPUT.propagator);
+        module_tddft::Evolve_elec::solve_psi(istep,
+                                             GlobalV::NBANDS,
+                                             GlobalV::NLOCAL,
+                                             this->p_hamilt,
+                                             this->LOWF,
+                                             this->psi,
+                                             this->psi_laststep,
+                                             this->Hk_laststep,
+                                             this->pelec_td->ekb,
+                                             td_htype,
+                                             INPUT.propagator);
         this->pelec_td->psiToRho_td(this->psi[0]);
     }
     // using HSolverLCAO::solve()
@@ -338,7 +338,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         }
 
         // calculate energy density matrix for tddft
-        if (istep > 1 && Evolve_elec::td_edm == 0)
+        if (istep > 1 && module_tddft::Evolve_elec::td_edm == 0)
             this->cal_edm_tddft();
     }
 
@@ -371,7 +371,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        if (Evolve_elec::out_dipole == 1)
+        if (module_tddft::Evolve_elec::out_dipole == 1)
         {
             std::stringstream ss_dipole;
             ss_dipole << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DIPOLE";

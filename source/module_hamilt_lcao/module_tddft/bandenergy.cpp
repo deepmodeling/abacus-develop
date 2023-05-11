@@ -7,6 +7,8 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 
+namespace module_tddft
+{
 #ifdef __MPI
 
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
@@ -145,3 +147,5 @@ void compute_ekb(const Parallel_Orbitals* pv,
 }
 
 #endif
+
+} // namespace module_tddft

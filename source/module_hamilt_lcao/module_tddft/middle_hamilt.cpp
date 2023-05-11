@@ -6,6 +6,8 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 
+namespace module_tddft
+{
 #ifdef __MPI
 
 void half_Hmatrix(const Parallel_Orbitals* pv,
@@ -63,3 +65,4 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
     }
 }
 #endif
+} // namespace module_tddft
