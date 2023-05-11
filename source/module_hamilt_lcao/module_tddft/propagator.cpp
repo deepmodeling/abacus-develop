@@ -29,6 +29,7 @@ void Propagator::compute_propagator(const int nband,
                                     std::complex<double>* U_operator,
                                     const int print_matrix) const
 {
+    int tag;
     switch (ptype)
     {
     case 0:
@@ -36,7 +37,7 @@ void Propagator::compute_propagator(const int nband,
         break;
 
     case 1:
-        int tag = 1;
+        tag = 1;
         compute_propagator_taylor(nband, nlocal, Stmp, Htmp, U_operator, print_matrix, tag);
         break;
 
