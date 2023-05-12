@@ -40,7 +40,8 @@ class PotSurChem : public PotBase
                                               v_eff.nr,
                                               chg->rho,
                                               this->vlocal,
-                                              &GlobalC::sf);
+                                              &GlobalC::sf,
+                                              GlobalC::rhopw);
     }
 
   private:
