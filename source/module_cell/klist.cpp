@@ -600,7 +600,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bbrav);
-
+        
+        // the map of bravis lattice from real to reciprocal space
+        // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
         std::vector<int> ibrav_a2b{ 1, 3, 2, 4, 5, 6, 7, 8, 10, 9, 11, 12, 13, 14 };
         auto ibrav_match = [&](int ibrav_b) -> bool
         {
