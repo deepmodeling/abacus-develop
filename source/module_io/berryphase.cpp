@@ -402,7 +402,7 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 	for(int istring = 0; istring < total_string; istring++)
 	{
 		phik[istring] = stringPhase(istring,nbands, psi_in, rhopw, kv);
-		// 将相位转换成复数形式
+        // transfer phase to complex number
 		cphik[istring] = std::complex<double>(cos(phik[istring]),sin(phik[istring]));	
 		cave = cave + std::complex<double>(wistring[istring],0.0) * cphik[istring];
 		
