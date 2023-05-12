@@ -218,11 +218,11 @@ void UnitCell::print_cell_cif(const std::string& fn) const
     ofs << "_cell_angle_beta " << angle_beta << std::endl;
     ofs << "_cell_angle_gamma " << angle_gamma << std::endl;
     ofs << std::endl;
-    ofs << "_symmetry_space_group_name_H-M"
-        << " " << std::endl;
-    ofs << "_symmetry_Int_Tables_number"
-        << " " << std::endl;
-    ofs << std::endl;
+    // ofs << "_symmetry_space_group_name_H-M"
+    //     << " " << std::endl;
+    // ofs << "_symmetry_Int_Tables_number"
+    //     << " " << std::endl;
+    // ofs << std::endl;
     ofs << "loop_" << std::endl;
     ofs << "_atom_site_label" << std::endl;
     ofs << "_atom_site_fract_x" << std::endl;

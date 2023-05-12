@@ -86,7 +86,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
-        EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
+        EXPECT_DOUBLE_EQ(INPUT.stress_thr, 0.5);
         EXPECT_DOUBLE_EQ(INPUT.press1,0.0);
         EXPECT_DOUBLE_EQ(INPUT.press2,0.0);
         EXPECT_DOUBLE_EQ(INPUT.press3,0.0);
@@ -1450,17 +1450,21 @@ protected:
     void SetUp() 
 	{
         // create a temporary file for testing
-        tmpfile = std::tmpnam(nullptr);
+        char tmpname[] = "tmpfile.tmp";
+        int fd = mkstemp(tmpname);
+        tmpfile = tmpname;
         std::ofstream ofs(tmpfile);
         ofs << "1.0"; // valid input
         ofs.close();
     }
 
     void TearDown() override {
-        std::remove(tmpfile.c_str());
+        close(fd);
+        unlink(tmpfile.c_str());
     }
 
     std::string tmpfile;
+    int fd;
 };
 
 TEST_F(ReadKSpacingTest, ValidInputOneValue) {

@@ -7,7 +7,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nks,
 	const int &nband,
 	const double &ef,
-	const K_Vectors* kv,
+	const K_Vectors& kv,
 	const Parallel_Kpoints* Pkpoints,
 	const UnitCell* ucell,
 	const ModuleBase::matrix &ekb)
@@ -27,7 +27,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 		ofs.close();	
 	}
 
-	for(int ik=0; ik<kv->nkstot; ik++)
+	for(int ik=0; ik<kv.nkstot; ik++)
 	{
 		if ( GlobalV::MY_POOL == Pkpoints->whichpool[ik] )
 		{
@@ -60,7 +60,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 
 				const int ik_now = ik - Pkpoints->startk_pool[GlobalV::MY_POOL];
 				ofs << "ik= " << ik << std::endl;
-				ofs << kv->kvec_c[ik_now].x << " " << kv->kvec_c[ik_now].y << " " << kv->kvec_c[ik_now].z << std::endl;  
+				ofs << kv.kvec_c[ik_now].x << " " << kv.kvec_c[ik_now].y << " " << kv.kvec_c[ik_now].z << std::endl;  
 
 				for(int ib = 0; ib < nband; ib++)
 				{
@@ -69,7 +69,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 				ofs << std::endl;
 
 				// the last k point
-				if(ik==kv->nkstot-1)
+				if(ik==kv.nkstot-1)
 				{
 					ofs << " END_BANDGRID_3D" << std::endl;
 					ofs << " END_BLOCK_BANDGRID_3D" << std::endl;
