@@ -32,9 +32,9 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
             delmem_cd_op()(gpu_ctx, this->c_vkb);
         }
         else {
-            delmem_dd_op()(gpu_ctx, this->d_deeq);
             delmem_zd_op()(gpu_ctx, this->z_deeq_nc);
         }
+        delmem_dd_op()(gpu_ctx, this->d_deeq);
         delmem_zd_op()(gpu_ctx, this->z_vkb);
         delmem_dd_op()(gpu_ctx, this->d_tab);
         delmem_dd_op()(gpu_ctx, this->d_indv);
@@ -126,9 +126,9 @@ void pseudopot_cell_vnl::init(const int ntype,
                 resmem_cd_op()(gpu_ctx, c_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
             }
             else {
-                resmem_dd_op()(gpu_ctx, d_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
                 resmem_zd_op()(gpu_ctx, z_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
             }
+            resmem_dd_op()(gpu_ctx, d_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
             resmem_dd_op()(gpu_ctx, d_indv, ntype * this->nhm);
             resmem_dd_op()(gpu_ctx, d_nhtol, ntype * this->nhm);
             resmem_dd_op()(gpu_ctx, d_nhtolm, ntype * this->nhm);
@@ -142,9 +142,9 @@ void pseudopot_cell_vnl::init(const int ntype,
                 resmem_ch_op()(cpu_ctx, c_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm, "VNL::c_deeq_nc");
             }
             else {
-                this->d_deeq = this->deeq.ptr;
                 this->z_deeq_nc = this->deeq_nc.ptr;
             }
+            this->d_deeq = this->deeq.ptr;
             this->d_indv = this->indv.c;
             this->d_nhtol = this->nhtol.c;
             this->d_nhtolm = this->nhtolm.c;
@@ -952,9 +952,9 @@ void pseudopot_cell_vnl::cal_effective_D(void)
             castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_deeq_nc, this->deeq_nc.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
         }
         else {
-            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_deeq, this->deeq.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
             syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_deeq_nc, this->deeq_nc.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
         }
+        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_deeq, this->deeq.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
     }
     else {
         if (GlobalV::precision_flag == "single") {
