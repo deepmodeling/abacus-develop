@@ -36,9 +36,9 @@ void surchem::gauss_charge(const UnitCell& cell,
 }
 
 void surchem::cal_pseudo(const UnitCell& cell,
-                         ModulePW::PW_Basis* rho_basis,
+                         const ModulePW::PW_Basis* rho_basis,
                          const complex<double>* Porter_g,
-                         const complex<double>* PS_TOTN,
+                         complex<double>* PS_TOTN,
                          Structure_Factor* sf)
 {
     complex<double>* N = new complex<double>[rho_basis->npw];

@@ -35,7 +35,7 @@ void eps_pot(const double* PS_TOTN_real,
     double *phisq = new double[rho_basis->nrxx];
 
     // nabla phi
-    XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, GlobalC::ucell.tpiba);
+    XC_Functional::grad_rho(phi, nabla_phi, rho_basis, GlobalC::ucell.tpiba);
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {

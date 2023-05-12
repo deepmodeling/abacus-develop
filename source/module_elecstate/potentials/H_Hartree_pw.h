@@ -33,11 +33,11 @@ class H_Hartree_pw
 
     static void shape_gradn(const complex<double> *PS_TOTN, ModulePW::PW_Basis *rho_basis, double *eprime);
 
-    static void eps_pot(const complex<double> *PS_TOTN,
-                        const complex<double> *phi,
-                        ModulePW::PW_Basis *rho_basis,
-                        double *d_eps,
-                        double *vwork);
+    static void eps_pot(const complex<double>* PS_TOTN,
+                        const complex<double>* phi,
+                        const ModulePW::PW_Basis* rho_basis,
+                        double* d_eps,
+                        double* vwork);
 
     static void test_res(const UnitCell &ucell,
                          ModulePW::PW_Basis *rho_basis,
