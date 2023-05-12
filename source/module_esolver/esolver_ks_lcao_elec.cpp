@@ -572,14 +572,14 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(this->pelec->ekb, nullptr);
+            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, nullptr);
         }
 
         // add by jingan
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
-            bp.Macroscopic_polarization(this->psi);
+            bp.Macroscopic_polarization(this->psi, this->pw_rho);
         }
 
         //below is for DeePKS NSCF calculation

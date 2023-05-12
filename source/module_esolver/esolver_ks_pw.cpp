@@ -928,7 +928,7 @@ namespace ModuleESolver
         if(INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot,GlobalC::ucell.G);
-            myWannier.init_wannier(this->pelec->ekb, this->psi);
+            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->psi);
         }
 
         //=======================================================
@@ -938,7 +938,7 @@ namespace ModuleESolver
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp;
-            bp.Macroscopic_polarization(this->psi);
+            bp.Macroscopic_polarization(this->psi, this->pw_rho);
         }
 
         ModuleBase::timer::tick("ESolver_KS_PW","nscf");

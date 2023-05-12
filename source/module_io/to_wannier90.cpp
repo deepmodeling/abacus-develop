@@ -44,7 +44,9 @@ toWannier90::~toWannier90()
     delete[] tag_cal_band;
 }
 
-void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi)
+void toWannier90::init_wannier(const ModuleBase::matrix& ekb,
+                               ModulePW::PW_Basis* rhopw,
+                               const psi::Psi<std::complex<double>>* psi)
 {
     this->read_nnkp();
 
@@ -65,7 +67,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std
     {
         writeUNK(*psi);
         outEIG(ekb);
-        cal_Mmn(*psi);
+        cal_Mmn(*psi, rhopw);
         cal_Amn(*psi, GlobalC::wfcpw);
     }
 #ifdef __LCAO
@@ -73,7 +75,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std
     {
         getUnkFromLcao();
         cal_Amn(this->unk_inLcao[0], GlobalC::wfcpw);
-        cal_Mmn(this->unk_inLcao[0]);
+        cal_Mmn(this->unk_inLcao[0], rhopw);
         writeUNK(this->unk_inLcao[0]);
         outEIG(ekb);
     }
@@ -396,48 +398,48 @@ void toWannier90::writeUNK(const psi::Psi<std::complex<double>> &wfc_pw)
 
         std::ofstream unkfile(name.str());
 
-        unkfile << std::setw(12) << GlobalC::rhopw->nx << std::setw(12) << GlobalC::rhopw->ny << std::setw(12) <<
-   GlobalC::rhopw->nz << std::setw(12) << ik+1 << std::setw(12) << num_bands << std::endl;
+        unkfile << std::setw(12) << rhopw->nx << std::setw(12) << rhopw->ny << std::setw(12) <<
+   rhopw->nz << std::setw(12) << ik+1 << std::setw(12) << num_bands << std::endl;
 
         for(int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             if(!tag_cal_band[ib]) continue;
             //std::complex<double> *porter = GlobalC::UFFT.porter;
             //  u_k in real space
-            ModuleBase::GlobalFunc::ZEROS(porter, GlobalC::rhopw->nrxx);
+            ModuleBase::GlobalFunc::ZEROS(porter, rhopw->nrxx);
             for (int ig = 0; ig < GlobalC::kv.ngk[ik]; ig++)
             {
                 porter[sf.ig2fftw[GlobalC::wf.igk(ik, ig)]] = wfc_pw[ik](ib, ig);
             }
             sf.FFT_wfc.FFT3D(porter, 1);
 
-            for(int k=0; k<GlobalC::rhopw->nz; k++)
+            for(int k=0; k<rhopw->nz; k++)
             {
-                for(int j=0; j<GlobalC::rhopw->ny; j++)
+                for(int j=0; j<rhopw->ny; j++)
                 {
-                    for(int i=0; i<GlobalC::rhopw->nx; i++)
+                    for(int i=0; i<rhopw->nx; i++)
                     {
                         if(!gamma_only_wannier)
                         {
                             unkfile << std::setw(20) << std::setprecision(9) << std::setiosflags(ios::scientific) <<
-   porter[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k].real()
+   porter[i*rhopw->ny*rhopw->nz + j*rhopw->nz + k].real()
                                     << std::setw(20) << std::setprecision(9) << std::setiosflags(ios::scientific) <<
-   porter[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k].imag()
+   porter[i*rhopw->ny*rhopw->nz + j*rhopw->nz + k].imag()
                                     //jingan test
                                     //<< "       " << std::setw(12) << std::setprecision(9) <<
-   std::setiosflags(ios::scientific) << abs(porter[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k])
+   std::setiosflags(ios::scientific) << abs(porter[i*rhopw->ny*rhopw->nz + j*rhopw->nz + k])
                                     << std::endl;
                         }
                         else
                         {
                             double zero = 0.0;
                             unkfile << std::setw(20) << std::setprecision(9) << std::setiosflags(ios::scientific) <<
-   abs( porter[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k] )
+   abs( porter[i*rhopw->ny*rhopw->nz + j*rhopw->nz + k] )
                                     << std::setw(20) << std::setprecision(9) << std::setiosflags(ios::scientific) <<
    zero
                                     //jingan test
                                     //<< "       " << std::setw(12) << std::setprecision(9) <<
-   std::setiosflags(ios::scientific) << abs(porter[i*GlobalC::rhopw->ny*GlobalC::rhopw->nz + j*GlobalC::rhopw->nz + k])
+   std::setiosflags(ios::scientific) << abs(porter[i*rhopw->ny*rhopw->nz + j*rhopw->nz + k])
                                     << std::endl;
                         }
                     }
@@ -673,7 +675,7 @@ void toWannier90::cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW
     delete[] trial_orbitals;
 }
 
-void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw)
+void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& wfc_pw, ModulePW::PW_Basis* rhopw)
 {
     // test by jingan
     // GlobalV::ofs_running << __FILE__ << __LINE__ << " cal_num_kpts = " << cal_num_kpts << std::endl;
@@ -748,7 +750,7 @@ void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw)
                         // std::complex<double> *unk_L_r = new std::complex<double>[GlobalC::wfcpw->nrxx];
                         // ToRealSpace(cal_ik,n,wfc_pw,unk_L_r,phase_G);
                         // mmn = unkdotb(unk_L_r,cal_ikb,m,wfc_pw);
-                        mmn = unkdotkb(cal_ik, cal_ikb, n, m, phase_G, wfc_pw);
+                        mmn = unkdotkb(rhopw, cal_ik, cal_ikb, n, m, phase_G, wfc_pw);
                         // delete[] unk_L_r;
                     }
                     else
@@ -1590,22 +1592,23 @@ std::complex<double> toWannier90::unkdotb(const std::complex<double> *psir,
     return result;
 }
 */
-std::complex<double> toWannier90::unkdotkb(const int &ik,
-                                           const int &ikb,
-                                           const int &iband_L,
-                                           const int &iband_R,
+std::complex<double> toWannier90::unkdotkb(ModulePW::PW_Basis* rhopw,
+                                           const int& ik,
+                                           const int& ikb,
+                                           const int& iband_L,
+                                           const int& iband_R,
                                            const ModuleBase::Vector3<double> G,
-                                           const psi::Psi<std::complex<double>> &wfc_pw)
+                                           const psi::Psi<std::complex<double>>& wfc_pw)
 {
     // (1) set value
     std::complex<double> result(0.0, 0.0);
     std::complex<double> *psir = new std::complex<double>[GlobalC::wfcpw->nmaxgr];
-    std::complex<double> *phase = new std::complex<double>[GlobalC::rhopw->nmaxgr];
+    std::complex<double>* phase = new std::complex<double>[rhopw->nmaxgr];
 
     // get the phase value in realspace
-    for (int ig = 0; ig < GlobalC::rhopw->npw; ig++)
+    for (int ig = 0; ig < rhopw->npw; ig++)
     {
-        if (GlobalC::rhopw->gdirect[ig] == G) // It should be used carefully. We cannot judge if two double are equal.
+        if (rhopw->gdirect[ig] == G) // It should be used carefully. We cannot judge if two double are equal.
         {
             phase[ig] = std::complex<double>(1.0, 0.0);
             break;
@@ -1613,7 +1616,7 @@ std::complex<double> toWannier90::unkdotkb(const int &ik,
     }
 
     // (2) fft and get value
-    GlobalC::rhopw->recip2real(phase, phase);
+    rhopw->recip2real(phase, phase);
     GlobalC::wfcpw->recip2real(&wfc_pw(ik, iband_L, 0), psir, ik);
 
     for (int ir = 0; ir < GlobalC::wfcpw->nrxx; ir++)

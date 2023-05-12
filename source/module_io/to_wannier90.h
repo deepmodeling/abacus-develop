@@ -69,11 +69,11 @@ class toWannier90
     // void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell,
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
-    void init_wannier(const ModuleBase::matrix& ekb, const psi::Psi<std::complex<double>> *psi = nullptr);
+    void init_wannier(const ModuleBase::matrix& ekb, ModulePW::PW_Basis* rhopw, const psi::Psi<std::complex<double>> *psi = nullptr);
     void read_nnkp();
     void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis_K* wfc_basis);
-    void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw);
+    void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis* rhopw);
     void produce_trial_in_pw(const int &ik, ModulePW::PW_Basis_K *wfc_basis, ModuleBase::ComplexMatrix &trial_orbitals_k);
     void get_trial_orbitals_lm_k(const int wannier_index,
                                  const int orbital_L,
@@ -91,12 +91,13 @@ class toWannier90
     // void ToRealSpace(const int &ik, const int &ib, const ModuleBase::ComplexMatrix *evc, std::complex<double> *psir,
     // const ModuleBase::Vector3<double> G); std::complex<double> unkdotb(const std::complex<double> *psir, const int
     // ikb, const int bandindex, const ModuleBase::ComplexMatrix *wfc_pw);
-    std::complex<double> unkdotkb(const int &ik,
-                                  const int &ikb,
-                                  const int &iband_L,
-                                  const int &iband_R,
+    std::complex<double> unkdotkb(ModulePW::PW_Basis* rhopw,
+                                  const int& ik,
+                                  const int& ikb,
+                                  const int& iband_L,
+                                  const int& iband_R,
                                   const ModuleBase::Vector3<double> G,
-                                  const psi::Psi<std::complex<double>> &wfc_pw);
+                                  const psi::Psi<std::complex<double>>& wfc_pw);
     // std::complex<double> gamma_only_cal(const int &ib_L, const int &ib_R, const ModuleBase::ComplexMatrix *wfc_pw,
     // const ModuleBase::Vector3<double> G);
 

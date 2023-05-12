@@ -61,19 +61,23 @@ std::complex<double> unkOverlap_pw::unkdotp_G(const int ik_L, const int ik_R, co
 
 }
 
-
-
-std::complex<double> unkOverlap_pw::unkdotp_G0(const int ik_L, const int ik_R, const int iband_L, const int iband_R, const psi::Psi<std::complex<double>>* evc, const ModuleBase::Vector3<double> G)
+std::complex<double> unkOverlap_pw::unkdotp_G0(ModulePW::PW_Basis* rhopw,
+                                               const int ik_L,
+                                               const int ik_R,
+                                               const int iband_L,
+                                               const int iband_R,
+                                               const psi::Psi<std::complex<double>>* evc,
+                                               const ModuleBase::Vector3<double> G)
 {
 	// (1) set value
 	std::complex<double> result(0.0,0.0);
 	std::complex<double> *psi_r = new std::complex<double>[GlobalC::wfcpw->nmaxgr];
-	std::complex<double> *phase = new std::complex<double>[GlobalC::rhopw->nmaxgr];
+	std::complex<double> *phase = new std::complex<double>[rhopw->nmaxgr];
 	
 	// get the phase value in realspace
-	for (int ig = 0; ig < GlobalC::rhopw->npw; ig++)
+	for (int ig = 0; ig < rhopw->npw; ig++)
 	{
-		if (GlobalC::rhopw->gdirect[ig] == G)
+		if (rhopw->gdirect[ig] == G)
 		{
 			phase[ig] = std::complex<double>(1.0,0.0);
 			break;
@@ -81,10 +85,10 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const int ik_L, const int ik_R, c
 	}
 	
 	// (2) fft and get value
-	GlobalC::rhopw->recip2real(phase, phase);
+	rhopw->recip2real(phase, phase);
 	GlobalC::wfcpw->recip2real(&evc[0](ik_L, iband_L, 0), psi_r, ik_L);
 	
-	for (int ir = 0; ir < GlobalC::rhopw->npw; ir++)
+	for (int ir = 0; ir < rhopw->npw; ir++)
 	{
 		psi_r[ir] = psi_r[ir] * phase[ir];
 	}
@@ -166,19 +170,25 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R
 }
 
 //here G is in direct coordinate
-std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_R, const int iband_L, const int iband_R, const psi::Psi<std::complex<double>> *evc, const ModuleBase::Vector3<double> G)
+std::complex<double> unkOverlap_pw::unkdotp_soc_G0(ModulePW::PW_Basis* rhopw,
+                                                   const int ik_L,
+                                                   const int ik_R,
+                                                   const int iband_L,
+                                                   const int iband_R,
+                                                   const psi::Psi<std::complex<double>>* evc,
+                                                   const ModuleBase::Vector3<double> G)
 {
 	// (1) set value
 	std::complex<double> result(0.0,0.0);
-	std::complex<double> *phase =new std::complex<double>[GlobalC::rhopw->nmaxgr];
+	std::complex<double> *phase =new std::complex<double>[rhopw->nmaxgr];
 	std::complex<double> *psi_up = new std::complex<double>[GlobalC::wfcpw->nmaxgr];
 	std::complex<double> *psi_down = new std::complex<double>[GlobalC::wfcpw->nmaxgr];
 	const int npwx = GlobalC::wfcpw->npwk_max;
 
 	// get the phase value in realspace
-	for (int ig = 0; ig < GlobalC::rhopw->npw; ig++)
+	for (int ig = 0; ig < rhopw->npw; ig++)
 	{
-		if (GlobalC::rhopw->gdirect[ig] == G)
+		if (rhopw->gdirect[ig] == G)
 		{
 			phase[ig] = std::complex<double>(1.0,0.0);
 			break;
@@ -186,7 +196,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const int ik_L, const int ik_
 	}
 	
 	// (2) fft and get value
-	GlobalC::rhopw->recip2real(phase, phase);
+	rhopw->recip2real(phase, phase);
 	GlobalC::wfcpw->recip2real(&evc[0](ik_L,iband_L,0), psi_up, ik_L);
 	GlobalC::wfcpw->recip2real(&evc[0](ik_L,iband_L,npwx), psi_down, ik_L);
 
