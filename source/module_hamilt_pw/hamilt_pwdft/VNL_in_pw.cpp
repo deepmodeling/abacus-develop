@@ -33,13 +33,13 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
         }
         else {
             delmem_dd_op()(gpu_ctx, this->d_deeq);
-            delmem_dd_op()(gpu_ctx, this->d_nhtol);
-            delmem_dd_op()(gpu_ctx, this->d_nhtolm);
-            delmem_dd_op()(gpu_ctx, this->d_indv);
-            delmem_dd_op()(gpu_ctx, this->d_tab);
             delmem_zd_op()(gpu_ctx, this->z_deeq_nc);
-            delmem_zd_op()(gpu_ctx, this->z_vkb);
         }
+        delmem_zd_op()(gpu_ctx, this->z_vkb);
+        delmem_dd_op()(gpu_ctx, this->d_tab);
+        delmem_dd_op()(gpu_ctx, this->d_indv);
+        delmem_dd_op()(gpu_ctx, this->d_nhtol);
+        delmem_dd_op()(gpu_ctx, this->d_nhtolm);
     }
     else {
         if (GlobalV::precision_flag == "single") {
@@ -127,11 +127,11 @@ void pseudopot_cell_vnl::init(const int ntype,
             }
             else {
                 resmem_dd_op()(gpu_ctx, d_deeq, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
-                resmem_dd_op()(gpu_ctx, d_nhtol, ntype * this->nhm);
-                resmem_dd_op()(gpu_ctx, d_nhtolm, ntype * this->nhm);
-                resmem_dd_op()(gpu_ctx, d_indv, ntype * this->nhm);
                 resmem_zd_op()(gpu_ctx, z_deeq_nc, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
             }
+            resmem_dd_op()(gpu_ctx, d_indv, ntype * this->nhm);
+            resmem_dd_op()(gpu_ctx, d_nhtol, ntype * this->nhm);
+            resmem_dd_op()(gpu_ctx, d_nhtolm, ntype * this->nhm);
         }
         else {
             if (GlobalV::precision_flag == "single") {
@@ -143,11 +143,11 @@ void pseudopot_cell_vnl::init(const int ntype,
             }
             else {
                 this->d_deeq = this->deeq.ptr;
-                this->d_nhtol = this->nhtol.c;
-                this->d_nhtolm = this->nhtolm.c;
-                this->d_indv = this->indv.c;
                 this->z_deeq_nc = this->deeq_nc.ptr;
             }
+            this->d_indv = this->indv.c;
+            this->d_nhtol = this->nhtol.c;
+            this->d_nhtolm = this->nhtolm.c;
             // There's no need to delete double precision pointers while in a CPU environment.
         }
 		this->dvan.create(ntype, this->nhm, this->nhm);
@@ -212,20 +212,16 @@ void pseudopot_cell_vnl::init(const int ntype,
             resmem_sd_op()(gpu_ctx, s_tab, this->tab.getSize());
             resmem_cd_op()(gpu_ctx, c_vkb, nkb * npwx);
         }
-        else {
-            resmem_dd_op()(gpu_ctx, d_tab, this->tab.getSize());
-            resmem_zd_op()(gpu_ctx, z_vkb, nkb * npwx);
-        }
+        resmem_zd_op()(gpu_ctx, z_vkb, nkb * npwx);
+        resmem_dd_op()(gpu_ctx, d_tab, this->tab.getSize());
     }
     else {
         if (GlobalV::precision_flag == "single") {
             resmem_sh_op()(cpu_ctx, s_tab, this->tab.getSize());
             resmem_ch_op()(cpu_ctx, c_vkb, nkb * npwx);
         }
-        else {
-            this->d_tab = this->tab.ptr;
-            this->z_vkb = this->vkb.c;
-        }
+        this->z_vkb = this->vkb.c;
+        this->d_tab = this->tab.ptr;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
 
