@@ -37,7 +37,8 @@ class H_Hartree_pw
                         const complex<double> *phi,
                         ModulePW::PW_Basis *rho_basis,
                         double *d_eps,
-                        double *vwork);
+                        double *vwork,
+                        ModulePW::PW_Basis* rhopw);
 
     static void test_res(const UnitCell &ucell,
                          ModulePW::PW_Basis *rho_basis,

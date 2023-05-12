@@ -11,7 +11,8 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
                                          const int& nspin,
                                          const double* const* const rho,
                                          const double* vlocal,
-                                         Structure_Factor* sf)
+                                         Structure_Factor* sf,
+                                         ModulePW::PW_Basis* rhopw)
 {
     ModuleBase::TITLE("surchem", "v_correction");
     ModuleBase::timer::tick("surchem", "v_correction");
@@ -39,7 +40,7 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
 
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
 
-    v += cal_vel(cell, rho_basis, TOTN, PS_TOTN, nspin);
+    v += cal_vel(cell, rho_basis, TOTN, PS_TOTN, nspin, rhopw);
     v += cal_vcav(cell, rho_basis, PS_TOTN, nspin);
 
     delete[] Porter;
