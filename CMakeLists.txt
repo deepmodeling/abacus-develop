@@ -33,6 +33,31 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 # Do not use the new container by default.
 option(ENABLE_CONTAINER "Enable the new multi-device container." OFF)
+option(COMMIT_INFO "Print commit information" ON)
+
+#read version from VERSION file
+file(STRINGS "VERSION" VERSION)
+string(STRIP ${VERSION} VERSION)
+add_definitions("-DVERSION=\"${VERSION}\"")
+
+if(COMMIT_INFO)
+  # Get commit hash
+  execute_process(
+    COMMAND git log -1 --pretty=format:%h
+    OUTPUT_VARIABLE COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  # Get commit time
+  execute_process(
+    COMMAND bash -c "date -d @$(git log -1 --pretty=format:%ct) +\"%Y-%m-%d %H:%M:%S\""
+    OUTPUT_VARIABLE COMMIT_TIME
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  set(COMMIT "${COMMIT_HASH} (${COMMIT_TIME})")
+  add_definitions("-DCOMMIT=\"${COMMIT}\"")
+endif()
 
 if (NOT ENABLE_MPI)
   set (ENABLE_LCAO OFF)

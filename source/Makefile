@@ -46,6 +46,10 @@ else
     HONG += -Ofast -march=native -DNDEBUG
 endif
 
+VERSION := $(shell cat ../VERSION)
+VERSION := $(strip $(VERSION))
+HONG += -DVERSION=\"$(VERSION)\"
+
 ifeq ($(INTEL), ON)
     OPTS += -lifcore -simd -qopenmp
     ##==========================
