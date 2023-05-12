@@ -63,7 +63,8 @@ class surchem
                                ModulePW::PW_Basis* rho_basis,
                                complex<double>* TOTN,
                                complex<double>* PS_TOTN,
-                               int nspin);
+                               int nspin,
+                               ModulePW::PW_Basis* rhopw);
 
     double cal_Ael(const UnitCell& cell,
                    const int& nrxx,  // num. of real space grids on current core
@@ -99,7 +100,8 @@ class surchem
                                     const int& nspin,
                                     const double* const* const rho,
                                     const double* vlocal,
-                                    Structure_Factor* sf);
+                                    Structure_Factor* sf,
+                                    ModulePW::PW_Basis* rhopw);
 
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,
