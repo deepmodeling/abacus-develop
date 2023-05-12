@@ -1,15 +1,15 @@
 #ifndef SURCHEM_H
 #define SURCHEM_H
 
+#include "atom_in.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
-#include "module_cell/unitcell.h"
-#include "module_basis/module_pw/pw_basis.h"
 #include "module_base/parallel_reduce.h"
+#include "module_basis/module_pw/pw_basis.h"
+#include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "atom_in.h"
 
 class surchem
 {
@@ -17,9 +17,9 @@ class surchem
     surchem();
     ~surchem();
 
-    double *TOTN_real;
-    double *delta_phi;
-    double *epspot;
+    double* TOTN_real;
+    double* delta_phi;
+    double* epspot;
     ModuleBase::matrix Vcav;
     ModuleBase::matrix Vel;
     double qs;
@@ -27,21 +27,20 @@ class surchem
     // get atom info
     atom_in GetAtom;
 
-    //allocate memory and deallocate them
-    void allocate(const int &nrxx, const int &nspin);
+    // allocate memory and deallocate them
+    void allocate(const int& nrxx, const int& nspin);
+
     void clear();
 
-    void cal_epsilon(const ModulePW::PW_Basis* rho_basis,
-                     const double* PS_TOTN_real,
-                     double* epsilon,
-                     double* epsilon0);
+    void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
     void cal_pseudo(const UnitCell& cell,
                     const ModulePW::PW_Basis* rho_basis,
                     const complex<double>* Porter_g,
-                    complex<double>* PS_TOTN);
+                    complex<double>* PS_TOTN,
+                    Structure_Factor* sf);
 
-    void gauss_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* N);
+    void gauss_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* N, Structure_Factor* sf);
 
     void cal_totn(const UnitCell& cell,
                   const ModulePW::PW_Basis* rho_basis,
@@ -49,6 +48,7 @@ class surchem
                   complex<double>* N,
                   complex<double>* TOTN,
                   const double* vlocal);
+
     void createcavity(const UnitCell& ucell,
                       const ModulePW::PW_Basis* rho_basis,
                       const complex<double>* PS_TOTN,
@@ -65,14 +65,12 @@ class surchem
                                complex<double>* PS_TOTN,
                                int nspin);
 
-    double cal_Ael(const UnitCell &cell, 
-                   const int& nrxx, // num. of real space grids on current core
-                   const int& nxyz  // total num. of real space grids
-    );
+    double cal_Ael(const UnitCell& cell,
+                   const int& nrxx,  // num. of real space grids on current core
+                   const int& nxyz); // total num. of real space grids
 
-    double cal_Acav(const UnitCell &cell, 
-                    const int& nxyz   // total num. of real space grids
-    );
+    double cal_Acav(const UnitCell& cell,
+                    const int& nxyz); // total num. of real space grids
 
     void cal_Acomp(const UnitCell& cell,
                    const ModulePW::PW_Basis* rho_basis,
@@ -100,7 +98,8 @@ class surchem
                                     const ModulePW::PW_Basis* rho_basis,
                                     const int& nspin,
                                     const double* const* const rho,
-                                    const double* vlocal);
+                                    const double* vlocal,
+                                    Structure_Factor* sf);
 
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,
