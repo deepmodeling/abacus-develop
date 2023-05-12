@@ -334,7 +334,7 @@ namespace ModuleESolver
         // mohan update 2021-02-25
         if(!GlobalV::test_skip_ewald)
         {
-            H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
+            H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw, GlobalC::sf.strucFac);
         }
 
         p_hamilt->non_first_scf = istep;
