@@ -1,8 +1,12 @@
 #include "surchem.h"
 
-void surchem::cal_totn(const UnitCell &cell, ModulePW::PW_Basis* rho_basis,
-                       const complex<double> *Porter_g, complex<double> *N,
-                       complex<double> *TOTN, const double * vlocal) {
+void surchem::cal_totn(const UnitCell& cell,
+                       const ModulePW::PW_Basis* rho_basis,
+                       const complex<double>* Porter_g,
+                       complex<double>* N,
+                       complex<double>* TOTN,
+                       const double* vlocal)
+{
     // vloc to N
     complex<double> *vloc_g = new complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(vloc_g, rho_basis->npw);
@@ -29,7 +33,7 @@ void surchem::cal_totn(const UnitCell &cell, ModulePW::PW_Basis* rho_basis,
     return;
 }
 
-void surchem::induced_charge(const UnitCell &cell, ModulePW::PW_Basis* rho_basis, double *induced_rho) 
+void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho)
 {
     std::complex<double> *delta_phig = new complex<double>[rho_basis->npw];
     std::complex<double> *induced_rhog = new complex<double>[rho_basis->npw];

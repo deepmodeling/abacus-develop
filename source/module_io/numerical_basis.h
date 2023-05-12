@@ -42,13 +42,13 @@ class Numerical_Basis
     static std::vector<ModuleBase::IntArray> init_mu_index(void);
 
     void numerical_atomic_wfc(const int& ik,
-                              ModulePW::PW_Basis_K* wfc_basis,
+                              const ModulePW::PW_Basis_K* wfc_basis,
                               ModuleBase::ComplexMatrix& psi,
                               const Structure_Factor& sf);
 
     ModuleBase::ComplexArray cal_overlap_Q(const int& ik,
                                            const int& np,
-                                           ModulePW::PW_Basis_K* wfc_basis,
+                                           const ModulePW::PW_Basis_K* wfc_basis,
                                            const psi::Psi<std::complex<double>>& psi,
                                            const double derivative_order,
                                            const Structure_Factor& sf) const;
@@ -58,7 +58,7 @@ class Numerical_Basis
                                             const double derivative_order,
                                             const Structure_Factor& sf) const;
 
-    static ModuleBase::matrix cal_overlap_V(ModulePW::PW_Basis_K* wfc_basis,
+    static ModuleBase::matrix cal_overlap_V(const ModulePW::PW_Basis_K* wfc_basis,
                                             const psi::Psi<std::complex<double>>& psi,
                                             const double derivative_order,
                                             const K_Vectors& kv);

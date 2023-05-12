@@ -4,10 +4,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/wf_op.h"
 #include "module_psi/kernels/device.h"
 #include "structure_factor.h"
-std::complex<double> *Structure_Factor::get_sk(const int ik,
+std::complex<double>* Structure_Factor::get_sk(const int ik,
                                                const int it,
                                                const int ia,
-                                               ModulePW::PW_Basis_K *wfc_basis) const
+                                               const ModulePW::PW_Basis_K* wfc_basis) const
 {
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
     const double arg = (wfc_basis->kvec_c[ik] * GlobalC::ucell.atoms[it].tau[ia]) * ModuleBase::TWO_PI;
@@ -40,10 +40,10 @@ std::complex<double> *Structure_Factor::get_sk(const int ik,
 }
 
 template <typename FPTYPE, typename Device>
-void Structure_Factor::get_sk(Device *ctx,
+void Structure_Factor::get_sk(Device* ctx,
                               const int ik,
-                              ModulePW::PW_Basis_K *wfc_basis,
-                              std::complex<FPTYPE> *sk) const
+                              const ModulePW::PW_Basis_K* wfc_basis,
+                              std::complex<FPTYPE>* sk) const
 {
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
 
@@ -132,10 +132,10 @@ void Structure_Factor::get_sk(Device *ctx,
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
 }
 
-std::complex<double> *Structure_Factor::get_skq(int ik,
+std::complex<double>* Structure_Factor::get_skq(int ik,
                                                 const int it,
                                                 const int ia,
-                                                ModulePW::PW_Basis_K *wfc_basis,
+                                                const ModulePW::PW_Basis_K* wfc_basis,
                                                 ModuleBase::Vector3<double> q) // pengfei 2016-11-23
 {
     const int npw = wfc_basis->npwk[ik];
@@ -151,21 +151,21 @@ std::complex<double> *Structure_Factor::get_skq(int ik,
     return skq;
 }
 
-template void Structure_Factor::get_sk<float, psi::DEVICE_CPU>(psi::DEVICE_CPU *,
+template void Structure_Factor::get_sk<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
                                                                int,
-                                                               ModulePW::PW_Basis_K *,
-                                                               std::complex<float> *) const;
-template void Structure_Factor::get_sk<double, psi::DEVICE_CPU>(psi::DEVICE_CPU *,
+                                                               const ModulePW::PW_Basis_K*,
+                                                               std::complex<float>*) const;
+template void Structure_Factor::get_sk<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
                                                                 int,
-                                                                ModulePW::PW_Basis_K *,
-                                                                std::complex<double> *) const;
+                                                                const ModulePW::PW_Basis_K*,
+                                                                std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
-template void Structure_Factor::get_sk<float, psi::DEVICE_GPU>(psi::DEVICE_GPU *,
+template void Structure_Factor::get_sk<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
                                                                int,
-                                                               ModulePW::PW_Basis_K *,
-                                                               std::complex<float> *) const;
-template void Structure_Factor::get_sk<double, psi::DEVICE_GPU>(psi::DEVICE_GPU *,
+                                                               const ModulePW::PW_Basis_K*,
+                                                               std::complex<float>*) const;
+template void Structure_Factor::get_sk<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
                                                                 int,
-                                                                ModulePW::PW_Basis_K *,
-                                                                std::complex<double> *) const;
+                                                                const ModulePW::PW_Basis_K*,
+                                                                std::complex<double>*) const;
 #endif

@@ -13,9 +13,9 @@ public:
 	pseudopot_cell_vl();
 	~pseudopot_cell_vl();
 
-	void init_vloc(ModuleBase::matrix &vloc_in, ModulePW::PW_Basis* rho_basis);
+    void init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::PW_Basis* rho_basis);
 
-	ModuleBase::matrix vloc;   //(ntype,ngl),the local potential for each atom type(ntype,ngl)
+    ModuleBase::matrix vloc;   //(ntype,ngl),the local potential for each atom type(ntype,ngl)
 	bool *numeric; //[ntype], =true
 
 private:
@@ -25,11 +25,15 @@ private:
 	void allocate(const int ngg);
 
 	// generate vloc for a particular atom type.
-	void vloc_of_g( const int &msh, const double *rab, const double *r, const double *vloc_at,
-	               const double &zp, double *vloc, ModulePW::PW_Basis* rho_basis) const;
+    void vloc_of_g(const int& msh,
+                   const double* rab,
+                   const double* r,
+                   const double* vloc_at,
+                   const double& zp,
+                   double* vloc,
+                   const ModulePW::PW_Basis* rho_basis) const;
 
-	void print_vloc(ModulePW::PW_Basis* rho_basis) const;
-
+    void print_vloc(const ModulePW::PW_Basis* rho_basis) const;
 };
 
 #endif // VL_IN_PW 

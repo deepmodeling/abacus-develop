@@ -156,7 +156,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
 
 ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
                                                         const int& np,
-                                                        ModulePW::PW_Basis_K* wfc_basis,
+                                                        const ModulePW::PW_Basis_K* wfc_basis,
                                                         const psi::Psi<std::complex<double>>& psi,
                                                         const double derivative_order,
                                                         const Structure_Factor& sf) const
@@ -352,7 +352,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
 }
 
 // Peize Lin add for dpsi 2020.04.23
-ModuleBase::matrix Numerical_Basis::cal_overlap_V(ModulePW::PW_Basis_K* wfc_basis,
+ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wfc_basis,
                                                   const psi::Psi<std::complex<double>>& psi,
                                                   const double derivative_order,
                                                   const K_Vectors& kv)
@@ -454,7 +454,7 @@ std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
 }
 
 void Numerical_Basis::numerical_atomic_wfc(const int& ik,
-                                           ModulePW::PW_Basis_K* wfc_basis,
+                                           const ModulePW::PW_Basis_K* wfc_basis,
                                            ModuleBase::ComplexMatrix& psi,
                                            const Structure_Factor& sf)
 {
