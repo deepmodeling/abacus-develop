@@ -15,7 +15,7 @@ void shape_gradn(const double *PS_TOTN_real, ModulePW::PW_Basis* rho_basis, doub
     }
 }
 
-void eps_pot(const double *PS_TOTN_real, const complex<double> *phi, ModulePW::PW_Basis* rho_basis, double *d_eps, double *vwork)
+void eps_pot(const double *PS_TOTN_real, const complex<double> *phi, ModulePW::PW_Basis* rho_basis, double *d_eps, double *vwork, ModulePW::PW_Basis* rhopw)
 {
     double *eprime = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(eprime, rho_basis->nrxx);
@@ -31,7 +31,7 @@ void eps_pot(const double *PS_TOTN_real, const complex<double> *phi, ModulePW::P
     double *phisq = new double[rho_basis->nrxx];
 
     // nabla phi
-    XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, GlobalC::ucell.tpiba);
+    XC_Functional::grad_rho(phi, nabla_phi, rhopw, GlobalC::ucell.tpiba);
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -52,7 +52,8 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
                                     ModulePW::PW_Basis* rho_basis,
                                     complex<double> *TOTN,
                                     complex<double> *PS_TOTN,
-                                    int nspin)
+                                    int nspin,
+                                    ModulePW::PW_Basis* rhopw)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
     ModuleBase::timer::tick("surchem", "cal_vel");
@@ -107,7 +108,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
     // double Ael = cal_Ael(cell, pwb);
 
     // the 2nd item of tmp_Vel
-    eps_pot(PS_TOTN_real, Sol_phi, rho_basis, epsilon, epspot);
+    eps_pot(PS_TOTN_real, Sol_phi, rho_basis, epsilon, epspot, rhopw);
 
     for (int i = 0; i < rho_basis->nrxx; i++)
     {
