@@ -920,7 +920,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // ModuleBase::ComplexMatrix vkb1(nkb, this->npwx);
     resmem_complex_op()(this->ctx, vkb1, this->npwx * nkb, "Force::vkb1");
     // init additional params
-    FPTYPE *force = nullptr, *d_wg = nullptr, *gcar = nullptr, *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
+    FPTYPE *force = nullptr;
+    FPTYPE *d_wg = nullptr;
+    FPTYPE *gcar = nullptr;
+    auto *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
     int wg_nc = wg.nc;
     int *atom_nh = nullptr, *atom_na = nullptr;
     int* h_atom_nh = new int[GlobalC::ucell.ntype];
