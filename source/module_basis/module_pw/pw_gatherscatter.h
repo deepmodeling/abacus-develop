@@ -4,13 +4,15 @@
 #include "typeinfo"
 namespace ModulePW
 {
-/// 
-/// in: (nplane,fftny,fftnx) out:(nz,nst)
-/// in and out should be in different places 
-/// in[] will be changed
-/// 
-template<typename T>
-void PW_Basis:: gatherp_scatters(std::complex<T> *in, std::complex<T> *out)
+/**
+ * @brief gather planes and scatter sticks
+ * @param in: (nplane,fftny,fftnx)
+ * @param out: (nz,nst)
+ * @note in and out should be in different places
+ * @note in[] will be changed
+ */
+template <typename T>
+void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
     ModuleBase::timer::tick(this->classname, "gatherp_scatters");
     
@@ -82,13 +84,15 @@ void PW_Basis:: gatherp_scatters(std::complex<T> *in, std::complex<T> *out)
     return;
 }
 
-/// 
-/// in: (nz,nst) out:(nplane,fftny,fftnx)
-/// in and out should be in different places 
-/// in[] will be changed
-/// 
-template<typename T>
-void PW_Basis:: gathers_scatterp(std::complex<T> *in, std::complex<T> *out)
+/**
+ * @brief gather sticks and scatter planes
+ * @param in: (nz,nst)
+ * @param out: (nplane,fftny,fftnx)
+ * @note in and out should be in different places
+ * @note in[] will be changed
+ */
+template <typename T>
+void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
     ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     

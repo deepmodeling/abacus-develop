@@ -13,7 +13,7 @@ double H_Ewald_pw::ewald_energy=0.0;
 H_Ewald_pw::H_Ewald_pw(){};
 H_Ewald_pw::~H_Ewald_pw(){};
 
-void H_Ewald_pw::compute_ewald(const UnitCell& cell, ModulePW::PW_Basis* rho_basis, const ModuleBase::ComplexMatrix& strucFac)
+void H_Ewald_pw::compute_ewald(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, const ModuleBase::ComplexMatrix& strucFac)
 {
     ModuleBase::TITLE("H_Ewald_pw","compute_ewald");
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");

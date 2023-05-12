@@ -34,11 +34,11 @@ public:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 
-    void set_pw_wfc(ModulePW::PW_Basis_K* wfc_basis,
-        const int& ik, const int& ib,
-        const int& nspin,
-        const double* const* const rho,
-        psi::Psi<std::complex<double>> &wfc_g);
-
+    void set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
+                    const int& ik,
+                    const int& ib,
+                    const int& nspin,
+                    const double* const* const rho,
+                    psi::Psi<std::complex<double>>& wfc_g);
 };
 #endif

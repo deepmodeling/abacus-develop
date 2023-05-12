@@ -53,11 +53,9 @@ void Structure_Factor::set
     return;
 }
 
-
-
-
+// Peize Lin optimize and add OpenMP 2021.04.01
 //  Calculate structure factor
-void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basis* rho_basis)			// Peize Lin optimize and add OpenMP 2021.04.01
+void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("PW_Basis","setup_structure_factor");
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor");
@@ -202,7 +200,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
 //    1. Use "r2c" fft
 //    2. Add parallel algorithm for fftw or na loop
 //
-void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
 {
     double *r = new double [rho_basis->nxyz]; 
     double *tmpr = new double[rho_basis->nrxx];

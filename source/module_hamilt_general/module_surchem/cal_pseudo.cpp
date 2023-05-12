@@ -4,7 +4,7 @@
 // atom_in surchem::GetAtom;
 
 void surchem::gauss_charge(const UnitCell& cell,
-                           ModulePW::PW_Basis* rho_basis,
+                           const ModulePW::PW_Basis* rho_basis,
                            complex<double>* N,
                            Structure_Factor* sf)
 {
@@ -36,7 +36,7 @@ void surchem::gauss_charge(const UnitCell& cell,
 }
 
 void surchem::cal_pseudo(const UnitCell& cell,
-                         ModulePW::PW_Basis* rho_basis,
+                         const ModulePW::PW_Basis* rho_basis,
                          const complex<double>* Porter_g,
                          complex<double>* PS_TOTN,
                          Structure_Factor* sf)
