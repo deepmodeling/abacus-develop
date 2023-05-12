@@ -295,7 +295,7 @@ namespace ModuleESolver
         //calculate ewald energy
         if(!GlobalV::test_skip_ewald)
         {
-            H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
+            H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw, GlobalC::sf.strucFac);
         }
 
         //=========================================================

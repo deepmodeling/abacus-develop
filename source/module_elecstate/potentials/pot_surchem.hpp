@@ -39,7 +39,8 @@ class PotSurChem : public PotBase
                                               const_cast<ModulePW::PW_Basis*>(this->rho_basis_),
                                               v_eff.nr,
                                               chg->rho,
-                                              this->vlocal);
+                                              this->vlocal,
+                                              &GlobalC::sf);
     }
 
   private:
