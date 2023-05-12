@@ -92,7 +92,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
-        EXPECT_DOUBLE_EQ(INPUT.stress_thr,1.0e-2);
+        EXPECT_DOUBLE_EQ(INPUT.stress_thr, 0.5);
         EXPECT_DOUBLE_EQ(INPUT.press1,0.0);
         EXPECT_DOUBLE_EQ(INPUT.press2,0.0);
         EXPECT_DOUBLE_EQ(INPUT.press3,0.0);

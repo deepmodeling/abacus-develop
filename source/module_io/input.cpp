@@ -192,7 +192,7 @@ void Input::Default(void)
     cal_force = 0;
     force_thr = 1.0e-3;
     force_thr_ev2 = 0;
-    stress_thr = 1.0e-2; // LiuXh add 20180515
+    stress_thr = 0.5; // LiuXh add 20180515 liuyu update 2023-05-10
     press1 = 0.0;
     press2 = 0.0;
     press3 = 0.0;
