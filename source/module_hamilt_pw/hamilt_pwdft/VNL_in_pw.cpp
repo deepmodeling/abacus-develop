@@ -60,8 +60,8 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 // allocate vkb, GlobalV::NQX, tab, tab_at
 //-----------------------------------
 void pseudopot_cell_vnl::init(const int ntype,
-                              Structure_Factor *psf_in,
-                              ModulePW::PW_Basis_K *wfc_basis,
+                              Structure_Factor* psf_in,
+                              const ModulePW::PW_Basis_K* wfc_basis,
                               const bool allocate_vkb)
 {
 	ModuleBase::TITLE("pseudopot_cell_vnl", "init");
