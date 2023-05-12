@@ -120,7 +120,12 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(ModulePW::PW_Basis* rhopw,
 }
 
 // if noncollinear = 1 or GlobalV::NSPIN = 4 , you need this routine to calculate overlap unk
-std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R, const int iband_L, const int iband_R, const psi::Psi<std::complex<double>> *evc)
+std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L,
+                                                  const int ik_R,
+                                                  const int iband_L,
+                                                  const int iband_R,
+		              const int npwx,
+                                                  const psi::Psi<std::complex<double>>* evc)
 {
 	
 	std::complex<double> result(0.0,0.0);
@@ -134,12 +139,12 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const int ik_L, const int ik_R
 	{
 		for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
 		{
-			unk_L[GlobalC::wfcpw->getigl2ig(ik_L,igl)+i*number_pw] = evc[0](ik_L, iband_L, igl+i*GlobalC::wf.npwx);
+			unk_L[GlobalC::wfcpw->getigl2ig(ik_L,igl)+i*number_pw] = evc[0](ik_L, iband_L, igl+i*npwx);
 		}
 	
 		for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
 		{
-			unk_R[GlobalC::wfcpw->getigl2ig(ik_L,igl)+i*number_pw] = evc[0](ik_R, iband_R, igl+i*GlobalC::wf.npwx);
+			unk_R[GlobalC::wfcpw->getigl2ig(ik_L,igl)+i*number_pw] = evc[0](ik_R, iband_R, igl+i*npwx);
 		}
 
 	}

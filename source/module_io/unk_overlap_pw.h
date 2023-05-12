@@ -37,6 +37,7 @@ class unkOverlap_pw
                                        const int ik_R,
                                        const int iband_L,
                                        const int iband_R,
+                                       const int npwx,
                                        const psi::Psi<std::complex<double>>* evc);
     std::complex<double> unkdotp_soc_G0(ModulePW::PW_Basis* rhopw,
                                         const int ik_L,

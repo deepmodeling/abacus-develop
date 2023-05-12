@@ -72,6 +72,7 @@ class toWannier90
 
     void init_wannier(const ModuleBase::matrix& ekb,
                       ModulePW::PW_Basis* rhopw,
+                      ModulePW::PW_Basis_K* wfcpw,
                       const K_Vectors& kv,
                       const psi::Psi<std::complex<double>>* psi = nullptr
                       );
@@ -93,6 +94,7 @@ class toWannier90
                                  const int mesh_r,
                                  ModuleBase::Vector3<double> *gk,
                                  const int npw,
+                                 const int npwx,
                                  ModuleBase::ComplexMatrix &trial_orbitals_k);
     void integral(const int meshr, const double *psir, const double *r, const double *rab, const int &l, double *table);
     void writeUNK(const psi::Psi<std::complex<double>> &wfc_pw);
@@ -110,7 +112,7 @@ class toWannier90
     // const ModuleBase::Vector3<double> G);
 
     void lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital_in_G);
-    void getUnkFromLcao(const K_Vectors& kv);
+    void getUnkFromLcao(const K_Vectors& kv, const int npwx);
     void get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc);
 
   private:
