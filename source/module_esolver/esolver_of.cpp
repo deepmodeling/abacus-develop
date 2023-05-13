@@ -301,7 +301,7 @@ void ESolver_OF::beforeOpt(const int istep)
     this->pelec->init_scf(istep, GlobalC::sf.strucFac);
 
     //calculate ewald energy
-    this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho);
+    this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, GlobalC::sf.strucFac);
 
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)

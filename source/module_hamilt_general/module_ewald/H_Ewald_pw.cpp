@@ -11,7 +11,9 @@ int H_Ewald_pw::mxr = 200;
 H_Ewald_pw::H_Ewald_pw(){};
 H_Ewald_pw::~H_Ewald_pw(){};
 
-double H_Ewald_pw::compute_ewald(const UnitCell& cell, ModulePW::PW_Basis* rho_basis)
+double H_Ewald_pw::compute_ewald(const UnitCell& cell,
+                                 const ModulePW::PW_Basis* rho_basis,
+                                 const ModuleBase::ComplexMatrix& strucFac)
 {
     ModuleBase::TITLE("H_Ewald_pw","compute_ewald");
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
@@ -112,7 +114,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell, ModulePW::PW_Basis* rho_b
         std::complex<double> rhon = ModuleBase::ZERO;
         for (int it=0; it<cell.ntype; it++)
         {
-            rhon += static_cast<double>( cell.atoms[it].ncpp.zv ) * conj( GlobalC::sf.strucFac(it, ig));
+            rhon += static_cast<double>(cell.atoms[it].ncpp.zv) * conj(strucFac(it, ig));
         }
         ewaldg += fact * abs(rhon) * abs(rhon)
                   * exp(- rho_basis->gg[ig] * cell.tpiba2 / alpha / 4.0 ) / rho_basis->gg[ig] / cell.tpiba2;

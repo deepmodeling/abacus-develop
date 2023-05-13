@@ -203,14 +203,21 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
 
     if (GlobalV::md_prec_level == 2)
     {
-        delete this->pelec;  
-        this->pelec = new elecstate::ElecStateLCAO(&(chr), &(GlobalC::kv), GlobalC::kv.nks, &(this->LOC), &(this->UHM), &(this->LOWF), this->pw_rho, GlobalC::bigpw);
+        delete this->pelec;
+        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+                                                   &(GlobalC::kv),
+                                                   GlobalC::kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF),
+                                                   this->pw_rho,
+                                                   GlobalC::bigpw);
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);
 
-        if(this->pelec->pot != nullptr)
+        if (this->pelec->pot != nullptr)
         {
             delete this->pelec->pot;
             this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
@@ -282,7 +289,7 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, &(GlobalC::kv), &(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
     }
 
     int nspin0 = 1;
@@ -312,7 +319,7 @@ void ESolver_KS_LCAO::postprocess()
                                 GlobalV::NBANDS,
                                 0.0,
                                 this->pelec->ekb,
-                                &(GlobalC::kv),
+                                GlobalC::kv,
                                 &(GlobalC::Pkpoints));
         }
     } // out_band
@@ -323,7 +330,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->psi,
                                        this->UHM,
                                        this->pelec,
-                                       &(GlobalC::kv),
+                                       GlobalC::kv,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
                                        GlobalC::GridD);
@@ -338,7 +345,8 @@ void ESolver_KS_LCAO::postprocess()
                                  this->pelec->wg,
                                  INPUT.dos_edelta_ev,
                                  INPUT.dos_scale,
-                                 INPUT.dos_sigma);
+                                 INPUT.dos_sigma,
+                                 GlobalC::kv);
 
         if (INPUT.out_dos == 3)
         {
@@ -350,7 +358,7 @@ void ESolver_KS_LCAO::postprocess()
                                              GlobalC::kv.nks,
                                              GlobalV::NBANDS,
                                              this->pelec->eferm.ef,
-                                             &(GlobalC::kv),
+                                             GlobalC::kv,
                                              &(GlobalC::Pkpoints),
                                              &(GlobalC::ucell),
                                              this->pelec->ekb);
@@ -635,14 +643,17 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz, this->pelec->charge->rho, this->pelec->nelec_spin.data());
+    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
+                                                this->pelec->charge->nxyz,
+                                                this->pelec->charge->rho,
+                                                this->pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 {
-    //print Hamiltonian and Overlap matrix
+    // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO::out_mat_hs)
@@ -651,7 +662,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
         }
         for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
         {
-            if(hsolver::HSolverLCAO::out_mat_hs) 
+            if (hsolver::HSolverLCAO::out_mat_hs)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -670,7 +681,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     1); // LiuXh, 2017-03-21
             }
             else if (this->psid != nullptr)
-            {//gamma_only case, Hloc and Sloc are correct H and S matrix
+            { // gamma_only case, Hloc and Sloc are correct H and S matrix
                 ModuleIO::saving_HS(this->LM.Hloc.data(),
                                     this->LM.Sloc.data(),
                                     bit,
@@ -890,7 +901,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 &(GlobalC::ucell),
                 precision);
         }
-        if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
@@ -996,12 +1007,12 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
         this->pelec->pot->write_elecstat_pot(
 #ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
+            GlobalC::bigpw->bz,
+            GlobalC::bigpw->nbz,
 #endif
-                ssp.str(),
-                this->pw_rho,
-                pelec->charge); // output 'Hartree + local pseudopot'
+            ssp.str(),
+            this->pw_rho,
+            pelec->charge); // output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)
@@ -1093,7 +1104,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                     GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat, nks);
                     GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *this->LOWF.ParaV);
                     GlobalC::ld.save_npy_o(deepks_bands - GlobalC::ld.o_delta, "o_base.npy", nks);
-                } // end deepks_scf gamma-only;
+                }    // end deepks_scf gamma-only;
                 else // multi-k bandgap label
                 {
                     wg_hl.create(GlobalC::kv.nks, GlobalV::NBANDS);
@@ -1125,13 +1136,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                     GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *this->LOWF.ParaV, GlobalC::kv.nks);
                     GlobalC::ld.save_npy_o(deepks_bands - GlobalC::ld.o_delta, "o_base.npy", nks);
                 } // end deepks_scf multi-k
-            } // end deepks_scf == 1
-            else // deepks_scf == 0
+            }     // end deepks_scf == 1
+            else  // deepks_scf == 0
             {
                 GlobalC::ld.save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
-            } // end deepks_scf == 0
-        } // end bandgap label
-    } // end deepks_out_labels
+            }                                                            // end deepks_scf == 0
+        }                                                                // end bandgap label
+    }                                                                    // end deepks_out_labels
 
     // 3. DeePKS PDM and descriptor
     const Parallel_Orbitals* pv = this->LOWF.ParaV;
@@ -1160,7 +1171,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                                            GlobalC::kv.kvec_d);
         }
         GlobalC::ld.check_projected_dm(); // print out the projected dm for NSCF calculaiton
-        GlobalC::ld.cal_descriptor(); // final descriptor
+        GlobalC::ld.cal_descriptor();     // final descriptor
         GlobalC::ld.check_descriptor(GlobalC::ucell);
 
         if (GlobalV::deepks_out_labels)
@@ -1206,8 +1217,11 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
-        } // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
+        }                                       // LiuXh add 2019-07-15
     }
 
     if (hsolver::HSolverLCAO::out_mat_t)
@@ -1215,15 +1229,18 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
             ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
-        } // LiuXh add 2019-07-15
+        }                                           // LiuXh add 2019-07-15
     }
 
     if (hsolver::HSolverLCAO::out_mat_dh)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
-        } // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
+        }                                       // LiuXh add 2019-07-15
     }
 
     // add by jingan for out r_R matrix 2019.8.14
@@ -1247,7 +1264,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC);
+            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, GlobalC::kv);
         }
     } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 

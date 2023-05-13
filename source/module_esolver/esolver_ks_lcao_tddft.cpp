@@ -546,7 +546,10 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     {
         if (hsolver::HSolverLCAO::out_mat_hsR)
         {
-            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         }
 
         if (hsolver::HSolverLCAO::out_mat_t)
@@ -556,7 +559,10 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
         if (hsolver::HSolverLCAO::out_mat_dh)
         {
-            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         }
 
         // add by jingan for out r_R matrix 2019.8.14

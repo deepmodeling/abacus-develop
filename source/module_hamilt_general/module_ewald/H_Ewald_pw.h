@@ -15,7 +15,9 @@ class H_Ewald_pw
     ~H_Ewald_pw();
 
     // compute the Ewald energy
-    static double compute_ewald(const UnitCell& cell, ModulePW::PW_Basis* rho_basis);
+    static double compute_ewald(const UnitCell& cell,
+                                const ModulePW::PW_Basis* rho_basis,
+                                const ModuleBase::ComplexMatrix& strucFac);
 
   public:
     static void rgen(

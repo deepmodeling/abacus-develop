@@ -23,27 +23,36 @@ template<typename FPTYPE, typename Device>
 class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
     public:
-    Meta(FPTYPE tpiba2_in, const int* isk_in, const FPTYPE* vk_in, const int vk_row, const int vk_col, ModulePW::PW_Basis_K* wfcpw);
+      Meta(FPTYPE tpiba2_in,
+           const int* isk_in,
+           const FPTYPE* vk_in,
+           const int vk_row,
+           const int vk_col,
+           const ModulePW::PW_Basis_K* wfcpw);
 
-    template<typename T_in, typename Device_in = Device>
-    explicit Meta(const Meta<OperatorPW<T_in, Device_in>>* meta);
+      template <typename T_in, typename Device_in = Device>
+      explicit Meta(const Meta<OperatorPW<T_in, Device_in>>* meta);
 
-    virtual ~Meta();
+      virtual ~Meta();
 
-    virtual void act(
-        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-        const int n_npwx, 
-        const std::complex<FPTYPE>* tmpsi_in, 
-        std::complex<FPTYPE>* tmhpsi
-    )const override;
+      virtual void act(const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+                       const int n_npwx,
+                       const std::complex<FPTYPE>* tmpsi_in,
+                       std::complex<FPTYPE>* tmhpsi) const override;
 
-    // denghui added for copy constructor at 20221105
-    FPTYPE get_tpiba() const {return this->tpiba;}
+      // denghui added for copy constructor at 20221105
+      FPTYPE get_tpiba() const
+      {
+          return this->tpiba;
+      }
     const int * get_isk() const {return this->isk;}
     const FPTYPE* get_vk() const {return this->vk;}
     int get_vk_row() const {return this->vk_row;}
     int get_vk_col() const {return this->vk_col;}
-    ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
+    const ModulePW::PW_Basis_K* get_wfcpw() const
+    {
+          return this->wfcpw;
+    }
 
     private:
 
@@ -60,7 +69,7 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     const FPTYPE * vk = nullptr;
 
-    ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};

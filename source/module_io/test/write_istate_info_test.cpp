@@ -66,7 +66,7 @@ TEST_F(IstateInfoTest,OutIstateInfoS1)
 		kd.set(0.01*i,0.01*i,0.01*i);
 		++i;
 	}
-	ModuleIO::write_istate_info(ekb,wg,kv,Pkpoints);
+	ModuleIO::write_istate_info(ekb,wg,*kv,Pkpoints);
 	std::ifstream ifs;
 	ifs.open("istate.info");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
@@ -103,7 +103,7 @@ TEST_F(IstateInfoTest,OutIstateInfoS2)
 		kd.set(0.01*i,0.01*i,0.01*i);
 		++i;
 	}
-	ModuleIO::write_istate_info(ekb,wg,kv,Pkpoints);
+	ModuleIO::write_istate_info(ekb,wg,*kv,Pkpoints);
 	std::ifstream ifs;
 	ifs.open("istate.info");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());

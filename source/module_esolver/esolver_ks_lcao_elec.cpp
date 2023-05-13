@@ -334,7 +334,8 @@ namespace ModuleESolver
         // mohan update 2021-02-25
         if(!GlobalV::test_skip_ewald)
         {
-            this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw);
+            this->pelec->f_en.ewald_energy
+                = H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw, GlobalC::sf.strucFac);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -400,9 +401,14 @@ namespace ModuleESolver
         {
             IState_Envelope IEP(this->pelec);
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                IEP.begin(this->psid, this->LOWF, this->UHM.GG, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r);
+                IEP.begin(this->psid,
+                          this->LOWF,
+                          this->UHM.GG,
+                          INPUT.out_wfc_pw,
+                          GlobalC::wf.out_wfc_r,
+                          GlobalC::kv);
             else
-                IEP.begin(this->psi, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r);
+                IEP.begin(this->psi, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
         }
         else
         {
@@ -569,14 +575,14 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(this->pelec->ekb, nullptr);
+            myWannier.init_wannier(this->pelec->ekb, GlobalC::kv, nullptr);
         }
 
         // add by jingan
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
-            bp.Macroscopic_polarization(this->psi);
+            bp.Macroscopic_polarization(this->psi,GlobalC::kv);
         }
 
         //below is for DeePKS NSCF calculation
