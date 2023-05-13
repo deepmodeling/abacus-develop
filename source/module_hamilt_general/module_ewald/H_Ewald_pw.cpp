@@ -8,12 +8,10 @@
 
 double H_Ewald_pw::alpha=0.0;
 int H_Ewald_pw::mxr = 200;
-double H_Ewald_pw::ewald_energy=0.0;
-
 H_Ewald_pw::H_Ewald_pw(){};
 H_Ewald_pw::~H_Ewald_pw(){};
 
-void H_Ewald_pw::compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_basis)
+double H_Ewald_pw::compute_ewald(const UnitCell& cell, ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("H_Ewald_pw","compute_ewald");
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
@@ -195,11 +193,8 @@ void H_Ewald_pw::compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_bas
     delete[] r;
     delete[] r2;
 
-	// set the Ewald energy, mohan add 2021-02-25
-	H_Ewald_pw::ewald_energy = ewalds; 
-
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
-    return;
+    return ewalds;
 } // end function ewald
 
 

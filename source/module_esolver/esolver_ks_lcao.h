@@ -20,7 +20,7 @@ namespace ModuleESolver
         void Init(Input& inp, UnitCell& cell) override;
         void init_after_vc(Input& inp, UnitCell& cell) override;
 
-        void cal_Energy(double& etot) override;
+        double cal_Energy() override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
         void postprocess() override;

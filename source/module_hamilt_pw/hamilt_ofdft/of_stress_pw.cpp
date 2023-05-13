@@ -69,7 +69,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
-        sigmaxc(i, i) = -(GlobalC::en.etxc - GlobalC::en.vtxc) / ucell.omega;
+        sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
 

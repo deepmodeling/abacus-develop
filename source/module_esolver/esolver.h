@@ -1,10 +1,9 @@
 #ifndef ESOLVER_H
 #define ESOLVER_H
 
-#include "module_io/input.h"
-#include "module_cell/unitcell.h"
-#include "module_elecstate/energy.h"
 #include "module_base/matrix.h"
+#include "module_cell/unitcell.h"
+#include "module_io/input.h"
 //--------------temporary----------------------------
 #include "module_psi/psi.h"
 
@@ -46,7 +45,7 @@ namespace ModuleESolver
         // such as nscf, istate-charge or envelope
         virtual void othercalculation(const int istep) {};
 
-        virtual void cal_Energy(double& etot) = 0;
+        virtual double cal_Energy() = 0;
         virtual void cal_Force(ModuleBase::matrix& force) = 0;
         virtual void cal_Stress(ModuleBase::matrix& stress) = 0;
         virtual void postprocess() {};

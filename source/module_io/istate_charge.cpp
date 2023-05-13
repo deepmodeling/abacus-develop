@@ -141,25 +141,25 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec)
 			for(int is=0; is<GlobalV::NSPIN; is++)
 			{
 				ssc<<"_SPIN"<<is<<"_CHG.cube";
-				double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-				ModuleIO::write_rho(
+                const double ef_tmp = pelec->eferm.get_efval(is);
+                ModuleIO::write_rho(
 #ifdef __MPI
-				    GlobalC::bigpw->bz,
-				    GlobalC::bigpw->nbz,
-				    GlobalC::rhopw->nplane,
-				    GlobalC::rhopw->startz_current,
+                    GlobalC::bigpw->bz,
+                    GlobalC::bigpw->nbz,
+                    GlobalC::rhopw->nplane,
+                    GlobalC::rhopw->startz_current,
 #endif
-				    pelec->charge->rho_save[is],
-				    is,
-				    GlobalV::NSPIN,
-				    0,
-				    ssc.str(),
-				    GlobalC::rhopw->nx,
-				    GlobalC::rhopw->ny,
-				    GlobalC::rhopw->nz,
-				    ef_tmp,
-				    &(GlobalC::ucell));
-			}
+                    pelec->charge->rho_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    0,
+                    ssc.str(),
+                    GlobalC::rhopw->nx,
+                    GlobalC::rhopw->ny,
+                    GlobalC::rhopw->nz,
+                    ef_tmp,
+                    &(GlobalC::ucell));
+            }
 		}
 	}
 

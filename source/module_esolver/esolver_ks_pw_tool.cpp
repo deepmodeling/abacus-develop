@@ -80,7 +80,7 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     const int ndim = 3;
     const int npwx = GlobalC::wf.npwx;
     const int nbands = GlobalV::NBANDS;
-    const double ef = this->pelec->ef;
+    const double ef = this->pelec->eferm.ef;
     const int npw = GlobalC::kv.ngk[ik];
     const int reducenb2 = (nbands - 1) * nbands / 2;
     bool gamma_only = false; //ABACUS do not support gamma_only yet.

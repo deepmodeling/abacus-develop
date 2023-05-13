@@ -17,7 +17,8 @@ class Relax_Driver
   private:
     // mohan add 2021-01-28
     // mohan moved this variable from electrons.h to relax_driver.h
-    int istep;
+    int istep = 0;
+    double etot = 0;
 
     // new relaxation method
     Relax rl;
