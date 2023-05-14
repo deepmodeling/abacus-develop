@@ -59,7 +59,7 @@ class Gint_k : public Gint
     // <phi_0i | V | phi_0j>
     // V is (Vl + Vh + Vxc) if no Vna is used,
     // and is (Vna + delta_Vh + Vxc) if Vna is used.
-    void folding_vl_k(const int &ik, LCAO_Matrix* LM);
+    void folding_vl_k(const int &ik, LCAO_Matrix* LM, const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     //------------------------------------------------------
     // in gint_k_env.cpp 
