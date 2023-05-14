@@ -276,6 +276,7 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     this->klist = klist_in;
     this->charge->set_rhopw(rhopw_in);
     this->bigpw = bigpw_in;
+    this->omega = rhopw_in->omega;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // autoset and check GlobalV::NBANDS, nelec_spin is used when NSPIN==2
