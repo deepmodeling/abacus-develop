@@ -206,7 +206,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                 this->Hk_laststep,
                                 this->pelec_td->ekb,
                                 td_htype,
-                                INPUT.propagator);
+                                INPUT.propagator,
+                                GlobalC::kv.nks);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
     }
