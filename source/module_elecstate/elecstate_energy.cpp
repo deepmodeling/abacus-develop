@@ -8,6 +8,7 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace elecstate
@@ -248,7 +249,7 @@ void ElecState::cal_energies(const int type)
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        this->edeepks_scf = GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
+        this->f_en.edeepks_scf = GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
     }
 #endif
     if (type == 1) // harris

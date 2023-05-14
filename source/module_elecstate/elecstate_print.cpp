@@ -5,6 +5,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_io/input.h"
 namespace elecstate
 {
