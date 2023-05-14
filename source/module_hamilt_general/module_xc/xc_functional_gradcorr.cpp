@@ -604,8 +604,10 @@ void XC_Functional::grad_wfc( const std::complex<double> *rhog, const int ik,
 	return;
 }
 
-void XC_Functional::grad_rho( const std::complex<double> *rhog, ModuleBase::Vector3<double> *gdr,
-	ModulePW::PW_Basis *rho_basis, const double tpiba)
+void XC_Functional::grad_rho(const std::complex<double>* rhog,
+                             ModuleBase::Vector3<double>* gdr,
+                             const ModulePW::PW_Basis* rho_basis,
+                             const double tpiba)
 {
 	std::complex<double> *gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
 

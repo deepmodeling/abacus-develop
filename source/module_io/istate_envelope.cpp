@@ -288,10 +288,12 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 }
 
 //for each band
-void IState_Envelope::set_pw_wfc(ModulePW::PW_Basis_K* wfc_basis,
-    const int& ik, const int& ib, const int& nspin,
-    const double* const* const rho,
-    psi::Psi<std::complex<double>> &wfc_g)
+void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
+                                 const int& ik,
+                                 const int& ib,
+                                 const int& nspin,
+                                 const double* const* const rho,
+                                 psi::Psi<std::complex<double>>& wfc_g)
 {
     if (ib == 0)//once is enough
         ModuleBase::TITLE("IState_Envelope", "set_pw_wfc");

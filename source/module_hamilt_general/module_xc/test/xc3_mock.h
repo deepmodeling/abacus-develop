@@ -6,53 +6,71 @@ namespace ModulePW
     PW_Basis::PW_Basis(){};
     PW_Basis::~PW_Basis(){};
 
-    template <typename FPTYPE> void PW_Basis::real2recip(
-        const FPTYPE * in, std::complex<FPTYPE> * out,
-        const bool add, const FPTYPE factor)
+    template <typename FPTYPE>
+    void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
     {
         for (int i=0;i<nrxx;i++)
         {
             out[i] = in[i];
         }
     }
-    template void PW_Basis::real2recip<double>(const double * in, std::complex<double> * out, bool add, double factor);
+    template void PW_Basis::real2recip<double>(const double* in,
+                                               std::complex<double>* out,
+                                               bool add,
+                                               double factor) const;
 
-    template <typename FPTYPE> void PW_Basis::real2recip(
-        const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out,
-        const bool add, const FPTYPE factor)
+    template <typename FPTYPE>
+    void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
+                              std::complex<FPTYPE>* out,
+                              const bool add,
+                              const FPTYPE factor) const
     {
         for (int i=0;i<nrxx;i++)
         {
             out[i] = in[i];
         }
     }
-    template void PW_Basis::real2recip<double>(const std::complex<double> * in, std::complex<double> * out, const bool add, const double factor);
+    template void PW_Basis::real2recip<double>(const std::complex<double>* in,
+                                               std::complex<double>* out,
+                                               const bool add,
+                                               const double factor) const;
 
-    template <typename FPTYPE> void PW_Basis::recip2real(
-        const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out,
-        const bool add, const FPTYPE factor) //in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE>
+    void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
+                              std::complex<FPTYPE>* out,
+                              const bool add,
+                              const FPTYPE factor) const // in:(nz, ns)  ; out(nplane,nx*ny)
     {
         for (int i=0;i<nrxx;i++)
         {
             out[i] = - ModuleBase::IMAG_UNIT*in[i];
         }
     }
-    template void PW_Basis::recip2real(const std::complex<double> * in, std::complex<double> * out,const bool add, const double factor);
+    template void PW_Basis::recip2real(const std::complex<double>* in,
+                                       std::complex<double>* out,
+                                       const bool add,
+                                       const double factor) const;
 
-    template <typename FPTYPE> void PW_Basis_K::recip2real(
-        const std::complex<FPTYPE>* in, std::complex<FPTYPE> * out,
-        const int ik, const bool add, const FPTYPE factor) //in:(nz, ns)  ; out(nplane,nx*ny)
-        {
-            for (int i=0;i<nrxx;i++)
-            {
-                out[i] = - ModuleBase::IMAG_UNIT*in[i];
-            }            
-        }
-    template void PW_Basis_K::recip2real(const std::complex<double> * in, std::complex<double> * out,
-        const int ik, const bool add, const double factor);
-
-    ModuleBase::Vector3<double> PW_Basis_K::getgpluskcar(int, int) const
+    template <typename FPTYPE>
+    void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
+                                std::complex<FPTYPE>* out,
+                                const int ik,
+                                const bool add,
+                                const FPTYPE factor) const // in:(nz, ns)  ; out(nplane,nx*ny)
     {
+        for (int i = 0; i < nrxx; i++)
+        {
+            out[i] = -ModuleBase::IMAG_UNIT * in[i];
+        }
+    }
+        template void PW_Basis_K::recip2real(const std::complex<double>* in,
+                                             std::complex<double>* out,
+                                             const int ik,
+                                             const bool add,
+                                             const double factor) const;
+
+        ModuleBase::Vector3<double> PW_Basis_K::getgpluskcar(int, int) const
+        {
         ModuleBase::Vector3<double> x = {1,2,3};
         return x;
     };
