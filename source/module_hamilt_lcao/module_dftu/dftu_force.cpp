@@ -53,7 +53,8 @@ void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
                         std::vector<ModuleBase::ComplexMatrix>& dm_k,
                         LCAO_Matrix& lm,
                         ModuleBase::matrix& force_dftu,
-                        ModuleBase::matrix& stress_dftu)
+                        ModuleBase::matrix& stress_dftu,
+                        const K_Vectors& kv)
 {
     ModuleBase::TITLE("DFTU", "force_stress");
     ModuleBase::timer::tick("DFTU", "force_stress");
@@ -77,10 +78,10 @@ void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
         std::vector<double> rho_VU(this->LM->ParaV->nloc);
 
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
 
-            const int spin = GlobalC::kv.isk[ik];
+            const int spin = kv.isk[ik];
 
             double* VU = new double[this->LM->ParaV->nloc];
             this->cal_VU_pot_mat_real(spin, false, VU);
@@ -110,9 +111,9 @@ void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
         std::vector<std::complex<double>> rho_VU(this->LM->ParaV->nloc);
 
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
-            const int spin = GlobalC::kv.isk[ik];
+            const int spin = kv.isk[ik];
 
             std::complex<double>* VU = new std::complex<double>[this->LM->ParaV->nloc];
             this->cal_VU_pot_mat_complex(spin, false, VU);

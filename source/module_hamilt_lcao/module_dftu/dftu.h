@@ -5,6 +5,7 @@
 #ifndef DFTU_H
 #define DFTU_H
 
+#include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
@@ -127,7 +128,8 @@ class DFTU
                       std::vector<ModuleBase::ComplexMatrix>& dm_k,
                       LCAO_Matrix& lm,
                       ModuleBase::matrix& force_dftu,
-                      ModuleBase::matrix& stress_dftu);
+                      ModuleBase::matrix& stress_dftu,
+                      const K_Vectors& kv);
 
   private:
     void cal_force_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix& force_dftu);
