@@ -54,7 +54,7 @@ void Local_Orbital_Charge::allocate_DM_k(void)
     }
 
     // Peize Lin test 2019-01-16
-    this->init_dm_2d();
+    this->init_dm_2d(GlobalC::kv.nks);
 
     return;
 }

@@ -268,7 +268,7 @@ void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid
 #endif
 
 	// Peize Lin test 2019-01-16
-    this->init_dm_2d();
+    this->init_dm_2d(GlobalC::kv.nks);
 
     if(GlobalC::wf.init_wfc=="file")
     {

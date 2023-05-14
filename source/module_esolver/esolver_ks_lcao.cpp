@@ -853,7 +853,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             dm2d[is] = new double[this->LOC.ParaV->nnr];
             ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
         }
-        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d);
+        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, GlobalC::kv);
 
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {

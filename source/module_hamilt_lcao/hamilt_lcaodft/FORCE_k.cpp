@@ -80,7 +80,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     };
     ModuleBase::OMP_PARALLEL(init_dm2d);
 
-    loc.cal_dm_R(loc.dm_k, ra, dm2d);
+    loc.cal_dm_R(loc.dm_k, ra, dm2d, GlobalC::kv);
 
     this->cal_ftvnl_dphi_k(dm2d, isforce, isstress, ra, ftvnl_dphi, stvnl_dphi);
 
@@ -380,7 +380,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
         elecstate::cal_dm(loc.ParaV, wgEkb, psi[0], edm_k);
     }
 
-    loc.cal_dm_R(edm_k, ra, edm2d);
+    loc.cal_dm_R(edm_k, ra, edm2d, GlobalC::kv);
     ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
 
     //--------------------------------------------
