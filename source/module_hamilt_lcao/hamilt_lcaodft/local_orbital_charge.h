@@ -38,7 +38,7 @@ class Local_Orbital_Charge
 	//-----------------
 	// in DM_k.cpp
 	//-----------------
-	void allocate_DM_k(void);
+	void allocate_DM_k(const int& nks);
 
 	// liaochen modify on 2010-3-23 
 	// change its state from private to public
@@ -78,7 +78,7 @@ class Local_Orbital_Charge
     const Parallel_Orbitals* ParaV;
 
     //temporary set it to public for ElecStateLCAO class, would be refactor later
-    void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in);
+    void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in, const K_Vectors& kv);
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 
