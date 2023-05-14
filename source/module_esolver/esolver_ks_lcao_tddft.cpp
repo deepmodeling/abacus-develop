@@ -102,6 +102,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
 
     // Initializee the potential.
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
@@ -205,11 +206,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     else if (this->phsol != nullptr)
     {
         // reset energy
-        // this->pelec->f_en.eband = 0.0;
-        // this->pelec->f_en.demet = 0.0;
-        // this->pelec->eferm.ef = 0.0;
-        // this->pelec->eferm.ef_up = 0.0;
-        // this->pelec->eferm.ef_dw = 0.0;
+        this->pelec->f_en.eband = 0.0;
+        this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
             this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);

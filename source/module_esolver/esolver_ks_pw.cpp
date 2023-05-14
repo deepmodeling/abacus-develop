@@ -170,6 +170,7 @@ void ESolver_KS_PW<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
 
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
 
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
@@ -384,11 +385,8 @@ void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int it
     if (this->phsol != nullptr)
     {
         // reset energy
-        // this->pelec->f_en.eband  = 0.0;
-        // this->pelec->f_en.demet  = 0.0;
-        // this->pelec->eferm.ef     = 0.0;
-        // this->pelec->eferm.ef_up = 0.0;
-        // this->pelec->eferm.ef_dw = 0.0;
+        this->pelec->f_en.eband = 0.0;
+        this->pelec->f_en.demet = 0.0;
         // choose if psi should be diag in subspace
         // be careful that istep start from 0 and iter start from 1
         // if (iter == 1)

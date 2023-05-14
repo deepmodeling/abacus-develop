@@ -61,18 +61,18 @@ TEST_F(fenergy, eferm_get_ef)
 {
     eferm.two_efermi = false;
     double& tmp_ef = eferm.get_ef(0);
-    tmp_ef = 0.0;
-    EXPECT_EQ(eferm.ef, 0.0);
+    tmp_ef = 0.7;
+    EXPECT_EQ(eferm.ef, 0.7);
     eferm.two_efermi = true;
-    tmp_ef = eferm.get_ef(0);
-    tmp_ef = 1.0;
+    double& tmp_efup = eferm.get_ef(0);
+    tmp_efup = 1.0;
     EXPECT_EQ(eferm.ef_up, 1.0);
-    tmp_ef = eferm.get_ef(1);
-    tmp_ef = -1.0;
-    EXPECT_EQ(eferm.ef_up, -1.0);
+    double& tmp_efdw = eferm.get_ef(1);
+    tmp_efdw = -1.0;
+    EXPECT_EQ(eferm.ef_dw, -1.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(tmp_ef = eferm.get_ef(2);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(eferm.get_ef(2);, ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please check NSPIN when TWO_EFERMI is true"));
 }
@@ -89,7 +89,7 @@ TEST_F(fenergy, eferm_get_efval)
     EXPECT_EQ(eferm.get_efval(1), -1.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(eferm.get_efval(2);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(eferm.get_efval(2);, ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please check NSPIN when TWO_EFERMI is true"));
 }

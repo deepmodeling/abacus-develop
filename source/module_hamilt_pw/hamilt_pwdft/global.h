@@ -11,14 +11,14 @@
 #include "module_ri/exx_lip.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
 #endif
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/magnetism.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #ifdef __CUDA
+#include "cublas_v2.h"
 namespace CudaCheck
 {
 static const char *_cublasGetErrorString(cublasStatus_t error)

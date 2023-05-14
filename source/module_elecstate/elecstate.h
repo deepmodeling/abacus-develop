@@ -22,7 +22,6 @@ class ElecState
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
         this->eferm.two_efermi = GlobalV::TWO_EFERMI;
-        this->omega = rhopw_in->omega;
     }
     virtual ~ElecState()
     {

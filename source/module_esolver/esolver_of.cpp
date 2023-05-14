@@ -112,6 +112,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
 
     this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
 
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
                                                 &GlobalC::ucell,
