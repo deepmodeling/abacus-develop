@@ -151,7 +151,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Quxin added for DFT+U
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, this->LM);
+        GlobalC::dftu.init(ucell, this->LM, GlobalC::kv.nks);
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
@@ -604,7 +604,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
             if (GlobalV::GAMMA_ONLY_LOCAL)
                 GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k);
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv);
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();

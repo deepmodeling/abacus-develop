@@ -36,7 +36,8 @@ class DFTU
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
-              LCAO_Matrix& lm);
+              LCAO_Matrix& lm,
+              const int& nks);
 
     // calculate the energy correction
     void cal_energy_correction(const int istep);
@@ -61,8 +62,8 @@ class DFTU
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot);
-    void cal_eff_pot_mat_real(const int ik, double* eff_pot);
+    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk);
+    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk);
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
     void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
 
@@ -73,7 +74,7 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k);
+    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv);
     void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma);
 
   private:
