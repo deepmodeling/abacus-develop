@@ -12,7 +12,7 @@
 
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 
-void Local_Orbital_Charge::init_dm_2d(int nks)
+void Local_Orbital_Charge::init_dm_2d(const int& nks)
 {
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
@@ -29,7 +29,7 @@ void Local_Orbital_Charge::cal_dm_R(
     std::vector<ModuleBase::ComplexMatrix> &dm_k,
     Record_adj& ra,    //ra.for_2d();
     double** dm2d,
-    K_Vectors kv)
+    const K_Vectors& kv)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "cal_dm_R");
     ModuleBase::timer::tick("Local_Orbital_Charge", "cal_dm_R");

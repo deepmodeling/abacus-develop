@@ -59,14 +59,14 @@ class Local_Orbital_Charge
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix	
     std::vector<ModuleBase::ComplexMatrix> edm_k_tddft;
 
-    void init_dm_2d(int nks);
+    void init_dm_2d(const int& nks);
     
     // dm(R) = wfc.T * wg * wfc.conj()*kphase, only used in multi-k 
     void cal_dm_R(
         std::vector<ModuleBase::ComplexMatrix>& dm_k,
         Record_adj& ra,
         double** dm2d,
-        K_Vectors kv);     //output, dm2d[NSPIN][LNNR]
+        const K_Vectors& kv);     //output, dm2d[NSPIN][LNNR]
 
     //-----------------
 	// wavefunctions' pointer
