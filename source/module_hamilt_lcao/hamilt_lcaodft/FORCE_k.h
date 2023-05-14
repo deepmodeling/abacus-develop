@@ -44,10 +44,11 @@ private:
 #else
 		ModuleBase::matrix& svl_dphi,
 #endif
-		LCAO_Hamilt &uhm);
+		LCAO_Hamilt &uhm,
+		const K_Vectors& kv);
 
 	// get the ds, dt, dvnl.
-	void allocate_k(const Parallel_Orbitals &pv);
+	void allocate_k(const Parallel_Orbitals &pv, const int& nks);
 
 	void finish_k(void);
 	
@@ -69,7 +70,9 @@ private:
         Local_Orbital_Charge& loc, 
 		ModuleBase::matrix& foverlap, 
 		ModuleBase::matrix& soverlap, 
-		const elecstate::ElecState* pelec
+		const elecstate::ElecState* pelec,
+		const int& nks,
+		const K_Vectors& kv
 	);
 
 	// calculate the force due to < phi | Vlocal | dphi >

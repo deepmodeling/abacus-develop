@@ -714,7 +714,8 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 #else
 				svl_dphi,
 #endif
-                uhm);
+                uhm,
+				GlobalC::kv);
     }
 	return;
 }
