@@ -1,7 +1,7 @@
 #include "surchem.h"
 #include "module_base/timer.h"
 
-void force_cor_one(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleBase::matrix& forcesol)
+void force_cor_one(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
 {
    
    
@@ -64,7 +64,7 @@ void force_cor_one(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleB
 
 }
 
-void force_cor_two(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleBase::matrix& forcesol)
+void force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
 {
    
     complex<double> *n_pseudo = new complex<double>[rho_basis->npw];
@@ -145,7 +145,7 @@ void force_cor_two(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleB
 
 }
 
-void surchem::cal_force_sol(const UnitCell &cell, ModulePW::PW_Basis* rho_basis , ModuleBase::matrix& forcesol)
+void surchem::cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
 {
     ModuleBase::TITLE("surchem", "cal_force_sol");
     ModuleBase::timer::tick("surchem", "cal_force_sol");

@@ -9,15 +9,15 @@
 using hamilt::Nonlocal;
 using hamilt::OperatorPW;
 
-template<typename FPTYPE, typename Device>
-Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(
-    const int* isk_in,
-    const pseudopot_cell_vnl* ppcell_in,
-    const UnitCell* ucell_in
-)
+template <typename FPTYPE, typename Device>
+Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const int* isk_in,
+                                               const pseudopot_cell_vnl* ppcell_in,
+                                               const UnitCell* ucell_in,
+                                               const ModulePW::PW_Basis_K* wfc_basis)
 {
     this->classname = "Nonlocal";
     this->cal_type = pw_nonlocal;
+    this->wfcpw = wfc_basis;
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;

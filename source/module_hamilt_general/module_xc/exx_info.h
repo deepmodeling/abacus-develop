@@ -2,7 +2,7 @@
 #define EXX_INFO_H
 
 #include "xc_functional.h"
-#include "src_ri/conv_coulomb_pot_k.h"
+#include "module_ri/conv_coulomb_pot_k.h"
 
 struct Exx_Info
 {
@@ -13,6 +13,7 @@ struct Exx_Info
 		Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
 		double hybrid_alpha = 0.25;
 		double hse_omega = 0.11;
+		double mixing_beta_for_loop1;
 		
 		bool separate_loop = true;
 		size_t hybrid_step = 1;

@@ -55,17 +55,25 @@ public:
 	void cleanfFFT();
 #endif // defined(__ENABLE_FLOAT_FFTW)
 
-    template <typename FPTYPE> void fftzfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
-	template <typename FPTYPE> void fftzbac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
-	template <typename FPTYPE> void fftxyfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
-	template <typename FPTYPE> void fftxybac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
-	template <typename FPTYPE> void fftxyr2c(FPTYPE * in, std::complex<FPTYPE>* out);
-	template <typename FPTYPE> void fftxyc2r(std::complex<FPTYPE>* in, FPTYPE* out);
+    template <typename FPTYPE>
+    void fftzfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fftzbac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fftxyfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fftxybac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fftxyr2c(FPTYPE* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fftxyc2r(std::complex<FPTYPE>* in, FPTYPE* out) const;
 
-    template <typename FPTYPE, typename Device> void fft3D_forward(const Device * ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
-    template <typename FPTYPE, typename Device> void fft3D_backward(const Device * ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
+    template <typename FPTYPE, typename Device>
+    void fft3D_forward(const Device* ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE, typename Device>
+    void fft3D_backward(const Device* ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
-public:
+  public:
 	//init fftw_plans
 	void initplan();
 	// We have not support mpi fftw yet.
@@ -88,18 +96,22 @@ public:
 	int nplane=0; //number of x-y planes
 	int nproc=1; // number of proc.
 
-    template <typename FPTYPE> FPTYPE * get_rspace_data();
-    template <typename FPTYPE> std::complex<FPTYPE> * get_auxr_data();
-    template <typename FPTYPE> std::complex<FPTYPE> * get_auxg_data();
-    template <typename FPTYPE> std::complex<FPTYPE> * get_auxr_3d_data();
+    template <typename FPTYPE>
+    FPTYPE* get_rspace_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_auxr_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_auxg_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_auxr_3d_data() const;
 
-private:
-	bool gamma_only=false;
-	bool mpifft=false; // if use mpi fft, only used when define __FFTW3_MPI
+  private:
+    bool gamma_only = false;
+    bool mpifft = false; // if use mpi fft, only used when define __FFTW3_MPI
 
-	bool destroyp=true;
-	fftw_plan planzfor;
-	fftw_plan planzbac;
+    bool destroyp = true;
+    fftw_plan planzfor;
+    fftw_plan planzbac;
 	fftw_plan planxfor1;
 	fftw_plan planxbac1;
 	fftw_plan planxfor2;
@@ -137,14 +149,14 @@ private:
 	fftwf_plan planfyc2r;
 #endif // defined(__ENABLE_FLOAT_FFTW)
 
-    std::complex<float> * c_auxr_3d=nullptr; //fft space
-    std::complex<double> * z_auxr_3d=nullptr; //fft space
+    mutable std::complex<float>* c_auxr_3d = nullptr;  // fft space
+    mutable std::complex<double>* z_auxr_3d = nullptr; // fft space
 
-    std::complex<float> * c_auxg=nullptr, * c_auxr=nullptr; //fft space,
-    std::complex<double> * z_auxg=nullptr, * z_auxr=nullptr; //fft space
+    mutable std::complex<float>*c_auxg = nullptr, *c_auxr = nullptr;  // fft space,
+    mutable std::complex<double>*z_auxg = nullptr, *z_auxr = nullptr; // fft space
 
-    float * s_rspace=nullptr; //real number space for r, [nplane * nx *ny]
-    double * d_rspace=nullptr; //real number space for r, [nplane * nx *ny]
+    mutable float* s_rspace = nullptr;  // real number space for r, [nplane * nx *ny]
+    mutable double* d_rspace = nullptr; // real number space for r, [nplane * nx *ny]
 
     std::string device = "cpu";
     std::string precision = "double";

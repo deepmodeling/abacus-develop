@@ -25,7 +25,10 @@ template<typename FPTYPE, typename Device>
 class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
   public:
-    Nonlocal(const int* isk_in,const pseudopot_cell_vnl* ppcell_in,const UnitCell* ucell_in);
+    Nonlocal(const int* isk_in,
+             const pseudopot_cell_vnl* ppcell_in,
+             const UnitCell* ucell_in,
+             const ModulePW::PW_Basis_K* wfc_basis);
 
     template<typename T_in, typename Device_in = Device>
     explicit Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>>* nonlocal);
@@ -61,6 +64,8 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     const pseudopot_cell_vnl* ppcell = nullptr;
 
     const UnitCell* ucell = nullptr;
+
+    const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     mutable std::complex<FPTYPE> *ps = nullptr;
     mutable std::complex<FPTYPE> *vkb = nullptr;

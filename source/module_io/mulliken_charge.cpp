@@ -15,6 +15,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/name_angular.h"
 #include "module_base/scalapack_connector.h"
 #include "write_orb_info.h"
 
@@ -119,7 +120,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
 }
 
 ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
-    LCAO_Hamilt &uhm
+    LCAO_Hamilt &uhm, const K_Vectors& kv
 )
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken_k");
@@ -132,7 +133,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
     MecMulP.create(GlobalV::NSPIN, nlocal);
     orbMulP.create(GlobalV::NSPIN, nlocal);
 
-    for(size_t ik = 0; ik != GlobalC::kv.nks; ++ik)
+    for(size_t ik = 0; ik != kv.nks; ++ik)
     {
         uhm.LM->zeros_HSk('S');
 		uhm.LM->folding_fixedH(ik);
@@ -166,7 +167,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
                 uhm.LM->ParaV->desc);
         if(GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
         {
-            const int spin = GlobalC::kv.isk[ik];
+            const int spin = kv.isk[ik];
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
                 if(uhm.LM->ParaV->in_this_processor(i, i))
                 {
@@ -250,7 +251,7 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc)
+void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc, const K_Vectors& kv)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
@@ -258,7 +259,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
     if(GlobalV::GAMMA_ONLY_LOCAL)
         orbMulP = ModuleIO::cal_mulliken(loc.dm_gamma, uhm);
     else
-        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, uhm);
+        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, uhm, kv);
 
     std::vector<std::vector<std::vector<double>>> AorbMulP = ModuleIO::convert(orbMulP);
 
@@ -322,7 +323,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
                         if (GlobalV::NSPIN==1)
                         {
                             double spin1 = ModuleIO::output_cut(AorbMulP[0][i][num]);
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
+                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                         }
                         else if (GlobalV::NSPIN==2)
@@ -331,7 +332,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
                             double spin2 = ModuleIO::output_cut(AorbMulP[1][i][num]);
                             double sum = ModuleIO::output_cut(spin1 + spin2);
                             double diff = ModuleIO::output_cut(spin1 - spin2);
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
+                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin1 << std::setw(30) << spin2 << std::setw(30) << sum << std::setw(30) << diff << std::endl;
                             sum_m[0] += AorbMulP[0][i][num];
                             sum_m[1] += AorbMulP[1][i][num];
                         }
@@ -343,7 +344,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
                                 spin[j] = ModuleIO::output_cut(AorbMulP[j][i][num]);
                                 sum_m[j] += AorbMulP[j][i][num];
                             } 
-                            os << GlobalC::en.Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
+                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0] << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3] << std::endl;
                         }
                         num++;
                     }
@@ -429,6 +430,6 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
             os << std::endl <<std::endl;
         }
         os.close();
-        ModuleIO::write_orb_info();
+        ModuleIO::write_orb_info(&(GlobalC::ucell));
     }
 }

@@ -4,8 +4,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 //calculate the GGA stress correction in PW and LCAO
-template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma, const Charge* const chr)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
+                                             ModulePW::PW_Basis* rho_basis,
+                                             const Charge* const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_gga");
 	ModuleBase::timer::tick("Stress_Func","stress_gga");
@@ -24,9 +26,9 @@ void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma, const Ch
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-	XC_Functional::gradcorr(dum1, dum2, dum3, chr, GlobalC::rhopw, &GlobalC::ucell, stress_gga, 1);
+    XC_Functional::gradcorr(dum1, dum2, dum3, chr, rho_basis, &GlobalC::ucell, stress_gga, 1);
 
-	for(int l = 0;l< 3;l++)
+    for(int l = 0;l< 3;l++)
 	{
 		for(int m = 0;m< l+1;m++)
 		{
@@ -48,8 +50,8 @@ void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma, const Ch
 	{
 		for(int j=0;j<3;j++)
 		{
-			sigma(i,j) += sigma_gradcorr[i][j] / GlobalC::rhopw->nxyz;
-		}
+            sigma(i, j) += sigma_gradcorr[i][j] / rho_basis->nxyz;
+        }
 	}
 
 	ModuleBase::timer::tick("Stress_Func","stress_gga");

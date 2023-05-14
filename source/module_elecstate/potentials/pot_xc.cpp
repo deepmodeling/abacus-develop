@@ -11,7 +11,7 @@ void PotXC::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matr
     ModuleBase::TITLE("PotXC", "cal_v_eff");
     ModuleBase::timer::tick("PotXC", "cal_v_eff");
     const int nrxx_current = chg->nrxx;
-
+    
     //----------------------------------------------------------
     //  calculate the exchange-correlation potential
     //----------------------------------------------------------
@@ -20,7 +20,7 @@ void PotXC::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matr
     {
 #ifdef USE_LIBXC
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc_meta(nrxx_current, ucell->omega, ucell->tpiba, chg, GlobalC::rhopw);
+            = XC_Functional::v_xc_meta(nrxx_current, ucell->omega, ucell->tpiba, chg);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
@@ -32,7 +32,7 @@ void PotXC::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matr
     else
     {
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(nrxx_current, chg, GlobalC::rhopw, ucell);
+            = XC_Functional::v_xc(nrxx_current, chg, ucell);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);

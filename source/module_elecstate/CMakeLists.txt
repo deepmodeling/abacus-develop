@@ -18,6 +18,7 @@ list(APPEND objects
     module_charge/symmetry_rhog.cpp
     energy.cpp
     magnetism.cpp
+    elecstate_getters.cpp
     occupy.cpp
 )
 

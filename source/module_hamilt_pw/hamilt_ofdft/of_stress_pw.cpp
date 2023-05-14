@@ -8,7 +8,10 @@
 // input variable.
 void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               ModuleBase::matrix& kinetic_stress,
-                              const psi::Psi<complex<double>>* psi_in)
+                              UnitCell& ucell,
+                              ModuleSymmetry::Symmetry* p_symm,
+                              Structure_Factor* p_sf,
+                              K_Vectors* p_kv)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
@@ -58,31 +61,26 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // hartree contribution
-    stress_har(sigmahar, GlobalC::rhopw, 1, pelec->charge);
+    stress_har(sigmahar, this->rhopw, 1, pelec->charge);
 
     // ewald contribution
-    stress_ewa(sigmaewa, GlobalC::rhopw, 1);
+    stress_ewa(sigmaewa, this->rhopw, 1);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
-        sigmaxc(i, i) = -(GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
+        sigmaxc(i, i) = -(GlobalC::en.etxc - GlobalC::en.vtxc) / ucell.omega;
     }
-    stress_gga(sigmaxc, pelec->charge);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        stress_mgga(sigmaxc, this->pelec->pot->get_effective_vofk(), this->pelec->wg, pelec->charge, psi_in);
+    stress_gga(sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(sigmaloc, GlobalC::rhopw, 1, pelec->charge);
+    stress_loc(sigmaloc, this->rhopw, p_sf, 1, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, GlobalC::rhopw, 1, pelec->charge);
-
-    // nonlocal
-    stress_nl(sigmanl, this->pelec->wg, psi_in);
+    stress_cc(sigmaxcc, this->rhopw, p_sf, 1, pelec->charge);
 
     // vdw term
-    stress_vdw(sigmavdw);
+    stress_vdw(sigmavdw, ucell);
 
     for (int ipol = 0; ipol < 3; ipol++)
     {
@@ -96,7 +94,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        GlobalC::symm.stress_symmetry(sigmatot, GlobalC::ucell);
+        p_symm->stress_symmetry(sigmatot, ucell);
     }
 
     bool ry = false;
@@ -120,9 +118,9 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     return;
 }
 
-void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma)
+void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
 {
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(ucell, INPUT);
     if (vdw_solver != nullptr)
     {
         sigma = vdw_solver->get_stress().to_matrix();

@@ -13,14 +13,16 @@ namespace elecstate
 class ElecStateLCAO_TDDFT : public ElecStateLCAO
 {
   public:
-    ElecStateLCAO_TDDFT(Charge* chg_in = nullptr,
-                        const K_Vectors* klist_in = nullptr,
-                        int nks_in = 1,
-                        Local_Orbital_Charge* loc_in = nullptr,
-                        LCAO_Hamilt* uhm_in = nullptr,
-                        Local_Orbital_wfc* lowf_in = nullptr)
+    ElecStateLCAO_TDDFT(Charge* chg_in ,
+                        const K_Vectors* klist_in ,
+                        int nks_in,
+                        Local_Orbital_Charge* loc_in ,
+                        LCAO_Hamilt* uhm_in ,
+                        Local_Orbital_wfc* lowf_in ,
+                        ModulePW::PW_Basis* rhopw_in ,
+                        ModulePW::PW_Basis_Big* bigpw_in )
     {
-        init_ks(chg_in, klist_in, nks_in);
+        init_ks(chg_in, klist_in, nks_in, rhopw_in, bigpw_in);        
         this->loc = loc_in;
         this->uhm = uhm_in;
         this->lowf = lowf_in;

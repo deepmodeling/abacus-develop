@@ -447,7 +447,7 @@ void FFT:: cleanfFFT()
 #endif // defined(__ENABLE_FLOAT_FFTW)
 
 template <>
-void FFT::fftzfor(std::complex<float> * in, std::complex<float> * out)
+void FFT::fftzfor(std::complex<float>* in, std::complex<float>* out) const
 {
 #if defined(__ENABLE_FLOAT_FFTW)
     fftwf_execute_dft(this->planfzfor,(fftwf_complex *)in,(fftwf_complex *)out);
@@ -457,13 +457,13 @@ void FFT::fftzfor(std::complex<float> * in, std::complex<float> * out)
 }
 
 template <>
-void FFT::fftzfor(std::complex<double> * in, std::complex<double> * out)
+void FFT::fftzfor(std::complex<double>* in, std::complex<double>* out) const
 {
 	fftw_execute_dft(this->planzfor,(fftw_complex *)in,(fftw_complex *)out);
 }
 
 template <>
-void FFT::fftzbac(std::complex<float> * in, std::complex<float> * out)
+void FFT::fftzbac(std::complex<float>* in, std::complex<float>* out) const
 {
 #if defined(__ENABLE_FLOAT_FFTW)
     fftwf_execute_dft(this->planfzbac,(fftwf_complex *)in, (fftwf_complex *)out);
@@ -473,13 +473,13 @@ void FFT::fftzbac(std::complex<float> * in, std::complex<float> * out)
 }
 
 template <>
-void FFT::fftzbac(std::complex<double> * in, std::complex<double> * out)
+void FFT::fftzbac(std::complex<double>* in, std::complex<double>* out) const
 {
 	fftw_execute_dft(this->planzbac,(fftw_complex *)in, (fftw_complex *)out);
 }
 
 template <>
-void FFT::fftxyfor(std::complex<float> * in, std::complex<float> * out)
+void FFT::fftxyfor(std::complex<float>* in, std::complex<float>* out) const
 {
 #if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
@@ -512,7 +512,7 @@ void FFT::fftxyfor(std::complex<float> * in, std::complex<float> * out)
 }
 
 template <>
-void FFT::fftxyfor(std::complex<double> * in, std::complex<double> * out)
+void FFT::fftxyfor(std::complex<double>* in, std::complex<double>* out) const
 {
 	int npy = this->nplane * this-> ny;
 	if(this->xprime)
@@ -541,7 +541,7 @@ void FFT::fftxyfor(std::complex<double> * in, std::complex<double> * out)
 }
 
 template <>
-void FFT::fftxybac(std::complex<float> * in, std::complex<float> * out)
+void FFT::fftxybac(std::complex<float> * in, std::complex<float> * out) const
 {
 #if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
@@ -574,7 +574,7 @@ void FFT::fftxybac(std::complex<float> * in, std::complex<float> * out)
 }
 
 template <>
-void FFT::fftxybac(std::complex<double> * in, std::complex<double> * out)
+void FFT::fftxybac(std::complex<double> * in, std::complex<double> * out) const
 {
 	int npy = this->nplane * this-> ny;
 	if(this->xprime)
@@ -603,7 +603,7 @@ void FFT::fftxybac(std::complex<double> * in, std::complex<double> * out)
 }
 
 template <>
-void FFT::fftxyr2c(float * in, std::complex<float> * out)
+void FFT::fftxyr2c(float * in, std::complex<float> * out) const
 {
 #if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
@@ -631,7 +631,7 @@ void FFT::fftxyr2c(float * in, std::complex<float> * out)
 }
 
 template <>
-void FFT::fftxyr2c(double * in, std::complex<double> * out)
+void FFT::fftxyr2c(double * in, std::complex<double> * out) const
 {
 	int npy = this->nplane * this-> ny;
 	if(this->xprime)
@@ -655,7 +655,7 @@ void FFT::fftxyr2c(double * in, std::complex<double> * out)
 }
 
 template <>
-void FFT::fftxyc2r(std::complex<float>* in, float* out)
+void FFT::fftxyc2r(std::complex<float>* in, float* out) const
 {
 #if defined(__ENABLE_FLOAT_FFTW)
     int npy = this->nplane * this-> ny;
@@ -683,7 +683,7 @@ void FFT::fftxyc2r(std::complex<float>* in, float* out)
 }
 
 template <>
-void FFT::fftxyc2r(std::complex<double> * in, double * out)
+void FFT::fftxyc2r(std::complex<double> * in, double * out) const
 {
 	int npy = this->nplane * this-> ny;
 	if(this->xprime)
@@ -708,7 +708,7 @@ void FFT::fftxyc2r(std::complex<double> * in, double * out)
 
 #if defined(__CUDA) || defined(__ROCM)
 template <>
-void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * in, std::complex<float> * out)
+void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * in, std::complex<float> * out) const
 {
 #if defined(__CUDA)
     cufftExecC2C(this->c_handle,
@@ -725,7 +725,7 @@ void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * i
 #endif
 }
 template <>
-void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double> * in, std::complex<double> * out)
+void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double> * in, std::complex<double> * out) const
 {
 #if defined(__CUDA)
     cufftExecZ2Z(this->z_handle,
@@ -743,7 +743,7 @@ void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double> * 
 }
 
 template <>
-void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float>* in, std::complex<float>* out)
+void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float>* in, std::complex<float>* out) const
 {
 #if defined(__CUDA)
     cufftExecC2C(this->c_handle,
@@ -760,7 +760,7 @@ void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float>* i
 #endif
 }
 template <>
-void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* in, std::complex<double>* out)
+void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* in, std::complex<double>* out) const
 {
 #if defined(__CUDA)
     cufftExecZ2Z(this->z_handle,
@@ -778,41 +778,48 @@ void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* 
 }
 #endif
 
-
 template <>
-float * FFT::get_rspace_data() {
+float* FFT::get_rspace_data() const
+{
     return this->s_rspace;
 }
 template <>
-double * FFT::get_rspace_data() {
+double* FFT::get_rspace_data() const
+{
     return this->d_rspace;
 }
 
 template <>
-std::complex<float> * FFT::get_auxr_data() {
+std::complex<float>* FFT::get_auxr_data() const
+{
     return this->c_auxr;
 }
 template <>
-std::complex<double> * FFT::get_auxr_data() {
+std::complex<double>* FFT::get_auxr_data() const
+{
     return this->z_auxr;
 }
 
 template <>
-std::complex<float> * FFT::get_auxg_data() {
+std::complex<float>* FFT::get_auxg_data() const
+{
     return this->c_auxg;
 }
 template <>
-std::complex<double> * FFT::get_auxg_data() {
+std::complex<double>* FFT::get_auxg_data() const
+{
     return this->z_auxg;
 }
 
 #if defined(__CUDA) || defined(__ROCM)
 template <>
-std::complex<float> * FFT::get_auxr_3d_data() {
+std::complex<float>* FFT::get_auxr_3d_data() const
+{
     return this->c_auxr_3d;
 }
 template <>
-std::complex<double> * FFT::get_auxr_3d_data() {
+std::complex<double>* FFT::get_auxr_3d_data() const
+{
     return this->z_auxr_3d;
 }
 #endif

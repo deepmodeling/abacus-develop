@@ -44,6 +44,9 @@ class Charge_Mixing
     //if first electronic step, then reset charge mixing
 	void reset();
 
+	// init pwrho, sunliang add 2023-05-08
+	void set_rhopw(ModulePW::PW_Basis* rhopw_in);
+
     // extracting parameters
 	// normally these parameters will not be used
 	// outside charge mixing, but Exx is using them
@@ -71,6 +74,8 @@ class Charge_Mixing
 	bool mixing_tau;
 
     bool new_e_iteration;
+
+	ModulePW::PW_Basis* rhopw = nullptr;
 
 //======================================
 // simple plain mixing method, in charge_mixing.cpp

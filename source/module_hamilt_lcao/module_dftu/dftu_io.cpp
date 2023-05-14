@@ -9,19 +9,6 @@ void DFTU::output()
 {
     ModuleBase::TITLE("DFTU", "output");
 
-    if (GlobalV::out_chg)
-    {
-        std::stringstream sst;
-        sst << GlobalV::global_out_dir << "onsite.dm";
-        std::ofstream ofdftu(sst.str().c_str());
-        if (!ofdftu)
-        {
-            std::cout << "DFTU::write_occup_m. Can't create file onsite.dm!" << std::endl;
-            exit(0);
-        }
-        this->write_occup_m(ofdftu);
-    }
-
     GlobalV::ofs_running << "//=========================L(S)DA+U===========================//" << std::endl;
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
@@ -40,7 +27,7 @@ void DFTU::output()
                 if (!Yukawa)
                 {
                     GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << 0
-                                         << "    U=" << this->U[T] * ModuleBase::Ry_to_eV << "ev" << std::endl;
+                                         << "    U=" << this->U[T] * ModuleBase::Ry_to_eV << "eV" << std::endl;
                 }
                 else
                 {
@@ -50,8 +37,8 @@ void DFTU::output()
                             continue;
                         double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
                         GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n
-                                             << "    U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "ev    "
-                                             << "J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "ev"
+                                             << "    U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV    "
+                                             << "J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV"
                                              << std::endl;
                     }
                 }
@@ -62,6 +49,20 @@ void DFTU::output()
     GlobalV::ofs_running << "Local occupation matrices" << std::endl;
     this->write_occup_m(GlobalV::ofs_running);
     GlobalV::ofs_running << "//=======================================================//" << std::endl;
+    
+    //Write onsite.dm
+    std::ofstream ofdftu;
+    if(GlobalV::out_chg){
+      if(GlobalV::MY_RANK == 0){
+        ofdftu.open(GlobalV::global_out_dir + "onsite.dm");
+      }
+    }
+    if(!ofdftu){
+      std::cout << "DFTU::write_occup_m. Can't create file onsite.dm!" << std::endl;
+      exit(0);
+    } 
+    this->write_occup_m(ofdftu);
+    ofdftu.close();
 
     return;
 }
@@ -70,8 +71,7 @@ void DFTU::write_occup_m(std::ofstream &ofs)
 {
     ModuleBase::TITLE("DFTU", "write_occup_m");
 
-    if (GlobalV::MY_RANK != 0)
-        return;
+    if(GlobalV::MY_RANK != 0) return;
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
@@ -114,7 +114,7 @@ void DFTU::write_occup_m(std::ofstream &ofs)
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    ofs << fixed << std::setw(12) << std::setprecision(8)
+                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
                                         << locale[iat][l][n][is](m0, m1);
                                 }
                                 ofs << std::endl;
@@ -134,7 +134,7 @@ void DFTU::write_occup_m(std::ofstream &ofs)
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
-                                        ofs << fixed << std::setw(12) << std::setprecision(8)
+                                        ofs << std::setw(12) << std::setprecision(8) << std::fixed
                                             << locale[iat][l][n][0](m0_all, m1_all);
                                     }
                                 }

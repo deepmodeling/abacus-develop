@@ -61,15 +61,6 @@ class energy
 	int out_dos;			// control dos calculation
 	int out_band;                    // control band calculation  pengfei 2014-10-13
 	int out_proj_band;                    // control projected band calculation  jiyy add 2022-05-11
-	const std::string Name_Angular[5][11] =
-	{
-    	{"s"},
-    	{"px", "py", "pz"},
-    	{"d3z^2-r^2", "dxy", "dxz", "dx^2-y^2", "dyz"},
-    	{"f5z^2-3r^2", "f5xz^2-xr^2", "f5yz^2-yr^2", "fzx^2-zy^2", "fxyz", "fx^3-3*xy^2", "f3yx^2-y^3"},
-    	{"g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9"}
-	};          // name of atomic orbital    jiyy add 2022-05-10
-
 	double dos_emin_ev;
 	double dos_emax_ev;
 	double dos_edelta_ev;
@@ -84,9 +75,18 @@ class energy
     // at first order in the charge density difference \delta
     // rho
     //=========================================================
-	void calculate_etot(void);
-	void print_etot(const bool converged, const int &iter,
-	const double &scf_thr, const double &duration, const double &pw_diag_thr=0, const double &avg_iter=0, bool print = true);
+	void calculate_etot(const int& nrxx, 	// num. of real space grids on current core
+						const int& nxyz		// total num. of real space grids
+	);
+	void print_etot(const int& nrxx,		// num. of real space grids on current core
+					const int& nxyz,		// total num. of real space grids
+					const bool converged, 
+					const int &iter,
+					const double &scf_thr, 
+					const double &duration, 
+					const double &pw_diag_thr=0, 
+					const double &avg_iter=0, 
+					bool print = true);
 
 	void print_format(const std::string &name, const double &value);
 

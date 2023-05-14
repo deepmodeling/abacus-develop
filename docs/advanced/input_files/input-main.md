@@ -386,7 +386,7 @@ These variables are used to control general system parameters.
   - sdft: [stochastic density functional theory](#electronic-structure-sdft);
   - tddft: real-time time-dependent density functional theory (TDDFT);
   - lj: Leonard Jones potential;
-  - dp: DeeP potential;
+  - dp: DeeP potential, see details in [md.md](../md.md#dpmd);
 - **Default**: ksdft
 
 ### symmetry
@@ -722,7 +722,7 @@ calculations.
   For plane-wave basis,
 
   - cg: cg method.
-  - dav: the Davidson algorithm. (Currently not working with Intel MKL library).
+  - dav: the Davidson algorithm.
 
   For atomic orbitals basis,
 
@@ -890,7 +890,7 @@ calculations.
 
 ## Electronic structure (SDFT)
 
-These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd".
+These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" calculation are supported.
 
 ### method_sto
 
@@ -1055,8 +1055,8 @@ These variables are used to control the geometry relaxation.
 ### stress_thr
 
 - **Type**: Real
-- **Description**: The threshold of the stress convergence, it indicates the largest stress among all the directions, the unit is KBar,
-- **Default**: 0.01
+- **Description**: The threshold of the stress convergence, it indicates the largest component of the stress tensor, the unit is kbar,
+- **Default**: 0.5
 
 ### press1, press2, press3
 
@@ -1721,7 +1721,7 @@ These variables are relevant when using hybrid functionals
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. (Currently not used)
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
 - **Default**: 1
 
 ### exx_hybrid_step

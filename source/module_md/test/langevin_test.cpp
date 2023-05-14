@@ -1,9 +1,11 @@
-#include "module_md/langevin.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_esolver/esolver_lj.h"
 #include "setcell.h"
+
+#define private public
+#define protected public
+#include "module_md/langevin.h"
 
 #define doublethreshold 1e-12
 
@@ -28,14 +30,14 @@
  *   - Langevin::restart
  *     - restart MD when md_restart is true
  *
- *   - Langevin::outputMD
+ *   - Langevin::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
 
 class Langevin_test : public testing::Test
 {
   protected:
-    MDrun *mdrun;
+    MD_base* mdrun;
     UnitCell ucell;
 
     void SetUp()
@@ -43,11 +45,11 @@ class Langevin_test : public testing::Test
         Setcell::setupcell(ucell);
         Setcell::parameters();
 
-        ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
+        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
         p_esolver->Init(INPUT, ucell);
 
         mdrun = new Langevin(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver);
+        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
     }
 
     void TearDown()
@@ -72,7 +74,7 @@ TEST_F(Langevin_test, setup)
 
 TEST_F(Langevin_test, first_half)
 {
-    mdrun->first_half();
+    mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00042883345359910814, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00016393608896004904, doublethreshold);
@@ -103,8 +105,9 @@ TEST_F(Langevin_test, first_half)
 
 TEST_F(Langevin_test, second_half)
 {
-    mdrun->first_half();
+    mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
+    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00066954020090275205, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 3.3862365219131354e-05, doublethreshold);
@@ -137,7 +140,7 @@ TEST_F(Langevin_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart();
+    mdrun->write_restart(GlobalV::global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -148,16 +151,16 @@ TEST_F(Langevin_test, write_restart)
 
 TEST_F(Langevin_test, restart)
 {
-    mdrun->restart();
+    mdrun->restart(GlobalV::global_readin_dir);
     remove("Restart_md.dat");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
 }
 
-TEST_F(Langevin_test, outputMD)
+TEST_F(Langevin_test, print_md)
 {
     std::ofstream ofs("running.log");
-    mdrun->outputMD(ofs, true);
+    mdrun->print_md(ofs, true);
     ofs.close();
 
     std::ifstream ifs("running.log");

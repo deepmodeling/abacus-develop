@@ -46,7 +46,6 @@ class XC_Functional
     static std::tuple<double,double,ModuleBase::matrix> v_xc(
 		const int &nrxx, // number of real-space grid
 		const Charge* const chr,
-		ModulePW::PW_Basis* rhopw,
 		const UnitCell *ucell); // charge density
 
 	// using libxc
@@ -54,16 +53,14 @@ class XC_Functional
 		const int &nrxx, // number of real-space grid
 		const double &omega, // volume of cell
 		const double tpiba,
-		const Charge* const chr,
-		ModulePW::PW_Basis* rhopw); // charge density
+		const Charge* const chr); // charge density
 
 	// for mGGA functional
 	static std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(
 		const int &nrxx, // number of real-space grid
 		const double &omega, // volume of cell
 		const double tpiba,
-		const Charge* const chr,
-		ModulePW::PW_Basis* rhopw);
+		const Charge* const chr);
 
 //-------------------
 //  xc_functional.cpp
@@ -202,9 +199,11 @@ class XC_Functional
 		std::vector<double> &stress_gga, const bool is_stress = 0);
 	static void grad_wfc( const std::complex<double> *rhog, const int ik,
 		std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis, const double tpiba);
-	static void grad_rho( const std::complex<double> *rhog, ModuleBase::Vector3<double> *gdr,
-		ModulePW::PW_Basis *rho_basis, const double tpiba);
-	static void grad_dot( const ModuleBase::Vector3<double> *h, double *dh,
+    static void grad_rho(const std::complex<double>* rhog,
+                         ModuleBase::Vector3<double>* gdr,
+                         const ModulePW::PW_Basis* rho_basis,
+                         const double tpiba);
+    static void grad_dot( const ModuleBase::Vector3<double> *h, double *dh,
 		ModulePW::PW_Basis *rho_basis, const double tpiba);
 	static void noncolin_rho(double *rhoout1,double *rhoout2,double *seg,
 		const double*const*const rho, const int nrxx, const double* ux_, const bool lsign_);

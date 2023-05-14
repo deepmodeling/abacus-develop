@@ -49,6 +49,35 @@ Of course a copy of ABACUS source code is required, which can be obtained via on
 - Get the source code of a stable version [here](https://github.com/deepmodeling/abacus-develop/releases)
 - If you have connection issues accessing GitHub, please try out our official [Gitee repo](https://gitee.com/deepmodeling/abacus-develop/): e.g. `git clone https://gitee.com/deepmodeling/abacus-develop.git`
 
+### Update to latest release
+
+Please check the [release page](https://github.com/deepmodeling/abacus-develop/releases) for the release note of a new version.
+
+It is OK to download the new source code from beginning following the previous step.
+
+To update your cloned git repo in-place:
+
+```bash
+git remote -v
+# Check if the output contains the line below
+# origin https://github.com/deepmodeling/abacus-develop.git (fetch)
+# The remote name is marked as "upstream" if you clone the repo from your own fork.
+
+# Replace "origin" with "upstream" or the remote name corresponding to deepmodeling/abacus-develop if necessary
+git fetch origin
+git checkout v3.2.0 # Replace the tag with the latest version
+git describe --tags # Verify if the tag has been successfully checked out
+```
+
+Then proceed to the [Build and Install](#build-and-install) part. If you encountered errors, try remove the `build` directory first and reconfigure.
+
+To use the codes under active development:
+
+```bash
+git checkout develop
+git pull
+```
+
 ## Configure
 
 The basic command synopsis is:

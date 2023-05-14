@@ -79,9 +79,9 @@ Structure_Factor::~Structure_Factor(){}
 ModuleSymmetry::Symmetry::Symmetry(){}
 ModuleSymmetry::Symmetry::~Symmetry(){}
 ModuleSymmetry::Symmetry_Basic::Symmetry_Basic(){}
-ModuleSymmetry::Symmetry_Basic::~Symmetry_Basic(){}
-WF_igk::WF_igk(){}
-WF_igk::~WF_igk(){}
+ModuleSymmetry::Symmetry_Basic::~Symmetry_Basic()
+{
+}
 WF_atomic::WF_atomic(){}
 WF_atomic::~WF_atomic(){}
 wavefunc::wavefunc(){}

@@ -65,12 +65,14 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(chr),
+        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
                                                          &(GlobalC::kv),
                                                          GlobalC::kv.nks,
                                                          &(this->LOC),
                                                          &(this->UHM),
-                                                         &(this->LOWF));
+                                                         &(this->LOWF),
+                                                         this->pw_rho,
+                                                         GlobalC::bigpw);
     }
 
     //------------------init Basis_lcao----------------------
@@ -99,7 +101,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     }
 
     // Inititlize the charge density.
-    this->pelec->charge->allocate(GlobalV::NSPIN, GlobalC::rhopw->nrxx, GlobalC::rhopw->npw);
+    this->pelec->charge->allocate(GlobalV::NSPIN);
 
     // Initializee the potential.
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
@@ -282,7 +284,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     }
 
     // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(pelec->charge, pelec->nelec_spin.data());
+    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz, this->pelec->charge->rho, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
     GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
@@ -509,7 +511,21 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(is, 0, ssp.str(), this->pelec->pot->get_effective_v(), precision);
+            this->pelec->pot->write_potential(
+#ifdef __MPI
+                GlobalC::bigpw->bz,
+                GlobalC::bigpw->nbz,
+                this->pw_rho->nplane,
+                this->pw_rho->startz_current,
+#endif
+                is,
+                0,
+                ssp.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(),
+                precision);
         }
     }
 
@@ -543,7 +559,10 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     {
         if (hsolver::HSolverLCAO::out_mat_hsR)
         {
-            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         }
 
         if (hsolver::HSolverLCAO::out_mat_t)
@@ -553,7 +572,10 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
 
         if (hsolver::HSolverLCAO::out_mat_dh)
         {
-            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep,
+                                  this->pelec->pot->get_effective_v(),
+                                  this->UHM,
+                                  GlobalC::kv); // LiuXh add 2019-07-15
         }
 
         // add by jingan for out r_R matrix 2019.8.14

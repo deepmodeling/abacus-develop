@@ -47,7 +47,9 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
-                        int nk_in)
+                        int nk_in,
+                        ModulePW::PW_Basis* rhopw_in,
+                        const ModulePW::PW_Basis_Big* bigpw_in)
 {
     return;
 }
@@ -78,11 +80,26 @@ Stochastic_WF::~Stochastic_WF()
     delete[] nchip;
 }
 
-void Stochastic_WF::init(const int nks_in)
+void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
 {
     /*chi0 = new ModuleBase::ComplexMatrix[nks_in];
     shchi = new ModuleBase::ComplexMatrix[nks_in];
     chiortho = new ModuleBase::ComplexMatrix[nks_in];
     nchip = new int[nks_in];
     this->nks = nks_in;*/
+}
+
+K_Vectors::K_Vectors(){}
+K_Vectors::~K_Vectors(){}
+wavefunc::wavefunc()
+{
+}
+wavefunc::~wavefunc()
+{
+}
+WF_atomic::WF_atomic()
+{
+}
+WF_atomic::~WF_atomic()
+{
 }
