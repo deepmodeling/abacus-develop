@@ -34,7 +34,8 @@ class Force_Stress_LCAO
 		const psi::Psi<std::complex<double>>* psi,
         LCAO_Hamilt &uhm,
         ModuleBase::matrix& fcs,
-		ModuleBase::matrix &scs);
+		ModuleBase::matrix &scs,
+		const K_Vectors& kv);
 
 private:
     
@@ -79,7 +80,8 @@ private:
 #else
 	    ModuleBase::matrix& svl_dphi,
 #endif
-        LCAO_Hamilt &uhm);
+        LCAO_Hamilt &uhm,
+		const K_Vectors& kv);
     
 
 

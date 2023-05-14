@@ -30,7 +30,8 @@ void Force_Stress_LCAO::getForceStress(
 	const psi::Psi<std::complex<double>>* psi,
     LCAO_Hamilt &uhm,
     ModuleBase::matrix& fcs,
-	ModuleBase::matrix &scs)
+	ModuleBase::matrix &scs,
+	const K_Vectors& kv)
 {
     ModuleBase::TITLE("Force_Stress_LCAO","getForceStress");
 	ModuleBase::timer::tick("Force_Stress_LCAO","getForceStress");
@@ -134,7 +135,8 @@ void Force_Stress_LCAO::getForceStress(
 #else
 				svl_dphi,
 #endif
-                uhm);
+                uhm,
+				kv);
     //implement vdw force or stress here
 	// Peize Lin add 2014-04-04, update 2021-03-09
     // jiyy add 2019-05-18, update 2021-05-02
@@ -353,8 +355,8 @@ void Force_Stress_LCAO::getForceStress(
 						GlobalC::GridD,
 						pv->trace_loc_row,
     					pv->trace_loc_col,
-						GlobalC::kv.nks,
-						GlobalC::kv.kvec_d,
+						kv.nks,
+						kv.kvec_d,
 						isstress);	
 				}
 				if(GlobalV::deepks_out_unittest) GlobalC::ld.check_gdmx(GlobalC::ucell.nat);
@@ -667,7 +669,8 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 #else
 	ModuleBase::matrix& svl_dphi,
 #endif
-    LCAO_Hamilt &uhm)
+    LCAO_Hamilt &uhm,
+	const K_Vectors& kv)
 {
 	if(isGammaOnly)
 	{
@@ -715,7 +718,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(
 				svl_dphi,
 #endif
                 uhm,
-				GlobalC::kv);
+				kv);
     }
 	return;
 }

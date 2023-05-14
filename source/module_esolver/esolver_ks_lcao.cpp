@@ -243,7 +243,8 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->psi,
                        this->UHM,
                        force,
-                       this->scs);
+                       this->scs,
+                       GlobalC::kv);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
