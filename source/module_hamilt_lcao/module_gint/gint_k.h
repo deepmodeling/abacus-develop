@@ -65,10 +65,11 @@ class Gint_k : public Gint
     // in gint_k_env.cpp 
     //------------------------------------------------------
     // calculate the envelop function via grid integrals
-    void cal_env_k(
-        int ik, 
-        const std::complex<double>* psi_k,
-        double* rho);
+    void cal_env_k(int ik,
+                   const std::complex<double>* psi_k,
+                   double* rho,
+                   const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     //------------------------------------------------------
     // in gint_k_sparse.cpp 
