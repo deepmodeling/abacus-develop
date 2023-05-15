@@ -137,8 +137,14 @@ class DFTU
                       const K_Vectors& kv);
 
   private:
-    void cal_force_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix& force_dftu);
-    void cal_stress_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix& stress_dftu);
+    void cal_force_k(const int ik,
+                    const std::complex<double>* rho_VU,
+                    ModuleBase::matrix& force_dftu,
+                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+    void cal_stress_k(const int ik,
+                      const std::complex<double>* rho_VU,
+                      ModuleBase::matrix& stress_dftu,
+                      const std::vector<ModuleBase::Vector3<double>>& kvec_d);
     void cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu);
     void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu);
 
