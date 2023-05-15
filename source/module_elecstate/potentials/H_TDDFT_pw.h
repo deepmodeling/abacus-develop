@@ -1,8 +1,9 @@
 #ifndef H_TDDFT_PW_H
 #define H_TDDFT_PW_H
 
-#include "pot_base.h"
 #include "module_io/input.h"
+#include "module_io/input_conv.h"
+#include "pot_base.h"
 
 namespace elecstate
 {
@@ -21,7 +22,20 @@ class H_TDDFT_pw : public PotBase
 
     void cal_fixed_v(double* vl_pseudo) override;
 
-    static void read_parameters(Input *in);
+    /**
+     * @brief read paramers of electric field and convert units
+     *
+     * @param in input
+     */
+    static void read_parameters(Input* in);
+
+    /**
+     * @brief compute force of electric field
+     *
+     * @param[in] cell information of cell
+     * @param[out] fdip force of electric field
+     */
+    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fdip);
 
   private:
     // internal time-step,
@@ -29,6 +43,11 @@ class H_TDDFT_pw : public PotBase
     // Vext will evolve by time, every time cal_fixed_v() is called, istep++
     //------------------------
     static int istep;
+
+    static double amp;
+
+    static double bmod;
+    static double bvec[3];
 
     // parameters
     static int stype; // 0 : length gauge  1: velocity gauge
@@ -100,7 +119,7 @@ class H_TDDFT_pw : public PotBase
     double cal_v_time_heaviside();
     // double cal_v_time_HHG();
 
-    double prepare(const UnitCell &cell, int &dir);
+    void prepare(const UnitCell& cell, int& dir);
 };
 
 } // namespace elecstate

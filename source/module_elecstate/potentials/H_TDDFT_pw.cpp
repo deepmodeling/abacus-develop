@@ -12,6 +12,10 @@ namespace elecstate
 
 int H_TDDFT_pw::istep = -1;
 
+double H_TDDFT_pw::amp;
+double H_TDDFT_pw::bmod;
+double H_TDDFT_pw::bvec[3];
+
 int H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
 
 std::vector<int> H_TDDFT_pw::ttype;
@@ -200,11 +204,7 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
 
-    double bmod[3];
-    for (int i = 0; i < 3; i++)
-    {
-        bmod[i] = prepare(GlobalC::ucell, i);
-    }
+    prepare(GlobalC::ucell, direc);
 
     for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
     {
@@ -218,15 +218,15 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
         switch (direc)
         {
         case 1:
-            vext_space[ir] = cal_v_space_length_potential(x) / bmod[0];
+            vext_space[ir] = cal_v_space_length_potential(x) / bmod;
             break;
 
         case 2:
-            vext_space[ir] = cal_v_space_length_potential(y) / bmod[1];
+            vext_space[ir] = cal_v_space_length_potential(y) / bmod;
             break;
 
         case 3:
-            vext_space[ir] = cal_v_space_length_potential(z) / bmod[2];
+            vext_space[ir] = cal_v_space_length_potential(z) / bmod;
             break;
 
         default:
@@ -371,10 +371,8 @@ double H_TDDFT_pw::cal_v_time_heaviside()
     return vext_time;
 }
 
-double H_TDDFT_pw::prepare(const UnitCell &cell, int &dir)
+void H_TDDFT_pw::prepare(const UnitCell& cell, int& dir)
 {
-    double bvec[3] = {0.0};
-    double bmod = 0.0;
     if (dir == 0)
     {
         bvec[0] = cell.G.e11;
@@ -398,7 +396,22 @@ double H_TDDFT_pw::prepare(const UnitCell &cell, int &dir)
         ModuleBase::WARNING_QUIT("H_TDDFT_pw::prepare", "direction is wrong!");
     }
     bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
-    return bmod;
+}
+
+void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fdip)
+{
+    int iat = 0;
+    for (int it = 0; it < cell.ntype; ++it)
+    {
+        for (int ia = 0; ia < cell.atoms[it].na; ++ia)
+        {
+            for (int jj = 0; jj < 3; ++jj)
+            {
+                fdip(iat, jj) = ModuleBase::e2 * amp * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
+            }
+            ++iat;
+        }
+    }
 }
 
 } // namespace elecstate

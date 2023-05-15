@@ -167,6 +167,15 @@ void Force_Stress_LCAO::getForceStress(
         fefield.create(nat, 3);
         elecstate::Efield::compute_force(GlobalC::ucell, fefield);
     }
+
+    // implement force from E-field of tddft
+    ModuleBase::matrix fefield_tddft;
+    if (GlobalV::ESOLVER_TYPE == "TDDFT" && isforce)
+    {
+        fefield_tddft.create(nat, 3);
+        elecstate::Efield::compute_force(GlobalC::ucell, fefield_tddft);
+    }
+
     //implement force from gate field
     ModuleBase::matrix fgate;
     if(GlobalV::GATE_FLAG&&isforce)
@@ -277,6 +286,11 @@ void Force_Stress_LCAO::getForceStress(
 				{
 					fcs(iat, i) += fefield(iat, i);
 				}
+                // E-field force of tddft
+                if (GlobalV::ESOLVER_TYPE == "TDDFT")
+                {
+                    fcs(iat, i) += fefield_tddft(iat, i);
+                }
                 //Gate field force
                 if(GlobalV::GATE_FLAG)
                 {
@@ -419,6 +433,11 @@ void Force_Stress_LCAO::getForceStress(
 				f_pw.print("EFIELD     FORCE", fefield,0);
 				//this->print_force("EFIELD     FORCE",fefield,1,ry);
 			}
+            if (GlobalV::ESOLVER_TYPE == "TDDFT")
+            {
+                f_pw.print("EFIELD_TDDFT     FORCE", fefield_tddft, 0);
+                // this->print_force("EFIELD_TDDFT     FORCE",fefield_tddft,1,ry);
+            }
             if(GlobalV::GATE_FLAG)
             {
                 f_pw.print("GATEFIELD     FORCE", fgate,0);
