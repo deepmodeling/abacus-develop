@@ -358,7 +358,7 @@ namespace ModuleESolver
         
         if(GlobalV::CALCULATION == "test_memory")
         {
-            Cal_Test::test_memory(this->pw_rho, this->pw_wfc);
+            Cal_Test::test_memory(this->pw_rho, this->pw_wfc, GlobalC::CHR_MIX.get_mixing_mode(), GlobalC::CHR_MIX.get_mixing_ndim());
             return;
         }
 

@@ -45,7 +45,7 @@ double Cal_Test::meigts123;
 
 double Cal_Test::mtot;
 
-void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_Basis_K* wfcpw)
+void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_Basis_K* wfcpw, const std::string chr_mixing_mode, const int chr_mixing_ndim)
 {
 	ModuleBase::TITLE("Cal_Test","test_memory");
 
@@ -63,13 +63,13 @@ void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_B
 	mrho_core = mrho;
 
 	// (2) memory for charge mixing
-	std::cout << " Mixing mode = " << GlobalC::CHR_MIX.get_mixing_mode() << std::endl;
-	if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
+	std::cout << " Mixing mode = " << chr_mixing_mode << std::endl;
+	if(chr_mixing_mode == "pulay")
 	{
-		std::cout << " Mixing dimension = " << GlobalC::CHR_MIX.get_mixing_ndim() << std::endl;
-		mRrho = GlobalC::CHR_MIX.get_mixing_ndim() * mrho;
-		mdRrho = (GlobalC::CHR_MIX.get_mixing_ndim()-1) * mrho;
-		mdrho = (GlobalC::CHR_MIX.get_mixing_ndim()-1) * mrho;
+		std::cout << " Mixing dimension = " << chr_mixing_ndim << std::endl;
+		mRrho = chr_mixing_ndim * mrho;
+		mdRrho = (chr_mixing_ndim-1) * mrho;
+		mdrho = (chr_mixing_ndim-1) * mrho;
 		mrho_save2 = mrho;
 //		std::cout << " Memory for pulay mixing: " << mrho << " MB" << std::endl;	
 	}
