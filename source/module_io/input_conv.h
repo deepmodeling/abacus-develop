@@ -40,10 +40,8 @@ std::vector<double> convert_units(std::string params, double c);
 
 /**
  * @brief read paramers of electric field for tddft and convert units
- *
- * @param in input
  */
-void read_td_efield(Input* in);
+void read_td_efield();
 #endif
 } // namespace Input_Conv
 
