@@ -18,7 +18,7 @@ public:
     /// for gamma_only
     void begin(const psi::Psi<double>* psid,
                const ModulePW::PW_Basis* rhopw,
-               ModulePW::PW_Basis_K* wfcpw,
+               const ModulePW::PW_Basis_K* wfcpw,
                Local_Orbital_wfc& lowf,
                Gint_Gamma& gg,
                int& out_wfc_pw,
@@ -27,7 +27,7 @@ public:
     /// for multi-k
     void begin(const psi::Psi<std::complex<double>>* psi,
                const ModulePW::PW_Basis* rhopw,
-               ModulePW::PW_Basis_K* wfcpw,
+               const ModulePW::PW_Basis_K* wfcpw,
                Local_Orbital_wfc& lowf,
                Gint_k& gk,
                int& out_wfc_pw,

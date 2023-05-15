@@ -45,8 +45,8 @@ public:
                        int nbands,
                        const int npwx,
                        const psi::Psi<std::complex<double>>* psi_in,
-                       ModulePW::PW_Basis* rhopw,
-                       ModulePW::PW_Basis_K* wfcpw,
+                       const ModulePW::PW_Basis* rhopw,
+                       const ModulePW::PW_Basis_K* wfcpw,
                        const K_Vectors& kv);
 
     void Berry_Phase(int nbands,
@@ -54,11 +54,15 @@ public:
                      int& mod_elec_tot,
                      const int npwx,
                      const psi::Psi<std::complex<double>>* psi_in,
-                     ModulePW::PW_Basis* rhopw,
-                     ModulePW::PW_Basis_K* wfcpw,
+                     const ModulePW::PW_Basis* rhopw,
+                     const ModulePW::PW_Basis_K* wfcpw,
                      const K_Vectors& kv);
 
-    void Macroscopic_polarization(const int npwx, const psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis* rhopw, ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv);
+    void Macroscopic_polarization(const int npwx,
+                                  const psi::Psi<std::complex<double>>* psi_in,
+                                  const ModulePW::PW_Basis* rhopw,
+                                  const ModulePW::PW_Basis_K* wfcpw,
+                                  const K_Vectors& kv);
 
     std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
 	

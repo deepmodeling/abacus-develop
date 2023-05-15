@@ -11,7 +11,7 @@ unkOverlap_pw::~unkOverlap_pw()
 	//GlobalV::ofs_running << "this is ~unkOverlap_pw()" << std::endl;
 }
 
-std::complex<double> unkOverlap_pw::unkdotp_G(ModulePW::PW_Basis_K* wfcpw,
+std::complex<double> unkOverlap_pw::unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,
                                               const int ik_L,
                                               const int ik_R,
                                               const int iband_L,
@@ -64,8 +64,8 @@ std::complex<double> unkOverlap_pw::unkdotp_G(ModulePW::PW_Basis_K* wfcpw,
 
 }
 
-std::complex<double> unkOverlap_pw::unkdotp_G0(ModulePW::PW_Basis* rhopw,
-                                               ModulePW::PW_Basis_K* wfcpw,
+std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
+                                               const ModulePW::PW_Basis_K* wfcpw,
                                                const int ik_L,
                                                const int ik_R,
                                                const int iband_L,
@@ -122,7 +122,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(ModulePW::PW_Basis* rhopw,
 }
 
 // if noncollinear = 1 or GlobalV::NSPIN = 4 , you need this routine to calculate overlap unk
-std::complex<double> unkOverlap_pw::unkdotp_soc_G(ModulePW::PW_Basis_K* wfcpw,
+std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wfcpw,
                                                   const int ik_L,
                                                   const int ik_R,
                                                   const int iband_L,
@@ -177,8 +177,8 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(ModulePW::PW_Basis_K* wfcpw,
 }
 
 //here G is in direct coordinate
-std::complex<double> unkOverlap_pw::unkdotp_soc_G0(ModulePW::PW_Basis* rhopw,
-                                                   ModulePW::PW_Basis_K* wfcpw,
+std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rhopw,
+                                                   const ModulePW::PW_Basis_K* wfcpw,
                                                    const int ik_L,
                                                    const int ik_R,
                                                    const int iband_L,

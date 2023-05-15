@@ -22,29 +22,29 @@ class unkOverlap_pw
   public:
     unkOverlap_pw();
     ~unkOverlap_pw();
-    std::complex<double> unkdotp_G(ModulePW::PW_Basis_K* wfcpw,
+    std::complex<double> unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,
                                    const int ik_L,
                                    const int ik_R,
                                    const int iband_L,
                                    const int iband_R,
                                    const psi::Psi<std::complex<double>>* evc);
-    std::complex<double> unkdotp_G0(ModulePW::PW_Basis* rhopw,
-                                    ModulePW::PW_Basis_K* wfcpw,
+    std::complex<double> unkdotp_G0(const ModulePW::PW_Basis* rhopw,
+                                    const ModulePW::PW_Basis_K* wfcpw,
                                     const int ik_L,
                                     const int ik_R,
                                     const int iband_L,
                                     const int iband_R,
                                     const psi::Psi<std::complex<double>>* evc,
                                     const ModuleBase::Vector3<double> G);
-    std::complex<double> unkdotp_soc_G(ModulePW::PW_Basis_K* wfcpw,
+    std::complex<double> unkdotp_soc_G(const ModulePW::PW_Basis_K* wfcpw,
                                        const int ik_L,
                                        const int ik_R,
                                        const int iband_L,
                                        const int iband_R,
                                        const int npwx,
                                        const psi::Psi<std::complex<double>>* evc);
-    std::complex<double> unkdotp_soc_G0(ModulePW::PW_Basis* rhopw,
-                                        ModulePW::PW_Basis_K* wfcpw,
+    std::complex<double> unkdotp_soc_G0(const ModulePW::PW_Basis* rhopw,
+                                        const ModulePW::PW_Basis_K* wfcpw,
                                         const int ik_L,
                                         const int ik_R,
                                         const int iband_L,

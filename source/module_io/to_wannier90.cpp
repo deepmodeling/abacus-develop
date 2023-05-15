@@ -45,8 +45,8 @@ toWannier90::~toWannier90()
 }
 
 void toWannier90::init_wannier(const ModuleBase::matrix& ekb,
-                               ModulePW::PW_Basis* rhopw,
-                               ModulePW::PW_Basis_K* wfcpw,
+                               const ModulePW::PW_Basis* rhopw,
+                               const ModulePW::PW_Basis_K* wfcpw,
                                const K_Vectors& kv,
                                const psi::Psi<std::complex<double>>* psi)
 {
@@ -378,7 +378,7 @@ void toWannier90::outEIG(const ModuleBase::matrix& ekb)
     }
 }
 
-void toWannier90::writeUNK(ModulePW::PW_Basis_K* wfcpw, const psi::Psi<std::complex<double>>& psi_pw)
+void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw, const psi::Psi<std::complex<double>>& psi_pw)
 {
 
 /*
@@ -607,7 +607,7 @@ void toWannier90::writeUNK(ModulePW::PW_Basis_K* wfcpw, const psi::Psi<std::comp
 #endif
 }
 
-void toWannier90::cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, ModulePW::PW_Basis_K* wfcpw)
+void toWannier90::cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw)
 {
     const int pwNumberMax = wfcpw->npwk_max;
 
@@ -677,7 +677,9 @@ void toWannier90::cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, ModulePW
     delete[] trial_orbitals;
 }
 
-void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw, ModulePW::PW_Basis* rhopw, ModulePW::PW_Basis_K* wfcpw)
+void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw,
+                          const ModulePW::PW_Basis* rhopw,
+                          const ModulePW::PW_Basis_K* wfcpw)
 {
     // test by jingan
     // GlobalV::ofs_running << __FILE__ << __LINE__ << " cal_num_kpts = " << cal_num_kpts << std::endl;
@@ -781,7 +783,7 @@ void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw, ModulePW
 
 void toWannier90::produce_trial_in_pw(const psi::Psi<std::complex<double>>& psi_pw,
                                       const int& ik,
-                                      ModulePW::PW_Basis_K* wfcpw,
+                                      const ModulePW::PW_Basis_K* wfcpw,
                                       ModuleBase::ComplexMatrix& trial_orbitals_k)
 {
 
@@ -1599,8 +1601,8 @@ std::complex<double> toWannier90::unkdotb(const std::complex<double> *psir,
     return result;
 }
 */
-std::complex<double> toWannier90::unkdotkb(ModulePW::PW_Basis* rhopw,
-                                           ModulePW::PW_Basis_K* wfcpw,
+std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis* rhopw,
+                                           const ModulePW::PW_Basis_K* wfcpw,
                                            const int& ik,
                                            const int& ikb,
                                            const int& iband_L,
@@ -1714,14 +1716,16 @@ result = result + conj(psir[wfcpw->ng2fftw[psi.igk(0, ig)]]); // * tem;
 */
 
 #ifdef __LCAO
-void toWannier90::lcao2pw_basis(const int ik, ModulePW::PW_Basis_K* wfcpw, ModuleBase::ComplexMatrix &orbital_in_G)
+void toWannier90::lcao2pw_basis(const int ik,
+                                const ModulePW::PW_Basis_K* wfcpw,
+                                ModuleBase::ComplexMatrix& orbital_in_G)
 {
     this->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
     Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, this->table_local);
     Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, orbital_in_G, this->table_local);
 }
 
-void toWannier90::getUnkFromLcao(ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv, const int npwx)
+void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv, const int npwx)
 {
     std::complex<double> ***lcao_wfc_global = new std::complex<double> **[num_kpts];
     for (int ik = 0; ik < num_kpts; ik++)

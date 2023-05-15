@@ -232,8 +232,8 @@ double berryphase::stringPhase(int index_str,
                                int nbands,
                                const int npwx,
                                const psi::Psi<std::complex<double>>* psi_in,
-                               ModulePW::PW_Basis* rhopw,
-                               ModulePW::PW_Basis_K* wfcpw,
+                               const ModulePW::PW_Basis* rhopw,
+                               const ModulePW::PW_Basis_K* wfcpw,
                                const K_Vectors& kv)
 {
 	std::complex<double> zeta(1.0, 0.0);
@@ -389,8 +389,8 @@ void berryphase::Berry_Phase(int nbands,
                              int& mod_elec_tot,
                              const int npwx,
                              const psi::Psi<std::complex<double>>* psi_in,
-                             ModulePW::PW_Basis* rhopw,
-                             ModulePW::PW_Basis_K* wfcpw,
+                             const ModulePW::PW_Basis* rhopw,
+                             const ModulePW::PW_Basis_K* wfcpw,
                              const K_Vectors& kv)
 {		
 	std::complex<double> cave = 0.0;
@@ -464,8 +464,8 @@ void berryphase::Berry_Phase(int nbands,
 
 void berryphase::Macroscopic_polarization(const int npwx,
                                           const psi::Psi<std::complex<double>>* psi_in,
-                                          ModulePW::PW_Basis* rhopw,
-                                          ModulePW::PW_Basis_K* wfcpw,
+                                          const ModulePW::PW_Basis* rhopw,
+                                          const ModulePW::PW_Basis_K* wfcpw,
                                           const K_Vectors& kv)
 {	
 	get_occupation_bands();

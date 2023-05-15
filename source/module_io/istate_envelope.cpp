@@ -15,7 +15,7 @@ IState_Envelope::~IState_Envelope()
 
 void IState_Envelope::begin(const psi::Psi<double>* psid,
                             const ModulePW::PW_Basis* rhopw,
-                            ModulePW::PW_Basis_K* wfcpw,
+                            const ModulePW::PW_Basis_K* wfcpw,
                             Local_Orbital_wfc& lowf,
                             Gint_Gamma& gg,
                             int& out_wfc_pw,
@@ -160,7 +160,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
 void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                             const ModulePW::PW_Basis* rhopw,
-                            ModulePW::PW_Basis_K* wfcpw,
+                            const ModulePW::PW_Basis_K* wfcpw,
                             Local_Orbital_wfc& lowf,
                             Gint_k& gk,
                             int& out_wf,
