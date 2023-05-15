@@ -32,9 +32,8 @@ class LCAO_Hamilt
     template<typename Tdata> void calculate_HR_exx_sparse(
             const int &current_spin,
             const double &sparse_threshold,
-            const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>,
-            const int nmp[],
-            RI::Tensor<Tdata>>>> &Hexxs);
+            const int (&nmp)[3],
+            const std::vector< std::map <int, std::map < std::pair<int, std::array<int,3>>, RI::Tensor<Tdata> > >>& Hexxs);
 #endif
     void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold);
     void calculate_SR_sparse(const double &sparse_threshold);
