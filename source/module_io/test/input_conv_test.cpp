@@ -316,18 +316,19 @@ TEST_F(InputConvTest, dftplus)
 
 TEST_F(InputConvTest, nspin)
 {
-	INPUT.Default();
-	std::string input_file = "./support/INPUT";
-	INPUT.Read(input_file);
-	INPUT.noncolin=true;
-	Input_Conv::Convert();
-	EXPECT_EQ(GlobalV::NSPIN,4);
-	EXPECT_EQ(GlobalV::NONCOLIN,true);
-	EXPECT_EQ(GlobalV::NPOL,2);
-	EXPECT_EQ(GlobalV::DOMAG,false);
-	EXPECT_EQ(GlobalV::DOMAG_Z,true);
-	EXPECT_EQ(GlobalV::LSPINORB,false);
-	EXPECT_EQ(GlobalV::soc_lambda,INPUT.soc_lambda);
+    INPUT.Default();
+    std::string input_file = "./support/INPUT";
+    INPUT.Read(input_file);
+    INPUT.noncolin = true;
+    INPUT.gamma_only_local = false;
+    Input_Conv::Convert();
+    EXPECT_EQ(GlobalV::NSPIN, 4);
+    EXPECT_EQ(GlobalV::NONCOLIN, true);
+    EXPECT_EQ(GlobalV::NPOL, 2);
+    EXPECT_EQ(GlobalV::DOMAG, false);
+    EXPECT_EQ(GlobalV::DOMAG_Z, true);
+    EXPECT_EQ(GlobalV::LSPINORB, false);
+    EXPECT_EQ(GlobalV::soc_lambda, INPUT.soc_lambda);
 }
 
 TEST_F(InputConvTest, nspinbeta)

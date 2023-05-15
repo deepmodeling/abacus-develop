@@ -920,7 +920,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // ModuleBase::ComplexMatrix vkb1(nkb, this->npwx);
     resmem_complex_op()(this->ctx, vkb1, this->npwx * nkb, "Force::vkb1");
     // init additional params
-    FPTYPE *force = nullptr, *d_wg = nullptr, *deeq = nullptr, *gcar = nullptr;
+    FPTYPE *force = nullptr;
+    FPTYPE *d_wg = nullptr;
+    FPTYPE *gcar = nullptr;
+    auto *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
     int wg_nc = wg.nc;
     int *atom_nh = nullptr, *atom_na = nullptr;
     int* h_atom_nh = new int[GlobalC::ucell.ntype];
@@ -932,7 +935,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     }
     if (this->device == psi::GpuDevice)
     {
-        deeq = GlobalC::ppcell.d_deeq;
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, force, forcenl.nr * forcenl.nc);
         resmem_var_op()(this->ctx, gcar, 3 * wfc_basis->nks * wfc_basis->npwk_max);
@@ -951,7 +953,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     }
     else
     {
-        deeq = GlobalC::ppcell.deeq.ptr;
         d_wg = wg.c;
         force = forcenl.c;
         gcar = &wfc_basis->gcar[0][0];
@@ -1012,7 +1013,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
             std::complex<FPTYPE>* h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
-            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_complex_double_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
             delmem_complex_h_op()(this->cpu_ctx, h_becp);
         }

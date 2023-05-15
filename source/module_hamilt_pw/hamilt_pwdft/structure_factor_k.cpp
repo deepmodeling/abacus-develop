@@ -124,7 +124,6 @@ void Structure_Factor::get_sk(Device* ctx,
     if (device == psi::GpuDevice)
     {
         delmem_int_op()(ctx, atom_na);
-        delmem_var_op()(ctx, kvec);
         delmem_var_op()(ctx, atom_tau);
     }
     delete[] h_atom_na;
