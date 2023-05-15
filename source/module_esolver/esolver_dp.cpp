@@ -95,7 +95,7 @@ namespace ModuleESolver
             }
         }
 #else
-        ModuleBase::WARNING_QUIT("DP_pot", "Please recompile with -D__DPMD !");
+        ModuleBase::WARNING_QUIT("DP_pot", "Please recompile with -D__DPMD");
 #endif
         ModuleBase::timer::tick("ESolver_DP", "Run");
     }
@@ -154,24 +154,24 @@ namespace ModuleESolver
                 if (find_type)
                 {
                     std::getline(ifs, word, '"'); ///< the string is ":[", which is useless
-                    std::getline(ifs, word, '"');
                     std::stringstream ss;
                     while (word[0] != ']')
                     {
+                        std::getline(ifs, word, '"');
                         ++ntype_dp;
-                        ss << word;
+                        ss << word << "  ";
                         std::getline(ifs, word, '"');
                     }
 
                     GlobalV::ofs_running << std::endl;
                     GlobalV::ofs_running << "Determine the type map from DP model" << std::endl;
-                    GlobalV::ofs_running << "ntype read from DP mddel: " << ntype_dp << std::endl;
+                    GlobalV::ofs_running << "ntype read from DP model: " << ntype_dp << std::endl;
 
                     label = new std::string[ntype_dp];
                     for (int it = 0; it < ntype_dp; ++it)
                     {
                         ss >> label[it];
-                        GlobalV::ofs_running << label[it];
+                        GlobalV::ofs_running << "  " << label[it];
                     }
                     GlobalV::ofs_running << std::endl << std::endl;
 

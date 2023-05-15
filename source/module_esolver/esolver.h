@@ -1,12 +1,10 @@
 #ifndef ESOLVER_H
 #define ESOLVER_H
 
-#include "module_io/input.h"
+#include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/energy.h"
-#include "module_base/matrix.h"
-//--------------temporary----------------------------
-#include "module_psi/psi.h"
+#include "module_io/input.h"
 
 namespace ModuleESolver
 {
@@ -18,18 +16,9 @@ namespace ModuleESolver
         ESolver() {
             classname = "ESolver";
         }
-        
-        virtual ~ESolver() 
+
+        virtual ~ESolver()
         {
-            //--------------temporary----------------------------
-            if(this->psi != nullptr)
-            {
-                delete psi;
-            }
-            if(this->psid != nullptr)
-            {
-                delete psid;
-            }
         }
 
         //virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
@@ -58,14 +47,6 @@ namespace ModuleESolver
         //get iterstep used in current scf
         virtual int getniter() { return 0; }
         string classname;
-
-        //--------------temporary----------------------------
-        // this is the interface of non-self-consistant calculation
-        virtual void nscf() {};
-        
-        //wavefunction coefficients
-        psi::Psi<std::complex<double>>* psi = nullptr;
-        psi::Psi<double>* psid = nullptr;
     };
 
     string determine_type();
