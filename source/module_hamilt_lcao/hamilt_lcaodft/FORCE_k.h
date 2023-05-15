@@ -48,9 +48,11 @@ private:
 		const K_Vectors& kv);
 
 	// get the ds, dt, dvnl.
-	void allocate_k(const Parallel_Orbitals &pv, const int& nks);
+    void allocate_k(const Parallel_Orbitals& pv,
+                    const int& nks,
+                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-	void finish_k(void);
+    void finish_k(void);
 	
 	// calculate the force due to < dphi | beta > < beta | phi >
     void cal_ftvnl_dphi_k(

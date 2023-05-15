@@ -88,7 +88,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int &lgd,
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         // here we reset the density matrix dimension.
-        this->allocate_gamma(lgd, psid, pelec);
+        this->allocate_gamma(lgd, psid, pelec, kv.nks);
     }
     else
     {

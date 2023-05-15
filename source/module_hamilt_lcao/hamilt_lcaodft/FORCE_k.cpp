@@ -57,7 +57,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     this->UHM = &uhm;
 
     const Parallel_Orbitals* pv = loc.ParaV;
-    this->allocate_k(*pv, kv.nks);
+    this->allocate_k(*pv, kv.nks, kv.kvec_d);
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
@@ -184,7 +184,9 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     return;
 }
 
-void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv, const int& nks)
+void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
+                            const int& nks,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Force_LCAO_k", "allocate_k");
     ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
@@ -273,7 +275,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv, const int& nks)
         for (int ik = 0; ik < nks; ik++)
         {
             this->UHM->genH.LM->zeros_HSk('S');
-            this->UHM->genH.LM->folding_fixedH(ik, GlobalC::kv.kvec_d, 1);
+            this->UHM->genH.LM->folding_fixedH(ik, kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
             ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
                                 this->UHM->genH.LM->Sloc2.data(),
