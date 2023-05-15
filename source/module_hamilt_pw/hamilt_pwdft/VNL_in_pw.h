@@ -37,8 +37,8 @@ public:
 	friend class Stochastic_hchi;
 
     void init(const int ntype,
-              Structure_Factor *psf_in,
-              ModulePW::PW_Basis_K *wfc_basis = nullptr,
+              Structure_Factor* psf_in,
+              const ModulePW::PW_Basis_K* wfc_basis = nullptr,
               const bool allocate_vkb = 1);
 
     double cell_factor; //LiuXh add 20180619
@@ -133,7 +133,7 @@ private:
     double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
     std::complex<double> * z_vkb = nullptr;
 
-	ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* wfcpw = nullptr;
     Structure_Factor *psf = nullptr;
 };
 

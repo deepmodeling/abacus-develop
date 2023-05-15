@@ -29,10 +29,10 @@ PW_Basis_K::~PW_Basis_K()
             delmem_sd_op()(gpu_ctx, this->s_gk2);
         }
         else {
-            delmem_dd_op()(gpu_ctx, this->d_kvec_c);
             delmem_dd_op()(gpu_ctx, this->d_gcar);
             delmem_dd_op()(gpu_ctx, this->d_gk2);
         }
+        delmem_dd_op()(gpu_ctx, this->d_kvec_c);
         delmem_int_op()(gpu_ctx, this->ig2ixyz_k);
         delmem_int_op()(gpu_ctx, this->d_igl2isz_k);
     }
@@ -98,10 +98,8 @@ void PW_Basis_K:: initparameters(
             resmem_sd_op()(gpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
-        else {
-            resmem_dd_op()(gpu_ctx, this->d_kvec_c, this->nks * 3);
-            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
-        }
+        resmem_dd_op()(gpu_ctx, this->d_kvec_c, this->nks * 3);
+        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
     }
     else {
 #endif
@@ -109,9 +107,7 @@ void PW_Basis_K:: initparameters(
             resmem_sh_op()(cpu_ctx, this->s_kvec_c, this->nks * 3);
             castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_kvec_c, reinterpret_cast<double *>(&this->kvec_c[0][0]), this->nks * 3);
         }
-        else {
-            this->d_kvec_c = reinterpret_cast<double *>(&this->kvec_c[0][0]);
-        }
+        this->d_kvec_c = reinterpret_cast<double *>(&this->kvec_c[0][0]);
         // There's no need to allocate double pointers while in a CPU environment.
 #if defined(__CUDA) || defined(__ROCM)
     }

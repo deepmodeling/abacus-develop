@@ -2,7 +2,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "surchem.h"
 
-void shape_gradn(const double *PS_TOTN_real, ModulePW::PW_Basis* rho_basis, double *eprime)
+void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime)
 {
 
     double epr_c = 1.0 / sqrt(ModuleBase::TWO_PI) / GlobalV::sigma_k;
@@ -15,7 +15,11 @@ void shape_gradn(const double *PS_TOTN_real, ModulePW::PW_Basis* rho_basis, doub
     }
 }
 
-void eps_pot(const double *PS_TOTN_real, const complex<double> *phi, ModulePW::PW_Basis* rho_basis, double *d_eps, double *vwork)
+void eps_pot(const double* PS_TOTN_real,
+             const complex<double>* phi,
+             const ModulePW::PW_Basis* rho_basis,
+             double* d_eps,
+             double* vwork)
 {
     double *eprime = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(eprime, rho_basis->nrxx);
@@ -31,7 +35,7 @@ void eps_pot(const double *PS_TOTN_real, const complex<double> *phi, ModulePW::P
     double *phisq = new double[rho_basis->nrxx];
 
     // nabla phi
-    XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, GlobalC::ucell.tpiba);
+    XC_Functional::grad_rho(phi, nabla_phi, rho_basis, GlobalC::ucell.tpiba);
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -48,10 +52,10 @@ void eps_pot(const double *PS_TOTN_real, const complex<double> *phi, ModulePW::P
     delete[] phisq;
 }
 
-ModuleBase::matrix surchem::cal_vel(const UnitCell &cell,
-                                    ModulePW::PW_Basis* rho_basis,
-                                    complex<double> *TOTN,
-                                    complex<double> *PS_TOTN,
+ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
+                                    const ModulePW::PW_Basis* rho_basis,
+                                    complex<double>* TOTN,
+                                    complex<double>* PS_TOTN,
                                     int nspin)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
