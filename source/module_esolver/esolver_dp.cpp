@@ -1,3 +1,21 @@
+/**
+ * @file esolver_dp.cpp
+ * @brief Implementation of ESolver_DP class for DeePMD method.
+ *
+ * This file contains the implementation of the ESolver_DP class, which is used for solving the energy and forces in a
+ * Deep Potential Molecular Dynamics (DeePMD) simulation.
+ * DeePMD is a method for training deep neural networks to accurately predict the potential energy surface of a
+ * molecular system.
+ *
+ * For more information about DeePMD, see the following reference:
+ *
+ * Han Wang, Linfeng Zhang, Jiequn Han, and Roberto Car.
+ * "DeePMD-kit: A deep learning package for many-body potential energy representation and molecular dynamics,"
+ * Computer Physics Communications 228, 178-184 (2018). https://doi.org/10.1016/j.cpc.2018.03.016
+ *
+ * @author YuLiu98
+ * @date 2023-05-15
+ */
 #include "esolver_dp.h"
 
 #include "module_base/parallel_common.h"

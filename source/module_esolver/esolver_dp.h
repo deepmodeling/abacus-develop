@@ -13,11 +13,6 @@
 namespace ModuleESolver
 {
 
-/**
- * @brief esolver dp
- *
- * Take DP machine learning model as energy esolver.
- */
 class ESolver_DP : public ESolver
 {
   public:
@@ -36,7 +31,7 @@ class ESolver_DP : public ESolver
 #endif
 
     /**
-     * @brief initialize related variables
+     * @brief Initialize the DP solver with given input parameters and unit cell
      *
      * @param inp input parameters
      * @param cell unitcell information
@@ -44,9 +39,7 @@ class ESolver_DP : public ESolver
     void Init(Input& inp, UnitCell& cell) override;
 
     /**
-     * @brief run the energy esolver
-     *
-     * Using DP model, energy, forces, and virials are obtained
+     * @brief Run the DP solver for a given ion/md step and unit cell
      *
      * @param istep the current ion/md step
      * @param cell unitcell information
@@ -75,8 +68,9 @@ class ESolver_DP : public ESolver
     void cal_Stress(ModuleBase::matrix& stress) override;
 
     /**
-     * @brief the postprocess of esolver dp
+     * @brief Prints the final total energy of the DP model to the output file
      *
+     * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
     void postprocess() override;
 
@@ -90,15 +84,28 @@ class ESolver_DP : public ESolver
      */
     bool type_map(const UnitCell& ucell);
 
-    /// the DP model
+    /**
+     * @brief DeePMD related variables for ESolver_DP class
+     *
+     * These variables are related to the DeePMD method and are used in the ESolver_DP class to compute the potential
+     * energy and forces.
+     *
+     * @note These variables are only defined if the __DPMD preprocessor macro is defined.
+     */
 #ifdef __DPMD
 #ifdef __DPMDC
-    deepmd::hpp::DeepPot dp;
+    deepmd::hpp::DeepPot dp; ///< C interface
 #else
-    deepmd::DeepPot dp;
+    deepmd::DeepPot dp; ///< C++ interface
 #endif
 #endif
 
+    /**
+     * @brief Variables for storing simulation data in ESolver_DP class
+     *
+     * These variables are used in the ESolver_DP class to store simulation data such as atomic positions, types, and
+     * the potential energy and forces.
+     */
     std::string dp_file;      ///< the directory of DP model file
     std::vector<int> dp_type; ///< convert atom type to dp type if find type_map
     std::vector<double> cell; ///< the lattice vectors
