@@ -217,6 +217,7 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);
+        this->pelec->omega = GlobalC::ucell.omega;
 
         if (this->pelec->pot != nullptr)
         {

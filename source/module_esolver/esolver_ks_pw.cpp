@@ -226,6 +226,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                                                  GlobalC::bigpw);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);
+        this->pelec->omega = GlobalC::ucell.omega;
 
         delete this->pelec->pot;
         this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
