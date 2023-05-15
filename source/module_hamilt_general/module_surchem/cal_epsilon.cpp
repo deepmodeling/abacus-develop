@@ -1,6 +1,9 @@
 #include "surchem.h"
 
-void surchem::cal_epsilon(ModulePW::PW_Basis* rho_basis, const double *PS_TOTN_real, double *epsilon, double *epsilon0)
+void surchem::cal_epsilon(const ModulePW::PW_Basis* rho_basis,
+                          const double* PS_TOTN_real,
+                          double* epsilon,
+                          double* epsilon0)
 {
     // shapefunction value varies from 0 in the solute to 1 in the solvent
     // epsilon = 1.0 + (eb_k - 1) * shape function

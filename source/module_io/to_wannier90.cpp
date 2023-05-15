@@ -607,7 +607,7 @@ void toWannier90::writeUNK(const psi::Psi<std::complex<double>> &wfc_pw)
 #endif
 }
 
-void toWannier90::cal_Amn(const psi::Psi<std::complex<double>> &wfc_pw, ModulePW::PW_Basis_K* wfc_basis)
+void toWannier90::cal_Amn(const psi::Psi<std::complex<double>>& wfc_pw, const ModulePW::PW_Basis_K* wfc_basis)
 {
     const int pwNumberMax = wfc_basis->npwk_max;
 
@@ -781,7 +781,7 @@ void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& wfc_pw, ModulePW
 
 void toWannier90::produce_trial_in_pw(const psi::Psi<std::complex<double>>& wfc_pw,
                                       const int& ik,
-                                      ModulePW::PW_Basis_K* wfc_basis,
+                                      const ModulePW::PW_Basis_K* wfc_basis,
                                       ModuleBase::ComplexMatrix& trial_orbitals_k)
 {
 

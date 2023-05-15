@@ -13,24 +13,24 @@ class Efield
     Efield();
     ~Efield();
 
-    static ModuleBase::matrix add_efield(const UnitCell &cell,
-                                         ModulePW::PW_Basis *rho_basis,
-                                         const int &nspin,
-                                         const double *const *const rho,
-                                         surchem &solvent);
+    static ModuleBase::matrix add_efield(const UnitCell& cell,
+                                         const ModulePW::PW_Basis* rho_basis,
+                                         const int& nspin,
+                                         const double* const* const rho,
+                                         surchem& solvent);
 
-    static double cal_elec_dipole(const UnitCell &cell,
-                                  ModulePW::PW_Basis *rho_basis,
-                                  const int &nspin,
-                                  const double *const *const rho,
-                                  const double &bmod);
+    static double cal_elec_dipole(const UnitCell& cell,
+                                  const ModulePW::PW_Basis* rho_basis,
+                                  const int& nspin,
+                                  const double* const* const rho,
+                                  const double& bmod);
 
-    static double cal_ion_dipole(const UnitCell &cell, const double &bmod);
+    static double cal_ion_dipole(const UnitCell& cell, const double& bmod);
 
-    static double cal_induced_dipole(const UnitCell &cell,
-                                     ModulePW::PW_Basis *rho_basis,
-                                     surchem &solvent,
-                                     const double &bmod);
+    static double cal_induced_dipole(const UnitCell& cell,
+                                     const ModulePW::PW_Basis* rho_basis,
+                                     surchem& solvent,
+                                     const double& bmod);
 
     static double saw_function(const double &a, const double &b, const double &x);
 
@@ -57,7 +57,7 @@ namespace elecstate
 class PotEfield : public PotBase
 {
   public:
-    PotEfield(const ModulePW::PW_Basis *rho_basis_in, const UnitCell *ucell_in, bool dipole) : ucell_(ucell_in)
+    PotEfield(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, bool dipole) : ucell_(ucell_in)
     {
         this->rho_basis_ = rho_basis_in;
         if (!dipole)
@@ -76,7 +76,7 @@ class PotEfield : public PotBase
     {
         ModuleBase::matrix v_efield(GlobalV::NSPIN, rho_basis_->nrxx);
         v_efield = Efield::add_efield(*ucell_,
-                                      const_cast<ModulePW::PW_Basis *>(rho_basis_),
+                                      const_cast<const ModulePW::PW_Basis*>(rho_basis_),
                                       GlobalV::NSPIN,
                                       nullptr,
                                       GlobalC::solvent_model);
@@ -89,7 +89,7 @@ class PotEfield : public PotBase
     void cal_v_eff(const Charge *chg, const UnitCell *ucell, ModuleBase::matrix &v_eff) override
     {
         v_eff += Efield::add_efield(*ucell,
-                                    const_cast<ModulePW::PW_Basis *>(rho_basis_),
+                                    const_cast<const ModulePW::PW_Basis*>(rho_basis_),
                                     v_eff.nr,
                                     chg->rho,
                                     GlobalC::solvent_model);
