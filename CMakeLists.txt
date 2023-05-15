@@ -41,40 +41,45 @@ string(STRIP ${VERSION} VERSION)
 add_definitions("-DVERSION=\"${VERSION}\"")
 
 if(COMMIT_INFO)
-  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-  find_package(GIT QUIET)
-  if(NOT GIT_FOUND)
-    message(STATUS "Git not found, downloading Git...")
-    execute_process(
-      COMMAND curl -L -O https://github.com/git/git/archive/refs/tags/v2.33.0.tar.gz
-      COMMAND tar -xf v2.33.0.tar.gz
-      COMMAND cd git-2.33.0 3838 make prefix=${CMAKE_INSTALL_PREFIX} install
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-    message(STATUS "Git downloaded and installed successfully")
+  find_program(GIT_EXECUTABLE git)
+  if(NOT GIT_EXECUTABLE)
+    message(STATUS "Git not found, attempting to install...")
+    include(FetchContent)
+    FetchContent_Declare(
+      PackageManager
+      GIT_REPOSITORY https://github.com/TheLartians/PackageManager.cmake
+      GIT_TAG v0.2.1
+      )
+    FetchContent_MakeAvailable(PackageManager)
+    find_package(PackageManager REQUIRED)
+    PackageManager_install(git)
+    find_program(GIT_EXECUTABLE git)
   endif()
 
-  execute_process(
-    COMMAND git log -1 --pretty=format:%h
-    OUTPUT_VARIABLE GIT_COMMIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
-  )
-  execute_process(
-    COMMAND git log -1 --format=%cd --date=local
-    OUTPUT_VARIABLE GIT_COMMIT_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    RESULT_VARIABLE GIT_COMMIT_DATE_RESULT
-  )
-  if(GIT_COMMIT_HASH_RESULT EQUAL 0 AND GIT_COMMIT_DATE_RESULT EQUAL 0)
-    set(COMMIT "${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})")
-    add_definitions("-DCOMMIT=\"${COMMIT}\"")
-    message(STATUS "Current commit hash: ${GIT_COMMIT_HASH}")
-    message(STATUS "Last commit date: ${GIT_COMMIT_DATE}")
-  else()
-    message(WARNING "Failed to get git commit info")
+  if(GIT_EXECUTABLE) 
+    message(STATUS "Found git: attempting to get commit info...")
+    execute_process(
+      COMMAND git log -1 --pretty=format:%h
+      OUTPUT_VARIABLE GIT_COMMIT_HASH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
+    )
+    execute_process(
+      COMMAND git log -1 --format=%cd --date=local
+      OUTPUT_VARIABLE GIT_COMMIT_DATE
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      RESULT_VARIABLE GIT_COMMIT_DATE_RESULT
+    )
+    if(GIT_COMMIT_HASH_RESULT EQUAL 0 AND GIT_COMMIT_DATE_RESULT EQUAL 0)
+      set(COMMIT "${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})")
+      add_definitions("-DCOMMIT=\"${COMMIT}\"")
+      message(STATUS "Current commit hash: ${GIT_COMMIT_HASH}")
+      message(STATUS "Last commit date: ${GIT_COMMIT_DATE}")
+    else()
+      message(WARNING "Failed to get git commit info")
+    endif()
   endif()
 endif()
 
