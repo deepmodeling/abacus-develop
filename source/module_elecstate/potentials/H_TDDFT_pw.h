@@ -24,12 +24,19 @@ class H_TDDFT_pw : public PotBase
 
     static void read_parameters(Input* in);
 
+    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fdip);
+
   private:
     // internal time-step,
     //-------hypothesis-------
     // Vext will evolve by time, every time cal_fixed_v() is called, istep++
     //------------------------
     static int istep;
+
+    static double amp;
+
+    static double bmod;
+    static double bvec[3];
 
     // parameters
     static int stype; // 0 : length gauge  1: velocity gauge
@@ -101,7 +108,7 @@ class H_TDDFT_pw : public PotBase
     double cal_v_time_heaviside();
     // double cal_v_time_HHG();
 
-    double prepare(const UnitCell &cell, int &dir);
+    void prepare(const UnitCell& cell, int& dir);
 };
 
 } // namespace elecstate
