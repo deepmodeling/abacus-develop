@@ -270,7 +270,7 @@ std::endl; GlobalV::ofs_running << " Q = < J_it_ia_il_in_im | Psi_n, k > " << st
     ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3 <double> [np];
     for (int ig=0; ig<np; ig++)
     {
-        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+        gk[ig] = wfcpw->getgpluskcar(ik,ig);
     }
 
     ModuleBase::YlmReal::Ylm_Real(total_lm, np, gk, ylm);

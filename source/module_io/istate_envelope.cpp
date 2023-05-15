@@ -295,7 +295,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 }
 
 //for each band
-void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
+void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                                  const int& ik,
                                  const int& ib,
                                  const int& nspin,
@@ -305,13 +305,13 @@ void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
     if (ib == 0)//once is enough
         ModuleBase::TITLE("IState_Envelope", "set_pw_wfc");
 
-    std::vector<std::complex<double>> Porter(wfc_basis->nrxx);
+    std::vector<std::complex<double>> Porter(wfcpw->nrxx);
     // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin0; is++)
-        for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+        for (int ir = 0; ir < wfcpw->nrxx; ir++)
             Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
 
     //call FFT
-    wfc_basis->real2recip(Porter.data(), &wfc_g(ib,0), ik);
+    wfcpw->real2recip(Porter.data(), &wfc_g(ib, 0), ik);
 }

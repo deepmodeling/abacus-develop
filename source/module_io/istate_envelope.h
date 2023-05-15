@@ -40,7 +40,7 @@ public:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 
-    void set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
+    void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                     const int& ik,
                     const int& ib,
                     const int& nspin,
