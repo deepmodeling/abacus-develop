@@ -91,7 +91,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int &lgd,
     }
     else
     {
-        lowf.allocate_k(lgd, psi, pelec);
+        lowf.allocate_k(lgd, psi, pelec, GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.kvec_c);
         this->allocate_DM_k(GlobalC::kv.nks);
     }
 

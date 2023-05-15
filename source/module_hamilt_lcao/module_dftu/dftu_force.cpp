@@ -185,7 +185,7 @@ void DFTU::cal_force_k(const int ik, const std::complex<double>* rho_VU, ModuleB
 
     for (int dim = 0; dim < 3; dim++)
     {
-        this->folding_matrix_k(ik, dim + 1, 0, &dSm_k[0]);
+        this->folding_matrix_k(ik, dim + 1, 0, &dSm_k[0], GlobalC::kv.kvec_d);
 
 #ifdef __MPI
         pzgemm_(&transN, &transC,
@@ -278,7 +278,7 @@ void DFTU::cal_stress_k(const int ik, const std::complex<double>* rho_VU, Module
     {
         for (int dim2 = dim1; dim2 < 3; dim2++)
         {
-            this->folding_matrix_k(ik, dim1 + 4, dim2, &dSR_k[0]);
+            this->folding_matrix_k(ik, dim1 + 4, dim2, &dSR_k[0], GlobalC::kv.kvec_d);
 
 #ifdef __MPI
             pzgemm_(&transN, &transN,
