@@ -1,8 +1,9 @@
 #ifndef H_TDDFT_PW_H
 #define H_TDDFT_PW_H
 
-#include "pot_base.h"
 #include "module_io/input.h"
+#include "module_io/input_conv.h"
+#include "pot_base.h"
 
 namespace elecstate
 {
@@ -21,7 +22,7 @@ class H_TDDFT_pw : public PotBase
 
     void cal_fixed_v(double* vl_pseudo) override;
 
-    static void read_parameters(Input *in);
+    static void read_parameters(Input* in);
 
   private:
     // internal time-step,
