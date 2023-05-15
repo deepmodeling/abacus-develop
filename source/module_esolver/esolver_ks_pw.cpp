@@ -329,7 +329,10 @@ void ESolver_KS_PW<FPTYPE, Device>::othercalculation(const int istep)
     ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
     if (GlobalV::CALCULATION == "test_memory")
     {
-        Cal_Test::test_memory();
+        Cal_Test::test_memory(this->pw_rho,
+                              this->pw_wfc,
+                              GlobalC::CHR_MIX.get_mixing_mode(),
+                              GlobalC::CHR_MIX.get_mixing_ndim());
         return;
     }
 
@@ -854,14 +857,14 @@ void ESolver_KS_PW<FPTYPE, Device>::postprocess()
         if (winput::out_spillage <= 2)
         {
             Numerical_Basis numerical_basis;
-            numerical_basis.output_overlap(this->psi[0], GlobalC::sf, GlobalC::kv);
+            numerical_basis.output_overlap(this->psi[0], GlobalC::sf, GlobalC::kv, GlobalC::wfcpw);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "BASIS OVERLAP (Q and S) GENERATION.");
         }
     }
 
     if (GlobalC::wf.out_wfc_r == 1) // Peize Lin add 2021.11.21
     {
-        ModuleIO::write_psi_r_1(this->psi[0], "wfc_realspace", true, GlobalC::kv);
+        ModuleIO::write_psi_r_1(this->psi[0], this->pw_wfc, "wfc_realspace", true, GlobalC::kv);
     }
 
     if (INPUT.cal_cond)
@@ -949,7 +952,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     if (INPUT.towannier90)
     {
         toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G);
-        myWannier.init_wannier(this->pelec->ekb, GlobalC::kv, this->psi);
+        myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, this->psi);
     }
 
     //=======================================================
@@ -959,7 +962,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
         berryphase bp;
-        bp.Macroscopic_polarization(this->psi, GlobalC::kv);
+        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, GlobalC::kv);
     }
 
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
