@@ -5,6 +5,7 @@
 #include "unk_overlap_lcao.h"
 #endif
 #include "module_basis/module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_psi/psi.h"
 
@@ -45,7 +46,8 @@ public:
                        const int npwx,
                        const psi::Psi<std::complex<double>>* psi_in,
                        ModulePW::PW_Basis* rhopw,
-	     const K_Vectors& kv);
+                       ModulePW::PW_Basis_K* wfcpw,
+                       const K_Vectors& kv);
 
     void Berry_Phase(int nbands,
                      double& pdl_elec_tot,
@@ -53,9 +55,10 @@ public:
                      const int npwx,
                      const psi::Psi<std::complex<double>>* psi_in,
                      ModulePW::PW_Basis* rhopw,
-	   const K_Vectors& kv);
+                     ModulePW::PW_Basis_K* wfcpw,
+                     const K_Vectors& kv);
 
-    void Macroscopic_polarization(const int npwx, const psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis* rhopw, const K_Vectors& kv);
+    void Macroscopic_polarization(const int npwx, const psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis* rhopw, ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv);
 
     std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
 	

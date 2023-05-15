@@ -45,11 +45,11 @@ double Cal_Test::meigts123;
 
 double Cal_Test::mtot;
 
-void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw)
+void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_Basis_K* wfcpw)
 {
 	ModuleBase::TITLE("Cal_Test","test_memory");
 
-	const int ngmw = Cal_Test::cal_np(GlobalC::wfcpw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
+	const int ngmw = Cal_Test::cal_np(wfcpw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
 	const int ngmc = Cal_Test::cal_np(rhopw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
 
 	std::cout << " number of atoms = " << GlobalC::ucell.nat << std::endl;

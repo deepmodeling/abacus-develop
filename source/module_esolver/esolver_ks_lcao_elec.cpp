@@ -358,7 +358,7 @@ namespace ModuleESolver
         
         if(GlobalV::CALCULATION == "test_memory")
         {
-            Cal_Test::test_memory(this->pw_rho);
+            Cal_Test::test_memory(this->pw_rho, this->pw_wfc);
             return;
         }
 
@@ -579,7 +579,7 @@ namespace ModuleESolver
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
-            bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, GlobalC::kv);
+            bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, GlobalC::kv);
         }
 
         //below is for DeePKS NSCF calculation

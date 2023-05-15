@@ -145,7 +145,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     }
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, kv);
+        ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
     }
 
     delete[] bands_picked;
@@ -284,7 +284,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, kv);
+            ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
         }
     }
 
