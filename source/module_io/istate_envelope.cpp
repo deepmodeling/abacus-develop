@@ -1,10 +1,11 @@
 #include "istate_envelope.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/rho_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
-#include "module_io/rho_io.h"
 
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes_in)
 {pes = pes_in;}
@@ -13,6 +14,9 @@ IState_Envelope::~IState_Envelope()
 {}
 
 void IState_Envelope::begin(const psi::Psi<double>* psid,
+                            const ModulePW::PW_Basis* rhopw,
+                            const ModulePW::PW_Basis_K* wfcpw,
+                            const ModulePW::PW_Basis_Big* bigpw,
                             Local_Orbital_wfc& lowf,
                             Gint_Gamma& gg,
                             int& out_wfc_pw,
@@ -87,7 +91,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
             for (int is = 0; is < GlobalV::NSPIN; ++is)
             {
                 std::cout << " Perform envelope function for band " << ib + 1 << std::endl;
-                ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], GlobalC::wfcpw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], wfcpw->nrxx);
 
                 psid->fix_k(is);
 #ifdef __MPI
@@ -108,25 +112,25 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
+                    bigpw->bz,
+                    bigpw->nbz,
+                    rhopw->nplane,
+                    rhopw->startz_current,
 #endif
                     pes->charge->rho_save[is],
                     is,
                     GlobalV::NSPIN,
                     0,
                     ss.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
+                    rhopw->nx,
+                    rhopw->ny,
+                    rhopw->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     3);
 
                 if (out_wfc_pw || out_wfc_r) //only for gamma_only now
-                    this->set_pw_wfc(GlobalC::wfcpw, 0, ib, GlobalV::NSPIN,
+                    this->set_pw_wfc(wfcpw, 0, ib, GlobalV::NSPIN,
                         pes->charge->rho_save, pw_wfc_g);
             }
         }
@@ -138,11 +142,11 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
         ssw << GlobalV::global_out_dir << "WAVEFUNC";
         std::cout << " write G-space wavefunction into \"" <<
             GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-        ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, GlobalC::wfcpw);
+        ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, wfcpw);
     }
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, kv);
+        ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
     }
 
     delete[] bands_picked;
@@ -156,6 +160,9 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 }
 
 void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
+                            const ModulePW::PW_Basis* rhopw,
+                            const ModulePW::PW_Basis_K* wfcpw,
+                            const ModulePW::PW_Basis_Big* bigpw,
                             Local_Orbital_wfc& lowf,
                             Gint_k& gk,
                             int& out_wf,
@@ -207,7 +214,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
     if (out_wf || out_wf_r)
     {
-        pw_wfc_g.resize(kv.nks, GlobalV::NBANDS, GlobalC::wf.npwx);
+        pw_wfc_g.resize(kv.nks, GlobalV::NBANDS, wfcpw->npwk_max);
     }
 
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -218,7 +225,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             for (int ik = 0; ik < kv.nks; ++ik)    //the loop of nspin0 is included
             {
                 const int ispin = kv.isk[ik];
-                ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[ispin], GlobalC::wfcpw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[ispin], wfcpw->nrxx);
                 std::cout << " Perform envelope function for kpoint " << ik << ",  band" << ib + 1 << std::endl;
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
@@ -240,19 +247,19 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 double& ef_tmp = GlobalC::en.get_ef(ispin,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
+                    bigpw->bz,
+                    bigpw->nbz,
+                    rhopw->nplane,
+                    rhopw->startz_current,
 #endif
                     pes->charge->rho[ispin],
                     ispin,
                     GlobalV::NSPIN,
                     0,
                     ss.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
+                    rhopw->nx,
+                    rhopw->ny,
+                    rhopw->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     3);
@@ -260,7 +267,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 if (out_wf || out_wf_r) //only for gamma_only now
                 {
                     pw_wfc_g.fix_k(ik);
-                    this->set_pw_wfc(GlobalC::wfcpw, ik, ib, GlobalV::NSPIN,
+                    this->set_pw_wfc(wfcpw, ik, ib, GlobalV::NSPIN,
                         pes->charge->rho, pw_wfc_g);
                 }
             }
@@ -275,11 +282,11 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
             ssw << GlobalV::global_out_dir << "WAVEFUNC";
             std::cout << " write G-space wavefunction into \"" <<
                 GlobalV::global_out_dir << "/" << ssw.str() << "\" files." << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, GlobalC::wfcpw);
+            ModuleIO::write_wfc_pw(ssw.str(), pw_wfc_g, kv, wfcpw);
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(pw_wfc_g, "wfc_realspace", false, kv);
+            ModuleIO::write_psi_r_1(pw_wfc_g, wfcpw, "wfc_realspace", false, kv);
         }
     }
 
@@ -288,7 +295,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 }
 
 //for each band
-void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
+void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                                  const int& ik,
                                  const int& ib,
                                  const int& nspin,
@@ -298,13 +305,13 @@ void IState_Envelope::set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
     if (ib == 0)//once is enough
         ModuleBase::TITLE("IState_Envelope", "set_pw_wfc");
 
-    std::vector<std::complex<double>> Porter(wfc_basis->nrxx);
+    std::vector<std::complex<double>> Porter(wfcpw->nrxx);
     // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin0; is++)
-        for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+        for (int ir = 0; ir < wfcpw->nrxx; ir++)
             Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
 
     //call FFT
-    wfc_basis->real2recip(Porter.data(), &wfc_g(ib,0), ik);
+    wfcpw->real2recip(Porter.data(), &wfc_g(ib, 0), ik);
 }
