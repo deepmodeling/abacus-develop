@@ -26,11 +26,9 @@ Structure_Factor::~Structure_Factor()
             delmem_cd_op()(gpu_ctx, this->c_eigts2);
             delmem_cd_op()(gpu_ctx, this->c_eigts3);
         }
-        else {
-            delmem_zd_op()(gpu_ctx, this->z_eigts1);
-            delmem_zd_op()(gpu_ctx, this->z_eigts2);
-            delmem_zd_op()(gpu_ctx, this->z_eigts3);
-        }
+        delmem_zd_op()(gpu_ctx, this->z_eigts1);
+        delmem_zd_op()(gpu_ctx, this->z_eigts2);
+        delmem_zd_op()(gpu_ctx, this->z_eigts3);
     }
     else {
         if (GlobalV::precision_flag == "single") {
@@ -53,11 +51,9 @@ void Structure_Factor::set
     return;
 }
 
-
-
-
+// Peize Lin optimize and add OpenMP 2021.04.01
 //  Calculate structure factor
-void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basis* rho_basis)			// Peize Lin optimize and add OpenMP 2021.04.01
+void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("PW_Basis","setup_structure_factor");
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor");
@@ -162,14 +158,12 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
             castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
             castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
         }
-        else {
-            resmem_zd_op()(gpu_ctx, this->z_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
-            resmem_zd_op()(gpu_ctx, this->z_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
-            resmem_zd_op()(gpu_ctx, this->z_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
-            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
-            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
-            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
-        }
+        resmem_zd_op()(gpu_ctx, this->z_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
+        resmem_zd_op()(gpu_ctx, this->z_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
+        resmem_zd_op()(gpu_ctx, this->z_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
+        syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts1, this->eigts1.c, Ucell->nat * (2 * rho_basis->nx + 1));
+        syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
+        syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
     else {
         if (GlobalV::precision_flag == "single") {
@@ -180,11 +174,9 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
             castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts2, this->eigts2.c, Ucell->nat * (2 * rho_basis->ny + 1));
             castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
         }
-        else {
-            this->z_eigts1 = this->eigts1.c;
-            this->z_eigts2 = this->eigts2.c;
-            this->z_eigts3 = this->eigts3.c;
-        }
+        this->z_eigts1 = this->eigts1.c;
+        this->z_eigts2 = this->eigts2.c;
+        this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
@@ -202,7 +194,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, ModulePW::PW_Basi
 //    1. Use "r2c" fft
 //    2. Add parallel algorithm for fftw or na loop
 //
-void Structure_Factor::bspline_sf(const int norder,UnitCell* Ucell,ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
 {
     double *r = new double [rho_basis->nxyz]; 
     double *tmpr = new double[rho_basis->nrxx];

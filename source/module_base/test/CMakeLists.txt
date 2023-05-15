@@ -157,3 +157,9 @@ AddTest(
   TARGET base_tool_threading
   SOURCES tool_threading_test.cpp ../tool_threading.h
 )
+
+AddTest(
+  TARGET spherical_bessel_transformer
+  SOURCES spherical_bessel_transformer_test.cpp ../spherical_bessel_transformer.cpp
+  LIBS ${math_libs}
+)

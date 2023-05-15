@@ -60,8 +60,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::CURRENT_SPIN,0);
 	EXPECT_EQ(GlobalV::CAL_FORCE,0);
 	EXPECT_NEAR(GlobalV::FORCE_THR,0.001,0.0000001);
-	EXPECT_DOUBLE_EQ(GlobalV::STRESS_THR,0.01);
-	EXPECT_EQ(GlobalV::PRESS1,0);
+    EXPECT_DOUBLE_EQ(GlobalV::STRESS_THR, 0.01);
+    EXPECT_EQ(GlobalV::PRESS1,0);
 	EXPECT_EQ(GlobalV::PRESS2,0);
 	EXPECT_EQ(GlobalV::PRESS3,0);
 	EXPECT_EQ(GlobalV::out_element_info,0);
@@ -316,18 +316,19 @@ TEST_F(InputConvTest, dftplus)
 
 TEST_F(InputConvTest, nspin)
 {
-	INPUT.Default();
-	std::string input_file = "./support/INPUT";
-	INPUT.Read(input_file);
-	INPUT.noncolin=true;
-	Input_Conv::Convert();
-	EXPECT_EQ(GlobalV::NSPIN,4);
-	EXPECT_EQ(GlobalV::NONCOLIN,true);
-	EXPECT_EQ(GlobalV::NPOL,2);
-	EXPECT_EQ(GlobalV::DOMAG,false);
-	EXPECT_EQ(GlobalV::DOMAG_Z,true);
-	EXPECT_EQ(GlobalV::LSPINORB,false);
-	EXPECT_EQ(GlobalV::soc_lambda,INPUT.soc_lambda);
+    INPUT.Default();
+    std::string input_file = "./support/INPUT";
+    INPUT.Read(input_file);
+    INPUT.noncolin = true;
+    INPUT.gamma_only_local = false;
+    Input_Conv::Convert();
+    EXPECT_EQ(GlobalV::NSPIN, 4);
+    EXPECT_EQ(GlobalV::NONCOLIN, true);
+    EXPECT_EQ(GlobalV::NPOL, 2);
+    EXPECT_EQ(GlobalV::DOMAG, false);
+    EXPECT_EQ(GlobalV::DOMAG_Z, true);
+    EXPECT_EQ(GlobalV::LSPINORB, false);
+    EXPECT_EQ(GlobalV::soc_lambda, INPUT.soc_lambda);
 }
 
 TEST_F(InputConvTest, nspinbeta)

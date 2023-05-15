@@ -240,21 +240,38 @@ public:
                 // Thus complex<double>[nmaxgr] is able to contain either reciprocal or real data
     FFT ft;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
-    
-    template <typename FPTYPE> void real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    template <typename FPTYPE> void real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE> * in, FPTYPE *out, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
 
-protected:
+    template <typename FPTYPE>
+    void real2recip(const FPTYPE* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void real2recip(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void recip2real(const std::complex<FPTYPE>* in,
+                    FPTYPE* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE>
+    void recip2real(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+  protected:
     //gather planes and scatter sticks of all processors
-    template<typename T>
-    void gatherp_scatters(std::complex<T> *in, std::complex<T> *out); 
+    template <typename T>
+    void gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const;
 
-    //gather sticks of and scatter planes of all processors
-    template<typename T>
-    void gathers_scatterp(std::complex<T> *in, std::complex<T> *out); 
-public:
+    // gather sticks of and scatter planes of all processors
+    template <typename T>
+    void gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const;
+
+  public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is) const;
 

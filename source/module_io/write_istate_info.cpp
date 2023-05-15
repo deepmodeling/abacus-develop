@@ -3,7 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors* kv,const Parallel_Kpoints* Pkpoints)
+void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv,const Parallel_Kpoints* Pkpoints)
 {
 	ModuleBase::TITLE("ModuleIO","write_istate_info");
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
@@ -27,7 +27,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
             std::ofstream ofsi2(ss.str().c_str(), ios::app);
             if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
             {
-                for (int ik = 0; ik < kv->nks; ik++)
+                for (int ik = 0; ik < kv.nks; ik++)
                 {
 #ifdef __MPI
                     int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
@@ -36,8 +36,8 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 #endif
                     ofsi2 << "BAND" << std::setw(25) << "Energy(ev)" << std::setw(25) << "Occupation"
                           << std::setw(25) << "Kpoint = " << ik_global
-                          << std::setw(25) << "(" << kv->kvec_d[ik].x << " " << kv->kvec_d[ik].y
-                          << " " << kv->kvec_d[ik].z << ")" << std::endl;
+                          << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
+                          << " " << kv.kvec_d[ik].z << ")" << std::endl;
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
@@ -50,7 +50,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
             }
             else
             {
-                for (int ik = 0; ik < kv->nks / 2; ik++)
+                for (int ik = 0; ik < kv.nks / 2; ik++)
                 {
 #ifdef __MPI
                     int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
@@ -60,15 +60,15 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                     ofsi2 << "BAND" << std::setw(25) << "Spin up Energy(ev)" << std::setw(25) << "Occupation"
                           << std::setw(25) << "Spin down Energy(ev)" << std::setw(25) << "Occupation"
                           << std::setw(25) << "Kpoint = " << ik_global
-                          << std::setw(25) << "(" << kv->kvec_d[ik].x << " " << kv->kvec_d[ik].y
-                          << " " << kv->kvec_d[ik].z << ")" << std::endl;
+                          << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
+                          << " " << kv.kvec_d[ik].z << ")" << std::endl;
 
                     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
                     {
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
                               << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(25) << wg(ik, ib)
-                              << std::setw(25) << ekb((ik + kv->nks / 2), ib) * ModuleBase::Ry_to_eV
-                              << std::setw(25) << wg(ik + kv->nks / 2, ib) << std::endl;
+                              << std::setw(25) << ekb((ik + kv.nks / 2), ib) * ModuleBase::Ry_to_eV
+                              << std::setw(25) << wg(ik + kv.nks / 2, ib) << std::endl;
                     }
                     ofsi2 << std::endl;
                     ofsi2 << std::endl;

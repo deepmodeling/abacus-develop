@@ -1,12 +1,12 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "surchem.h"
 
-void surchem::minimize_cg(const UnitCell &ucell,
-                          ModulePW::PW_Basis* rho_basis,
-                          double *d_eps,
-                          const complex<double> *tot_N,
-                          complex<double> *phi,
-                          int &ncgsol)
+void surchem::minimize_cg(const UnitCell& ucell,
+                          const ModulePW::PW_Basis* rho_basis,
+                          double* d_eps,
+                          const complex<double>* tot_N,
+                          complex<double>* phi,
+                          int& ncgsol)
 {
     // parameters of CG method
     double alpha = 0;
@@ -161,15 +161,15 @@ void surchem::minimize_cg(const UnitCell &ucell,
     delete[] phi_work;
 }
 
-void surchem::Leps2(const UnitCell &ucell,
-                    ModulePW::PW_Basis* rho_basis,
-                    complex<double> *phi,
-                    double *epsilon, // epsilon from shapefunc, dim=nrxx
-                    complex<double> *gradphi_x, // dim=ngmc
-                    complex<double> *gradphi_y,
-                    complex<double> *gradphi_z,
-                    complex<double> *phi_work,
-                    complex<double> *lp)
+void surchem::Leps2(const UnitCell& ucell,
+                    const ModulePW::PW_Basis* rho_basis,
+                    complex<double>* phi,
+                    double* epsilon,            // epsilon from shapefunc, dim=nrxx
+                    complex<double>* gradphi_x, // dim=ngmc
+                    complex<double>* gradphi_y,
+                    complex<double>* gradphi_z,
+                    complex<double>* phi_work,
+                    complex<double>* lp)
 {
     // cout<<"leps2!"<<endl;
     ModuleBase::Vector3<double> *grad_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];

@@ -5,16 +5,15 @@
 #include "exx_abfs.h"
 #include "exx_abfs-abfs_index.h"
 #include "exx_abfs-construct_orbs.h"
-#include "exx_abfs-inverse_matrix_double.h"
 #include "exx_abfs-jle.h"
 #include "module_basis/module_ao/ORB_read.h"
-#include "exx_abfs-matrix_orbs11.h"
-#include "exx_abfs-matrix_orbs21.h"
-#include "exx_abfs-matrix_orbs22.h"
+#include "module_ri/Matrix_Orbs11.h"
+#include "module_ri/Matrix_Orbs21.h"
+#include "module_ri/Matrix_Orbs22.h"
+#include "module_ri/LRI_CV_Tools.h"
 
-#include "../src_ri/test_code/exx_abfs-unittest.h"
-#include "../src_ri/test_code/element_basis_index-test.h"
-#include "../src_ri/test_code/test_function.h"
+#include "../module_ri/test_code/element_basis_index-test.h"
+#include "../module_ri/test_code/test_function.h"
 
 void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 {
@@ -70,9 +69,9 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | lcaos lcaos >
-	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> 
+	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> 
 	{
-		Exx_Abfs::Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
+		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
 		m_lcaoslcaos_lcaoslcaos.init( 1, this->kmesh_times, 1 );
 		m_lcaoslcaos_lcaoslcaos.init_radial( lcaos, lcaos, lcaos, lcaos );
 		#if TEST_EXX_RADIAL>=1
@@ -80,15 +79,15 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 		#else
 		m_lcaoslcaos_lcaoslcaos.init_radial_table();
 		#endif
-		return m_lcaoslcaos_lcaoslcaos.cal_overlap_matrix( index_lcaos, index_lcaos, index_lcaos, index_lcaos);
+		return m_lcaoslcaos_lcaoslcaos.cal_overlap_matrix_all<double>( index_lcaos, index_lcaos, index_lcaos, index_lcaos);
 	}();
 	
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | jys >
-	const auto ms_lcaoslcaos_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<ModuleBase::matrix>>>>>
+	const auto ms_lcaoslcaos_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
-		Exx_Abfs::Matrix_Orbs21 m_jyslcaos_lcaos;
+		Matrix_Orbs21 m_jyslcaos_lcaos;
 		m_jyslcaos_lcaos.init( 1, this->kmesh_times, 1 );
 		m_jyslcaos_lcaos.init_radial( jle.jle, lcaos, lcaos );
 		#if TEST_EXX_RADIAL>=1
@@ -96,15 +95,15 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 		#else
 		m_jyslcaos_lcaos.init_radial_table();
 		#endif
-		return m_jyslcaos_lcaos.cal_overlap_matrix( index_jys, index_lcaos, index_lcaos );
+		return m_jyslcaos_lcaos.cal_overlap_matrix_all<double>( index_jys, index_lcaos, index_lcaos );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < jys | jys >
-	const auto ms_jys_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>>
+	const auto ms_jys_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
-		Exx_Abfs::Matrix_Orbs11 m_jys_jys;
+		Matrix_Orbs11 m_jys_jys;
 		m_jys_jys.init( 2, this->kmesh_times, 1 );
 		m_jys_jys.init_radial( jle.jle, jle.jle );
 		#if TEST_EXX_RADIAL>=1
@@ -112,15 +111,15 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 		#else
 		m_jys_jys.init_radial_table();
 		#endif
-		return m_jys_jys.cal_overlap_matrix( index_jys, index_jys );
+		return m_jys_jys.cal_overlap_matrix_all<double>( index_jys, index_jys );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < abfs | abfs >
-	const auto ms_abfs_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>>
+	const auto ms_abfs_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
-		Exx_Abfs::Matrix_Orbs11 m_abfs_abfs;
+		Matrix_Orbs11 m_abfs_abfs;
 		m_abfs_abfs.init( 2, this->kmesh_times, 1 );
 		m_abfs_abfs.init_radial( abfs, abfs );
 		#if TEST_EXX_RADIAL>=1
@@ -128,15 +127,15 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 		#else
 		m_abfs_abfs.init_radial_table();
 		#endif
-		return m_abfs_abfs.cal_overlap_matrix( index_abfs, index_abfs );
+		return m_abfs_abfs.cal_overlap_matrix_all<double>( index_abfs, index_abfs );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | abfs >
-	const auto ms_lcaoslcaos_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<ModuleBase::matrix>>>>>
+	const auto ms_lcaoslcaos_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
-		Exx_Abfs::Matrix_Orbs21 m_abfslcaos_lcaos;
+		Matrix_Orbs21 m_abfslcaos_lcaos;
 		m_abfslcaos_lcaos.init( 1, this->kmesh_times, 1 );
 		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos );
 		#if TEST_EXX_RADIAL>=1
@@ -144,15 +143,15 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 		#else
 		m_abfslcaos_lcaos.init_radial_table();
 		#endif
-		return m_abfslcaos_lcaos.cal_overlap_matrix( index_abfs, index_lcaos, index_lcaos );
+		return m_abfslcaos_lcaos.cal_overlap_matrix_all<double>( index_abfs, index_lcaos, index_lcaos );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < jys | abfs >
-	const auto ms_jys_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>>
+	const auto ms_jys_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
-		Exx_Abfs::Matrix_Orbs11 m_jys_abfs;
+		Matrix_Orbs11 m_jys_abfs;
 		m_jys_abfs.init( 2, this->kmesh_times, 1 );
 		m_jys_abfs.init_radial( jle.jle, abfs );
 		#if TEST_EXX_RADIAL>=1
@@ -160,7 +159,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 		#else
 		m_jys_abfs.init_radial_table();
 		#endif
-		return m_jys_abfs.cal_overlap_matrix( index_jys, index_abfs );
+		return m_jys_abfs.cal_overlap_matrix_all<double>( index_jys, index_abfs );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -186,23 +185,23 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 						if(GlobalC::exx_info.info_ri.pca_threshold<=1)
 						{
 							// < abfs | abfs >.I
-							const std::vector<std::vector<ModuleBase::matrix>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, T,I,T,I );
+							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, T,I,T,I );
 							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
-							const ModuleBase::matrix m_lcaoslcaos_lcaoslcaos_proj =
+							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
 								cal_proj(
 									ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I),
 									ms_abfs_abfs_I,
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I));
 							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
-							const std::vector<ModuleBase::matrix> m_lcaoslcaos_jys_proj =
+							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
 								{cal_proj(
 									ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I)[0],
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I),
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})};
 							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
-							const std::vector<std::vector<ModuleBase::matrix>> m_jys_jys_proj =
+							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
 								{{cal_proj(
 									ms_jys_jys.at(T).at(I).at(T).at(I),
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)},
@@ -232,16 +231,16 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 						if(GlobalC::exx_info.info_ri.pca_threshold<=1)
 						{
 							// < abfs | abfs >.I
-							const std::vector<std::vector<ModuleBase::matrix>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, TA,IA,TB,IB );
+							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, TA,IA,TB,IB );
 							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
-							const ModuleBase::matrix m_lcaoslcaos_lcaoslcaos_proj =
+							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
 								cal_proj(
 									ms_lcaoslcaos_lcaoslcaos.at(TA).at(IA).at(TB).at(IB),
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
 									ms_abfs_abfs_I,
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB));
 							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
-							const std::vector<ModuleBase::matrix> m_lcaoslcaos_jys_proj =
+							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
 								{cal_proj(
 									ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[0],
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
@@ -253,7 +252,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) })};
 							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
-							const std::vector<std::vector<ModuleBase::matrix>> m_jys_jys_proj =
+							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
 								{{cal_proj(
 									ms_jys_jys.at(TA).at(IA).at(TA).at(IA),
 									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
@@ -301,17 +300,17 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 }
 
 // m_big - m_left * m_middle * m_right.T
-ModuleBase::matrix Exx_Opt_Orb::cal_proj( 
-	const ModuleBase::matrix & m_big, 
-	const std::vector<ModuleBase::matrix> & m_left, 
-	const std::vector<std::vector<ModuleBase::matrix>> & m_middle, 
-	const std::vector<ModuleBase::matrix> & m_right ) const
+RI::Tensor<double> Exx_Opt_Orb::cal_proj( 
+	const RI::Tensor<double> & m_big, 
+	const std::vector<RI::Tensor<double>> & m_left, 
+	const std::vector<std::vector<RI::Tensor<double>>> & m_middle, 
+	const std::vector<RI::Tensor<double>> & m_right ) const
 {
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_proj");
+    ModuleBase::TITLE("Exx_Opt_Orb::cal_proj");
 
 //auto print_nrc = [](const matrix & m){ std::cout<<"\t"<<m.nr<<"\t"<<m.nc<<std::endl; };
 
-	ModuleBase::matrix m_proj = m_big;
+	RI::Tensor<double> m_proj = m_big;
 //print_nrc(m_proj);
 	for( size_t il=0; il!=m_left.size(); ++il )
 	{
@@ -321,42 +320,32 @@ ModuleBase::matrix Exx_Opt_Orb::cal_proj(
 //print_nrc(m_left[il]);
 //print_nrc(m_middle[il][ir]);
 //print_nrc(m_right[ir]);
-			m_proj -= m_left[il] * m_middle[il][ir] * transpose(m_right[ir]);
+			m_proj = m_proj - m_left[il] *m_middle[il][ir] * m_right[ir].transpose();
 		}
 	}
 	return m_proj;
 }
 
-std::vector<std::vector<ModuleBase::matrix>> Exx_Opt_Orb::cal_I(
-	const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,ModuleBase::matrix>>>> &ms,
+std::vector<std::vector<RI::Tensor<double>>> Exx_Opt_Orb::cal_I(
+	const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> &ms,
 	const size_t TA, const size_t IA, const size_t TB, const size_t IB ) const
 {
 	ModuleBase::TITLE("Exx_Opt_Orb::cal_I");
 
 	if( TA==TB && IA==IB )
 	{
-		std::vector<std::vector<ModuleBase::matrix>> m_I
-			{{ {ms.at(TA).at(IA).at(TA).at(IA).nr, ms.at(TA).at(IA).at(TA).at(IA).nc} }};
-		Exx_Abfs::Inverse_Matrix_Double inv;
-		inv.init( ms.at(TA).at(IA).at(TA).at(IA).nr );
-		inv.input( ms.at(TA).at(IA).at(TA).at(IA) );
-		inv.cal_inverse( Exx_Abfs::Inverse_Matrix_Double::Method::dsyev );
-		inv.output( m_I[0][0] );
-		return m_I;
+		std::vector<std::vector<RI::Tensor<double>>> m_I
+        {{ RI::Tensor<double>(ms.at(TA).at(IA).at(TA).at(IA).shape) }};
+		return LRI_CV_Tools::cal_I(m_I);
 	}
 	else
 	{
-		std::vector<std::vector<ModuleBase::matrix>> m_I
-			{{ {ms.at(TA).at(IA).at(TA).at(IA).nr, ms.at(TA).at(IA).at(TA).at(IA).nc},
-			   {ms.at(TA).at(IA).at(TB).at(IB).nr, ms.at(TA).at(IA).at(TB).at(IB).nc} },
-			 { {ms.at(TB).at(IB).at(TA).at(IA).nr, ms.at(TB).at(IB).at(TA).at(IA).nc},
-			   {ms.at(TB).at(IB).at(TB).at(IB).nr, ms.at(TB).at(IB).at(TB).at(IB).nc} }};
-		Exx_Abfs::Inverse_Matrix_Double inv;
-		inv.init( ms.at(TA).at(IA).at(TA).at(IA).nr + ms.at(TB).at(IB).at(TA).at(IA).nr );
-		inv.input( ms.at(TA).at(IA).at(TA).at(IA), ms.at(TA).at(IA).at(TB).at(IB), ms.at(TB).at(IB).at(TA).at(IA), ms.at(TB).at(IB).at(TB).at(IB) );
-		inv.cal_inverse( Exx_Abfs::Inverse_Matrix_Double::Method::dsyev );
-		inv.output( m_I[0][0], m_I[0][1], m_I[1][0], m_I[1][1] );
-		return m_I;
+		std::vector<std::vector<RI::Tensor<double>>> m_I
+			{{ RI::Tensor<double>(ms.at(TA).at(IA).at(TA).at(IA).shape),
+			   RI::Tensor<double>(ms.at(TA).at(IA).at(TB).at(IB).shape) },
+			 { RI::Tensor<double>(ms.at(TB).at(IB).at(TA).at(IA).shape),
+			   RI::Tensor<double>(ms.at(TB).at(IB).at(TB).at(IB).shape) }};
+		return LRI_CV_Tools::cal_I(m_I);
 	}
 }
 

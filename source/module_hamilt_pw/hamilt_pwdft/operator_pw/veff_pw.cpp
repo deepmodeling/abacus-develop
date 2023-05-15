@@ -7,13 +7,12 @@
 using hamilt::Veff;
 using hamilt::OperatorPW;
 
-template<typename FPTYPE, typename Device>
-Veff<OperatorPW<FPTYPE, Device>>::Veff(
-    const int* isk_in,
-    const FPTYPE* veff_in,
-    const int veff_row,
-    const int veff_col,
-    ModulePW::PW_Basis_K* wfcpw_in)
+template <typename FPTYPE, typename Device>
+Veff<OperatorPW<FPTYPE, Device>>::Veff(const int* isk_in,
+                                       const FPTYPE* veff_in,
+                                       const int veff_row,
+                                       const int veff_col,
+                                       const ModulePW::PW_Basis_K* wfcpw_in)
 {
     this->classname = "Veff";
     this->cal_type = pw_veff;

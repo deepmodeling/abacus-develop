@@ -6,7 +6,7 @@
 #ifndef ABFS_VECTOR3_ORDER_H
 #define ABFS_VECTOR3_ORDER_H
 
-#include "src_ri/abfs.h"
+#include "module_ri/abfs.h"
 
 // mohan comment out 2021-02-06
 //#include <boost/archive/binary_oarchive.hpp>
