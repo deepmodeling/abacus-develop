@@ -138,7 +138,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             GlobalC::ld.check_v_delta_k(pv->nnr);
             for (int ik = 0; ik < kv.nks; ik++)
             {
-                uhm.LM->folding_fixedH(ik);
+                uhm.LM->folding_fixedH(ik, kv.kvec_d);
             }
             GlobalC::ld.cal_e_delta_band_k(loc.dm_k,
                                            pv->trace_loc_row,
@@ -273,7 +273,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv, const int& nks)
         for (int ik = 0; ik < nks; ik++)
         {
             this->UHM->genH.LM->zeros_HSk('S');
-            this->UHM->genH.LM->folding_fixedH(ik, 1);
+            this->UHM->genH.LM->folding_fixedH(ik, GlobalC::kv.kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
             ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
                                 this->UHM->genH.LM->Sloc2.data(),

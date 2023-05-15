@@ -2,6 +2,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hsolver/hsolver_lcao.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
@@ -75,7 +76,7 @@ void OperatorLCAO<std::complex<double>>::folding_fixed(const int ik)
     //-----------------------------------------
     this->LM->zeros_HSk('S');
     this->LM->zeros_HSk('T');
-    this->LM->folding_fixedH(ik);
+    this->LM->folding_fixedH(ik, GlobalC::kv.kvec_d);
 
     //------------------------------------------
     // Add T(k)+Vnl(k)+Vlocal(k)
