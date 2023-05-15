@@ -15,10 +15,11 @@
 class Mix_DMk_2D
 {
 public:
-	Mix_DMk_2D &set_nks(const int nks);
+	Mix_DMk_2D &set_nks(const int nks, const bool gamma_only_in);
 	Mix_DMk_2D &set_mixing_mode(const Mixing_Mode mixing_mode);
-	Mix_DMk_2D &set_mixing_beta(const double mixing_beta);
-	Mix_DMk_2D &set_coef_pulay(const int iter, const Charge_Mixing &chr_mix);
+    Mix_DMk_2D& set_mixing_beta(const double mixing_beta);
+    template<typename ChgMix>
+    Mix_DMk_2D& set_coef_pulay(const int iter, const ChgMix& chr_mix);
 
 	void mix(const std::vector<ModuleBase::matrix> &dm, const bool flag_restart);
 	void mix(const std::vector<ModuleBase::ComplexMatrix> &dm, const bool flag_restart);
@@ -28,7 +29,21 @@ public:
 
 private:
 	std::vector<Mix_Data<ModuleBase::matrix>> mix_DMk_gamma;
-	std::vector<Mix_Data<ModuleBase::ComplexMatrix>> mix_DMk_k;
+    std::vector<Mix_Data<ModuleBase::ComplexMatrix>> mix_DMk_k;
+    bool gamma_only;
 };
+
+template<typename ChgMix>
+Mix_DMk_2D& Mix_DMk_2D::set_coef_pulay(const int iter, const ChgMix& chr_mix)
+{
+	ModuleBase::TITLE("Mix_DMk_2D","set_coef_pulay");
+	if(gamma_only)
+		for(Mix_Data<ModuleBase::matrix> &mix_one : this->mix_DMk_gamma)
+			mix_one.set_coef_pulay(iter, chr_mix);
+	else
+		for(Mix_Data<ModuleBase::ComplexMatrix> &mix_one : this->mix_DMk_k)
+			mix_one.set_coef_pulay(iter, chr_mix);
+	return *this;
+}
 
 #endif

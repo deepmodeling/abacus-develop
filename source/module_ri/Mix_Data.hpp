@@ -61,7 +61,8 @@ void Mix_Data<Tdata>::pulay_mixing(const Tdata &data_in, const bool flag_restart
 }
 
 template<typename Tdata>
-void Mix_Data<Tdata>::set_coef_pulay(const int iter, const Charge_Mixing &chr_mix)
+template<typename ChgMix>
+void Mix_Data<Tdata>::set_coef_pulay(const int iter, const ChgMix& chr_mix)
 {
 	ModuleBase::TITLE("Mix_Data","set_coef_pulay");
 	const std::size_t coef_size = std::min(iter-1, chr_mix.get_mixing_ndim());

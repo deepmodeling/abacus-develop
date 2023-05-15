@@ -23,7 +23,8 @@ public:
 
 	void mix(const Tdata &data_in, const bool flag_restart);
 
-	void set_coef_pulay(const int iter, const Charge_Mixing &chr_mix);		// iter start from 1
+    template<typename ChgMix>
+    void set_coef_pulay(const int iter, const ChgMix& chr_mix);		// iter start from 1
 
 private:
 	Tdata data_out;

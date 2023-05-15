@@ -332,7 +332,7 @@ namespace ModuleESolver
 		// set initial parameter for mix_DMk_2D
 		if(GlobalC::exx_info.info_global.cal_exx)
 		{
-			this->mix_DMk_2D.set_nks(GlobalC::kv.nks);
+			this->mix_DMk_2D.set_nks(GlobalC::kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
 			if(GlobalC::exx_info.info_global.separate_loop)
 			{
 				if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
