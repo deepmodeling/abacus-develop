@@ -79,7 +79,8 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int &lgd,
                                            elecstate::ElecState *pelec,
                                            Local_Orbital_wfc &lowf,
                                            psi::Psi<double> *psid,
-                                           psi::Psi<std::complex<double>> *psi)
+                                           psi::Psi<std::complex<double>> *psi,
+                                           const K_Vectors& kv)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
 
@@ -91,8 +92,8 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int &lgd,
     }
     else
     {
-        lowf.allocate_k(lgd, psi, pelec, GlobalC::kv.nks, GlobalC::kv.nkstot, GlobalC::kv.kvec_c);
-        this->allocate_DM_k(GlobalC::kv.nks);
+        lowf.allocate_k(lgd, psi, pelec, kv.nks, kv.nkstot, kv.kvec_c);
+        this->allocate_DM_k(kv.nks);
     }
 
     return;

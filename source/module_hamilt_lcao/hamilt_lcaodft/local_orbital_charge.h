@@ -25,7 +25,8 @@ class Local_Orbital_Charge
         elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
         psi::Psi<double>* psid,
-        psi::Psi<std::complex<double>>* psi);
+        psi::Psi<std::complex<double>>* psi,
+        const K_Vectors& kv);
 
 	//-----------------
 	// in DM_gamma.cpp

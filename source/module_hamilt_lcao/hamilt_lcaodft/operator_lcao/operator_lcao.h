@@ -91,9 +91,7 @@ class OperatorLCAO : public Operator<T>
     bool allocated_smatrix = false;
 
     //fixed HR matrix folding to HK
-    void folding_fixed(const int ik);
-
-
+    void folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 };
 
 }//end namespace hamilt
