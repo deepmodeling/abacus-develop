@@ -22,8 +22,19 @@ class H_TDDFT_pw : public PotBase
 
     void cal_fixed_v(double* vl_pseudo) override;
 
+    /**
+     * @brief read paramers of electric field and convert units
+     *
+     * @param in input
+     */
     static void read_parameters(Input* in);
 
+    /**
+     * @brief compute force of electric field
+     *
+     * @param[in] cell information of cell
+     * @param[out] fdip force of electric field
+     */
     static void compute_force(const UnitCell& cell, ModuleBase::matrix& fdip);
 
   private:

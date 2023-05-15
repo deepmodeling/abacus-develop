@@ -1,3 +1,8 @@
+/**
+ * @file evolve_psi.h
+ * @brief evolve the wave function
+ *  This file originally belonged to file LCAO_evolve.cpp
+ */
 #ifndef ELEC_PSI_H
 #define ELEC_PSI_H
 
