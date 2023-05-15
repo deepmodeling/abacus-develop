@@ -15,8 +15,6 @@
 #include <string>
 #include <vector>
 
-#include "module_io/input.h"
-
 using namespace std;
 
 namespace Input_Conv
@@ -43,6 +41,7 @@ std::vector<double> convert_units(std::string params, double c);
  */
 void read_td_efield();
 #endif
+
 } // namespace Input_Conv
 
 #endif // Input_Convert

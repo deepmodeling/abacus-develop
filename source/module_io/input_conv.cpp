@@ -16,6 +16,7 @@
 #endif
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
@@ -24,7 +25,6 @@
 #endif
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"

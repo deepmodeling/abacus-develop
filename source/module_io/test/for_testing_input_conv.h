@@ -6,6 +6,7 @@
 #include "module_elecstate/energy.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -50,6 +51,60 @@ int elecstate::Efield::efield_dir;
 double elecstate::Efield::efield_pos_max;
 double elecstate::Efield::efield_pos_dec;
 double elecstate::Efield::efield_amp;
+
+// parameters of electric field for tddft
+
+int elecstate::H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
+
+std::vector<int> elecstate::H_TDDFT_pw::ttype;
+//  0  Gauss type function.
+//  1  trapezoid type function.
+//  2  Trigonometric functions, sin^2.
+//  3  heaviside function.
+//  4  HHG function.
+
+int elecstate::H_TDDFT_pw::tstart;
+int elecstate::H_TDDFT_pw::tend;
+double elecstate::H_TDDFT_pw::dt;
+
+// space domain parameters
+
+// length gauge
+double elecstate::H_TDDFT_pw::lcut1;
+double elecstate::H_TDDFT_pw::lcut2;
+
+// time domain parameters
+
+// Gauss
+int elecstate::H_TDDFT_pw::gauss_count;
+std::vector<double> elecstate::H_TDDFT_pw::gauss_omega; // time(a.u.)^-1
+std::vector<double> elecstate::H_TDDFT_pw::gauss_phase;
+std::vector<double> elecstate::H_TDDFT_pw::gauss_sigma; // time(a.u.)
+std::vector<double> elecstate::H_TDDFT_pw::gauss_t0;
+std::vector<double> elecstate::H_TDDFT_pw::gauss_amp; // Ry/bohr
+
+// trapezoid
+int elecstate::H_TDDFT_pw::trape_count;
+std::vector<double> elecstate::H_TDDFT_pw::trape_omega; // time(a.u.)^-1
+std::vector<double> elecstate::H_TDDFT_pw::trape_phase;
+std::vector<double> elecstate::H_TDDFT_pw::trape_t1;
+std::vector<double> elecstate::H_TDDFT_pw::trape_t2;
+std::vector<double> elecstate::H_TDDFT_pw::trape_t3;
+std::vector<double> elecstate::H_TDDFT_pw::trape_amp; // Ry/bohr
+
+// Trigonometric
+int elecstate::H_TDDFT_pw::trigo_count;
+std::vector<double> elecstate::H_TDDFT_pw::trigo_omega1; // time(a.u.)^-1
+std::vector<double> elecstate::H_TDDFT_pw::trigo_omega2; // time(a.u.)^-1
+std::vector<double> elecstate::H_TDDFT_pw::trigo_phase1;
+std::vector<double> elecstate::H_TDDFT_pw::trigo_phase2;
+std::vector<double> elecstate::H_TDDFT_pw::trigo_amp; // Ry/bohr
+
+// Heaviside
+int elecstate::H_TDDFT_pw::heavi_count;
+std::vector<double> elecstate::H_TDDFT_pw::heavi_t0;
+std::vector<double> elecstate::H_TDDFT_pw::heavi_amp; // Ry/bohr
+
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.0;
 double BFGS_Basic::relax_bfgs_w1 = -1.0;
 double BFGS_Basic::relax_bfgs_w2 = -1.0;
