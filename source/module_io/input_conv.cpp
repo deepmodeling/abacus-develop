@@ -112,6 +112,73 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
     regfree(&reg);
 }
 
+std::vector<double> Input_Conv::convert_units(std::string params, double c)
+{
+    std::vector<double> params_ori;
+    std::vector<double> params_out;
+    parse_expression(params, params_ori);
+    for (auto param: params_ori)
+        params_out.emplace_back(param * c);
+
+    return params_out;
+}
+
+void Input_Conv::read_td_efield(Input* in)
+{
+    elecstate::H_TDDFT_pw::stype = in->td_stype;
+
+    parse_expression(in->td_ttype, elecstate::H_TDDFT_pw::ttype);
+
+    elecstate::H_TDDFT_pw::tstart = in->td_tstart;
+    elecstate::H_TDDFT_pw::tend = in->td_tend;
+
+    elecstate::H_TDDFT_pw::dt = in->mdp.md_dt / ModuleBase::AU_to_FS;
+
+    // space domain parameters
+
+    // length gauge
+    elecstate::H_TDDFT_pw::lcut1 = in->td_lcut1;
+    elecstate::H_TDDFT_pw::lcut2 = in->td_lcut2;
+
+    // time domain parameters
+
+    // Gauss
+    elecstate::H_TDDFT_pw::gauss_omega
+        = convert_units(in->td_gauss_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::gauss_phase = convert_units(in->td_gauss_phase, 1.0);
+    elecstate::H_TDDFT_pw::gauss_sigma = convert_units(in->td_gauss_sigma, 1 / ModuleBase::AU_to_FS);
+    elecstate::H_TDDFT_pw::gauss_t0 = convert_units(in->td_gauss_t0, 1.0);
+    elecstate::H_TDDFT_pw::gauss_amp
+        = convert_units(in->td_gauss_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    // trapezoid
+    elecstate::H_TDDFT_pw::trape_omega
+        = convert_units(in->td_trape_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::trape_phase = convert_units(in->td_trape_phase, 1.0);
+    elecstate::H_TDDFT_pw::trape_t1 = convert_units(in->td_trape_t1, 1.0);
+    elecstate::H_TDDFT_pw::trape_t2 = convert_units(in->td_trape_t2, 1.0);
+    elecstate::H_TDDFT_pw::trape_t3 = convert_units(in->td_trape_t3, 1.0);
+    elecstate::H_TDDFT_pw::trape_amp
+        = convert_units(in->td_trape_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    // Trigonometric
+    elecstate::H_TDDFT_pw::trigo_omega1
+        = convert_units(in->td_trigo_freq1, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::trigo_omega2
+        = convert_units(in->td_trigo_freq2, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::trigo_phase1 = convert_units(in->td_trigo_phase1, 1.0);
+    elecstate::H_TDDFT_pw::trigo_phase2 = convert_units(in->td_trigo_phase2, 1.0);
+    elecstate::H_TDDFT_pw::trigo_amp
+        = convert_units(in->td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    // Heaviside
+    elecstate::H_TDDFT_pw::heavi_t0 = convert_units(in->td_heavi_t0, 1.0);
+    elecstate::H_TDDFT_pw::heavi_amp
+        = convert_units(in->td_heavi_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    return;
+}
+
 void Input_Conv::Convert(void)
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
@@ -389,7 +456,7 @@ void Input_Conv::Convert(void)
     module_tddft::Evolve_elec::out_efield = INPUT.out_efield;
     module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
     module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
-    elecstate::H_TDDFT_pw::read_parameters(&INPUT);
+    read_td_efield(&INPUT);
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11

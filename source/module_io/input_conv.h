@@ -5,14 +5,17 @@
 #ifndef INPUT_CONVERT_H
 #define INPUT_CONVERT_H
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <string>
 #include <vector>
+
+#include "module_io/input.h"
 
 using namespace std;
 
@@ -24,6 +27,22 @@ void Convert(void);
 // fn (string): expressions such as "3*1 0 2*0.5 3*0"
 // arr (vector): stores parsing results, for example, "3*1 0 2*0.5 1*1.5" can be parsed as [1, 1, 1, 0, 0.5, 0.5, 1.5]
 template <typename T> void parse_expression(const std::string &fn, std::vector<T> &arr);
+
+/**
+ * @brief convert units
+ *
+ * @param params input parameter
+ * @param c coefficients of unit conversion
+ * @return parameter after unit vonversion
+ */
+std::vector<double> convert_units(std::string params, double c);
+
+/**
+ * @brief read paramers of electric field for tddft and convert units
+ *
+ * @param in input
+ */
+void read_td_efield(Input* in);
 } // namespace Input_Conv
 
 #endif // Input_Convert

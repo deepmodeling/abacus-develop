@@ -23,31 +23,12 @@ class H_TDDFT_pw : public PotBase
     void cal_fixed_v(double* vl_pseudo) override;
 
     /**
-     * @brief read paramers of electric field and convert units
-     *
-     * @param in input
-     */
-    static void read_parameters(Input* in);
-
-    /**
      * @brief compute force of electric field
      *
      * @param[in] cell information of cell
      * @param[out] fdip force of electric field
      */
     static void compute_force(const UnitCell& cell, ModuleBase::matrix& fdip);
-
-  private:
-    // internal time-step,
-    //-------hypothesis-------
-    // Vext will evolve by time, every time cal_fixed_v() is called, istep++
-    //------------------------
-    static int istep;
-
-    static double amp;
-
-    static double bmod;
-    static double bvec[3];
 
     // parameters
     static int stype; // 0 : length gauge  1: velocity gauge
@@ -101,9 +82,19 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> heavi_t0;
     static std::vector<double> heavi_amp; // Ry/bohr
 
-    const UnitCell* ucell_ = nullptr;
+  private:
+    // internal time-step,
+    //-------hypothesis-------
+    // Vext will evolve by time, every time cal_fixed_v() is called, istep++
+    //------------------------
+    static int istep;
 
-    static std::vector<double> set_parameters(std::string params, double c);
+    static double amp;
+
+    static double bmod;
+    static double bvec[3];
+
+    const UnitCell* ucell_ = nullptr;
 
     // potential of electric field in space domain : length gauge and velocity gauge
     void cal_v_space(std::vector<double> &vext_space, int direc);

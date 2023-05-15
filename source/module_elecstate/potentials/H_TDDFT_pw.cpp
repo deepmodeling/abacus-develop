@@ -74,8 +74,6 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     // time evolve
     H_TDDFT_pw::istep++;
 
-    read_parameters(&INPUT);
-
     // judgement to skip vext
     if (!module_tddft::Evolve_elec::td_vext || istep > tend || istep < tstart)
     {
@@ -113,65 +111,6 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     }
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
-    return;
-}
-
-std::vector<double> H_TDDFT_pw::set_parameters(std::string params, double c)
-{
-    std::vector<double> params_ori;
-    std::vector<double> params_out;
-    Input_Conv::parse_expression(params, params_ori);
-    for (auto param: params_ori)
-        params_out.emplace_back(param * c);
-
-    return params_out;
-}
-
-void H_TDDFT_pw::read_parameters(Input *in)
-{
-    stype = in->td_stype;
-
-    Input_Conv::parse_expression(in->td_ttype, ttype);
-
-    tstart = in->td_tstart;
-    tend = in->td_tend;
-
-    dt = in->mdp.md_dt / ModuleBase::AU_to_FS;
-
-    // space domain parameters
-
-    // length gauge
-    lcut1 = in->td_lcut1;
-    lcut2 = in->td_lcut2;
-
-    // time domain parameters
-
-    // Gauss
-    gauss_omega = set_parameters(in->td_gauss_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    gauss_phase = set_parameters(in->td_gauss_phase, 1.0);
-    gauss_sigma = set_parameters(in->td_gauss_sigma, 1 / ModuleBase::AU_to_FS);
-    gauss_t0 = set_parameters(in->td_gauss_t0, 1.0);
-    gauss_amp = set_parameters(in->td_gauss_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
-    // trapezoid
-    trape_omega = set_parameters(in->td_trape_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    trape_phase = set_parameters(in->td_trape_phase, 1.0);
-    trape_t1 = set_parameters(in->td_trape_t1, 1.0);
-    trape_t2 = set_parameters(in->td_trape_t2, 1.0);
-    trape_t3 = set_parameters(in->td_trape_t3, 1.0);
-    trape_amp = set_parameters(in->td_trape_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
-    // Trigonometric
-    trigo_omega1 = set_parameters(in->td_trigo_freq1, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    trigo_omega2 = set_parameters(in->td_trigo_freq2, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    trigo_phase1 = set_parameters(in->td_trigo_phase1, 1.0);
-    trigo_phase2 = set_parameters(in->td_trigo_phase2, 1.0);
-    trigo_amp = set_parameters(in->td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
-    // Heaviside
-    heavi_t0 = set_parameters(in->td_heavi_t0, 1.0);
-    heavi_amp = set_parameters(in->td_heavi_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
     return;
 }
 
