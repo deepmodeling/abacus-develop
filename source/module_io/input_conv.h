@@ -28,6 +28,7 @@ void Convert(void);
 // arr (vector): stores parsing results, for example, "3*1 0 2*0.5 1*1.5" can be parsed as [1, 1, 1, 0, 0.5, 0.5, 1.5]
 template <typename T> void parse_expression(const std::string &fn, std::vector<T> &arr);
 
+#ifdef __LCAO
 /**
  * @brief convert units
  *
@@ -43,6 +44,7 @@ std::vector<double> convert_units(std::string params, double c);
  * @param in input
  */
 void read_td_efield(Input* in);
+#endif
 } // namespace Input_Conv
 
 #endif // Input_Convert

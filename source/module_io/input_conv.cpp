@@ -112,6 +112,7 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
     regfree(&reg);
 }
 
+#ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c)
 {
     std::vector<double> params_ori;
@@ -178,6 +179,7 @@ void Input_Conv::read_td_efield(Input* in)
 
     return;
 }
+#endif
 
 void Input_Conv::Convert(void)
 {
