@@ -15,19 +15,19 @@ thirdorder: [https://bitbucket.org/sousaw/thirdorder/src/master/](https://bitbuc
 
 ## Prepare
 
-The ABACUS software package provides an example of using ABACUS+ShengBTE to calculate the lattice thermal conductivity in the examples/interface_ShengBTE folder. The example includes two folders: LCAO (Linear Combination of Atomic Orbitals) which uses numerical atomic orbitals and PW (Plane wave) which uses plane wave basis vectors. Each folder contains three subfolders: 2nd, 3rd, and shengbte, which respectively store the relevant files for calculating second-order force constants using Phonopy (2nd), third-order force constants using the thirdorder program (3rd), and lattice thermal conductivity using ShengBTE (shengbte).
+The ABACUS software package provides an example of using ABACUS+ShengBTE to calculate the lattice thermal conductivity in the `examples/interface_ShengBTE` folder. The example includes two folders: `LCAO` (Linear Combination of Atomic Orbitals) which uses numerical atomic orbitals and `PW` (Plane wave) which uses plane wave basis vectors. Each folder contains three subfolders: `2nd`, `3rd`, and `shengbte`, which respectively store the relevant files for calculating second-order force constants using Phonopy (`2nd`), third-order force constants using the thirdorder program (`3rd`), and lattice thermal conductivity using ShengBTE (`shengbte`).
 
 ## How to use
 
-Taking the LCAO folder as an example, we provide the test case of a diamond structure Si structure containing 2 atoms with the norm-conserving pseudopotential Si_ONCV_PBE-1.0.upf and the atomic orbital file Si_gga_7au_100Ry_2s2p1d.orb (GGA functional, 7 a.u. cut-off radius, 100 Ry energy cut-off, and DZP orbitals containing 2s2p1d).
+Taking the `LCAO` folder as an example, we provide the test case of a diamond structure Si structure containing 2 atoms with the norm-conserving pseudopotential `Si_ONCV_PBE-1.0.upf` and the atomic orbital file `Si_gga_7au_100Ry_2s2p1d.orb` (GGA functional, 7 a.u. cut-off radius, 100 Ry energy cut-off, and DZP orbitals containing 2s2p1d).
 
 ### 1. Calculating the second-order force constants
 
-It would be best to combine Phonopy and ASE with ABACUS to calculate the second-order force constants. First, enter the 2nd folder.
+It would be best to combine Phonopy and ASE with ABACUS to calculate the second-order force constants. First, enter the `2nd` folder.
 
 ### 1.1 Structure optimization
 
-Before performing lattice thermal conductivity calculations, it is necessary to optimize the atomic configuration of the simulated material system. The following is the atomic configuration file STRU obtained after structure optimization (relax) using ABACUS. In this example, for simplicity, a 2\*2\*2 Brillouin zone k-point sampling was used in the structure optimization process, with an energy cutoff value of 100 Ry for plane waves (the plane wave basis vector is also used in LCAO). Note that the actual calculation should use more convergent k-point sampling.
+Before performing lattice thermal conductivity calculations, it is necessary to optimize the atomic configuration of the simulated material system. The following is the atomic configuration file `STRU` obtained after structure optimization (relax) using ABACUS. In this example, for simplicity, a 2\*2\*2 Brillouin zone k-point sampling was used in the structure optimization process, with an energy cutoff value of 100 Ry for plane waves (the plane wave basis vector is also used in LCAO). Note that the actual calculation should use more convergent k-point sampling.
 
 ```bash
 ATOMIC_SPECIES
@@ -62,28 +62,28 @@ The Phonopy software is called to generate multiple atomic configurations of the
 phonopy setting.conf --abacus -d
 ```
 
-where the setting.conf file reads:
+where the `setting.conf` file reads:
 
 ```bash
 DIM = 2 2 2
 ATOM_NAME = Si
 ```
 
-In this Si example, we only need to generate one perturbed atomic configuration, STRU-001. Perform SCF calculations (SCF stands for Self-Consistent Field and represents the iterative self-consistent calculation of density functional theory) on all perturbed configurations (in this case, there is only one for Si) to obtain the forces on the atoms. Afterward, use the following command to generate the FORCE_SET file:
+In this Si example, we only need to generate one perturbed atomic configuration, `STRU-001`. Perform SCF calculations (SCF stands for Self-Consistent Field and represents the iterative self-consistent calculation of density functional theory) on all perturbed configurations (in this case, there is only one for Si) to obtain the forces on the atoms. Afterward, use the following command to generate the `FORCE_SET` file:
 
 ```bash
 phonopy -f OUT.DIA-50/running_scf.log
 ```
 
-Tip: In the input file INPUT of ABACUS, you can set the variable stru_file, which corresponds to the atomic configuration file STRU-001, and ABACUS will read the structure file directly.
+Tip: In the input file `INPUT` of ABACUS, you can set the variable `stru_file`, which corresponds to the atomic configuration file `STRU-001`, and ABACUS will read the structure file directly.
 
-Next, set the band.conf file to calculate the phonon spectrum and the second-order force constants:
+Next, set the `band.conf` file to calculate the phonon spectrum and the second-order force constants:
 
 ```bash
 phonopy -p band.conf --abacus
 ```
 
-The band.conf file mentioned here contains the following contents (you can refer to the Phonopy documentation for specific parameter meanings):
+The `band.conf` file mentioned here contains the following contents (you can refer to the Phonopy documentation for specific parameter meanings):
 
 ```bash
 ATOM_NAME = Si
@@ -97,7 +97,7 @@ FORCE_CONSTANTS = WRITE
 FULL_FORCE_CONSTANTS = .TRUE.
 ```
 
-After this step, the Phonopy software will generate band.yaml (for plotting the phonon spectrum) and the FORCE_CONSTANTS file. The data contained in the FORCE_CONSTANTS file is the second-order force constants. It is important to set FULL_FORCE_CONSTANTS = .TRUE., which outputs all the second-order force constants. Otherwise, there may be errors when ShengBTE reads the data.
+After this step, the Phonopy software will generate `band.yaml` (for plotting the phonon spectrum) and the `FORCE_CONSTANTS` file. The data contained in the `FORCE_CONSTANTS` file is the second-order force constants. It is important to set `FULL_FORCE_CONSTANTS = .TRUE.`, which outputs all the second-order force constants. Otherwise, there may be errors when ShengBTE reads the data.
 
 In addition, you can use the following command to output the gnuplot format of the phonon spectrum for plotting:
 
@@ -107,29 +107,29 @@ phonopy-bandplot --gnuplot > pho.dat
 
 ### 1.3 Post-processing
 
-Note that ShengBTE software requires the unit of the data in the FORCE_CONSTANTS_2ND file to be eV/Å^2, but the unit of the FORCE_CONSTANTS calculated by ABACUS combined with Phonopy is eV/(Å*au), where au is the atomic unit system and 1 au = 0.52918 Å. You can use the provided au2si.py script in the 2nd directory to convert the units and generate the FORCE_CONSTANTS_2ND file. The command is as follows:
+Note that ShengBTE software requires the unit of the data in the `FORCE_CONSTANTS_2ND` file to be eV/Å^2, but the unit of the `FORCE_CONSTANTS` calculated by ABACUS combined with Phonopy is eV/(Å*au), where au is the atomic unit system and 1 au = 0.52918 Å. You can use the provided `au2si.py` script in the `2nd` directory to convert the units and generate the `FORCE_CONSTANTS_2ND` file. The command is as follows:
 
 ```python
 python au2si.py
 ```
 
-The FORCE_CONSTANTS_2ND file is provided in the shengbte folder for reference to the calculation results.
+The `FORCE_CONSTANTS_2ND` file is provided in the shengbte folder for reference to the calculation results.
 
 ### 2. Calculating the third-order force constants
 
-To calculate the third-order force constants, you need to combine with the thirdorder program and output the third-order force constant file FORCE_CONSTANTS_3RD. However, thirdorder currently only supports reading input and output files from VASP and QE. Therefore, we are using thirdorder by converting ABACUS's structure and output force files to POSCAR and vasprun.xml, respectively. Please enter the 3rd folder first, and the specific steps will be described below.
+To calculate the third-order force constants, you need to combine with the thirdorder program and output the third-order force constant file `FORCE_CONSTANTS_3RD`. However, thirdorder currently only supports reading input and output files from VASP and QE. Therefore, we are using thirdorder by converting ABACUS's structure and output force files to `POSCAR` and `vasprun.xml`, respectively. Please enter the `3rd` folder first, and the specific steps will be described below.
 
 ### 2.1 Obtaining perturbed configurations
 
-First, convert the optimized STRU file from ABACUS software to POSCAR (the converted POSCAR file is already provided in the directory, or you can do this conversion by yourself).
+First, convert the optimized `STRU` file from ABACUS software to `POSCAR` (the converted `POSCAR` file is already provided in the directory, or you can do this conversion by yourself).
 
-Then, run the thirdorder_vasp program to generate a series of atomic configuration files 3RD.POSCAR.* after perturbation. For example, in this example, a total of 40 configurations were generated:
+Then, run the `thirdorder_vasp.py` program to generate a series of atomic configuration files `3RD.POSCAR.*` after perturbation. For example, in this example, a total of 40 configurations were generated:
 
 ```bash
 thirdorder_vasp.py sow 2 2 2 -2
 ```
 
-Run pos2stru.py to convert the above POSCAR to STRU file. Note that this script calls functions from the ASE software package (ASE needs to be installed in advance):
+Run `pos2stru.py` to convert the above `POSCAR` to `STRU` file. Note that this script calls functions from the ASE software package (ASE needs to be installed in advance):
 
 ```python
 python pos2stru.py
@@ -139,15 +139,15 @@ Note: The dpdata software cannot be called here to perform the conversion. This 
 
 ### 2.2 Calculation of atomic forces for perturbation configurations
 
-You can refer to the run_stru.sh script provided in the directory to batch generate SCF-* folders and submit calculations. Here, ABACUS needs to perform SCF calculations on 40 atomic configurations, which may take some time. It is recommended to run each SCF separately in the SCF-* folder. The scf_thr parameter in INPUT file should be set to at least 1e-8 to obtain converged results.
+You can refer to the `run_stru.sh` script provided in the directory to batch generate `SCF-*` folders and submit calculations. Here, ABACUS needs to perform SCF calculations on 40 atomic configurations, which may take some time. It is recommended to run each SCF separately in the `SCF-*` folder. The `scf_thr` parameter in INPUT file should be set to at least 1e-8 to obtain converged results.
 
-After the calculations are complete, run aba2vasp.py to package the atomic forces calculated by ABACUS into the vasprun.xml format and place them in each SCF-\* folder with the following command:
+After the calculations are complete, run `aba2vasp.py` to package the atomic forces calculated by ABACUS into the `vasprun.xml` format and place them in each `SCF-\*` folder with the following command:
 
 ```python
 python aba2vasp.py
 ```
 
-The vasprun.xml format is illustrated as follows:
+The `vasprun.xml` format is illustrated as follows:
 
 ```xml
 <modeling>
@@ -196,11 +196,11 @@ Finally, execute the following command:
 find SCF-* -name vasprun.xml|sort -n|thirdorder_vasp.py reap 2 2 2 -2
 ```
 
-Then, the third-order force constant file FORCE_CONSTANTS_3RD can be obtained by running the above command. The FORCE_CONSTANTS_3RD file is provided in the shengbte folder for reference in calculating the results.
+Then, the third-order force constant file `FORCE_CONSTANTS_3RD` can be obtained by running the above command. The `FORCE_CONSTANTS_3RD` file is provided in the shengbte folder for reference in calculating the results.
 
 ### 3. Run ShengBTE to obtain lattice thermal conductivity
 
-Enter the shengbte folder, in which the three files CONTROL (parameter file of ShengBTE), FORCE_CONSTANTS_2ND (second-order force constant file), and FORCE_CONSTANTS_3RD (third-order force constant file) have been prepared. Next, run ShengBTE with the following command to obtain the lattice thermal conductivity, where the calculation results are given in the Ref folder for reference:
+Enter the `shengbte` folder, in which the three files `CONTROL` (parameter file of ShengBTE), `FORCE_CONSTANTS_2ND` (second-order force constant file), and `FORCE_CONSTANTS_3RD` (third-order force constant file) have been prepared. Next, run ShengBTE with the following command to obtain the lattice thermal conductivity, where the calculation results are given in the Ref folder for reference:
 
 ```bash
 mpirun -n 10 ShengBTE
@@ -208,4 +208,4 @@ mpirun -n 10 ShengBTE
 
 ## Conclusion
 
-For using plane wave (PW) in ABACUS to perform ShengBTE calculations, similar procedures should be followed. However, the 'scf_thr' parameter in the INPUT file for calculating the third-order force constant needs to be set to at least 1e-12. The experimental lattice thermal conductivity of Si at 300 K is around 150 W/(m K), while the calculated thermal conductivity of Si at 300 K is around 100 W/(m K) by using the provided example. This is because, as a demo, a 2\*2\*2 expanded cell and a 2\*2\*2 K-point are used in the example, but the results are not converged yet with respect to the given system size and k-points. In actual research, the size of the supercell and the sampling scheme of K-points need to be tested to obtain converged results.
+For using plane wave (PW) in ABACUS to perform ShengBTE calculations, similar procedures should be followed. However, the `scf_thr` parameter in the `INPUT` file for calculating the third-order force constant needs to be set to at least 1e-12. The experimental lattice thermal conductivity of Si at 300 K is around 150 W/(m K), while the calculated thermal conductivity of Si at 300 K is around 100 W/(m K) by using the provided example. This is because, as a demo, a 2\*2\*2 expanded cell and a 2\*2\*2 K-point are used in the example, but the results are not converged yet with respect to the given system size and k-points. In actual research, the size of the supercell and the sampling scheme of K-points need to be tested to obtain converged results.
