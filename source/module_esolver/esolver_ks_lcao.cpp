@@ -740,7 +740,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, pelec->charge->rho);
+            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, pelec->charge->nrxx, pelec->charge->rho);
         }
     }
 
