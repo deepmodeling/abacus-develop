@@ -47,6 +47,7 @@ toWannier90::~toWannier90()
 void toWannier90::init_wannier(const ModuleBase::matrix& ekb,
                                const ModulePW::PW_Basis* rhopw,
                                const ModulePW::PW_Basis_K* wfcpw,
+                               const ModulePW::PW_Basis_Big* bigpw,
                                const K_Vectors& kv,
                                const psi::Psi<std::complex<double>>* psi)
 {
@@ -67,7 +68,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb,
 
     if (GlobalV::BASIS_TYPE == "pw")
     {
-        writeUNK(wfcpw, *psi);
+        writeUNK(wfcpw, *psi, bigpw);
         outEIG(ekb);
         cal_Mmn(*psi, rhopw, wfcpw);
         cal_Amn(*psi, wfcpw);
@@ -78,7 +79,7 @@ void toWannier90::init_wannier(const ModuleBase::matrix& ekb,
         getUnkFromLcao(wfcpw, kv, wfcpw->npwk_max);
         cal_Amn(this->unk_inLcao[0], wfcpw);
         cal_Mmn(this->unk_inLcao[0], rhopw, wfcpw);
-        writeUNK(wfcpw, this->unk_inLcao[0]);
+        writeUNK(wfcpw, this->unk_inLcao[0], bigpw);
         outEIG(ekb);
     }
 #endif
@@ -378,7 +379,9 @@ void toWannier90::outEIG(const ModuleBase::matrix& ekb)
     }
 }
 
-void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw, const psi::Psi<std::complex<double>>& psi_pw)
+void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw,
+                           const psi::Psi<std::complex<double>>& psi_pw,
+                           const ModulePW::PW_Basis_Big* bigpw)
 {
 
 /*
@@ -462,10 +465,10 @@ void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw, const psi::Psi<std
     // num_z: how many planes on processor 'ip'
     int *num_z = new int[GlobalV::NPROC_IN_POOL];
     ModuleBase::GlobalFunc::ZEROS(num_z, GlobalV::NPROC_IN_POOL);
-    for (int iz = 0; iz < GlobalC::bigpw->nbz; iz++)
+    for (int iz = 0; iz < bigpw->nbz; iz++)
     {
         int ip = iz % GlobalV::NPROC_IN_POOL;
-        num_z[ip] += GlobalC::bigpw->bz;
+        num_z[ip] += bigpw->bz;
     }
 
     // start_z: start position of z in

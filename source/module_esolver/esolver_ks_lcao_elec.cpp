@@ -394,15 +394,15 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG, this->pelec, this->pw_rho);
+            ISC.begin(this->UHM.GG, this->pelec, this->pw_rho, GlobalC::bigpw);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {
             IState_Envelope IEP(this->pelec);
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                IEP.begin(this->psid, this->pw_rho, this->pw_wfc, this->LOWF, this->UHM.GG, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
+                IEP.begin(this->psid, this->pw_rho, this->pw_wfc, GlobalC::bigpw, this->LOWF, this->UHM.GG, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
             else
-                IEP.begin(this->psi, this->pw_rho, this->pw_wfc, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
+                IEP.begin(this->psi, this->pw_rho, this->pw_wfc, GlobalC::bigpw, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
         }
         else
         {
@@ -572,7 +572,7 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::kv, nullptr);
+            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, nullptr);
         }
 
         // add by jingan

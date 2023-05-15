@@ -16,6 +16,7 @@ IState_Envelope::~IState_Envelope()
 void IState_Envelope::begin(const psi::Psi<double>* psid,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,
+                            const ModulePW::PW_Basis_Big* bigpw,
                             Local_Orbital_wfc& lowf,
                             Gint_Gamma& gg,
                             int& out_wfc_pw,
@@ -111,8 +112,8 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
+                    bigpw->bz,
+                    bigpw->nbz,
                     rhopw->nplane,
                     rhopw->startz_current,
 #endif
@@ -161,6 +162,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                             const ModulePW::PW_Basis* rhopw,
                             const ModulePW::PW_Basis_K* wfcpw,
+                            const ModulePW::PW_Basis_Big* bigpw,
                             Local_Orbital_wfc& lowf,
                             Gint_k& gk,
                             int& out_wf,
@@ -245,8 +247,8 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 double& ef_tmp = GlobalC::en.get_ef(ispin,GlobalV::TWO_EFERMI);
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
+                    bigpw->bz,
+                    bigpw->nbz,
                     rhopw->nplane,
                     rhopw->startz_current,
 #endif

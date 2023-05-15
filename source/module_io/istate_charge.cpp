@@ -16,8 +16,10 @@ IState_Charge::IState_Charge(
 
 IState_Charge::~IState_Charge(){}
 
-
-void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec, const ModulePW::PW_Basis* rhopw)
+void IState_Charge::begin(Gint_Gamma& gg,
+                          elecstate::ElecState* pelec,
+                          const ModulePW::PW_Basis* rhopw,
+                          const ModulePW::PW_Basis_Big* bigpw)
 {
 	ModuleBase::TITLE("IState_Charge","begin");
 
@@ -142,25 +144,25 @@ void IState_Charge::begin(Gint_Gamma &gg, elecstate::ElecState* pelec, const Mod
 			{
 				ssc<<"_SPIN"<<is<<"_CHG.cube";
 				double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
-				ModuleIO::write_rho(
+                ModuleIO::write_rho(
 #ifdef __MPI
-				    GlobalC::bigpw->bz,
-				    GlobalC::bigpw->nbz,
-				    rhopw->nplane,
-				    rhopw->startz_current,
+                    bigpw->bz,
+                    bigpw->nbz,
+                    rhopw->nplane,
+                    rhopw->startz_current,
 #endif
-				    pelec->charge->rho_save[is],
-				    is,
-				    GlobalV::NSPIN,
-				    0,
-				    ssc.str(),
-				    rhopw->nx,
-				    rhopw->ny,
-				    rhopw->nz,
-				    ef_tmp,
-				    &(GlobalC::ucell));
-			}
-		}
+                    pelec->charge->rho_save[is],
+                    is,
+                    GlobalV::NSPIN,
+                    0,
+                    ssc.str(),
+                    rhopw->nx,
+                    rhopw->ny,
+                    rhopw->nz,
+                    ef_tmp,
+                    &(GlobalC::ucell));
+            }
+        }
 	}
 
 	delete[] bands_picked;

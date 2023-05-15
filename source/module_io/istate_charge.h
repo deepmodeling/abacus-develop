@@ -17,7 +17,10 @@ public:
         Local_Orbital_Charge &loc_in);
     ~IState_Charge();
 
-    void begin(Gint_Gamma& gg, elecstate::ElecState* pelec, const ModulePW::PW_Basis* rhopw);
+    void begin(Gint_Gamma& gg,
+               elecstate::ElecState* pelec,
+               const ModulePW::PW_Basis* rhopw,
+               const ModulePW::PW_Basis_Big* bigpw);
 
   private:
     int *bands_picked;

@@ -928,7 +928,7 @@ namespace ModuleESolver
         if(INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot,GlobalC::ucell.G);
-            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::kv, this->psi);
+            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, this->psi);
         }
 
         //=======================================================
