@@ -458,7 +458,7 @@ void Input_Conv::Convert(void)
     module_tddft::Evolve_elec::out_efield = INPUT.out_efield;
     module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
     module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
-    read_td_efield(&INPUT);
+    read_td_efield();
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11
