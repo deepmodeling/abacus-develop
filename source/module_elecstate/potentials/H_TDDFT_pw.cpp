@@ -337,7 +337,7 @@ void H_TDDFT_pw::prepare(const UnitCell& cell, int& dir)
     bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
 }
 
-void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fdip)
+void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
 {
     int iat = 0;
     for (int it = 0; it < cell.ntype; ++it)
@@ -346,7 +346,7 @@ void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fdip)
         {
             for (int jj = 0; jj < 3; ++jj)
             {
-                fdip(iat, jj) = ModuleBase::e2 * amp * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
+                fe(iat, jj) = ModuleBase::e2 * amp * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
             }
             ++iat;
         }

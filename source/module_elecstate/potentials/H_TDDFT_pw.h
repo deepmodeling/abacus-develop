@@ -26,9 +26,9 @@ class H_TDDFT_pw : public PotBase
      * @brief compute force of electric field
      *
      * @param[in] cell information of cell
-     * @param[out] fdip force of electric field
+     * @param[out] fe force of electric field  F=qE
      */
-    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fdip);
+    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fe);
 
     // parameters
     static int stype; // 0 : length gauge  1: velocity gauge
