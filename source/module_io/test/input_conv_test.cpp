@@ -562,7 +562,7 @@ TEST_F(InputConvTest, ConvertUnitsWithMultipleParams)
     EXPECT_EQ(result, expected);
 }
 
-TEST(InputConvTest, ReadTdEfieldTest)
+TEST_F(InputConvTest, ReadTdEfieldTest)
 {
     Input_Conv::read_td_efield();
 
