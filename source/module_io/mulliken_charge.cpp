@@ -136,7 +136,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
     for(size_t ik = 0; ik != kv.nks; ++ik)
     {
         uhm.LM->zeros_HSk('S');
-		uhm.LM->folding_fixedH(ik);
+		uhm.LM->folding_fixedH(ik, kv.kvec_d);
 
         ModuleBase::ComplexMatrix mud;
         mud.create(uhm.LM->ParaV->ncol, uhm.LM->ParaV->nrow);
