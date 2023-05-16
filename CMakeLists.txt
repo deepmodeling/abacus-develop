@@ -35,11 +35,7 @@ option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the nativ
 option(ENABLE_CONTAINER "Enable the new multi-device container." OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 
-#read version from VERSION file
-file(STRINGS "VERSION" VERSION)
-string(STRIP ${VERSION} VERSION)
-add_definitions("-DVERSION=\"${VERSION}\"")
-
+# get commit info
 if(COMMIT_INFO)
   find_program(GIT_EXECUTABLE git)
   if(NOT GIT_EXECUTABLE)

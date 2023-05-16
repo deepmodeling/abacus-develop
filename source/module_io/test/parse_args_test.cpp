@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "module_io/parse_args.h"
+#include "version.h"
 
 TEST(ParseArgsTest, OutVersionTest)
 {

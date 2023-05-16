@@ -4,7 +4,7 @@
 //==========================================================
 // #include "global.h"
 #include "module_io/input.h"
-
+#include "version.h"
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
