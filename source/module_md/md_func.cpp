@@ -201,7 +201,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
 
     p_esolver->Run(istep, unit_in);
 
-    p_esolver->cal_Energy(potential);
+    potential = p_esolver->cal_Energy();
 
     ModuleBase::matrix force_temp(unit_in.nat, 3);
     p_esolver->cal_Force(force_temp);

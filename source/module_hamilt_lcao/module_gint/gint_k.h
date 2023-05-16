@@ -59,16 +59,17 @@ class Gint_k : public Gint
     // <phi_0i | V | phi_0j>
     // V is (Vl + Vh + Vxc) if no Vna is used,
     // and is (Vna + delta_Vh + Vxc) if Vna is used.
-    void folding_vl_k(const int &ik, LCAO_Matrix* LM);
+    void folding_vl_k(const int &ik, LCAO_Matrix* LM, const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     //------------------------------------------------------
     // in gint_k_env.cpp 
     //------------------------------------------------------
     // calculate the envelop function via grid integrals
-    void cal_env_k(
-        int ik, 
-        const std::complex<double>* psi_k,
-        double* rho);
+    void cal_env_k(int ik,
+                   const std::complex<double>* psi_k,
+                   double* rho,
+                   const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     //------------------------------------------------------
     // in gint_k_sparse.cpp 

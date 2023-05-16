@@ -20,8 +20,11 @@
 
 // Peize Lin add 2022.09.13
 template<typename Tdata>
-void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold,
-	const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, RI::Tensor<Tdata>>>> &Hexxs)
+void LCAO_Hamilt::calculate_HR_exx_sparse(
+			const int &current_spin, 
+			const double &sparse_threshold,
+			const int (&nmp)[3],
+			const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, RI::Tensor<Tdata>>>>& Hexxs)
 {
 	ModuleBase::TITLE("LCAO_Hamilt","calculate_HR_exx_sparse");
 	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
@@ -81,7 +84,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(const int &current_spin, const double 
 		}
 	}
 
-	const Abfs::Vector3_Order<int> Rs_period(GlobalC::kv.nmp[0], GlobalC::kv.nmp[1], GlobalC::kv.nmp[2]);
+	const Abfs::Vector3_Order<int> Rs_period(nmp[0], nmp[1], nmp[2]);
 	for(int Rx=0; Rx<Rs_period.x; ++Rx)
 		for(int Ry=0; Ry<Rs_period.y; ++Ry)
 			for(int Rz=0; Rz<Rs_period.z; ++Rz)

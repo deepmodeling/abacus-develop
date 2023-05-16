@@ -15,7 +15,7 @@ LCAO_Matrix::~LCAO_Matrix()
 }
 
 
-void LCAO_Matrix::divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &pv)
+void LCAO_Matrix::divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &pv, const int& nks)
 {
     ModuleBase::TITLE("LCAO_Matrix","divide_HS_in_frag");
 
@@ -56,7 +56,7 @@ void LCAO_Matrix::divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &pv)
             }
             else
             {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, pv.nloc,GlobalC::kv.nks);
+                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, pv.nloc, nks);
             }
         }
 	}

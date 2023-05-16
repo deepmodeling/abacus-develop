@@ -28,13 +28,14 @@ void ELEC_evolve::evolve_psi(const int& istep,
                              std::complex<double>** Hk_laststep,
                              ModuleBase::matrix& ekb,
                              int htype,
-                             int propagator)
+                             int propagator,
+                             const int& nks)
 {
     ModuleBase::TITLE("ELEC_evolve", "eveolve_psi");
     ModuleBase::timer::tick("ELEC_evolve", "evolve_psi");
 
     // pool parallization in future -- mohan note 2021-02-09
-    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+    for (int ik = 0; ik < nks; ik++)
     {
         phm->updateHk(ik);
 

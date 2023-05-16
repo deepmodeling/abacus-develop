@@ -34,7 +34,8 @@ class Force_Stress_LCAO
 		const psi::Psi<std::complex<double>>* psi,
         LCAO_Hamilt &uhm,
         ModuleBase::matrix& fcs,
-		ModuleBase::matrix &scs);
+		ModuleBase::matrix &scs,
+		const K_Vectors& kv);
 
 private:
     
@@ -51,47 +52,47 @@ private:
 
 	void forceSymmetry(ModuleBase::matrix &fcs);
 
-	void calForcePwPart(
-		ModuleBase::matrix &fvl_dvl, 
-		ModuleBase::matrix &fewalds, 
-		ModuleBase::matrix &fcc, 
-		ModuleBase::matrix &fscc,
-		const Charge* const chr);
+    void calForcePwPart(ModuleBase::matrix& fvl_dvl,
+                        ModuleBase::matrix& fewalds,
+                        ModuleBase::matrix& fcc,
+                        ModuleBase::matrix& fscc,
+                        const double& etxc,
+                        const ModuleBase::matrix& vnew,
+                        const bool vnew_exist,
+                        const Charge* const chr);
 
-	void calForceStressIntegralPart(
-		const bool isGammaOnly,
-		const bool isforce,
-        const bool isstress,
-        Local_Orbital_Charge& loc,
-		const elecstate::ElecState* pelec,
-        const psi::Psi<double>* psid,
-		const psi::Psi<std::complex<double>>* psi,
-        ModuleBase::matrix& foverlap,
-		ModuleBase::matrix &ftvnl_dphi,
-		ModuleBase::matrix &fvnl_dbeta,	
-		ModuleBase::matrix &fvl_dphi,
-		ModuleBase::matrix &soverlap,
-		ModuleBase::matrix &stvnl_dphi,
-		ModuleBase::matrix &svnl_dbeta,
+    void calForceStressIntegralPart(const bool isGammaOnly,
+                                    const bool isforce,
+                                    const bool isstress,
+                                    Local_Orbital_Charge& loc,
+                                    const elecstate::ElecState* pelec,
+                                    const psi::Psi<double>* psid,
+                                    const psi::Psi<std::complex<double>>* psi,
+                                    ModuleBase::matrix& foverlap,
+                                    ModuleBase::matrix& ftvnl_dphi,
+                                    ModuleBase::matrix& fvnl_dbeta,
+                                    ModuleBase::matrix& fvl_dphi,
+                                    ModuleBase::matrix& soverlap,
+                                    ModuleBase::matrix& stvnl_dphi,
+                                    ModuleBase::matrix& svnl_dbeta,
 #if __DEEPKS
-		ModuleBase::matrix& svl_dphi,
-	    ModuleBase::matrix& svnl_dalpha,
+                                    ModuleBase::matrix& svl_dphi,
+                                    ModuleBase::matrix& svnl_dalpha,
 #else
-	    ModuleBase::matrix& svl_dphi,
+                                    ModuleBase::matrix& svl_dphi,
 #endif
-        LCAO_Hamilt &uhm);
-    
+                                    LCAO_Hamilt &uhm,
+		                                const K_Vectors& kv);
 
+    void calStressPwPart(ModuleBase::matrix& sigmadvl,
+                         ModuleBase::matrix& sigmahar,
+                         ModuleBase::matrix& sigmaewa,
+                         ModuleBase::matrix& sigmacc,
+                         ModuleBase::matrix& sigmaxc,
+                         const double& etxc,
+                         const Charge* const chr);
 
-	void calStressPwPart(
-		ModuleBase::matrix &sigmadvl,
-		ModuleBase::matrix &sigmahar,
-		ModuleBase::matrix &sigmaewa,
-		ModuleBase::matrix &sigmacc,
-		ModuleBase::matrix &sigmaxc,
-		const Charge* const chr);
-	
-	static double force_invalid_threshold_ev;
-	static double output_acc; // control the accuracy
+    static double force_invalid_threshold_ev;
+    static double output_acc; // control the accuracy
 };
 #endif

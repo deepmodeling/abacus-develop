@@ -32,6 +32,7 @@ void PW_Basis:: initgrids(
     this->tpiba = ModuleBase::TWO_PI / this->lat0;
     this->tpiba2 = this->tpiba*this->tpiba;
     this->latvec = latvec_in;
+    this->omega = abs(latvec.Det()) * lat0 * lat0 * lat0;
     this->GT = latvec.Inverse();
 	this->G  = GT.Transpose();
 	this->GGT = G * GT;
@@ -162,6 +163,7 @@ void PW_Basis:: initgrids(
     this->tpiba = ModuleBase::TWO_PI / this->lat0;
     this->tpiba2 = this->tpiba*this->tpiba;
     this->latvec = latvec_in;
+    this->omega = abs(latvec.Det()) * lat0 * lat0 * lat0;
     this->GT = latvec.Inverse();
 	this->G  = GT.Transpose();
 	this->GGT = G * GT;

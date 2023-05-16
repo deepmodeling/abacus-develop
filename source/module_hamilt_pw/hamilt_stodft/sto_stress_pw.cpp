@@ -5,7 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
-                               const ModuleBase::matrix& wg,
+                               const elecstate::ElecState& elec,
                                ModulePW::PW_Basis* rho_basis,
                                ModuleSymmetry::Symmetry* p_symm,
                                Structure_Factor* p_sf,
@@ -15,14 +15,14 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                                Stochastic_WF& stowf,
                                const Charge* const chr)
 {
-    ModuleBase::TITLE("Sto_Stress_PW","cal_stress");
-	ModuleBase::timer::tick("Sto_Stress_PW","cal_stress");    
-
-	sigmatot.create(3,3);
-	ModuleBase::matrix sigmaxc(3,3);
-	ModuleBase::matrix sigmahar(3,3);
-	ModuleBase::matrix sigmakin(3,3);
-	ModuleBase::matrix sigmaloc(3,3);
+    ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
+    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
+    const ModuleBase::matrix& wg = elec.wg;
+    sigmatot.create(3, 3);
+    ModuleBase::matrix sigmaxc(3, 3);
+    ModuleBase::matrix sigmahar(3, 3);
+    ModuleBase::matrix sigmakin(3, 3);
+    ModuleBase::matrix sigmaloc(3,3);
 	ModuleBase::matrix sigmanl(3,3);
 	ModuleBase::matrix sigmaewa(3,3);
 	ModuleBase::matrix sigmaxcc(3,3);
@@ -39,7 +39,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; ++i)
     {
-        sigmaxc(i, i) = -(GlobalC::en.etxc - GlobalC::en.vtxc) / GlobalC::ucell.omega;
+        sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / GlobalC::ucell.omega;
     }
     stress_gga(sigmaxc, rho_basis, chr);
 
