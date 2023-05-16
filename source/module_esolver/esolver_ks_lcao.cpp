@@ -115,7 +115,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
+    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, GlobalC::kv.nks);
     //------------------init Hamilt_lcao----------------------
 
 #ifdef __EXX
@@ -151,7 +151,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Quxin added for DFT+U
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, this->LM);
+        GlobalC::dftu.init(ucell, this->LM, GlobalC::kv.nks);
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
@@ -250,7 +250,8 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->psi,
                        this->UHM,
                        force,
-                       this->scs);
+                       this->scs,
+                       GlobalC::kv);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -605,7 +606,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
             if (GlobalV::GAMMA_ONLY_LOCAL)
                 GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k);
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv);
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
@@ -858,7 +859,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             dm2d[is] = new double[this->LOC.ParaV->nnr];
             ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
         }
-        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d);
+        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, GlobalC::kv);
 
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {

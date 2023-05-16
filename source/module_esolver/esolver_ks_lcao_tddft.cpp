@@ -85,7 +85,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV);
+    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, GlobalC::kv.nks);
     //------------------init Hamilt_lcao----------------------
 
     // pass Hamilt-pointer to Operator
@@ -198,7 +198,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                 this->Hk_laststep,
                                 this->pelec_td->ekb,
                                 td_htype,
-                                INPUT.propagator);
+                                INPUT.propagator,
+                                GlobalC::kv.nks);
         this->pelec_td->psiToRho_td(this->psi[0]);
         // this->pelec_td->psiToRho(this->psi[0]);
     }

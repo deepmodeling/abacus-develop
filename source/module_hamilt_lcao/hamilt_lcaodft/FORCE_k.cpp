@@ -48,7 +48,8 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 #else
                             ModuleBase::matrix& svl_dphi,
 #endif
-                            LCAO_Hamilt& uhm)
+                            LCAO_Hamilt& uhm,
+                            const K_Vectors& kv)
 {
     ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
     ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
@@ -56,11 +57,11 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     this->UHM = &uhm;
 
     const Parallel_Orbitals* pv = loc.ParaV;
-    this->allocate_k(*pv);
+    this->allocate_k(*pv, kv.nks, kv.kvec_d);
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec);
+    this->cal_foverlap_k(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec, kv.nks, kv);
 
     // calculate the density matrix
     double** dm2d = new double*[GlobalV::NSPIN];
@@ -80,7 +81,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     };
     ModuleBase::OMP_PARALLEL(init_dm2d);
 
-    loc.cal_dm_R(loc.dm_k, ra, dm2d);
+    loc.cal_dm_R(loc.dm_k, ra, dm2d, kv);
 
     this->cal_ftvnl_dphi_k(dm2d, isforce, isstress, ra, ftvnl_dphi, stvnl_dphi);
 
@@ -100,8 +101,8 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                        GlobalC::GridD,
                                        pv->trace_loc_row,
                                        pv->trace_loc_col,
-                                       GlobalC::kv.nks,
-                                       GlobalC::kv.kvec_d);
+                                       kv.nks,
+                                       kv.kvec_d);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
@@ -111,8 +112,8 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                   GlobalC::GridD,
                                   pv->trace_loc_row,
                                   pv->trace_loc_col,
-                                  GlobalC::kv.nks,
-                                  GlobalC::kv.kvec_d,
+                                  kv.nks,
+                                  kv.kvec_d,
                                   isstress,
                                   svnl_dalpha);
 #ifdef __MPI
@@ -124,7 +125,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 #endif
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.print_dm_k(GlobalC::kv.nks, loc.dm_k);
+            GlobalC::ld.print_dm_k(kv.nks, loc.dm_k);
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
@@ -135,14 +136,14 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                       pv->trace_loc_col,
                                       pv->nnr);
             GlobalC::ld.check_v_delta_k(pv->nnr);
-            for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+            for (int ik = 0; ik < kv.nks; ik++)
             {
-                uhm.LM->folding_fixedH(ik);
+                uhm.LM->folding_fixedH(ik, kv.kvec_d);
             }
             GlobalC::ld.cal_e_delta_band_k(loc.dm_k,
                                            pv->trace_loc_row,
                                            pv->trace_loc_col,
-                                           GlobalC::kv.nks,
+                                           kv.nks,
                                            pv->nrow,
                                            pv->ncol);
             ofstream ofs("E_delta_bands.dat");
@@ -183,7 +184,9 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     return;
 }
 
-void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
+void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
+                            const int& nks,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Force_LCAO_k", "allocate_k");
     ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
@@ -269,10 +272,10 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv)
         cal_deri = false;
         //this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns);
         this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns, INPUT.dmax);
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < nks; ik++)
         {
             this->UHM->genH.LM->zeros_HSk('S');
-            this->UHM->genH.LM->folding_fixedH(ik, 1);
+            this->UHM->genH.LM->folding_fixedH(ik, kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
             ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
                                 this->UHM->genH.LM->Sloc2.data(),
@@ -317,7 +320,9 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                                   Local_Orbital_Charge& loc,
                                   ModuleBase::matrix& foverlap,
                                   ModuleBase::matrix& soverlap,
-                                  const elecstate::ElecState* pelec
+                                  const elecstate::ElecState* pelec,
+                                  const int& nks,
+                                  const K_Vectors& kv
                                   )
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_foverlap_k");
@@ -350,19 +355,19 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
 
     ModuleBase::matrix wgEkb;
-    wgEkb.create(GlobalC::kv.nks, GlobalV::NBANDS);
-    ModuleBase::Memory::record("Force::wgEkb", sizeof(double) * GlobalC::kv.nks * GlobalV::NBANDS);
+    wgEkb.create(nks, GlobalV::NBANDS);
+    ModuleBase::Memory::record("Force::wgEkb", sizeof(double) * nks * GlobalV::NBANDS);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+    for (int ik = 0; ik < nks; ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             wgEkb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
         }
     }
-    std::vector<ModuleBase::ComplexMatrix> edm_k(GlobalC::kv.nks);
+    std::vector<ModuleBase::ComplexMatrix> edm_k(nks);
 
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
     if (loc.edm_k_tddft.size())
@@ -370,7 +375,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        for (int ik = 0; ik < nks; ++ik)
         {
             edm_k[ik] = loc.edm_k_tddft[ik];
         }
@@ -380,7 +385,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
         elecstate::cal_dm(loc.ParaV, wgEkb, psi[0], edm_k);
     }
 
-    loc.cal_dm_R(edm_k, ra, edm2d);
+    loc.cal_dm_R(edm_k, ra, edm2d, kv);
     ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
 
     //--------------------------------------------

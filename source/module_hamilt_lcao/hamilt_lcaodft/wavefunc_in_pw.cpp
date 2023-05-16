@@ -457,7 +457,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // {
 // 	ModuleBase::TITLE("Wavefunc_in_pw","produce_local_basis_in_pw");
 // 	assert(ik>=0);
-// 	const int npw = GlobalC::kv.ngk[ik];
+// 	const int npw = kv.ngk[ik];
 // 	const int total_lm = ( GlobalC::ucell.lmax + 1) * ( GlobalC::ucell.lmax + 1);
 // 	ModuleBase::matrix ylm(total_lm, npw);
 // 	std::complex<double> *aux = new std::complex<double>[npw];

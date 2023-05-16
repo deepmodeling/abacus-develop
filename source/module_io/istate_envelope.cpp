@@ -240,7 +240,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 }
 #endif
                 //deal with NSPIN=4
-                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin]);
+                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin], GlobalC::kv.kvec_c, GlobalC::kv.kvec_d);
 
                 std::stringstream ss;
                 ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";

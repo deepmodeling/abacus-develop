@@ -55,7 +55,9 @@ void Gint_k::destroy_pvpR(void)
 
 // folding the matrix for 'ik' k-point.
 // H(k)=\sum{R} H(R)exp(ikR) 
-void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
+void Gint_k::folding_vl_k(const int &ik, 
+                        LCAO_Matrix *LM, 
+                        const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Gint_k","folding_vl_k");
     ModuleBase::timer::tick("Gint_k","folding_vl_k");
@@ -174,7 +176,7 @@ void Gint_k::folding_vl_k(const int &ik, LCAO_Matrix *LM)
                             dR.z = adjs.box[ad].z;
 
                             // calculate the phase factor exp(ikR).
-                            const double arg = (GlobalC::kv.kvec_d[ ik ] * dR) * ModuleBase::TWO_PI;
+                            const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                             double sinp, cosp;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
                             const std::complex<double> phase = std::complex<double>(cosp, sinp);
