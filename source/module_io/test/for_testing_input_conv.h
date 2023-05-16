@@ -3,7 +3,6 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/energy.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
