@@ -629,10 +629,16 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
         int bnop=0;
-        symm.setgroup(bsymop, bnop, bbrav);
         ModuleBase::Matrix3 b_optlat = symm.optlat.Inverse().Transpose();
-        //symm.gmatrix_convert_int(bsymop, bsymop, bnop, b_optlat, ucell.G);
-        symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat, ucell.G);
+        //search optlat again after using reciprocity relation
+        ModuleBase::Vector3<double> gb1_now(b_optlat.e11, b_optlat.e12, b_optlat.e13);
+        ModuleBase::Vector3<double> gb2_now(b_optlat.e21, b_optlat.e22, b_optlat.e23);
+        ModuleBase::Vector3<double> gb3_now(b_optlat.e31, b_optlat.e32, b_optlat.e33);
+        symm.lattice_type(gb1, gb2, gb3, gb1_now, gb2_now, gb3_now, b_const, b0_const, bbrav, bbrav_name, ucell, false, nullptr);
+        ModuleBase::Matrix3 b_optlat_repeat(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
+        symm.setgroup(bsymop, bnop, bbrav);
+        symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_repeat, ucell.G);
+        
         //check if all the kgmatrix are in bsymop
         auto matequal = [&symm] (ModuleBase::Matrix3 a, ModuleBase::Matrix3 b)
         {
