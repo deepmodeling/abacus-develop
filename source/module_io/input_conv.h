@@ -28,11 +28,11 @@ template <typename T> void parse_expression(const std::string &fn, std::vector<T
 
 #ifdef __LCAO
 /**
- * @brief convert units
+ * @brief convert units of different parameters
  *
  * @param params input parameter
  * @param c coefficients of unit conversion
- * @return parameter after unit vonversion
+ * @return parame*c : parameter after unit vonversion
  */
 std::vector<double> convert_units(std::string params, double c);
 
