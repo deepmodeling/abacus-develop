@@ -270,7 +270,7 @@ std::endl; GlobalV::ofs_running << " Q = < J_it_ia_il_in_im | Psi_n, k > " << st
     ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3 <double> [np];
     for (int ig=0; ig<np; ig++)
     {
-        gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+        gk[ig] = wfcpw->getgpluskcar(ik,ig);
     }
 
     ModuleBase::YlmReal::Ylm_Real(total_lm, np, gk, ylm);
@@ -287,7 +287,7 @@ std::endl; GlobalV::ofs_running << " Q = < J_it_ia_il_in_im | Psi_n, k > " << st
     {
         for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++)
         {
-            std::complex<double> *sk = sf.get_sk(ik, T1, I1,GlobalC::wfcpw);
+            std::complex<double> *sk = sf.get_sk(ik, T1, I1,wfcpw);
             for (int L=0; L< lmax+1; L++)
             {
                 GlobalV::ofs_running << " " << std::setw(5) << ik+1

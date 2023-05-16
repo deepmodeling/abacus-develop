@@ -1,77 +1,61 @@
 #ifndef ESOLVER_H
 #define ESOLVER_H
 
-#include "module_io/input.h"
-#include "module_cell/unitcell.h"
-#include "module_elecstate/energy.h"
 #include "module_base/matrix.h"
-//--------------temporary----------------------------
-#include "module_psi/psi.h"
+#include "module_cell/unitcell.h"
+#include "module_io/input.h"
 
 namespace ModuleESolver
 {
-    class ESolver
+class ESolver
+{
+    // protected:
+    //     ModuleBase::matrix lattice_v;
+  public:
+    ESolver()
     {
-        // protected:
-        //     ModuleBase::matrix lattice_v;
-    public:
-        ESolver() {
-            classname = "ESolver";
-        }
-        
-        virtual ~ESolver() 
-        {
-            //--------------temporary----------------------------
-            if(this->psi != nullptr)
-            {
-                delete psi;
-            }
-            if(this->psid != nullptr)
-            {
-                delete psid;
-            }
-        }
+        classname = "ESolver";
+    }
 
-        //virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
-        virtual void Init(Input& inp, UnitCell& cell) = 0;
+    virtual ~ESolver()
+    {
+    }
 
-        // They shoud be add after atom class is refactored
-        // virtual void UpdateLatAtom(ModuleBase::matrix &lat_in, Atom &atom_in);
-        // virtual void UpdateLat(ModuleBase::matrix &lat_in);
-        // virtual void UpdateAtom(Atom &atom_in);
+    // virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
+    virtual void Init(Input& inp, UnitCell& cell) = 0;
 
-        virtual void Run(int istep, UnitCell& cell) = 0;
+    // They shoud be add after atom class is refactored
+    // virtual void UpdateLatAtom(ModuleBase::matrix &lat_in, Atom &atom_in);
+    // virtual void UpdateLat(ModuleBase::matrix &lat_in);
+    // virtual void UpdateAtom(Atom &atom_in);
 
-        //Deal with exx and other calculation than scf/md/relax: 
-        // such as nscf, istate-charge or envelope
-        virtual void othercalculation(const int istep) {};
+    virtual void Run(int istep, UnitCell& cell) = 0;
 
-        virtual void cal_Energy(double& etot) = 0;
-        virtual void cal_Force(ModuleBase::matrix& force) = 0;
-        virtual void cal_Stress(ModuleBase::matrix& stress) = 0;
-        virtual void postprocess() {};
+    // Deal with exx and other calculation than scf/md/relax:
+    //  such as nscf, istate-charge or envelope
+    virtual void othercalculation(const int istep){};
 
-        //Print current classname.
-        void printname();
+    virtual double cal_Energy() = 0;
+    virtual void cal_Force(ModuleBase::matrix& force) = 0;
+    virtual void cal_Stress(ModuleBase::matrix& stress) = 0;
+    virtual void postprocess(){};
 
-        //temporarily
-        //get iterstep used in current scf
-        virtual int getniter() { return 0; }
-        string classname;
+    // Print current classname.
+    void printname();
 
-        //--------------temporary----------------------------
-        // this is the interface of non-self-consistant calculation
-        virtual void nscf() {};
-        
-        //wavefunction coefficients
-        psi::Psi<std::complex<double>>* psi = nullptr;
-        psi::Psi<double>* psid = nullptr;
-    };
+    // temporarily
+    // get iterstep used in current scf
+    virtual int getniter()
+    {
+        return 0;
+    }
+    string classname;
+};
 
-    string determine_type();
-    void init_esolver(ESolver*& p_esolver);
-    void clean_esolver(ESolver*& pesolver);
+string determine_type();
+void init_esolver(ESolver*& p_esolver);
+void clean_esolver(ESolver*& pesolver);
 
-}
+} // namespace ModuleESolver
 
 #endif

@@ -2,7 +2,7 @@
 #define STO_STRESS_PW_H
 
 #include "module_basis/module_pw/pw_basis_k.h"
-#include "module_elecstate/module_charge/charge.h"
+#include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
 #include "sto_wf.h"
 // qianrui create 2021-6-4
@@ -15,7 +15,7 @@ class Sto_Stress_PW : public Stress_Func<double>
 
     // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& sigmatot,
-                    const ModuleBase::matrix& wg,
+                    const elecstate::ElecState& elec,
                     ModulePW::PW_Basis* rho_basis,
                     ModuleSymmetry::Symmetry* p_symm,
                     Structure_Factor* p_sf,

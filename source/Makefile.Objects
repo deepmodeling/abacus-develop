@@ -152,6 +152,8 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_vdelta.o\
 
 OBJS_ELECSTAT=elecstate.o\
+    elecstate_energy.o\
+    elecstate_print.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     elecstate_op.o\
@@ -432,7 +434,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_extra.o\
     charge_mixing.o\
     charge_pulay.o\
-    energy.o\
+    fp_energy.o\
     forces.o\
     force_op.o\
     stress_op.o\

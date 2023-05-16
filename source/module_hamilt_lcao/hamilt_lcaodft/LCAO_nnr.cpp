@@ -316,7 +316,10 @@ int Grid_Technique::binary_search_find_R2_offset(int val, int iat) {
 }
 
 // be called in LCAO_Hamilt::calculate_Hk.
-void LCAO_Matrix::folding_fixedH(const int &ik, bool cal_syns)
+void LCAO_Matrix::folding_fixedH(
+						const int &ik, 
+						const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+						bool cal_syns)
 {
 	ModuleBase::TITLE("LCAO_nnr","folding_fixedH");
     ModuleBase::timer::tick("LCAO_nnr", "folding_fixedH");
@@ -428,8 +431,8 @@ void LCAO_Matrix::folding_fixedH(const int &ik, bool cal_syns)
 					// dR is the index of box in Crystal coordinates
 					//------------------------------------------------
 					ModuleBase::Vector3<double> dR(adjs.box[ad].x, adjs.box[ad].y, adjs.box[ad].z); 
-					const double arg = ( GlobalC::kv.kvec_d[ik] * dR ) * ModuleBase::TWO_PI;
-					//const double arg = ( GlobalC::kv.kvec_d[ik] * GlobalC::GridD.getBox(ad) ) * ModuleBase::TWO_PI;
+					const double arg = ( kvec_d[ik] * dR ) * ModuleBase::TWO_PI;
+					//const double arg = ( kvec_d[ik] * GlobalC::GridD.getBox(ad) ) * ModuleBase::TWO_PI;
 					double sinp, cosp;
 					ModuleBase::libm::sincos(arg, &sinp, &cosp);
 					const std::complex<double> kphase = std::complex <double> ( cosp,  sinp );

@@ -47,7 +47,8 @@ class ELEC_evolve
                            std::complex<double>** Hk_laststep,
                            ModuleBase::matrix& ekb,
                            int htype,
-                           int propagator);
+                           int propagator,
+                           const int& nks);
 };
 
 #endif

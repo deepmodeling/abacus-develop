@@ -160,22 +160,25 @@ public:
    
 
 public:
-    bool gamma_only=false;	// only half g are used.
-    bool full_pw=false;   // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used. !! Note this parameter is not used in PW_BASIS_K !! sunliang added 2022-08-30.
-    double ggecut=0;    //Energy cut off for g^2/2, unit in 1/lat0^2, ggecut=ecutwfc(Ry)*lat0^2/4pi^2
-    double gridecut_lat=0; //Energy cut off for all fft grids, unit in 1/lat0^2, gridecut_lat=ecutrho(Ry)*lat0^2/4pi^2
-    double lat0=1;     //unit length for lattice, unit in bohr
-    double tpiba=1;    //  2pi/lat0
-    double tpiba2=1;   //  4pi^2/lat0^2
-    ModuleBase::Matrix3 latvec; // Unitcell lattice vectors, unit in lat0
-    ModuleBase::Matrix3 G; // reciprocal lattice vector, unit in 1/lat0
-    ModuleBase::Matrix3 GT; // traspose of G
-    ModuleBase::Matrix3 GGT; // GGT = G*GT
-    int distribution_type=1;
-    int full_pw_dim=0; // If full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only. sunliang added 2022-08-30.
-    int poolnproc=1;
-    int poolrank=0;
-    
+  bool gamma_only = false; ///< only half g are used.
+  bool full_pw = false; ///< If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will
+                        ///< be used. !! Note this parameter is not used in PW_BASIS_K !! sunliang added 2022-08-30.
+  double ggecut = 0.0;  ///< Energy cut off for g^2/2 = ecutwfc(Ry)*lat0^2/4pi^2, unit in 1/lat0^2
+  double gridecut_lat = 0.0;  ///< Energy cut off for all fft grids = ecutrho(Ry)*lat0^2/4pi^2, unit in 1/lat0^2
+  double lat0 = 1;            ///< unit length for lattice, unit in bohr
+  double tpiba = 1;           ///<  2pi/lat0
+  double tpiba2 = 1;          ///<  4pi^2/lat0^2
+  ModuleBase::Matrix3 latvec; ///< Unitcell lattice vectors, unit in lat0
+  ModuleBase::Matrix3 G;      ///< reciprocal lattice vector, unit in 1/lat0
+  ModuleBase::Matrix3 GT;     ///< traspose of G
+  ModuleBase::Matrix3 GGT;    ///< GGT = G*GT
+  double omega = 1.0;         ///< volume of the cell
+  int distribution_type = 1;  ///< distribution method
+  int full_pw_dim = 0; ///< If full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1)
+                       ///< odd only; (2) even only. sunliang added 2022-08-30.
+  int poolnproc = 1;
+  int poolrank = 0;
+
 protected:
     //distribute plane waves to different processors
     //method 1: first consider number of plane waves
@@ -240,21 +243,38 @@ public:
                 // Thus complex<double>[nmaxgr] is able to contain either reciprocal or real data
     FFT ft;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
-    
-    template <typename FPTYPE> void real2recip(const FPTYPE * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    template <typename FPTYPE> void real2recip(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nplane,nx*ny)  ; out(nz, ns)
-    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE> * in, FPTYPE *out, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
-    template <typename FPTYPE> void recip2real(const std::complex<FPTYPE> * in, std::complex<FPTYPE> * out, const bool add = false, const FPTYPE factor = 1.0); //in:(nz, ns)  ; out(nplane,nx*ny)
 
-protected:
+    template <typename FPTYPE>
+    void real2recip(const FPTYPE* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void real2recip(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void recip2real(const std::complex<FPTYPE>* in,
+                    FPTYPE* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE>
+    void recip2real(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+  protected:
     //gather planes and scatter sticks of all processors
-    template<typename T>
-    void gatherp_scatters(std::complex<T> *in, std::complex<T> *out); 
+    template <typename T>
+    void gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const;
 
-    //gather sticks of and scatter planes of all processors
-    template<typename T>
-    void gathers_scatterp(std::complex<T> *in, std::complex<T> *out); 
-public:
+    // gather sticks of and scatter planes of all processors
+    template <typename T>
+    void gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const;
+
+  public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is) const;
 

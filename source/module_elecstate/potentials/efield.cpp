@@ -29,11 +29,11 @@ Efield::~Efield()
 //=======================================================
 // calculate dipole potential in surface calculations
 //=======================================================
-ModuleBase::matrix Efield::add_efield(const UnitCell &cell,
-                                      ModulePW::PW_Basis *rho_basis,
-                                      const int &nspin,
-                                      const double *const *const rho,
-                                      surchem &solvent)
+ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
+                                      const ModulePW::PW_Basis* rho_basis,
+                                      const int& nspin,
+                                      const double* const* const rho,
+                                      surchem& solvent)
 {
     ModuleBase::TITLE("Efield", "add_efield");
     ModuleBase::timer::tick("Efield", "add_efield");
@@ -150,11 +150,11 @@ double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
     return ion_dipole;
 }
 
-double Efield::cal_elec_dipole(const UnitCell &cell,
-                               ModulePW::PW_Basis *rho_basis,
-                               const int &nspin,
-                               const double *const *const rho,
-                               const double &bmod)
+double Efield::cal_elec_dipole(const UnitCell& cell,
+                               const ModulePW::PW_Basis* rho_basis,
+                               const int& nspin,
+                               const double* const* const rho,
+                               const double& bmod)
 {
     double elec_dipole = 0;
     const int nspin0 = (nspin == 2) ? 2 : 1;
@@ -183,10 +183,10 @@ double Efield::cal_elec_dipole(const UnitCell &cell,
     return elec_dipole;
 }
 
-double Efield::cal_induced_dipole(const UnitCell &cell,
-                                  ModulePW::PW_Basis *rho_basis,
-                                  surchem &solvent,
-                                  const double &bmod)
+double Efield::cal_induced_dipole(const UnitCell& cell,
+                                  const ModulePW::PW_Basis* rho_basis,
+                                  surchem& solvent,
+                                  const double& bmod)
 {
     double induced_dipole = 0;
 

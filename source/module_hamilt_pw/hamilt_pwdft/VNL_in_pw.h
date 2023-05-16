@@ -4,15 +4,12 @@
 #include "VL_in_pw.h"
 #include "module_base/complexarray.h"
 #include "module_base/complexmatrix.h"
+#include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_psi/psi.h"
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #endif
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_cell/unitcell.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/forces.h"
-#include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
-#include "module_psi/psi.h"
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
@@ -24,21 +21,10 @@ class pseudopot_cell_vnl: public pseudopot_cell_vl
 public:
 
 	pseudopot_cell_vnl();
-	~pseudopot_cell_vnl();
-
-	friend class Stress_Func<double>;
-	friend class Forces<double>;
-	friend class Epsilon0_vasp;
-	friend class Potential;
-	friend class Hamilt_PW;
-	friend class HamiltPW;
-	friend class WF_atomic;
-	friend class wavefunc;
-	friend class Stochastic_hchi;
-
+    ~pseudopot_cell_vnl();
     void init(const int ntype,
-              Structure_Factor *psf_in,
-              ModulePW::PW_Basis_K *wfc_basis = nullptr,
+              Structure_Factor* psf_in,
+              const ModulePW::PW_Basis_K* wfc_basis = nullptr,
               const bool allocate_vkb = 1);
 
     double cell_factor; //LiuXh add 20180619
@@ -133,7 +119,7 @@ private:
     double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
     std::complex<double> * z_vkb = nullptr;
 
-	ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* wfcpw = nullptr;
     Structure_Factor *psf = nullptr;
 };
 

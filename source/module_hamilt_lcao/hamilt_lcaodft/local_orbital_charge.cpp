@@ -79,7 +79,8 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int &lgd,
                                            elecstate::ElecState *pelec,
                                            Local_Orbital_wfc &lowf,
                                            psi::Psi<double> *psid,
-                                           psi::Psi<std::complex<double>> *psi)
+                                           psi::Psi<std::complex<double>> *psi,
+                                           const K_Vectors& kv)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_dm_wfc");
 
@@ -87,12 +88,12 @@ void Local_Orbital_Charge::allocate_dm_wfc(const int &lgd,
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         // here we reset the density matrix dimension.
-        this->allocate_gamma(lgd, psid, pelec);
+        this->allocate_gamma(lgd, psid, pelec, kv.nks);
     }
     else
     {
-        lowf.allocate_k(lgd, psi, pelec);
-        this->allocate_DM_k();
+        lowf.allocate_k(lgd, psi, pelec, kv.nks, kv.nkstot, kv.kvec_c);
+        this->allocate_DM_k(kv.nks);
     }
 
     return;

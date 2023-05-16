@@ -51,7 +51,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
             // but I'll use force and stress explicitly here for now
 
             // calculate the total energy
-            p_esolver->cal_Energy(GlobalC::en.etot);
+            this->etot = p_esolver->cal_Energy();
 
             // calculate and gather all parts of total ionic forces
             ModuleBase::matrix force;
@@ -68,12 +68,12 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
 
             if (GlobalV::relax_new)
             {
-                stop = rl.relax_step(force, stress, GlobalC::en.etot);
+                stop = rl.relax_step(force, stress, this->etot);
             }
             else
             {
                 stop = rl_old.relax_step(istep,
-                                         GlobalC::en.etot,
+                                         this->etot,
                                          GlobalC::ucell,
                                          force,
                                          stress,

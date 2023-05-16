@@ -15,7 +15,7 @@ public:
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
     void Init(Input &inp, UnitCell &cell) override;
-    void cal_Energy(double& etot) override;
+    double cal_Energy() override;
     void cal_Force(ModuleBase::matrix& force) override;
     void cal_Stress(ModuleBase::matrix& stress) override;
 public:
