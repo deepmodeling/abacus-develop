@@ -17,11 +17,13 @@ class LCAO_Matrix
     LCAO_Matrix();
     ~LCAO_Matrix();
 
-    void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv);
+    void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv, const int& nks);
     
     // folding the fixed Hamiltonian (T+Vnl) if
 	// k-point algorithm is used.
-	void folding_fixedH(const int &ik, bool cal_syns = false);
+	void folding_fixedH(const int &ik, 
+                        const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
+                        bool cal_syns = false);
 
     Parallel_Orbitals *ParaV;
 

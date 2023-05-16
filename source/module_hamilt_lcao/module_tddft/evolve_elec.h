@@ -49,7 +49,8 @@ class Evolve_elec
                           std::complex<double>** Hk_laststep,
                           ModuleBase::matrix& ekb,
                           int htype,
-                          int propagator);
+                          int propagator,
+                          const int& nks);
 };
 } // namespace module_tddft
 #endif

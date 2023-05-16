@@ -166,7 +166,7 @@ namespace ModuleESolver
         this->UHM.grid_prepare();
 
         // init density kernel and wave functions.
-        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->pelec, this->LOWF, this->psid, this->psi);
+        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->pelec, this->LOWF, this->psid, this->psi, GlobalC::kv);
 
         //======================================
         // do the charge extrapolation before the density matrix is regenerated.

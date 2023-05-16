@@ -16,24 +16,23 @@
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
 double Force_Stress_LCAO::output_acc = 1.0e-8;
 
-Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
-{
-}
-Force_Stress_LCAO::~Force_Stress_LCAO()
-{
-}
+Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) :
+    RA(&ra), f_pw(nat_in), nat(nat_in){}
+Force_Stress_LCAO::~Force_Stress_LCAO() {}
 
-void Force_Stress_LCAO::getForceStress(const bool isforce,
-                                       const bool isstress,
-                                       const bool istestf,
-                                       const bool istests,
-                                       Local_Orbital_Charge& loc,
-                                       const elecstate::ElecState* pelec,
-                                       const psi::Psi<double>* psid,
-                                       const psi::Psi<std::complex<double>>* psi,
-                                       LCAO_Hamilt& uhm,
-                                       ModuleBase::matrix& fcs,
-                                       ModuleBase::matrix& scs)
+void Force_Stress_LCAO::getForceStress(
+	const bool isforce,
+	const bool isstress,
+	const bool istestf,
+    const bool istests,
+    Local_Orbital_Charge& loc,
+	const elecstate::ElecState* pelec,
+    const psi::Psi<double>* psid,
+	const psi::Psi<std::complex<double>>* psi,
+    LCAO_Hamilt &uhm,
+    ModuleBase::matrix& fcs,
+	ModuleBase::matrix &scs,
+	const K_Vectors& kv)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
@@ -137,12 +136,14 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 #else
                                      svl_dphi,
 #endif
-                                     uhm);
-    // implement vdw force or stress here
-    //  Peize Lin add 2014-04-04, update 2021-03-09
-    //  jiyy add 2019-05-18, update 2021-05-02
-    ModuleBase::matrix force_vdw;
-    ModuleBase::matrix stress_vdw;
+                                     uhm,
+				                             kv);
+    //implement vdw force or stress here
+	// Peize Lin add 2014-04-04, update 2021-03-09
+    // jiyy add 2019-05-18, update 2021-05-02
+	ModuleBase::matrix force_vdw;
+	ModuleBase::matrix stress_vdw;
+  
     auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
     if (vdw_solver != nullptr)
     {
@@ -201,13 +202,13 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         if (isforce)
         {
             force_dftu.create(nat, 3);
-        }
-        if (isstress)
-        {
-            stress_dftu.create(3, 3);
-        }
-        GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu);
-    }
+		}
+		if(isstress)
+		{
+			stress_dftu.create(3, 3);
+		}
+		GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu, kv);
+	}
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)
         this->flk.finish_k();
@@ -348,37 +349,35 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
             GlobalC::ld.save_npy_f(fcs, "f_tot.npy", GlobalC::ucell.nat); // Ty/Bohr, F_tot
             if (GlobalV::deepks_scf)
             {
-                GlobalC::ld.save_npy_f(fcs - GlobalC::ld.F_delta, "f_base.npy", GlobalC::ucell.nat); // Ry/Bohr, F_base
+                GlobalC::ld.save_npy_f(fcs - GlobalC::ld.F_delta, "f_base.npy", GlobalC::ucell.nat); //Ry/Bohr, F_base
 
-                if (GlobalV::GAMMA_ONLY_LOCAL)
+                if(GlobalV::GAMMA_ONLY_LOCAL)
                 {
                     GlobalC::ld.cal_gdmx(loc.dm_gamma[0],
-                                         GlobalC::ucell,
-                                         GlobalC::ORB,
-                                         GlobalC::GridD,
-                                         pv->trace_loc_row,
-                                         pv->trace_loc_col,
-                                         isstress);
+                    GlobalC::ucell,
+                    GlobalC::ORB,
+                    GlobalC::GridD,
+                    pv->trace_loc_row,
+                    pv->trace_loc_col,
+                    isstress);
                 }
                 else
-                {
-                    GlobalC::ld.cal_gdmx_k(loc.dm_k,
-                                           GlobalC::ucell,
-                                           GlobalC::ORB,
-                                           GlobalC::GridD,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           GlobalC::kv.nks,
-                                           GlobalC::kv.kvec_d,
-                                           isstress);
+                {			
+                  GlobalC::ld.cal_gdmx_k(loc.dm_k,
+                    GlobalC::ucell,
+                    GlobalC::ORB,
+                    GlobalC::GridD,
+                    pv->trace_loc_row,
+                    pv->trace_loc_col,
+                    kv.nks,
+                    kv.kvec_d,
+                    isstress);	
                 }
-                if (GlobalV::deepks_out_unittest)
-                    GlobalC::ld.check_gdmx(GlobalC::ucell.nat);
+                if(GlobalV::deepks_out_unittest) GlobalC::ld.check_gdmx(GlobalC::ucell.nat);
                 GlobalC::ld.cal_gvx(GlobalC::ucell.nat);
 
-                if (GlobalV::deepks_out_unittest)
-                    GlobalC::ld.check_gvx(GlobalC::ucell.nat);
-                GlobalC::ld.save_npy_gvx(GlobalC::ucell.nat); //  /Bohr, grad_vx
+                if(GlobalV::deepks_out_unittest) GlobalC::ld.check_gvx(GlobalC::ucell.nat);
+                GlobalC::ld.save_npy_gvx(GlobalC::ucell.nat);//  /Bohr, grad_vx
             }
             else
             {
@@ -694,7 +693,8 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
 #else
                                                    ModuleBase::matrix& svl_dphi,
 #endif
-                                                   LCAO_Hamilt& uhm)
+                                                   LCAO_Hamilt &uhm,
+                                                   const K_Vectors& kv)
 {
     if (isGammaOnly)
     {
@@ -739,7 +739,8 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
 #else
                      svl_dphi,
 #endif
-                     uhm);
+                     uhm,
+				             kv);
     }
     return;
 }

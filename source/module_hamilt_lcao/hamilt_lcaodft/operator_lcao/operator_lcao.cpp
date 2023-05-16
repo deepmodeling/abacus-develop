@@ -2,6 +2,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hsolver/hsolver_lcao.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
@@ -54,7 +55,7 @@ void OperatorLCAO<std::complex<double>>::refresh_h()
 }
 
 template<>
-void OperatorLCAO<double>::folding_fixed(const int ik)
+void OperatorLCAO<double>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
     ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
@@ -64,7 +65,7 @@ void OperatorLCAO<double>::folding_fixed(const int ik)
 }
 
 template<>
-void OperatorLCAO<std::complex<double>>::folding_fixed(const int ik)
+void OperatorLCAO<std::complex<double>>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
     ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
@@ -75,7 +76,7 @@ void OperatorLCAO<std::complex<double>>::folding_fixed(const int ik)
     //-----------------------------------------
     this->LM->zeros_HSk('S');
     this->LM->zeros_HSk('T');
-    this->LM->folding_fixedH(ik);
+    this->LM->folding_fixedH(ik, kvec_d);
 
     //------------------------------------------
     // Add T(k)+Vnl(k)+Vlocal(k)
@@ -154,7 +155,7 @@ void OperatorLCAO<T>::init(const int ik_in)
             //in cal_type=lcao_dftu, HK only need to update from one node
             //dftu is a special operator, it should be the last node of chain
             //Overlap matrix for ik is used by it, do folding first and then return
-            this->folding_fixed(ik_in);
+            this->folding_fixed(ik_in, GlobalC::kv.kvec_d);
             this->contributeHk(ik_in);
             return;
 
@@ -179,7 +180,7 @@ void OperatorLCAO<T>::init(const int ik_in)
     }
     else
     {//it is the last node, do folding process together
-        this->folding_fixed(ik_in);
+        this->folding_fixed(ik_in, GlobalC::kv.kvec_d);
     }
 
     ModuleBase::timer::tick("OperatorLCAO", "init");

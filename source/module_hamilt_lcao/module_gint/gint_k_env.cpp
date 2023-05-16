@@ -5,7 +5,11 @@
 #include "module_base/ylm.h"
 #include "module_base/timer.h"
 
-void Gint_k::cal_env_k(int ik, const std::complex<double>* psi_k, double* rho)
+void Gint_k::cal_env_k(int ik, 
+                       const std::complex<double>* psi_k, 
+                       double* rho, 
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_c, 
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Gint_k", "cal_env_k");
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
@@ -58,11 +62,11 @@ void Gint_k::cal_env_k(int ik, const std::complex<double>* psi_k, double* rho)
                 const int Ry = GlobalC::GridT.ucell_index2y[id_ucell] + GlobalC::GridT.minu2;
                 const int Rz = GlobalC::GridT.ucell_index2z[id_ucell] + GlobalC::GridT.minu3;
                 ModuleBase::Vector3<double> R((double)Rx, (double)Ry, (double)Rz);
-                //std::cout << "kvec_d: " << GlobalC::kv.kvec_d[ik].x << " " << GlobalC::kv.kvec_d[ik].y << " " << GlobalC::kv.kvec_d[ik].z << std::endl;
-                //std::cout << "kvec_c: " << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z << std::endl;
+                //std::cout << "kvec_d: " << kvec_d[ik].x << " " << kvec_d[ik].y << " " << kvec_d[ik].z << std::endl;
+                //std::cout << "kvec_c: " << kvec_c[ik].x << " " << kvec_c[ik].y << " " << kvec_c[ik].z << std::endl;
                 //std::cout << "R: " << R.x << " " << R.y << " " << R.z << std::endl;
-                const double arg = (GlobalC::kv.kvec_d[ik] * R) * ModuleBase::TWO_PI;
-                const double arg1 = (GlobalC::kv.kvec_c[ik] * (R.x * GlobalC::ucell.a1 + R.y * GlobalC::ucell.a2 + R.z * GlobalC::ucell.a3)) * ModuleBase::TWO_PI;
+                const double arg = (kvec_d[ik] * R) * ModuleBase::TWO_PI;
+                const double arg1 = (kvec_c[ik] * (R.x * GlobalC::ucell.a1 + R.y * GlobalC::ucell.a2 + R.z * GlobalC::ucell.a3)) * ModuleBase::TWO_PI;
                 //std::cout << "arg0=" << arg << ", arg1=" << arg1 << std::endl;
                 const std::complex<double> kphase = std::complex <double>(cos(arg), sin(arg));
 

@@ -32,12 +32,13 @@ void Evolve_elec::solve_psi(const int& istep,
                             std::complex<double>** Hk_laststep,
                             ModuleBase::matrix& ekb,
                             int htype,
-                            int propagator)
+                            int propagator,
+                            const int& nks)
 {
     ModuleBase::TITLE("Evolve_elec", "eveolve_psi");
     ModuleBase::timer::tick("Evolve_elec", "evolve_psi");
 
-    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+    for (int ik = 0; ik < nks; ik++)
     {
         phm->updateHk(ik);
 

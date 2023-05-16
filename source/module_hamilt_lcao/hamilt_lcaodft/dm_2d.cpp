@@ -12,7 +12,7 @@
 
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 
-void Local_Orbital_Charge::init_dm_2d()
+void Local_Orbital_Charge::init_dm_2d(const int& nks)
 {
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
@@ -20,7 +20,7 @@ void Local_Orbital_Charge::init_dm_2d()
 	}
 	else
 	{
-		this->dm_k.resize(GlobalC::kv.nks);
+		this->dm_k.resize(nks);
 	}
 }
 
@@ -28,19 +28,20 @@ void Local_Orbital_Charge::init_dm_2d()
 void Local_Orbital_Charge::cal_dm_R(
     std::vector<ModuleBase::ComplexMatrix> &dm_k,
     Record_adj& ra,    //ra.for_2d();
-    double** dm2d)
+    double** dm2d,
+    const K_Vectors& kv)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "cal_dm_R");
     ModuleBase::timer::tick("Local_Orbital_Charge", "cal_dm_R");
     assert(dm_k[0].nr > 0 && dm_k[0].nc > 0); //must call cal_dm first
 
-    for (int ik = 0;ik < GlobalC::kv.nks;++ik)
+    for (int ik = 0;ik < kv.nks;++ik)
     {
         // allocate memory and pointer for each ispin
         int ispin = 0;
         if (GlobalV::NSPIN == 2)
         {
-            ispin = GlobalC::kv.isk[ik];
+            ispin = kv.isk[ik];
         }
 #ifdef _OPENMP
         #pragma omp parallel for schedule(dynamic)
@@ -65,9 +66,9 @@ void Local_Orbital_Charge::cal_dm_R(
                     //-----------------
                     const std::complex<double> phase =
                         exp(ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (
-                            GlobalC::kv.kvec_d[ik].x * ra.info[iat][cb][0] +
-                            GlobalC::kv.kvec_d[ik].y * ra.info[iat][cb][1] +
-                            GlobalC::kv.kvec_d[ik].z * ra.info[iat][cb][2]
+                            kv.kvec_d[ik].x * ra.info[iat][cb][0] +
+                            kv.kvec_d[ik].y * ra.info[iat][cb][1] +
+                            kv.kvec_d[ik].z * ra.info[iat][cb][2]
                             ));
                     for (int iw1 = 0;iw1 < GlobalC::ucell.atoms[T1].nw;++iw1)
                     {
