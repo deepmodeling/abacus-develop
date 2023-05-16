@@ -554,6 +554,7 @@ TEST_F(InputConvTest, ConvertUnitsWithSingleParam)
     EXPECT_EQ(result, expected);
 }
 
+#ifdef __LCAO
 TEST_F(InputConvTest, ConvertUnitsWithMultipleParams)
 {
     std::string params = "1.23 4.56 7.89";
@@ -592,5 +593,6 @@ TEST(InputConvTest, ReadTdEfieldTest)
     EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_t0, ElementsAre(100));
     EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_amp, ElementsAre(1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
 }
+#endif
 
 #undef private
