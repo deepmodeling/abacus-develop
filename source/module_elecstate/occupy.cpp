@@ -143,7 +143,7 @@ void Occupy::iweights(const int nks,                 // number of k points.
             {
                 for (int ib1 = 0; ib1 < nband; ib1++)
                 {
-                    if (ekb[ik1][ib1] < ef || ekb[ik1][ib1] == ef)
+                    if (ekb[ik1][ib1] <= ef)
                     {
                         count++;
                     }
@@ -177,7 +177,7 @@ void Occupy::iweights(const int nks,                 // number of k points.
         }
     }
 
-    if (conv == false && elecstate::get_en_iter() == 2)
+    if (conv == false)
     {
         ModuleBase::WARNING_QUIT("Occupied", "not converged, change 'smearing' method.");
     }

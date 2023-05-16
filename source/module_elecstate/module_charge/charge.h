@@ -4,8 +4,9 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_basis/module_pw/pw_basis.h"
 #include "module_base/parallel_global.h"
+#include "module_basis/module_pw/pw_basis.h"
+#include "module_elecstate/fp_energy.h"
 
 //==========================================================
 // Electron Charge Density
@@ -46,7 +47,7 @@ class Charge
 
     void set_rhopw(ModulePW::PW_Basis* rhopw_in);
 
-    void init_rho(const ModuleBase::ComplexMatrix &strucFac);
+    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac);
     // mohan update 2021-02-20
     void allocate(const int &nspin_in);
 

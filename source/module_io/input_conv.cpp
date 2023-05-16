@@ -283,7 +283,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     GlobalC::wf.init_wfc = INPUT.init_wfc;
     GlobalC::wf.mem_saver = INPUT.mem_saver; // mohan add 2010-09-07
-    GlobalC::en.printe = INPUT.printe; // mohan add 2011-03-16
 #ifdef __LCAO
     if (INPUT.dft_plus_u)
     {
@@ -554,9 +553,6 @@ void Input_Conv::Convert(void)
     GlobalV::out_pot = INPUT.out_pot;
     GlobalC::wf.out_wfc_pw = INPUT.out_wfc_pw;
     GlobalC::wf.out_wfc_r = INPUT.out_wfc_r;
-    GlobalC::en.out_dos = INPUT.out_dos;
-    GlobalC::en.out_band = INPUT.out_band;
-    GlobalC::en.out_proj_band = INPUT.out_proj_band;
     GlobalV::out_app_flag = INPUT.out_app_flag;
 
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
@@ -578,12 +574,6 @@ void Input_Conv::Convert(void)
         ModuleBase::WARNING_QUIT("Input_conv", "test_neighbour must be done with 1 processor");
     }
 #endif
-
-    GlobalC::en.dos_emin_ev = INPUT.dos_emin_ev;
-    GlobalC::en.dos_emax_ev = INPUT.dos_emax_ev;
-    GlobalC::en.dos_edelta_ev = INPUT.dos_edelta_ev;
-    GlobalC::en.dos_scale = INPUT.dos_scale;
-    GlobalC::en.bcoeff = INPUT.dos_sigma;
 
     //----------------------------------------------------------
     // About LCAO

@@ -21,3 +21,9 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES elecstate_magnetism_test.cpp ../magnetism.cpp
 )
+
+AddTest(
+  TARGET fp_energy_UT
+  LIBS ${math_libs} base device
+  SOURCES fp_energy_test.cpp ../fp_energy.cpp
+)

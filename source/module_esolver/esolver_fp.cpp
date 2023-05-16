@@ -14,6 +14,14 @@ namespace ModuleESolver
     }
     ESolver_FP::~ESolver_FP()
     {
+        if (this->psi != nullptr)
+        {
+            delete psi;
+        }
+        if (this->psid != nullptr)
+        {
+            delete psid;
+        }
         delete pw_rho;
         delete this->pelec;
     }
@@ -71,6 +79,7 @@ namespace ModuleESolver
             this->pw_rho->collect_local_pw(); 
             this->pw_rho->collect_uniqgg();
         }
+        this->pelec->omega = GlobalC::ucell.omega;
 
         if(ModuleSymmetry::Symmetry::symm_flag == 1)
         {
