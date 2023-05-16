@@ -7,7 +7,7 @@ class NumericalRadial {
 public:
    
     NumericalRadial();
-    NumericalRadial(NumericalRadial const&);
+    NumericalRadial(NumericalRadial const&); //!< Constructs by a deep copy
 
     //! Performs a deep copy
     NumericalRadial& operator=(NumericalRadial const&);
@@ -17,7 +17,7 @@ public:
     //! Initializes the object by providing the grid & values in one space.
     void build(
             const int l,                    //!< angular momentum
-            const char r_or_k,              //!< specifies whether the input corresponds to r or k space
+            const bool for_r_space,         //!< specifies whether the input corresponds to r or k space
             const int ngrid,                //!< number of input grid points
             const double* const grid,       //!< input grid
             const double* const value,      //!< values on the grid
@@ -38,11 +38,11 @@ public:
      *
      *  If sbt is nullptr, the class will use an internal one.
      *
-     *  update specifies whether and how values are recomputed with the 
+     *  "update" specifies whether and how values are recomputed with the 
      *  new transformer. Accpeted values are:
-     *   0: does not update values
-     *   1: updates by a forward transform (r space info must exist)
-     *  -1: updates by a backward transform (k space info must exist)
+     *   0: does not recompute values;
+     *   1: calls a forward transform (r space info must exist);
+     *  -1: calls a backward transform (k space info must exist).
      *                                                                      */
     void set_transformer(
             ModuleBase::SphericalBesselTransformer* sbt = nullptr, //!< pointer to external transformer
@@ -51,7 +51,7 @@ public:
 
     //! Sets up a new grid
     void set_grid(
-            const char r_or_k,          //!< 'r' or 'k'
+            const bool for_r_space,     //!< specifies whether to set grid for the r or k space
             const int ngrid,            //!< number of grid points
             const double* const grid,   //!< grid
             const char mode = 'i'       //!< specifies how values are updated, could be 'i' or 't'.
@@ -73,8 +73,8 @@ public:
      *  in the designated space, but also sets the grid (and updates values accordingly)
      *  in the other space such that r & k grids are FFT-compliant.
      *                                                                                  */
-    void set_grid(
-            const char r_or_k, 
+    void set_uniform_grid(
+            const bool for_r_space, 
             const int ngrid, 
             const double cutoff,
             const char mode = 'i',
@@ -83,27 +83,25 @@ public:
 
     //! Updates values on an existing grid.
     /*!
-     *    If r_or_k == 'r', rvalue_[ir] will be set to value[ir] for ir from 0 to nr_-1.
-     *    Same applies to 'k'.
-     *
-     *  Values of the other space will also be updated if it exist.
-     *
-     *    This function does not check the index bound; use with care!
+     *  The number of values to read from "value" is nr_ or nk_ depending on for_r_space.
+     *  Values of the other space will also be updated if they exist.
+     *  This function does not check the index bound; use with care!
      *                                                                                  */
     void set_value(
-            const char r_or_k,
-            const double* const value,
-            const int p
+            const bool for_r_space,     //!< specifies whether to set grid for the r or k space
+            const double* const value,  //!< new values
+            const int p                 //!< see @ref group1
     );
 
     //! Removes the grid & values from one space.
-    void wipe(const char r_or_k);
+    void wipe(const bool r_space /*! specifies whether to wipe off the r or k space info */);
 
     //! Saves the data to file (what data, in what format?)
-    void save(std::string file = "") const;
+    void save(std::string file = "" /*! file name */) const;
 
-    //! Computes the radial table for the two-center integral.
+    //! Computes the radial table for two-center integrals.
     /*!
+     *  TODO add support for non-FFT-compliant grid
      *  Currently this function requires that "this" and "ket" have exactly the same 
      *  grid and are FFT-compliant. On finish, table is filled with values on the same 
      *  rgrid_ of each object.
@@ -168,10 +166,10 @@ public:
     int nk() const { return nk_; }
 
     //! gets r-space grid cutoff distance
-    double rcut() const { assert(rgrid_); return rgrid_[nr_-1]; }
+    double rcut() const { return rgrid_ ? rgrid_[nr_-1] : 0.0; }
 
     //! gets k-space grid cutoff distance
-    double kcut() const { assert(kgrid_); return kgrid_[nk_-1]; }
+    double kcut() const { return kgrid_ ? kgrid_[nk_-1] : 0.0; }
 
     //! gets the pointer to r-space grid points
     double* ptr_rgrid() const { return rgrid_; }
@@ -185,23 +183,14 @@ public:
     //! gets the pointer to k-space values
     double* ptr_kvalue() const { return kvalue_; }
 
-    //! gets the ir-th r-space grid point
-    double rgrid(const int ir) const { assert(rgrid_ && ir<nr_); return rgrid_[ir]; }
-
-    //! gets the ik-th k-space grid point
-    double kgrid(const int ik) const { assert(kgrid_ && ik<nk_); return kgrid_[ik]; }
-
-    //! gets the value on the ir-th r-space grid point
-    double rvalue(const int ir) const { assert(rvalue_ && ir<nr_); return rvalue_[ir]; }
-
-    //! gets the value on the ik-th k-space grid point
-    double kvalue(const int ik) const { assert(kvalue_ && ik<nk_); return kvalue_[ik]; }
-
     //! gets the exponent of the pre-multiplied power term in rvalues_. @see pr_
     double pr() const { return pr_; }
 
     //! gets the exponent of the pre-multiplied power term in kvalues_. @see pk_
     double pk() const { return pk_; }
+
+    //! gets the flag for FFT-compliancy. @see is_fft_compliant_ 
+    bool is_fft_compliant() const { return is_fft_compliant_; }
     ///@}
 
 private:
