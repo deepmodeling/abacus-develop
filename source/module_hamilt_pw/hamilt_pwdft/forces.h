@@ -7,7 +7,7 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include "module_elecstate/module_charge/charge.h"
+#include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/kernels/memory_op.h"
@@ -32,8 +32,7 @@ class Forces
     ~Forces(){};
 
     void cal_force(ModuleBase::matrix& force,
-                   const ModuleBase::matrix& wg,
-                   const Charge* const chr,
+                   const elecstate::ElecState& elec,
                    ModulePW::PW_Basis* rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
@@ -54,7 +53,10 @@ class Forces
                       K_Vectors* p_kv,
                       ModulePW::PW_Basis_K* psi_basis,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
-    void cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis);
+    void cal_force_scc(ModuleBase::matrix& forcescc,
+                       ModulePW::PW_Basis* rho_basis,
+                       const ModuleBase::matrix& v_current,
+                       const bool vnew_exist);
 
     static void print(const std::string& name, const ModuleBase::matrix& f, bool rv = true);
     static void print_to_files(std::ofstream& ofs, const std::string& name, const ModuleBase::matrix& f);

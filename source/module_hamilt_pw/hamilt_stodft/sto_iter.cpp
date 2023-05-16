@@ -292,7 +292,7 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
                                          "Cannot converge feimi energy. Please retry with different random number");
         }
     }
-    pes->ef = this->stofunc.mu = mu0 = mu3;
+    pes->eferm.ef = this->stofunc.mu = mu0 = mu3;
     GlobalV::ofs_running<<"Converge fermi energy = "<<mu3<<" Ry in "<<count<<" steps."<<std::endl;
     this->check_precision(targetne,10*GlobalV::SCF_THR,"Ne");
     
@@ -454,18 +454,18 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
             // number of electrons in KS orbitals
             for (int iksb = 0; iksb < GlobalV::NBANDS; ++iksb)
             {
-                pes->demet += stofunc.fdlnfd(enb[iksb]) * this->pkv->wk[ikk];
+                pes->f_en.demet += stofunc.fdlnfd(enb[iksb]) * this->pkv->wk[ikk];
             }
         }
     }
-    pes->demet /= GlobalV::NPROC_IN_POOL;
+    pes->f_en.demet /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
-	MPI_Allreduce(MPI_IN_PLACE, &pes->demet, 1, MPI_DOUBLE, MPI_SUM , STO_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, &stodemet,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 #endif
-    pes->demet += stodemet;
-    this->check_precision(pes->demet, 1e-4, "TS");
-    pes->demet *= Occupy::gaussian_parameter;
+    pes->f_en.demet += stodemet;
+    this->check_precision(pes->f_en.demet, 1e-4, "TS");
+    pes->f_en.demet *= Occupy::gaussian_parameter;
 
     //--------------------cal eband------------------------
     double sto_eband = 0;
@@ -502,7 +502,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &sto_eband,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 #endif
-    pes->eband += sto_eband;
+    pes->f_en.eband += sto_eband;
     //---------------------cal rho-------------------------
     double *sto_rho = new double [nrxx];
 

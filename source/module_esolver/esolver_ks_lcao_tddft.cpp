@@ -102,14 +102,15 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
 
     // Initializee the potential.
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(GlobalC::sf.strucFac),
-                                                &(GlobalC::en.etxc),
-                                                &(GlobalC::en.vtxc));
+                                                &(pelec->f_en.etxc),
+                                                &(pelec->f_en.vtxc));
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
@@ -137,11 +138,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     else if (this->phsol != nullptr)
     {
         // reset energy
-        this->pelec_td->eband = 0.0;
-        this->pelec_td->demet = 0.0;
-        this->pelec_td->ef = 0.0;
-        GlobalC::en.ef_up = 0.0;
-        GlobalC::en.ef_dw = 0.0;
+        this->pelec->f_en.eband = 0.0;
+        this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
             this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
@@ -187,11 +185,11 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
-        this->pelec_td->print_band(ik, GlobalC::en.printe, iter);
+        this->pelec_td->print_band(ik, INPUT.printe, iter);
     }
 
     // using new charge density.
-    GlobalC::en.calculate_harris();
+    this->pelec->cal_energies(1);
 
     // symmetrize the charge density only for ground state
     if (istep <= 1)
@@ -209,8 +207,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                                 this->pelec->charge->rho,
                                                 pelec->nelec_spin.data());
 
-    // calculate delta energy
-    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
+    // (7) calculate delta energy
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
 void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
@@ -285,11 +283,11 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         if (GlobalV::NSPIN == 4)
             GlobalC::ucell.cal_ux();
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
-        GlobalC::en.delta_escf(this->pelec);
+        this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
     {
-        GlobalC::en.cal_converged(this->pelec);
+        this->pelec->cal_converged();
     }
 
     // store wfc and Hk laststep

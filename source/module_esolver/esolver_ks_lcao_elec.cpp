@@ -187,7 +187,7 @@ namespace ModuleESolver
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
-                double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+                double& ef_tmp = this->pelec->eferm.get_ef(is);
                 ModuleIO::read_dm(
 #ifdef __MPI
 		            GlobalC::GridT.nnrg,
@@ -287,7 +287,7 @@ namespace ModuleESolver
         auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
         if (vdw_solver != nullptr)
         {
-            GlobalC::en.evdw = vdw_solver->get_energy();
+            this->pelec->f_en.evdw = vdw_solver->get_energy();
         }
         
         this->beforesolver(istep);
@@ -334,7 +334,8 @@ namespace ModuleESolver
         // mohan update 2021-02-25
         if(!GlobalV::test_skip_ewald)
         {
-            H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw, GlobalC::sf.strucFac);
+            this->pelec->f_en.ewald_energy
+                = H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw, GlobalC::sf.strucFac);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -550,20 +551,17 @@ namespace ModuleESolver
         {
             if (!GlobalV::TWO_EFERMI)
             {
-                GlobalC::en.cal_bandgap(this->pelec);
-                GlobalV::ofs_running << " E_bandgap "
-                << GlobalC::en.bandgap * ModuleBase::Ry_to_eV 
-                << " eV" << std::endl;
+                this->pelec->cal_bandgap();
+                GlobalV::ofs_running << " E_bandgap " << this->pelec->bandgap * ModuleBase::Ry_to_eV << " eV"
+                                     << std::endl;
             }
             else
             {
-                GlobalC::en.cal_bandgap_updw(this->pelec);
-                GlobalV::ofs_running << " E_bandgap_up " 
-                << GlobalC::en.bandgap_up * ModuleBase::Ry_to_eV 
-                << " eV" << std::endl;
-                GlobalV::ofs_running << " E_bandgap_dw " 
-                << GlobalC::en.bandgap_dw * ModuleBase::Ry_to_eV 
-                << " eV" << std::endl;
+                this->pelec->cal_bandgap_updw();
+                GlobalV::ofs_running << " E_bandgap_up " << this->pelec->bandgap_up * ModuleBase::Ry_to_eV << " eV"
+                                     << std::endl;
+                GlobalV::ofs_running << " E_bandgap_dw " << this->pelec->bandgap_dw * ModuleBase::Ry_to_eV << " eV"
+                                     << std::endl;
             }
         
         }

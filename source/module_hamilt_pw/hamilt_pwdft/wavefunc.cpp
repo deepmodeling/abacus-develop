@@ -96,10 +96,19 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
 {
     ModuleBase::TITLE("wavefunc","wfcinit");
     ModuleBase::timer::tick("wavefunc", "wfcinit");
-    this->wfcinit_k(psi_in, wfc_basis);
-
-    GlobalC::en.demet = 0.0;
-
+    if (GlobalV::BASIS_TYPE == "pw")
+    {
+        if (this->irindex != nullptr)
+            delete[] this->irindex;
+        this->irindex = new int[wfc_basis->fftnxy];
+        wfc_basis->getfftixy2is(this->irindex);
+#if defined(__CUDA) || defined(__ROCM)
+        if (GlobalV::device_flag == "gpu")
+        {
+            wfc_basis->get_ig2ixyz_k();
+        }
+#endif
+    }
     ModuleBase::timer::tick("wavefunc","wfcinit");
     return;
 }
@@ -108,8 +117,9 @@ int wavefunc::get_starting_nw(void)const
 {
     if (init_wfc == "file")
     {
-		throw std::runtime_error("wavefunc::get_starting_nw. start_ wfc from file: not implemented yet! "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__)); 	// Peize Lin change 2019-05-01
-        //ModuleBase::WARNING_QUIT("wfcinit_k","\n start_ wfc from file: not implemented yet!");
+        throw std::runtime_error("wavefunc::get_starting_nw. start_ wfc from file: not implemented yet! "
+                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
+                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__)); // Peize Lin change 2019-05-01
         //**********************************************************************
         // ... read the wavefunction into memory (if it is not done in c_bands)
         //**********************************************************************
@@ -556,26 +566,6 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 #endif
 
 }//namespace hamilt
-
-void wavefunc::wfcinit_k(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basis_K *wfc_basis)
-{
-    ModuleBase::TITLE("wavefunc", "wfcinit_k");
-
-    if (GlobalV::BASIS_TYPE == "pw")
-    {
-        if (this->irindex != nullptr)
-            delete[] this->irindex;
-        this->irindex = new int[wfc_basis->fftnxy];
-        wfc_basis->getfftixy2is(this->irindex);
-#if defined(__CUDA) || defined(__ROCM)
-        if (GlobalV::device_flag == "gpu")
-        {
-            wfc_basis->get_ig2ixyz_k();
-        }
-#endif
-    }
-	return;
-}
 
 //--------------------------------------------
 // get the nearest unitcell positions
