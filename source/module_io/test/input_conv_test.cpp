@@ -568,10 +568,10 @@ TEST(InputConvTest, ReadTdEfieldTest)
 
     EXPECT_EQ(elecstate::H_TDDFT_pw::stype, 0);
     EXPECT_EQ(elecstate::H_TDDFT_pw::ttype[0], 0);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::tstart[0], 1);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::tend[0], 1000);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1[0], 0.05);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2[0], 0.95);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::tstart, 1);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::tend, 1000);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1, 0.05);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2, 0.95);
     EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_omega[0],
                 testing::DoubleNear(22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
     EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_phase[0], testing::DoubleNear(0.0));
