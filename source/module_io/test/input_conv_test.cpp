@@ -536,6 +536,7 @@ TEST_F(InputConvTest,ParseExpressionDouble)
 	EXPECT_DOUBLE_EQ(vec[3],0.5);
 }
 
+#ifdef __LCAO
 TEST_F(InputConvTest, ConvertUnitsWithEmptyParams)
 {
     std::string params = "";
@@ -554,7 +555,6 @@ TEST_F(InputConvTest, ConvertUnitsWithSingleParam)
     EXPECT_EQ(result, expected);
 }
 
-#ifdef __LCAO
 TEST_F(InputConvTest, ConvertUnitsWithMultipleParams)
 {
     std::string params = "1.23 4.56 7.89";
