@@ -567,29 +567,37 @@ TEST(InputConvTest, ReadTdEfieldTest)
     Input_Conv::read_td_efield();
 
     EXPECT_EQ(elecstate::H_TDDFT_pw::stype, 0);
-    EXPECT_THAT(elecstate::H_TDDFT_pw::ttype, DoubleNear(0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::ttype, testing::DoubleNear(0));
     EXPECT_EQ(elecstate::H_TDDFT_pw::tstart, 1);
     EXPECT_EQ(elecstate::H_TDDFT_pw::tend, 1000);
     EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1, 0.05);
     EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2, 0.95);
-    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_omega, DoubleNear(22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_phase, DoubleNear(0.0));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_sigma, DoubleNear(30.0 / ModuleBase::AU_to_FS));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_t0, DoubleNear(100.0));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_amp, DoubleNear(0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_omega, DoubleNear(1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_phase, DoubleNear(0.0));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t1, DoubleNear(1875));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t2, DoubleNear(5625));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t3, DoubleNear(7500));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_amp, DoubleNear(2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_omega1, DoubleNear(1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_omega2, DoubleNear(0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_phase1, DoubleNear(0.0));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_phase2, DoubleNear(0.0));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_amp, DoubleNear(2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_t0, DoubleNear(100));
-    EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_amp, DoubleNear(1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_omega,
+                testing::DoubleNear(22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_phase, testing::DoubleNear(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_sigma, testing::DoubleNear(30.0 / ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_t0, testing::DoubleNear(100.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_amp,
+                testing::DoubleNear(0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_omega,
+                testing::DoubleNear(1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_phase, testing::DoubleNear(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t1, testing::DoubleNear(1875));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t2, testing::DoubleNear(5625));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t3, testing::DoubleNear(7500));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_amp,
+                testing::DoubleNear(2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_omega1,
+                testing::DoubleNear(1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_omega2,
+                testing::DoubleNear(0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_phase1, testing::DoubleNear(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_phase2, testing::DoubleNear(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_amp,
+                testing::DoubleNear(2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_t0, testing::DoubleNear(100));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_amp,
+                testing::DoubleNear(1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
 }
 #endif
 
