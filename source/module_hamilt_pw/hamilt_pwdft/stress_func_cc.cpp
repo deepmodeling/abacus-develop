@@ -6,11 +6,11 @@
 
 //NLCC term, need to be tested
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
-                                            ModulePW::PW_Basis *rho_basis,
-                                            Structure_Factor *p_sf,
+void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
+                                            ModulePW::PW_Basis* rho_basis,
+                                            Structure_Factor* p_sf,
                                             const bool is_pw,
-                                            const Charge *const chr)
+                                            const Charge* const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_cc");
 	ModuleBase::timer::tick("Stress_Func","stress_cc");
@@ -48,8 +48,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
         const auto etxc_vtxc_v
             = XC_Functional::v_xc_meta(rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr);
 
-        GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
-        GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
+        // etxc = std::get<0>(etxc_vtxc_v);
+        // vtxc = std::get<1>(etxc_vtxc_v);
         vxc = std::get<2>(etxc_vtxc_v);
 #else
         ModuleBase::WARNING_QUIT("cal_force_cc","to use mGGA, compile with LIBXC");
@@ -59,14 +59,14 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix &sigma,
 	{
 		if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
-        GlobalC::en.etxc    = std::get<0>(etxc_vtxc_v);			// may delete?
-		GlobalC::en.vtxc    = std::get<1>(etxc_vtxc_v);			// may delete?
-		vxc = std::get<2>(etxc_vtxc_v);
-	}
+        // etxc = std::get<0>(etxc_vtxc_v); // may delete?
+        // vtxc = std::get<1>(etxc_vtxc_v); // may delete?
+        vxc = std::get<2>(etxc_vtxc_v);
+    }
 
-	std::complex<FPTYPE> * psic = new std::complex<FPTYPE> [rho_basis->nmaxgr];
+    std::complex<FPTYPE>* psic = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
-	if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
+    if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
 	{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)

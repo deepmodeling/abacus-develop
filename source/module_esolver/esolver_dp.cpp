@@ -118,9 +118,9 @@ namespace ModuleESolver
         ModuleBase::timer::tick("ESolver_DP", "Run");
     }
 
-    void ESolver_DP::cal_Energy(double& etot)
+    double ESolver_DP::cal_Energy()
     {
-        etot = dp_potential;
+        return dp_potential;
     }
 
     void ESolver_DP::cal_Force(ModuleBase::matrix& force)

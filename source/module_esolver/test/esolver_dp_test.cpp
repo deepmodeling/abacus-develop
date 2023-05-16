@@ -97,7 +97,7 @@ TEST_F(ESolverDPTest, CalEnergy)
 {
     double etot = 0.0;
     esolver->dp_potential = 9.8;
-    esolver->cal_Energy(etot);
+    etot = esolver->cal_Energy();
 
     // Check the results
     EXPECT_DOUBLE_EQ(etot, 9.8);

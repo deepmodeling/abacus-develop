@@ -102,14 +102,15 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
 
     // Inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
 
     // Initializee the potential.
     this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(GlobalC::sf.strucFac),
-                                                &(GlobalC::en.etxc),
-                                                &(GlobalC::en.vtxc));
+                                                &(pelec->f_en.etxc),
+                                                &(pelec->f_en.vtxc));
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
@@ -121,16 +122,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
         GlobalC::CHR_MIX.reset();
 
     // mohan update 2012-06-05
-    GlobalC::en.deband_harris = GlobalC::en.delta_e(this->pelec);
-
-    // mohan move it outside 2011-01-13
-    // first need to calculate the weight according to
-    // electrons number.
-    // mohan add iter > 1 on 2011-04-02
-    // because the GlobalC::en.ekb has not value now.
-    // so the smearing can not be done.
-    // if (iter > 1 && istep <= 1 && GlobalV::ocp == 0)
-    //    Occupy::calculate_weights();
+    this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
 
     if (GlobalC::wf.init_wfc == "file")
     {
@@ -181,7 +173,7 @@ void ESolver_KS_LCAO_TDDFT::eachiterinit(const int istep, const int iter)
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             this->pelec->pot->init_pot(istep, this->pelec->charge);
-            GlobalC::en.delta_escf(this->pelec);
+            this->pelec->f_en.descf = this->pelec->cal_delta_escf();
         }
     }
 
@@ -215,11 +207,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     else if (this->phsol != nullptr)
     {
         // reset energy
-        this->pelec_td->eband = 0.0;
-        this->pelec_td->demet = 0.0;
-        this->pelec_td->ef = 0.0;
-        GlobalC::en.ef_up = 0.0;
-        GlobalC::en.ef_dw = 0.0;
+        this->pelec->f_en.eband = 0.0;
+        this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
             this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
@@ -257,22 +246,17 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
             << endl;
     }
 
-    // transform energy for print
-    GlobalC::en.eband = this->pelec_td->eband;
-    GlobalC::en.demet = this->pelec_td->demet;
-    GlobalC::en.ef = this->pelec_td->ef;
-
     // (3) sum bands to calculate charge density
     // if (istep <= 1 ) Occupy::calculate_weights();
 
     for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
-        this->pelec_td->print_band(ik, GlobalC::en.printe, iter);
+        this->pelec_td->print_band(ik, INPUT.printe, iter);
     }
 
     // (4) mohan add 2010-06-24
     // using new charge density.
-    GlobalC::en.calculate_harris();
+    this->pelec->cal_energies(1);
 
     // (5) symmetrize the charge density
     if (istep <= 1)
@@ -288,7 +272,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx, this->pelec->charge->nxyz, this->pelec->charge->rho, pelec->nelec_spin.data());
 
     // (7) calculate delta energy
-    GlobalC::en.deband = GlobalC::en.delta_e(this->pelec);
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
 void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
@@ -364,11 +348,11 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         if (GlobalV::NSPIN == 4)
             GlobalC::ucell.cal_ux();
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
-        GlobalC::en.delta_escf(this->pelec);
+        this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
     {
-        GlobalC::en.cal_converged(this->pelec);
+        this->pelec->cal_converged();
     }
 
     // store wfc and Hk laststep
@@ -458,7 +442,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         const int precision = 3;
         std::stringstream ssc;
         ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-        double& ef_tmp = GlobalC::en.get_ef(is, GlobalV::TWO_EFERMI);
+        const double ef_tmp = this->pelec->eferm.get_efval(is);
         ModuleIO::write_rho(
 #ifdef __MPI
             GlobalC::bigpw->bz,
@@ -533,7 +517,8 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
     if (this->conv_elec)
     {
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
-        GlobalV::ofs_running << " final etot is " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
+                             << std::endl;
     }
 
     if (GlobalV::OUT_LEVEL != "m")
@@ -547,7 +532,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         if (GlobalV::OUT_LEVEL != "m")
             GlobalV::ofs_running << std::setprecision(16);
         if (GlobalV::OUT_LEVEL != "m")
-            GlobalV::ofs_running << " EFERMI = " << GlobalC::en.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
+            GlobalV::ofs_running << " EFERMI = " << this->pelec->eferm.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
     else
     {

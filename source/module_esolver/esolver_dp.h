@@ -50,8 +50,9 @@ class ESolver_DP : public ESolver
      * @brief get the total energy without ion kinetic energy
      *
      * @param etot the computed energy
+     * @return total energy without ion kinetic energy
      */
-    void cal_Energy(double& etot) override;
+    double cal_Energy() override;
 
     /**
      * @brief get the computed atomic forces
@@ -106,10 +107,10 @@ class ESolver_DP : public ESolver
      * These variables are used in the ESolver_DP class to store simulation data such as atomic positions, types, and
      * the potential energy and forces.
      */
-    std::string dp_file;      ///< the directory of DP model file
-    std::vector<int> dp_type; ///< convert atom type to dp type if find type_map
-    std::vector<double> cell; ///< the lattice vectors
-    std::vector<int> atype;   ///< the atom type corresponding to DP model
+    std::string dp_file;          ///< the directory of DP model file
+    std::vector<int> dp_type;     ///< convert atom type to dp type if find type_map
+    std::vector<double> cell;     ///< the lattice vectors
+    std::vector<int> atype;       ///< the atom type corresponding to DP model
     std::vector<double> coord;    ///< the atomic positions
     double dp_potential;          ///< the computed potential energy
     ModuleBase::matrix dp_force;  ///< the computed atomic forces

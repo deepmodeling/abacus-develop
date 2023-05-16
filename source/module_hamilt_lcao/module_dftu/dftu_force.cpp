@@ -2,17 +2,8 @@
 // Author:Xin Qu
 // DATE : 2019-12-10
 //==========================================================
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_base/inverse_matrix.h"
-#include "module_base/timer.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/magnetism.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#include "dftu.h"
+#include <stdio.h>
+#include <string.h>
 
 #include <cmath>
 #include <complex>
@@ -20,8 +11,19 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
+
+#include "dftu.h"
+#include "module_base/constants.h"
+#include "module_base/global_function.h"
+#include "module_base/inverse_matrix.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/timer.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_elecstate/magnetism.h"
+#include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 extern "C"
 {

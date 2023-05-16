@@ -80,7 +80,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
 		{
 			pes->psiToRho(psi);
 #ifdef __MPI
-			MPI_Bcast(&pes->eband,1, MPI_DOUBLE, 0,PARAPW_WORLD);
+            MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 		}
 		else
@@ -93,13 +93,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
 		// calculate stochastic rho
 		stoiter.sum_stoband(stowf,pes,pHamilt,wfc_basis);
 
-
-		//(6) calculate the delta_harris energy 
-		// according to new charge density.
-		// mohan add 2009-01-23
-		//en.calculate_harris();
-
-		//will do rho symmetry and energy calculation in esolver
+        //will do rho symmetry and energy calculation in esolver
         ModuleBase::timer::tick(this->classname, "solve");
         return;
     }

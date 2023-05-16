@@ -79,6 +79,7 @@ namespace ModuleESolver
             this->pw_rho->collect_local_pw(); 
             this->pw_rho->collect_uniqgg();
         }
+        this->pelec->omega = GlobalC::ucell.omega;
 
         if(ModuleSymmetry::Symmetry::symm_flag == 1)
         {

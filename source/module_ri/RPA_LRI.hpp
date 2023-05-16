@@ -90,10 +90,10 @@ void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
     this->out_Cs();
     this->out_coulomb_k();
 
-    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
-    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
+    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etxc / 2.0 << std::endl;
+    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etot / 2.0 << std::endl;
     std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
-              << (GlobalC::en.etot - GlobalC::en.etxc + exx_lri_rpa.Eexx) / 2.0 << std::endl;
+              << (pelec->f_en.etot - pelec->f_en.etxc + exx_lri_rpa.Eexx) / 2.0 << std::endl;
 
     return;
 }
@@ -202,7 +202,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_bands(const elecstate::ElecSt
     ofs << GlobalV::NSPIN << std::endl;
     ofs << GlobalV::NBANDS << std::endl;
     ofs << GlobalV::NLOCAL << std::endl;
-    ofs << (GlobalC::en.ef / 2.0) << std::endl;
+    ofs << (pelec->eferm.ef / 2.0) << std::endl;
 
     for (int ik = 0; ik != nks_tot; ik++)
     {
