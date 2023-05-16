@@ -1,12 +1,11 @@
 #include "elecstate.h"
+#include "elecstate_getters.h"
 #include "module_base/global_variable.h"
-#include "module_cell/unitcell.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_io/input.h"
 namespace elecstate
 {
 /// @brief print and check for band energy and occupations
@@ -39,9 +38,10 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     ModuleBase::TITLE("ESolver_KS_PW", "print_eigenvalue");
 
     ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-    ofs << std::setprecision(5);
     for (int ik = 0; ik < this->klist->nks; ik++)
     {
+        ofs << std::setprecision(5);
+        ofs << std::setiosflags(ios::showpoint);
         if (ik == 0)
         {
             ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
@@ -62,9 +62,8 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         {
             if (this->klist->isk[ik] == 0)
             {
-                ofs << " " << ik + 1 << "/" << this->klist->nks / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
+                ofs << " " << ik + 1 << "/" << this->klist->nks / 2 
+                << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
                 ofs << std::setprecision(6);
             }
@@ -86,8 +85,8 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
             ofs << std::setprecision(6);
         }
 
-        GlobalV::ofs_running << std::setprecision(6);
-        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+        ofs << std::setprecision(6);
+        ofs << std::setiosflags(ios::showpoint);
         for (int ib = 0; ib < this->ekb.nc; ib++)
         {
             ofs << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(15)
@@ -185,11 +184,12 @@ void ElecState::print_etot(const bool converged,
         this->print_format("E_Ewald", this->f_en.ewald_energy);
         this->print_format("E_demet", this->f_en.demet); // mohan add 2011-12-02
         this->print_format("E_descf", this->f_en.descf);
-        if (INPUT.vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
+        std::string vdw_method = get_input_vdw_method();
+        if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
             this->print_format("E_vdwD2", this->f_en.evdw);
         }
-        else if (INPUT.vdw_method == "d3_0" || INPUT.vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
+        else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
         {
             this->print_format("E_vdwD3", this->f_en.evdw);
         }
@@ -255,33 +255,34 @@ void ElecState::print_etot(const bool converged,
 
     // xiaohui add 2013-09-02, Peize Lin update 2020.11.14
     std::string label;
-    if (GlobalV::KS_SOLVER == "cg")
+    std::string ks_solver_type = get_ks_solver_type();
+    if (ks_solver_type == "cg")
     {
         label = "CG";
     }
-    else if (GlobalV::KS_SOLVER == "lapack")
+    else if (ks_solver_type == "lapack")
     {
         label = "LA";
     }
-    else if (GlobalV::KS_SOLVER == "genelpa")
+    else if (ks_solver_type == "genelpa")
     {
         label = "GE";
     }
-    else if (GlobalV::KS_SOLVER == "dav")
+    else if (ks_solver_type == "dav")
     {
         label = "DA";
     }
-    else if (GlobalV::KS_SOLVER == "scalapack_gvx")
+    else if (ks_solver_type == "scalapack_gvx")
     {
         label = "GV";
     }
-    else if (GlobalV::KS_SOLVER == "cusolver")
+    else if (ks_solver_type == "cusolver")
     {
         label = "CU";
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Energy", "print_etot");
+        ModuleBase::WARNING_QUIT("Energy", "print_etot found unknown ks_solver_type");
     }
     ss << label << iter;
     // xiaohui add 2013-09-02
@@ -310,16 +311,16 @@ void ElecState::print_etot(const bool converged,
                 if (GlobalV::NSPIN == 2)
                 {
                     std::cout << std::setprecision(2);
-                    std::cout << std::setw(10) << GlobalC::ucell.magnet.tot_magnetization;
-                    std::cout << std::setw(10) << GlobalC::ucell.magnet.abs_magnetization;
+                    std::cout << std::setw(10) << get_ucell_tot_magnetization();
+                    std::cout << std::setw(10) << get_ucell_abs_magnetization();
                 }
                 else if (GlobalV::NSPIN == 4 && GlobalV::NONCOLIN)
                 {
                     std::cout << std::setprecision(2);
-                    std::cout << std::setw(10) << GlobalC::ucell.magnet.tot_magnetization_nc[0] << std::setw(10)
-                              << GlobalC::ucell.magnet.tot_magnetization_nc[1] << std::setw(10)
-                              << GlobalC::ucell.magnet.tot_magnetization_nc[2];
-                    std::cout << std::setw(10) << GlobalC::ucell.magnet.abs_magnetization;
+                    std::cout << std::setw(10) << get_ucell_tot_magnetization_nc_x() << std::setw(10)
+                              << get_ucell_tot_magnetization_nc_y() << std::setw(10)
+                              << get_ucell_tot_magnetization_nc_z();
+                    std::cout << std::setw(10) << get_ucell_abs_magnetization();
                 }
                 if (scf_thr > 1.0)
                 {
@@ -348,8 +349,8 @@ void ElecState::print_etot(const bool converged,
             if (GlobalV::NSPIN == 2)
             {
                 std::cout << std::setprecision(2);
-                std::cout << std::setw(10) << GlobalC::ucell.magnet.tot_magnetization;
-                std::cout << std::setw(10) << GlobalC::ucell.magnet.abs_magnetization;
+                std::cout << std::setw(10) << get_ucell_tot_magnetization();
+                std::cout << std::setw(10) << get_ucell_abs_magnetization();
             }
             std::cout << std::setprecision(6);
             std::cout << std::setw(15) << this->f_en.etot * ModuleBase::Ry_to_eV;
@@ -369,7 +370,7 @@ void ElecState::print_etot(const bool converged,
     return;
 }
 
-/// @brief function to print name and value
+/// @brief function to print name, value and value*Ry_to_eV
 /// @param name: name
 /// @param value: value
 void ElecState::print_format(const std::string& name, const double& value)
