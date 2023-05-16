@@ -5,21 +5,12 @@
 #include "driver.h"
 #include "module_base/parallel_global.h"
 #include <ctime>
-#include <iostream>
+#include "module_io/parse_args.h"
 
 int main(int argc, char **argv)
 {
-    if (argc > 1 && std::string(argv[1]) == "--version")
-    {
-#ifdef VERSION
-        const char* version = VERSION;
-#else
-        const char* version = "unknown";
-#endif
-        std::cout << "ABACUS version " << version << std::endl;
-        std::exit(0);
-    }
-
+    ModuleIO::parse_args(argc,argv);
+    
     Parallel_Global::read_mpi_parameters(argc,argv);
 	// main program for doing electronic structure calculations
 	//----------------------------------------------------------
