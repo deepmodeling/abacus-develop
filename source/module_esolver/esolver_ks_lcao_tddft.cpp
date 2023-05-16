@@ -178,11 +178,6 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
             << endl;
     }
 
-    // transform energy for print
-    GlobalC::en.eband = this->pelec_td->eband;
-    GlobalC::en.demet = this->pelec_td->demet;
-    GlobalC::en.ef = this->pelec_td->ef;
-
     for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
     {
         this->pelec_td->print_band(ik, INPUT.printe, iter);
