@@ -12,15 +12,7 @@
  * - Tested functions:
  *   - Occupy::Occupy()
  *   - Occupy::decision()
-*/
-
-int a = 0;
-
-int elecstate::get_en_iter()
-{
-    return a;
-}
-
+ */
 #define private public
 #include "module_elecstate/occupy.h"
 
@@ -221,9 +213,7 @@ TEST_F(OccupyTest, IweightsS4)
 
 TEST_F(OccupyTest, IweightsWarning)
 {
-  a = 2;
   GlobalV::NSPIN = 1;
-  EXPECT_EQ(2, elecstate::get_en_iter());
   double ef = 0.0;
   double nelec = 2.5;
   ModuleBase::matrix wg(1, 1);

@@ -71,16 +71,20 @@ class toWannier90
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
     void init_wannier(const ModuleBase::matrix& ekb,
+                      const ModulePW::PW_Basis* rhopw,
+                      const ModulePW::PW_Basis_K* wfcpw,
+                      const ModulePW::PW_Basis_Big* bigpw,
                       const K_Vectors& kv,
-                      const psi::Psi<std::complex<double>>* psi = nullptr
-                      );
+                      const psi::Psi<std::complex<double>>* psi = nullptr);
     void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
-    void cal_Amn(const psi::Psi<std::complex<double>>& wfc_pw, const ModulePW::PW_Basis_K* wfc_basis);
-    void cal_Mmn(const psi::Psi<std::complex<double>> &wfc_pw);
-    void produce_trial_in_pw(const psi::Psi<std::complex<double>>& wfc_pw,
+    void cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);
+    void cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw,
+                 const ModulePW::PW_Basis* rhopw,
+                 const ModulePW::PW_Basis_K* wfcpw);
+    void produce_trial_in_pw(const psi::Psi<std::complex<double>>& psi_pw,
                              const int& ik,
-                             const ModulePW::PW_Basis_K* wfc_basis,
+                             const ModulePW::PW_Basis_K* wfcpw,
                              ModuleBase::ComplexMatrix& trial_orbitals_k);
     void get_trial_orbitals_lm_k(const int wannier_index,
                                  const int orbital_L,
@@ -92,23 +96,28 @@ class toWannier90
                                  const int mesh_r,
                                  ModuleBase::Vector3<double> *gk,
                                  const int npw,
+                                 const int npwx,
                                  ModuleBase::ComplexMatrix &trial_orbitals_k);
     void integral(const int meshr, const double *psir, const double *r, const double *rab, const int &l, double *table);
-    void writeUNK(const psi::Psi<std::complex<double>> &wfc_pw);
+    void writeUNK(const ModulePW::PW_Basis_K* wfcpw,
+                  const psi::Psi<std::complex<double>>& psi_pw,
+                  const ModulePW::PW_Basis_Big* bigpw);
     // void ToRealSpace(const int &ik, const int &ib, const ModuleBase::ComplexMatrix *evc, std::complex<double> *psir,
     // const ModuleBase::Vector3<double> G); std::complex<double> unkdotb(const std::complex<double> *psir, const int
-    // ikb, const int bandindex, const ModuleBase::ComplexMatrix *wfc_pw);
-    std::complex<double> unkdotkb(const int &ik,
-                                  const int &ikb,
-                                  const int &iband_L,
-                                  const int &iband_R,
+    // ikb, const int bandindex, const ModuleBase::ComplexMatrix *psi_pw);
+    std::complex<double> unkdotkb(const ModulePW::PW_Basis* rhopw,
+                                  const ModulePW::PW_Basis_K* wfcpw,
+                                  const int& ik,
+                                  const int& ikb,
+                                  const int& iband_L,
+                                  const int& iband_R,
                                   const ModuleBase::Vector3<double> G,
-                                  const psi::Psi<std::complex<double>> &wfc_pw);
-    // std::complex<double> gamma_only_cal(const int &ib_L, const int &ib_R, const ModuleBase::ComplexMatrix *wfc_pw,
+                                  const psi::Psi<std::complex<double>>& psi_pw);
+    // std::complex<double> gamma_only_cal(const int &ib_L, const int &ib_R, const ModuleBase::ComplexMatrix *psi_pw,
     // const ModuleBase::Vector3<double> G);
 
-    void lcao2pw_basis(const int ik, ModuleBase::ComplexMatrix &orbital_in_G);
-    void getUnkFromLcao(const K_Vectors& kv);
+    void lcao2pw_basis(const int ik, const ModulePW::PW_Basis_K* wfcpw, ModuleBase::ComplexMatrix& orbital_in_G);
+    void getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv, const int npwx);
     void get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc);
 
   private:

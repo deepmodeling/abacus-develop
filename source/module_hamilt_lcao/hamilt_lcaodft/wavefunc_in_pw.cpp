@@ -248,7 +248,7 @@ const double *rab, const int &l, double* table)
 }
 
 void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
-                                               ModulePW::PW_Basis_K *wfc_basis,
+                                               const ModulePW::PW_Basis_K *wfc_basis,
                                                ModuleBase::ComplexMatrix &psi,
                                                const ModuleBase::realArray &table_local)
 {

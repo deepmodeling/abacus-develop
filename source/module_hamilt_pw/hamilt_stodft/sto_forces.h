@@ -21,8 +21,7 @@ class Sto_Forces : public Forces<double>
     ~Sto_Forces(){};
 
     void cal_stoforce(ModuleBase::matrix& force,
-                      const ModuleBase::matrix& wg,
-                      const Charge* const chr,
+                      const elecstate::ElecState& elec,
                       ModulePW::PW_Basis* rho_basis,
                       ModuleSymmetry::Symmetry* p_symm,
                       Structure_Factor* p_sf,

@@ -1,9 +1,11 @@
 #include "sto_forces.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
+#include "module_base/mathzone.h"
 #include "module_cell/module_symmetry/symmetry.h"
+#include "module_elecstate/elecstate.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
-#include "module_base/mathzone.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // new
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -12,8 +14,7 @@
 #include "module_base/timer.h"
 
 void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
-                              const ModuleBase::matrix& wg,
-                              const Charge* const chr,
+                              const elecstate::ElecState& elec,
                               ModulePW::PW_Basis* rho_basis,
                               ModuleSymmetry::Symmetry* p_symm,
                               Structure_Factor* p_sf,
@@ -25,18 +26,20 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::timer::tick("Sto_Force","cal_force");
 	ModuleBase::TITLE("Sto_Forces", "init");
 	this->nat =  GlobalC::ucell.nat;
-	force.create(nat, 3);
-	
-	ModuleBase::matrix forcelc(nat, 3);
-	ModuleBase::matrix forceion(nat, 3);
-	ModuleBase::matrix forcecc(nat, 3);
-	ModuleBase::matrix forcenl(nat, 3);
-	ModuleBase::matrix forcescc(nat, 3);
+    const ModuleBase::matrix& wg = elec.wg;
+    const Charge* chr = elec.charge;
+    force.create(nat, 3);
+
+    ModuleBase::matrix forcelc(nat, 3);
+    ModuleBase::matrix forceion(nat, 3);
+    ModuleBase::matrix forcecc(nat, 3);
+    ModuleBase::matrix forcenl(nat, 3);
+    ModuleBase::matrix forcescc(nat, 3);
     this->cal_force_loc(forcelc, rho_basis, chr);
     this->cal_force_ew(forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, psi_in, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr);
-    this->cal_force_scc(forcescc, rho_basis);
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
 
     //impose total force = 0
     int iat = 0;

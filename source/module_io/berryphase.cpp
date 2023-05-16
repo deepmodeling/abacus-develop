@@ -228,7 +228,13 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 }
 
 #include "../module_base/complexmatrix.h"
-double berryphase::stringPhase(int index_str, int nbands, const psi::Psi<std::complex<double>>* psi_in, const K_Vectors& kv)
+double berryphase::stringPhase(int index_str,
+                               int nbands,
+                               const int npwx,
+                               const psi::Psi<std::complex<double>>* psi_in,
+                               const ModulePW::PW_Basis* rhopw,
+                               const ModulePW::PW_Basis_K* wfcpw,
+                               const K_Vectors& kv)
 {
 	std::complex<double> zeta(1.0, 0.0);
 	ModuleBase::ComplexMatrix mat(nbands,nbands);
@@ -271,13 +277,13 @@ double berryphase::stringPhase(int index_str, int nbands, const psi::Psi<std::co
 								ModuleBase::Vector3<double> tem_G(0.0,0.0,1.0);
 								G = tem_G;
 							}
-							
-							mat(nb,mb) = pw_method.unkdotp_G0(ik_1, ik_2, nb, mb, psi_in, G);
-						}
+
+                            mat(nb, mb) = pw_method.unkdotp_G0(rhopw, wfcpw, ik_1, ik_2, nb, mb, psi_in, G);
+                        }
 						else 
 						{
-							mat(nb, mb) = pw_method.unkdotp_G(ik_1, ik_2, nb, mb, psi_in);
-						}
+                            mat(nb, mb) = pw_method.unkdotp_G(wfcpw, ik_1, ik_2, nb, mb, psi_in);
+                        }
 					}
 					else
 					{
@@ -298,11 +304,12 @@ double berryphase::stringPhase(int index_str, int nbands, const psi::Psi<std::co
 								ModuleBase::Vector3<double> tem_G(0.0,0.0,1.0);
 								G = tem_G;
 							}
-							
-							mat(nb,mb) = pw_method.unkdotp_soc_G0(ik_1, ik_2, nb, mb, psi_in, G);							
-						}
-						else  mat(nb, mb) = pw_method.unkdotp_soc_G(ik_1, ik_2, nb, mb, psi_in);
-					}
+
+                            mat(nb, mb) = pw_method.unkdotp_soc_G0(rhopw, wfcpw, ik_1, ik_2, nb, mb, psi_in, G);
+                        }
+                        else
+                            mat(nb, mb) = pw_method.unkdotp_soc_G(wfcpw, ik_1, ik_2, nb, mb, npwx, psi_in);
+                    }
 					
 				} // nb
 				
@@ -377,7 +384,14 @@ double berryphase::stringPhase(int index_str, int nbands, const psi::Psi<std::co
 	return log(zeta).imag();
 }
 
-void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot, const psi::Psi<std::complex<double>>* psi_in, const K_Vectors& kv)
+void berryphase::Berry_Phase(int nbands,
+                             double& pdl_elec_tot,
+                             int& mod_elec_tot,
+                             const int npwx,
+                             const psi::Psi<std::complex<double>>* psi_in,
+                             const ModulePW::PW_Basis* rhopw,
+                             const ModulePW::PW_Basis_K* wfcpw,
+                             const K_Vectors& kv)
 {		
 	std::complex<double> cave = 0.0;
 	double *phik = new double[total_string];
@@ -397,8 +411,8 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 	
 	for(int istring = 0; istring < total_string; istring++)
 	{
-		phik[istring] = stringPhase(istring,nbands, psi_in, kv);
-		// transfer phase to complex number
+        phik[istring] = stringPhase(istring, nbands, npwx, psi_in, rhopw, wfcpw, kv);
+        // transfer phase to complex number
 		cphik[istring] = std::complex<double>(cos(phik[istring]),sin(phik[istring]));	
 		cave = cave + std::complex<double>(wistring[istring],0.0) * cphik[istring];
 		
@@ -448,8 +462,11 @@ void berryphase::Berry_Phase(int nbands, double &pdl_elec_tot, int &mod_elec_tot
 
 }
 
-
-void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* psi_in, const K_Vectors& kv)
+void berryphase::Macroscopic_polarization(const int npwx,
+                                          const psi::Psi<std::complex<double>>* psi_in,
+                                          const ModulePW::PW_Basis* rhopw,
+                                          const ModulePW::PW_Basis_K* wfcpw,
+                                          const K_Vectors& kv)
 {	
 	get_occupation_bands();
 #ifdef __LCAO	
@@ -577,9 +594,9 @@ void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* 
 			set_kpoints(kv, direction);
 			double pdl_elec_tot = 0.0;
 			int mod_elec_tot = 0;
-			Berry_Phase(occ_nbands, pdl_elec_tot, mod_elec_tot, psi_in, kv);
-		
-			const double rmod = GlobalC::ucell.a1.norm() * GlobalC::ucell.lat0;
+            Berry_Phase(occ_nbands, pdl_elec_tot, mod_elec_tot, npwx, psi_in, rhopw, wfcpw, kv);
+
+            const double rmod = GlobalC::ucell.a1.norm() * GlobalC::ucell.lat0;
 			const double unit1 = rmod;
 			const double unit2 = rmod / GlobalC::ucell.omega;
 			const double unit3 = ( rmod / GlobalC::ucell.omega ) * ( 1.60097e-19/pow(5.29177e-11,2) );
@@ -612,9 +629,9 @@ void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* 
 			set_kpoints(kv, direction);
 			double pdl_elec_tot = 0.0;
 			int mod_elec_tot = 0;
-			Berry_Phase(occ_nbands, pdl_elec_tot, mod_elec_tot, psi_in, kv);
-		
-			const double rmod = GlobalC::ucell.a2.norm() * GlobalC::ucell.lat0;
+            Berry_Phase(occ_nbands, pdl_elec_tot, mod_elec_tot, npwx, psi_in, rhopw, wfcpw, kv);
+
+            const double rmod = GlobalC::ucell.a2.norm() * GlobalC::ucell.lat0;
 			const double unit1 = rmod;
 			const double unit2 = rmod / GlobalC::ucell.omega;
 			const double unit3 = ( rmod / GlobalC::ucell.omega ) * ( 1.60097e-19/pow(5.29177e-11,2) );
@@ -647,9 +664,9 @@ void berryphase::Macroscopic_polarization(const psi::Psi<std::complex<double>>* 
 			set_kpoints(kv, direction);
 			double pdl_elec_tot = 0.0;
 			int mod_elec_tot = 0;
-			Berry_Phase(occ_nbands, pdl_elec_tot, mod_elec_tot, psi_in, kv);
-		
-			const double rmod = GlobalC::ucell.a3.norm() * GlobalC::ucell.lat0;
+            Berry_Phase(occ_nbands, pdl_elec_tot, mod_elec_tot, npwx, psi_in, rhopw, wfcpw, kv);
+
+            const double rmod = GlobalC::ucell.a3.norm() * GlobalC::ucell.lat0;
 			const double unit1 = rmod;
 			const double unit2 = rmod / GlobalC::ucell.omega;
 			const double unit3 = ( rmod / GlobalC::ucell.omega ) * ( 1.60097e-19/pow(5.29177e-11,2) );

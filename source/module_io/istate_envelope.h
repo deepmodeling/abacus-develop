@@ -17,6 +17,9 @@ public:
 
     /// for gamma_only
     void begin(const psi::Psi<double>* psid,
+               const ModulePW::PW_Basis* rhopw,
+               const ModulePW::PW_Basis_K* wfcpw,
+               const ModulePW::PW_Basis_Big* bigpw,
                Local_Orbital_wfc& lowf,
                Gint_Gamma& gg,
                int& out_wfc_pw,
@@ -24,6 +27,9 @@ public:
                const K_Vectors& kv);
     /// for multi-k
     void begin(const psi::Psi<std::complex<double>>* psi,
+               const ModulePW::PW_Basis* rhopw,
+               const ModulePW::PW_Basis_K* wfcpw,
+               const ModulePW::PW_Basis_Big* bigpw,
                Local_Orbital_wfc& lowf,
                Gint_k& gk,
                int& out_wfc_pw,
@@ -34,7 +40,7 @@ public:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 
-    void set_pw_wfc(const ModulePW::PW_Basis_K* wfc_basis,
+    void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                     const int& ik,
                     const int& ib,
                     const int& nspin,
