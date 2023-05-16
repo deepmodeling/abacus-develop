@@ -16,6 +16,8 @@
 #define private public
 #include "module_io/input.h"
 
+using ::testing::ElementsAre;
+
 class InputConvTest : public testing::Test
 {
 protected:
@@ -532,6 +534,63 @@ TEST_F(InputConvTest,ParseExpressionDouble)
 	EXPECT_DOUBLE_EQ(vec[1],3.5);
 	EXPECT_DOUBLE_EQ(vec[2],1.2);
 	EXPECT_DOUBLE_EQ(vec[3],0.5);
+}
+
+TEST_F(InputConvTest, ConvertUnitsWithEmptyParams)
+{
+    std::string params = "";
+    double c = 2.0;
+    std::vector<double> expected = {};
+    std::vector<double> result = Input_Conv::convert_units(params, c);
+    EXPECT_EQ(result, expected);
+}
+
+TEST_F(InputConvTest, ConvertUnitsWithSingleParam)
+{
+    std::string params = "1.23";
+    double c = 2.0;
+    std::vector<double> expected = {2.46};
+    std::vector<double> result = Input_Conv::convert_units(params, c);
+    EXPECT_EQ(result, expected);
+}
+
+TEST_F(InputConvTest, ConvertUnitsWithMultipleParams)
+{
+    std::string params = "1.23 4.56 7.89";
+    double c = 0.5;
+    std::vector<double> expected = {0.615, 2.28, 3.945};
+    std::vector<double> result = Input_Conv::convert_units(params, c);
+    EXPECT_EQ(result, expected);
+}
+
+TEST(InputConvTest, ReadTdEfieldTest)
+{
+    Input_Conv::read_td_efield();
+
+    EXPECT_EQ(elecstate::H_TDDFT_pw::stype, 0);
+    EXPECT_THAT(elecstate::H_TDDFT_pw::ttype, ElementsAre(0));
+    EXPECT_EQ(elecstate::H_TDDFT_pw::tstart, 1);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::tend, 1000);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1, 0.05);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2, 0.95);
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_omega, ElementsAre(22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_phase, ElementsAre(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_sigma, ElementsAre(30.0 / ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_t0, ElementsAre(100.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::gauss_amp, ElementsAre(0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_omega, ElementsAre(1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_phase, ElementsAre(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t1, ElementsAre(1875));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t2, ElementsAre(5625));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_t3, ElementsAre(7500));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trape_amp, ElementsAre(2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_omega1, ElementsAre(1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_omega2, ElementsAre(0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_phase1, ElementsAre(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_phase2, ElementsAre(0.0));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::trigo_amp, ElementsAre(2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_t0, ElementsAre(100));
+    EXPECT_THAT(elecstate::H_TDDFT_pw::heavi_amp, ElementsAre(1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV));
 }
 
 #undef private
