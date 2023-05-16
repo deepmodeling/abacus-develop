@@ -36,8 +36,10 @@ namespace ModuleBase
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 UnitCell::~UnitCell(){}
-InfoNonlocal::~InfoNonlocal(){}
+#ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
+InfoNonlocal::~InfoNonlocal(){}
+#endif
 UnitCell::UnitCell(){}
 Grid_Driver::Grid_Driver(
 	const int &test_d_in, 
