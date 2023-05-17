@@ -10,6 +10,11 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 
+/**
+ * @brief Mixes the input data according to the set mixing mode.
+ * @param data_in Input data to be mixed.
+ * @param flag_restart Flag indicating if it is a restart.
+ */
 template<typename Tdata>
 void Mix_Data<Tdata>::mix(const Tdata &data_in, const bool flag_restart)
 {
