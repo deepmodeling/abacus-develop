@@ -139,7 +139,7 @@ void Occupy::iweights(const int nks,
     {
         ModuleBase::WARNING_QUIT("iweights", "It is not a semiconductor or insulator. Change 'smearing_method'.");
     }
-    ef = -1e-10;
+    ef = -1e+10;
 
     for (int ik = 0; ik < nks; ++ik)
     {
