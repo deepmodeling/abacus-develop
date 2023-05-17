@@ -23,8 +23,7 @@ inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
     return gIndex;
 }
 
-void Propagator::compute_propagator(const int nband,
-                                    const int nlocal,
+void Propagator::compute_propagator(const int nlocal,
                                     const std::complex<double>* Stmp,
                                     const std::complex<double>* Htmp,
                                     const std::complex<double>* H_laststep,
@@ -35,16 +34,16 @@ void Propagator::compute_propagator(const int nband,
     switch (ptype)
     {
     case 0:
-        compute_propagator_cn2(nband, nlocal, Stmp, Htmp, U_operator, print_matrix);
+        compute_propagator_cn2(nlocal, Stmp, Htmp, U_operator, print_matrix);
         break;
 
     case 1:
         tag = 1;
-        compute_propagator_taylor(nband, nlocal, Stmp, Htmp, U_operator, print_matrix, tag);
+        compute_propagator_taylor(nlocal, Stmp, Htmp, U_operator, print_matrix, tag);
         break;
 
     case 2:
-        compute_propagator_etrs(nband, nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
+        compute_propagator_etrs(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
 
         break;
 
@@ -54,8 +53,7 @@ void Propagator::compute_propagator(const int nband,
     }
 }
 
-void Propagator::compute_propagator_cn2(const int nband,
-                                        const int nlocal,
+void Propagator::compute_propagator_cn2(const int nlocal,
                                         const std::complex<double>* Stmp,
                                         const std::complex<double>* Htmp,
                                         std::complex<double>* U_operator,
@@ -259,8 +257,7 @@ void Propagator::compute_propagator_cn2(const int nband,
     delete[] ipiv;
 }
 
-void Propagator::compute_propagator_taylor(const int nband,
-                                           const int nlocal,
+void Propagator::compute_propagator_taylor(const int nlocal,
                                            const std::complex<double>* Stmp,
                                            const std::complex<double>* Htmp,
                                            std::complex<double>* U_operator,
@@ -580,8 +577,7 @@ void Propagator::compute_propagator_taylor(const int nband,
     delete[] ipiv;
 }
 
-void Propagator::compute_propagator_etrs(const int nband,
-                                         const int nlocal,
+void Propagator::compute_propagator_etrs(const int nlocal,
                                          const std::complex<double>* Stmp,
                                          const std::complex<double>* Htmp,
                                          const std::complex<double>* H_laststep,
@@ -593,8 +589,8 @@ void Propagator::compute_propagator_etrs(const int nband,
     ModuleBase::GlobalFunc::ZEROS(U1, this->ParaV->nloc);
     ModuleBase::GlobalFunc::ZEROS(U2, this->ParaV->nloc);
     int tag = 2;
-    compute_propagator_taylor(nband, nlocal, Stmp, Htmp, U1, print_matrix, tag);
-    compute_propagator_taylor(nband, nlocal, Stmp, H_laststep, U2, print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, Htmp, U1, print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2, print_matrix, tag);
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,

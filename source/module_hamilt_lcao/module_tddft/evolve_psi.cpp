@@ -67,7 +67,7 @@ void evolve_psi(const int nband,
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
     Propagator prop(propagator, pv);
-    prop.compute_propagator(nband, nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
+    prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
