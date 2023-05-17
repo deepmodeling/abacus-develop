@@ -3,6 +3,7 @@
 // DATE : 2009-11-08
 //==========================================================
 #include "parallel_global.h"
+#include "version.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -206,9 +207,19 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 
     if (GlobalV::MY_RANK == 0)
     {
+#ifdef VERSION
+        const char* version = VERSION;
+#else
+        const char* version = "unknown";
+#endif
+#ifdef COMMIT
+        const char* commit = COMMIT;
+#else
+        const char* commit = "unknown";
+#endif
         std::cout
             << "                                                                                     " << std::endl
-            << "                              ABACUS v3.2                                            " << std::endl
+            << "                              ABACUS " << version << std::endl
             << std::endl
             << "               Atomic-orbital Based Ab-initio Computation at UStc                    " << std::endl
             << std::endl
@@ -216,6 +227,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
             << "               Documentation: https://abacus.deepmodeling.com/                       " << std::endl
             << "                  Repository: https://github.com/abacusmodeling/abacus-develop       " << std::endl
             << "                              https://github.com/deepmodeling/abacus-develop         " << std::endl
+            << "                      Commit: " << commit << std::endl
             << std::endl;
         time_t time_now = time(NULL);
         std::cout << " " << ctime(&time_now);
