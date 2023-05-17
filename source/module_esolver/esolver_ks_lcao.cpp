@@ -504,6 +504,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
+			this->mix_DMk_2D.set_mixing_beta(GlobalC::CHR_MIX.get_mixing_beta());
 			if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
 				this->mix_DMk_2D.set_coef_pulay(iter, GlobalC::CHR_MIX);
 			const bool flag_restart = (iter==1) ? true : false;

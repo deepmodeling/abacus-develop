@@ -351,7 +351,6 @@ namespace ModuleESolver
 					throw std::invalid_argument(
 						"mixing_mode = " + GlobalC::CHR_MIX.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
 						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
-				this->mix_DMk_2D.set_mixing_beta(GlobalC::CHR_MIX.get_mixing_beta());
 			}
 		}
 #endif // __MPI

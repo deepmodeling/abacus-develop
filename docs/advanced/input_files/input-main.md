@@ -194,6 +194,7 @@
 		- [exx\_hse\_omega](#exx_hse_omega)
 		- [exx\_separate\_loop](#exx_separate_loop)
 		- [exx\_hybrid\_step](#exx_hybrid_step)
+		- [exx\_mixing\_beta](#exx_mixing_beta)
 		- [exx\_lambda](#exx_lambda)
 		- [exx\_pca\_threshold](#exx_pca_threshold)
 		- [exx\_c\_threshold](#exx_c_threshold)
@@ -1729,6 +1730,12 @@ These variables are relevant when using hybrid functionals
 - **Type**: Integer
 - **Description**: This variable indicates the maximal electronic iteration number in the evaluation of Fock exchange.
 - **Default**: 100
+
+### exx_mixing_beta
+
+- **Type**: Real
+- **Description**: mixing_beta for outer-loop when exx_separate_loop=1
+- **Default**: 1.0
 
 ### exx_lambda
 
