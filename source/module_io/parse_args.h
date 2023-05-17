@@ -1,6 +1,7 @@
 #ifndef ModuleIO_PARSE_ARGS_H
 #define ModuleIO_PARSE_ARGS_H
 #include <iostream>
+#include <cstdlib>
 #include "version.h"
 
 namespace ModuleIO
