@@ -257,7 +257,7 @@ exx_hybrid_alpha               default #
 exx_hse_omega                  0.11 #
 exx_separate_loop              1 #0 or 1
 exx_hybrid_step                100 #
-exx_mixing_beta                0.0 #
+exx_mixing_beta                1.0 #
 exx_lambda                     0.3 #
 exx_real_number                default #0 or 1
 exx_pca_threshold              0 #

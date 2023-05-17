@@ -277,7 +277,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_alpha               default #fraction of Fock exchange in hybrid functionals"));
         EXPECT_THAT(output,testing::HasSubstr("exx_hse_omega                  0.11 #range-separation parameter in HSE functional"));
         EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_step                100 #the maximal electronic iteration number in the evaluation of Fock exchange"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_mixing_beta                0 #mixing_beta for outer-loop when exx_separate_loop=1"));   
+        EXPECT_THAT(output,testing::HasSubstr("exx_mixing_beta                1 #mixing_beta for outer-loop when exx_separate_loop=1"));   
         EXPECT_THAT(output,testing::HasSubstr("exx_lambda                     0.3 #used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method"));
         EXPECT_THAT(output,testing::HasSubstr("exx_real_number                default #exx calculated in real or complex"));
         EXPECT_THAT(output,testing::HasSubstr("exx_pca_threshold              0 #threshold to screen on-site ABFs in exx"));

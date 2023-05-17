@@ -504,11 +504,19 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
+			if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
+				this->mix_DMk_2D.set_coef_pulay(iter, GlobalC::CHR_MIX);
+			const bool flag_restart = (iter==1) ? true : false;
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
+			else
+				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
+
             // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
             else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
         }
     }
 #endif
@@ -585,9 +593,9 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
             XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
             else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
             GlobalC::restart.info_load.restart_exx = true;
         }
     }
@@ -1204,13 +1212,19 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #ifdef __EXX
     if (INPUT.rpa)
     {
+		this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
+		if(GlobalV::GAMMA_ONLY_LOCAL)
+			this->mix_DMk_2D.mix(this->LOC.dm_gamma, true);
+		else
+			this->mix_DMk_2D.mix(this->LOC.dm_k, true);
+
         // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, GlobalC::kv, this->LOC, *this->LOWF.ParaV);
+        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, GlobalC::kv, this->mix_DMk_2D, *this->LOWF.ParaV);
         rpa_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
-        rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
+        rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
     }
 #endif
     if (hsolver::HSolverLCAO::out_mat_hsR)
@@ -1342,11 +1356,17 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             }
 
+			const bool flag_restart = (two_level_step==0) ? true : false;
+			if(GlobalV::GAMMA_ONLY_LOCAL)
+				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
+			else
+				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
+
             // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
             else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->LOC, *this->LOWF.ParaV);
+                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
             iter = 0;
             std::cout << " Updating EXX and rerun SCF" << std::endl;
             this->two_level_step++;

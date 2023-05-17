@@ -380,7 +380,7 @@ void Input::Default(void)
 
     exx_separate_loop = true;
     exx_hybrid_step = 100;
-    exx_mixing_beta = 0.0;
+    exx_mixing_beta = 1.0;
 
     exx_lambda = 0.3;
 

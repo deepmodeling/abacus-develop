@@ -41,11 +41,10 @@ template <typename Tdata> class RPA_LRI
     void cal_rpa_cv();
     void cal_postSCF_exx(const MPI_Comm& mpi_comm_in,
                     const K_Vectors& kv,
-                    const Local_Orbital_Charge& loc,
+                    const Mix_DMk_2D &mix_DMk_2D,
                     const Parallel_Orbitals& pv);
     void out_for_RPA(const Parallel_Orbitals& parav,
                      const psi::Psi<std::complex<double>> &psi,
-                     Local_Orbital_Charge &loc,
                      const elecstate::ElecState *pelec);
     void out_eigen_vector(const Parallel_Orbitals &parav, const psi::Psi<std::complex<double>> &psi);
     void out_struc();
