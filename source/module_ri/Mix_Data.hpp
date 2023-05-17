@@ -60,6 +60,12 @@ void Mix_Data<Tdata>::pulay_mixing(const Tdata &data_in, const bool flag_restart
 	}
 }
 
+/**
+ * @brief Sets the Pulay mixing coefficients.
+ * @tparam ChgMix Type of the charge mixing coefficient.
+ * @param iter Iteration number.
+ * @param chr_mix Charge mixing coefficient.
+ */
 template<typename Tdata>
 template<typename ChgMix>
 void Mix_Data<Tdata>::set_coef_pulay(const int iter, const ChgMix& chr_mix)
