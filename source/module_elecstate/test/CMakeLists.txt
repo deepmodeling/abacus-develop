@@ -23,7 +23,13 @@ AddTest(
 )
 
 AddTest(
-  TARGET fp_energy_UT
+  TARGET elecstate_fp_energy
   LIBS ${math_libs} base device
-  SOURCES fp_energy_test.cpp ../fp_energy.cpp
+  SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp
+)
+
+AddTest(
+  TARGET elecstate_print
+  LIBS ${math_libs} base device
+  SOURCES elecstate_print_test.cpp ../elecstate_print.cpp
 )
