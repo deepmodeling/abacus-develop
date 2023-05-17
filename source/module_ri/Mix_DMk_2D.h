@@ -15,6 +15,12 @@
 class Mix_DMk_2D
 {
 public:
+/**
+     * @brief Sets the number of k-points and gamma_only flag.
+     * @param nks Number of k-points.
+     * @param gamma_only_in Flag indicating if only gamma point is mixed.
+     * @return Reference to the current object.
+     */
 	Mix_DMk_2D &set_nks(const int nks, const bool gamma_only_in);
 	Mix_DMk_2D &set_mixing_mode(const Mixing_Mode mixing_mode);
     Mix_DMk_2D& set_mixing_beta(const double mixing_beta);
