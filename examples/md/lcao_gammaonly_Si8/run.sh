@@ -12,3 +12,17 @@ do
 done
 
 rm INPUT
+
+for i in $( seq 0 7 )
+do
+    if [[ ! -f md$i.output ]] || 
+       [[ ! -f OUT.ABACUS/running_md$i.log ]] ||
+       [[ ! ( "$(tail -1 OUT.ABACUS/running_md$i.log)" == " Total  Time  :"* ) ]]
+    then
+    	echo "job is failed!"
+    	exit 1
+    fi
+done
+
+echo "job is successed!"
+exit 0

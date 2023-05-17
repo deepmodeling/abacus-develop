@@ -1,8 +1,9 @@
 #ifndef H_TDDFT_PW_H
 #define H_TDDFT_PW_H
 
-#include "pot_base.h"
 #include "module_io/input.h"
+#include "module_io/input_conv.h"
+#include "pot_base.h"
 
 namespace elecstate
 {
@@ -21,6 +22,66 @@ class H_TDDFT_pw : public PotBase
 
     void cal_fixed_v(double* vl_pseudo) override;
 
+    /**
+     * @brief compute force of electric field
+     *
+     * @param[in] cell information of cell
+     * @param[out] fe force of electric field  F=qE
+     */
+    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fe);
+
+    // parameters
+    static int stype; // 0 : length gauge  1: velocity gauge
+
+    static std::vector<int> ttype;
+    //  0  Gauss type function.
+    //  1  trapezoid type function.
+    //  2  Trigonometric functions, sin^2.
+    //  3  heaviside function.
+    //  4  HHG function.
+
+    static int tstart;
+    static int tend;
+    static double dt;
+
+    // space domain parameters
+
+    //length gauge
+    static double lcut1;
+    static double lcut2;
+
+    // time domain parameters
+
+    // Gauss
+    static int gauss_count;
+    static std::vector<double> gauss_omega; // time(a.u.)^-1
+    static std::vector<double> gauss_phase;
+    static std::vector<double> gauss_sigma; // time(a.u.)
+    static std::vector<double> gauss_t0;
+    static std::vector<double> gauss_amp; // Ry/bohr
+
+    // trapezoid
+    static int trape_count;
+    static std::vector<double> trape_omega; // time(a.u.)^-1
+    static std::vector<double> trape_phase;
+    static std::vector<double> trape_t1;
+    static std::vector<double> trape_t2;
+    static std::vector<double> trape_t3;
+    static std::vector<double> trape_amp; // Ry/bohr
+
+    // Trigonometric
+    static int trigo_count;
+    static std::vector<double> trigo_omega1; // time(a.u.)^-1
+    static std::vector<double> trigo_omega2; // time(a.u.)^-1
+    static std::vector<double> trigo_phase1;
+    static std::vector<double> trigo_phase2;
+    static std::vector<double> trigo_amp; // Ry/bohr
+
+    // Heaviside
+    static int heavi_count;
+    static std::vector<double> heavi_t0;
+    static std::vector<double> heavi_amp; // Ry/bohr
+
   private:
     // internal time-step,
     //-------hypothesis-------
@@ -28,73 +89,12 @@ class H_TDDFT_pw : public PotBase
     //------------------------
     static int istep;
 
-    // parameters
-    int stype ; // 0 : length gauge  1: velocity gauge
+    static double amp;
 
-    std::vector<int> ttype ;
-    //  0  Gauss type function.
-    //  1  trapezoid type function.
-    //  2  Trigonometric functions, sin^2.
-    //  3  heaviside function.
-    //  4  HHG function.
-
-    int tstart;
-    int tend;
-    double dt;
-
-    // space domain parameters
-
-    //length gauge
-    double lcut1;
-    double lcut2;
-
-    // time domain parameters
-
-    // Gauss
-    int gauss_count;
-    std::vector<double> gauss_omega; // time(a.u.)^-1 
-    std::vector<double> gauss_phase ;
-    std::vector<double> gauss_sigma ; // time(a.u.)
-    std::vector<double> gauss_t0 ;
-    std::vector<double> gauss_amp ;  // Ry/bohr
-
-    // trapezoid
-    int trape_count;
-    std::vector<double> trape_omega ; // time(a.u.)^-1 
-    std::vector<double> trape_phase ;
-    std::vector<double> trape_t1 ;
-    std::vector<double> trape_t2 ;
-    std::vector<double> trape_t3 ;
-    std::vector<double> trape_amp ; // Ry/bohr
-
-    // Trigonometric
-    int trigo_count;
-    std::vector<double> trigo_omega1 ; // time(a.u.)^-1 
-    std::vector<double> trigo_omega2 ; // time(a.u.)^-1 
-    std::vector<double> trigo_phase1 ;
-    std::vector<double> trigo_phase2 ;
-    std::vector<double> trigo_amp ; // Ry/bohr
-
-    // Heaviside
-    int heavi_count;
-    std::vector<double> heavi_t0;
-    std::vector<double> heavi_amp; // Ry/bohr
-
-    // HHG
-    // int hhg_count = 0;
-    // std::vector<double> hhg_amp1; // Ry/bohr
-    // std::vector<double> hhg_amp2; // Ry/bohr
-    // std::vector<double> hhg_omega1; // time(a.u.)^-1 
-    // std::vector<double> hhg_omega2; // time(a.u.)^-1 
-    // std::vector<double> hhg_phase1;
-    // std::vector<double> hhg_phase2;
-    // std::vector<double> hhg_t0;
-    // std::vector<double> hhg_sigma; // time(a.u.)
+    static double bmod;
+    static double bvec[3];
 
     const UnitCell* ucell_ = nullptr;
-
-    std::vector<double> set_parameters(std::string params, double c);
-    void read_parameters(Input* in);
 
     // potential of electric field in space domain : length gauge and velocity gauge
     void cal_v_space(std::vector<double> &vext_space, int direc);
@@ -110,7 +110,7 @@ class H_TDDFT_pw : public PotBase
     double cal_v_time_heaviside();
     // double cal_v_time_HHG();
 
-    double prepare(const UnitCell &cell, int &dir);
+    void prepare(const UnitCell& cell, int& dir);
 };
 
 } // namespace elecstate
