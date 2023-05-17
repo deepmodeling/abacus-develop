@@ -32,7 +32,13 @@ public:
     template<typename ChgMix>
     Mix_DMk_2D& set_coef_pulay(const int iter, const ChgMix& chr_mix);
 
+/**
+     * @brief Mixes the density matrix.
+     * @param dm double Density matrix.
+     * @param flag_restart Flag indicating if it is a restart.
+     */
 	void mix(const std::vector<ModuleBase::matrix> &dm, const bool flag_restart);
+
 	void mix(const std::vector<ModuleBase::ComplexMatrix> &dm, const bool flag_restart);
 
 	std::vector<const ModuleBase::matrix*> get_DMk_gamma_out() const;
