@@ -11,4 +11,18 @@ cp INPUT2 INPUT
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee scf2.output
 mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf2.log
 
-rm INPUT
+rm INPUT KPT
+
+if [[ ! -f scf1.output ]] || 
+   [[ ! -f scf2.output ]] || 
+   [[ ! -f OUT.ABACUS/running_scf1.log ]] ||
+   [[ ! -f OUT.ABACUS/running_scf2.log ]] ||
+   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf1.log)" == " Total  Time  :"* ) ]] ||
+   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf2.log)" == " Total  Time  :"* ) ]]
+then
+	echo "job is failed!"
+	exit 1
+else
+	echo "job is successed!"
+	exit 0
+fi

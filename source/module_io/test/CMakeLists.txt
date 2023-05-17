@@ -108,3 +108,8 @@ AddTest(
 	../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
 	../../module_cell/read_pp_blps.cpp
 )
+
+AddTest(
+  TARGET io_parse_args
+  SOURCES parse_args_test.cpp
+)
