@@ -3628,11 +3628,6 @@ void Input::Check(void)
 		}
 	}
 
-    // if(scf_thr_type != 1 and scf_thr_type != 2)
-    // {
-    //     ModuleBase::WARNING_QUIT("INPUT", "scf_thr_type must be 1 (for pw) or 2 (for lcao)");
-    // }
-
     return;
 }
 
