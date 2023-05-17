@@ -634,7 +634,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
-        int bnop=0;
+        int bnop = 0;
+        // search again
+        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav, bbrav_name, ucell, false, nullptr);
         ModuleBase::Matrix3 b_optlat_new(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
         symm.setgroup(bsymop, bnop, bbrav);
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
