@@ -22,6 +22,11 @@ public:
      * @return Reference to the current object.
      */
 	Mix_DMk_2D &set_nks(const int nks, const bool gamma_only_in);
+/**
+     * @brief Sets the mixing mode.
+     * @param mixing_mode Mixing mode.
+     * @return Reference to the current object.
+     */
 	Mix_DMk_2D &set_mixing_mode(const Mixing_Mode mixing_mode);
     Mix_DMk_2D& set_mixing_beta(const double mixing_beta);
     template<typename ChgMix>
