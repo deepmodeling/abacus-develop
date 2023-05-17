@@ -39,6 +39,11 @@ public:
      */
 	void mix(const std::vector<ModuleBase::matrix> &dm, const bool flag_restart);
 
+/**
+     * @brief Mixes the complex density matrix.
+     * @param dm Complex density matrix.
+     * @param flag_restart Flag indicating if it is a restart.
+     */
 	void mix(const std::vector<ModuleBase::ComplexMatrix> &dm, const bool flag_restart);
 
 /**
