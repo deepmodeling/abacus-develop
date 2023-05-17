@@ -33,6 +33,51 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 # Do not use the new container by default.
 option(ENABLE_CONTAINER "Enable the new multi-device container." OFF)
+option(COMMIT_INFO "Print commit information in log" ON)
+
+# get commit info
+if(COMMIT_INFO)
+  find_program(GIT_EXECUTABLE git)
+  if(NOT GIT_EXECUTABLE)
+    message(STATUS "Git not found, attempting to install...")
+    include(FetchContent)
+    FetchContent_Declare(
+      PackageManager
+      GIT_REPOSITORY https://github.com/TheLartians/PackageManager.cmake
+      GIT_TAG v0.2.1
+      )
+    FetchContent_MakeAvailable(PackageManager)
+    find_package(PackageManager REQUIRED)
+    PackageManager_install(git)
+    find_program(GIT_EXECUTABLE git)
+  endif()
+
+  if(GIT_EXECUTABLE) 
+    message(STATUS "Found git: attempting to get commit info...")
+    execute_process(
+      COMMAND git log -1 --pretty=format:%h
+      OUTPUT_VARIABLE GIT_COMMIT_HASH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
+    )
+    execute_process(
+      COMMAND git log -1 --format=%cd --date=local
+      OUTPUT_VARIABLE GIT_COMMIT_DATE
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      RESULT_VARIABLE GIT_COMMIT_DATE_RESULT
+    )
+    if(GIT_COMMIT_HASH_RESULT EQUAL 0 AND GIT_COMMIT_DATE_RESULT EQUAL 0)
+      set(COMMIT "${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})")
+      add_definitions("-DCOMMIT=\"${COMMIT}\"")
+      message(STATUS "Current commit hash: ${GIT_COMMIT_HASH}")
+      message(STATUS "Last commit date: ${GIT_COMMIT_DATE}")
+    else()
+      message(WARNING "Failed to get git commit info")
+    endif()
+  endif()
+endif()
 
 if (NOT ENABLE_MPI)
   set (ENABLE_LCAO OFF)
