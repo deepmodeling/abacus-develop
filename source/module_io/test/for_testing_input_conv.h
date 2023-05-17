@@ -1,29 +1,27 @@
 #define private public
 
-#include "module_cell/unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_relax/relax_old/bfgs_basic.h"
-#include "module_relax/relax_old/ions_move_basic.h"
-#include "module_relax/relax_old/lattice_change_basic.h"
-#include "module_relax/relax_old/ions_move_cg.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_elecstate/energy.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_cell/unitcell.h"
+#include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_charge/charge_mixing.h"
+#include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
-#include "module_elecstate/potentials/gatefield.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
-#include "module_io/restart.h"
-#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "module_elecstate/occupy.h"
-#include "module_elecstate/module_charge/charge_mixing.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_elecstate/elecstate_lcao.h"
 #include "module_io/berryphase.h"
+#include "module_io/restart.h"
 #include "module_md/md_func.h"
+#include "module_relax/relax_old/bfgs_basic.h"
+#include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/ions_move_cg.h"
+#include "module_relax/relax_old/lattice_change_basic.h"
 
 bool berryphase::berry_phase_flag=false;
 int elecstate::ElecStateLCAO::out_wfc_lcao = 0;
@@ -72,8 +70,6 @@ ORB_gaunt_table::ORB_gaunt_table(){}
 ORB_gaunt_table::~ORB_gaunt_table(){}
 ModuleDFTU::DFTU::DFTU(){}
 ModuleDFTU::DFTU::~DFTU(){}
-energy::energy(){}
-energy::~energy(){}
 Structure_Factor::Structure_Factor(){}
 Structure_Factor::~Structure_Factor(){}
 ModuleSymmetry::Symmetry::Symmetry(){}
@@ -250,7 +246,6 @@ namespace GlobalC
 	wavefunc wf;
 	ModuleSymmetry::Symmetry symm;
 	Structure_Factor sf;
-	energy en;
 	ModuleDFTU::DFTU dftu;
 	Restart restart;
 	pseudopot_cell_vnl ppcell;

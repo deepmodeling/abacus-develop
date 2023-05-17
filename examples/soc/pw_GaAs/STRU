@@ -5,8 +5,6 @@ Ga 1   Ga_ONCV_PBE-soc-1.0.upf
 LATTICE_CONSTANT
 1  // add lattice constant, 10.58 ang
 
-NUMERICAL_ORBITAL
-
 LATTICE_VECTORS
 5.34197 5.34197  0.0
 0.0  5.34197 5.34197

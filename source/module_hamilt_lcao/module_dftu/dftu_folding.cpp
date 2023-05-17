@@ -93,7 +93,7 @@ void DFTU::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma)
     return;
 }
 
-void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::complex<double>* mat_k)
+void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::complex<double>* mat_k, std::vector<ModuleBase::Vector3<double>> kvec_d)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
@@ -177,7 +177,7 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                     ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x,
                                                    GlobalC::GridD.getBox(ad).y,
                                                    GlobalC::GridD.getBox(ad).z);
-                    const double arg = (GlobalC::kv.kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                    const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
 
                     //--------------------------------------------------

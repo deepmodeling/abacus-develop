@@ -130,7 +130,7 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
                 {
                     uhm.LM->allocate_HS_k(pv->nloc);
                     uhm.LM->zeros_HSk('S');
-                    uhm.LM->folding_fixedH(ik);
+                    uhm.LM->folding_fixedH(ik,kv.kvec_d);
 
                     psi->fix_k(ik);
                     psi::Psi<std::complex<double>> Dwfc(psi[0], 1);

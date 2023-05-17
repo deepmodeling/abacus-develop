@@ -22,7 +22,11 @@ template<typename FPTYPE, typename Device>
 class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 {
   public:
-    Veff(const int* isk_in, const FPTYPE* veff_in, const int veff_row, const int veff_col, ModulePW::PW_Basis_K* wfcpw_in);
+    Veff(const int* isk_in,
+         const FPTYPE* veff_in,
+         const int veff_row,
+         const int veff_col,
+         const ModulePW::PW_Basis_K* wfcpw_in);
 
     template<typename T_in, typename Device_in = Device>
     explicit Veff(const Veff<OperatorPW<T_in, Device_in>>* veff);
@@ -42,7 +46,10 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     int get_veff_row() const {return this->veff_row;}
     int get_npol() const {return this->npol;}
     const int *get_isk() const {return isk;}
-    ModulePW::PW_Basis_K* get_wfcpw() const {return this->wfcpw;}
+    const ModulePW::PW_Basis_K* get_wfcpw() const
+    {
+        return this->wfcpw;
+    }
 
   private:
 
@@ -52,8 +59,7 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     const int* isk = nullptr;
 
-
-    ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};

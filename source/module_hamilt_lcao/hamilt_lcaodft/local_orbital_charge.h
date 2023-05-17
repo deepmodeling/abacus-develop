@@ -25,12 +25,13 @@ class Local_Orbital_Charge
         elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
         psi::Psi<double>* psid,
-        psi::Psi<std::complex<double>>* psi);
+        psi::Psi<std::complex<double>>* psi,
+        const K_Vectors& kv);
 
 	//-----------------
 	// in DM_gamma.cpp
 	//-----------------
-	void allocate_gamma(const int &lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec);
+	void allocate_gamma(const int &lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec, const int& nks);
 
     void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec);
     void cal_dk_gamma_from_2D_pub(void);
@@ -38,7 +39,7 @@ class Local_Orbital_Charge
 	//-----------------
 	// in DM_k.cpp
 	//-----------------
-	void allocate_DM_k(void);
+	void allocate_DM_k(const int& nks);
 
 	// liaochen modify on 2010-3-23 
 	// change its state from private to public
@@ -59,13 +60,14 @@ class Local_Orbital_Charge
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix	
     std::vector<ModuleBase::ComplexMatrix> edm_k_tddft;
 
-    void init_dm_2d(void);
+    void init_dm_2d(const int& nks);
     
     // dm(R) = wfc.T * wg * wfc.conj()*kphase, only used in multi-k 
     void cal_dm_R(
         std::vector<ModuleBase::ComplexMatrix>& dm_k,
         Record_adj& ra,
-        double** dm2d);     //output, dm2d[NSPIN][LNNR]
+        double** dm2d,
+        const K_Vectors& kv);     //output, dm2d[NSPIN][LNNR]
 
     //-----------------
 	// wavefunctions' pointer
@@ -77,7 +79,7 @@ class Local_Orbital_Charge
     const Parallel_Orbitals* ParaV;
 
     //temporary set it to public for ElecStateLCAO class, would be refactor later
-    void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in);
+    void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in, const K_Vectors& kv);
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 

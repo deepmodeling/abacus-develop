@@ -9,7 +9,6 @@ Structure_Factor sf;
 ModulePW::PW_Basis* rhopw;
 ModulePW::PW_Basis_Big* bigpw;
 ModulePW::PW_Basis_K* wfcpw;
-energy en;
 wavefunc wf;
 #ifdef __EXX
 Exx_Info exx_info;

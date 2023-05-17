@@ -89,9 +89,9 @@ namespace ModuleESolver
 #endif
     }
 
-    void ESolver_LJ::cal_Energy(double& etot)
+    double ESolver_LJ::cal_Energy()
     {
-        etot = lj_potential;
+        return lj_potential;
     }
 
     void ESolver_LJ::cal_Force(ModuleBase::matrix& force)

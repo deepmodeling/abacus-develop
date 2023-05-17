@@ -2,6 +2,7 @@
 
 #include "cal_dm.h"
 #include "module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 
@@ -40,7 +41,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<std::complex<double>>& psi)
         }
     }
 
-    this->loc->cal_dk_k(GlobalC::GridT, this->wg);
+    this->loc->cal_dk_k(GlobalC::GridT, this->wg, GlobalC::kv);
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10

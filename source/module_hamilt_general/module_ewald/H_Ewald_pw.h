@@ -10,26 +10,16 @@
 
 class H_Ewald_pw 
 {
-	public:
-
-	// need to be updated in near future 2021-02-25
-    friend class Stress_Func<double, psi::DEVICE_CPU>; // Ewald stress
-    friend class Stress_Func<double, psi::DEVICE_GPU>; // Ewald stress
-    friend class Forces<double, psi::DEVICE_CPU>; // Ewald forces
-    friend class Forces<double, psi::DEVICE_GPU>; // Ewald forces
-	friend class Force_LCAO; // Ewald forces
-
+  public:
     H_Ewald_pw();
     ~H_Ewald_pw();
 
-	// the Ewald energy
-    static double ewald_energy;
+    // compute the Ewald energy
+    static double compute_ewald(const UnitCell& cell,
+                                const ModulePW::PW_Basis* rho_basis,
+                                const ModuleBase::ComplexMatrix& strucFac);
 
-	// compute the Ewald energy
-    static void compute_ewald(const UnitCell &cell, ModulePW::PW_Basis* rho_basis);
-
-	private:
-
+  public:
     static void rgen(
         const ModuleBase::Vector3<double> &dtau,
         const double &rmax,

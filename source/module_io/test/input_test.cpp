@@ -1450,17 +1450,21 @@ protected:
     void SetUp() 
 	{
         // create a temporary file for testing
-        tmpfile = std::tmpnam(nullptr);
+        char tmpname[] = "tmpfile.tmp";
+        int fd = mkstemp(tmpname);
+        tmpfile = tmpname;
         std::ofstream ofs(tmpfile);
         ofs << "1.0"; // valid input
         ofs.close();
     }
 
     void TearDown() override {
-        std::remove(tmpfile.c_str());
+        close(fd);
+        unlink(tmpfile.c_str());
     }
 
     std::string tmpfile;
+    int fd;
 };
 
 TEST_F(ReadKSpacingTest, ValidInputOneValue) {

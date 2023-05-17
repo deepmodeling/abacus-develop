@@ -5,6 +5,7 @@
 #ifndef DFTU_H
 #define DFTU_H
 
+#include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
@@ -35,7 +36,8 @@ class DFTU
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
-              LCAO_Matrix& lm);
+              LCAO_Matrix& lm,
+              const int& nks);
 
     // calculate the energy correction
     void cal_energy_correction(const int istep);
@@ -60,8 +62,8 @@ class DFTU
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot);
-    void cal_eff_pot_mat_real(const int ik, double* eff_pot);
+    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk);
+    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk);
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
     void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
 
@@ -72,7 +74,7 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k);
+    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv);
     void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma);
 
   private:
@@ -116,7 +118,11 @@ class DFTU
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
-    void folding_matrix_k(const int ik, const int dim1, const int dim2, std::complex<double>* mat_k);
+    void folding_matrix_k(const int ik, 
+                        const int dim1, 
+                        const int dim2, 
+                        std::complex<double>* mat_k, 
+                        std::vector<ModuleBase::Vector3<double>> kvec_d);
 
     //=============================================================
     // In dftu_force.cpp
@@ -127,11 +133,18 @@ class DFTU
                       std::vector<ModuleBase::ComplexMatrix>& dm_k,
                       LCAO_Matrix& lm,
                       ModuleBase::matrix& force_dftu,
-                      ModuleBase::matrix& stress_dftu);
+                      ModuleBase::matrix& stress_dftu,
+                      const K_Vectors& kv);
 
   private:
-    void cal_force_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix& force_dftu);
-    void cal_stress_k(const int ik, const std::complex<double>* rho_VU, ModuleBase::matrix& stress_dftu);
+    void cal_force_k(const int ik,
+                    const std::complex<double>* rho_VU,
+                    ModuleBase::matrix& force_dftu,
+                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+    void cal_stress_k(const int ik,
+                      const std::complex<double>* rho_VU,
+                      ModuleBase::matrix& stress_dftu,
+                      const std::vector<ModuleBase::Vector3<double>>& kvec_d);
     void cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu);
     void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu);
 

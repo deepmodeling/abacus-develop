@@ -8,14 +8,13 @@
 using hamilt::Meta;
 using hamilt::OperatorPW;
 
-template<typename FPTYPE, typename Device>
-Meta<OperatorPW<FPTYPE, Device>>::Meta(
-    FPTYPE tpiba_in, 
-    const int* isk_in,
-    const FPTYPE* vk_in,
-    const int vk_row,
-    const int vk_col,
-    ModulePW::PW_Basis_K* wfcpw_in)
+template <typename FPTYPE, typename Device>
+Meta<OperatorPW<FPTYPE, Device>>::Meta(FPTYPE tpiba_in,
+                                       const int* isk_in,
+                                       const FPTYPE* vk_in,
+                                       const int vk_row,
+                                       const int vk_col,
+                                       const ModulePW::PW_Basis_K* wfcpw_in)
 {
     this->classname = "Meta";
     this->cal_type = pw_meta;

@@ -11,7 +11,7 @@
 void ModuleIO::write_wfc_pw(const std::string& fn,
                             const psi::Psi<std::complex<double>>& psi,
                             const K_Vectors& kv,
-                            const ModulePW::PW_Basis_K* wfc_basis)
+                            const ModulePW::PW_Basis_K* wfcpw)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_pw");
     const int nkstot = kv.nkstot;
@@ -94,17 +94,17 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                                  << kv.kvec_c[ik].x << std::setw(10) << kv.kvec_c[ik].y << std::setw(10)
                                  << kv.kvec_c[ik].z << std::setw(10) << kv.wk[ik] << std::setw(10) << ikngtot
                                  << std::setw(10) << GlobalV::NBANDS << std::setw(10) << INPUT.ecutwfc << std::setw(10)
-                                 << wfc_basis->lat0 << std::setw(10) << wfc_basis->tpiba << std::endl;
+                                 << wfcpw->lat0 << std::setw(10) << wfcpw->tpiba << std::endl;
                             ofs2<<"\n<Reciprocal Lattice Vector>"<<std::endl;
-                            ofs2<<std::setw(10)<<wfc_basis->G.e11<<std::setw(10)<<wfc_basis->G.e12<<std::setw(10)<<wfc_basis->G.e13<<std::endl;
-                            ofs2<<std::setw(10)<<wfc_basis->G.e21<<std::setw(10)<<wfc_basis->G.e22<<std::setw(10)<<wfc_basis->G.e23<<std::endl;
-                            ofs2<<std::setw(10)<<wfc_basis->G.e31<<std::setw(10)<<wfc_basis->G.e32<<std::setw(10)<<wfc_basis->G.e33<<std::endl;
+                            ofs2<<std::setw(10)<<wfcpw->G.e11<<std::setw(10)<<wfcpw->G.e12<<std::setw(10)<<wfcpw->G.e13<<std::endl;
+                            ofs2<<std::setw(10)<<wfcpw->G.e21<<std::setw(10)<<wfcpw->G.e22<<std::setw(10)<<wfcpw->G.e23<<std::endl;
+                            ofs2<<std::setw(10)<<wfcpw->G.e31<<std::setw(10)<<wfcpw->G.e32<<std::setw(10)<<wfcpw->G.e33<<std::endl;
                             ofs2<<"<Reciprocal Lattice Vector>\n"<<std::endl;
                             ofs2<<"<G vectors>"<<std::endl;
                         }
                         for (int ig = 0; ig < kv.ngk[ik]; ig++)
                         {
-                            ofs2<<std::setw(10)<<wfc_basis->getgcar(ik,ig).x<<std::setw(10)<<wfc_basis->getgcar(ik,ig).y<<std::setw(10)<<wfc_basis->getgcar(ik,ig).z<<std::endl;
+                            ofs2<<std::setw(10)<<wfcpw->getgcar(ik,ig).x<<std::setw(10)<<wfcpw->getgcar(ik,ig).y<<std::setw(10)<<wfcpw->getgcar(ik,ig).z<<std::endl;
 						}
                         if(id==GlobalV::NPROC_IN_POOL-1)
                         {
@@ -119,10 +119,10 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                         {
                             wfs2 << int(72) << ikstot + 1 << nkstot << kv.kvec_c[ik].x << kv.kvec_c[ik].y
                                  << kv.kvec_c[ik].z << kv.wk[ik] << ikngtot << GlobalV::NBANDS << INPUT.ecutwfc
-                                 << wfc_basis->lat0 << wfc_basis->tpiba << 72; // 4 int + 7 double is 72B
-                            wfs2<<72<<wfc_basis->G.e11<<wfc_basis->G.e12<<wfc_basis->G.e13
-                                    <<wfc_basis->G.e21<<wfc_basis->G.e22<<wfc_basis->G.e23
-                                    <<wfc_basis->G.e31<<wfc_basis->G.e32<<wfc_basis->G.e33<<72; //9 double is 72B
+                                 << wfcpw->lat0 << wfcpw->tpiba << 72; // 4 int + 7 double is 72B
+                            wfs2<<72<<wfcpw->G.e11<<wfcpw->G.e12<<wfcpw->G.e13
+                                    <<wfcpw->G.e21<<wfcpw->G.e22<<wfcpw->G.e23
+                                    <<wfcpw->G.e31<<wfcpw->G.e32<<wfcpw->G.e33<<72; //9 double is 72B
                         }
                         if(id==0)
                         {
@@ -131,7 +131,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 
                         for (int ig = 0; ig < kv.ngk[ik]; ig++)
                         {
-                            wfs2<<wfc_basis->getgcar(ik,ig).x<<wfc_basis->getgcar(ik,ig).y<<wfc_basis->getgcar(ik,ig).z;
+                            wfs2<<wfcpw->getgcar(ik,ig).x<<wfcpw->getgcar(ik,ig).y<<wfcpw->getgcar(ik,ig).z;
 						}
                         if(id==GlobalV::NPROC_IN_POOL-1)
                         {

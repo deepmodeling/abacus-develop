@@ -23,8 +23,7 @@ FPTYPE Forces<FPTYPE, Device>::output_acc = 1.0e-8; // (Ryd/angstrom).
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
-                                       const ModuleBase::matrix& wg,
-                                       const Charge* const chr,
+                                       const elecstate::ElecState& elec,
                                        ModulePW::PW_Basis* rho_basis,
                                        ModuleSymmetry::Symmetry* p_symm,
                                        Structure_Factor* p_sf,
@@ -34,6 +33,8 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 {
     ModuleBase::TITLE("Forces", "init");
     this->device = psi::device::get_device_type<Device>(this->ctx);
+    const ModuleBase::matrix& wg = elec.wg;
+    const Charge* const chr = elec.charge;
     force.create(nat, 3);
 
     ModuleBase::matrix forcelc(nat, 3);
@@ -49,7 +50,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         this->cal_force_nl(forcenl, wg, pkv, wfc_basis, psi_in);
     }
     this->cal_force_cc(forcecc, rho_basis, chr);
-    this->cal_force_scc(forcescc, rho_basis);
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
@@ -572,8 +573,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
         upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)
                      * erfc(sqrt(GlobalC::ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     } while (upperbound > 1.0e-6);
-    //	std::cout << " GlobalC::en.alpha = " << alpha << std::endl;
-    //	std::cout << " upperbound = " << upperbound << std::endl;
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -768,8 +767,8 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
         const auto etxc_vtxc_v
             = XC_Functional::v_xc_meta(rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr);
 
-        GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
-        GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
+        // etxc = std::get<0>(etxc_vtxc_v);
+        // vtxc = std::get<1>(etxc_vtxc_v);
         v = std::get<2>(etxc_vtxc_v);
 #else
         ModuleBase::WARNING_QUIT("cal_force_cc", "to use mGGA, compile with LIBXC");
@@ -781,8 +780,8 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
             GlobalC::ucell.cal_ux();
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
 
-        GlobalC::en.etxc = std::get<0>(etxc_vtxc_v);
-        GlobalC::en.vtxc = std::get<1>(etxc_vtxc_v);
+        // etxc = std::get<0>(etxc_vtxc_v);
+        // vtxc = std::get<1>(etxc_vtxc_v);
         v = std::get<2>(etxc_vtxc_v);
     }
 
@@ -920,7 +919,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // ModuleBase::ComplexMatrix vkb1(nkb, this->npwx);
     resmem_complex_op()(this->ctx, vkb1, this->npwx * nkb, "Force::vkb1");
     // init additional params
-    FPTYPE *force = nullptr, *d_wg = nullptr, *deeq = nullptr, *gcar = nullptr;
+    FPTYPE *force = nullptr;
+    FPTYPE *d_wg = nullptr;
+    FPTYPE *gcar = nullptr;
+    auto *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
     int wg_nc = wg.nc;
     int *atom_nh = nullptr, *atom_na = nullptr;
     int* h_atom_nh = new int[GlobalC::ucell.ntype];
@@ -932,7 +934,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     }
     if (this->device == psi::GpuDevice)
     {
-        deeq = GlobalC::ppcell.d_deeq;
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, force, forcenl.nr * forcenl.nc);
         resmem_var_op()(this->ctx, gcar, 3 * wfc_basis->nks * wfc_basis->npwk_max);
@@ -951,7 +952,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     }
     else
     {
-        deeq = GlobalC::ppcell.deeq.ptr;
         d_wg = wg.c;
         force = forcenl.c;
         gcar = &wfc_basis->gcar[0][0];
@@ -1012,7 +1012,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
             std::complex<FPTYPE>* h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
-            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_complex_double_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
             delmem_complex_h_op()(this->cpu_ctx, h_becp);
         }
@@ -1106,13 +1106,16 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
 }
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModulePW::PW_Basis* rho_basis)
+void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
+                                           ModulePW::PW_Basis* rho_basis,
+                                           const ModuleBase::matrix& vnew,
+                                           const bool vnew_exist)
 {
     ModuleBase::TITLE("Forces", "cal_force_scc");
     ModuleBase::timer::tick("Forces", "cal_force_scc");
 
     // for orbital free case
-    if (!GlobalC::en.vnew_exist)
+    if (!vnew_exist)
     {
         ModuleBase::timer::tick("Forces", "cal_force_scc");
         return;
@@ -1120,9 +1123,8 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
 
     std::complex<double>* psic = new std::complex<double>[rho_basis->nmaxgr];
 
-    ModuleBase::matrix& v_current = GlobalC::en.vnew;
-    const int nrxx = v_current.nc;
-    const int nspin = v_current.nr;
+    const int nrxx = vnew.nc;
+    const int nspin = vnew.nr;
 
     if (nspin == 1 || nspin == 4)
     {
@@ -1131,7 +1133,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
 #endif
         for (int ir = 0; ir < nrxx; ir++)
         {
-            psic[ir] = v_current(0, ir);
+            psic[ir] = vnew(0, ir);
         }
     }
     else
@@ -1143,12 +1145,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc, ModuleP
 #endif
         for (int ir = 0; ir < nrxx; ir++)
         {
-            psic[ir] = (v_current(isup, ir) + v_current(isdw, ir)) * 0.5;
+            psic[ir] = (vnew(isup, ir) + vnew(isdw, ir)) * 0.5;
         }
     }
-    // delete vnew memory
-    v_current.create(0, 0);
-    GlobalC::en.vnew_exist = false;
 
     int ndm = 0;
 
