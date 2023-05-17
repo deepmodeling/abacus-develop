@@ -39,17 +39,9 @@ option(COMMIT_INFO "Print commit information in log" ON)
 if(COMMIT_INFO)
   find_program(GIT_EXECUTABLE git)
   if(NOT GIT_EXECUTABLE)
-    message(STATUS "Git not found, attempting to install...")
-    include(FetchContent)
-    FetchContent_Declare(
-      PackageManager
-      GIT_REPOSITORY https://github.com/TheLartians/PackageManager.cmake
-      GIT_TAG v0.2.1
-      )
-    FetchContent_MakeAvailable(PackageManager)
-    find_package(PackageManager REQUIRED)
-    PackageManager_install(git)
-    find_program(GIT_EXECUTABLE git)
+    message(FATAL_ERROR "Git not found. Please install Git and retry. \n\
+Alternatively, you can add the setting '-DCOMMIT_INFO=OFF', \
+and doing so will not output the commit information of the installed ABACUS in the log file")
   endif()
 
   if(GIT_EXECUTABLE) 
