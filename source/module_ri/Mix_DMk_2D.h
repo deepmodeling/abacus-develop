@@ -41,6 +41,10 @@ public:
 
 	void mix(const std::vector<ModuleBase::ComplexMatrix> &dm, const bool flag_restart);
 
+/**
+     * @brief Returns the gamma density matrix.
+     * @return Vector of pointers to gamma density matrices.
+     */
 	std::vector<const ModuleBase::matrix*> get_DMk_gamma_out() const;
 /**
      * @brief Returns the k-point density matrix.
