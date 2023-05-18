@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix				autotest
+calculation     	scf
+ntype				2
+symmetry			-1
+nspin				4
+lspinorb			1
+noncolin			1
+pseudo_dir			../../PP_ORB
+orbital_dir			../../PP_ORB
+
+#Parameters (2.PW)
+ecutwfc				20
+scf_thr				1e-3
+
+#Parameters (4.Relaxation)
+scf_nmax			100
+
+#Parameters (5.LCAO)
+basis_type			lcao
+gamma_only			0
+
+#Parameters (6.Smearing)
+smearing_method		gaussian
+smearing_sigma		0.02
+
+#Parameters (7.Charge Mixing)
+mixing_type			pulay
+mixing_beta			0.4
+
+#Parameters (14.exx)
+dft_functional		hse
+exx_pca_threshold	1E-1
+exx_ccp_rmesh_times	1
+exx_separate_loop	1
+exx_hybrid_step		3
