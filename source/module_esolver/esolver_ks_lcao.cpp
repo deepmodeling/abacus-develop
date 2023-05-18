@@ -194,7 +194,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Fix pelec->wg by ocp_kb
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb.data());
+        this->pelec->fixed_weights(GlobalV::ocp_kb);
     }
 }
 
