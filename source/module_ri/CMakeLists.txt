@@ -4,7 +4,8 @@ if (ENABLE_LIBRI)
         Matrix_Orbs21.cpp
         Matrix_Orbs22.cpp
         RI_2D_Comm.cpp
-      exx_lip.cpp
+        exx_lip.cpp
+        Mix_DMk_2D.cpp
   )
 
   if(ENABLE_LCAO)
@@ -24,6 +25,10 @@ if (ENABLE_LIBRI)
       OBJECT
       ${objects}
   )
+  
+  if(BUILD_TESTING)
+    add_subdirectory(test)
+  endif()
 
   if(ENABLE_COVERAGE)
     add_coverage(ri)

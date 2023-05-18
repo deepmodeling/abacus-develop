@@ -9,7 +9,6 @@
 #include "LRI_CV.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_base/matrix.h"
 #include <RI/physics/Exx.h>
 
@@ -21,6 +20,7 @@
 
 	class Local_Orbital_Charge;
 	class Parallel_Orbitals;
+	class Mix_DMk_2D;
 	
 	template<typename Tdata>
 	class RPA_LRI;
@@ -41,7 +41,7 @@ public:
 
 	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
 	void cal_exx_ions();
-	void cal_exx_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv);
+	void cal_exx_elec(const Mix_DMk_2D &mix_DMk_2D, const Parallel_Orbitals &pv);
 	void cal_exx_force();
 	void cal_exx_stress();
 
@@ -49,7 +49,6 @@ public:
 	Tdata Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
-	std::vector<std::deque<std::vector<std::vector<Tdata>>>> Hk_seq;
 
 	void write_Hexxs(const std::string &file_name) const;
 	void read_Hexxs(const std::string &file_name);

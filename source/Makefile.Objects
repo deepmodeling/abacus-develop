@@ -382,14 +382,19 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_k.o\
-      ELEC_evolve.o\
+      evolve_elec.o\
+      evolve_psi.o\
+      bandenergy.o\
+      middle_hamilt.o\
+      norm_psi.o\
+      propagator.o\
+      upsi.o\
       FORCE_STRESS.o\
       FORCE_gamma.o\
       FORCE_gamma_edm.o\
       FORCE_gamma_tvnl.o\
       FORCE_gamma_vl.o\
       FORCE_k.o\
-      LCAO_evolve.o\
       LCAO_gen_fixedH.o\
       LCAO_hamilt.o\
       LCAO_matrix.o\
@@ -416,7 +421,8 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
-      RI_2D_Comm.o
+      RI_2D_Comm.o\
+      Mix_DMk_2D.o
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\

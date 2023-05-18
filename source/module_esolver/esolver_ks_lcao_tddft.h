@@ -29,7 +29,6 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
 
   protected:
     virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
-    virtual void eachiterinit(const int istep, const int iter) override;
     virtual void updatepot(const int istep, const int iter) override;
     virtual void afterscf(const int istep) override;
     void cal_edm_tddft();

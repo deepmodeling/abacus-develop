@@ -124,13 +124,13 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_down,0.45);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_up,0.55);
 	EXPECT_DOUBLE_EQ(elecstate::Gatefield::block_height,0.1);
-	EXPECT_EQ(ELEC_evolve::td_force_dt,0.02);
-	EXPECT_EQ(ELEC_evolve::td_vext,false);
-	EXPECT_EQ(ELEC_evolve::out_dipole,false);
-	EXPECT_EQ(ELEC_evolve::out_efield,false);
-	EXPECT_EQ(ELEC_evolve::td_print_eij,-1.0);
-	EXPECT_EQ(ELEC_evolve::td_edm,0);
-	EXPECT_EQ(GlobalV::ocp,false);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_force_dt, 0.02);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_vext, false);
+    EXPECT_EQ(module_tddft::Evolve_elec::out_dipole, false);
+    EXPECT_EQ(module_tddft::Evolve_elec::out_efield, false);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_print_eij, -1.0);
+    EXPECT_EQ(module_tddft::Evolve_elec::td_edm, 0);
+    EXPECT_EQ(GlobalV::ocp,false);
 	EXPECT_EQ(GlobalV::ocp_set,INPUT.ocp_set);
 	EXPECT_EQ(GlobalV::out_mul,0);
 	EXPECT_EQ(GlobalC::ppcell.cell_factor,1.2);
@@ -507,9 +507,9 @@ TEST_F(InputConvTest,parse )
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
-	ELEC_evolve::td_vext=true;
-	Input_Conv::Convert();
-	EXPECT_EQ(ELEC_evolve::td_vext_dire_case.size(),0);
+    module_tddft::Evolve_elec::td_vext = true;
+    Input_Conv::Convert();
+    EXPECT_EQ(module_tddft::Evolve_elec::td_vext_dire_case.size(), 0);
 }
 
 TEST_F(InputConvTest,parse2 )
@@ -533,5 +533,64 @@ TEST_F(InputConvTest,ParseExpressionDouble)
 	EXPECT_DOUBLE_EQ(vec[2],1.2);
 	EXPECT_DOUBLE_EQ(vec[3],0.5);
 }
+
+#ifdef __LCAO
+TEST_F(InputConvTest, ConvertUnitsWithEmptyParams)
+{
+    std::string params = "";
+    double c = 2.0;
+    std::vector<double> expected = {};
+    std::vector<double> result = Input_Conv::convert_units(params, c);
+    EXPECT_EQ(result, expected);
+}
+
+TEST_F(InputConvTest, ConvertUnitsWithSingleParam)
+{
+    std::string params = "1.23";
+    double c = 2.0;
+    std::vector<double> expected = {2.46};
+    std::vector<double> result = Input_Conv::convert_units(params, c);
+    EXPECT_EQ(result, expected);
+}
+
+TEST_F(InputConvTest, ConvertUnitsWithMultipleParams)
+{
+    std::string params = "1.23 4.56 7.89";
+    double c = 0.5;
+    std::vector<double> expected = {0.615, 2.28, 3.945};
+    std::vector<double> result = Input_Conv::convert_units(params, c);
+    EXPECT_EQ(result, expected);
+}
+
+TEST_F(InputConvTest, ReadTdEfieldTest)
+{
+    Input_Conv::read_td_efield();
+
+    EXPECT_EQ(elecstate::H_TDDFT_pw::stype, 0);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::ttype[0], 0);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::tstart, 1);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::tend, 1000);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1, 0.05);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2, 0.95);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_omega[0], 22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_phase[0], 0.0);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_sigma[0], 30.0 / ModuleBase::AU_to_FS, 1e-8);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_t0[0], 100.0);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_amp[0], 0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_omega[0], 1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::trape_phase[0], 0.0);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t1[0], 1875);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t2[0], 5625);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t3[0], 7500);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_amp[0], 2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega1[0], 1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega2[0], 0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_phase1[0], 0.0);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_phase2[0], 0.0);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_amp[0], 2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
+    EXPECT_EQ(elecstate::H_TDDFT_pw::heavi_t0[0], 100);
+    EXPECT_NEAR(elecstate::H_TDDFT_pw::heavi_amp[0], 1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
+}
+#endif
 
 #undef private

@@ -67,11 +67,6 @@ void ElecState::calculate_weights()
         return;
     }
 
-    double** ekb_tmp = new double*[this->ekb.nr];
-    for (int i = 0; i < this->ekb.nr; ++i)
-    {
-        ekb_tmp[i] = &(this->ekb(i, 0));
-    }
     int nbands = this->ekb.nc;
     int nks = this->ekb.nr;
 
@@ -83,7 +78,7 @@ void ElecState::calculate_weights()
                              this->klist->wk,
                              nbands,
                              this->nelec_spin[0],
-                             ekb_tmp,
+                             this->ekb,
                              this->eferm.ef_up,
                              this->wg,
                              0,
@@ -92,7 +87,7 @@ void ElecState::calculate_weights()
                              this->klist->wk,
                              nbands,
                              this->nelec_spin[1],
-                             ekb_tmp,
+                             this->ekb,
                              this->eferm.ef_dw,
                              this->wg,
                              1,
@@ -106,7 +101,7 @@ void ElecState::calculate_weights()
                              this->klist->wk,
                              nbands,
                              GlobalV::nelec,
-                             ekb_tmp,
+                             this->ekb,
                              this->eferm.ef,
                              this->wg,
                              -1,
@@ -125,7 +120,7 @@ void ElecState::calculate_weights()
                              this->nelec_spin[0],
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
-                             ekb_tmp,
+                             this->ekb,
                              this->eferm.ef_up,
                              demet_up,
                              this->wg,
@@ -137,7 +132,7 @@ void ElecState::calculate_weights()
                              this->nelec_spin[1],
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
-                             ekb_tmp,
+                             this->ekb,
                              this->eferm.ef_dw,
                              demet_dw,
                              this->wg,
@@ -154,7 +149,7 @@ void ElecState::calculate_weights()
                              GlobalV::nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
-                             ekb_tmp,
+                             this->ekb,
                              this->eferm.ef,
                              this->f_en.demet,
                              this->wg,
@@ -166,52 +161,8 @@ void ElecState::calculate_weights()
     }
     else if (Occupy::fixed_occupations)
     {
-        // fix occupations need nelup and neldw.
-        // mohan add 2011-04-03
-        this->eferm.ef = -1.0e+20;
-        for (int ik = 0; ik < nks; ik++)
-        {
-            for (int ibnd = 0; ibnd < nbands; ibnd++)
-            {
-                if (this->wg(ik, ibnd) > 0.0)
-                {
-                    this->eferm.ef = std::max(this->eferm.ef, ekb_tmp[ik][ibnd]);
-                }
-            }
-        }
+        ModuleBase::WARNING_QUIT("calculate_weights", "other occupations, not implemented");
     }
-
-    if (GlobalV::TWO_EFERMI)
-    {
-        Parallel_Reduce::gather_max_double_all(this->eferm.ef_up);
-        Parallel_Reduce::gather_max_double_all(this->eferm.ef_dw);
-    }
-    else
-    {
-        double ebotom = ekb_tmp[0][0];
-        double etop = ekb_tmp[0][0];
-        for (int ik = 0; ik < nks; ik++)
-        {
-            for (int ib = 0; ib < nbands; ib++)
-            {
-                ebotom = min(ebotom, ekb_tmp[ik][ib]);
-                etop = max(etop, ekb_tmp[ik][ib]);
-            }
-        }
-
-        // parallel
-        Parallel_Reduce::gather_max_double_all(this->eferm.ef);
-        Parallel_Reduce::gather_max_double_all(etop);
-        Parallel_Reduce::gather_min_double_all(ebotom);
-
-        // not parallel yet!
-        //		OUT(GlobalV::ofs_running,"Top    Energy (eV)", etop * ModuleBase::Ry_to_eV);
-        //      OUT(GlobalV::ofs_running,"Fermi  Energy (eV)", this->eferm.ef * ModuleBase::Ry_to_eV);
-        //		OUT(GlobalV::ofs_running,"Bottom Energy (eV)", ebotom * ModuleBase::Ry_to_eV);
-        //		OUT(GlobalV::ofs_running,"Range  Energy (eV)", etop-ebotom * ModuleBase::Ry_to_eV);
-    }
-
-    delete[] ekb_tmp;
 
     return;
 }

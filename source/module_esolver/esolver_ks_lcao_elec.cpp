@@ -328,6 +328,32 @@ namespace ModuleESolver
 			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 			return;
 		}
+		
+		// set initial parameter for mix_DMk_2D
+		if(GlobalC::exx_info.info_global.cal_exx)
+		{
+			this->mix_DMk_2D.set_nks(GlobalC::kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
+			if(GlobalC::exx_info.info_global.separate_loop)
+			{
+				if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
+				else
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain)
+					                .set_mixing_beta(GlobalC::exx_info.info_global.mixing_beta_for_loop1);
+			}
+			else
+			{
+				if(GlobalC::CHR_MIX.get_mixing_mode() == "plain")
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
+				else if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
+				else
+					throw std::invalid_argument(
+						"mixing_mode = " + GlobalC::CHR_MIX.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
+						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
+				this->mix_DMk_2D.set_mixing_beta(GlobalC::CHR_MIX.get_mixing_beta());
+			}
+		}
 #endif // __MPI
 #endif // __EXX
         // 1. calculate ewald energy.

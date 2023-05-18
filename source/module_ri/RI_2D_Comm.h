@@ -30,21 +30,20 @@ namespace RI_2D_Comm
 //public:
 	template<typename Tdata, typename Tmatrix>
 	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
-	split_m2D_ktoR(const K_Vectors &kv, const std::vector<Tmatrix> &mks_2D, const Parallel_Orbitals &pv);
+	split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tmatrix*> &mks_2D, const Parallel_Orbitals &pv);
 
 	// judge[is] = {s0, s1}
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
 	get_2D_judge(const Parallel_Orbitals &pv);
 
 	template<typename Tdata>
-    extern void add_Hexx(
-        const K_Vectors &kv,
-        const int ik,
+	extern void add_Hexx(
+		const K_Vectors &kv,
+		const int ik,
 		const double alpha,
 		const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
 		const Parallel_Orbitals &pv,
-		LCAO_Matrix &lm,
-		std::vector<std::deque<std::vector<std::vector<Tdata>>>> &Hk_seq);
+		LCAO_Matrix &lm);
 
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(

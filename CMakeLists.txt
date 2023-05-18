@@ -39,20 +39,9 @@ option(COMMIT_INFO "Print commit information in log" ON)
 if(COMMIT_INFO)
   find_program(GIT_EXECUTABLE git)
   if(NOT GIT_EXECUTABLE)
-    message(STATUS "Git not found, attempting to install...")
-    include(FetchContent)
-    FetchContent_Declare(
-      PackageManager
-      GIT_REPOSITORY https://github.com/TheLartians/PackageManager.cmake
-      GIT_TAG v0.2.1
-      )
-    FetchContent_MakeAvailable(PackageManager)
-    find_package(PackageManager REQUIRED)
-    PackageManager_install(git)
-    find_program(GIT_EXECUTABLE git)
-  endif()
-
-  if(GIT_EXECUTABLE) 
+    message(WARNING "Git is not found, and abacus will not output the git commit information in log. \n\
+You can install Git first and reinstall abacus.")
+  else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
       COMMAND git log -1 --pretty=format:%h

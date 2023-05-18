@@ -104,71 +104,54 @@ void Occupy::decision(const std::string &name, const std::string &smearing_metho
     return;
 }
 
-//=============================================================
-// calculates weights for semiconductors and insulators
-// (bands are either empty or filled)
-//=============================================================
-void Occupy::iweights(const int nks,                 // number of k points.
-                      const std::vector<double> &wk, // weight of each k point (consider symmetry).
-                      const int nband,               // number of bands.
-                      const double &nelec,           // number of electrons for this spin direction.
-                      double **ekb,                  // the array save the band energy.
-                      double &ef,                    // output: the highest occupied Kohn-Sham level.
-                      ModuleBase::matrix &wg,        // output: weight for each k, each band.
-                      const int &is,                 // the spin index now.
-                      const std::vector<int> &isk    // distinguish k point belong to which spin.
-)
+/**
+ * @brief calculates weights and fermi energy for semiconductors and insulators
+ *
+ * @note It is only applicable to semiconductors and insulators that have an energy gap.
+ *       Here, bands are either empty or filled, and there is no electronic transfer among different k-points.
+ *
+ * @param nks number of k points.
+ * @param wk weight of each k point (consider symmetry).
+ * @param nbands number of bands.
+ * @param nelec number of electrons for this spin direction.
+ * @param ekb the array save the band energy.
+ * @param ef output: the highest occupied Kohn-Sham level.
+ * @param wg output: weight for each k, each band.
+ * @param is the spin index now.
+ * @param isk distinguish k point belong to which spin.
+ */
+void Occupy::iweights(const int nks,
+                      const std::vector<double>& wk,
+                      const int nbands,
+                      const double& nelec,
+                      const ModuleBase::matrix& ekb,
+                      double& ef,
+                      ModuleBase::matrix& wg,
+                      const int& is,
+                      const std::vector<int>& isk)
 {
-    assert(is < 2); // not include non-collinear yet!
-    double degspin;
-    bool conv = false; // pengfei 2017-04-04
+    assert(is < 2);
 
-    degspin = (GlobalV::NSPIN == 2) ? 1.0 : 2.0;
-    if (GlobalV::NSPIN == 4)
-        degspin = 1.0; // added by zhengdy-soc
-
-    assert(degspin > 0.0);
-    double ib_min = nelec / degspin;
-
-    int ib_min1 = (ib_min - int(ib_min) == 0) ? int(ib_min) : int(ib_min) + 1;
-
-    for (int ik = 0; ik < nks && !conv; ik++)
+    double degspin = (GlobalV::NSPIN == 1) ? 2.0 : 1.0;
+    double ib_mind = nelec / degspin;
+    int ib_min = std::ceil(ib_mind);
+    if (ib_min != int(ib_mind))
     {
-        for (int ib = 0; ib < nband && !conv; ib++)
-        {
-            // std::cout << " ekb=" << ekb[ik][ib] << std::endl;
-            int count = 0;
-            ef = ekb[ik][ib];
-            for (int ik1 = 0; ik1 < nks; ik1++)
-            {
-                for (int ib1 = 0; ib1 < nband; ib1++)
-                {
-                    if (ekb[ik1][ib1] <= ef)
-                    {
-                        count++;
-                    }
-                }
-            }
-
-            if ((GlobalV::NSPIN == 2 && count == ib_min1 * nks / 2) || (GlobalV::NSPIN == 1 && count == ib_min1 * nks)
-                || ((GlobalV::NSPIN == 4) && count == ib_min1 * nks))
-            {
-                conv = true;
-            }
-        }
+        ModuleBase::WARNING_QUIT("iweights", "It is not a semiconductor or insulator. Change 'smearing_method'.");
     }
+    ef = -1e+10;
 
-    for (int ik = 0; ik < nks; ik++)
+    for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < nband; ib++)
+        if (GlobalV::NSPIN == 2 && isk[ik] != is)
+            continue;
+
+        for (int ib = 0; ib < nbands; ++ib)
         {
-            if (ekb[ik][ib] < ef)
+            if (ib < ib_min)
             {
                 wg(ik, ib) = wk[ik];
-            }
-            else if (ekb[ik][ib] == ef)
-            {
-                wg(ik, ib) = wk[ik] * (ib_min + 1.0 - double(ib_min1));
+                ef = std::max(ef, ekb(ik, ib));
             }
             else
             {
@@ -176,30 +159,41 @@ void Occupy::iweights(const int nks,                 // number of k points.
             }
         }
     }
-
-    if (conv == false)
-    {
-        ModuleBase::WARNING_QUIT("Occupied", "not converged, change 'smearing' method.");
-    }
+#ifdef __MPI
+    Parallel_Reduce::gather_max_double_all(ef);
+#endif
 
     return;
-} // end subroutine iweights
+}
 
-//==========================================================
-// calculates weights with the gaussian spreading technique
-//==========================================================
-void Occupy::gweights(const int nks,                 // number of k points.
-                      const std::vector<double> &wk, // weight of each k point(symmetry considered).
-                      const int nband,               // number of bands.
-                      const double &nelec,           // number of electrons.
-                      const double &smearing_sigma,  // parameter input by user.
-                      const int ngauss,              // which type of smearing.
-                      double **ekb,                  // save the band energy.
-                      double &ef,                    // ouput: fermi level
-                      double &demet,                 // output: energy correction for metal
-                      ModuleBase::matrix &wg,        // output: weight of each band at each k point.
-                      const int &is,                 // spin
-                      const std::vector<int> &isk)   // array to point out each k belong to which spin
+/**
+ * @brief calculates weights with the gaussian spreading technique
+ *
+ * @param nks number of k points.
+ * @param wk weight of each k point(symmetry considered).
+ * @param nband number of bands.
+ * @param nelec number of electrons.
+ * @param smearing_sigma parameter input by user.
+ * @param ngauss which type of smearing.
+ * @param ekb band energy.
+ * @param ef output: fermi level
+ * @param demet output: energy correction for metal
+ * @param wg output: weight of each band at each k point
+ * @param is spin
+ * @param isk array to point out each k belong to which spin
+ */
+void Occupy::gweights(const int nks,
+                      const std::vector<double>& wk,
+                      const int nband,
+                      const double& nelec,
+                      const double& smearing_sigma,
+                      const int ngauss,
+                      const ModuleBase::matrix& ekb,
+                      double& ef,
+                      double& demet,
+                      ModuleBase::matrix& wg,
+                      const int& is,
+                      const std::vector<int>& isk)
 {
     // ModuleBase::TITLE("Occupy","gweights");
     //===============================
@@ -221,7 +215,7 @@ void Occupy::gweights(const int nks,                 // number of k points.
             // Calculate the gaussian weights
             //================================
             // call wgauss
-            wg(ik, ib) = wk[ik] * Occupy::wgauss((ef - ekb[ik][ib]) / smearing_sigma, ngauss);
+            wg(ik, ib) = wk[ik] * Occupy::wgauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
 
             //====================================================================
             // The correct form of the band energy is  \int e n(e) de   for e<ef
@@ -229,23 +223,37 @@ void Occupy::gweights(const int nks,                 // number of k points.
             //====================================================================
             // Mohan fix bug 2010-1-9
             // call w1gauss
-            demet += wk[ik] * smearing_sigma * Occupy::w1gauss((ef - ekb[ik][ib]) / smearing_sigma, ngauss);
+            demet += wk[ik] * smearing_sigma * Occupy::w1gauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
         }
     }
 
     return;
 } // end subroutine gweights
 
-void Occupy::efermig(double **ekb,
+/**
+ * @brief Finds the Fermi energy
+ *
+ * @param ekb band energy.
+ * @param nband number of bands.
+ * @param nks nks number of k points.
+ * @param nelec number of electrons.
+ * @param wk wk weight of each k point(symmetry considered).
+ * @param smearing_sigma parameter input by user.
+ * @param ngauss which type of smearing.
+ * @param ef output: fermi level
+ * @param is spin
+ * @param isk array to point out each k belong to which spin
+ */
+void Occupy::efermig(const ModuleBase::matrix& ekb,
                      const int nband,
                      const int nks,
-                     const double &nelec,
-                     const std::vector<double> &wk,
-                     const double &smearing_sigma,
+                     const double& nelec,
+                     const std::vector<double>& wk,
+                     const double& smearing_sigma,
                      const int ngauss,
-                     double &ef,
-                     const int &is,
-                     const std::vector<int> &isk)
+                     double& ef,
+                     const int& is,
+                     const std::vector<int>& isk)
 {
     // ModuleBase::TITLE("Occupy","efermig");
     //==================================================================
@@ -266,13 +274,13 @@ void Occupy::efermig(double **ekb,
     */
 
     // the first 0 stands for the first k point.
-    double elw = ekb[0][0];
-    double eup = ekb[0][nband - 1];
+    double elw = ekb(0, 0);
+    double eup = ekb(0, nband - 1);
 
     for (int ik = 1; ik < nks; ik++) // do ik = 2, nks
     {
-        elw = std::min(elw, ekb[ik][0]);
-        eup = std::max(eup, ekb[ik][nband - 1]);
+        elw = std::min(elw, ekb(ik, 0));
+        eup = std::max(eup, ekb(ik, nband - 1));
     }
 
     eup += 2 * smearing_sigma;
@@ -343,20 +351,31 @@ sumkg:
         }
     }
     return;
-} // end function efermig
+}
 
-//===================================================================
-// This function computes the number of states under a given energy e
-//===================================================================
-double Occupy::sumkg(double **ekb,
+/**
+ * @brief This function computes the number of states under a given energy e
+ *
+ * @param ekb band energy.
+ * @param nband number of bands.
+ * @param nks number of k points.
+ * @param wk weight of each k point(symmetry considered).
+ * @param smearing_sigma parameter input by user
+ * @param ngauss which type of smearing.
+ * @param e a givern energy
+ * @param is spin
+ * @param isk array to point out each k belong to which spin
+ * @return (double) the number of states
+ */
+double Occupy::sumkg(const ModuleBase::matrix& ekb,
                      const int nband,
                      const int nks,
-                     const std::vector<double> &wk,
-                     const double &smearing_sigma,
+                     const std::vector<double>& wk,
+                     const double& smearing_sigma,
                      const int ngauss,
-                     const double &e,
-                     const int &is,
-                     const std::vector<int> &isk)
+                     const double& e,
+                     const int& is,
+                     const std::vector<int>& isk)
 {
     // ModuleBase::TITLE("Occupy","sumkg");
     double sum2 = 0.0;
@@ -371,7 +390,7 @@ double Occupy::sumkg(double **ekb,
             //===========================
             // call wgauss
             //===========================
-            sum1 += Occupy::wgauss((e - ekb[ik][ib]) / smearing_sigma, ngauss);
+            sum1 += Occupy::wgauss((e - ekb(ik, ib)) / smearing_sigma, ngauss);
         }
         sum2 += wk[ik] * sum1;
     }
@@ -385,7 +404,7 @@ double Occupy::sumkg(double **ekb,
     // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
 
     return sum2;
-} // end function sumkg
+}
 
 double Occupy::wgauss(const double &x, const int n)
 {
