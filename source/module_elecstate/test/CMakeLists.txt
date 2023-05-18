@@ -40,3 +40,23 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES elecstate_base_test.cpp ../elecstate.cpp ../occupy.cpp ../../module_psi/psi.cpp
 )
+
+AddTest(
+  TARGET elecstate_pw
+  LIBS ${math_libs} base device
+  SOURCES elecstate_pw_test.cpp
+    ../elecstate_pw.cpp
+    ../elecstate.cpp
+    ../occupy.cpp
+    ../../module_psi/psi.cpp
+    ../../module_basis/module_pw/pw_basis_k.cpp
+    ../../module_basis/module_pw/pw_basis.cpp
+    ../../module_basis/module_pw/pw_init.cpp
+    ../../module_basis/module_pw/pw_distributeg.cpp
+    ../../module_basis/module_pw/pw_distributer.cpp
+    ../../module_basis/module_pw/pw_distributeg_method1.cpp
+    ../../module_basis/module_pw/pw_distributeg_method2.cpp
+    ../../module_basis/module_pw/pw_transform_k.cpp
+    ../../module_basis/module_pw/fft.cpp
+    ../../module_psi/kernels/memory_op.cpp
+)

@@ -12,6 +12,16 @@ double get_ucell_omega()
     return GlobalC::ucell.omega;
 }
 
+double get_ucell_tpiba()
+{
+    return GlobalC::ucell.tpiba;
+}
+
+int get_xc_func_type()
+{
+    return XC_Functional::get_func_type();
+}
+
 std::string get_input_vdw_method()
 {
     return INPUT.vdw_method;
