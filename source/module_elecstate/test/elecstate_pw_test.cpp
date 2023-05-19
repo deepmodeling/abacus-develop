@@ -91,6 +91,8 @@ void Set_GlobalV_Default()
  *      - including double and single precision versions
  *   - IinitRhoData: elecstate::ElecStatePW::init_rho_data()
  *      - get rho and kin_r for ElecStatePW
+ *   - ParallelK: elecstate::ElecStatePW::parallelK()
+ *      - trivial call due to removing of __MPI
  *   - todo: psiToRho: elecstate::ElecStatePW::psiToRho()
  */
 
