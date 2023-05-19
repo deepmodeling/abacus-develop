@@ -4,7 +4,7 @@
 //==========================================================
 // #include "global.h"
 #include "module_io/input.h"
-
+#include "version.h"
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -64,11 +64,20 @@ void Input::Init(const std::string &fn)
                                           this->mdp.md_restart,
                                           this->out_alllog); // xiaohui add 2013-09-01
     Check();
-
+#ifdef VERSION
+        const char* version = VERSION;
+#else
+        const char* version = "unknown";
+#endif
+#ifdef COMMIT
+        const char* commit = COMMIT;
+#else
+        const char* commit = "unknown";
+#endif
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                              ABACUS v3.2                                            "
+    GlobalV::ofs_running << "                              ABACUS " << version
                          << std::endl << std::endl;
     GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
                          << std::endl << std::endl;
@@ -79,6 +88,8 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
                          << std::endl;
     GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
+                         << std::endl; 
+    GlobalV::ofs_running << "                      Commit: " << commit
                          << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(ios::right);
 
@@ -369,7 +380,7 @@ void Input::Default(void)
 
     exx_separate_loop = true;
     exx_hybrid_step = 100;
-    exx_mixing_beta = 0.0;
+    exx_mixing_beta = 1.0;
 
     exx_lambda = 0.3;
 

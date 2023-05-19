@@ -1,15 +1,16 @@
 #include "module_base/parallel_reduce.h"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
+#include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/dipole_io.h"
 
 // fuxiang add 2017-03-15
-void ModuleIO::write_dipole(const double *rho_save,
-                            const int &is,
-                            const int &istep,
-                            const std::string &fn,
-                            const int &precision,
+void ModuleIO::write_dipole(const double* rho_save,
+                            const ModulePW::PW_Basis* rhopw,
+                            const int& is,
+                            const int& istep,
+                            const std::string& fn,
+                            const int& precision,
                             const bool for_plot)
 {
     ModuleBase::TITLE("ModuleIO", "write_dipole");
@@ -36,24 +37,24 @@ void ModuleIO::write_dipole(const double *rho_save,
 
 #ifndef __MPI
     double dipole_elec_x = 0.0, dipole_elec_y = 0.0, dipole_elec_z = 0.0;
-    for (int k = 0; k < GlobalC::rhopw->nz; k++)
+    for (int k = 0; k < rhopw->nz; k++)
     {
-        for (int j = 0; j < GlobalC::rhopw->ny; j++)
+        for (int j = 0; j < rhopw->ny; j++)
         {
-            for (int i = 0; i < GlobalC::rhopw->nx; i++)
+            for (int i = 0; i < rhopw->nx; i++)
             {
-                dipole_elec_x += rho_save[i * GlobalC::rhopw->ny * GlobalC::rhopw->nz + j * GlobalC::rhopw->nz + k] * i
-                                 * GlobalC::ucell.lat0 * 0.529177 / GlobalC::rhopw->nx;
-                dipole_elec_y += rho_save[i * GlobalC::rhopw->ny * GlobalC::rhopw->nz + j * GlobalC::rhopw->nz + k] * j
-                                 * GlobalC::ucell.lat0 * 0.529177 / GlobalC::rhopw->ny;
-                dipole_elec_z += rho_save[i * GlobalC::rhopw->ny * GlobalC::rhopw->nz + j * GlobalC::rhopw->nz + k] * k
-                                 * GlobalC::ucell.lat0 * 0.529177 / GlobalC::rhopw->nz;
+                dipole_elec_x += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * i
+                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->nx;
+                dipole_elec_y += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * j
+                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->ny;
+                dipole_elec_z += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * k
+                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->nz;
             }
         }
     }
-    dipole_elec_x *= GlobalC::ucell.omega / static_cast<double>(GlobalC::rhopw->nxyz);
-    dipole_elec_y *= GlobalC::ucell.omega / static_cast<double>(GlobalC::rhopw->nxyz);
-    dipole_elec_z *= GlobalC::ucell.omega / static_cast<double>(GlobalC::rhopw->nxyz);
+    dipole_elec_x *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
+    dipole_elec_y *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
+    dipole_elec_z *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
     Parallel_Reduce::reduce_double_pool(dipole_elec_x);
     Parallel_Reduce::reduce_double_pool(dipole_elec_y);
     Parallel_Reduce::reduce_double_pool(dipole_elec_z);
@@ -63,14 +64,14 @@ void ModuleIO::write_dipole(const double *rho_save,
 
     double dipole_elec[3] = {0.0, 0.0, 0.0};
 
-    for (int ir = 0; ir < GlobalC::rhopw->nrxx; ++ir)
+    for (int ir = 0; ir < rhopw->nrxx; ++ir)
     {
-        int i = ir / (GlobalC::rhopw->ny * GlobalC::rhopw->nplane);
-        int j = ir / GlobalC::rhopw->nplane - i * GlobalC::rhopw->ny;
-        int k = ir % GlobalC::rhopw->nplane + GlobalC::rhopw->startz_current;
-        double x = (double)i / GlobalC::rhopw->nx;
-        double y = (double)j / GlobalC::rhopw->ny;
-        double z = (double)k / GlobalC::rhopw->nz;
+        int i = ir / (rhopw->ny * rhopw->nplane);
+        int j = ir / rhopw->nplane - i * rhopw->ny;
+        int k = ir % rhopw->nplane + rhopw->startz_current;
+        double x = (double)i / rhopw->nx;
+        double y = (double)j / rhopw->ny;
+        double z = (double)k / rhopw->nz;
 
         dipole_elec[0] += rho_save[ir] * x;
         dipole_elec[1] += rho_save[ir] * y;
@@ -82,7 +83,7 @@ void ModuleIO::write_dipole(const double *rho_save,
     Parallel_Reduce::reduce_double_pool(dipole_elec[2]);
     for (int i = 0; i < 3; ++i)
     {
-        dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / GlobalC::rhopw->nxyz;
+        dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / rhopw->nxyz;
     }
 
     std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec[0] << std::endl;

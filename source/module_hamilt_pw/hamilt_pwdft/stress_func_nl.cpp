@@ -64,7 +64,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
         h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
         h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
     }
-    FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *deeq = nullptr, *gcar = nullptr, *kvec_c = nullptr,
+    FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *gcar = nullptr, *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(),  *kvec_c = GlobalC::wfcpw->get_kvec_c_data<FPTYPE>(),
            *qvec = nullptr;
     resmem_var_op()(this->ctx, qvec, 3);
     resmem_var_op()(this->ctx, stress, 9);
@@ -72,17 +72,14 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     resmem_var_h_op()(this->cpu_ctx, sigmanlc, 9);
     if (this->device == psi::GpuDevice)
     {
-        deeq = GlobalC::ppcell.d_deeq;
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, gcar, 3 * p_kv->nks * wfc_basis->npwk_max);
-        resmem_var_op()(this->ctx, kvec_c, 3 * p_kv->nks);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
                              gcar,
                              &wfc_basis->gcar[0][0],
                              3 * p_kv->nks * wfc_basis->npwk_max);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, kvec_c, &wfc_basis->kvec_c[0][0], 3 * p_kv->nks);
         resmem_complex_op()(this->ctx, pvkb2, nkb * npwx);
         resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * npwx);
         for (int ii = 0; ii < 3; ii++)
@@ -96,10 +93,8 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     }
     else
     {
-        deeq = GlobalC::ppcell.deeq.ptr;
         d_wg = wg.c;
         gcar = &wfc_basis->gcar[0][0];
-        kvec_c = &wfc_basis->kvec_c[0][0];
         atom_nh = h_atom_nh;
         atom_na = h_atom_na;
         for (int ii = 0; ii < 3; ii++)
@@ -163,7 +158,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
             std::complex<FPTYPE> *h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
-            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_complex_double_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
             delmem_complex_h_op()(this->cpu_ctx, h_becp);
         }
@@ -312,7 +307,6 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, gcar);
-        delmem_var_op()(this->ctx, kvec_c);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
         delmem_complex_op()(this->ctx, pvkb2);

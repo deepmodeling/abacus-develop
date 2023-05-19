@@ -13,7 +13,7 @@ struct Exx_Info
 		Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
 		double hybrid_alpha = 0.25;
 		double hse_omega = 0.11;
-		double mixing_beta_for_loop1;
+		double mixing_beta_for_loop1 = 1.0;
 		
 		bool separate_loop = true;
 		size_t hybrid_step = 1;

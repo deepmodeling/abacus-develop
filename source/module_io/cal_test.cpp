@@ -45,31 +45,31 @@ double Cal_Test::meigts123;
 
 double Cal_Test::mtot;
 
-void Cal_Test::test_memory(void)
+void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_Basis_K* wfcpw, const std::string chr_mixing_mode, const int chr_mixing_ndim)
 {
 	ModuleBase::TITLE("Cal_Test","test_memory");
 
-	const int ngmw = Cal_Test::cal_np(GlobalC::wfcpw->ggecut, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
-	const int ngmc = Cal_Test::cal_np(GlobalC::rhopw->ggecut, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
+	const int ngmw = Cal_Test::cal_np(wfcpw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
+	const int ngmc = Cal_Test::cal_np(rhopw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
 
 	std::cout << " number of atoms = " << GlobalC::ucell.nat << std::endl;
 	std::cout << " plane wave number for wave functions = " << ngmw << std::endl;
 	std::cout << " plane wave number for chage density  = " << ngmc << std::endl;
 
-	mporter = ModuleBase::Memory::calculate_mem ( GlobalC::rhopw->nxyz, "double");
+	mporter = ModuleBase::Memory::calculate_mem ( rhopw->nxyz, "double");
 
 	mrho = mporter;
 	mrho_save = mrho;
 	mrho_core = mrho;
 
 	// (2) memory for charge mixing
-	std::cout << " Mixing mode = " << GlobalC::CHR_MIX.get_mixing_mode() << std::endl;
-	if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
+	std::cout << " Mixing mode = " << chr_mixing_mode << std::endl;
+	if(chr_mixing_mode == "pulay")
 	{
-		std::cout << " Mixing dimension = " << GlobalC::CHR_MIX.get_mixing_ndim() << std::endl;
-		mRrho = GlobalC::CHR_MIX.get_mixing_ndim() * mrho;
-		mdRrho = (GlobalC::CHR_MIX.get_mixing_ndim()-1) * mrho;
-		mdrho = (GlobalC::CHR_MIX.get_mixing_ndim()-1) * mrho;
+		std::cout << " Mixing dimension = " << chr_mixing_ndim << std::endl;
+		mRrho = chr_mixing_ndim * mrho;
+		mdRrho = (chr_mixing_ndim-1) * mrho;
+		mdrho = (chr_mixing_ndim-1) * mrho;
 		mrho_save2 = mrho;
 //		std::cout << " Memory for pulay mixing: " << mrho << " MB" << std::endl;	
 	}
@@ -97,7 +97,7 @@ void Cal_Test::test_memory(void)
 	mgg = ModuleBase::Memory::calculate_mem( ngmc, "double");
 	mig123 = ModuleBase::Memory::calculate_mem( ngmc*3, "int");
 	mstrucFac = ModuleBase::Memory::calculate_mem( GlobalC::ucell.ntype*ngmc, "cdouble");
-	meigts123 = ModuleBase::Memory::calculate_mem( GlobalC::ucell.nat * (2*GlobalC::rhopw->nx+1+2*GlobalC::rhopw->ny+1+2*GlobalC::rhopw->nz+1), "cdouble");
+	meigts123 = ModuleBase::Memory::calculate_mem( GlobalC::ucell.nat * (2*rhopw->nx+1+2*rhopw->ny+1+2*rhopw->nz+1), "cdouble");
 
 //	std::cout << " Memory for "
 

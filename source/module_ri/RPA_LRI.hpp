@@ -63,19 +63,18 @@ template <typename Tdata>
 void RPA_LRI<Tdata>::cal_postSCF_exx(
                 const MPI_Comm& mpi_comm_in,
                 const K_Vectors& kv,
-                const Local_Orbital_Charge& loc,
+				const Mix_DMk_2D &mix_DMk_2D,
                 const Parallel_Orbitals& pv)
 {
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
-    exx_lri_rpa.cal_exx_elec(loc, pv);
+    exx_lri_rpa.cal_exx_elec(mix_DMk_2D, pv);
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 
 template <typename Tdata>
 void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
                                  const psi::Psi<std::complex<double>> &psi,
-                                 Local_Orbital_Charge &loc,
                                  const elecstate::ElecState *pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_for_RPA");
@@ -90,10 +89,10 @@ void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
     this->out_Cs();
     this->out_coulomb_k();
 
-    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etxc / 2.0 << std::endl;
-    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << GlobalC::en.etot / 2.0 << std::endl;
+    std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etxc / 2.0 << std::endl;
+    std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etot / 2.0 << std::endl;
     std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
-              << (GlobalC::en.etot - GlobalC::en.etxc + exx_lri_rpa.Eexx) / 2.0 << std::endl;
+              << (pelec->f_en.etot - pelec->f_en.etxc + exx_lri_rpa.Eexx) / 2.0 << std::endl;
 
     return;
 }
@@ -202,7 +201,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_bands(const elecstate::ElecSt
     ofs << GlobalV::NSPIN << std::endl;
     ofs << GlobalV::NBANDS << std::endl;
     ofs << GlobalV::NLOCAL << std::endl;
-    ofs << (GlobalC::en.ef / 2.0) << std::endl;
+    ofs << (pelec->eferm.ef / 2.0) << std::endl;
 
     for (int ik = 0; ik != nks_tot; ik++)
     {

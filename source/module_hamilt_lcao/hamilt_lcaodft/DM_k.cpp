@@ -10,7 +10,7 @@
 #include <mkl_service.h>
 #endif
 
-void Local_Orbital_Charge::allocate_DM_k(void)
+void Local_Orbital_Charge::allocate_DM_k(const int& nks)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "allocate_k");
 
@@ -54,7 +54,7 @@ void Local_Orbital_Charge::allocate_DM_k(void)
     }
 
     // Peize Lin test 2019-01-16
-    this->init_dm_2d();
+    this->init_dm_2d(nks);
 
     return;
 }
@@ -70,7 +70,8 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
                         std::complex<double> ***wfc_k_grid,
                         std::complex<double> *WFC_PHASE,
                         std::complex<double> **DM_ATOM,
-                        const ModuleBase::matrix &wg_in)
+                        const ModuleBase::matrix &wg_in,
+                        const K_Vectors& kv)
 {
 
     const char transa = 'N';
@@ -78,10 +79,10 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
     const std::complex<double> alpha = 1;
     const std::complex<double> beta = 1;
 
-    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+    for (int ik = 0; ik < kv.nks; ik++)
     {
         std::complex<double> **wfc = wfc_k_grid[ik];
-        const int ispin = GlobalC::kv.isk[ik];
+        const int ispin = kv.isk[ik];
         int atom2start = 0;
 
         for (int ia2 = 0; ia2 < RA.na_each[ia1]; ++ia2)
@@ -94,9 +95,9 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
             const int iw2_lo = gt.trace_lo[start2];
             const int nw2 = atom2->nw;
             std::complex<double> exp_R = ModuleBase::libm::exp(fac
-                                             * (GlobalC::kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
-                                                + GlobalC::kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
-                                                + GlobalC::kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
+                                             * (kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
+                                                + kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
+                                                + kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
 
             // ModuleBase::GlobalFunc::ZEROS(WFC_PHASE, GlobalV::NBANDS*nw1);
             int ibStart = 0;
@@ -152,7 +153,8 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
                            std::complex<double> ***wfc_k_grid,
                            std::complex<double> *WFC_PHASE,
                            std::complex<double> **DM_ATOM,
-                           const ModuleBase::matrix &wg_in)
+                           const ModuleBase::matrix &wg_in,
+                           const K_Vectors& kv)
 {
 
     if (GlobalV::NSPIN != 4)
@@ -170,7 +172,7 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
     {
         for (int is2 = 0; is2 < 2; is2++)
         {
-            for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+            for (int ik = 0; ik < kv.nks; ik++)
             {
                 std::complex<double> **wfc = wfc_k_grid[ik];
                 int atom2start = 0;
@@ -185,9 +187,9 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
                     const int iw2_lo = gt.trace_lo[start2] / GlobalV::NPOL + gt.lgd / GlobalV::NPOL * is2;
                     const int nw2 = atom2->nw;
                     std::complex<double> exp_R = ModuleBase::libm::exp(fac
-                                                     * (GlobalC::kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
-                                                        + GlobalC::kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
-                                                        + GlobalC::kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
+                                                     * (kv.kvec_d[ik].x * RA.info[ia1][ia2][0]
+                                                        + kv.kvec_d[ik].y * RA.info[ia1][ia2][1]
+                                                        + kv.kvec_d[ik].z * RA.info[ia1][ia2][2]));
 
                     // ModuleBase::GlobalFunc::ZEROS(WFC_PHASE, GlobalV::NBANDS*nw1);
                     int ibStart = 0;
@@ -236,7 +238,7 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
     return;
 }
 
-void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix &wg_in)
+void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix &wg_in, const K_Vectors& kv)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "cal_dk_k");
     ModuleBase::timer::tick("LCAO_Charge", "cal_dk_k");
@@ -315,7 +317,8 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
                                 this->LOWF->wfc_k_grid,
                                 WFC_PHASE,
                                 DM_ATOM,
-                                wg_in);
+                                wg_in,
+                                kv);
                 }
                 else
                 {
@@ -329,7 +332,8 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
                                    this->LOWF->wfc_k_grid,
                                    WFC_PHASE,
                                    DM_ATOM,
-                                   wg_in);
+                                   wg_in,
+                                   kv);
                 }
 
                 if (GlobalV::NSPIN != 4)
@@ -378,7 +382,7 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
     /*  std::cout << std::setprecision(3);
         for(int i=0; i<nnrg_now; i++)
 
-        for(int ik=0; ik<GlobalC::kv.nkstot; ++ik)
+        for(int ik=0; ik<kv.nkstot; ++ik)
         {
             for(int ib=0; ib<GlobalV::NBANDS; ++ib)
             {

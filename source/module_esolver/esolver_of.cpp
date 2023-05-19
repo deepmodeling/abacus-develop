@@ -112,15 +112,14 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     }
 
     this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
 
-    this->pelec->pot = new elecstate::Potential(
-        GlobalC::rhopw,
-        &GlobalC::ucell,
-        &GlobalC::ppcell.vloc,
-        &GlobalC::sf.strucFac,
-        &(GlobalC::en.etxc),
-        &(GlobalC::en.vtxc)
-    );
+    this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
+                                                &GlobalC::ucell,
+                                                &GlobalC::ppcell.vloc,
+                                                &GlobalC::sf.strucFac,
+                                                &(this->pelec->f_en.etxc),
+                                                &(this->pelec->f_en.vtxc));
     //There is no Operator in ESolver_OF, register Potentials here!
     std::vector<string> pot_register_in;
     if (GlobalV::VION_IN_H)
@@ -261,7 +260,9 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         this->updateV();
 
         // calculate the energy of new rho and phi
-        this->cal_Energy(this->energy_current);
+        this->energy_llast = this->energy_last;
+        this->energy_last = this->energy_current;
+        this->energy_current = this->cal_Energy();
 
         // print neccesary information
         this->printInfo();
@@ -301,7 +302,7 @@ void ESolver_OF::beforeOpt(const int istep)
     this->pelec->init_scf(istep, GlobalC::sf.strucFac);
 
     //calculate ewald energy
-    H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho);
+    this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, GlobalC::sf.strucFac);
 
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -468,33 +469,33 @@ void ESolver_OF::solveV()
     }
     delete[] tempTheta;
 
-// // ======================== for test ============================
-//     if (this->iter == 0)
-//     {
-//         for (int i = -100; i < 100; ++i)
-//         {
-//             this->theta[0] = 0.001 * i;
-//             for (int ir = 0; ir < this->nrxx; ++ir)
-//             {
-//                 ptempPhi[0][ir] = this->pphi[0][ir] * cos(this->theta[0]) + this->pdirect[0][ir] * sin(this->theta[0]);
-//                 ptempRho->rho[0][ir] = ptempPhi[0][ir] * ptempPhi[0][ir];
-//             }
-//             this->caldEdtheta(ptempPhi, ptempRho, this->theta, dEdtheta);
-//             GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
-//             E = GlobalC::en.etot;
-//             double eKE = 0.;
-//             double ePP = 0.;
-//             eKE = this->kineticEnergy();
-//             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->nrxx, this->dV);
-//             // ePP = this->inner_product(GlobalC::pot.vltot, ptempRho[0], this->nrxx, this->dV);
-//             Parallel_Reduce::reduce_double_all(ePP);
-//             E += eKE + ePP;
-//             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << E << endl;
-//             if (this->theta[0] == 0) cout << "dEdtheta    " << dEdtheta[0]<< endl;
-//         }
-//         exit(0);
-//     }
-// // ======================== for test ============================
+    // // ======================== for test ============================
+    //     if (this->iter == 0)
+    //     {
+    //         for (int i = -100; i < 100; ++i)
+    //         {
+    //             this->theta[0] = 0.001 * i;
+    //             for (int ir = 0; ir < this->nrxx; ++ir)
+    //             {
+    //                 ptempPhi[0][ir] = this->pphi[0][ir] * cos(this->theta[0]) + this->pdirect[0][ir] *
+    //                 sin(this->theta[0]); ptempRho->rho[0][ir] = ptempPhi[0][ir] * ptempPhi[0][ir];
+    //             }
+    //             this->caldEdtheta(ptempPhi, ptempRho, this->theta, dEdtheta);
+    //             this->pelec->f_en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
+    //             E = this->pelec->f_en.etot;
+    //             double eKE = 0.;
+    //             double ePP = 0.;
+    //             eKE = this->kineticEnergy();
+    //             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->nrxx, this->dV);
+    //             // ePP = this->inner_product(GlobalC::pot.vltot, ptempRho[0], this->nrxx, this->dV);
+    //             Parallel_Reduce::reduce_double_all(ePP);
+    //             E += eKE + ePP;
+    //             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << E << endl;
+    //             if (this->theta[0] == 0) cout << "dEdtheta    " << dEdtheta[0]<< endl;
+    //         }
+    //         exit(0);
+    //     }
+    // // ======================== for test ============================
 
     // (4) line search to find the best theta
     double eKE = 0.;    // kinetic energy
@@ -506,8 +507,8 @@ void ESolver_OF::solveV()
         while (true)
         {
             // update energy
-            GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
-            E = GlobalC::en.etot;
+            this->pelec->cal_energies(2);
+            E = this->pelec->f_en.etot;
             eKE = this->kineticEnergy();
             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), this->ptempRho->rho[0], this->nrxx, this->dV);
             Parallel_Reduce::reduce_double_all(ePP);
@@ -588,70 +589,70 @@ void ESolver_OF::solveV()
     //         maxThetaDir = max(abs(pthetaDir[0]), abs(pthetaDir[1]));
     //         thetaAlpha = min(0.1, 0.1*ModuleBase::PI/maxThetaDir);
 
-    //         // line search along thetaDir to find thetaAlpha
-    //         this->opt_dcsrch.set_paras(1e-4, 1e-2, 1e-12, 0., ModuleBase::PI/maxThetaDir);
-    //         strcpy(this->task, "START");
-    //         numDC = 0;
-    //         while(true)
-    //         {
-    //             GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
-    //             E = GlobalC::en.etot;
-    //             eKE = this->kineticEnergy();
-    //             ePP = 0.;
-    //             for (int is = 0; is < GlobalV::NSPIN; ++is) {
-    //                 ePP += this->inner_product(GlobalC::pot.vltot, ptempRho[is], this->nrxx, this->dV);
-    //             }
-    //             Parallel_Reduce::reduce_double_all(ePP);
-    //             E += eKE + ePP;
-    //             this->opt_dcsrch.dcSrch(E, dEdalpha, thetaAlpha, this->task);
-    //             numDC++;
+        //         // line search along thetaDir to find thetaAlpha
+        //         this->opt_dcsrch.set_paras(1e-4, 1e-2, 1e-12, 0., ModuleBase::PI/maxThetaDir);
+        //         strcpy(this->task, "START");
+        //         numDC = 0;
+        //         while(true)
+        //         {
+        //             this->pelec->f_en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
+        //             E = this->pelec->f_en.etot;
+        //             eKE = this->kineticEnergy();
+        //             ePP = 0.;
+        //             for (int is = 0; is < GlobalV::NSPIN; ++is) {
+        //                 ePP += this->inner_product(GlobalC::pot.vltot, ptempRho[is], this->nrxx, this->dV);
+        //             }
+        //             Parallel_Reduce::reduce_double_all(ePP);
+        //             E += eKE + ePP;
+        //             this->opt_dcsrch.dcSrch(E, dEdalpha, thetaAlpha, this->task);
+        //             numDC++;
 
-    //             if (strncmp(this->task, "FG", 2) == 0)
-    //             {
-    //                 for (int is = 0; is < GlobalV::NSPIN; ++is)
-    //                 {
-    //                     tempTheta[is] = this->theta[is] + thetaAlpha * pthetaDir[is];
-    //                     for (int ir = 0; ir < this->nrxx; ++ir)
-    //                     {
-    //                         ptempPhi[is][ir] = this->pphi[is][ir] * cos(tempTheta[is]) + this->pdirect[is][ir] * sin(tempTheta[is]);
-    //                         ptempRho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
-    //                     }
-    //                 }
-    //                 this->caldEdtheta(ptempPhi, ptempRho, tempTheta, dEdtheta);
-    //                 dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1);
+        //             if (strncmp(this->task, "FG", 2) == 0)
+        //             {
+        //                 for (int is = 0; is < GlobalV::NSPIN; ++is)
+        //                 {
+        //                     tempTheta[is] = this->theta[is] + thetaAlpha * pthetaDir[is];
+        //                     for (int ir = 0; ir < this->nrxx; ++ir)
+        //                     {
+        //                         ptempPhi[is][ir] = this->pphi[is][ir] * cos(tempTheta[is]) + this->pdirect[is][ir] *
+        //                         sin(tempTheta[is]); ptempRho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
+        //                     }
+        //                 }
+        //                 this->caldEdtheta(ptempPhi, ptempRho, tempTheta, dEdtheta);
+        //                 dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1);
 
-    //                 if (numDC > 10)
-    //                 {
-    //                     GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter number." << endl;
-    //                     break;
-    //                 }
-    //             }
-    //             else if (strncmp(this->task, "CO", 2) == 0)
-    //             {
-    //                 break;
-    //             }
-    //             else if (strncmp(this->task, "WA", 2) == 0)
-    //             {
-    //                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
-    //                 cout << this->task << endl;
-    //                 break;
-    //             }
-    //             else if (strncmp(this->task, "ER", 2) == 0)
-    //             {
-    //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
-    //                 cout << this->task << endl;
-    //                 break;
-    //             }
-    //         }
+        //                 if (numDC > 10)
+        //                 {
+        //                     GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter
+        //                     number." << endl; break;
+        //                 }
+        //             }
+        //             else if (strncmp(this->task, "CO", 2) == 0)
+        //             {
+        //                 break;
+        //             }
+        //             else if (strncmp(this->task, "WA", 2) == 0)
+        //             {
+        //                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
+        //                 cout << this->task << endl;
+        //                 break;
+        //             }
+        //             else if (strncmp(this->task, "ER", 2) == 0)
+        //             {
+        //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
+        //                 cout << this->task << endl;
+        //                 break;
+        //             }
+        //         }
 
-    //         for (int is = 0; is < GlobalV::NSPIN; ++is) this->theta[is] += thetaAlpha * pthetaDir[is];
-    //         if (sqrt(dEdtheta[0] * dEdtheta[0] + dEdtheta[1] * dEdtheta[1]) < alphaTol) break;
-    //         thetaIter++;
-    //         if (thetaIter > 2) break;
-    //     }
-    //     delete[] tempTheta;
-    //     delete[] pthetaDir;
-    // ========================== Under testing ==========================
+        //         for (int is = 0; is < GlobalV::NSPIN; ++is) this->theta[is] += thetaAlpha * pthetaDir[is];
+        //         if (sqrt(dEdtheta[0] * dEdtheta[0] + dEdtheta[1] * dEdtheta[1]) < alphaTol) break;
+        //         thetaIter++;
+        //         if (thetaIter > 2) break;
+        //     }
+        //     delete[] tempTheta;
+        //     delete[] pthetaDir;
+        // ========================== Under testing ==========================
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -886,7 +887,8 @@ void ESolver_OF::afterOpt()
     if (this->conv)
     {
         GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
-        GlobalV::ofs_running << " final etot is " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
+                             << std::endl;
     }
     else
     {
@@ -899,7 +901,7 @@ void ESolver_OF::afterOpt()
         {
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            double& ef_tmp = GlobalC::en.get_ef(is,GlobalV::TWO_EFERMI);
+            const double ef_tmp = this->pelec->eferm.get_efval(is);
             ModuleIO::write_rho(
 #ifdef __MPI
                 GlobalC::bigpw->bz,
@@ -949,7 +951,7 @@ void ESolver_OF::postprocess()
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << GlobalC::en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
+    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
     // =============== for test ===============
     // if (GlobalV::CAL_FORCE)
@@ -1062,9 +1064,9 @@ double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
 // =====================================================================
 // NOTE THIS FUNCTION SHOULD BE CALLEDD AFTER POTENTIAL HAS BEEN UPDATED
 // =====================================================================
-void ESolver_OF::cal_Energy(double& etot)
+double ESolver_OF::cal_Energy()
 {
-    GlobalC::en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
+    this->pelec->cal_energies(2);
     double eKE = this->kineticEnergy(); // kinetic energy
     double ePP = 0.;                    // electron-ion interaction energy
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -1072,19 +1074,15 @@ void ESolver_OF::cal_Energy(double& etot)
         ePP += this->inner_product(this->pelec->pot->get_fixed_v(), pelec->charge->rho[is], this->nrxx, this->dV);
     }
     Parallel_Reduce::reduce_double_all(ePP);
-    GlobalC::en.etot += eKE + ePP;
-
-    this->energy_llast = this->energy_last;
-    this->energy_last = this->energy_current;
-    this->energy_current = GlobalC::en.etot;
+    this->pelec->f_en.etot += eKE + ePP;
+    return this->pelec->f_en.etot;
 }
 
 
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces<double> ff(GlobalC::ucell.nat);
-    ModuleBase::matrix placeholder_wg;//using a placeholder for this template interface, would be refactor later
-    ff.cal_force(force, placeholder_wg, pelec->charge, this->pw_rho, &GlobalC::symm, &GlobalC::sf);
+    ff.cal_force(force, *pelec, this->pw_rho, &GlobalC::symm, &GlobalC::sf);
 }
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)

@@ -56,7 +56,7 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
     this->init_rho = true;
 }
 
-template<typename FPTYPE, typename Device>
+template <typename FPTYPE, typename Device>
 void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
@@ -111,9 +111,9 @@ void ElecStatePW<FPTYPE, Device>::parallelK()
     this->charge->rho_mpi(this->bigpw->nbz, this->bigpw->bz);
     if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
 	{
-		this->eband /= GlobalV::NPROC_IN_POOL;
-		MPI_Allreduce(MPI_IN_PLACE, &this->eband, 1, MPI_DOUBLE, MPI_SUM , STO_WORLD);
-	}
+        this->f_en.eband /= GlobalV::NPROC_IN_POOL;
+        MPI_Allreduce(MPI_IN_PLACE, &this->f_en.eband, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);
+    }
 #endif
 }
 

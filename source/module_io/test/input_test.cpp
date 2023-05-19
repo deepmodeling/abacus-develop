@@ -228,7 +228,7 @@ TEST_F(InputTest, Default)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
-		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,1.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,1E-4);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,1E-1);
@@ -565,7 +565,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.exx_separate_loop);
         EXPECT_EQ(INPUT.exx_hybrid_step,100);
         EXPECT_DOUBLE_EQ(INPUT.exx_lambda,0.3);
-		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,0.0);
+		EXPECT_DOUBLE_EQ(INPUT.exx_mixing_beta,1.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_pca_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_c_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_v_threshold,0);
@@ -1450,17 +1450,21 @@ protected:
     void SetUp() 
 	{
         // create a temporary file for testing
-        tmpfile = std::tmpnam(nullptr);
+        char tmpname[] = "tmpfile.tmp";
+        int fd = mkstemp(tmpname);
+        tmpfile = tmpname;
         std::ofstream ofs(tmpfile);
         ofs << "1.0"; // valid input
         ofs.close();
     }
 
     void TearDown() override {
-        std::remove(tmpfile.c_str());
+        close(fd);
+        unlink(tmpfile.c_str());
     }
 
     std::string tmpfile;
+    int fd;
 };
 
 TEST_F(ReadKSpacingTest, ValidInputOneValue) {

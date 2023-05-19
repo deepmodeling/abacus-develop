@@ -1,5 +1,8 @@
 list(APPEND objects
     elecstate.cpp
+    elecstate_getters.cpp
+    elecstate_energy.cpp
+    elecstate_print.cpp
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
     potentials/gatefield.cpp
@@ -16,9 +19,8 @@ list(APPEND objects
     module_charge/charge_pulay.cpp
     module_charge/symmetry_rho.cpp
     module_charge/symmetry_rhog.cpp
-    energy.cpp
+    fp_energy.cpp
     magnetism.cpp
-    elecstate_getters.cpp
     occupy.cpp
 )
 

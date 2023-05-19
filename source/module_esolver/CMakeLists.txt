@@ -28,3 +28,7 @@ if(ENABLE_COVERAGE)
   add_coverage(esolver)
 endif()
 
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+

@@ -6,4 +6,7 @@ variance_wfc_r_0_2 2.17777
 variance_wfc_r_0_3 2.60806
 variance_wfc_r_0_4 0.78311
 variance_wfc_r_0_5 0.84843
+pointgroupref T_d
+spacegroupref O_h
+nksibzref 1
 totaltimeref 0.11908

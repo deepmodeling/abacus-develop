@@ -269,6 +269,12 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
         }
         this->diag_ethr = std::min(this->diag_ethr, static_cast<FPTYPE>(0.1) * drho / std::max(static_cast<FPTYPE>(1.0), static_cast<FPTYPE>(GlobalV::nelec)));
     }
+    // It is essential for single precision implementation to keep the diag_ethr value
+    // less or equal to the single-precision limit of convergence(0.5e-4).
+    // modified by denghuilu at 2023-05-15
+    if (GlobalV::precision_flag == "single") {
+        this->diag_ethr = std::max(this->diag_ethr, static_cast<FPTYPE>(0.5e-4));
+    }
     return this->diag_ethr;
 }
 
