@@ -1,16 +1,10 @@
 #include <cmath>
 
 #include "elecstate.h"
+#include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
-#include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_elecstate/potentials/gatefield.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
 namespace elecstate
 {
 /// @brief calculate band gap
@@ -97,7 +91,7 @@ double ElecState::cal_delta_eband() const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
     {
         v_ofk = this->pot->get_effective_vofk(0);
     }
@@ -105,7 +99,7 @@ double ElecState::cal_delta_eband() const
     for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
     {
         deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
             deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
         }
@@ -118,7 +112,7 @@ double ElecState::cal_delta_eband() const
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
             deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
             {
                 deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
             }
@@ -164,7 +158,7 @@ double ElecState::cal_delta_escf() const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
     {
         v_ofk = this->pot->get_effective_vofk(0);
     }
@@ -172,7 +166,7 @@ double ElecState::cal_delta_escf() const
     for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
     {
         descf -= (this->charge->rho[0][ir] - this->charge->rho_save[0][ir]) * (v_eff[ir] - v_fixed[ir]);
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
             descf -= (this->charge->kin_r[0][ir] - this->charge->kin_r_save[0][ir]) * v_ofk[ir];
         }
@@ -181,14 +175,14 @@ double ElecState::cal_delta_escf() const
     if (GlobalV::NSPIN == 2)
     {
         v_eff = this->pot->get_effective_v(1);
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
             v_ofk = this->pot->get_effective_vofk(1);
         }
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
             descf -= (this->charge->rho[1][ir] - this->charge->rho_save[1][ir]) * (v_eff[ir] - v_fixed[ir]);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
             {
                 descf -= (this->charge->kin_r[1][ir] - this->charge->kin_r_save[1][ir]) * v_ofk[ir];
             }
@@ -232,24 +226,24 @@ void ElecState::cal_converged()
  */
 void ElecState::cal_energies(const int type)
 {
-    this->f_en.hartree_energy = elecstate::H_Hartree_pw::hartree_energy;
-    this->f_en.efield = elecstate::Efield::etotefield;
-    this->f_en.gatefield = elecstate::Gatefield::etotgatefield;
+    this->f_en.hartree_energy = get_hartree_energy();
+    this->f_en.efield = get_etot_efield();
+    this->f_en.gatefield = get_etot_gatefield();
     if (GlobalV::imp_sol)
     {
-        this->f_en.esol_el = GlobalC::solvent_model.cal_Ael(GlobalC::ucell, this->charge->nrxx, this->charge->nxyz);
-        this->f_en.esol_cav = GlobalC::solvent_model.cal_Acav(GlobalC::ucell, this->charge->nxyz);
+        this->f_en.esol_el = get_solvent_model_Ael();
+        this->f_en.esol_cav = get_solvent_model_Acav();
     }
 #ifdef __LCAO
     if (GlobalV::dft_plus_u)
     {
-        this->f_en.edftu = GlobalC::dftu.get_energy();
+        this->f_en.edftu = get_dftu_energy();
     }
 #endif
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        this->f_en.edeepks_scf = GlobalC::ld.E_delta - GlobalC::ld.e_delta_band;
+        this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
     }
 #endif
     if (type == 1) // harris
@@ -262,39 +256,4 @@ void ElecState::cal_energies(const int type)
     }
 }
 
-#ifdef __EXX
-#ifdef __LCAO
-/// @brief calculation if converged
-/// @date Peize Lin add 2016-12-03
-void ElecState::set_exx()
-{
-    ModuleBase::TITLE("energy", "set_exx");
-
-    auto exx_energy = []() -> double {
-        if ("lcao_in_pw" == GlobalV::BASIS_TYPE)
-        {
-            return GlobalC::exx_lip.get_exx_energy();
-        }
-        else if ("lcao" == GlobalV::BASIS_TYPE)
-        {
-            if (GlobalC::exx_info.info_ri.real_number)
-                return GlobalC::exx_lri_double.Eexx;
-            else
-                return std::real(GlobalC::exx_lri_complex.Eexx);
-        }
-        else
-        {
-            throw std::invalid_argument(ModuleBase::GlobalFunc::TO_STRING(__FILE__)
-                                        + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
-        }
-    };
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        this->f_en.exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_energy();
-    }
-
-    return;
-}
-#endif //__LCAO
-#endif //__EXX
 } // namespace elecstate

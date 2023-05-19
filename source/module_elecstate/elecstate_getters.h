@@ -8,6 +8,10 @@ namespace elecstate
 
 /// @brief get the value of GlobalC::ucell.omega
 double get_ucell_omega();
+/// @brief get the value of GlobalC::ucell.tpiba
+double get_ucell_tpiba();
+/// @brief get the value of XC_Functional::func_type
+int get_xc_func_type();
 /// @brief get the value of INPUT.vdw_method
 std::string get_input_vdw_method();
 /// @brief get the value of GlobalC::ucell.magnet.tot_magnetization
@@ -22,6 +26,7 @@ double get_ucell_tot_magnetization_nc_y();
 double get_ucell_tot_magnetization_nc_z();
 /// @brief get the type of KS_SOLVER
 std::string get_ks_solver_type();
+/// @brief get the value of GlobalC::solvent_model.cal_Ael
 
 } // namespace elecstate
 
