@@ -54,6 +54,7 @@ has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
+symmetry=`grep "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
@@ -396,7 +397,16 @@ if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
 	oprec=`python3 get_oprec.py`
 	echo "oprec $oprec" >> $1
 fi
+
+if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
+	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
+	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
+	nksibz=`grep ' nkstot_ibz ' $running_path | awk '{print $3}'`
+	echo "pointgroupref $pointgroup" >>$1
+	echo "spacegroupref $spacegroup" >>$1
+	echo "nksibzref $nksibz" >>$1
+fi
+
 #echo $total_band
 ttot=`grep $word $running_path | awk '{print $3}'`
 echo "totaltimeref $ttot" >>$1
-
