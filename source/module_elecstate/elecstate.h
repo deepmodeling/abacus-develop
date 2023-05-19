@@ -67,7 +67,7 @@ class ElecState
     // calculate wg from ekb
     virtual void calculate_weights();
     // use occupied weights from INPUT and skip calculate_weights
-    void fixed_weights(const double * const ocp_kb);
+    void fixed_weights(const std::vector<double>& ocp_kb);
     // if nupdown is not 0(TWO_EFERMI case), 
     // nelec_spin will be fixed and weights will be constrained 
     void init_nelec_spin();

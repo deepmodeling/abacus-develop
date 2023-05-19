@@ -10,11 +10,6 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 
-/**
- * @brief Mixes the input data according to the set mixing mode.
- * @param data_in Input data to be mixed.
- * @param flag_restart Flag indicating if it is a restart.
- */
 template<typename Tdata>
 void Mix_Data<Tdata>::mix(const Tdata &data_in, const bool flag_restart)
 {
@@ -65,12 +60,6 @@ void Mix_Data<Tdata>::pulay_mixing(const Tdata &data_in, const bool flag_restart
 	}
 }
 
-/**
- * @brief Sets the Pulay mixing coefficients.
- * @tparam ChgMix Type of the charge mixing coefficient.
- * @param iter Iteration number.
- * @param chr_mix Charge mixing coefficient.
- */
 template<typename Tdata>
 template<typename ChgMix>
 void Mix_Data<Tdata>::set_coef_pulay(const int iter, const ChgMix& chr_mix)
