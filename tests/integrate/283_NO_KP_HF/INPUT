@@ -12,8 +12,6 @@ scf_thr			1E-5
 scf_nmax		100
 
 calculation		scf
-cal_force		1
-cal_stress		1
 
 #Parameters (3.Basis)
 basis_type		lcao
@@ -27,14 +25,14 @@ smearing_sigma		0.002
 mixing_type		pulay
 
 #Parameters (7.Hybrid)
-dft_functional				hse
+dft_functional				hf
 exx_real_number				1
 exx_pca_threshold			1E-4
 exx_c_threshold 			1E-4
 exx_v_threshold 			1
 exx_dm_threshold 			1E-4
 exx_cauchy_threshold		1E-6
-exx_ccp_rmesh_times			1
+exx_ccp_rmesh_times			3
 exx_separate_loop			1
 exx_hybrid_step				3
 
