@@ -103,6 +103,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::TEST_STRESS,0);
 	EXPECT_EQ(GlobalV::test_skip_ewald,0);
 	EXPECT_DOUBLE_EQ(GlobalV::SCF_THR,0.00000001);
+	EXPECT_EQ(GlobalV::SCF_THR_TYPE,2);
 	EXPECT_EQ(GlobalC::wf.init_wfc,"atomic");
     EXPECT_EQ(GlobalC::wf.mem_saver, 0);
     EXPECT_EQ(GlobalV::LSPINORB,false);
