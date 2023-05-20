@@ -101,6 +101,7 @@ void Input::Print(const std::string &fn) const
                                  pw_diag_thr,
                                  "threshold for eigenvalues is cg electron iterations");
     ModuleBase::GlobalFunc::OUTP(ofs, "scf_thr", scf_thr, "charge density error");
+    ModuleBase::GlobalFunc::OUTP(ofs, "scf_thr_type", scf_thr_type, "type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_wfc", init_wfc, "start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_chg", init_chg, "start charge is from 'atomic' or file");
     ModuleBase::GlobalFunc::OUTP(ofs,

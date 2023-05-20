@@ -75,6 +75,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("ecutwfc                        20 ##energy cutoff for wave functions"));
         EXPECT_THAT(output,testing::HasSubstr("pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations"));
         EXPECT_THAT(output,testing::HasSubstr("scf_thr                        1e-08 #charge density error"));
+        EXPECT_THAT(output,testing::HasSubstr("scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao"));
         EXPECT_THAT(output,testing::HasSubstr("init_wfc                       atomic #start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'"));
         EXPECT_THAT(output,testing::HasSubstr("init_chg                       atomic #start charge is from 'atomic' or file"));
         EXPECT_THAT(output,testing::HasSubstr("chg_extrap                     atomic #atomic; first-order; second-order; dm:coefficients of SIA"));
