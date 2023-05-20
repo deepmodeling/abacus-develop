@@ -28,19 +28,19 @@ void Gint::gint_kernel_vlocal(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 	Gint_Tools::cal_psir_ylm(
-		na_grid, grid_index, delta_r,
+		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
 		psir_ylm.ptr_2D);
 	
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
@@ -83,7 +83,7 @@ void Gint::gint_kernel_dvlocal(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -91,12 +91,12 @@ void Gint::gint_kernel_dvlocal(
 	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
-	Gint_Tools::cal_dpsir_ylm(na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
+	Gint_Tools::cal_dpsir_ylm(this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
 		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
 
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
@@ -135,7 +135,7 @@ void Gint::gint_kernel_vlocal_meta(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -144,7 +144,7 @@ void Gint::gint_kernel_vlocal_meta(
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(
-		na_grid, grid_index, delta_r,
+		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
 		psir_ylm.ptr_2D,
@@ -155,15 +155,15 @@ void Gint::gint_kernel_vlocal_meta(
 	
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
 
 	//calculating df_mu(r) = vofk(r) * dpsi_mu(r) * dv
 	const Gint_Tools::Array_Pool<double> dpsix_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.ptr_2D);
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_x.ptr_2D);
 	const Gint_Tools::Array_Pool<double> dpsiy_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.ptr_2D);	
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.ptr_2D);	
 	const Gint_Tools::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
-			na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.ptr_2D);
+			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.ptr_2D);
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {

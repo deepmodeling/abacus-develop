@@ -36,17 +36,18 @@ void Gint_k::cal_env_k(int ik,
 
             int * block_iw, * block_index, * block_size;
             bool** cal_flag;
-            Gint_Tools::get_block_info(size, grid_index, block_iw, block_index, block_size, cal_flag);
+            Gint_Tools::get_block_info(this->bxyz, size, grid_index, block_iw, block_index, block_size, cal_flag);
 
             //evaluate psi on grids
             Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
             Gint_Tools::cal_psir_ylm(
-                size, grid_index, delta_r,
+                this->bxyz, size, grid_index, delta_r,
                 block_index, block_size,
                 cal_flag,
                 psir_ylm.ptr_2D);
 
-            int* vindex = Gint_Tools::get_vindex(GlobalC::GridT.start_ind[grid_index], ncyz);
+            int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
+                GlobalC::GridT.start_ind[grid_index], ncyz);
 
             for (int ia1 = 0; ia1 < size; ia1++)
             {

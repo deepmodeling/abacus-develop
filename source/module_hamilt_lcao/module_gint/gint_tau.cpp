@@ -21,7 +21,7 @@ void Gint::gint_kernel_tau(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -30,7 +30,7 @@ void Gint::gint_kernel_tau(
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(
-		na_grid, grid_index, delta_r,
+		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
 		psir_ylm.ptr_2D,
@@ -52,21 +52,21 @@ void Gint::gint_kernel_tau(
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_x.ptr_2D,
 				dpsix_DM.ptr_2D,
 				inout->DM[is], 1);
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_y.ptr_2D,
 				dpsiy_DM.ptr_2D,
 				inout->DM[is], 1);	
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_z.ptr_2D,
@@ -76,21 +76,21 @@ void Gint::gint_kernel_tau(
 		else
 		{
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, GlobalC::GridT,
 				dpsir_ylm_x.ptr_2D,
 				dpsix_DM.ptr_2D,
 				inout->DM_R[is], 1);
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, GlobalC::GridT,
 				dpsir_ylm_y.ptr_2D,
 				dpsiy_DM.ptr_2D,
 				inout->DM_R[is], 1);
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, GlobalC::GridT,
 				dpsir_ylm_z.ptr_2D,

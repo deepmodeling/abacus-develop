@@ -25,6 +25,9 @@ class Gint
         const int &nbz_in,
         const int &nbz_start_in,
         const int& ncxyz_in,
+        const int& bx_in,
+        const int& by_in,
+        const int& bz_in,
         const int& bxyz_in,
         const int& nbxx_in);
 
@@ -35,7 +38,7 @@ class Gint
 	int nbz;
 	int ncxyz;
     int nbz_start;
-    int bxyz;
+    int bx, by, bz, bxyz;
     int nbxx;
 
     //------------------------------------------------------

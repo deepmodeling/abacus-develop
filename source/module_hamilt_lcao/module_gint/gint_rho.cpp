@@ -21,12 +21,12 @@ void Gint::gint_kernel_rho(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
 	//evaluate psi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 	Gint_Tools::cal_psir_ylm(
-		na_grid, grid_index, delta_r,
+		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
 		psir_ylm.ptr_2D);
@@ -38,7 +38,7 @@ void Gint::gint_kernel_rho(
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				psir_ylm.ptr_2D,
@@ -49,7 +49,7 @@ void Gint::gint_kernel_rho(
 		{
 			//calculating g_mu(r) = sum_nu rho_mu,nu psi_nu(r)
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, GlobalC::GridT,
 				psir_ylm.ptr_2D,
