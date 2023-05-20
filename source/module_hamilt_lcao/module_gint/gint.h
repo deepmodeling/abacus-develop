@@ -20,7 +20,8 @@ class Gint
 
     // preparing FFT grid
     void prep_grid(
-        const int &nbx_in,
+        const Grid_Technique& gt,
+        const int& nbx_in,
         const int &nby_in,
         const int &nbz_in,
         const int &nbz_start_in,
@@ -34,6 +35,7 @@ class Gint
         const int& nplane_in,
         const int& startz_current_in);
 
+    const Grid_Technique* gridt = nullptr;
     protected:
     // variables related to FFT grid
  	int nbx;

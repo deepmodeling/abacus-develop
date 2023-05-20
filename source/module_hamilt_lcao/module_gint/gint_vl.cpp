@@ -28,11 +28,11 @@ void Gint::gint_kernel_vlocal(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
-	Gint_Tools::cal_psir_ylm(
+	Gint_Tools::cal_psir_ylm(*this->gridt, 
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
@@ -83,7 +83,7 @@ void Gint::gint_kernel_dvlocal(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -91,7 +91,7 @@ void Gint::gint_kernel_dvlocal(
 	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
-	Gint_Tools::cal_dpsir_ylm(this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
+	Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
 		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
 
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
@@ -135,7 +135,7 @@ void Gint::gint_kernel_vlocal_meta(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -143,7 +143,7 @@ void Gint::gint_kernel_vlocal_meta(
 	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
-	Gint_Tools::cal_dpsir_ylm(
+	Gint_Tools::cal_dpsir_ylm(*this->gridt,
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
@@ -226,7 +226,7 @@ void Gint::cal_meshball_vlocal_gamma(
 {
 	const char transa='N', transb='T';
 	const double alpha=1, beta=1;
-    const int lgd_now = GlobalC::GridT.lgd;
+    const int lgd_now = this->gridt->lgd;
 
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
@@ -291,26 +291,6 @@ void Gint::cal_meshball_vlocal_gamma(
 	}
 }
 
-inline int find_offset(const int id1, const int id2, const int iat1, const int iat2)
-{
-	const int R1x=GlobalC::GridT.ucell_index2x[id1];
-	const int R2x=GlobalC::GridT.ucell_index2x[id2];
-	const int dRx=R1x-R2x;
-	const int R1y=GlobalC::GridT.ucell_index2y[id1];
-	const int R2y=GlobalC::GridT.ucell_index2y[id2];
-	const int dRy=R1y-R2y;
-	const int R1z=GlobalC::GridT.ucell_index2z[id1];
-	const int R2z=GlobalC::GridT.ucell_index2z[id2];
-	const int dRz=R1z-R2z;
-
-	const int index=GlobalC::GridT.cal_RindexAtom(dRx, dRy, dRz, iat2);
-
-	const int offset = GlobalC::GridT.binary_search_find_R2_offset(index, iat1);
-
-	assert(offset < GlobalC::GridT.nad[iat1]);
-	return offset;
-}
-
 void Gint::cal_meshball_vlocal_k(
 	int na_grid,
 	int LD_pool,
@@ -323,7 +303,27 @@ void Gint::cal_meshball_vlocal_k(
 	double** psir_vlbr3,
 	double* pvpR)
 {
-	char transa='N', transb='T';
+    auto find_offset = [&](const int id1, const int id2, const int iat1, const int iat2)->int
+    {
+        const int R1x=this->gridt->ucell_index2x[id1];
+        const int R2x=this->gridt->ucell_index2x[id2];
+        const int dRx=R1x-R2x;
+        const int R1y=this->gridt->ucell_index2y[id1];
+        const int R2y=this->gridt->ucell_index2y[id2];
+        const int dRy=R1y-R2y;
+        const int R1z=this->gridt->ucell_index2z[id1];
+        const int R2z=this->gridt->ucell_index2z[id2];
+        const int dRz=R1z-R2z;
+
+        const int index=this->gridt->cal_RindexAtom(dRx, dRy, dRz, iat2);
+
+        const int offset = this->gridt->binary_search_find_R2_offset(index, iat1);
+
+        assert(offset < this->gridt->nad[iat1]);
+        return offset;
+    };
+    
+    char transa = 'N', transb = 'T';
 	double alpha=1, beta=1;
 	int allnw=block_index[na_grid];
 
@@ -334,15 +334,15 @@ void Gint::cal_meshball_vlocal_k(
 		//const int iw1_lo=block_iw[ia1];
 		const int idx1=block_index[ia1];
 		int m=block_size[ia1];
-		const int mcell_index1 = GlobalC::GridT.bcell_start[grid_index] + ia1;
-		const int iat1= GlobalC::GridT.which_atom[mcell_index1];
+		const int mcell_index1 = this->gridt->bcell_start[grid_index] + ia1;
+		const int iat1= this->gridt->which_atom[mcell_index1];
 		const int T1 = GlobalC::ucell.iat2it[iat1];
-		const int id1 = GlobalC::GridT.which_unitcell[mcell_index1];
-		const int DM_start = GlobalC::GridT.nlocstartg[iat1];
+		const int id1 = this->gridt->which_unitcell[mcell_index1];
+		const int DM_start = this->gridt->nlocstartg[iat1];
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
-			const int mcell_index2 = GlobalC::GridT.bcell_start[grid_index] + ia2;
-			const int iat2 = GlobalC::GridT.which_atom[mcell_index2];
+			const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
+			const int iat2 = this->gridt->which_atom[mcell_index2];
 			const int T2 = GlobalC::ucell.iat2it[iat2];
 			if (iat1 <= iat2)
 			{
@@ -358,12 +358,12 @@ void Gint::cal_meshball_vlocal_k(
                 const int idx2=block_index[ia2];
         		int n=block_size[ia2];
 				//const int I2 = GlobalC::ucell.iat2ia[iat2];
-				const int mcell_index2 = GlobalC::GridT.bcell_start[grid_index] + ia2;
-				const int id2 = GlobalC::GridT.which_unitcell[mcell_index2];
+				const int mcell_index2 = this->gridt->bcell_start[grid_index] + ia2;
+				const int id2 = this->gridt->which_unitcell[mcell_index2];
 				int offset;
 				offset=find_offset(id1, id2, iat1, iat2);
 
-				const int iatw = DM_start + GlobalC::GridT.find_R2st[iat1][offset];	
+				const int iatw = DM_start + this->gridt->find_R2st[iat1][offset];	
 
 			    if(cal_num>this->bxyz/4)
 			    {

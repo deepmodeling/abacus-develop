@@ -6,11 +6,6 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-namespace GlobalC
-{
-Grid_Technique GridT;
-}
-
 Grid_Technique::Grid_Technique()
 {
     this->nlocdimg = nullptr;	

@@ -186,12 +186,12 @@ namespace Gint_Tools
 	// block_index : size na_grid+1, start from 0, accumulates block_size
 	// cal_flag : whether the atom-grid distance is larger than cutoff
 	//------------------------------------------------------
-	void get_block_info(const int bxyz, const int na_grid, const int grid_index,
-		int * &block_iw, int * &block_index, int * &block_size, bool** &cal_flag
-	);		
+	void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
+		int * &block_iw, int * &block_index, int * &block_size, bool** &cal_flag);		
 
 	// psir_ylm[pw.bxyz][LD_pool]
     void cal_psir_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, // number of atoms on this grid 
 		const int grid_index, // 1d index of FFT index (i,j,k) 
@@ -203,6 +203,7 @@ namespace Gint_Tools
 
 	// psir_ylm and dpsir_ylm, both[pw.bxyz][LD_pool]
     void cal_dpsir_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid 
 		const int grid_index, 				// 1d index of FFT index (i,j,k) 
@@ -217,6 +218,7 @@ namespace Gint_Tools
 
 	// dpsir_ylm * (r-R), R is the atomic position
     void cal_dpsirr_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid 
 		const int grid_index, 				// 1d index of FFT index (i,j,k) 
@@ -228,6 +230,7 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_yy, double*const*const dpsir_ylm_yz, double*const*const dpsir_ylm_zz);
 
     void cal_ddpsir_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid 
 		const int grid_index, 				// 1d index of FFT index (i,j,k) 
@@ -254,6 +257,7 @@ namespace Gint_Tools
 
 	// sum_nu rho_mu,nu psi_nu, for gamma point
     void mult_psi_DM(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid,  					    // how many atoms on this (i,j,k) grid
 		const int LD_pool,
@@ -268,13 +272,13 @@ namespace Gint_Tools
 
 	// sum_nu,R rho_mu,nu(R) psi_nu, for multi-k
     void mult_psi_DMR(
+        const Grid_Technique &gt,
         const int bxyz,
         const int& grid_index,
         const int &na_grid,
         const int*const block_index, 
         const int*const block_size,
         bool** cal_flag,
-        const Grid_Technique &gt,
         double** psi,
 		double** psi_DMR,
         double* DMR,

@@ -810,7 +810,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
             ModuleIO::write_dm(
 #ifdef __MPI
-                GlobalC::GridT.trace_lo,
+                this->GridT.trace_lo,
 #endif
                 is,
                 iter,
@@ -960,7 +960,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             const double ef_tmp = this->pelec->eferm.get_efval(is);
             ModuleIO::write_dm(
 #ifdef __MPI
-                GlobalC::GridT.trace_lo,
+                this->GridT.trace_lo,
 #endif
                 is,
                 0,

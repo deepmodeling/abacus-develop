@@ -74,7 +74,7 @@ void Gint_k::distribute_pvpR_sparseMatrix(
                 if (iter != pvpR_sparseMatrix.end())
                 {
                     
-                    if(GlobalC::GridT.trace_lo[row] >= 0)
+                    if(this->gridt->trace_lo[row] >= 0)
                     {
                         auto row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
@@ -92,7 +92,7 @@ void Gint_k::distribute_pvpR_sparseMatrix(
                 {
                     for (int col = 0; col < row; ++col)
                     {
-                        if(GlobalC::GridT.trace_lo[col] >= 0)
+                        if(this->gridt->trace_lo[col] >= 0)
                         {
                             auto row_iter = minus_R_iter->second.find(col);
                             if (row_iter != minus_R_iter->second.end())
@@ -208,7 +208,7 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
                 auto iter = pvpR_soc_sparseMatrix.find(R_coor);
                 if (iter != pvpR_soc_sparseMatrix.end())
                 {
-                    if(GlobalC::GridT.trace_lo[row] >= 0)
+                    if(this->gridt->trace_lo[row] >= 0)
                     {
                         auto row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
@@ -226,7 +226,7 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
                 {
                     for (int col = 0; col < row; ++col)
                     {
-                        if(GlobalC::GridT.trace_lo[col] >= 0)
+                        if(this->gridt->trace_lo[col] >= 0)
                         {
                             auto row_iter = minus_R_iter->second.find(col);
                             if (row_iter != minus_R_iter->second.end())
@@ -298,12 +298,12 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
         for(int I1=0; I1<GlobalC::ucell.atoms[T1].na; ++I1)
         {
             const int iat = GlobalC::ucell.itia2iat(T1,I1);
-            if(GlobalC::GridT.in_this_processor[iat])
+            if(this->gridt->in_this_processor[iat])
             {
                 Atom* atom1 = &GlobalC::ucell.atoms[T1];
                 const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
 
-                const int DM_start = GlobalC::GridT.nlocstartg[iat];
+                const int DM_start = this->gridt->nlocstartg[iat];
                 tau1 = GlobalC::ucell.atoms[T1].tau[I1];
                 GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
                 int nad2 = 0;
@@ -314,7 +314,7 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
                     const int I2 = GlobalC::GridD.getNatom(ad);
                     const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
 
-                    if(GlobalC::GridT.in_this_processor[iat2])
+                    if(this->gridt->in_this_processor[iat2])
                     {
                         Atom* atom2 = &GlobalC::ucell.atoms[T2];
                         dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
@@ -325,7 +325,7 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
                         {
                             const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
                             Abfs::Vector3_Order<int> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z);
-                            int ixxx = DM_start + GlobalC::GridT.find_R2st[iat][nad2];
+                            int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
                             for(int iw=0; iw<atom1->nw * GlobalV::NPOL; iw++)
                             {
                                 for(int iw2=0;iw2<atom2->nw * GlobalV::NPOL; iw2++)

@@ -47,6 +47,7 @@ namespace ModuleESolver
         Local_Orbital_Charge LOC;
         LCAO_Hamilt UHM;
         LCAO_Matrix LM;
+        Grid_Technique GridT;
 #ifdef __EXX
 		Mix_DMk_2D mix_DMk_2D;
 #endif

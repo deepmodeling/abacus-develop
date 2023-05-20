@@ -63,7 +63,7 @@ class Grid_Technique : public Grid_MeshBall
 	int **find_R2_sorted_index;
 	int **find_R2st;
     bool allocate_find_R2;
-	int binary_search_find_R2_offset(int val, int iat);
+	int binary_search_find_R2_offset(int val, int iat) const;
 
 	//indexes for nnrg -> orbital index + R index
 	std::vector<gridIntegral::gridIndex> nnrg_index;
@@ -122,10 +122,4 @@ private:
 	void check_bigcell(int* &ind_bigcell, bool* &bigcell_on_processor);
 	void get_startind(const int& ny, const int& nplane, const int& startz_current);
 };
-
-namespace GlobalC
-{
-extern Grid_Technique GridT;
-}
-
 #endif

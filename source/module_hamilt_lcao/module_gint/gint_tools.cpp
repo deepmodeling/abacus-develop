@@ -119,6 +119,7 @@ namespace Gint_Tools
 	}
 
     void get_block_info(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid,
 		const int grid_index,
@@ -140,28 +141,28 @@ namespace Gint_Tools
 		block_index[0] = 0;
 		for (int id=0; id<na_grid; id++)
 		{
-			const int mcell_index=GlobalC::GridT.bcell_start[grid_index] + id;
-			const int iat=GlobalC::GridT.which_atom[mcell_index]; // index of atom
+			const int mcell_index=gt.bcell_start[grid_index] + id;
+			const int iat=gt.which_atom[mcell_index]; // index of atom
 			const int it=GlobalC::ucell.iat2it[ iat ]; // index of atom type
 			const int ia=GlobalC::ucell.iat2ia[ iat ]; // index of atoms within each type
 			const int start=GlobalC::ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
-			block_iw[id]=GlobalC::GridT.trace_lo[start];
+			block_iw[id]=gt.trace_lo[start];
 			block_index[id+1] = block_index[id]+GlobalC::ucell.atoms[it].nw;
 			block_size[id]=GlobalC::ucell.atoms[it].nw;
 
-			const int imcell=GlobalC::GridT.which_bigcell[mcell_index];
+			const int imcell=gt.which_bigcell[mcell_index];
 			const double mt[3] = {
-				GlobalC::GridT.meshball_positions[imcell][0] - GlobalC::GridT.tau_in_bigcell[iat][0],
-				GlobalC::GridT.meshball_positions[imcell][1] - GlobalC::GridT.tau_in_bigcell[iat][1],
-				GlobalC::GridT.meshball_positions[imcell][2] - GlobalC::GridT.tau_in_bigcell[iat][2]};
+				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
 			for(int ib=0; ib<bxyz; ib++)
 			{
 				// meshcell_pos: z is the fastest
 				const double dr[3] = {
-					GlobalC::GridT.meshcell_pos[ib][0] + mt[0],
-					GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
-					GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
+					gt.meshcell_pos[ib][0] + mt[0],
+					gt.meshcell_pos[ib][1] + mt[1],
+					gt.meshcell_pos[ib][2] + mt[2]};
 				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 
 				if(distance > GlobalC::ORB.Phi[it].getRcut() - 1.0e-10)
@@ -173,6 +174,7 @@ namespace Gint_Tools
 	}
 
     void cal_psir_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid
 		const int grid_index, 				// 1d index of FFT index (i,j,k)
@@ -189,9 +191,9 @@ namespace Gint_Tools
 			// there are two parameters we want to know here:
 			// in which bigcell of the meshball the atom is in?
 			// what's the cartesian coordinate of the bigcell?
-			const int mcell_index=GlobalC::GridT.bcell_start[grid_index] + id;
+			const int mcell_index=gt.bcell_start[grid_index] + id;
 
-			const int iat=GlobalC::GridT.which_atom[mcell_index]; // index of atom
+			const int iat=gt.which_atom[mcell_index]; // index of atom
 			const int it=GlobalC::ucell.iat2it[iat]; // index of atom type
 			const Atom*const atom=&GlobalC::ucell.atoms[it];
 			auto &OrbPhi = GlobalC::ORB.Phi[it];
@@ -214,11 +216,11 @@ namespace Gint_Tools
 			// the std::vector from the grid which is now being operated to the atom position.
 			// in meshball language, is the std::vector from imcell to the center cel, plus
 			// tau_in_bigcell.
-			const int imcell=GlobalC::GridT.which_bigcell[mcell_index];
+			const int imcell=gt.which_bigcell[mcell_index];
 			const double mt[3] = {
-				GlobalC::GridT.meshball_positions[imcell][0] - GlobalC::GridT.tau_in_bigcell[iat][0],
-				GlobalC::GridT.meshball_positions[imcell][1] - GlobalC::GridT.tau_in_bigcell[iat][1],
-				GlobalC::GridT.meshball_positions[imcell][2] - GlobalC::GridT.tau_in_bigcell[iat][2]};
+				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
 			// number of grids in each big cell (bxyz)
 			for(int ib=0; ib<bxyz; ib++)
@@ -232,11 +234,11 @@ namespace Gint_Tools
 				{
 					// meshcell_pos: z is the fastest
 					const double dr[3] = {
-						GlobalC::GridT.meshcell_pos[ib][0] + mt[0],
-						GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
-						GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
+						gt.meshcell_pos[ib][0] + mt[0],
+						gt.meshcell_pos[ib][1] + mt[1],
+						gt.meshcell_pos[ib][2] + mt[2]};
 					double distance = std::sqrt( dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] );	// distance between atom and grid
-					//if(distance[id] > GlobalC::GridT.orbital_rmax) continue;
+					//if(distance[id] > gt.orbital_rmax) continue;
 					if (distance < 1.0E-9) distance += 1.0E-9;
 
 					//------------------------------------------------------
@@ -283,6 +285,7 @@ namespace Gint_Tools
 	}
 
     void cal_dpsir_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid
 		const int grid_index, 				// 1d index of FFT index (i,j,k)
@@ -298,17 +301,17 @@ namespace Gint_Tools
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
-			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
-			const int imcell = GlobalC::GridT.which_bigcell[mcell_index];
-			int iat = GlobalC::GridT.which_atom[mcell_index];
+			const int mcell_index = gt.bcell_start[grid_index] + id;
+			const int imcell = gt.which_bigcell[mcell_index];
+			int iat = gt.which_atom[mcell_index];
 			const int it = GlobalC::ucell.iat2it[iat];
 			const int ia = GlobalC::ucell.iat2ia[iat];
 			Atom *atom = &GlobalC::ucell.atoms[it];
 
 			const double mt[3]={
-				GlobalC::GridT.meshball_positions[imcell][0] - GlobalC::GridT.tau_in_bigcell[iat][0],
-				GlobalC::GridT.meshball_positions[imcell][1] - GlobalC::GridT.tau_in_bigcell[iat][1],
-				GlobalC::GridT.meshball_positions[imcell][2] - GlobalC::GridT.tau_in_bigcell[iat][2]};
+				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
 			for(int ib=0; ib<bxyz; ib++)
 			{
@@ -326,9 +329,9 @@ namespace Gint_Tools
 				else
 				{
 					const double dr[3]={						// vectors between atom and grid
-						GlobalC::GridT.meshcell_pos[ib][0] + mt[0],
-						GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
-						GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
+						gt.meshcell_pos[ib][0] + mt[0],
+						gt.meshcell_pos[ib][1] + mt[1],
+						gt.meshcell_pos[ib][2] + mt[2]};
 					double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
 
 					//array to store spherical harmonics and its derivatives
@@ -406,6 +409,7 @@ namespace Gint_Tools
 	}
 
     void cal_ddpsir_ylm(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid
 		const int grid_index, 				// 1d index of FFT index (i,j,k)
@@ -423,17 +427,17 @@ namespace Gint_Tools
 		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
-			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
-			const int imcell = GlobalC::GridT.which_bigcell[mcell_index];
-			int iat = GlobalC::GridT.which_atom[mcell_index];
+			const int mcell_index = gt.bcell_start[grid_index] + id;
+			const int imcell = gt.which_bigcell[mcell_index];
+			int iat = gt.which_atom[mcell_index];
 			const int it = GlobalC::ucell.iat2it[iat];
 			const int ia = GlobalC::ucell.iat2ia[iat];
 			Atom *atom = &GlobalC::ucell.atoms[it];
 
 			const double mt[3]={
-				GlobalC::GridT.meshball_positions[imcell][0] - GlobalC::GridT.tau_in_bigcell[iat][0],
-				GlobalC::GridT.meshball_positions[imcell][1] - GlobalC::GridT.tau_in_bigcell[iat][1],
-				GlobalC::GridT.meshball_positions[imcell][2] - GlobalC::GridT.tau_in_bigcell[iat][2]};
+				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
 			for(int ib=0; ib<bxyz; ib++)
 			{
@@ -455,9 +459,9 @@ namespace Gint_Tools
 				else
 				{
 					const double dr[3]={						// vectors between atom and grid
-						GlobalC::GridT.meshcell_pos[ib][0] + mt[0],
-						GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
-						GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
+						gt.meshcell_pos[ib][0] + mt[0],
+						gt.meshcell_pos[ib][1] + mt[1],
+						gt.meshcell_pos[ib][2] + mt[2]};
 					double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);
 
 					// for some unknown reason, the finite difference between dpsi and ddpsi
@@ -697,6 +701,7 @@ namespace Gint_Tools
 	}
 
     void cal_dpsirr_ylm(
+        const Grid_Technique& gt,
         const int bxyz,
         const int na_grid, 					// number of atoms on this grid
 		const int grid_index, 				// 1d index of FFT index (i,j,k)
@@ -716,16 +721,16 @@ namespace Gint_Tools
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
 		for (int id=0; id<na_grid; id++)
 		{
-			const int mcell_index = GlobalC::GridT.bcell_start[grid_index] + id;
-			const int imcell = GlobalC::GridT.which_bigcell[mcell_index];
-			int iat = GlobalC::GridT.which_atom[mcell_index];
+			const int mcell_index = gt.bcell_start[grid_index] + id;
+			const int imcell = gt.which_bigcell[mcell_index];
+			int iat = gt.which_atom[mcell_index];
 			const int it = GlobalC::ucell.iat2it[iat];
 			Atom *atom = &GlobalC::ucell.atoms[it];
 
 			const double mt[3]={
-				GlobalC::GridT.meshball_positions[imcell][0] - GlobalC::GridT.tau_in_bigcell[iat][0],
-				GlobalC::GridT.meshball_positions[imcell][1] - GlobalC::GridT.tau_in_bigcell[iat][1],
-				GlobalC::GridT.meshball_positions[imcell][2] - GlobalC::GridT.tau_in_bigcell[iat][2]};
+				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
+				gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
+				gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
 			for(int ib=0; ib<bxyz; ib++)
 			{
@@ -750,9 +755,9 @@ namespace Gint_Tools
 				else
 				{
 					const double dr[3]={						// vectors between atom and grid
-						GlobalC::GridT.meshcell_pos[ib][0] + mt[0],
-						GlobalC::GridT.meshcell_pos[ib][1] + mt[1],
-						GlobalC::GridT.meshcell_pos[ib][2] + mt[2]};
+						gt.meshcell_pos[ib][0] + mt[0],
+						gt.meshcell_pos[ib][1] + mt[1],
+						gt.meshcell_pos[ib][2] + mt[2]};
 
 					for (int iw=0; iw< atom->nw; ++iw)
 					{
@@ -809,6 +814,7 @@ namespace Gint_Tools
 	}
 
     void mult_psi_DM(
+        const Grid_Technique& gt, 
         const int bxyz,
         const int na_grid,  					    // how many atoms on this (i,j,k) grid
 		const int LD_pool,
@@ -875,7 +881,7 @@ namespace Gint_Tools
 				if(cal_num>ib_length/4)
 				{
 					dsymm_(&side, &uplo, &block_size[ia1], &ib_length,
-						&alpha_symm, &DM[iw1_lo][iw1_lo], &GlobalC::GridT.lgd,
+						&alpha_symm, &DM[iw1_lo][iw1_lo], &gt.lgd,
 						&psi[first_ib][block_index[ia1]], &LD_pool,
 						&beta, &psi_DM[first_ib][block_index[ia1]], &LD_pool);
 				}
@@ -887,7 +893,7 @@ namespace Gint_Tools
 						if(cal_flag[ib][ia1])
 						{
 							dsymv_(&uplo, &block_size[ia1],
-								&alpha_symm, &DM[iw1_lo][iw1_lo], &GlobalC::GridT.lgd,
+								&alpha_symm, &DM[iw1_lo][iw1_lo], &gt.lgd,
 								&psi[ib][block_index[ia1]], &inc,
 								&beta, &psi_DM[ib][block_index[ia1]], &inc);
 						}
@@ -939,7 +945,7 @@ namespace Gint_Tools
 				if(cal_pair_num>ib_length/4)
 				{
                     dgemm_(&transa, &transb, &block_size[ia2], &ib_length, &block_size[ia1],
-                        &alpha_gemm, &DM[iw1_lo][iw2_lo], &GlobalC::GridT.lgd,
+                        &alpha_gemm, &DM[iw1_lo][iw2_lo], &gt.lgd,
                         &psi[first_ib][block_index[ia1]], &LD_pool,
                         &beta, &psi_DM[first_ib][block_index[ia2]], &LD_pool);
 				}
@@ -950,7 +956,7 @@ namespace Gint_Tools
                         if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
                             dgemv_(&transa, &block_size[ia2], &block_size[ia1],
-                                &alpha_gemm, &DM[iw1_lo][iw2_lo], &GlobalC::GridT.lgd,
+                                &alpha_gemm, &DM[iw1_lo][iw2_lo], &gt.lgd,
                                 &psi[ib][block_index[ia1]], &inc,
                                 &beta, &psi_DM[ib][block_index[ia2]], &inc);
                         }
@@ -966,13 +972,13 @@ namespace Gint_Tools
 //can be done as sum_mu,mu + 2 sum_mu<nu, saving some time
 //but for force, we cannot exchange the index
     void mult_psi_DMR(
-        const int bxyz, 
+        const Grid_Technique& gt, 
+        const int bxyz,
         const int& grid_index,
 		const int &na_grid,
 		const int*const block_index,
 		const int*const block_size,
 		bool** cal_flag,
-		const Grid_Technique &gt,
 		double** psi,
 		double ** psi_DMR,
 		double* DMR,
@@ -980,7 +986,7 @@ namespace Gint_Tools
 	{
 		double *psi2, *psi2_dmr;
 		int iwi, iww;
-		const int LD_pool = GlobalC::GridT.max_atom*GlobalC::ucell.nwmax;
+		const int LD_pool = gt.max_atom*GlobalC::ucell.nwmax;
 
 		bool *all_out_of_range = new bool[na_grid];
 		for(int ia=0; ia<na_grid; ++ia) //number of atoms
@@ -1034,8 +1040,8 @@ namespace Gint_Tools
 			if(job==1) //density
 			{
 				const int idx1=block_index[ia1];
-				int* find_start = GlobalC::GridT.find_R2[iat];
-				int* find_end = GlobalC::GridT.find_R2[iat] + GlobalC::GridT.nad[iat];
+				int* find_start = gt.find_R2[iat];
+				int* find_end = gt.find_R2[iat] + gt.nad[iat];
 				//ia2==ia1
 				int cal_num=0;
 				for(int ib=0; ib<bxyz; ++ib)
@@ -1050,7 +1056,7 @@ namespace Gint_Tools
 				if(cal_num>0)
 				{
 					//find offset
-					const int index = GlobalC::GridT.cal_RindexAtom(0, 0, 0, iat);
+					const int index = gt.cal_RindexAtom(0, 0, 0, iat);
 					offset = -1;
 					for(int* find=find_start; find < find_end; find++)
 					{
@@ -1065,12 +1071,12 @@ namespace Gint_Tools
 					}
 
 					assert(offset!=-1);
-					assert(offset < GlobalC::GridT.nad[iat]);
+					assert(offset < gt.nad[iat]);
 				}
 
 				if(cal_num>bxyz/4)
 				{
-					const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
+					const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
 					dgemm_(&trans, &trans, &block_size[ia1], &bxyz, &block_size[ia1], &alpha,
 						&DMR[DM_start], &block_size[ia1],
 						&psi[0][idx1], &LD_pool,
@@ -1078,7 +1084,7 @@ namespace Gint_Tools
 				}
 				else if(cal_num>0)
 				{
-					const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
+					const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
 					for(int ib=0; ib<bxyz; ++ib					)
 					{
 						if(cal_flag[ib][ia1])
@@ -1185,7 +1191,7 @@ namespace Gint_Tools
 				{
 					const int idx1=block_index[ia1];
 			        const int idx2=block_index[ia2];
-    				const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
+    				const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
     				dgemm_(&trans, &trans, &block_size[ia2], &bxyz, &block_size[ia1], &alpha1,
     					&DMR[DM_start], &block_size[ia2],
     					&psi[0][idx1], &LD_pool,
@@ -1195,7 +1201,7 @@ namespace Gint_Tools
 				{
 					const int idx1=block_index[ia1];
 					const int idx2=block_index[ia2];
-    				const int DM_start = GlobalC::GridT.nlocstartg[iat]+ GlobalC::GridT.find_R2st[iat][offset];
+    				const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
 
     				for(int ib=0; ib<bxyz; ++ib)
     				{
