@@ -69,6 +69,7 @@
 		- [printe](#printe)
 		- [scf\_nmax](#scf_nmax)
 		- [scf\_thr](#scf_thr)
+		- [scf\_thr\_type](#scf_thr_type)
 		- [chg\_extrap](#chg_extrap)
 		- [lspinorb](#lspinorb)
 		- [noncolin](#noncolin)
@@ -855,6 +856,12 @@ calculations.
 - **Type**: Real
 - **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
+
+### scf_thr_type
+
+- **Type**: Int
+- **Description**: Choose the calculation method of convergence criterion. If set to 1, the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$. If set to 2, the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$. Note that this parameter is still under testing and the default setting is usually sufficient.
+- **Default**: 1 for PW, and 2 for LCAO.
 
 ### chg_extrap
 

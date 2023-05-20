@@ -263,6 +263,7 @@ void Input::Default(void)
     // iteration
     //----------------------------------------------------------
     scf_thr = -1.0; // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
+    scf_thr_type = -1; // the default value (1 for pw, and 2 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
@@ -1078,6 +1079,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("scf_thr", word) == 0)
         {
             read_value(ifs, scf_thr);
+        }
+        else if (strcmp("scf_thr_type", word) == 0)
+        {
+            read_value(ifs, scf_thr_type);
         }
         else if (strcmp("scf_nmax", word) == 0)
         {
@@ -2730,6 +2735,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr = 1.0e-9;
         }
     }
+
+    if (scf_thr_type == -1)
+    {
+        if (basis_type == "lcao" || basis_type == "lcao_in_pw")
+        {
+            scf_thr_type = 2;
+        }
+        else if (basis_type == "pw")
+        {
+            scf_thr_type = 1;
+        }
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -2855,6 +2872,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(test_stress);
 
     Parallel_Common::bcast_double(scf_thr);
+    Parallel_Common::bcast_int(scf_thr_type);
     Parallel_Common::bcast_int(scf_nmax);
     Parallel_Common::bcast_int(this->relax_nmax);
     Parallel_Common::bcast_bool(out_stru); // mohan add 2012-03-23
