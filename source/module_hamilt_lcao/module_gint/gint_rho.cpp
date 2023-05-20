@@ -24,7 +24,7 @@ void Gint::gint_kernel_rho(
 	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
 	//evaluate psi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 	Gint_Tools::cal_psir_ylm(
 		na_grid, grid_index, delta_r,
 		block_index, block_size, 
@@ -33,8 +33,8 @@ void Gint::gint_kernel_rho(
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-		Gint_Tools::Array_Pool<double> psir_DM(GlobalC::bigpw->bxyz, LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(psir_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
+		Gint_Tools::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(psir_DM.ptr_1D, this->bxyz*LD_pool);
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			Gint_Tools::mult_psi_DM(
@@ -66,7 +66,7 @@ void Gint::gint_kernel_rho(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
 	}
@@ -83,7 +83,7 @@ void Gint::cal_meshball_rho(
 {		
 	const int inc = 1;
 	// sum over mu to get density on grid
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		double r=ddot_(&block_index[na_grid], psir_ylm[ib], &inc, psir_DMR[ib], &inc);
 		const int grid = vindex[ib];

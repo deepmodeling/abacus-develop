@@ -27,10 +27,6 @@ class Grid_MeshK
 	Grid_MeshK();
 	~Grid_MeshK();
 
-	void cal_extended_cell(const int &dxe, const int &dye, const int &dze);
-
-	private:
-
 };
 
 #endif

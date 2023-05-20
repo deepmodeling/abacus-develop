@@ -167,7 +167,7 @@ namespace Gint_Tools
 	int* get_vindex(const int start_ind, const int ncyz);
 
 	// extract the local potentials.
-	// vldr3[GlobalC::bigpw->bxyz]
+	// vldr3[bxyz]
     double* get_vldr3(const double* const vlocal,
 		const int ncyz, const int ibx, const int jby, const int kbz,
 		const double dv);
@@ -203,7 +203,7 @@ namespace Gint_Tools
 		const double delta_r, 				// delta_r of the uniform FFT grid
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
-		const bool*const*const cal_flag,    // cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const bool*const*const cal_flag,    // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 		double*const*const psir_ylm,
 		double*const*const dpsir_ylm_x,
 		double*const*const dpsir_ylm_y,
@@ -215,7 +215,7 @@ namespace Gint_Tools
 		const int grid_index, 				// 1d index of FFT index (i,j,k) 
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
-		const bool*const*const cal_flag,    // cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const bool*const*const cal_flag,    // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 		double*const*const dpsir_ylm_x, double*const*const dpsir_ylm_y, double*const*const dpsir_ylm_z,
 		double*const*const dpsir_ylm_xx, double*const*const dpsir_ylm_xy, double*const*const dpsir_ylm_xz,
 		double*const*const dpsir_ylm_yy, double*const*const dpsir_ylm_yz, double*const*const dpsir_ylm_zz);
@@ -226,7 +226,7 @@ namespace Gint_Tools
 		const double delta_r, 				// delta_r of the uniform FFT grid
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
-		const bool*const*const cal_flag,    // cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const bool*const*const cal_flag,    // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 		double*const*const ddpsir_ylm_xx,
 		double*const*const ddpsir_ylm_xy,
 		double*const*const ddpsir_ylm_xz,
@@ -239,9 +239,9 @@ namespace Gint_Tools
 		const int na_grid,  					    // how many atoms on this (i,j,k) grid
 		const int LD_pool,
 		const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
-		const bool*const*const cal_flag,	    	// cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-		const double*const vldr3,			    	// vldr3[GlobalC::bigpw->bxyz]
-		const double*const*const psir_ylm);		    // psir_ylm[GlobalC::bigpw->bxyz][LD_pool]
+		const bool*const*const cal_flag,	    	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const double*const vldr3,			    	// vldr3[bxyz]
+		const double*const*const psir_ylm);		    // psir_ylm[bxyz][LD_pool]
 
 	// sum_nu rho_mu,nu psi_nu, for gamma point
 	void mult_psi_DM(
@@ -250,8 +250,8 @@ namespace Gint_Tools
 		const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
 		const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
 		const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
-		const bool*const*const cal_flag,	    	// cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-		const double*const*const psi,	    // psir_vlbr3[GlobalC::bigpw->bxyz][LD_pool]
+		const bool*const*const cal_flag,	    	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
 		double** psi_DM,
 		const double*const*const DM,
 		const int job);

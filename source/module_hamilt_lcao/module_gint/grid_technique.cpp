@@ -149,9 +149,9 @@ void Grid_Technique::get_startind(void)
 		iby = ( i - ibx * nby * nbzp ) / nbzp;
 		ibz = i % nbzp;
 	
-		ix = ibx * GlobalC::bigpw->bx;
-		iy = iby * GlobalC::bigpw->by;
-		iz = (ibz + nbzp_start) * GlobalC::bigpw->bz - GlobalC::rhopw->startz_current;
+		ix = ibx * this->bx;
+		iy = iby * this->by;
+		iz = (ibz + nbzp_start) * this->bz - GlobalC::rhopw->startz_current;
 
 		int ind = iz + iy * GlobalC::rhopw->nplane + ix * GlobalC::rhopw->ny*GlobalC::rhopw->nplane;
 		

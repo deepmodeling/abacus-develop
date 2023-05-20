@@ -124,7 +124,7 @@ void Gint::cal_gint(Gint_inout *inout)
     		#pragma omp for
 #endif
             // entering the main loop of grid points
-			for(int grid_index = 0; grid_index < GlobalC::bigpw->nbxx; grid_index++)
+			for(int grid_index = 0; grid_index < this->nbxx; grid_index++)
 			{
 				// get the value: how many atoms has orbital value on this grid.
 				const int na_grid = GlobalC::GridT.how_many_atoms[ grid_index ];
@@ -299,7 +299,9 @@ void Gint::prep_grid(
 	const int &nby_in,
 	const int &nbz_in,
 	const int &nbz_start_in,
-    const int& ncxyz_in)
+    const int& ncxyz_in,
+    const int& bxyz_in,
+    const int& nbxx_in)
 {
 	ModuleBase::TITLE(GlobalV::ofs_running,"Gint_k","prep_grid");
 
@@ -307,11 +309,15 @@ void Gint::prep_grid(
 	this->nby = nby_in;
 	this->nbz = nbz_in;
 	this->ncxyz = ncxyz_in;
-	this->nbz_start = nbz_start_in;
-	assert(nbx>0);
+    this->nbz_start = nbz_start_in;
+    this->bxyz = bxyz_in;
+    this->nbxx = nbxx_in;
+    assert(nbx > 0);
 	assert(nby>0);
 	assert(nbz>=0);
-	assert(ncxyz>0);
+    assert(ncxyz > 0);
+    assert(bxyz > 0);
+    assert(nbxx > 0);
 
 	assert( GlobalC::ucell.omega > 0.0);
 

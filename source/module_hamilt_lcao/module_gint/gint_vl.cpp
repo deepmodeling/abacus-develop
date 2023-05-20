@@ -31,7 +31,7 @@ void Gint::gint_kernel_vlocal(
 	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
 	Gint_Tools::cal_psir_ylm(
 		na_grid, grid_index, delta_r,
 		block_index, block_size, 
@@ -61,7 +61,7 @@ void Gint::gint_kernel_vlocal(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
 	}
@@ -86,10 +86,10 @@ void Gint::gint_kernel_dvlocal(
 	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
 		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
@@ -114,7 +114,7 @@ void Gint::gint_kernel_dvlocal(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
 	}
@@ -138,10 +138,10 @@ void Gint::gint_kernel_vlocal_meta(
 	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(
 		na_grid, grid_index, delta_r,
@@ -204,7 +204,7 @@ void Gint::gint_kernel_vlocal_meta(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
 	}
@@ -219,9 +219,9 @@ void Gint::cal_meshball_vlocal_gamma(
 	const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
 	const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
 	const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
-	const bool*const*const cal_flag,	    	// cal_flag[GlobalC::bigpw->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-	const double*const*const psir_ylm,		    // psir_ylm[GlobalC::bigpw->bxyz][LD_pool]
-	const double*const*const psir_vlbr3,	    // psir_vlbr3[GlobalC::bigpw->bxyz][LD_pool]
+	const bool*const*const cal_flag,	    	// cal_flag[this->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+	const double*const*const psir_ylm,		    // psir_ylm[this->bxyz][LD_pool]
+	const double*const*const psir_vlbr3,	    // psir_vlbr3[this->bxyz][LD_pool]
 	double* GridVlocal)	    // GridVlocal[lgd_now][lgd_now]
 {
 	const char transa='N', transb='T';
@@ -238,7 +238,7 @@ void Gint::cal_meshball_vlocal_gamma(
 			if(iw1_lo<=iw2_lo)
 			{
                 int first_ib=0;
-                for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+                for(int ib=0; ib<this->bxyz; ++ib)
                 {
                     if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
@@ -247,7 +247,7 @@ void Gint::cal_meshball_vlocal_gamma(
                     }
                 }
                 int last_ib=0;
-                for(int ib=GlobalC::bigpw->bxyz-1; ib>=0; --ib)
+                for(int ib=this->bxyz-1; ib>=0; --ib)
                 {
                     if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                     {
@@ -327,7 +327,7 @@ void Gint::cal_meshball_vlocal_k(
 	double alpha=1, beta=1;
 	int allnw=block_index[na_grid];
 
-	int k=GlobalC::bigpw->bxyz;
+	int k=this->bxyz;
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
 		//if(all_out_of_range[ia1]) continue;
@@ -347,7 +347,7 @@ void Gint::cal_meshball_vlocal_k(
 			if (iat1 <= iat2)
 			{
     			int cal_num=0;
-    			for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+    			for(int ib=0; ib<this->bxyz; ++ib)
     			{
     				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
     				    ++cal_num;
@@ -365,9 +365,9 @@ void Gint::cal_meshball_vlocal_k(
 
 				const int iatw = DM_start + GlobalC::GridT.find_R2st[iat1][offset];	
 
-			    if(cal_num>GlobalC::bigpw->bxyz/4)
+			    if(cal_num>this->bxyz/4)
 			    {
-					k=GlobalC::bigpw->bxyz;
+					k=this->bxyz;
 					dgemm_(&transa, &transb, &n, &m, &k, &alpha,
 						&psir_vlbr3[0][idx2], &LD_pool, 
 						&psir_ylm[0][idx1], &LD_pool,
@@ -375,7 +375,7 @@ void Gint::cal_meshball_vlocal_k(
 				}
     			else
     			{
-					for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+					for(int ib=0; ib<this->bxyz; ++ib)
 					{
 						if(cal_flag[ib][ia1]&&cal_flag[ib][ia2])
 						{

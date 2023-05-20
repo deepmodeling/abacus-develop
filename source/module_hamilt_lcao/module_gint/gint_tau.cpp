@@ -24,10 +24,10 @@ void Gint::gint_kernel_tau(
 	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(
 		na_grid, grid_index, delta_r,
@@ -41,12 +41,12 @@ void Gint::gint_kernel_tau(
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-		Gint_Tools::Array_Pool<double> dpsix_DM(GlobalC::bigpw->bxyz, LD_pool);
-		Gint_Tools::Array_Pool<double> dpsiy_DM(GlobalC::bigpw->bxyz, LD_pool);
-		Gint_Tools::Array_Pool<double> dpsiz_DM(GlobalC::bigpw->bxyz, LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(dpsix_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
+		Gint_Tools::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
+		Gint_Tools::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
+		Gint_Tools::Array_Pool<double> dpsiz_DM(this->bxyz, LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsix_DM.ptr_1D, this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.ptr_1D, this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.ptr_1D, this->bxyz*LD_pool);
 
 		//calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
 		if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -113,7 +113,7 @@ void Gint::gint_kernel_tau(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
 	}
@@ -134,7 +134,7 @@ void Gint::cal_meshball_tau(
 {		
 	const int inc = 1;
 	// sum over mu to get density on grid
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		double rx=ddot_(&block_index[na_grid], dpsix[ib], &inc, dpsix_dm[ib], &inc);
 		double ry=ddot_(&block_index[na_grid], dpsiy[ib], &inc, dpsiy_dm[ib], &inc);
