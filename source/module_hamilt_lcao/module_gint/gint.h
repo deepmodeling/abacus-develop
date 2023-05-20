@@ -29,7 +29,10 @@ class Gint
         const int& by_in,
         const int& bz_in,
         const int& bxyz_in,
-        const int& nbxx_in);
+        const int& nbxx_in,
+        const int& ny_in,
+        const int& nplane_in,
+        const int& startz_current_in);
 
     protected:
     // variables related to FFT grid
@@ -40,6 +43,7 @@ class Gint
     int nbz_start;
     int bx, by, bz, bxyz;
     int nbxx;
+    int ny, nplane, startz_current; // from rhopw
 
     //------------------------------------------------------
     // in gint_vl.cpp 

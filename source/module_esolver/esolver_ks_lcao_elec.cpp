@@ -58,7 +58,8 @@ namespace ModuleESolver
             GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz,
             GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz,
             GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbz,
-            GlobalC::bigpw->nbxx, GlobalC::bigpw->nbzp_start, GlobalC::bigpw->nbzp);
+            GlobalC::bigpw->nbxx, GlobalC::bigpw->nbzp_start, GlobalC::bigpw->nbzp,
+            GlobalC::rhopw->ny, GlobalC::rhopw->nplane,GlobalC::rhopw->startz_current);
 
         // (2)For each atom, calculate the adjacent atoms in different cells
         // and allocate the space for H(R) and S(R).

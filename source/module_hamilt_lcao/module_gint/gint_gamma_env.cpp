@@ -20,7 +20,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 		const int nby = GlobalC::GridT.nby;
 		const int nbz_start = GlobalC::GridT.nbzp_start;
 		const int nbz = GlobalC::GridT.nbzp;
-		const int ncyz = GlobalC::rhopw->ny*GlobalC::rhopw->nplane; // mohan add 2012-03-25
+		const int ncyz = this->ny*this->nplane; // mohan add 2012-03-25
 
         for(int grid_index = 0; grid_index < this->nbxx; grid_index++)
         {
@@ -43,7 +43,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 				psir_ylm.ptr_2D);
 
             int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
-                GlobalC::GridT.start_ind[grid_index], ncyz);
+                this->nplane, GlobalC::GridT.start_ind[grid_index], ncyz);
 
 			for (int ia1=0; ia1<size; ia1++)
 			{

@@ -75,7 +75,10 @@ void Grid_Technique::set_pbc_grid(
 		const int &nbz_in,
 		const int &nbxx_in,
 		const int &nbzp_start_in,
-		const int &nbzp_in)
+		const int &nbzp_in,
+        const int& ny,
+        const int& nplane,
+        const int& startz_current)
 {
 	ModuleBase::TITLE("Grid_Technique","init");
 	ModuleBase::timer::tick("Grid_Technique","init");
@@ -111,7 +114,7 @@ void Grid_Technique::set_pbc_grid(
 
 	this->init_meshball();
 
-	this->init_atoms_on_grid();	
+	this->init_atoms_on_grid(ny, nplane, startz_current);	
 
 	this->cal_trace_lo();
 
@@ -119,7 +122,7 @@ void Grid_Technique::set_pbc_grid(
 	return;
 }
 
-void Grid_Technique::get_startind(void)
+void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& startz_current)
 {
 	ModuleBase::TITLE("Grid_Technique","get_startind");
 
@@ -151,9 +154,9 @@ void Grid_Technique::get_startind(void)
 	
 		ix = ibx * this->bx;
 		iy = iby * this->by;
-		iz = (ibz + nbzp_start) * this->bz - GlobalC::rhopw->startz_current;
+		iz = (ibz + nbzp_start) * this->bz - startz_current;
 
-		int ind = iz + iy * GlobalC::rhopw->nplane + ix * GlobalC::rhopw->ny*GlobalC::rhopw->nplane;
+		int ind = iz + iy * nplane + ix * ny*nplane;
 		
 		start_ind[i] = ind;
 	}
@@ -164,12 +167,12 @@ void Grid_Technique::get_startind(void)
 // PLEASE update this 'init_atoms_on_grid' to make
 // it adapted to 'cuboid' shape of grid
 // mohan add 2021-04-06
-void Grid_Technique::init_atoms_on_grid(void)
+void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const int& startz_current)
 {
 	ModuleBase::TITLE("Grid_Technique","init_atoms_on_grid");
 
 	assert(nbxx>=0);
-	this->get_startind();
+	this->get_startind(ny, nplane, startz_current);
 	
 	// (1) prepare data. 
 	// counting the number of atoms whose orbitals have

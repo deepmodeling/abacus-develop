@@ -162,21 +162,21 @@ namespace Gint_Tools
 	};
 	
 	// vindex[pw.bxyz]
-    int* get_vindex(const int bxyz, const int bx, const int by, const int bz,
+    int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane,
         const int ncyz, const int ibx, const int jby, const int kbz);
 
-    int* get_vindex(const int bxyz, const int bx, const int by, const int bz,
+    int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane,
         const int start_ind, const int ncyz);
 
 	// extract the local potentials.
 	// vldr3[bxyz]
     double* get_vldr3(const double* const vlocal,
-        const int bxyz, const int bx, const int by, const int bz,
+        const int bxyz, const int bx, const int by, const int bz, const int nplane,
         const int ncyz, const int ibx, const int jby, const int kbz,
         const double dv);
 
     double* get_vldr3(const double* const vlocal,
-        const int bxyz, const int bx, const int by, const int bz,
+        const int bxyz, const int bx, const int by, const int bz, const int nplane,
         const int start_ind, const int ncyz, const double dv);
 
 	//------------------------------------------------------

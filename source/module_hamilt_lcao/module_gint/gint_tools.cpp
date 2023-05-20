@@ -15,6 +15,7 @@ namespace Gint_Tools
         const int bx,
         const int by,
         const int bz,
+        const int nplane,
         const int start_ind,
 		const int ncyz)
 	{
@@ -26,7 +27,7 @@ namespace Gint_Tools
 			const int ipart = ii*ncyz;
 			for(int jj=0; jj<by; jj++)
 			{
-				const int jpart = jj*GlobalC::rhopw->nplane + ipart;
+				const int jpart = jj*nplane + ipart;
 				for(int kk=0; kk<bz; kk++)
 				{
 					vindex[bindex] = start_ind + kk + jpart;
@@ -43,6 +44,7 @@ namespace Gint_Tools
         const int bx,
         const int by,
         const int bz,
+        const int nplane,
         const int ncyz,
 		const int ibx,
 		const int jby,
@@ -58,7 +60,7 @@ namespace Gint_Tools
 			for(int jj=0; jj<by; jj++)
 			{
 				// jpart can be obtained by using a previously stored array
-				const int jpart = (jby+jj)*GlobalC::rhopw->nplane + ipart;
+				const int jpart = (jby+jj)*nplane + ipart;
 				for(int kk=0; kk<bz; kk++)
 				{
 					vindex[bindex] = kbz+kk + jpart;
@@ -76,6 +78,7 @@ namespace Gint_Tools
         const int bx,
         const int by,
         const int bz,
+        const int nplane,
         const int ncyz,
 		const int ibx,
 		const int jby,
@@ -83,7 +86,7 @@ namespace Gint_Tools
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, ncyz, ibx, jby, kbz);
+		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, ncyz, ibx, jby, kbz);
 		double *vldr3 = new double[bxyz];
 		for(int ib=0; ib<bxyz; ib++)
 		{
@@ -99,12 +102,13 @@ namespace Gint_Tools
         const int bx,
         const int by,
         const int bz,
+        const int nplane,
         const int start_ind,
 		const int ncyz,
 		const double dv)
 	{
 		// set the index for obtaining local potentials
-		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, start_ind, ncyz);
+		int* vindex = Gint_Tools::get_vindex(bxyz, bx, by, bz, nplane, start_ind, ncyz);
 		double *vldr3 = new double[bxyz];
 		for(int ib=0; ib<bxyz; ib++)
 		{

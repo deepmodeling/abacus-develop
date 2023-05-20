@@ -37,14 +37,16 @@ void LCAO_Hamilt::grid_prepare(void)
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
         this->GG.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start,
-            GlobalC::rhopw->nxyz, GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz, GlobalC::bigpw->bxyz, GlobalC::bigpw->nbxx);
+            GlobalC::rhopw->nxyz, GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz, GlobalC::bigpw->bxyz, GlobalC::bigpw->nbxx,
+            GlobalC::rhopw->ny, GlobalC::rhopw->nplane, GlobalC::rhopw->startz_current);
 
     }
     else // multiple k-points
     {
         // calculate the grid integration of 'Vl' matrix for l-points algorithms.
         this->GK.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start,
-            GlobalC::rhopw->nxyz, GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz, GlobalC::bigpw->bxyz, GlobalC::bigpw->nbxx);
+            GlobalC::rhopw->nxyz, GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz, GlobalC::bigpw->bxyz, GlobalC::bigpw->nbxx,
+            GlobalC::rhopw->ny, GlobalC::rhopw->nplane, GlobalC::rhopw->startz_current);
     }
 
     ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
