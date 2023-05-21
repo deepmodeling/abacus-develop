@@ -153,6 +153,8 @@ OBJS_DEEPKS=LCAO_deepks.o\
 
 OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
+    elecstate_energy_terms.o\
+    elecstate_exx.o\
     elecstate_print.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
