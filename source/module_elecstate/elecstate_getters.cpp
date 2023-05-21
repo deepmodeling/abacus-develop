@@ -3,6 +3,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 
 namespace elecstate
 {

@@ -114,6 +114,22 @@ class ElecState
     void set_exx();
 #endif //__LCAO
 #endif //__EXX
+ 
+    double get_hartree_energy();
+    double get_etot_efield();
+    double get_etot_gatefield();
+
+    double get_solvent_model_Ael();
+    double get_solvent_model_Acav();
+
+#ifdef __LCAO
+    double get_dftu_energy();
+#endif
+
+#ifdef __DEEPKS
+    double get_deepks_E_delta();
+    double get_deepks_E_delta_band();
+#endif
 
     fenergy f_en;                                  ///< energies contribute to the total free energy
     efermi eferm;                                  ///< fermi energies
