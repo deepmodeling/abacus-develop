@@ -37,6 +37,7 @@ void ElecState::cal_bandgap()
 }
 
 /// @brief calculate spin up & down band gap
+/// @todo add isk[ik] so as to discriminate different spins
 void ElecState::cal_bandgap_updw()
 {
     if (this->ekb.nr == 0 || this->ekb.nc == 0)

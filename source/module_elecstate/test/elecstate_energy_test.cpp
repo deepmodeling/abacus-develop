@@ -44,6 +44,12 @@ double ElecState::get_dftu_energy()
 }
 #endif
 } // namespace elecstate
+K_Vectors::K_Vectors()
+{
+}
+K_Vectors::~K_Vectors()
+{
+}
 
 /***************************************************************
  *  unit test of functions in elecstate_energy.cpp
@@ -167,4 +173,55 @@ TEST_F(ElecStateEnergyTest, CalConverged)
     elecstate->cal_converged();
     EXPECT_TRUE(elecstate->vnew_exist);
     EXPECT_DOUBLE_EQ(elecstate->f_en.descf, 0.0);
+}
+
+TEST_F(ElecStateEnergyTest, CalBandgapTrivial)
+{
+    elecstate->cal_bandgap();
+    EXPECT_DOUBLE_EQ(elecstate->bandgap, 0.0);
+}
+
+TEST_F(ElecStateEnergyTest, CalBandgap)
+{
+    K_Vectors* klist = new K_Vectors;
+    klist->nks = 5;
+    elecstate->klist = klist;
+    elecstate->ekb.create(klist->nks, GlobalV::NBANDS);
+    for (int ik = 0; ik < klist->nks; ik++)
+    {
+        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        {
+            elecstate->ekb(ik, ib) = ib;
+        }
+    }
+    elecstate->eferm.ef = 2.5;
+    elecstate->cal_bandgap();
+    EXPECT_DOUBLE_EQ(elecstate->bandgap, 1.0);
+}
+
+TEST_F(ElecStateEnergyTest, CalBandgapUpDwTrivial)
+{
+    elecstate->cal_bandgap_updw();
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 0.0);
+}
+
+TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
+{
+    K_Vectors* klist = new K_Vectors;
+    klist->nks = 5;
+    elecstate->klist = klist;
+    elecstate->ekb.create(klist->nks, GlobalV::NBANDS);
+    for (int ik = 0; ik < klist->nks; ik++)
+    {
+        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        {
+            elecstate->ekb(ik, ib) = ib;
+        }
+    }
+    elecstate->eferm.ef_up = 2.5;
+    elecstate->eferm.ef_dw = 1.5;
+    elecstate->cal_bandgap_updw();
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 1.0);
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 1.0);
 }
