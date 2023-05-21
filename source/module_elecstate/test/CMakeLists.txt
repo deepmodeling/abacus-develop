@@ -40,3 +40,9 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES elecstate_base_test.cpp ../elecstate.cpp ../occupy.cpp ../../module_psi/psi.cpp
 )
+
+AddTest(
+  TARGET elecstate_energy
+  LIBS ${math_libs} base device
+  SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
+)
