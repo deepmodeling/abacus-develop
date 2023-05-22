@@ -62,3 +62,9 @@ AddTest(
     ../../module_basis/module_pw/fft.cpp
     ../../module_psi/kernels/memory_op.cpp
 )
+
+AddTest(
+  TARGET elecstate_energy
+  LIBS ${math_libs} base device
+  SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
+)
