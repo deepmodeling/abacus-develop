@@ -162,6 +162,7 @@ OBJS_ELECSTAT=elecstate.o\
     efield.o\
     gatefield.o\
     potential_new.o\
+    potential_types.o\
     pot_local.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
