@@ -3,6 +3,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 
 namespace elecstate
 {
@@ -10,6 +11,16 @@ namespace elecstate
 double get_ucell_omega()
 {
     return GlobalC::ucell.omega;
+}
+
+double get_ucell_tpiba()
+{
+    return GlobalC::ucell.tpiba;
+}
+
+int get_xc_func_type()
+{
+    return XC_Functional::get_func_type();
 }
 
 std::string get_input_vdw_method()

@@ -189,6 +189,7 @@ class Input
     // iteration
     //==========================================================
     double scf_thr; // \sum |rhog_out - rhog_in |^2
+    int scf_thr_type; // type of the criterion of scf_thr, 1: reci drho, 2: real drho
     int scf_nmax; // number of max elec iter
     int relax_nmax; // number of max ionic iter
     bool out_stru; // outut stru file each ion step

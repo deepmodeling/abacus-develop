@@ -1,4 +1,7 @@
 etotref -6447.581245402137
 etotperatomref -3223.7906227011
 Compare_mulliken_pass 0
+pointgroupref O_h
+spacegroupref O_h
+nksibzref 1
 totaltimeref 41.363

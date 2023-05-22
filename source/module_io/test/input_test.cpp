@@ -131,6 +131,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
         EXPECT_DOUBLE_EQ(INPUT.scf_thr,-1.0);
+        EXPECT_EQ(INPUT.scf_thr_type,-1);
         EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
@@ -724,6 +725,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.ks_solver = "default";
 	INPUT.lcao_ecut = 0;
 	INPUT.scf_thr = -1.0;
+	INPUT.scf_thr_type = -1;
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
 	INPUT.nbndsto_str = "all";
 	// the 1st calling
@@ -742,6 +744,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.mem_saver,0);
 	EXPECT_EQ(INPUT.relax_nmax,1);
 	EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-7);
+	EXPECT_EQ(INPUT.scf_thr_type,2);
 #ifdef __ELPA
 	EXPECT_EQ(INPUT.ks_solver,"genelpa");
 #else
@@ -769,6 +772,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.ks_solver = "default";
 	INPUT.gamma_only_local = 1;
 	INPUT.scf_thr = -1.0;
+	INPUT.scf_thr_type = -1;
     INPUT.nbndsto_str = "0";
     INPUT.esolver_type = "sdft";
     // the 2nd calling
@@ -792,6 +796,7 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.by,1);
 	EXPECT_EQ(INPUT.bz,1);
 	EXPECT_DOUBLE_EQ(INPUT.scf_thr,1.0e-9);
+	EXPECT_EQ(INPUT.scf_thr_type,1);
 	EXPECT_EQ(INPUT.esolver_type, "ksdft");
 	//==================================================
 	// prepare default parameters for the 3rd calling

@@ -61,7 +61,7 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     //Fix pelec->wg by ocp_kb
     if(GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb.data());
+        this->pelec->fixed_weights(GlobalV::ocp_kb);
     }
 
     this->Init_GlobalC(inp,ucell);//temporary

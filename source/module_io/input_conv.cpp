@@ -348,6 +348,7 @@ void Input_Conv::Convert(void)
     // iteration (1/3)
     //----------------------------------------------------------
     GlobalV::SCF_THR = INPUT.scf_thr;
+    GlobalV::SCF_THR_TYPE = INPUT.scf_thr_type;
 
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)

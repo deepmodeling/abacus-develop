@@ -128,7 +128,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 	
 	if(GlobalV::test_charge)GlobalV::ofs_running << " scf_thr from rhog_dot_product is " << scf_thr << std::endl;
 	
-	if(GlobalV::BASIS_TYPE=="pw" && !GlobalV::test_charge)
+	// This is a temporary method to choose the type of scf_thr, in order to test different scf_thr_type.
+	// Charge mixing will be refactored later.
+	if(GlobalV::SCF_THR_TYPE == 1 && !GlobalV::test_charge)
 	{
 		return scf_thr;
 	}
@@ -160,7 +162,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 
 	// mohan add 2011-01-22
 	//if(LINEAR_SCALING && LOCAL_BASIS) xiaohui modify 2013-09-01
-	if(GlobalV::BASIS_TYPE=="lcao" )
+	if(GlobalV::SCF_THR_TYPE == 2)
 	{
 		scf_thr = scf_thr2;	
 	}

@@ -10,7 +10,7 @@ Mix_DMk_2D &Mix_DMk_2D::set_nks(const int nks, const bool gamma_only_in)
 {
     ModuleBase::TITLE("Mix_DMk_2D", "set_nks");
     this->gamma_only = gamma_only_in;
-    if (gamma_only)
+    if (this->gamma_only)
 		this->mix_DMk_gamma.resize(nks);
 	else
 		this->mix_DMk_k.resize(nks);
@@ -20,7 +20,7 @@ Mix_DMk_2D &Mix_DMk_2D::set_nks(const int nks, const bool gamma_only_in)
 Mix_DMk_2D &Mix_DMk_2D::set_mixing_mode(const Mixing_Mode mixing_mode)
 {
 	ModuleBase::TITLE("Mix_DMk_2D","set_mixing_mode");
-	if(gamma_only)
+	if(this->gamma_only)
 		for(Mix_Data<ModuleBase::matrix> &mix_one : this->mix_DMk_gamma)
 			mix_one.mixing_mode = mixing_mode;
 	else
@@ -32,7 +32,7 @@ Mix_DMk_2D &Mix_DMk_2D::set_mixing_mode(const Mixing_Mode mixing_mode)
 Mix_DMk_2D &Mix_DMk_2D::set_mixing_beta(const double mixing_beta)
 {
 	ModuleBase::TITLE("Mix_DMk_2D","set_mixing_beta");
-	if(gamma_only)
+	if(this->gamma_only)
 		for(Mix_Data<ModuleBase::matrix> &mix_one : this->mix_DMk_gamma)
 			mix_one.mixing_beta = mixing_beta;
 	else

@@ -69,6 +69,7 @@
 		- [printe](#printe)
 		- [scf\_nmax](#scf_nmax)
 		- [scf\_thr](#scf_thr)
+		- [scf\_thr\_type](#scf_thr_type)
 		- [chg\_extrap](#chg_extrap)
 		- [lspinorb](#lspinorb)
 		- [noncolin](#noncolin)
@@ -194,6 +195,7 @@
 		- [exx\_hse\_omega](#exx_hse_omega)
 		- [exx\_separate\_loop](#exx_separate_loop)
 		- [exx\_hybrid\_step](#exx_hybrid_step)
+		- [exx\_mixing\_beta](#exx_mixing_beta)
 		- [exx\_lambda](#exx_lambda)
 		- [exx\_pca\_threshold](#exx_pca_threshold)
 		- [exx\_c\_threshold](#exx_c_threshold)
@@ -854,6 +856,12 @@ calculations.
 - **Type**: Real
 - **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
+
+### scf_thr_type
+
+- **Type**: Int
+- **Description**: Choose the calculation method of convergence criterion. If set to 1, the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$. If set to 2, the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$. Note that this parameter is still under testing and the default setting is usually sufficient.
+- **Default**: 1 for PW, and 2 for LCAO.
 
 ### chg_extrap
 
@@ -1729,6 +1737,12 @@ These variables are relevant when using hybrid functionals
 - **Type**: Integer
 - **Description**: This variable indicates the maximal electronic iteration number in the evaluation of Fock exchange.
 - **Default**: 100
+
+### exx_mixing_beta
+
+- **Type**: Real
+- **Description**: mixing_beta for outer-loop when exx_separate_loop=1
+- **Default**: 1.0
 
 ### exx_lambda
 

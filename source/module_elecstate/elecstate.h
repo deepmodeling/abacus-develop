@@ -67,7 +67,7 @@ class ElecState
     // calculate wg from ekb
     virtual void calculate_weights();
     // use occupied weights from INPUT and skip calculate_weights
-    void fixed_weights(const double * const ocp_kb);
+    void fixed_weights(const std::vector<double>& ocp_kb);
     // if nupdown is not 0(TWO_EFERMI case), 
     // nelec_spin will be fixed and weights will be constrained 
     void init_nelec_spin();
@@ -114,6 +114,22 @@ class ElecState
     void set_exx();
 #endif //__LCAO
 #endif //__EXX
+ 
+    double get_hartree_energy();
+    double get_etot_efield();
+    double get_etot_gatefield();
+
+    double get_solvent_model_Ael();
+    double get_solvent_model_Acav();
+
+#ifdef __LCAO
+    double get_dftu_energy();
+#endif
+
+#ifdef __DEEPKS
+    double get_deepks_E_delta();
+    double get_deepks_E_delta_band();
+#endif
 
     fenergy f_en;                                  ///< energies contribute to the total free energy
     efermi eferm;                                  ///< fermi energies
