@@ -209,19 +209,38 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDwTrivial)
 TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->nks = 5;
+    klist->nks = 6;
+    klist->isk.resize(6);
+    for (int ik = 0; ik < klist->nks; ik++)
+    {
+        if (ik < 3)
+        {
+            klist->isk[ik] = 0;
+        }
+        else
+        {
+            klist->isk[ik] = 1;
+        } 
+    }
     elecstate->klist = klist;
     elecstate->ekb.create(klist->nks, GlobalV::NBANDS);
     for (int ik = 0; ik < klist->nks; ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
-            elecstate->ekb(ik, ib) = ib;
+            if (ik < 3)
+            {
+                elecstate->ekb(ik, ib) = ib;
+            }
+            else
+            {
+                elecstate->ekb(ik, ib) = 0.5*ib;
+            }
         }
     }
-    elecstate->eferm.ef_up = 2.5;
-    elecstate->eferm.ef_dw = 1.5;
+    elecstate->eferm.ef_up = 0.5;
+    elecstate->eferm.ef_dw = 2.1;
     elecstate->cal_bandgap_updw();
     EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 1.0);
-    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 1.0);
+    EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 0.5);
 }

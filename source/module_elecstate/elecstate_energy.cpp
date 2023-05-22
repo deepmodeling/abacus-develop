@@ -56,21 +56,27 @@ void ElecState::cal_bandgap_updw()
     {
         for (int ik = 0; ik < nks; ik++)
         {
-            if (!(this->ekb(ik, ib) - this->eferm.ef_up > 1e-5) && homo_up < this->ekb(ik, ib))
+            if (this->klist->isk[ik] == 0)
             {
-                homo_up = this->ekb(ik, ib);
+                if (!(this->ekb(ik, ib) - this->eferm.ef_up > 1e-5) && homo_up < this->ekb(ik, ib))
+                {
+                    homo_up = this->ekb(ik, ib);
+                }
+                if (this->ekb(ik, ib) - this->eferm.ef_up > 1e-5 && lumo_up > this->ekb(ik, ib))
+                {
+                    lumo_up = this->ekb(ik, ib);
+                }
             }
-            if (this->ekb(ik, ib) - this->eferm.ef_up > 1e-5 && lumo_up > this->ekb(ik, ib))
+            if (this->klist->isk[ik] == 1)
             {
-                lumo_up = this->ekb(ik, ib);
-            }
-            if (!(this->ekb(ik, ib) - this->eferm.ef_dw > 1e-5) && homo_dw < this->ekb(ik, ib))
-            {
-                homo_dw = this->ekb(ik, ib);
-            }
-            if (this->ekb(ik, ib) - this->eferm.ef_dw > 1e-5 && lumo_dw > this->ekb(ik, ib))
-            {
-                lumo_dw = this->ekb(ik, ib);
+                if (!(this->ekb(ik, ib) - this->eferm.ef_dw > 1e-5) && homo_dw < this->ekb(ik, ib))
+                {
+                    homo_dw = this->ekb(ik, ib);
+                }
+                if (this->ekb(ik, ib) - this->eferm.ef_dw > 1e-5 && lumo_dw > this->ekb(ik, ib))
+                {
+                    lumo_dw = this->ekb(ik, ib);
+                }
             }
         }
     }
