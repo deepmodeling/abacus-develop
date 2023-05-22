@@ -37,6 +37,7 @@ void ElecState::cal_bandgap()
 }
 
 /// @brief calculate spin up & down band gap
+/// @todo add isk[ik] so as to discriminate different spins
 void ElecState::cal_bandgap_updw()
 {
     if (this->ekb.nr == 0 || this->ekb.nc == 0)
@@ -200,7 +201,9 @@ double ElecState::cal_delta_escf() const
         }
     }
 
+#ifdef __MPI
     Parallel_Reduce::reduce_double_pool(descf);
+#endif
 
     descf *= this->omega / this->charge->rhopw->nxyz;
     return descf;
