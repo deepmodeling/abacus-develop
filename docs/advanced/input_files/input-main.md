@@ -7,6 +7,7 @@
 		- [calculation](#calculation)
 		- [esolver\_type](#esolver_type)
 		- [symmetry](#symmetry)
+		- [symmetry\_prec](#symmetry_prec)
 		- [kpar](#kpar)
 		- [bndpar](#bndpar)
 		- [latname](#latname)
@@ -24,7 +25,6 @@
 		- [nbspline](#nbspline)
 		- [kspacing](#kspacing)
 		- [min\_dist\_coef](#min_dist_coef)
-		- [symmetry\_prec](#symmetry_prec)
 		- [device](#device)
 	- [Variables related to input files](#variables-related-to-input-files)
 		- [stru\_file](#stru_file)
@@ -400,6 +400,12 @@ These variables are used to control general system parameters.
   - if set to -1, no symmetry will be considered.
 - **Default**: 1
 
+### symmetry_prec
+
+- **Type**: Real
+- **Description**: The accuracy for symmetry judgment. The unit is Bohr.
+- **Default**: 1.0e-5
+
 ### kpar
 
 - **Type**: Integer
@@ -530,12 +536,6 @@ Notice: if gamma_only is set to be true, kspacing is invalid.
 - **Type**: Real
 - **Description**: a factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme conditions like high pressure, you should set this parameter as a smaller value or even 0.
 - **Default**: 0.2
-
-### symmetry_prec
-
-- **Type**: Real
-- **Description**: The accuracy for symmetry judgment. The unit is Bohr.
-- **Default**: 1.0e-5
 
 ### device
 

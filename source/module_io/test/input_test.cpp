@@ -79,7 +79,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.ks_solver,"default");
         EXPECT_DOUBLE_EQ(INPUT.search_radius,-1.0);
         EXPECT_TRUE(INPUT.search_pbc);
-        EXPECT_EQ(INPUT.symmetry,0);
+        EXPECT_EQ(INPUT.symmetry,1);
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.0);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
@@ -884,7 +884,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"md");
-	EXPECT_EQ(INPUT.symmetry,0);
+	EXPECT_EQ(INPUT.symmetry,1);
 	EXPECT_EQ(INPUT.cal_force,1);
 	EXPECT_EQ(INPUT.mdp.md_nstep,50);
 	EXPECT_EQ(INPUT.out_level,"m");
