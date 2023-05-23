@@ -399,4 +399,29 @@ TEST_F(PotentialNewTest, GetVnew)
     delete chg;
 }
 
+TEST_F(PotentialNewTest, GetEffectiveV)
+{
+    // construct potential
+    rhopw->nrxx = 100;
+    pot = new elecstate::Potential(rhopw, ucell, vloc, structure_factors, etxc, vtxc);
+    EXPECT_TRUE(pot->fixed_mode);
+    EXPECT_TRUE(pot->dynamic_mode);
+    EXPECT_EQ(pot->v_effective_fixed.size(), 100);
+    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nc, 100);
+    ModuleBase::matrix v_eff_tmp = pot->get_effective_v();
+    EXPECT_EQ(v_eff_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(v_eff_tmp.nc, 100);
+    for (int ir = 0; ir < v_eff_tmp.nr; ir++)
+    {
+        for (int ic = 0; ic < v_eff_tmp.nc; ic++)
+        {
+            EXPECT_DOUBLE_EQ(v_eff_tmp(ir, ic), pot->v_effective(ir, ic));
+        }
+    }
+    //pot->v_effective(0, 0) = 1.0;
+    //v_eff_tmp(0, 0) = 1.0;
+    //EXPECT_DOUBLE_EQ(pot->v_effective(0, 0), 1.0);
+    //EXPECT_DOUBLE_EQ(v_eff_tmp(0, 0), 1.0);
+}
 #undef private
