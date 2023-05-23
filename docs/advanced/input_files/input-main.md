@@ -1538,14 +1538,21 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### of_kinetic
 
-* **Type**: string
-* **Description**: the type of kinetic energy density functional, including tf (Thomas-Fermi), vw (von Weizsäcker), wt (Wang-Teter), tf+ (TF$\rm{\lambda}$vW), and lkt (Luo-Karasiev-Trickey).
-* **Default**: wt
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: The type of kinetic energy density functional.
+  - wt: Wang-Teter.
+  - tf: Thomas-Fermi.
+  - vw: von Weizsäcker.
+  - tf+: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - lkt: Luo-Karasiev-Trickey.
+- **Default**: wt
 
 ### of_method
 
-- **Type**: string
-- **Description**: the optimization method used in OFDFT.
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: The optimization method used in OFDFT.
   - cg1: Polak-Ribiere. Standard CG algorithm.
   - cg2: Hager-Zhang (generally faster than cg1).
   - tn: Truncated Newton algorithm.
@@ -1553,90 +1560,116 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### of_conv
 
-- **Type**: string
-- **Description**: criterion used to check the convergence of OFDFT.
-  - energy: total energy changes less than 'of_tole'.
-  - potential: the norm of potential is less than 'of_tolp'.
-  - both: both energy and potential must satisfy the convergence criterion.
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: Criterion used to check the convergence of OFDFT.
+  - energy: Ttotal energy changes less than `of_tole`.
+  - potential: The norm of potential is less than `of_tolp`.
+  - both: Both energy and potential must satisfy the convergence criterion.
 - **Default**: energy
 
 ### of_tole
 
-- **Type**: Double
-- **Description**: tolerance of the energy change (in Ry) for determining the convergence.
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Tolerance of the energy change for determining the convergence.
 - **Default**: 2e-6
+- **Unit**: Ry
 
 ### of_tolp
 
-- **Type**: Double
-- **Description**: tolerance of potential (in a.u.) for determining the convergence.
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Tolerance of potential for determining the convergence.
 - **Default**: 1e-5
+- **Unit**: Ry
 
 ### of_tf_weight
 
-- **Type**: Double
-- **Description**: weight of TF KEDF.
-- **Default**: 1
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
+- **Description**: Weight of TF KEDF.
+- **Default**: 1.0
 
 ### of_vw_weight
 
-- **Type**: Double
-- **Description**: weight of vW KEDF.
-- **Default**: 1
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
+- **Description**: Weight of vW KEDF.
+- **Default**: 1.0
 
 ### of_wt_alpha
 
-- **Type**: Double
-- **Description**: parameter alpha of WT KEDF.
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Parameter alpha of WT KEDF.
 - **Default**: $5/6$
 
 ### of_wt_beta
 
-- **Type**: Double
-- **Description**: parameter beta of WT KEDF.
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Parameter beta of WT KEDF.
 - **Default**: $5/6$
 
 ### of_wt_rho0
 
-- **Type**: Double
-- **Description**: the average density of system, in Bohr^-3.
-- **Default**: 0
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: The average density of system.
+- **Default**: 0.0
+- **Unit**: Bohr^-3
 
 ### of_hold_rho0
 
 - **Type**: Boolean
-- **Description**: If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
-- **Default**: 0
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Whether to fix the average density rho0.
+  - 0: rho0 will change if volume of system has changed.
+  - 1: rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
+- **Default**: False
 
 ### of_lkt_a
 
-- **Type**: Double
-- **Description**: parameter a of LKT KEDF.
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=lkt`
+- **Description**: Parameter a of LKT KEDF.
 - **Default**: 1.3
 
 ### of_read_kernel
 
 - **Type**: Boolean
-- **Description**: If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
-- **Default**: 0
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Whether to read in the kernel file.
+  - 0: The kernel of WT KEDF will be filled from formula.
+  - 1: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+- **Default**: False
 
 ### of_kernel_file
 
 - **Type**: String
+- **Availability**: OFDFT with `of_read_kernel=True`
 - **Description**: The name of WT kernel file.
 - **Default**: WTkernel.txt
 
 ### of_full_pw
 
 - **Type**: Boolean
-- **Description**: If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
-- **Default**: 1
+- **Availability**: OFDFT
+- **Description**: Whether to use full planewaves.
+  - 0: Only use the planewaves inside ecut, the same as KSDFT.
+  - 1: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+- **Default**: True
 
 ### of_full_pw_dim
 
 - **Type**: Integer
-- **Description**: If of_full_pw = 1, the dimension of FFT will be restricted to be (0) either odd or even; (1) odd only; (2) even only.
-  Note that even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-**spline** interpolation unstable, so set `of_full_pw_dim = 1` if `nbspline != -1`.
+- **Availability**: OFDFT with `of_full_pw = True`
+- **Description**: Specify the parity of FFT dimensions.
+  - 0: either odd or even.
+  - 1: odd only.
+  - 2: even only.
+  >Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
