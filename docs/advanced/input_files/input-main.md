@@ -399,8 +399,8 @@ These variables are used to control general system parameters.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
-  - -1: if (*[dft_fuctional](#dft_functional)=hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)=True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
-  - 0: if *[calculation](#calculation)=md/nscf/istate/ienvelope/get_S*
+  - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
+  - 0: if *[calculation](#calculation)==md/nscf/istate/ienvelope/get_S*
   - 1: else
 
 ### symmetry_prec
@@ -1721,13 +1721,15 @@ These variables are relevant to gate field (compensating charge)
 
 These variables are relevant when using hybrid functionals.
 
-**Availablity**: *[dft_functional](#dft_functional)=hse/hf/pbe0/opt_orb* and *[basis_type](#basis_type)=lcao/lcao_in_pw*
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
 
 ### exx_hybrid_alpha
 
 - **Type**: Real
 - **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
-- **Default**: 1 if dft_functional==hf else 0.25
+- **Default**: 
+  - 1: if *[dft_functional](#dft_functional)==hf*
+  - 0.25: else
 
 ### exx_hse_omega
 
@@ -1752,14 +1754,14 @@ These variables are relevant when using hybrid functionals.
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)=1*
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
 - **Description**: mixing_beta for outer-loop
 - **Default**: 1.0
 
 ### exx_lambda
 
 - **Type**: Real
-- **Availability**: *[basis_type](#basis_type)=lcao_in_pw*
+- **Availability**: *[basis_type](#basis_type)==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using *lcao_in_pw* method.
 - **Default**: 0.3
 
@@ -1834,7 +1836,7 @@ These variables are relevant when using hybrid functionals.
 - **Type**: Real
 - **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
 - **Default**: 
-  - 1.5: if *[dft_functional](#dft_functional)=hse*
+  - 1.5: if *[dft_functional](#dft_functional)==hse*
   - 5: else
 
 ### exx_distribute_type
@@ -1849,21 +1851,21 @@ These variables are relevant when using hybrid functionals.
 ### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Availability**: *[dft_functional](#dft_functional)=opt_orb*
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
 - **Description**: The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 ### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Availability**: *[dft_functional](#dft_functional)=opt_orb*
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
 - **Description**: The cut-off of plane wave expansion (Ry), when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
 
 ### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Availability**: *[dft_functional](#dft_functional)=opt_orb*
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
 - **Description**: The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
