@@ -1729,24 +1729,28 @@ These variables are relevant when using hybrid functionals
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. 
+  - 0: start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
+  - 1: a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
 - **Default**: 1
 
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Description**: This variable indicates the maximal electronic iteration number in the evaluation of Fock exchange.
+- **Description**: the maximal electronic iteration number in the evaluation of Fock exchange.
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Description**: mixing_beta for outer-loop when exx_separate_loop=1
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)=1*
+- **Description**: mixing_beta for outer-loop
 - **Default**: 1.0
 
 ### exx_lambda
 
 - **Type**: Real
+- **Availability**: *[basis_type](#basis_type)=lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using *lcao_in_pw* method.
 - **Default**: 0.3
 
@@ -1825,32 +1829,42 @@ These variables are relevant when using hybrid functionals
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. `order` is where atom pairs are simply distributed by their orders. `hmeans` is a distribution where the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. `kmeans1` and `kmeans2` are two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+  - `order`: atom pairs are simply distributed by their orders. 
+  - `hmeans` the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
+  - `kmeans1` ,   `kmeans2`: two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
 ### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. The radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. exx_opt_orb_lmax gives the maximum l of the spherical Bessel functions. A reasonable choice is 2.
+- **Availability**: *[dft_functional](#dft_functional)=opt_orb*
+- **Description**: the maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 ### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. A plane wave basis is used to optimize the radial ABFs. This parameter thus gives the cut-off of plane wave expansion, in Ry. A reasonable choice is 60.
+- **Availability**: *[dft_functional](#dft_functional)=opt_orb*
+- **Description**: the cut-off of plane wave expansion (Ry), when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
 
 ### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
+- **Availability**: *[dft_functional](#dft_functional)=opt_orb*
+- **Description**: the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
 ### exx_real_number
 
 - **Type**: Boolean
-- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
-- **Default**: 1 if gamma_only else 0
+- **Description**: 
+  - 1: enforce LIBRI to use `double` data type, otherwise
+  - 0: enforce LIBRI to use `complex` data type.
+- **Default**: depends on the [gamma_only](#gamma_only) option
+  - 1: if gamma_only 
+  - 0: else 
 
 [back to top](#full-list-of-input-keywords)
 
