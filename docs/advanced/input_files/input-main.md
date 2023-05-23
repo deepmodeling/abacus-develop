@@ -1514,7 +1514,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Real
 - **Availability**: `gen_bessel` calculation
-- **Description**: energy range for smooth
+- **Description**: smearing parameter for smooth
 - **Default**: 0.1
 - **Unit**: Bohr
 
