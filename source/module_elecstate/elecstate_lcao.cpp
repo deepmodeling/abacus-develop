@@ -41,7 +41,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<std::complex<double>>& psi)
         }
     }
 
-    this->loc->cal_dk_k(GlobalC::GridT, this->wg, GlobalC::kv);
+    this->loc->cal_dk_k(*this->lowf->gridt, this->wg, GlobalC::kv);
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10
@@ -165,7 +165,7 @@ void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
     // added by zhengdy-soc, rearrange the wfc_k_grid from [up,down,up,down...] to [up,up...down,down...],
     if (ElecStateLCAO::need_psi_grid && GlobalV::NSPIN == 4)
     {
-        int row = GlobalC::GridT.lgd;
+        int row = this->lowf->gridt->lgd;
         std::vector<std::complex<double>> tmp(row);
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {

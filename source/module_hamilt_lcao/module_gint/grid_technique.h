@@ -63,7 +63,7 @@ class Grid_Technique : public Grid_MeshBall
 	int **find_R2_sorted_index;
 	int **find_R2st;
     bool allocate_find_R2;
-	int binary_search_find_R2_offset(int val, int iat);
+	int binary_search_find_R2_offset(int val, int iat) const;
 
 	//indexes for nnrg -> orbital index + R index
 	std::vector<gridIntegral::gridIndex> nnrg_index;
@@ -86,8 +86,11 @@ class Grid_Technique : public Grid_MeshBall
 			const int &nbz_in,
 			const int &nbxx_in,
 			const int &nbzp_start_in,
-			const int &nbzp_in);
-            
+            const int& nbzp_in,
+            const int& ny,
+            const int& nplane,
+            const int& startz_current);
+
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
     void cal_nnrg(Parallel_Orbitals* pv);
@@ -112,17 +115,11 @@ private:
     int nbox;
 
 	// atoms on meshball
-	void init_atoms_on_grid(void);
+	void init_atoms_on_grid(const int& ny, const int& nplane, const int& startz_current);
 	void init_atoms_on_grid2(const int* index2normal);
 	void cal_grid_integration_index(void);
 	void cal_trace_lo(void);
 	void check_bigcell(int* &ind_bigcell, bool* &bigcell_on_processor);
-	void get_startind(void);
+	void get_startind(const int& ny, const int& nplane, const int& startz_current);
 };
-
-namespace GlobalC
-{
-extern Grid_Technique GridT;
-}
-
 #endif
