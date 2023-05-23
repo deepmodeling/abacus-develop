@@ -196,7 +196,7 @@ void Input::Default(void)
     ks_solver = "default"; // xiaohui add 2013-09-01
     search_radius = -1.0; // unit: a.u. -1.0 has no meaning.
     search_pbc = true;
-    symmetry = 0;
+    symmetry = 1;
     init_vel = false;
     ref_cell_factor = 1.0;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
