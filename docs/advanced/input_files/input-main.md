@@ -395,15 +395,17 @@ These variables are used to control general system parameters.
 
 - **Type**: Integer
 - **Description**: takes value 1, 0 or -1.
-  - if set to 1, symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups only)
-  - if set to 0, only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
-  - if set to -1, no symmetry will be considered.
-- **Default**: 1
+  - 1: no symmetry will be considered.
+  - 0: only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
+  - 1: symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
+- **Default**: 
+  - 0: if *[calculation](#calculation)=md*
+  - 1: else
 
 ### symmetry_prec
 
 - **Type**: Real
-- **Description**: The accuracy for symmetry judgment. The unit is Bohr.
+- **Description**: The accuracy for symmetry judgment (Bohr).
 - **Default**: 1.0e-5
 
 ### kpar
