@@ -2532,6 +2532,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (calculation == "nscf" || calculation == "get_S")
     {
         GlobalV::CALCULATION = "nscf";
+        symmetry = 0;
         this->relax_nmax = 1;
         out_stru = 0;
 
@@ -2557,6 +2558,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (calculation == "istate")
     {
         GlobalV::CALCULATION = "istate";
+        symmetry = 0;
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
@@ -2574,6 +2576,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (calculation == "ienvelope")
     {
         GlobalV::CALCULATION = "ienvelope"; // mohan fix 2011-11-04
+        symmetry = 0;
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;

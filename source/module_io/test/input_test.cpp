@@ -837,8 +837,9 @@ TEST_F(InputTest, Default_2)
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"istate");
-	EXPECT_EQ(INPUT.relax_nmax,1);
-	EXPECT_EQ(INPUT.out_stru,0);
+    EXPECT_EQ(INPUT.relax_nmax, 1);
+    EXPECT_EQ(INPUT.symmetry, 0);
+    EXPECT_EQ(INPUT.out_stru, 0);
 	EXPECT_EQ(INPUT.out_band,0);
 	EXPECT_EQ(INPUT.out_proj_band,0);
 	EXPECT_EQ(INPUT.cal_force,0);
@@ -856,8 +857,9 @@ TEST_F(InputTest, Default_2)
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"ienvelope");
-	EXPECT_EQ(INPUT.relax_nmax,1);
-	EXPECT_EQ(INPUT.out_stru,0);
+    EXPECT_EQ(INPUT.relax_nmax, 1);
+    EXPECT_EQ(INPUT.symmetry, 0);
+    EXPECT_EQ(INPUT.out_stru, 0);
 	EXPECT_EQ(INPUT.out_band,0);
 	EXPECT_EQ(INPUT.out_proj_band,0);
 	EXPECT_EQ(INPUT.cal_force,0);
@@ -884,7 +886,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"md");
-	EXPECT_EQ(INPUT.symmetry,1);
+	EXPECT_EQ(INPUT.symmetry,0);
 	EXPECT_EQ(INPUT.cal_force,1);
 	EXPECT_EQ(INPUT.mdp.md_nstep,50);
 	EXPECT_EQ(INPUT.out_level,"m");
