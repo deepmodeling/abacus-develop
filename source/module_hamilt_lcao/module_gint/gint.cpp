@@ -32,9 +32,10 @@ void Gint::cal_gint(Gint_inout *inout)
 	if(inout->job==Gint_Tools::job_type::force) ModuleBase::timer::tick("Gint_interface","cal_gint_force");
 	if(inout->job==Gint_Tools::job_type::force_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_force_meta");
 
-	const int max_size = GlobalC::GridT.max_atom;
+	const int max_size = this->gridt->max_atom;
 	const int LD_pool = max_size*GlobalC::ucell.nwmax;
-    const int lgd = GlobalC::GridT.lgd;
+    const int lgd = this->gridt->lgd;
+    const int nnrg = this->gridt->nnrg;
 
     if(max_size!=0)
     {
@@ -48,7 +49,7 @@ void Gint::cal_gint(Gint_inout *inout)
 #endif
 		{
             //prepare some constants
-			const int ncyz = GlobalC::rhopw->ny*GlobalC::rhopw->nplane; // mohan add 2012-03-25
+			const int ncyz = this->ny*this->nplane; // mohan add 2012-03-25
 			const double dv = GlobalC::ucell.omega/this->ncxyz;
 
 			// it's a uniform grid to save orbital values, so the delta_r is a constant.
@@ -62,7 +63,7 @@ void Gint::cal_gint(Gint_inout *inout)
                 }
                 else
                 {
-                    ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], GlobalC::GridT.nnrg);
+                    ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
                 }
             }
 
@@ -72,9 +73,9 @@ void Gint::cal_gint(Gint_inout *inout)
 				{
 					ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
 				}
-				ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], GlobalC::GridT.nnrg);
-				ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], GlobalC::GridT.nnrg);
-				ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], GlobalC::GridT.nnrg);
+				ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], nnrg);
+				ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], nnrg);
+				ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], nnrg);
 			}
 
             //perpare auxiliary arrays to store thread-specific values
@@ -84,8 +85,8 @@ void Gint::cal_gint(Gint_inout *inout)
 			{
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
-                    pvpR_thread = new double[GlobalC::GridT.nnrg];
-                    ModuleBase::GlobalFunc::ZEROS(pvpR_thread, GlobalC::GridT.nnrg);
+                    pvpR_thread = new double[nnrg];
+                    ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
                 }
                 if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
                 {
@@ -97,12 +98,12 @@ void Gint::cal_gint(Gint_inout *inout)
 			double *pvdpRx_thread, *pvdpRy_thread, *pvdpRz_thread;
 			if(inout->job==Gint_Tools::job_type::dvlocal)
 			{
-				pvdpRx_thread = new double[GlobalC::GridT.nnrg];
-				ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, GlobalC::GridT.nnrg);
-				pvdpRy_thread = new double[GlobalC::GridT.nnrg];
-				ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, GlobalC::GridT.nnrg);
-				pvdpRz_thread = new double[GlobalC::GridT.nnrg];
-				ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, GlobalC::GridT.nnrg);								
+				pvdpRx_thread = new double[nnrg];
+				ModuleBase::GlobalFunc::ZEROS(pvdpRx_thread, nnrg);
+				pvdpRy_thread = new double[nnrg];
+				ModuleBase::GlobalFunc::ZEROS(pvdpRy_thread, nnrg);
+				pvdpRz_thread = new double[nnrg];
+				ModuleBase::GlobalFunc::ZEROS(pvdpRz_thread, nnrg);								
 			}
 
 			ModuleBase::matrix fvl_dphi_thread;
@@ -124,30 +125,33 @@ void Gint::cal_gint(Gint_inout *inout)
     		#pragma omp for
 #endif
             // entering the main loop of grid points
-			for(int grid_index = 0; grid_index < GlobalC::bigpw->nbxx; grid_index++)
+			for(int grid_index = 0; grid_index < this->nbxx; grid_index++)
 			{
 				// get the value: how many atoms has orbital value on this grid.
-				const int na_grid = GlobalC::GridT.how_many_atoms[ grid_index ];
+				const int na_grid = this->gridt->how_many_atoms[ grid_index ];
 
 				if(na_grid==0) continue;
 
 				if(inout->job == Gint_Tools::job_type::rho)
 				{
 					//int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
-					int* vindex = Gint_Tools::get_vindex(GlobalC::GridT.start_ind[grid_index], ncyz);
-					this->gint_kernel_rho(na_grid, grid_index, delta_r, vindex, LD_pool, inout);
+                    int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz);
+                    this->gint_kernel_rho(na_grid, grid_index, delta_r, vindex, LD_pool, inout);
 					delete[] vindex;
 				}
 				else if(inout->job == Gint_Tools::job_type::tau)
 				{
-					int* vindex = Gint_Tools::get_vindex(GlobalC::GridT.start_ind[grid_index], ncyz);
-					this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout);
+                    int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz);
+                    this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout);
 					delete[] vindex;
 				}
 				else if(inout->job == Gint_Tools::job_type::force)
 				{
-					double* vldr3 = Gint_Tools::get_vldr3(inout->vl, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					double** DM_in;
+                    double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+                    double** DM_in;
 					if(GlobalV::GAMMA_ONLY_LOCAL) DM_in = inout->DM[GlobalV::CURRENT_SPIN];
 					if(!GlobalV::GAMMA_ONLY_LOCAL) DM_in = inout->DM_R;
 					#ifdef _OPENMP
@@ -163,8 +167,9 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 				else if(inout->job==Gint_Tools::job_type::vlocal)
 				{
-					double* vldr3 = Gint_Tools::get_vldr3(inout->vl, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					#ifdef _OPENMP
+                    double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+#ifdef _OPENMP
 						if((GlobalV::GAMMA_ONLY_LOCAL && lgd>0) || !GlobalV::GAMMA_ONLY_LOCAL)
 						{
 							this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
@@ -185,8 +190,9 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 				else if(inout->job==Gint_Tools::job_type::dvlocal)
 				{
-					double* vldr3 = Gint_Tools::get_vldr3(inout->vl, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					#ifdef _OPENMP
+                    double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+#ifdef _OPENMP
 						this->gint_kernel_dvlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
 							pvdpRx_thread, pvdpRy_thread, pvdpRz_thread);
 					#else
@@ -197,9 +203,11 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 				else if(inout->job==Gint_Tools::job_type::vlocal_meta)
 				{
-					double* vldr3 = Gint_Tools::get_vldr3(inout->vl, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					#ifdef _OPENMP
+                    double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+                    double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk,this->bxyz,  this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+#ifdef _OPENMP
 						if((GlobalV::GAMMA_ONLY_LOCAL && lgd>0) || !GlobalV::GAMMA_ONLY_LOCAL)
 						{
 							this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
@@ -221,9 +229,11 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 				else if(inout->job == Gint_Tools::job_type::force_meta)
 				{
-					double* vldr3 = Gint_Tools::get_vldr3(inout->vl, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk, GlobalC::GridT.start_ind[grid_index], ncyz, dv);
-					double** DM_in;
+                    double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+                    double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk, this->bxyz, this->bx, this->by, this->bz,
+                        this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
+                    double** DM_in;
 					if(GlobalV::GAMMA_ONLY_LOCAL) DM_in = inout->DM[GlobalV::CURRENT_SPIN];
 					if(!GlobalV::GAMMA_ONLY_LOCAL) DM_in = inout->DM_R;
 					#ifdef _OPENMP
@@ -255,7 +265,7 @@ void Gint::cal_gint(Gint_inout *inout)
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
                     #pragma omp critical(gint_k)
-                    for(int innrg=0; innrg<GlobalC::GridT.nnrg; innrg++)
+                    for(int innrg=0; innrg<nnrg; innrg++)
                     {
                         pvpR_reduced[inout->ispin][innrg] += pvpR_thread[innrg];
                     }
@@ -295,23 +305,49 @@ void Gint::cal_gint(Gint_inout *inout)
 }
 
 void Gint::prep_grid(
-	const int &nbx_in,
+    const Grid_Technique& gt,
+    const int& nbx_in,
 	const int &nby_in,
 	const int &nbz_in,
 	const int &nbz_start_in,
-    const int& ncxyz_in)
+    const int& ncxyz_in,
+    const int& bx_in,
+    const int& by_in,
+    const int& bz_in,
+    const int& bxyz_in,
+    const int& nbxx_in,
+    const int& ny_in,
+    const int& nplane_in,
+    const int& startz_current_in)
 {
 	ModuleBase::TITLE(GlobalV::ofs_running,"Gint_k","prep_grid");
 
+    this->gridt = &gt;
     this->nbx = nbx_in;
 	this->nby = nby_in;
 	this->nbz = nbz_in;
 	this->ncxyz = ncxyz_in;
-	this->nbz_start = nbz_start_in;
-	assert(nbx>0);
+    this->nbz_start = nbz_start_in;
+    this->bx = bx_in;
+    this->by = by_in;
+    this->bz = bz_in;
+    this->bxyz = bxyz_in;
+    this->nbxx = nbxx_in;
+    this->ny = ny_in;
+    this->nplane = nplane_in;
+    this->startz_current = startz_current_in;
+    assert(nbx > 0);
 	assert(nby>0);
 	assert(nbz>=0);
-	assert(ncxyz>0);
+    assert(ncxyz > 0);
+    assert(bx > 0);
+    assert(by > 0);
+    assert(bz > 0);
+    assert(bxyz > 0);
+    assert(nbxx >= 0);
+    assert(ny > 0);
+    assert(nplane >= 0);
+    assert(startz_current >= 0);
 
 	assert( GlobalC::ucell.omega > 0.0);
 
