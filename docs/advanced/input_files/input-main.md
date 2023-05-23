@@ -399,13 +399,17 @@ These variables are used to control general system parameters.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
+  - -1: if *[dft_fuctional](#dft_functional)=hse/hf/pbe0* (hybrid functionals), because currently symmetry is not supported in EXX (exact exchange) calculation
   - 0: if *[calculation](#calculation)=md/nscf/istate/ienvelope/get_S*
   - 1: else
 
 ### symmetry_prec
 
 - **Type**: Real
-- **Description**: The accuracy for symmetry judgment.
+- **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
+  
+  Note: if *[calculation](#calculation)=cell_relax*, this value can be dynamically enlarged corresponding to the accuracy loss of the lattice parameters and atom positions during the relaxation. There will be a warning message in that case.
+
 - **Default**: 1.0e-5
 - **Unit**:  Bohr
 
@@ -1715,7 +1719,9 @@ These variables are relevant to gate field (compensating charge)
 
 ## Exact Exchange
 
-These variables are relevant when using hybrid functionals
+These variables are relevant when using hybrid functionals.
+
+**Availablity**: *[dft_functional](#dft_functional)=hse/hf/pbe0/opt_orb* and *[basis_type](#basis_type)=lcao/lcao_in_pw*
 
 ### exx_hybrid_alpha
 
