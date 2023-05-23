@@ -1631,40 +1631,53 @@ These variables are relevant to electric field and dipole correction
 ### efield_flag
 
 - **Type**: Boolean
-- **Description**: If set to true, a saw-like potential simulating an electric field
-  is added to the bare ionic potential.
-- **Default**: false
+- **Description**: added the electric field.
+  - True: A saw-like potential simulating an electric field is added to the bare ionic potential.
+  - False: Not added the electric field.
+- **Default**: False
 
 ### dip_cor_flag
 
 - **Type**: Boolean
-- **Description**: If dip_cor_flag == true and efield_flag == true,  a dipole correction is also
-  added to the bare ionic potential. If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
-- **Default**: false
+- **Availability**: with dip_cor_flag = True and efield_flag = True.
+- **Description**: Added a dipole correction to the bare ionic potential.
+  - True：A dipole correction is also added to the bare ionic potential. 
+  - False: A dipole correction is not added to the bare ionic potential. 
+> Note: If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface alculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+- **Default**: False
 
 ### efield_dir
 
 - **Type**: Integer
-- **Description**: The direction of the electric field or dipole correction is parallel to the reciprocal lattice vector, so the potential is constant in planes defined by FFT grid points, efield_dir = 0, 1 or 2. Used only if efield_flag == true.
+- **Availability**: with efield_flag = True.
+- **Description**: The direction of the electric field or dipole correction is parallel to the reciprocal lattice vector, so the potential is constant in planes defined by FFT grid points, efield_dir can set to 0, 1 or 2.
+  - 0: parallel to $b_1=\frac{2\pi(a_2\times a_3)}{a_1\cdot(a_2\times a_3)}$
+  - 1: parallel to $b_2=\frac{2\pi(a_3\times a_1)}{a_1\cdot(a_2\times a_3)}$
+  - 2: parallel to $b_3=\frac{2\pi(a_1\times a_2)}{a_1\cdot(a_2\times a_3)}$
 - **Default**: 2
 
 ### efield_pos_max
 
 - **Type**: Real
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1. Used only if efield_flag == true.
+- **Availability**: with efield_flag = True.
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1.
 - **Default**: 0.5
 
 ### efield_pos_dec
 
 - **Type**: Real
-- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1. Used only if efield_flag == true.
+- **Availability**: with efield_flag = True.
+- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
 - **Default**: 0.1
 
 ### efield_amp
 
 - **Type**: Real
-- **Description**: Amplitude of the electric field, in ***Hartree*** a.u.; 1 a.u. = 51.4220632*10^10 V/m. Used only if efield_flag == true. The saw-like potential increases with slope efield_amp  in the region from (efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. Important: the change of slope of this potential must be located in the empty region, or else unphysical forces will result.
+- **Availability**: with efield_flag = True.
+- **Description**: Amplitude of the electric field. The saw-like potential increases with slope efield_amp  in the region from  efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. 
+> Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
+- **Unit**: a.u., 1 a.u. = 51.4220632*10^10 V/m.
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2118,41 +2131,52 @@ These variables are used to control DFT+U correlated parameters
 ### dft_plus_u
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABCUS will calculate plus U correction, which is especially important for correlated electron.
-- **Default**: 0
+- **Description**: 
+  - True: ABCUS will calculate plus U correction, which is especially important for correlated electron.
+  - False: ABCUS will not plus U correction.
+- **Default**: False
 
 ### orbital_corr
 
 - **Type**: Integer
-- **Description**: $l_1,l_2,l_3,\ldots$ for atom type 1,2,3 respectively.(usually 2 for d electrons and 3 for f electrons) .Specify which orbits need plus U correction for each atom. If set to -1, the correction would not be calculated for this atom.
+- **Description**: $l_1,l_2,l_3,\ldots$ for atom type 1,2,3 respectively. Specify which orbits need plus U correction for each atom. 
+  - -1: The plus U correction would not be calculated for this atom.
+  - 1: For p electrons orbits need plus U correction.
+  - 2: For d electrons orbits need plus U correction.
+  - 3: For f electrons orbits need plus U correction.
 - **Default**: None
 
 ### hubbard_u
 
 - **Type**: Real
-- **Description**: Hubbard Coulomb interaction parameter U(ev) in plus U correction, which should be specified for each atom unless Yukawa potential is used.
+- **Description**: Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless Yukawa potential is used.
 
-> Note : since we only implemented the simplified scheme by Duradev, the 'U' here is actually Ueff which is given by hubbard U minus hund J.
+> Note : Since we only implemented the simplified scheme by Duradev, the 'U' here is actually Ueff which is given by hubbard U minus hund J.
 
 - **Default**: 0.0
 
 ### yukawa_potential
 
 - **Type**: Boolean
-- **Description**: whether to use the local screen Coulomb potential method to calculate the values of U and J. If this is set to 1, hubbard_u does not need to be specified.
-- **Default**: 0
+- **Description**: whether to use the local screen Coulomb potential method to calculate the values of U and J.
+  - True: hubbard_u does not need to be specified.
+  - False: hubbard_u does need to be specified.
+- **Default**: False
 
 ### yukawa_lambda
 
 - **Type**: Real
-- **Description**: The screen length of Yukawa potential. Relevant if `yukawa_potential` is set to 1. If left to default, we will calculate the screen length as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
-- **Default**: calculated on the fly.
+- **Availability**: DFT+U with `yukawa_potential` = True.
+- **Description**: The screen length of Yukawa potential. If left to default, we will calculate the screen length as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
+- **Default**: Calculated on the fly.
 
 ### omc
 
 - **Type**: Integer
-- **Description**: The parameter controls what form of occupation matrix control we are using. If set to 0, then no occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step. If set to 1, then the first SCF step will use an initial density matrix read from a file named `initial_onsite.dm`, but for later steps, the onsite density matrix will be updated. If set to 2, the same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
-
+- **Description**: The parameter controls what form of occupation matrix control we are using.
+  - 0: Then no occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
+  - 1: Then the first SCF step will use an initial density matrix read from a file named `initial_onsite.dm`, but for later steps, the onsite density matrix will be updated.
+  - 2: The same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
 > Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 
 - **Default**: 0
