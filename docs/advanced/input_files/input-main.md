@@ -786,8 +786,8 @@ calculations.
 ### smearing_sigma_temp
 
 - **Type**: Real
-- **Description**: Energy range for smearing, smearing_sigma = 1/2 * kB * smearing_sigma_temp.
-- **Default**: 1/2 * kB * smearing_sigma_temp.
+- **Description**: Energy range for smearing, `smearing_sigma` = 1/2 * kB * `smearing_sigma_temp`.
+- **Default**: 2 * `smearing_sigma_temp` / kB.
 - **Unit**: K
 
 ### mixing_type
@@ -822,7 +822,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
+  -  A positive number: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
   -  0: No Kerker scaling is performed.
 - **Default**: 0.0
 
@@ -876,16 +876,18 @@ calculations.
 - **Description**: Choose the calculation method of convergence criterion. 
   - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
   - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  
   >Note: This parameter is still under testing and the default setting is usually sufficient.
+
 - **Default**: 1 for PW, and 2 for LCAO.
 
 ### chg_extrap
 
 - **Type**: String
 - **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
-  - atomic: atomic extrapolation
-  - first-order: first-order extrapolation
-  - second-order: second-order extrapolation
+  - atomic: atomic extrapolation.
+  - first-order: first-order extrapolation.
+  - second-order: second-order extrapolation.
 - **Default**: atomic
 
 ### lspinorb
