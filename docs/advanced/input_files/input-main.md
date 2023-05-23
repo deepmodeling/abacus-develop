@@ -1010,7 +1010,7 @@ These variables are used to control the geometry relaxation.
 - **Description**: 
   - **True** calculate the force at the end of the electronic iteration
   - **False** no force calculation at the end of the electronic iteration
-- **Default**: 0 if `calculation` is set to `scf`, 1 if `calculation` is set to `cell-relax`, `relax`, or `md`.
+- **Default**: False if `calculation` is set to `scf`, True if `calculation` is set to `cell-relax`, `relax`, or `md`.
 
 ### force_thr
 
