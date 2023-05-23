@@ -1516,7 +1516,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: `gen_bessel` calculation
 - **Description**: energy range for smooth
 - **Default**: 0.1
-- **Unit**: Ry
+- **Unit**: Bohr
 
 ### deepks_bandgap
 
