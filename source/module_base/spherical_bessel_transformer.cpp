@@ -148,7 +148,19 @@ void SphericalBesselTransformer::radrfft(const int l,
     {
         for (int i = 1; i <= n; ++i)
         {
-            out_tmp[0] += 2. * pref * in[i] * std::pow(i * dx, 2);
+            out_tmp[0] += 2. * pref * in[i] * std::pow(i * dx, 2 - p);
+        }
+
+        if (p == 2)
+        {
+            out_tmp[0] += 2. * pref * in[0];
+        }
+
+        if (p > 2)
+        {
+            // estimate F(0) from the next three points by a quadratic interpolation
+            // FIXME this may not be a good numerical solution, to be studied later
+            out_tmp[0] += 3 * in[1] / std::pow(dx, p) - 3 * in[2] / std::pow(2 * dx, p) + in[3] / std::pow(3 * dx, p);
         }
     }
 
