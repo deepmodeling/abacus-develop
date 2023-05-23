@@ -399,7 +399,7 @@ These variables are used to control general system parameters.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
-  - -1: if *[dft_fuctional](#dft_functional)=hse/hf/pbe0* (hybrid functionals), because currently symmetry is not supported in EXX (exact exchange) calculation
+  - -1: if (*[dft_fuctional](#dft_functional)=hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)=True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
   - 0: if *[calculation](#calculation)=md/nscf/istate/ienvelope/get_S*
   - 1: else
 
