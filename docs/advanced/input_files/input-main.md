@@ -710,9 +710,9 @@ calculations.
 ### basis_type
 
 - **Type**: String
-- **Description**: This is an important parameter to choose basis set in ABACUS.
-  - *pw*: Using plane-wave basis set only.
-  - *lcao_in_pw*: Expand the localized atomic set in plane-wave basis.
+- **Description**: Choose the basis set.
+  - pw: Using plane-wave basis set only.
+  - lcao_in_pw: Expand the localized atomic set in plane-wave basis.
   - lcao: Using localized atomic orbital sets.
 - **Default**: pw
 
@@ -739,12 +739,12 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: `cg` (pw) or `genelpa` (lcao)
+- **Default**: cg (pw) or genelpa (lcao)
 
 ### nbands
 
 - **Type**: Integer
-- **Description**: Number of Kohn-Sham orbitals to calculate. It is recommended you setup this value, especially when you use smearing techniques, more bands should be included.
+- **Description**: The number of Kohn-Sham orbitals to calculate. It is recommended to setup this value, especially when smearing techniques are utilized, more bands should be included.
 - **Default**:
   - nspin=1: max(1.2\*occupied_bands, occupied_bands + 10)
   - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
@@ -753,40 +753,47 @@ calculations.
 ### nbands_istate
 
 - **Type**: Integer
-- **Description**: Only used when `calculation = ienvelope` or `calculation = istate`, this variable indicates how many bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Availability**: Only used when `calculation = ienvelope` or `calculation = istate`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 ### nspin
 
 - **Type**: Integer
-- **Description**: Number of spin components of wave functions. There are only two choices now: 1 or 2, meaning non spin or collinear spin. For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+- **Description**: The number of spin components of wave functions.
+  - 1: Spin degeneracy
+  - 2: Collinear spin polarized.
+  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - fixed: use fixed occupations.
-  - gauss or gaussian: use Gaussian smearing method.
-  - mp: use methfessel-paxton smearing method; recommended for metals.
+  - fixed: fixed occupations.
+  - gauss or gaussian: Gaussian smearing method.
+  - mp: methfessel-paxton smearing method; recommended for metals.
   - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 ### smearing_sigma
 
 - **Type**: Real
-- **Description**: energy range for smearing, the unit is Rydberg.
+- **Description**: Energy range for smearing.
 - **Default**: 0.001
+- **Unit**: Ry
 
 ### smearing_sigma_temp
 
 - **Type**: Real
-- **Description**: energy range for smearing, and is the same as smearing_sigma, but the unit is K. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
+- **Description**: Energy range for smearing, smearing_sigma = 1/2 * kB * smearing_sigma_temp.
+- **Default**: 1/2 * kB * smearing_sigma_temp.
+- **Unit**: K
 
 ### mixing_type
 
 - **Type**: String
-- **Description**: Charge mixing methods. We offer the following 3 options:
+- **Description**: Charge mixing methods.
   - plain: Just simple mixing.
   - pulay: Standard Pulay method.
   - broyden: Broyden method.
@@ -814,26 +821,32 @@ calculations.
 ### mixing_gg0
 
 - **Type**: Real
-- **Description**: When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$; if set to 0, then no Kerker scaling is performed. Setting mixing_gg0 = 1.5 is normally a good starting point.
+- **Description**: Whether to perfom Kerker scaling.
+  -  When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
+  -  0: No Kerker scaling is performed.
 - **Default**: 0.0
 
 ### mixing_tau
 
 - **Type**: Boolean
-- **Description**: Only relevant for meta-GGA calculations. If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Availability**: Only relevant for meta-GGA calculations.
+- **Description**: If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
 - **Default**: False
 
 ### mixing_dftu
 
 - **Type**: Boolean
-- **Description**: Only relevant for DFT+U calculations. If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Availability**: Only relevant for DFT+U calculations.
+- **Description**: If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
 - **Default**: False
 
 ### gamma_only
 
 - **Type**: Integer
-- **Description**: It is an important parameter **only to be used in localized orbitals set**.
-  If you set gamma_only = 1, ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file. If you set gamma_only = 0, more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+- **Availability**: Only used in localized orbitals set
+- **Description**: Whether to use gamma_only algorithm.
+  - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
+  - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
 
   > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
   >
@@ -854,13 +867,16 @@ calculations.
 ### scf_thr
 
 - **Type**: Real
-- **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
 
 ### scf_thr_type
 
 - **Type**: Int
-- **Description**: Choose the calculation method of convergence criterion. If set to 1, the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$. If set to 2, the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$. Note that this parameter is still under testing and the default setting is usually sufficient.
+- **Description**: Choose the calculation method of convergence criterion. 
+  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
+  - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  >Note: This parameter is still under testing and the default setting is usually sufficient.
 - **Default**: 1 for PW, and 2 for LCAO.
 
 ### chg_extrap
@@ -875,19 +891,20 @@ calculations.
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
-- **Default**: 0
+- **Description**: Whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
+- **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
-- **Default**: 0
+- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
+- **Default**: False
 
 ### soc_lambda
 
 - **Type**: Real
-- **Description**: Relevant for soc calculations. Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
+- **Availability**: Relevant for soc calculations.
+- **Description**: Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
 
   `soc_lambda`, which has value range [0.0, 1.0] , is used for modulate SOC effect.
 
