@@ -1522,7 +1522,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Boolean
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
-- **Description**: include deepks bandgap correction
+- **Description**: include bandgap label for DeePKS training
 - **Default**: False
 
 ### deepks_out_unittest
