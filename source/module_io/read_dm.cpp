@@ -127,9 +127,6 @@ void ModuleIO::read_dm(
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-        //GlobalV::ofs_running << " NLOCAL=" << GlobalV::NLOCAL << std::endl;
-        //GlobalV::ofs_running << " lgd_now=" << lgd_now << std::endl;
-        //GlobalV::ofs_running << " GlobalC::GridT.lgd=" << GlobalC::GridT.lgd << std::endl;
 
         double *tmp = new double[GlobalV::NLOCAL];
         for(int i=0; i<GlobalV::NLOCAL; ++i)

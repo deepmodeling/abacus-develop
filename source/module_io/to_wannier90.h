@@ -20,6 +20,7 @@ using namespace std;
 
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 #endif
 
 class toWannier90
@@ -70,12 +71,21 @@ class toWannier90
     // void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell,
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
-    void init_wannier(const ModuleBase::matrix& ekb,
-                      const ModulePW::PW_Basis* rhopw,
-                      const ModulePW::PW_Basis_K* wfcpw,
-                      const ModulePW::PW_Basis_Big* bigpw,
-                      const K_Vectors& kv,
-                      const psi::Psi<std::complex<double>>* psi = nullptr);
+    void init_wannier_pw(const ModuleBase::matrix& ekb,
+        const ModulePW::PW_Basis* rhopw,
+        const ModulePW::PW_Basis_K* wfcpw,
+        const ModulePW::PW_Basis_Big* bigpw,
+        const K_Vectors& kv,
+        const psi::Psi<std::complex<double>>* psi = nullptr);
+    #ifdef __LCAO
+    void init_wannier_lcao(const Grid_Technique& gt,
+        const ModuleBase::matrix& ekb,
+        const ModulePW::PW_Basis* rhopw,
+        const ModulePW::PW_Basis_K* wfcpw,
+        const ModulePW::PW_Basis_Big* bigpw,
+        const K_Vectors& kv,
+        const psi::Psi<std::complex<double>>* psi = nullptr);
+    #endif
     void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);
@@ -122,6 +132,9 @@ class toWannier90
 
   private:
     std::complex<double> ***wfc_k_grid = nullptr;
+#ifdef __LCAO
+    const Grid_Technique* gridt = nullptr;
+#endif
 };
 
 #endif

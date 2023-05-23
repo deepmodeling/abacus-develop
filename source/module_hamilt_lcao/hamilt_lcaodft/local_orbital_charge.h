@@ -21,7 +21,7 @@ class Local_Orbital_Charge
 	~Local_Orbital_Charge();
 
 	// mohan added 2021-02-08
-    void allocate_dm_wfc(const int& lgd,
+    void allocate_dm_wfc(const Grid_Technique& gt,
         elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
         psi::Psi<double>* psid,
@@ -39,7 +39,7 @@ class Local_Orbital_Charge
 	//-----------------
 	// in DM_k.cpp
 	//-----------------
-	void allocate_DM_k(const int& nks);
+	void allocate_DM_k(const int& nks, const int& nnrg);
 
 	// liaochen modify on 2010-3-23 
 	// change its state from private to public

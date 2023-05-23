@@ -17,6 +17,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 class unkOverlap_lcao
 {
@@ -47,7 +48,7 @@ class unkOverlap_lcao
     unkOverlap_lcao();
     ~unkOverlap_lcao();
 
-    void init(std::complex<double>*** wfc_k_grid, const int nkstot);
+    void init(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const int nkstot);
     int iw2it(int iw);
     int iw2ia(int iw);
     int iw2iL(int iw);
@@ -61,7 +62,7 @@ class unkOverlap_lcao
                                       const K_Vectors& kv);
     void cal_R_number();
     void cal_orb_overlap();
-    void get_lcao_wfc_global_ik(std::complex<double>** ctot, std::complex<double>** cc);
+    void get_lcao_wfc_global_ik(const Grid_Technique& gt, std::complex<double>** ctot, std::complex<double>** cc);
     void prepare_midmatrix_pblas(const int ik_L,
                                  const int ik_R,
                                  const ModuleBase::Vector3<double> dk,
@@ -76,7 +77,7 @@ class unkOverlap_lcao
                                         const psi::Psi<std::complex<double>>* psi_in,
                                         const K_Vectors& kv);
 
-    void test(std::complex<double>*** wfc_k_grid, const K_Vectors& kv);
+    void test(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const K_Vectors& kv);
 };
 
 

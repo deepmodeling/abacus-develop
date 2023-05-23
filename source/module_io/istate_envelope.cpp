@@ -72,7 +72,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     {
         wfc_gamma_grid[is] = new double* [GlobalV::NBANDS];
         for (int ib = 0;ib < GlobalV::NBANDS; ++ib)
-            wfc_gamma_grid[is][ib] = new double[GlobalC::GridT.lgd];
+            wfc_gamma_grid[is][ib] = new double[gg.gridt->lgd];
     }
 
     //for pw-wfc in G space
