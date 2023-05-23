@@ -1,8 +1,8 @@
 #include "elecstate_pw.h"
 
+#include "elecstate_getters.h"
 #include "module_base/constants.h"
 #include "module_base/parallel_reduce.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 #include "module_psi/kernels/device.h"
 
@@ -20,7 +20,8 @@ ElecStatePW<FPTYPE, Device>::~ElecStatePW()
 {
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         delmem_var_op()(this->ctx, this->rho_data);
-        if (XC_Functional::get_func_type() == 3) {
+        if (get_xc_func_type() == 3)
+        {
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
     }
@@ -37,7 +38,8 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
-        if (XC_Functional::get_func_type() == 3) {
+        if (get_xc_func_type() == 3)
+        {
             this->kin_r = new FPTYPE*[this->charge->nspin];
             resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
             for (int ii = 0; ii < this->charge->nspin; ii++) {
@@ -47,7 +49,8 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
     }
     else {
         this->rho = reinterpret_cast<FPTYPE **>(this->charge->rho);
-        if (XC_Functional::get_func_type() == 3) {
+        if (get_xc_func_type() == 3)
+        {
             this->kin_r = reinterpret_cast<FPTYPE **>(this->charge->kin_r);
         }
     }
@@ -74,8 +77,8 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
         // denghui replaced at 20221110
 		// ModuleBase::GlobalFunc::ZEROS(this->rho[is], this->charge->nrxx);
         setmem_var_op()(this->ctx, this->rho[is], 0,  this->charge->nrxx);
-		if (XC_Functional::get_func_type() == 3)
-		{
+        if (get_xc_func_type() == 3)
+        {
             // ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
             setmem_var_op()(this->ctx, this->kin_r[is], 0,  this->charge->nrxx);
         }
@@ -89,7 +92,8 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
     if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
         for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
-            if (XC_Functional::get_func_type() == 3) {
+            if (get_xc_func_type() == 3)
+            {
                 castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
             }
         }
@@ -161,7 +165,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / GlobalC::ucell.omega);
+            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / get_ucell_omega());
 
             // replaced by denghui at 20221110
             elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
@@ -180,7 +184,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / GlobalC::ucell.omega);
+            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / get_ucell_omega());
 
             if (w1 != 0.0)
             {
@@ -189,13 +193,22 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             }
 
             // kinetic energy density
-            if (XC_Functional::get_func_type() == 3)
+            if (get_xc_func_type() == 3)
             {
                 for (int j = 0; j < 3; j++)
                 {
                     setmem_complex_op()(this->ctx, this->wfcr, 0,  this->charge->nrxx);
 
-                    meta_op()(this->ctx, ik, j, npw, this->basis->npwk_max, static_cast<FPTYPE>(GlobalC::ucell.tpiba), this->basis->template get_gcar_data<FPTYPE>(), this->basis->template get_kvec_c_data<FPTYPE>(), &psi(ibnd, 0), this->wfcr);
+                    meta_op()(this->ctx,
+                              ik,
+                              j,
+                              npw,
+                              this->basis->npwk_max,
+                              static_cast<FPTYPE>(get_ucell_tpiba()),
+                              this->basis->template get_gcar_data<FPTYPE>(),
+                              this->basis->template get_kvec_c_data<FPTYPE>(),
+                              &psi(ibnd, 0),
+                              this->wfcr);
 
                     this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
