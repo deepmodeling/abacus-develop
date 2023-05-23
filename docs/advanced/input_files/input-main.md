@@ -969,23 +969,26 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The methods to do geometry optimization, note that there are two implementations of the CG method, see [relax_new](#relax_new):
-  - cg: using the conjugate gradient (cg) algorithm (see relax_new for the new cg method).
-  - bfgs: using the BFGS algorithm.
-  - sd: using the steepest descent (sd) algorithm.
-  - fire: MD-based relaxation algorithm, named `fast inertial relaxation engine`, this algorithm should be employed by setting [md_type](#md_type) to `fire`.
+- **Description**: The methods to do geometry optimization. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new). Also note that the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [md_type](#md_type) to `fire`. See [fire](../md.md#fire) for more details.
+  - cg: using the conjugate gradient (CG) algorithm (see relax_new for the new CG method).
+  - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
+  - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
+  - sd: using the steepest descent (SD) algorithm.
 - **Default**: cg
 
 ### relax_new
 
 - **Type**: Boolean
-- **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
+- **Description**: At around the end of 2022 we made a new implementation of the Conjugate Gradient (CG) method for `relax` and `cell-relax` calculations. But the old implementation was also kept. 
+  - True: use the new implementation of CG method for `relax` and `cell-relax` calculations.
+  - False: use the old implementation of CG method for `relax` and `cell-relax` calculations.
 - **Default**: True
 
 ### relax_scale_force
 
 - **Type**: Real
-- **Description**: This parameter is only relevant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
+- **Availability**: only used when `relax_new` set to `True`
+- **Description**: The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
 - **Default**: 0.5
 
 ### relax_nmax
@@ -997,112 +1000,130 @@ These variables are used to control the geometry relaxation.
 ### relax_cg_thr
 
 - **Type**: Real
-- **Description**: When move-method is set to 'cg-bfgs', a mixed cg-bfgs algorithm is used. The ions first move according to cg method, then switched to bfgs when the maximum of force on atoms is reduced below cg-threshold. The unit is eV/Angstrom.
+- **Description**: When move-method is set to `cg_bfgs`, a mixed algorithm of conjugate gradient (CG) method and Broyden–Fletcher–Goldfarb–Shanno (BFGS) method is used. The ions first move according to CG method, then switched to BFGS method when the maximum of force on atoms is reduced below the CG force threshold, which is set by this parameter.
+- **Unit**: eV/Angstrom
 - **Default**: 0.5
 
 ### cal_force
 
 - **Type**: Boolean
-- **Description**: If set to 1, calculate the force at the end of the electronic iteration. 0 means the force calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`, `relax`, or `md`.
-- **Default**: 0
+- **Description**: 
+  - **True** calculate the force at the end of the electronic iteration
+  - **False** no force calculation at the end of the electronic iteration
+- **Default**: 0 if `calculation` is set to `scf`, 1 if `calculation` is set to `cell-relax`, `relax`, or `md`.
 
 ### force_thr
 
 - **Type**: Real
-- **Description**: The threshold of the force convergence, it indicates the largest force among all the atoms, the unit is Ry=Bohr
-- **Default**: 0.001 Ry/Bohr = 0.0257112 eV/Angstrom
+- **Description**: Threshold of the force convergence in Ry/Bohr. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to [force_thr_ev](#force_thr_ev) except for the unit. You may choose either you like.
+- **Unit**: Ry/Bohr (25.7112 eV/Angstrom)
+- **Default**: 0.001 
 
 ### force_thr_ev
 
 - **Type**: Real
-- **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV/Angstrom, you can choose either one as you like. The recommended value for using atomic orbitals is 0.04 eV/Angstrom.
-- **Default**: 0.0257112 eV/Angstrom
+- **Description**: Threshold of the force convergence in eV/Angstrom. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to [force_thr](#force_thr) except for the unit. You may choose either you like.
+- **Unit**: eV/Angstrom (0.03889 Ry/Bohr)
+- **Default**: 0.0257112
 
 ### force_thr_ev2
 
 - **Type**: Real
-- **Description**: The calculated force will be set to 0 when it is smaller than force_thr_ev2.
+- **Description**: The calculated force will be set to 0 when it is smaller than the parameter `force_thr_ev2`.
 - **Default**: 0.0 eV/Angstrom
 
 ### relax_bfgs_w1
 
 - **Type**: Real
-- **Description**: This variable controls the Wolfe condition for BFGS algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
+- **Description**: This variable controls the Wolfe condition for Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
 - **Default**: 0.01
 
 ### relax_bfgs_w2
 
 - **Type**: Real
-- **Description**: This variable controls the Wolfe condition for BFGS algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
+- **Description**: This variable controls the Wolfe condition for Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
 - **Default**: 0.5
 
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Description**: This variable is for geometry optimization. It indicates the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it will not be larger than relax_bfgs_rmax Bohr.
+- **Description**: This variable is for geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`
+- **Unit**: Bohr
 - **Default**: 0.8
 
 ### relax_bfgs_rmin
 
 - **Type**: Real
 - **Description**: This variable is for geometry optimization. It indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down.
+- **Unit**: Bohr
 - **Default**: 1e-5
 
 ### relax_bfgs_init
 
 - **Type**: Real
-- **Description**: This variable is for geometry optimization. It indicates the initial movement of all the atoms. The sum of the movements from all atoms is relax_bfgs_init Bohr.
+- **Description**: This variable is for geometry optimization. It stands for the sum of initial movements of all of the atoms.
+- **Unit**: Bohr
 - **Default**: 0.5
 
 ### cal_stress
 
-- **Type**: Integer
-- **Description**: If set to 1, calculate the stress at the end of the electronic iteration. 0 means the stress calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`.
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: 
+  - **True**: calculate the stress at the end of the electronic iteration
+  - **False**: no calculation of the stress at the end of the electronic iteration
+- **Default**: True if `calculation` is `cell-relax`, False otherwise. 
 
 ### stress_thr
 
 - **Type**: Real
-- **Description**: The threshold of the stress convergence, it indicates the largest component of the stress tensor, the unit is kbar,
+- **Description**: The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.
+- **Unit**: kbar
 - **Default**: 0.5
 
 ### press1, press2, press3
 
 - **Type**: Real
-- **Description**: The external pressures along three axes, the compressive stress is taken to be positive, and the unit is KBar.
+- **Description**: The external pressures along three axes. Positive input value is taken as compressive stress.
+- **Unit**: kbar
 - **Default**: 0
 
 ### fixed_axes
 
 - **Type**: String
+- **Availability**: only used when `calculation` set to `cell-relax`
 - **Description**: Axes that are fixed during cell relaxation. Possible choices are:
-  - None : default; all of the axes can relax
-  - volume : relaxation with fixed volume
-  - shape : fix shape but change volume (i.e. only lattice constant changes)
-  - a : fix a axis during relaxation
-  - b : fix b axis during relaxation
-  - c : fix c axis during relaxation
-  - ab : fix both a and b axes during relaxation
-  - ac : fix both a and c axes during relaxation
-  - bc : fix both b and c axes during relaxation
+  - **None**: default; all of the axes can relax
+  - **volume**: relaxation with fixed volume
+  - **shape**: fix shape but change volume (i.e. only lattice constant changes)
+  - **a**: fix a axis during relaxation
+  - **b**: fix b axis during relaxation
+  - **c**: fix c axis during relaxation
+  - **ab**: fix both a and b axes during relaxation
+  - **ac**: fix both a and c axes during relaxation
+  - **bc**: fix both b and c axes during relaxation
 
-> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = 1
+> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = True
 
 - **Default**: None
 
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Description**: When set to true, the lattice type will be preserved during relaxation. Must be used along with [relax_new](#relax_new) set to true, and a specific [latname](#latname) must be provided
+- **Availability**: Must be used along with [relax_new](#relax_new) set to True, and a specific [latname](#latname) must be provided
+- **Description**: 
+  - **True**: the lattice type will be preserved during relaxation
+  - **False**: No restrictions are exerted during relaxation in terms of lattice type
 
-> Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges.
+> Note: it is possible to use `fixed_ibrav` with `fixed_axes`, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (`latname` = "sc"), and we use `fixed_ibrav` along with `fixed_axes` = "volume", then the cell is never allowed to move and as a result, the relaxation never converges.
 
 - **Default**: False
 
 ### fixed_atoms
 
 - **Type**: Boolean
-- **Description**: When set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
+- **Description**: 
+  - **True**: The direct coordinates of atoms will be preserved during variable-cell relaxation.
+  - **False**: No restrictions are exerted on positions of all atoms. However, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
 - **Default**: False
 
 ### cell_factor
