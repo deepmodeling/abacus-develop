@@ -1120,240 +1120,202 @@ These variables are used to control the output of properties.
 ### out_mul
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt. In MD calculations, the output interval is controlled by [out_interval](#out_interval).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+- **Default**: False
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on),  wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on), and density matrix of localized orbitals (if [out_dm](#out_dm) is turned on). If set to 0, ABACUS will output them only when converged in SCF or electronic iters reach its maximum. Used for the restart of SCF.
+- **Description**: The output frequency of the charge density (controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)), and density matrix of localized orbitals (controlled by [out_dm](#out_dm)). 
+  - \>0: Output them every `out_freq_elec` iteration numbers in electronic iterations.
+  - 0: Output them when the electronic iteration is converged or reaches the maximal iteration number.
 - **Default**: 0
-
-### out_freq_ion
-
-- **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of ionic steps to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when ionic steps reach its maximum step. Used for the restart of MD or Relax.
-- **Default**: 0
-
-> Note : out_freq_ion is currently useless.
 
 ### out_chg
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
-- **Default**: 0
+- **Description**: Whether to output the charge density on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as: 
+  - npsin = 1: SPIN1_CHG.cube;
+  - npsin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
+  - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
+
+  The circle order of the charge density on real space grids is: z is the outer loop, then y and finally x (x is moving fastest).
+- **Default**: False
 
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot.cube. Our toolset includes a Python script located at `tools/average_pot/aveElecStatPot.py` that calculates the average electrostatic potential along the z-axis and outputs it to ElecStaticPot_AVE.
+- **Description**: 
+  - 1: Output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
+    - npsin = 1: SPIN1_POT.cube;
+    - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
+    - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
+  - 2: Output the electrostatic potential on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 - **Default**: 0
 
 ### out_dm
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the density matrix of localized orbitals, only useful for localized orbitals set. The name of the output file is SPIN1_DM and SPIN2_DM in the output directory.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (gamma-only algorithm)
+- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
+  - npsin = 1: SPIN1_DM;
+  - npsin = 2: SPIN1_DM, and SPIN2_DM.
+- **Default**: False
 
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs the coefficients of wave functions into text files. The file names are WAVEFUNC$K$.txt, where $K$ is the index of k point. When set this variable to 2, results are stored in binary files. The file names are WAVEFUNC$K$.dat.
+- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Description**: 
+  - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points. 
+  - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
 - **Default**: 0
 
 ### out_wfc_r
 
 - **Type**: Boolean
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace$K$B, where $K is the index of k point, $B is the index of band.
-- **Default**: 0
+- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
+- **Default**: False
 
 ### out_wfc_lcao
 
 - **Type**: Boolean
-- **Description**: **Only used in localized orbitals set**. If set to 1, ABACUS will output the wave functions coefficients. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as:
+  - gamma-only: `LOWF_GAMMA_S1.dat`;
+  - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
+
+  The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
+- **Default**: Flase
 
 ### out_dos
 
-- **Type**: Integer
-- **Description**: Controls whether to output the density of state (DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For more information, refer to the [worked example](../elec_properties/dos.md).
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
+- **Default**: False
 
 ### out_band
 
 - **Type**: Boolean
-- **Description**: Controls whether to output the band structure. For more information, refer to the [worked example](../elec_properties/band.md)
-- **Default**: 0
+- **Description**: Whether to output the band structure. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Default**: False
 
 ### out_proj_band
 
 - **Type**: Boolean
-- **Description**: Controls whether to output the projected band structure. For more information, refer to the [worked example](../elec_properties/band.md)
-- **Default**: 0
+- **Description**: Whether to output the projected band structure. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Default**: False
 
 ### out_stru
 
 - **Type**: Boolean
-- **Description**: If set to 1, then the structure files will be written after each ion step
-- **Default**: 0
+- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
+- **Default**: False
 
 ### out_bandgap
 
 - **Type**: Boolean
-- **Description**: If set to 1, the bandgap will be printed out at each SCF step.
-- **Default**: 0
+- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
+  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
+  - [nupdown](#nupdown) = 0: `E_bandgap`
+- **Default**: False
 
 ### out_level
 
 - **Type**: String
-- **Description**: Controls the level of output. `ie` means write output at electron level; `i` means write additional output at ions level.
+- **Description**: Control the output level of information in `OUT.${suffix}/running_${calculation}.log`.
+  - ie: electronic iteration level, which prints useful information for electronic iterations;
+  - i: geometry relaxation level, which prints some information for geometry relaxations additionally;
+  - m: molecular dynamics level, which does not print some information for simplicity.
+
 - **Default**: ie
 
 ### out_alllog
 
 - **Type**: Boolean
-- **Description**: determines whether to write log from all ranks in an MPI run. If set to be 1, then each rank will write detained running information to a file named running_${calculation}\_(${rank}+1).log. If set to 0, log will only be written from rank 0 into a file named running_${calculation}.log.
-- **Default**: 0
+- **Description**: Whether to print information into individual logs from all ranks in an MPI run. 
+  - True: Information from each rank will be written into individual files named `OUT.${suffix}/running_${calculation}_${rank+1}.log`.
+  - False: Information will only be written from rank 0 into a file named `OUT.${suffix}/running_${calculation}.log`.
+- **Default**: False
 
 ### out_mat_hs
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs is set to 1, ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of files in the directory `OUT.${suffix}`. The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
-
-  For nspin = 1 and nspin = 4 calculations, there will be only one spin component, so `$k` runs from 0 up to $nkpoints - 1$. For nspin = 2, `$k` runs from $2*nkpoints - 1$. In the latter case, the files are arranged into blocks of up and down spins. For example, if there are 3 k points, then we have the following correspondence:
-
-  data-0-H : 1st k point, spin up
-  data-1-H : 2nd k point, spin up
-  data-2-H : 3rd k point, spin up
-  data-3-H : 1st k point, spin down
-  data-4-H : 2nd k point, spin down
-  data-5-H : 3rd k point, spin down
-
-  As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
-
-  The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
-
-  The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Default**: False
 
 ### out_mat_r
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
-
-  Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
-
-  ```
-  -5 -5 -5    //R (lattice vector)
-  ...
-  -5 -5 -4    //R (lattice vector)
-  ...
-  -5 -5 -3    //R (lattice vector)
-  ```
-
-  Each block here contains the matrix for the corresponding cell. There are three columns in each block, giving the matrix elements in x, y, z directions, respectively. There are altogether nbasis * nbasis lines in each block, which emulates the matrix elements.
-
-  In MD calculations, if [out_app_flag](#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, The output frequency is controlled by [out_interval](#out_interval). For example, if we are running a 10-step MD with out_interval = 3, then `$x` will be 0, 3, 6, and 9.
-
-  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print the matrix representation of the position matrix into a file named `data-rR-tr` in the directory `OUT.${suffix}`. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
+- **Default**: False
 
 ### out_mat_hs2
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$.
-
-  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain $H(R)$ for spin up and spin down, respectively.
-
-  As for molecular dynamics calculations, the format is controlled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag) in the same manner as the position matrix as detailed in [out_mat_r](#out_mat_r).
-
-  Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
-
-  The rest of the files are arranged in blocks. Each block starts with a line giving the lattice vector `R` and the number of nonzero matrix elements, such as:
-
-  ```
-  -3 1 1 1020
-  ```
-
-  which means there are 1020 nonzero elements in the (-3,1,1) cell.
-
-  If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
-
-  The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
-
-  - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
-  - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
-
-  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
+- **Default**: False
 
 ### out_mat_t
 
 - **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: 0
+- **Default**: False
 
 ### out_mat_dh
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False
 
 ### out_app_flag
 
 - **Type**: Boolean
-- **Description**: Whether output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during MD. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
 - **Default**: true
 
 ### out_interval
 
 - **Type**: Integer
-- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. Check input parameter [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info
 
 - **Type**: Boolean
-- **Description**: When set to 1, ABACUS will generate a new directory under OUT.suffix path named as element name such as 'Si', which contained files "Si-d1-orbital-dru.dat  Si-p2-orbital-k.dat    Si-s2-orbital-dru.dat
-  Si-d1-orbital-k.dat    Si-p2-orbital-r.dat    Si-s2-orbital-k.dat
-  Si-d1-orbital-r.dat    Si-p2-orbital-ru.dat   Si-s2-orbital-r.dat
-  Si-d1-orbital-ru.dat   Si-p-proj-k.dat        Si-s2-orbital-ru.dat
-  Si.NONLOCAL            Si-p-proj-r.dat        Si-s-proj-k.dat
-  Si-p1-orbital-dru.dat  Si-p-proj-ru.dat       Si-s-proj-r.dat
-  Si-p1-orbital-k.dat    Si-s1-orbital-dru.dat  Si-s-proj-ru.dat
-  Si-p1-orbital-r.dat    Si-s1-orbital-k.dat    v_loc_g.dat
-  Si-p1-orbital-ru.dat   Si-s1-orbital-r.dat
-  Si-p2-orbital-dru.dat  Si-s1-orbital-ru.dat" for example.
-- **Default**: 0
+- **Description**: Whether to print element information into files in the directory `OUT.${suffix}/${element_label}`, including pseudopotential and orbital information of the element.
+- **Default**: False
 
 ### restart_save
 
 - **Type**: Boolean
-- **Description**: Only for LCAO, store charge density file and H matrix file every scf step for restart.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to save charge density files and Hamiltonian matrix files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
+  - auto: These files are saved in folder `OUT.${suffix}/restart/`;
+  - other: These files are saved in folder `${read_file_dir}/restart/`.
+- **Default**: False
 
 ### restart_load
 
 - **Type**: Boolean
-- **Description**: Only for LCAO, used for restart, only if that:
-  - set restart_save as true and do scf calculation before.
-  - please ensure the suffix is the same as calculation before and density file and H matrix file exist.
-    Restart from stored density file and H matrix file.
-- **Default**: 0
-
-### dft_plus_dmft
-
-- **Type**: Boolean
-- **Description**: Whether to generate output to be used in dmft. It seems this functionality is not working anymore.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file and Hamiltonian matrix file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file and Hamiltonian matrix file exist.
+- **Default**: False
 
 ### rpa
 
 - **Type**: Boolean
-- **Description**: Generate output files used in rpa calculation.
-- **Default**: 0
+- **Description**: Generate output files used in rpa calculations.
+- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
