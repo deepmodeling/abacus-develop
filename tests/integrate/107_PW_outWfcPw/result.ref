@@ -6,4 +6,7 @@ Max_wfc_3 0.3811
 Max_wfc_4 0.3619
 Max_wfc_5 0.4156
 Max_wfc_6 0.3917
+pointgroupref T_d
+spacegroupref O_h
+nksibzref 1
 totaltimeref 

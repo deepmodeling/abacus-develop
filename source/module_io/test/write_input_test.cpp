@@ -75,6 +75,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("ecutwfc                        20 ##energy cutoff for wave functions"));
         EXPECT_THAT(output,testing::HasSubstr("pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations"));
         EXPECT_THAT(output,testing::HasSubstr("scf_thr                        1e-08 #charge density error"));
+        EXPECT_THAT(output,testing::HasSubstr("scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao"));
         EXPECT_THAT(output,testing::HasSubstr("init_wfc                       atomic #start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'"));
         EXPECT_THAT(output,testing::HasSubstr("init_chg                       atomic #start charge is from 'atomic' or file"));
         EXPECT_THAT(output,testing::HasSubstr("chg_extrap                     atomic #atomic; first-order; second-order; dm:coefficients of SIA"));
@@ -277,7 +278,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_alpha               default #fraction of Fock exchange in hybrid functionals"));
         EXPECT_THAT(output,testing::HasSubstr("exx_hse_omega                  0.11 #range-separation parameter in HSE functional"));
         EXPECT_THAT(output,testing::HasSubstr("exx_hybrid_step                100 #the maximal electronic iteration number in the evaluation of Fock exchange"));
-        EXPECT_THAT(output,testing::HasSubstr("exx_mixing_beta                0 #mixing_beta for outer-loop when exx_separate_loop=1"));   
+        EXPECT_THAT(output,testing::HasSubstr("exx_mixing_beta                1 #mixing_beta for outer-loop when exx_separate_loop=1"));   
         EXPECT_THAT(output,testing::HasSubstr("exx_lambda                     0.3 #used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method"));
         EXPECT_THAT(output,testing::HasSubstr("exx_real_number                default #exx calculated in real or complex"));
         EXPECT_THAT(output,testing::HasSubstr("exx_pca_threshold              0 #threshold to screen on-site ABFs in exx"));

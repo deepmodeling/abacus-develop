@@ -1,36 +1,42 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix                  autotest
-calculation     	scf
-dft_functional		hse
-
-nbands			12
-symmetry		0
-init_chg		atomic
+suffix			autotest
+ntype			1
+symmetry		-1
+gamma_only      0
+nspin			1
 
 #Parameters (2.Iteration)
-ecutwfc			10
-scf_thr			1e-6
-scf_nmax		10
+ecutwfc			20
+scf_thr			1E-5
+scf_nmax		100
+
+calculation		scf
+cal_force		1
+cal_stress		1
 
 #Parameters (3.Basis)
 basis_type		lcao
-#gamma_only		1
+ks_solver       genelpa
 
 #Parameters (4.Smearing)
-smearing_method		gaussian
-smearing_sigma		0.02
+smearing_method		gauss
+smearing_sigma		0.002
 
 #Parameters (5.Mixing)
 mixing_type		pulay
-mixing_beta		0.4
 
 #Parameters (7.Hybrid)
-exx_pca_threshold 1e-4
-exx_c_threshold 1e-4
-exx_dm_threshold 1e-4
-exx_schwarz_threshold 1e-5
-exx_cauchy_threshold 1e-7
-exx_ccp_rmesh_times 10
+dft_functional				hse
+exx_real_number				1
+exx_pca_threshold			1E-4
+exx_c_threshold 			1E-4
+exx_v_threshold 			1
+exx_dm_threshold 			1E-4
+exx_cauchy_threshold		1E-6
+exx_ccp_rmesh_times			1
+exx_separate_loop			1
+exx_hybrid_step				3
+
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB

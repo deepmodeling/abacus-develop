@@ -54,11 +54,12 @@ namespace ModuleESolver
         //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT ATOMS");
 
         // (3) Periodic condition search for each grid.
-        GlobalC::GridT.set_pbc_grid(
+        this->GridT.set_pbc_grid(
             GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz,
             GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz,
             GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbz,
-            GlobalC::bigpw->nbxx, GlobalC::bigpw->nbzp_start, GlobalC::bigpw->nbzp);
+            GlobalC::bigpw->nbxx, GlobalC::bigpw->nbzp_start, GlobalC::bigpw->nbzp,
+            GlobalC::rhopw->ny, GlobalC::rhopw->nplane,GlobalC::rhopw->startz_current);
 
         // (2)For each atom, calculate the adjacent atoms in different cells
         // and allocate the space for H(R) and S(R).
@@ -73,8 +74,8 @@ namespace ModuleESolver
 #endif
 
             // need to first calculae lgd.
-            // using GlobalC::GridT.init.
-            GlobalC::GridT.cal_nnrg(pv);
+            // using GridT.init.
+            this->GridT.cal_nnrg(pv);
         }
 
         ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");
@@ -132,7 +133,10 @@ namespace ModuleESolver
                 this->psi = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, ncol, this->LOWF.ParaV->nrow, nullptr);
             }
         }
-
+        
+        // prepare grid in Gint
+        this->UHM.grid_prepare(this->GridT);
+        
         // init Hamiltonian
         if (this->p_hamilt != nullptr)
         {
@@ -162,11 +166,8 @@ namespace ModuleESolver
             }
         }
 
-        // prepare grid in Gint
-        this->UHM.grid_prepare();
-
         // init density kernel and wave functions.
-        this->LOC.allocate_dm_wfc(GlobalC::GridT.lgd, this->pelec, this->LOWF, this->psid, this->psi, GlobalC::kv);
+        this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psid, this->psi, GlobalC::kv);
 
         //======================================
         // do the charge extrapolation before the density matrix is regenerated.
@@ -190,8 +191,8 @@ namespace ModuleESolver
                 double& ef_tmp = this->pelec->eferm.get_ef(is);
                 ModuleIO::read_dm(
 #ifdef __MPI
-		            GlobalC::GridT.nnrg,
-		            GlobalC::GridT.trace_lo,
+		            this->GridT.nnrg,
+		            this->GridT.trace_lo,
 #endif
 		            is,
 		            ssd.str(),
@@ -327,6 +328,31 @@ namespace ModuleESolver
 			exx_opt_orb.generate_matrix(GlobalC::kv);
 			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
 			return;
+		}
+		
+		// set initial parameter for mix_DMk_2D
+		if(GlobalC::exx_info.info_global.cal_exx)
+		{
+			this->mix_DMk_2D.set_nks(GlobalC::kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
+			if(GlobalC::exx_info.info_global.separate_loop)
+			{
+				if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
+				else
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain)
+					                .set_mixing_beta(GlobalC::exx_info.info_global.mixing_beta_for_loop1);
+			}
+			else
+			{
+				if(GlobalC::CHR_MIX.get_mixing_mode() == "plain")
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
+				else if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
+					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
+				else
+					throw std::invalid_argument(
+						"mixing_mode = " + GlobalC::CHR_MIX.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
+						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
+			}
 		}
 #endif // __MPI
 #endif // __EXX
@@ -570,7 +596,7 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, nullptr);
+            myWannier.init_wannier_lcao(this->GridT, this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, nullptr);
         }
 
         // add by jingan

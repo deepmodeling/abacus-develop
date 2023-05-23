@@ -3,7 +3,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "module_base/tool_title.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "occupy.h"
 #include "module_base/parallel_reduce.h"
 
@@ -17,21 +16,21 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const double* const ocp_kb)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
 {
 
     int num = 0;
     num = this->klist->nks * GlobalV::NBANDS;
-    if (num != GlobalV::ocp_kb.size())
+    if (num != ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "size of occupation array is wrong , please check ocp_set");
     }
 
     double num_elec = 0.0;
-    for (int i = 0; i < GlobalV::ocp_kb.size(); i++)
+    for (int i = 0; i < ocp_kb.size(); i++)
     {
-        num_elec += GlobalV::ocp_kb[i];
+        num_elec += ocp_kb[i];
     }
     if (abs(num_elec - GlobalV::nelec) > 1.0e-5)
     {
@@ -157,8 +156,10 @@ void ElecState::calculate_weights()
                              -1,
                              this->klist->isk);
         }
+#ifdef __MPI
         // qianrui fix a bug on 2021-7-21
         Parallel_Reduce::reduce_double_allpool(this->f_en.demet);
+#endif
     }
     else if (Occupy::fixed_occupations)
     {
@@ -190,7 +191,9 @@ void ElecState::calEBand()
         // Reduce all the Energy in each cpu
         //==================================
         this->f_en.eband /= GlobalV::NPROC_IN_POOL;
+#ifdef __MPI
         Parallel_Reduce::reduce_double_all(this->f_en.eband);
+#endif
     }
     return;
 }

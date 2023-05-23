@@ -189,7 +189,7 @@ void ESolver_KS_PW<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     // Fix pelec->wg by ocp_kb
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb.data());
+        this->pelec->fixed_weights(GlobalV::ocp_kb);
     }
 }
 
@@ -952,7 +952,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     if (INPUT.towannier90)
     {
         toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G);
-        myWannier.init_wannier(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, this->psi);
+        myWannier.init_wannier_pw(this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, this->psi);
     }
 
     //=======================================================

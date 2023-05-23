@@ -25,7 +25,8 @@ public:
     std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]	
     std::complex<double>* wfc_k_grid2; // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
 
-    const Parallel_Orbitals *ParaV;
+    const Parallel_Orbitals* ParaV;
+    const Grid_Technique* gridt;
 
 
     void allocate_k(const int& lgd,
@@ -120,7 +121,7 @@ int Local_Orbital_wfc::set_wfc_grid(
         for(int i=0; i<naroc[0]; ++i)
         {
             int igrow=globalIndex(i, nb, dim0, iprow);
-	        int mu_local=GlobalC::GridT.trace_lo[igrow];
+	        int mu_local=this->gridt->trace_lo[igrow];
             if (wfc && mu_local >= 0)
             {
                 wfc[igcol][mu_local]=work[j*naroc[0]+i];
