@@ -2132,8 +2132,8 @@ These variables are used to control DFT+U correlated parameters
 
 - **Type**: Boolean
 - **Description**: 
-  - True: ABCUS will calculate plus U correction, which is especially important for correlated electron.
-  - False: ABCUS will not plus U correction.
+  - True: calculate plus U correction, which is especially important for correlated electron.
+  - False: not plus U correction.
 - **Default**: False
 
 ### orbital_corr
