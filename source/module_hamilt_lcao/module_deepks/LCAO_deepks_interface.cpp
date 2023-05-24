@@ -76,7 +76,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                             wg_hl(is, ib + nocc - 1) = -1.0;
                             wg_hl(is, ib + nocc) = 1.0;
                             dm_bandgap_gamma[ib].resize(GlobalV::NSPIN);
-                            elecstate::cal_dm(ParaV, wg_hl, psid[0], dm_bandgap_gamma[ib]);
+                            elecstate::cal_dm(ParaV, wg_hl, psid, dm_bandgap_gamma[ib]);
                         }
                     }
 
@@ -101,7 +101,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                             wg_hl(ik, ib + nocc) = 1.0;
                         }
                         dm_bandgap_k[ib].resize(nks);
-                        elecstate::cal_dm(ParaV, wg_hl, psi[0], dm_bandgap_k[ib]);
+                        elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap_k[ib]);
                     }
 
                     // ld->cal_o_delta_k(dm_bandgap_k, ParaV, nks);
