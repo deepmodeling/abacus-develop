@@ -1748,14 +1748,15 @@ These variables are relevant when using hybrid functionals.
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Description**: the maximal electronic iteration number in the evaluation of Fock exchange
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
 - **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
-- **Description**: mixing_beta for outer-loop
+- **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
 ### exx_lambda
@@ -1859,8 +1860,9 @@ These variables are relevant when using hybrid functionals.
 
 - **Type**: Real
 - **Availability**: *[dft_functional](#dft_functional)==opt_orb*
-- **Description**: The cut-off of plane wave expansion (Ry), when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
+- **Description**: The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
+- **Unit**: Ry
 
 ### exx_opt_orb_tolerence
 
