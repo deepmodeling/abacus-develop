@@ -1066,8 +1066,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                           GlobalC::ORB,
                           GlobalC::GridD,
                           *this->LOWF.ParaV,
-                          this->psi,
-                          this->psid);
+                          this->psi[0],
+                          this->psid[0]);
 
     /*
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04

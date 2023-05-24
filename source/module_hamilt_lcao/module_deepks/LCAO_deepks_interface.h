@@ -19,8 +19,8 @@ class LCAO_Deepks_Interface
                              const LCAO_Orbitals& orb,
                              Grid_Driver& GridD,
                              const Parallel_Orbitals& ParaV,
-                             psi::Psi<std::complex<double>>* psi,
-                             psi::Psi<double>* psid);
+                             const psi::Psi<std::complex<double>>& psi,
+                             const psi::Psi<double>& psid);
     //void print_projected_dm();
     //void print_descriptors();
     //void perform_deepks_scf();

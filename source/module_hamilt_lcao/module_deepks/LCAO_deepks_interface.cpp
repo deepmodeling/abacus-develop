@@ -28,8 +28,8 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               const LCAO_Orbitals& orb,
                                               Grid_Driver& GridD,
                                               const Parallel_Orbitals& ParaV,
-                                              psi::Psi<std::complex<double>>* psi,
-                                              psi::Psi<double>* psid)
+                                              const psi::Psi<std::complex<double>>& psi,
+                                              const psi::Psi<double>& psid)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
 
