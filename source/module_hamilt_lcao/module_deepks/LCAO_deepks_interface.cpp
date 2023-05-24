@@ -1,11 +1,9 @@
 #ifdef __DEEPKS
 #include "LCAO_deepks_interface.h"
 
-#include "module_elecstate/cal_dm.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
-#include "module_base/matrix.h"
-#include "module_base/complexmatrix.h"
+#include "module_elecstate/cal_dm.h"
 
 LCAO_Deepks_Interface::LCAO_Deepks_Interface(LCAO_Deepks* ld_in) : ld(ld_in)
 {
@@ -31,10 +29,13 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               Grid_Driver& GridD,
                                               const Parallel_Orbitals* ParaV,
                                               const psi::Psi<std::complex<double>>& psi,
-                                              const psi::Psi<double>& psid)
+                                              const psi::Psi<double>& psid,
+                                              const std::vector<ModuleBase::matrix>& dm_gamma,
+                                              const std::vector<ModuleBase::ComplexMatrix>& dm_k)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
-
+    // calculating deepks correction to bandgap
+    // and save the results
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
     {
         ld->save_npy_e(etot, "e_tot.npy");
@@ -119,6 +120,44 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
             }                                                    // end deepks_scf == 0
         }                                                        // end bandgap label
     }                                                            // end deepks_out_labels
+
+    // DeePKS PDM and descriptor
+    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
+    {
+        // this part is for integrated test of deepks
+        // so it is printed no matter even if deepks_out_labels is not used
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            ld->cal_projected_DM(dm_gamma[0], ucell, orb, GridD, ParaV->trace_loc_row, ParaV->trace_loc_col);
+        }
+        else
+        {
+            ld->cal_projected_DM_k(dm_k, ucell, orb, GridD, ParaV->trace_loc_row, ParaV->trace_loc_col, nks, kvec_d);
+        }
+        ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
+        ld->cal_descriptor();     // final descriptor
+        ld->check_descriptor(ucell);
+
+        if (GlobalV::deepks_out_labels)
+            ld->save_npy_d(nat); // libnpy needed
+    }
+    //
+    if (GlobalV::deepks_scf)
+    {
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            ld->cal_e_delta_band(dm_gamma, ParaV->trace_loc_row, ParaV->trace_loc_col, ParaV->nrow);
+        }
+        else
+        {
+            ld->cal_e_delta_band_k(dm_k, ParaV->trace_loc_row, ParaV->trace_loc_col, nks, ParaV->nrow, ParaV->ncol);
+        }
+        std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
+                  << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"
+                  << std::endl;
+        std::cout << "E_delta_NN= " << std::setprecision(8) << ld->E_delta << " Ry"
+                  << " = " << std::setprecision(8) << ld->E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
+    }
 }
 
 #endif
