@@ -4,6 +4,8 @@
 #include "module_elecstate/cal_dm.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 
 LCAO_Deepks_Interface::LCAO_Deepks_Interface(LCAO_Deepks* ld_in) : ld(ld_in)
 {
@@ -27,7 +29,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               const UnitCell& ucell,
                                               const LCAO_Orbitals& orb,
                                               Grid_Driver& GridD,
-                                              const Parallel_Orbitals& ParaV,
+                                              const Parallel_Orbitals* ParaV,
                                               const psi::Psi<std::complex<double>>& psi,
                                               const psi::Psi<double>& psid)
 {
@@ -80,10 +82,10 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                         }
                     }
 
-                    ld->cal_orbital_precalc(dm_bandgap_gamma, nat, ucell, orb, GridD, ParaV);
+                    ld->cal_orbital_precalc(dm_bandgap_gamma, nat, ucell, orb, GridD, *ParaV);
 
                     ld->save_npy_orbital_precalc(nat, nks);
-                    ld->cal_o_delta(dm_bandgap_gamma, ParaV);
+                    ld->cal_o_delta(dm_bandgap_gamma, *ParaV);
                     ld->save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks);
                 }    // end deepks_scf gamma-only;
                 else // multi-k bandgap label
@@ -105,9 +107,9 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                     }
 
                     // ld->cal_o_delta_k(dm_bandgap_k, ParaV, nks);
-                    ld->cal_orbital_precalc_k(dm_bandgap_k, nat, nks, kvec_d, ucell, orb, GridD, ParaV);
+                    ld->cal_orbital_precalc_k(dm_bandgap_k, nat, nks, kvec_d, ucell, orb, GridD, *ParaV);
                     ld->save_npy_orbital_precalc(nat, nks);
-                    ld->cal_o_delta_k(dm_bandgap_k, ParaV, nks);
+                    ld->cal_o_delta_k(dm_bandgap_k, *ParaV, nks);
                     ld->save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks);
                 } // end deepks_scf multi-k
             }     // end deepks_scf == 1

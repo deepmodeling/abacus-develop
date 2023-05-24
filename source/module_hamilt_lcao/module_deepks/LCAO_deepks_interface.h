@@ -18,7 +18,7 @@ class LCAO_Deepks_Interface
                              const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
                              Grid_Driver& GridD,
-                             const Parallel_Orbitals& ParaV,
+                             const Parallel_Orbitals* ParaV,
                              const psi::Psi<std::complex<double>>& psi,
                              const psi::Psi<double>& psid);
     //void print_projected_dm();

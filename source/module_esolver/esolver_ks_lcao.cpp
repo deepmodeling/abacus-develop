@@ -1065,7 +1065,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                           GlobalC::ucell,
                           GlobalC::ORB,
                           GlobalC::GridD,
-                          *this->LOWF.ParaV,
+                          this->LOWF.ParaV,
                           this->psi,
                           this->psid);
 
