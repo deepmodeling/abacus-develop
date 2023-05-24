@@ -803,7 +803,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: mixing parameter. We recommend the following options:
-  - **default**: -10.0 means program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
+  - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
     - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
     - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
     - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
@@ -824,7 +824,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
   -  **0**: No Kerker scaling is performed.
 - **Default**: 0.0
 
@@ -1585,7 +1585,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: String
 - **Availability**: OFDFT
-- **Description**: The type of kinetic energy density functional.
+- **Description**: The type of KEDF (kinetic energy density functional).
   - **wt**: Wang-Teter.
   - **tf**: Thomas-Fermi.
   - **vw**: von Weizsäcker.
@@ -1633,28 +1633,28 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
-- **Description**: Weight of TF KEDF.
+- **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
-- **Description**: Weight of vW KEDF.
+- **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter alpha of WT KEDF.
+- **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_beta
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter beta of WT KEDF.
+- **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_rho0
@@ -1678,7 +1678,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=lkt`
-- **Description**: Parameter a of LKT KEDF.
+- **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
 
 ### of_read_kernel
@@ -1686,8 +1686,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to read in the kernel file.
-  - **True**: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
-  - **False**: The kernel of WT KEDF will be filled from formula.
+  - **True**: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by `of_kernel_file`. 
+  - **False**: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
 - **Default**: False
 
 ### of_kernel_file
