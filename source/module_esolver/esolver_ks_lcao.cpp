@@ -28,6 +28,7 @@
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -1052,164 +1053,24 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 
 #ifdef __DEEPKS
-    // calculating deepks correction to bandgap
-    // and save the results
+    std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld,[](LCAO_Deepks*){});
+    LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(ld_shared_ptr);
+    LDI.out_deepks_labels(this->pelec->f_en.etot,
+                          this->pelec->klist->nks,
+                          GlobalC::ucell.nat,
+                          this->pelec->ekb,
+                          this->pelec->klist->kvec_d,
+                          GlobalC::ucell,
+                          GlobalC::ORB,
+                          GlobalC::GridD,
+                          this->LOWF.ParaV,
+                          *(this->psi),
+                          *(this->psid),
+                          this->LOC.dm_gamma,
+                          this->LOC.dm_k);
 
-    if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
-    {
-        GlobalC::ld.save_npy_e(this->pelec->f_en.etot, "e_tot.npy");
-        if (GlobalV::deepks_scf)
-        {
-            GlobalC::ld.save_npy_e(this->pelec->f_en.etot - GlobalC::ld.E_delta,
-                                   "e_base.npy"); // ebase :no deepks E_delta including
-        }
-        else // deepks_scf = 0; base calculation
-        {
-            GlobalC::ld.save_npy_e(this->pelec->f_en.etot, "e_base.npy"); // no scf, e_tot=e_base
-        }
-
-        if (GlobalV::deepks_bandgap)
-        {
-            int nocc = GlobalV::nelec / 2;
-            int nks = GlobalC::kv.nks;
-            ModuleBase::matrix deepks_bands;
-            deepks_bands.create(nks, 1);
-            for (int iks = 0; iks < nks; iks++)
-            {
-                for (int hl = 0; hl < 1; hl++)
-                {
-                    deepks_bands(iks, hl) = this->pelec->ekb(iks, nocc + hl) - this->pelec->ekb(iks, nocc - 1 + hl);
-                }
-            }
-            GlobalC::ld.save_npy_o(deepks_bands, "o_tot.npy", nks);
-            if (GlobalV::deepks_scf)
-            {
-                int nocc = GlobalV::nelec / 2;
-                ModuleBase::matrix wg_hl;
-                if (GlobalV::GAMMA_ONLY_LOCAL)
-                {
-                    wg_hl.create(GlobalV::NSPIN, GlobalV::NBANDS);
-                    std::vector<std::vector<ModuleBase::matrix>> dm_bandgap_gamma;
-                    dm_bandgap_gamma.resize(GlobalV::NSPIN);
-                    for (int is = 0; is < GlobalV::NSPIN; is++)
-                    {
-                        for (int ib = 0; ib < 1; ib++)
-                        {
-                            wg_hl.zero_out();
-                            wg_hl(is, ib + nocc - 1) = -1.0;
-                            wg_hl(is, ib + nocc) = 1.0;
-                            dm_bandgap_gamma[ib].resize(GlobalV::NSPIN);
-                            elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psid[0], dm_bandgap_gamma[ib]);
-                        }
-                    }
-
-                    GlobalC::ld.cal_orbital_precalc(dm_bandgap_gamma,
-                                                    GlobalC::ucell.nat,
-                                                    GlobalC::ucell,
-                                                    GlobalC::ORB,
-                                                    GlobalC::GridD,
-                                                    *this->LOWF.ParaV);
-
-                    GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat, nks);
-                    GlobalC::ld.cal_o_delta(dm_bandgap_gamma, *this->LOWF.ParaV);
-                    GlobalC::ld.save_npy_o(deepks_bands - GlobalC::ld.o_delta, "o_base.npy", nks);
-                }    // end deepks_scf gamma-only;
-                else // multi-k bandgap label
-                {
-                    wg_hl.create(GlobalC::kv.nks, GlobalV::NBANDS);
-                    std::vector<std::vector<ModuleBase::ComplexMatrix>> dm_bandgap_k;
-                    dm_bandgap_k.resize(1);
-
-                    for (int ib = 0; ib < 1; ib++)
-                    {
-                        wg_hl.zero_out();
-                        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
-                        {
-                            wg_hl(ik, ib + nocc - 1) = -1.0;
-                            wg_hl(ik, ib + nocc) = 1.0;
-                        }
-                        dm_bandgap_k[ib].resize(GlobalC::kv.nks);
-                        elecstate::cal_dm(this->LOWF.ParaV, wg_hl, this->psi[0], dm_bandgap_k[ib]);
-                    }
-
-                    // GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *this->LOWF.ParaV, GlobalC::kv.nks);
-                    GlobalC::ld.cal_orbital_precalc_k(dm_bandgap_k,
-                                                      GlobalC::ucell.nat,
-                                                      GlobalC::kv.nks,
-                                                      GlobalC::kv.kvec_d,
-                                                      GlobalC::ucell,
-                                                      GlobalC::ORB,
-                                                      GlobalC::GridD,
-                                                      *this->LOWF.ParaV);
-                    GlobalC::ld.save_npy_orbital_precalc(GlobalC::ucell.nat, nks);
-                    GlobalC::ld.cal_o_delta_k(dm_bandgap_k, *this->LOWF.ParaV, GlobalC::kv.nks);
-                    GlobalC::ld.save_npy_o(deepks_bands - GlobalC::ld.o_delta, "o_base.npy", nks);
-                } // end deepks_scf multi-k
-            }     // end deepks_scf == 1
-            else  // deepks_scf == 0
-            {
-                GlobalC::ld.save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
-            }                                                            // end deepks_scf == 0
-        }                                                                // end bandgap label
-    }                                                                    // end deepks_out_labels
-
-    // 3. DeePKS PDM and descriptor
-    const Parallel_Orbitals* pv = this->LOWF.ParaV;
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
-    {
-        // this part is for integrated test of deepks
-        // so it is printed no matter even if deepks_out_labels is not used
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma[0],
-                                         GlobalC::ucell,
-                                         GlobalC::ORB,
-                                         GlobalC::GridD,
-                                         pv->trace_loc_row,
-                                         pv->trace_loc_col);
-        }
-        else
-        {
-            GlobalC::ld.cal_projected_DM_k(this->LOC.dm_k,
-                                           GlobalC::ucell,
-                                           GlobalC::ORB,
-                                           GlobalC::GridD,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           GlobalC::kv.nks,
-                                           GlobalC::kv.kvec_d);
-        }
-        GlobalC::ld.check_projected_dm(); // print out the projected dm for NSCF calculaiton
-        GlobalC::ld.cal_descriptor();     // final descriptor
-        GlobalC::ld.check_descriptor(GlobalC::ucell);
-
-        if (GlobalV::deepks_out_labels)
-            GlobalC::ld.save_npy_d(GlobalC::ucell.nat); // libnpy needed
-    }
-
-    if (GlobalV::deepks_scf)
-    {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            GlobalC::ld.cal_e_delta_band(this->LOC.dm_gamma, pv->trace_loc_row, pv->trace_loc_col, pv->nrow);
-        }
-        else
-        {
-            GlobalC::ld.cal_e_delta_band_k(this->LOC.dm_k,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           GlobalC::kv.nks,
-                                           pv->nrow,
-                                           pv->ncol);
-        }
-        std::cout << "E_delta_band = " << std::setprecision(8) << GlobalC::ld.e_delta_band << " Ry"
-                  << " = " << std::setprecision(8) << GlobalC::ld.e_delta_band * ModuleBase::Ry_to_eV << " eV"
-                  << std::endl;
-        std::cout << "E_delta_NN= " << std::setprecision(8) << GlobalC::ld.E_delta << " Ry"
-                  << " = " << std::setprecision(8) << GlobalC::ld.E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    }
 #endif
-    // 4. some outputs
+    // 3. some outputs
 #ifdef __EXX
     if (INPUT.rpa)
     {
