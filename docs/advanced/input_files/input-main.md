@@ -917,67 +917,79 @@ calculations.
 
 ## Electronic structure (SDFT)
 
-These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" calculation are supported.
+These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). In the following text, stochastic DFT is used to refer to these three methods. We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" [calculation](#calculation) are supported.
 
 ### method_sto
 
 - **Type**: Integer
-- **Description**:
-  - Different method to do SDFT.
-  - 1: SDFT calculates $T_n(\hat{h})\ket{\chi}$ twice, where $T_n(x)$ is the n-th order Chebyshev polynomial and $\hat{h}=\frac{\hat{H}-\bar{E}}{\Delta E}$ owning eigenvalue $\in(-1,1)$. This method cost less memory but is slower.
-  - 2: SDFT calculates $T_n(\hat{h})\ket{\chi}$ once but need much more memory. This method is much faster. Besides, it calculates $N_e$ with $\bra{\chi}\sqrt{\hat f}\sqrt{\hat f}\ket{\chi}$, which needs a smaller [nche_sto](#nche_sto). However, when memory is not enough, only method 1 can be used.
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Different methods to do stochastic DFT
+  - 1: Calculate $T_n(\hat{h})\ket{\chi}$ twice, where $T_n(x)$ is the n-th order Chebyshev polynomial and $\hat{h}=\frac{\hat{H}-\bar{E}}{\Delta E}$ owning eigenvalues $\in(-1,1)$. This method cost less memory but is slower.
+  - 2: Calculate $T_n(\hat{h})\ket{\chi}$ once but needs much more memory. This method is much faster. Besides, it calculates $N_e$ with $\bra{\chi}\sqrt{\hat f}\sqrt{\hat f}\ket{\chi}$, which needs a smaller [nche_sto](#nche_sto). However, when the memory is not enough, only method 1 can be used.
   - other: use 2
 - **Default**: 2
 
 ### nbands_sto
 
-- **Type**: Integer
-- **Description**:
-  - nbands_sto > 0: This parameter determines the number of stochastic orbitals to be calculated in both SDFT and MDFT. Increasing the number of bands will result in more precise results and smaller stochastic errors ($ \propto 1/\sqrt{N_{\chi}}$);
-  If you want to perform MDFT, you should set the parameter [nbands](#nbands), which represents the number of KS orbitals.
-  - nbands_sto = 0: This means that a KSDFT calculation will be executed.
-  - nbands_sto = all: This uses all complete basis to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors
+- **Type**: Integer or string
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: The number of stochastic orbitals 
+  - \> 0: Perform stochastic DFT. 
+   Increasing the number of bands improves accuracy and reduces stochastic errors, which scale as $1/\sqrt{N_{\chi}}$;
+   To perform mixed stochastic-deterministic DFT, you should set [nbands](#nbands), which represents the number of KS orbitals.
+  - 0: Perform Kohn-Sham DFT.
+  - all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
 - **Default**: 256
 
 ### nche_sto
 
 - **Type**: Integer
-- **Description**: Chebyshev expansion orders for SDFT, MDFT, CT methods.
-- **Default**:100
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Chebyshev expansion orders for stochastic DFT.
+- **Default**: 100
 
 ### emin_sto
 
 - **Type**: Real
-- **Description**: Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator $\hat{H}$. The unit is Ry.
-- **Default**:0.0
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator $\hat{H}$.
+- **Default**: 0.0
+- **Unit**: Ry
 
 ### emax_sto
 
 - **Type**: Real
-- **Description**: Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator $\hat{H}$. The unit is Ry.
-- **Default**:0.0
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator $\hat{H}$.
+- **Default**: 0.0
+- **Unit**: Ry
 
 ### seed_sto
 
 - **Type**: Integer
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: The random seed to generate stochastic orbitals.
-  - seed_sto>=0: Stochastic orbitals have the form of $\exp(i2\pi\theta(G))$, where $\theta$ is a uniform distribution in $(0,1)$. If seed_sto = 0, the seed is decided by time(NULL).
-  - seed_sto<=-1: Stochastic orbitals have the form of $\pm1$ with equal probability. If seed_sto = -1, the seed is decided by time(NULL).
-- **Default**:0
+  - \>= 0: Stochastic orbitals have the form of $\exp(i2\pi\theta(G))$, where $\theta$ is a uniform distribution in $(0,1)$.
+  - 0: the seed is decided by time(NULL).
+  - \<= -1: Stochastic orbitals have the form of $\pm1$ with equal probability. 
+  - -1: the seed is decided by time(NULL).
+- **Default**: 0
 
 ### initsto_freq
 
 - **Type**: Integer
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
   - positive integer: Update stochastic orbitals
   - 0:                Never change stochastic orbitals.
-- **Default**:0
+- **Default**: 0
 
 ### npart_sto
 
 - **Type**: Integer
-- **Description**: Make memory cost to 1/npart_sto times of the previous one when running post process of SDFT like DOS with method_sto = 2.
-- **Default**:1
+- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True`
+- **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS.
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2773,7 +2785,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ## Electronic conductivities
 
-Frequency-dependent electronic conductivities can be calculated with Kubo-Greenwood formula[Phys. Rev. B 83, 235120 (2011)].
+Frequency-dependent electronic conductivities can be calculated with Kubo-Greenwood formula [Phys. Rev. B 83, 235120 (2011)].
 
 Onsager coefficients:
 
@@ -2804,49 +2816,63 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 ### cal_cond
 
 - **Type**: Boolean
-- **Description**: If set to 1, electronic conductivities will be calculated. Only supported in calculations of SDFT and KSDFT_PW.
-- **Default**: 0
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Whether to calculate electronic conductivities.
+- **Default**: False
 
 ### cond_nche
 
 - **Type**: Integer
-- **Description**: Chebyshev expansion orders for stochastic Kubo Greenwood. Only used when the calculation is SDFT.
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Chebyshev expansion orders for stochastic Kubo Greenwood.
 - **Default**: 20
 
 ### cond_dw
 
 - **Type**: Real
-- **Description**: Frequency interval ($d\omega$) for frequency-dependent conductivities. The unit is eV.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Frequency interval ($\mathrm{d}\omega$) for frequency-dependent conductivities.
 - **Default**: 0.1
+- **Unit**: eV
 
 ### cond_wcut
 
 - **Type**: Real
-- **Description**: Cutoff frequency for frequency-dependent conductivities. The unit is eV.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Cutoff frequency for frequency-dependent conductivities.
 - **Default**: 10.0
+- **Unit**: eV
 
 ### cond_dt
 
 - **Type**: Real
-- **Description**: t interval to integrate Onsager coefficients. The unit is a.u.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Time interval ($\mathrm{d}t$) to integrate Onsager coefficients.
 - **Default**: 0.02
+- **Unit**: a.u.
 
 ### cond_dtbatch
 
 - **Type**: Integer
-- **Description**: exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: exp(iH\*dt\*cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
 - **Default**: 4
 
 ### cond_fwhm
 
-- **Type**: Integer
-- **Description**: We use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
+- **Type**: Real
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: FWHM for conductivities, $\mathrm{FWHM}=2*\sqrt{2\ln2}\cdot \Delta E$. Here, we use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. 
 - **Default**: 0.4
+- **Unit**: eV
 
 ### cond_nonlocal
 
 - **Type**: Boolean
-- **Description**: Conductivities need to calculate velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$ and $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$. If `cond_nonlocal` is false, $m\hat{v}\approx\hat{p}$.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Whether to consider nonlocal potential correction when calculating velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$.
+ 	- True:  $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$.
+	- False: $m\hat{v}\approx\hat{p}$.
 - **Default**: True
 
 [back to top](#full-list-of-input-keywords)
