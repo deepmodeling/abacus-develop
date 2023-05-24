@@ -28,6 +28,7 @@
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -1055,6 +1056,20 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     // calculating deepks correction to bandgap
     // and save the results
 
+    LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(&(GlobalC::ld));
+    LDI.out_deepks_labels(this->pelec->f_en.etot,
+                          GlobalC::kv.nks,
+                          GlobalC::ucell.nat,
+                          this->pelec->ekb,
+                          GlobalC::kv.kvec_d,
+                          GlobalC::ucell,
+                          GlobalC::ORB,
+                          GlobalC::GridD,
+                          *this->LOWF.ParaV,
+                          this->psi,
+                          this->psid);
+
+    /*
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
     {
         GlobalC::ld.save_npy_e(this->pelec->f_en.etot, "e_tot.npy");
@@ -1152,6 +1167,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             }                                                            // end deepks_scf == 0
         }                                                                // end bandgap label
     }                                                                    // end deepks_out_labels
+    */
 
     // 3. DeePKS PDM and descriptor
     const Parallel_Orbitals* pv = this->LOWF.ParaV;
