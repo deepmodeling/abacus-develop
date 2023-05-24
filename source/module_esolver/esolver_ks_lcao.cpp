@@ -1053,12 +1053,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 
 #ifdef __DEEPKS
-    LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(&(GlobalC::ld));
+    std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld,[](LCAO_Deepks*){});
+    LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(ld_shared_ptr);
     LDI.out_deepks_labels(this->pelec->f_en.etot,
-                          GlobalC::kv.nks,
+                          this->pelec->klist->nks,
                           GlobalC::ucell.nat,
                           this->pelec->ekb,
-                          GlobalC::kv.kvec_d,
+                          this->pelec->klist->kvec_d,
                           GlobalC::ucell,
                           GlobalC::ORB,
                           GlobalC::GridD,

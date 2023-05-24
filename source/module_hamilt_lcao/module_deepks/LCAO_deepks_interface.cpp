@@ -5,18 +5,8 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/cal_dm.h"
 
-LCAO_Deepks_Interface::LCAO_Deepks_Interface(LCAO_Deepks* ld_in) : ld(ld_in)
+LCAO_Deepks_Interface::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks> ld_in) : ld(ld_in)
 {
-    this->ld = ld_in;
-}
-
-LCAO_Deepks_Interface::~LCAO_Deepks_Interface()
-{
-    if (this->ld != nullptr)
-    {
-        delete this->ld;
-        this->ld = nullptr;
-    }
 }
 
 void LCAO_Deepks_Interface::out_deepks_labels(double etot,

@@ -5,13 +5,12 @@
 #include "LCAO_deepks.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
+#include <memory>
 
 class LCAO_Deepks_Interface
 {
   public:
-    LCAO_Deepks_Interface(LCAO_Deepks* ld_in);
-    ~LCAO_Deepks_Interface();
-    LCAO_Deepks* ld = nullptr;
+    LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks> ld_in);
     void out_deepks_labels(double etot,
                            int nks,
                            int nat,
@@ -25,6 +24,8 @@ class LCAO_Deepks_Interface
                            const psi::Psi<double>& psid,
                            const std::vector<ModuleBase::matrix>& dm_gamma,
                            const std::vector<ModuleBase::ComplexMatrix>& dm_k);
+  private:
+    std::shared_ptr<LCAO_Deepks> ld;
 };
 
 #endif
