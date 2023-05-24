@@ -216,26 +216,26 @@
 		- [exx\_real\_number](#exx_real_number)
 	- [Molecular dynamics](#molecular-dynamics)
 		- [md\_type](#md_type)
-		- [md\_thermostat](#md_thermostat)
 		- [md\_nstep](#md_nstep)
-		- [md\_restart](#md_restart)
 		- [md\_dt](#md_dt)
+		- [md\_thermostat](#md_thermostat)
 		- [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
-		- [md\_dumpfreq](#md_dumpfreq)
+		- [md\_restart](#md_restart)
 		- [md\_restartfreq](#md_restartfreq)
+		- [md\_dumpfreq](#md_dumpfreq)
+		- [dump\_force](#dump_force)
+		- [dump\_vel](#dump_vel)
+		- [dump\_virial](#dump_virial)
 		- [md\_seed](#md_seed)
-		- [md\_prec\_level](#md_prec_level)
-		- [ref\_cell\_factor](#ref_cell_factor)
 		- [md\_tfreq](#md_tfreq)
 		- [md\_tchain](#md_tchain)
 		- [md\_pmode](#md_pmode)
+		- [md\_prec\_level](#md_prec_level)
+		- [ref\_cell\_factor](#ref_cell_factor)
 		- [md\_pcouple](#md_pcouple)
 		- [md\_pfirst, md\_plast](#md_pfirst-md_plast)
 		- [md\_pfreq](#md_pfreq)
 		- [md\_pchain](#md_pchain)
-		- [dump\_force](#dump_force)
-		- [dump\_vel](#dump_vel)
-		- [dump\_virial](#dump_virial)
 		- [lj\_rcut](#lj_rcut)
 		- [lj\_epsilon](#lj_epsilon)
 		- [lj\_sigma](#lj_sigma)
@@ -1941,258 +1941,278 @@ These variables are relevant when using hybrid functionals
 
 ## Molecular dynamics
 
-These variables are used to control the molecular dynamics calculations.
+These variables are used to control molecular dynamics calculations. For more information, please refer to [md.md](../md.md#molecular-dynamics) in detail.
 
 ### md_type
 
 - **Type**: String
-- **Description**: control the algorithm to integrate the equation of motion for md.
+- **Description**: Control the algorithm to integrate the equation of motion for molecular dynamics (MD), see [md.md](../md.md#molecular-dynamics) in detail.
 
-  - fire: a MD-based relaxation algorithm, named `fast inertial relaxation engine`, see details in [md.md](../md.md#fire).
+  - fire: a MD-based relaxation algorithm, named fast inertial relaxation engine.
   - nve: NVE ensemble with velocity Verlet algorithm.
   - nvt: NVT ensemble, see [md_thermostat](#md_thermostat) in detail.
   - npt: Nose-Hoover style NPT ensemble, see [md_pmode](#md_pmode) in detail.
-  - langevin: NVT ensemble with Langevin thermostat.
-  - msst: MSST method.
+  - langevin: NVT ensemble with Langevin thermostat, see [md_damp](#md_damp) in detail.
+  - msst: MSST method, see [msst_direction](#msst_direction), [msst_vel](#msst_vel), [msst_qmass](#msst_qmass), [msst_vis](#msst_vis), [msst_tscale](#msst_tscale) in detail.
 
 - **Default**: nvt
-
-### md_thermostat
-
-- **Type**: String
-- **Description**: specify the temperature control method used in NVT ensemble.
-
-  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
-  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
-  - berendsen: Berendsen thermostat, see the parameter [md_nraise](#md_nraise) in detail.
-  - rescaling: velocity Rescaling method 1, see the parameter [md_tolerance](#md_tolerance) in detail.
-  - rescale_v: velocity Rescaling method 2, see the parameter [md_nraise](#md_nraise) in detail.
-
-- **Default**: nhc
 
 ### md_nstep
 
 - **Type**: Integer
-- **Description**: the total number of md steps.
+- **Description**: The total number of molecular dynamics steps.
 - **Default**: 10
-
-### md_restart
-
-- **Type**: Boolean
-- **Description**: Control whether restart md. ABACUS read in `Restart_md.dat` to determine the current md step, then read in the corresponding `STRU_MD_$step` in the folder `OUT.$suffix/STRU/` automatically.
-  - true: ABACUS will calculate md normally.
-  - false: ABACUS will calculate md from the last step in your previous md calculation.
-- **Default**: false
 
 ### md_dt
 
 - **Type**: Real
-- **Description**: This is the time step(fs) used in md simulation.
+- **Description**: The time step used in molecular dynamics calculations.
 - **Default**: 1.0
+- **Unit**: fs
+
+### md_thermostat
+
+- **Type**: String
+- **Description**: Specify the temperature control method used in NVT ensemble.
+
+  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
+  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
+  - berendsen: Berendsen thermostat, see [md_nraise](#md_nraise) in detail.
+  - rescaling: velocity Rescaling method 1, see [md_tolerance](#md_tolerance) in detail.
+  - rescale_v: velocity Rescaling method 2, see [md_nraise](#md_nraise) in detail.
+
+- **Default**: nhc
 
 ### md_tfirst, md_tlast
 
 - **Type**: Real
-- **Description**: This is the temperature (K) used in md simulation. The default value of md_tlast is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
+- **Description**: The temperature used in molecular dynamics calculations. 
+
+  Note that `md_tlast` is only used in NVT simulations. The default value of `md_tlast` is `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
 - **Default**: No default
+- **Unit**: K
 
-### md_dumpfreq
+### md_restart
 
-- **Type**: Integer
-- **Description**: This is the frequency to dump md information.
-- **Default**: 1
+- **Type**: Boolean
+- **Description**: Control whether to restart molecular dynamics calculations. 
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically.
+  - False: ABACUS will start molecular dynamics calculations normally from the first step.
+- **Default**: False
 
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: This is the frequency to output restart information.
+- **Description**: The output frequency of `OUT.${suffix}/Restart_md.dat` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
 - **Default**: 5
 
-### md_seed
+### md_dumpfreq
 
 - **Type**: Integer
-- **Description**:
-  - md_seed < 0: No srand() in MD initialization.
-  - md_seed >= 0: srand(md_seed) in MD initialization.
-- **Default**: -1
-
-### md_prec_level
-
-- **Type**: Integer
-- **Description**: Determine the precision level of vc-md.
-
-  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
-  - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
-
-  > Note: this parameter is only used in variable-cell MD!
-  >
-- **Default**: 0
-
-### ref_cell_factor
-
-- **Type**: Real
-- **Description**: 
-  Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
-- **Default**: 1.0
-
-### md_tfreq
-
-- **Type**: Real
-- **Description**: control the frequency of the temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
-- **Default**: 1/40/md_dt
-  > Note: It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
-
-### md_tchain
-
-- **Type**: Integer
-- **Description**: number of thermostats coupled with the particles in the Nose Hoover Chain method.
-- **Default**: 1
-
-### md_pmode
-
-- **Type**: String
-- **Description**: specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
-  - iso: isotropic cell fluctuations.
-  - aniso: anisotropic cell fluctuations.
-  - tri: non-orthogonal (triclinic) simulation box.
-- **Default**: iso
-- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
-
-### md_pcouple
-
-- **Type**: String
-- **Description**: the coupled lattice vectors will scale proportionally.
-  - none: three lattice vectors scale independently.
-  - xyz: lattice vectors x, y, and z scale proportionally.
-  - xy: lattice vectors x and y scale proportionally.
-  - xz: lattice vectors x and z scale proportionally.
-  - yz: lattice vectors y and z scale proportionally.
-- **Default**: none
-
-### md_pfirst, md_plast
-
-- **Type**: Real
-- **Description**: This is the target pressure (KBar) used in npt ensemble simulation, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
-- **Default**: No default
-
-### md_pfreq
-
-- **Type**: Real
-- **Description**: control the frequency of the pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
-- **Default**: 1/400/md_dt
-
-### md_pchain
-
-- **Type**: Integer
-- **Description**: number of thermostats coupled with the barostat in the Nose Hoover Chain method.
+- **Description**: The output frequency of `OUT.${suffix}/MD_dump` in molecular dynamics calculations, which including the information of lattices and atoms.
 - **Default**: 1
 
 ### dump_force
 
 - **Type**: Boolean
-- **Description**: Output atomic forces into the file `MD_dump` or not. If `true`, forces will be written, otherwise forces will not be written.
-- **Default**: false
+- **Description**: Whether to output atomic forces into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
 
 ### dump_vel
 
 - **Type**: Boolean
-- **Description**: Output atomic velocities into the file `MD_dump` or not. If `true`, velocities will be written, otherwise velocities will not be written.
-- **Default**: false
+- **Description**: Whether to output atomic velocities into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
 
 ### dump_virial
 
 - **Type**: Boolean
-- **Description**: Output lattice virial into the file `MD_dump` or not. If `true`, lattice virial will be written, otherwise lattice virial will not be written.
-- **Default**: false
+- **Description**: Whether to output lattice virials into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
+### md_seed
+
+- **Type**: Integer
+- **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
+  - \< 0: No srand() function is called.
+  - \>= 0: The function srand(md_seed) is called.
+- **Default**: -1
+
+### md_tfreq
+
+- **Type**: Real
+- **Description**: Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
+
+  Note: It is a system-dependent empirical parameter, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice might lead to the failure of jobs.
+
+- **Default**: 1/40/md_dt
+- **Unit**: $\mathrm{fs^{-1}}$
+
+### md_tchain
+
+- **Type**: Integer
+- **Description**: Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+- **Default**: 1
+
+### md_pmode
+
+- **Type**: String
+- **Description**: Specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - iso: The three diagonal elements of the lattice are fluctuated isotropically. 
+  - aniso: The three diagonal elements of the lattice are fluctuated anisotropically.
+  - tri: The lattice must be a lower-triangular matrix, and all six freedoms are fluctuated.
+- **Default**: iso
+- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
+
+### md_prec_level
+
+- **Type**: Integer
+- **Availability**: Plane wave basis
+- **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
+  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
+  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
+
+    Currently, the option is useful only in isotropic NPT simulations.
+  - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+
+- **Default**: 0
+
+### ref_cell_factor
+
+- **Type**: Real
+- **Description**: Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Default**: 1.0
+
+### md_pcouple
+
+- **Type**: String
+- **Description**: The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - none: Three lattice vectors scale independently.
+  - xyz: Lattice vectors x, y, and z scale proportionally.
+  - xy: Lattice vectors x and y scale proportionally.
+  - xz: Lattice vectors x and z scale proportionally.
+  - yz: Lattice vectors y and z scale proportionally.
+- **Default**: none
+
+### md_pfirst, md_plast
+
+- **Type**: Real
+- **Description**: The target pressure used in NPT ensemble simulations, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
+- **Default**: No default
+- **Unit**: kbar
+
+### md_pfreq
+
+- **Type**: Real
+- **Description**: The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+
+  Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.
+- **Default**: 1/400/md_dt
+- **Unit**: $\mathrm{kbar^{-1}}$
+
+### md_pchain
+
+- **Type**: Integer
+- **Description**: The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+- **Default**: 1
 
 ### lj_rcut
 
 - **Type**: Real
-- **Description**: Cut-off radius for Leonard Jones potential (angstrom).
+- **Description**: Cut-off radius for Leonard Jones potential.
 - **Default**: 8.5 (for He)
+- **Unit**: Angstrom
 
 ### lj_epsilon
 
 - **Type**: Real
-- **Description**: The value of epsilon for Leonard Jones potential (eV).
+- **Description**: The value of epsilon for Leonard Jones potential.
 - **Default**: 0.01032 (for He)
+- **Unit**: eV
 
 ### lj_sigma
 
 - **Type**: Real
-- **Description**: The value of sigma for Leonard Jones potential (angstrom).
+- **Description**: The value of sigma for Leonard Jones potential.
 - **Default**: 3.405 (for He)
+- **Unit**: Angstrom
 
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of potential files for CMD such as DP.
+- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### msst_direction
 
 - **Type**: Integer
-- **Description**: the direction of shock wave for MSST.
-- **Default**: 2 (z direction)
+- **Description**: The direction of the shock wave in the MSST method.
+  - 0: x direction
+  - 1: y direction
+  - 2: z direction
+- **Default**: 2
 
 ### msst_vel
 
 - **Type**: Real
-- **Description**: the velocity of shock wave (Angstrom/fs) for MSST.
+- **Description**: The velocity of the shock wave in the MSST method.
 - **Default**: 0.0
+- **Unit**: Angstrom/fs
 
 ### msst_vis
 
 - **Type**: Real
-- **Description**: artificial viscosity (mass/length/time) for MSST.
+- **Description**: Artificial viscosity in the MSST method.
 - **Default**: 0.0
+- **Unit**: g/(mol\*Angstrom\*fs)
 
 ### msst_tscale
 
 - **Type**: Real
-- **Description**: reduction in initial temperature (0~1) used to compress volume in MSST.
+- **Description**: The reduction percentage of the initial temperature used to compress volume in the MSST method.
 - **Default**: 0.01
 
 ### msst_qmass
 
 - **Type**: Real
-- **Description**: Inertia of extended system variable. Used only when md_type is msst, you should set a number that is larger than 0. Note that Qmass of NHC is set by md_tfreq.
+- **Description**: Inertia of the extended system variable. You should set a number larger than 0.
 - **Default**: No default
+- **Unit**: $\mathrm{g^{2}/(mol^{2}*Angstrom^{4})}$
 
 ### md_damp
 
 - **Type**: Real
-- **Description**: damping parameter (fs) used to add force in Langevin method.
+- **Description**: The damping parameter used to add fictitious force in the Langevin method.
 - **Default**: 1.0
+- **Unit**: fs
 
 ### md_tolerance
 
 - **Type**: Real
-- **Description**: Tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance` (Kelvin).
+- **Description**: Thr temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance`.
 - **Default**: 100.0
+- **Unit**: K
 
 ### md_nraise
 
 - **Type**: Integer
 - **Description**:
-  - Anderson: the "collision frequency" parameter is given as 1/`md_nraise`;
-  - Berendsen: the "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`;
-  - Rescale_v: every `md_nraise` steps the current temperature is rescaled to the target temperature;
+  - Anderson: The "collision frequency" parameter is given as 1/`md_nraise`.
+  - Berendsen: The "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`.
+  - Rescale_v: Every `md_nraise` steps the current temperature is rescaled to the target temperature.
 - **Default**: 1
 
 ### cal_syns
 
 - **Type**: Boolean
-- **Description**:
-  If set to 1, asynchronous overlap matrix is calculated for Hefei-NAMD.
-- **Default**: 0
+- **Description**: Whether the asynchronous overlap matrix is calculated for Hefei-NAMD.
+- **Default**: False
 
 ### dmax
 
 - **Type**: Real
-- **Description**: The maximum displacement of all atoms in one step (bohr). This parameter is useful when cal_syns = 1 .
+- **Description**: The maximum displacement of all atoms in one step. This parameter is useful when [cal_syns](#cal_syns) = True.
 - **Default**: 0.01
+- **Unit**: bohr
 
 [back to top](#full-list-of-input-keywords)
 
