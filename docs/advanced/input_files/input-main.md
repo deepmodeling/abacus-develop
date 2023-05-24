@@ -710,9 +710,9 @@ calculations.
 ### basis_type
 
 - **Type**: String
-- **Description**: This is an important parameter to choose basis set in ABACUS.
-  - *pw*: Using plane-wave basis set only.
-  - *lcao_in_pw*: Expand the localized atomic set in plane-wave basis.
+- **Description**: Choose the basis set.
+  - pw: Using plane-wave basis set only.
+  - lcao_in_pw: Expand the localized atomic set in plane-wave basis.
   - lcao: Using localized atomic orbital sets.
 - **Default**: pw
 
@@ -739,12 +739,12 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: `cg` (pw) or `genelpa` (lcao)
+- **Default**: cg (pw) or genelpa (lcao)
 
 ### nbands
 
 - **Type**: Integer
-- **Description**: Number of Kohn-Sham orbitals to calculate. It is recommended you setup this value, especially when you use smearing techniques, more bands should be included.
+- **Description**: The number of Kohn-Sham orbitals to calculate. It is recommended to setup this value, especially when smearing techniques are utilized, more bands should be included.
 - **Default**:
   - nspin=1: max(1.2\*occupied_bands, occupied_bands + 10)
   - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
@@ -753,40 +753,47 @@ calculations.
 ### nbands_istate
 
 - **Type**: Integer
-- **Description**: Only used when `calculation = ienvelope` or `calculation = istate`, this variable indicates how many bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Availability**: Only used when `calculation = ienvelope` or `calculation = istate`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 ### nspin
 
 - **Type**: Integer
-- **Description**: Number of spin components of wave functions. There are only two choices now: 1 or 2, meaning non spin or collinear spin. For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+- **Description**: The number of spin components of wave functions.
+  - 1: Spin degeneracy
+  - 2: Collinear spin polarized.
+  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - fixed: use fixed occupations.
-  - gauss or gaussian: use Gaussian smearing method.
-  - mp: use methfessel-paxton smearing method; recommended for metals.
+  - fixed: fixed occupations.
+  - gauss or gaussian: Gaussian smearing method.
+  - mp: methfessel-paxton smearing method; recommended for metals.
   - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 ### smearing_sigma
 
 - **Type**: Real
-- **Description**: energy range for smearing, the unit is Rydberg.
+- **Description**: Energy range for smearing.
 - **Default**: 0.001
+- **Unit**: Ry
 
 ### smearing_sigma_temp
 
 - **Type**: Real
-- **Description**: energy range for smearing, and is the same as smearing_sigma, but the unit is K. smearing_sigma = 1/2 * kB * smearing_sigma_temp.
+- **Description**: Energy range for smearing, `smearing_sigma` = 1/2 * kB * `smearing_sigma_temp`.
+- **Default**: 2 * `smearing_sigma_temp` / kB.
+- **Unit**: K
 
 ### mixing_type
 
 - **Type**: String
-- **Description**: Charge mixing methods. We offer the following 3 options:
+- **Description**: Charge mixing methods.
   - plain: Just simple mixing.
   - pulay: Standard Pulay method.
   - broyden: Broyden method.
@@ -814,26 +821,32 @@ calculations.
 ### mixing_gg0
 
 - **Type**: Real
-- **Description**: When set to a positive number, the high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$; if set to 0, then no Kerker scaling is performed. Setting mixing_gg0 = 1.5 is normally a good starting point.
+- **Description**: Whether to perfom Kerker scaling.
+  -  A positive number: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
+  -  0: No Kerker scaling is performed.
 - **Default**: 0.0
 
 ### mixing_tau
 
 - **Type**: Boolean
-- **Description**: Only relevant for meta-GGA calculations. If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Availability**: Only relevant for meta-GGA calculations.
+- **Description**: If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
 - **Default**: False
 
 ### mixing_dftu
 
 - **Type**: Boolean
-- **Description**: Only relevant for DFT+U calculations. If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Availability**: Only relevant for DFT+U calculations.
+- **Description**: If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
 - **Default**: False
 
 ### gamma_only
 
 - **Type**: Integer
-- **Description**: It is an important parameter **only to be used in localized orbitals set**.
-  If you set gamma_only = 1, ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file. If you set gamma_only = 0, more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+- **Availability**: Only used in localized orbitals set
+- **Description**: Whether to use gamma_only algorithm.
+  - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
+  - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
 
   > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
   >
@@ -854,40 +867,46 @@ calculations.
 ### scf_thr
 
 - **Type**: Real
-- **Description**: An important parameter in ABACUS. It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
 
 ### scf_thr_type
 
 - **Type**: Int
-- **Description**: Choose the calculation method of convergence criterion. If set to 1, the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$. If set to 2, the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$. Note that this parameter is still under testing and the default setting is usually sufficient.
+- **Description**: Choose the calculation method of convergence criterion. 
+  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
+  - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  
+  >Note: This parameter is still under testing and the default setting is usually sufficient.
+
 - **Default**: 1 for PW, and 2 for LCAO.
 
 ### chg_extrap
 
 - **Type**: String
 - **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
-  - atomic: atomic extrapolation
-  - first-order: first-order extrapolation
-  - second-order: second-order extrapolation
+  - atomic: atomic extrapolation.
+  - first-order: first-order extrapolation.
+  - second-order: second-order extrapolation.
 - **Default**: atomic
 
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
-- **Default**: 0
+- **Description**: Whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
+- **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
-- **Default**: 0
+- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
+- **Default**: False
 
 ### soc_lambda
 
 - **Type**: Real
-- **Description**: Relevant for soc calculations. Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
+- **Availability**: Relevant for soc calculations.
+- **Description**: Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
 
   `soc_lambda`, which has value range [0.0, 1.0] , is used for modulate SOC effect.
 
@@ -898,67 +917,79 @@ calculations.
 
 ## Electronic structure (SDFT)
 
-These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" calculation are supported.
+These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). In the following text, stochastic DFT is used to refer to these three methods. We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" [calculation](#calculation) are supported.
 
 ### method_sto
 
 - **Type**: Integer
-- **Description**:
-  - Different method to do SDFT.
-  - 1: SDFT calculates $T_n(\hat{h})\ket{\chi}$ twice, where $T_n(x)$ is the n-th order Chebyshev polynomial and $\hat{h}=\frac{\hat{H}-\bar{E}}{\Delta E}$ owning eigenvalue $\in(-1,1)$. This method cost less memory but is slower.
-  - 2: SDFT calculates $T_n(\hat{h})\ket{\chi}$ once but need much more memory. This method is much faster. Besides, it calculates $N_e$ with $\bra{\chi}\sqrt{\hat f}\sqrt{\hat f}\ket{\chi}$, which needs a smaller [nche_sto](#nche_sto). However, when memory is not enough, only method 1 can be used.
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Different methods to do stochastic DFT
+  - 1: Calculate $T_n(\hat{h})\ket{\chi}$ twice, where $T_n(x)$ is the n-th order Chebyshev polynomial and $\hat{h}=\frac{\hat{H}-\bar{E}}{\Delta E}$ owning eigenvalues $\in(-1,1)$. This method cost less memory but is slower.
+  - 2: Calculate $T_n(\hat{h})\ket{\chi}$ once but needs much more memory. This method is much faster. Besides, it calculates $N_e$ with $\bra{\chi}\sqrt{\hat f}\sqrt{\hat f}\ket{\chi}$, which needs a smaller [nche_sto](#nche_sto). However, when the memory is not enough, only method 1 can be used.
   - other: use 2
 - **Default**: 2
 
 ### nbands_sto
 
-- **Type**: Integer
-- **Description**:
-  - nbands_sto > 0: This parameter determines the number of stochastic orbitals to be calculated in both SDFT and MDFT. Increasing the number of bands will result in more precise results and smaller stochastic errors ($ \propto 1/\sqrt{N_{\chi}}$);
-  If you want to perform MDFT, you should set the parameter [nbands](#nbands), which represents the number of KS orbitals.
-  - nbands_sto = 0: This means that a KSDFT calculation will be executed.
-  - nbands_sto = all: This uses all complete basis to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors
+- **Type**: Integer or string
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: The number of stochastic orbitals 
+  - \> 0: Perform stochastic DFT. 
+   Increasing the number of bands improves accuracy and reduces stochastic errors, which scale as $1/\sqrt{N_{\chi}}$;
+   To perform mixed stochastic-deterministic DFT, you should set [nbands](#nbands), which represents the number of KS orbitals.
+  - 0: Perform Kohn-Sham DFT.
+  - all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
 - **Default**: 256
 
 ### nche_sto
 
 - **Type**: Integer
-- **Description**: Chebyshev expansion orders for SDFT, MDFT, CT methods.
-- **Default**:100
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Chebyshev expansion orders for stochastic DFT.
+- **Default**: 100
 
 ### emin_sto
 
 - **Type**: Real
-- **Description**: Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator $\hat{H}$. The unit is Ry.
-- **Default**:0.0
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator $\hat{H}$.
+- **Default**: 0.0
+- **Unit**: Ry
 
 ### emax_sto
 
 - **Type**: Real
-- **Description**: Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator $\hat{H}$. The unit is Ry.
-- **Default**:0.0
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator $\hat{H}$.
+- **Default**: 0.0
+- **Unit**: Ry
 
 ### seed_sto
 
 - **Type**: Integer
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: The random seed to generate stochastic orbitals.
-  - seed_sto>=0: Stochastic orbitals have the form of $\exp(i2\pi\theta(G))$, where $\theta$ is a uniform distribution in $(0,1)$. If seed_sto = 0, the seed is decided by time(NULL).
-  - seed_sto<=-1: Stochastic orbitals have the form of $\pm1$ with equal probability. If seed_sto = -1, the seed is decided by time(NULL).
-- **Default**:0
+  - \>= 0: Stochastic orbitals have the form of $\exp(i2\pi\theta(G))$, where $\theta$ is a uniform distribution in $(0,1)$.
+  - 0: the seed is decided by time(NULL).
+  - \<= -1: Stochastic orbitals have the form of $\pm1$ with equal probability. 
+  - -1: the seed is decided by time(NULL).
+- **Default**: 0
 
 ### initsto_freq
 
 - **Type**: Integer
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
   - positive integer: Update stochastic orbitals
   - 0:                Never change stochastic orbitals.
-- **Default**:0
+- **Default**: 0
 
 ### npart_sto
 
 - **Type**: Integer
-- **Description**: Make memory cost to 1/npart_sto times of the previous one when running post process of SDFT like DOS with method_sto = 2.
-- **Default**:1
+- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True`
+- **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS.
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 
@@ -969,23 +1000,26 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The methods to do geometry optimization, note that there are two implementations of the CG method, see [relax_new](#relax_new):
-  - cg: using the conjugate gradient (cg) algorithm (see relax_new for the new cg method).
-  - bfgs: using the BFGS algorithm.
-  - sd: using the steepest descent (sd) algorithm.
-  - fire: MD-based relaxation algorithm, named `fast inertial relaxation engine`, this algorithm should be employed by setting [md_type](#md_type) to `fire`.
+- **Description**: The methods to do geometry optimization. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new). Also note that the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [md_type](#md_type) to `fire`. See [fire](../md.md#fire) for more details.
+  - cg: using the conjugate gradient (CG) algorithm (see relax_new for the new CG method).
+  - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
+  - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
+  - sd: using the steepest descent (SD) algorithm.
 - **Default**: cg
 
 ### relax_new
 
 - **Type**: Boolean
-- **Description**: At around the end of 2022 we made a new implementation of the CG method for relax and cell-relax calculations. But the old implementation was also kept. To use the new method, set relax_new to true. To use the old one, set it to false.
+- **Description**: At around the end of 2022 we made a new implementation of the Conjugate Gradient (CG) method for `relax` and `cell-relax` calculations. But the old implementation was also kept. 
+  - True: use the new implementation of CG method for `relax` and `cell-relax` calculations.
+  - False: use the old implementation of CG method for `relax` and `cell-relax` calculations.
 - **Default**: True
 
 ### relax_scale_force
 
 - **Type**: Real
-- **Description**: This parameter is only relevant when `relax_new` is set to True. It controls the size of the first CG step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
+- **Availability**: only used when `relax_new` set to `True`
+- **Description**: The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
 - **Default**: 0.5
 
 ### relax_nmax
@@ -997,112 +1031,130 @@ These variables are used to control the geometry relaxation.
 ### relax_cg_thr
 
 - **Type**: Real
-- **Description**: When move-method is set to 'cg-bfgs', a mixed cg-bfgs algorithm is used. The ions first move according to cg method, then switched to bfgs when the maximum of force on atoms is reduced below cg-threshold. The unit is eV/Angstrom.
+- **Description**: When move-method is set to `cg_bfgs`, a mixed algorithm of conjugate gradient (CG) method and Broyden–Fletcher–Goldfarb–Shanno (BFGS) method is used. The ions first move according to CG method, then switched to BFGS method when the maximum of force on atoms is reduced below the CG force threshold, which is set by this parameter.
+- **Unit**: eV/Angstrom
 - **Default**: 0.5
 
 ### cal_force
 
 - **Type**: Boolean
-- **Description**: If set to 1, calculate the force at the end of the electronic iteration. 0 means the force calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`, `relax`, or `md`.
-- **Default**: 0
+- **Description**: 
+  - **True** calculate the force at the end of the electronic iteration
+  - **False** no force calculation at the end of the electronic iteration
+- **Default**: False if `calculation` is set to `scf`, True if `calculation` is set to `cell-relax`, `relax`, or `md`.
 
 ### force_thr
 
 - **Type**: Real
-- **Description**: The threshold of the force convergence, it indicates the largest force among all the atoms, the unit is Ry=Bohr
-- **Default**: 0.001 Ry/Bohr = 0.0257112 eV/Angstrom
+- **Description**: Threshold of the force convergence in Ry/Bohr. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to [force_thr_ev](#force_thr_ev) except for the unit. You may choose either you like.
+- **Unit**: Ry/Bohr (25.7112 eV/Angstrom)
+- **Default**: 0.001 
 
 ### force_thr_ev
 
 - **Type**: Real
-- **Description**: The threshold of the force convergence, has the same function as force_thr, just the unit is different, it is eV/Angstrom, you can choose either one as you like. The recommended value for using atomic orbitals is 0.04 eV/Angstrom.
-- **Default**: 0.0257112 eV/Angstrom
+- **Description**: Threshold of the force convergence in eV/Angstrom. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to [force_thr](#force_thr) except for the unit. You may choose either you like.
+- **Unit**: eV/Angstrom (0.03889 Ry/Bohr)
+- **Default**: 0.0257112
 
 ### force_thr_ev2
 
 - **Type**: Real
-- **Description**: The calculated force will be set to 0 when it is smaller than force_thr_ev2.
+- **Description**: The calculated force will be set to 0 when it is smaller than the parameter `force_thr_ev2`.
 - **Default**: 0.0 eV/Angstrom
 
 ### relax_bfgs_w1
 
 - **Type**: Real
-- **Description**: This variable controls the Wolfe condition for BFGS algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
+- **Description**: This variable controls the Wolfe condition for Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
 - **Default**: 0.01
 
 ### relax_bfgs_w2
 
 - **Type**: Real
-- **Description**: This variable controls the Wolfe condition for BFGS algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
+- **Description**: This variable controls the Wolfe condition for Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. You can look into the paper Phys.Chem.Chem.Phys.,2000,2,2177 for more information.
 - **Default**: 0.5
 
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Description**: This variable is for geometry optimization. It indicates the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it will not be larger than relax_bfgs_rmax Bohr.
+- **Description**: This variable is for geometry optimization. It stands for the maximal movement of all the atoms. The sum of the movements from all atoms can be increased during the optimization steps. However, it can not be larger than `relax_bfgs_rmax`
+- **Unit**: Bohr
 - **Default**: 0.8
 
 ### relax_bfgs_rmin
 
 - **Type**: Real
 - **Description**: This variable is for geometry optimization. It indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down.
+- **Unit**: Bohr
 - **Default**: 1e-5
 
 ### relax_bfgs_init
 
 - **Type**: Real
-- **Description**: This variable is for geometry optimization. It indicates the initial movement of all the atoms. The sum of the movements from all atoms is relax_bfgs_init Bohr.
+- **Description**: This variable is for geometry optimization. It stands for the sum of initial movements of all of the atoms.
+- **Unit**: Bohr
 - **Default**: 0.5
 
 ### cal_stress
 
-- **Type**: Integer
-- **Description**: If set to 1, calculate the stress at the end of the electronic iteration. 0 means the stress calculation is turned off. It is automatically set to 1 if `calculation` is `cell-relax`.
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: 
+  - **True**: calculate the stress at the end of the electronic iteration
+  - **False**: no calculation of the stress at the end of the electronic iteration
+- **Default**: True if `calculation` is `cell-relax`, False otherwise. 
 
 ### stress_thr
 
 - **Type**: Real
-- **Description**: The threshold of the stress convergence, it indicates the largest component of the stress tensor, the unit is kbar,
+- **Description**: The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.
+- **Unit**: kbar
 - **Default**: 0.5
 
 ### press1, press2, press3
 
 - **Type**: Real
-- **Description**: The external pressures along three axes, the compressive stress is taken to be positive, and the unit is KBar.
+- **Description**: The external pressures along three axes. Positive input value is taken as compressive stress.
+- **Unit**: kbar
 - **Default**: 0
 
 ### fixed_axes
 
 - **Type**: String
+- **Availability**: only used when `calculation` set to `cell-relax`
 - **Description**: Axes that are fixed during cell relaxation. Possible choices are:
-  - None : default; all of the axes can relax
-  - volume : relaxation with fixed volume
-  - shape : fix shape but change volume (i.e. only lattice constant changes)
-  - a : fix a axis during relaxation
-  - b : fix b axis during relaxation
-  - c : fix c axis during relaxation
-  - ab : fix both a and b axes during relaxation
-  - ac : fix both a and c axes during relaxation
-  - bc : fix both b and c axes during relaxation
+  - **None**: default; all of the axes can relax
+  - **volume**: relaxation with fixed volume
+  - **shape**: fix shape but change volume (i.e. only lattice constant changes)
+  - **a**: fix a axis during relaxation
+  - **b**: fix b axis during relaxation
+  - **c**: fix c axis during relaxation
+  - **ab**: fix both a and b axes during relaxation
+  - **ac**: fix both a and c axes during relaxation
+  - **bc**: fix both b and c axes during relaxation
 
-> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = 1
+> Note : fixed_axes = "shape" and "volume" are only available for [relax_new](#relax_new) = True
 
 - **Default**: None
 
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Description**: When set to true, the lattice type will be preserved during relaxation. Must be used along with [relax_new](#relax_new) set to true, and a specific [latname](#latname) must be provided
+- **Availability**: Must be used along with [relax_new](#relax_new) set to True, and a specific [latname](#latname) must be provided
+- **Description**: 
+  - **True**: the lattice type will be preserved during relaxation
+  - **False**: No restrictions are exerted during relaxation in terms of lattice type
 
-> Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges.
+> Note: it is possible to use `fixed_ibrav` with `fixed_axes`, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (`latname` = "sc"), and we use `fixed_ibrav` along with `fixed_axes` = "volume", then the cell is never allowed to move and as a result, the relaxation never converges.
 
 - **Default**: False
 
 ### fixed_atoms
 
 - **Type**: Boolean
-- **Description**: When set to true, the direct coordinates of atoms will be preserved during variable-cell relaxation. If set to false, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
+- **Description**: 
+  - **True**: The direct coordinates of atoms will be preserved during variable-cell relaxation.
+  - **False**: No restrictions are exerted on positions of all atoms. However, users can still fix certain components of certain atoms by using the `m` keyword in `STRU` file. For the latter option, check the end of this [instruction](stru.md).
 - **Default**: False
 
 ### cell_factor
@@ -1140,7 +1192,7 @@ These variables are used to control the output of properties.
 ### out_chg
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: z is the outer loop, then y and finally x (x is moving fastest).
+- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: x is the outer loop, then y and finally z (z is moving fastest).
 - **Default**: 0
 
 ### out_pot
@@ -1521,14 +1573,21 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### of_kinetic
 
-* **Type**: string
-* **Description**: the type of kinetic energy density functional, including tf (Thomas-Fermi), vw (von Weizsäcker), wt (Wang-Teter), tf+ (TF$\rm{\lambda}$vW), and lkt (Luo-Karasiev-Trickey).
-* **Default**: wt
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: The type of kinetic energy density functional.
+  - wt: Wang-Teter.
+  - tf: Thomas-Fermi.
+  - vw: von Weizsäcker.
+  - tf+: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - lkt: Luo-Karasiev-Trickey.
+- **Default**: wt
 
 ### of_method
 
-- **Type**: string
-- **Description**: the optimization method used in OFDFT.
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: The optimization method used in OFDFT.
   - cg1: Polak-Ribiere. Standard CG algorithm.
   - cg2: Hager-Zhang (generally faster than cg1).
   - tn: Truncated Newton algorithm.
@@ -1536,90 +1595,116 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### of_conv
 
-- **Type**: string
-- **Description**: criterion used to check the convergence of OFDFT.
-  - energy: total energy changes less than 'of_tole'.
-  - potential: the norm of potential is less than 'of_tolp'.
-  - both: both energy and potential must satisfy the convergence criterion.
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: Criterion used to check the convergence of OFDFT.
+  - energy: Ttotal energy changes less than `of_tole`.
+  - potential: The norm of potential is less than `of_tolp`.
+  - both: Both energy and potential must satisfy the convergence criterion.
 - **Default**: energy
 
 ### of_tole
 
-- **Type**: Double
-- **Description**: tolerance of the energy change (in Ry) for determining the convergence.
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Tolerance of the energy change for determining the convergence.
 - **Default**: 2e-6
+- **Unit**: Ry
 
 ### of_tolp
 
-- **Type**: Double
-- **Description**: tolerance of potential (in a.u.) for determining the convergence.
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Tolerance of potential for determining the convergence.
 - **Default**: 1e-5
+- **Unit**: Ry
 
 ### of_tf_weight
 
-- **Type**: Double
-- **Description**: weight of TF KEDF.
-- **Default**: 1
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
+- **Description**: Weight of TF KEDF.
+- **Default**: 1.0
 
 ### of_vw_weight
 
-- **Type**: Double
-- **Description**: weight of vW KEDF.
-- **Default**: 1
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
+- **Description**: Weight of vW KEDF.
+- **Default**: 1.0
 
 ### of_wt_alpha
 
-- **Type**: Double
-- **Description**: parameter alpha of WT KEDF.
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Parameter alpha of WT KEDF.
 - **Default**: $5/6$
 
 ### of_wt_beta
 
-- **Type**: Double
-- **Description**: parameter beta of WT KEDF.
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Parameter beta of WT KEDF.
 - **Default**: $5/6$
 
 ### of_wt_rho0
 
-- **Type**: Double
-- **Description**: the average density of system, in Bohr^-3.
-- **Default**: 0
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: The average density of system.
+- **Default**: 0.0
+- **Unit**: Bohr^-3
 
 ### of_hold_rho0
 
 - **Type**: Boolean
-- **Description**: If set to 1, the rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
-- **Default**: 0
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Whether to fix the average density rho0.
+  - 0: rho0 will change if volume of system has changed.
+  - 1: rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
+- **Default**: False
 
 ### of_lkt_a
 
-- **Type**: Double
-- **Description**: parameter a of LKT KEDF.
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=lkt`
+- **Description**: Parameter a of LKT KEDF.
 - **Default**: 1.3
 
 ### of_read_kernel
 
 - **Type**: Boolean
-- **Description**: If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
-- **Default**: 0
+- **Availability**: OFDFT with `of_kinetic=wt`
+- **Description**: Whether to read in the kernel file.
+  - 0: The kernel of WT KEDF will be filled from formula.
+  - 1: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+- **Default**: False
 
 ### of_kernel_file
 
 - **Type**: String
+- **Availability**: OFDFT with `of_read_kernel=True`
 - **Description**: The name of WT kernel file.
 - **Default**: WTkernel.txt
 
 ### of_full_pw
 
 - **Type**: Boolean
-- **Description**: If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
-- **Default**: 1
+- **Availability**: OFDFT
+- **Description**: Whether to use full planewaves.
+  - 0: Only use the planewaves inside ecut, the same as KSDFT.
+  - 1: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+- **Default**: True
 
 ### of_full_pw_dim
 
 - **Type**: Integer
-- **Description**: If of_full_pw = 1, the dimension of FFT will be restricted to be (0) either odd or even; (1) odd only; (2) even only.
-  Note that even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-**spline** interpolation unstable, so set `of_full_pw_dim = 1` if `nbspline != -1`.
+- **Availability**: OFDFT with `of_full_pw = True`
+- **Description**: Specify the parity of FFT dimensions.
+  - 0: either odd or even.
+  - 1: odd only.
+  - 2: even only.
+  >Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -2700,7 +2785,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ## Electronic conductivities
 
-Frequency-dependent electronic conductivities can be calculated with Kubo-Greenwood formula[Phys. Rev. B 83, 235120 (2011)].
+Frequency-dependent electronic conductivities can be calculated with Kubo-Greenwood formula [Phys. Rev. B 83, 235120 (2011)].
 
 Onsager coefficients:
 
@@ -2731,49 +2816,63 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 ### cal_cond
 
 - **Type**: Boolean
-- **Description**: If set to 1, electronic conductivities will be calculated. Only supported in calculations of SDFT and KSDFT_PW.
-- **Default**: 0
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Whether to calculate electronic conductivities.
+- **Default**: False
 
 ### cond_nche
 
 - **Type**: Integer
-- **Description**: Chebyshev expansion orders for stochastic Kubo Greenwood. Only used when the calculation is SDFT.
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Chebyshev expansion orders for stochastic Kubo Greenwood.
 - **Default**: 20
 
 ### cond_dw
 
 - **Type**: Real
-- **Description**: Frequency interval ($d\omega$) for frequency-dependent conductivities. The unit is eV.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Frequency interval ($\mathrm{d}\omega$) for frequency-dependent conductivities.
 - **Default**: 0.1
+- **Unit**: eV
 
 ### cond_wcut
 
 - **Type**: Real
-- **Description**: Cutoff frequency for frequency-dependent conductivities. The unit is eV.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Cutoff frequency for frequency-dependent conductivities.
 - **Default**: 10.0
+- **Unit**: eV
 
 ### cond_dt
 
 - **Type**: Real
-- **Description**: t interval to integrate Onsager coefficients. The unit is a.u.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Time interval ($\mathrm{d}t$) to integrate Onsager coefficients.
 - **Default**: 0.02
+- **Unit**: a.u.
 
 ### cond_dtbatch
 
 - **Type**: Integer
-- **Description**: exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: exp(iH\*dt\*cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
 - **Default**: 4
 
 ### cond_fwhm
 
-- **Type**: Integer
-- **Description**: We use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. FWHM for conductivities, $FWHM=2*\sqrt{2\ln2}\cdot \Delta E$. The unit is eV.
+- **Type**: Real
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: FWHM for conductivities, $\mathrm{FWHM}=2*\sqrt{2\ln2}\cdot \Delta E$. Here, we use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. 
 - **Default**: 0.4
+- **Unit**: eV
 
 ### cond_nonlocal
 
 - **Type**: Boolean
-- **Description**: Conductivities need to calculate velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$ and $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$. If `cond_nonlocal` is false, $m\hat{v}\approx\hat{p}$.
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Whether to consider nonlocal potential correction when calculating velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$.
+ 	- True:  $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$.
+	- False: $m\hat{v}\approx\hat{p}$.
 - **Default**: True
 
 [back to top](#full-list-of-input-keywords)
