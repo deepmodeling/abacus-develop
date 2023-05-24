@@ -150,6 +150,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
+        LCAO_deepks_interface.o\
 
 OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
