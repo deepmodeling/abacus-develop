@@ -87,6 +87,30 @@ void Set_GlobalV_Default()
 
 /**
  * - Tested Functions:
+ *   - Constructor: elecstate::Potential(rhopw, ucell, vloc, structure_factors, etxc, vtxc) and elecstate::Potential::allocate()
+ *     - potentials are divided into 2 types: fixed and dynamic
+ *     - fixed potentials: loc, gatefield that are independent of rho
+ *     - dynamic potentials: hartree, xc, surchem that are dependent of rho
+ *   - Getters: elecstate::Potential::get_v_effective_data() and elecstate::Potential::get_vofk_effective_data()
+ *     - get the pointers to v_effective and vofk_effective
+ *   - PotRegist: elecstate::Potential::pot_egist(components_list)
+ *     - add new objects of potentials that are derived classes of PotBase
+ *   - CalFixedV: elecstate::Potential::cal_fixed_v()
+ *     - calculate the fixed potentials: v_effective_fixed
+ *   - CalVeff: elecstate::Potential::cal_v_eff()
+ *     - calculate v_effective by adding v_effective_fixed and adding the dynamic potentials
+ *   - UpdateFromCharge: elecstate::Potential::update_from_charge()
+ *     - calls cal_fixed_v and cal_v_eff to update v_effective from rho
+ *   - InitPot: elecstate::Potential::init_pot()
+ *     - using istep and update_from_charge to initialize v_effective
+ *   - GetVnew: elecstate::Potential::get_vnew()
+ *     - used later for scf correction to the forces
+ *   - GetEffective: elecstate::Potential::get_effective_v()
+ *     - get the matrix reference or double pointer v_effective
+ *   - GetEffectiveVOfK: elecstate::Potential::get_effective_vofk()
+ *     - get the matrix reference or double pointer vofk_effective
+ *   - GetFixedV: elecstate::Potential::get_fixed_v()
+ *     - get the double pointer to v_effective_fixed
  */
 
 class PotentialNewTest : public ::testing::Test
