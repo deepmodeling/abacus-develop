@@ -6,20 +6,19 @@
 namespace ModuleIO
 {
 /// @brief manege the output of dos in numerical atomic basis case
-/// @param[in] psid 
-/// @param[in] psi 
-/// @param[in] uhm 
-/// @param[in] ekb 
-/// @param[in] wg 
-/// @param[in] dos_edelta_ev 
-/// @param[in] dos_scale 
-/// @param[in] dos_sigma 
-/// @param[in] kv 
-/// @param[in] Pkpoints 
-/// @param[in] ucell 
-/// @param[in] eferm 
-/// @param[in] nks 
-/// @param[in] nbands 
+/// @param[in] psid
+/// @param[in] psi
+/// @param[in] uhm
+/// @param[in] ekb
+/// @param[in] wg
+/// @param[in] dos_edelta_ev
+/// @param[in] dos_scale
+/// @param[in] dos_sigma
+/// @param[in] kv
+/// @param[in] Pkpoints
+/// @param[in] ucell
+/// @param[in] eferm
+/// @param[in] nbands
 void out_dos_nao(const psi::Psi<double>* psid,
                   const psi::Psi<std::complex<double>>* psi,
                   LCAO_Hamilt& uhm,
@@ -32,7 +31,6 @@ void out_dos_nao(const psi::Psi<double>* psid,
                   const Parallel_Kpoints& Pkpoints,
                   const UnitCell& ucell,
                   const elecstate::efermi& eferm,
-                  int nks,
                   int nbands)
 {
     ModuleBase::TITLE("Driver", "init");
@@ -45,7 +43,7 @@ void out_dos_nao(const psi::Psi<double>* psid,
         {
             std::stringstream ss3;
             ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-            nscf_fermi_surface(ss3.str(), nks, nbands, eferm.ef, kv, Pkpoints, ucell, ekb);
+            nscf_fermi_surface(ss3.str(), nbands, eferm.ef, kv, Pkpoints, ucell, ekb);
         }
     }
 

@@ -4,7 +4,6 @@
 #include "module_base/timer.h"
 
 void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
-	const int &nks,
 	const int &nband,
 	const double &ef,
 	const K_Vectors& kv,

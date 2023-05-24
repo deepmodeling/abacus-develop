@@ -18,7 +18,6 @@ void out_dos_nao(const psi::Psi<double>* psid,
                   const Parallel_Kpoints& Pkpoints,
                   const UnitCell& ucell,
                   const elecstate::efermi& eferm,
-                  int nks,
                   int nbands);
 }
 

@@ -349,7 +349,8 @@ void ESolver_KS_LCAO::postprocess()
                                *(this->pelec->klist),
                                GlobalC::Pkpoints,
                                GlobalC::ucell,
-                               this->pelec->eferm);
+                               this->pelec->eferm,
+                               GlobalV::NBANDS);
     }
 }
 
