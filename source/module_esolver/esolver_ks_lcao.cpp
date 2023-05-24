@@ -4,12 +4,11 @@
 #include "module_io/dm_io.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
-#include "module_io/nscf_fermi_surf.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
-#include "module_io/write_dos_lcao.h"
+#include "module_io/dos_lcao.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 
@@ -295,9 +294,7 @@ void ESolver_KS_LCAO::postprocess()
         ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
     }
 
-    int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
-        nspin0 = 2;
+    int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     if (INPUT.out_band) // pengfei 2014-10-13
     {
@@ -341,6 +338,19 @@ void ESolver_KS_LCAO::postprocess()
 
     if (INPUT.out_dos)
     {
+        ModuleIO::out_dos_lcao(this->psid,
+                               this->psi,
+                               this->UHM,
+                               this->pelec->ekb,
+                               this->pelec->wg,
+                               INPUT.dos_edelta_ev,
+                               INPUT.dos_scale,
+                               INPUT.dos_sigma,
+                               *(this->pelec->klist),
+                               GlobalC::Pkpoints,
+                               GlobalC::ucell,
+                               this->pelec->eferm);
+        /*
         ModuleIO::write_dos_lcao(this->psid,
                                  this->psi,
                                  this->UHM,
@@ -379,6 +389,7 @@ void ESolver_KS_LCAO::postprocess()
             GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->pelec->eferm.ef_dw << " Rydberg"
                                  << std::endl;
         }
+        */
     }
 }
 

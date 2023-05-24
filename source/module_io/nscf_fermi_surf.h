@@ -12,8 +12,8 @@ namespace ModuleIO
 		const int &nband,
 		const double &ef,
 		const K_Vectors& kv,
-		const Parallel_Kpoints* Pkpoints,
-		const UnitCell* ucell,
+		const Parallel_Kpoints& Pkpoints,
+		const UnitCell& ucell,
 		const ModuleBase::matrix &ekb);
 }
 #endif
