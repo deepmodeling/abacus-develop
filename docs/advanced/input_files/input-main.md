@@ -1032,8 +1032,8 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Real
 - **Description**: When move-method is set to `cg_bfgs`, a mixed algorithm of conjugate gradient (CG) method and Broyden–Fletcher–Goldfarb–Shanno (BFGS) method is used. The ions first move according to CG method, then switched to BFGS method when the maximum of force on atoms is reduced below the CG force threshold, which is set by this parameter.
-- **Unit**: eV/Angstrom
 - **Default**: 0.5
+- **Unit**: eV/Angstrom
 
 ### cal_force
 
@@ -1047,21 +1047,22 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Real
 - **Description**: Threshold of the force convergence in Ry/Bohr. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to [force_thr_ev](#force_thr_ev) except for the unit. You may choose either you like.
-- **Unit**: Ry/Bohr (25.7112 eV/Angstrom)
 - **Default**: 0.001 
+- **Unit**: Ry/Bohr (25.7112 eV/Angstrom)
 
 ### force_thr_ev
 
 - **Type**: Real
 - **Description**: Threshold of the force convergence in eV/Angstrom. The threshold is compared with the largest force among all of the atoms. The recommended value for using atomic orbitals is 0.04 eV/Angstrom (0.0016 Ry/Bohr). The parameter is equivalent to [force_thr](#force_thr) except for the unit. You may choose either you like.
-- **Unit**: eV/Angstrom (0.03889 Ry/Bohr)
 - **Default**: 0.0257112
+- **Unit**: eV/Angstrom (0.03889 Ry/Bohr)
 
 ### force_thr_ev2
 
 - **Type**: Real
 - **Description**: The calculated force will be set to 0 when it is smaller than the parameter `force_thr_ev2`.
-- **Default**: 0.0 eV/Angstrom
+- **Default**: 0.0 
+- **Unit**: eV/Angstrom
 
 ### relax_bfgs_w1
 
@@ -1086,15 +1087,15 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Real
 - **Description**: This variable is for geometry optimization. It indicates the minimal movement of all the atoms. When the movement of all the atoms is smaller than relax_bfgs_rmin Bohr, and the force convergence is still not achieved, the calculation will break down.
-- **Unit**: Bohr
 - **Default**: 1e-5
+- **Unit**: Bohr
 
 ### relax_bfgs_init
 
 - **Type**: Real
 - **Description**: This variable is for geometry optimization. It stands for the sum of initial movements of all of the atoms.
-- **Unit**: Bohr
 - **Default**: 0.5
+- **Unit**: Bohr
 
 ### cal_stress
 
@@ -1108,15 +1109,15 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Real
 - **Description**: The threshold of the stress convergence. The threshold is compared with the largest component of the stress tensor.
-- **Unit**: kbar
 - **Default**: 0.5
+- **Unit**: kbar
 
 ### press1, press2, press3
 
 - **Type**: Real
 - **Description**: The external pressures along three axes. Positive input value is taken as compressive stress.
-- **Unit**: kbar
 - **Default**: 0
+- **Unit**: kbar
 
 ### fixed_axes
 
