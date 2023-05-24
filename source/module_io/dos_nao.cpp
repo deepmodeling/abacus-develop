@@ -1,11 +1,26 @@
-#include "module_io/dos_lcao.h"
+#include "module_io/dos_nao.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
 #include "module_io/input.h"
 
 namespace ModuleIO
 {
-void out_dos_lcao(const psi::Psi<double>* psid,
+/// @brief manege the output of dos in numerical atomic basis case
+/// @param[in] psid 
+/// @param[in] psi 
+/// @param[in] uhm 
+/// @param[in] ekb 
+/// @param[in] wg 
+/// @param[in] dos_edelta_ev 
+/// @param[in] dos_scale 
+/// @param[in] dos_sigma 
+/// @param[in] kv 
+/// @param[in] Pkpoints 
+/// @param[in] ucell 
+/// @param[in] eferm 
+/// @param[in] nks 
+/// @param[in] nbands 
+void out_dos_nao(const psi::Psi<double>* psid,
                   const psi::Psi<std::complex<double>>* psi,
                   LCAO_Hamilt& uhm,
                   const ModuleBase::matrix& ekb,

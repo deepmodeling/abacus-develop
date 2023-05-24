@@ -6,7 +6,7 @@
 
 namespace ModuleIO
 {
-void out_dos_lcao(const psi::Psi<double>* psid,
+void out_dos_nao(const psi::Psi<double>* psid,
                   const psi::Psi<std::complex<double>>* psi,
                   LCAO_Hamilt& uhm,
                   const ModuleBase::matrix& ekb,

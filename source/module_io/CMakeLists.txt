@@ -43,7 +43,7 @@ if(ENABLE_LCAO)
       write_wfc_nao.cpp
       write_HS.cpp
       write_dm.cpp
-      dos_lcao.cpp
+      dos_nao.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
