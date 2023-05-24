@@ -1,347 +1,347 @@
 # Full List of INPUT Keywords
 
 - [Full List of INPUT Keywords](#full-list-of-input-keywords)
-	- [System variables](#system-variables)
-		- [suffix](#suffix)
-		- [ntype](#ntype)
-		- [calculation](#calculation)
-		- [esolver\_type](#esolver_type)
-		- [symmetry](#symmetry)
-		- [kpar](#kpar)
-		- [bndpar](#bndpar)
-		- [latname](#latname)
-		- [init\_wfc](#init_wfc)
-		- [init\_chg](#init_chg)
-		- [init\_vel](#init_vel)
-		- [nelec](#nelec)
-		- [nupdown](#nupdown)
-		- [dft\_functional](#dft_functional)
-		- [xc\_temperature](#xc_temperature)
-		- [pseudo\_rcut](#pseudo_rcut)
-		- [pseudo\_mesh](#pseudo_mesh)
-		- [mem\_saver](#mem_saver)
-		- [diago\_proc](#diago_proc)
-		- [nbspline](#nbspline)
-		- [kspacing](#kspacing)
-		- [min\_dist\_coef](#min_dist_coef)
-		- [symmetry\_prec](#symmetry_prec)
-		- [device](#device)
-	- [Variables related to input files](#variables-related-to-input-files)
-		- [stru\_file](#stru_file)
-		- [kpoint\_file](#kpoint_file)
-		- [pseudo\_dir](#pseudo_dir)
-		- [orbital\_dir](#orbital_dir)
-		- [read\_file\_dir](#read_file_dir)
-		- [wannier\_card](#wannier_card)
-	- [Plane wave related variables](#plane-wave-related-variables)
-		- [ecutwfc](#ecutwfc)
-		- [nx, ny, nz](#nx-ny-nz)
-		- [pw\_seed](#pw_seed)
-		- [pw\_diag\_thr](#pw_diag_thr)
-		- [pw\_diag\_nmax](#pw_diag_nmax)
-		- [pw\_diag\_ndim](#pw_diag_ndim)
-	- [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-		- [nb2d](#nb2d)
-		- [lmaxmax](#lmaxmax)
-		- [lcao\_ecut](#lcao_ecut)
-		- [lcao\_dk](#lcao_dk)
-		- [lcao\_dr](#lcao_dr)
-		- [lcao\_rmax](#lcao_rmax)
-		- [search\_radius](#search_radius)
-		- [search\_pbc](#search_pbc)
-		- [bx, by, bz](#bx-by-bz)
-	- [Electronic structure](#electronic-structure)
-		- [basis\_type](#basis_type)
-		- [ks\_solver](#ks_solver)
-		- [nbands](#nbands)
-		- [nbands\_istate](#nbands_istate)
-		- [nspin](#nspin)
-		- [smearing\_method](#smearing_method)
-		- [smearing\_sigma](#smearing_sigma)
-		- [smearing\_sigma\_temp](#smearing_sigma_temp)
-		- [mixing\_type](#mixing_type)
-		- [mixing\_beta](#mixing_beta)
-		- [mixing\_ndim](#mixing_ndim)
-		- [mixing\_gg0](#mixing_gg0)
-		- [mixing\_tau](#mixing_tau)
-		- [mixing\_dftu](#mixing_dftu)
-		- [gamma\_only](#gamma_only)
-		- [printe](#printe)
-		- [scf\_nmax](#scf_nmax)
-		- [scf\_thr](#scf_thr)
-		- [scf\_thr\_type](#scf_thr_type)
-		- [chg\_extrap](#chg_extrap)
-		- [lspinorb](#lspinorb)
-		- [noncolin](#noncolin)
-		- [soc\_lambda](#soc_lambda)
-	- [Electronic structure (SDFT)](#electronic-structure-sdft)
-		- [method\_sto](#method_sto)
-		- [nbands\_sto](#nbands_sto)
-		- [nche\_sto](#nche_sto)
-		- [emin\_sto](#emin_sto)
-		- [emax\_sto](#emax_sto)
-		- [seed\_sto](#seed_sto)
-		- [initsto\_freq](#initsto_freq)
-		- [npart\_sto](#npart_sto)
-	- [Geometry relaxation](#geometry-relaxation)
-		- [relax\_method](#relax_method)
-		- [relax\_new](#relax_new)
-		- [relax\_scale\_force](#relax_scale_force)
-		- [relax\_nmax](#relax_nmax)
-		- [relax\_cg\_thr](#relax_cg_thr)
-		- [cal\_force](#cal_force)
-		- [force\_thr](#force_thr)
-		- [force\_thr\_ev](#force_thr_ev)
-		- [force\_thr\_ev2](#force_thr_ev2)
-		- [relax\_bfgs\_w1](#relax_bfgs_w1)
-		- [relax\_bfgs\_w2](#relax_bfgs_w2)
-		- [relax\_bfgs\_rmax](#relax_bfgs_rmax)
-		- [relax\_bfgs\_rmin](#relax_bfgs_rmin)
-		- [relax\_bfgs\_init](#relax_bfgs_init)
-		- [cal\_stress](#cal_stress)
-		- [stress\_thr](#stress_thr)
-		- [press1, press2, press3](#press1-press2-press3)
-		- [fixed\_axes](#fixed_axes)
-		- [fixed\_ibrav](#fixed_ibrav)
-		- [fixed\_atoms](#fixed_atoms)
-		- [cell\_factor](#cell_factor)
-	- [Variables related to output information](#variables-related-to-output-information)
-		- [out\_mul](#out_mul)
-		- [out\_freq\_elec](#out_freq_elec)
-		- [out\_freq\_ion](#out_freq_ion)
-		- [out\_chg](#out_chg)
-		- [out\_pot](#out_pot)
-		- [out\_dm](#out_dm)
-		- [out\_wfc\_pw](#out_wfc_pw)
-		- [out\_wfc\_r](#out_wfc_r)
-		- [out\_wfc\_lcao](#out_wfc_lcao)
-		- [out\_dos](#out_dos)
-		- [out\_band](#out_band)
-		- [out\_proj\_band](#out_proj_band)
-		- [out\_stru](#out_stru)
-		- [out\_bandgap](#out_bandgap)
-		- [out\_level](#out_level)
-		- [out\_alllog](#out_alllog)
-		- [out\_mat\_hs](#out_mat_hs)
-		- [out\_mat\_r](#out_mat_r)
-		- [out\_mat\_hs2](#out_mat_hs2)
-		- [out\_mat\_t](#out_mat_t)
-		- [out\_mat\_dh](#out_mat_dh)
-		- [out\_app\_flag](#out_app_flag)
-		- [out\_interval](#out_interval)
-		- [out\_element\_info](#out_element_info)
-		- [restart\_save](#restart_save)
-		- [restart\_load](#restart_load)
-		- [dft\_plus\_dmft](#dft_plus_dmft)
-		- [rpa](#rpa)
-	- [Density of states](#density-of-states)
-		- [dos\_edelta\_ev](#dos_edelta_ev)
-		- [dos\_sigma](#dos_sigma)
-		- [dos\_scale](#dos_scale)
-		- [dos\_emin\_ev](#dos_emin_ev)
-		- [dos\_emax\_ev](#dos_emax_ev)
-		- [dos\_nche](#dos_nche)
-	- [NAOs](#naos)
-		- [bessel\_nao\_ecut](#bessel_nao_ecut)
-		- [bessel\_nao\_tolerence](#bessel_nao_tolerence)
-		- [bessel\_nao\_rcut](#bessel_nao_rcut)
-		- [bessel\_nao\_smooth](#bessel_nao_smooth)
-		- [bessel\_nao\_sigma](#bessel_nao_sigma)
-	- [DeePKS](#deepks)
-		- [deepks\_out\_labels](#deepks_out_labels)
-		- [deepks\_scf](#deepks_scf)
-		- [deepks\_model](#deepks_model)
-		- [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
-		- [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
-		- [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
-		- [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
-		- [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
-		- [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
-		- [deepks\_bandgap](#deepks_bandgap)
-		- [deepks\_out\_unittest](#deepks_out_unittest)
-	- [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
-		- [of\_kinetic](#of_kinetic)
-		- [of\_method](#of_method)
-		- [of\_conv](#of_conv)
-		- [of\_tole](#of_tole)
-		- [of\_tolp](#of_tolp)
-		- [of\_tf\_weight](#of_tf_weight)
-		- [of\_vw\_weight](#of_vw_weight)
-		- [of\_wt\_alpha](#of_wt_alpha)
-		- [of\_wt\_beta](#of_wt_beta)
-		- [of\_wt\_rho0](#of_wt_rho0)
-		- [of\_hold\_rho0](#of_hold_rho0)
-		- [of\_lkt\_a](#of_lkt_a)
-		- [of\_read\_kernel](#of_read_kernel)
-		- [of\_kernel\_file](#of_kernel_file)
-		- [of\_full\_pw](#of_full_pw)
-		- [of\_full\_pw\_dim](#of_full_pw_dim)
-	- [Electric field and dipole correction](#electric-field-and-dipole-correction)
-		- [efield\_flag](#efield_flag)
-		- [dip\_cor\_flag](#dip_cor_flag)
-		- [efield\_dir](#efield_dir)
-		- [efield\_pos\_max](#efield_pos_max)
-		- [efield\_pos\_dec](#efield_pos_dec)
-		- [efield\_amp](#efield_amp)
-	- [Gate field (compensating charge)](#gate-field-compensating-charge)
-		- [gate\_flag](#gate_flag)
-		- [zgate](#zgate)
-		- [block](#block)
-		- [block\_down](#block_down)
-		- [block\_up](#block_up)
-		- [block\_height](#block_height)
-	- [Exact Exchange](#exact-exchange)
-		- [exx\_hybrid\_alpha](#exx_hybrid_alpha)
-		- [exx\_hse\_omega](#exx_hse_omega)
-		- [exx\_separate\_loop](#exx_separate_loop)
-		- [exx\_hybrid\_step](#exx_hybrid_step)
-		- [exx\_mixing\_beta](#exx_mixing_beta)
-		- [exx\_lambda](#exx_lambda)
-		- [exx\_pca\_threshold](#exx_pca_threshold)
-		- [exx\_c\_threshold](#exx_c_threshold)
-		- [exx\_v\_threshold](#exx_v_threshold)
-		- [exx\_dm\_threshold](#exx_dm_threshold)
-		- [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
-		- [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
-		- [exx\_schwarz\_threshold](#exx_schwarz_threshold)
-		- [exx\_cauchy\_threshold](#exx_cauchy_threshold)
-		- [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
-		- [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
-		- [exx\_ccp\_threshold](#exx_ccp_threshold)
-		- [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
-		- [exx\_distribute\_type](#exx_distribute_type)
-		- [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
-		- [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
-		- [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
-		- [exx\_real\_number](#exx_real_number)
-	- [Molecular dynamics](#molecular-dynamics)
-		- [md\_type](#md_type)
-		- [md\_thermostat](#md_thermostat)
-		- [md\_nstep](#md_nstep)
-		- [md\_restart](#md_restart)
-		- [md\_dt](#md_dt)
-		- [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
-		- [md\_dumpfreq](#md_dumpfreq)
-		- [md\_restartfreq](#md_restartfreq)
-		- [md\_seed](#md_seed)
-		- [md\_prec\_level](#md_prec_level)
-		- [ref\_cell\_factor](#ref_cell_factor)
-		- [md\_tfreq](#md_tfreq)
-		- [md\_tchain](#md_tchain)
-		- [md\_pmode](#md_pmode)
-		- [md\_pcouple](#md_pcouple)
-		- [md\_pfirst, md\_plast](#md_pfirst-md_plast)
-		- [md\_pfreq](#md_pfreq)
-		- [md\_pchain](#md_pchain)
-		- [dump\_force](#dump_force)
-		- [dump\_vel](#dump_vel)
-		- [dump\_virial](#dump_virial)
-		- [lj\_rcut](#lj_rcut)
-		- [lj\_epsilon](#lj_epsilon)
-		- [lj\_sigma](#lj_sigma)
-		- [pot\_file](#pot_file)
-		- [msst\_direction](#msst_direction)
-		- [msst\_vel](#msst_vel)
-		- [msst\_vis](#msst_vis)
-		- [msst\_tscale](#msst_tscale)
-		- [msst\_qmass](#msst_qmass)
-		- [md\_damp](#md_damp)
-		- [md\_tolerance](#md_tolerance)
-		- [md\_nraise](#md_nraise)
-		- [cal\_syns](#cal_syns)
-		- [dmax](#dmax)
-	- [DFT+*U* correction](#dftu-correction)
-		- [dft\_plus\_u](#dft_plus_u)
-		- [orbital\_corr](#orbital_corr)
-		- [hubbard\_u](#hubbard_u)
-		- [yukawa\_potential](#yukawa_potential)
-		- [yukawa\_lambda](#yukawa_lambda)
-		- [omc](#omc)
-	- [vdW correction](#vdw-correction)
-		- [vdw\_method](#vdw_method)
-		- [vdw\_s6](#vdw_s6)
-		- [vdw\_s8](#vdw_s8)
-		- [vdw\_a1](#vdw_a1)
-		- [vdw\_a2](#vdw_a2)
-		- [vdw\_d](#vdw_d)
-		- [vdw\_abc](#vdw_abc)
-		- [vdw\_C6\_file](#vdw_c6_file)
-		- [vdw\_C6\_unit](#vdw_c6_unit)
-		- [vdw\_R0\_file](#vdw_r0_file)
-		- [vdw\_R0\_unit](#vdw_r0_unit)
-		- [vdw\_cutoff\_type](#vdw_cutoff_type)
-		- [vdw\_cutoff\_radius](#vdw_cutoff_radius)
-		- [vdw\_radius\_unit](#vdw_radius_unit)
-		- [vdw\_cutoff\_period](#vdw_cutoff_period)
-		- [vdw\_cn\_thr](#vdw_cn_thr)
-		- [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
-	- [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
-		- [berry\_phase](#berry_phase)
-		- [gdir](#gdir)
-		- [towannier90](#towannier90)
-		- [nnkpfile](#nnkpfile)
-		- [wannier\_spin](#wannier_spin)
-	- [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
-		- [td\_edm](#td_edm)
-		- [td\_print\_eij](#td_print_eij)
-		- [td\_force\_dt](#td_force_dt)
-		- [propagator](#propagator)
-		- [td\_vext](#td_vext)
-		- [td\_vext\_dire](#td_vext_dire)
-		- [td\_stype](#td_stype)
-		- [td\_ttype](#td_ttype)
-		- [td\_tstart](#td_tstart)
-		- [td\_tend](#td_tend)
-		- [td\_lcut1](#td_lcut1)
-		- [td\_lcut2](#td_lcut2)
-		- [td\_gauss\_freq](#td_gauss_freq)
-		- [td\_gauss\_phase](#td_gauss_phase)
-		- [td\_gauss\_sigma](#td_gauss_sigma)
-		- [td\_gauss\_t0](#td_gauss_t0)
-		- [td\_gauss\_amp](#td_gauss_amp)
-		- [td\_trape\_freq](#td_trape_freq)
-		- [td\_trape\_phase](#td_trape_phase)
-		- [td\_trape\_t1](#td_trape_t1)
-		- [td\_trape\_t2](#td_trape_t2)
-		- [td\_trape\_t3](#td_trape_t3)
-		- [td\_trape\_amp](#td_trape_amp)
-		- [td\_trigo\_freq1](#td_trigo_freq1)
-		- [td\_trigo\_freq2](#td_trigo_freq2)
-		- [td\_trigo\_phase1](#td_trigo_phase1)
-		- [td\_trigo\_phase2](#td_trigo_phase2)
-		- [td\_trigo\_amp](#td_trigo_amp)
-		- [td\_heavi\_t0](#td_heavi_t0)
-		- [td\_heavi\_amp](#td_heavi_amp)
-		- [out\_dipole](#out_dipole)
-		- [out\_efield](#out_efield)
-		- [ocp](#ocp)
-		- [ocp\_set](#ocp_set)
-	- [Variables useful for debugging](#variables-useful-for-debugging)
-		- [nurse](#nurse)
-		- [t\_in\_h](#t_in_h)
-		- [vl\_in\_h](#vl_in_h)
-		- [vnl\_in\_h](#vnl_in_h)
-		- [vh\_in\_h](#vh_in_h)
-		- [vion\_in\_h](#vion_in_h)
-		- [test\_force](#test_force)
-		- [test\_stress](#test_stress)
-		- [colour](#colour)
-		- [test\_skip\_ewald](#test_skip_ewald)
-	- [Electronic conductivities](#electronic-conductivities)
-		- [cal\_cond](#cal_cond)
-		- [cond\_nche](#cond_nche)
-		- [cond\_dw](#cond_dw)
-		- [cond\_wcut](#cond_wcut)
-		- [cond\_dt](#cond_dt)
-		- [cond\_dtbatch](#cond_dtbatch)
-		- [cond\_fwhm](#cond_fwhm)
-		- [cond\_nonlocal](#cond_nonlocal)
-	- [Implicit solvation model](#implicit-solvation-model)
-		- [imp\_sol](#imp_sol)
-		- [eb\_k](#eb_k)
-		- [tau](#tau)
-		- [sigma\_k](#sigma_k)
-		- [nc\_k](#nc_k)
+  - [System variables](#system-variables)
+    - [suffix](#suffix)
+    - [ntype](#ntype)
+    - [calculation](#calculation)
+    - [esolver\_type](#esolver_type)
+    - [symmetry](#symmetry)
+    - [kpar](#kpar)
+    - [bndpar](#bndpar)
+    - [latname](#latname)
+    - [init\_wfc](#init_wfc)
+    - [init\_chg](#init_chg)
+    - [init\_vel](#init_vel)
+    - [nelec](#nelec)
+    - [nupdown](#nupdown)
+    - [dft\_functional](#dft_functional)
+    - [xc\_temperature](#xc_temperature)
+    - [pseudo\_rcut](#pseudo_rcut)
+    - [pseudo\_mesh](#pseudo_mesh)
+    - [mem\_saver](#mem_saver)
+    - [diago\_proc](#diago_proc)
+    - [nbspline](#nbspline)
+    - [kspacing](#kspacing)
+    - [min\_dist\_coef](#min_dist_coef)
+    - [symmetry\_prec](#symmetry_prec)
+    - [device](#device)
+  - [Variables related to input files](#variables-related-to-input-files)
+    - [stru\_file](#stru_file)
+    - [kpoint\_file](#kpoint_file)
+    - [pseudo\_dir](#pseudo_dir)
+    - [orbital\_dir](#orbital_dir)
+    - [read\_file\_dir](#read_file_dir)
+    - [wannier\_card](#wannier_card)
+  - [Plane wave related variables](#plane-wave-related-variables)
+    - [ecutwfc](#ecutwfc)
+    - [nx, ny, nz](#nx-ny-nz)
+    - [pw\_seed](#pw_seed)
+    - [pw\_diag\_thr](#pw_diag_thr)
+    - [pw\_diag\_nmax](#pw_diag_nmax)
+    - [pw\_diag\_ndim](#pw_diag_ndim)
+  - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
+    - [nb2d](#nb2d)
+    - [lmaxmax](#lmaxmax)
+    - [lcao\_ecut](#lcao_ecut)
+    - [lcao\_dk](#lcao_dk)
+    - [lcao\_dr](#lcao_dr)
+    - [lcao\_rmax](#lcao_rmax)
+    - [search\_radius](#search_radius)
+    - [search\_pbc](#search_pbc)
+    - [bx, by, bz](#bx-by-bz)
+  - [Electronic structure](#electronic-structure)
+    - [basis\_type](#basis_type)
+    - [ks\_solver](#ks_solver)
+    - [nbands](#nbands)
+    - [nbands\_istate](#nbands_istate)
+    - [nspin](#nspin)
+    - [smearing\_method](#smearing_method)
+    - [smearing\_sigma](#smearing_sigma)
+    - [smearing\_sigma\_temp](#smearing_sigma_temp)
+    - [mixing\_type](#mixing_type)
+    - [mixing\_beta](#mixing_beta)
+    - [mixing\_ndim](#mixing_ndim)
+    - [mixing\_gg0](#mixing_gg0)
+    - [mixing\_tau](#mixing_tau)
+    - [mixing\_dftu](#mixing_dftu)
+    - [gamma\_only](#gamma_only)
+    - [printe](#printe)
+    - [scf\_nmax](#scf_nmax)
+    - [scf\_thr](#scf_thr)
+    - [scf\_thr\_type](#scf_thr_type)
+    - [chg\_extrap](#chg_extrap)
+    - [lspinorb](#lspinorb)
+    - [noncolin](#noncolin)
+    - [soc\_lambda](#soc_lambda)
+  - [Electronic structure (SDFT)](#electronic-structure-sdft)
+    - [method\_sto](#method_sto)
+    - [nbands\_sto](#nbands_sto)
+    - [nche\_sto](#nche_sto)
+    - [emin\_sto](#emin_sto)
+    - [emax\_sto](#emax_sto)
+    - [seed\_sto](#seed_sto)
+    - [initsto\_freq](#initsto_freq)
+    - [npart\_sto](#npart_sto)
+  - [Geometry relaxation](#geometry-relaxation)
+    - [relax\_method](#relax_method)
+    - [relax\_new](#relax_new)
+    - [relax\_scale\_force](#relax_scale_force)
+    - [relax\_nmax](#relax_nmax)
+    - [relax\_cg\_thr](#relax_cg_thr)
+    - [cal\_force](#cal_force)
+    - [force\_thr](#force_thr)
+    - [force\_thr\_ev](#force_thr_ev)
+    - [force\_thr\_ev2](#force_thr_ev2)
+    - [relax\_bfgs\_w1](#relax_bfgs_w1)
+    - [relax\_bfgs\_w2](#relax_bfgs_w2)
+    - [relax\_bfgs\_rmax](#relax_bfgs_rmax)
+    - [relax\_bfgs\_rmin](#relax_bfgs_rmin)
+    - [relax\_bfgs\_init](#relax_bfgs_init)
+    - [cal\_stress](#cal_stress)
+    - [stress\_thr](#stress_thr)
+    - [press1, press2, press3](#press1-press2-press3)
+    - [fixed\_axes](#fixed_axes)
+    - [fixed\_ibrav](#fixed_ibrav)
+    - [fixed\_atoms](#fixed_atoms)
+    - [cell\_factor](#cell_factor)
+  - [Variables related to output information](#variables-related-to-output-information)
+    - [out\_mul](#out_mul)
+    - [out\_freq\_elec](#out_freq_elec)
+    - [out\_freq\_ion](#out_freq_ion)
+    - [out\_chg](#out_chg)
+    - [out\_pot](#out_pot)
+    - [out\_dm](#out_dm)
+    - [out\_wfc\_pw](#out_wfc_pw)
+    - [out\_wfc\_r](#out_wfc_r)
+    - [out\_wfc\_lcao](#out_wfc_lcao)
+    - [out\_dos](#out_dos)
+    - [out\_band](#out_band)
+    - [out\_proj\_band](#out_proj_band)
+    - [out\_stru](#out_stru)
+    - [out\_bandgap](#out_bandgap)
+    - [out\_level](#out_level)
+    - [out\_alllog](#out_alllog)
+    - [out\_mat\_hs](#out_mat_hs)
+    - [out\_mat\_r](#out_mat_r)
+    - [out\_mat\_hs2](#out_mat_hs2)
+    - [out\_mat\_t](#out_mat_t)
+    - [out\_mat\_dh](#out_mat_dh)
+    - [out\_app\_flag](#out_app_flag)
+    - [out\_interval](#out_interval)
+    - [out\_element\_info](#out_element_info)
+    - [restart\_save](#restart_save)
+    - [restart\_load](#restart_load)
+    - [dft\_plus\_dmft](#dft_plus_dmft)
+    - [rpa](#rpa)
+  - [Density of states](#density-of-states)
+    - [dos\_edelta\_ev](#dos_edelta_ev)
+    - [dos\_sigma](#dos_sigma)
+    - [dos\_scale](#dos_scale)
+    - [dos\_emin\_ev](#dos_emin_ev)
+    - [dos\_emax\_ev](#dos_emax_ev)
+    - [dos\_nche](#dos_nche)
+  - [NAOs](#naos)
+    - [bessel\_nao\_ecut](#bessel_nao_ecut)
+    - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
+    - [bessel\_nao\_rcut](#bessel_nao_rcut)
+    - [bessel\_nao\_smooth](#bessel_nao_smooth)
+    - [bessel\_nao\_sigma](#bessel_nao_sigma)
+  - [DeePKS](#deepks)
+    - [deepks\_out\_labels](#deepks_out_labels)
+    - [deepks\_scf](#deepks_scf)
+    - [deepks\_model](#deepks_model)
+    - [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
+    - [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
+    - [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
+    - [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
+    - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
+    - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
+    - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_out\_unittest](#deepks_out_unittest)
+  - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
+    - [of\_kinetic](#of_kinetic)
+    - [of\_method](#of_method)
+    - [of\_conv](#of_conv)
+    - [of\_tole](#of_tole)
+    - [of\_tolp](#of_tolp)
+    - [of\_tf\_weight](#of_tf_weight)
+    - [of\_vw\_weight](#of_vw_weight)
+    - [of\_wt\_alpha](#of_wt_alpha)
+    - [of\_wt\_beta](#of_wt_beta)
+    - [of\_wt\_rho0](#of_wt_rho0)
+    - [of\_hold\_rho0](#of_hold_rho0)
+    - [of\_lkt\_a](#of_lkt_a)
+    - [of\_read\_kernel](#of_read_kernel)
+    - [of\_kernel\_file](#of_kernel_file)
+    - [of\_full\_pw](#of_full_pw)
+    - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [Electric field and dipole correction](#electric-field-and-dipole-correction)
+    - [efield\_flag](#efield_flag)
+    - [dip\_cor\_flag](#dip_cor_flag)
+    - [efield\_dir](#efield_dir)
+    - [efield\_pos\_max](#efield_pos_max)
+    - [efield\_pos\_dec](#efield_pos_dec)
+    - [efield\_amp](#efield_amp)
+  - [Gate field (compensating charge)](#gate-field-compensating-charge)
+    - [gate\_flag](#gate_flag)
+    - [zgate](#zgate)
+    - [block](#block)
+    - [block\_down](#block_down)
+    - [block\_up](#block_up)
+    - [block\_height](#block_height)
+  - [Exact Exchange](#exact-exchange)
+    - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
+    - [exx\_hse\_omega](#exx_hse_omega)
+    - [exx\_separate\_loop](#exx_separate_loop)
+    - [exx\_hybrid\_step](#exx_hybrid_step)
+    - [exx\_mixing\_beta](#exx_mixing_beta)
+    - [exx\_lambda](#exx_lambda)
+    - [exx\_pca\_threshold](#exx_pca_threshold)
+    - [exx\_c\_threshold](#exx_c_threshold)
+    - [exx\_v\_threshold](#exx_v_threshold)
+    - [exx\_dm\_threshold](#exx_dm_threshold)
+    - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
+    - [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
+    - [exx\_schwarz\_threshold](#exx_schwarz_threshold)
+    - [exx\_cauchy\_threshold](#exx_cauchy_threshold)
+    - [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
+    - [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
+    - [exx\_ccp\_threshold](#exx_ccp_threshold)
+    - [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
+    - [exx\_distribute\_type](#exx_distribute_type)
+    - [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
+    - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
+    - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
+    - [exx\_real\_number](#exx_real_number)
+  - [Molecular dynamics](#molecular-dynamics)
+    - [md\_type](#md_type)
+    - [md\_thermostat](#md_thermostat)
+    - [md\_nstep](#md_nstep)
+    - [md\_restart](#md_restart)
+    - [md\_dt](#md_dt)
+    - [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
+    - [md\_dumpfreq](#md_dumpfreq)
+    - [md\_restartfreq](#md_restartfreq)
+    - [md\_seed](#md_seed)
+    - [md\_prec\_level](#md_prec_level)
+    - [ref\_cell\_factor](#ref_cell_factor)
+    - [md\_tfreq](#md_tfreq)
+    - [md\_tchain](#md_tchain)
+    - [md\_pmode](#md_pmode)
+    - [md\_pcouple](#md_pcouple)
+    - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
+    - [md\_pfreq](#md_pfreq)
+    - [md\_pchain](#md_pchain)
+    - [dump\_force](#dump_force)
+    - [dump\_vel](#dump_vel)
+    - [dump\_virial](#dump_virial)
+    - [lj\_rcut](#lj_rcut)
+    - [lj\_epsilon](#lj_epsilon)
+    - [lj\_sigma](#lj_sigma)
+    - [pot\_file](#pot_file)
+    - [msst\_direction](#msst_direction)
+    - [msst\_vel](#msst_vel)
+    - [msst\_vis](#msst_vis)
+    - [msst\_tscale](#msst_tscale)
+    - [msst\_qmass](#msst_qmass)
+    - [md\_damp](#md_damp)
+    - [md\_tolerance](#md_tolerance)
+    - [md\_nraise](#md_nraise)
+    - [cal\_syns](#cal_syns)
+    - [dmax](#dmax)
+  - [DFT+*U* correction](#dftu-correction)
+    - [dft\_plus\_u](#dft_plus_u)
+    - [orbital\_corr](#orbital_corr)
+    - [hubbard\_u](#hubbard_u)
+    - [yukawa\_potential](#yukawa_potential)
+    - [yukawa\_lambda](#yukawa_lambda)
+    - [omc](#omc)
+  - [vdW correction](#vdw-correction)
+    - [vdw\_method](#vdw_method)
+    - [vdw\_s6](#vdw_s6)
+    - [vdw\_s8](#vdw_s8)
+    - [vdw\_a1](#vdw_a1)
+    - [vdw\_a2](#vdw_a2)
+    - [vdw\_d](#vdw_d)
+    - [vdw\_abc](#vdw_abc)
+    - [vdw\_C6\_file](#vdw_c6_file)
+    - [vdw\_C6\_unit](#vdw_c6_unit)
+    - [vdw\_R0\_file](#vdw_r0_file)
+    - [vdw\_R0\_unit](#vdw_r0_unit)
+    - [vdw\_cutoff\_type](#vdw_cutoff_type)
+    - [vdw\_cutoff\_radius](#vdw_cutoff_radius)
+    - [vdw\_radius\_unit](#vdw_radius_unit)
+    - [vdw\_cutoff\_period](#vdw_cutoff_period)
+    - [vdw\_cn\_thr](#vdw_cn_thr)
+    - [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
+  - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
+    - [berry\_phase](#berry_phase)
+    - [gdir](#gdir)
+    - [towannier90](#towannier90)
+    - [nnkpfile](#nnkpfile)
+    - [wannier\_spin](#wannier_spin)
+  - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+    - [td\_edm](#td_edm)
+    - [td\_print\_eij](#td_print_eij)
+    - [td\_force\_dt](#td_force_dt)
+    - [propagator](#propagator)
+    - [td\_vext](#td_vext)
+    - [td\_vext\_dire](#td_vext_dire)
+    - [td\_stype](#td_stype)
+    - [td\_ttype](#td_ttype)
+    - [td\_tstart](#td_tstart)
+    - [td\_tend](#td_tend)
+    - [td\_lcut1](#td_lcut1)
+    - [td\_lcut2](#td_lcut2)
+    - [td\_gauss\_freq](#td_gauss_freq)
+    - [td\_gauss\_phase](#td_gauss_phase)
+    - [td\_gauss\_sigma](#td_gauss_sigma)
+    - [td\_gauss\_t0](#td_gauss_t0)
+    - [td\_gauss\_amp](#td_gauss_amp)
+    - [td\_trape\_freq](#td_trape_freq)
+    - [td\_trape\_phase](#td_trape_phase)
+    - [td\_trape\_t1](#td_trape_t1)
+    - [td\_trape\_t2](#td_trape_t2)
+    - [td\_trape\_t3](#td_trape_t3)
+    - [td\_trape\_amp](#td_trape_amp)
+    - [td\_trigo\_freq1](#td_trigo_freq1)
+    - [td\_trigo\_freq2](#td_trigo_freq2)
+    - [td\_trigo\_phase1](#td_trigo_phase1)
+    - [td\_trigo\_phase2](#td_trigo_phase2)
+    - [td\_trigo\_amp](#td_trigo_amp)
+    - [td\_heavi\_t0](#td_heavi_t0)
+    - [td\_heavi\_amp](#td_heavi_amp)
+    - [out\_dipole](#out_dipole)
+    - [out\_efield](#out_efield)
+    - [ocp](#ocp)
+    - [ocp\_set](#ocp_set)
+  - [Variables useful for debugging](#variables-useful-for-debugging)
+    - [nurse](#nurse)
+    - [t\_in\_h](#t_in_h)
+    - [vl\_in\_h](#vl_in_h)
+    - [vnl\_in\_h](#vnl_in_h)
+    - [vh\_in\_h](#vh_in_h)
+    - [vion\_in\_h](#vion_in_h)
+    - [test\_force](#test_force)
+    - [test\_stress](#test_stress)
+    - [colour](#colour)
+    - [test\_skip\_ewald](#test_skip_ewald)
+  - [Electronic conductivities](#electronic-conductivities)
+    - [cal\_cond](#cal_cond)
+    - [cond\_nche](#cond_nche)
+    - [cond\_dw](#cond_dw)
+    - [cond\_wcut](#cond_wcut)
+    - [cond\_dt](#cond_dt)
+    - [cond\_dtbatch](#cond_dtbatch)
+    - [cond\_fwhm](#cond_fwhm)
+    - [cond\_nonlocal](#cond_nonlocal)
+  - [Implicit solvation model](#implicit-solvation-model)
+    - [imp\_sol](#imp_sol)
+    - [eb\_k](#eb_k)
+    - [tau](#tau)
+    - [sigma\_k](#sigma_k)
+    - [nc\_k](#nc_k)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -711,26 +711,26 @@ calculations.
 
 - **Type**: String
 - **Description**: Choose the basis set.
-  - pw: Using plane-wave basis set only.
-  - lcao_in_pw: Expand the localized atomic set in plane-wave basis.
-  - lcao: Using localized atomic orbital sets.
+  - **pw**: Using plane-wave basis set only.
+  - **lcao_in_pw**: Expand the localized atomic set in plane-wave basis.
+  - **lcao**: Using localized atomic orbital sets.
 - **Default**: pw
 
 ### ks_solver
 
 - **Type**: String
-- **Description**: It's about the choice of diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
+- **Description**: Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
-  - cg: cg method.
-  - dav: the Davidson algorithm.
+  - **cg**: cg method.
+  - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
 
-  - genelpa: This method should be used if you choose localized orbitals.
-  - scalapack-gvx: scalapack can also be used for localized orbitals.
-  - cusolver: this method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **genelpa**: This method should be used if you choose localized orbitals.
+  - **scalapack-gvx**: scalapack can also be used for localized orbitals.
+  - **cusolver**: this method needs building with the cusolver component for lcao and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -739,7 +739,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (pw) or genelpa (lcao)
+- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis)
 
 ### nbands
 
@@ -761,19 +761,19 @@ calculations.
 
 - **Type**: Integer
 - **Description**: The number of spin components of wave functions.
-  - 1: Spin degeneracy
-  - 2: Collinear spin polarized.
-  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+  - **1**: Spin degeneracy
+  - **2**: Collinear spin polarized.
+  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - fixed: fixed occupations.
-  - gauss or gaussian: Gaussian smearing method.
-  - mp: methfessel-paxton smearing method; recommended for metals.
-  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
+  - **fixed**: fixed occupations.
+  - **gauss** or **gaussian**: Gaussian smearing method.
+  - **mp**: methfessel-paxton smearing method; recommended for metals.
+  - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 ### smearing_sigma
@@ -794,22 +794,24 @@ calculations.
 
 - **Type**: String
 - **Description**: Charge mixing methods.
-  - plain: Just simple mixing.
-  - pulay: Standard Pulay method.
-  - broyden: Broyden method.
+  - **plain**: Just simple mixing.
+  - **pulay**: Standard Pulay method.
+  - **broyden**: Broyden method.
 - **Default**: pulay
 
 ### mixing_beta
 
 - **Type**: Real
 - **Description**: mixing parameter. We recommend the following options:
-  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts.
-    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**;
-    - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
-    - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
-  - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
-  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**
-  - For low-dimensional large systems, the setup of **mixing_beta=0.1**, **mixing_ndim=20**, and **mixing_gg0=1.5** usually works well.
+  - **default**: -10.0 means program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
+    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+  - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
+  - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
+  
+  Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.5` usually works well.
+
 - **Default**: -10.0
 
 ### mixing_ndim
@@ -822,22 +824,26 @@ calculations.
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  A positive number: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
-  -  0: No Kerker scaling is performed.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
+  -  **0**: No Kerker scaling is performed.
 - **Default**: 0.0
 
 ### mixing_tau
 
 - **Type**: Boolean
 - **Availability**: Only relevant for meta-GGA calculations.
-- **Description**: If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Description**: Whether to mix the kinetic energy density.
+  - **True**: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+  - **False**: The kinetic energy density will not be mixed.
 - **Default**: False
 
 ### mixing_dftu
 
 - **Type**: Boolean
 - **Availability**: Only relevant for DFT+U calculations.
-- **Description**: If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Description**: Whether to mix the occupation matrices.
+  - **True**: The occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+  - **False**: The occupation matrices will not be mixed.
 - **Default**: False
 
 ### gamma_only
@@ -845,11 +851,11 @@ calculations.
 - **Type**: Integer
 - **Availability**: Only used in localized orbitals set
 - **Description**: Whether to use gamma_only algorithm.
-  - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
-  - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **0**: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **1**: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
 
-  > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-  >
+  Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
+
 - **Default**: 0
 
 ### printe
@@ -868,38 +874,42 @@ calculations.
 
 - **Type**: Real
 - **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
-- **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
+- **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 
 ### scf_thr_type
 
 - **Type**: Int
 - **Description**: Choose the calculation method of convergence criterion. 
-  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
+  - **2**: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
   
-  >Note: This parameter is still under testing and the default setting is usually sufficient.
+  Note: This parameter is still under testing and the default setting is usually sufficient.
 
-- **Default**: 1 for PW, and 2 for LCAO.
+- **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
 ### chg_extrap
 
 - **Type**: String
 - **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
-  - atomic: atomic extrapolation.
-  - first-order: first-order extrapolation.
-  - second-order: second-order extrapolation.
+  - **atomic**: atomic extrapolation.
+  - **first-order**: first-order extrapolation.
+  - **second-order**: second-order extrapolation.
 - **Default**: atomic
 
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: Whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to consider spin-orbital coupling effect in the calculation. 
+  - **True**: Consider spin-orbital coupling effect, and `nspin` is also automatically set to 4.
+  - **False**: Do not consider spin-orbital coupling effect.
 - **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. 
+  - **True**: Allow non-collinear polarization, and `nspin` is also automatically set to 4.
+  - **False**: Do not allow non-collinear polarization.
 - **Default**: False
 
 ### soc_lambda
@@ -1576,11 +1586,11 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The type of kinetic energy density functional.
-  - wt: Wang-Teter.
-  - tf: Thomas-Fermi.
-  - vw: von Weizsäcker.
-  - tf+: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
-  - lkt: Luo-Karasiev-Trickey.
+  - **wt**: Wang-Teter.
+  - **tf**: Thomas-Fermi.
+  - **vw**: von Weizsäcker.
+  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **lkt**: Luo-Karasiev-Trickey.
 - **Default**: wt
 
 ### of_method
@@ -1588,9 +1598,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The optimization method used in OFDFT.
-  - cg1: Polak-Ribiere. Standard CG algorithm.
-  - cg2: Hager-Zhang (generally faster than cg1).
-  - tn: Truncated Newton algorithm.
+  - **cg1**: Polak-Ribiere. Standard CG algorithm.
+  - **cg2**: Hager-Zhang (generally faster than cg1).
+  - **tn**: Truncated Newton algorithm.
 - **Default**:tn
 
 ### of_conv
@@ -1598,9 +1608,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: Criterion used to check the convergence of OFDFT.
-  - energy: Ttotal energy changes less than `of_tole`.
-  - potential: The norm of potential is less than `of_tolp`.
-  - both: Both energy and potential must satisfy the convergence criterion.
+  - **energy**: Ttotal energy changes less than `of_tole`.
+  - **potential**: The norm of potential is less than `of_tolp`.
+  - **both**: Both energy and potential must satisfy the convergence criterion.
 - **Default**: energy
 
 ### of_tole
@@ -1660,8 +1670,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to fix the average density rho0.
-  - 0: rho0 will change if volume of system has changed.
-  - 1: rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
+  - **True**: rho0 will be fixed even if the volume of system has changed, it will be set to True automatically if `of_wt_rho0` is not zero.
+  - **False**: rho0 will change if volume of system has changed.
 - **Default**: False
 
 ### of_lkt_a
@@ -1676,8 +1686,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to read in the kernel file.
-  - 0: The kernel of WT KEDF will be filled from formula.
-  - 1: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+  - **True**: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+  - **False**: The kernel of WT KEDF will be filled from formula.
 - **Default**: False
 
 ### of_kernel_file
@@ -1692,8 +1702,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT
 - **Description**: Whether to use full planewaves.
-  - 0: Only use the planewaves inside ecut, the same as KSDFT.
-  - 1: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **True**: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **False**: Only use the planewaves inside ecut, the same as KSDFT.
 - **Default**: True
 
 ### of_full_pw_dim
@@ -1701,10 +1711,12 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Integer
 - **Availability**: OFDFT with `of_full_pw = True`
 - **Description**: Specify the parity of FFT dimensions.
-  - 0: either odd or even.
-  - 1: odd only.
-  - 2: even only.
-  >Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+  - **0**: either odd or even.
+  - **1**: odd only.
+  - **2**: even only.
+  
+  Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
