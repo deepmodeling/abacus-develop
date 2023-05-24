@@ -2166,130 +2166,155 @@ These variables are used to control vdW-corrected related parameters.
 ### vdw_method
 
 - **Type**: String
-- **Description**: If set to d2 ,d3_0 or d3_bj, ABACUS will calculate corresponding vdW correction, which is DFT-D2, DFT-D3(0) or DFTD3(BJ) method. And this correction includes energy and forces. `none` means that no vdW-corrected method has been used.
+- **Description**: Specifies the method used for Van der Waals (VdW) correction. Available options are:
+	- `d2`: [Grimme's D2](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20495) dispersion correction method
+	- `d3_0`: [Grimme's DFT-D3(0)](https://aip.scitation.org/doi/10.1063/1.3382344) dispersion correction method
+	- `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method
+	- `none`: no vdW correction
 - **Default**: none
 
 ### vdw_s6
 
 - **Type**: Real
-- **Description**: This scale factor is to optimize the interaction energy deviations. For DFT-D2, it is found to be 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 0.75 if vdw_method is chosen to be d2; 1.0 if vdw_method is chosen to be d3_0 or d3_bj
+- **Availability**: `vdw_method` is set to `d2`, `d3_0`, or `d3_bj`
+- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 0.75: if `vdw_method` is set to `d2`
+  - 1.0: if `vdw_method` is set to `d3_0` or `d3_bj`
 
 ### vdw_s8
 
 - **Type**: Real
-- **Description**: This scale factor is only relevant for D3(0) and D3(BJ) methods. Recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 0.722 if vdw_method is chosen to be d3_0; 0.7875 if vdw_method is chosen to be d3_bj
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 0.722: if `vdw_method` is set to `d3_0`
+  - 0.7875: if `vdw_method` is set to `d3_bj`
 
 ### vdw_a1
 
 - **Type**: Real
-- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) methods. Recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 1.217 if vdw_method is chosen to be d3_0; 0.4289 if vdw_method is chosen to be d3_bj
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 1.217: if `vdw_method` is set to `d3_0`
+  - 0.4289: if `vdw_method` is set to `d3_bj`
 
 ### vdw_a2
 
 - **Type**: Real
-- **Description**: This damping function parameter is only relevant for the DFT-D3(BJ) approach. Recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 1.0 if vdw_method is chosen to be d3_0; 4.4407 if vdw_method is chosen to be d3_bj
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 1.0: if `vdw_method` is set to `d3_0`
+  - 4.4407: if `vdw_method` is set to `d3_bj`
 
 ### vdw_d
 
 - **Type**: Real
-- **Description**: The variable is to control the damping rate of damping function of DFT-D2.
+- **Availability**: `vdw_method` is set to `d2`
+- **Description**: Controls the damping rate of the damping function in the DFT-D2 method.
 - **Default**: 20
 
 ### vdw_abc
 
 - **Type**: Integer
-- **Description**: The variable is to control whether three-body terms are calculated for DFT-D3 approaches, including D3(0) and D3(BJ). If set to 1, ABACUS will calculate three-body term, otherwise, the three-body term is not included.
-- **Default**: 0
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: Determines whether three-body terms are calculated for DFT-D3 methods.
+  - True: ABACUS will calculate the three-body term.
+  - False: The three-body term is not included.
+- **Default**: False
 
 ### vdw_C6_file
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $C_6$ parameters in D2 method. It gives the name of the file which contains the list of $C_6$ parameters for each element.
-
-  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `C6_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). The unit is Jnm6/mol.
-
-  Otherwise, if user wants to manually set the $C_6$ Parameters, they should provide a file containing the $C_6$ parameters to be used. An example is given by:
-
+- **Availability**: `vdw_method` is set to `d2`
+- **Description**: Specifies the name of the file containing $C_6$ parameters for each element when using the D2 method. If not set, ABACUS uses the default $C_6$ parameters (Jnm6/mol) stored in the [program](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). To manually set the $C_6$ parameters, provide a file containing the parameters. An example is given by:
   ```
   H  0.1
   Si 9.0
   ```
-
   Namely, each line contains the element name and the corresponding $C_6$ parameter.
 - **Default**: default
 
 ### vdw_C6_unit
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $C_6$ parameters in D2 method. It specified the unit of the supplied $C_6$ parameters. Allowed values are: `Jnm6/mol` (meaning J·nm^{6}/mol) and `eVA`(meaning eV·Angstrom)
+- **Availability**: `vdw_C6_file` is not default
+- **Description**: Specifies the unit of the provided $C_6$ parameters in the D2 method. Available options are:
+  - `Jnm6/mol` (J·nm^6/mol)
+  - `eVA` (eV·Angstrom)
 - **Default**: Jnm6/mol
 
 ### vdw_R0_file
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $R_0$ parameters in D2 method.
-  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `R0_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). The unit is Angstrom.
-
-  Otherwise, if the user wants to manually set the $C_6$ Parameters, they should provide a file containing the $C_6$ parameters to be used. An example is given by:
-
+- **Availability**: `vdw_method` is set to `d2`
+- **Description**: Specifies the name of the file containing $R_0$ parameters for each element when using the D2 method. If not set, ABACUS uses the default $R_0$ parameters (Angstrom) stored in the [program](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). To manually set the $R_0$ parameters, provide a file containing the parameters. An example is given by:
   ```
   Li 1.0
   Cl 2.0
   ```
-
   Namely, each line contains the element name and the corresponding $R_0$ parameter.
 - **Default**: default
 
 ### vdw_R0_unit
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $R_0$ parameters in D2 method. It specified the unit of the supplied $C_6$ parameters. Allowed values are: `A`(meaning Angstrom) and `Bohr`.
+- **Availability**: `vdw_R0_file` is not default
+- **Description**: Specifies the unit for the $R_0$ parameters in the D2 method when manually set by the user. Available options are:
+  - `A` (Angstrom)
+  - `Bohr`
 - **Default**: A
 
 ### vdw_cutoff_type
 
 - **Type**: String
-- **Description**: When applying Van-der-Waals correction in periodic systems, a cutoff radius needs to be supplied to avoid infinite  summation. In ABACUS, we restrict the range of correction to a supercell centered around the unit cell at origin.
-
-  In ABACUS, we provide two ways to determine the extent of the supercell.
-
-  When `vdw_cutoff_type` is set to `radius`, the supercell is chosen such that it is contained in a sphere centered at the origin. The radius of the sphere is specified by `vdw_cutoff_radius`.
-
-  When `vdw_cutoff_type` is set to `period`, the extent of the supercell is specified explicitly using keyword `vdw_cutoff_period`.
+- **Description**: Determines the method used for specifying the cutoff radius in periodic systems when applying Van der Waals correction. Available options are:
+  - `radius`: The supercell is selected within a sphere centered at the origin with a radius defined by `vdw_cutoff_radius`.
+  - `period`: The extent of the supercell is explicitly specified using the `vdw_cutoff_period` keyword. 
 - **Default**: radius
 
 ### vdw_cutoff_radius
 
 - **Type**: Real
-- **Description**: If `vdw_cutoff_type` is set to `radius`, this variable specifies the radius of the cutoff sphere. For DFT-D2, the default value is 56.6918, while for DFT-D3, the default value is 95.
-- **Default**: 56.6918 if vdw_method is chosen to be d2; 95 if vdw_method is chosen to be d3_0 or d3_bj
+- **Availability**: `vdw_cutoff_type` is set to `radius`
+- **Description**: Defines the radius of the cutoff sphere when `vdw_cutoff_type` is set to `radius`. The default values depend on the chosen `vdw_method`. 
+- **Default**: 
+  - 56.6918 if `vdw_method` is set to `d2`
+  - 95 if `vdw_method` is set to `d3_0` or `d3_bj`
+- **Unit**: defined by `vdw_radius_unit` (default `Bohr`)
 
 ### vdw_radius_unit
 
 - **Type**: String
-- **Description**: If `vdw_cutoff_type` is set to `radius`, this variable specifies the unit of `vdw_cutoff_radius`. Two values are allowed: `A`(meaning Angstrom) and `Bohr`.
+- **Availability**: `vdw_cutoff_type` is set to `radius`
+- **Description**: specify the unit of `vdw_cutoff_radius`. Available options are: 
+  - `A`(Angstrom)
+  - `Bohr`
 - **Default**: Bohr
 
 ### vdw_cutoff_period
 
 - **Type**: Integer Integer Integer
-- **Description**: If vdw_cutoff_type is set to `period`, the three integers supplied here will explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
+- **Availability**: `vdw_cutoff_type` is set to `period`
+- **Description**: The three integers supplied here explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
 - **Default**: 3 3 3
 
 ### vdw_cn_thr
 
 - **Type**: Real
-- **Description**: Only relevant for D3 correction. The cutoff radius when calculating coordination numbers.
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: The cutoff radius when calculating coordination numbers.
 - **Default**: 40
+- **Unit**: defined by `vdw_cn_thr_unit` (default: `Bohr`)
 
 ### vdw_cn_thr_unit
 
 - **Type**: String
-- **Description**: Unit of the coordination number cutoff. Two values are allowed: `A`(meaning Angstrom) and `Bohr`.
+- **Description**: Unit of the coordination number cutoff (`vdw_cn_thr`). Available options are:
+  - `A`(Angstrom)
+  - `Bohr`
 - **Default**: Bohr
 
 [back to top](#full-list-of-input-keywords)
