@@ -51,7 +51,7 @@ You can install Git first and reinstall abacus.")
       RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
     )
     execute_process(
-      COMMAND git log -1 --format=%cd --date=local
+      COMMAND git log -1 --format=%cd
       OUTPUT_VARIABLE GIT_COMMIT_DATE
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
