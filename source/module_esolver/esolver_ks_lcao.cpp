@@ -4,12 +4,11 @@
 #include "module_io/dm_io.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
-#include "module_io/nscf_fermi_surf.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
-#include "module_io/write_dos_lcao.h"
+#include "module_io/dos_nao.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 
@@ -296,9 +295,7 @@ void ESolver_KS_LCAO::postprocess()
         ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
     }
 
-    int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
-        nspin0 = 2;
+    int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     if (INPUT.out_band) // pengfei 2014-10-13
     {
@@ -342,44 +339,19 @@ void ESolver_KS_LCAO::postprocess()
 
     if (INPUT.out_dos)
     {
-        ModuleIO::write_dos_lcao(this->psid,
-                                 this->psi,
-                                 this->UHM,
-                                 this->pelec->ekb,
-                                 this->pelec->wg,
-                                 INPUT.dos_edelta_ev,
-                                 INPUT.dos_scale,
-                                 INPUT.dos_sigma,
-                                 GlobalC::kv);
-
-        if (INPUT.out_dos == 3)
-        {
-            for (int i = 0; i < nspin0; i++)
-            {
-                std::stringstream ss3;
-                ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-                ModuleIO::nscf_fermi_surface(ss3.str(),
-                                             GlobalC::kv.nks,
-                                             GlobalV::NBANDS,
-                                             this->pelec->eferm.ef,
-                                             GlobalC::kv,
-                                             &(GlobalC::Pkpoints),
-                                             &(GlobalC::ucell),
-                                             this->pelec->ekb);
-            }
-        }
-
-        if (nspin0 == 1)
-        {
-            GlobalV::ofs_running << " Fermi energy is " << this->pelec->eferm.ef << " Rydberg" << std::endl;
-        }
-        else if (nspin0 == 2)
-        {
-            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << this->pelec->eferm.ef_up << " Rydberg"
-                                 << std::endl;
-            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->pelec->eferm.ef_dw << " Rydberg"
-                                 << std::endl;
-        }
+        ModuleIO::out_dos_nao(this->psid,
+                               this->psi,
+                               this->UHM,
+                               this->pelec->ekb,
+                               this->pelec->wg,
+                               INPUT.dos_edelta_ev,
+                               INPUT.dos_scale,
+                               INPUT.dos_sigma,
+                               *(this->pelec->klist),
+                               GlobalC::Pkpoints,
+                               GlobalC::ucell,
+                               this->pelec->eferm,
+                               GlobalV::NBANDS);
     }
 }
 

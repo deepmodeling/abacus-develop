@@ -345,7 +345,8 @@ OBJS_IO=input.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_band.o\
-    dos.o\
+    cal_dos.o\
+    dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
     output.o\
