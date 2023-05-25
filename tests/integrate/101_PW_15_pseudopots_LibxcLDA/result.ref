@@ -2,4 +2,7 @@ etotref -196.4803276789654660
 etotperatomref -98.2401638395
 totalforceref 0.000000
 totalstressref 1409.543919
+pointgroupref T_d
+spacegroupref O_h
+nksibzref 1
 totaltimeref +0.11872

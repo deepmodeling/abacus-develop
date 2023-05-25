@@ -255,7 +255,7 @@ void Exx_Lip::init(ModuleSymmetry::Symmetry &symm,
 
 Exx_Lip::~Exx_Lip()
 {
-	ModuleBase::TITLE("Exx_Lip","~Exx_Lip");
+	// ModuleBase::TITLE("Exx_Lip","~Exx_Lip");
 	if( init_finish)
 	{
 		for( int iw=0; iw<GlobalV::NLOCAL; ++iw)

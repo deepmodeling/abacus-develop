@@ -15,22 +15,24 @@
 #include "module_ri/exx_abfs-jle.h"
 #endif
 #ifdef __LCAO
+#include "module_basis/module_ao/ORB_read.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/module_tddft/ELEC_evolve.h"
-#include "module_basis/module_ao/ORB_read.h"
+#include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #endif
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_psi/kernels/device.h"
 #include "module_md/md_func.h"
+#include "module_psi/kernels/device.h"
 
-template <typename T> void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
+template <typename T>
+void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
@@ -109,6 +111,75 @@ template <typename T> void Input_Conv::parse_expression(const std::string &fn, s
     }
     regfree(&reg);
 }
+
+#ifdef __LCAO
+std::vector<double> Input_Conv::convert_units(std::string params, double c)
+{
+    std::vector<double> params_ori;
+    std::vector<double> params_out;
+    parse_expression(params, params_ori);
+    for (auto param: params_ori)
+        params_out.emplace_back(param * c);
+
+    return params_out;
+}
+
+void Input_Conv::read_td_efield()
+{
+    elecstate::H_TDDFT_pw::stype = INPUT.td_stype;
+
+    parse_expression(INPUT.td_ttype, elecstate::H_TDDFT_pw::ttype);
+
+    elecstate::H_TDDFT_pw::tstart = INPUT.td_tstart;
+    elecstate::H_TDDFT_pw::tend = INPUT.td_tend;
+
+    elecstate::H_TDDFT_pw::dt = INPUT.mdp.md_dt / ModuleBase::AU_to_FS;
+
+    // space domain parameters
+
+    // length gauge
+    elecstate::H_TDDFT_pw::lcut1 = INPUT.td_lcut1;
+    elecstate::H_TDDFT_pw::lcut2 = INPUT.td_lcut2;
+
+    // time domain parameters
+
+    // Gauss
+    elecstate::H_TDDFT_pw::gauss_omega
+        = convert_units(INPUT.td_gauss_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::gauss_phase = convert_units(INPUT.td_gauss_phase, 1.0);
+    elecstate::H_TDDFT_pw::gauss_sigma = convert_units(INPUT.td_gauss_sigma, 1 / ModuleBase::AU_to_FS);
+    elecstate::H_TDDFT_pw::gauss_t0 = convert_units(INPUT.td_gauss_t0, 1.0);
+    elecstate::H_TDDFT_pw::gauss_amp
+        = convert_units(INPUT.td_gauss_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    // trapezoid
+    elecstate::H_TDDFT_pw::trape_omega
+        = convert_units(INPUT.td_trape_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::trape_phase = convert_units(INPUT.td_trape_phase, 1.0);
+    elecstate::H_TDDFT_pw::trape_t1 = convert_units(INPUT.td_trape_t1, 1.0);
+    elecstate::H_TDDFT_pw::trape_t2 = convert_units(INPUT.td_trape_t2, 1.0);
+    elecstate::H_TDDFT_pw::trape_t3 = convert_units(INPUT.td_trape_t3, 1.0);
+    elecstate::H_TDDFT_pw::trape_amp
+        = convert_units(INPUT.td_trape_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    // Trigonometric
+    elecstate::H_TDDFT_pw::trigo_omega1
+        = convert_units(INPUT.td_trigo_freq1, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::trigo_omega2
+        = convert_units(INPUT.td_trigo_freq2, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
+    elecstate::H_TDDFT_pw::trigo_phase1 = convert_units(INPUT.td_trigo_phase1, 1.0);
+    elecstate::H_TDDFT_pw::trigo_phase2 = convert_units(INPUT.td_trigo_phase2, 1.0);
+    elecstate::H_TDDFT_pw::trigo_amp
+        = convert_units(INPUT.td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    // Heaviside
+    elecstate::H_TDDFT_pw::heavi_t0 = convert_units(INPUT.td_heavi_t0, 1.0);
+    elecstate::H_TDDFT_pw::heavi_amp
+        = convert_units(INPUT.td_heavi_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
+
+    return;
+}
+#endif
 
 void Input_Conv::Convert(void)
 {
@@ -277,13 +348,13 @@ void Input_Conv::Convert(void)
     // iteration (1/3)
     //----------------------------------------------------------
     GlobalV::SCF_THR = INPUT.scf_thr;
+    GlobalV::SCF_THR_TYPE = INPUT.scf_thr_type;
 
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
     GlobalC::wf.init_wfc = INPUT.init_wfc;
     GlobalC::wf.mem_saver = INPUT.mem_saver; // mohan add 2010-09-07
-    GlobalC::en.printe = INPUT.printe; // mohan add 2011-03-16
 #ifdef __LCAO
     if (INPUT.dft_plus_u)
     {
@@ -377,16 +448,17 @@ void Input_Conv::Convert(void)
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    ELEC_evolve::td_force_dt = INPUT.td_force_dt;
-    ELEC_evolve::td_vext = INPUT.td_vext;
-    if (ELEC_evolve::td_vext)
+    module_tddft::Evolve_elec::td_force_dt = INPUT.td_force_dt;
+    module_tddft::Evolve_elec::td_vext = INPUT.td_vext;
+    if (module_tddft::Evolve_elec::td_vext)
     {
-        parse_expression(INPUT.td_vext_dire, ELEC_evolve::td_vext_dire_case);
+        parse_expression(INPUT.td_vext_dire, module_tddft::Evolve_elec::td_vext_dire_case);
     }
-    ELEC_evolve::out_dipole = INPUT.out_dipole;
-    ELEC_evolve::out_efield = INPUT.out_efield ;
-    ELEC_evolve::td_print_eij = INPUT.td_print_eij;
-    ELEC_evolve::td_edm = INPUT.td_edm;
+    module_tddft::Evolve_elec::out_dipole = INPUT.out_dipole;
+    module_tddft::Evolve_elec::out_efield = INPUT.out_efield;
+    module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
+    module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
+    read_td_efield();
 #endif
 
     // setting for constrained DFT, jiyy add 2020.10.11
@@ -554,9 +626,6 @@ void Input_Conv::Convert(void)
     GlobalV::out_pot = INPUT.out_pot;
     GlobalC::wf.out_wfc_pw = INPUT.out_wfc_pw;
     GlobalC::wf.out_wfc_r = INPUT.out_wfc_r;
-    GlobalC::en.out_dos = INPUT.out_dos;
-    GlobalC::en.out_band = INPUT.out_band;
-    GlobalC::en.out_proj_band = INPUT.out_proj_band;
     GlobalV::out_app_flag = INPUT.out_app_flag;
 
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
@@ -578,12 +647,6 @@ void Input_Conv::Convert(void)
         ModuleBase::WARNING_QUIT("Input_conv", "test_neighbour must be done with 1 processor");
     }
 #endif
-
-    GlobalC::en.dos_emin_ev = INPUT.dos_emin_ev;
-    GlobalC::en.dos_emax_ev = INPUT.dos_emax_ev;
-    GlobalC::en.dos_edelta_ev = INPUT.dos_edelta_ev;
-    GlobalC::en.dos_scale = INPUT.dos_scale;
-    GlobalC::en.bcoeff = INPUT.dos_sigma;
 
     //----------------------------------------------------------
     // About LCAO

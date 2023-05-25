@@ -364,12 +364,11 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     }
     // When the internal memory is large enough, it is better to make vkb1 be the number of pseudopot_cell_vnl.
     // We only need to initialize it once as long as the cell is unchanged.
-    FPTYPE * vq = nullptr, * vkb1 = nullptr, * gk = nullptr, * ylm = nullptr,
+    FPTYPE * vkb1 = nullptr, * gk = nullptr, * ylm = nullptr,
            * _tab = this->get_tab_data<FPTYPE>(),
            * _indv = this->get_indv_data<FPTYPE>(),
            * _nhtol = this->get_nhtol_data<FPTYPE>(),
            * _nhtolm = this->get_nhtolm_data<FPTYPE>();
-    resmem_var_op()(ctx, vq, npw, "VNL::vq");
     resmem_var_op()(ctx, ylm, x1 * npw, "VNL::ylm");
     resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
@@ -424,7 +423,6 @@ void pseudopot_cell_vnl::getvnl(Device * ctx, const int &ik, std::complex<FPTYPE
     delete [] h_atom_nh;
     delete [] h_atom_na;
     delete [] h_atom_nb;
-    delmem_var_op()(ctx, vq);
     delmem_var_op()(ctx, ylm);
     delmem_var_op()(ctx, vkb1);
     delmem_complex_op()(ctx, sk);
@@ -610,12 +608,13 @@ void pseudopot_cell_vnl::init_vnl(UnitCell &cell)
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_tab, this->tab.ptr, this->tab.getSize());
         }
-        else {
-            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_indv, this->indv.c, this->indv.nr * this->indv.nc);
-            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
-            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
-            syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_tab, this->tab.ptr, this->tab.getSize());
-        }
+        // Even when the single precision flag is enabled,
+        // these variables are utilized in the Force/Stress calculation as well.
+        // modified by denghuilu at 2023-05-15
+        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_indv, this->indv.c, this->indv.nr * this->indv.nc);
+        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
+        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
+        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_tab, this->tab.ptr, this->tab.getSize());
     }
     else {
         if (GlobalV::precision_flag == "single") {

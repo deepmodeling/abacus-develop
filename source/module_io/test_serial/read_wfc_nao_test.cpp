@@ -10,7 +10,7 @@ Parallel_Orbitals::~Parallel_Orbitals(){}
 
 namespace elecstate
 {
-      const double* ElecState::getRho(int spin) const{return &(this->ef);}//just for mock
+      const double* ElecState::getRho(int spin) const{return &(this->eferm.ef);}//just for mock
       void ElecState::calculate_weights(){}
 }
 

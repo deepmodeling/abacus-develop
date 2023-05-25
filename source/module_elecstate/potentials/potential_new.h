@@ -63,6 +63,8 @@ class Potential : public PotBase
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
+    PotBase* get_pot_type(const std::string& pot_type);
+
     // interfaces to get values
     ModuleBase::matrix& get_effective_v()
     {

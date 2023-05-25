@@ -3,7 +3,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "module_base/tool_title.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "occupy.h"
 #include "module_base/parallel_reduce.h"
 
@@ -17,21 +16,21 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const double* const ocp_kb)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
 {
 
     int num = 0;
     num = this->klist->nks * GlobalV::NBANDS;
-    if (num != GlobalV::ocp_kb.size())
+    if (num != ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "size of occupation array is wrong , please check ocp_set");
     }
 
     double num_elec = 0.0;
-    for (int i = 0; i < GlobalV::ocp_kb.size(); i++)
+    for (int i = 0; i < ocp_kb.size(); i++)
     {
-        num_elec += GlobalV::ocp_kb[i];
+        num_elec += ocp_kb[i];
     }
     if (abs(num_elec - GlobalV::nelec) > 1.0e-5)
     {
@@ -68,11 +67,6 @@ void ElecState::calculate_weights()
         return;
     }
 
-    double** ekb_tmp = new double*[this->ekb.nr];
-    for (int i = 0; i < this->ekb.nr; ++i)
-    {
-        ekb_tmp[i] = &(this->ekb(i, 0));
-    }
     int nbands = this->ekb.nc;
     int nks = this->ekb.nr;
 
@@ -84,8 +78,8 @@ void ElecState::calculate_weights()
                              this->klist->wk,
                              nbands,
                              this->nelec_spin[0],
-                             ekb_tmp,
-                             GlobalC::en.ef_up,
+                             this->ekb,
+                             this->eferm.ef_up,
                              this->wg,
                              0,
                              this->klist->isk);
@@ -93,8 +87,8 @@ void ElecState::calculate_weights()
                              this->klist->wk,
                              nbands,
                              this->nelec_spin[1],
-                             ekb_tmp,
-                             GlobalC::en.ef_dw,
+                             this->ekb,
+                             this->eferm.ef_dw,
                              this->wg,
                              1,
                              this->klist->isk);
@@ -107,8 +101,8 @@ void ElecState::calculate_weights()
                              this->klist->wk,
                              nbands,
                              GlobalV::nelec,
-                             ekb_tmp,
-                             this->ef,
+                             this->ekb,
+                             this->eferm.ef,
                              this->wg,
                              -1,
                              this->klist->isk);
@@ -126,8 +120,8 @@ void ElecState::calculate_weights()
                              this->nelec_spin[0],
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
-                             ekb_tmp,
-                             GlobalC::en.ef_up,
+                             this->ekb,
+                             this->eferm.ef_up,
                              demet_up,
                              this->wg,
                              0,
@@ -138,13 +132,13 @@ void ElecState::calculate_weights()
                              this->nelec_spin[1],
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
-                             ekb_tmp,
-                             GlobalC::en.ef_dw,
+                             this->ekb,
+                             this->eferm.ef_dw,
                              demet_dw,
                              this->wg,
                              1,
                              this->klist->isk);
-            this->demet = demet_up + demet_dw;
+            this->f_en.demet = demet_up + demet_dw;
         }
         else
         {
@@ -155,64 +149,22 @@ void ElecState::calculate_weights()
                              GlobalV::nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
-                             ekb_tmp,
-                             this->ef,
-                             this->demet,
+                             this->ekb,
+                             this->eferm.ef,
+                             this->f_en.demet,
                              this->wg,
                              -1,
                              this->klist->isk);
         }
+#ifdef __MPI
         // qianrui fix a bug on 2021-7-21
-        Parallel_Reduce::reduce_double_allpool(this->demet);
+        Parallel_Reduce::reduce_double_allpool(this->f_en.demet);
+#endif
     }
     else if (Occupy::fixed_occupations)
     {
-        // fix occupations need nelup and neldw.
-        // mohan add 2011-04-03
-        this->ef = -1.0e+20;
-        for (int ik = 0; ik < nks; ik++)
-        {
-            for (int ibnd = 0; ibnd < nbands; ibnd++)
-            {
-                if (this->wg(ik, ibnd) > 0.0)
-                {
-                    this->ef = std::max(this->ef, ekb_tmp[ik][ibnd]);
-                }
-            }
-        }
+        ModuleBase::WARNING_QUIT("calculate_weights", "other occupations, not implemented");
     }
-
-    if (GlobalV::TWO_EFERMI)
-    {
-        Parallel_Reduce::gather_max_double_all(GlobalC::en.ef_up);
-        Parallel_Reduce::gather_max_double_all(GlobalC::en.ef_dw);
-    }
-    else
-    {
-        double ebotom = ekb_tmp[0][0];
-        double etop = ekb_tmp[0][0];
-        for (int ik = 0; ik < nks; ik++)
-        {
-            for (int ib = 0; ib < nbands; ib++)
-            {
-                ebotom = min(ebotom, ekb_tmp[ik][ib]);
-                etop = max(etop, ekb_tmp[ik][ib]);
-            }
-        }
-
-        // parallel
-        Parallel_Reduce::gather_max_double_all(this->ef);
-        Parallel_Reduce::gather_max_double_all(etop);
-        Parallel_Reduce::gather_min_double_all(ebotom);
-
-        // not parallel yet!
-        //		OUT(GlobalV::ofs_running,"Top    Energy (eV)", etop * ModuleBase::Ry_to_eV);
-        //      OUT(GlobalV::ofs_running,"Fermi  Energy (eV)", this->ef * ModuleBase::Ry_to_eV);
-        //		OUT(GlobalV::ofs_running,"Bottom Energy (eV)", ebotom * ModuleBase::Ry_to_eV);
-        //		OUT(GlobalV::ofs_running,"Range  Energy (eV)", etop-ebotom * ModuleBase::Ry_to_eV);
-    }
-
-    delete[] ekb_tmp;
 
     return;
 }
@@ -232,142 +184,17 @@ void ElecState::calEBand()
             eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
         }
     }
-    this->eband = eband;
+    this->f_en.eband = eband;
     if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
     {
         //==================================
         // Reduce all the Energy in each cpu
         //==================================
-        this->eband /= GlobalV::NPROC_IN_POOL;
-        Parallel_Reduce::reduce_double_all(this->eband);
+        this->f_en.eband /= GlobalV::NPROC_IN_POOL;
+#ifdef __MPI
+        Parallel_Reduce::reduce_double_all(this->f_en.eband);
+#endif
     }
-    return;
-}
-
-void ElecState::print_band(const int& ik, const int& printe, const int& iter)
-{
-    // check the band energy.
-    bool wrong = false;
-    for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
-    {
-        if (abs(this->ekb(ik, ib)) > 1.0e10)
-        {
-            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                 << std::endl;
-            wrong = true;
-        }
-    }
-    if (wrong)
-    {
-        ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
-    }
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        if (printe > 0 && ((iter + 1) % printe == 0))
-        {
-            GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN + 1
-                                 << " K-point=" << ik + 1 << std::endl;
-            GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-            {
-                GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
-                                     << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
-                // for the first electron iteration, we don't have the energy
-                // spectrum, so we can't get the occupations.
-                GlobalV::ofs_running << std::setw(15) << this->wg(ik, ib);
-                GlobalV::ofs_running << std::endl;
-            }
-        }
-    }
-    return;
-}
-
-void ElecState::print_eigenvalue(std::ofstream& ofs)
-{
-    bool wrong = false;
-    for (int ik = 0; ik < this->klist->nks; ++ik)
-    {
-        for (int ib = 0; ib < this->ekb.nc; ++ib)
-        {
-            if (abs(this->ekb(ik, ib)) > 1.0e10)
-            {
-                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                     << std::endl;
-                wrong = true;
-            }
-        }
-    }
-    if (wrong)
-    {
-        ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
-    }
-
-    if (GlobalV::MY_RANK != 0)
-    {
-        return;
-    }
-
-    ModuleBase::TITLE("ESolver_KS_PW", "print_eigenvalue");
-
-    ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-    ofs << std::setprecision(5);
-    for (int ik = 0; ik < this->klist->nks; ik++)
-    {
-        if (ik == 0)
-        {
-            ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
-            if (GlobalV::NSPIN == 2)
-            {
-                ofs << "SPIN UP : " << std::endl;
-            }
-        }
-        else if (ik == this->klist->nks / 2)
-        {
-            if (GlobalV::NSPIN == 2)
-            {
-                ofs << "SPIN DOWN : " << std::endl;
-            }
-        }
-
-        if (GlobalV::NSPIN == 2)
-        {
-            if (this->klist->isk[ik] == 0)
-            {
-                ofs << " " << ik + 1 << "/" << this->klist->nks / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-            if (this->klist->isk[ik] == 1)
-            {
-                ofs << " " << ik + 1 - this->klist->nks / 2 << "/" << this->klist->nks / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-        } // Pengfei Li  added  14-9-9
-        else
-        {
-            ofs << " " << ik + 1 << "/" << this->klist->nks << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x
-                << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik]
-                << " pws)" << std::endl;
-
-            ofs << std::setprecision(6);
-        }
-
-        GlobalV::ofs_running << std::setprecision(6);
-        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
-        for (int ib = 0; ib < this->ekb.nc; ib++)
-        {
-            ofs << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(15)
-                << this->wg(ik, ib) << std::endl;
-        }
-        ofs << std::endl;
-    } // end ik
     return;
 }
 
@@ -383,7 +210,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0 || GlobalV::md_prec_level == 2)
     {
-        this->charge->init_rho(strucfac);
+        this->charge->init_rho(this->eferm, strucfac);
     }
 
     // renormalize the charge density
@@ -433,7 +260,7 @@ void ElecState::cal_nbands()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "occupied bands", occupied_bands);
 
     // mohan add 2010-09-04
-    // std::cout << "nbands(GlobalC::ucell) = " <<GlobalV::NBANDS <<std::endl;
+    // std::cout << "nbands(this-> = " <<GlobalV::NBANDS <<std::endl;
     if (GlobalV::NBANDS == occupied_bands)
     {
         if (Occupy::gauss())
@@ -509,5 +336,4 @@ void ElecState::cal_nbands()
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", GlobalV::NBANDS);
 }
-
 } // namespace elecstate

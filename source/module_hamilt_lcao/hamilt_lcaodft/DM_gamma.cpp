@@ -83,7 +83,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     // count the number of elements to be received from each process
     for(int iGlobal=0; iGlobal<GlobalV::NLOCAL; ++iGlobal)
     {
-        int iLocalGrid=GlobalC::GridT.trace_lo[iGlobal];
+        int iLocalGrid=this->LOWF->gridt->trace_lo[iGlobal];
         if(iLocalGrid>=0)
         {
             //trace_global[iLocalGrid]=iGlobal;
@@ -206,7 +206,11 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
 
 // allocate density kernel may change once the ion
 // positions change
-void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec)
+void Local_Orbital_Charge::allocate_gamma(
+                const int& lgd, 
+                psi::Psi<double>* psid, 
+                elecstate::ElecState* pelec,
+                const int& nks)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -268,7 +272,7 @@ void Local_Orbital_Charge::allocate_gamma(const int& lgd, psi::Psi<double>* psid
 #endif
 
 	// Peize Lin test 2019-01-16
-    this->init_dm_2d();
+    this->init_dm_2d(nks);
 
     if(GlobalC::wf.init_wfc=="file")
     {

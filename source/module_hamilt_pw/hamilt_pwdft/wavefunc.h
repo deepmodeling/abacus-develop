@@ -24,8 +24,7 @@ class wavefunc : public WF_atomic
     // init_wfc : "random",or "atomic" or "file"
     std::string init_wfc;
     int mem_saver; // 1: save evc when doing nscf calculation.
-    void wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basis_K *wfc_basis); // from wfcinit.f90
-    void wfcinit_k(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basis_K *wfc_basis);
+    void wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis_K* wfc_basis);
     int get_starting_nw(void)const;
 
 	// wanf2: save PAO orbitals,

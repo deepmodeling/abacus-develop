@@ -16,7 +16,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "module_ri/serialization_cereal.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_ri/Mix_DMk_2D.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <RI/distribute/Distribute_Equally.h>
@@ -46,8 +46,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 //			throw std::invalid_argument("exx mixing error. exx_separate_loop==false, mixing_mode!=plain or pulay");
 //		Hexx_para.mixing_beta = GlobalC::CHR.mixing_beta;
 //	}
-
-	this->Hk_seq.resize(GlobalC::kv.nks);
 
     this->mpi_comm = mpi_comm_in;
     this->p_kv = &kv_in;
@@ -163,7 +161,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 }
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Parallel_Orbitals &pv)
+void Exx_LRI<Tdata>::cal_exx_elec(const Mix_DMk_2D &mix_DMk_2D, const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
@@ -172,8 +170,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Local_Orbital_Charge &loc, const Paralle
 
 	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> Ds =
 		GlobalV::GAMMA_ONLY_LOCAL
-		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, loc.dm_gamma, pv)
-		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, loc.dm_k, pv);
+		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, mix_DMk_2D.get_DMk_gamma_out(), pv)
+		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, mix_DMk_2D.get_DMk_k_out(), pv);
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 

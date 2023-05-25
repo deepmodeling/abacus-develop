@@ -136,7 +136,9 @@ void DFTU::mix_locale()
     ModuleBase::timer::tick("DFTU", "mix_locale");
 }
 
-void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> &dm_k)
+void DFTU::cal_occup_m_k(const int iter, 
+                        std::vector<ModuleBase::ComplexMatrix> &dm_k,
+                        const K_Vectors& kv)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_k");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
@@ -153,10 +155,10 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
     std::vector<std::complex<double>> srho(this->LM->ParaV->nloc);
     std::vector<std::complex<double>> Sk(this->LM->ParaV->nloc);
 
-    for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+    for (int ik = 0; ik < kv.nks; ik++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_k(iw,nu)
-        this->folding_matrix_k(ik, 0, 0, &Sk[0]);
+        this->folding_matrix_k(ik, 0, 0, &Sk[0], kv.kvec_d);
 
 #ifdef __MPI
         pzgemm_(&transN,
@@ -180,7 +182,7 @@ void DFTU::cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix> 
                 this->LM->ParaV->desc);
 #endif
 
-        const int spin = GlobalC::kv.isk[ik];
+        const int spin = kv.isk[ik];
         for (int it = 0; it < GlobalC::ucell.ntype; it++)
         {
             const int NL = GlobalC::ucell.atoms[it].nwl + 1;

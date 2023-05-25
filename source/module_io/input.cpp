@@ -4,7 +4,7 @@
 //==========================================================
 // #include "global.h"
 #include "module_io/input.h"
-
+#include "version.h"
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -64,11 +64,20 @@ void Input::Init(const std::string &fn)
                                           this->mdp.md_restart,
                                           this->out_alllog); // xiaohui add 2013-09-01
     Check();
-
+#ifdef VERSION
+        const char* version = VERSION;
+#else
+        const char* version = "unknown";
+#endif
+#ifdef COMMIT
+        const char* commit = COMMIT;
+#else
+        const char* commit = "unknown";
+#endif
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                              ABACUS v3.2                                            "
+    GlobalV::ofs_running << "                              ABACUS " << version
                          << std::endl << std::endl;
     GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
                          << std::endl << std::endl;
@@ -79,6 +88,8 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
                          << std::endl;
     GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
+                         << std::endl; 
+    GlobalV::ofs_running << "                      Commit: " << commit
                          << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(ios::right);
 
@@ -252,6 +263,7 @@ void Input::Default(void)
     // iteration
     //----------------------------------------------------------
     scf_thr = -1.0; // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
+    scf_thr_type = -1; // the default value (1 for pw, and 2 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
@@ -369,7 +381,7 @@ void Input::Default(void)
 
     exx_separate_loop = true;
     exx_hybrid_step = 100;
-    exx_mixing_beta = 0.0;
+    exx_mixing_beta = 1.0;
 
     exx_lambda = 0.3;
 
@@ -1067,6 +1079,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("scf_thr", word) == 0)
         {
             read_value(ifs, scf_thr);
+        }
+        else if (strcmp("scf_thr_type", word) == 0)
+        {
+            read_value(ifs, scf_thr_type);
         }
         else if (strcmp("scf_nmax", word) == 0)
         {
@@ -2719,6 +2735,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr = 1.0e-9;
         }
     }
+
+    if (scf_thr_type == -1)
+    {
+        if (basis_type == "lcao" || basis_type == "lcao_in_pw")
+        {
+            scf_thr_type = 2;
+        }
+        else if (basis_type == "pw")
+        {
+            scf_thr_type = 1;
+        }
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -2844,6 +2872,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(test_stress);
 
     Parallel_Common::bcast_double(scf_thr);
+    Parallel_Common::bcast_int(scf_thr_type);
     Parallel_Common::bcast_int(scf_nmax);
     Parallel_Common::bcast_int(this->relax_nmax);
     Parallel_Common::bcast_bool(out_stru); // mohan add 2012-03-23

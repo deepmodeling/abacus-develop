@@ -18,7 +18,7 @@ class LCAO_Hamilt
     LCAO_Hamilt();
     ~LCAO_Hamilt();
 
-    void grid_prepare(void);
+    void grid_prepare(const Grid_Technique& gt);
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
@@ -29,8 +29,11 @@ class LCAO_Hamilt
     void calculat_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold);
     void calculat_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold);
 #ifdef __EXX
-    template<typename Tdata> void calculate_HR_exx_sparse(const int &current_spin, const double &sparse_threshold,
-        const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, RI::Tensor<Tdata>>>> &Hexxs);
+    template<typename Tdata> void calculate_HR_exx_sparse(
+            const int &current_spin,
+            const double &sparse_threshold,
+            const int (&nmp)[3],
+            const std::vector< std::map <int, std::map < std::pair<int, std::array<int,3>>, RI::Tensor<Tdata> > >>& Hexxs);
 #endif
     void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold);
     void calculate_SR_sparse(const double &sparse_threshold);

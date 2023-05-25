@@ -2,4 +2,7 @@ etotref -376.5302709544197910
 etotperatomref -125.5100903181
 totalforceref 987.469575
 totalstressref 2048.625481
+pointgroupref C_2v
+spacegroupref C_2v
+nksibzref 1
 totaltimeref +0.11103

@@ -246,13 +246,13 @@ namespace ModuleESolver
                             double bandgap_for_autoset = 0.0;
                             if (!GlobalV::TWO_EFERMI)
                             {
-                                GlobalC::en.cal_bandgap(this->pelec);
-                                bandgap_for_autoset = GlobalC::en.bandgap;
+                                this->pelec->cal_bandgap();
+                                bandgap_for_autoset = this->pelec->bandgap;
                             }
                             else
                             {
-                                GlobalC::en.cal_bandgap_updw(this->pelec);
-                                bandgap_for_autoset = std::min(GlobalC::en.bandgap_up, GlobalC::en.bandgap_dw);
+                                this->pelec->cal_bandgap_updw();
+                                bandgap_for_autoset = std::min(this->pelec->bandgap_up, this->pelec->bandgap_dw);
                             }
                             GlobalC::CHR_MIX.auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
@@ -310,7 +310,7 @@ namespace ModuleESolver
     template<typename FPTYPE, typename Device>
     void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const FPTYPE drho, const FPTYPE duration, const FPTYPE ethr)
     {
-        GlobalC::en.print_etot(this->pw_rho->nrxx, this->pw_rho->nxyz, this->conv_elec, iter, drho, duration, ethr);
+        this->pelec->print_etot(this->conv_elec, iter, drho, duration, INPUT.printe, ethr);
     }
 
     template<typename FPTYPE, typename Device>

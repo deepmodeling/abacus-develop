@@ -123,7 +123,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     //------------------------------------------------------------------
     //                    Calculate
     //------------------------------------------------------------------
-    const double mu = this->pelec->ef;
+    const double mu = this->pelec->eferm.ef;
     stoiter.stofunc.mu = mu;
     double * ct11 = new double[nt];
     double * ct12 = new double[nt];

@@ -1,9 +1,10 @@
+#include "write_dos_lcao.h"
+
+#include "cal_dos.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "dos.h"
-#include "write_dos_lcao.h"
 #include "write_orb_info.h"
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
@@ -203,7 +204,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                 {
                     uhm.LM->allocate_HS_k(pv->nloc);
                     uhm.LM->zeros_HSk('S');
-                    uhm.LM->folding_fixedH(ik);
+                    uhm.LM->folding_fixedH(ik, kv.kvec_d);
 
                     psi->fix_k(ik);
                     psi::Psi<std::complex<double>> Dwfc(psi[0], 1);

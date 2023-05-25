@@ -21,16 +21,16 @@ void Gint::gint_kernel_tau(
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
-	Gint_Tools::Array_Pool<double> psir_ylm(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_x(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_y(GlobalC::bigpw->bxyz, LD_pool);
-	Gint_Tools::Array_Pool<double> dpsir_ylm_z(GlobalC::bigpw->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_x(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_y(this->bxyz, LD_pool);
+	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
-	Gint_Tools::cal_dpsir_ylm(
-		na_grid, grid_index, delta_r,
+	Gint_Tools::cal_dpsir_ylm(*this->gridt, 
+		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
 		psir_ylm.ptr_2D,
@@ -41,32 +41,32 @@ void Gint::gint_kernel_tau(
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-		Gint_Tools::Array_Pool<double> dpsix_DM(GlobalC::bigpw->bxyz, LD_pool);
-		Gint_Tools::Array_Pool<double> dpsiy_DM(GlobalC::bigpw->bxyz, LD_pool);
-		Gint_Tools::Array_Pool<double> dpsiz_DM(GlobalC::bigpw->bxyz, LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(dpsix_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
-		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.ptr_1D, GlobalC::bigpw->bxyz*LD_pool);
+		Gint_Tools::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
+		Gint_Tools::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
+		Gint_Tools::Array_Pool<double> dpsiz_DM(this->bxyz, LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsix_DM.ptr_1D, this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.ptr_1D, this->bxyz*LD_pool);
+		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.ptr_1D, this->bxyz*LD_pool);
 
 		//calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				*this->gridt,this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_x.ptr_2D,
 				dpsix_DM.ptr_2D,
 				inout->DM[is], 1);
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				*this->gridt, this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_y.ptr_2D,
 				dpsiy_DM.ptr_2D,
 				inout->DM[is], 1);	
 			Gint_Tools::mult_psi_DM(
-				na_grid, LD_pool,
+				*this->gridt, this->bxyz, na_grid, LD_pool,
 				block_iw, block_size,
 				block_index, cal_flag,
 				dpsir_ylm_z.ptr_2D,
@@ -76,23 +76,23 @@ void Gint::gint_kernel_tau(
 		else
 		{
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
-				cal_flag, GlobalC::GridT,
+				cal_flag, 
 				dpsir_ylm_x.ptr_2D,
 				dpsix_DM.ptr_2D,
 				inout->DM_R[is], 1);
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
-				cal_flag, GlobalC::GridT,
+				cal_flag,
 				dpsir_ylm_y.ptr_2D,
 				dpsiy_DM.ptr_2D,
 				inout->DM_R[is], 1);
 			Gint_Tools::mult_psi_DMR(
-				grid_index, na_grid,
+				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
-				cal_flag, GlobalC::GridT,
+				cal_flag, 
 				dpsir_ylm_z.ptr_2D,
 				dpsiz_DM.ptr_2D,
 				inout->DM_R[is], 1);
@@ -113,7 +113,7 @@ void Gint::gint_kernel_tau(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
 	}
@@ -134,7 +134,7 @@ void Gint::cal_meshball_tau(
 {		
 	const int inc = 1;
 	// sum over mu to get density on grid
-	for(int ib=0; ib<GlobalC::bigpw->bxyz; ++ib)
+	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		double rx=ddot_(&block_index[na_grid], dpsix[ib], &inc, dpsix_dm[ib], &inc);
 		double ry=ddot_(&block_index[na_grid], dpsiy[ib], &inc, dpsiy_dm[ib], &inc);

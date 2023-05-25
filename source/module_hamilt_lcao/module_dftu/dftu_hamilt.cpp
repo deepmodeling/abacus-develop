@@ -6,7 +6,7 @@
 namespace ModuleDFTU
 {
 
-void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
+void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk)
 {
     ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
     ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
@@ -16,7 +16,7 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
         return;
     }
 
-    int spin = GlobalC::kv.isk[ik];
+    int spin = isk[ik];
 
     ModuleBase::GlobalFunc::ZEROS(eff_pot, this->LM->ParaV->nloc);
 
@@ -57,7 +57,7 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot)
     return;
 }
 
-void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
+void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk)
 {
     ModuleBase::TITLE("DFTU", "cal_eff_pot_mat");
     ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
@@ -67,7 +67,7 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot)
         return;
     }
 
-    int spin = GlobalC::kv.isk[ik];
+    int spin = isk[ik];
 
     ModuleBase::GlobalFunc::ZEROS(eff_pot, this->LM->ParaV->nloc);
 
