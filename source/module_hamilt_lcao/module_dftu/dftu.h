@@ -167,7 +167,7 @@ class DFTU
 
   public:
     bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
-    void cal_slater_UJ(double** rho);
+    void cal_slater_UJ(double** rho, const int& nrxx);
 
   private:
     double lambda; // the parameter in Yukawa potential
@@ -176,7 +176,7 @@ class DFTU
     std::vector<std::vector<std::vector<double>>> J_Yukawa; // J_Yukawa[T][L][N]
 
     void cal_slater_Fk(const int L, const int T); // L:angular momnet, T:atom type
-    void cal_yukawa_lambda(double** rho);
+    void cal_yukawa_lambda(double** rho, const int& nrxx);
 
     double spherical_Bessel(const int k, const double r, const double lambda);
     double spherical_Hankel(const int k, const double r, const double lambda);

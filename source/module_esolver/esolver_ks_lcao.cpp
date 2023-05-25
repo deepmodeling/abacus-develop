@@ -252,7 +252,8 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->UHM,
                        force,
                        this->scs,
-                       GlobalC::kv);
+                       GlobalC::kv,
+                       GlobalC::rhopw);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -525,7 +526,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho, GlobalC::rhopw->nrxx); // Calculate U and J if Yukawa potential is used
     }
 
 #ifdef __DEEPKS

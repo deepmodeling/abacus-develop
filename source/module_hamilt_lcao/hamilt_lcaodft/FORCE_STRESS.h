@@ -35,7 +35,8 @@ class Force_Stress_LCAO
         LCAO_Hamilt &uhm,
         ModuleBase::matrix& fcs,
 		ModuleBase::matrix &scs,
-		const K_Vectors& kv);
+		const K_Vectors& kv,
+        ModulePW::PW_Basis* rhopw);
 
 private:
     
@@ -59,7 +60,8 @@ private:
                         const double& etxc,
                         const ModuleBase::matrix& vnew,
                         const bool vnew_exist,
-                        const Charge* const chr);
+                        const Charge* const chr,
+                        ModulePW::PW_Basis* rhopw);
 
     void calForceStressIntegralPart(const bool isGammaOnly,
                                     const bool isforce,
@@ -90,7 +92,8 @@ private:
                          ModuleBase::matrix& sigmacc,
                          ModuleBase::matrix& sigmaxc,
                          const double& etxc,
-                         const Charge* const chr);
+                         const Charge* const chr,
+                         ModulePW::PW_Basis* rhopw);
 
     static double force_invalid_threshold_ev;
     static double output_acc; // control the accuracy

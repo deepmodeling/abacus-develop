@@ -18,7 +18,7 @@ class LCAO_Hamilt
     LCAO_Hamilt();
     ~LCAO_Hamilt();
 
-    void grid_prepare(const Grid_Technique& gt);
+    void grid_prepare(const Grid_Technique& gt, const ModulePW::PW_Basis& rhopw);
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
