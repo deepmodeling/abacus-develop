@@ -79,3 +79,17 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
 )
+
+AddTest(
+  TARGET charge_test
+  LIBS ${math_libs} base device
+  SOURCES charge_test.cpp ../module_charge/charge.cpp
+    ../../module_basis/module_pw/pw_basis.cpp
+    ../../module_basis/module_pw/pw_init.cpp
+    ../../module_basis/module_pw/pw_distributeg.cpp
+    ../../module_basis/module_pw/pw_distributer.cpp
+    ../../module_basis/module_pw/pw_distributeg_method1.cpp
+    ../../module_basis/module_pw/pw_distributeg_method2.cpp
+    ../../module_basis/module_pw/pw_transform.cpp
+    ../../module_basis/module_pw/fft.cpp
+)
