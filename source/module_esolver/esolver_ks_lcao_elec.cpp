@@ -503,7 +503,8 @@ namespace ModuleESolver
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(
                         &LM,
                         nullptr, //no explicit call yet
-                        &(LM.Hloc)
+                        &(LM.Hloc,
+                        GlobalC::kv)
                     );
                 p_hamilt->opsd->add(exx);
             }
@@ -513,7 +514,8 @@ namespace ModuleESolver
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
                         &LM,
                         nullptr, //no explicit call yet
-                        &(LM.Hloc2)
+                        &(LM.Hloc2,
+                        GlobalC::kv)
                     );
                 p_hamilt->ops->add(exx);
             }
