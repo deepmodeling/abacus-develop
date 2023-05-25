@@ -135,8 +135,8 @@ namespace ModuleESolver
         }
         
         // prepare grid in Gint
-        this->UHM.grid_prepare(this->GridT, *GlobalC::rhopw);
-        
+        this->UHM.grid_prepare(this->GridT, *GlobalC::rhopw, *GlobalC::bigpw);
+
         // init Hamiltonian
         if (this->p_hamilt != nullptr)
         {

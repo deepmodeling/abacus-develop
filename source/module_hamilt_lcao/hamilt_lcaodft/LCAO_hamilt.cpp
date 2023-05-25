@@ -29,23 +29,23 @@ LCAO_Hamilt::~LCAO_Hamilt()
 //--------------------------------------------
 // prepare grid network for Gint(grid integral)
 //--------------------------------------------
-void LCAO_Hamilt::grid_prepare(const Grid_Technique& gt, const ModulePW::PW_Basis& rhopw)
+void LCAO_Hamilt::grid_prepare(const Grid_Technique& gt, const ModulePW::PW_Basis& rhopw, const ModulePW::PW_Basis_Big& bigpw)
 {
     ModuleBase::TITLE("LCAO_Hamilt","grid_prepare");
     ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-        this->GG.prep_grid(gt, GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start,
-            rhopw.nxyz, GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz, GlobalC::bigpw->bxyz, GlobalC::bigpw->nbxx,
+        this->GG.prep_grid(gt, bigpw.nbx, bigpw.nby, bigpw.nbzp, bigpw.nbzp_start,
+            rhopw.nxyz, bigpw.bx, bigpw.by, bigpw.bz, bigpw.bxyz, bigpw.nbxx,
             rhopw.ny, rhopw.nplane, rhopw.startz_current);
 
     }
     else // multiple k-points
     {
         // calculate the grid integration of 'Vl' matrix for l-points algorithms.
-        this->GK.prep_grid(gt, GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start,
-            rhopw.nxyz, GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz, GlobalC::bigpw->bxyz, GlobalC::bigpw->nbxx,
+        this->GK.prep_grid(gt, bigpw.nbx, bigpw.nby, bigpw.nbzp, bigpw.nbzp_start,
+            rhopw.nxyz, bigpw.bx, bigpw.by, bigpw.bz, bigpw.bxyz, bigpw.nbxx,
             rhopw.ny, rhopw.nplane, rhopw.startz_current);
     }
 
