@@ -74,8 +74,8 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv);
-    void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma);
+    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv, const double& mixing_beta);
+    void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma, const double& mixing_beta);
 
   private:
     // dftu can be calculated only after locale has been initialed
@@ -83,7 +83,7 @@ class DFTU
 
     void copy_locale();
     void zero_locale();
-    void mix_locale();
+    void mix_locale(const double& mixing_beta);
 
     // local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step

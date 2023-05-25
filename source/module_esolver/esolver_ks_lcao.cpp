@@ -615,9 +615,9 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::dftu.omc != 2)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
+                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, GlobalC::CHR_MIX.get_mixing_beta());
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv);
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv, GlobalC::CHR_MIX.get_mixing_beta());
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
