@@ -504,7 +504,7 @@ namespace ModuleESolver
                         &LM,
                         nullptr, //no explicit call yet
                         &(LM.Hloc),
-                        GlobalC::kv)
+                        GlobalC::kv
                     );
                 p_hamilt->opsd->add(exx);
             }
@@ -515,7 +515,7 @@ namespace ModuleESolver
                         &LM,
                         nullptr, //no explicit call yet
                         &(LM.Hloc2,
-                        GlobalC::kv)
+                        GlobalC::kv
                     );
                 p_hamilt->ops->add(exx);
             }
