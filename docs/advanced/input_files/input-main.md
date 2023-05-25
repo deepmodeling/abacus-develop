@@ -2582,7 +2582,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Real
 - **Description**:
   phase of Gauss type electric field\
-  amp\*(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2) ???
+  amp\*(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.0
 
 ### td_gauss_sigma
