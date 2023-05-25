@@ -2491,7 +2491,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if (symmetry == "default")
     {   //deal with no-forced default value
-        if (calculation == "nscf" || calculation == "get_S" || calculation == "istate" || calculation == "ienvelope")
+        if (gamma_only || calculation == "nscf" || calculation == "get_S" || calculation == "istate" || calculation == "ienvelope")
             symmetry = "0";     //if md or exx, symmetry will be force-set to 0 or -1 later
         else
             symmetry = "1";
