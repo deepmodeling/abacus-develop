@@ -763,7 +763,7 @@ calculations.
 - **Description**: The number of spin components of wave functions.
   - **1**: Spin degeneracy
   - **2**: Collinear spin polarized.
-  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified by the user.
 - **Default**: 1
 
 ### smearing_method
