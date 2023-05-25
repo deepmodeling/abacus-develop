@@ -153,7 +153,8 @@ namespace ModuleESolver
                                                             &(this->UHM.genH),
                                                             &(this->LM),
                                                             &(this->LOC),
-                                                            this->pelec->pot);
+                                                            this->pelec->pot,
+                                                            GlobalC::kv);
             }
             // multi_k case
             else
@@ -162,7 +163,8 @@ namespace ModuleESolver
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
                                                                         &(this->LOC),
-                                                                        this->pelec->pot);
+                                                                        this->pelec->pot,
+                                                                        GlobalC::kv);
             }
         }
 

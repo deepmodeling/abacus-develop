@@ -24,13 +24,15 @@ class HamiltLCAO : public Hamilt<double>
                LCAO_gen_fixedH* genH_in,
                LCAO_Matrix* LM_in,
                Local_Orbital_Charge* loc_in,
-               elecstate::Potential* pot_in);
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in);
 
     HamiltLCAO(Gint_k* GK_in,
                LCAO_gen_fixedH* genH_in,
                LCAO_Matrix* LM_in,
                Local_Orbital_Charge* loc_in,
-               elecstate::Potential* pot_in);
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in);
 
     ~HamiltLCAO()
     {
@@ -53,7 +55,7 @@ class HamiltLCAO : public Hamilt<double>
     void matrix(MatrixBlock<T>& hk_in, MatrixBlock<T>& sk_in) override;
 
   private:
-    
+    K_Vectors kv;
 };
 
 } // namespace hamilt
