@@ -135,8 +135,8 @@ namespace ModuleESolver
         }
         
         // prepare grid in Gint
-        this->UHM.grid_prepare(this->GridT);
-        
+        this->UHM.grid_prepare(this->GridT, *GlobalC::rhopw, *GlobalC::bigpw);
+
         // init Hamiltonian
         if (this->p_hamilt != nullptr)
         {
@@ -153,7 +153,8 @@ namespace ModuleESolver
                                                             &(this->UHM.genH),
                                                             &(this->LM),
                                                             &(this->LOC),
-                                                            this->pelec->pot);
+                                                            this->pelec->pot,
+                                                            GlobalC::kv);
             }
             // multi_k case
             else
@@ -162,7 +163,8 @@ namespace ModuleESolver
                                                                         &(this->UHM.genH),
                                                                         &(this->LM),
                                                                         &(this->LOC),
-                                                                        this->pelec->pot);
+                                                                        this->pelec->pot,
+                                                                        GlobalC::kv);
             }
         }
 
@@ -501,7 +503,8 @@ namespace ModuleESolver
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(
                         &LM,
                         nullptr, //no explicit call yet
-                        &(LM.Hloc)
+                        &(LM.Hloc),
+                        GlobalC::kv
                     );
                 p_hamilt->opsd->add(exx);
             }
@@ -511,7 +514,8 @@ namespace ModuleESolver
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
                         &LM,
                         nullptr, //no explicit call yet
-                        &(LM.Hloc2)
+                        &(LM.Hloc2),
+                        GlobalC::kv
                     );
                 p_hamilt->ops->add(exx);
             }

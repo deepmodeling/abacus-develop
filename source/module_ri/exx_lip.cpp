@@ -694,7 +694,7 @@ void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry &symm)
 //	Wavefunc_in_pw::make_table_q(q_pack->wf_ptr->ORB_ptr->orbital_file, q_pack->wf_ptr->table_local, q_pack->wf_ptr);
 	for(int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 	{
-		Wavefunc_in_pw::produce_local_basis_in_pw(iq, GlobalC::wfcpw, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local);
+		Wavefunc_in_pw::produce_local_basis_in_pw(iq, GlobalC::wfcpw, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local, *GlobalC::wfcpw);
 //		Wavefunc_in_pw::produce_local_basis_in_pw(iq, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local, q_pack->wf_ptr);
 	}
 #endif

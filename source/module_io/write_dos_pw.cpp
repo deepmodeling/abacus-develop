@@ -1,5 +1,6 @@
-#include "dos.h"
 #include "write_dos_pw.h"
+
+#include "cal_dos.h"
 #include "module_base/parallel_reduce.h"
 #include "module_io/input.h"
 

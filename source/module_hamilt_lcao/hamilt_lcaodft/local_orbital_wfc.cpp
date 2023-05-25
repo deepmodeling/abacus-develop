@@ -13,6 +13,7 @@ Local_Orbital_wfc::Local_Orbital_wfc()
 	allocate_flag = false;
 	wfck_flag = false;	
 	complex_flag = false;
+    nks = 0;
 }
 
 Local_Orbital_wfc::~Local_Orbital_wfc()
@@ -25,13 +26,12 @@ Local_Orbital_wfc::~Local_Orbital_wfc()
     }
     if(this->wfck_flag)
     {
-		for(int i=0; i<GlobalC::kv.nks; i++)
+		for(int i=0; i<nks; i++)
 		{
 			delete[] this->wfc_k_grid[i];
 		}
 		delete[] this->wfc_k_grid;
 	}
-
 }
 
 void Local_Orbital_wfc::allocate_k(const int& lgd,
@@ -41,8 +41,10 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
     const int& nkstot,
     const std::vector<ModuleBase::Vector3<double>>& kvec_c)
 {
-	ModuleBase::TITLE("Local_Orbital_wfc","allocate_k");
-	if(GlobalV::NLOCAL < GlobalV::NBANDS)
+    this->nks = nks;
+
+    ModuleBase::TITLE("Local_Orbital_wfc", "allocate_k");
+    if(GlobalV::NLOCAL < GlobalV::NBANDS)
 	{
 		ModuleBase::WARNING_QUIT("Local_Orbital_wfc::allocate","NLOCAL<NBANDS");
 	}
@@ -238,7 +240,8 @@ void Local_Orbital_wfc::wfc_2d_to_grid(
     std::complex<double>** wfc_grid,
     int ik, 
     const ModuleBase::matrix& ekb, 
-    const ModuleBase::matrix& wg)
+    const ModuleBase::matrix& wg,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_c)
 {
     ModuleBase::TITLE(" Local_Orbital_wfc", "wfc_2d_to_grid");
     ModuleBase::timer::tick(" Local_Orbital_wfc","wfc_2d_to_grid");
@@ -300,7 +303,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(
     {
         std::stringstream ss;
         ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".dat";
-        ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, GlobalC::kv.kvec_c[ik], ekb, wg);
+        ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, kvec_c[ik], ekb, wg);
         for (int i = 0; i < GlobalV::NBANDS; i++)
         {
             delete[] ctot[i];

@@ -54,15 +54,15 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_dos_test
+  TARGET io_cal_dos
   LIBS ${math_libs} base device
-  SOURCES dos_test.cpp ../dos.cpp
+  SOURCES cal_dos_test.cpp ../cal_dos.cpp
 )
 
 AddTest(
   TARGET io_write_dos_pw
   LIBS ${math_libs} base device symmetry
-  SOURCES write_dos_pw_test.cpp ../dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
 )
 
 AddTest(

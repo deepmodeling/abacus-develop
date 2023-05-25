@@ -57,19 +57,9 @@ namespace elecstate
 class PotHartree : public PotBase
 {
   public:
-    PotHartree(const ModulePW::PW_Basis *rho_basis_in)
-    {
-        this->rho_basis_ = rho_basis_in;
-        this->dynamic_mode = true;
-        this->fixed_mode = false;
-    }
+    PotHartree(const ModulePW::PW_Basis* rho_basis_in);
 
-    void cal_v_eff(const Charge *chg, const UnitCell *ucell, ModuleBase::matrix &v_eff) override
-    {
-        v_eff
-            += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis *>(this->rho_basis_), v_eff.nr, chg->rho);
-        return;
-    }
+    void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff);
 };
 
 } // namespace elecstate

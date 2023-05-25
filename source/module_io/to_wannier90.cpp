@@ -1745,7 +1745,7 @@ void toWannier90::lcao2pw_basis(const int ik,
 {
     this->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
     Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, this->table_local);
-    Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, orbital_in_G, this->table_local);
+    Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, orbital_in_G, this->table_local, *GlobalC::wfcpw);
 }
 
 void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv, const int npwx)
