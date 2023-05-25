@@ -31,7 +31,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     this->of_tolp = inp.of_tolp;
     this->maxIter = inp.scf_nmax;
 
-    chr.cal_nelec();
+    chr.cal_nelec(ucell);
 
 	if(ucell.atoms[0].ncpp.xc_func=="HSE"||ucell.atoms[0].ncpp.xc_func=="PBE0")
 	{
