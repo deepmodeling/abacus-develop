@@ -7,6 +7,7 @@
 		- [calculation](#calculation)
 		- [esolver\_type](#esolver_type)
 		- [symmetry](#symmetry)
+		- [symmetry\_prec](#symmetry_prec)
 		- [kpar](#kpar)
 		- [bndpar](#bndpar)
 		- [latname](#latname)
@@ -24,7 +25,6 @@
 		- [nbspline](#nbspline)
 		- [kspacing](#kspacing)
 		- [min\_dist\_coef](#min_dist_coef)
-		- [symmetry\_prec](#symmetry_prec)
 		- [device](#device)
 	- [Variables related to input files](#variables-related-to-input-files)
 		- [stru\_file](#stru_file)
@@ -394,11 +394,24 @@ These variables are used to control general system parameters.
 ### symmetry
 
 - **Type**: Integer
-- **Description**:
-  - -1: no symmetry will be considered.
-  - 0: only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
-  - 1: symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups only)
-- **Default**: 0
+- **Description**: takes value 1, 0 or -1.
+  - -1: No symmetry will be considered.
+  - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
+  - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
+- **Default**: 
+  - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
+  - 0: if *[calculation](#calculation)==md/nscf/istate/ienvelope/get_S* or *[gamma_only]==True*
+  - 1: else
+
+### symmetry_prec
+
+- **Type**: Real
+- **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
+  
+  Note: if *[calculation](#calculation)=cell_relax*, this value can be dynamically enlarged corresponding to the accuracy loss of the lattice parameters and atom positions during the relaxation. There will be a warning message in that case.
+
+- **Default**: 1.0e-5
+- **Unit**:  Bohr
 
 ### kpar
 
@@ -554,13 +567,6 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 - **Type**: Real
 - **Description**: a factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme conditions like high pressure, you should set this parameter as a smaller value or even 0.
 - **Default**: 0.2
-
-### symmetry_prec
-
-- **Type**: Real
-- **Description**: The accuracy for symmetry judgment.
-- **Default**: 1.0e-5
-- **Unit**: Bohr
 
 ### device
 
@@ -1823,41 +1829,50 @@ These variables are relevant to gate field (compensating charge)
 
 ## Exact Exchange
 
-These variables are relevant when using hybrid functionals
+These variables are relevant when using hybrid functionals.
+
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
 
 ### exx_hybrid_alpha
 
 - **Type**: Real
 - **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
-- **Default**: 1 if dft_functional==hf else 0.25
+- **Default**: 
+  - 1: if *[dft_functional](#dft_functional)==hf*
+  - 0.25: else
 
 ### exx_hse_omega
 
 - **Type**: Real
-- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$.
+- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
 - **Default**: 0.11
 
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
-- **Default**: 1
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. 
+  - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
+  - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
+- **Default**: True
 
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Description**: This variable indicates the maximal electronic iteration number in the evaluation of Fock exchange.
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Description**: mixing_beta for outer-loop when exx_separate_loop=1
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
 ### exx_lambda
 
 - **Type**: Real
+- **Availability**: *[basis_type](#basis_type)==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using *lcao_in_pw* method.
 - **Default**: 0.3
 
@@ -1931,37 +1946,50 @@ These variables are relevant when using hybrid functionals
 
 - **Type**: Real
 - **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
-- **Default**: 1.5 if dft_functional==hse else 5
+- **Default**: 
+  - 1.5: if *[dft_functional](#dft_functional)==hse*
+  - 5: else
 
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. `order` is where atom pairs are simply distributed by their orders. `hmeans` is a distribution where the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. `kmeans1` and `kmeans2` are two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+  - `order`: Atom pairs are simply distributed by their orders. 
+  - `hmeans`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
+  - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
 ### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. The radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. exx_opt_orb_lmax gives the maximum l of the spherical Bessel functions. A reasonable choice is 2.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 ### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. A plane wave basis is used to optimize the radial ABFs. This parameter thus gives the cut-off of plane wave expansion, in Ry. A reasonable choice is 60.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
+- **Unit**: Ry
 
 ### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
 ### exx_real_number
 
 - **Type**: Boolean
-- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
-- **Default**: 1 if gamma_only else 0
+- **Description**: 
+  - True: Enforce LIBRI to use `double` data type.
+  - False: Enforce LIBRI to use `complex` data type.
+- **Default**: depends on the [gamma_only](#gamma_only) option
+  - True: if gamma_only 
+  - False: else 
 
 [back to top](#full-list-of-input-keywords)
 
