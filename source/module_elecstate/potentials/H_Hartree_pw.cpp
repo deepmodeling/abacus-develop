@@ -98,4 +98,17 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     return v;
 } // end subroutine v_h
 
+PotHartree::PotHartree(const ModulePW::PW_Basis* rho_basis_in)
+{
+    this->rho_basis_ = rho_basis_in;
+    this->dynamic_mode = true;
+    this->fixed_mode = false;
+}
+
+void PotHartree::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
+{
+    v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, chg->rho);
+    return;
+}
+
 } // namespace elecstate
