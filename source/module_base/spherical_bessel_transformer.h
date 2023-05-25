@@ -19,7 +19,7 @@ namespace ModuleBase
  *          j (x)
  *           l
  *
- *  is the l-th order spherical Bessel funciton of the first kind.
+ *  is the l-th order spherical Bessel function of the first kind.
  *
  *  This class interprets the input array as
  *

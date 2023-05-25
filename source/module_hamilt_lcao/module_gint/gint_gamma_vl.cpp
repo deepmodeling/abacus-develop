@@ -29,8 +29,8 @@ extern "C"
 
 void Gint_Gamma::cal_vlocal(Gint_inout *inout, const bool new_e_iteration)
 {
-	const int max_size = GlobalC::GridT.max_atom;
-	const int lgd = GlobalC::GridT.lgd;
+	const int max_size = this->gridt->max_atom;
+	const int lgd = this->gridt->lgd;
 
 	if(inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta)
 	{
@@ -56,6 +56,7 @@ void Gint_Gamma::cal_vlocal(Gint_inout *inout, const bool new_e_iteration)
 // s stands for 'sender' and r stands for 'receiver'
 //------------------------------------------------------------------
 inline int setBufferParameter(
+    const Grid_Technique& gt,
 	MPI_Comm comm_2D,
 	int blacs_ctxt,
 	int nblk,
@@ -102,7 +103,7 @@ inline int setBufferParameter(
     // the global index to be received from other pro (r_global_index),
     // the send/receive siz/dis for data exchange by MPI_Alltoall
 	//---------------------------------------------------------------------
-    s_index_siz=GlobalC::GridT.lgd*GlobalC::GridT.lgd*2;
+    s_index_siz=gt.lgd*gt.lgd*2;
 
     delete[] s_local_index;
     s_local_index=new int[s_index_siz];
@@ -126,7 +127,7 @@ inline int setBufferParameter(
             grow=Local_Orbital_wfc::globalIndex(irow, nblk, nprows, iprow);
             if (grow >= GlobalV::NLOCAL)
                 continue;
-            int lrow = GlobalC::GridT.trace_lo[grow];
+            int lrow = gt.trace_lo[grow];
             if (lrow < 0)
                 continue;
 
@@ -135,7 +136,7 @@ inline int setBufferParameter(
                 gcol=Local_Orbital_wfc::globalIndex(icol,nblk, npcols, ipcol);
                 if (gcol >= GlobalV::NLOCAL)
                     continue;
-                int lcol = GlobalC::GridT.trace_lo[gcol];
+                int lcol = gt.trace_lo[gcol];
                 if (lcol < 0)
                     continue;
                 s_global_index[pos]=grow;
@@ -201,7 +202,7 @@ void Gint_Gamma::vl_grid_to_2D(const int lgd_now, LCAO_Matrix &lm, const bool ne
     {
         ModuleBase::timer::tick("Gint_Gamma","distri_vl_index");
         #ifdef __MPI
-        setBufferParameter(lm.ParaV->comm_2D, lm.ParaV->blacs_ctxt, lm.ParaV->nb,
+        setBufferParameter(*this->gridt, lm.ParaV->comm_2D, lm.ParaV->blacs_ctxt, lm.ParaV->nb,
                            this->sender_index_size, this->sender_local_index,
                            this->sender_size_process, this->sender_displacement_process,
                            this->sender_size, this->sender_buffer,

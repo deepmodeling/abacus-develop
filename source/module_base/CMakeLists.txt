@@ -46,6 +46,7 @@ add_library(
     parallel_common.cpp
     parallel_global.cpp
     parallel_reduce.cpp
+    spherical_bessel_transformer.cpp
     ${LIBM_SRC}
 )
 
