@@ -33,7 +33,8 @@ void Force_Stress_LCAO::getForceStress(
     ModuleBase::matrix& fcs,
 	ModuleBase::matrix &scs,
 	const K_Vectors& kv,
-    ModulePW::PW_Basis* rhopw)
+    ModulePW::PW_Basis* rhopw,
+    ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
@@ -340,7 +341,7 @@ void Force_Stress_LCAO::getForceStress(
         // pengfei 2016-12-20
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            this->forceSymmetry(fcs);
+            this->forceSymmetry(fcs, symm);
         }
 
 #ifdef __DEEPKS
@@ -571,7 +572,7 @@ void Force_Stress_LCAO::getForceStress(
 
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            GlobalC::symm.stress_symmetry(scs, GlobalC::ucell);
+            symm->stress_symmetry(scs, GlobalC::ucell);
         } // end symmetry
 
         // print Rydberg stress or not
@@ -796,7 +797,7 @@ void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
 
 #include "module_base/mathzone.h"
 // do symmetry for total force
-void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
+void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm)
 {
     double* pos;
     double d1, d2, d3;
@@ -812,8 +813,8 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
             pos[3 * iat + 2] = GlobalC::ucell.atoms[it].taud[ia].z;
             for (int k = 0; k < 3; ++k)
             {
-                GlobalC::symm.check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                GlobalC::symm.check_boundary(pos[iat * 3 + k]);
+                symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                symm->check_boundary(pos[iat * 3 + k]);
             }
             iat++;
         }
@@ -841,7 +842,7 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    GlobalC::symm.force_symmetry(fcs, pos, GlobalC::ucell);
+    symm->force_symmetry(fcs, pos, GlobalC::ucell);
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         ModuleBase::Mathzone::Direct_to_Cartesian(fcs(iat, 0),
@@ -864,7 +865,6 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    // std::cout << "nrotk =" << GlobalC::symm.nrotk << std::endl;
     delete[] pos;
     return;
 }
