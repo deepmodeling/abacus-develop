@@ -98,7 +98,7 @@ void Charge::allocate(const int& nspin_in)
 
     if (GlobalV::test_charge > 1)
     {
-        std::cout << "\n spin_number = " << nspin << " real_point_number = " << nrxx;
+        std::cout << "\n spin_number = " << nspin << " real_point_number = " << nrxx << std::endl;
     }
 
     // allocate memory
@@ -159,11 +159,7 @@ double Charge::sum_rho(void) const
     ModuleBase::TITLE("Charge", "sum_rho");
 
     double sum_rho = 0.0;
-    int nspin0 = 1;
-    if (nspin == 2)
-    {
-        nspin0 = 2;
-    }
+    int nspin0 = (nspin == 2) ? 2 : 1;
 
     for (int is = 0; is < nspin0; is++)
     {

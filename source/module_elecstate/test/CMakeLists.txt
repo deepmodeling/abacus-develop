@@ -84,6 +84,7 @@ AddTest(
   TARGET charge_test
   LIBS ${math_libs} base device
   SOURCES charge_test.cpp ../module_charge/charge.cpp
+    # PW_Basis dependencies
     ../../module_basis/module_pw/pw_basis.cpp
     ../../module_basis/module_pw/pw_init.cpp
     ../../module_basis/module_pw/pw_distributeg.cpp
@@ -92,4 +93,17 @@ AddTest(
     ../../module_basis/module_pw/pw_distributeg_method2.cpp
     ../../module_basis/module_pw/pw_transform.cpp
     ../../module_basis/module_pw/fft.cpp
+    # UnitCell dependencies
+    ../../module_cell/unitcell.cpp
+    ../../module_cell/read_atoms.cpp
+    ../../module_cell/read_cell_pseudopots.cpp
+    ../../module_cell/atom_spec.cpp
+    ../../module_cell/atom_pseudo.cpp
+    ../../module_cell/pseudo_nc.cpp
+    ../../module_cell/read_pp.cpp
+    ../../module_cell/read_pp_upf201.cpp
+    ../../module_cell/read_pp_upf100.cpp
+    ../../module_cell/read_pp_vwr.cpp
+    ../../module_cell/read_pp_blps.cpp
+    ../../module_io/output.cpp
 )
