@@ -739,7 +739,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis)
+- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set)
 
 ### nbands
 
@@ -793,6 +793,7 @@ calculations.
 ### mixing_type
 
 - **Type**: String
+- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method.
@@ -878,7 +879,7 @@ calculations.
 
 ### scf_thr_type
 
-- **Type**: Int
+- **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion. 
   - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
   - **2**: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
@@ -890,7 +891,7 @@ calculations.
 ### chg_extrap
 
 - **Type**: String
-- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
+- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations or molecular dynamics.
   - **atomic**: atomic extrapolation.
   - **first-order**: first-order extrapolation.
   - **second-order**: second-order extrapolation.
