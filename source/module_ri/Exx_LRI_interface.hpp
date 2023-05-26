@@ -4,7 +4,27 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
+template<typename Tdata>
+void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
+{
+	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
+	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+	std::ofstream ofs(file_name, std::ofstream::binary);
+	cereal::BinaryOutputArchive oar(ofs);
+	oar(exx_lri->Hexxs);
+	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+}
 
+template<typename Tdata>
+void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
+{
+	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
+	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
+	std::ifstream ifs(file_name, std::ofstream::binary);
+	cereal::BinaryInputArchive iar(ifs);
+	iar(exx_lri->Hexxs);
+	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
+}
 template<typename Tdata>
 void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv)
 {

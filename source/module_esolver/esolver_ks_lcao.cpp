@@ -259,6 +259,10 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        force,
                        this->scs,
                        this->sf,
+#ifdef __EXX
+                        GlobalC::exx_lri_double,
+                        GlobalC::exx_lri_complex,
+#endif  
                        this->kv,
                        this->pw_rho,
                        &this->symm);
@@ -915,9 +919,9 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
-            GlobalC::exx_lri_double.write_Hexxs(file_name_exx);
+            this->exd->write_Hexxs(file_name_exx);
         else
-            GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
+            this->exc->write_Hexxs(file_name_exx);
     }
 #endif
 

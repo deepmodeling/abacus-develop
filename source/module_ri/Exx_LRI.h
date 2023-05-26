@@ -51,9 +51,6 @@ public:
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
 
-	void write_Hexxs(const std::string &file_name) const;
-	void read_Hexxs(const std::string &file_name);
-
 private:
 	const Exx_Info::Exx_Info_RI &info;
     MPI_Comm mpi_comm;

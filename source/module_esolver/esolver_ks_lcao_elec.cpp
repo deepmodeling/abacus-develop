@@ -309,9 +309,9 @@ namespace ModuleESolver
 //Peize Lin add 2016-12-03
 #ifdef __EXX
         if (GlobalC::exx_info.info_ri.real_number)
-            this->eld->exx_beforescf(kv);
+            this->exd->exx_beforescf(kv);
         else
-            this->elc->exx_beforescf(kv);
+            this->exc->exx_beforescf(kv);
 #endif // __EXX
         // 1. calculate ewald energy.
         // mohan update 2021-02-25
@@ -462,9 +462,9 @@ namespace ModuleESolver
             //GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
 			const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
 			if(GlobalC::exx_info.info_ri.real_number)
-				GlobalC::exx_lri_double.read_Hexxs(file_name_exx);
+				this->exd->read_Hexxs(file_name_exx);
 			else
-				GlobalC::exx_lri_complex.read_Hexxs(file_name_exx);
+				this->exc->read_Hexxs(file_name_exx);
 
             // This is a temporary fix
             if(GlobalV::GAMMA_ONLY_LOCAL)

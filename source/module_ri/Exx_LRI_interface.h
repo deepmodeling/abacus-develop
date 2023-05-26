@@ -15,6 +15,9 @@ public:
     Exx_LRI_Interface(Exx_LRI<Tdata>& exx_lri) : exx_lri(&exx_lri) {}
     Exx_LRI_Interface() = delete;
 
+    void write_Hexxs(const std::string &file_name) const;
+	void read_Hexxs(const std::string &file_name);
+
     // Processes in ESolver_KS_LCAO
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
     void exx_beforescf(const K_Vectors& kv);

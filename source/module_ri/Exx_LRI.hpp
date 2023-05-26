@@ -283,26 +283,5 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 }
 
-template<typename Tdata>
-void Exx_LRI<Tdata>::write_Hexxs(const std::string &file_name) const
-{
-	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
-	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
-	std::ofstream ofs(file_name, std::ofstream::binary);
-	cereal::BinaryOutputArchive oar(ofs);
-	oar(this->Hexxs);
-	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
-}
-
-template<typename Tdata>
-void Exx_LRI<Tdata>::read_Hexxs(const std::string &file_name)
-{
-	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
-	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
-	std::ifstream ifs(file_name, std::ofstream::binary);
-	cereal::BinaryInputArchive iar(ifs);
-	iar(this->Hexxs);
-	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
-}
 
 #endif
