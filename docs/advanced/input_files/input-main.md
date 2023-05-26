@@ -7,6 +7,7 @@
     - [calculation](#calculation)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
+    - [symmetry\_prec](#symmetry_prec)
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
@@ -24,7 +25,6 @@
     - [nbspline](#nbspline)
     - [kspacing](#kspacing)
     - [min\_dist\_coef](#min_dist_coef)
-    - [symmetry\_prec](#symmetry_prec)
     - [device](#device)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
@@ -108,7 +108,6 @@
   - [Variables related to output information](#variables-related-to-output-information)
     - [out\_mul](#out_mul)
     - [out\_freq\_elec](#out_freq_elec)
-    - [out\_freq\_ion](#out_freq_ion)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
     - [out\_dm](#out_dm)
@@ -132,7 +131,6 @@
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [restart\_load](#restart_load)
-    - [dft\_plus\_dmft](#dft_plus_dmft)
     - [rpa](#rpa)
   - [Density of states](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
@@ -216,26 +214,26 @@
     - [exx\_real\_number](#exx_real_number)
   - [Molecular dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
-    - [md\_thermostat](#md_thermostat)
     - [md\_nstep](#md_nstep)
-    - [md\_restart](#md_restart)
     - [md\_dt](#md_dt)
+    - [md\_thermostat](#md_thermostat)
     - [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
-    - [md\_dumpfreq](#md_dumpfreq)
+    - [md\_restart](#md_restart)
     - [md\_restartfreq](#md_restartfreq)
+    - [md\_dumpfreq](#md_dumpfreq)
+    - [dump\_force](#dump_force)
+    - [dump\_vel](#dump_vel)
+    - [dump\_virial](#dump_virial)
     - [md\_seed](#md_seed)
-    - [md\_prec\_level](#md_prec_level)
-    - [ref\_cell\_factor](#ref_cell_factor)
     - [md\_tfreq](#md_tfreq)
     - [md\_tchain](#md_tchain)
     - [md\_pmode](#md_pmode)
+    - [md\_prec\_level](#md_prec_level)
+    - [ref\_cell\_factor](#ref_cell_factor)
     - [md\_pcouple](#md_pcouple)
     - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
     - [md\_pfreq](#md_pfreq)
     - [md\_pchain](#md_pchain)
-    - [dump\_force](#dump_force)
-    - [dump\_vel](#dump_vel)
-    - [dump\_virial](#dump_virial)
     - [lj\_rcut](#lj_rcut)
     - [lj\_epsilon](#lj_epsilon)
     - [lj\_sigma](#lj_sigma)
@@ -393,11 +391,24 @@ These variables are used to control general system parameters.
 ### symmetry
 
 - **Type**: Integer
-- **Description**:
-  - -1: no symmetry will be considered.
-  - 0: only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
-  - 1: symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups only)
-- **Default**: 0
+- **Description**: takes value 1, 0 or -1.
+  - -1: No symmetry will be considered.
+  - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
+  - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
+- **Default**: 
+  - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
+  - 0: if *[calculation](#calculation)==md/nscf/istate/ienvelope/get_S* or *[gamma_only]==True*
+  - 1: else
+
+### symmetry_prec
+
+- **Type**: Real
+- **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
+  
+  Note: if *[calculation](#calculation)=cell_relax*, this value can be dynamically enlarged corresponding to the accuracy loss of the lattice parameters and atom positions during the relaxation. There will be a warning message in that case.
+
+- **Default**: 1.0e-5
+- **Unit**:  Bohr
 
 ### kpar
 
@@ -553,13 +564,6 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 - **Type**: Real
 - **Description**: a factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme conditions like high pressure, you should set this parameter as a smaller value or even 0.
 - **Default**: 0.2
-
-### symmetry_prec
-
-- **Type**: Real
-- **Description**: The accuracy for symmetry judgment.
-- **Default**: 1.0e-5
-- **Unit**: Bohr
 
 ### device
 
@@ -1197,240 +1201,202 @@ These variables are used to control the output of properties.
 ### out_mul
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt. In MD calculations, the output interval is controlled by [out_interval](#out_interval).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+- **Default**: False
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on),  wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on), and density matrix of localized orbitals (if [out_dm](#out_dm) is turned on). If set to 0, ABACUS will output them only when converged in SCF or electronic iters reach its maximum. Used for the restart of SCF.
+- **Description**: The output frequency of the charge density (controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)), and density matrix of localized orbitals (controlled by [out_dm](#out_dm)). 
+  - \>0: Output them every `out_freq_elec` iteration numbers in electronic iterations.
+  - 0: Output them when the electronic iteration is converged or reaches the maximal iteration number.
 - **Default**: 0
-
-### out_freq_ion
-
-- **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of ionic steps to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when ionic steps reach its maximum step. Used for the restart of MD or Relax.
-- **Default**: 0
-
-> Note : out_freq_ion is currently useless.
 
 ### out_chg
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: x is the outer loop, then y and finally z (z is moving fastest).
-- **Default**: 0
+- **Description**: Whether to output the charge density on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as: 
+  - npsin = 1: SPIN1_CHG.cube;
+  - npsin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
+  - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
+
+  The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+- **Default**: False
 
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot.cube. Our toolset includes a Python script located at `tools/average_pot/aveElecStatPot.py` that calculates the average electrostatic potential along the z-axis and outputs it to ElecStaticPot_AVE.
+- **Description**: 
+  - 1: Output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
+    - npsin = 1: SPIN1_POT.cube;
+    - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
+    - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
+  - 2: Output the electrostatic potential on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 - **Default**: 0
 
 ### out_dm
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the density matrix of localized orbitals, only useful for localized orbitals set. The name of the output file is SPIN1_DM and SPIN2_DM in the output directory.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (gamma-only algorithm)
+- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
+  - npsin = 1: SPIN1_DM;
+  - npsin = 2: SPIN1_DM, and SPIN2_DM.
+- **Default**: False
 
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs the coefficients of wave functions into text files. The file names are WAVEFUNC$K$.txt, where $K$ is the index of k point. When set this variable to 2, results are stored in binary files. The file names are WAVEFUNC$K$.dat.
+- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Description**: 
+  - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points. 
+  - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
 - **Default**: 0
 
 ### out_wfc_r
 
 - **Type**: Boolean
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace$K$B, where $K is the index of k point, $B is the index of band.
-- **Default**: 0
+- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
+- **Default**: False
 
 ### out_wfc_lcao
 
 - **Type**: Boolean
-- **Description**: **Only used in localized orbitals set**. If set to 1, ABACUS will output the wave functions coefficients. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as:
+  - gamma-only: `LOWF_GAMMA_S1.dat`;
+  - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
+
+  The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
+- **Default**: Flase
 
 ### out_dos
 
-- **Type**: Integer
-- **Description**: Controls whether to output the density of state (DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For more information, refer to the [worked example](../elec_properties/dos.md).
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
+- **Default**: False
 
 ### out_band
 
 - **Type**: Boolean
-- **Description**: Controls whether to output the band structure. For more information, refer to the [worked example](../elec_properties/band.md)
-- **Default**: 0
+- **Description**: Whether to output the band structure. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Default**: False
 
 ### out_proj_band
 
 - **Type**: Boolean
-- **Description**: Controls whether to output the projected band structure. For more information, refer to the [worked example](../elec_properties/band.md)
-- **Default**: 0
+- **Description**: Whether to output the projected band structure. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Default**: False
 
 ### out_stru
 
 - **Type**: Boolean
-- **Description**: If set to 1, then the structure files will be written after each ion step
-- **Default**: 0
+- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
+- **Default**: False
 
 ### out_bandgap
 
 - **Type**: Boolean
-- **Description**: If set to 1, the bandgap will be printed out at each SCF step.
-- **Default**: 0
+- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
+  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
+  - [nupdown](#nupdown) = 0: `E_bandgap`
+- **Default**: False
 
 ### out_level
 
 - **Type**: String
-- **Description**: Controls the level of output. `ie` means write output at electron level; `i` means write additional output at ions level.
+- **Description**: Control the output level of information in `OUT.${suffix}/running_${calculation}.log`.
+  - ie: electronic iteration level, which prints useful information for electronic iterations;
+  - i: geometry relaxation level, which prints some information for geometry relaxations additionally;
+  - m: molecular dynamics level, which does not print some information for simplicity.
+
 - **Default**: ie
 
 ### out_alllog
 
 - **Type**: Boolean
-- **Description**: determines whether to write log from all ranks in an MPI run. If set to be 1, then each rank will write detained running information to a file named running_${calculation}\_(${rank}+1).log. If set to 0, log will only be written from rank 0 into a file named running_${calculation}.log.
-- **Default**: 0
+- **Description**: Whether to print information into individual logs from all ranks in an MPI run. 
+  - True: Information from each rank will be written into individual files named `OUT.${suffix}/running_${calculation}_${rank+1}.log`.
+  - False: Information will only be written from rank 0 into a file named `OUT.${suffix}/running_${calculation}.log`.
+- **Default**: False
 
 ### out_mat_hs
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs is set to 1, ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of files in the directory `OUT.${suffix}`. The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
-
-  For nspin = 1 and nspin = 4 calculations, there will be only one spin component, so `$k` runs from 0 up to $nkpoints - 1$. For nspin = 2, `$k` runs from $2*nkpoints - 1$. In the latter case, the files are arranged into blocks of up and down spins. For example, if there are 3 k points, then we have the following correspondence:
-
-  data-0-H : 1st k point, spin up
-  data-1-H : 2nd k point, spin up
-  data-2-H : 3rd k point, spin up
-  data-3-H : 1st k point, spin down
-  data-4-H : 2nd k point, spin down
-  data-5-H : 3rd k point, spin down
-
-  As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
-
-  The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
-
-  The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Default**: False
 
 ### out_mat_r
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
-
-  Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
-
-  ```
-  -5 -5 -5    //R (lattice vector)
-  ...
-  -5 -5 -4    //R (lattice vector)
-  ...
-  -5 -5 -3    //R (lattice vector)
-  ```
-
-  Each block here contains the matrix for the corresponding cell. There are three columns in each block, giving the matrix elements in x, y, z directions, respectively. There are altogether nbasis * nbasis lines in each block, which emulates the matrix elements.
-
-  In MD calculations, if [out_app_flag](#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, The output frequency is controlled by [out_interval](#out_interval). For example, if we are running a 10-step MD with out_interval = 3, then `$x` will be 0, 3, 6, and 9.
-
-  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print the matrix representation of the position matrix into a file named `data-rR-tr` in the directory `OUT.${suffix}`. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
+- **Default**: False
 
 ### out_mat_hs2
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$.
-
-  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain $H(R)$ for spin up and spin down, respectively.
-
-  As for molecular dynamics calculations, the format is controlled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag) in the same manner as the position matrix as detailed in [out_mat_r](#out_mat_r).
-
-  Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
-
-  The rest of the files are arranged in blocks. Each block starts with a line giving the lattice vector `R` and the number of nonzero matrix elements, such as:
-
-  ```
-  -3 1 1 1020
-  ```
-
-  which means there are 1020 nonzero elements in the (-3,1,1) cell.
-
-  If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
-
-  The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
-
-  - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
-  - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
-
-  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
+- **Default**: False
 
 ### out_mat_t
 
 - **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: 0
+- **Default**: False
 
 ### out_mat_dh
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False
 
 ### out_app_flag
 
 - **Type**: Boolean
-- **Description**: Whether output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during MD. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
 - **Default**: true
 
 ### out_interval
 
 - **Type**: Integer
-- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. Check input parameter [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info
 
 - **Type**: Boolean
-- **Description**: When set to 1, ABACUS will generate a new directory under OUT.suffix path named as element name such as 'Si', which contained files "Si-d1-orbital-dru.dat  Si-p2-orbital-k.dat    Si-s2-orbital-dru.dat
-  Si-d1-orbital-k.dat    Si-p2-orbital-r.dat    Si-s2-orbital-k.dat
-  Si-d1-orbital-r.dat    Si-p2-orbital-ru.dat   Si-s2-orbital-r.dat
-  Si-d1-orbital-ru.dat   Si-p-proj-k.dat        Si-s2-orbital-ru.dat
-  Si.NONLOCAL            Si-p-proj-r.dat        Si-s-proj-k.dat
-  Si-p1-orbital-dru.dat  Si-p-proj-ru.dat       Si-s-proj-r.dat
-  Si-p1-orbital-k.dat    Si-s1-orbital-dru.dat  Si-s-proj-ru.dat
-  Si-p1-orbital-r.dat    Si-s1-orbital-k.dat    v_loc_g.dat
-  Si-p1-orbital-ru.dat   Si-s1-orbital-r.dat
-  Si-p2-orbital-dru.dat  Si-s1-orbital-ru.dat" for example.
-- **Default**: 0
+- **Description**: Whether to print element information into files in the directory `OUT.${suffix}/${element_label}`, including pseudopotential and orbital information of the element.
+- **Default**: False
 
 ### restart_save
 
 - **Type**: Boolean
-- **Description**: Only for LCAO, store charge density file and H matrix file every scf step for restart.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to save charge density files and Hamiltonian matrix files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
+  - auto: These files are saved in folder `OUT.${suffix}/restart/`;
+  - other: These files are saved in folder `${read_file_dir}/restart/`.
+- **Default**: False
 
 ### restart_load
 
 - **Type**: Boolean
-- **Description**: Only for LCAO, used for restart, only if that:
-  - set restart_save as true and do scf calculation before.
-  - please ensure the suffix is the same as calculation before and density file and H matrix file exist.
-    Restart from stored density file and H matrix file.
-- **Default**: 0
-
-### dft_plus_dmft
-
-- **Type**: Boolean
-- **Description**: Whether to generate output to be used in dmft. It seems this functionality is not working anymore.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file and Hamiltonian matrix file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file and Hamiltonian matrix file exist.
+- **Default**: False
 
 ### rpa
 
 - **Type**: Boolean
-- **Description**: Generate output files used in rpa calculation.
-- **Default**: 0
+- **Description**: Generate output files used in rpa calculations.
+- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1520,7 +1486,9 @@ Warning: this function is not robust enough for the current version. Please try 
 ### deepks_out_labels
 
 - **Type**: Boolean
-- **Description**: When set to 1, ABACUS will calculate and output descriptor for DeePKS training. In `LCAO` calculation, a path of *.orb file is needed to be specified under `NUMERICAL_DESCRIPTOR`in `STRU`file. For example:
+- **Availability**: numerical atomic orbital basis
+- **Description**: print energy and force labels and descriptors for DeePKS training
+- **Note**: In `LCAO` calculation, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
   ```
   NUMERICAL_ORBITAL
@@ -1530,66 +1498,81 @@ Warning: this function is not robust enough for the current version. Please try 
   NUMERICAL_DESCRIPTOR
   jle.orb
   ```
-- **Default**: 0
+- **Default**: False
 
 ### deepks_scf
 
 - **Type**: Boolean
-- **Description**: only when deepks is enabled in `LCAO` calculation can this variable set to 1. Then, a trained, traced model file is needed for self-consistent field iteration in DeePKS method.
-- **Default**: 0
+- **Availability**: numerical atomic orbital basis
+- **Description**: perform self-consistent field iteration in DeePKS method
+- **Note**: A trained, traced model file is needed.
+- **Default**: False
 
 ### deepks_model
 
 - **Type**: String
-- **Description**: the path of the trained, traced NN model file (generated by deepks-kit). used when deepks_scf is set to 1.
+- **Availability**: numerical atomic orbital basis and `deepks_scf` is true
+- **Description**: the path of the trained, traced neural network model file generated by [deepks-kit](https://github.com/deepmodeling/deepks-kit)
 - **Default**: None
 
 ### bessel_descriptor_lmax
 
 - **Type**: Integer
-- **Description**: the projectors used in DeePKS are bessel functions. To generate such projectors, set calculation type to `gen_bessel` and run ABACUS. The lmax of Bessel functions is specified using bessel_descriptor_lmax. See also [calculation](#calculation).
+- **Availability**: `gen_bessel` calculation
+- **Description**: the maximum angular momentum of the Bessel functions generated as the projectors in DeePKS
+- **NOte**: To generate such projectors, set calculation type to `gen_bessel` in ABACUS. See also [calculation](#calculation).
 - **Default**: 2
 
 ### bessel_descriptor_ecut
 
 - **Type**: Real
-- **Description**: energy cutoff of bessel functions. See also `bessel_descriptor_lmax`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: energy cutoff of Bessel functions
 - **Default**: same as ecutwfc
+- **Unit**: Ry
 
 ### bessel_descriptor_tolerence
 
 - **Type**: Real
-- **Description**: tolerance when searching for the zeros of bessel functions. See also `bessel_descriptor_lmax`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: tolerance for searching the zeros of Bessel functions
 - **Default**: 1.0e-12
 
 ### bessel_descriptor_rcut
 
 - **Type**: Real
-- **Description**: cutoff radius of bessel functions. See also `bessel_descriptor_lmax`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: cutoff radius of Bessel functions
 - **Default**: 6.0
+- **Unit**: Bohr
 
 ### bessel_descriptor_smooth
 
 - **Type**: Boolean
-- **Description**: whether the bessel functions smooth at radius cutoff. See also `bessel_descriptor_lmax`.
-- **Default**: 1
+- **Availability**: `gen_bessel` calculation
+- **Description**: smooth the Bessel functions at radius cutoff
+- **Default**: False
 
 ### bessel_descriptor_sigma
 
 - **Type**: Real
-- **Description**: energy range for smooth. See also `bessel_descriptor_smooth`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: smooth parameter at the cutoff radius of projectors
 - **Default**: 0.1
+- **Unit**: Bohr
 
 ### deepks_bandgap
 
 - **Type**: Boolean
-- **Description**: whether to include deepks bandgap correction.
+- **Availability**: numerical atomic orbital basis and `deepks_scf` is true
+- **Description**: include bandgap label for DeePKS training
 - **Default**: False
 
 ### deepks_out_unittest
 
 - **Type**: Boolean
-- **Description**: this is used to generate some files for constructing DeePKS unit test. Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
+- **Description**: generate files for constructing DeePKS unit test
+- **Note**: Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
 - **Default**: False
 
 [back to top](#full-list-of-input-keywords)
@@ -1822,41 +1805,50 @@ These variables are relevant to gate field (compensating charge)
 
 ## Exact Exchange
 
-These variables are relevant when using hybrid functionals
+These variables are relevant when using hybrid functionals.
+
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
 
 ### exx_hybrid_alpha
 
 - **Type**: Real
 - **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
-- **Default**: 1 if dft_functional==hf else 0.25
+- **Default**: 
+  - 1: if *[dft_functional](#dft_functional)==hf*
+  - 0.25: else
 
 ### exx_hse_omega
 
 - **Type**: Real
-- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$.
+- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
 - **Default**: 0.11
 
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
-- **Default**: 1
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. 
+  - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
+  - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
+- **Default**: True
 
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Description**: This variable indicates the maximal electronic iteration number in the evaluation of Fock exchange.
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Description**: mixing_beta for outer-loop when exx_separate_loop=1
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
 ### exx_lambda
 
 - **Type**: Real
+- **Availability**: *[basis_type](#basis_type)==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using *lcao_in_pw* method.
 - **Default**: 0.3
 
@@ -1930,294 +1922,327 @@ These variables are relevant when using hybrid functionals
 
 - **Type**: Real
 - **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
-- **Default**: 1.5 if dft_functional==hse else 5
+- **Default**: 
+  - 1.5: if *[dft_functional](#dft_functional)==hse*
+  - 5: else
 
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. `order` is where atom pairs are simply distributed by their orders. `hmeans` is a distribution where the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. `kmeans1` and `kmeans2` are two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+  - `order`: Atom pairs are simply distributed by their orders. 
+  - `hmeans`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
+  - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
 ### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. The radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. exx_opt_orb_lmax gives the maximum l of the spherical Bessel functions. A reasonable choice is 2.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 ### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. A plane wave basis is used to optimize the radial ABFs. This parameter thus gives the cut-off of plane wave expansion, in Ry. A reasonable choice is 60.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
+- **Unit**: Ry
 
 ### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
 ### exx_real_number
 
 - **Type**: Boolean
-- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
-- **Default**: 1 if gamma_only else 0
+- **Description**: 
+  - True: Enforce LIBRI to use `double` data type.
+  - False: Enforce LIBRI to use `complex` data type.
+- **Default**: depends on the [gamma_only](#gamma_only) option
+  - True: if gamma_only 
+  - False: else 
 
 [back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics
 
-These variables are used to control the molecular dynamics calculations.
+These variables are used to control molecular dynamics calculations. For more information, please refer to [md.md](../md.md#molecular-dynamics) in detail.
 
 ### md_type
 
 - **Type**: String
-- **Description**: control the algorithm to integrate the equation of motion for md.
+- **Description**: Control the algorithm to integrate the equation of motion for molecular dynamics (MD), see [md.md](../md.md#molecular-dynamics) in detail.
 
-  - fire: a MD-based relaxation algorithm, named `fast inertial relaxation engine`, see details in [md.md](../md.md#fire).
+  - fire: a MD-based relaxation algorithm, named fast inertial relaxation engine.
   - nve: NVE ensemble with velocity Verlet algorithm.
   - nvt: NVT ensemble, see [md_thermostat](#md_thermostat) in detail.
   - npt: Nose-Hoover style NPT ensemble, see [md_pmode](#md_pmode) in detail.
-  - langevin: NVT ensemble with Langevin thermostat.
-  - msst: MSST method.
+  - langevin: NVT ensemble with Langevin thermostat, see [md_damp](#md_damp) in detail.
+  - msst: MSST method, see [msst_direction](#msst_direction), [msst_vel](#msst_vel), [msst_qmass](#msst_qmass), [msst_vis](#msst_vis), [msst_tscale](#msst_tscale) in detail.
 
 - **Default**: nvt
-
-### md_thermostat
-
-- **Type**: String
-- **Description**: specify the temperature control method used in NVT ensemble.
-
-  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
-  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
-  - berendsen: Berendsen thermostat, see the parameter [md_nraise](#md_nraise) in detail.
-  - rescaling: velocity Rescaling method 1, see the parameter [md_tolerance](#md_tolerance) in detail.
-  - rescale_v: velocity Rescaling method 2, see the parameter [md_nraise](#md_nraise) in detail.
-
-- **Default**: nhc
 
 ### md_nstep
 
 - **Type**: Integer
-- **Description**: the total number of md steps.
+- **Description**: The total number of molecular dynamics steps.
 - **Default**: 10
-
-### md_restart
-
-- **Type**: Boolean
-- **Description**: Control whether restart md. ABACUS read in `Restart_md.dat` to determine the current md step, then read in the corresponding `STRU_MD_$step` in the folder `OUT.$suffix/STRU/` automatically.
-  - true: ABACUS will calculate md normally.
-  - false: ABACUS will calculate md from the last step in your previous md calculation.
-- **Default**: false
 
 ### md_dt
 
 - **Type**: Real
-- **Description**: This is the time step(fs) used in md simulation.
+- **Description**: The time step used in molecular dynamics calculations.
 - **Default**: 1.0
+- **Unit**: fs
+
+### md_thermostat
+
+- **Type**: String
+- **Description**: Specify the temperature control method used in NVT ensemble.
+
+  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
+  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
+  - berendsen: Berendsen thermostat, see [md_nraise](#md_nraise) in detail.
+  - rescaling: velocity Rescaling method 1, see [md_tolerance](#md_tolerance) in detail.
+  - rescale_v: velocity Rescaling method 2, see [md_nraise](#md_nraise) in detail.
+
+- **Default**: nhc
 
 ### md_tfirst, md_tlast
 
 - **Type**: Real
-- **Description**: This is the temperature (K) used in md simulation. The default value of md_tlast is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
+- **Description**: The temperature used in molecular dynamics calculations. 
+
+  Note that `md_tlast` is only used in NVT simulations. The default value of `md_tlast` is `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
 - **Default**: No default
+- **Unit**: K
 
-### md_dumpfreq
+### md_restart
 
-- **Type**: Integer
-- **Description**: This is the frequency to dump md information.
-- **Default**: 1
+- **Type**: Boolean
+- **Description**: Control whether to restart molecular dynamics calculations. 
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically.
+  - False: ABACUS will start molecular dynamics calculations normally from the first step.
+- **Default**: False
 
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: This is the frequency to output restart information.
+- **Description**: The output frequency of `OUT.${suffix}/Restart_md.dat` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
 - **Default**: 5
 
-### md_seed
+### md_dumpfreq
 
 - **Type**: Integer
-- **Description**:
-  - md_seed < 0: No srand() in MD initialization.
-  - md_seed >= 0: srand(md_seed) in MD initialization.
-- **Default**: -1
-
-### md_prec_level
-
-- **Type**: Integer
-- **Description**: Determine the precision level of vc-md.
-
-  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
-  - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
-
-  > Note: this parameter is only used in variable-cell MD!
-  >
-- **Default**: 0
-
-### ref_cell_factor
-
-- **Type**: Real
-- **Description**: 
-  Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
-- **Default**: 1.0
-
-### md_tfreq
-
-- **Type**: Real
-- **Description**: control the frequency of the temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
-- **Default**: 1/40/md_dt
-  > Note: It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
-
-### md_tchain
-
-- **Type**: Integer
-- **Description**: number of thermostats coupled with the particles in the Nose Hoover Chain method.
-- **Default**: 1
-
-### md_pmode
-
-- **Type**: String
-- **Description**: specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
-  - iso: isotropic cell fluctuations.
-  - aniso: anisotropic cell fluctuations.
-  - tri: non-orthogonal (triclinic) simulation box.
-- **Default**: iso
-- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
-
-### md_pcouple
-
-- **Type**: String
-- **Description**: the coupled lattice vectors will scale proportionally.
-  - none: three lattice vectors scale independently.
-  - xyz: lattice vectors x, y, and z scale proportionally.
-  - xy: lattice vectors x and y scale proportionally.
-  - xz: lattice vectors x and z scale proportionally.
-  - yz: lattice vectors y and z scale proportionally.
-- **Default**: none
-
-### md_pfirst, md_plast
-
-- **Type**: Real
-- **Description**: This is the target pressure (KBar) used in npt ensemble simulation, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
-- **Default**: No default
-
-### md_pfreq
-
-- **Type**: Real
-- **Description**: control the frequency of the pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
-- **Default**: 1/400/md_dt
-
-### md_pchain
-
-- **Type**: Integer
-- **Description**: number of thermostats coupled with the barostat in the Nose Hoover Chain method.
+- **Description**: The output frequency of `OUT.${suffix}/MD_dump` in molecular dynamics calculations, which including the information of lattices and atoms.
 - **Default**: 1
 
 ### dump_force
 
 - **Type**: Boolean
-- **Description**: Output atomic forces into the file `MD_dump` or not. If `true`, forces will be written, otherwise forces will not be written.
-- **Default**: false
+- **Description**: Whether to output atomic forces into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
 
 ### dump_vel
 
 - **Type**: Boolean
-- **Description**: Output atomic velocities into the file `MD_dump` or not. If `true`, velocities will be written, otherwise velocities will not be written.
-- **Default**: false
+- **Description**: Whether to output atomic velocities into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
 
 ### dump_virial
 
 - **Type**: Boolean
-- **Description**: Output lattice virial into the file `MD_dump` or not. If `true`, lattice virial will be written, otherwise lattice virial will not be written.
-- **Default**: false
+- **Description**: Whether to output lattice virials into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
+### md_seed
+
+- **Type**: Integer
+- **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
+  - \< 0: No srand() function is called.
+  - \>= 0: The function srand(md_seed) is called.
+- **Default**: -1
+
+### md_tfreq
+
+- **Type**: Real
+- **Description**: Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
+
+  Note: It is a system-dependent empirical parameter, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice might lead to the failure of jobs.
+
+- **Default**: 1/40/md_dt
+- **Unit**: $\mathrm{fs^{-1}}$
+
+### md_tchain
+
+- **Type**: Integer
+- **Description**: Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+- **Default**: 1
+
+### md_pmode
+
+- **Type**: String
+- **Description**: Specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - iso: The three diagonal elements of the lattice are fluctuated isotropically. 
+  - aniso: The three diagonal elements of the lattice are fluctuated anisotropically.
+  - tri: The lattice must be a lower-triangular matrix, and all six freedoms are fluctuated.
+- **Default**: iso
+- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
+
+### md_prec_level
+
+- **Type**: Integer
+- **Availability**: Plane wave basis
+- **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
+  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
+  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
+
+    Currently, the option is useful only in isotropic NPT simulations.
+  - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+
+- **Default**: 0
+
+### ref_cell_factor
+
+- **Type**: Real
+- **Description**: Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Default**: 1.0
+
+### md_pcouple
+
+- **Type**: String
+- **Description**: The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - none: Three lattice vectors scale independently.
+  - xyz: Lattice vectors x, y, and z scale proportionally.
+  - xy: Lattice vectors x and y scale proportionally.
+  - xz: Lattice vectors x and z scale proportionally.
+  - yz: Lattice vectors y and z scale proportionally.
+- **Default**: none
+
+### md_pfirst, md_plast
+
+- **Type**: Real
+- **Description**: The target pressure used in NPT ensemble simulations, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
+- **Default**: No default
+- **Unit**: kbar
+
+### md_pfreq
+
+- **Type**: Real
+- **Description**: The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+
+  Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.
+- **Default**: 1/400/md_dt
+- **Unit**: $\mathrm{kbar^{-1}}$
+
+### md_pchain
+
+- **Type**: Integer
+- **Description**: The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+- **Default**: 1
 
 ### lj_rcut
 
 - **Type**: Real
-- **Description**: Cut-off radius for Leonard Jones potential (angstrom).
+- **Description**: Cut-off radius for Leonard Jones potential.
 - **Default**: 8.5 (for He)
+- **Unit**: Angstrom
 
 ### lj_epsilon
 
 - **Type**: Real
-- **Description**: The value of epsilon for Leonard Jones potential (eV).
+- **Description**: The value of epsilon for Leonard Jones potential.
 - **Default**: 0.01032 (for He)
+- **Unit**: eV
 
 ### lj_sigma
 
 - **Type**: Real
-- **Description**: The value of sigma for Leonard Jones potential (angstrom).
+- **Description**: The value of sigma for Leonard Jones potential.
 - **Default**: 3.405 (for He)
+- **Unit**: Angstrom
 
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of potential files for CMD such as DP.
+- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### msst_direction
 
 - **Type**: Integer
-- **Description**: the direction of shock wave for MSST.
-- **Default**: 2 (z direction)
+- **Description**: The direction of the shock wave in the MSST method.
+  - 0: x direction
+  - 1: y direction
+  - 2: z direction
+- **Default**: 2
 
 ### msst_vel
 
 - **Type**: Real
-- **Description**: the velocity of shock wave (Angstrom/fs) for MSST.
+- **Description**: The velocity of the shock wave in the MSST method.
 - **Default**: 0.0
+- **Unit**: Angstrom/fs
 
 ### msst_vis
 
 - **Type**: Real
-- **Description**: artificial viscosity (mass/length/time) for MSST.
+- **Description**: Artificial viscosity in the MSST method.
 - **Default**: 0.0
+- **Unit**: g/(mol\*Angstrom\*fs)
 
 ### msst_tscale
 
 - **Type**: Real
-- **Description**: reduction in initial temperature (0~1) used to compress volume in MSST.
+- **Description**: The reduction percentage of the initial temperature used to compress volume in the MSST method.
 - **Default**: 0.01
 
 ### msst_qmass
 
 - **Type**: Real
-- **Description**: Inertia of extended system variable. Used only when md_type is msst, you should set a number that is larger than 0. Note that Qmass of NHC is set by md_tfreq.
+- **Description**: Inertia of the extended system variable. You should set a number larger than 0.
 - **Default**: No default
+- **Unit**: $\mathrm{g^{2}/(mol^{2}*Angstrom^{4})}$
 
 ### md_damp
 
 - **Type**: Real
-- **Description**: damping parameter (fs) used to add force in Langevin method.
+- **Description**: The damping parameter used to add fictitious force in the Langevin method.
 - **Default**: 1.0
+- **Unit**: fs
 
 ### md_tolerance
 
 - **Type**: Real
-- **Description**: Tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance` (Kelvin).
+- **Description**: Thr temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance`.
 - **Default**: 100.0
+- **Unit**: K
 
 ### md_nraise
 
 - **Type**: Integer
 - **Description**:
-  - Anderson: the "collision frequency" parameter is given as 1/`md_nraise`;
-  - Berendsen: the "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`;
-  - Rescale_v: every `md_nraise` steps the current temperature is rescaled to the target temperature;
+  - Anderson: The "collision frequency" parameter is given as 1/`md_nraise`.
+  - Berendsen: The "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`.
+  - Rescale_v: Every `md_nraise` steps the current temperature is rescaled to the target temperature.
 - **Default**: 1
 
 ### cal_syns
 
 - **Type**: Boolean
-- **Description**:
-  If set to 1, asynchronous overlap matrix is calculated for Hefei-NAMD.
-- **Default**: 0
+- **Description**: Whether the asynchronous overlap matrix is calculated for Hefei-NAMD.
+- **Default**: False
 
 ### dmax
 
 - **Type**: Real
-- **Description**: The maximum displacement of all atoms in one step (bohr). This parameter is useful when cal_syns = 1 .
+- **Description**: The maximum displacement of all atoms in one step. This parameter is useful when [cal_syns](#cal_syns) = True.
 - **Default**: 0.01
+- **Unit**: bohr
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2929,38 +2954,39 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 
 ## Implicit solvation model
 
-These variables are used to control the usage of implicit solvation model. This approach treats the solvent as a continuous medium instead of individual “explicit” solvent molecules, which means that the solute embedded in an implicit solvent and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath.
+These variables are used to control the usage of implicit solvation model. This approach treats the solvent as a continuous medium instead of individual "explicit" solvent molecules, which means that the solute is embedded in an implicit solvent and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath.
 
 ### imp_sol
 
 - **Type**: Boolean
-- **Description**: If set to 1, an implicit solvation correction is considered.
-- **Default**: 0
+- **Description**: calculate implicit solvation correction
+- **Default**: False
 
 ### eb_k
 
 - **Type**: Real
-- **Description**: The relative permittivity of the bulk solvent, 80 for water. Used only if `imp_sol` == true.
+- **Availability**: `imp_sol` is true.
+- **Description**: the relative permittivity of the bulk solvent, 80 for water
 - **Default**: 80
 
 ### tau
 
 - **Type**: Real
-- **Description**: The effective surface tension parameter, which describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent that are not captured by the electrostatic terms. The unit is $Ry/Bohr^{2}$.
+- **Description**: The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
 - **Default**: 1.0798e-05
+- **Unit**: $Ry/Bohr^{2}$
 
 ### sigma_k
 
 - **Type**: Real
-- **Description**: We assume a diffuse cavity that is implicitly determined by the electronic structure of the solute.
-  `sigma_k` is the parameter that describes the width of the diffuse cavity.
+- **Description**: the width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
 - **Default**: 0.6
 
 ### nc_k
 
 - **Type**: Real
-- **Description**: It determines at what value of the electron density the dielectric cavity forms.
-  The unit is $Bohr^{-3}$.
+- **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
+- **Unit**: $Bohr^{-3}$
 
 [back to top](#full-list-of-input-keywords)

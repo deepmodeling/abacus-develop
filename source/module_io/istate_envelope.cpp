@@ -231,7 +231,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 psi->fix_k(ik);
 #ifdef __MPI
                 // need to deal with NSPIN=4 !!!!
-                lowf.wfc_2d_to_grid(0, psi->get_pointer(), lowf.wfc_k_grid[ik], ik, this->pes->ekb, this->pes->wg);
+                lowf.wfc_2d_to_grid(0, psi->get_pointer(), lowf.wfc_k_grid[ik], ik, this->pes->ekb, this->pes->wg, GlobalC::kv.kvec_c);
 #else
                 for (int i = 0;i < GlobalV::NBANDS;++i)
                 {

@@ -22,7 +22,9 @@ class OperatorDFTU<OperatorLCAO<T>> : public OperatorLCAO<T>
     OperatorDFTU<OperatorLCAO<T>>(
         LCAO_Matrix* LM_in,
         std::vector<double>* HR_pointer_in,
-        std::vector<T>* HK_pointer_in):HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
+        std::vector<T>* HK_pointer_in,
+        const std::vector<int>& isk_in)
+        :HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), isk(isk_in)
     {
         this->LM = LM_in;
         this->cal_type = lcao_dftu;
@@ -40,7 +42,7 @@ class OperatorDFTU<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     bool HR_fixed_done = false;
 
+    const std::vector<int>& isk;
 };
-
 }
 #endif

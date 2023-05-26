@@ -251,7 +251,9 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->UHM,
                        force,
                        this->scs,
-                       GlobalC::kv);
+                       GlobalC::kv,
+                       GlobalC::rhopw,
+                       &GlobalC::symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -497,7 +499,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho, GlobalC::rhopw->nrxx); // Calculate U and J if Yukawa potential is used
     }
 
 #ifdef __DEEPKS
@@ -586,9 +588,9 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::dftu.omc != 2)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
+                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, GlobalC::CHR_MIX.get_mixing_beta());
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv);
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv, GlobalC::CHR_MIX.get_mixing_beta());
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
@@ -1133,7 +1135,8 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
             hamilt::Operator<double>* exx
                 = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
                                                                         nullptr, // no explicit call yet
-                                                                        &(LM.Hloc));
+                                                                        &(LM.Hloc),
+                                                                        GlobalC::kv);
             p_hamilt->opsd->add(exx);
         }
         else
@@ -1141,7 +1144,8 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
             hamilt::Operator<std::complex<double>>* exx
                 = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&LM,
                                                                                       nullptr, // no explicit call yet
-                                                                                      &(LM.Hloc2));
+                                                                                      &(LM.Hloc2),
+                                                                                      GlobalC::kv);
             p_hamilt->ops->add(exx);
         }
     };

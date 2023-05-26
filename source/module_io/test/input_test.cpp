@@ -79,7 +79,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.ks_solver,"default");
         EXPECT_DOUBLE_EQ(INPUT.search_radius,-1.0);
         EXPECT_TRUE(INPUT.search_pbc);
-        EXPECT_EQ(INPUT.symmetry,0);
+        EXPECT_EQ(INPUT.symmetry,"default");
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.0);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
@@ -415,7 +415,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.ks_solver,"genelpa");
         EXPECT_DOUBLE_EQ(INPUT.search_radius,-1.0);
         EXPECT_TRUE(INPUT.search_pbc);
-        EXPECT_EQ(INPUT.symmetry,1);
+        EXPECT_EQ(INPUT.symmetry,"1");
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
         EXPECT_EQ(INPUT.cal_force, 0);
@@ -833,12 +833,14 @@ TEST_F(InputTest, Default_2)
 	//==================================================
 	// prepare default parameters for the 4th calling
 	INPUT.calculation = "istate";
+    INPUT.symmetry = "default";
 	// the 4th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"istate");
-	EXPECT_EQ(INPUT.relax_nmax,1);
-	EXPECT_EQ(INPUT.out_stru,0);
+    EXPECT_EQ(INPUT.relax_nmax, 1);
+    EXPECT_EQ(INPUT.out_stru, 0);
+    EXPECT_EQ(INPUT.symmetry, "0");
 	EXPECT_EQ(INPUT.out_band,0);
 	EXPECT_EQ(INPUT.out_proj_band,0);
 	EXPECT_EQ(INPUT.cal_force,0);
@@ -852,12 +854,14 @@ TEST_F(InputTest, Default_2)
 	//==================================================
 	// prepare default parameters for the 5th calling
 	INPUT.calculation = "ienvelope";
+    INPUT.symmetry = "default";
 	// the 5th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"ienvelope");
-	EXPECT_EQ(INPUT.relax_nmax,1);
-	EXPECT_EQ(INPUT.out_stru,0);
+    EXPECT_EQ(INPUT.relax_nmax, 1);
+    EXPECT_EQ(INPUT.symmetry, "0");
+    EXPECT_EQ(INPUT.out_stru, 0);
 	EXPECT_EQ(INPUT.out_band,0);
 	EXPECT_EQ(INPUT.out_proj_band,0);
 	EXPECT_EQ(INPUT.cal_force,0);
@@ -884,7 +888,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"md");
-	EXPECT_EQ(INPUT.symmetry,0);
+	EXPECT_EQ(INPUT.symmetry,"0");
 	EXPECT_EQ(INPUT.cal_force,1);
 	EXPECT_EQ(INPUT.mdp.md_nstep,50);
 	EXPECT_EQ(INPUT.out_level,"m");
@@ -994,12 +998,12 @@ TEST_F(InputTest, Check)
 	//
 	INPUT.calculation = "nscf";
 	INPUT.out_dos = 3;
-	INPUT.symmetry = 1;
+	INPUT.symmetry = "1";
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now."));
-	INPUT.symmetry = 0;
+	INPUT.symmetry = "0";
 	INPUT.out_dos = 0;
 	//
 	INPUT.calculation = "istate";
