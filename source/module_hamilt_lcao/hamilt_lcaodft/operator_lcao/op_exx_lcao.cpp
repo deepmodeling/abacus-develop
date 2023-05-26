@@ -1,3 +1,4 @@
+#ifdef __EXX
 #include "op_exx_lcao.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
@@ -23,7 +24,6 @@ void OperatorEXX<OperatorLCAO<T>>::contributeHR()
 template<>
 void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 {
-#ifdef __EXX
     // Peize Lin add 2016-12-03
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
@@ -42,13 +42,11 @@ void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 				*this->LM->Hexxc,
 				*this->LM);
     }
-#endif
 }
 
 template<>
 void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
-#ifdef __EXX
     // Peize Lin add 2016-12-03
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
     {
@@ -67,6 +65,6 @@ void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 				*this->LM->Hexxc,
 				*this->LM);
     }
-#endif
 }
 } // namespace hamilt
+#endif
