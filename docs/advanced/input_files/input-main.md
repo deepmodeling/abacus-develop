@@ -282,7 +282,7 @@
   - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
-    - [propagator](#propagator)
+    - [td\_propagator](#td_propagator)
     - [td\_vext](#td_vext)
     - [td\_vext\_dire](#td_vext_dire)
     - [td\_stype](#td_stype)
@@ -309,8 +309,8 @@
     - [td\_trigo\_amp](#td_trigo_amp)
     - [td\_heavi\_t0](#td_heavi_t0)
     - [td\_heavi\_amp](#td_heavi_amp)
-    - [out\_dipole](#out_dipole)
-    - [out\_efield](#out_efield)
+    - [td\_out\_dipole](#td_out_dipole)
+    - [td\_out\_efield](#td_out_efield)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
   - [Variables useful for debugging](#variables-useful-for-debugging)
@@ -2513,7 +2513,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   - \>=0: print the $E_{ij}\ (<\psi_i|H|\psi_j>$) elements which are larger than td_print_eij.
 - **Default**: -1
 
-### propagator
+### td_propagator
 
 - **Type**: Integer
 - **Description**:
@@ -2758,7 +2758,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   E = 0.0 , t>t0
 - **Default**: 2.74
 
-### out_dipole
+### td_out_dipole
 
 - **Type**: Boolean
 - **Description**:
@@ -2766,7 +2766,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   - False: do not output dipole.
 - **Default**: False
 
-### out_efield
+### td_out_efield
 
 - **Type**: Boolean
 - **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
