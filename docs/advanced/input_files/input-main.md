@@ -2141,7 +2141,7 @@ These variables are used to control DFT+U correlated parameters
 - **Type**: Integer
 - **Description**: Specifies which orbits need plus U correction for each atom type ($l_1,l_2,l_3,\ldots$ for atom type 1, 2, 3, respectively).
   - -1: The plus U correction will not be calculated for this atom.
-  - 1: For p electrons orbits need plus U correction.
+  - 1: For p-electron orbits, the plus U correction is needed.
   - 2: For d electrons orbits need plus U correction.
   - 3: For f electrons orbits need plus U correction.
 - **Default**: None
