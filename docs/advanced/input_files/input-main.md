@@ -2167,7 +2167,7 @@ These variables are used to control DFT+U correlated parameters
 
 - **Type**: Real
 - **Availability**: DFT+U with `yukawa_potential` = True.
-- **Description**: The screen length of Yukawa potential. If left to default, we will calculate the screen length as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
+- **Description**: The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
 - **Default**: Calculated on the fly.
 
 ### omc
