@@ -90,14 +90,13 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 		}
 	}
 
-	if(GlobalC::wf.init_wfc == "atomic" )
-	{
-		
-	}
-	else if(GlobalC::wf.init_wfc == "file")
-	{
-		int error;
-		std::cout << " Read in wave functions files: " << nkstot << std::endl;
+    if (INPUT.init_wfc == "atomic")
+    {
+    }
+    else if (INPUT.init_wfc == "file")
+    {
+        int error;
+        std::cout << " Read in wave functions files: " << nkstot << std::endl;
         if(psi == nullptr)
         {
             ModuleBase::WARNING_QUIT("allocate_k","psi should be allocated first!");
@@ -132,9 +131,9 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
                 ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In k-dependent wave function file, k point is not correct");
             }
         }
-	}
-	else
-	{
+    }
+    else
+    {
 		ModuleBase::WARNING_QUIT("Local_Orbital_wfc","check the parameter: init_wfc");
 	}
 
