@@ -712,8 +712,8 @@ calculations.
 - **Type**: String
 - **Description**: Choose the basis set.
   - **pw**: Using plane-wave basis set only.
-  - **lcao_in_pw**: Expand the localized atomic set in plane-wave basis.
   - **lcao**: Using localized atomic orbital sets.
+  - **lcao_in_pw**: (Unavailable currently, it will be fixed in future versions) Expand the localized atomic set in plane-wave basis.
 - **Default**: pw
 
 ### ks_solver
@@ -729,8 +729,8 @@ calculations.
   For atomic orbitals basis,
 
   - **genelpa**: This method should be used if you choose localized orbitals.
-  - **scalapack-gvx**: scalapack can also be used for localized orbitals.
-  - **cusolver**: this method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **scalapack-gvx**: Scalapack can also be used for localized orbitals.
+  - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
