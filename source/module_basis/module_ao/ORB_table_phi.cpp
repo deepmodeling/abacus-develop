@@ -170,6 +170,21 @@ void ORB_table_phi::cal_ST_Phi12_R
 			{
 				k1_dot_k2[ik] = n1.getPsi_k2(ik) * n2.getPsi_k2(ik);
 			}
+			
+			int tddft = 0;
+			int vext_time_domain = 0;
+			double A_t = 1.0;
+			if (tddft == 1)
+			{
+				if (vext_time_domain == 1)
+				{
+					for (int ik = 0; ik < kmesh; ik++)
+					{
+						k1_dot_k2[ik] = n1.getPsi_k2(ik) * n2.getPsi_k2(ik) + A_t * sqrt(n1.getPsi_k2(ik) * n2.getPsi_k2(ik));
+					}
+				}
+			}
+				
 			break;
 	}
 

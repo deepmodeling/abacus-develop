@@ -198,6 +198,30 @@ double H_TDDFT_pw::cal_v_space_length_potential(double i)
 
 void H_TDDFT_pw::cal_v_space_velocity(std::vector<double> &vext_space, int direc)
 {
+	ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_velocity");
+    ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_velocity");
+	
+	//Some parameters and some need input by users;
+	// This part is for initial test
+	double E0 = 1.0;	//E0 is Amplitude of electric field;
+	double omega = 10;	//Unit eV;
+	double E_t;
+	double A_t = 0.0;
+	double dt = 0.05;	//Unit fs;
+	double S = 1.0;
+	double A2S;
+	double time_cut = 100;
+	
+	//Calculate vector potential A(t);
+	for (int time=0; time <= time_cut; time++)
+	{
+		E_t = E0*cos(omega/27.2114*time);
+		A_t += -1.0*E_t*dt;	
+	}
+	
+	//Calculate one of them A(t)^2*S;
+	A2S = A_t*A_t*S;
+	
     return;
 }
 
