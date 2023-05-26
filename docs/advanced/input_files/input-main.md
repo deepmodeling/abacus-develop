@@ -2160,7 +2160,7 @@ These variables are used to control DFT+U correlated parameters
 - **Type**: Boolean
 - **Description**: whether to use the local screen Coulomb potential method to calculate the values of U and J.
   - True: hubbard_u does not need to be specified.
-  - False: hubbard_u does need to be specified.
+  - False: `hubbard_u` does need to be specified.
 - **Default**: False
 
 ### yukawa_lambda
