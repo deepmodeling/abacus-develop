@@ -50,14 +50,14 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exx_lri_double = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
-        this->exd = new Exx_LRI_Interface<double>(this->exx_lri_double);
+        this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
+        this->exd = std::make_shared<Exx_LRI_Interface<double>>(this->exx_lri_double);
         this->LM.Hexxd = &this->exd->get_Hexxs();
     }
     else
     {
-        this->exx_lri_complex = new Exx_LRI <std::complex<double>>(GlobalC::exx_info.info_ri);
-        this->exc = new Exx_LRI_Interface<std::complex<double>>(this->exx_lri_complex);
+        this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
+        this->exc = std::make_shared<Exx_LRI_Interface<std::complex<double>>>(this->exx_lri_complex);
         this->LM.Hexxc = &this->exc->get_Hexxs();
     }
 #endif
@@ -65,19 +65,6 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
     this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
-#ifdef __EXX
-    if (GlobalC::exx_info.info_ri.real_number)
-    {
-        delete this->exd;
-        delete this->exx_lri_double;
-    }
-    else
-    {
-        delete this->exc;
-        delete this->exx_lri_complex;
-    }
-        
-#endif
 }
 
 void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)

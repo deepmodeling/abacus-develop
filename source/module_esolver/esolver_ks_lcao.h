@@ -64,10 +64,10 @@ namespace ModuleESolver
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
 #ifdef __EXX
-        Exx_LRI_Interface<double>* exd = nullptr;
-        Exx_LRI_Interface<std::complex<double>>* exc = nullptr;
-        Exx_LRI<double>* exx_lri_double = nullptr; // Peize Lin add 2022-08-06
-        Exx_LRI<std::complex<double>>* exx_lri_complex = nullptr; // Peize Lin add 2022-08-06
+        std::shared_ptr<Exx_LRI_Interface<double>> exd = nullptr;
+        std::shared_ptr<Exx_LRI_Interface<std::complex<double>>> exc = nullptr;
+        std::shared_ptr<Exx_LRI<double>> exx_lri_double = nullptr;
+        std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
 #endif
     };
 

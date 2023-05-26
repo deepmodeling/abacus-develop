@@ -4,6 +4,7 @@
 
 class Local_Orbital_Charge;
 class LCAO_Matrix;
+class Charge_Mixing;
 namespace elecstate
 {
 class ElecState;
@@ -15,7 +16,7 @@ class Exx_LRI_Interface
 public:
     /// @brief  Constructor for Exx_LRI_Interface
     /// @param exx_lri
-    Exx_LRI_Interface(Exx_LRI<Tdata>* exx_lri) : exx_lri(exx_lri) {}
+    Exx_LRI_Interface(std::shared_ptr<Exx_LRI<Tdata>> exx_lri) : exx_lri(exx_lri) {}
     Exx_LRI_Interface() = delete;
 
     void write_Hexxs(const std::string &file_name) const;
@@ -28,7 +29,7 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const K_Vectors& kv);
+    void exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter);
@@ -45,6 +46,6 @@ public:
         int& iter);
     
 private:
-    Exx_LRI<Tdata>* exx_lri;
+    std::shared_ptr<Exx_LRI<Tdata>> exx_lri;
 };
 #include "Exx_LRI_interface.hpp"

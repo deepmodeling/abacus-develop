@@ -309,9 +309,9 @@ namespace ModuleESolver
 //Peize Lin add 2016-12-03
 #ifdef __EXX
         if (GlobalC::exx_info.info_ri.real_number)
-            this->exd->exx_beforescf(kv);
+            this->exd->exx_beforescf(kv, *this->p_chgmix);
         else
-            this->exc->exx_beforescf(kv);
+            this->exc->exx_beforescf(kv, *this->p_chgmix);
 #endif // __EXX
         // 1. calculate ewald energy.
         // mohan update 2021-02-25

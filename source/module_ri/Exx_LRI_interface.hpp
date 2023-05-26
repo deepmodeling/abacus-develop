@@ -26,7 +26,7 @@ void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
 template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv)
+void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
 {
 #ifdef __MPI
 		if ( GlobalC::exx_info.info_global.cal_exx )
@@ -66,13 +66,13 @@ void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv)
 			}
 			else
 			{
-				if(GlobalC::CHR_MIX.get_mixing_mode() == "plain")
+				if(chgmix.get_mixing_mode() == "plain")
 					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
-				else if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
+				else if(chgmix.get_mixing_mode() == "pulay")
 					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
 				else
 					throw std::invalid_argument(
-						"mixing_mode = " + GlobalC::CHR_MIX.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
+						"mixing_mode = " + chgmix.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
 						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
             }
         }

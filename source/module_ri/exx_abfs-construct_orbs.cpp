@@ -7,6 +7,7 @@
 
 #include "module_ri/test_code/exx_abfs-construct_orbs-test.h"		// Peize Lin test
 #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"   //for ucell
 
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::change_orbs(
 	const LCAO_Orbitals &orbs_in,
