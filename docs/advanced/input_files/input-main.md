@@ -2151,7 +2151,7 @@ These variables are used to control DFT+U correlated parameters
 - **Type**: Real
 - **Description**: Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
-> Note : Since we only implemented the simplified scheme by Duradev, the 'U' here is actually Ueff which is given by hubbard U minus hund J.
+> Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
 
 - **Default**: 0.0
 
