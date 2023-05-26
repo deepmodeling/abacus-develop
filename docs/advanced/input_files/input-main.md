@@ -1,346 +1,343 @@
 # Full List of INPUT Keywords
 
 - [Full List of INPUT Keywords](#full-list-of-input-keywords)
-	- [System variables](#system-variables)
-		- [suffix](#suffix)
-		- [ntype](#ntype)
-		- [calculation](#calculation)
-		- [esolver\_type](#esolver_type)
-		- [symmetry](#symmetry)
-		- [symmetry\_prec](#symmetry_prec)
-		- [kpar](#kpar)
-		- [bndpar](#bndpar)
-		- [latname](#latname)
-		- [init\_wfc](#init_wfc)
-		- [init\_chg](#init_chg)
-		- [init\_vel](#init_vel)
-		- [nelec](#nelec)
-		- [nupdown](#nupdown)
-		- [dft\_functional](#dft_functional)
-		- [xc\_temperature](#xc_temperature)
-		- [pseudo\_rcut](#pseudo_rcut)
-		- [pseudo\_mesh](#pseudo_mesh)
-		- [mem\_saver](#mem_saver)
-		- [diago\_proc](#diago_proc)
-		- [nbspline](#nbspline)
-		- [kspacing](#kspacing)
-		- [min\_dist\_coef](#min_dist_coef)
-		- [device](#device)
-	- [Variables related to input files](#variables-related-to-input-files)
-		- [stru\_file](#stru_file)
-		- [kpoint\_file](#kpoint_file)
-		- [pseudo\_dir](#pseudo_dir)
-		- [orbital\_dir](#orbital_dir)
-		- [read\_file\_dir](#read_file_dir)
-		- [wannier\_card](#wannier_card)
-	- [Plane wave related variables](#plane-wave-related-variables)
-		- [ecutwfc](#ecutwfc)
-		- [nx, ny, nz](#nx-ny-nz)
-		- [pw\_seed](#pw_seed)
-		- [pw\_diag\_thr](#pw_diag_thr)
-		- [pw\_diag\_nmax](#pw_diag_nmax)
-		- [pw\_diag\_ndim](#pw_diag_ndim)
-	- [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-		- [nb2d](#nb2d)
-		- [lmaxmax](#lmaxmax)
-		- [lcao\_ecut](#lcao_ecut)
-		- [lcao\_dk](#lcao_dk)
-		- [lcao\_dr](#lcao_dr)
-		- [lcao\_rmax](#lcao_rmax)
-		- [search\_radius](#search_radius)
-		- [search\_pbc](#search_pbc)
-		- [bx, by, bz](#bx-by-bz)
-	- [Electronic structure](#electronic-structure)
-		- [basis\_type](#basis_type)
-		- [ks\_solver](#ks_solver)
-		- [nbands](#nbands)
-		- [nbands\_istate](#nbands_istate)
-		- [nspin](#nspin)
-		- [smearing\_method](#smearing_method)
-		- [smearing\_sigma](#smearing_sigma)
-		- [smearing\_sigma\_temp](#smearing_sigma_temp)
-		- [mixing\_type](#mixing_type)
-		- [mixing\_beta](#mixing_beta)
-		- [mixing\_ndim](#mixing_ndim)
-		- [mixing\_gg0](#mixing_gg0)
-		- [mixing\_tau](#mixing_tau)
-		- [mixing\_dftu](#mixing_dftu)
-		- [gamma\_only](#gamma_only)
-		- [printe](#printe)
-		- [scf\_nmax](#scf_nmax)
-		- [scf\_thr](#scf_thr)
-		- [scf\_thr\_type](#scf_thr_type)
-		- [chg\_extrap](#chg_extrap)
-		- [lspinorb](#lspinorb)
-		- [noncolin](#noncolin)
-		- [soc\_lambda](#soc_lambda)
-	- [Electronic structure (SDFT)](#electronic-structure-sdft)
-		- [method\_sto](#method_sto)
-		- [nbands\_sto](#nbands_sto)
-		- [nche\_sto](#nche_sto)
-		- [emin\_sto](#emin_sto)
-		- [emax\_sto](#emax_sto)
-		- [seed\_sto](#seed_sto)
-		- [initsto\_freq](#initsto_freq)
-		- [npart\_sto](#npart_sto)
-	- [Geometry relaxation](#geometry-relaxation)
-		- [relax\_method](#relax_method)
-		- [relax\_new](#relax_new)
-		- [relax\_scale\_force](#relax_scale_force)
-		- [relax\_nmax](#relax_nmax)
-		- [relax\_cg\_thr](#relax_cg_thr)
-		- [cal\_force](#cal_force)
-		- [force\_thr](#force_thr)
-		- [force\_thr\_ev](#force_thr_ev)
-		- [force\_thr\_ev2](#force_thr_ev2)
-		- [relax\_bfgs\_w1](#relax_bfgs_w1)
-		- [relax\_bfgs\_w2](#relax_bfgs_w2)
-		- [relax\_bfgs\_rmax](#relax_bfgs_rmax)
-		- [relax\_bfgs\_rmin](#relax_bfgs_rmin)
-		- [relax\_bfgs\_init](#relax_bfgs_init)
-		- [cal\_stress](#cal_stress)
-		- [stress\_thr](#stress_thr)
-		- [press1, press2, press3](#press1-press2-press3)
-		- [fixed\_axes](#fixed_axes)
-		- [fixed\_ibrav](#fixed_ibrav)
-		- [fixed\_atoms](#fixed_atoms)
-		- [cell\_factor](#cell_factor)
-	- [Variables related to output information](#variables-related-to-output-information)
-		- [out\_mul](#out_mul)
-		- [out\_freq\_elec](#out_freq_elec)
-		- [out\_freq\_ion](#out_freq_ion)
-		- [out\_chg](#out_chg)
-		- [out\_pot](#out_pot)
-		- [out\_dm](#out_dm)
-		- [out\_wfc\_pw](#out_wfc_pw)
-		- [out\_wfc\_r](#out_wfc_r)
-		- [out\_wfc\_lcao](#out_wfc_lcao)
-		- [out\_dos](#out_dos)
-		- [out\_band](#out_band)
-		- [out\_proj\_band](#out_proj_band)
-		- [out\_stru](#out_stru)
-		- [out\_bandgap](#out_bandgap)
-		- [out\_level](#out_level)
-		- [out\_alllog](#out_alllog)
-		- [out\_mat\_hs](#out_mat_hs)
-		- [out\_mat\_r](#out_mat_r)
-		- [out\_mat\_hs2](#out_mat_hs2)
-		- [out\_mat\_t](#out_mat_t)
-		- [out\_mat\_dh](#out_mat_dh)
-		- [out\_app\_flag](#out_app_flag)
-		- [out\_interval](#out_interval)
-		- [out\_element\_info](#out_element_info)
-		- [restart\_save](#restart_save)
-		- [restart\_load](#restart_load)
-		- [dft\_plus\_dmft](#dft_plus_dmft)
-		- [rpa](#rpa)
-	- [Density of states](#density-of-states)
-		- [dos\_edelta\_ev](#dos_edelta_ev)
-		- [dos\_sigma](#dos_sigma)
-		- [dos\_scale](#dos_scale)
-		- [dos\_emin\_ev](#dos_emin_ev)
-		- [dos\_emax\_ev](#dos_emax_ev)
-		- [dos\_nche](#dos_nche)
-	- [NAOs](#naos)
-		- [bessel\_nao\_ecut](#bessel_nao_ecut)
-		- [bessel\_nao\_tolerence](#bessel_nao_tolerence)
-		- [bessel\_nao\_rcut](#bessel_nao_rcut)
-		- [bessel\_nao\_smooth](#bessel_nao_smooth)
-		- [bessel\_nao\_sigma](#bessel_nao_sigma)
-	- [DeePKS](#deepks)
-		- [deepks\_out\_labels](#deepks_out_labels)
-		- [deepks\_scf](#deepks_scf)
-		- [deepks\_model](#deepks_model)
-		- [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
-		- [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
-		- [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
-		- [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
-		- [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
-		- [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
-		- [deepks\_bandgap](#deepks_bandgap)
-		- [deepks\_out\_unittest](#deepks_out_unittest)
-	- [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
-		- [of\_kinetic](#of_kinetic)
-		- [of\_method](#of_method)
-		- [of\_conv](#of_conv)
-		- [of\_tole](#of_tole)
-		- [of\_tolp](#of_tolp)
-		- [of\_tf\_weight](#of_tf_weight)
-		- [of\_vw\_weight](#of_vw_weight)
-		- [of\_wt\_alpha](#of_wt_alpha)
-		- [of\_wt\_beta](#of_wt_beta)
-		- [of\_wt\_rho0](#of_wt_rho0)
-		- [of\_hold\_rho0](#of_hold_rho0)
-		- [of\_lkt\_a](#of_lkt_a)
-		- [of\_read\_kernel](#of_read_kernel)
-		- [of\_kernel\_file](#of_kernel_file)
-		- [of\_full\_pw](#of_full_pw)
-		- [of\_full\_pw\_dim](#of_full_pw_dim)
-	- [Electric field and dipole correction](#electric-field-and-dipole-correction)
-		- [efield\_flag](#efield_flag)
-		- [dip\_cor\_flag](#dip_cor_flag)
-		- [efield\_dir](#efield_dir)
-		- [efield\_pos\_max](#efield_pos_max)
-		- [efield\_pos\_dec](#efield_pos_dec)
-		- [efield\_amp](#efield_amp)
-	- [Gate field (compensating charge)](#gate-field-compensating-charge)
-		- [gate\_flag](#gate_flag)
-		- [zgate](#zgate)
-		- [block](#block)
-		- [block\_down](#block_down)
-		- [block\_up](#block_up)
-		- [block\_height](#block_height)
-	- [Exact Exchange](#exact-exchange)
-		- [exx\_hybrid\_alpha](#exx_hybrid_alpha)
-		- [exx\_hse\_omega](#exx_hse_omega)
-		- [exx\_separate\_loop](#exx_separate_loop)
-		- [exx\_hybrid\_step](#exx_hybrid_step)
-		- [exx\_mixing\_beta](#exx_mixing_beta)
-		- [exx\_lambda](#exx_lambda)
-		- [exx\_pca\_threshold](#exx_pca_threshold)
-		- [exx\_c\_threshold](#exx_c_threshold)
-		- [exx\_v\_threshold](#exx_v_threshold)
-		- [exx\_dm\_threshold](#exx_dm_threshold)
-		- [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
-		- [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
-		- [exx\_schwarz\_threshold](#exx_schwarz_threshold)
-		- [exx\_cauchy\_threshold](#exx_cauchy_threshold)
-		- [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
-		- [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
-		- [exx\_ccp\_threshold](#exx_ccp_threshold)
-		- [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
-		- [exx\_distribute\_type](#exx_distribute_type)
-		- [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
-		- [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
-		- [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
-		- [exx\_real\_number](#exx_real_number)
-	- [Molecular dynamics](#molecular-dynamics)
-		- [md\_type](#md_type)
-		- [md\_nstep](#md_nstep)
-		- [md\_dt](#md_dt)
-		- [md\_thermostat](#md_thermostat)
-		- [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
-		- [md\_restart](#md_restart)
-		- [md\_restartfreq](#md_restartfreq)
-		- [md\_dumpfreq](#md_dumpfreq)
-		- [dump\_force](#dump_force)
-		- [dump\_vel](#dump_vel)
-		- [dump\_virial](#dump_virial)
-		- [md\_seed](#md_seed)
-		- [md\_tfreq](#md_tfreq)
-		- [md\_tchain](#md_tchain)
-		- [md\_pmode](#md_pmode)
-		- [md\_prec\_level](#md_prec_level)
-		- [ref\_cell\_factor](#ref_cell_factor)
-		- [md\_pcouple](#md_pcouple)
-		- [md\_pfirst, md\_plast](#md_pfirst-md_plast)
-		- [md\_pfreq](#md_pfreq)
-		- [md\_pchain](#md_pchain)
-		- [lj\_rcut](#lj_rcut)
-		- [lj\_epsilon](#lj_epsilon)
-		- [lj\_sigma](#lj_sigma)
-		- [pot\_file](#pot_file)
-		- [msst\_direction](#msst_direction)
-		- [msst\_vel](#msst_vel)
-		- [msst\_vis](#msst_vis)
-		- [msst\_tscale](#msst_tscale)
-		- [msst\_qmass](#msst_qmass)
-		- [md\_damp](#md_damp)
-		- [md\_tolerance](#md_tolerance)
-		- [md\_nraise](#md_nraise)
-		- [cal\_syns](#cal_syns)
-		- [dmax](#dmax)
-	- [DFT+*U* correction](#dftu-correction)
-		- [dft\_plus\_u](#dft_plus_u)
-		- [orbital\_corr](#orbital_corr)
-		- [hubbard\_u](#hubbard_u)
-		- [yukawa\_potential](#yukawa_potential)
-		- [yukawa\_lambda](#yukawa_lambda)
-		- [omc](#omc)
-	- [vdW correction](#vdw-correction)
-		- [vdw\_method](#vdw_method)
-		- [vdw\_s6](#vdw_s6)
-		- [vdw\_s8](#vdw_s8)
-		- [vdw\_a1](#vdw_a1)
-		- [vdw\_a2](#vdw_a2)
-		- [vdw\_d](#vdw_d)
-		- [vdw\_abc](#vdw_abc)
-		- [vdw\_C6\_file](#vdw_c6_file)
-		- [vdw\_C6\_unit](#vdw_c6_unit)
-		- [vdw\_R0\_file](#vdw_r0_file)
-		- [vdw\_R0\_unit](#vdw_r0_unit)
-		- [vdw\_cutoff\_type](#vdw_cutoff_type)
-		- [vdw\_cutoff\_radius](#vdw_cutoff_radius)
-		- [vdw\_radius\_unit](#vdw_radius_unit)
-		- [vdw\_cutoff\_period](#vdw_cutoff_period)
-		- [vdw\_cn\_thr](#vdw_cn_thr)
-		- [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
-	- [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
-		- [berry\_phase](#berry_phase)
-		- [gdir](#gdir)
-		- [towannier90](#towannier90)
-		- [nnkpfile](#nnkpfile)
-		- [wannier\_spin](#wannier_spin)
-	- [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
-		- [td\_edm](#td_edm)
-		- [td\_print\_eij](#td_print_eij)
-		- [td\_force\_dt](#td_force_dt)
-		- [propagator](#propagator)
-		- [td\_vext](#td_vext)
-		- [td\_vext\_dire](#td_vext_dire)
-		- [td\_stype](#td_stype)
-		- [td\_ttype](#td_ttype)
-		- [td\_tstart](#td_tstart)
-		- [td\_tend](#td_tend)
-		- [td\_lcut1](#td_lcut1)
-		- [td\_lcut2](#td_lcut2)
-		- [td\_gauss\_freq](#td_gauss_freq)
-		- [td\_gauss\_phase](#td_gauss_phase)
-		- [td\_gauss\_sigma](#td_gauss_sigma)
-		- [td\_gauss\_t0](#td_gauss_t0)
-		- [td\_gauss\_amp](#td_gauss_amp)
-		- [td\_trape\_freq](#td_trape_freq)
-		- [td\_trape\_phase](#td_trape_phase)
-		- [td\_trape\_t1](#td_trape_t1)
-		- [td\_trape\_t2](#td_trape_t2)
-		- [td\_trape\_t3](#td_trape_t3)
-		- [td\_trape\_amp](#td_trape_amp)
-		- [td\_trigo\_freq1](#td_trigo_freq1)
-		- [td\_trigo\_freq2](#td_trigo_freq2)
-		- [td\_trigo\_phase1](#td_trigo_phase1)
-		- [td\_trigo\_phase2](#td_trigo_phase2)
-		- [td\_trigo\_amp](#td_trigo_amp)
-		- [td\_heavi\_t0](#td_heavi_t0)
-		- [td\_heavi\_amp](#td_heavi_amp)
-		- [out\_dipole](#out_dipole)
-		- [out\_efield](#out_efield)
-		- [ocp](#ocp)
-		- [ocp\_set](#ocp_set)
-	- [Variables useful for debugging](#variables-useful-for-debugging)
-		- [t\_in\_h](#t_in_h)
-		- [vl\_in\_h](#vl_in_h)
-		- [vnl\_in\_h](#vnl_in_h)
-		- [vh\_in\_h](#vh_in_h)
-		- [vion\_in\_h](#vion_in_h)
-		- [test\_force](#test_force)
-		- [test\_stress](#test_stress)
-		- [colour](#colour)
-		- [test\_skip\_ewald](#test_skip_ewald)
-	- [Electronic conductivities](#electronic-conductivities)
-		- [cal\_cond](#cal_cond)
-		- [cond\_nche](#cond_nche)
-		- [cond\_dw](#cond_dw)
-		- [cond\_wcut](#cond_wcut)
-		- [cond\_dt](#cond_dt)
-		- [cond\_dtbatch](#cond_dtbatch)
-		- [cond\_fwhm](#cond_fwhm)
-		- [cond\_nonlocal](#cond_nonlocal)
-	- [Implicit solvation model](#implicit-solvation-model)
-		- [imp\_sol](#imp_sol)
-		- [eb\_k](#eb_k)
-		- [tau](#tau)
-		- [sigma\_k](#sigma_k)
-		- [nc\_k](#nc_k)
+  - [System variables](#system-variables)
+    - [suffix](#suffix)
+    - [ntype](#ntype)
+    - [calculation](#calculation)
+    - [esolver\_type](#esolver_type)
+    - [symmetry](#symmetry)
+    - [symmetry\_prec](#symmetry_prec)
+    - [kpar](#kpar)
+    - [bndpar](#bndpar)
+    - [latname](#latname)
+    - [init\_wfc](#init_wfc)
+    - [init\_chg](#init_chg)
+    - [init\_vel](#init_vel)
+    - [nelec](#nelec)
+    - [nupdown](#nupdown)
+    - [dft\_functional](#dft_functional)
+    - [xc\_temperature](#xc_temperature)
+    - [pseudo\_rcut](#pseudo_rcut)
+    - [pseudo\_mesh](#pseudo_mesh)
+    - [mem\_saver](#mem_saver)
+    - [diago\_proc](#diago_proc)
+    - [nbspline](#nbspline)
+    - [kspacing](#kspacing)
+    - [min\_dist\_coef](#min_dist_coef)
+    - [device](#device)
+  - [Variables related to input files](#variables-related-to-input-files)
+    - [stru\_file](#stru_file)
+    - [kpoint\_file](#kpoint_file)
+    - [pseudo\_dir](#pseudo_dir)
+    - [orbital\_dir](#orbital_dir)
+    - [read\_file\_dir](#read_file_dir)
+    - [wannier\_card](#wannier_card)
+  - [Plane wave related variables](#plane-wave-related-variables)
+    - [ecutwfc](#ecutwfc)
+    - [nx, ny, nz](#nx-ny-nz)
+    - [pw\_seed](#pw_seed)
+    - [pw\_diag\_thr](#pw_diag_thr)
+    - [pw\_diag\_nmax](#pw_diag_nmax)
+    - [pw\_diag\_ndim](#pw_diag_ndim)
+  - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
+    - [nb2d](#nb2d)
+    - [lmaxmax](#lmaxmax)
+    - [lcao\_ecut](#lcao_ecut)
+    - [lcao\_dk](#lcao_dk)
+    - [lcao\_dr](#lcao_dr)
+    - [lcao\_rmax](#lcao_rmax)
+    - [search\_radius](#search_radius)
+    - [search\_pbc](#search_pbc)
+    - [bx, by, bz](#bx-by-bz)
+  - [Electronic structure](#electronic-structure)
+    - [basis\_type](#basis_type)
+    - [ks\_solver](#ks_solver)
+    - [nbands](#nbands)
+    - [nbands\_istate](#nbands_istate)
+    - [nspin](#nspin)
+    - [smearing\_method](#smearing_method)
+    - [smearing\_sigma](#smearing_sigma)
+    - [smearing\_sigma\_temp](#smearing_sigma_temp)
+    - [mixing\_type](#mixing_type)
+    - [mixing\_beta](#mixing_beta)
+    - [mixing\_ndim](#mixing_ndim)
+    - [mixing\_gg0](#mixing_gg0)
+    - [mixing\_tau](#mixing_tau)
+    - [mixing\_dftu](#mixing_dftu)
+    - [gamma\_only](#gamma_only)
+    - [printe](#printe)
+    - [scf\_nmax](#scf_nmax)
+    - [scf\_thr](#scf_thr)
+    - [scf\_thr\_type](#scf_thr_type)
+    - [chg\_extrap](#chg_extrap)
+    - [lspinorb](#lspinorb)
+    - [noncolin](#noncolin)
+    - [soc\_lambda](#soc_lambda)
+  - [Electronic structure (SDFT)](#electronic-structure-sdft)
+    - [method\_sto](#method_sto)
+    - [nbands\_sto](#nbands_sto)
+    - [nche\_sto](#nche_sto)
+    - [emin\_sto](#emin_sto)
+    - [emax\_sto](#emax_sto)
+    - [seed\_sto](#seed_sto)
+    - [initsto\_freq](#initsto_freq)
+    - [npart\_sto](#npart_sto)
+  - [Geometry relaxation](#geometry-relaxation)
+    - [relax\_method](#relax_method)
+    - [relax\_new](#relax_new)
+    - [relax\_scale\_force](#relax_scale_force)
+    - [relax\_nmax](#relax_nmax)
+    - [relax\_cg\_thr](#relax_cg_thr)
+    - [cal\_force](#cal_force)
+    - [force\_thr](#force_thr)
+    - [force\_thr\_ev](#force_thr_ev)
+    - [force\_thr\_ev2](#force_thr_ev2)
+    - [relax\_bfgs\_w1](#relax_bfgs_w1)
+    - [relax\_bfgs\_w2](#relax_bfgs_w2)
+    - [relax\_bfgs\_rmax](#relax_bfgs_rmax)
+    - [relax\_bfgs\_rmin](#relax_bfgs_rmin)
+    - [relax\_bfgs\_init](#relax_bfgs_init)
+    - [cal\_stress](#cal_stress)
+    - [stress\_thr](#stress_thr)
+    - [press1, press2, press3](#press1-press2-press3)
+    - [fixed\_axes](#fixed_axes)
+    - [fixed\_ibrav](#fixed_ibrav)
+    - [fixed\_atoms](#fixed_atoms)
+    - [cell\_factor](#cell_factor)
+  - [Variables related to output information](#variables-related-to-output-information)
+    - [out\_mul](#out_mul)
+    - [out\_freq\_elec](#out_freq_elec)
+    - [out\_chg](#out_chg)
+    - [out\_pot](#out_pot)
+    - [out\_dm](#out_dm)
+    - [out\_wfc\_pw](#out_wfc_pw)
+    - [out\_wfc\_r](#out_wfc_r)
+    - [out\_wfc\_lcao](#out_wfc_lcao)
+    - [out\_dos](#out_dos)
+    - [out\_band](#out_band)
+    - [out\_proj\_band](#out_proj_band)
+    - [out\_stru](#out_stru)
+    - [out\_bandgap](#out_bandgap)
+    - [out\_level](#out_level)
+    - [out\_alllog](#out_alllog)
+    - [out\_mat\_hs](#out_mat_hs)
+    - [out\_mat\_r](#out_mat_r)
+    - [out\_mat\_hs2](#out_mat_hs2)
+    - [out\_mat\_t](#out_mat_t)
+    - [out\_mat\_dh](#out_mat_dh)
+    - [out\_app\_flag](#out_app_flag)
+    - [out\_interval](#out_interval)
+    - [out\_element\_info](#out_element_info)
+    - [restart\_save](#restart_save)
+    - [restart\_load](#restart_load)
+    - [rpa](#rpa)
+  - [Density of states](#density-of-states)
+    - [dos\_edelta\_ev](#dos_edelta_ev)
+    - [dos\_sigma](#dos_sigma)
+    - [dos\_scale](#dos_scale)
+    - [dos\_emin\_ev](#dos_emin_ev)
+    - [dos\_emax\_ev](#dos_emax_ev)
+    - [dos\_nche](#dos_nche)
+  - [NAOs](#naos)
+    - [bessel\_nao\_ecut](#bessel_nao_ecut)
+    - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
+    - [bessel\_nao\_rcut](#bessel_nao_rcut)
+    - [bessel\_nao\_smooth](#bessel_nao_smooth)
+    - [bessel\_nao\_sigma](#bessel_nao_sigma)
+  - [DeePKS](#deepks)
+    - [deepks\_out\_labels](#deepks_out_labels)
+    - [deepks\_scf](#deepks_scf)
+    - [deepks\_model](#deepks_model)
+    - [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
+    - [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
+    - [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
+    - [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
+    - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
+    - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
+    - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_out\_unittest](#deepks_out_unittest)
+  - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
+    - [of\_kinetic](#of_kinetic)
+    - [of\_method](#of_method)
+    - [of\_conv](#of_conv)
+    - [of\_tole](#of_tole)
+    - [of\_tolp](#of_tolp)
+    - [of\_tf\_weight](#of_tf_weight)
+    - [of\_vw\_weight](#of_vw_weight)
+    - [of\_wt\_alpha](#of_wt_alpha)
+    - [of\_wt\_beta](#of_wt_beta)
+    - [of\_wt\_rho0](#of_wt_rho0)
+    - [of\_hold\_rho0](#of_hold_rho0)
+    - [of\_lkt\_a](#of_lkt_a)
+    - [of\_read\_kernel](#of_read_kernel)
+    - [of\_kernel\_file](#of_kernel_file)
+    - [of\_full\_pw](#of_full_pw)
+    - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [Electric field and dipole correction](#electric-field-and-dipole-correction)
+    - [efield\_flag](#efield_flag)
+    - [dip\_cor\_flag](#dip_cor_flag)
+    - [efield\_dir](#efield_dir)
+    - [efield\_pos\_max](#efield_pos_max)
+    - [efield\_pos\_dec](#efield_pos_dec)
+    - [efield\_amp](#efield_amp)
+  - [Gate field (compensating charge)](#gate-field-compensating-charge)
+    - [gate\_flag](#gate_flag)
+    - [zgate](#zgate)
+    - [block](#block)
+    - [block\_down](#block_down)
+    - [block\_up](#block_up)
+    - [block\_height](#block_height)
+  - [Exact Exchange](#exact-exchange)
+    - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
+    - [exx\_hse\_omega](#exx_hse_omega)
+    - [exx\_separate\_loop](#exx_separate_loop)
+    - [exx\_hybrid\_step](#exx_hybrid_step)
+    - [exx\_mixing\_beta](#exx_mixing_beta)
+    - [exx\_lambda](#exx_lambda)
+    - [exx\_pca\_threshold](#exx_pca_threshold)
+    - [exx\_c\_threshold](#exx_c_threshold)
+    - [exx\_v\_threshold](#exx_v_threshold)
+    - [exx\_dm\_threshold](#exx_dm_threshold)
+    - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
+    - [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
+    - [exx\_schwarz\_threshold](#exx_schwarz_threshold)
+    - [exx\_cauchy\_threshold](#exx_cauchy_threshold)
+    - [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
+    - [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
+    - [exx\_ccp\_threshold](#exx_ccp_threshold)
+    - [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
+    - [exx\_distribute\_type](#exx_distribute_type)
+    - [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
+    - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
+    - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
+    - [exx\_real\_number](#exx_real_number)
+  - [Molecular dynamics](#molecular-dynamics)
+    - [md\_type](#md_type)
+    - [md\_nstep](#md_nstep)
+    - [md\_dt](#md_dt)
+    - [md\_thermostat](#md_thermostat)
+    - [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
+    - [md\_restart](#md_restart)
+    - [md\_restartfreq](#md_restartfreq)
+    - [md\_dumpfreq](#md_dumpfreq)
+    - [dump\_force](#dump_force)
+    - [dump\_vel](#dump_vel)
+    - [dump\_virial](#dump_virial)
+    - [md\_seed](#md_seed)
+    - [md\_tfreq](#md_tfreq)
+    - [md\_tchain](#md_tchain)
+    - [md\_pmode](#md_pmode)
+    - [md\_prec\_level](#md_prec_level)
+    - [ref\_cell\_factor](#ref_cell_factor)
+    - [md\_pcouple](#md_pcouple)
+    - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
+    - [md\_pfreq](#md_pfreq)
+    - [md\_pchain](#md_pchain)
+    - [lj\_rcut](#lj_rcut)
+    - [lj\_epsilon](#lj_epsilon)
+    - [lj\_sigma](#lj_sigma)
+    - [pot\_file](#pot_file)
+    - [msst\_direction](#msst_direction)
+    - [msst\_vel](#msst_vel)
+    - [msst\_vis](#msst_vis)
+    - [msst\_tscale](#msst_tscale)
+    - [msst\_qmass](#msst_qmass)
+    - [md\_damp](#md_damp)
+    - [md\_tolerance](#md_tolerance)
+    - [md\_nraise](#md_nraise)
+    - [cal\_syns](#cal_syns)
+    - [dmax](#dmax)
+  - [DFT+*U* correction](#dftu-correction)
+    - [dft\_plus\_u](#dft_plus_u)
+    - [orbital\_corr](#orbital_corr)
+    - [hubbard\_u](#hubbard_u)
+    - [yukawa\_potential](#yukawa_potential)
+    - [yukawa\_lambda](#yukawa_lambda)
+    - [omc](#omc)
+  - [vdW correction](#vdw-correction)
+    - [vdw\_method](#vdw_method)
+    - [vdw\_s6](#vdw_s6)
+    - [vdw\_s8](#vdw_s8)
+    - [vdw\_a1](#vdw_a1)
+    - [vdw\_a2](#vdw_a2)
+    - [vdw\_d](#vdw_d)
+    - [vdw\_abc](#vdw_abc)
+    - [vdw\_C6\_file](#vdw_c6_file)
+    - [vdw\_C6\_unit](#vdw_c6_unit)
+    - [vdw\_R0\_file](#vdw_r0_file)
+    - [vdw\_R0\_unit](#vdw_r0_unit)
+    - [vdw\_cutoff\_type](#vdw_cutoff_type)
+    - [vdw\_cutoff\_radius](#vdw_cutoff_radius)
+    - [vdw\_radius\_unit](#vdw_radius_unit)
+    - [vdw\_cutoff\_period](#vdw_cutoff_period)
+    - [vdw\_cn\_thr](#vdw_cn_thr)
+    - [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
+  - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
+    - [berry\_phase](#berry_phase)
+    - [gdir](#gdir)
+    - [towannier90](#towannier90)
+    - [nnkpfile](#nnkpfile)
+    - [wannier\_spin](#wannier_spin)
+  - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+    - [td\_edm](#td_edm)
+    - [td\_print\_eij](#td_print_eij)
+    - [td\_propagator](#td_propagator)
+    - [td\_vext](#td_vext)
+    - [td\_vext\_dire](#td_vext_dire)
+    - [td\_stype](#td_stype)
+    - [td\_ttype](#td_ttype)
+    - [td\_tstart](#td_tstart)
+    - [td\_tend](#td_tend)
+    - [td\_lcut1](#td_lcut1)
+    - [td\_lcut2](#td_lcut2)
+    - [td\_gauss\_freq](#td_gauss_freq)
+    - [td\_gauss\_phase](#td_gauss_phase)
+    - [td\_gauss\_sigma](#td_gauss_sigma)
+    - [td\_gauss\_t0](#td_gauss_t0)
+    - [td\_gauss\_amp](#td_gauss_amp)
+    - [td\_trape\_freq](#td_trape_freq)
+    - [td\_trape\_phase](#td_trape_phase)
+    - [td\_trape\_t1](#td_trape_t1)
+    - [td\_trape\_t2](#td_trape_t2)
+    - [td\_trape\_t3](#td_trape_t3)
+    - [td\_trape\_amp](#td_trape_amp)
+    - [td\_trigo\_freq1](#td_trigo_freq1)
+    - [td\_trigo\_freq2](#td_trigo_freq2)
+    - [td\_trigo\_phase1](#td_trigo_phase1)
+    - [td\_trigo\_phase2](#td_trigo_phase2)
+    - [td\_trigo\_amp](#td_trigo_amp)
+    - [td\_heavi\_t0](#td_heavi_t0)
+    - [td\_heavi\_amp](#td_heavi_amp)
+    - [td\_out\_dipole](#td_out_dipole)
+    - [td\_out\_efield](#td_out_efield)
+    - [ocp](#ocp)
+    - [ocp\_set](#ocp_set)
+  - [Variables useful for debugging](#variables-useful-for-debugging)
+    - [t\_in\_h](#t_in_h)
+    - [vl\_in\_h](#vl_in_h)
+    - [vnl\_in\_h](#vnl_in_h)
+    - [vh\_in\_h](#vh_in_h)
+    - [vion\_in\_h](#vion_in_h)
+    - [test\_force](#test_force)
+    - [test\_stress](#test_stress)
+    - [colour](#colour)
+    - [test\_skip\_ewald](#test_skip_ewald)
+  - [Electronic conductivities](#electronic-conductivities)
+    - [cal\_cond](#cal_cond)
+    - [cond\_nche](#cond_nche)
+    - [cond\_dw](#cond_dw)
+    - [cond\_wcut](#cond_wcut)
+    - [cond\_dt](#cond_dt)
+    - [cond\_dtbatch](#cond_dtbatch)
+    - [cond\_fwhm](#cond_fwhm)
+    - [cond\_nonlocal](#cond_nonlocal)
+  - [Implicit solvation model](#implicit-solvation-model)
+    - [imp\_sol](#imp_sol)
+    - [eb\_k](#eb_k)
+    - [tau](#tau)
+    - [sigma\_k](#sigma_k)
+    - [nc\_k](#nc_k)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2525,29 +2522,25 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_edm
 
-- **Type**: int
-- **Description**: the method to calculate the energy density matrix.
+- **Type**: Integer
+- **Description**: the method to calculate the energy density matrix
   - 0: new method (use the original formula).
   - 1: old method (use the formula for ground state).
 - **Default**: 0
 
 ### td_print_eij
 
-- **Type**: double
-- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij
+- **Type**: Real
+- **Description**:  
+  - <0: don't print $E_{ij}$.
+  - \>=0: print the $E_{ij}\ (<\psi_i|H|\psi_j>$) elements which are larger than td_print_eij.
 - **Default**: -1
 
-### td_force_dt
-
-- **Type**: Real
-- **Description**: Time-dependent evolution force changes time step. (fs)
-- **Default**: 0.02
-
-### propagator
+### td_propagator
 
 - **Type**: Integer
 - **Description**:
-  method of propagator.
+  method of propagator
   - 0: Crank-Nicolson.
   - 1: 4th Taylor expansions of exponential.
   - 2: enforced time-reversal symmetry (ETRS).
@@ -2557,15 +2550,15 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**:
-  - 1: add a laser material interaction (extern laser field).
-  - 0: no extern laser field.
-- **Default**: 0
+  - True: add a laser material interaction (extern laser field).
+  - False: no extern laser field.
+- **Default**: False
 
 ### td_vext_dire
 
 - **Type**: String
 - **Description**:
-  If `td_vext` is true, the td_vext_dire is a string to set the number of electric fields, like "1 2" representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
+  If `td_vext` is True, the td_vext_dire is a string to set the number of electric fields, like `td_vext_dire 1 2` representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
   - 1: the direction of external light field is along x axis.
   - 2: the direction of external light field is along y axis.
   - 3: the direction of external light field is along z axis.
@@ -2582,7 +2575,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_ttype
 
-- **Type**: String
+- **Type**: Integer
 - **Description**:
   type of electric field in time domain
   - 0: Gaussian type function.
@@ -2596,226 +2589,230 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Integer
 - **Description**:
-  number of step where electric field start
+  number of steps where electric field starts
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
 - **Description**:
-  number of step where electric field end
+  number of steps where electric field ends
 - **Default**: 100
 
 ### td_lcut1
 
-- **Type**: Double
+- **Type**: Real
 - **Description**:
-  cut1 of interval in length gauge
-  E = E0 , cut1<x<cut2
+  cut1 of interval in length gauge\
+  E = E0 , cut1<x<cut2\
   E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
 - **Default**: 0.05
 
 ### td_lcut2
 
-- **Type**: Double
+- **Type**: Real
 - **Description**:
-  cut2 of interval in length gauge
+  cut2 of interval in length gauge\
+  E = E0 , cut1<x<cut2\
+  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
 - **Default**: 0.05
 
 ### td_gauss_freq
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency of Gauss type electric field  (fs^-1)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  frequency (freq) of Gauss type electric field  (fs^-1)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 22.13
 
 ### td_gauss_phase
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
   phase of Gauss type electric field\
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  amp\*(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.0
 
 ### td_gauss_sigma
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  sigma of Gauss type electric field  (fs)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  sigma of Gauss type electric field  (fs)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 30.0
 
 ### td_gauss_t0
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time center of Gauss type electric field\
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  step number of time center (t0) of Gauss type electric field\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 100
 
 ### td_gauss_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Gauss type electric field  (V/A)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  amplitude (amp) of Gauss type electric field  (V/Angstrom)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.25
 
 ### td_trape_freq
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency of Trapezoid type electric field  (fs^-1)
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  frequency (freq) of Trapezoid type electric field  (fs^-1)\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1.60
 
 ### td_trape_phase
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
   phase of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 0.0
 
 ### td_trape_t1
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 1 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 1 (t1) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1875
 
 ### td_trape_t2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 2 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 2 (t2) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 5625
 
 ### td_trape_t3
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 3 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 3 (t3) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 7500
 
 ### td_trape_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Trapezoid type electric field  (V/A)\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  amplitude (amp) of Trapezoid type electric field  (V/Angstrom)\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 2.74
 
 ### td_trigo_freq1
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency 1 of Trigonometric type electric field  (fs^-1)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  frequency 1 (freq1) of Trigonometric type electric field  (fs^-1)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 1.164656
 
 ### td_trigo_freq2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency 2 of Trigonometric type electric field  (fs^-1)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  frequency 2 (freq2) of Trigonometric type electric field  (fs^-1)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.029116
 
 ### td_trigo_phase1
 
-- **Type**: String
+- **Type**:Real
 - **Description**:
-  phase 1 of Trigonometric type electric field\
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  phase 1 (phase1) of Trigonometric type electric field\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.0
 
 ### td_trigo_phase2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  phase 2 of Trigonometric type electric field\
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  phase 2 (phase2) of Trigonometric type electric field\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.0
 
 ### td_trigo_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Trigonometric type electric field  (V/A)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  amplitude (amp) of Trigonometric type electric field (V/Angstrom)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 2.74
 
 ### td_heavi_t0
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of switch time of Heaviside type electric field\
+  step number of switch time (t0) of Heaviside type electric field\
   E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 100
 
 ### td_heavi_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Heaviside type electric field  (V/A)\
+  amplitude (amp) of Heaviside type electric field  (V/Angstrom)\
   E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 2.74
 
-### out_dipole
+### td_out_dipole
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**:
-  - 1: Output dipole.
-  - 0: do not Output dipole.
-- **Default**: 0
+  - True: output dipole.
+  - False: do not output dipole.
+- **Default**: False
 
-### out_efield
+### td_out_efield
 
-- **Type**: Integer
-- **Description**:
-  - 1: Output efield.
-  - 0: do not Output efield.
-  The unit of output file is atomic unit ( 1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom ).
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
+  - True: output efield.
+  - False: do not output efield.
+- **Default**: False
 
 ### ocp
 
 - **Type**: Boolean
-- **Description**: choose whether calculating constrained DFT or not.
+- **Availability**: 
   - For PW and LCAO codes. if set to 1, occupations of bands will be setting of "ocp_set".
   - For TDDFT in LCAO codes. if set to 1, occupations will be constrained since second ionic step.
   - For OFDFT, this feature can't be used.
-- **Default**:0
+- **Description**: 
+- True: fix the occupations of bands.
+- False: do not fix the occupations of bands.
+- **Default**: False
 
 ### ocp_set
 
-- **Type**: string
-- **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
+- **Type**: String
+- **Description**: If ocp is True, the ocp_set is a string to set the number of occupancy, like '1 10 * 1 0 1' representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**: none
 
 [back to top](#full-list-of-input-keywords)

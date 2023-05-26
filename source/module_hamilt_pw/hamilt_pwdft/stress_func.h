@@ -82,7 +82,7 @@ class Stress_Func
     // 4) the stress from the local pseudopotentials
     void stress_loc(ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
-                    Structure_Factor* p_sf,
+                    const Structure_Factor* p_sf,
                     const bool is_pw,
                     const Charge* const chr); // local pseudopotential part in PW or LCAO
 
@@ -101,7 +101,7 @@ class Stress_Func
     // 5) the stress from the non-linear core correction (if any)
     void stress_cc(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
-                   Structure_Factor* p_sf,
+                   const Structure_Factor* p_sf,
                    const bool is_pw,
                    const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 

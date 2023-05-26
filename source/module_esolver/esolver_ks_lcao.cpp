@@ -66,15 +66,15 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
+            this->symm.analy_sys(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // Setup the k points according to symmetry.
-        GlobalC::kv.set(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-        Print_Info::setup_parameters(ucell, GlobalC::kv);
+        Print_Info::setup_parameters(ucell, kv);
     }
     else
     {
@@ -86,13 +86,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecStateLCAO(&(chr),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
+                                                   &(kv),
+                                                   kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF),
                                                    this->pw_rho,
-                                                   GlobalC::bigpw);
+                                                   pw_big);
     }
 
     //------------------init Basis_lcao----------------------
@@ -115,7 +115,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, GlobalC::kv.nks);
+    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, kv.nks);
     //------------------init Hamilt_lcao----------------------
 
 #ifdef __EXX
@@ -141,9 +141,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
+                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, GlobalC::kv);
+                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, kv);
         }
     }
 #endif
@@ -151,13 +151,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Quxin added for DFT+U
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, this->LM, GlobalC::kv.nks);
+        GlobalC::dftu.init(ucell, this->LM, kv.nks);
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
     // without structure factors
     // this function belongs to cell LOOP
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
     // init HSolver
     if (this->phsol == nullptr)
@@ -173,10 +173,10 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
     {
-        this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
+        this->pelec->pot = new elecstate::Potential(pw_rho,
                                                     &GlobalC::ucell,
                                                     &(GlobalC::ppcell.vloc),
-                                                    &(GlobalC::sf.strucFac),
+                                                    &(sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
@@ -206,15 +206,15 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
     {
         delete this->pelec;
         this->pelec = new elecstate::ElecStateLCAO(&(chr),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
+                                                   &(kv),
+                                                   kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF),
                                                    this->pw_rho,
-                                                   GlobalC::bigpw);
+                                                   pw_big);
 
-        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);
         this->pelec->omega = GlobalC::ucell.omega;
@@ -222,10 +222,10 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
         if (this->pelec->pot != nullptr)
         {
             delete this->pelec->pot;
-            this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
+            this->pelec->pot = new elecstate::Potential(pw_rho,
                                                         &GlobalC::ucell,
                                                         &(GlobalC::ppcell.vloc),
-                                                        &(GlobalC::sf.strucFac),
+                                                        &(sf),
                                                         &(this->pelec->f_en.etxc),
                                                         &(this->pelec->f_en.vtxc));
         }
@@ -251,9 +251,10 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->UHM,
                        force,
                        this->scs,
-                       GlobalC::kv,
-                       GlobalC::rhopw,
-                       &GlobalC::symm);
+                       this->sf,
+                       this->kv,
+                       this->pw_rho,
+                       &this->symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -294,7 +295,7 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, kv, &(GlobalC::Pkpoints));
     }
 
     int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
@@ -304,11 +305,11 @@ void ESolver_KS_LCAO::postprocess()
         int nks = 0;
         if (nspin0 == 1)
         {
-            nks = GlobalC::kv.nkstot;
+            nks = kv.nkstot;
         }
         else if (nspin0 == 2)
         {
-            nks = GlobalC::kv.nkstot / 2;
+            nks = kv.nkstot / 2;
         }
 
         for (int is = 0; is < nspin0; is++)
@@ -316,14 +317,7 @@ void ESolver_KS_LCAO::postprocess()
             std::stringstream ss2;
             ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                nks,
-                                GlobalV::NBANDS,
-                                0.0,
-                                this->pelec->ekb,
-                                GlobalC::kv,
-                                &(GlobalC::Pkpoints));
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, 0.0, this->pelec->ekb, kv, &(GlobalC::Pkpoints));
         }
     } // out_band
 
@@ -333,7 +327,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->psi,
                                        this->UHM,
                                        this->pelec,
-                                       GlobalC::kv,
+                                       kv,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
                                        GlobalC::GridD);
@@ -417,7 +411,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     // mohan add 2010-07-16
     // used for pulay mixing.
     if (iter == 1)
-        GlobalC::CHR_MIX.reset();
+        this->p_chgmix->reset();
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
@@ -426,7 +420,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     // first need to calculate the weight according to
     // electrons number.
 
-    if (GlobalC::wf.init_wfc == "file")
+    if (wf.init_wfc == "file")
     {
         if (iter == 1)
         {
@@ -479,11 +473,11 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
-			this->mix_DMk_2D.set_mixing_beta(GlobalC::CHR_MIX.get_mixing_beta());
-			if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
-				this->mix_DMk_2D.set_coef_pulay(iter, GlobalC::CHR_MIX);
-			const bool flag_restart = (iter==1) ? true : false;
-			if(GlobalV::GAMMA_ONLY_LOCAL)
+            this->mix_DMk_2D.set_mixing_beta(this->p_chgmix->get_mixing_beta());
+            if (this->p_chgmix->get_mixing_mode() == "pulay")
+                this->mix_DMk_2D.set_coef_pulay(iter, *(this->p_chgmix));
+            const bool flag_restart = (iter == 1) ? true : false;
+            if(GlobalV::GAMMA_ONLY_LOCAL)
 				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
 			else
 				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
@@ -499,7 +493,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho, GlobalC::rhopw->nrxx); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho, pw_rho->nrxx); // Calculate U and J if Yukawa potential is used
     }
 
 #ifdef __DEEPKS
@@ -550,7 +544,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // print ekb for each k point and each band
-    for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+    for (int ik = 0; ik < kv.nks; ++ik)
     {
         this->pelec->print_band(ik, INPUT.printe, iter);
     }
@@ -588,9 +582,9 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::dftu.omc != 2)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, GlobalC::CHR_MIX.get_mixing_beta());
+                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, this->p_chgmix->get_mixing_beta());
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv, GlobalC::CHR_MIX.get_mixing_beta());
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, kv, this->p_chgmix->get_mixing_beta());
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
@@ -606,12 +600,8 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         }
         else
         {
-            GlobalC::ld.cal_e_delta_band_k(this->LOC.dm_k,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           GlobalC::kv.nks,
-                                           pv->nrow,
-                                           pv->ncol);
+            GlobalC::ld
+                .cal_e_delta_band_k(this->LOC.dm_k, pv->trace_loc_row, pv->trace_loc_col, kv.nks, pv->nrow, pv->ncol);
         }
     }
 #endif
@@ -623,7 +613,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        srho.begin(is, *(pelec->charge), pw_rho, GlobalC::Pgrid, this->symm);
     }
 
     // (6) compute magnetization, only for spin==2
@@ -644,7 +634,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
         {
             this->UHM.GK.renew(true);
         }
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        for (int ik = 0; ik < kv.nks; ++ik)
         {
             if (hsolver::HSolverLCAO::out_mat_hs)
             {
@@ -683,7 +673,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
         {
             elecstate::ElecStateLCAO::out_wfc_flag = 1;
         }
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
             if (this->psi != nullptr)
             {
@@ -754,19 +744,19 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
             const double ef_tmp = this->pelec->eferm.get_efval(is);
             ModuleIO::write_rho(
 #ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
+                pw_big->bz,
+                pw_big->nbz,
+                pw_rho->nplane,
+                pw_rho->startz_current,
 #endif
                 pelec->charge->rho_save[is],
                 is,
                 GlobalV::NSPIN,
                 iter,
                 ssc.str(),
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
+                pw_rho->nx,
+                pw_rho->ny,
+                pw_rho->nz,
                 ef_tmp,
                 &(GlobalC::ucell),
                 precision);
@@ -808,19 +798,19 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 const double ef_tmp = this->pelec->eferm.get_efval(is);
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
+                    pw_big->bz,
+                    pw_big->nbz,
+                    pw_rho->nplane,
+                    pw_rho->startz_current,
 #endif
                     pelec->charge->kin_r_save[is],
                     is,
                     GlobalV::NSPIN,
                     iter,
                     ssc.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
+                    pw_rho->nx,
+                    pw_rho->ny,
+                    pw_rho->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     precision);
@@ -843,7 +833,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             dm2d[is] = new double[this->LOC.ParaV->nnr];
             ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
         }
-        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, GlobalC::kv);
+        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, kv);
 
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -868,19 +858,19 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             const double ef_tmp = this->pelec->eferm.get_efval(is);
             ModuleIO::write_rho(
 #ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
+                pw_big->bz,
+                pw_big->nbz,
+                pw_rho->nplane,
+                pw_rho->startz_current,
 #endif
                 pelec->charge->rho_save[is],
                 is,
                 GlobalV::NSPIN,
                 0,
                 ssc.str(),
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
+                pw_rho->nx,
+                pw_rho->ny,
+                pw_rho->nz,
                 ef_tmp,
                 &(GlobalC::ucell),
                 precision);
@@ -894,19 +884,19 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                 const double ef_tmp = this->pelec->eferm.get_efval(is);
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
+                    pw_big->bz,
+                    pw_big->nbz,
+                    pw_rho->nplane,
+                    pw_rho->startz_current,
 #endif
                     pelec->charge->kin_r_save[is],
                     is,
                     GlobalV::NSPIN,
                     0,
                     ssc.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
+                    pw_rho->nx,
+                    pw_rho->ny,
+                    pw_rho->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
             }
@@ -968,8 +958,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
             this->pelec->pot->write_potential(
 #ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
+                pw_big->bz,
+                pw_big->nbz,
                 this->pw_rho->nplane,
                 this->pw_rho->startz_current,
 #endif
@@ -991,8 +981,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
         this->pelec->pot->write_elecstat_pot(
 #ifdef __MPI
-            GlobalC::bigpw->bz,
-            GlobalC::bigpw->nbz,
+            pw_big->bz,
+            pw_big->nbz,
 #endif
             ssp.str(),
             this->pw_rho,
@@ -1058,8 +1048,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, GlobalC::kv, this->mix_DMk_2D, *this->LOWF.ParaV);
-        rpa_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
+        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, kv, this->mix_DMk_2D, *this->LOWF.ParaV);
+        rpa_lri_double.init(MPI_COMM_WORLD, kv);
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
     }
 #endif
@@ -1067,10 +1057,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_HS_R(istep,
-                                  this->pelec->pot->get_effective_v(),
-                                  this->UHM,
-                                  GlobalC::kv); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM,
+                                  kv);          // LiuXh add 2019-07-15
         }                                       // LiuXh add 2019-07-15
     }
 
@@ -1086,10 +1074,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_dH_R(istep,
-                                  this->pelec->pot->get_effective_v(),
-                                  this->UHM,
-                                  GlobalC::kv); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM,
+                                  kv);          // LiuXh add 2019-07-15
         }                                       // LiuXh add 2019-07-15
     }
 
@@ -1114,7 +1100,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, GlobalC::kv);
+            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
         }
     } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 
@@ -1136,7 +1122,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
                 = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
                                                                         nullptr, // no explicit call yet
                                                                         &(LM.Hloc),
-                                                                        GlobalC::kv);
+                                                                        kv);
             p_hamilt->opsd->add(exx);
         }
         else
@@ -1145,7 +1131,7 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
                 = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&LM,
                                                                                       nullptr, // no explicit call yet
                                                                                       &(LM.Hloc2),
-                                                                                      GlobalC::kv);
+                                                                                      kv);
             p_hamilt->ops->add(exx);
         }
     };

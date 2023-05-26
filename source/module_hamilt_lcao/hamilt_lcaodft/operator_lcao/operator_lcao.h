@@ -1,5 +1,6 @@
 #ifndef OPERATORLCAO_H
 #define OPERATORLCAO_H
+#include "module_base/vector3.h"
 #include "module_hamilt_general/matrixblock.h"
 #include "module_hamilt_general/operator.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
@@ -11,6 +12,7 @@ template <typename T>
 class OperatorLCAO : public Operator<T>
 {
   public:
+    OperatorLCAO(const std::vector<ModuleBase::Vector3<double>>& kvec_d_in):kvec_d(kvec_d_in){};
     virtual ~OperatorLCAO()
     {
         if (this->allocated_smatrix)
@@ -70,6 +72,7 @@ class OperatorLCAO : public Operator<T>
     // protected:
     //  Hamiltonian matrix which are stored in LCAO_Matrix and calculated in OperatorLCAO
     LCAO_Matrix* LM = nullptr;
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d;
 
   protected:
     bool new_e_iteration = true;

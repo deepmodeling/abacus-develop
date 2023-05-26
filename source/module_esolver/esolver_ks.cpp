@@ -1,7 +1,11 @@
 #include "esolver_ks.h"
+
 #include <iostream>
-#include "time.h"
+
 #include "../module_io/print_info.h"
+#include "module_base/timer.h"
+#include "module_io/input.h"
+#include "time.h"
 #ifdef __MPI
 #include "mpi.h"
 #else
@@ -11,8 +15,6 @@
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/module_charge/charge_mixing.h"
-#include "module_base/timer.h"
 //---------------------------------------
 
 namespace ModuleESolver
@@ -32,10 +34,36 @@ namespace ModuleESolver
         // pw_rho = new ModuleBase::PW_Basis();
         //temporary, it will be removed
         pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, GlobalV::precision_flag);
-        GlobalC::wfcpw = this->pw_wfc; //Temporary
         ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
         tmp->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
-        GlobalC::CHR_MIX.set_rhopw(this->pw_rho);
+
+        ///----------------------------------------------------------
+        /// charge mixing
+        ///----------------------------------------------------------
+        p_chgmix = new Charge_Mixing();
+        p_chgmix->set_rhopw(this->pw_rho);
+        p_chgmix->set_mixing(INPUT.mixing_mode,
+                             INPUT.mixing_beta,
+                             INPUT.mixing_ndim,
+                             INPUT.mixing_gg0,
+                             INPUT.mixing_tau);
+        // using bandgap to auto set mixing_beta
+        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
+        {
+            p_chgmix->need_auto_set();
+        }
+        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
+        {
+            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+        }
+
+        ///----------------------------------------------------------
+        /// wavefunc
+        ///----------------------------------------------------------
+        this->wf.init_wfc = INPUT.init_wfc;
+        this->wf.mem_saver = INPUT.mem_saver;
+        this->wf.out_wfc_pw = INPUT.out_wfc_pw;
+        this->wf.out_wfc_r = INPUT.out_wfc_r;
     }
 
     template<typename FPTYPE, typename Device>
@@ -44,6 +72,7 @@ namespace ModuleESolver
         delete this->pw_wfc;
         delete this->p_hamilt;
         delete this->phsol;
+        delete this->p_chgmix;
     }
 
     template<typename FPTYPE, typename Device>
@@ -61,17 +90,17 @@ namespace ModuleESolver
         // symmetry analysis should be performed every time the cell is changed
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
+            this->symm.analy_sys(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // Setup the k points according to symmetry.
-        GlobalC::kv.set(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        this->kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
         // print information
         // mohan add 2021-01-30
-        Print_Info::setup_parameters(ucell, GlobalC::kv);
+        Print_Info::setup_parameters(ucell, this->kv);
 
         if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="ienvelope")
         {
@@ -80,24 +109,34 @@ namespace ModuleESolver
     #ifdef __MPI
             this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
     #endif
-            this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz);
-            this->pw_wfc->initparameters(false, inp.ecutwfc, GlobalC::kv.nks, GlobalC::kv.kvec_d.data());
-    #ifdef __MPI
+            this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
+                                    ucell.latvec,
+                                    this->pw_rho->nx,
+                                    this->pw_rho->ny,
+                                    this->pw_rho->nz);
+            this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+#ifdef __MPI
             if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
             //qianrui add 2021-8-13 to make different kpar parameters can get the same results
     #endif
             this->pw_wfc->setuptransform();
-            for(int ik = 0 ; ik < GlobalC::kv.nks; ++ik)   GlobalC::kv.ngk[ik] = this->pw_wfc->npwk[ik];
+            for (int ik = 0; ik < this->kv.nks; ++ik)
+            this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
             this->pw_wfc->collect_local_pw(); 
             this->print_wfcfft(inp, GlobalV::ofs_running);
         }
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
-        GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
-            GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
-            
+        GlobalC::Pgrid.init(this->pw_rho->nx,
+                            this->pw_rho->ny,
+                            this->pw_rho->nz,
+                            this->pw_rho->nplane,
+                            this->pw_rho->nrxx,
+                            pw_big->nbz,
+                            pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+
         // Calculate Structure factor
-        GlobalC::sf.setup_structure_factor(&GlobalC::ucell, GlobalC::rhopw);
+        this->sf.setup_structure_factor(&GlobalC::ucell, this->pw_rho);
 
         // Initialize charge extrapolation
         CE.Init_CE(this->pw_rho->nrxx);
@@ -114,11 +153,16 @@ namespace ModuleESolver
         {
             // initialize the real-space uniform grid for FFT and parallel
             // distribution of plane waves
-            GlobalC::Pgrid.init(GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz, GlobalC::rhopw->nplane,
-                        GlobalC::rhopw->nrxx, GlobalC::bigpw->nbz, GlobalC::bigpw->bz); // mohan add 2010-07-22, update 2011-05-04
+            GlobalC::Pgrid.init(this->pw_rho->nx,
+                                this->pw_rho->ny,
+                                this->pw_rho->nz,
+                                this->pw_rho->nplane,
+                                this->pw_rho->nrxx,
+                                pw_big->nbz,
+                                pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
 
             // Calculate Structure factor
-            GlobalC::sf.setup_structure_factor(&ucell, GlobalC::rhopw);
+            this->sf.setup_structure_factor(&ucell, this->pw_rho);
         }
     }
 
@@ -214,7 +258,7 @@ namespace ModuleESolver
                     // FPTYPE drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
 
-                    drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
+                    drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
                     FPTYPE hsolver_error = 0.0;
                     if (firstscf)
                     {
@@ -225,7 +269,7 @@ namespace ModuleESolver
                         {
                             diag_ethr = this->phsol->reset_diagethr(GlobalV::ofs_running, hsolver_error, drho);
                             this->hamilt2density(istep, iter, diag_ethr);
-                            drho = GlobalC::CHR_MIX.get_drho(pelec->charge, GlobalV::nelec);
+                            drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
                             hsolver_error = this->phsol->cal_hsolerror();
                         }
                     }
@@ -254,17 +298,17 @@ namespace ModuleESolver
                                 this->pelec->cal_bandgap_updw();
                                 bandgap_for_autoset = std::min(this->pelec->bandgap_up, this->pelec->bandgap_dw);
                             }
-                            GlobalC::CHR_MIX.auto_set(bandgap_for_autoset, GlobalC::ucell);
+                            p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
                         //conv_elec = this->estate.mix_rho();
-                        GlobalC::CHR_MIX.mix_rho(iter, pelec->charge);
+                        p_chgmix->mix_rho(iter, pelec->charge);
                         //----------charge mixing done-----------
                     }
                 }
 #ifdef __MPI
 		        MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
 		        MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
-		        MPI_Bcast(pelec->charge->rho[0], GlobalC::rhopw->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+                MPI_Bcast(pelec->charge->rho[0], this->pw_rho->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 
                 // Hamilt should be used after it is constructed.

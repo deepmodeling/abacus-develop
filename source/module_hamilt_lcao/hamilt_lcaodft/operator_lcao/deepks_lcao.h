@@ -23,11 +23,11 @@ class DeePKS<OperatorLCAO<T>> : public OperatorLCAO<T>
   public:
     DeePKS<OperatorLCAO<T>>(Local_Orbital_Charge* loc_in,
                             LCAO_Matrix* LM_in,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                             std::vector<double>* HR_pointer_in,
                             std::vector<T>* HK_pointer_in,
-                            const int& nks_in,
-                            const std::vector<ModuleBase::Vector3<double>>& kvec_d_in)
-        : loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), nks(nks_in), kvec_d(kvec_d_in)
+                            const int& nks_in)
+        : loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), nks(nks_in), OperatorLCAO<T>(kvec_d_in)
     {
         this->LM = LM_in;
         this->cal_type = lcao_deepks;
@@ -47,8 +47,6 @@ class DeePKS<OperatorLCAO<T>> : public OperatorLCAO<T>
     bool HR_fixed_done = false;
 
     const int& nks;
-
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d;
 };
 
 } // namespace hamilt

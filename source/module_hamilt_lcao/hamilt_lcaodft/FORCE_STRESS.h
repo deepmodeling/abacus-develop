@@ -5,9 +5,9 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
-// #include "./force_lcao_gamma.h"
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_io/input_conv.h"
 #include "module_psi/psi.h"
 
@@ -33,6 +33,7 @@ class Force_Stress_LCAO
                         LCAO_Hamilt& uhm,
                         ModuleBase::matrix& fcs,
                         ModuleBase::matrix& scs,
+                        const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
                         ModuleSymmetry::Symmetry* symm);
@@ -58,7 +59,8 @@ class Force_Stress_LCAO
                         const ModuleBase::matrix& vnew,
                         const bool vnew_exist,
                         const Charge* const chr,
-                        ModulePW::PW_Basis* rhopw);
+                        ModulePW::PW_Basis* rhopw,
+                        const Structure_Factor& sf);
 
     void calForceStressIntegralPart(const bool isGammaOnly,
                                     const bool isforce,
@@ -90,7 +92,8 @@ class Force_Stress_LCAO
                          ModuleBase::matrix& sigmaxc,
                          const double& etxc,
                          const Charge* const chr,
-                         ModulePW::PW_Basis* rhopw);
+                         ModulePW::PW_Basis* rhopw,
+                         const Structure_Factor& sf);
 
     static double force_invalid_threshold_ev;
     static double output_acc; // control the accuracy
