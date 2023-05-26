@@ -161,7 +161,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 }
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_elec(const Mix_DMk_2D &mix_DMk_2D, const Parallel_Orbitals &pv)
+void Exx_LRI<Tdata>::cal_exx_elec(const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
@@ -170,8 +170,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Mix_DMk_2D &mix_DMk_2D, const Parallel_O
 
 	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> Ds =
 		GlobalV::GAMMA_ONLY_LOCAL
-		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, mix_DMk_2D.get_DMk_gamma_out(), pv)
-		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, mix_DMk_2D.get_DMk_k_out(), pv);
+		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), pv)
+		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, this->mix_DMk_2D.get_DMk_k_out(), pv);
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
