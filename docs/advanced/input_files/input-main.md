@@ -2173,7 +2173,7 @@ These variables are used to control DFT+U correlated parameters
 ### omc
 
 - **Type**: Integer
-- **Description**: The parameter controls what form of occupation matrix control we are using.
+- **Description**: The parameter controls the form of occupation matrix control used.
   - 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
   - 1: The first SCF step will use an initial density matrix read from a file named `[initial_onsite.dm](http://initial_onsite.dm/)`, but for later steps, the onsite density matrix will be updated.
   - 2: The same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
