@@ -48,18 +48,35 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
     classname = "ESolver_KS_LCAO";
     basisname = "LCAO";
 #ifdef __EXX
-    this->exd = new Exx_LRI_Interface<double>(GlobalC::exx_lri_double);
-    this->exc = new Exx_LRI_Interface<std::complex<double>>(GlobalC::exx_lri_complex);
-    this->LM.Hexxd = &this->exd->get_Hexxs();
-    this->LM.Hexxc = &this->exc->get_Hexxs();
+    if (GlobalC::exx_info.info_ri.real_number)
+    {
+        this->exx_lri_double = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        this->exd = new Exx_LRI_Interface<double>(this->exx_lri_double);
+        this->LM.Hexxd = &this->exd->get_Hexxs();
+    }
+    else
+    {
+        this->exx_lri_complex = new Exx_LRI <std::complex<double>>(GlobalC::exx_info.info_ri);
+        this->exc = new Exx_LRI_Interface<std::complex<double>>(this->exx_lri_complex);
+        this->LM.Hexxc = &this->exc->get_Hexxs();
+    }
 #endif
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
     this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 #ifdef __EXX
-    delete this->exd;
-    delete this->exc;
+    if (GlobalC::exx_info.info_ri.real_number)
+    {
+        delete this->exd;
+        delete this->exx_lri_double;
+    }
+    else
+    {
+        delete this->exc;
+        delete this->exx_lri_complex;
+    }
+        
 #endif
 }
 
@@ -150,9 +167,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, kv);
+                this->exx_lri_double->init(MPI_COMM_WORLD, kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, kv);
+                this->exx_lri_complex->init(MPI_COMM_WORLD, kv);
         }
     }
 #endif
@@ -262,8 +279,8 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->scs,
                        this->sf,
 #ifdef __EXX
-                        GlobalC::exx_lri_double,
-                        GlobalC::exx_lri_complex,
+                        *this->exx_lri_double,
+                        *this->exx_lri_complex,
 #endif  
                        this->kv,
                        this->pw_rho,

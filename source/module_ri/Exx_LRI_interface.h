@@ -15,22 +15,22 @@ class Exx_LRI_Interface
 public:
     /// @brief  Constructor for Exx_LRI_Interface
     /// @param exx_lri
-    Exx_LRI_Interface(Exx_LRI<Tdata>& exx_lri) : exx_lri(&exx_lri) {}
+    Exx_LRI_Interface(Exx_LRI<Tdata>* exx_lri) : exx_lri(exx_lri) {}
     Exx_LRI_Interface() = delete;
 
     void write_Hexxs(const std::string &file_name) const;
     void read_Hexxs(const std::string& file_name);
     
     using TAC = std::pair<int, std::array<int, 3>>;
-    std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() { return this->exx_lri->Hexxs; }
+    std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_lri->Hexxs; }
     
-    Tdata& get_Eexx() const { return &this->exx_lri->Eexx; }
+    Tdata& get_Eexx() const { return this->exx_lri->Eexx; }
 
     // Processes in ESolver_KS_LCAO
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
     void exx_beforescf(const K_Vectors& kv);
 
-        /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
+    /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter);
 
     /// @brief in hamilt2density: calcate Hexx and Eexx

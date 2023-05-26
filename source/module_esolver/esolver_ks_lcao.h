@@ -66,6 +66,8 @@ namespace ModuleESolver
 #ifdef __EXX
         Exx_LRI_Interface<double>* exd = nullptr;
         Exx_LRI_Interface<std::complex<double>>* exc = nullptr;
+        Exx_LRI<double>* exx_lri_double = nullptr; // Peize Lin add 2022-08-06
+        Exx_LRI<std::complex<double>>* exx_lri_complex = nullptr; // Peize Lin add 2022-08-06
 #endif
     };
 

@@ -110,7 +110,7 @@ void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, co
     {
         // add exx
         // Peize Lin add 2016-12-03
-        elec.set_exx();
+        elec.set_exx(this->get_Eexx());
 
         if (GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish
             && !GlobalC::restart.info_load.restart_exx)
