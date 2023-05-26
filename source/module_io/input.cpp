@@ -2163,7 +2163,7 @@ bool Input::Read(const std::string &fn)
     //----------------------------------------------------------
     //       DFT+U    Xin Qu  added on 2020-10-29
     //----------------------------------------------------------
-    std::vector<double> hubbard_u(ntype);
+    hubbard_u = new double[ntype];
     for (int i = 0; i < ntype; i++)
     {
         hubbard_u[i] = 0.0;
