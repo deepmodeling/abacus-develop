@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 #define private public
 #define protected public
@@ -59,7 +60,7 @@ void Set_GlobalV_Default()
  *     - allocate rho, rhog, rho_save, rhog_save, kin_r, kin_r_save
  *     - using rhopw and GlobalV::NSPIN
  *   - SumRho: Charge::sum_rho()
- *     - calculate \sum_{spin}\sum_{nrxx} rho[is][ir]
+ *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
  */
 
 class ChargeTest : public ::testing::Test
@@ -69,12 +70,17 @@ class ChargeTest : public ::testing::Test
     std::unique_ptr<UnitCell> ucell;
     Charge* charge;
     ModulePW::PW_Basis* rhopw;
+    std::string output;
     void SetUp() override
     {
         elecstate::Set_GlobalV_Default();
         ucell = utp.SetUcellInfo();
         charge = new Charge;
         rhopw = new ModulePW::PW_Basis;
+        rhopw->initgrids(ucell->lat0, ucell->latvec, elecstate::tmp_gridecut);
+        rhopw->distribute_r();
+        rhopw->initparameters(false, elecstate::tmp_gridecut);
+        rhopw->distribute_g();
     }
     void TearDown() override
     {
@@ -91,26 +97,18 @@ TEST_F(ChargeTest, Constructor)
 
 TEST_F(ChargeTest, Allocate)
 {
-    // UcellTestPrepare utp = UcellTestLib["Si"];
-    // ucell = utp.SetUcellInfo();
-    //  init ucell
+    // ucell info
     EXPECT_DOUBLE_EQ(ucell->omega, 265.302);
-    // init rhopw
-
-    rhopw->initgrids(ucell->lat0, ucell->latvec, elecstate::tmp_gridecut);
+    // rhopw info
     EXPECT_DOUBLE_EQ(rhopw->lat0, 10.2);
     EXPECT_EQ(rhopw->nx, 24);
     EXPECT_EQ(rhopw->ny, 24);
     EXPECT_EQ(rhopw->nz, 24);
     EXPECT_EQ(rhopw->nxyz, 13824);
-    rhopw->distribute_r();
     EXPECT_EQ(rhopw->nrxx, 13824);
-    rhopw->initparameters(false, elecstate::tmp_gridecut);
-    rhopw->distribute_g();
     EXPECT_EQ(rhopw->npw, 3143);
     EXPECT_EQ(rhopw->npwtot, 3143);
     // call Charge::allocate()
-    charge = new Charge;
     GlobalV::test_charge = 2;
     elecstate::tmp_xc_func_type = 3;
     charge->set_rhopw(rhopw);
@@ -118,49 +116,26 @@ TEST_F(ChargeTest, Allocate)
     charge->allocate(GlobalV::NSPIN);
     EXPECT_TRUE(charge->allocate_rho);
     // test if Charge::allocate() be called twice
-
     EXPECT_NO_THROW(charge->allocate(GlobalV::NSPIN));
     EXPECT_TRUE(charge->allocate_rho);
-    // delete rhopw;
-    //charge->destroy();
-    /*
-    if (charge->rhopw != nullptr)
-    {
-        delete charge->rhopw;
-        charge->rhopw = nullptr;
-    }
-    delete charge;
-    */
 }
 
 TEST_F(ChargeTest, SumRho)
 {
-    EXPECT_DOUBLE_EQ(ucell->omega, 265.302);
-
-    rhopw->initgrids(ucell->lat0, ucell->latvec, elecstate::tmp_gridecut);
-    EXPECT_DOUBLE_EQ(rhopw->lat0, 10.2);
-    EXPECT_EQ(rhopw->nx, 24);
-    EXPECT_EQ(rhopw->ny, 24);
-    EXPECT_EQ(rhopw->nz, 24);
-    EXPECT_EQ(rhopw->nxyz, 13824);
-    rhopw->distribute_r();
-    EXPECT_EQ(rhopw->nrxx, 13824);
-    rhopw->initparameters(false, elecstate::tmp_gridecut);
-    rhopw->distribute_g();
-    EXPECT_EQ(rhopw->npw, 3143);
-    EXPECT_EQ(rhopw->npwtot, 3143);
-    // call Charge::allocate()
-    charge = new Charge;
-    GlobalV::test_charge = 2;
-    elecstate::tmp_xc_func_type = 3;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     charge->allocate(GlobalV::NSPIN);
     EXPECT_TRUE(charge->allocate_rho);
-    // test if Charge::allocate() be called twice
-
-    EXPECT_NO_THROW(charge->allocate(GlobalV::NSPIN));
-    EXPECT_TRUE(charge->allocate_rho);
+    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    for (int is = 0; is < nspin; is++)
+    {
+        for (int ir = 0; ir < rhopw->nrxx; ir++)
+        {
+            charge->rho[is][ir] = 0.1;
+        }
+    }
+    elecstate::tmp_ucell_omega = ucell->omega;
+    EXPECT_NEAR(charge->sum_rho(), 0.1 * nspin * rhopw->nrxx * ucell->omega / rhopw->nxyz, 1E-10);
 }
 
 #undef protected
