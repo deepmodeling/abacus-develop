@@ -2484,7 +2484,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:  
-  - <0: don't print $E_{ij}$
+  - <0: don't print $E_{ij}$.
   - \>=0: print the $E_{ij}\ (<\psi_i|H|\psi_j>$) elements which are larger than td_print_eij.
 - **Default**: -1
 
@@ -2510,7 +2510,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**:
-  If `td_vext` is True, the td_vext_dire is a string to set the number of electric fields, like `td_vext_dire 1 2` representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field. ???
+  If `td_vext` is True, the td_vext_dire is a string to set the number of electric fields, like `td_vext_dire 1 2` representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
   - 1: the direction of external light field is along x axis.
   - 2: the direction of external light field is along y axis.
   - 3: the direction of external light field is along z axis.
@@ -2613,7 +2613,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  frequency (freq) of Trapezoid type electric field  (fs^-1)
+  frequency (freq) of Trapezoid type electric field  (fs^-1)\
   E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
   E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
   E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
@@ -2679,7 +2679,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  frequency 1 (freq1) of Trigonometric type electric field  (fs^-1)
+  frequency 1 (freq1) of Trigonometric type electric field  (fs^-1)\
   amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 1.164656
 
@@ -2687,7 +2687,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  frequency 2 (freq2) of Trigonometric type electric field  (fs^-1)
+  frequency 2 (freq2) of Trigonometric type electric field  (fs^-1)\
   amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.029116
 
@@ -2711,7 +2711,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  amplitude (amp) of Trigonometric type electric field (V/Angstrom)
+  amplitude (amp) of Trigonometric type electric field (V/Angstrom)\
   amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 2.74
 
@@ -2737,16 +2737,16 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**:
-  - True: Output dipole.
-  - False: Do not output dipole.
+  - True: output dipole.
+  - False: do not output dipole.
 - **Default**: False
 
 ### out_efield
 
 - **Type**: Boolean
 - **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
-  - True: Output efield.
-  - False: Do not output efield.
+  - True: output efield.
+  - False: do not output efield.
 - **Default**: False
 
 ### ocp
@@ -2757,8 +2757,8 @@ These variables are used to control berry phase and wannier90 interface paramete
   - For TDDFT in LCAO codes. if set to 1, occupations will be constrained since second ionic step.
   - For OFDFT, this feature can't be used.
 - **Description**: 
-- True: Fix the occupations of bands.
-- False: Do not fix the occupations of bands.
+- True: fix the occupations of bands.
+- False: do not fix the occupations of bands.
 - **Default**: False
 
 ### ocp_set
