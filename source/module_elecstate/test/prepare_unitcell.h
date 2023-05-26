@@ -23,22 +23,6 @@ public:
 		std::valarray<int> natom_in,
 		std::vector<double> atomic_mass_in,
 		std::string coor_type_in,
-		std::valarray<double> coordinates_in);
-	UcellTestPrepare(std::string latname_in,
-		int lmaxmax_in,
-		bool init_vel_in,
-		bool selective_dynamics_in,
-		bool relax_new_in,
-		std::string fixed_axes_in,
-		double lat0_in,
-		std::valarray<double> latvec_in,
-		std::vector<std::string> elements_in,
-		std::vector<std::string> pp_files_in,
-		std::vector<std::string> pp_types_in,
-		std::vector<std::string> orb_files_in,
-		std::valarray<int> natom_in,
-		std::vector<double> atomic_mass_in,
-		std::string coor_type_in,
 		std::valarray<double> coordinates_in,
 		std::valarray<double> mbl_in,
 		std::valarray<double> velocity_in);
@@ -66,12 +50,12 @@ public:
 	int ntype;
 	int atomic_index;
 
-	UnitCell* SetUcellInfo()
-	{
+    std::unique_ptr<UnitCell> SetUcellInfo()
+    {
 		//basic info
 		this->ntype = this->elements.size();
-		UnitCell* ucell = new UnitCell;
-		ucell->setup(this->latname,
+        std::unique_ptr<UnitCell> ucell(new UnitCell);
+        ucell->setup(this->latname,
 				this->ntype,
 				this->lmaxmax,
 				this->init_vel,
@@ -188,7 +172,7 @@ public:
 						ucell->atoms[it].taud[ia].x, ucell->atoms[it].taud[ia].y, ucell->atoms[it].taud[ia].z);
 				}
                 ucell->atoms[it].dis[ia].set(0, 0, 0);
-				if(this->init_vel)
+                if(this->init_vel)
 				{
 					ucell->atoms[it].vel[ia].x = this->velocity[this->atomic_index*3+0];
 					ucell->atoms[it].vel[ia].y = this->velocity[this->atomic_index*3+1];
@@ -218,43 +202,6 @@ public:
 		return ucell;
 	}
 };
-
-UcellTestPrepare::UcellTestPrepare(std::string latname_in,
-		int lmaxmax_in,
-		bool init_vel_in,
-		bool selective_dynamics_in,
-		bool relax_new_in,
-		std::string fixed_axes_in,
-		double lat0_in,
-		std::valarray<double> latvec_in,
-		std::vector<std::string> elements_in,
-		std::vector<std::string> pp_files_in,
-		std::vector<std::string> pp_types_in,
-		std::vector<std::string> orb_files_in,
-		std::valarray<int> natom_in,
-		std::vector<double> atomic_mass_in,
-		std::string coor_type_in,
-		std::valarray<double> coordinates_in):
-	latname(latname_in),
-	lmaxmax(lmaxmax_in),
-	init_vel(init_vel_in),
-	selective_dynamics(selective_dynamics_in),
-	relax_new(relax_new_in),
-	fixed_axes(fixed_axes_in),
-	lat0(lat0_in),
-	latvec(latvec_in),
-	elements(elements_in),
-	pp_files(pp_files_in),
-	pp_types(pp_types_in),
-	orb_files(orb_files_in),
-	natom(natom_in),
-	atomic_mass(atomic_mass_in),
-	coor_type(coor_type_in),
-	coordinates(coordinates_in)
-{
-	mbl = {0};
-	velocity = {0};
-}
 
 UcellTestPrepare::UcellTestPrepare(std::string latname_in,
 		int lmaxmax_in,
@@ -336,6 +283,10 @@ std::map<std::string,UcellTestPrepare> UcellTestLib
 				{28.0},	//atomic mass
 				"Cartesian",	//coordination type
 				{0.0,0.0,0.0,	//atomic coordinates
-				 0.25,0.25,0.25})}
+				 0.25,0.25,0.25},
+				 {1,1,1,
+				 1,1,1},
+				 {0,0,0,
+				 0,0,0})},
 };
 #endif
