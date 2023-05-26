@@ -11,12 +11,8 @@
 #include "module_ri/exx_lip.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
 #endif
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_cell/klist.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #ifdef __CUDA
 #include "cublas_v2.h"
 namespace CudaCheck
@@ -281,12 +277,6 @@ static const char *_hipfftGetErrorString(hipfftResult_t error)
 //==========================================================
 namespace GlobalC
 {
-extern K_Vectors kv;
-extern Structure_Factor sf;
-extern ModulePW::PW_Basis* rhopw;
-extern ModulePW::PW_Basis_Big* bigpw;
-extern ModulePW::PW_Basis_K* wfcpw;
-extern wavefunc wf;
 #ifdef __EXX
 extern Exx_Info exx_info;
 extern Exx_Lip exx_lip;
@@ -294,15 +284,12 @@ extern Exx_Lip exx_lip;
 extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
-#include "module_cell/unitcell.h"
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_cell/parallel_kpoints.h"
+#include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 namespace GlobalC
 {
 extern UnitCell ucell;
-extern Charge_Mixing CHR_MIX;
-extern ModuleSymmetry::Symmetry symm;
 extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;
 extern Restart restart; // Peize Lin add 2020.04.04
