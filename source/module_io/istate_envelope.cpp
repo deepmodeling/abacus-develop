@@ -72,7 +72,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
     {
         wfc_gamma_grid[is] = new double* [GlobalV::NBANDS];
         for (int ib = 0;ib < GlobalV::NBANDS; ++ib)
-            wfc_gamma_grid[is][ib] = new double[GlobalC::GridT.lgd];
+            wfc_gamma_grid[is][ib] = new double[gg.gridt->lgd];
     }
 
     //for pw-wfc in G space
@@ -231,7 +231,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 psi->fix_k(ik);
 #ifdef __MPI
                 // need to deal with NSPIN=4 !!!!
-                lowf.wfc_2d_to_grid(0, psi->get_pointer(), lowf.wfc_k_grid[ik], ik, this->pes->ekb, this->pes->wg);
+                lowf.wfc_2d_to_grid(0, psi->get_pointer(), lowf.wfc_k_grid[ik], ik, this->pes->ekb, this->pes->wg, GlobalC::kv.kvec_c);
 #else
                 for (int i = 0;i < GlobalV::NBANDS;++i)
                 {

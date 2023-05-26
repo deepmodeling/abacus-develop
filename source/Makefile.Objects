@@ -150,6 +150,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
+        LCAO_deepks_interface.o\
 
 OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
@@ -162,6 +163,7 @@ OBJS_ELECSTAT=elecstate.o\
     efield.o\
     gatefield.o\
     potential_new.o\
+    potential_types.o\
     pot_local.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
@@ -343,7 +345,8 @@ OBJS_IO=input.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_band.o\
-    dos.o\
+    cal_dos.o\
+    dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
     output.o\

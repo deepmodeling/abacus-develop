@@ -83,7 +83,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     // count the number of elements to be received from each process
     for(int iGlobal=0; iGlobal<GlobalV::NLOCAL; ++iGlobal)
     {
-        int iLocalGrid=GlobalC::GridT.trace_lo[iGlobal];
+        int iLocalGrid=this->LOWF->gridt->trace_lo[iGlobal];
         if(iLocalGrid>=0)
         {
             //trace_global[iLocalGrid]=iGlobal;

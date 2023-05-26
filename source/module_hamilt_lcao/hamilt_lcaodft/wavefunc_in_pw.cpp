@@ -250,7 +250,8 @@ const double *rab, const int &l, double* table)
 void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
                                                const ModulePW::PW_Basis_K *wfc_basis,
                                                ModuleBase::ComplexMatrix &psi,
-                                               const ModuleBase::realArray &table_local)
+                                               const ModuleBase::realArray &table_local,
+											   const ModulePW::PW_Basis_K& wfcpw)
 {
 	ModuleBase::TITLE("Wavefunc_in_pw","produce_local_basis_in_pw");
 	assert(ik>=0);
@@ -275,7 +276,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 	{
 		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
 		{
-            std::complex<double> *sk = GlobalC::sf.get_sk(ik, it, ia, GlobalC::wfcpw);
+            std::complex<double> *sk = GlobalC::sf.get_sk(ik, it, ia, &wfcpw);
             int ic = 0;
             for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
