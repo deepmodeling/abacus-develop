@@ -36,7 +36,8 @@ namespace Wavefunc_in_pw
     void produce_local_basis_in_pw(const int &ik,
                                    const ModulePW::PW_Basis_K *wfc_basis,
                                    ModuleBase::ComplexMatrix &psi,
-                                   const ModuleBase::realArray &table_local);
+                                   const ModuleBase::realArray &table_local,
+								   const ModulePW::PW_Basis_K& wfcpw);
 
     // void produce_local_basis_q_in_pw(const int &ik,
     //                                  ModuleBase::ComplexMatrix &psi,

@@ -53,7 +53,7 @@ class Input
       -1, no symmetry at all; 
       0, only basic time reversal would be considered; 
       1, point group symmetry would be considered*/
-    int symmetry; 
+    string symmetry; 
     double symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
     int kpar; // ecch pool is for one k point
 
