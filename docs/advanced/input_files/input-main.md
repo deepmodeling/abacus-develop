@@ -2133,7 +2133,7 @@ These variables are used to control DFT+U correlated parameters
 - **Type**: Boolean
 - **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
   - True: Calculate plus U correction.
-  - False: not plus U correction.
+  - False: Do not calculate plus U correction.
 - **Default**: False
 
 ### orbital_corr
