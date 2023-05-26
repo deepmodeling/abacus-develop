@@ -2143,7 +2143,7 @@ These variables are used to control DFT+U correlated parameters
   - -1: The plus U correction will not be calculated for this atom.
   - 1: For p-electron orbits, the plus U correction is needed.
   - 2: For d-electron orbits, the plus U correction is needed.
-  - 3: For f electrons orbits need plus U correction.
+  - 3: For f-electron orbits, the plus U correction is needed.
 - **Default**: None
 
 ### hubbard_u
