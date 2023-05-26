@@ -18,7 +18,7 @@ class LCAO_Hamilt
     LCAO_Hamilt();
     ~LCAO_Hamilt();
 
-    void grid_prepare(const Grid_Technique& gt);
+    void grid_prepare(const Grid_Technique& gt, const ModulePW::PW_Basis& rhopw, const ModulePW::PW_Basis_Big& bigpw);
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
@@ -35,7 +35,7 @@ class LCAO_Hamilt
             const int (&nmp)[3],
             const std::vector< std::map <int, std::map < std::pair<int, std::array<int,3>>, RI::Tensor<Tdata> > >>& Hexxs);
 #endif
-    void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold);
+    void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold, const int (&nmp)[3]);
     void calculate_SR_sparse(const double &sparse_threshold);
     void clear_zero_elements(const int &current_spin, const double &sparse_threshold);
     void destroy_all_HSR_sparse(void);

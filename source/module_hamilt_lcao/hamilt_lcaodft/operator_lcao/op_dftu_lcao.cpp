@@ -25,7 +25,7 @@ void OperatorDFTU<OperatorLCAO<double>>::contributeHk(int ik)
     ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<double> eff_pot(this->LM->ParaV->nloc);
-    GlobalC::dftu.cal_eff_pot_mat_real(ik, &eff_pot[0], GlobalC::kv.isk);
+    GlobalC::dftu.cal_eff_pot_mat_real(ik, &eff_pot[0], isk);
 
     for (int irc = 0; irc < this->LM->ParaV->nloc; irc++)
     {
@@ -42,7 +42,7 @@ void OperatorDFTU<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<std::complex<double>> eff_pot(this->LM->ParaV->nloc);
-    GlobalC::dftu.cal_eff_pot_mat_complex(ik, &eff_pot[0], GlobalC::kv.isk);
+    GlobalC::dftu.cal_eff_pot_mat_complex(ik, &eff_pot[0], isk);
 
     for (int irc = 0; irc < this->LM->ParaV->nloc; irc++)
     {

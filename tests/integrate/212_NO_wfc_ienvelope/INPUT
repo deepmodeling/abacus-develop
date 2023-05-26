@@ -1,6 +1,7 @@
 INPUT_PARAMETERS
 #Parameters	(System)
 suffix                  autotest
+symmetry        0
 
 nbands			4
 stru_file		STRU

@@ -151,7 +151,7 @@ void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
         wfc_grid = this->lowf->wfc_k_grid[ik];
     }
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg, GlobalC::kv.kvec_c);
 #else
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
     {
