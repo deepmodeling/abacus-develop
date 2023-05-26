@@ -88,11 +88,12 @@ void RI_2D_Comm::add_Hexx(
 	const int ik,
 	const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
-	const Parallel_Orbitals &pv,
 	LCAO_Matrix &lm)
 {
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
+  
+    const Parallel_Orbitals& pv = *lm.ParaV;
 
 	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))

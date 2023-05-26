@@ -50,6 +50,8 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 #ifdef __EXX
     this->exd = new Exx_LRI_Interface<double>(GlobalC::exx_lri_double);
     this->exc = new Exx_LRI_Interface<std::complex<double>>(GlobalC::exx_lri_complex);
+    this->LM.Hexxd = &this->exd->get_Hexxs();
+    this->LM.Hexxc = &this->exc->get_Hexxs();
 #endif
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()

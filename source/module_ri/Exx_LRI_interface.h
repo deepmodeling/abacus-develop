@@ -1,10 +1,13 @@
 #pragma once
 #include "Exx_LRI.h"
-#include "module_elecstate/elecstate.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include <memory>
+
+class Local_Orbital_Charge;
+class LCAO_Matrix;
+namespace elecstate
+{
+class ElecState;
+}
 
 template<typename Tdata>
 class Exx_LRI_Interface
@@ -16,7 +19,12 @@ public:
     Exx_LRI_Interface() = delete;
 
     void write_Hexxs(const std::string &file_name) const;
-	void read_Hexxs(const std::string &file_name);
+    void read_Hexxs(const std::string& file_name);
+    
+    using TAC = std::pair<int, std::array<int, 3>>;
+    std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() { return this->exx_lri->Hexxs; }
+    
+    Tdata& get_Eexx() const { return &this->exx_lri->Eexx; }
 
     // Processes in ESolver_KS_LCAO
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
