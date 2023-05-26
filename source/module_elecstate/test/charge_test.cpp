@@ -45,6 +45,7 @@ void Set_GlobalV_Default()
 {
     GlobalV::NSPIN = 1;
     GlobalV::test_charge = 0;
+    GlobalV::nelec = 8;
 }
 } // namespace elecstate
 
@@ -61,6 +62,14 @@ void Set_GlobalV_Default()
  *     - using rhopw and GlobalV::NSPIN
  *   - SumRho: Charge::sum_rho()
  *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
+ *   - RenormalizeRho: Charge::renormalize_rho()
+ *     - renormalize rho so as to ensure the sum of rho equals to total number of electrons
+ *   - CheckNe: Charge::check_ne()
+ *     - check the total number of electrons summed from rho[is]
+ *   - SaveRhoBeforeSumBand: Charge::save_rho_before_sum_band()
+ *     - meaning as the function name
+ *   - InitFinalScf:: Charge::init_final_scf()
+ *     - similar to Charge::allocate(), but for final scf
  */
 
 class ChargeTest : public ::testing::Test
@@ -136,6 +145,78 @@ TEST_F(ChargeTest, SumRho)
     }
     elecstate::tmp_ucell_omega = ucell->omega;
     EXPECT_NEAR(charge->sum_rho(), 0.1 * nspin * rhopw->nrxx * ucell->omega / rhopw->nxyz, 1E-10);
+}
+
+TEST_F(ChargeTest, RenormalizeRho)
+{
+    charge->set_rhopw(rhopw);
+    EXPECT_FALSE(charge->allocate_rho);
+    charge->allocate(GlobalV::NSPIN);
+    EXPECT_TRUE(charge->allocate_rho);
+    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    for (int is = 0; is < nspin; is++)
+    {
+        for (int ir = 0; ir < rhopw->nrxx; ir++)
+        {
+            charge->rho[is][ir] = 0.1;
+        }
+    }
+    EXPECT_EQ(GlobalV::nelec, 8);
+    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->renormalize_rho();
+    EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
+}
+
+TEST_F(ChargeTest, CheckNe)
+{
+    charge->set_rhopw(rhopw);
+    EXPECT_FALSE(charge->allocate_rho);
+    charge->allocate(GlobalV::NSPIN);
+    EXPECT_TRUE(charge->allocate_rho);
+    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    for (int is = 0; is < nspin; is++)
+    {
+        for (int ir = 0; ir < rhopw->nrxx; ir++)
+        {
+            charge->rho[is][ir] = 0.1;
+        }
+    }
+    EXPECT_EQ(GlobalV::nelec, 8);
+    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->renormalize_rho();
+    EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
+    EXPECT_NEAR(charge->check_ne(charge->rho[0]), 8.0, 1e-10);
+}
+
+TEST_F(ChargeTest, SaveRhoBeforeSumBand)
+{
+    charge->set_rhopw(rhopw);
+    EXPECT_FALSE(charge->allocate_rho);
+    charge->allocate(GlobalV::NSPIN);
+    EXPECT_TRUE(charge->allocate_rho);
+    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    for (int is = 0; is < nspin; is++)
+    {
+        for (int ir = 0; ir < rhopw->nrxx; ir++)
+        {
+            charge->rho[is][ir] = 0.1;
+        }
+    }
+    EXPECT_EQ(GlobalV::nelec, 8);
+    elecstate::tmp_xc_func_type = 3;
+    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->renormalize_rho();
+    charge->save_rho_before_sum_band();
+    EXPECT_NEAR(charge->check_ne(charge->rho_save[0]), 8.0, 1e-10);
+}
+
+TEST_F(ChargeTest, InitFinalScf)
+{
+    charge->set_rhopw(rhopw);
+    elecstate::tmp_xc_func_type = 1;
+    GlobalV::test_charge = 2;
+    charge->init_final_scf();
+    EXPECT_TRUE(charge->allocate_rho_final_scf);
 }
 
 #undef protected

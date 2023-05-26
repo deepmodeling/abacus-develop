@@ -624,10 +624,9 @@ void Charge::init_final_scf()
     ModuleBase::TITLE("Charge", "init_after_scf");
 
     assert(allocate_rho_final_scf == false);
-
     if (GlobalV::test_charge > 1)
     {
-        std::cout << "\n spin_number = " << GlobalV::NSPIN << " real_point_number = " << this->rhopw->nrxx;
+        std::cout << "\n spin_number = " << GlobalV::NSPIN << " real_point_number = " << this->rhopw->nrxx << std::endl;
     }
 
     // allocate memory
