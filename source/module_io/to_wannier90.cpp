@@ -95,12 +95,13 @@ void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
 
 #ifdef __LCAO
 void toWannier90::init_wannier_lcao(const Grid_Technique& gt,
-    const ModuleBase::matrix& ekb,
-    const ModulePW::PW_Basis* rhopw,
-    const ModulePW::PW_Basis_K* wfcpw,
-    const ModulePW::PW_Basis_Big* bigpw,
-    const K_Vectors& kv,
-    const psi::Psi<std::complex<double>>* psi)
+                                    const ModuleBase::matrix& ekb,
+                                    const ModulePW::PW_Basis* rhopw,
+                                    const ModulePW::PW_Basis_K* wfcpw,
+                                    const ModulePW::PW_Basis_Big* bigpw,
+                                    const Structure_Factor& sf,
+                                    const K_Vectors& kv,
+                                    const psi::Psi<std::complex<double>>* psi)
 {
     this->gridt = &gt;
     this->read_nnkp(kv);
@@ -118,7 +119,7 @@ void toWannier90::init_wannier_lcao(const Grid_Technique& gt,
         }
     }
 
-    getUnkFromLcao(wfcpw, kv, wfcpw->npwk_max);
+    getUnkFromLcao(wfcpw, sf, kv, wfcpw->npwk_max);
     cal_Amn(this->unk_inLcao[0], wfcpw);
     cal_Mmn(this->unk_inLcao[0], rhopw, wfcpw);
     writeUNK(wfcpw, this->unk_inLcao[0], bigpw);
@@ -1741,14 +1742,18 @@ result = result + conj(psir[wfcpw->ng2fftw[psi.igk(0, ig)]]); // * tem;
 #ifdef __LCAO
 void toWannier90::lcao2pw_basis(const int ik,
                                 const ModulePW::PW_Basis_K* wfcpw,
+                                const Structure_Factor& sf,
                                 ModuleBase::ComplexMatrix& orbital_in_G)
 {
     this->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
     Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, this->table_local);
-    Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, orbital_in_G, this->table_local, *GlobalC::wfcpw);
+    Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, this->table_local);
 }
 
-void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw, const K_Vectors& kv, const int npwx)
+void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw,
+                                 const Structure_Factor& sf,
+                                 const K_Vectors& kv,
+                                 const int npwx)
 {
     std::complex<double> ***lcao_wfc_global = new std::complex<double> **[num_kpts];
     for (int ik = 0; ik < num_kpts; ik++)
@@ -1775,7 +1780,7 @@ void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw, const K_Vect
 
         int npw = kv.ngk[ik];
         orbital_in_G[ik].create(GlobalV::NLOCAL, npw);
-        this->lcao2pw_basis(ik, wfcpw, orbital_in_G[ik]);
+        this->lcao2pw_basis(ik, wfcpw, sf, orbital_in_G[ik]);
     }
 
     for (int ik = 0; ik < num_kpts; ik++)

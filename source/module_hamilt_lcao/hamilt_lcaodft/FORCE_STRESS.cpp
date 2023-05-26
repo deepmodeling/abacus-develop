@@ -20,21 +20,21 @@ Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) :
     RA(&ra), f_pw(nat_in), nat(nat_in){}
 Force_Stress_LCAO::~Force_Stress_LCAO() {}
 
-void Force_Stress_LCAO::getForceStress(
-	const bool isforce,
-	const bool isstress,
-	const bool istestf,
-    const bool istests,
-    Local_Orbital_Charge& loc,
-	const elecstate::ElecState* pelec,
-    const psi::Psi<double>* psid,
-	const psi::Psi<std::complex<double>>* psi,
-    LCAO_Hamilt &uhm,
-    ModuleBase::matrix& fcs,
-	ModuleBase::matrix &scs,
-	const K_Vectors& kv,
-    ModulePW::PW_Basis* rhopw,
-    ModuleSymmetry::Symmetry* symm)
+void Force_Stress_LCAO::getForceStress(const bool isforce,
+                                       const bool isstress,
+                                       const bool istestf,
+                                       const bool istests,
+                                       Local_Orbital_Charge& loc,
+                                       const elecstate::ElecState* pelec,
+                                       const psi::Psi<double>* psid,
+                                       const psi::Psi<std::complex<double>>* psi,
+                                       LCAO_Hamilt& uhm,
+                                       ModuleBase::matrix& fcs,
+                                       ModuleBase::matrix& scs,
+                                       const Structure_Factor& sf,
+                                       const K_Vectors& kv,
+                                       ModulePW::PW_Basis* rhopw,
+                                       ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
@@ -80,7 +80,8 @@ void Force_Stress_LCAO::getForceStress(
                              pelec->vnew,
                              pelec->vnew_exist,
                              pelec->charge,
-                             rhopw);
+                             rhopw,
+                             sf);
     }
 
     // total stress : ModuleBase::matrix scs
@@ -114,7 +115,15 @@ void Force_Stress_LCAO::getForceStress(
         svnl_dalpha.create(3, 3);
 #endif
         // calculate basic terms in Stress, similar method with PW base
-        this->calStressPwPart(sigmadvl, sigmahar, sigmaewa, sigmacc, sigmaxc, pelec->f_en.etxc, pelec->charge, rhopw);
+        this->calStressPwPart(sigmadvl,
+                              sigmahar,
+                              sigmaewa,
+                              sigmacc,
+                              sigmaxc,
+                              pelec->f_en.etxc,
+                              pelec->charge,
+                              rhopw,
+                              sf);
     }
     //--------------------------------------------------------
     // implement four terms which needs integration
@@ -652,7 +661,8 @@ void Force_Stress_LCAO::calForcePwPart(ModuleBase::matrix& fvl_dvl,
                                        const ModuleBase::matrix& vnew,
                                        const bool vnew_exist,
                                        const Charge* const chr,
-                                       ModulePW::PW_Basis* rhopw)
+                                       ModulePW::PW_Basis* rhopw,
+                                       const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
     //--------------------------------------------------------
@@ -663,7 +673,7 @@ void Force_Stress_LCAO::calForcePwPart(ModuleBase::matrix& fvl_dvl,
     //--------------------------------------------------------
     // ewald force: use plane wave only.
     //--------------------------------------------------------
-    f_pw.cal_force_ew(fewalds, rhopw, &GlobalC::sf); // remain problem
+    f_pw.cal_force_ew(fewalds, rhopw, &sf); // remain problem
 
     //--------------------------------------------------------
     // force due to core correlation.
@@ -757,15 +767,15 @@ void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
                                         ModuleBase::matrix& sigmaxc,
                                         const double& etxc,
                                         const Charge* const chr,
-                                        ModulePW::PW_Basis* rhopw
-                                        )
+                                        ModulePW::PW_Basis* rhopw,
+                                        const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calStressPwPart");
     //--------------------------------------------------------
     // local pseudopotential stress:
     // use charge density; plane wave; local pseudopotential;
     //--------------------------------------------------------
-    sc_pw.stress_loc(sigmadvl, rhopw, &GlobalC::sf, 0, chr);
+    sc_pw.stress_loc(sigmadvl, rhopw, &sf, 0, chr);
 
     //--------------------------------------------------------
     // hartree term
@@ -780,7 +790,7 @@ void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
     //--------------------------------------------------------
     // stress due to core correlation.
     //--------------------------------------------------------
-    sc_pw.stress_cc(sigmacc, rhopw, &GlobalC::sf, 0, chr);
+    sc_pw.stress_cc(sigmacc, rhopw, &sf, 0, chr);
 
     //--------------------------------------------------------
     // stress due to self-consistent charge.

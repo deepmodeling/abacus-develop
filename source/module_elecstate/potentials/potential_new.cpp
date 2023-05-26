@@ -16,7 +16,7 @@ namespace elecstate
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const UnitCell* ucell_in,
                      const ModuleBase::matrix* vloc_in,
-                     const ModuleBase::ComplexMatrix* structure_factors_in,
+                     Structure_Factor* structure_factors_in,
                      double* etxc_in,
                      double* vtxc_in)
     : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), etxc_(etxc_in), vtxc_(vtxc_in)

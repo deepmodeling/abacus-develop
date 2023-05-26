@@ -54,12 +54,21 @@ namespace ModuleESolver
         //ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT ATOMS");
 
         // (3) Periodic condition search for each grid.
-        this->GridT.set_pbc_grid(
-            GlobalC::rhopw->nx, GlobalC::rhopw->ny, GlobalC::rhopw->nz,
-            GlobalC::bigpw->bx, GlobalC::bigpw->by, GlobalC::bigpw->bz,
-            GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbz,
-            GlobalC::bigpw->nbxx, GlobalC::bigpw->nbzp_start, GlobalC::bigpw->nbzp,
-            GlobalC::rhopw->ny, GlobalC::rhopw->nplane,GlobalC::rhopw->startz_current);
+        this->GridT.set_pbc_grid(pw_rho->nx,
+                                 pw_rho->ny,
+                                 pw_rho->nz,
+                                 this->pw_big->bx,
+                                 this->pw_big->by,
+                                 this->pw_big->bz,
+                                 this->pw_big->nbx,
+                                 this->pw_big->nby,
+                                 this->pw_big->nbz,
+                                 this->pw_big->nbxx,
+                                 this->pw_big->nbzp_start,
+                                 this->pw_big->nbzp,
+                                 pw_rho->ny,
+                                 pw_rho->nplane,
+                                 pw_rho->startz_current);
 
         // (2)For each atom, calculate the adjacent atoms in different cells
         // and allocate the space for H(R) and S(R).
@@ -130,12 +139,12 @@ namespace ModuleESolver
                     ncol = this->LOWF.paraV->ncol;
                 }
 #endif
-                this->psi = new psi::Psi<std::complex<double>>(GlobalC::kv.nks, ncol, this->LOWF.ParaV->nrow, nullptr);
+                this->psi = new psi::Psi<std::complex<double>>(this->kv.nks, ncol, this->LOWF.ParaV->nrow, nullptr);
             }
         }
         
         // prepare grid in Gint
-        this->UHM.grid_prepare(this->GridT, *GlobalC::rhopw, *GlobalC::bigpw);
+        this->UHM.grid_prepare(this->GridT, *pw_rho, *this->pw_big);
 
         // init Hamiltonian
         if (this->p_hamilt != nullptr)
@@ -150,26 +159,26 @@ namespace ModuleESolver
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
                 this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
-                                                            &(this->UHM.genH),
-                                                            &(this->LM),
-                                                            &(this->LOC),
-                                                            this->pelec->pot,
-                                                            GlobalC::kv);
+                                                                &(this->UHM.genH),
+                                                                &(this->LM),
+                                                                &(this->LOC),
+                                                                this->pelec->pot,
+                                                                this->kv);
             }
             // multi_k case
             else
             {
                 this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
-                                                                        &(this->UHM.genH),
-                                                                        &(this->LM),
-                                                                        &(this->LOC),
-                                                                        this->pelec->pot,
-                                                                        GlobalC::kv);
+                                                                              &(this->UHM.genH),
+                                                                              &(this->LM),
+                                                                              &(this->LOC),
+                                                                              this->pelec->pot,
+                                                                              this->kv);
             }
         }
 
         // init density kernel and wave functions.
-        this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psid, this->psi, GlobalC::kv);
+        this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psid, this->psi, this->kv);
 
         //======================================
         // do the charge extrapolation before the density matrix is regenerated.
@@ -186,7 +195,7 @@ namespace ModuleESolver
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], GlobalC::rhopw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], pw_rho->nrxx);
                 std::stringstream ssd;
                 ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
                 // reading density matrix,
@@ -213,7 +222,7 @@ namespace ModuleESolver
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], pw_rho->nrxx);
                     }
                     Gint_inout inout1(this->LOC.DM, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
@@ -227,7 +236,7 @@ namespace ModuleESolver
                 {
                     for(int is=0; is<GlobalV::NSPIN; is++)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], GlobalC::rhopw->nrxx);
+                        ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], pw_rho->nrxx);
                     }
                     Gint_inout inout1(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
@@ -281,7 +290,7 @@ namespace ModuleESolver
         if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
             CE.update_all_dis(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge, &(GlobalC::sf));
+            CE.extrapolate_charge(pelec->charge, &(sf));
         }
 
         //----------------------------------------------------------
@@ -294,13 +303,13 @@ namespace ModuleESolver
         }
         
         this->beforesolver(istep);
-        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        this->pelec->init_scf(istep, sf.strucFac);
         // the electron charge density should be symmetrized,
         // here is the initialization
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::Pgrid, this->symm);
         }
 //Peize Lin add 2016-12-03
 #ifdef __EXX
@@ -327,34 +336,34 @@ namespace ModuleESolver
 		{
 			//program should be stopped after this judgement
 			Exx_Opt_Orb exx_opt_orb;
-			exx_opt_orb.generate_matrix(GlobalC::kv);
-			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-			return;
-		}
+            exx_opt_orb.generate_matrix(this->kv);
+            ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+            return;
+        }
 		
 		// set initial parameter for mix_DMk_2D
 		if(GlobalC::exx_info.info_global.cal_exx)
 		{
-			this->mix_DMk_2D.set_nks(GlobalC::kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
-			if(GlobalC::exx_info.info_global.separate_loop)
-			{
-				if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
+            this->mix_DMk_2D.set_nks(this->kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
+            if (GlobalC::exx_info.info_global.separate_loop)
+            {
+                if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
 					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
 				else
 					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain)
 					                .set_mixing_beta(GlobalC::exx_info.info_global.mixing_beta_for_loop1);
-			}
-			else
+            }
+            else
 			{
-				if(GlobalC::CHR_MIX.get_mixing_mode() == "plain")
-					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
-				else if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
-					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
+                if (this->p_chgmix->get_mixing_mode() == "plain")
+                    this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
+                else if (this->p_chgmix->get_mixing_mode() == "pulay")
+                    this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
 				else
-					throw std::invalid_argument(
-						"mixing_mode = " + GlobalC::CHR_MIX.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
-						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
-			}
+                    throw std::invalid_argument("mixing_mode = " + this->p_chgmix->get_mixing_mode()
+                                                + ", mix_DMk_2D unsupported.\n" + std::string(__FILE__) + " line "
+                                                + std::to_string(__LINE__));
+            }
 		}
 #endif // __MPI
 #endif // __EXX
@@ -362,8 +371,7 @@ namespace ModuleESolver
         // mohan update 2021-02-25
         if(!GlobalV::test_skip_ewald)
         {
-            this->pelec->f_en.ewald_energy
-                = H_Ewald_pw::compute_ewald(GlobalC::ucell, GlobalC::rhopw, GlobalC::sf.strucFac);
+            this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, pw_rho, sf.strucFac);
         }
 
         p_hamilt->non_first_scf = istep;
@@ -387,7 +395,10 @@ namespace ModuleESolver
         
         if(GlobalV::CALCULATION == "test_memory")
         {
-            Cal_Test::test_memory(this->pw_rho, this->pw_wfc, GlobalC::CHR_MIX.get_mixing_mode(), GlobalC::CHR_MIX.get_mixing_ndim());
+            Cal_Test::test_memory(this->pw_rho,
+                                  this->pw_wfc,
+                                  this->p_chgmix->get_mixing_mode(),
+                                  this->p_chgmix->get_mixing_ndim());
             return;
         }
 
@@ -414,7 +425,7 @@ namespace ModuleESolver
 
         this->beforesolver(istep);
         //pelec should be initialized before these calculations
-        this->pelec->init_scf( istep, GlobalC::sf.strucFac );
+        this->pelec->init_scf(istep, sf.strucFac);
         // self consistent calculations for electronic ground state
         if (GlobalV::CALCULATION == "nscf")
         {
@@ -423,15 +434,31 @@ namespace ModuleESolver
         else if (GlobalV::CALCULATION == "istate")
         {
             IState_Charge ISC(this->psid, this->LOC);
-            ISC.begin(this->UHM.GG, this->pelec, this->pw_rho, GlobalC::bigpw);
+            ISC.begin(this->UHM.GG, this->pelec, this->pw_rho, this->pw_big);
         }
         else if (GlobalV::CALCULATION == "ienvelope")
         {
             IState_Envelope IEP(this->pelec);
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                IEP.begin(this->psid, this->pw_rho, this->pw_wfc, GlobalC::bigpw, this->LOWF, this->UHM.GG, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
+                IEP.begin(this->psid,
+                          this->pw_rho,
+                          this->pw_wfc,
+                          this->pw_big,
+                          this->LOWF,
+                          this->UHM.GG,
+                          INPUT.out_wfc_pw,
+                          wf.out_wfc_r,
+                          this->kv);
             else
-                IEP.begin(this->psi, this->pw_rho, this->pw_wfc, GlobalC::bigpw, this->LOWF, this->UHM.GK, INPUT.out_wfc_pw, GlobalC::wf.out_wfc_r, GlobalC::kv);
+                IEP.begin(this->psi,
+                          this->pw_rho,
+                          this->pw_wfc,
+                          this->pw_big,
+                          this->LOWF,
+                          this->UHM.GK,
+                          INPUT.out_wfc_pw,
+                          wf.out_wfc_r,
+                          this->kv);
         }
         else
         {
@@ -500,12 +527,10 @@ namespace ModuleESolver
             if(GlobalV::GAMMA_ONLY_LOCAL)
             {
                 hamilt::Operator<double>* exx
-                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(
-                        &LM,
-                        nullptr, //no explicit call yet
-                        &(LM.Hloc),
-                        GlobalC::kv
-                    );
+                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
+                                                                            nullptr, // no explicit call yet
+                                                                            &(LM.Hloc),
+                                                                            this->kv);
                 p_hamilt->opsd->add(exx);
             }
             else
@@ -513,10 +538,9 @@ namespace ModuleESolver
                 hamilt::Operator<std::complex<double>>* exx
                     = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
                         &LM,
-                        nullptr, //no explicit call yet
+                        nullptr, // no explicit call yet
                         &(LM.Hloc2),
-                        GlobalC::kv
-                    );
+                        this->kv);
                 p_hamilt->ops->add(exx);
             }
         }
@@ -550,7 +574,7 @@ namespace ModuleESolver
         GlobalV::ofs_running << " end of band structure calculation " << std::endl;
         GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < this->kv.nks; ik++)
         {
             if (GlobalV::NSPIN == 2)
             {
@@ -558,22 +582,20 @@ namespace ModuleESolver
                 {
                     GlobalV::ofs_running << " spin up :" << std::endl;
                 }
-                if (ik == (GlobalC::kv.nks / 2))
+                if (ik == (this->kv.nks / 2))
                 {
                     GlobalV::ofs_running << " spin down :" << std::endl;
                 }
             }
 
-            GlobalV::ofs_running << " k-points"
-                << ik + 1 << "(" << GlobalC::kv.nkstot << "): "
-                << GlobalC::kv.kvec_c[ik].x << " " << GlobalC::kv.kvec_c[ik].y << " " << GlobalC::kv.kvec_c[ik].z << std::endl;
+            GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.nkstot << "): " << this->kv.kvec_c[ik].x << " "
+                                 << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
 
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
-                GlobalV::ofs_running << " spin" << GlobalC::kv.isk[ik] + 1
-                    << "final_state " << ib + 1 << " "
-                    << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                    << " " << this->pelec->wg(ik, ib) * GlobalC::kv.nks << std::endl;
+                GlobalV::ofs_running << " spin" << this->kv.isk[ik] + 1 << "final_state " << ib + 1 << " "
+                                     << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV << " "
+                                     << this->pelec->wg(ik, ib) * this->kv.nks << std::endl;
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -599,15 +621,22 @@ namespace ModuleESolver
         // add by jingan in 2018.11.7
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
-            toWannier90 myWannier(GlobalC::kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier_lcao(this->GridT, this->pelec->ekb, this->pw_rho, this->pw_wfc, GlobalC::bigpw, GlobalC::kv, nullptr);
+            toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
+            myWannier.init_wannier_lcao(this->GridT,
+                                        this->pelec->ekb,
+                                        this->pw_rho,
+                                        this->pw_wfc,
+                                        this->pw_big,
+                                        this->sf,
+                                        this->kv,
+                                        nullptr);
         }
 
         // add by jingan
         if (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
         {
             berryphase bp(this->LOWF);
-            bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, GlobalC::kv);
+            bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         }
 
         //below is for DeePKS NSCF calculation
@@ -627,13 +656,13 @@ namespace ModuleESolver
             else
             {
                 GlobalC::ld.cal_projected_DM_k(this->LOC.dm_k,
-                                           GlobalC::ucell,
-                                           GlobalC::ORB,
-                                           GlobalC::GridD,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           GlobalC::kv.nks,
-                                           GlobalC::kv.kvec_d);
+                                               GlobalC::ucell,
+                                               GlobalC::ORB,
+                                               GlobalC::GridD,
+                                               pv->trace_loc_row,
+                                               pv->trace_loc_col,
+                                               this->kv.nks,
+                                               this->kv.kvec_d);
             }
             GlobalC::ld.cal_descriptor(); // final descriptor
             GlobalC::ld.cal_gedm(GlobalC::ucell.nat);

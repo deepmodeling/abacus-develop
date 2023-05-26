@@ -28,8 +28,6 @@ class WF_atomic
     psi::Psi<std::complex<double>>* psi = nullptr;
 
     ModuleBase::ComplexMatrix *wanf2 = nullptr; // wannier functions in the PW basis
-    
-    int pw_seed; //random seed for wave functions qianrui add 2021-8-13
 
     void init_at_1(Structure_Factor *sf_in); // from init_at_1.f90
 
