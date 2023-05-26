@@ -154,6 +154,8 @@ extern "C"
 	void dlarfg_(int *n, double *alpha, double *x, int *incx, double *tau);
 	void zlarfg_(int *n, std::complex<double> *alpha, std::complex<double> *x, int *incx, std::complex<double> *tau);
 
+    // solve a tridiagonal linear system
+    void dgtsv_(int* N, int* NRHS, double* DL, double* D, double* DU, double* B, int* LDB, int* INFO);
 }
 
 #ifdef GATHER_INFO
