@@ -59,8 +59,8 @@ test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
 #--------------------------------------------
-if [ $calculation != "nscf" ] && [ $calculation != "ienvelope" ]\
-&& [ $calculation != "istate" ] && [ $calculation != "get_S" ]; then
+if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
 	etot=`grep ETOT_ $running_path | awk '{print $2}'`
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
 	echo "etotref $etot" >>$1
@@ -315,7 +315,7 @@ if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
 	echo "Compare_mulliken_pass $?" >>$1
 fi
 
-if [ $calculation == "ienvelope" ]; then
+if [ $calculation == "get_wf" ]; then
 	nfile=0
 	# envfiles=`ls OUT.autotest/ | grep ENV$`
 	# if test -z "$envfiles"; then
@@ -342,7 +342,7 @@ if [ $calculation == "ienvelope" ]; then
 	fi
 fi
 
-if [ $calculation == "istate" ]; then
+if [ $calculation == "get_pchg" ]; then
 	nfile=0
 	# chgfiles=`ls OUT.autotest/ | grep -E '_CHG$'`
 	# if test -z "$chgfiles"; then
