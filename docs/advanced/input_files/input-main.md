@@ -366,8 +366,8 @@ These variables are used to control general system parameters.
   - relax: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want
   - cell-relax: do variable-cell relaxation calculation
   - nscf: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3
-  - istate: For LCAO basis. Please see the explanation for variable `nbands_istate`
-  - ienvelope: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_wf: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
   - md: molecular dynamics
   - test_memory : checks memory required for the calculation. The number is not quite reliable, please use it with care
   - test_neighbour : only performs neighbouring atom search
@@ -396,7 +396,7 @@ These variables are used to control general system parameters.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
   - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
-  - 0: if *[calculation](#calculation)==md/nscf/istate/ienvelope/get_S* or *[gamma_only]==True*
+  - 0: if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*
   - 1: else
 
 ### symmetry_prec
@@ -780,8 +780,8 @@ calculations.
 ### nbands_istate
 
 - **Type**: Integer
-- **Availability**: Only used when `calculation = ienvelope` or `calculation = istate`.
-- **Description**: The number of bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Availability**: Only used when `calculation = get_wf` or `calculation = get_pchg`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 ### nspin
@@ -1257,7 +1257,7 @@ These variables are used to control the output of properties.
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
 - **Description**: 
   - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points. 
   - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
@@ -1266,7 +1266,7 @@ These variables are used to control the output of properties.
 ### out_wfc_r
 
 - **Type**: Boolean
-- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
 - **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
 - **Default**: False
 

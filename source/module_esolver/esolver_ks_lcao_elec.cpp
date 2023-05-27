@@ -374,12 +374,12 @@ namespace ModuleESolver
         {
             this->nscf();
         }
-        else if (GlobalV::CALCULATION == "istate")
+        else if (GlobalV::CALCULATION == "get_pchg")
         {
             IState_Charge ISC(this->psid, this->LOC);
             ISC.begin(this->UHM.GG, this->pelec, this->pw_rho, this->pw_big);
         }
-        else if (GlobalV::CALCULATION == "ienvelope")
+        else if (GlobalV::CALCULATION == "get_wf")
         {
             IState_Envelope IEP(this->pelec);
             if (GlobalV::GAMMA_ONLY_LOCAL)
