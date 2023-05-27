@@ -35,7 +35,6 @@
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
@@ -48,6 +47,20 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 {
     classname = "ESolver_KS_LCAO";
     basisname = "LCAO";
+#ifdef __EXX
+    if (GlobalC::exx_info.info_ri.real_number)
+    {
+        this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
+        this->exd = std::make_shared<Exx_LRI_Interface<double>>(this->exx_lri_double);
+        this->LM.Hexxd = &this->exd->get_Hexxs();
+    }
+    else
+    {
+        this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
+        this->exc = std::make_shared<Exx_LRI_Interface<std::complex<double>>>(this->exx_lri_complex);
+        this->LM.Hexxc = &this->exc->get_Hexxs();
+    }
+#endif
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
@@ -141,9 +154,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, kv);
+                this->exx_lri_double->init(MPI_COMM_WORLD, kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, kv);
+                this->exx_lri_complex->init(MPI_COMM_WORLD, kv);
         }
     }
 #endif
@@ -254,6 +267,10 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->sf,
                        this->kv,
                        this->pw_rho,
+#ifdef __EXX
+                        *this->exx_lri_double,
+                        *this->exx_lri_complex,
+#endif  
                        &this->symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
@@ -469,26 +486,10 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
 #ifdef __EXX
     // calculate exact-exchange
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
-        {
-            this->mix_DMk_2D.set_mixing_beta(this->p_chgmix->get_mixing_beta());
-            if (this->p_chgmix->get_mixing_mode() == "pulay")
-                this->mix_DMk_2D.set_coef_pulay(iter, *(this->p_chgmix));
-            const bool flag_restart = (iter == 1) ? true : false;
-            if(GlobalV::GAMMA_ONLY_LOCAL)
-				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
-			else
-				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
-
-            // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-        }
-    }
+    if (GlobalC::exx_info.info_ri.real_number)
+        this->exd->exx_eachiterinit(this->LOC, *(this->p_chgmix), iter);
+    else
+        this->exc->exx_eachiterinit(this->LOC, *(this->p_chgmix), iter);
 #endif
 
     if (GlobalV::dft_plus_u)
@@ -550,29 +551,10 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
 #ifdef __EXX
-    // Peize Lin add 2020.04.04
-    if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
-    {
-        // add exx
-        // Peize Lin add 2016-12-03
-        this->pelec->set_exx();
-
-        if (GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish
-            && !GlobalC::restart.info_load.restart_exx)
-        {
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            GlobalC::restart.info_load.restart_exx = true;
-        }
-    }
+    if (GlobalC::exx_info.info_ri.real_number)
+        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
     else
-    {
-        this->pelec->f_en.exx = 0.;
-    }
+        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
 #endif
 
     // if DFT+U calculation is needed, this function will calculate
@@ -943,9 +925,9 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
-            GlobalC::exx_lri_double.write_Hexxs(file_name_exx);
+            this->exd->write_Hexxs(file_name_exx);
         else
-            GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
+            this->exc->write_Hexxs(file_name_exx);
     }
 #endif
 
@@ -1038,17 +1020,11 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #ifdef __EXX
     if (INPUT.rpa)
     {
-		this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
-		if(GlobalV::GAMMA_ONLY_LOCAL)
-			this->mix_DMk_2D.mix(this->LOC.dm_gamma, true);
-		else
-			this->mix_DMk_2D.mix(this->LOC.dm_k, true);
-
         // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, kv, this->mix_DMk_2D, *this->LOWF.ParaV);
+        rpa_lri_double.cal_postSCF_exx(this->LOC, MPI_COMM_WORLD, kv, *this->LOWF.ParaV);
         rpa_lri_double.init(MPI_COMM_WORLD, kv);
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
     }
@@ -1113,90 +1089,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 bool ESolver_KS_LCAO::do_after_converge(int& iter)
 {
 #ifdef __EXX
-
-    // Add EXX operator
-    auto add_exx_operator = [&]() {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            hamilt::Operator<double>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
-                                                                        nullptr, // no explicit call yet
-                                                                        &(LM.Hloc),
-                                                                        kv);
-            p_hamilt->opsd->add(exx);
-        }
-        else
-        {
-            hamilt::Operator<std::complex<double>>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&LM,
-                                                                                      nullptr, // no explicit call yet
-                                                                                      &(LM.Hloc2),
-                                                                                      kv);
-            p_hamilt->ops->add(exx);
-        }
-    };
-
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        // no separate_loop case
-        if (!GlobalC::exx_info.info_global.separate_loop)
-        {
-            GlobalC::exx_info.info_global.hybrid_step = 1;
-
-            // in no_separate_loop case, scf loop only did twice
-            // in first scf loop, exx updated once in beginning,
-            // in second scf loop, exx updated every iter
-
-            if (this->two_level_step)
-            {
-                return true;
-            }
-            else
-            {
-                // update exx and redo scf
-                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-                iter = 0;
-                std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
-                this->two_level_step++;
-
-                add_exx_operator();
-
-                return false;
-            }
-        }
-        // has separate_loop case
-        // exx converged or get max exx steps
-        else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                 || (iter == 1 && this->two_level_step != 0))
-        {
-            return true;
-        }
-        else
-        {
-            // update exx and redo scf
-            if (two_level_step == 0)
-            {
-                add_exx_operator();
-                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            }
-
-			const bool flag_restart = (two_level_step==0) ? true : false;
-			if(GlobalV::GAMMA_ONLY_LOCAL)
-				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
-			else
-				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
-
-            // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            iter = 0;
-            std::cout << " Updating EXX and rerun SCF" << std::endl;
-            this->two_level_step++;
-            return false;
-        }
-    }
+    if (GlobalC::exx_info.info_ri.real_number)
+        return this->exd->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, kv, iter);
+    else
+        return this->exc->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, kv, iter);
 #endif // __EXX
     return true;
 }

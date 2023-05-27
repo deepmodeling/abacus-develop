@@ -9,11 +9,6 @@
 #include "module_io/istate_charge.h"
 #include "module_io/istate_envelope.h"
 #include "module_io/write_HS_R.h"
-//
-#ifdef __EXX
-#include "module_ri/exx_abfs-jle.h"
-#include "module_ri/exx_opt_orb.h"
-#endif
 
 #include "module_io/berryphase.h"
 #include "module_io/to_wannier90.h"
@@ -313,59 +308,10 @@ namespace ModuleESolver
         }
 //Peize Lin add 2016-12-03
 #ifdef __EXX
-#ifdef __MPI
-		if ( GlobalC::exx_info.info_global.cal_exx )
-		{
-            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0")
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
-            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
-            {
-                XC_Functional::set_xc_type("scan");
-            }
-
-			//GlobalC::exx_lcao.cal_exx_ions(*this->LOWF.ParaV);
-			if(GlobalC::exx_info.info_ri.real_number)
-				GlobalC::exx_lri_double.cal_exx_ions();
-			else
-				GlobalC::exx_lri_complex.cal_exx_ions();
-		}
-
-		if (Exx_Abfs::Jle::generate_matrix)
-		{
-			//program should be stopped after this judgement
-			Exx_Opt_Orb exx_opt_orb;
-            exx_opt_orb.generate_matrix(this->kv);
-            ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-            return;
-        }
-		
-		// set initial parameter for mix_DMk_2D
-		if(GlobalC::exx_info.info_global.cal_exx)
-		{
-            this->mix_DMk_2D.set_nks(this->kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
-            if (GlobalC::exx_info.info_global.separate_loop)
-            {
-                if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
-					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
-				else
-					this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain)
-					                .set_mixing_beta(GlobalC::exx_info.info_global.mixing_beta_for_loop1);
-            }
-            else
-			{
-                if (this->p_chgmix->get_mixing_mode() == "plain")
-                    this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
-                else if (this->p_chgmix->get_mixing_mode() == "pulay")
-                    this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
-				else
-                    throw std::invalid_argument("mixing_mode = " + this->p_chgmix->get_mixing_mode()
-                                                + ", mix_DMk_2D unsupported.\n" + std::string(__FILE__) + " line "
-                                                + std::to_string(__LINE__));
-            }
-		}
-#endif // __MPI
+        if (GlobalC::exx_info.info_ri.real_number)
+            this->exd->exx_beforescf(kv, *this->p_chgmix);
+        else
+            this->exc->exx_beforescf(kv, *this->p_chgmix);
 #endif // __EXX
         // 1. calculate ewald energy.
         // mohan update 2021-02-25
@@ -375,9 +321,6 @@ namespace ModuleESolver
         }
 
         p_hamilt->non_first_scf = istep;
-
-        // for exx two_level scf
-        this->two_level_step = 0;
 
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
         return;
@@ -519,9 +462,9 @@ namespace ModuleESolver
             //GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
 			const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
 			if(GlobalC::exx_info.info_ri.real_number)
-				GlobalC::exx_lri_double.read_Hexxs(file_name_exx);
+				this->exd->read_Hexxs(file_name_exx);
 			else
-				GlobalC::exx_lri_complex.read_Hexxs(file_name_exx);
+				this->exc->read_Hexxs(file_name_exx);
 
             // This is a temporary fix
             if(GlobalV::GAMMA_ONLY_LOCAL)

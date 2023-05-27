@@ -20,21 +20,26 @@ Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) :
     RA(&ra), f_pw(nat_in), nat(nat_in){}
 Force_Stress_LCAO::~Force_Stress_LCAO() {}
 
-void Force_Stress_LCAO::getForceStress(const bool isforce,
-                                       const bool isstress,
-                                       const bool istestf,
-                                       const bool istests,
-                                       Local_Orbital_Charge& loc,
-                                       const elecstate::ElecState* pelec,
-                                       const psi::Psi<double>* psid,
-                                       const psi::Psi<std::complex<double>>* psi,
-                                       LCAO_Hamilt& uhm,
-                                       ModuleBase::matrix& fcs,
-                                       ModuleBase::matrix& scs,
-                                       const Structure_Factor& sf,
-                                       const K_Vectors& kv,
-                                       ModulePW::PW_Basis* rhopw,
-                                       ModuleSymmetry::Symmetry* symm)
+void Force_Stress_LCAO::getForceStress(
+	const bool isforce,
+	const bool isstress,
+	const bool istestf,
+    const bool istests,
+    Local_Orbital_Charge& loc,
+	const elecstate::ElecState* pelec,
+    const psi::Psi<double>* psid,
+	const psi::Psi<std::complex<double>>* psi,
+    LCAO_Hamilt &uhm,
+    ModuleBase::matrix& fcs,
+    ModuleBase::matrix & scs,
+    const Structure_Factor& sf,
+	const K_Vectors& kv,
+    ModulePW::PW_Basis* rhopw,
+#ifdef __EXX
+    Exx_LRI<double>& exx_lri_double,
+    Exx_LRI<std::complex<double>>& exx_lri_complex,
+#endif
+    ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
@@ -234,26 +239,26 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                GlobalC::exx_lri_double.cal_exx_force();
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.force_exx;
+                exx_lri_double.cal_exx_force();
+                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_double.force_exx;
             }
             else
             {
-                GlobalC::exx_lri_complex.cal_exx_force();
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_complex.force_exx;
+                exx_lri_complex.cal_exx_force();
+                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_complex.force_exx;
             }
         }
         if (isstress)
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                GlobalC::exx_lri_double.cal_exx_stress();
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.stress_exx;
+                exx_lri_double.cal_exx_stress();
+                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_double.stress_exx;
             }
             else
             {
-                GlobalC::exx_lri_complex.cal_exx_stress();
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_complex.stress_exx;
+                exx_lri_complex.cal_exx_stress();
+                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_complex.stress_exx;
             }
         }
     }

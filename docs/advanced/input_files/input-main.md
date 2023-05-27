@@ -738,26 +738,26 @@ calculations.
 
 - **Type**: String
 - **Description**: Choose the basis set.
-  - pw: Using plane-wave basis set only.
-  - lcao_in_pw: Expand the localized atomic set in plane-wave basis.
-  - lcao: Using localized atomic orbital sets.
+  - **pw**: Using plane-wave basis set only.
+  - **lcao**: Using localized atomic orbital sets.
+  - **lcao_in_pw**: (Unavailable currently, it will be fixed in future versions) Expand the localized atomic set in plane-wave basis.
 - **Default**: pw
 
 ### ks_solver
 
 - **Type**: String
-- **Description**: It's about the choice of diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
+- **Description**: Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
-  - cg: cg method.
-  - dav: the Davidson algorithm.
+  - **cg**: cg method.
+  - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
 
-  - genelpa: This method should be used if you choose localized orbitals.
-  - scalapack-gvx: scalapack can also be used for localized orbitals.
-  - cusolver: this method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **genelpa**: This method should be used if you choose localized orbitals.
+  - **scalapack-gvx**: Scalapack can also be used for localized orbitals.
+  - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -766,7 +766,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (pw) or genelpa (lcao)
+- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set)
 
 ### nbands
 
@@ -788,19 +788,19 @@ calculations.
 
 - **Type**: Integer
 - **Description**: The number of spin components of wave functions.
-  - 1: Spin degeneracy
-  - 2: Collinear spin polarized.
-  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+  - **1**: Spin degeneracy
+  - **2**: Collinear spin polarized.
+  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified by the user.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - fixed: fixed occupations.
-  - gauss or gaussian: Gaussian smearing method.
-  - mp: methfessel-paxton smearing method; recommended for metals.
-  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
+  - **fixed**: fixed occupations.
+  - **gauss** or **gaussian**: Gaussian smearing method.
+  - **mp**: methfessel-paxton smearing method; recommended for metals.
+  - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 ### smearing_sigma
@@ -820,23 +820,26 @@ calculations.
 ### mixing_type
 
 - **Type**: String
+- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
-  - plain: Just simple mixing.
-  - pulay: Standard Pulay method.
-  - broyden: Broyden method.
+  - **plain**: Just simple mixing.
+  - **pulay**: Standard Pulay method.
+  - **broyden**: Broyden method.
 - **Default**: pulay
 
 ### mixing_beta
 
 - **Type**: Real
 - **Description**: mixing parameter. We recommend the following options:
-  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts.
-    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**;
-    - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
-    - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
-  - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
-  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**
-  - For low-dimensional large systems, the setup of **mixing_beta=0.1**, **mixing_ndim=20**, and **mixing_gg0=1.5** usually works well.
+  - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
+    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+  - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
+  - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
+  
+  Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.5` usually works well.
+
 - **Default**: -10.0
 
 ### mixing_ndim
@@ -849,22 +852,26 @@ calculations.
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  A positive number: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
-  -  0: No Kerker scaling is performed.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
+  -  **0**: No Kerker scaling is performed.
 - **Default**: 0.0
 
 ### mixing_tau
 
 - **Type**: Boolean
 - **Availability**: Only relevant for meta-GGA calculations.
-- **Description**: If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Description**: Whether to mix the kinetic energy density.
+  - **True**: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+  - **False**: The kinetic energy density will not be mixed.
 - **Default**: False
 
 ### mixing_dftu
 
 - **Type**: Boolean
 - **Availability**: Only relevant for DFT+U calculations.
-- **Description**: If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Description**: Whether to mix the occupation matrices.
+  - **True**: The occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+  - **False**: The occupation matrices will not be mixed.
 - **Default**: False
 
 ### gamma_only
@@ -872,11 +879,11 @@ calculations.
 - **Type**: Integer
 - **Availability**: Only used in localized orbitals set
 - **Description**: Whether to use gamma_only algorithm.
-  - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
-  - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **0**: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **1**: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
 
-  > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-  >
+  Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
+
 - **Default**: 0
 
 ### printe
@@ -895,38 +902,42 @@ calculations.
 
 - **Type**: Real
 - **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
-- **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
+- **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 
 ### scf_thr_type
 
-- **Type**: Int
+- **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion. 
-  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
+  - **2**: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
   
-  >Note: This parameter is still under testing and the default setting is usually sufficient.
+  Note: This parameter is still under testing and the default setting is usually sufficient.
 
-- **Default**: 1 for PW, and 2 for LCAO.
+- **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
 ### chg_extrap
 
 - **Type**: String
-- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
-  - atomic: atomic extrapolation.
-  - first-order: first-order extrapolation.
-  - second-order: second-order extrapolation.
+- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations or molecular dynamics.
+  - **atomic**: atomic extrapolation.
+  - **first-order**: first-order extrapolation.
+  - **second-order**: second-order extrapolation.
 - **Default**: atomic
 
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: Whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to consider spin-orbital coupling effect in the calculation. 
+  - **True**: Consider spin-orbital coupling effect, and `nspin` is also automatically set to 4.
+  - **False**: Do not consider spin-orbital coupling effect.
 - **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. 
+  - **True**: Allow non-collinear polarization, and `nspin` is also automatically set to 4.
+  - **False**: Do not allow non-collinear polarization.
 - **Default**: False
 
 ### soc_lambda
@@ -1582,12 +1593,12 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: String
 - **Availability**: OFDFT
-- **Description**: The type of kinetic energy density functional.
-  - wt: Wang-Teter.
-  - tf: Thomas-Fermi.
-  - vw: von Weizsäcker.
-  - tf+: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
-  - lkt: Luo-Karasiev-Trickey.
+- **Description**: The type of KEDF (kinetic energy density functional).
+  - **wt**: Wang-Teter.
+  - **tf**: Thomas-Fermi.
+  - **vw**: von Weizsäcker.
+  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **lkt**: Luo-Karasiev-Trickey.
 - **Default**: wt
 
 ### of_method
@@ -1595,9 +1606,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The optimization method used in OFDFT.
-  - cg1: Polak-Ribiere. Standard CG algorithm.
-  - cg2: Hager-Zhang (generally faster than cg1).
-  - tn: Truncated Newton algorithm.
+  - **cg1**: Polak-Ribiere. Standard CG algorithm.
+  - **cg2**: Hager-Zhang (generally faster than cg1).
+  - **tn**: Truncated Newton algorithm.
 - **Default**:tn
 
 ### of_conv
@@ -1605,9 +1616,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: Criterion used to check the convergence of OFDFT.
-  - energy: Ttotal energy changes less than `of_tole`.
-  - potential: The norm of potential is less than `of_tolp`.
-  - both: Both energy and potential must satisfy the convergence criterion.
+  - **energy**: Ttotal energy changes less than `of_tole`.
+  - **potential**: The norm of potential is less than `of_tolp`.
+  - **both**: Both energy and potential must satisfy the convergence criterion.
 - **Default**: energy
 
 ### of_tole
@@ -1630,28 +1641,28 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
-- **Description**: Weight of TF KEDF.
+- **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
-- **Description**: Weight of vW KEDF.
+- **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter alpha of WT KEDF.
+- **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_beta
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter beta of WT KEDF.
+- **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_rho0
@@ -1667,15 +1678,15 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to fix the average density rho0.
-  - 0: rho0 will change if volume of system has changed.
-  - 1: rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
+  - **True**: rho0 will be fixed even if the volume of system has changed, it will be set to True automatically if `of_wt_rho0` is not zero.
+  - **False**: rho0 will change if volume of system has changed.
 - **Default**: False
 
 ### of_lkt_a
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=lkt`
-- **Description**: Parameter a of LKT KEDF.
+- **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
 
 ### of_read_kernel
@@ -1683,8 +1694,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to read in the kernel file.
-  - 0: The kernel of WT KEDF will be filled from formula.
-  - 1: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+  - **True**: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by `of_kernel_file`. 
+  - **False**: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
 - **Default**: False
 
 ### of_kernel_file
@@ -1699,8 +1710,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT
 - **Description**: Whether to use full planewaves.
-  - 0: Only use the planewaves inside ecut, the same as KSDFT.
-  - 1: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **True**: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **False**: Only use the planewaves inside ecut, the same as KSDFT.
 - **Default**: True
 
 ### of_full_pw_dim
@@ -1708,10 +1719,12 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Integer
 - **Availability**: OFDFT with `of_full_pw = True`
 - **Description**: Specify the parity of FFT dimensions.
-  - 0: either odd or even.
-  - 1: odd only.
-  - 2: even only.
-  >Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+  - **0**: either odd or even.
+  - **1**: odd only.
+  - **2**: even only.
+  
+  Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
