@@ -1036,7 +1036,7 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
 {
 	ModuleBase::TITLE("UnitCell","setup_cell_after_vc");
     assert(lat0 > 0.0);
-    this->omega = abs(latvec.Det()) * this->lat0 * lat0 * lat0;
+    this->omega = std::abs(latvec.Det()) * this->lat0 * lat0 * lat0;
     if(this->omega <= 0)
     {
         ModuleBase::WARNING_QUIT("setup_cell_after_vc", "omega <= 0 .");

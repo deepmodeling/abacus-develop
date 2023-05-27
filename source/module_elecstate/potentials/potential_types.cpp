@@ -23,7 +23,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
     {
-        return new PotLocal(this->vloc_, this->structure_factors_, this->rho_basis_);
+        return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_);
     }
     else if (pot_type == "hartree")
     {
@@ -35,7 +35,10 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "surchem")
     {
-        return new PotSurChem(this->rho_basis_, this->v_effective_fixed.data(), &GlobalC::solvent_model);
+        return new PotSurChem(this->rho_basis_,
+                              this->structure_factors_,
+                              this->v_effective_fixed.data(),
+                              &GlobalC::solvent_model);
     }
     else if (pot_type == "efield")
     {

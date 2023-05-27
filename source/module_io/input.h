@@ -14,6 +14,11 @@ using namespace std;
 class Input
 {
   public:
+    ~Input()
+    {
+        delete[] hubbard_u;
+        delete[] orbital_corr;
+    }
     void Init(const std::string &fn);
 
     void Print(const std::string &fn) const;
@@ -452,12 +457,12 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u; // true:DFT+U correction; false: standard DFT calculation(default)
-    int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
-    double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
-    int omc; // whether turn on occupation matrix control method or not
-    bool yukawa_potential; // default:false
-    double yukawa_lambda; // default:-1.0, which means we calculate lambda
+    bool dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
+    int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
+    double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
+    int omc;                     ///< whether turn on occupation matrix control method or not
+    bool yukawa_potential;       ///< default:false
+    double yukawa_lambda;        ///< default:-1.0, which means we calculate lambda
 
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08

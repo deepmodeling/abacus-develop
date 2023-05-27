@@ -1,15 +1,17 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 #include "./esolver_fp.h"
-#include "string.h"
 #include "fstream"
-#include "module_hsolver/hsolver.h"
-#include "module_hamilt_general/hamilt.h"
 #include "module_basis/module_pw/pw_basis_k.h"
-#include "module_io/cal_test.h"
+#include "module_cell/klist.h"
 #include "module_elecstate/module_charge/charge_extra.h"
-// #include "estates.h"
-// #include "h2e.h"
+#include "module_elecstate/module_charge/charge_mixing.h"
+#include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hsolver/hsolver.h"
+#include "module_io/cal_test.h"
+#include "string.h"
+
 namespace ModuleESolver
 {
 
@@ -72,6 +74,8 @@ namespace ModuleESolver
         hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
         hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
         ModulePW::PW_Basis_K* pw_wfc = nullptr;
+        Charge_Mixing* p_chgmix = nullptr;
+        wavefunc wf;
         Charge_Extra CE;
 
     protected:
