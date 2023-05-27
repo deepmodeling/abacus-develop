@@ -37,12 +37,12 @@ class Force_Stress_LCAO
                         ModuleBase::matrix& fcs,
                         ModuleBase::matrix& scs,
                         const Structure_Factor& sf,
+                        const K_Vectors& kv,
+                        ModulePW::PW_Basis* rhopw,
 #ifdef __EXX
                         Exx_LRI<double>& exx_lri_double,
                         Exx_LRI<std::complex<double>>& exx_lri_complex,
 #endif  
-                        const K_Vectors& kv,
-                        ModulePW::PW_Basis* rhopw,
                         ModuleSymmetry::Symmetry* symm);
 
   private:

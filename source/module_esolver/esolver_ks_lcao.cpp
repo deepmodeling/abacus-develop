@@ -265,12 +265,12 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        force,
                        this->scs,
                        this->sf,
+                       this->kv,
+                       this->pw_rho,
 #ifdef __EXX
                         *this->exx_lri_double,
                         *this->exx_lri_complex,
 #endif  
-                       this->kv,
-                       this->pw_rho,
                        &this->symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
