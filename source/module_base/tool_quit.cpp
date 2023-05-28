@@ -47,7 +47,7 @@ void QUIT(void)
 
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
 
-    if (GlobalV::MY_RANK==0)
+    //if (GlobalV::MY_RANK==0)
     {
         ModuleBase::Memory::print_all( GlobalV::ofs_running ) ;
     }
