@@ -34,16 +34,18 @@ void Bessel_Basis::init(
 	this->ecut = ecutwfc;
 	this->rcut = rcut_in;
 	this->tolerence = tol_in;
+    this->smooth = smooth;
+    this->sigma = sigma;
 
-	//----------------------------------------------
-	// setup Ecut_number
-	// ne * pi / rcut = sqrt(ecut) (Rydberg)
-	//----------------------------------------------
-//	this->Ecut_number = static_cast<int>( sqrt( 2.0 * ecut )* rcut/ModuleBase::PI );// hartree
-	this->Ecut_number = static_cast<int>( sqrt( ecut )* rcut/ModuleBase::PI ); // Rydberg Unit.
-	assert( this->Ecut_number > 0 );
+    //----------------------------------------------
+    // setup Ecut_number
+    // ne * pi / rcut = sqrt(ecut) (Rydberg)
+    //----------------------------------------------
+    //	this->Ecut_number = static_cast<int>( sqrt( 2.0 * ecut )* rcut/ModuleBase::PI );// hartree
+    this->Ecut_number = static_cast<int>(sqrt(ecut) * rcut / ModuleBase::PI); // Rydberg Unit.
+    assert(this->Ecut_number > 0);
 
-	//------------------
+    //------------------
 	// Making a table
 	//------------------
 
