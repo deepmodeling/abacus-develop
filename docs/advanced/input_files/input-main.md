@@ -1454,7 +1454,7 @@ These variables are used to control the calculation of DOS.
 
 ## NAOs
 
-These variables are used to control the generation of numerical atomic orbitals (NAOs). NAOs is the linear combination of bessel functions.
+These variables are used to control the generation of numerical atomic orbitals (NAOs), the radial part of which is the linear combination of bessel functions. In the plane-wave-based calculations, necessary information will be printed into `OUT.${suffix}/orb_matrix.${i}.dat`, which is served as a input file for the generation of NAOs. Please check [SIAB package](../../../tools/SIAB/README.md#siab-package-description) for more information.
 
 ### bessel_nao_ecut
 
