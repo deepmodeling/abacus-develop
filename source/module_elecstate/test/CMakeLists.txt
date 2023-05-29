@@ -110,6 +110,9 @@ AddTest(
 
 AddTest(
   TARGET charge_mixing
+  if(ENABLE_LIBXC)
+  LIBS  MPI::MPI_CXX Libxc::xc
+  endif()
   LIBS  base ${math_libs}  psi  device
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
