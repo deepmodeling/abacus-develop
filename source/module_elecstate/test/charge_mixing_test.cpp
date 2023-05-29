@@ -11,7 +11,7 @@ Magnetism::Magnetism(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 #endif
-// mock function cell
+// mock class cell
 namespace GlobalC{
   UnitCell ucell;
 };
