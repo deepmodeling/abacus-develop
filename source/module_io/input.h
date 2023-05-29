@@ -48,7 +48,7 @@ class Input
     bool pseudo_mesh; // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype; // number of atom types
     int nbands; // number of bands
-    int nbands_istate; // number of bands around fermi level for istate calculation.
+    int nbands_istate; // number of bands around fermi level for get_pchg calculation.
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel;             // read velocity from STRU or not  liuyu 2021-07-14

@@ -593,16 +593,16 @@ EOF
 
 
 # (1.4.2.4) get INPUTs
-cat > INPUTs << EOF
-INPUT_ORBITAL_INFORMATION
-<SPHERICAL_BESSEL>
-1           // smooth or not
-0.1         // smearing_sigma
-$ecut       // energy cutoff for spherical bessel functions(Ry)
-$rcut       // cutoff of wavefunctions(a.u.)
-1.0e-12     // tolerence
-</SPHERICAL_BESSEL>
-EOF
+# cat > INPUTs << EOF
+# INPUT_ORBITAL_INFORMATION
+# <SPHERICAL_BESSEL>
+# 1           // smooth or not
+# 0.1         // smearing_sigma
+# $ecut       // energy cutoff for spherical bessel functions(Ry)
+# $rcut       // cutoff of wavefunctions(a.u.)
+# 1.0e-12     // tolerence
+# </SPHERICAL_BESSEL>
+# EOF
 
 
 # (1.4.2.5) get INPUT

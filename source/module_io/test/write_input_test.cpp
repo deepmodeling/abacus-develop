@@ -40,7 +40,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("lmaxmax                        2 #maximum of l channels used"));
         EXPECT_THAT(output,testing::HasSubstr("dft_functional                 hse #exchange correlation functional"));
         EXPECT_THAT(output,testing::HasSubstr("xc_temperature                 0 #temperature for finite temperature functionals"));
-        EXPECT_THAT(output,testing::HasSubstr("calculation                    scf #test; scf; relax; nscf; ienvelope; istate"));
+        EXPECT_THAT(output,testing::HasSubstr("calculation                    scf #test; scf; relax; nscf; get_wf; get_pchg"));
         EXPECT_THAT(output,testing::HasSubstr("esolver_type                   ksdft #the energy solver: ksdft, sdft, ofdft, tddft, lj, dp"));
         EXPECT_THAT(output,testing::HasSubstr("ntype                          1 #atom species number"));
         EXPECT_THAT(output,testing::HasSubstr("nspin                          1 #1: single spin; 2: up and down spin; 4: noncollinear spin"));
@@ -48,7 +48,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms"));
         EXPECT_THAT(output,testing::HasSubstr("nbands                         8 #number of bands"));
         EXPECT_THAT(output,testing::HasSubstr("nbands_sto                     256 #number of stochastic bands"));
-        EXPECT_THAT(output,testing::HasSubstr("nbands_istate                  5 #number of bands around Fermi level for istate calulation"));
+        EXPECT_THAT(output,testing::HasSubstr("nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation"));
         EXPECT_THAT(output,testing::HasSubstr("symmetry                       1 #the control of symmetry"));
         EXPECT_THAT(output,testing::HasSubstr("init_vel                       0 #read velocity from STRU or not"));
         EXPECT_THAT(output,testing::HasSubstr("symmetry_prec                  1e-05 #accuracy for symmetry"));
