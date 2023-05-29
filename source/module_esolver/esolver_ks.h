@@ -45,7 +45,7 @@ namespace ModuleESolver
         virtual int getniter() override;
 
         // create a new Output_Rho object
-        ModuleIO::Output_Rho create_Output_Rho(int is, int iter, std::string prefix="");
+        ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="");
 
     protected:
         // Something to do before SCF iterations.

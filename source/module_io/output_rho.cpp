@@ -14,7 +14,7 @@ Output_Rho::Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
                        const UnitCell* ucell,
                        const std::string directory,
                        int precision,
-                       const std::string prefix)
+                       const std::string& prefix)
     : _pw_big(pw_big),
       _pw_rho(pw_rho),
       _is(is),
@@ -27,7 +27,7 @@ Output_Rho::Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
       _precision(precision),
       _prefix(prefix)
 {
-    this->_fn = this->_directory + "/" + prefix + "_SPIN" + std::to_string(this->_is + 1) + "_CHG" + ".dat";
+    this->_fn = this->_directory + "/" + prefix + "SPIN" + std::to_string(this->_is + 1) + "_CHG.cube";
 }
 void Output_Rho::write()
 {

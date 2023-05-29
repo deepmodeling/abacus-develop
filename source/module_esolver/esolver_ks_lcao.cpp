@@ -720,7 +720,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleIO::Output_Rho pelec_rho = create_Output_Rho(is, iter, "tmp");
+            ModuleIO::Output_Rho pelec_rho = create_Output_Rho(is, iter, "tmp_");
             pelec_rho.write();
             /*
             const int precision = 3;
