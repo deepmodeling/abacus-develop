@@ -21,6 +21,9 @@ list(APPEND objects
     write_rho.cpp
     write_dipole.cpp
     write_wfc_r.cpp
+    output_interface.cpp
+    output_parser.cpp
+    output_rho.cpp
 )
 
 list(APPEND objects_advanced

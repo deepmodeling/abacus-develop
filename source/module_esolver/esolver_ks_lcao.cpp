@@ -2,13 +2,15 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dm_io.h"
+#include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
+#include "module_io/output_parser.h"
+#include "module_io/output_rho.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
-#include "module_io/dos_nao.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 
@@ -719,6 +721,19 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
+            ModuleIO::Output_Rho pelec_rho(pw_big,
+                                           pw_rho,
+                                           is,
+                                           GlobalV::NSPIN,
+                                           pelec->charge->rho_save[is],
+                                           iter,
+                                           this->pelec->eferm.get_efval(is),
+                                           &(GlobalC::ucell));
+            ModuleIO::Output_Parser pelec_out(pelec_rho);
+            pelec_out.SetOutputFilename(GlobalV::global_out_dir, "tmp", is, "CHG", ".cube", "_");
+            pelec_out.SetPrecision(3);
+            pelec_out.Write();
+            /*
             const int precision = 3;
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "tmp"
@@ -742,6 +757,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 ef_tmp,
                 &(GlobalC::ucell),
                 precision);
+            */
 
             std::stringstream ssd;
             if (GlobalV::GAMMA_ONLY_LOCAL)
@@ -754,6 +770,8 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 ssd << GlobalV::global_out_dir << "tmp"
                     << "_SPIN" << is + 1 << "_DM_R";
             }
+            const int precision = 3;
+            const double ef_tmp = this->pelec->eferm.get_efval(is);
 
             ModuleIO::write_dm(
 #ifdef __MPI
