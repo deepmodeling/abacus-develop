@@ -1,4 +1,3 @@
-  
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
