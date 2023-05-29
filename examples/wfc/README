@@ -19,4 +19,4 @@ For the wave functions in Real Space:
 	- set 'out_wfc_r' to '1'
 The wave function is output in files OUT.${suffix}/wfc_realspace/wfc_realspace_$K_$B, 
 where $K and $B is the index of k point and band respectively.
-Note, it is only used in planewave basis and ienvelope calculation in localized orbitals set
+Note, it is only used in planewave basis and get_wf calculation in localized orbitals set

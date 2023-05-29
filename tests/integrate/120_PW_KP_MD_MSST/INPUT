@@ -14,6 +14,9 @@ scf_nmax			20
 basis_type		pw
 md_nstep           3
 
+smearing_method    gauss
+smearing_sigma     0.001
+
 cal_stress          1
 cal_force           1
 

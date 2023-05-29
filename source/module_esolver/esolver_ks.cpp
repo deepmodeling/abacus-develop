@@ -102,7 +102,7 @@ namespace ModuleESolver
         // mohan add 2021-01-30
         Print_Info::setup_parameters(ucell, this->kv);
 
-        if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="ienvelope")
+        if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
         {
             //Envelope function is calculated as lcao_in_pw
             //new plane wave basis
