@@ -3,7 +3,6 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #define private public
 #include "../module_charge/charge_mixing.h"
-#undef USE_LIBXC
 
 // mock function
 Magnetism::~Magnetism(){}
