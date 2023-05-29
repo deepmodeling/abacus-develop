@@ -33,12 +33,12 @@ class ChargeMixingTest : public ::testing::Test
 
 TEST_F(ChargeMixingTest,SetMixingTest)
 {
-  Charge_Mixing CMtest;
+    Charge_Mixing CMtest;
     std::string mode ="1";
     double beta=1.0;
     int dim=1;
-	  double gg0=1;
-	  bool tau= true;
+	double gg0=1;
+	bool tau= true;
     CMtest.set_mixing(mode,beta,dim,gg0,tau);
     EXPECT_EQ(CMtest.mixing_mode, "1");
     EXPECT_EQ(CMtest.mixing_beta, 1.0);
