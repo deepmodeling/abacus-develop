@@ -426,7 +426,7 @@ void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int it
     // add exx
 #ifdef __LCAO
 #ifdef __EXX
-    this->pelec->set_exx(); // Peize Lin add 2019-03-09
+    this->pelec->set_exx(GlobalC::exx_lip.get_exx_energy()); // Peize Lin add 2019-03-09
 #endif
 #endif
     // calculate the delta_harris energy

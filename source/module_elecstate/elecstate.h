@@ -111,7 +111,8 @@ class ElecState
     void cal_energies(const int type);
 #ifdef __EXX
 #ifdef __LCAO
-    void set_exx();
+    void set_exx(const double& Eexx);
+    void set_exx(const std::complex<double>& Eexx);
 #endif //__LCAO
 #endif //__EXX
  

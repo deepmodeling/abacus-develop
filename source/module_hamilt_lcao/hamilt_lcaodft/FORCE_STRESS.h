@@ -10,6 +10,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_io/input_conv.h"
 #include "module_psi/psi.h"
+#ifdef __EXX
+#include "module_ri/Exx_LRI.h"
+#endif
 
 class Force_Stress_LCAO
 {
@@ -36,6 +39,10 @@ class Force_Stress_LCAO
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
+#ifdef __EXX
+                        Exx_LRI<double>& exx_lri_double,
+                        Exx_LRI<std::complex<double>>& exx_lri_complex,
+#endif  
                         ModuleSymmetry::Symmetry* symm);
 
   private:
