@@ -79,7 +79,7 @@ namespace ModuleESolver
     void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
-        chr.cal_nelec();
+        chr.cal_nelec(ucell);
 
         /* it has been established that that
          xc_func is same for all elements, therefore
