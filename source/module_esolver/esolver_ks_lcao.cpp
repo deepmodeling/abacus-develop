@@ -5,7 +5,6 @@
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
-#include "module_io/output_parser.h"
 #include "module_io/output_rho.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
@@ -721,18 +720,8 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleIO::Output_Rho pelec_rho(pw_big,
-                                           pw_rho,
-                                           is,
-                                           GlobalV::NSPIN,
-                                           pelec->charge->rho_save[is],
-                                           iter,
-                                           this->pelec->eferm.get_efval(is),
-                                           &(GlobalC::ucell));
-            ModuleIO::Output_Parser pelec_out(pelec_rho);
-            pelec_out.SetOutputFilename(GlobalV::global_out_dir, "tmp", is, "CHG", ".cube", "_");
-            pelec_out.SetPrecision(3);
-            pelec_out.Write();
+            ModuleIO::Output_Rho pelec_rho = create_Output_Rho(is, iter, "tmp");
+            pelec_rho.write();
             /*
             const int precision = 3;
             std::stringstream ssc;

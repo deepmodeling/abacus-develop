@@ -380,4 +380,21 @@ template class ESolver_KS<double, psi::DEVICE_CPU>;
 template class ESolver_KS<float, psi::DEVICE_GPU>;
 template class ESolver_KS<double, psi::DEVICE_GPU>;
 #endif
+
+template <typename FPTYPE, typename Device>
+ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Rho(int is, int iter, std::string prefix)
+{
+        int precision = 3;
+        return ModuleIO::Output_Rho(this->pw_big,
+                                    this->pw_rho,
+                                    is,
+                                    GlobalV::NSPIN,
+                                    pelec->charge->rho_save[is],
+                                    iter,
+                                    this->pelec->eferm.get_efval(is),
+                                    &(GlobalC::ucell),
+                                    GlobalV::global_out_dir,
+                                    precision,
+                                    prefix);
+}
 }

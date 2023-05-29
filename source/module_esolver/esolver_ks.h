@@ -10,6 +10,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver.h"
 #include "module_io/cal_test.h"
+#include "module_io/output_rho.h"
 #include "string.h"
 
 namespace ModuleESolver
@@ -42,6 +43,9 @@ namespace ModuleESolver
 
         // get current step of Ionic simulation
         virtual int getniter() override;
+
+        // create a new Output_Rho object
+        ModuleIO::Output_Rho create_Output_Rho(int is, int iter, std::string prefix="");
 
     protected:
         // Something to do before SCF iterations.

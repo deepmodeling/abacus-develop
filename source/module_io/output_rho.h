@@ -18,7 +18,10 @@ class Output_Rho : public Output_Interface
                const double* data,
                int iter,
                const double& ef,
-               const UnitCell* ucell);
+               const UnitCell* ucell,
+               const std::string directory,
+               int precision,
+               const std::string prefix);
     void write() override;
 
   public:
@@ -30,6 +33,10 @@ class Output_Rho : public Output_Interface
     int _iter;
     const double& _ef;
     const UnitCell* _ucell;
+    const std::string _directory;
+    const std::string _prefix;
+    std::string _fn;
+    int _precision;
 };
 
 } // namespace ModuleIO
