@@ -24,7 +24,7 @@ class Output_Rho : public Output_Interface
                const std::string& prefix);
     void write() override;
 
-  public:
+  private:
     const ModulePW::PW_Basis_Big* _pw_big;
     const ModulePW::PW_Basis* _pw_rho;
     int _is;
