@@ -7,6 +7,7 @@
 // mock function
 Magnetism::~Magnetism(){}
 Magnetism::Magnetism(){}
+int XC_Functional::get_func_type(){return 1;}
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
