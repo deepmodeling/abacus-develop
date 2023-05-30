@@ -5,7 +5,6 @@
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
-#include "module_io/output_rho.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
