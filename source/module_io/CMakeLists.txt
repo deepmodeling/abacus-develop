@@ -45,6 +45,7 @@ if(ENABLE_LCAO)
       write_HS.cpp
       write_dm.cpp
       dos_nao.cpp
+      output_dm.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

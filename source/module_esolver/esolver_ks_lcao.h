@@ -11,6 +11,7 @@
 #include "module_ri/Mix_DMk_2D.h"
 #include "module_ri/Exx_LRI_interface.h"
 #endif
+#include "module_io/output_dm.h"
 
 namespace ModuleESolver
 {
@@ -63,6 +64,10 @@ namespace ModuleESolver
         void set_matrix_grid(Record_adj& ra);
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
+
+        // create Output_DM
+        ModuleIO::Output_DM create_Output_DM(int is, int iter);
+
 #ifdef __EXX
         std::shared_ptr<Exx_LRI_Interface<double>> exd = nullptr;
         std::shared_ptr<Exx_LRI_Interface<std::complex<double>>> exc = nullptr;

@@ -720,9 +720,10 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleIO::Output_Rho pelec_rho = create_Output_Rho(is, iter, "tmp_");
-            pelec_rho.write();
+            this->create_Output_Rho(is, iter, "tmp_").write();
+            this->create_Output_DM(is, iter).write();
 
+            /*
             std::stringstream ssd;
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
@@ -749,6 +750,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
                 this->LOC.DM,
                 ef_tmp,
                 &(GlobalC::ucell));
+            */
         }
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -1077,6 +1079,21 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         return this->exc->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, kv, iter);
 #endif // __EXX
     return true;
+}
+
+ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
+{
+    int precision = 3;
+    return ModuleIO::Output_DM(this->GridT,
+                               is,
+                               iter,
+                               precision,
+                               this->LOC.out_dm,
+                               this->LOC.DM,
+                               this->pelec->eferm.get_efval(is),
+                               &(GlobalC::ucell),
+                               GlobalV::global_out_dir,
+                               GlobalV::GAMMA_ONLY_LOCAL);
 }
 
 } // namespace ModuleESolver
