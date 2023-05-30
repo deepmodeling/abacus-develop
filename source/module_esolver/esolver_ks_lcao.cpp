@@ -736,26 +736,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 {
     if (this->LOC.out_dm1 == 1)
     {
-        double** dm2d;
-        dm2d = new double*[GlobalV::NSPIN];
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            dm2d[is] = new double[this->LOC.ParaV->nnr];
-            ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
-        }
-        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, kv);
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
-        }
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            delete[] dm2d[is];
-        }
-
-        delete[] dm2d;
+        this->create_Output_DM1(istep).write();
     }
 
     if (GlobalV::out_chg)
@@ -968,6 +949,11 @@ ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
                                &(GlobalC::ucell),
                                GlobalV::global_out_dir,
                                GlobalV::GAMMA_ONLY_LOCAL);
+}
+
+ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
+{
+    return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv);
 }
 
 } // namespace ModuleESolver
