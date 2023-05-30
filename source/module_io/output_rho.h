@@ -8,7 +8,7 @@
 namespace ModuleIO
 {
 
-/// @brief Construct a new Output_Rho::Output_Rho object to write the charge density
+/// @brief the output interface to write the charge density
 class Output_Rho : public Output_Interface
 {
   public:

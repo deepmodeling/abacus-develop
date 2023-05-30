@@ -10,7 +10,7 @@
 namespace ModuleIO
 {
   
-/// @brief Construct a new Output_DM::Output_DM object to write the density matrix
+/// @brief the output interface to write the density matrix
 class Output_DM : public Output_Interface
 {
   public:
