@@ -688,38 +688,38 @@ These variables are used to control the numerical atomic orbitals related parame
 ### lcao_ecut
 
 - **Type**: Real
-- **Description**: Energy cutoff when calculating LCAO two-center integrals. In Ry.
-- **Default**: 50
+- **Description**: Energy cutoff (in Ry) for two-center integrals in LCAO. The two-center integration table are obtained via a k space integral whose upper limit is about sqrt(`lcao_ecut`).
+- **Default**: `ecutwfc`
 
 ### lcao_dk
 
 - **Type**: Real
-- **Description**: Delta k for 1D integration in LCAO
+- **Description**: k spacing (in Bohr${}^{-1}$) for two-center integrals. The two-center integration table are obtained via a k space integral on a uniform grid with spacing `lcao_dk`.
 - **Default**: 0.01
 
 ### lcao_dr
 
 - **Type**: Real
-- **Description**: Delta r for 1D integration in LCAO
+- **Description**: r spacing (in Bohr) of the integration table of two-center integrals.
 - **Default**: 0.01
 
 ### lcao_rmax
 
 - **Type**: Real
-- **Description**: Max R for 1D two-center integration table
+- **Description**: Maximum distance (in Bohr) for the two-center integration table.
 - **Default**: 30
 
 ### search_radius
 
 - **Type**: Real
-- **Description**: Set the search radius for finding neighbouring atoms. If set to -1, then the radius will be set to maximum of projector and orbital cut-off.
+- **Description**: Searching radius in finding the neighbouring atoms. By default the radius will be automatically determined by the cutoffs of orbitals and nonlocal beta projectors.
 - **Default**: -1
 
 ### search_pbc
 
 - **Type**: Boolean
-- **Description**: In searching for neighbouring atoms, if set to 1, then periodic images will also be searched. If set to 0, then periodic images will not be searched.
-- **Default**: 1
+- **Description**: If True, periodic images will be included in searching for the neighbouring atoms. If False, periodic images will be ignored.
+- **Default**: True
 
 ### bx, by, bz
 
@@ -1454,36 +1454,37 @@ These variables are used to control the calculation of DOS.
 
 ## NAOs
 
-These variables are used to control the generation of numerical atomic orbitals (NAOs), the radial part of which is the linear combination of bessel functions. In the plane-wave-based calculations, necessary information will be printed into `OUT.${suffix}/orb_matrix.${i}.dat`, which is served as a input file for the generation of NAOs. Please check [SIAB package](../../../tools/SIAB/README.md#siab-package-description) for more information.
+These variables are used to control the generation of numerical atomic orbitals (NAOs), whose radial parts are linear combinations of spherical Bessel functions with a node (i.e., evaluate to zero) at the cutoff radius.
+In plane-wave-based calculations, necessary information will be printed into `OUT.${suffix}/orb_matrix.${i}.dat`, which serves as an input file for the generation of NAOs. Please check [SIAB package](../../../tools/SIAB/README.md#siab-package-description) for more information.
 
 ### bessel_nao_ecut
 
 - **Type**: Real
-- **Description**: energy cutoff of bessel functions.
-- **Default**: same as ecutwfc
+- **Description**: "Energy cutoff" (in Ry) of spherical Bessel functions. The number of spherical Bessel functions that constitute the radial parts of NAOs is determined by sqrt(`bessel_nao_ecut`)$\times$`bessel_nao_rcut`/$\pi$.
+- **Default**: `ecutwfc`
 
 ### bessel_nao_tolerence
 
 - **Type**: Real
-- **Description**: tolerance when searching for the zeros of bessel functions.
+- **Description**: tolerance when searching for the zeros of spherical Bessel functions.
 - **Default**: 1.0e-12
 
 ### bessel_nao_rcut
 
 - **Type**: Real
-- **Description**: cutoff radius of bessel functions.
+- **Description**: Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
 - **Default**: 6.0
 
 ### bessel_nao_smooth
 
 - **Type**: Boolean
-- **Description**: whether the bessel functions smooth at radius cutoff.
-- **Default**: 1
+- **Description**: if True, NAOs will be smoothed near the cutoff radius by $1-\exp\left(-\frac{(r-r_{cut})^2}{2\sigma^2}\right)$. See `bessel_nao_rcut` for $r_{cut}$ and `bessel_nao_sigma` for $\sigma$.
+- **Default**: True
 
 ### bessel_nao_sigma
 
 - **Type**: Real
-- **Description**: energy range for smooth. See also `bessel_nao_smooth`.
+- **Description**: Smoothing range (in Bohr). See also `bessel_nao_smooth`.
 - **Default**: 0.1
 
 [back to top](#full-list-of-input-keywords)
