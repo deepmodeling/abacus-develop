@@ -3,6 +3,7 @@
 
 namespace ModuleIO
 {
+/// @brief base class for interface output classes
 class Output_Interface
 {
   public:
