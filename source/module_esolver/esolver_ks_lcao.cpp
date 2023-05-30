@@ -762,53 +762,10 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::stringstream ssc;
-            const int precision = 3;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
-                pw_rho->nplane,
-                pw_rho->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                pw_rho->nx,
-                pw_rho->ny,
-                pw_rho->nz,
-                ef_tmp,
-                &(GlobalC::ucell),
-                precision);
-        }
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            this->create_Output_Rho(is, istep).write();
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rho->nplane,
-                    pw_rho->startz_current,
-#endif
-                    pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    0,
-                    ssc.str(),
-                    pw_rho->nx,
-                    pw_rho->ny,
-                    pw_rho->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell));
+                this->create_Output_Kin(is, istep).write();
             }
         }
     }
@@ -817,34 +774,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            const int precision = 3;
-
-            std::stringstream ssd;
-            std::stringstream ssd_tmp;
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM";
-                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
-            }
-            else
-            {
-                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM_R";
-                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
-            }
-            std::remove(ssd_tmp.str().c_str());
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_dm(
-#ifdef __MPI
-                this->GridT.trace_lo,
-#endif
-                is,
-                0,
-                ssd.str(),
-                precision,
-                this->LOC.out_dm,
-                this->LOC.DM,
-                ef_tmp,
-                &(GlobalC::ucell));
+            this->create_Output_DM(is, istep).write();
         }
     }
 
