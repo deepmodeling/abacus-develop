@@ -722,31 +722,6 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         {
             ModuleIO::Output_Rho pelec_rho = create_Output_Rho(is, iter, "tmp_");
             pelec_rho.write();
-            /*
-            const int precision = 3;
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "tmp"
-                << "_SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
-                pw_rho->nplane,
-                pw_rho->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                iter,
-                ssc.str(),
-                pw_rho->nx,
-                pw_rho->ny,
-                pw_rho->nz,
-                ef_tmp,
-                &(GlobalC::ucell),
-                precision);
-            */
 
             std::stringstream ssd;
             if (GlobalV::GAMMA_ONLY_LOCAL)
