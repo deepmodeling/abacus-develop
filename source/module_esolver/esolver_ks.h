@@ -73,7 +73,10 @@ namespace ModuleESolver
         // create a new Output_Rho object
         ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="None");
 
-// TODO: control single precision at input files
+        // create a new Output_Rho object to print kinetic energy density
+        ModuleIO::Output_Rho create_Output_Kin(int is, int iter, const std::string& prefix = "None");
+
+        // TODO: control single precision at input files
 
         hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
         hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;

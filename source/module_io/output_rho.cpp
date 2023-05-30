@@ -14,7 +14,8 @@ Output_Rho::Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
                        const UnitCell* ucell,
                        const std::string directory,
                        int precision,
-                       const std::string& prefix)
+                       const std::string tag,
+                       const std::string prefix)
     : _pw_big(pw_big),
       _pw_rho(pw_rho),
       _is(is),
@@ -25,15 +26,16 @@ Output_Rho::Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
       _ucell(ucell),
       _directory(directory),
       _precision(precision),
+      _tag(tag),
       _prefix(prefix)
 {
     if (prefix != "None")
     {
-        this->_fn = this->_directory + "/" + prefix + "SPIN" + std::to_string(this->_is + 1) + "_CHG.cube";
+        this->_fn = this->_directory + "/" + _prefix + "SPIN" + std::to_string(this->_is + 1) + "_" + _tag + ".cube";
     }
     else
     {
-        this->_fn = this->_directory + "/SPIN" + std::to_string(this->_is + 1) + "_CHG.cube";
+        this->_fn = this->_directory + "/SPIN" + std::to_string(this->_is + 1) + "_" + _tag + ".cube";
     }
 }
 void Output_Rho::write()

@@ -378,6 +378,7 @@ namespace ModuleESolver
     ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
     {
         int precision = 3;
+        std::string tag = "CHG";
         return ModuleIO::Output_Rho(this->pw_big,
                                     this->pw_rho,
                                     is,
@@ -388,6 +389,26 @@ namespace ModuleESolver
                                     &(GlobalC::ucell),
                                     GlobalV::global_out_dir,
                                     precision,
+                                    tag,
+                                    prefix);
+    }
+
+    template <typename FPTYPE, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
+    {
+        int precision = 3;
+        std::string tag = "TAU";
+        return ModuleIO::Output_Rho(this->pw_big,
+                                    this->pw_rho,
+                                    is,
+                                    GlobalV::NSPIN,
+                                    pelec->charge->kin_r_save[is],
+                                    iter,
+                                    this->pelec->eferm.get_efval(is),
+                                    &(GlobalC::ucell),
+                                    GlobalV::global_out_dir,
+                                    precision,
+                                    tag,
                                     prefix);
     }
 

@@ -722,64 +722,9 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         {
             this->create_Output_Rho(is, iter, "tmp_").write();
             this->create_Output_DM(is, iter).write();
-
-            /*
-            std::stringstream ssd;
-            if (GlobalV::GAMMA_ONLY_LOCAL)
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                ssd << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_DM";
-            }
-            else
-            {
-                ssd << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_DM_R";
-            }
-            const int precision = 3;
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-
-            ModuleIO::write_dm(
-#ifdef __MPI
-                this->GridT.trace_lo,
-#endif
-                is,
-                iter,
-                ssd.str(),
-                precision,
-                this->LOC.out_dm,
-                this->LOC.DM,
-                ef_tmp,
-                &(GlobalC::ucell));
-            */
-        }
-
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            const int precision = 3;
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rho->nplane,
-                    pw_rho->startz_current,
-#endif
-                    pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    iter,
-                    ssc.str(),
-                    pw_rho->nx,
-                    pw_rho->ny,
-                    pw_rho->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell),
-                    precision);
+                this->create_Output_Kin(is, iter, "tmp_").write();
             }
         }
     }

@@ -21,7 +21,8 @@ class Output_Rho : public Output_Interface
                const UnitCell* ucell,
                const std::string directory,
                int precision,
-               const std::string& prefix);
+               const std::string tag,
+               const std::string prefix);
     void write() override;
 
   private:
@@ -35,6 +36,7 @@ class Output_Rho : public Output_Interface
     const UnitCell* _ucell;
     const std::string _directory;
     const std::string _prefix;
+    const std::string _tag;
     std::string _fn;
     int _precision;
 };
