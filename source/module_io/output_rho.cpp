@@ -27,7 +27,14 @@ Output_Rho::Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
       _precision(precision),
       _prefix(prefix)
 {
-    this->_fn = this->_directory + "/" + prefix + "SPIN" + std::to_string(this->_is + 1) + "_CHG.cube";
+    if (prefix != "None")
+    {
+        this->_fn = this->_directory + "/" + prefix + "SPIN" + std::to_string(this->_is + 1) + "_CHG.cube";
+    }
+    else
+    {
+        this->_fn = this->_directory + "/SPIN" + std::to_string(this->_is + 1) + "_CHG.cube";
+    }
 }
 void Output_Rho::write()
 {

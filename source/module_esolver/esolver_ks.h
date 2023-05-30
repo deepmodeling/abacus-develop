@@ -44,9 +44,6 @@ namespace ModuleESolver
         // get current step of Ionic simulation
         virtual int getniter() override;
 
-        // create a new Output_Rho object
-        ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="");
-
     protected:
         // Something to do before SCF iterations.
         virtual void beforescf(int istep) {};
@@ -72,6 +69,9 @@ namespace ModuleESolver
         // Write the headline in the running_log file
         // "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
         void writehead(std::ofstream& ofs_running, const int istep, const int iter);
+
+        // create a new Output_Rho object
+        ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="None");
 
 // TODO: control single precision at input files
 
