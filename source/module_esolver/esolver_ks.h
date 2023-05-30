@@ -70,10 +70,10 @@ namespace ModuleESolver
         // "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
         void writehead(std::ofstream& ofs_running, const int istep, const int iter);
 
-        // create a new Output_Rho object
+        /// @brief create a new ModuleIO::Output_Rho object to output charge density
         ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="None");
 
-        // create a new Output_Rho object to print kinetic energy density
+        /// @brief create a new ModuleIO::Output_Rho object to print kinetic energy density
         ModuleIO::Output_Rho create_Output_Kin(int is, int iter, const std::string& prefix = "None");
 
         // TODO: control single precision at input files

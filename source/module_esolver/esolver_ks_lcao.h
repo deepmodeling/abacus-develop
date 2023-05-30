@@ -65,7 +65,7 @@ namespace ModuleESolver
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
 
-        // create Output_DM
+        /// @brief create ModuleIO::Output_DM object to output density matrix
         ModuleIO::Output_DM create_Output_DM(int is, int iter);
 
 #ifdef __EXX
