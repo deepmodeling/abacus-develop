@@ -137,5 +137,4 @@ AddTest(
       ../../module_cell/read_pp_vwr.cpp
       ../../module_cell/read_pp_blps.cpp
       ../../module_io/output.cpp
-      ../../module_hamilt_general/module_xc/xc_functional.cpp
 )
