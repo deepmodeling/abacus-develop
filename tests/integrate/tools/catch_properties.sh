@@ -51,6 +51,8 @@ get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_scan=`grep dft_functional INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -213,6 +215,13 @@ fi
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
     python3 ../tools/CompareFile.py data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
     echo "ComparerR_pass $?" >>$1
+fi
+
+#echo $has_scan
+if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
+       ! test -z "$out_chg" && [ $out_chg == 1 ]; then
+    python3 ../tools/CompareFile.py SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
+    echo "SPIN1_TAU.cube_pass $?" >>$1
 fi
 
 # echo "$has_wfc_r" ## test out_wfc_r > 0
