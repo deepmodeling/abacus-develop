@@ -396,7 +396,7 @@ namespace ModuleESolver
     template <typename FPTYPE, typename Device>
     ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
     {
-        int precision = 3;
+        int precision = 11;
         std::string tag = "TAU";
         return ModuleIO::Output_Rho(this->pw_big,
                                     this->pw_rho,

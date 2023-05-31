@@ -18,7 +18,7 @@ class Output_Rho : public Output_Interface
                int nspin,
                const double* data,
                int iter,
-               const double& ef,
+               double ef,
                const UnitCell* ucell,
                const std::string directory,
                int precision,
@@ -33,7 +33,7 @@ class Output_Rho : public Output_Interface
     int _nspin;
     const double* _data;
     int _iter;
-    const double& _ef;
+    double _ef;
     const UnitCell* _ucell;
     const std::string _directory;
     const std::string _prefix;
