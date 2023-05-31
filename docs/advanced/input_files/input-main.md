@@ -1254,6 +1254,15 @@ These variables are used to control the output of properties.
   - npsin = 2: SPIN1_DM, and SPIN2_DM.
 - **Default**: False
 
+### out_dm1
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (multi-k points)
+- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
+  - npsin = 1: data-DMR-sparse_SPIN0.csr;
+  - npsin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+- **Default**: False
+
 ### out_wfc_pw
 
 - **Type**: Integer
