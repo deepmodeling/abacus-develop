@@ -55,6 +55,7 @@ TEST_F(fenergy, print_all)
     f_en.print_all();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("total="));
+    EXPECT_THAT(output, testing::HasSubstr("entropy(-TS)="));
 }
 
 TEST_F(fenergy, eferm_get_ef)
