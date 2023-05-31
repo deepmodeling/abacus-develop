@@ -664,36 +664,3 @@ void Charge::init_final_scf()
     this->allocate_rho_final_scf = true;
     return;
 }
-
-//=========================================================
-// calculate total number of electrons (GlobalV::nelec) and default
-// number of bands (GlobalV::NBANDS).
-//=========================================================
-//#include "module_elecstate/occupy.h"
-void Charge::cal_nelec(const UnitCell& ucell)
-{
-    ModuleBase::TITLE("UnitCell", "cal_nelec");
-    //=======================================================
-    // calculate the total number of electrons in the system
-    // if GlobalV::nelec <>0; use input number (setup.f90)
-    //=======================================================
-
-    GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
-
-    if (GlobalV::nelec == 0)
-    {
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            std::stringstream ss1, ss2;
-            ss1 << "electron number of element " << ucell.atoms[it].label;
-            const int nelec_it = ucell.atoms[it].ncpp.zv * ucell.atoms[it].na;
-            GlobalV::nelec += nelec_it;
-            ss2 << "total electron number of element " << ucell.atoms[it].label;
-
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), ucell.atoms[it].ncpp.zv);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
-        }
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", GlobalV::nelec);
-    }
-    return;
-}
