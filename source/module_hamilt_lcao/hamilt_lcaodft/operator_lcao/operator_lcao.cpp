@@ -155,7 +155,7 @@ void OperatorLCAO<T>::init(const int ik_in)
             //in cal_type=lcao_dftu, HK only need to update from one node
             //dftu is a special operator, it should be the last node of chain
             //Overlap matrix for ik is used by it, do folding first and then return
-            this->folding_fixed(ik_in, GlobalC::kv.kvec_d);
+            this->folding_fixed(ik_in, this->kvec_d);
             this->contributeHk(ik_in);
             return;
 
@@ -180,7 +180,7 @@ void OperatorLCAO<T>::init(const int ik_in)
     }
     else
     {//it is the last node, do folding process together
-        this->folding_fixed(ik_in, GlobalC::kv.kvec_d);
+        this->folding_fixed(ik_in, this->kvec_d);
     }
 
     ModuleBase::timer::tick("OperatorLCAO", "init");

@@ -182,7 +182,7 @@ void ElecState::print_etot(const bool converged,
         this->print_format("E_Hartree", this->f_en.hartree_energy);
         this->print_format("E_xc", this->f_en.etxc - this->f_en.etxcc);
         this->print_format("E_Ewald", this->f_en.ewald_energy);
-        this->print_format("E_demet", this->f_en.demet); // mohan add 2011-12-02
+        this->print_format("E_entropy (-TS)", this->f_en.demet); // mohan add 2011-12-02
         this->print_format("E_descf", this->f_en.descf);
         std::string vdw_method = get_input_vdw_method();
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09

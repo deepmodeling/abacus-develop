@@ -832,12 +832,12 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.diago_proc,8);
 	//==================================================
 	// prepare default parameters for the 4th calling
-	INPUT.calculation = "istate";
+	INPUT.calculation = "get_pchg";
     INPUT.symmetry = "default";
 	// the 4th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(GlobalV::CALCULATION,"istate");
+	EXPECT_EQ(GlobalV::CALCULATION,"get_pchg");
     EXPECT_EQ(INPUT.relax_nmax, 1);
     EXPECT_EQ(INPUT.out_stru, 0);
     EXPECT_EQ(INPUT.symmetry, "0");
@@ -853,12 +853,12 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.out_pot,0);
 	//==================================================
 	// prepare default parameters for the 5th calling
-	INPUT.calculation = "ienvelope";
+	INPUT.calculation = "get_wf";
     INPUT.symmetry = "default";
 	// the 5th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(GlobalV::CALCULATION,"ienvelope");
+	EXPECT_EQ(GlobalV::CALCULATION,"get_wf");
     EXPECT_EQ(INPUT.relax_nmax, 1);
     EXPECT_EQ(INPUT.symmetry, "0");
     EXPECT_EQ(INPUT.out_stru, 0);
@@ -1006,20 +1006,20 @@ TEST_F(InputTest, Check)
 	INPUT.symmetry = "0";
 	INPUT.out_dos = 0;
 	//
-	INPUT.calculation = "istate";
+	INPUT.calculation = "get_pchg";
 	INPUT.basis_type = "pw";
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("calculate = istate is only availble for LCAO"));
+	EXPECT_THAT(output,testing::HasSubstr("calculate = get_pchg is only availble for LCAO"));
 	INPUT.basis_type = "lcao";
 	//
-	INPUT.calculation = "ienvelope";
+	INPUT.calculation = "get_wf";
 	INPUT.basis_type = "pw";
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("calculate = ienvelope is only availble for LCAO"));
+	EXPECT_THAT(output,testing::HasSubstr("calculate = get_wf is only availble for LCAO"));
 	INPUT.basis_type = "lcao";
 	//
 	INPUT.calculation = "md";

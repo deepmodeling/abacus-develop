@@ -14,6 +14,6 @@ ecutwfc			25.0              # Rydberg
 basis_type		lcao 	
 scf_thr			1e-10
 
-calculation     	istate
+calculation     	get_pchg
 gamma_only		1
 read_file_dir 		./

@@ -1,8 +1,7 @@
 name: Help Wanted
 description: For general questions or assistance.
-labels: Help wanted
-assignees: 
-  - caic99
+labels: [Help wanted]
+assignees: dyzheng
 
 body:
 - type: textarea

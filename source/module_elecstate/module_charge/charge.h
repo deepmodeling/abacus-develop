@@ -8,6 +8,9 @@
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_elecstate/fp_energy.h"
 
+//a forward declaration of UnitCell
+class UnitCell;
+
 //==========================================================
 // Electron Charge Density
 //==========================================================
@@ -51,11 +54,13 @@ class Charge
     // mohan update 2021-02-20
     void allocate(const int &nspin_in);
 
-    void atomic_rho(const int spin_number_need, const double& omega, double **rho_in, const ModuleBase::ComplexMatrix &strucFac) const;
+    void atomic_rho(const int spin_number_need,
+                    const double& omega,
+                    double** rho_in,
+                    const ModuleBase::ComplexMatrix& strucFac,
+                    const UnitCell& ucell) const;
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
-
-    void cal_nelec(); // calculate total number of electrons  Yu Liu add 2021-07-03
 
     void renormalize_rho(void);
 

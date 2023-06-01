@@ -1,346 +1,343 @@
 # Full List of INPUT Keywords
 
 - [Full List of INPUT Keywords](#full-list-of-input-keywords)
-	- [System variables](#system-variables)
-		- [suffix](#suffix)
-		- [ntype](#ntype)
-		- [calculation](#calculation)
-		- [esolver\_type](#esolver_type)
-		- [symmetry](#symmetry)
-		- [symmetry\_prec](#symmetry_prec)
-		- [kpar](#kpar)
-		- [bndpar](#bndpar)
-		- [latname](#latname)
-		- [init\_wfc](#init_wfc)
-		- [init\_chg](#init_chg)
-		- [init\_vel](#init_vel)
-		- [nelec](#nelec)
-		- [nupdown](#nupdown)
-		- [dft\_functional](#dft_functional)
-		- [xc\_temperature](#xc_temperature)
-		- [pseudo\_rcut](#pseudo_rcut)
-		- [pseudo\_mesh](#pseudo_mesh)
-		- [mem\_saver](#mem_saver)
-		- [diago\_proc](#diago_proc)
-		- [nbspline](#nbspline)
-		- [kspacing](#kspacing)
-		- [min\_dist\_coef](#min_dist_coef)
-		- [device](#device)
-	- [Variables related to input files](#variables-related-to-input-files)
-		- [stru\_file](#stru_file)
-		- [kpoint\_file](#kpoint_file)
-		- [pseudo\_dir](#pseudo_dir)
-		- [orbital\_dir](#orbital_dir)
-		- [read\_file\_dir](#read_file_dir)
-		- [wannier\_card](#wannier_card)
-	- [Plane wave related variables](#plane-wave-related-variables)
-		- [ecutwfc](#ecutwfc)
-		- [nx, ny, nz](#nx-ny-nz)
-		- [pw\_seed](#pw_seed)
-		- [pw\_diag\_thr](#pw_diag_thr)
-		- [pw\_diag\_nmax](#pw_diag_nmax)
-		- [pw\_diag\_ndim](#pw_diag_ndim)
-	- [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-		- [nb2d](#nb2d)
-		- [lmaxmax](#lmaxmax)
-		- [lcao\_ecut](#lcao_ecut)
-		- [lcao\_dk](#lcao_dk)
-		- [lcao\_dr](#lcao_dr)
-		- [lcao\_rmax](#lcao_rmax)
-		- [search\_radius](#search_radius)
-		- [search\_pbc](#search_pbc)
-		- [bx, by, bz](#bx-by-bz)
-	- [Electronic structure](#electronic-structure)
-		- [basis\_type](#basis_type)
-		- [ks\_solver](#ks_solver)
-		- [nbands](#nbands)
-		- [nbands\_istate](#nbands_istate)
-		- [nspin](#nspin)
-		- [smearing\_method](#smearing_method)
-		- [smearing\_sigma](#smearing_sigma)
-		- [smearing\_sigma\_temp](#smearing_sigma_temp)
-		- [mixing\_type](#mixing_type)
-		- [mixing\_beta](#mixing_beta)
-		- [mixing\_ndim](#mixing_ndim)
-		- [mixing\_gg0](#mixing_gg0)
-		- [mixing\_tau](#mixing_tau)
-		- [mixing\_dftu](#mixing_dftu)
-		- [gamma\_only](#gamma_only)
-		- [printe](#printe)
-		- [scf\_nmax](#scf_nmax)
-		- [scf\_thr](#scf_thr)
-		- [scf\_thr\_type](#scf_thr_type)
-		- [chg\_extrap](#chg_extrap)
-		- [lspinorb](#lspinorb)
-		- [noncolin](#noncolin)
-		- [soc\_lambda](#soc_lambda)
-	- [Electronic structure (SDFT)](#electronic-structure-sdft)
-		- [method\_sto](#method_sto)
-		- [nbands\_sto](#nbands_sto)
-		- [nche\_sto](#nche_sto)
-		- [emin\_sto](#emin_sto)
-		- [emax\_sto](#emax_sto)
-		- [seed\_sto](#seed_sto)
-		- [initsto\_freq](#initsto_freq)
-		- [npart\_sto](#npart_sto)
-	- [Geometry relaxation](#geometry-relaxation)
-		- [relax\_method](#relax_method)
-		- [relax\_new](#relax_new)
-		- [relax\_scale\_force](#relax_scale_force)
-		- [relax\_nmax](#relax_nmax)
-		- [relax\_cg\_thr](#relax_cg_thr)
-		- [cal\_force](#cal_force)
-		- [force\_thr](#force_thr)
-		- [force\_thr\_ev](#force_thr_ev)
-		- [force\_thr\_ev2](#force_thr_ev2)
-		- [relax\_bfgs\_w1](#relax_bfgs_w1)
-		- [relax\_bfgs\_w2](#relax_bfgs_w2)
-		- [relax\_bfgs\_rmax](#relax_bfgs_rmax)
-		- [relax\_bfgs\_rmin](#relax_bfgs_rmin)
-		- [relax\_bfgs\_init](#relax_bfgs_init)
-		- [cal\_stress](#cal_stress)
-		- [stress\_thr](#stress_thr)
-		- [press1, press2, press3](#press1-press2-press3)
-		- [fixed\_axes](#fixed_axes)
-		- [fixed\_ibrav](#fixed_ibrav)
-		- [fixed\_atoms](#fixed_atoms)
-		- [cell\_factor](#cell_factor)
-	- [Variables related to output information](#variables-related-to-output-information)
-		- [out\_mul](#out_mul)
-		- [out\_freq\_elec](#out_freq_elec)
-		- [out\_freq\_ion](#out_freq_ion)
-		- [out\_chg](#out_chg)
-		- [out\_pot](#out_pot)
-		- [out\_dm](#out_dm)
-		- [out\_wfc\_pw](#out_wfc_pw)
-		- [out\_wfc\_r](#out_wfc_r)
-		- [out\_wfc\_lcao](#out_wfc_lcao)
-		- [out\_dos](#out_dos)
-		- [out\_band](#out_band)
-		- [out\_proj\_band](#out_proj_band)
-		- [out\_stru](#out_stru)
-		- [out\_bandgap](#out_bandgap)
-		- [out\_level](#out_level)
-		- [out\_alllog](#out_alllog)
-		- [out\_mat\_hs](#out_mat_hs)
-		- [out\_mat\_r](#out_mat_r)
-		- [out\_mat\_hs2](#out_mat_hs2)
-		- [out\_mat\_t](#out_mat_t)
-		- [out\_mat\_dh](#out_mat_dh)
-		- [out\_app\_flag](#out_app_flag)
-		- [out\_interval](#out_interval)
-		- [out\_element\_info](#out_element_info)
-		- [restart\_save](#restart_save)
-		- [restart\_load](#restart_load)
-		- [dft\_plus\_dmft](#dft_plus_dmft)
-		- [rpa](#rpa)
-	- [Density of states](#density-of-states)
-		- [dos\_edelta\_ev](#dos_edelta_ev)
-		- [dos\_sigma](#dos_sigma)
-		- [dos\_scale](#dos_scale)
-		- [dos\_emin\_ev](#dos_emin_ev)
-		- [dos\_emax\_ev](#dos_emax_ev)
-		- [dos\_nche](#dos_nche)
-	- [NAOs](#naos)
-		- [bessel\_nao\_ecut](#bessel_nao_ecut)
-		- [bessel\_nao\_tolerence](#bessel_nao_tolerence)
-		- [bessel\_nao\_rcut](#bessel_nao_rcut)
-		- [bessel\_nao\_smooth](#bessel_nao_smooth)
-		- [bessel\_nao\_sigma](#bessel_nao_sigma)
-	- [DeePKS](#deepks)
-		- [deepks\_out\_labels](#deepks_out_labels)
-		- [deepks\_scf](#deepks_scf)
-		- [deepks\_model](#deepks_model)
-		- [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
-		- [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
-		- [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
-		- [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
-		- [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
-		- [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
-		- [deepks\_bandgap](#deepks_bandgap)
-		- [deepks\_out\_unittest](#deepks_out_unittest)
-	- [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
-		- [of\_kinetic](#of_kinetic)
-		- [of\_method](#of_method)
-		- [of\_conv](#of_conv)
-		- [of\_tole](#of_tole)
-		- [of\_tolp](#of_tolp)
-		- [of\_tf\_weight](#of_tf_weight)
-		- [of\_vw\_weight](#of_vw_weight)
-		- [of\_wt\_alpha](#of_wt_alpha)
-		- [of\_wt\_beta](#of_wt_beta)
-		- [of\_wt\_rho0](#of_wt_rho0)
-		- [of\_hold\_rho0](#of_hold_rho0)
-		- [of\_lkt\_a](#of_lkt_a)
-		- [of\_read\_kernel](#of_read_kernel)
-		- [of\_kernel\_file](#of_kernel_file)
-		- [of\_full\_pw](#of_full_pw)
-		- [of\_full\_pw\_dim](#of_full_pw_dim)
-	- [Electric field and dipole correction](#electric-field-and-dipole-correction)
-		- [efield\_flag](#efield_flag)
-		- [dip\_cor\_flag](#dip_cor_flag)
-		- [efield\_dir](#efield_dir)
-		- [efield\_pos\_max](#efield_pos_max)
-		- [efield\_pos\_dec](#efield_pos_dec)
-		- [efield\_amp](#efield_amp)
-	- [Gate field (compensating charge)](#gate-field-compensating-charge)
-		- [gate\_flag](#gate_flag)
-		- [zgate](#zgate)
-		- [block](#block)
-		- [block\_down](#block_down)
-		- [block\_up](#block_up)
-		- [block\_height](#block_height)
-	- [Exact Exchange](#exact-exchange)
-		- [exx\_hybrid\_alpha](#exx_hybrid_alpha)
-		- [exx\_hse\_omega](#exx_hse_omega)
-		- [exx\_separate\_loop](#exx_separate_loop)
-		- [exx\_hybrid\_step](#exx_hybrid_step)
-		- [exx\_mixing\_beta](#exx_mixing_beta)
-		- [exx\_lambda](#exx_lambda)
-		- [exx\_pca\_threshold](#exx_pca_threshold)
-		- [exx\_c\_threshold](#exx_c_threshold)
-		- [exx\_v\_threshold](#exx_v_threshold)
-		- [exx\_dm\_threshold](#exx_dm_threshold)
-		- [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
-		- [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
-		- [exx\_schwarz\_threshold](#exx_schwarz_threshold)
-		- [exx\_cauchy\_threshold](#exx_cauchy_threshold)
-		- [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
-		- [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
-		- [exx\_ccp\_threshold](#exx_ccp_threshold)
-		- [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
-		- [exx\_distribute\_type](#exx_distribute_type)
-		- [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
-		- [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
-		- [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
-		- [exx\_real\_number](#exx_real_number)
-	- [Molecular dynamics](#molecular-dynamics)
-		- [md\_type](#md_type)
-		- [md\_nstep](#md_nstep)
-		- [md\_dt](#md_dt)
-		- [md\_thermostat](#md_thermostat)
-		- [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
-		- [md\_restart](#md_restart)
-		- [md\_restartfreq](#md_restartfreq)
-		- [md\_dumpfreq](#md_dumpfreq)
-		- [dump\_force](#dump_force)
-		- [dump\_vel](#dump_vel)
-		- [dump\_virial](#dump_virial)
-		- [md\_seed](#md_seed)
-		- [md\_tfreq](#md_tfreq)
-		- [md\_tchain](#md_tchain)
-		- [md\_pmode](#md_pmode)
-		- [md\_prec\_level](#md_prec_level)
-		- [ref\_cell\_factor](#ref_cell_factor)
-		- [md\_pcouple](#md_pcouple)
-		- [md\_pfirst, md\_plast](#md_pfirst-md_plast)
-		- [md\_pfreq](#md_pfreq)
-		- [md\_pchain](#md_pchain)
-		- [lj\_rcut](#lj_rcut)
-		- [lj\_epsilon](#lj_epsilon)
-		- [lj\_sigma](#lj_sigma)
-		- [pot\_file](#pot_file)
-		- [msst\_direction](#msst_direction)
-		- [msst\_vel](#msst_vel)
-		- [msst\_vis](#msst_vis)
-		- [msst\_tscale](#msst_tscale)
-		- [msst\_qmass](#msst_qmass)
-		- [md\_damp](#md_damp)
-		- [md\_tolerance](#md_tolerance)
-		- [md\_nraise](#md_nraise)
-		- [cal\_syns](#cal_syns)
-		- [dmax](#dmax)
-	- [DFT+*U* correction](#dftu-correction)
-		- [dft\_plus\_u](#dft_plus_u)
-		- [orbital\_corr](#orbital_corr)
-		- [hubbard\_u](#hubbard_u)
-		- [yukawa\_potential](#yukawa_potential)
-		- [yukawa\_lambda](#yukawa_lambda)
-		- [omc](#omc)
-	- [vdW correction](#vdw-correction)
-		- [vdw\_method](#vdw_method)
-		- [vdw\_s6](#vdw_s6)
-		- [vdw\_s8](#vdw_s8)
-		- [vdw\_a1](#vdw_a1)
-		- [vdw\_a2](#vdw_a2)
-		- [vdw\_d](#vdw_d)
-		- [vdw\_abc](#vdw_abc)
-		- [vdw\_C6\_file](#vdw_c6_file)
-		- [vdw\_C6\_unit](#vdw_c6_unit)
-		- [vdw\_R0\_file](#vdw_r0_file)
-		- [vdw\_R0\_unit](#vdw_r0_unit)
-		- [vdw\_cutoff\_type](#vdw_cutoff_type)
-		- [vdw\_cutoff\_radius](#vdw_cutoff_radius)
-		- [vdw\_radius\_unit](#vdw_radius_unit)
-		- [vdw\_cutoff\_period](#vdw_cutoff_period)
-		- [vdw\_cn\_thr](#vdw_cn_thr)
-		- [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
-	- [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
-		- [berry\_phase](#berry_phase)
-		- [gdir](#gdir)
-		- [towannier90](#towannier90)
-		- [nnkpfile](#nnkpfile)
-		- [wannier\_spin](#wannier_spin)
-	- [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
-		- [td\_edm](#td_edm)
-		- [td\_print\_eij](#td_print_eij)
-		- [td\_force\_dt](#td_force_dt)
-		- [propagator](#propagator)
-		- [td\_vext](#td_vext)
-		- [td\_vext\_dire](#td_vext_dire)
-		- [td\_stype](#td_stype)
-		- [td\_ttype](#td_ttype)
-		- [td\_tstart](#td_tstart)
-		- [td\_tend](#td_tend)
-		- [td\_lcut1](#td_lcut1)
-		- [td\_lcut2](#td_lcut2)
-		- [td\_gauss\_freq](#td_gauss_freq)
-		- [td\_gauss\_phase](#td_gauss_phase)
-		- [td\_gauss\_sigma](#td_gauss_sigma)
-		- [td\_gauss\_t0](#td_gauss_t0)
-		- [td\_gauss\_amp](#td_gauss_amp)
-		- [td\_trape\_freq](#td_trape_freq)
-		- [td\_trape\_phase](#td_trape_phase)
-		- [td\_trape\_t1](#td_trape_t1)
-		- [td\_trape\_t2](#td_trape_t2)
-		- [td\_trape\_t3](#td_trape_t3)
-		- [td\_trape\_amp](#td_trape_amp)
-		- [td\_trigo\_freq1](#td_trigo_freq1)
-		- [td\_trigo\_freq2](#td_trigo_freq2)
-		- [td\_trigo\_phase1](#td_trigo_phase1)
-		- [td\_trigo\_phase2](#td_trigo_phase2)
-		- [td\_trigo\_amp](#td_trigo_amp)
-		- [td\_heavi\_t0](#td_heavi_t0)
-		- [td\_heavi\_amp](#td_heavi_amp)
-		- [out\_dipole](#out_dipole)
-		- [out\_efield](#out_efield)
-		- [ocp](#ocp)
-		- [ocp\_set](#ocp_set)
-	- [Variables useful for debugging](#variables-useful-for-debugging)
-		- [t\_in\_h](#t_in_h)
-		- [vl\_in\_h](#vl_in_h)
-		- [vnl\_in\_h](#vnl_in_h)
-		- [vh\_in\_h](#vh_in_h)
-		- [vion\_in\_h](#vion_in_h)
-		- [test\_force](#test_force)
-		- [test\_stress](#test_stress)
-		- [colour](#colour)
-		- [test\_skip\_ewald](#test_skip_ewald)
-	- [Electronic conductivities](#electronic-conductivities)
-		- [cal\_cond](#cal_cond)
-		- [cond\_nche](#cond_nche)
-		- [cond\_dw](#cond_dw)
-		- [cond\_wcut](#cond_wcut)
-		- [cond\_dt](#cond_dt)
-		- [cond\_dtbatch](#cond_dtbatch)
-		- [cond\_fwhm](#cond_fwhm)
-		- [cond\_nonlocal](#cond_nonlocal)
-	- [Implicit solvation model](#implicit-solvation-model)
-		- [imp\_sol](#imp_sol)
-		- [eb\_k](#eb_k)
-		- [tau](#tau)
-		- [sigma\_k](#sigma_k)
-		- [nc\_k](#nc_k)
+  - [System variables](#system-variables)
+    - [suffix](#suffix)
+    - [ntype](#ntype)
+    - [calculation](#calculation)
+    - [esolver\_type](#esolver_type)
+    - [symmetry](#symmetry)
+    - [symmetry\_prec](#symmetry_prec)
+    - [kpar](#kpar)
+    - [bndpar](#bndpar)
+    - [latname](#latname)
+    - [init\_wfc](#init_wfc)
+    - [init\_chg](#init_chg)
+    - [init\_vel](#init_vel)
+    - [nelec](#nelec)
+    - [nupdown](#nupdown)
+    - [dft\_functional](#dft_functional)
+    - [xc\_temperature](#xc_temperature)
+    - [pseudo\_rcut](#pseudo_rcut)
+    - [pseudo\_mesh](#pseudo_mesh)
+    - [mem\_saver](#mem_saver)
+    - [diago\_proc](#diago_proc)
+    - [nbspline](#nbspline)
+    - [kspacing](#kspacing)
+    - [min\_dist\_coef](#min_dist_coef)
+    - [device](#device)
+  - [Variables related to input files](#variables-related-to-input-files)
+    - [stru\_file](#stru_file)
+    - [kpoint\_file](#kpoint_file)
+    - [pseudo\_dir](#pseudo_dir)
+    - [orbital\_dir](#orbital_dir)
+    - [read\_file\_dir](#read_file_dir)
+    - [wannier\_card](#wannier_card)
+  - [Plane wave related variables](#plane-wave-related-variables)
+    - [ecutwfc](#ecutwfc)
+    - [nx, ny, nz](#nx-ny-nz)
+    - [pw\_seed](#pw_seed)
+    - [pw\_diag\_thr](#pw_diag_thr)
+    - [pw\_diag\_nmax](#pw_diag_nmax)
+    - [pw\_diag\_ndim](#pw_diag_ndim)
+  - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
+    - [nb2d](#nb2d)
+    - [lmaxmax](#lmaxmax)
+    - [lcao\_ecut](#lcao_ecut)
+    - [lcao\_dk](#lcao_dk)
+    - [lcao\_dr](#lcao_dr)
+    - [lcao\_rmax](#lcao_rmax)
+    - [search\_radius](#search_radius)
+    - [search\_pbc](#search_pbc)
+    - [bx, by, bz](#bx-by-bz)
+  - [Electronic structure](#electronic-structure)
+    - [basis\_type](#basis_type)
+    - [ks\_solver](#ks_solver)
+    - [nbands](#nbands)
+    - [nbands\_istate](#nbands_istate)
+    - [nspin](#nspin)
+    - [smearing\_method](#smearing_method)
+    - [smearing\_sigma](#smearing_sigma)
+    - [smearing\_sigma\_temp](#smearing_sigma_temp)
+    - [mixing\_type](#mixing_type)
+    - [mixing\_beta](#mixing_beta)
+    - [mixing\_ndim](#mixing_ndim)
+    - [mixing\_gg0](#mixing_gg0)
+    - [mixing\_tau](#mixing_tau)
+    - [mixing\_dftu](#mixing_dftu)
+    - [gamma\_only](#gamma_only)
+    - [printe](#printe)
+    - [scf\_nmax](#scf_nmax)
+    - [scf\_thr](#scf_thr)
+    - [scf\_thr\_type](#scf_thr_type)
+    - [chg\_extrap](#chg_extrap)
+    - [lspinorb](#lspinorb)
+    - [noncolin](#noncolin)
+    - [soc\_lambda](#soc_lambda)
+  - [Electronic structure (SDFT)](#electronic-structure-sdft)
+    - [method\_sto](#method_sto)
+    - [nbands\_sto](#nbands_sto)
+    - [nche\_sto](#nche_sto)
+    - [emin\_sto](#emin_sto)
+    - [emax\_sto](#emax_sto)
+    - [seed\_sto](#seed_sto)
+    - [initsto\_freq](#initsto_freq)
+    - [npart\_sto](#npart_sto)
+  - [Geometry relaxation](#geometry-relaxation)
+    - [relax\_method](#relax_method)
+    - [relax\_new](#relax_new)
+    - [relax\_scale\_force](#relax_scale_force)
+    - [relax\_nmax](#relax_nmax)
+    - [relax\_cg\_thr](#relax_cg_thr)
+    - [cal\_force](#cal_force)
+    - [force\_thr](#force_thr)
+    - [force\_thr\_ev](#force_thr_ev)
+    - [force\_thr\_ev2](#force_thr_ev2)
+    - [relax\_bfgs\_w1](#relax_bfgs_w1)
+    - [relax\_bfgs\_w2](#relax_bfgs_w2)
+    - [relax\_bfgs\_rmax](#relax_bfgs_rmax)
+    - [relax\_bfgs\_rmin](#relax_bfgs_rmin)
+    - [relax\_bfgs\_init](#relax_bfgs_init)
+    - [cal\_stress](#cal_stress)
+    - [stress\_thr](#stress_thr)
+    - [press1, press2, press3](#press1-press2-press3)
+    - [fixed\_axes](#fixed_axes)
+    - [fixed\_ibrav](#fixed_ibrav)
+    - [fixed\_atoms](#fixed_atoms)
+    - [cell\_factor](#cell_factor)
+  - [Variables related to output information](#variables-related-to-output-information)
+    - [out\_mul](#out_mul)
+    - [out\_freq\_elec](#out_freq_elec)
+    - [out\_chg](#out_chg)
+    - [out\_pot](#out_pot)
+    - [out\_dm](#out_dm)
+    - [out\_wfc\_pw](#out_wfc_pw)
+    - [out\_wfc\_r](#out_wfc_r)
+    - [out\_wfc\_lcao](#out_wfc_lcao)
+    - [out\_dos](#out_dos)
+    - [out\_band](#out_band)
+    - [out\_proj\_band](#out_proj_band)
+    - [out\_stru](#out_stru)
+    - [out\_bandgap](#out_bandgap)
+    - [out\_level](#out_level)
+    - [out\_alllog](#out_alllog)
+    - [out\_mat\_hs](#out_mat_hs)
+    - [out\_mat\_r](#out_mat_r)
+    - [out\_mat\_hs2](#out_mat_hs2)
+    - [out\_mat\_t](#out_mat_t)
+    - [out\_mat\_dh](#out_mat_dh)
+    - [out\_app\_flag](#out_app_flag)
+    - [out\_interval](#out_interval)
+    - [out\_element\_info](#out_element_info)
+    - [restart\_save](#restart_save)
+    - [restart\_load](#restart_load)
+    - [rpa](#rpa)
+  - [Density of states](#density-of-states)
+    - [dos\_edelta\_ev](#dos_edelta_ev)
+    - [dos\_sigma](#dos_sigma)
+    - [dos\_scale](#dos_scale)
+    - [dos\_emin\_ev](#dos_emin_ev)
+    - [dos\_emax\_ev](#dos_emax_ev)
+    - [dos\_nche](#dos_nche)
+  - [NAOs](#naos)
+    - [bessel\_nao\_ecut](#bessel_nao_ecut)
+    - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
+    - [bessel\_nao\_rcut](#bessel_nao_rcut)
+    - [bessel\_nao\_smooth](#bessel_nao_smooth)
+    - [bessel\_nao\_sigma](#bessel_nao_sigma)
+  - [DeePKS](#deepks)
+    - [deepks\_out\_labels](#deepks_out_labels)
+    - [deepks\_scf](#deepks_scf)
+    - [deepks\_model](#deepks_model)
+    - [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
+    - [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
+    - [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
+    - [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
+    - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
+    - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
+    - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_out\_unittest](#deepks_out_unittest)
+  - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
+    - [of\_kinetic](#of_kinetic)
+    - [of\_method](#of_method)
+    - [of\_conv](#of_conv)
+    - [of\_tole](#of_tole)
+    - [of\_tolp](#of_tolp)
+    - [of\_tf\_weight](#of_tf_weight)
+    - [of\_vw\_weight](#of_vw_weight)
+    - [of\_wt\_alpha](#of_wt_alpha)
+    - [of\_wt\_beta](#of_wt_beta)
+    - [of\_wt\_rho0](#of_wt_rho0)
+    - [of\_hold\_rho0](#of_hold_rho0)
+    - [of\_lkt\_a](#of_lkt_a)
+    - [of\_read\_kernel](#of_read_kernel)
+    - [of\_kernel\_file](#of_kernel_file)
+    - [of\_full\_pw](#of_full_pw)
+    - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [Electric field and dipole correction](#electric-field-and-dipole-correction)
+    - [efield\_flag](#efield_flag)
+    - [dip\_cor\_flag](#dip_cor_flag)
+    - [efield\_dir](#efield_dir)
+    - [efield\_pos\_max](#efield_pos_max)
+    - [efield\_pos\_dec](#efield_pos_dec)
+    - [efield\_amp](#efield_amp)
+  - [Gate field (compensating charge)](#gate-field-compensating-charge)
+    - [gate\_flag](#gate_flag)
+    - [zgate](#zgate)
+    - [block](#block)
+    - [block\_down](#block_down)
+    - [block\_up](#block_up)
+    - [block\_height](#block_height)
+  - [Exact Exchange](#exact-exchange)
+    - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
+    - [exx\_hse\_omega](#exx_hse_omega)
+    - [exx\_separate\_loop](#exx_separate_loop)
+    - [exx\_hybrid\_step](#exx_hybrid_step)
+    - [exx\_mixing\_beta](#exx_mixing_beta)
+    - [exx\_lambda](#exx_lambda)
+    - [exx\_pca\_threshold](#exx_pca_threshold)
+    - [exx\_c\_threshold](#exx_c_threshold)
+    - [exx\_v\_threshold](#exx_v_threshold)
+    - [exx\_dm\_threshold](#exx_dm_threshold)
+    - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
+    - [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
+    - [exx\_schwarz\_threshold](#exx_schwarz_threshold)
+    - [exx\_cauchy\_threshold](#exx_cauchy_threshold)
+    - [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
+    - [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
+    - [exx\_ccp\_threshold](#exx_ccp_threshold)
+    - [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
+    - [exx\_distribute\_type](#exx_distribute_type)
+    - [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
+    - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
+    - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
+    - [exx\_real\_number](#exx_real_number)
+  - [Molecular dynamics](#molecular-dynamics)
+    - [md\_type](#md_type)
+    - [md\_nstep](#md_nstep)
+    - [md\_dt](#md_dt)
+    - [md\_thermostat](#md_thermostat)
+    - [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
+    - [md\_restart](#md_restart)
+    - [md\_restartfreq](#md_restartfreq)
+    - [md\_dumpfreq](#md_dumpfreq)
+    - [dump\_force](#dump_force)
+    - [dump\_vel](#dump_vel)
+    - [dump\_virial](#dump_virial)
+    - [md\_seed](#md_seed)
+    - [md\_tfreq](#md_tfreq)
+    - [md\_tchain](#md_tchain)
+    - [md\_pmode](#md_pmode)
+    - [md\_prec\_level](#md_prec_level)
+    - [ref\_cell\_factor](#ref_cell_factor)
+    - [md\_pcouple](#md_pcouple)
+    - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
+    - [md\_pfreq](#md_pfreq)
+    - [md\_pchain](#md_pchain)
+    - [lj\_rcut](#lj_rcut)
+    - [lj\_epsilon](#lj_epsilon)
+    - [lj\_sigma](#lj_sigma)
+    - [pot\_file](#pot_file)
+    - [msst\_direction](#msst_direction)
+    - [msst\_vel](#msst_vel)
+    - [msst\_vis](#msst_vis)
+    - [msst\_tscale](#msst_tscale)
+    - [msst\_qmass](#msst_qmass)
+    - [md\_damp](#md_damp)
+    - [md\_tolerance](#md_tolerance)
+    - [md\_nraise](#md_nraise)
+    - [cal\_syns](#cal_syns)
+    - [dmax](#dmax)
+  - [DFT+*U* correction](#dftu-correction)
+    - [dft\_plus\_u](#dft_plus_u)
+    - [orbital\_corr](#orbital_corr)
+    - [hubbard\_u](#hubbard_u)
+    - [yukawa\_potential](#yukawa_potential)
+    - [yukawa\_lambda](#yukawa_lambda)
+    - [omc](#omc)
+  - [vdW correction](#vdw-correction)
+    - [vdw\_method](#vdw_method)
+    - [vdw\_s6](#vdw_s6)
+    - [vdw\_s8](#vdw_s8)
+    - [vdw\_a1](#vdw_a1)
+    - [vdw\_a2](#vdw_a2)
+    - [vdw\_d](#vdw_d)
+    - [vdw\_abc](#vdw_abc)
+    - [vdw\_C6\_file](#vdw_c6_file)
+    - [vdw\_C6\_unit](#vdw_c6_unit)
+    - [vdw\_R0\_file](#vdw_r0_file)
+    - [vdw\_R0\_unit](#vdw_r0_unit)
+    - [vdw\_cutoff\_type](#vdw_cutoff_type)
+    - [vdw\_cutoff\_radius](#vdw_cutoff_radius)
+    - [vdw\_radius\_unit](#vdw_radius_unit)
+    - [vdw\_cutoff\_period](#vdw_cutoff_period)
+    - [vdw\_cn\_thr](#vdw_cn_thr)
+    - [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
+  - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
+    - [berry\_phase](#berry_phase)
+    - [gdir](#gdir)
+    - [towannier90](#towannier90)
+    - [nnkpfile](#nnkpfile)
+    - [wannier\_spin](#wannier_spin)
+  - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+    - [td\_edm](#td_edm)
+    - [td\_print\_eij](#td_print_eij)
+    - [td\_propagator](#td_propagator)
+    - [td\_vext](#td_vext)
+    - [td\_vext\_dire](#td_vext_dire)
+    - [td\_stype](#td_stype)
+    - [td\_ttype](#td_ttype)
+    - [td\_tstart](#td_tstart)
+    - [td\_tend](#td_tend)
+    - [td\_lcut1](#td_lcut1)
+    - [td\_lcut2](#td_lcut2)
+    - [td\_gauss\_freq](#td_gauss_freq)
+    - [td\_gauss\_phase](#td_gauss_phase)
+    - [td\_gauss\_sigma](#td_gauss_sigma)
+    - [td\_gauss\_t0](#td_gauss_t0)
+    - [td\_gauss\_amp](#td_gauss_amp)
+    - [td\_trape\_freq](#td_trape_freq)
+    - [td\_trape\_phase](#td_trape_phase)
+    - [td\_trape\_t1](#td_trape_t1)
+    - [td\_trape\_t2](#td_trape_t2)
+    - [td\_trape\_t3](#td_trape_t3)
+    - [td\_trape\_amp](#td_trape_amp)
+    - [td\_trigo\_freq1](#td_trigo_freq1)
+    - [td\_trigo\_freq2](#td_trigo_freq2)
+    - [td\_trigo\_phase1](#td_trigo_phase1)
+    - [td\_trigo\_phase2](#td_trigo_phase2)
+    - [td\_trigo\_amp](#td_trigo_amp)
+    - [td\_heavi\_t0](#td_heavi_t0)
+    - [td\_heavi\_amp](#td_heavi_amp)
+    - [td\_out\_dipole](#td_out_dipole)
+    - [td\_out\_efield](#td_out_efield)
+    - [ocp](#ocp)
+    - [ocp\_set](#ocp_set)
+  - [Variables useful for debugging](#variables-useful-for-debugging)
+    - [t\_in\_h](#t_in_h)
+    - [vl\_in\_h](#vl_in_h)
+    - [vnl\_in\_h](#vnl_in_h)
+    - [vh\_in\_h](#vh_in_h)
+    - [vion\_in\_h](#vion_in_h)
+    - [test\_force](#test_force)
+    - [test\_stress](#test_stress)
+    - [colour](#colour)
+    - [test\_skip\_ewald](#test_skip_ewald)
+  - [Electronic conductivities](#electronic-conductivities)
+    - [cal\_cond](#cal_cond)
+    - [cond\_nche](#cond_nche)
+    - [cond\_dw](#cond_dw)
+    - [cond\_wcut](#cond_wcut)
+    - [cond\_dt](#cond_dt)
+    - [cond\_dtbatch](#cond_dtbatch)
+    - [cond\_fwhm](#cond_fwhm)
+    - [cond\_nonlocal](#cond_nonlocal)
+  - [Implicit solvation model](#implicit-solvation-model)
+    - [imp\_sol](#imp_sol)
+    - [eb\_k](#eb_k)
+    - [tau](#tau)
+    - [sigma\_k](#sigma_k)
+    - [nc\_k](#nc_k)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -369,8 +366,8 @@ These variables are used to control general system parameters.
   - relax: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want
   - cell-relax: do variable-cell relaxation calculation
   - nscf: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3
-  - istate: For LCAO basis. Please see the explanation for variable `nbands_istate`
-  - ienvelope: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_wf: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
   - md: molecular dynamics
   - test_memory : checks memory required for the calculation. The number is not quite reliable, please use it with care
   - test_neighbour : only performs neighbouring atom search
@@ -399,7 +396,7 @@ These variables are used to control general system parameters.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
   - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
-  - 0: if *[calculation](#calculation)==md/nscf/istate/ienvelope/get_S* or *[gamma_only]==True*
+  - 0: if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*
   - 1: else
 
 ### symmetry_prec
@@ -691,38 +688,38 @@ These variables are used to control the numerical atomic orbitals related parame
 ### lcao_ecut
 
 - **Type**: Real
-- **Description**: Energy cutoff when calculating LCAO two-center integrals. In Ry.
-- **Default**: 50
+- **Description**: Energy cutoff (in Ry) for two-center integrals in LCAO. The two-center integration table are obtained via a k space integral whose upper limit is about sqrt(`lcao_ecut`).
+- **Default**: `ecutwfc`
 
 ### lcao_dk
 
 - **Type**: Real
-- **Description**: Delta k for 1D integration in LCAO
+- **Description**: k spacing (in Bohr${}^{-1}$) for two-center integrals. The two-center integration table are obtained via a k space integral on a uniform grid with spacing `lcao_dk`.
 - **Default**: 0.01
 
 ### lcao_dr
 
 - **Type**: Real
-- **Description**: Delta r for 1D integration in LCAO
+- **Description**: r spacing (in Bohr) of the integration table of two-center integrals.
 - **Default**: 0.01
 
 ### lcao_rmax
 
 - **Type**: Real
-- **Description**: Max R for 1D two-center integration table
+- **Description**: Maximum distance (in Bohr) for the two-center integration table.
 - **Default**: 30
 
 ### search_radius
 
 - **Type**: Real
-- **Description**: Set the search radius for finding neighbouring atoms. If set to -1, then the radius will be set to maximum of projector and orbital cut-off.
+- **Description**: Searching radius in finding the neighbouring atoms. By default the radius will be automatically determined by the cutoffs of orbitals and nonlocal beta projectors.
 - **Default**: -1
 
 ### search_pbc
 
 - **Type**: Boolean
-- **Description**: In searching for neighbouring atoms, if set to 1, then periodic images will also be searched. If set to 0, then periodic images will not be searched.
-- **Default**: 1
+- **Description**: If True, periodic images will be included in searching for the neighbouring atoms. If False, periodic images will be ignored.
+- **Default**: True
 
 ### bx, by, bz
 
@@ -741,26 +738,26 @@ calculations.
 
 - **Type**: String
 - **Description**: Choose the basis set.
-  - pw: Using plane-wave basis set only.
-  - lcao_in_pw: Expand the localized atomic set in plane-wave basis.
-  - lcao: Using localized atomic orbital sets.
+  - **pw**: Using plane-wave basis set only.
+  - **lcao**: Using localized atomic orbital sets.
+  - **lcao_in_pw**: (Unavailable currently, it will be fixed in future versions) Expand the localized atomic set in plane-wave basis.
 - **Default**: pw
 
 ### ks_solver
 
 - **Type**: String
-- **Description**: It's about the choice of diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
+- **Description**: Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
-  - cg: cg method.
-  - dav: the Davidson algorithm.
+  - **cg**: cg method.
+  - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
 
-  - genelpa: This method should be used if you choose localized orbitals.
-  - scalapack-gvx: scalapack can also be used for localized orbitals.
-  - cusolver: this method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **genelpa**: This method should be used if you choose localized orbitals.
+  - **scalapack-gvx**: Scalapack can also be used for localized orbitals.
+  - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -769,7 +766,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (pw) or genelpa (lcao)
+- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set)
 
 ### nbands
 
@@ -783,27 +780,27 @@ calculations.
 ### nbands_istate
 
 - **Type**: Integer
-- **Availability**: Only used when `calculation = ienvelope` or `calculation = istate`.
-- **Description**: The number of bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Availability**: Only used when `calculation = get_wf` or `calculation = get_pchg`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 ### nspin
 
 - **Type**: Integer
 - **Description**: The number of spin components of wave functions.
-  - 1: Spin degeneracy
-  - 2: Collinear spin polarized.
-  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+  - **1**: Spin degeneracy
+  - **2**: Collinear spin polarized.
+  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified by the user.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - fixed: fixed occupations.
-  - gauss or gaussian: Gaussian smearing method.
-  - mp: methfessel-paxton smearing method; recommended for metals.
-  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
+  - **fixed**: fixed occupations.
+  - **gauss** or **gaussian**: Gaussian smearing method.
+  - **mp**: methfessel-paxton smearing method; recommended for metals.
+  - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 ### smearing_sigma
@@ -823,23 +820,26 @@ calculations.
 ### mixing_type
 
 - **Type**: String
+- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
-  - plain: Just simple mixing.
-  - pulay: Standard Pulay method.
-  - broyden: Broyden method.
+  - **plain**: Just simple mixing.
+  - **pulay**: Standard Pulay method.
+  - **broyden**: Broyden method.
 - **Default**: pulay
 
 ### mixing_beta
 
 - **Type**: Real
 - **Description**: mixing parameter. We recommend the following options:
-  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts.
-    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**;
-    - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
-    - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
-  - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
-  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**
-  - For low-dimensional large systems, the setup of **mixing_beta=0.1**, **mixing_ndim=20**, and **mixing_gg0=1.5** usually works well.
+  - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
+    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+  - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
+  - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
+  
+  Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.5` usually works well.
+
 - **Default**: -10.0
 
 ### mixing_ndim
@@ -852,22 +852,26 @@ calculations.
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  A positive number: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
-  -  0: No Kerker scaling is performed.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
+  -  **0**: No Kerker scaling is performed.
 - **Default**: 0.0
 
 ### mixing_tau
 
 - **Type**: Boolean
 - **Availability**: Only relevant for meta-GGA calculations.
-- **Description**: If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Description**: Whether to mix the kinetic energy density.
+  - **True**: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+  - **False**: The kinetic energy density will not be mixed.
 - **Default**: False
 
 ### mixing_dftu
 
 - **Type**: Boolean
 - **Availability**: Only relevant for DFT+U calculations.
-- **Description**: If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Description**: Whether to mix the occupation matrices.
+  - **True**: The occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+  - **False**: The occupation matrices will not be mixed.
 - **Default**: False
 
 ### gamma_only
@@ -875,11 +879,11 @@ calculations.
 - **Type**: Integer
 - **Availability**: Only used in localized orbitals set
 - **Description**: Whether to use gamma_only algorithm.
-  - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
-  - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **0**: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **1**: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
 
-  > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-  >
+  Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
+
 - **Default**: 0
 
 ### printe
@@ -898,38 +902,42 @@ calculations.
 
 - **Type**: Real
 - **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
-- **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
+- **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 
 ### scf_thr_type
 
-- **Type**: Int
+- **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion. 
-  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
+  - **2**: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
   
-  >Note: This parameter is still under testing and the default setting is usually sufficient.
+  Note: This parameter is still under testing and the default setting is usually sufficient.
 
-- **Default**: 1 for PW, and 2 for LCAO.
+- **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
 ### chg_extrap
 
 - **Type**: String
-- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
-  - atomic: atomic extrapolation.
-  - first-order: first-order extrapolation.
-  - second-order: second-order extrapolation.
+- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations or molecular dynamics.
+  - **atomic**: atomic extrapolation.
+  - **first-order**: first-order extrapolation.
+  - **second-order**: second-order extrapolation.
 - **Default**: atomic
 
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: Whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to consider spin-orbital coupling effect in the calculation. 
+  - **True**: Consider spin-orbital coupling effect, and `nspin` is also automatically set to 4.
+  - **False**: Do not consider spin-orbital coupling effect.
 - **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. 
+  - **True**: Allow non-collinear polarization, and `nspin` is also automatically set to 4.
+  - **False**: Do not allow non-collinear polarization.
 - **Default**: False
 
 ### soc_lambda
@@ -1246,10 +1254,19 @@ These variables are used to control the output of properties.
   - npsin = 2: SPIN1_DM, and SPIN2_DM.
 - **Default**: False
 
+### out_dm1
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (multi-k points)
+- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
+  - npsin = 1: data-DMR-sparse_SPIN0.csr;
+  - npsin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+- **Default**: False
+
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
 - **Description**: 
   - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points. 
   - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
@@ -1258,7 +1275,7 @@ These variables are used to control the output of properties.
 ### out_wfc_r
 
 - **Type**: Boolean
-- **Availability**: Plane wave basis or ienvelope calculation in numerical atomic orbital basis
+- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
 - **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
 - **Default**: False
 
@@ -1446,36 +1463,37 @@ These variables are used to control the calculation of DOS.
 
 ## NAOs
 
-These variables are used to control the generation of numerical atomic orbitals (NAOs). NAOs is the linear combination of bessel functions.
+These variables are used to control the generation of numerical atomic orbitals (NAOs), whose radial parts are linear combinations of spherical Bessel functions with a node (i.e., evaluate to zero) at the cutoff radius.
+In plane-wave-based calculations, necessary information will be printed into `OUT.${suffix}/orb_matrix.${i}.dat`, which serves as an input file for the generation of NAOs. Please check [SIAB package](../../../tools/SIAB/README.md#siab-package-description) for more information.
 
 ### bessel_nao_ecut
 
 - **Type**: Real
-- **Description**: energy cutoff of bessel functions.
-- **Default**: same as ecutwfc
+- **Description**: "Energy cutoff" (in Ry) of spherical Bessel functions. The number of spherical Bessel functions that constitute the radial parts of NAOs is determined by sqrt(`bessel_nao_ecut`)$\times$`bessel_nao_rcut`/$\pi$.
+- **Default**: `ecutwfc`
 
 ### bessel_nao_tolerence
 
 - **Type**: Real
-- **Description**: tolerance when searching for the zeros of bessel functions.
+- **Description**: tolerance when searching for the zeros of spherical Bessel functions.
 - **Default**: 1.0e-12
 
 ### bessel_nao_rcut
 
 - **Type**: Real
-- **Description**: cutoff radius of bessel functions.
+- **Description**: Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
 - **Default**: 6.0
 
 ### bessel_nao_smooth
 
 - **Type**: Boolean
-- **Description**: whether the bessel functions smooth at radius cutoff.
-- **Default**: 1
+- **Description**: if True, NAOs will be smoothed near the cutoff radius by $1-\exp\left(-\frac{(r-r_{cut})^2}{2\sigma^2}\right)$. See `bessel_nao_rcut` for $r_{cut}$ and `bessel_nao_sigma` for $\sigma$.
+- **Default**: True
 
 ### bessel_nao_sigma
 
 - **Type**: Real
-- **Description**: energy range for smooth. See also `bessel_nao_smooth`.
+- **Description**: Smoothing range (in Bohr). See also `bessel_nao_smooth`.
 - **Default**: 0.1
 
 [back to top](#full-list-of-input-keywords)
@@ -1585,12 +1603,12 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: String
 - **Availability**: OFDFT
-- **Description**: The type of kinetic energy density functional.
-  - wt: Wang-Teter.
-  - tf: Thomas-Fermi.
-  - vw: von Weizsäcker.
-  - tf+: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
-  - lkt: Luo-Karasiev-Trickey.
+- **Description**: The type of KEDF (kinetic energy density functional).
+  - **wt**: Wang-Teter.
+  - **tf**: Thomas-Fermi.
+  - **vw**: von Weizsäcker.
+  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **lkt**: Luo-Karasiev-Trickey.
 - **Default**: wt
 
 ### of_method
@@ -1598,9 +1616,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The optimization method used in OFDFT.
-  - cg1: Polak-Ribiere. Standard CG algorithm.
-  - cg2: Hager-Zhang (generally faster than cg1).
-  - tn: Truncated Newton algorithm.
+  - **cg1**: Polak-Ribiere. Standard CG algorithm.
+  - **cg2**: Hager-Zhang (generally faster than cg1).
+  - **tn**: Truncated Newton algorithm.
 - **Default**:tn
 
 ### of_conv
@@ -1608,9 +1626,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: Criterion used to check the convergence of OFDFT.
-  - energy: Ttotal energy changes less than `of_tole`.
-  - potential: The norm of potential is less than `of_tolp`.
-  - both: Both energy and potential must satisfy the convergence criterion.
+  - **energy**: Ttotal energy changes less than `of_tole`.
+  - **potential**: The norm of potential is less than `of_tolp`.
+  - **both**: Both energy and potential must satisfy the convergence criterion.
 - **Default**: energy
 
 ### of_tole
@@ -1633,28 +1651,28 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
-- **Description**: Weight of TF KEDF.
+- **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
-- **Description**: Weight of vW KEDF.
+- **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter alpha of WT KEDF.
+- **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_beta
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter beta of WT KEDF.
+- **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_rho0
@@ -1670,15 +1688,15 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to fix the average density rho0.
-  - 0: rho0 will change if volume of system has changed.
-  - 1: rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
+  - **True**: rho0 will be fixed even if the volume of system has changed, it will be set to True automatically if `of_wt_rho0` is not zero.
+  - **False**: rho0 will change if volume of system has changed.
 - **Default**: False
 
 ### of_lkt_a
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=lkt`
-- **Description**: Parameter a of LKT KEDF.
+- **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
 
 ### of_read_kernel
@@ -1686,8 +1704,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to read in the kernel file.
-  - 0: The kernel of WT KEDF will be filled from formula.
-  - 1: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+  - **True**: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by `of_kernel_file`. 
+  - **False**: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
 - **Default**: False
 
 ### of_kernel_file
@@ -1702,8 +1720,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT
 - **Description**: Whether to use full planewaves.
-  - 0: Only use the planewaves inside ecut, the same as KSDFT.
-  - 1: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **True**: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **False**: Only use the planewaves inside ecut, the same as KSDFT.
 - **Default**: True
 
 ### of_full_pw_dim
@@ -1711,10 +1729,12 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Integer
 - **Availability**: OFDFT with `of_full_pw = True`
 - **Description**: Specify the parity of FFT dimensions.
-  - 0: either odd or even.
-  - 1: odd only.
-  - 2: even only.
-  >Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+  - **0**: either odd or even.
+  - **1**: odd only.
+  - **2**: even only.
+  
+  Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -2525,29 +2545,25 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_edm
 
-- **Type**: int
-- **Description**: the method to calculate the energy density matrix.
+- **Type**: Integer
+- **Description**: the method to calculate the energy density matrix
   - 0: new method (use the original formula).
   - 1: old method (use the formula for ground state).
 - **Default**: 0
 
 ### td_print_eij
 
-- **Type**: double
-- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij
+- **Type**: Real
+- **Description**:  
+  - <0: don't print $E_{ij}$.
+  - \>=0: print the $E_{ij}\ (<\psi_i|H|\psi_j>$) elements which are larger than td_print_eij.
 - **Default**: -1
 
-### td_force_dt
-
-- **Type**: Real
-- **Description**: Time-dependent evolution force changes time step. (fs)
-- **Default**: 0.02
-
-### propagator
+### td_propagator
 
 - **Type**: Integer
 - **Description**:
-  method of propagator.
+  method of propagator
   - 0: Crank-Nicolson.
   - 1: 4th Taylor expansions of exponential.
   - 2: enforced time-reversal symmetry (ETRS).
@@ -2557,15 +2573,15 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**:
-  - 1: add a laser material interaction (extern laser field).
-  - 0: no extern laser field.
-- **Default**: 0
+  - True: add a laser material interaction (extern laser field).
+  - False: no extern laser field.
+- **Default**: False
 
 ### td_vext_dire
 
 - **Type**: String
 - **Description**:
-  If `td_vext` is true, the td_vext_dire is a string to set the number of electric fields, like "1 2" representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
+  If `td_vext` is True, the td_vext_dire is a string to set the number of electric fields, like `td_vext_dire 1 2` representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
   - 1: the direction of external light field is along x axis.
   - 2: the direction of external light field is along y axis.
   - 3: the direction of external light field is along z axis.
@@ -2582,7 +2598,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_ttype
 
-- **Type**: String
+- **Type**: Integer
 - **Description**:
   type of electric field in time domain
   - 0: Gaussian type function.
@@ -2596,226 +2612,230 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Integer
 - **Description**:
-  number of step where electric field start
+  number of steps where electric field starts
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
 - **Description**:
-  number of step where electric field end
+  number of steps where electric field ends
 - **Default**: 100
 
 ### td_lcut1
 
-- **Type**: Double
+- **Type**: Real
 - **Description**:
-  cut1 of interval in length gauge
-  E = E0 , cut1<x<cut2
+  cut1 of interval in length gauge\
+  E = E0 , cut1<x<cut2\
   E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
 - **Default**: 0.05
 
 ### td_lcut2
 
-- **Type**: Double
+- **Type**: Real
 - **Description**:
-  cut2 of interval in length gauge
+  cut2 of interval in length gauge\
+  E = E0 , cut1<x<cut2\
+  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
 - **Default**: 0.05
 
 ### td_gauss_freq
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency of Gauss type electric field  (fs^-1)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  frequency (freq) of Gauss type electric field  (fs^-1)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 22.13
 
 ### td_gauss_phase
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
   phase of Gauss type electric field\
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  amp\*(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.0
 
 ### td_gauss_sigma
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  sigma of Gauss type electric field  (fs)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  sigma of Gauss type electric field  (fs)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 30.0
 
 ### td_gauss_t0
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time center of Gauss type electric field\
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  step number of time center (t0) of Gauss type electric field\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 100
 
 ### td_gauss_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Gauss type electric field  (V/A)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  amplitude (amp) of Gauss type electric field  (V/Angstrom)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.25
 
 ### td_trape_freq
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency of Trapezoid type electric field  (fs^-1)
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  frequency (freq) of Trapezoid type electric field  (fs^-1)\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1.60
 
 ### td_trape_phase
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
   phase of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 0.0
 
 ### td_trape_t1
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 1 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 1 (t1) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1875
 
 ### td_trape_t2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 2 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 2 (t2) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 5625
 
 ### td_trape_t3
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 3 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 3 (t3) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 7500
 
 ### td_trape_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Trapezoid type electric field  (V/A)\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  amplitude (amp) of Trapezoid type electric field  (V/Angstrom)\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 2.74
 
 ### td_trigo_freq1
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency 1 of Trigonometric type electric field  (fs^-1)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  frequency 1 (freq1) of Trigonometric type electric field  (fs^-1)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 1.164656
 
 ### td_trigo_freq2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency 2 of Trigonometric type electric field  (fs^-1)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  frequency 2 (freq2) of Trigonometric type electric field  (fs^-1)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.029116
 
 ### td_trigo_phase1
 
-- **Type**: String
+- **Type**:Real
 - **Description**:
-  phase 1 of Trigonometric type electric field\
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  phase 1 (phase1) of Trigonometric type electric field\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.0
 
 ### td_trigo_phase2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  phase 2 of Trigonometric type electric field\
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  phase 2 (phase2) of Trigonometric type electric field\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.0
 
 ### td_trigo_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Trigonometric type electric field  (V/A)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  amplitude (amp) of Trigonometric type electric field (V/Angstrom)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 2.74
 
 ### td_heavi_t0
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of switch time of Heaviside type electric field\
+  step number of switch time (t0) of Heaviside type electric field\
   E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 100
 
 ### td_heavi_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Heaviside type electric field  (V/A)\
+  amplitude (amp) of Heaviside type electric field  (V/Angstrom)\
   E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 2.74
 
-### out_dipole
+### td_out_dipole
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**:
-  - 1: Output dipole.
-  - 0: do not Output dipole.
-- **Default**: 0
+  - True: output dipole.
+  - False: do not output dipole.
+- **Default**: False
 
-### out_efield
+### td_out_efield
 
-- **Type**: Integer
-- **Description**:
-  - 1: Output efield.
-  - 0: do not Output efield.
-  The unit of output file is atomic unit ( 1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom ).
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
+  - True: output efield.
+  - False: do not output efield.
+- **Default**: False
 
 ### ocp
 
 - **Type**: Boolean
-- **Description**: choose whether calculating constrained DFT or not.
+- **Availability**: 
   - For PW and LCAO codes. if set to 1, occupations of bands will be setting of "ocp_set".
   - For TDDFT in LCAO codes. if set to 1, occupations will be constrained since second ionic step.
   - For OFDFT, this feature can't be used.
-- **Default**:0
+- **Description**: 
+- True: fix the occupations of bands.
+- False: do not fix the occupations of bands.
+- **Default**: False
 
 ### ocp_set
 
-- **Type**: string
-- **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
+- **Type**: String
+- **Description**: If ocp is True, the ocp_set is a string to set the number of occupancy, like '1 10 * 1 0 1' representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**: none
 
 [back to top](#full-list-of-input-keywords)

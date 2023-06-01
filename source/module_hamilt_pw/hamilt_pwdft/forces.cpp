@@ -510,7 +510,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
                                           ModulePW::PW_Basis* rho_basis,
-                                          Structure_Factor* p_sf)
+                                          const Structure_Factor* p_sf)
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");

@@ -248,6 +248,9 @@ public:
 			const std::string &fixed_axes_in);
 
 	void check_structure(double factor);
+
+    /// @brief calculate the total number of electrons in system (GlobalV::nelec)
+    void cal_nelec(double& nelec);
 };
 
 #endif //unitcell class
