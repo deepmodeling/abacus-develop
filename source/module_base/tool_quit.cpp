@@ -47,10 +47,10 @@ void QUIT(void)
 
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
 
-    if (GlobalV::MY_RANK==0)
-    {
-        ModuleBase::Memory::print_all( GlobalV::ofs_running ) ;
-    }
+    //if (GlobalV::MY_RANK==0)
+    //{
+    //    ModuleBase::Memory::print_all( GlobalV::ofs_running ) ;
+    //}
     std::cout<<" See output information in : "<<GlobalV::global_out_dir<<std::endl;
 #endif
 
