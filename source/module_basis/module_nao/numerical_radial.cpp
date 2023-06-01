@@ -75,46 +75,60 @@ NumericalRadial& NumericalRadial::operator=(const NumericalRadial& rhs)
         return *this;
     }
 
-    this->symbol_ = rhs.symbol_;
-    this->itype_ = rhs.itype_;
-    this->izeta_ = rhs.izeta_;
-    this->l_ = rhs.l_;
+    symbol_ = rhs.symbol_;
+    itype_ = rhs.itype_;
+    izeta_ = rhs.izeta_;
+    l_ = rhs.l_;
 
-    this->nr_ = rhs.nr_;
-    this->nk_ = rhs.nk_;
+    nr_ = rhs.nr_;
+    nk_ = rhs.nk_;
 
-    this->is_fft_compliant_ = rhs.is_fft_compliant_;
+    is_fft_compliant_ = rhs.is_fft_compliant_;
 
-    this->pr_ = rhs.pr_;
-    this->pk_ = rhs.pk_;
+    pr_ = rhs.pr_;
+    pk_ = rhs.pk_;
 
-    this->use_internal_transformer_ = rhs.use_internal_transformer_;
+    delete[] rgrid_;
+    delete[] rvalue_;
+    delete[] kgrid_;
+    delete[] kvalue_;
+    rgrid_ = nullptr;
+    kgrid_ = nullptr;
+    rvalue_ = nullptr;
+    kvalue_ = nullptr;
 
     // deep copy
     if (rhs.ptr_rgrid())
     {
-        this->rgrid_ = new double[nr_];
-        this->rvalue_ = new double[nr_];
-        std::memcpy(this->rgrid_, rhs.rgrid_, nr_ * sizeof(double));
-        std::memcpy(this->rvalue_, rhs.rvalue_, nr_ * sizeof(double));
+        rgrid_ = new double[nr_];
+        rvalue_ = new double[nr_];
+        std::memcpy(rgrid_, rhs.rgrid_, nr_ * sizeof(double));
+        std::memcpy(rvalue_, rhs.rvalue_, nr_ * sizeof(double));
     }
 
     if (rhs.ptr_kgrid())
     {
-        this->kgrid_ = new double[nk_];
-        this->kvalue_ = new double[nk_];
-        std::memcpy(this->kgrid_, rhs.kgrid_, nk_ * sizeof(double));
-        std::memcpy(this->kvalue_, rhs.kvalue_, nk_ * sizeof(double));
+        kgrid_ = new double[nk_];
+        kvalue_ = new double[nk_];
+        std::memcpy(kgrid_, rhs.kgrid_, nk_ * sizeof(double));
+        std::memcpy(kvalue_, rhs.kvalue_, nk_ * sizeof(double));
     }
 
-    if (use_internal_transformer_)
+    if (rhs.use_internal_transformer_)
     {
-        this->sbt_ = new ModuleBase::SphericalBesselTransformer;
+        if (!use_internal_transformer_) {
+            sbt_ = new ModuleBase::SphericalBesselTransformer;
+        }
     }
     else
     {
-        this->sbt_ = rhs.sbt_;
+        if (use_internal_transformer_)
+        {
+            delete sbt_;
+        }
+        sbt_ = rhs.sbt_;
     }
+    use_internal_transformer_ = rhs.use_internal_transformer_;
 
     return *this;
 }

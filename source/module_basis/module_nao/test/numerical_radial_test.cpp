@@ -546,5 +546,7 @@ int main(int argc, char** argv)
     MPI_Finalize();
 #endif
 
+    fftw_cleanup();
+
     return result;
 }
