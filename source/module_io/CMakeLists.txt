@@ -21,6 +21,7 @@ list(APPEND objects
     write_rho.cpp
     write_dipole.cpp
     write_wfc_r.cpp
+    output_rho.cpp
 )
 
 list(APPEND objects_advanced
@@ -44,6 +45,8 @@ if(ENABLE_LCAO)
       write_HS.cpp
       write_dm.cpp
       dos_nao.cpp
+      output_dm.cpp
+      output_dm1.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

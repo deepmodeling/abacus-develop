@@ -11,7 +11,6 @@
 
 WF_atomic::WF_atomic()
 {
-    pw_seed = 0;
 }
 
 WF_atomic::~WF_atomic()
@@ -542,15 +541,15 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
     assert(iw_start >= 0);
     const int ng = wfc_basis->npwk[ik];
 #ifdef __MPI
-// #if ((defined __CUDA) || (defined __ROCM))
-    // if(pw_seed > 0)//qianrui add 2021-8-13
+    // #if ((defined __CUDA) || (defined __ROCM))
+    // if(INPUT.pw_seed > 0)//qianrui add 2021-8-13
     // {
-    //     srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+    //     srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
     // }
-// #else
-    if(pw_seed > 0)//qianrui add 2021-8-13
+    // #else
+    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         const int nxy = wfc_basis->fftnxy;
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
@@ -600,10 +599,10 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
     {
 // #endif
 #else  // !__MPI
-        if(pw_seed > 0)//qianrui add 2021-8-13
-        {
-            srand(unsigned(pw_seed + ik));
-        }
+    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    {
+        srand(unsigned(INPUT.pw_seed + ik));
+    }
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
@@ -640,9 +639,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     assert(psi.nr >= iw_end);
     const int ng = wfc_basis->npwk[ik];
 #ifdef __MPI
-    if(pw_seed > 0)//qianrui add 2021-8-13
+    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
     {
-        srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         const int nxy = wfc_basis->fftnxy;
         const int nz = wfc_basis->nz;
         const int nstnz = wfc_basis->nst*nz;
@@ -688,9 +687,9 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     else
     {
 #else
-        if(pw_seed > 0)//qianrui add 2021-8-13
-        {
-            srand(unsigned(pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
+    if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
+    {
+            srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
         }
 #endif
         double rr, arg;

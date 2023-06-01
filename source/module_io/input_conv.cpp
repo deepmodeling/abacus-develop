@@ -250,7 +250,6 @@ void Input_Conv::Convert(void)
     }
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
-    GlobalC::wf.pw_seed = INPUT.pw_seed;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
     GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
 
@@ -312,7 +311,6 @@ void Input_Conv::Convert(void)
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(INPUT.symmetry);
-    GlobalC::symm.epsilon = INPUT.symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
     GlobalV::BASIS_TYPE = INPUT.basis_type;
     GlobalV::KS_SOLVER = INPUT.ks_solver;
     GlobalV::SEARCH_RADIUS = INPUT.search_radius;
@@ -321,7 +319,6 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     // planewave (8/8)
     //----------------------------------------------------------
-    GlobalC::sf.set(INPUT.nbspline);
     GlobalV::GAMMA_ONLY_LOCAL = INPUT.gamma_only_local;
 
     //----------------------------------------------------------
@@ -350,11 +347,6 @@ void Input_Conv::Convert(void)
     GlobalV::SCF_THR = INPUT.scf_thr;
     GlobalV::SCF_THR_TYPE = INPUT.scf_thr_type;
 
-    //----------------------------------------------------------
-    // wavefunction / charge / potential / (2/4)
-    //----------------------------------------------------------
-    GlobalC::wf.init_wfc = INPUT.init_wfc;
-    GlobalC::wf.mem_saver = INPUT.mem_saver; // mohan add 2010-09-07
 #ifdef __LCAO
     if (INPUT.dft_plus_u)
     {
@@ -589,23 +581,6 @@ void Input_Conv::Convert(void)
     // occupation (3/3)
     //----------------------------------------------------------
     Occupy::decision(INPUT.occupations, INPUT.smearing_method, INPUT.smearing_sigma);
-    //----------------------------------------------------------
-    // charge mixing(3/3)
-    //----------------------------------------------------------
-    GlobalC::CHR_MIX.set_mixing(INPUT.mixing_mode,
-                                INPUT.mixing_beta,
-                                INPUT.mixing_ndim,
-                                INPUT.mixing_gg0,
-                                INPUT.mixing_tau); // mohan modify 2014-09-27, add mixing_gg0
-    //using bandgap to auto set mixing_beta
-    if(std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
-    {
-        GlobalC::CHR_MIX.need_auto_set();
-    }
-    else if(INPUT.mixing_beta > 1.0 || INPUT.mixing_beta<0.0)
-    {
-        ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-    }
 
     //----------------------------------------------------------
     // iteration
@@ -624,8 +599,6 @@ void Input_Conv::Convert(void)
     GlobalV::out_chg = INPUT.out_chg;
     GlobalV::nelec = INPUT.nelec;
     GlobalV::out_pot = INPUT.out_pot;
-    GlobalC::wf.out_wfc_pw = INPUT.out_wfc_pw;
-    GlobalC::wf.out_wfc_r = INPUT.out_wfc_r;
     GlobalV::out_app_flag = INPUT.out_app_flag;
 
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing

@@ -765,7 +765,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     finish_func(funcs);
 
     ModuleBase::timer::tick("XC_Functional","v_xc_meta");
-    return std::make_tuple( etxc, vtxc, move(v), move(vofk) );
+    return std::make_tuple( etxc, vtxc, std::move(v), std::move(vofk) );
 
 }
 

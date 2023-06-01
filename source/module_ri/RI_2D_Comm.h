@@ -42,7 +42,6 @@ namespace RI_2D_Comm
 		const int ik,
 		const double alpha,
 		const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
-		const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm);
 
 	template<typename Tdata>

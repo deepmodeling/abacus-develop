@@ -2491,7 +2491,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if (symmetry == "default")
     {   //deal with no-forced default value
-        if (gamma_only || calculation == "nscf" || calculation == "get_S" || calculation == "istate" || calculation == "ienvelope")
+        if (gamma_only || calculation == "nscf" || calculation == "get_S" || calculation == "get_pchg" || calculation == "get_wf")
             symmetry = "0";     //if md or exx, symmetry will be force-set to 0 or -1 later
         else
             symmetry = "1";
@@ -2561,9 +2561,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
         }
     }
-    else if (calculation == "istate")
+    else if (calculation == "get_pchg")
     {
-        GlobalV::CALCULATION = "istate";
+        GlobalV::CALCULATION = "get_pchg";
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
@@ -2578,9 +2578,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         out_dm1 = 0;
         out_pot = 0;
     }
-    else if (calculation == "ienvelope")
+    else if (calculation == "get_wf")
     {
-        GlobalV::CALCULATION = "ienvelope"; // mohan fix 2011-11-04
+        GlobalV::CALCULATION = "get_wf"; // mohan fix 2011-11-04
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
@@ -3262,18 +3262,18 @@ void Input::Check(void)
                                      "symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now.");
         }
     }
-    else if (calculation == "istate")
+    else if (calculation == "get_pchg")
     {
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
-            ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
+            ModuleBase::WARNING_QUIT("Input::Check", "calculate = get_pchg is only availble for LCAO.");
         }
     }
-    else if (calculation == "ienvelope")
+    else if (calculation == "get_wf")
     {
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
-            ModuleBase::WARNING_QUIT("Input::Check", "calculate = ienvelope is only availble for LCAO.");
+            ModuleBase::WARNING_QUIT("Input::Check", "calculate = get_wf is only availble for LCAO.");
         }
     }
     else if (calculation == "md") // mohan add 2011-11-04
