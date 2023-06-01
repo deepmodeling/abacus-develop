@@ -535,6 +535,23 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
                 precision);
         }
     }
+    else if (GlobalV::out_pot == 2)
+    {
+        std::stringstream ssp;
+        std::stringstream ssp_ave;
+        ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
+        // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
+        ModuleIO::write_elecstat_pot(
+#ifdef __MPI
+            this->pw_big->bz,
+            this->pw_big->nbz,
+#endif
+            ssp.str(),
+            this->pw_rho,
+            this->pelec->charge,
+            &(GlobalC::ucell),
+            this->pelec->pot->get_fixed_v()); // output 'Hartree + local pseudopot'
+    }
 
     if (GlobalV::out_chg)
     {
@@ -563,22 +580,6 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     else
     {
         GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
-    }
-
-    if (GlobalV::out_pot == 2)
-    {
-        std::stringstream ssp;
-        std::stringstream ssp_ave;
-        ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
-        // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(
-#ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
-#endif
-            ssp.str(),
-            this->pw_rho,
-            this->pelec->charge); // output 'Hartree + local pseudopot'
     }
 
     if (GlobalV::OUT_LEVEL != "m")
