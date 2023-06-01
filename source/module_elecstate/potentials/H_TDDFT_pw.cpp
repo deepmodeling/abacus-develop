@@ -312,19 +312,19 @@ double H_TDDFT_pw::cal_v_time_heaviside()
 
 void H_TDDFT_pw::prepare(const UnitCell& cell, int& dir)
 {
-    if (dir == 0)
+    if (dir == 1)
     {
         bvec[0] = cell.G.e11;
         bvec[1] = cell.G.e12;
         bvec[2] = cell.G.e13;
     }
-    else if (dir == 1)
+    else if (dir == 2)
     {
         bvec[0] = cell.G.e21;
         bvec[1] = cell.G.e22;
         bvec[2] = cell.G.e23;
     }
-    else if (dir == 2)
+    else if (dir == 3)
     {
         bvec[0] = cell.G.e31;
         bvec[1] = cell.G.e32;
