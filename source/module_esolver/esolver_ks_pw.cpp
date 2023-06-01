@@ -487,55 +487,10 @@ void ESolver_KS_PW<FPTYPE, Device>::eachiterfinish(const int iter)
         {
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_CHG.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rho->nplane,
-                    this->pw_rho->startz_current,
-#endif
-                    this->pelec->charge->rho_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    iter,
-                    ssc.str(),
-                    this->pw_rho->nx,
-                    this->pw_rho->ny,
-                    this->pw_rho->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell),
-                    3);
-            }
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                for (int is = 0; is < GlobalV::NSPIN; is++)
+                this->create_Output_Rho(is, iter, "tmp_").write();
+                if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
-                    std::stringstream ssc;
-                    ssc << GlobalV::global_out_dir << "tmp"
-                        << "_SPIN" << is + 1 << "_TAU.cube";
-                    const double ef_tmp = this->pelec->eferm.get_efval(is);
-                    ModuleIO::write_rho(
-#ifdef __MPI
-                        this->pw_big->bz,
-                        this->pw_big->nbz,
-                        this->pw_rho->nplane,
-                        this->pw_rho->startz_current,
-#endif
-                        this->pelec->charge->kin_r_save[is],
-                        is,
-                        GlobalV::NSPIN,
-                        iter,
-                        ssc.str(),
-                        this->pw_rho->nx,
-                        this->pw_rho->ny,
-                        this->pw_rho->nz,
-                        ef_tmp,
-                        &(GlobalC::ucell),
-                        3);
+                    this->create_Output_Kin(is, iter, "tmp_").write();
                 }
             }
         }
@@ -584,51 +539,10 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
-#endif
-                this->pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
-                ef_tmp,
-                &(GlobalC::ucell));
-        }
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            this->create_Output_Rho(is, istep).write();
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rho->nplane,
-                    this->pw_rho->startz_current,
-#endif
-                    this->pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    0,
-                    ssc.str(),
-                    this->pw_rho->nx,
-                    this->pw_rho->ny,
-                    this->pw_rho->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell));
+                this->create_Output_Kin(is, istep).write();
             }
         }
     }

@@ -10,6 +10,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver.h"
 #include "module_io/cal_test.h"
+#include "module_io/output_rho.h"
 #include "string.h"
 
 namespace ModuleESolver
@@ -69,7 +70,13 @@ namespace ModuleESolver
         // "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
         void writehead(std::ofstream& ofs_running, const int istep, const int iter);
 
-// TODO: control single precision at input files
+        /// @brief create a new ModuleIO::Output_Rho object to output charge density
+        ModuleIO::Output_Rho create_Output_Rho(int is, int iter, const std::string& prefix="None");
+
+        /// @brief create a new ModuleIO::Output_Rho object to print kinetic energy density
+        ModuleIO::Output_Rho create_Output_Kin(int is, int iter, const std::string& prefix = "None");
+
+        // TODO: control single precision at input files
 
         hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
         hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
