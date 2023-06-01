@@ -31,8 +31,15 @@ void Force_Stress_LCAO::getForceStress(
 	const psi::Psi<std::complex<double>>* psi,
     LCAO_Hamilt &uhm,
     ModuleBase::matrix& fcs,
-	ModuleBase::matrix &scs,
-	const K_Vectors& kv)
+    ModuleBase::matrix & scs,
+    const Structure_Factor& sf,
+	const K_Vectors& kv,
+    ModulePW::PW_Basis* rhopw,
+#ifdef __EXX
+    Exx_LRI<double>& exx_lri_double,
+    Exx_LRI<std::complex<double>>& exx_lri_complex,
+#endif
+    ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
@@ -77,7 +84,9 @@ void Force_Stress_LCAO::getForceStress(
                              pelec->f_en.etxc,
                              pelec->vnew,
                              pelec->vnew_exist,
-                             pelec->charge);
+                             pelec->charge,
+                             rhopw,
+                             sf);
     }
 
     // total stress : ModuleBase::matrix scs
@@ -111,7 +120,15 @@ void Force_Stress_LCAO::getForceStress(
         svnl_dalpha.create(3, 3);
 #endif
         // calculate basic terms in Stress, similar method with PW base
-        this->calStressPwPart(sigmadvl, sigmahar, sigmaewa, sigmacc, sigmaxc, pelec->f_en.etxc, pelec->charge);
+        this->calStressPwPart(sigmadvl,
+                              sigmahar,
+                              sigmaewa,
+                              sigmacc,
+                              sigmaxc,
+                              pelec->f_en.etxc,
+                              pelec->charge,
+                              rhopw,
+                              sf);
     }
     //--------------------------------------------------------
     // implement four terms which needs integration
@@ -192,7 +209,7 @@ void Force_Stress_LCAO::getForceStress(
     if (GlobalV::imp_sol && isforce)
     {
         fsol.create(nat, 3);
-        GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, GlobalC::rhopw, fsol);
+        GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, rhopw, fsol);
     }
     // Force contribution from DFT+U
     ModuleBase::matrix force_dftu;
@@ -222,26 +239,26 @@ void Force_Stress_LCAO::getForceStress(
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                GlobalC::exx_lri_double.cal_exx_force();
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.force_exx;
+                exx_lri_double.cal_exx_force();
+                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_double.force_exx;
             }
             else
             {
-                GlobalC::exx_lri_complex.cal_exx_force();
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_complex.force_exx;
+                exx_lri_complex.cal_exx_force();
+                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_complex.force_exx;
             }
         }
         if (isstress)
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                GlobalC::exx_lri_double.cal_exx_stress();
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_double.stress_exx;
+                exx_lri_double.cal_exx_stress();
+                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_double.stress_exx;
             }
             else
             {
-                GlobalC::exx_lri_complex.cal_exx_stress();
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * GlobalC::exx_lri_complex.stress_exx;
+                exx_lri_complex.cal_exx_stress();
+                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_complex.stress_exx;
             }
         }
     }
@@ -338,7 +355,7 @@ void Force_Stress_LCAO::getForceStress(
         // pengfei 2016-12-20
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            this->forceSymmetry(fcs);
+            this->forceSymmetry(fcs, symm);
         }
 
 #ifdef __DEEPKS
@@ -569,7 +586,7 @@ void Force_Stress_LCAO::getForceStress(
 
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            GlobalC::symm.stress_symmetry(scs, GlobalC::ucell);
+            symm->stress_symmetry(scs, GlobalC::ucell);
         } // end symmetry
 
         // print Rydberg stress or not
@@ -648,27 +665,29 @@ void Force_Stress_LCAO::calForcePwPart(ModuleBase::matrix& fvl_dvl,
                                        const double& etxc,
                                        const ModuleBase::matrix& vnew,
                                        const bool vnew_exist,
-                                       const Charge* const chr)
+                                       const Charge* const chr,
+                                       ModulePW::PW_Basis* rhopw,
+                                       const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
     //--------------------------------------------------------
     // local pseudopotential force:
     // use charge density; plane wave; local pseudopotential;
     //--------------------------------------------------------
-    f_pw.cal_force_loc(fvl_dvl, GlobalC::rhopw, chr);
+    f_pw.cal_force_loc(fvl_dvl, rhopw, chr);
     //--------------------------------------------------------
     // ewald force: use plane wave only.
     //--------------------------------------------------------
-    f_pw.cal_force_ew(fewalds, GlobalC::rhopw, &GlobalC::sf); // remain problem
+    f_pw.cal_force_ew(fewalds, rhopw, &sf); // remain problem
 
     //--------------------------------------------------------
     // force due to core correlation.
     //--------------------------------------------------------
-    f_pw.cal_force_cc(fcc, GlobalC::rhopw, chr);
+    f_pw.cal_force_cc(fcc, rhopw, chr);
     //--------------------------------------------------------
     // force due to self-consistent charge.
     //--------------------------------------------------------
-    f_pw.cal_force_scc(fscc, GlobalC::rhopw, vnew, vnew_exist);
+    f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist);
     return;
 }
 
@@ -752,29 +771,31 @@ void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
                                         ModuleBase::matrix& sigmacc,
                                         ModuleBase::matrix& sigmaxc,
                                         const double& etxc,
-                                        const Charge* const chr)
+                                        const Charge* const chr,
+                                        ModulePW::PW_Basis* rhopw,
+                                        const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calStressPwPart");
     //--------------------------------------------------------
     // local pseudopotential stress:
     // use charge density; plane wave; local pseudopotential;
     //--------------------------------------------------------
-    sc_pw.stress_loc(sigmadvl, GlobalC::rhopw, &GlobalC::sf, 0, chr);
+    sc_pw.stress_loc(sigmadvl, rhopw, &sf, 0, chr);
 
     //--------------------------------------------------------
     // hartree term
     //--------------------------------------------------------
-    sc_pw.stress_har(sigmahar, GlobalC::rhopw, 0, chr);
+    sc_pw.stress_har(sigmahar, rhopw, 0, chr);
 
     //--------------------------------------------------------
     // ewald stress: use plane wave only.
     //--------------------------------------------------------
-    sc_pw.stress_ewa(sigmaewa, GlobalC::rhopw, 0); // remain problem
+    sc_pw.stress_ewa(sigmaewa, rhopw, 0); // remain problem
 
     //--------------------------------------------------------
     // stress due to core correlation.
     //--------------------------------------------------------
-    sc_pw.stress_cc(sigmacc, GlobalC::rhopw, &GlobalC::sf, 0, chr);
+    sc_pw.stress_cc(sigmacc, rhopw, &sf, 0, chr);
 
     //--------------------------------------------------------
     // stress due to self-consistent charge.
@@ -784,14 +805,14 @@ void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
         sigmaxc(i, i) = -etxc / GlobalC::ucell.omega;
     }
     // Exchange-correlation for PBE
-    sc_pw.stress_gga(sigmaxc, GlobalC::rhopw, chr);
+    sc_pw.stress_gga(sigmaxc, rhopw, chr);
 
     return;
 }
 
 #include "module_base/mathzone.h"
 // do symmetry for total force
-void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
+void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm)
 {
     double* pos;
     double d1, d2, d3;
@@ -807,8 +828,8 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
             pos[3 * iat + 2] = GlobalC::ucell.atoms[it].taud[ia].z;
             for (int k = 0; k < 3; ++k)
             {
-                GlobalC::symm.check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                GlobalC::symm.check_boundary(pos[iat * 3 + k]);
+                symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                symm->check_boundary(pos[iat * 3 + k]);
             }
             iat++;
         }
@@ -836,7 +857,7 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    GlobalC::symm.force_symmetry(fcs, pos, GlobalC::ucell);
+    symm->force_symmetry(fcs, pos, GlobalC::ucell);
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         ModuleBase::Mathzone::Direct_to_Cartesian(fcs(iat, 0),
@@ -859,7 +880,6 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs)
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    // std::cout << "nrotk =" << GlobalC::symm.nrotk << std::endl;
     delete[] pos;
     return;
 }

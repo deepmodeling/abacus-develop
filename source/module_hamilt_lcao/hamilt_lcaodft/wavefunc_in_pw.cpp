@@ -247,10 +247,11 @@ const double *rab, const int &l, double* table)
 	return;
 }
 
-void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
-                                               const ModulePW::PW_Basis_K *wfc_basis,
-                                               ModuleBase::ComplexMatrix &psi,
-                                               const ModuleBase::realArray &table_local)
+void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
+                                               const ModulePW::PW_Basis_K* wfc_basis,
+                                               const Structure_Factor& sf,
+                                               ModuleBase::ComplexMatrix& psi,
+                                               const ModuleBase::realArray& table_local)
 {
 	ModuleBase::TITLE("Wavefunc_in_pw","produce_local_basis_in_pw");
 	assert(ik>=0);
@@ -275,7 +276,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 	{
 		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
 		{
-            std::complex<double> *sk = GlobalC::sf.get_sk(ik, it, ia, GlobalC::wfcpw);
+            std::complex<double>* sk = sf.get_sk(ik, it, ia, wfc_basis);
             int ic = 0;
             for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
@@ -311,12 +312,11 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 											psi(iwall, ig) =
 											lphase * sk[ig] * ylm(lm, ig) * flq[ig];
 											//else
-											psi(iwall+1, ig+GlobalC::wf.npwx) =
-											lphase * sk[ig] * ylm(lm, ig) * flq[ig];
-
-										}
-										iwall+=2;
-									}
+                                            psi(iwall + 1, ig + wfc_basis->npwk_max)
+                                                = lphase * sk[ig] * ylm(lm, ig) * flq[ig];
+                                        }
+                                        iwall += 2;
+                                    }
 								}//if
 								else
 								{//atomic_wfc_so_mag
@@ -360,12 +360,13 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 									for(int m = 0;m<2*L+1;m++)
 									{
 										const int lm = L*L +m;
-										if(iwall+2*L+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
-										for(int ig = 0;ig<npw;ig++)
-										{
-											aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
-										}
-										//rotate wfc as needed
+                                        if (iwall + 2 * L + 1 > GlobalC::ucell.natomwfc)
+                                            ModuleBase::WARNING_QUIT("this->wf.atomic_wfc()", "error: too many wfcs");
+                                        for (int ig = 0; ig < npw; ig++)
+                                        {
+                                            aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
+                                        }
+                                        //rotate wfc as needed
 										//first rotation with angle alpha around (OX)
 										for(int ig = 0;ig<npw;ig++)
 										{
@@ -374,15 +375,17 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 											//build the orthogonal wfc
 											//first rotation with angle (alpha + ModuleBase::PI) around (OX)
 											psi(iwall,ig) = (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5*gamma)) * fup;
-											psi(iwall,ig+ GlobalC::wf.npwx) = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5*gamma)) * fdown;
-											//second rotation with angle gamma around(OZ)
-											fup = cos(0.5 * (alpha + ModuleBase::PI))*aux[ig];
-											fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
+                                            psi(iwall, ig + wfc_basis->npwk_max)
+                                                = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown;
+                                            // second rotation with angle gamma around(OZ)
+                                            fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
+                                            fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
 											psi(iwall+2*L+1,ig) = (cos(0.5*gamma) + ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fup;
-											psi(iwall+2*L+1,ig+ GlobalC::wf.npwx) = (cos(0.5*gamma) - ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fdown;
-										}
-										iwall++;
-									}
+                                            psi(iwall + 2 * L + 1, ig + wfc_basis->npwk_max)
+                                                = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown;
+                                        }
+                                        iwall++;
+                                    }
 									iwall += 2*L +1;
 								} // end else INPUT.starting_spin_angle || !GlobalV::DOMAG
 							} // end if GlobalC::ucell.atoms[it].has_so
@@ -397,12 +400,13 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 								for(int m = 0;m<2*L+1;m++)
 								{
 									const int lm = L*L +m;
-									if(iwall+2*L+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
-									for(int ig = 0;ig<npw;ig++)
-									{
-										aux[ig] = sk[ig] * ylm(lm,ig) * flq[ig];
-									}
-									//rotate function
+                                    if (iwall + 2 * L + 1 > GlobalC::ucell.natomwfc)
+                                        ModuleBase::WARNING_QUIT("this->wf.atomic_wfc()", "error: too many wfcs");
+                                    for (int ig = 0; ig < npw; ig++)
+                                    {
+                                        aux[ig] = sk[ig] * ylm(lm,ig) * flq[ig];
+                                    }
+                                    //rotate function
 									//first, rotation with angle alpha around(OX)
 									for(int ig = 0;ig<npw;ig++)
 									{
@@ -411,15 +415,17 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 										//build the orthogonal wfc
 										//first rotation with angle(alpha+ModuleBase::PI) around(OX)
 										psi(iwall,ig) = (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup;
-										psi(iwall,ig+ GlobalC::wf.npwx) = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown;
-										//second rotation with angle gamma around(OZ)
-										fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-										fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
+                                        psi(iwall, ig + wfc_basis->npwk_max)
+                                            = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown;
+                                        // second rotation with angle gamma around(OZ)
+                                        fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
+                                        fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
 										psi(iwall+2*L+1,ig) = (cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fup;
-										psi(iwall+2*L+1,ig+ GlobalC::wf.npwx) = (cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fdown;
-									} // end ig
-									iwall++;
-								} // end m
+                                        psi(iwall + 2 * L + 1, ig + wfc_basis->npwk_max)
+                                            = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown;
+                                    } // end ig
+                                    iwall++;
+                                } // end m
 								iwall += 2*L+1;
 							} // end else GlobalC::ucell.atoms[it].has_so
 						} // end for is_N
@@ -531,12 +537,13 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 															aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
 // 													}
 // 													for(int ig=0; ig<npw;ig++)
-// 														psi(iwall, ig + GlobalC::wf.npwx*is ) = lphase * fact[is] * skq[ig] * aux[ig] *
-// flq[ig];
+// 														psi(iwall, ig + wfc_basis->npwk_max*is ) = lphase * fact[is] * skq[ig]
+// * aux[ig]
+// * flq[ig];
 // 												}
 // 												else
-// 													for(int ig=0; ig<npw;ig++) psi(iwall,ig+ GlobalC::wf.npwx*is) = std::complex<double>(0.0 ,
-// 0.0);
+// 													for(int ig=0; ig<npw;ig++) psi(iwall,ig+ wfc_basis->npwk_max*is) =
+// std::complex<double>(0.0 , 0.0);
 // 											}//is
 // 											iwall++;
 // 									}//if
@@ -586,8 +593,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 									for(int m = 0;m<2*L+1;m++)
 // 									{
 // 										const int lm = L*L +m;
-// 										//if(iwall+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too
-// many wfcs"); 										for(int ig = 0;ig<npw;ig++)
+// 										//if(iwall+2*l+1>GlobalC::ucell.natomwfc)
+// ModuleBase::WARNING_QUIT("this->wf.atomic_wfc()","error: too many wfcs"); for(int ig = 0;ig<npw;ig++)
 // 										{
 // 											aux[ig] = skq[ig] * ylm(lm,ig) * chiaux[ig];
 // 										}
@@ -599,14 +606,18 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 											fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
 // 											//build the orthogonal wfc
 // 											//first rotation with angle (alpha + ModuleBase::PI) around (OX)
-// 											psi(iwall,ig) = (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5*gamma)) *
-// fup; 											psi(iwall,ig+ GlobalC::wf.npwx) = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5*gamma)) * fdown;
+// 											psi(iwall,ig) = (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5*gamma))
+// *
+// fup; 											psi(iwall,ig+ wfc_basis->npwk_max) = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT *
+// sin(0.5*gamma))
+// * fdown;
 // 											//second rotation with angle gamma around(OZ)
 // 											fup = cos(0.5 * (alpha + ModuleBase::PI))*aux[ig];
 // 											fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
 // 											psi(iwall+2*L+1,ig) = (cos(0.5*gamma) +
-// ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fup; 											psi(iwall+2*L+1,ig+ GlobalC::wf.npwx) = (cos(0.5*gamma) -
-// ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fdown;
+// ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fup; 											psi(iwall+2*L+1,ig+ wfc_basis->npwk_max)
+// = (cos(0.5*gamma)
+// - ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fdown;
 // 										}
 // 										iwall++;
 // 									}
@@ -624,8 +635,9 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 								for(int m = 0;m<2*L+1;m++)
 // 								{
 // 									const int lm = L*L +m;
-// 								//   if(iwall+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too
-// many wfcs"); 									for(int ig = 0;ig<npw;ig++)
+// 								//   if(iwall+2*l+1>GlobalC::ucell.natomwfc)
+// ModuleBase::WARNING_QUIT("this->wf.atomic_wfc()","error: too many wfcs"); 									for(int
+// ig = 0;ig<npw;ig++)
 // 									{
 // 										aux[ig] = skq[ig] * ylm(lm,ig) * flq[ig];
 // 									}
@@ -638,13 +650,16 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,
 // 										//build the orthogonal wfc
 // 										//first rotation with angle(alpha+ModuleBase::PI) around(OX)
 // 										psi(iwall,ig) = (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) *
-// fup; 										psi(iwall,ig+ GlobalC::wf.npwx) = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown;
+// fup; 										psi(iwall,ig+ wfc_basis->npwk_max) = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT *
+// sin(0.5*gamman))
+// * fdown;
 // 										//second rotation with angle gamma around(OZ)
 // 										fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
 // 										fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
 // 										psi(iwall+2*L+1,ig) = (cos(0.5*gamman) +
-// ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fup; 										psi(iwall+2*L+1,ig+ GlobalC::wf.npwx) = (cos(0.5*gamman) -
-// ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fdown;
+// ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fup; 										psi(iwall+2*L+1,ig+ wfc_basis->npwk_max)
+// = (cos(0.5*gamman)
+// - ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fdown;
 // 									}
 // 									iwall++;
 // 								}

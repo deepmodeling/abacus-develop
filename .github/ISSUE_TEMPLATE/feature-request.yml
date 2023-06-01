@@ -1,8 +1,7 @@
 name: Feature Request
 description: Suggest something more for ABACUS to do
-labels: Feature
-assignees: 
-  - mohanchen
+labels: [Feature]
+assignees: mohanchen
 
 body:
 - type: textarea

@@ -1,6 +1,7 @@
 INPUT_PARAMETERS
 #Parameters	(System)
 suffix                  autotest
+symmetry        0
 
 nbands			4
 stru_file		STRU
@@ -14,7 +15,7 @@ ecutwfc			25.0              # Rydberg
 basis_type		lcao 	
 scf_thr			1e-10
 
-calculation     	ienvelope 
+calculation     	get_wf 
 read_file_dir		./
 
 bx 2

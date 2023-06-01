@@ -1,9 +1,10 @@
+#include "write_dos_lcao.h"
+
+#include "cal_dos.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "dos.h"
-#include "write_dos_lcao.h"
 #include "write_orb_info.h"
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21

@@ -46,7 +46,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "lmaxmax", lmaxmax, "maximum of l channels used");
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_functional", dft_functional, "exchange correlation functional");
     ModuleBase::GlobalFunc::OUTP(ofs, "xc_temperature", xc_temperature, "temperature for finite temperature functionals");
-    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; ienvelope; istate");
+    ModuleBase::GlobalFunc::OUTP(ofs, "calculation", calculation, "test; scf; relax; nscf; get_wf; get_pchg");
     ModuleBase::GlobalFunc::OUTP(ofs,"esolver_type",esolver_type,"the energy solver: ksdft, sdft, ofdft, tddft, lj, dp");
     ModuleBase::GlobalFunc::OUTP(ofs, "ntype", ntype, "atom species number");
     ModuleBase::GlobalFunc::OUTP(ofs, "nspin", nspin, "1: single spin; 2: up and down spin; 4: noncollinear spin");
@@ -59,7 +59,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "nbands_istate",
                                  nbands_istate,
-                                 "number of bands around Fermi level for istate calulation");
+                                 "number of bands around Fermi level for get_pchg calulation");
     ModuleBase::GlobalFunc::OUTP(ofs, "symmetry", symmetry, "the control of symmetry");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_vel", init_vel, "read velocity from STRU or not");
     ModuleBase::GlobalFunc::OUTP(ofs,
@@ -101,6 +101,7 @@ void Input::Print(const std::string &fn) const
                                  pw_diag_thr,
                                  "threshold for eigenvalues is cg electron iterations");
     ModuleBase::GlobalFunc::OUTP(ofs, "scf_thr", scf_thr, "charge density error");
+    ModuleBase::GlobalFunc::OUTP(ofs, "scf_thr_type", scf_thr_type, "type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_wfc", init_wfc, "start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_chg", init_chg, "start charge is from 'atomic' or file");
     ModuleBase::GlobalFunc::OUTP(ofs,

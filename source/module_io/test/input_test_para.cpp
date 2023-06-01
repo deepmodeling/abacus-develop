@@ -86,7 +86,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.ks_solver,"default");
         EXPECT_DOUBLE_EQ(INPUT.search_radius,-1.0);
         EXPECT_TRUE(INPUT.search_pbc);
-        EXPECT_EQ(INPUT.symmetry,0);
+        EXPECT_EQ(INPUT.symmetry,"default");
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec,1.0e-5);
         EXPECT_EQ(INPUT.cal_force, 0);
@@ -137,6 +137,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.test_force,0);
         EXPECT_EQ(INPUT.test_stress,0);
         EXPECT_DOUBLE_EQ(INPUT.scf_thr,-1.0);
+        EXPECT_EQ(INPUT.scf_thr_type,-1);
         EXPECT_EQ(INPUT.scf_nmax,100);
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);

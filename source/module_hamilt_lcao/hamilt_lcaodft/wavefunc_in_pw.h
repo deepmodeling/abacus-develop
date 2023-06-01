@@ -7,6 +7,7 @@
 #include "module_base/realarray.h"
 #include "module_base/vector3.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 //---------------------------------------------------
 // FUNCTION: expand the local basis sets into plane
@@ -33,10 +34,11 @@ namespace Wavefunc_in_pw
 		const double &ecut,
 		const double &beta);
 
-    void produce_local_basis_in_pw(const int &ik,
-                                   const ModulePW::PW_Basis_K *wfc_basis,
-                                   ModuleBase::ComplexMatrix &psi,
-                                   const ModuleBase::realArray &table_local);
+    void produce_local_basis_in_pw(const int& ik,
+                                   const ModulePW::PW_Basis_K* wfc_basis,
+                                   const Structure_Factor& sf,
+                                   ModuleBase::ComplexMatrix& psi,
+                                   const ModuleBase::realArray& table_local);
 
     // void produce_local_basis_q_in_pw(const int &ik,
     //                                  ModuleBase::ComplexMatrix &psi,

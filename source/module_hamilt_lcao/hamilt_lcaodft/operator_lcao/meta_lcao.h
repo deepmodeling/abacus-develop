@@ -21,23 +21,23 @@ template<typename T>
 class Meta<OperatorLCAO<T>> : public OperatorLCAO<T> 
 {
     public:
-
-    Meta<OperatorLCAO<T>>(
-        Gint_k* GK_in,
-        Local_Orbital_Charge* loc_in,
-        LCAO_Matrix* LM_in,
-        std::vector<double>* HR_pointer_in,
-        std::vector<T>* HK_pointer_in):GK(GK_in), loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
-    {
-        this->LM = LM_in;
-        this->cal_type = lcao_gint;
+      Meta<OperatorLCAO<T>>(Gint_k* GK_in,
+                            Local_Orbital_Charge* loc_in,
+                            LCAO_Matrix* LM_in,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                            std::vector<double>* HR_pointer_in,
+                            std::vector<T>* HK_pointer_in)
+          : GK(GK_in), loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), OperatorLCAO<T>(kvec_d_in)
+      {
+          this->LM = LM_in;
+          this->cal_type = lcao_gint;
     }
     Meta<OperatorLCAO<T>>(
         Gint_Gamma* GG_in,
         Local_Orbital_Charge* loc_in,
         LCAO_Matrix* LM_in,
         std::vector<double>* HR_pointer_in,
-        std::vector<T>* HK_pointer_in):GG(GG_in), loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in)
+        std::vector<T>* HK_pointer_in):GG(GG_in), loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), OperatorLCAO<T>(std::vector<ModuleBase::Vector3<double>>{ModuleBase::Vector3<double>(0,0,0)})
     {
         this->LM = LM_in;
         this->cal_type = lcao_gint;

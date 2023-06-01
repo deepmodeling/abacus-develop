@@ -5,6 +5,7 @@ pseudo_dir	../../PP_ORB
 	
 nbands			    8
 calculation         cell-relax
+symmetry        0
 
 #Parameters (Accuracy)
 ecutwfc			    20

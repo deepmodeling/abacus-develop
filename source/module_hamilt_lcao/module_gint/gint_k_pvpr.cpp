@@ -23,15 +23,15 @@ void Gint_k::allocate_pvpR(void)
     }
 
     //xiaohui modify 2015-05-30
-    // the number of matrix element <phi_0 | V | phi_R> is GlobalC::GridT.nnrg.
+    // the number of matrix element <phi_0 | V | phi_R> is nnrg.
     this->pvpR_reduced = new double*[GlobalV::NSPIN];
     for(int is =0;is<GlobalV::NSPIN;is++)
     {
-        this->pvpR_reduced[is] = new double[GlobalC::GridT.nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvpR_reduced[is], GlobalC::GridT.nnrg);
+        this->pvpR_reduced[is] = new double[this->gridt->nnrg];	
+        ModuleBase::GlobalFunc::ZEROS( pvpR_reduced[is], this->gridt->nnrg);
     }
 
-    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * GlobalC::GridT.nnrg * GlobalV::NSPIN);
+    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * GlobalV::NSPIN);
 
     this->pvpR_alloc_flag = true;
     return;
@@ -68,8 +68,8 @@ void Gint_k::folding_vl_k(const int &ik,
     }
 
     //####################### EXPLAIN #################################
-    // 1. what is GlobalC::GridT.lgd ?
-    // GlobalC::GridT.lgd is the number of orbitals in each processor according
+    // 1. what is gridt->lgd ?
+    // gridt->lgd is the number of orbitals in each processor according
     // to the division of real space FFT grid.
     // 
     // 2. why the folding of vlocal is different from folding of 
@@ -82,25 +82,26 @@ void Gint_k::folding_vl_k(const int &ik,
     // matrix element < phi_0 | Vlocal | phi_R >
     //#################################################################
 
-    std::complex<double>** pvp = new std::complex<double>*[GlobalC::GridT.lgd];
-    std::complex<double>* pvp_base = new std::complex<double>[GlobalC::GridT.lgd * GlobalC::GridT.lgd];
-    for(int i=0; i<GlobalC::GridT.lgd; i++)
+    int lgd = this->gridt->lgd;
+    std::complex<double>** pvp = new std::complex<double>*[lgd];
+    std::complex<double>* pvp_base = new std::complex<double>[lgd * lgd];
+    for(int i=0; i<lgd; i++)
     {
-        pvp[i] = pvp_base + i * GlobalC::GridT.lgd;
+        pvp[i] = pvp_base + i * lgd;
     }
 
     std::complex<double>*** pvp_nc;
     std::complex<double>* pvp_nc_base;
     if(GlobalV::NSPIN==4)
     {
-        pvp_nc_base = new std::complex<double>[4 * GlobalC::GridT.lgd * GlobalC::GridT.lgd];
+        pvp_nc_base = new std::complex<double>[4 * lgd * lgd];
         pvp_nc=new std::complex<double>**[4];
         for(int spin=0;spin<4;spin++)
         {
-            pvp_nc[spin] = new std::complex<double>*[GlobalC::GridT.lgd];
-            for(int i=0; i<GlobalC::GridT.lgd; i++)
+            pvp_nc[spin] = new std::complex<double>*[lgd];
+            for(int i=0; i<lgd; i++)
             {
-                pvp_nc[spin][i] = pvp_nc_base + spin * GlobalC::GridT.lgd * GlobalC::GridT.lgd + i * GlobalC::GridT.lgd;
+                pvp_nc[spin][i] = pvp_nc_base + spin * lgd * lgd + i * lgd;
             }
         }
     }
@@ -108,7 +109,7 @@ void Gint_k::folding_vl_k(const int &ik,
     auto init_pvp = [&](int num_threads, int thread_id)
     {
         int beg, len;
-        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, GlobalC::GridT.lgd * GlobalC::GridT.lgd, 256, beg, len);
+        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, lgd * lgd, 256, beg, len);
         ModuleBase::GlobalFunc::ZEROS(pvp_base + beg, len);
         if(GlobalV::NSPIN==4)
         {
@@ -131,13 +132,13 @@ void Gint_k::folding_vl_k(const int &ik,
         const int I1 = GlobalC::ucell.iat2ia[iat];
         {
             // atom in this grid piece.
-            if(GlobalC::GridT.in_this_processor[iat])
+            if(this->gridt->in_this_processor[iat])
             {
                 Atom* atom1 = &GlobalC::ucell.atoms[T1];
                 const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
 
                 // get the start positions of elements.
-                const int DM_start = GlobalC::GridT.nlocstartg[iat];
+                const int DM_start = this->gridt->nlocstartg[iat];
 
                 // get the coordinates of adjacent atoms.
                 tau1 = GlobalC::ucell.atoms[T1].tau[I1];
@@ -156,7 +157,7 @@ void Gint_k::folding_vl_k(const int &ik,
 
 
                     // adjacent atom is also on the grid.
-                    if(GlobalC::GridT.in_this_processor[iat2])
+                    if(this->gridt->in_this_processor[iat2])
                     {
                         Atom* atom2 = &GlobalC::ucell.atoms[T2];
                         dtau = adjs.adjacent_tau[ad] - tau1;
@@ -180,14 +181,14 @@ void Gint_k::folding_vl_k(const int &ik,
                             double sinp, cosp;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
                             const std::complex<double> phase = std::complex<double>(cosp, sinp);
-                            int ixxx = DM_start + GlobalC::GridT.find_R2st[iat][nad];
+                            int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
                             
                             if(GlobalV::NSPIN!=4)
                             {
                                 for(int iw=0; iw<atom1->nw; iw++)
                                 {
-                                    std::complex<double> *vij = pvp[GlobalC::GridT.trace_lo[start1+iw]];
-                                    const int* iw2_lo = &GlobalC::GridT.trace_lo[start2];
+                                    std::complex<double> *vij = pvp[this->gridt->trace_lo[start1+iw]];
+                                    const int* iw2_lo = &this->gridt->trace_lo[start2];
                                     // get the <phi | V | phi>(R) Hamiltonian.
                                     const double *vijR = &pvpR_reduced[0][ixxx];
                                     for(int iw2 = 0; iw2<atom2->nw; ++iw2)
@@ -203,10 +204,10 @@ void Gint_k::folding_vl_k(const int &ik,
                             {
                                 for(int iw=0; iw<atom1->nw; iw++)
                                 {
-                                    int iw2_lo = GlobalC::GridT.trace_lo[start2]/GlobalV::NPOL;
+                                    int iw2_lo = this->gridt->trace_lo[start2]/GlobalV::NPOL;
                                     for(int spin = 0;spin<4;spin++) 
                                     {
-                                        auto vij = pvp_nc[spin][GlobalC::GridT.trace_lo[start1]/GlobalV::NPOL + iw];
+                                        auto vij = pvp_nc[spin][this->gridt->trace_lo[start1]/GlobalV::NPOL + iw];
                                         auto vijR = &pvpR_reduced[spin][ixxx];
                                         auto vijs = &vij[iw2_lo];
                                         for(int iw2 = 0; iw2<atom2->nw; ++iw2)
@@ -248,7 +249,7 @@ void Gint_k::folding_vl_k(const int &ik,
             tmp[j] = std::complex<double>(0.0, 0.0);
         }
         int i_flag = i & 1; // i % 2 == 0
-        const int mug = GlobalC::GridT.trace_lo[i];
+        const int mug = this->gridt->trace_lo[i];
         // if the row element is on this processor.
         if (mug >= 0)
         {
@@ -259,7 +260,7 @@ void Gint_k::folding_vl_k(const int &ik,
 #endif
                 for (int j=0; j<nlocal; j++)
                 {
-                    const int nug = GlobalC::GridT.trace_lo[j];
+                    const int nug = this->gridt->trace_lo[j];
                     // if the col element is on this processor.
                     if (nug >=0)
                     {
@@ -289,7 +290,7 @@ void Gint_k::folding_vl_k(const int &ik,
                     {
                         int j_flag = j & 1; // j % 2 == 0
                         int ij_same = i_flag ^ j_flag ? 0 : 1;
-                        const int nug = GlobalC::GridT.trace_lo[j];
+                        const int nug = this->gridt->trace_lo[j];
                         const int nug0 = nug/GlobalV::NPOL;
                         double sign = sign_table[j_flag];
                         // if the col element is on this processor.
@@ -341,7 +342,7 @@ void Gint_k::folding_vl_k(const int &ik,
                         if (!ij_same)
                             continue;
 
-                        const int nug = GlobalC::GridT.trace_lo[j];
+                        const int nug = this->gridt->trace_lo[j];
                         const int nug0 = nug/GlobalV::NPOL;
                         double sign = sign_table[j_flag];
                         // if the col element is on this processor.

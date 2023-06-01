@@ -3,7 +3,7 @@ list(APPEND objects
     input_conv.cpp
     bessel_basis.cpp
     cal_test.cpp
-    dos.cpp
+    cal_dos.cpp
     write_dos_pw.cpp
     nscf_band.cpp
     write_istate_info.cpp
@@ -21,6 +21,7 @@ list(APPEND objects
     write_rho.cpp
     write_dipole.cpp
     write_wfc_r.cpp
+    output_rho.cpp
 )
 
 list(APPEND objects_advanced
@@ -43,6 +44,9 @@ if(ENABLE_LCAO)
       write_wfc_nao.cpp
       write_HS.cpp
       write_dm.cpp
+      dos_nao.cpp
+      output_dm.cpp
+      output_dm1.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

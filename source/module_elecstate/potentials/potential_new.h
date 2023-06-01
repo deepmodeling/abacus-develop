@@ -1,11 +1,12 @@
 #ifndef POTENTIALNEW_H
 #define POTENTIALNEW_H
 
-#include "module_base/complexmatrix.h"
-#include "pot_base.h"
-#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-
 #include <vector>
+
+#include "module_base/complexmatrix.h"
+#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "pot_base.h"
 
 namespace elecstate
 {
@@ -49,7 +50,7 @@ class Potential : public PotBase
     Potential(const ModulePW::PW_Basis* rho_basis_in,
               const UnitCell* ucell_in,
               const ModuleBase::matrix* vloc_in,
-              const ModuleBase::ComplexMatrix* structure_factors_in,
+              Structure_Factor* structure_factors_in,
               double* etxc_in,
               double* vtxc_in);
     ~Potential();
@@ -62,6 +63,8 @@ class Potential : public PotBase
     void update_from_charge(const Charge* chg, const UnitCell* ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
+
+    PotBase* get_pot_type(const std::string& pot_type);
 
     // interfaces to get values
     ModuleBase::matrix& get_effective_v()
@@ -196,7 +199,7 @@ class Potential : public PotBase
 
     const UnitCell* ucell_ = nullptr;
     const ModuleBase::matrix* vloc_ = nullptr;
-    const ModuleBase::ComplexMatrix* structure_factors_ = nullptr;
+    Structure_Factor* structure_factors_ = nullptr;
 };
 
 } // namespace elecstate

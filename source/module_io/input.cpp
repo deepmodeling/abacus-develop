@@ -196,7 +196,7 @@ void Input::Default(void)
     ks_solver = "default"; // xiaohui add 2013-09-01
     search_radius = -1.0; // unit: a.u. -1.0 has no meaning.
     search_pbc = true;
-    symmetry = 0;
+    symmetry = "default";
     init_vel = false;
     ref_cell_factor = 1.0;
     symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
@@ -263,6 +263,7 @@ void Input::Default(void)
     // iteration
     //----------------------------------------------------------
     scf_thr = -1.0; // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
+    scf_thr_type = -1; // the default value (1 for pw, and 2 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
     out_stru = 0;
@@ -1078,6 +1079,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("scf_thr", word) == 0)
         {
             read_value(ifs, scf_thr);
+        }
+        else if (strcmp("scf_thr_type", word) == 0)
+        {
+            read_value(ifs, scf_thr_type);
         }
         else if (strcmp("scf_nmax", word) == 0)
         {
@@ -2484,6 +2489,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         else if (dft_functional == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
+    if (symmetry == "default")
+    {   //deal with no-forced default value
+        if (gamma_only || calculation == "nscf" || calculation == "get_S" || calculation == "get_pchg" || calculation == "get_wf")
+            symmetry = "0";     //if md or exx, symmetry will be force-set to 0 or -1 later
+        else
+            symmetry = "1";
+    }
     if (diago_proc <= 0)
     {
         diago_proc = GlobalV::NPROC;
@@ -2549,9 +2561,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("init_chg", init_chg);
         }
     }
-    else if (calculation == "istate")
+    else if (calculation == "get_pchg")
     {
-        GlobalV::CALCULATION = "istate";
+        GlobalV::CALCULATION = "get_pchg";
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
@@ -2566,9 +2578,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         out_dm1 = 0;
         out_pot = 0;
     }
-    else if (calculation == "ienvelope")
+    else if (calculation == "get_wf")
     {
-        GlobalV::CALCULATION = "ienvelope"; // mohan fix 2011-11-04
+        GlobalV::CALCULATION = "get_wf"; // mohan fix 2011-11-04
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
@@ -2586,7 +2598,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (calculation == "md") // mohan add 2011-11-04
     {
         GlobalV::CALCULATION = "md";
-        symmetry = 0;
+        symmetry = "0";
         cal_force = 1;
         if (mdp.md_nstep == 0)
         {
@@ -2730,6 +2742,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr = 1.0e-9;
         }
     }
+
+    if (scf_thr_type == -1)
+    {
+        if (basis_type == "lcao" || basis_type == "lcao_in_pw")
+        {
+            scf_thr_type = 2;
+        }
+        else if (basis_type == "pw")
+        {
+            scf_thr_type = 1;
+        }
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -2795,7 +2819,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
-    Parallel_Common::bcast_int(symmetry);
+    Parallel_Common::bcast_string(symmetry);
     Parallel_Common::bcast_bool(init_vel); // liuyu 2021-07-14
     Parallel_Common::bcast_double(ref_cell_factor);
     Parallel_Common::bcast_double(symmetry_prec); // LiuXh add 2021-08-12, accuracy for symmetry
@@ -2855,6 +2879,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(test_stress);
 
     Parallel_Common::bcast_double(scf_thr);
+    Parallel_Common::bcast_int(scf_thr_type);
     Parallel_Common::bcast_int(scf_nmax);
     Parallel_Common::bcast_int(this->relax_nmax);
     Parallel_Common::bcast_bool(out_stru); // mohan add 2012-03-23
@@ -3231,24 +3256,24 @@ void Input::Check(void)
     //----------------------------------------------------------
     if (calculation == "nscf" || calculation == "get_S")
     {
-        if (out_dos == 3 && symmetry)
+        if (out_dos == 3 && symmetry == "1")
         {
             ModuleBase::WARNING_QUIT("Input::Check",
                                      "symmetry can't be used for out_dos==3(Fermi Surface Plotting) by now.");
         }
     }
-    else if (calculation == "istate")
+    else if (calculation == "get_pchg")
     {
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
-            ModuleBase::WARNING_QUIT("Input::Check", "calculate = istate is only availble for LCAO.");
+            ModuleBase::WARNING_QUIT("Input::Check", "calculate = get_pchg is only availble for LCAO.");
         }
     }
-    else if (calculation == "ienvelope")
+    else if (calculation == "get_wf")
     {
         if (basis_type == "pw") // xiaohui add 2013-09-01
         {
-            ModuleBase::WARNING_QUIT("Input::Check", "calculate = ienvelope is only availble for LCAO.");
+            ModuleBase::WARNING_QUIT("Input::Check", "calculate = get_wf is only availble for LCAO.");
         }
     }
     else if (calculation == "md") // mohan add 2011-11-04

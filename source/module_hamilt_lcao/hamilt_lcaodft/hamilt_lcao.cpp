@@ -31,8 +31,10 @@ HamiltLCAO<T>::HamiltLCAO(
     LCAO_gen_fixedH* genH_in,
     LCAO_Matrix* LM_in,
     Local_Orbital_Charge* loc_in,
-    elecstate::Potential* pot_in)
+    elecstate::Potential* pot_in,
+    const K_Vectors& kv_in)
 {
+    this->kv = kv_in;
     this->classname = "HamiltLCAO";
     //reset fixed Hamiltonian matrix in real space
     LM_in->zeros_HSgamma('T');
@@ -45,6 +47,7 @@ HamiltLCAO<T>::HamiltLCAO(
     this->opsd = new Overlap<OperatorLCAO<double>>(
         genH_in,
         LM_in,
+        kv.kvec_d,
         &(LM_in->Sloc),
         &(LM_in->Sloc)
     );
@@ -57,6 +60,7 @@ HamiltLCAO<T>::HamiltLCAO(
         Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>(
             genH_in,
             LM_in,
+            kv.kvec_d,
             &(LM_in->Hloc_fixed),
             &(LM_in->Hloc)
         );
@@ -70,6 +74,7 @@ HamiltLCAO<T>::HamiltLCAO(
         Operator<double>* nonlocal = new Nonlocal<OperatorLCAO<double>>(
             genH_in,
             LM_in,
+            kv.kvec_d,
             &(LM_in->Hloc_fixed),
             &(LM_in->Hloc)
         );
@@ -118,7 +123,8 @@ HamiltLCAO<T>::HamiltLCAO(
                 LM_in,
                 pot_in,
                 nullptr, // no explicit call yet
-                &(LM_in->Hloc) // no explicit call yet
+                &(LM_in->Hloc), // no explicit call yet
+                kv_in.kvec_d
             );
             this->opsd->add(veff);
 
@@ -137,12 +143,12 @@ HamiltLCAO<T>::HamiltLCAO(
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        Operator<double>* deepks = new DeePKS<OperatorLCAO<double>>(
-            loc_in,
-            LM_in,
-            nullptr,// no explicit call yet
-            &(LM_in->Hloc)
-        );
+        Operator<double>* deepks = new DeePKS<OperatorLCAO<double>>(loc_in,
+                                                                    LM_in,
+                                                                    kv_in.kvec_d,
+                                                                    nullptr, // no explicit call yet
+                                                                    &(LM_in->Hloc),
+                                                                    kv_in.nks);
         this->opsd->add(deepks);
     }
 #endif
@@ -152,8 +158,10 @@ HamiltLCAO<T>::HamiltLCAO(
     {
         Operator<double>* dftu = new OperatorDFTU<OperatorLCAO<double>>(
             LM_in,
+            kv.kvec_d,
             nullptr,// no explicit call yet
-            &(LM_in->Hloc)
+            &(LM_in->Hloc),
+            kv_in.isk
         );
         this->opsd->add(dftu);
     }
@@ -166,8 +174,10 @@ HamiltLCAO<T>::HamiltLCAO(
     LCAO_gen_fixedH* genH_in,
     LCAO_Matrix* LM_in,
     Local_Orbital_Charge* loc_in,
-    elecstate::Potential* pot_in)
+    elecstate::Potential* pot_in,
+    const K_Vectors& kv_in)
 {
+    this->kv = kv_in;
     this->classname = "HamiltLCAO";
 
     //reset fixed Hamiltonian matrix in real space
@@ -216,6 +226,7 @@ HamiltLCAO<T>::HamiltLCAO(
                 GK_in,
                 loc_in,
                 LM_in,
+                kv.kvec_d,
                 pot_in,
                 nullptr, // no explicit call yet
                 &(LM_in->Hloc2) // no explicit call yet
@@ -231,6 +242,7 @@ HamiltLCAO<T>::HamiltLCAO(
                 GK_in,
                 loc_in,
                 LM_in,
+                kv.kvec_d,
                 nullptr, // no explicit call yet
                 &(LM_in->Hloc2) // no explicit call yet
             );
@@ -243,6 +255,7 @@ HamiltLCAO<T>::HamiltLCAO(
     Operator<std::complex<double>>* overlap = new Overlap<OperatorLCAO<std::complex<double>>>(
         genH_in,
         LM_in,
+        kv.kvec_d,
         &(LM_in->SlocR),
         &(LM_in->Sloc2)
     );
@@ -262,6 +275,7 @@ HamiltLCAO<T>::HamiltLCAO(
         Operator<std::complex<double>>* ekinetic = new Ekinetic<OperatorLCAO<std::complex<double>>>(
             genH_in,
             LM_in,
+            kv.kvec_d,
             &(LM_in->Hloc_fixedR),
             &(LM_in->Hloc2)
         );
@@ -275,6 +289,7 @@ HamiltLCAO<T>::HamiltLCAO(
         Operator<std::complex<double>>* nonlocal = new Nonlocal<OperatorLCAO<std::complex<double>>>(
             genH_in,
             LM_in,
+            kv.kvec_d,
             &(LM_in->Hloc_fixedR),
             &(LM_in->Hloc2)
         );
@@ -284,12 +299,13 @@ HamiltLCAO<T>::HamiltLCAO(
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        Operator<std::complex<double>>* deepks = new DeePKS<OperatorLCAO<std::complex<double>>>(
-            loc_in,
-            LM_in,
-            nullptr,// no explicit call yet
-            &(LM_in->Hloc2)
-        );
+        Operator<std::complex<double>>* deepks
+            = new DeePKS<OperatorLCAO<std::complex<double>>>(loc_in,
+                                                             LM_in,
+                                                             kv_in.kvec_d,
+                                                             nullptr, // no explicit call yet
+                                                             &(LM_in->Hloc2),
+                                                             kv_in.nks);
         this->ops->add(deepks);
     }
 #endif
@@ -298,8 +314,10 @@ HamiltLCAO<T>::HamiltLCAO(
     {
         Operator<std::complex<double>>* dftu = new OperatorDFTU<OperatorLCAO<std::complex<double>>>(
             LM_in,
+            kv.kvec_d,
             nullptr,// no explicit call yet
-            &(LM_in->Hloc2)
+            &(LM_in->Hloc2),
+            kv_in.isk
         );
         this->ops->add(dftu);
     }
@@ -331,7 +349,7 @@ template <> void HamiltLCAO<double>::updateHk(const int ik)
     //update global spin index
     if (GlobalV::NSPIN == 2)
     {
-        GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+        GlobalV::CURRENT_SPIN = this->kv.isk[ik];
     }
     this->opsd->init(ik);
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
@@ -344,7 +362,7 @@ template <> void HamiltLCAO<std::complex<double>>::updateHk(const int ik)
     //update global spin index
     if (GlobalV::NSPIN == 2)
     {
-        GlobalV::CURRENT_SPIN = GlobalC::kv.isk[ik];
+        GlobalV::CURRENT_SPIN = this->kv.isk[ik];
     }
     this->ops->init(ik);
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
