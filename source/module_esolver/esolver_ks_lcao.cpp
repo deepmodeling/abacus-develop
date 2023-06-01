@@ -6,6 +6,7 @@
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
 #include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
@@ -777,7 +778,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         {
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(
+            ModuleIO::write_potential(
 #ifdef __MPI
                 pw_big->bz,
                 pw_big->nbz,
@@ -800,14 +801,16 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         std::stringstream ssp_ave;
         ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
         // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(
+        ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             pw_big->bz,
             pw_big->nbz,
 #endif
             ssp.str(),
             this->pw_rho,
-            pelec->charge); // output 'Hartree + local pseudopot'
+            pelec->charge,
+            &(GlobalC::ucell),
+            this->pelec->pot->get_fixed_v()); // output 'Hartree + local pseudopot'
     }
 
     if (this->conv_elec)

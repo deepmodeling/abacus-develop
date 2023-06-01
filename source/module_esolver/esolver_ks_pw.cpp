@@ -30,6 +30,7 @@
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 #include "module_io/to_wannier90.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
@@ -517,7 +518,7 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
             int precision = 3; // be consistent with esolver_ks_lcao.cpp
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(
+            ModuleIO::write_potential(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,
