@@ -29,20 +29,24 @@ LCAO_Hamilt::~LCAO_Hamilt()
 //--------------------------------------------
 // prepare grid network for Gint(grid integral)
 //--------------------------------------------
-void LCAO_Hamilt::grid_prepare(void)
+void LCAO_Hamilt::grid_prepare(const Grid_Technique& gt, const ModulePW::PW_Basis& rhopw, const ModulePW::PW_Basis_Big& bigpw)
 {
     ModuleBase::TITLE("LCAO_Hamilt","grid_prepare");
     ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-        this->GG.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start, GlobalC::rhopw->nxyz);
+        this->GG.prep_grid(gt, bigpw.nbx, bigpw.nby, bigpw.nbzp, bigpw.nbzp_start,
+            rhopw.nxyz, bigpw.bx, bigpw.by, bigpw.bz, bigpw.bxyz, bigpw.nbxx,
+            rhopw.ny, rhopw.nplane, rhopw.startz_current);
 
     }
     else // multiple k-points
     {
         // calculate the grid integration of 'Vl' matrix for l-points algorithms.
-        this->GK.prep_grid(GlobalC::bigpw->nbx, GlobalC::bigpw->nby, GlobalC::bigpw->nbzp, GlobalC::bigpw->nbzp_start, GlobalC::rhopw->nxyz);
+        this->GK.prep_grid(gt, bigpw.nbx, bigpw.nby, bigpw.nbzp, bigpw.nbzp_start,
+            rhopw.nxyz, bigpw.bx, bigpw.by, bigpw.bz, bigpw.bxyz, bigpw.nbxx,
+            rhopw.ny, rhopw.nplane, rhopw.startz_current);
     }
 
     ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
@@ -303,7 +307,7 @@ void LCAO_Hamilt::calculate_STN_R_sparse_for_S(const double &sparse_threshold)
     return;
 }
 
-void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold)
+void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold, const int (&nmp)[3])
 {
     ModuleBase::TITLE("LCAO_Hamilt","calculate_HSR_sparse");
 
@@ -330,9 +334,9 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
     if( GlobalC::exx_info.info_global.cal_exx )
     {
         if(GlobalC::exx_info.info_ri.real_number)
-            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::kv.nmp, GlobalC::exx_lri_double.Hexxs);
+            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, nmp, *this->LM->Hexxd);
         else
-            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, GlobalC::kv.nmp, GlobalC::exx_lri_complex.Hexxs);
+            this->calculate_HR_exx_sparse(current_spin, sparse_threshold, nmp, *this->LM->Hexxc);
     }
 #endif // __MPI
 #endif // __EXX

@@ -150,9 +150,12 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_psialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
+        LCAO_deepks_interface.o\
 
 OBJS_ELECSTAT=elecstate.o\
     elecstate_energy.o\
+    elecstate_energy_terms.o\
+    elecstate_exx.o\
     elecstate_print.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
@@ -160,6 +163,7 @@ OBJS_ELECSTAT=elecstate.o\
     efield.o\
     gatefield.o\
     potential_new.o\
+    potential_types.o\
     pot_local.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
@@ -341,7 +345,8 @@ OBJS_IO=input.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_band.o\
-    dos.o\
+    cal_dos.o\
+    dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
     output.o\
@@ -359,6 +364,7 @@ OBJS_IO=input.o\
     write_rho.o\
     write_dipole.o\
     write_wfc_r.o\
+    output_rho.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -378,6 +384,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       single_R_io.o\
       write_HS_R.o\
       write_dm.o\
+      output_dm.o\
+      output_dm1.o\
       write_dm_sparse.o\
 
 OBJS_LCAO=DM_gamma.o\
@@ -421,7 +429,8 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
-      RI_2D_Comm.o
+      RI_2D_Comm.o\
+      Mix_DMk_2D.o
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\
@@ -435,6 +444,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     VNL_in_pw.o\
     VNL_grad_pw.o\
     charge.o\
+    charge_init.o\
+    charge_mpi.o\
     charge_broyden.o\
     charge_extra.o\
     charge_mixing.o\

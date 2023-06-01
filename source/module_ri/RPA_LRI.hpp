@@ -60,22 +60,25 @@ template <typename Tdata> void RPA_LRI<Tdata>::cal_rpa_cv()
 }
 
 template <typename Tdata>
-void RPA_LRI<Tdata>::cal_postSCF_exx(
+void RPA_LRI<Tdata>::cal_postSCF_exx(const Local_Orbital_Charge& loc,
                 const MPI_Comm& mpi_comm_in,
                 const K_Vectors& kv,
-                const Local_Orbital_Charge& loc,
                 const Parallel_Orbitals& pv)
 {
+    exx_lri_rpa.mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
+    if(GlobalV::GAMMA_ONLY_LOCAL)
+        exx_lri_rpa.mix_DMk_2D.mix(loc.dm_gamma, true);
+    else
+        exx_lri_rpa.mix_DMk_2D.mix(loc.dm_k, true);
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
-    exx_lri_rpa.cal_exx_elec(loc, pv);
+    exx_lri_rpa.cal_exx_elec(pv);
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 
 template <typename Tdata>
 void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
                                  const psi::Psi<std::complex<double>> &psi,
-                                 Local_Orbital_Charge &loc,
                                  const elecstate::ElecState *pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_for_RPA");

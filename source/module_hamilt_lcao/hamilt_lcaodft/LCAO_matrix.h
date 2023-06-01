@@ -9,6 +9,9 @@
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "module_base/abfs-vector3_order.h"
+#ifdef __EXX
+#include <RI/global/Tensor.h>
+#endif
 
 class LCAO_Matrix
 {
@@ -26,6 +29,12 @@ class LCAO_Matrix
                         bool cal_syns = false);
 
     Parallel_Orbitals *ParaV;
+    
+#ifdef __EXX
+    using TAC = std::pair<int, std::array<int, 3>>;
+    std::vector< std::map<int, std::map<TAC, RI::Tensor<double>>>> *Hexxd;
+    std::vector< std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>> *Hexxc;
+#endif
 
     void allocate_HS_k(const long &nloc);
 

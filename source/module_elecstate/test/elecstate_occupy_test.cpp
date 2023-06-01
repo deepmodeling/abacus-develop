@@ -179,58 +179,55 @@ TEST_F(OccupyTest, DecisionArbitrary)
   EXPECT_THAT(output, testing::HasSubstr("occupations, not implemented"));
 }
 
-TEST_F(OccupyTest, IweightsS2)
+TEST_F(OccupyTest, IweightsNOSPIN)
 {
-  GlobalV::NSPIN = 2;
-  double ef = 1.0;
+  GlobalV::NSPIN = 1;
+  double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
-  std::vector<double> wk(1);
-  double **ekb = new double *[1];
-  ekb[0] = new double[1];
-  wk[0] = 1.0;
-  ekb[0][0] = 0.0;
-  occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, 0, std::vector<int>(1, 0));
-  EXPECT_DOUBLE_EQ(wg(0, 0), 1.0);
-  delete[] ekb[0];
-  delete[] ekb;
+  std::vector<double> wk(1, 2.0);
+  ModuleBase::matrix ekb(1, 1);
+  std::vector<int> isk(1);
+  ekb(0, 0) = 0.1;
+  occupy.iweights(1, wk, 1, 2.0, ekb, ef, wg, 0, isk);
+  EXPECT_DOUBLE_EQ(wg(0, 0), 2.0);
+  EXPECT_DOUBLE_EQ(ef, 0.1);
 }
 
-TEST_F(OccupyTest, IweightsS4)
+TEST_F(OccupyTest, IweightsSPIN)
 {
-  GlobalV::NSPIN = 4;
-  double ef = 1.0;
-  ModuleBase::matrix wg(1, 1);
-  std::vector<double> wk(1);
-  double **ekb = new double *[1];
-  ekb[0] = new double[1];
-  wk[0] = 1.0;
-  ekb[0][0] = 0.0;
-  occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, 0, std::vector<int>(1, 0));
+  GlobalV::NSPIN = 2;
+  double ef_up = 0.0;
+  double ef_dw = 0.0;
+  ModuleBase::matrix wg(2, 1);
+  std::vector<double> wk(2, 1.0);
+  ModuleBase::matrix ekb(2, 1);
+  std::vector<int> isk(2);
+  isk[0] = 0;
+  isk[1] = 1;
+  ekb(0, 0) = 0.1;
+  ekb(1, 0) = 0.2;
+  occupy.iweights(2, wk, 1, 1.0, ekb, ef_up, wg, 0, isk);
+  occupy.iweights(2, wk, 1, 1.0, ekb, ef_dw, wg, 1, isk);
   EXPECT_DOUBLE_EQ(wg(0, 0), 1.0);
-  delete[] ekb[0];
-  delete[] ekb;
+  EXPECT_DOUBLE_EQ(wg(1, 0), 1.0);
+  EXPECT_DOUBLE_EQ(ef_up, 0.1);
+  EXPECT_DOUBLE_EQ(ef_dw, 0.2);
 }
 
 TEST_F(OccupyTest, IweightsWarning)
 {
   GlobalV::NSPIN = 1;
   double ef = 0.0;
-  double nelec = 2.5;
   ModuleBase::matrix wg(1, 1);
-  std::vector<double> wk(1);
-  double **ekb = new double *[1];
-  ekb[0] = new double[1];
-  wk[0] = 1.0;
-  ekb[0][0] = 0.0;
+  std::vector<double> wk(1, 2.0);
+  ModuleBase::matrix ekb(1, 1);
+  std::vector<int> isk(1);
+  ekb(0, 0) = 0.1;
+
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.iweights(1, wk, 1, nelec, ekb, ef, wg, 0, std::vector<int>(1, 0)),
-              ::testing::ExitedWithCode(0),
-              "");
+  EXPECT_EXIT(occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, 0, isk);, ::testing::ExitedWithCode(0), "");
   output = testing::internal::GetCapturedStdout();
-  // test output on screen
-  EXPECT_THAT(output, testing::HasSubstr("not converged, change 'smearing' method."));
-  delete[] ekb[0];
-  delete[] ekb;
+  EXPECT_THAT(output, testing::HasSubstr("It is not a semiconductor or insulator. Change 'smearing_method'."));
 }
 
 TEST_F(OccupyTest, Wgauss)
@@ -254,9 +251,8 @@ TEST_F(OccupyTest, W1gauss)
 
 TEST_F(OccupyTest, Sumkg)
 {
-  double **ekb = new double *[1];
-  ekb[0] = new double[1];
-  ekb[0][0] = -1.0;
+  ModuleBase::matrix ekb(1, 1);
+  ekb(0, 0) = -1.0;
   std::vector<double> wk = {1, 1.0};
   double smearing_sigma = 0.1;
   int ngauss = 0;
@@ -264,15 +260,12 @@ TEST_F(OccupyTest, Sumkg)
   int is = 0;
   std::vector<int> isk = {0, 0};
   EXPECT_DOUBLE_EQ(occupy.sumkg(ekb, 1, 1, wk, smearing_sigma, ngauss, e, is, isk), 1.0);
-  delete[] ekb[0];
-  delete[] ekb;
 }
 
 TEST_F(OccupyTest, Efermig)
 {
-  double** ekb = new double*[1];
-  ekb[0] = new double[1];
-  ekb[0][0] = -1.0;
+  ModuleBase::matrix ekb(1, 1);
+  ekb(0, 0) = -1.0;
   std::vector<double> wk = {1, 1.0};
   double smearing_sigma = 0.1;
   int ngauss = 0;
@@ -282,15 +275,12 @@ TEST_F(OccupyTest, Efermig)
   double ef = 0.0;
   occupy.efermig(ekb, 1, 1, 1.0, wk, smearing_sigma, ngauss, ef, is, isk);
   EXPECT_NEAR(ef, -0.5, 1e-13);
-  delete[] ekb[0];
-  delete[] ekb;
 }
 
 TEST_F(OccupyTest, Gweights)
 {
-  double** ekb = new double*[1];
-  ekb[0] = new double[1];
-  ekb[0][0] = -1.0;
+  ModuleBase::matrix ekb(1, 1);
+  ekb(0, 0) = -1.0;
   std::vector<double> wk = {1, 1.0};
   double smearing_sigma = 0.1;
   int ngauss = 0;
@@ -305,8 +295,6 @@ TEST_F(OccupyTest, Gweights)
   EXPECT_NEAR(ef, -0.5, 1e-13);
   EXPECT_NEAR(demet, 0.0, 1e-13);
   EXPECT_NEAR(wg(0, 0), 1.0, 1e-13);
-  delete[] ekb[0];
-  delete[] ekb;
 }
 
 #undef private

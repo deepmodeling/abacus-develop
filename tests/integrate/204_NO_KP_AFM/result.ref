@@ -3,4 +3,7 @@ etotperatomref -3218.6225137967
 totalforceref 0.000000
 totalstressref 804.086430
 Compare_mulliken_pass 0
+pointgroupref O_h
+spacegroupref O_h
+nksibzref 4
 totaltimeref +15.56249

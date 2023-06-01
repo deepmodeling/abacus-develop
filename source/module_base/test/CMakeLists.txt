@@ -163,3 +163,10 @@ AddTest(
   SOURCES spherical_bessel_transformer_test.cpp ../spherical_bessel_transformer.cpp
   LIBS ${math_libs}
 )
+
+AddTest(
+  TARGET cubic_spline
+  SOURCES cubic_spline_test.cpp ../cubic_spline.cpp
+  LIBS ${math_libs}
+)
+

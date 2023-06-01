@@ -40,7 +40,9 @@ class Grid_MeshCell: public Grid_MeshK
 
 
 	void init_latvec(void);
-	void init_meshcell_pos(void);
+    void init_meshcell_pos(void);
+
+    void cal_extended_cell(const int &dxe, const int &dye, const int &dze);
 
 	public:
 

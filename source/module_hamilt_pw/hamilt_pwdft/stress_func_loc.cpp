@@ -9,7 +9,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
-                                             Structure_Factor* p_sf,
+                                             const Structure_Factor* p_sf,
                                              const bool is_pw,
                                              const Charge* const chr)
 {

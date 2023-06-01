@@ -74,8 +74,8 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv);
-    void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma);
+    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv, const double& mixing_beta);
+    void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma, const double& mixing_beta);
 
   private:
     // dftu can be calculated only after locale has been initialed
@@ -83,7 +83,7 @@ class DFTU
 
     void copy_locale();
     void zero_locale();
-    void mix_locale();
+    void mix_locale(const double& mixing_beta);
 
     // local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
@@ -167,7 +167,7 @@ class DFTU
 
   public:
     bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
-    void cal_slater_UJ(double** rho);
+    void cal_slater_UJ(double** rho, const int& nrxx);
 
   private:
     double lambda; // the parameter in Yukawa potential
@@ -176,7 +176,7 @@ class DFTU
     std::vector<std::vector<std::vector<double>>> J_Yukawa; // J_Yukawa[T][L][N]
 
     void cal_slater_Fk(const int L, const int T); // L:angular momnet, T:atom type
-    void cal_yukawa_lambda(double** rho);
+    void cal_yukawa_lambda(double** rho, const int& nrxx);
 
     double spherical_Bessel(const int k, const double r, const double lambda);
     double spherical_Hankel(const int k, const double r, const double lambda);
