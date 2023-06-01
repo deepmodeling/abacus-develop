@@ -167,7 +167,6 @@ OBJS_ELECSTAT=elecstate.o\
     pot_local.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
-    write_pot.o\
     pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
