@@ -23,6 +23,7 @@ list(APPEND objects
     write_dipole.cpp
     write_wfc_r.cpp
     output_rho.cpp
+    output_potential.cpp
 )
 
 list(APPEND objects_advanced

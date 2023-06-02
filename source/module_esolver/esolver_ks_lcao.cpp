@@ -771,6 +771,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 #endif
 
+    this->create_Output_Potential(istep).write();
+    /*
     if (GlobalV::out_pot == 1)
     {
         const int precision = 3;
@@ -812,6 +814,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
             &(GlobalC::ucell),
             this->pelec->pot->get_fixed_v()); // output 'Hartree + local pseudopot'
     }
+    */
 
     if (this->conv_elec)
     {
