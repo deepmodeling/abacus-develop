@@ -178,14 +178,14 @@ void ElecState::print_etot(const bool converged,
         GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30)
                              << "eV" << std::endl;
         this->print_format("E_KohnSham", this->f_en.etot);
-        this->print_format("E_KS(sig->0)", this->f_en.etot - this->f_en.demet/(2+n_order));
+        this->print_format("E_KS(sigma->0)", this->f_en.etot - this->f_en.demet/(2+n_order));
         this->print_format("E_Harris", this->f_en.etot_harris);
         this->print_format("E_band", this->f_en.eband);
         this->print_format("E_one_elec", this->f_en.eband + this->f_en.deband);
         this->print_format("E_Hartree", this->f_en.hartree_energy);
         this->print_format("E_xc", this->f_en.etxc - this->f_en.etxcc);
         this->print_format("E_Ewald", this->f_en.ewald_energy);
-        this->print_format("E_entro(-TS)", this->f_en.demet); // mohan add 2011-12-02
+        this->print_format("E_entropy(-TS)", this->f_en.demet); // mohan add 2011-12-02
         this->print_format("E_descf", this->f_en.descf);
         std::string vdw_method = get_input_vdw_method();
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
@@ -381,7 +381,7 @@ void ElecState::print_format(const std::string& name, const double& value)
     GlobalV::ofs_running << std::setiosflags(ios::showpos);
     std::stringstream name2;
     name2 << name;
-    GlobalV::ofs_running << " " << std::setw(12) << name2.str() << std::setw(30) << value << std::setw(30)
+    GlobalV::ofs_running << " " << std::setw(16) << name2.str() << std::setw(30) << value << std::setw(30)
                          << value * ModuleBase::Ry_to_eV << std::endl;
     GlobalV::ofs_running << std::resetiosflags(ios::showpos);
     return;
