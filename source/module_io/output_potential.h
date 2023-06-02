@@ -19,7 +19,7 @@ class Output_Potential : public Output_Interface
                      ModulePW::PW_Basis* pw_rho,
                      int nspin,
                      int iter,
-                     bool out_pot,
+                     int out_pot,
                      const ModuleBase::matrix& v_effective,
                      const double* v_effective_fixed,
                      const UnitCell* ucell,
@@ -35,7 +35,7 @@ class Output_Potential : public Output_Interface
     ModulePW::PW_Basis* _pw_rho;
     int _nspin;
     int _iter;
-    bool _out_pot;
+    int _out_pot;
     const ModuleBase::matrix& _v_effective;
     const double* _v_effective_fixed;
     const UnitCell* _ucell;

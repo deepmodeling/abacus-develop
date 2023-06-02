@@ -418,18 +418,18 @@ namespace ModuleESolver
         int precision = 3;
         std::string tag = "POT";
         return ModuleIO::Output_Potential(this->pw_big,
-                                    this->pw_rho,
-                                    GlobalV::NSPIN,
-                                    iter,
-                                    GlobalV::out_pot,
-                                    this->pelec->pot->get_effective_v(),
-                                    this->pelec->pot->get_fixed_v(),
-                                    &(GlobalC::ucell),
-                                    pelec->charge,
-                                    precision,
-                                    GlobalV::global_out_dir,
-                                    tag,
-                                    prefix);
+                                          this->pw_rho,
+                                          GlobalV::NSPIN,
+                                          iter,
+                                          GlobalV::out_pot,
+                                          this->pelec->pot->get_effective_v(),
+                                          this->pelec->pot->get_fixed_v(),
+                                          &(GlobalC::ucell),
+                                          pelec->charge,
+                                          precision,
+                                          GlobalV::global_out_dir,
+                                          tag,
+                                          prefix);
     }
 
 
