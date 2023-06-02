@@ -9,7 +9,7 @@
 
 namespace GlobalC
 {
-extern Grid_Driver GridD;
+Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
 }
 
 Grid_Driver::Grid_Driver(

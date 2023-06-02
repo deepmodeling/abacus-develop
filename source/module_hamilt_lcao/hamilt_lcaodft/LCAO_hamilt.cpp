@@ -1,10 +1,11 @@
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "LCAO_hamilt.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+
 #include "module_base/parallel_reduce.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"	//caoyu add 2021-07-26
 #endif

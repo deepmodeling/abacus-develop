@@ -10,7 +10,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-// #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 using namespace std;
 
 template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)

@@ -7,7 +7,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30
 #include "gint_tools.h"
 
 void Gint::gint_kernel_tau(

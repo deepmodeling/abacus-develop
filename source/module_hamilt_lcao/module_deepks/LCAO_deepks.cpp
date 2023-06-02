@@ -21,7 +21,6 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace GlobalC
