@@ -511,47 +511,7 @@ void ESolver_KS_PW<FPTYPE, Device>::eachiterfinish(const int iter)
 template <typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
 {
-    if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            int precision = 3; // be consistent with esolver_ks_lcao.cpp
-            std::stringstream ssp;
-            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            ModuleIO::write_potential(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
-#endif
-                is,
-                0,
-                ssp.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(),
-                precision);
-        }
-    }
-    else if (GlobalV::out_pot == 2)
-    {
-        std::stringstream ssp;
-        std::stringstream ssp_ave;
-        ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
-        // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        ModuleIO::write_elecstat_pot(
-#ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
-#endif
-            ssp.str(),
-            this->pw_rho,
-            this->pelec->charge,
-            &(GlobalC::ucell),
-            this->pelec->pot->get_fixed_v()); // output 'Hartree + local pseudopot'
-    }
+    this->create_Output_Potential(istep).write();
 
     if (GlobalV::out_chg)
     {
