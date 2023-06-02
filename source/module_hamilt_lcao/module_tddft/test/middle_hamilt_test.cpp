@@ -19,6 +19,13 @@
 
 #define doublethreshold 1e-8
 
+Parallel_Orbitals::Parallel_Orbitals()
+{
+}
+Parallel_Orbitals::~Parallel_Orbitals()
+{
+}
+
 TEST(MiddleHamiltTest, testMiddleHamilt)
 {
     std::complex<double>* Htmp;

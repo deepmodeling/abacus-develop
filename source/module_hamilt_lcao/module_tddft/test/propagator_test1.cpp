@@ -20,6 +20,13 @@
 Input INPUT;
 #define doublethreshold 1e-8
 
+Parallel_Orbitals::Parallel_Orbitals()
+{
+}
+Parallel_Orbitals::~Parallel_Orbitals()
+{
+}
+
 TEST(PropagatorTest, testPropagatorCN)
 {
     std::complex<double>* U_operator;

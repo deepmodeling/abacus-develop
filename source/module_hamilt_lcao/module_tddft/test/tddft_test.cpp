@@ -12,9 +12,8 @@
  ***********************************************/
 
 int myprow, nprow, ictxt, mypcol, npcol;
-;
 
-int main(int argc, char** argv)
+void MPIInit()
 {
     int myrank;
     int mysize;
@@ -31,12 +30,21 @@ int main(int argc, char** argv)
     Cblacs_get(-1, 0, &ictxt);
     Cblacs_gridinit(&ictxt, "Row", nprow, npcol);
     Cblacs_gridinfo(ictxt, &nprow, &npcol, &myprow, &mypcol);
+}
+
+/************************************************
+ *  unit test of module_tddft
+ ***********************************************/
+int main(int argc, char** argv)
+{
+    MPIInit();
 
     int result = 0;
     testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
     Cblacs_exit(ictxt);
-    // MPI_Finalize();
-    return result;
+
+    MPI_Finalize();
+    return 0;
 }
