@@ -106,7 +106,7 @@ void Gint::gint_kernel_tau(
 				vindex,
 				dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D,
 				dpsix_DM.ptr_2D, dpsiy_DM.ptr_2D, dpsiz_DM.ptr_2D,
-				inout->chr->kin_r[is]);
+				inout->rho[is]);
 		}
 	}
 
