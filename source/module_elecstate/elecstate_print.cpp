@@ -175,7 +175,7 @@ void ElecState::print_etot(const bool converged,
     if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
-        GlobalV::ofs_running << "\n " << std::setw(12) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30)
+        GlobalV::ofs_running << "\n " << std::setw(16) << "Energy" << std::setw(30) << "Rydberg" << std::setw(30)
                              << "eV" << std::endl;
         this->print_format("E_KohnSham", this->f_en.etot);
         this->print_format("E_KS(sigma->0)", this->f_en.etot - this->f_en.demet/(2+n_order));
