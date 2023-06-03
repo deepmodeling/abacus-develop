@@ -2,13 +2,13 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dm_io.h"
+#include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
-#include "module_io/dos_nao.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 
@@ -719,83 +719,11 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            const int precision = 3;
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "tmp"
-                << "_SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
-                pw_rho->nplane,
-                pw_rho->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                iter,
-                ssc.str(),
-                pw_rho->nx,
-                pw_rho->ny,
-                pw_rho->nz,
-                ef_tmp,
-                &(GlobalC::ucell),
-                precision);
-
-            std::stringstream ssd;
-            if (GlobalV::GAMMA_ONLY_LOCAL)
+            this->create_Output_Rho(is, iter, "tmp_").write();
+            this->create_Output_DM(is, iter).write();
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                ssd << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_DM";
-            }
-            else
-            {
-                ssd << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_DM_R";
-            }
-
-            ModuleIO::write_dm(
-#ifdef __MPI
-                this->GridT.trace_lo,
-#endif
-                is,
-                iter,
-                ssd.str(),
-                precision,
-                this->LOC.out_dm,
-                this->LOC.DM,
-                ef_tmp,
-                &(GlobalC::ucell));
-        }
-
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            const int precision = 3;
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rho->nplane,
-                    pw_rho->startz_current,
-#endif
-                    pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    iter,
-                    ssc.str(),
-                    pw_rho->nx,
-                    pw_rho->ny,
-                    pw_rho->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell),
-                    precision);
+                this->create_Output_Kin(is, iter, "tmp_").write();
             }
         }
     }
@@ -808,79 +736,17 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 {
     if (this->LOC.out_dm1 == 1)
     {
-        double** dm2d;
-        dm2d = new double*[GlobalV::NSPIN];
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            dm2d[is] = new double[this->LOC.ParaV->nnr];
-            ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
-        }
-        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, kv);
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
-        }
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            delete[] dm2d[is];
-        }
-
-        delete[] dm2d;
+        this->create_Output_DM1(istep).write();
     }
 
     if (GlobalV::out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::stringstream ssc;
-            const int precision = 3;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
-                pw_rho->nplane,
-                pw_rho->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                pw_rho->nx,
-                pw_rho->ny,
-                pw_rho->nz,
-                ef_tmp,
-                &(GlobalC::ucell),
-                precision);
-        }
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            this->create_Output_Rho(is, istep).write();
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rho->nplane,
-                    pw_rho->startz_current,
-#endif
-                    pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    0,
-                    ssc.str(),
-                    pw_rho->nx,
-                    pw_rho->ny,
-                    pw_rho->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell));
+                this->create_Output_Kin(is, istep).write();
             }
         }
     }
@@ -889,34 +755,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            const int precision = 3;
-
-            std::stringstream ssd;
-            std::stringstream ssd_tmp;
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM";
-                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
-            }
-            else
-            {
-                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM_R";
-                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
-            }
-            std::remove(ssd_tmp.str().c_str());
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_dm(
-#ifdef __MPI
-                this->GridT.trace_lo,
-#endif
-                is,
-                0,
-                ssd.str(),
-                precision,
-                this->LOC.out_dm,
-                this->LOC.DM,
-                ef_tmp,
-                &(GlobalC::ucell));
+            this->create_Output_DM(is, istep).write();
         }
     }
 
@@ -1095,6 +934,26 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
         return this->exc->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, kv, iter);
 #endif // __EXX
     return true;
+}
+
+ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
+{
+    int precision = 3;
+    return ModuleIO::Output_DM(this->GridT,
+                               is,
+                               iter,
+                               precision,
+                               this->LOC.out_dm,
+                               this->LOC.DM,
+                               this->pelec->eferm.get_efval(is),
+                               &(GlobalC::ucell),
+                               GlobalV::global_out_dir,
+                               GlobalV::GAMMA_ONLY_LOCAL);
+}
+
+ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
+{
+    return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv);
 }
 
 } // namespace ModuleESolver

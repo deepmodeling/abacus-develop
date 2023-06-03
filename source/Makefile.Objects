@@ -364,6 +364,7 @@ OBJS_IO=input.o\
     write_rho.o\
     write_dipole.o\
     write_wfc_r.o\
+    output_rho.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -383,6 +384,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       single_R_io.o\
       write_HS_R.o\
       write_dm.o\
+      output_dm.o\
+      output_dm1.o\
       write_dm_sparse.o\
 
 OBJS_LCAO=DM_gamma.o\

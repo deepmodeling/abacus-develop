@@ -62,8 +62,6 @@ class Charge
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
 
-    void cal_nelec(const UnitCell& ucell); // calculate total number of electrons  Yu Liu add 2021-07-03
-
     void renormalize_rho(void);
 
     void save_rho_before_sum_band(void);

@@ -79,7 +79,7 @@ namespace ModuleESolver
     void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
-        chr.cal_nelec(ucell);
+        ucell.cal_nelec(GlobalV::nelec);
 
         /* it has been established that that
          xc_func is same for all elements, therefore
@@ -372,6 +372,44 @@ namespace ModuleESolver
     int ESolver_KS<FPTYPE, Device>::getniter()
     {
         return this->niter;
+    }
+
+    template <typename FPTYPE, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
+    {
+        int precision = 3;
+        std::string tag = "CHG";
+        return ModuleIO::Output_Rho(this->pw_big,
+                                    this->pw_rho,
+                                    is,
+                                    GlobalV::NSPIN,
+                                    pelec->charge->rho_save[is],
+                                    iter,
+                                    this->pelec->eferm.get_efval(is),
+                                    &(GlobalC::ucell),
+                                    GlobalV::global_out_dir,
+                                    precision,
+                                    tag,
+                                    prefix);
+    }
+
+    template <typename FPTYPE, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
+    {
+        int precision = 11;
+        std::string tag = "TAU";
+        return ModuleIO::Output_Rho(this->pw_big,
+                                    this->pw_rho,
+                                    is,
+                                    GlobalV::NSPIN,
+                                    pelec->charge->kin_r_save[is],
+                                    iter,
+                                    this->pelec->eferm.get_efval(is),
+                                    &(GlobalC::ucell),
+                                    GlobalV::global_out_dir,
+                                    precision,
+                                    tag,
+                                    prefix);
     }
 
 template class ESolver_KS<float, psi::DEVICE_CPU>;
