@@ -18,8 +18,6 @@ FLOAT = OFF
 # OFF: compile double lib
 GTEST_DIR = /home/qianrui/gnucompile/g_gtest
 # Must give gtest directory
-FFTW_DIR = /home/qianrui/gnucompile/fftw_3.3.8
-# directory of fftw package. only used when CXX=mpicxx/g++
 #======================================================================
 
 
