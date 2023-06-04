@@ -1,9 +1,6 @@
 #include "to_wannier90.h"
 
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#ifdef __LCAO
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30, this module should be modified
-#endif
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
 #include "module_base/math_sphbes.h"
