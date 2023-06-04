@@ -11,6 +11,7 @@
 #include "module_hsolver/hsolver.h"
 #include "module_io/cal_test.h"
 #include "module_io/output_rho.h"
+#include "module_io/output_potential.h"
 #include "string.h"
 
 namespace ModuleESolver
@@ -76,6 +77,8 @@ namespace ModuleESolver
         /// @brief create a new ModuleIO::Output_Rho object to print kinetic energy density
         ModuleIO::Output_Rho create_Output_Kin(int is, int iter, const std::string& prefix = "None");
 
+        /// @brief create a new ModuleIO::Output_Potential object to print potential
+        ModuleIO::Output_Potential create_Output_Potential(int iter, const std::string& prefix = "None");
         // TODO: control single precision at input files
 
         hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
