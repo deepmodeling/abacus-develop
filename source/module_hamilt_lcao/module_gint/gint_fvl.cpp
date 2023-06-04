@@ -1,9 +1,7 @@
 #include "gint_k.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h" // mohan add 2021-01-30
-
-#include "module_base/ylm.h"
 #include "module_base/timer.h"
+#include "module_base/ylm.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Gint::gint_kernel_force(
 	const int na_grid,

@@ -6,8 +6,6 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-#include "global_fp.h" // mohan add 2021-01-30
-
 Local_Orbital_wfc::Local_Orbital_wfc()
 {
 	allocate_flag = false;
