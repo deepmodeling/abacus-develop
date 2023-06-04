@@ -217,6 +217,7 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         ifs.close();
     }
 
+    delete[] is_read;
     delete[] rvalue;
     delete[] rgrid;
 }
