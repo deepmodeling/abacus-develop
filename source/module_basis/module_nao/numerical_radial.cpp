@@ -161,7 +161,7 @@ void NumericalRadial::build(const int l,
     assert(grid && value);
 
     // grid must be strictly increasing and every element must be non-negative
-    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<>())); // std::less<>() would allow equal values
+    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<double>())); // std::less<>() would allow equal values
     assert(grid[0] >= 0.0);
 
     symbol_ = symbol;
@@ -242,7 +242,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
     assert(ngrid > 1);
 
     // grid must be strictly increasing and every element must be non-negative
-    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<>())); // std::less<>() would allow equal values
+    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<double>())); // std::less<>() would allow equal values
     assert(grid[0] >= 0.0);
 
     // tbu stands for "to be updated"
