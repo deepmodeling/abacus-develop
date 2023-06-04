@@ -65,6 +65,7 @@ void RPA_LRI<Tdata>::cal_postSCF_exx(const Local_Orbital_Charge& loc,
                 const K_Vectors& kv,
                 const Parallel_Orbitals& pv)
 {
+    exx_lri_rpa.mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
     exx_lri_rpa.mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
     if(GlobalV::GAMMA_ONLY_LOCAL)
         exx_lri_rpa.mix_DMk_2D.mix(loc.dm_gamma, true);

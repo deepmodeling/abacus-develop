@@ -34,7 +34,7 @@ public:
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter);
 
-    /// @brief in hamilt2density: calcate Hexx and Eexx
+    /// @brief in hamilt2density: calculate Hexx and Eexx
     void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv);
 
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop

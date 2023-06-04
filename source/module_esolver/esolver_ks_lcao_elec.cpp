@@ -211,7 +211,7 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                Gint_inout inout(this->LOC.DM, pelec->charge, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM, pelec->charge->rho, Gint_Tools::job_type::rho);
                 this->UHM.GG.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
@@ -219,13 +219,13 @@ namespace ModuleESolver
                     {
                         ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], pw_rho->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM, pelec->charge, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM, pelec->charge->kin_r, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
                 }
             }
             else
             {
-                Gint_inout inout(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM_R, pelec->charge->rho, Gint_Tools::job_type::rho);
                 this->UHM.GK.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
@@ -233,7 +233,7 @@ namespace ModuleESolver
                     {
                         ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], pw_rho->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM_R, pelec->charge->kin_r, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
                 }
             }

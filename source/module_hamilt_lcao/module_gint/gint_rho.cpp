@@ -61,7 +61,7 @@ void Gint::gint_kernel_rho(
 		this->cal_meshball_rho(
 			na_grid, block_index,
 			vindex, psir_ylm.ptr_2D,
-			psir_DM.ptr_2D, inout->chr->rho[is]);
+			psir_DM.ptr_2D, inout->rho[is]);
 	}
 	delete[] block_iw;
 	delete[] block_index;
