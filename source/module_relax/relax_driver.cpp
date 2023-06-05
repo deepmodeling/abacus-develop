@@ -66,23 +66,22 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
                 p_esolver->cal_Stress(stress);
             }
 
-            if (GlobalV::relax_new)
-            {
-                stop = rl.relax_step(force, stress, this->etot);
-            }
-            else
-            {
-                stop = rl_old.relax_step(istep,
-                                         this->etot,
-                                         GlobalC::ucell,
-                                         force,
-                                         stress,
-                                         force_step,
-                                         stress_step); // pengfei Li 2018-05-14
-            }
-
             if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
             {
+                if (GlobalV::relax_new)
+                {
+                    stop = rl.relax_step(force, stress, this->etot);
+                }
+                else
+                {
+                    stop = rl_old.relax_step(istep,
+                                             this->etot,
+                                             GlobalC::ucell,
+                                             force,
+                                             stress,
+                                             force_step,
+                                             stress_step); // pengfei Li 2018-05-14
+                }
                 // print structure
                 std::stringstream ss, ss1;
                 ss << GlobalV::global_out_dir << "STRU_ION_D";

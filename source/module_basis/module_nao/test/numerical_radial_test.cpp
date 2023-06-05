@@ -14,7 +14,7 @@ using ModuleBase::PI;
 using ModuleBase::SphericalBesselTransformer;
 
 /***********************************************************
- *      unit test of class "Numerical_Orbital_Lm"
+ *      Unit test of class "NumericalRadial"
  ***********************************************************/
 /*!
  *  Tested functions:
@@ -95,7 +95,7 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
 
     NumericalRadial chi2(chi);
     EXPECT_EQ(chi.symbol(), chi2.symbol());
-    EXPECT_EQ(chi.ichi(), chi2.ichi());
+    EXPECT_EQ(chi.izeta(), chi2.izeta());
     EXPECT_EQ(chi.itype(), chi2.itype());
     EXPECT_EQ(chi.l(), chi2.l());
 
@@ -123,12 +123,12 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_EQ(chi.pr(), chi2.pr());
     EXPECT_EQ(chi.pk(), chi2.pk());
     EXPECT_EQ(chi.is_fft_compliant(), chi2.is_fft_compliant());
-    EXPECT_NE(chi.sbt(), chi2.sbt());
+    EXPECT_NE(chi.ptr_sbt(), chi2.ptr_sbt());
 
     NumericalRadial chi3;
     chi3 = chi;
     EXPECT_EQ(chi.symbol(), chi3.symbol());
-    EXPECT_EQ(chi.ichi(), chi3.ichi());
+    EXPECT_EQ(chi.izeta(), chi3.izeta());
     EXPECT_EQ(chi.itype(), chi3.itype());
     EXPECT_EQ(chi.l(), chi3.l());
 
@@ -160,13 +160,13 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     SphericalBesselTransformer sbt;
     chi.set_transformer(&sbt, 1);
     chi3 = chi;
-    EXPECT_EQ(chi3.sbt(), chi.sbt());
+    EXPECT_EQ(chi3.ptr_sbt(), chi.ptr_sbt());
 
     // nullptr means use an internal transformer
     chi.set_transformer(nullptr, 0);
     chi.set_transformer(nullptr, -1);
     chi3 = chi;
-    EXPECT_NE(chi3.sbt(), chi.sbt());
+    EXPECT_NE(chi3.ptr_sbt(), chi.ptr_sbt());
 
     // self assignment is not common, but it should not throw
     EXPECT_NO_THROW(chi3 = chi3);
@@ -182,7 +182,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     int sz = 5000;
     int pr = -1;
     int itype = 3;
-    int ichi = 5;
+    int izeta = 5;
     std::string symbol = "Au";
     for (int ir = 0; ir != sz; ++ir)
     {
@@ -191,10 +191,10 @@ TEST_F(NumericalRadialTest, BuildAndGet)
         f[ir] = std::exp(-r);
     }
 
-    chi.build(l, true, sz, grid, f, pr, itype, ichi, symbol);
+    chi.build(l, true, sz, grid, f, pr, izeta, symbol, itype);
 
     EXPECT_EQ(chi.symbol(), symbol);
-    EXPECT_EQ(chi.ichi(), ichi);
+    EXPECT_EQ(chi.izeta(), izeta);
     EXPECT_EQ(chi.itype(), itype);
     EXPECT_EQ(chi.l(), l);
 
@@ -218,7 +218,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     EXPECT_EQ(chi.pk(), 0);
     EXPECT_EQ(chi.is_fft_compliant(), false);
 
-    EXPECT_NE(chi.sbt(), nullptr);
+    EXPECT_NE(chi.ptr_sbt(), nullptr);
 }
 
 TEST_F(NumericalRadialTest, GridSetAndWipe)
@@ -317,38 +317,71 @@ TEST_F(NumericalRadialTest, SetUniformGrid)
     }
 }
 
-// TEST_F(NumericalRadialTest, Interpolate) {
-//     /*
-//      * This test starts with a NumericalRadial object with k-space values
-//      *
-//      *          48*sqrt(2/pi) * k^2  / (k^2+1)^4
-//      *
-//      * on a non-uniform k-grid. A uniform k-grid is then set up with values
-//      * obtained by interpolation. Finally, a FFT-compliant r-grid is set up,
-//      * and the r-space values are checked with the analytic expression
-//      *
-//      *          r^2 * exp(-r)
-//      *                                                                      */
-//     double dk = PI/50;
-//     int sz = 10000;
-//     int pk = -2;
-//     double pref = 48 * std::sqrt(2./PI);
-//     for (int ik = 0; ik != sz; ++ik) {
-//         double k = ik * dk;
-//         grid[ik] = k;
-//         f[ik] = pref / std::pow(k*k+1, 4);
-//     }
-//
-//     chi.build(2, false, sz, grid, f, pk);
-//     chi.set_uniform_grid(false, sz, PI/dk, 'i', true);
-//
-//     double dr = PI / chi.kcut();
-//     for (int ir = 100; ir != sz; ++ir)
-//     {
-//         double r = ir * dr;
-//         EXPECT_NEAR(r*r*std::exp(-r), chi.ptr_rvalue()[ir], tol);
-//     }
-// }
+TEST_F(NumericalRadialTest, Interpolate) {
+    /*
+     * This test starts with a NumericalRadial object with k-space values
+     *
+     *          48*sqrt(2/pi) * k^2  / (k^2+1)^4
+     *
+     * on a non-uniform k-grid. A uniform k-grid is then set up with values
+     * obtained by interpolation. Finally, a FFT-compliant r-grid is set up,
+     * and the r-space values are checked with the analytic expression
+     *
+     *          r^2 * exp(-r)
+     *                                                                      */
+    double dk = 0.01;
+    int sz = 10000;
+    int pk = -2;
+    double pref = 48 * std::sqrt(2./PI);
+    for (int ik = 0; ik != sz; ++ik) {
+        double k = ik * dk;
+        k *= std::exp(0.02*k);
+        grid[ik] = k;
+        f[ik] = pref / std::pow(k*k+1, 4);
+    }
+
+    chi.build(2, false, sz, grid, f, pk);
+
+    chi.set_uniform_grid(false, sz, PI/50*(sz-1), 'i', true);
+
+    double dr = PI / chi.kcut();
+    for (int ir = 0; ir != sz; ++ir)
+    {
+        double r = ir * dr;
+        EXPECT_NEAR(r*r*std::exp(-r), chi.ptr_rvalue()[ir], tol*2); // slightly relax the tolerance due to interpolation
+    }
+}
+
+TEST_F(NumericalRadialTest, ZeroPadding) {
+    /*
+     * This test checks whether set_grid properly pads the value array.
+     *                                                                      */
+    double dk = PI / 50;
+    int sz1 = 2000;
+    int pk = -2;
+    double pref = 48 * std::sqrt(2. / PI);
+    for (int ik = 0; ik != sz1; ++ik)
+    {
+        double k = ik * dk;
+        grid[ik] = k;
+        f[ik] = pref / std::pow(k * k + 1, 4);
+    }
+
+    chi.build(2, false, sz1, grid, f, pk);
+
+    int sz2 = 10000;
+    chi.set_uniform_grid(false, sz2, dk*(sz2-1), 'i');
+
+    for (int ik = 0; ik != sz1; ++ik)
+    {
+        EXPECT_EQ(f[ik], chi.ptr_kvalue()[ik]);
+    }
+
+    for (int ik = sz1; ik != sz2; ++ik)
+    {
+        EXPECT_EQ(0.0, chi.ptr_kvalue()[ik]);
+    }
+}
 
 TEST_F(NumericalRadialTest, SetValue)
 {
@@ -497,4 +530,23 @@ TEST_F(NumericalRadialTest, RadialTable)
     }
 
     delete[] table;
+}
+
+int main(int argc, char** argv)
+{
+
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+#endif
+
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+
+    fftw_cleanup();
+
+    return result;
 }

@@ -1,6 +1,7 @@
 #include "esolver_of.h"
 
 #include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 
 //-----------temporary-------------------------
 #include "module_base/global_function.h"
@@ -932,7 +933,7 @@ void ESolver_OF::afterOpt()
             int precision = 3; // be consistent with esolver_ks_lcao.cpp
             std::stringstream ssp;
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(
+            ModuleIO::write_potential(
 #ifdef __MPI
                 pw_big->bz,
                 pw_big->nbz,

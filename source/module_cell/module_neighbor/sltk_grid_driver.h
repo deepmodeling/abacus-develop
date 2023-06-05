@@ -125,4 +125,8 @@ private:
 	)const;
 };
 
+namespace GlobalC
+{
+extern Grid_Driver GridD;
+}
 #endif
