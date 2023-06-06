@@ -1,5 +1,3 @@
-remove_definitions(-D__MPI)
-
 AddTest(
   TARGET numerical_radial
   SOURCES

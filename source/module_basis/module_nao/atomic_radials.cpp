@@ -9,6 +9,7 @@
 
 void AtomicRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
 {
+    // deallocates all arrays and reset variables
     cleanup();
 
     std::ifstream ifs;
@@ -21,6 +22,7 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
     }
 
 #ifdef __MPI
+    // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
     Parallel_Common::bcast_bool(is_open);
 #endif
 
@@ -144,17 +146,27 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
     }
 
 #ifdef __MPI
+    // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
     Parallel_Common::bcast_string(symbol_);
     Parallel_Common::bcast_double(orb_ecut_);
     Parallel_Common::bcast_int(lmax_);
-    Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
 
     Parallel_Common::bcast_int(nchi_);
     Parallel_Common::bcast_int(nzeta_max_);
-    Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
 
     Parallel_Common::bcast_int(ngrid);
     Parallel_Common::bcast_double(dr);
+#endif
+
+    if (rank != 0) {
+        nzeta_ = new int[lmax_ + 1];
+        index_map_ = new int[(lmax_ + 1) * nzeta_max_];
+    }
+
+#ifdef __MPI
+    // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
+    Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
+    Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
 #endif
 
     double* rvalue = new double[ngrid];
@@ -201,6 +213,7 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         }
 
 #ifdef __MPI
+        // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
         Parallel_Common::bcast_int(l);
         Parallel_Common::bcast_int(izeta);
         Parallel_Common::bcast_double(rvalue, ngrid);
