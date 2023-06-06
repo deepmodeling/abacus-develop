@@ -45,6 +45,11 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
 
     itype_ = itype;
     read_abacus_orb(ifs, ptr_log, rank);
+
+    if (rank == 0)
+    {
+        ifs.close();
+    }
 }
 
 void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, const int rank)
@@ -81,10 +86,6 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
             else if (tmp == "Cutoff(Ry)")
             {
                 ifs >> orb_ecut_;
-            }
-            else if (tmp == "Cutoff(a.u.)")
-            {
-                ifs >> rcut_max_; // orbitals in an ABACUS orbital file have the same cutoff radius
             }
             else if (tmp == "Lmax")
             {
@@ -210,11 +211,6 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
 
         chi_[index(l, izeta)].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype_);
         chi_[index(l, izeta)].normalize();
-    }
-
-    if (rank == 0)
-    {
-        ifs.close();
     }
 
     delete[] is_read;

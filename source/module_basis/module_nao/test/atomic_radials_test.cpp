@@ -14,7 +14,7 @@
 /*!
  *  Tested functions:
  *
- *  - read
+ *  - build
  *      - parse an orbital file and initialize the NumericalRadial objects
  *
  *  - all "getters"

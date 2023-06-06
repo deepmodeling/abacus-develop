@@ -153,9 +153,6 @@ class NumericalRadial
     //! Saves the data to file (what data, in what format?)
     void save(std::string file = "" /*! file name */) const;
 
-    //! Set itype for the object.
-    void set_itype(const int itype) { itype_ = itype; }
-
     //! Computes the radial table for two-center integrals.
     /*!
      *  TODO add support for non-FFT-compliant grid
@@ -249,13 +246,15 @@ class NumericalRadial
     //! gets r-space grid cutoff distance
     double rcut() const
     {
-        return rgrid_ ? rgrid_[nr_ - 1] : 0.0;
+        assert(rgrid_);
+        return rgrid_[nr_ - 1];
     }
 
     //! gets k-space grid cutoff distance
     double kcut() const
     {
-        return kgrid_ ? kgrid_[nk_ - 1] : 0.0;
+        assert(kgrid_);
+        return kgrid_[nk_ - 1];
     }
 
     //! gets the pointer to r-space grid points

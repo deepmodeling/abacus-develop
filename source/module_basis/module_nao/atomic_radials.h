@@ -25,10 +25,8 @@
 class AtomicRadials : public RadialSet
 {
   public:
-    AtomicRadials(){};
-    ~AtomicRadials()
-    {
-    } // ~RadialSet() is called automatically
+    AtomicRadials() {}
+    ~AtomicRadials() {} // ~RadialSet() is called automatically
 
     //! Build the class from an orbital file
     void build(const std::string& file,          //!< orbital file name
@@ -38,10 +36,7 @@ class AtomicRadials : public RadialSet
     );
 
     //! Get the energy cutoff as given by the orbital file
-    double orb_ecut() const
-    {
-        return orb_ecut_;
-    }
+    double orb_ecut() const { return orb_ecut_; }
 
   private:
     double orb_ecut_; //!< energy cutoff as given by the orbital file

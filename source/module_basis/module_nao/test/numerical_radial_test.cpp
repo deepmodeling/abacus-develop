@@ -201,7 +201,6 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     EXPECT_EQ(chi.nr(), sz);
     EXPECT_EQ(chi.nk(), 0);
     EXPECT_EQ(chi.rcut(), grid[sz - 1]);
-    EXPECT_EQ(chi.kcut(), 0);
 
     ASSERT_NE(chi.ptr_rgrid(), nullptr);
     ASSERT_NE(chi.ptr_rvalue(), nullptr);
