@@ -34,6 +34,7 @@ TEST(PropagatorTest, testPropagatorETRS)
     pv->nrow = nlocal;
     pv->dim0 = 1;
     pv->dim1 = 1;
+    pv->nb = 1;
 
     int dim[2];
     int period[2] = {1, 1};
