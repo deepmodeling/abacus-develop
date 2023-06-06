@@ -22,7 +22,10 @@ class RadialSet
 {
   public:
     RadialSet(){};
-    ~RadialSet();
+    RadialSet(const RadialSet&);            //!< deep copy
+    RadialSet& operator=(const RadialSet&); //!< deep copy
+
+    virtual ~RadialSet();
 
     //! build the set of numerical radial functions from a file
     virtual void build(const std::string& file,                //!< orbital or pseudopotential file
@@ -37,36 +40,14 @@ class RadialSet
      *  Get access to private members.
      *                                                                      */
     //!@{
-    const std::string& symbol() const
-    {
-        return symbol_;
-    }
-    int itype() const
-    {
-        return itype_;
-    }
-    int lmax() const
-    {
-        return lmax_;
-    }
+    const std::string& symbol() const { return symbol_; }
+    int itype() const { return itype_; }
+    int lmax() const { return lmax_; }
+    double rcut_max() const;
 
-    int nzeta(int l) const
-    {
-        return nzeta_[l];
-    }
-    int nzeta_max() const
-    {
-        return nzeta_max_;
-    }
-    int nchi() const
-    {
-        return nchi_;
-    }
-
-    double rcut_max() const
-    {
-        return rcut_max_;
-    }
+    int nzeta(int l) const { return nzeta_[l]; }
+    int nzeta_max() const { return nzeta_max_; }
+    int nchi() const { return nchi_; }
 
     const NumericalRadial& chi(int l, int izeta);
     //!@}
@@ -97,8 +78,6 @@ class RadialSet
     int* nzeta_ = nullptr; //!< number of NumericalRadial objects for each angular momentum
     int nzeta_max_ = 0;    //!< maximum number of NumericalRadial objects among each angular momentum
     int nchi_ = 0;         //!< total number of NumericalRadial objects
-
-    double rcut_max_ = 0; //!< maximum r-space cutoff radius among all NumericalRadial objects
 
     NumericalRadial* chi_ = nullptr; //!< array of NumericalRadial objects
 
