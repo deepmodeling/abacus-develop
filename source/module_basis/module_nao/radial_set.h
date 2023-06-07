@@ -7,21 +7,20 @@
 
 #include "module_basis/module_nao/numerical_radial.h"
 
-//! An abstract class representing a related set of numerical radial functions
+//! An abstract class representing a related set of numerical radial functions.
 /*!
  *  This abstract class represents a set of numerical radial functions from
- *  a single file and of the same "itype" number. This is supposed to be the
- *  base class for concrete classes like AtomicRadials and BetaRadials, in
- *  which case "itype" is the element index in calculation, and they represent
- *  the set of all radial functions of the numerical atomic orbitals and
- *  Kleinman-Bylander beta functions of a single element respectively.
+ *  a single file. This is supposed to be the base class for concrete classes
+ *  like AtomicRadials and BetaRadials, in which case they represent the set
+ *  of all radial functions of the numerical atomic orbitals and Kleinman-
+ *  Bylander beta functions of a single element respectively.
  *
  *  @see AtomicRadials BetaRadials
  *                                                                          */
 class RadialSet
 {
   public:
-    RadialSet(){};
+    RadialSet() {}
     RadialSet(const RadialSet&);            //!< deep copy
     RadialSet& operator=(const RadialSet&); //!< deep copy
 
@@ -45,7 +44,11 @@ class RadialSet
     int lmax() const { return lmax_; }
     double rcut_max() const;
 
-    int nzeta(int l) const { return nzeta_[l]; }
+    int nzeta(int l) const
+    {
+        assert(l >= 0 && l <= lmax_);
+        return nzeta_[l];
+    }
     int nzeta_max() const { return nzeta_max_; }
     int nchi() const { return nchi_; }
 
@@ -88,6 +91,9 @@ class RadialSet
 
     //! get the index in chi_ array from (l,izeta)
     int index(const int l, const int izeta) const;
+
+    //! calculate nzeta_max_ and build index_map_ from nzeta_ and lmax_
+    void indexing();
 };
 
 #endif

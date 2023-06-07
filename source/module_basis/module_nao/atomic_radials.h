@@ -15,11 +15,9 @@
  *      int element_index = 1;
  *      std::ofstream ofs_log("/path/to/log/file");
  *      std::string orb_file = "/path/to/orbital/file";
- *      int rank = 0;
- *      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
  *
  *      AtomicRadials O_radials;
- *      O_radials.build(orb_file, element_index, ofs_log, rank);
+ *      O_radials.build(orb_file, element_index, ofs_log, GlobalV::MY_RANK);
  *
  *                                                                          */
 class AtomicRadials : public RadialSet

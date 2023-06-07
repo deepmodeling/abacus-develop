@@ -87,6 +87,16 @@ class RadialCollection
     int ntype_ = 0; //!< number of RadialSet in the collection
     int lmax_ = -1; //!< maximum angular momentum of all NumericalRadial objects in the collection
     int nchi_ = 0;  //!< total number of NumericalRadial objects in the collection
+
+    //! array of RadialSet objects
+    /*!
+     *  Each object hold a set of NumericalRadial objects that belong to a single element.
+     *  The set could be either atomic orbitals or beta functions, in which case the
+     *  underlying objects are AtomicRadials or BetaRadials, respectively.
+     *
+     *  NOTE: AtomicRadials and BetaRadials do not necessarily have the same size as
+     *  RadialSet. Therefore, a multilevel pointer is necessary for polymorphism.
+     *                                                                                    */
     RadialSet** radset_ = nullptr;
 
     void cleanup();

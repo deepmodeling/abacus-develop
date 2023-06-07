@@ -22,7 +22,6 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
     }
 
 #ifdef __MPI
-    // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
     Parallel_Common::bcast_bool(is_open);
 #endif
 
@@ -119,34 +118,14 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
          * 3. a map from (l, izeta) to 1-d array index in chi_
          *                                                                              */
         nchi_ = 0;
-        nzeta_max_ = 0;
         for (int l = 0; l <= lmax_; ++l)
         {
             nchi_ += nzeta_[l];
-            nzeta_max_ = std::max(nzeta_[l], nzeta_max_);
         }
-
-        index_map_ = new int[(lmax_ + 1) * nzeta_max_];
-        int index_chi = 0;
-        for (int l = 0; l <= lmax_; ++l)
-        {
-            for (int izeta = 0; izeta != nzeta_max_; ++izeta)
-            {
-                if (izeta >= nzeta_[l])
-                {
-                    index_map_[l * nzeta_max_ + izeta] = -1; // -1 means no such orbital
-                }
-                else
-                {
-                    index_map_[l * nzeta_max_ + izeta] = index_chi;
-                    ++index_chi;
-                }
-            }
-        }
+        indexing(); // calculate nzeta_max_ and build index_map_
     }
 
 #ifdef __MPI
-    // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
     Parallel_Common::bcast_string(symbol_);
     Parallel_Common::bcast_double(orb_ecut_);
     Parallel_Common::bcast_int(lmax_);
@@ -158,13 +137,13 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
     Parallel_Common::bcast_double(dr);
 #endif
 
-    if (rank != 0) {
+    if (rank != 0)
+    {
         nzeta_ = new int[lmax_ + 1];
         index_map_ = new int[(lmax_ + 1) * nzeta_max_];
     }
 
 #ifdef __MPI
-    // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
     Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
     Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
 #endif
@@ -213,7 +192,6 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         }
 
 #ifdef __MPI
-        // NOTE Paralle_Common::bcast_xxx use GlobalV::MY_RANK. Use with care!
         Parallel_Common::bcast_int(l);
         Parallel_Common::bcast_int(izeta);
         Parallel_Common::bcast_double(rvalue, ngrid);

@@ -36,15 +36,15 @@ void RadialCollection::cleanup()
     nchi_ = 0;
 }
 
-void RadialCollection::build(const int nfile, const std::string* const file, const char type)
+void RadialCollection::build(const int nfile, const std::string* const file, const char file_type)
 {
-    assert(type == 'o' || type == 'p');
+    assert(file_type == 'o' || file_type == 'p');
 
     cleanup();
 
     ntype_ = nfile;
     radset_ = new RadialSet*[ntype_];
-    switch (type)
+    switch (file_type)
     {
     case 'o':
         for (int itype = 0; itype < ntype_; ++itype)

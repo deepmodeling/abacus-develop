@@ -12,7 +12,8 @@
  *  Tested functions:
  *
  *  - build
- *      - parse an orbital file and initialize the NumericalRadial objects
+ *      - parse a series of orbital or pseudopotential files and
+ *        initialize AtomicRadials/BetaRadials objects accordingly.
  *
  *  - all "getters"
  *      - Get access to private members.
@@ -27,18 +28,19 @@ class RadialCollectionTest : public ::testing::Test
     void TearDown();
 
     RadialCollection orb;                                         //!< object under test
-    int nfile = 0; // number of orbital files
+    int nfile = 0; // number of orbital/pseudopotential files
     std::string* file = nullptr; //!< orbitals file to read from
     std::string log_file = "./test_files/atomic_orbital.log";         //!< file for logging
 };
 
 void RadialCollectionTest::SetUp() {
+    std::string dir = "../../../../../tests/PP_ORB/";
     nfile = 4;
     file = new std::string[nfile];
-    file[0] = "../../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
-    file[1] = "../../../../../tests/PP_ORB/H_gga_8au_60Ry_2s1p.orb";
-    file[2] = "../../../../../tests/PP_ORB/O_gga_10au_100Ry_2s2p1d.orb";
-    file[3] = "../../../../../tests/PP_ORB/Fe_gga_9au_100Ry_4s2p2d1f.orb";
+    file[0] = dir + "C_gga_8au_100Ry_2s2p1d.orb";
+    file[1] = dir + "H_gga_8au_60Ry_2s1p.orb";
+    file[2] = dir + "O_gga_10au_100Ry_2s2p1d.orb";
+    file[3] = dir + "Fe_gga_9au_100Ry_4s2p2d1f.orb";
 }
 
 void RadialCollectionTest::TearDown() {
@@ -84,11 +86,17 @@ TEST_F(RadialCollectionTest, BuildAndGet) {
     EXPECT_EQ(orb.nchi(3), 9);
     EXPECT_EQ(orb.nchi(), 22);
 
-    EXPECT_EQ(orb(0).itype(), 0);
-    EXPECT_EQ(orb(3).itype(), 3);
+    for (int itype = 0; itype <= 3; ++itype) {
+        EXPECT_EQ(orb(itype).itype(), itype);
+    }
 
-    EXPECT_EQ(orb(0, 1, 0).l(), 1);
-    EXPECT_EQ(orb(3, 3, 0).l(), 3);
+    for (int itype = 0; itype <= 3; ++itype) {
+        for (int l = 0; l <= orb(itype).lmax(); ++l) {
+            for (int izeta = 0; izeta != orb(itype).nzeta(l); ++izeta) {
+                EXPECT_EQ(orb(itype, l, izeta).l(), l);
+            }
+        }
+    }
 }
 
 TEST_F(RadialCollectionTest, BatchSet) {
@@ -100,7 +108,7 @@ TEST_F(RadialCollectionTest, BatchSet) {
 
     EXPECT_EQ(orb.rcut_max(), 20.0);
     for (int itype = 0; itype != orb.ntype(); ++itype) {
-        for (int l = 0; l <= orb.lmax(); ++l) {
+        for (int l = 0; l <= orb(itype).lmax(); ++l) {
             for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
                 EXPECT_EQ(&sbt, orb(itype, l, izeta).ptr_sbt());
                 EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), 20.0);
@@ -115,7 +123,7 @@ TEST_F(RadialCollectionTest, BatchSet) {
 
     orb.set_grid(true, 3, grid, 'i');
     for (int itype = 0; itype != orb.ntype(); ++itype) {
-        for (int l = 0; l <= orb.lmax(); ++l) {
+        for (int l = 0; l <= orb(itype).lmax(); ++l) {
             for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
                 EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), 3.14);
             }
