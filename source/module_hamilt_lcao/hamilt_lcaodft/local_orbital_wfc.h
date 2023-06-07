@@ -61,12 +61,14 @@ public:
     // (in which the implementation should be put in header file )
     // because sub-function `write_wfc_nao_complex`contains GlobalC declared in `global.h`
     // which will cause lots of "not defined" if included in a header file.
-    void wfc_2d_to_grid(int out_wfc_lcao,
+    void wfc_2d_to_grid(const int istep,
+                        int out_wfc_lcao,
                         const double* wfc_2d,
                         double** wfc_grid,
                         const ModuleBase::matrix& ekb,
                         const ModuleBase::matrix& wg);
-    void wfc_2d_to_grid(int out_wfc_lcao,
+    void wfc_2d_to_grid(const int istep,
+                        int out_wfc_lcao,
                         const std::complex<double>* wfc_2d,
                         std::complex<double>** wfc_grid,
                         int ik,

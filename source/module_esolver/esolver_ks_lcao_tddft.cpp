@@ -224,11 +224,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             }
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-            if (this->psi != nullptr)
+            if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
+                ModuleIO::saving_HS(istep,
+                                    h_mat.p,
                                     s_mat.p,
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
@@ -236,11 +237,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     this->LOWF.ParaV[0],
                                     1); // LiuXh, 2017-03-21
             }
-            else if (this->psid != nullptr)
+            else if (this->psid != nullptr && (istep % GlobalV::out_interval == 0))
             {
                 hamilt::MatrixBlock<double> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
+                ModuleIO::saving_HS(istep,
+                                    h_mat.p,
                                     s_mat.p,
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
@@ -259,15 +261,18 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
-            if (this->psi != nullptr)
+            if (istep % GlobalV::out_interval == 0)
             {
-                this->psi[0].fix_k(ik);
-                this->pelec->print_psi(this->psi[0]);
-            }
-            else
-            {
-                this->psid[0].fix_k(ik);
-                this->pelec->print_psi(this->psid[0]);
+                if (this->psi != nullptr)
+                {
+                    this->psi[0].fix_k(ik);
+                    this->pelec->print_psi(this->psi[0], istep);
+                }
+                else
+                {
+                    this->psid[0].fix_k(ik);
+                    this->pelec->print_psi(this->psid[0], istep);
+                }
             }
         }
         elecstate::ElecStateLCAO::out_wfc_flag = 0;
