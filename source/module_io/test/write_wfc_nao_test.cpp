@@ -20,6 +20,7 @@ TEST(ModuleIOTest, WriteWfcNao)
     GlobalV::NBANDS = 2;
     GlobalV::NLOCAL = 2;
     GlobalV::CURRENT_SPIN = 0;
+    GlobalV::out_app_flag = 1;
 
     // Set up test data
     std::string filename = "test_wfc_nao.txt";
