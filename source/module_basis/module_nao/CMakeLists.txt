@@ -5,6 +5,7 @@ if(ENABLE_LCAO)
 	numerical_radial.cpp
     radial_set.cpp
     atomic_radials.cpp
+    beta_radials.cpp
     radial_collection.cpp
   )
 

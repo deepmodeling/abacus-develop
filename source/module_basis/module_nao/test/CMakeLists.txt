@@ -17,6 +17,16 @@ AddTest(
 )
 
 AddTest(
+  TARGET beta_radials
+  SOURCES
+    beta_radials_test.cpp
+    ../beta_radials.cpp
+    ../radial_set.cpp
+    ../numerical_radial.cpp
+  LIBS ${math_libs} device base
+)
+
+AddTest(
   TARGET radial_collection
   SOURCES
     radial_collection_test.cpp
