@@ -417,8 +417,10 @@ TEST_F(GlobalFunctionTest, MakeDir)
 {
     GlobalV::MY_RANK = 0;
     ModuleBase::GlobalFunc::MAKE_DIR("scf");
-    std::system("test -d ");
-    std::system("rm -r scf ");
+    auto error1 = std::system("test -d ");
+    EXPECT_EQ(error1, 0);
+    auto error2 = std::system("rm -r scf ");
+    EXPECT_EQ(error2, 0);
     SUCCEED();
 }
 
