@@ -1,5 +1,6 @@
 #include "symmetry_rho.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_base/parallel_common.h"
 
 Symmetry_rho::Symmetry_rho()
 {
@@ -85,6 +86,7 @@ bool Symmetry_rho::psymm(double* rho_part, const ModulePW::PW_Basis *rho_basis, 
 		*/
 	#ifdef __MPI
 	}
+    Parallel_Common::bcast_bool(sreal);
 
 	// (3)
 	const int ncxy = rho_basis->nx * rho_basis->ny;
