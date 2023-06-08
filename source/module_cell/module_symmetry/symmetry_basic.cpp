@@ -985,19 +985,19 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 	g.e23 = gmatrix.e23 * (double)nr3 / (double)nr2;
 	g.e33 = gmatrix.e33;
 
-	ri = int(g.e11 * i + g.e21 * j + g.e31 * k) + (int)(gtrans.x *  nr1);
+	ri = static_cast<int>(std::round(g.e11 * i + g.e21 * j + g.e31 * k)) + static_cast<int>(std::round(gtrans.x *  nr1));
 	if (ri < 0)
 	{
 		ri += 10 * nr1;
 	}
 	ri = ri%nr1;
-	rj = int(g.e12 * i + g.e22 * j + g.e32 * k) + (int)(gtrans.y  * nr2);
+	rj = static_cast<int>(std::round(g.e12 * i + g.e22 * j + g.e32 * k)) + static_cast<int>(std::round(gtrans.y  * nr2));
 	if (rj < 0)
 	{
 		rj += 10 * nr2;
 	}
 	rj = rj%nr2;
-	rk = int(g.e13 * i + g.e23 * j + g.e33 * k) + (int)(gtrans.z  * nr3);
+	rk = static_cast<int>(std::round(g.e13 * i + g.e23 * j + g.e33 * k)) + static_cast<int>(std::round(gtrans.z  * nr3));
 	if (rk < 0)
 	{
 		rk += 10 * nr3;
