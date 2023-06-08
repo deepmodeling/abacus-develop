@@ -19,4 +19,8 @@ if(ENABLE_LCAO)
     add_coverage(tddft)
     endif()
 
+    IF (BUILD_TESTING)
+    add_subdirectory(test)
+    endif()
+
 endif()
