@@ -73,6 +73,8 @@ public:
 
 	int tab;
 
+    bool rhosym_real;	///< true: do rho_symmetry in real space; false: do rho_symmetry in reciprocal space
+
 	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst )const;
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
@@ -97,7 +99,7 @@ public:
 	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
 	void checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double *pos);
 	void pricell(double* pos);
-	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
+	bool rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
 	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);

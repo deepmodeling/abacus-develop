@@ -20,7 +20,7 @@ class Symmetry_rho
 
   private:
 	// in real space:
-	void psymm(double *rho_part, const ModulePW::PW_Basis *pw, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;
+	bool psymm(double *rho_part, const ModulePW::PW_Basis *pw, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;
 	// in reciprocal space:
 	void psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis *rho_basis, 
 			Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;

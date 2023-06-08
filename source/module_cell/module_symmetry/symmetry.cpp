@@ -157,7 +157,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
+    this->rhosym_real = (this->nrot == this->nrotk);
 
     //convert gmatrix to reciprocal space
     this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
@@ -1280,12 +1281,12 @@ void Symmetry::pricell(double* pos)
 
 
 //modified by shu on 2010.01.20
-void Symmetry::rho_symmetry( double *rho,
+bool Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
 {
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
-
+    const double RHOEQ_TOL = 1e-2;  // a reasonable value needs to be discussed
 	// allocate flag for each FFT grid.
     bool* symflag = new bool[nr1 * nr2 * nr3];
     for (int i=0; i<nr1*nr2*nr3; i++)
@@ -1314,7 +1315,17 @@ void Symmetry::rho_symmetry( double *rho,
                     {
                         this->rotate(gmatrix[isym], gtrans[isym], i, j, k, nr1, nr2, nr3, ri[isym], rj[isym], rk[isym]);
                         const int index = ri[isym] * nr2 * nr3 + rj[isym] * nr3 + rk[isym];
-                        sum += rho[ index ];
+                        const int index0 = i * nr2 * nr3 + j * nr3 + k;
+                        //check if the error is too large
+                        if (std::abs(rho[index0] - rho[index]) > RHOEQ_TOL)
+                        {
+                            delete[] symflag;
+                            delete[] ri;
+                            delete[] rj;
+                            delete[] rk;
+                            return false;
+                        }
+                        sum += rho[index];
                     }
                     sum /= nrotk;
 
@@ -1333,7 +1344,8 @@ void Symmetry::rho_symmetry( double *rho,
     delete[] ri;
     delete[] rj;
     delete[] rk;
-    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+    ModuleBase::timer::tick("Symmetry", "rho_symmetry");
+    return true;
 }
 void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
