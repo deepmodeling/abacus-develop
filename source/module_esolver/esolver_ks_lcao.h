@@ -13,6 +13,7 @@
 #endif
 #include "module_io/output_dm.h"
 #include "module_io/output_dm1.h"
+#include "module_io/output_mat_sparse.h"
 
 namespace ModuleESolver
 {
@@ -71,6 +72,9 @@ namespace ModuleESolver
 
         /// @brief create ModuleIO::Output_DM1 object to output sparse density matrix
         ModuleIO::Output_DM1 create_Output_DM1(int istep);
+
+        /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
+        ModuleIO::Output_Mat_Sparse create_Output_Mat_Sparse(int istep);
 
 #ifdef __EXX
         std::shared_ptr<Exx_LRI_Interface<double>> exd = nullptr;
