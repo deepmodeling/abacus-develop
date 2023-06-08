@@ -269,6 +269,7 @@ void ModuleIO::save_HS_triangle(const int istep,
                 g1.open(ssh.str().c_str(), ofstream::app);
                 g2.open(sss.str().c_str(), ofstream::app);
             }
+            else
             {
                 g1.open(ssh.str().c_str());
                 g2.open(sss.str().c_str());
@@ -344,6 +345,7 @@ void ModuleIO::save_HS_triangle(const int istep,
             std::ofstream g1(ssh.str().c_str(), ofstream::app);
             std::ofstream g2(sss.str().c_str(), ofstream::app);
         }
+        else
         {
             std::ofstream g1(ssh.str().c_str());
             std::ofstream g2(sss.str().c_str());
@@ -511,6 +513,7 @@ void ModuleIO::save_HS_complete(const int istep,
                 g1.open(ssh.str().c_str(), ofstream::app);
                 g2.open(sss.str().c_str(), ofstream::app);
             }
+            else
             {
                 g1.open(ssh.str().c_str());
                 g2.open(sss.str().c_str());
@@ -586,6 +589,7 @@ void ModuleIO::save_HS_complete(const int istep,
             std::ofstream g1(ssh.str().c_str(), ofstream::app);
             std::ofstream g2(sss.str().c_str(), ofstream::app);
         }
+        else
         {
             std::ofstream g1(ssh.str().c_str());
             std::ofstream g2(sss.str().c_str());
@@ -785,6 +789,7 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
                 g1.open(ssh.str().c_str(), ofstream::app);
                 g2.open(sss.str().c_str(), ofstream::app);
             }
+            else
             {
                 g1.open(ssh.str().c_str());
                 g2.open(sss.str().c_str());
@@ -861,6 +866,7 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
             std::ofstream g1(ssh.str().c_str(), ofstream::app);
             std::ofstream g2(sss.str().c_str(), ofstream::app);
         }
+        else
         {
             std::ofstream g1(ssh.str().c_str());
             std::ofstream g2(sss.str().c_str());

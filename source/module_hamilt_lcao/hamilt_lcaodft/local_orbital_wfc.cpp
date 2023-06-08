@@ -310,6 +310,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
         {
             ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".dat";
         }
+        else
         {
             ss << GlobalV::global_out_dir << istep << "_"
                << "LOWF_K_" << ik + 1 << ".dat";

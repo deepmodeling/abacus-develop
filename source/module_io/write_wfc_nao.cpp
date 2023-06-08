@@ -15,6 +15,7 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
         {
             ofs.open(name.c_str(), std::ofstream::app);
         }
+        else
         {
             ofs.open(name.c_str());
         }
@@ -60,6 +61,7 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<doubl
         {
             ofs.open(name.c_str(), std::ofstream::app);
         }
+        else
         {
             ofs.open(name.c_str());
         }
