@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                          autotest
-calculation                    scf	#test; scf; relax; nscf; ienvelope; istate;
+calculation                    scf	#test; scf; relax; nscf; get_wf; get_pchg;
 symmetry                       0	#turn symmetry on or off
 
 #Parameters (2.PW)

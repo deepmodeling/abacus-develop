@@ -1,8 +1,8 @@
 #include "record_adj.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 Record_adj::Record_adj() : iat2ca(nullptr) {}
 Record_adj::~Record_adj(){
 	if(info_modified)

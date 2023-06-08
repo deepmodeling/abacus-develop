@@ -10,7 +10,6 @@ threshold=0.0000001
 ca=8
 # regex of case name
 case="^[^#].*_.*$"
-#case="107_PW_OB_outputbands"
 # enable AddressSanitizer
 sanitize=false
 

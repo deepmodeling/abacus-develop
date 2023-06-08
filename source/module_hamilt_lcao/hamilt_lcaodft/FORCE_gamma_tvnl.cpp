@@ -1,6 +1,6 @@
 #include "FORCE_gamma.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include <unordered_map>
 #include "module_base/timer.h"
 

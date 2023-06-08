@@ -120,7 +120,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
         
         ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
     }
-    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac);
+    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac, GlobalC::ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
@@ -215,7 +215,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
             ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
         }
     });
-    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, sf->strucFac);
+    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, sf->strucFac, GlobalC::ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif

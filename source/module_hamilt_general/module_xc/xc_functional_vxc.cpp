@@ -454,6 +454,11 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
         ModuleBase::timer::tick("XC_Functional","v_xc_libxc");
         return std::make_tuple( etxc, vtxc, std::move(v_nspin4) );
     } // end if(4==GlobalV::NSPIN)
+    else//NSPIN != 1,2,4 is not supported
+    {
+        throw std::domain_error("GlobalV::NSPIN ="+std::to_string(GlobalV::NSPIN)
+            +" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
 }
 
 //the interface to libxc xc_mgga_exc_vxc(xc_func,n,rho,grho,laplrho,tau,e,v1,v2,v3,v4)
@@ -765,7 +770,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
     finish_func(funcs);
 
     ModuleBase::timer::tick("XC_Functional","v_xc_meta");
-    return std::make_tuple( etxc, vtxc, move(v), move(vofk) );
+    return std::make_tuple( etxc, vtxc, std::move(v), std::move(vofk) );
 
 }
 

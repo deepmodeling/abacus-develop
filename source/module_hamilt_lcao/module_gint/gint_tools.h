@@ -31,17 +31,17 @@ class Gint_inout
 		LCAO_Matrix *lm;
 
     //output
-        Charge* chr;
+        double** rho;
         ModuleBase::matrix* fvl_dphi;
         ModuleBase::matrix* svl_dphi;
 
         Gint_Tools::job_type job;
 
-	// electron density, multi-k
-        Gint_inout(double **DM_R_in, Charge* chr_in, Gint_Tools::job_type job_in)
+	// electron density and kin_r, multi-k
+        Gint_inout(double **DM_R_in, double** rho_in, Gint_Tools::job_type job_in)
         {
             DM_R = DM_R_in;
-            chr = chr_in;
+            rho = rho_in;
             job = job_in;
         }
 
@@ -91,11 +91,11 @@ class Gint_inout
             job = job_in;
         }
 
-	// electron density, gamma point
-        Gint_inout(double ***DM_in, Charge* chr_in, Gint_Tools::job_type job_in)
+	// electron density and kin_r, gamma point
+        Gint_inout(double ***DM_in, double** rho_in, Gint_Tools::job_type job_in)
         {
             DM = DM_in;
-            chr = chr_in;
+            rho = rho_in;
             job = job_in;
         }
 

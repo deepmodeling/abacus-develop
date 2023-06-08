@@ -231,7 +231,13 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 psi->fix_k(ik);
 #ifdef __MPI
                 // need to deal with NSPIN=4 !!!!
-                lowf.wfc_2d_to_grid(0, psi->get_pointer(), lowf.wfc_k_grid[ik], ik, this->pes->ekb, this->pes->wg);
+                lowf.wfc_2d_to_grid(0,
+                                    psi->get_pointer(),
+                                    lowf.wfc_k_grid[ik],
+                                    ik,
+                                    this->pes->ekb,
+                                    this->pes->wg,
+                                    kv.kvec_c);
 #else
                 for (int i = 0;i < GlobalV::NBANDS;++i)
                 {
@@ -240,7 +246,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 }
 #endif
                 //deal with NSPIN=4
-                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin], GlobalC::kv.kvec_c, GlobalC::kv.kvec_d);
+                gk.cal_env_k(ik, lowf.wfc_k_grid[ik][ib], pes->charge->rho[ispin], kv.kvec_c, kv.kvec_d);
 
                 std::stringstream ss;
                 ss << GlobalV::global_out_dir << "BAND" << ib + 1 << "_k_" << ik / nspin0 + 1 << "_s_" << ispin + 1 << "_ENV.cube";

@@ -43,9 +43,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::KSPACING[1],0.0);
 	EXPECT_EQ(GlobalV::KSPACING[2],0.0);
 	EXPECT_DOUBLE_EQ(GlobalV::MIN_DIST_COEF,0.2);
-	EXPECT_EQ(GlobalV::NBANDS,8);
-	EXPECT_EQ(GlobalC::wf.pw_seed,1);
-	EXPECT_EQ(GlobalV::NBANDS_ISTATE,5);
+    EXPECT_EQ(GlobalV::NBANDS, 8);
+    EXPECT_EQ(GlobalV::NBANDS_ISTATE,5);
 	EXPECT_EQ(GlobalV::device_flag,"cpu");
 	EXPECT_EQ(GlobalV::KPAR,1);
 	EXPECT_EQ(GlobalV::NSTOGROUP,1);
@@ -79,10 +78,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::relax_new,true);
 	EXPECT_EQ(GlobalV::OUT_LEVEL,"ie");
 	EXPECT_DOUBLE_EQ(Ions_Move_CG::RELAX_CG_THR,0.5);
-	EXPECT_EQ(ModuleSymmetry::Symmetry::symm_flag,1);
-	EXPECT_DOUBLE_EQ(GlobalC::symm.epsilon,0.00001);
-	EXPECT_EQ(GlobalV::BASIS_TYPE,"lcao");
-	EXPECT_EQ(GlobalV::KS_SOLVER,"genelpa");
+    EXPECT_EQ(ModuleSymmetry::Symmetry::symm_flag, 1);
+    EXPECT_EQ(GlobalV::BASIS_TYPE, "lcao");
+    EXPECT_EQ(GlobalV::KS_SOLVER,"genelpa");
 	EXPECT_EQ(GlobalV::SEARCH_RADIUS,-1);
 	EXPECT_EQ(GlobalV::SEARCH_PBC,1);
 	EXPECT_EQ(GlobalV::GAMMA_ONLY_LOCAL,true);
@@ -103,9 +101,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::TEST_STRESS,0);
 	EXPECT_EQ(GlobalV::test_skip_ewald,0);
 	EXPECT_DOUBLE_EQ(GlobalV::SCF_THR,0.00000001);
-	EXPECT_EQ(GlobalV::SCF_THR_TYPE,2);
-	EXPECT_EQ(GlobalC::wf.init_wfc,"atomic");
-    EXPECT_EQ(GlobalC::wf.mem_saver, 0);
+    EXPECT_EQ(GlobalV::SCF_THR_TYPE, 2);
     EXPECT_EQ(GlobalV::LSPINORB,false);
 	EXPECT_EQ(GlobalV::NONCOLIN,false);
 	EXPECT_EQ(GlobalV::DOMAG,false);
@@ -143,9 +139,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::chg_extrap,"atomic");
 	EXPECT_EQ(GlobalV::out_chg,false);
 	EXPECT_EQ(GlobalV::nelec,0.0);
-	EXPECT_EQ(GlobalV::out_pot,2);
-	EXPECT_EQ(GlobalC::wf.out_wfc_pw,0);
-    EXPECT_EQ(GlobalC::wf.out_wfc_r, false);
+    EXPECT_EQ(GlobalV::out_pot, 2);
     EXPECT_EQ(GlobalV::out_app_flag, false);
     EXPECT_EQ(GlobalV::out_bandgap, false);
     EXPECT_EQ(Local_Orbital_Charge::out_dm,false);
@@ -415,29 +409,6 @@ TEST_F(InputConvTest,cell_factor  )
 	INPUT.cell_factor=1.0;
 	Input_Conv::Convert();
 	EXPECT_EQ(INPUT.cell_factor,2.0);
-}
-
-TEST_F(InputConvTest,mixing_beta2 )
-{
-	INPUT.Default();
-	std::string input_file = "./support/INPUT";
-	INPUT.Read(input_file);
-	INPUT.mixing_beta=2.0;
-	std::string output2;
-	testing::internal::CaptureStdout();
-	Input_Conv::Convert();
-	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_EQ(GlobalC::CHR_MIX.autoset,false);
-}
-
-TEST_F(InputConvTest,mixing_beta )
-{
-	INPUT.Default();
-	std::string input_file = "./support/INPUT";
-	INPUT.Read(input_file);
-	INPUT.mixing_beta=-10.0;
-	Input_Conv::Convert();
-	EXPECT_EQ(GlobalC::CHR_MIX.autoset,true);
 }
 
 TEST_F(InputConvTest,neighbour  )

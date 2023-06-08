@@ -64,7 +64,8 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
         h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
         h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
     }
-    FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *gcar = nullptr, *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(),  *kvec_c = GlobalC::wfcpw->get_kvec_c_data<FPTYPE>(),
+    FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *gcar = nullptr,
+           *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(), *kvec_c = wfc_basis->get_kvec_c_data<FPTYPE>(),
            *qvec = nullptr;
     resmem_var_op()(this->ctx, qvec, 3);
     resmem_var_op()(this->ctx, stress, 9);

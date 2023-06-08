@@ -14,8 +14,9 @@ list(APPEND objects
     potentials/pot_local.cpp
     potentials/potential_new.cpp
     potentials/potential_types.cpp
-    potentials/write_pot.cpp
     module_charge/charge.cpp
+    module_charge/charge_init.cpp
+    module_charge/charge_mpi.cpp
     module_charge/charge_broyden.cpp
     module_charge/charge_extra.cpp
     module_charge/charge_mixing.cpp

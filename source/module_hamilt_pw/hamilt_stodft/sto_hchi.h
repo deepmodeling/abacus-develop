@@ -1,6 +1,7 @@
 #ifndef STO_HCHI_H
 #define STO_HCHI_H
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_cell/klist.h"
 
 //-----------------------------------------------------
 // h * chi

@@ -107,6 +107,7 @@ _OB    output bands file
 _OD    output DOS file
 _OW    output wave functions
 _OC    output charge density
+_OK    output kinetic energy density
 
 _GO    gamma_only method
 _KP    all K-Points method

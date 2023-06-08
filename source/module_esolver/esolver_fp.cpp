@@ -1,16 +1,21 @@
 #include "esolver_fp.h"
-#include "../module_base/global_variable.h"
-#include "../module_hamilt_pw/hamilt_pwdft/global.h"
+
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/input.h"
 namespace ModuleESolver
 {   ESolver_FP::ESolver_FP()
     {
         // pw_rho = new ModuleBase::PW_Basis();
         
         pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
-        GlobalC::rhopw = this->pw_rho; //Temporary
+
         //temporary, it will be removed
-        GlobalC::bigpw = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);
-        GlobalC::bigpw->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
+        pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);
+        pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
+        sf.set(INPUT.nbspline);
+
+        this->symm.epsilon = INPUT.symmetry_prec;
     }
     ESolver_FP::~ESolver_FP()
     {
@@ -59,12 +64,12 @@ namespace ModuleESolver
             pw_rho->collect_local_pw(); 
             pw_rho->collect_uniqgg();
 
-            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
         }
         else if (GlobalV::md_prec_level == 1)
         {
-            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
         }
         else if (GlobalV::md_prec_level == 2)
@@ -83,18 +88,20 @@ namespace ModuleESolver
 
         if(ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            GlobalC::symm.analy_sys(cell, GlobalV::ofs_running);
+            symm.analy_sys(cell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
-        GlobalC::kv.set_after_vc(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
+        kv.set_after_vc(symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
     void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)
     {
-        std::cout << " UNIFORM GRID DIM     : " << GlobalC::rhopw->nx << " * " << GlobalC::rhopw->ny << " * " << GlobalC::rhopw->nz << std::endl;
-        std::cout << " UNIFORM GRID DIM(BIG): " << GlobalC::bigpw->nbx << " * " << GlobalC::bigpw->nby << " * " << GlobalC::bigpw->nbz << std::endl;
+        std::cout << " UNIFORM GRID DIM     : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz
+                  << std::endl;
+        std::cout << " UNIFORM GRID DIM(BIG): " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
+                  << std::endl;
 
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -120,10 +127,10 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::OUT(ofs,"energy cutoff for charge/potential (unit:Ry)", ecut);
             
 	    ModuleBase::GlobalFunc::OUT(ofs,"fft grid for charge/potential", this->pw_rho->nx,this->pw_rho->ny,this->pw_rho->nz);
-	    ModuleBase::GlobalFunc::OUT(ofs,"fft grid division",GlobalC::bigpw->bx,GlobalC::bigpw->by,GlobalC::bigpw->bz);
-	    ModuleBase::GlobalFunc::OUT(ofs,"big fft grid for charge/potential",GlobalC::bigpw->nbx,GlobalC::bigpw->nby,GlobalC::bigpw->nbz);
-        ModuleBase::GlobalFunc::OUT(ofs,"nbxx",GlobalC::bigpw->nbxx);
-	    ModuleBase::GlobalFunc::OUT(ofs,"nrxx",this->pw_rho->nrxx);
+        ModuleBase::GlobalFunc::OUT(ofs, "fft grid division", pw_big->bx, pw_big->by, pw_big->bz);
+        ModuleBase::GlobalFunc::OUT(ofs, "big fft grid for charge/potential", pw_big->nbx, pw_big->nby, pw_big->nbz);
+        ModuleBase::GlobalFunc::OUT(ofs, "nbxx", pw_big->nbxx);
+        ModuleBase::GlobalFunc::OUT(ofs, "nrxx", this->pw_rho->nrxx);
 
         ofs << "\n SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
         ModuleBase::GlobalFunc::OUT(ofs,"number of plane waves",this->pw_rho->npwtot);

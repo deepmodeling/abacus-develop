@@ -1,227 +1,158 @@
- *********************************************************
- *                                                       *
- *                  WELCOME TO ABACUS                    *
- *                                                       *
- *            'Atomic-orbital Based Ab-initio            *
- *                  Computation at UStc'                 *
- *                                                       *
- *          Website: http://abacus.ustc.edu.cn/          *
- *                                                       *
- *********************************************************
- Fri Jul 30 18:13:54 2021
+                                                                                     
+                              ABACUS v3.2.3
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: unknown
+
+ Sat May 27 18:09:23 2023
  MAKE THE DIR         : OUT.ABACUS/
- DONE(0.127479   SEC) : SETUP UNITCELL
- DONE(0.135747   SEC) : INIT K-POINTS
+ dft_functional readin is: hse
+ dft_functional in pseudopot file is: PBE
+In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file
+Please make sure this is what you need
+ UNIFORM GRID DIM     : 48 * 48 * 48
+ UNIFORM GRID DIM(BIG): 12 * 12 * 12
+ DONE(0.186074   SEC) : SETUP UNITCELL
+ DONE(0.214175   SEC) : INIT K-POINTS
  ---------------------------------------------------------
  Self-consistent calculations for electrons
  ---------------------------------------------------------
  SPIN    KPOINTS         PROCESSORS  NBASE       
- 1       512             2           26          
+ 1       512             1           26          
  ---------------------------------------------------------
  Use Systematically Improvable Atomic bases
  ---------------------------------------------------------
  ELEMENT ORBITALS        NBASE       NATOM       XC          
- Si      2s2p1d-8au      13          2           PBE
+ Si      2s2p1d-8au      13          2           
  ---------------------------------------------------------
  Initial plane wave basis and FFT box
  ---------------------------------------------------------
- SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS
- DONE(1.83772    SEC) : INIT PLANEWAVE
- UNIFORM GRID DIM     : 48 * 48 * 48
- UNIFORM GRID DIM(BIG): 24 * 24 * 24
- DONE(1.83975    SEC) : INIT CHARGE
- DONE(1.84095    SEC) : INIT POTENTIAL
- START POTENTIAL      : atomic
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- ---------------------------------------------------------
+ -------------------------------------------
  SELF-CONSISTENT : 
- ---------------------------------------------------------
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- The angular momentum larger than 4 (g orbitals) may be error about eggbox. 
- Check file ./module_orbital/ORB_atomic_lm.cpp line 272
- ITER   ETOT(eV)       EDIFF(eV)      SCF_THR      TIME(s)    
- GE1    -2.140228e+02  0.000000e+00   1.487e-01  3.328e+00  
- GE2    -2.140400e+02  -1.721168e-02  3.449e-02  3.070e+00  
- GE3    -2.140404e+02  -4.611448e-04  2.690e-03  3.073e+00  
- GE4    -2.140404e+02  -5.787871e-06  6.919e-05  3.209e+00  
- GE5    -2.140404e+02  -1.861796e-07  1.409e-05  3.069e+00  
- GE6    -2.140404e+02  3.460502e-08   5.541e-07  3.062e+00  
- GE7    -2.140404e+02  1.279774e-09   3.983e-08  3.188e+00  
- GE8    -2.140404e+02  8.002215e-11   3.571e-09  3.083e+00  
- ITER   ETOT(eV)       EDIFF(eV)      SCF_THR      TIME(s)    
- GE1    -2.139658e+02  0.000000e+00   3.298e-02  5.923e+01  
- GE2    -2.139876e+02  -2.173434e-02  2.097e-02  5.620e+01  
- GE3    -2.141280e+02  -1.404185e-01  1.037e-02  5.717e+01  
- GE4    -2.140724e+02  5.557905e-02   3.787e-05  5.693e+01  
- GE5    -2.140653e+02  7.109159e-03   8.892e-06  5.779e+01  
- GE6    -2.140653e+02  -8.667824e-06  8.325e-06  5.725e+01  
- GE7    -2.140654e+02  -6.403528e-05  1.033e-06  5.749e+01  
- GE8    -2.140654e+02  1.477898e-06   2.977e-07  5.654e+01  
- GE9    -2.140654e+02  2.405585e-06   5.665e-08  5.767e+01  
- GE10   -2.140654e+02  2.685301e-07   5.428e-08  5.759e+01  
- GE11   -2.140654e+02  -1.831485e-08  2.632e-08  5.789e+01  
- GE12   -2.140654e+02  9.471519e-09   1.755e-08  5.805e+01  
- GE13   -2.140654e+02  -1.479518e-08  1.270e-08  5.801e+01  
- GE14   -2.140654e+02  1.400811e-08   1.589e-08  5.636e+01  
- GE15   -2.140654e+02  -2.488261e-08  1.866e-08  5.797e+01  
- GE16   -2.140654e+02  9.767246e-10   1.177e-08  5.806e+01  
- GE17   -2.140654e+02  -1.142108e-07  4.212e-08  5.748e+01  
- GE18   -2.140654e+02  9.273820e-08   1.838e-08  5.761e+01  
- GE19   -2.140654e+02  6.315877e-09   7.624e-09  5.633e+01  
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(6.42367    SEC) : INIT SCF
+ ITER   ETOT(eV)       EDIFF(eV)      DRHO       TIME(s)    
+ GE1    -2.140683e+02  0.000000e+00   1.487e-01  1.057e+00  
+ GE2    -2.140332e+02  3.510154e-02   8.289e-02  9.588e-01  
+ GE3    -2.140404e+02  -7.165057e-03  6.562e-03  9.316e-01  
+ GE4    -2.140405e+02  -5.082605e-05  7.009e-04  9.285e-01  
+ GE5    -2.140405e+02  -3.224777e-06  4.875e-05  9.417e-01  
+ GE6    -2.140405e+02  1.163533e-07   2.903e-06  9.218e-01  
+ GE7    -2.140405e+02  5.999027e-09   5.318e-07  9.235e-01  
+ GE8    -2.140405e+02  1.192139e-09   2.612e-08  9.232e-01  
+ GE9    -2.140405e+02  2.907480e-11   1.288e-08  9.275e-01  
+ GE10   -2.140405e+02  3.226505e-11   4.256e-10  9.287e-01  
+ Updating EXX and rerun SCF
+ GE1    -2.139725e+02  0.000000e+00   3.299e-02  3.181e+00  
+ GE2    -2.140640e+02  -9.148680e-02  1.248e-02  3.179e+00  
+ GE3    -2.140627e+02  1.267737e-03   7.731e-03  3.178e+00  
+ GE4    -2.140630e+02  -2.965608e-04  1.360e-03  3.173e+00  
+ GE5    -2.140630e+02  -5.060878e-06  5.604e-05  3.191e+00  
+ GE6    -2.140630e+02  -6.892249e-09  3.882e-05  3.180e+00  
+ GE7    -2.140630e+02  -9.899134e-08  1.572e-07  3.176e+00  
+ GE8    -2.140630e+02  -9.699332e-10  2.484e-07  3.176e+00  
+ GE9    -2.140630e+02  4.351794e-10   6.795e-08  3.174e+00  
+ GE10   -2.140630e+02  1.616878e-10   1.095e-09  3.180e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   1.206e-03  3.176e+00  
+ GE2    -2.140649e+02  5.938287e-06   6.395e-04  3.172e+00  
+ GE3    -2.140649e+02  1.930747e-07   6.232e-05  3.173e+00  
+ GE4    -2.140649e+02  -1.148341e-07  1.239e-07  3.183e+00  
+ GE5    -2.140649e+02  1.255557e-10   5.695e-08  3.196e+00  
+ GE6    -2.140649e+02  -6.242743e-11  1.187e-09  3.191e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   1.791e-04  3.159e+00  
+ GE2    -2.140649e+02  2.937734e-07   9.363e-05  3.147e+00  
+ GE3    -2.140649e+02  1.612513e-07   8.587e-06  3.153e+00  
+ GE4    -2.140649e+02  -1.391914e-08  1.797e-08  3.156e+00  
+ GE5    -2.140649e+02  -1.933486e-13  1.245e-09  3.147e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   2.578e-05  3.152e+00  
+ GE2    -2.140649e+02  2.886898e-08   1.338e-05  3.163e+00  
+ GE3    -2.140649e+02  2.679543e-08   1.172e-06  3.156e+00  
+ GE4    -2.140649e+02  -1.835458e-09  2.829e-09  3.170e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   3.656e-06  3.186e+00  
+ GE2    -2.140649e+02  3.849063e-09   1.891e-06  3.171e+00  
+ GE3    -2.140649e+02  3.906270e-09   1.612e-07  3.174e+00  
+ GE4    -2.140649e+02  -2.475829e-10  5.202e-10  3.174e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   5.159e-07  3.175e+00  
+ GE2    -2.140649e+02  5.398535e-10   2.663e-07  3.166e+00  
+ GE3    -2.140649e+02  5.566989e-10   2.232e-08  3.168e+00  
+ GE4    -2.140649e+02  -3.388434e-11  4.680e-10  3.171e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   7.256e-08  3.247e+00  
+ GE2    -2.140649e+02  7.598600e-11   3.741e-08  3.362e+00  
+ GE3    -2.140649e+02  7.871705e-11   3.138e-09  3.157e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   1.058e-08  3.170e+00  
+ GE2    -2.140649e+02  1.251932e-11   5.433e-09  3.168e+00  
+ Updating EXX and rerun SCF
+ GE1    -2.140649e+02  0.000000e+00   6.157e-10  3.185e+00  
 
   |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------
-                       total               1156.5         11        1.1e+02   1e+02     %
-   Run_lcao            lcao_line           1156.5         1         1.2e+03   1e+02     %
-   ORB_control         set_orb_tables      1.6511         1         1.7       0.14      %
-   LCAO_Orbitals       Read_Orbitals       0.78571        1         0.79      0.068     %
-   NOrbital_Lm         extra_uniform       1.0429         1786      0.00058   0.09      %
-   Mathzone_Add1       Cubic_Spline_Interpolation0.36946        1786      0.00021   0.032     %
-   ORB_gen_tables      gen_tables          0.86535        1         0.87      0.075     %
-   ORB_table_phi       init_Table          0.48247        1         0.48      0.042     %
-   ORB_table_phi       cal_ST_Phi12_R      6.0674         3242      0.0019    0.52      %
-   ORB_table_beta      init_Table_Beta     0.18283        1         0.18      0.016     %
-   ORB_table_beta      VNL_PhiBeta_R       0.18166        26        0.007     0.016     %
-   ORB_gaunt_table     init_Gaunt_CH       0.16943        4         0.042     0.015     %
-   ORB_gaunt_table     init_Gaunt          2.2665         4         0.57      0.2       %
-   ORB_gaunt_table     Get_Gaunt_SH        12.294         3636325   3.4e-06   1.1       %
-   FFT                 FFT3D               0.32018        372       0.00086   0.028     %
-   Potential           v_of_rho            3.9312         28        0.14      0.34      %
-   Potential_Libxc     v_xc                3.865          28        0.14      0.33      %
-   LOOP_ions           opt_ions            1141.2         1         1.1e+03   99        %
-   LOOP_elec           solve_elec_stru     1141.2         1         1.1e+03   99        %
-   Grid_Driver         Find_atom           0.56446        55430     1e-05     0.049     %
-   LOOP_elec           before_solver       1.3018         1         1.3       0.11      %
-   LCAO_Hamilt         set_lcao_matrices   1.3005         1         1.3       0.11      %
-   LCAO_gen_fixedH     build_Nonlocal_mu   1.286          1         1.3       0.11      %
-   ORB_gen_tables      snap_psibeta        1.0365         373321    2.8e-06   0.09      %
-   LOOP_elec           solver              1139.8         1         1.1e+03   99        %
-   ELEC_scf            scf                 1102.3         2         5.5e+02   95        %
-   ELEC_cbands_k       cal_bands           63.543         27        2.4       5.5       %
-   Gint_k              vlocal              30.719         27        1.1       2.7       %
-   Efficience          each_k              31.556         13824     0.0023    2.7       %
-   Efficience          H_k                 21.799         13824     0.0016    1.9       %
-   LCAO_Hamilt         calculate_Hk        21.769         13824     0.0016    1.9       %
-   Gint_k              folding_vl_k        1.9313         13824     0.00014   0.17      %
-   Gint_k              Distri              0.66037        13824     4.8e-05   0.057     %
-   LCAO_nnr            folding_fixedH      19.409         13824     0.0014    1.7       %
-   Efficience          diago_k             9.7353         13824     0.0007    0.84      %
-   Diago_LCAO_Matrix   genelpa             16.392         6912      0.0024    1.4       %
-   Diago_LCAO_Matrix   genelpa1            5.9648         13824     0.00043   0.52      %
-   Diago_LCAO_Matrix   genelpa2            3.2835         13824     0.00024   0.28      %
-   Diago_LCAO_Matrix   gath_eig_complex    0.13013        13824     9.4e-06   0.011     %
-   Local_Orbital_Cha   sum_bands           19.875         27        0.74      1.7       %
-   LCAO_Charge         cal_dk_k            4.1727         27        0.15      0.36      %
-   Gint_k              cal_rho_k           15.264         27        0.57      1.3       %
-   Charge              mix_rho             0.17865        27        0.0066    0.015     %
+                       total               268.86         7         38        1e+02     %
+   Driver              driver_line         268.81         1         2.7e+02   1e+02     %
+   NOrbital_Lm         extra_uniform       0.33109        1833      0.00018   0.12      %
+   Mathzone_Add1       Cubic_Spline_Interpolation0.10532        1833      5.7e-05   0.039     %
+   ORB_control         set_orb_tables      0.24915        1         0.25      0.093     %
+   ORB_gen_tables      gen_tables          0.24915        1         0.25      0.093     %
+   ORB_table_phi       cal_ST_Phi12_R      1.6229         3388      0.00048   0.6       %
+   ORB_table_beta      init_Table_Beta     0.1005         1         0.1       0.037     %
+   ORB_table_beta      VNL_PhiBeta_R       0.10002        26        0.0038    0.037     %
+   ORB_gaunt_table     init_Gaunt_CH       0.1403         4         0.035     0.052     %
+   ORB_gaunt_table     init_Gaunt          1.3884         4         0.35      0.52      %
+   ORB_gaunt_table     Get_Gaunt_SH        2.3722         3636325   6.5e-07   0.88      %
+   Exx_LRI             init                4.8989         1         4.9       1.8       %
+   Matrix_Orbs21       init                2.1963         2         1.1       0.82      %
+   Matrix_Orbs21       init_radial_table   1.7823         2         0.89      0.66      %
+   LRI_CV              set_orbitals        2.7339         1         2.7       1         %
+   Matrix_Orbs11       init                0.18977        1         0.19      0.071     %
+   Matrix_Orbs11       init_radial_table   0.54225        1         0.54      0.2       %
+   Ions                opt_ions            263.4          1         2.6e+02   98        %
+   ESolver_KS_LCAO     Run                 263.4          1         2.6e+02   98        %
+   ESolver_KS_LCAO     beforescf           0.99424        1         0.99      0.37      %
+   PW_Basis            recip2real          0.11455        252       0.00045   0.043     %
+   Potential           update_from_charge  6.2141         50        0.12      2.3       %
+   Potential           cal_v_eff           6.2131         50        0.12      2.3       %
+   PW_Basis            real2recip          0.16459        359       0.00046   0.061     %
+   PotXC               cal_v_eff           6.1272         50        0.12      2.3       %
+   XC_Functional       v_xc                117.56         31        3.8       44        %
+   Exx_LRI             cal_exx_ions        0.94398        1         0.94      0.35      %
+   LRI_CV              cal_datas           0.20283        2         0.1       0.075     %
+   HSolverLCAO         solve               127.02         49        2.6       47        %
+   HamiltLCAO          updateHk            106.59         25088     0.0042    40        %
+   OperatorLCAO        init                103.36         70144     0.0015    38        %
+   Veff                contributeHk        9.1228         25088     0.00036   3.4       %
+   Gint_interface      cal_gint            1.4468         98        0.015     0.54      %
+   Gint_interface      cal_gint_vlocal     0.8758         49        0.018     0.33      %
+   Gint_Tools          cal_psir_ylm        0.2424         3038      8e-05     0.09      %
+   Gint_k              folding_vl_k        8.2249         25088     0.00033   3.1       %
+   Gint_k              Distri              7.0532         25088     0.00028   2.6       %
+   OperatorLCAO        folding_fixed       15.563         25088     0.00062   5.8       %
+   LCAO_nnr            folding_fixedH      15.164         25088     0.0006    5.6       %
+   HSolverLCAO         hamiltSolvePsiK     17.155         25088     0.00068   6.4       %
+   OperatorLCAO        get_hs_pointers     61.404         15104     0.0041    23        %
+   DiagoElpa           elpa_solve          13.171         25088     0.00052   4.9       %
+   ElecStateLCAO       psiToRho            3.2479         49        0.066     1.2       %
+   elecstate           cal_dm              0.23405        49        0.0048    0.087     %
+   psiMulPsiMpi        pdgemm              0.10221        25088     4.1e-06   0.038     %
+   LCAO_Charge         cal_dk_k            2.3764         49        0.048     0.88      %
+   Gint_interface      cal_gint_rho        0.57094        49        0.012     0.21      %
+   Exx_LRI             cal_exx_elec        128.96         9         14        48        %
+   RI_2D_Comm          split_m2D_ktoR      12.933         9         1.4       4.8       %
+   RI_2D_Comm          add_Hexx            81.595         19968     0.0041    30        %
+   XC_Functional       v_xc_libxc          6.0455         39        0.16      2.2       %
  ----------------------------------------------------------------------------------------
 
- START  Time  : Fri Jul 30 18:13:54 2021
- FINISH Time  : Fri Jul 30 18:33:10 2021
- TOTAL  Time  : 1.2e+03
+ START  Time  : Sat May 27 18:09:23 2023
+ FINISH Time  : Sat May 27 18:13:52 2023
+ TOTAL  Time  : 269
  SEE INFORMATION IN : OUT.ABACUS/

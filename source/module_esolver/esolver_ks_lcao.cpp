@@ -2,22 +2,22 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dm_io.h"
+#include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
-#include "module_io/nscf_fermi_surf.h"
 #include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_dm_sparse.h"
-#include "module_io/write_dos_lcao.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
@@ -36,7 +36,6 @@
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
@@ -49,6 +48,20 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 {
     classname = "ESolver_KS_LCAO";
     basisname = "LCAO";
+#ifdef __EXX
+    if (GlobalC::exx_info.info_ri.real_number)
+    {
+        this->exx_lri_double = std::make_shared<Exx_LRI<double>>(GlobalC::exx_info.info_ri);
+        this->exd = std::make_shared<Exx_LRI_Interface<double>>(this->exx_lri_double);
+        this->LM.Hexxd = &this->exd->get_Hexxs();
+    }
+    else
+    {
+        this->exx_lri_complex = std::make_shared<Exx_LRI<std::complex<double>>>(GlobalC::exx_info.info_ri);
+        this->exc = std::make_shared<Exx_LRI_Interface<std::complex<double>>>(this->exx_lri_complex);
+        this->LM.Hexxc = &this->exc->get_Hexxs();
+    }
+#endif
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
@@ -67,15 +80,15 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            GlobalC::symm.analy_sys(ucell, GlobalV::ofs_running);
+            this->symm.analy_sys(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // Setup the k points according to symmetry.
-        GlobalC::kv.set(GlobalC::symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-        Print_Info::setup_parameters(ucell, GlobalC::kv);
+        Print_Info::setup_parameters(ucell, kv);
     }
     else
     {
@@ -87,13 +100,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecStateLCAO(&(chr),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
+                                                   &(kv),
+                                                   kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF),
                                                    this->pw_rho,
-                                                   GlobalC::bigpw);
+                                                   pw_big);
     }
 
     //------------------init Basis_lcao----------------------
@@ -116,7 +129,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, GlobalC::kv.nks);
+    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, kv.nks);
     //------------------init Hamilt_lcao----------------------
 
 #ifdef __EXX
@@ -142,9 +155,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
 
             // GlobalC::exx_lcao.init();
             if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
+                this->exx_lri_double->init(MPI_COMM_WORLD, kv);
             else
-                GlobalC::exx_lri_complex.init(MPI_COMM_WORLD, GlobalC::kv);
+                this->exx_lri_complex->init(MPI_COMM_WORLD, kv);
         }
     }
 #endif
@@ -152,13 +165,13 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Quxin added for DFT+U
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, this->LM, GlobalC::kv.nks);
+        GlobalC::dftu.init(ucell, this->LM, kv.nks);
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
     // without structure factors
     // this function belongs to cell LOOP
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
     // init HSolver
     if (this->phsol == nullptr)
@@ -174,10 +187,10 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
     {
-        this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
+        this->pelec->pot = new elecstate::Potential(pw_rho,
                                                     &GlobalC::ucell,
                                                     &(GlobalC::ppcell.vloc),
-                                                    &(GlobalC::sf.strucFac),
+                                                    &(sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
@@ -207,15 +220,15 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
     {
         delete this->pelec;
         this->pelec = new elecstate::ElecStateLCAO(&(chr),
-                                                   &(GlobalC::kv),
-                                                   GlobalC::kv.nks,
+                                                   &(kv),
+                                                   kv.nks,
                                                    &(this->LOC),
                                                    &(this->UHM),
                                                    &(this->LOWF),
                                                    this->pw_rho,
-                                                   GlobalC::bigpw);
+                                                   pw_big);
 
-        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, GlobalC::rhopw);
+        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);
         this->pelec->omega = GlobalC::ucell.omega;
@@ -223,10 +236,10 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
         if (this->pelec->pot != nullptr)
         {
             delete this->pelec->pot;
-            this->pelec->pot = new elecstate::Potential(GlobalC::rhopw,
+            this->pelec->pot = new elecstate::Potential(pw_rho,
                                                         &GlobalC::ucell,
                                                         &(GlobalC::ppcell.vloc),
-                                                        &(GlobalC::sf.strucFac),
+                                                        &(sf),
                                                         &(this->pelec->f_en.etxc),
                                                         &(this->pelec->f_en.vtxc));
         }
@@ -252,7 +265,14 @@ void ESolver_KS_LCAO::cal_Force(ModuleBase::matrix& force)
                        this->UHM,
                        force,
                        this->scs,
-                       GlobalC::kv);
+                       this->sf,
+                       this->kv,
+                       this->pw_rho,
+#ifdef __EXX
+                        *this->exx_lri_double,
+                        *this->exx_lri_complex,
+#endif  
+                       &this->symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -293,23 +313,21 @@ void ESolver_KS_LCAO::postprocess()
     // qianrui modify 2020-10-18
     if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, GlobalC::kv, &(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, kv, &(GlobalC::Pkpoints));
     }
 
-    int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
-        nspin0 = 2;
+    int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     if (INPUT.out_band) // pengfei 2014-10-13
     {
         int nks = 0;
         if (nspin0 == 1)
         {
-            nks = GlobalC::kv.nkstot;
+            nks = kv.nkstot;
         }
         else if (nspin0 == 2)
         {
-            nks = GlobalC::kv.nkstot / 2;
+            nks = kv.nkstot / 2;
         }
 
         for (int is = 0; is < nspin0; is++)
@@ -317,14 +335,7 @@ void ESolver_KS_LCAO::postprocess()
             std::stringstream ss2;
             ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                nks,
-                                GlobalV::NBANDS,
-                                0.0,
-                                this->pelec->ekb,
-                                GlobalC::kv,
-                                &(GlobalC::Pkpoints));
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, 0.0, this->pelec->ekb, kv, &(GlobalC::Pkpoints));
         }
     } // out_band
 
@@ -334,7 +345,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->psi,
                                        this->UHM,
                                        this->pelec,
-                                       GlobalC::kv,
+                                       kv,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
                                        GlobalC::GridD);
@@ -342,44 +353,19 @@ void ESolver_KS_LCAO::postprocess()
 
     if (INPUT.out_dos)
     {
-        ModuleIO::write_dos_lcao(this->psid,
-                                 this->psi,
-                                 this->UHM,
-                                 this->pelec->ekb,
-                                 this->pelec->wg,
-                                 INPUT.dos_edelta_ev,
-                                 INPUT.dos_scale,
-                                 INPUT.dos_sigma,
-                                 GlobalC::kv);
-
-        if (INPUT.out_dos == 3)
-        {
-            for (int i = 0; i < nspin0; i++)
-            {
-                std::stringstream ss3;
-                ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-                ModuleIO::nscf_fermi_surface(ss3.str(),
-                                             GlobalC::kv.nks,
-                                             GlobalV::NBANDS,
-                                             this->pelec->eferm.ef,
-                                             GlobalC::kv,
-                                             &(GlobalC::Pkpoints),
-                                             &(GlobalC::ucell),
-                                             this->pelec->ekb);
-            }
-        }
-
-        if (nspin0 == 1)
-        {
-            GlobalV::ofs_running << " Fermi energy is " << this->pelec->eferm.ef << " Rydberg" << std::endl;
-        }
-        else if (nspin0 == 2)
-        {
-            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << this->pelec->eferm.ef_up << " Rydberg"
-                                 << std::endl;
-            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->pelec->eferm.ef_dw << " Rydberg"
-                                 << std::endl;
-        }
+        ModuleIO::out_dos_nao(this->psid,
+                               this->psi,
+                               this->UHM,
+                               this->pelec->ekb,
+                               this->pelec->wg,
+                               INPUT.dos_edelta_ev,
+                               INPUT.dos_scale,
+                               INPUT.dos_sigma,
+                               *(this->pelec->klist),
+                               GlobalC::Pkpoints,
+                               GlobalC::ucell,
+                               this->pelec->eferm,
+                               GlobalV::NBANDS);
     }
 }
 
@@ -443,7 +429,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     // mohan add 2010-07-16
     // used for pulay mixing.
     if (iter == 1)
-        GlobalC::CHR_MIX.reset();
+        this->p_chgmix->reset();
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
@@ -452,7 +438,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     // first need to calculate the weight according to
     // electrons number.
 
-    if (GlobalC::wf.init_wfc == "file")
+    if (wf.init_wfc == "file")
     {
         if (iter == 1)
         {
@@ -501,31 +487,15 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
 #ifdef __EXX
     // calculate exact-exchange
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
-        {
-			this->mix_DMk_2D.set_mixing_beta(GlobalC::CHR_MIX.get_mixing_beta());
-			if(GlobalC::CHR_MIX.get_mixing_mode() == "pulay")
-				this->mix_DMk_2D.set_coef_pulay(iter, GlobalC::CHR_MIX);
-			const bool flag_restart = (iter==1) ? true : false;
-			if(GlobalV::GAMMA_ONLY_LOCAL)
-				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
-			else
-				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
-
-            // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-        }
-    }
+    if (GlobalC::exx_info.info_ri.real_number)
+        this->exd->exx_eachiterinit(this->LOC, *(this->p_chgmix), iter);
+    else
+        this->exc->exx_eachiterinit(this->LOC, *(this->p_chgmix), iter);
 #endif
 
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho); // Calculate U and J if Yukawa potential is used
+        GlobalC::dftu.cal_slater_UJ(pelec->charge->rho, pw_rho->nrxx); // Calculate U and J if Yukawa potential is used
     }
 
 #ifdef __DEEPKS
@@ -576,35 +546,16 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     }
 
     // print ekb for each k point and each band
-    for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+    for (int ik = 0; ik < kv.nks; ++ik)
     {
         this->pelec->print_band(ik, INPUT.printe, iter);
     }
 
 #ifdef __EXX
-    // Peize Lin add 2020.04.04
-    if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
-    {
-        // add exx
-        // Peize Lin add 2016-12-03
-        this->pelec->set_exx();
-
-        if (GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish
-            && !GlobalC::restart.info_load.restart_exx)
-        {
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            GlobalC::restart.info_load.restart_exx = true;
-        }
-    }
+    if (GlobalC::exx_info.info_ri.real_number)
+        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
     else
-    {
-        this->pelec->f_en.exx = 0.;
-    }
+        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
 #endif
 
     // if DFT+U calculation is needed, this function will calculate
@@ -614,9 +565,9 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::dftu.omc != 2)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma);
+                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, this->p_chgmix->get_mixing_beta());
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, GlobalC::kv);
+                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, kv, this->p_chgmix->get_mixing_beta());
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
@@ -632,12 +583,8 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         }
         else
         {
-            GlobalC::ld.cal_e_delta_band_k(this->LOC.dm_k,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           GlobalC::kv.nks,
-                                           pv->nrow,
-                                           pv->ncol);
+            GlobalC::ld
+                .cal_e_delta_band_k(this->LOC.dm_k, pv->trace_loc_row, pv->trace_loc_col, kv.nks, pv->nrow, pv->ncol);
         }
     }
 #endif
@@ -649,7 +596,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(pelec->charge), GlobalC::rhopw, GlobalC::Pgrid, GlobalC::symm);
+        srho.begin(is, *(pelec->charge), pw_rho, GlobalC::Pgrid, this->symm);
     }
 
     // (6) compute magnetization, only for spin==2
@@ -670,7 +617,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
         {
             this->UHM.GK.renew(true);
         }
-        for (int ik = 0; ik < GlobalC::kv.nks; ++ik)
+        for (int ik = 0; ik < kv.nks; ++ik)
         {
             if (hsolver::HSolverLCAO::out_mat_hs)
             {
@@ -709,7 +656,7 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
         {
             elecstate::ElecStateLCAO::out_wfc_flag = 1;
         }
-        for (int ik = 0; ik < GlobalC::kv.nks; ik++)
+        for (int ik = 0; ik < kv.nks; ik++)
         {
             if (this->psi != nullptr)
             {
@@ -773,83 +720,11 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            const int precision = 3;
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "tmp"
-                << "_SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                iter,
-                ssc.str(),
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
-                ef_tmp,
-                &(GlobalC::ucell),
-                precision);
-
-            std::stringstream ssd;
-            if (GlobalV::GAMMA_ONLY_LOCAL)
+            this->create_Output_Rho(is, iter, "tmp_").write();
+            this->create_Output_DM(is, iter).write();
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                ssd << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_DM";
-            }
-            else
-            {
-                ssd << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_DM_R";
-            }
-
-            ModuleIO::write_dm(
-#ifdef __MPI
-                this->GridT.trace_lo,
-#endif
-                is,
-                iter,
-                ssd.str(),
-                precision,
-                this->LOC.out_dm,
-                this->LOC.DM,
-                ef_tmp,
-                &(GlobalC::ucell));
-        }
-
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            const int precision = 3;
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "tmp"
-                    << "_SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
-#endif
-                    pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    iter,
-                    ssc.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell),
-                    precision);
+                this->create_Output_Kin(is, iter, "tmp_").write();
             }
         }
     }
@@ -862,79 +737,17 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 {
     if (this->LOC.out_dm1 == 1)
     {
-        double** dm2d;
-        dm2d = new double*[GlobalV::NSPIN];
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            dm2d[is] = new double[this->LOC.ParaV->nnr];
-            ModuleBase::GlobalFunc::ZEROS(dm2d[is], this->LOC.ParaV->nnr);
-        }
-        this->LOC.cal_dm_R(this->LOC.dm_k, this->RA, dm2d, GlobalC::kv);
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleIO::write_dm1(is, istep, dm2d, this->LOC.ParaV, this->LOC.DMR_sparse);
-        }
-
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            delete[] dm2d[is];
-        }
-
-        delete[] dm2d;
+        this->create_Output_DM1(istep).write();
     }
 
     if (GlobalV::out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::stringstream ssc;
-            const int precision = 3;
-            ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_rho(
-#ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                GlobalC::rhopw->nplane,
-                GlobalC::rhopw->startz_current,
-#endif
-                pelec->charge->rho_save[is],
-                is,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                GlobalC::rhopw->nx,
-                GlobalC::rhopw->ny,
-                GlobalC::rhopw->nz,
-                ef_tmp,
-                &(GlobalC::ucell),
-                precision);
-        }
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            this->create_Output_Rho(is, istep).write();
+            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                std::stringstream ssc;
-                ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_TAU.cube";
-                const double ef_tmp = this->pelec->eferm.get_efval(is);
-                ModuleIO::write_rho(
-#ifdef __MPI
-                    GlobalC::bigpw->bz,
-                    GlobalC::bigpw->nbz,
-                    GlobalC::rhopw->nplane,
-                    GlobalC::rhopw->startz_current,
-#endif
-                    pelec->charge->kin_r_save[is],
-                    is,
-                    GlobalV::NSPIN,
-                    0,
-                    ssc.str(),
-                    GlobalC::rhopw->nx,
-                    GlobalC::rhopw->ny,
-                    GlobalC::rhopw->nz,
-                    ef_tmp,
-                    &(GlobalC::ucell));
+                this->create_Output_Kin(is, istep).write();
             }
         }
     }
@@ -943,34 +756,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            const int precision = 3;
-
-            std::stringstream ssd;
-            std::stringstream ssd_tmp;
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM";
-                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM";
-            }
-            else
-            {
-                ssd_tmp << GlobalV::global_out_dir << "tmp_SPIN" << is + 1 << "_DM_R";
-                ssd << GlobalV::global_out_dir << "SPIN" << is + 1 << "_DM_R";
-            }
-            std::remove(ssd_tmp.str().c_str());
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
-            ModuleIO::write_dm(
-#ifdef __MPI
-                this->GridT.trace_lo,
-#endif
-                is,
-                0,
-                ssd.str(),
-                precision,
-                this->LOC.out_dm,
-                this->LOC.DM,
-                ef_tmp,
-                &(GlobalC::ucell));
+            this->create_Output_DM(is, istep).write();
         }
     }
 
@@ -979,51 +765,13 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
-            GlobalC::exx_lri_double.write_Hexxs(file_name_exx);
+            this->exd->write_Hexxs(file_name_exx);
         else
-            GlobalC::exx_lri_complex.write_Hexxs(file_name_exx);
+            this->exc->write_Hexxs(file_name_exx);
     }
 #endif
 
-    if (GlobalV::out_pot == 1)
-    {
-        const int precision = 3;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ssp;
-            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(
-#ifdef __MPI
-                GlobalC::bigpw->bz,
-                GlobalC::bigpw->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
-#endif
-                is,
-                0,
-                ssp.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(),
-                precision);
-        }
-    }
-    else if (GlobalV::out_pot == 2)
-    {
-        std::stringstream ssp;
-        std::stringstream ssp_ave;
-        ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
-        // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(
-#ifdef __MPI
-            GlobalC::bigpw->bz,
-            GlobalC::bigpw->nbz,
-#endif
-            ssp.str(),
-            this->pw_rho,
-            pelec->charge); // output 'Hartree + local pseudopot'
-    }
+    this->create_Output_Potential(istep).write();
 
     if (this->conv_elec)
     {
@@ -1039,17 +787,16 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (this->conv_elec)
     {
-        // xiaohui add "OUT_LEVEL", 2015-09-16
         if (GlobalV::OUT_LEVEL != "m")
+        {
             GlobalV::ofs_running << std::setprecision(16);
-        if (GlobalV::OUT_LEVEL != "m")
             GlobalV::ofs_running << " EFERMI = " << this->pelec->eferm.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        }
     }
     else
     {
         GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
-        if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add "m" option, 2015-09-16
-            std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
+        std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
 #ifdef __DEEPKS
@@ -1074,18 +821,12 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #ifdef __EXX
     if (INPUT.rpa)
     {
-		this->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
-		if(GlobalV::GAMMA_ONLY_LOCAL)
-			this->mix_DMk_2D.mix(this->LOC.dm_gamma, true);
-		else
-			this->mix_DMk_2D.mix(this->LOC.dm_k, true);
-
         // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(MPI_COMM_WORLD, GlobalC::kv, this->mix_DMk_2D, *this->LOWF.ParaV);
-        rpa_lri_double.init(MPI_COMM_WORLD, GlobalC::kv);
+        rpa_lri_double.cal_postSCF_exx(this->LOC, MPI_COMM_WORLD, kv, *this->LOWF.ParaV);
+        rpa_lri_double.init(MPI_COMM_WORLD, kv);
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
     }
 #endif
@@ -1093,10 +834,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_HS_R(istep,
-                                  this->pelec->pot->get_effective_v(),
-                                  this->UHM,
-                                  GlobalC::kv); // LiuXh add 2019-07-15
+            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM,
+                                  kv);          // LiuXh add 2019-07-15
         }                                       // LiuXh add 2019-07-15
     }
 
@@ -1112,10 +851,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::output_dH_R(istep,
-                                  this->pelec->pot->get_effective_v(),
-                                  this->UHM,
-                                  GlobalC::kv); // LiuXh add 2019-07-15
+            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM,
+                                  kv);          // LiuXh add 2019-07-15
         }                                       // LiuXh add 2019-07-15
     }
 
@@ -1140,7 +877,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     {
         if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, GlobalC::kv);
+            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
         }
     } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
 
@@ -1153,90 +890,32 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 bool ESolver_KS_LCAO::do_after_converge(int& iter)
 {
 #ifdef __EXX
-
-    // Add EXX operator
-    auto add_exx_operator = [&]() {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            hamilt::Operator<double>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
-                                                                        nullptr, // no explicit call yet
-                                                                        &(LM.Hloc));
-            p_hamilt->opsd->add(exx);
-        }
-        else
-        {
-            hamilt::Operator<std::complex<double>>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&LM,
-                                                                                      nullptr, // no explicit call yet
-                                                                                      &(LM.Hloc2));
-            p_hamilt->ops->add(exx);
-        }
-    };
-
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        // no separate_loop case
-        if (!GlobalC::exx_info.info_global.separate_loop)
-        {
-            GlobalC::exx_info.info_global.hybrid_step = 1;
-
-            // in no_separate_loop case, scf loop only did twice
-            // in first scf loop, exx updated once in beginning,
-            // in second scf loop, exx updated every iter
-
-            if (this->two_level_step)
-            {
-                return true;
-            }
-            else
-            {
-                // update exx and redo scf
-                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-                iter = 0;
-                std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
-                this->two_level_step++;
-
-                add_exx_operator();
-
-                return false;
-            }
-        }
-        // has separate_loop case
-        // exx converged or get max exx steps
-        else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                 || (iter == 1 && this->two_level_step != 0))
-        {
-            return true;
-        }
-        else
-        {
-            // update exx and redo scf
-            if (two_level_step == 0)
-            {
-                add_exx_operator();
-                XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-            }
-
-			const bool flag_restart = (two_level_step==0) ? true : false;
-			if(GlobalV::GAMMA_ONLY_LOCAL)
-				this->mix_DMk_2D.mix(this->LOC.dm_gamma, flag_restart);
-			else
-				this->mix_DMk_2D.mix(this->LOC.dm_k, flag_restart);
-
-            // GlobalC::exx_lcao.cal_exx_elec(this->LOC, this->LOWF.wfc_k_grid);
-            if (GlobalC::exx_info.info_ri.real_number)
-                GlobalC::exx_lri_double.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            else
-                GlobalC::exx_lri_complex.cal_exx_elec(this->mix_DMk_2D, *this->LOWF.ParaV);
-            iter = 0;
-            std::cout << " Updating EXX and rerun SCF" << std::endl;
-            this->two_level_step++;
-            return false;
-        }
-    }
+    if (GlobalC::exx_info.info_ri.real_number)
+        return this->exd->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, kv, iter);
+    else
+        return this->exc->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, kv, iter);
 #endif // __EXX
     return true;
+}
+
+ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
+{
+    int precision = 3;
+    return ModuleIO::Output_DM(this->GridT,
+                               is,
+                               iter,
+                               precision,
+                               this->LOC.out_dm,
+                               this->LOC.DM,
+                               this->pelec->eferm.get_efval(is),
+                               &(GlobalC::ucell),
+                               GlobalV::global_out_dir,
+                               GlobalV::GAMMA_ONLY_LOCAL);
+}
+
+ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
+{
+    return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv);
 }
 
 } // namespace ModuleESolver

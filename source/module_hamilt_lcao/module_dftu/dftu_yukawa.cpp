@@ -6,7 +6,6 @@
 #include "module_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "dftu.h"
 
 #include <cmath>
@@ -21,7 +20,7 @@
 namespace ModuleDFTU
 {
 
-void DFTU::cal_yukawa_lambda(double** rho)
+void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("DFTU", "cal_yukawa_lambda");
 
@@ -35,7 +34,7 @@ void DFTU::cal_yukawa_lambda(double** rho)
     double sum_rho_lambda = 0.0;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        for (int ir = 0; ir < GlobalC::rhopw->nrxx; ir++)
+        for (int ir = 0; ir < nrxx; ir++)
         {
             double rho_ir = rho[is][ir];
             sum_rho += rho_ir;
@@ -109,13 +108,13 @@ void DFTU::cal_slater_Fk(const int L, const int T)
     return;
 }
 
-void DFTU::cal_slater_UJ(double** rho)
+void DFTU::cal_slater_UJ(double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("DFTU", "cal_slater_UJ");
     if (!Yukawa)
         return;
 
-    this->cal_yukawa_lambda(rho);
+    this->cal_yukawa_lambda(rho, nrxx);
 
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {

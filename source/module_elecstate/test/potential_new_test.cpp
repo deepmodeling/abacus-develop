@@ -33,6 +33,12 @@ ModulePW::FFT::FFT()
 ModulePW::FFT::~FFT()
 {
 }
+Structure_Factor::Structure_Factor()
+{
+}
+Structure_Factor::~Structure_Factor()
+{
+}
 UnitCell::UnitCell()
 {
 }
@@ -119,7 +125,7 @@ class PotentialNewTest : public ::testing::Test
     ModulePW::PW_Basis* rhopw = nullptr;
     UnitCell* ucell = nullptr;
     ModuleBase::matrix* vloc = nullptr;
-    ModuleBase::ComplexMatrix* structure_factors = nullptr;
+    Structure_Factor* structure_factors = nullptr;
     double* etxc = nullptr;
     double* vtxc = nullptr;
     elecstate::Potential* pot = nullptr;
@@ -128,7 +134,7 @@ class PotentialNewTest : public ::testing::Test
         rhopw = new ModulePW::PW_Basis;
         ucell = new UnitCell;
         vloc = new ModuleBase::matrix;
-        structure_factors = new ModuleBase::ComplexMatrix;
+        structure_factors = new Structure_Factor();
         etxc = new double;
         vtxc = new double;
         elecstate::Set_GlobalV_Default();

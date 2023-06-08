@@ -12,10 +12,14 @@ class PotSurChem : public PotBase
   public:
     // constructor for exchange-correlation potential
     // meta-GGA should input matrix of kinetic potential, it is optional
-    PotSurChem(const ModulePW::PW_Basis* rho_basis_in, const double* vlocal_in, surchem* surchem_in)
+    PotSurChem(const ModulePW::PW_Basis* rho_basis_in,
+               Structure_Factor* structure_factors_in,
+               const double* vlocal_in,
+               surchem* surchem_in)
         : vlocal(vlocal_in), surchem_(surchem_in)
     {
         this->rho_basis_ = rho_basis_in;
+        this->structure_factors_ = structure_factors_in;
         this->dynamic_mode = true;
         this->fixed_mode = false;
     }
@@ -40,11 +44,12 @@ class PotSurChem : public PotBase
                                               v_eff.nr,
                                               chg->rho,
                                               this->vlocal,
-                                              &GlobalC::sf);
+                                              this->structure_factors_);
     }
 
   private:
     surchem* surchem_ = nullptr;
+    Structure_Factor* structure_factors_ = nullptr;
     const double* vlocal = nullptr;
     bool allocated = false;
 };

@@ -14,6 +14,11 @@ using namespace std;
 class Input
 {
   public:
+    ~Input()
+    {
+        delete[] hubbard_u;
+        delete[] orbital_corr;
+    }
     void Init(const std::string &fn);
 
     void Print(const std::string &fn) const;
@@ -43,7 +48,7 @@ class Input
     bool pseudo_mesh; // 0: use msh to normalize radial wave functions;  1: use mesh, which is used in QE.
     int ntype; // number of atom types
     int nbands; // number of bands
-    int nbands_istate; // number of bands around fermi level for istate calculation.
+    int nbands_istate; // number of bands around fermi level for get_pchg calculation.
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel;             // read velocity from STRU or not  liuyu 2021-07-14
@@ -53,7 +58,7 @@ class Input
       -1, no symmetry at all; 
       0, only basic time reversal would be considered; 
       1, point group symmetry would be considered*/
-    int symmetry; 
+    string symmetry; 
     double symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
     int kpar; // ecch pool is for one k point
 
@@ -452,12 +457,12 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u; // true:DFT+U correction; false: standard DFT calculation(default)
-    int *orbital_corr; // which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
-    double *hubbard_u; // Hubbard Coulomb interaction parameter U(ev)
-    int omc; // whether turn on occupation matrix control method or not
-    bool yukawa_potential; // default:false
-    double yukawa_lambda; // default:-1.0, which means we calculate lambda
+    bool dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
+    int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
+    double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
+    int omc;                     ///< whether turn on occupation matrix control method or not
+    bool yukawa_potential;       ///< default:false
+    double yukawa_lambda;        ///< default:-1.0, which means we calculate lambda
 
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08

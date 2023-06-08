@@ -129,7 +129,9 @@ TEST(ToolThreadingTEST, OmpParalle)
 	EXPECT_THAT(output1,testing::HasSubstr("1"));
     EXPECT_THAT(output1,testing::HasSubstr("0"));
 }
+#ifndef _OPENMP
 #define _OPENMP
+#endif
 TEST(ToolThreadingTEST, OmpParalleOpenmp)
 {
     std::string output2;

@@ -167,7 +167,6 @@ OBJS_ELECSTAT=elecstate.o\
     pot_local.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
-    write_pot.o\
     pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
@@ -345,7 +344,8 @@ OBJS_IO=input.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_band.o\
-    dos.o\
+    cal_dos.o\
+    dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
     output.o\
@@ -361,8 +361,11 @@ OBJS_IO=input.o\
     write_input.o\
     write_cube.o\
     write_rho.o\
+    write_potential.o\
     write_dipole.o\
     write_wfc_r.o\
+    output_rho.o\
+    output_potential.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -382,6 +385,8 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       single_R_io.o\
       write_HS_R.o\
       write_dm.o\
+      output_dm.o\
+      output_dm1.o\
       write_dm_sparse.o\
 
 OBJS_LCAO=DM_gamma.o\
@@ -406,7 +411,6 @@ OBJS_LCAO=DM_gamma.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
       center2_orb-orb22.o\
-      global_fp.o\
       local_orbital_charge.o\
       local_orbital_wfc.o\
       record_adj.o\
@@ -440,6 +444,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     VNL_in_pw.o\
     VNL_grad_pw.o\
     charge.o\
+    charge_init.o\
+    charge_mpi.o\
     charge_broyden.o\
     charge_extra.o\
     charge_mixing.o\

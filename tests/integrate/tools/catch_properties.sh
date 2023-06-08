@@ -51,6 +51,8 @@ get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_scan=`grep dft_functional INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -59,8 +61,8 @@ test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
 #--------------------------------------------
-if [ $calculation != "nscf" ] && [ $calculation != "ienvelope" ]\
-&& [ $calculation != "istate" ] && [ $calculation != "get_S" ]; then
+if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
 	etot=`grep ETOT_ $running_path | awk '{print $2}'`
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
 	echo "etotref $etot" >>$1
@@ -215,6 +217,15 @@ if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
     echo "ComparerR_pass $?" >>$1
 fi
 
+#echo $has_scan
+if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
+       ! test -z "$out_chg" && [ $out_chg == 1 ]; then
+    python3 ../tools/CompareFile.py SPIN1_CHG.cube.ref OUT.autotest/SPIN1_CHG.cube 8
+    echo "SPIN1_CHG.cube_pass $?" >>$1
+    python3 ../tools/CompareFile.py SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
+    echo "SPIN1_TAU.cube_pass $?" >>$1
+fi
+
 # echo "$has_wfc_r" ## test out_wfc_r > 0
 if ! test -z "$has_wfc_r"  && [ $has_wfc_r == 1 ]; then
 	if [[ ! -f OUT.autotest/running_scf.log ]];then
@@ -315,7 +326,7 @@ if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
 	echo "Compare_mulliken_pass $?" >>$1
 fi
 
-if [ $calculation == "ienvelope" ]; then
+if [ $calculation == "get_wf" ]; then
 	nfile=0
 	# envfiles=`ls OUT.autotest/ | grep ENV$`
 	# if test -z "$envfiles"; then
@@ -342,7 +353,7 @@ if [ $calculation == "ienvelope" ]; then
 	fi
 fi
 
-if [ $calculation == "istate" ]; then
+if [ $calculation == "get_pchg" ]; then
 	nfile=0
 	# chgfiles=`ls OUT.autotest/ | grep -E '_CHG$'`
 	# if test -z "$chgfiles"; then

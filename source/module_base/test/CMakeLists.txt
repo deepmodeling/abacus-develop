@@ -5,6 +5,11 @@ AddTest(
   SOURCES blas_connector_test.cpp
 )
 AddTest(
+  TARGET base_blacs_connector
+  LIBS ${math_libs}
+  SOURCES blacs_connector_test.cpp
+)
+AddTest(
   TARGET base_timer
   SOURCES timer_test.cpp ../timer.cpp
 )
@@ -163,3 +168,10 @@ AddTest(
   SOURCES spherical_bessel_transformer_test.cpp ../spherical_bessel_transformer.cpp
   LIBS ${math_libs}
 )
+
+AddTest(
+  TARGET cubic_spline
+  SOURCES cubic_spline_test.cpp ../cubic_spline.cpp
+  LIBS ${math_libs}
+)
+

@@ -1,0 +1,5 @@
+This test for: output of kinectic energy density
+*Si-diamond
+*old upf pseudopotential
+*smearing_method default
+*ks_solver cg

@@ -39,7 +39,7 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, c
     cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << endl;
     assert(nw >= 1);
     assert(nt >= 1);
-    const int nk = GlobalC::kv.nks;
+    const int nk = this->kv.nks;
 
     double *ct11 = new double[nt];
     double *ct12 = new double[nt];
@@ -48,7 +48,7 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, c
     ModuleBase::GlobalFunc::ZEROS(ct12, nt);
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
 
-    hamilt::Velocity velop(GlobalC::wfcpw, GlobalC::kv.isk.data(),&GlobalC::ppcell,&GlobalC::ucell, INPUT.cond_nonlocal);
+    hamilt::Velocity velop(this->pw_wfc, this->kv.isk.data(), &GlobalC::ppcell, &GlobalC::ucell, INPUT.cond_nonlocal);
     for (int ik = 0; ik < nk; ++ik)
     {
         velop.init(ik);
@@ -78,10 +78,10 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     char transn = 'N';
     char transc = 'C';
     const int ndim = 3;
-    const int npwx = GlobalC::wf.npwx;
+    const int npwx = this->wf.npwx;
     const int nbands = GlobalV::NBANDS;
     const double ef = this->pelec->eferm.ef;
-    const int npw = GlobalC::kv.ngk[ik];
+    const int npw = this->kv.ngk[ik];
     const int reducenb2 = (nbands - 1) * nbands / 2;
     bool gamma_only = false; //ABACUS do not support gamma_only yet.
     std::complex<double> *levc = &(this->psi[0](ik, 0, 0));
@@ -122,8 +122,8 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
 
     if(GlobalV::RANK_IN_POOL == 0)
     {
-        int nkstot = GlobalC::kv.nkstot;
-        int ikglobal = GlobalC::kv.getik_global(ik);
+        int nkstot = this->kv.nkstot;
+        int ikglobal = this->kv.getik_global(ik);
         stringstream ss;
         ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal+1<<".dat";
         Binstream binpij(ss.str(), "w");

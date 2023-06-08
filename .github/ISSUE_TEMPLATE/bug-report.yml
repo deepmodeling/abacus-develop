@@ -1,14 +1,13 @@
 name: Bug Report
 description: Create a report for problems with ABACUS
-labels: Bug
-assignees: 
-  - dyzheng
-body: 
+labels: [Bug]
+assignees: dyzheng
+body:
 - type: textarea
   attributes:
     label: Describe the bug
     description: |
-      A clear and concise description of what the bug is. The bug may results in:  
+      A clear and concise description of what the bug is. The bug may results in:
       - abnormal interruption of the program,
       - systematic or randomized numerical error, or
       - relatively low efficiency.
@@ -30,7 +29,7 @@ body:
       2. [e.g. configure CMake with options ...]
       3. [e.g. build ABACUS with ...]
       4. [e.g. run ABACUS with ...]
-      
+
       It is recommended to attach your calculation case here for the developers to reproduce the bug.
 
 - type: textarea
@@ -50,5 +49,3 @@ body:
   attributes:
     value: >
       Thanks for contributing 🎉!
-
-
