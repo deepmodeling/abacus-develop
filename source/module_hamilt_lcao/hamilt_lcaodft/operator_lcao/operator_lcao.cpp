@@ -173,6 +173,11 @@ void OperatorLCAO<T>::init(const int ik_in)
 
             break;
         }
+        default:
+        {
+            ModuleBase::WARNING_QUIT("OperatorLCAO::init", "unknown cal_type");
+            break;
+        }
     }
     if(this->next_op != nullptr)
     {//it is not the last node, loop next init() function
