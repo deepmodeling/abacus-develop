@@ -74,6 +74,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     GlobalV::NBANDS = 2;
     GlobalV::NLOCAL = 3;
     GlobalV::CURRENT_SPIN = 0;
+    GlobalV::out_app_flag = 1;
     //set up test data
     std::string name = "test_wfc_nao_complex.dat";
     int ik = 0;
