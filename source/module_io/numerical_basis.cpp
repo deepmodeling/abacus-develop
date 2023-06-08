@@ -43,7 +43,9 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
 			INPUT.bessel_nao_smooth,
 			INPUT.bessel_nao_sigma,
 			INPUT.bessel_nao_rcut,
-			INPUT.bessel_nao_tolerence );
+			INPUT.bessel_nao_tolerence,
+            GlobalC::ucell
+            );
         this->mu_index = this->init_mu_index();
         this->init_label = true;
     }
@@ -71,7 +73,9 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
 			INPUT.bessel_nao_smooth,
 			INPUT.bessel_nao_sigma,
 			INPUT.bessel_nao_rcut,
-			INPUT.bessel_nao_tolerence );
+			INPUT.bessel_nao_tolerence,
+            GlobalC::ucell
+            );
         this->mu_index = this->init_mu_index();
         this->init_label = true;
     }
