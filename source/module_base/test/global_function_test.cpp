@@ -316,9 +316,9 @@ TEST_F(GlobalFunctionTest, OutV3)
     ofs.close();
     ifs.open("tmp");
     getline(ifs, output);
-    EXPECT_THAT(output, testing::HasSubstr("[grid] = 100, 125, 375"));
+    EXPECT_THAT(output, testing::HasSubstr("grid = [ 100, 125, 375 ]"));
     getline(ifs, output);
-    EXPECT_THAT(output, testing::HasSubstr("[direct] = 1.1, 2.2, 3.3"));
+    EXPECT_THAT(output, testing::HasSubstr("direct = [ 1.1, 2.2, 3.3 ]"));
     ifs.close();
 }
 // P for parameters
