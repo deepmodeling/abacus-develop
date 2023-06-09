@@ -364,6 +364,7 @@ OBJS_IO=input.o\
     write_potential.o\
     write_dipole.o\
     write_wfc_r.o\
+    output_log.o\
     output_rho.o\
     output_potential.o\
 
