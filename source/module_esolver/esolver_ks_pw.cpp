@@ -533,16 +533,13 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     }
     if (this->conv_elec)
     {
-        if (GlobalV::OUT_LEVEL != "m")
-        {
-            GlobalV::ofs_running << std::setprecision(16);
-            GlobalV::ofs_running << " EFERMI = " << this->pelec->eferm.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        }
+        GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
+        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
+                             << std::endl;
     }
     else
     {
-        GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
-        std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
+        GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
     }
 
     if (GlobalV::OUT_LEVEL != "m")
