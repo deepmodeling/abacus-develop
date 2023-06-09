@@ -369,6 +369,26 @@ void output::printM3(std::ofstream &ofs, const std::string &description, const M
 {
 }
 */
+
+/************************************************
+ *       unit test of bessel_basis.cpp
+ ***********************************************/
+
+/*
+ * - Tested Functions:
+ *   - InitTest: Bessel_Basis::init(start_from_file, ecutwfc, ntype, lmax_in, smooth, sigma, rcut_in, tol_in, ucell, dk, dr)
+ *     - initialize Bessel_Basis class object with following steps:
+ *     - call init_TableOne(...): calculate TableOne (l, ie, ik) = int{dr r^2 jle(r)*jlk(r)} (jle(r) and jlk(r) are Spherical Bessel functions)
+ *     - return, unless set start_from_file = true, will also do the following:
+ *     - call allocate_C4(...): allocate memory for C4 4d-matrix (it, il, in, ie) and set all elements to 1.0
+ *     - call readin_C4(...): read C4 value from external file and store in C4 4d-matrix
+ *     - call init_Faln(...): calculate F_{aln}(it, il, in, ik) = sum_{ie}{C4(it, il, in, ie)*TableOne(il, ie, ik)}
+ *   - PolynomialInterpolation2Test: Bessel_Basis::Polynomial_Interpolation2(const int &l, const int &ie, const double &gnorm)
+ *     - return (cubic spline) interpolated element value of TableOne 3d-matrix
+ *   - PolynomialInterpolationTest: Bessel_Basis::Polynomial_Interpolation(const int &it, const int &l, const int &ic, const double &gnorm)
+ *     - return (cubic spline) interpolated element value of Faln 4d-matrix
+ */
+
 #define private public
 class TestBesselBasis : public ::testing::Test {
 protected:
