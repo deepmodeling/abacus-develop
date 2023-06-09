@@ -1,18 +1,17 @@
-#include "module_esolver/esolver_ks_lcao.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 //
+#include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_io/berryphase.h"
 #include "module_io/istate_charge.h"
 #include "module_io/istate_envelope.h"
-#include "module_io/write_HS_R.h"
-
-#include "module_io/berryphase.h"
 #include "module_io/to_wannier90.h"
-#include "module_base/timer.h"
+#include "module_io/write_HS_R.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
@@ -211,7 +210,7 @@ namespace ModuleESolver
             // calculate the charge density
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                Gint_inout inout(this->LOC.DM, pelec->charge, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM, pelec->charge->rho, Gint_Tools::job_type::rho);
                 this->UHM.GG.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
@@ -219,13 +218,13 @@ namespace ModuleESolver
                     {
                         ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], pw_rho->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM, pelec->charge, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM, pelec->charge->kin_r, Gint_Tools::job_type::tau);
                     this->UHM.GG.cal_gint(&inout1);
                 }
             }
             else
             {
-                Gint_inout inout(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::rho);
+                Gint_inout inout(this->LOC.DM_R, pelec->charge->rho, Gint_Tools::job_type::rho);
                 this->UHM.GK.cal_gint(&inout);
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type()==5)
                 {
@@ -233,7 +232,7 @@ namespace ModuleESolver
                     {
                         ModuleBase::GlobalFunc::ZEROS(pelec->charge->kin_r[0], pw_rho->nrxx);
                     }
-                    Gint_inout inout1(this->LOC.DM_R, pelec->charge, Gint_Tools::job_type::tau);
+                    Gint_inout inout1(this->LOC.DM_R, pelec->charge->kin_r, Gint_Tools::job_type::tau);
                     this->UHM.GK.cal_gint(&inout1);
                 }
             }

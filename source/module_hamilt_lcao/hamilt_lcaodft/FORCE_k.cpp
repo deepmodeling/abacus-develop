@@ -4,7 +4,7 @@
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_base/tool_threading.h"
 #include "module_io/write_HS.h"

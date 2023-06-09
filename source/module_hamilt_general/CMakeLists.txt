@@ -17,3 +17,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(hamilt_general)
 endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()

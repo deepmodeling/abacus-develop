@@ -3,7 +3,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"

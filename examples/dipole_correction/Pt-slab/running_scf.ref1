@@ -56,33 +56,6 @@
                       L=1, number of zeta = 1
                       L=2, number of zeta = 1
              number of atom for this type = 27
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
 
                         TOTAL ATOM NUMBER = 27
 
@@ -892,7 +865,7 @@
     E_Hartree                +35397.5519375                +481608.401602
          E_xc                -634.356374811                -8630.86126006
       E_Ewald                +29678.9985233                 +403803.49085
-      E_entropy (-TS)      -0.0749559760553                 -1.0198283735
+      E_entropy(-TS)       -0.0749559760553                 -1.0198283735
       E_descf                            +0                            +0
      E_efield            +0.000187211029487             +0.00254713672947
         E_exx                            +0                            +0

@@ -654,19 +654,40 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 							atoms[it].m_loc_[ia].z = atoms[it].mag[ia];
 						}
 
-						ModuleBase::GlobalFunc::OUT(ofs_running, "noncollinear magnetization_x",atoms[it].m_loc_[ia].x);
-						ModuleBase::GlobalFunc::OUT(ofs_running, "noncollinear magnetization_y",atoms[it].m_loc_[ia].y);
-						ModuleBase::GlobalFunc::OUT(ofs_running, "noncollinear magnetization_z",atoms[it].m_loc_[ia].z);
+						//print only ia==0 && mag>0 to avoid too much output
+						//print when ia!=0 && mag[ia] != mag[0] to avoid too much output
+						if(ia==0 || (ia!=0 
+						    && (atoms[it].m_loc_[ia].x != atoms[it].m_loc_[0].x 
+					        || atoms[it].m_loc_[ia].y != atoms[it].m_loc_[0].y 
+					        || atoms[it].m_loc_[ia].z != atoms[it].m_loc_[0].z)))
+						{
+							//use a stringstream to generate string: "concollinear magnetization of element it is:"
+							std::stringstream ss;
+							ss << "magnetization of element " << it+1;
+							if(ia!=0) 
+							{
+								ss<<" (atom"<<ia+1<<")";
+							}
+							ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(),atoms[it].m_loc_[ia].x, atoms[it].m_loc_[ia].y, atoms[it].m_loc_[ia].z);
+						}
 						ModuleBase::GlobalFunc::ZEROS(magnet.ux_ ,3);
 					}
 					else if(GlobalV::NSPIN==2)
 					{
 						atoms[it].m_loc_[ia].x = atoms[it].mag[ia];
-						ModuleBase::GlobalFunc::OUT(ofs_running, "start magnetization",atoms[it].mag[ia]);
-					}
-					else if(GlobalV::NSPIN==1)
-					{
-						ModuleBase::GlobalFunc::OUT(ofs_running, "start magnetization","FALSE");
+						//print only ia==0 && mag>0 to avoid too much output
+						//print when ia!=0 && mag[ia] != mag[0] to avoid too much output
+						if(ia==0 || (ia!=0 && atoms[it].mag[ia] != atoms[it].mag[0]))
+						{
+							//use a stringstream to generate string: "cocollinear magnetization of element it is:"
+							std::stringstream ss;
+							ss << "magnetization of element " << it+1;
+							if(ia!=0) 
+							{
+								ss<<" (atom"<<ia+1<<")";
+							}
+							ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(),atoms[it].mag[ia]);
+						}
 					}
 
 			

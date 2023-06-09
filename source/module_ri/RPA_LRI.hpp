@@ -10,7 +10,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-// #include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 using namespace std;
 
 template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
@@ -65,6 +64,7 @@ void RPA_LRI<Tdata>::cal_postSCF_exx(const Local_Orbital_Charge& loc,
                 const K_Vectors& kv,
                 const Parallel_Orbitals& pv)
 {
+    exx_lri_rpa.mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
     exx_lri_rpa.mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
     if(GlobalV::GAMMA_ONLY_LOCAL)
         exx_lri_rpa.mix_DMk_2D.mix(loc.dm_gamma, true);

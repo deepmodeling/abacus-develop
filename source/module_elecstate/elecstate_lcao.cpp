@@ -51,13 +51,13 @@ void ElecStateLCAO::psiToRho(const psi::Psi<std::complex<double>>& psi)
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    Gint_inout inout(this->loc->DM_R, this->charge, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
     this->uhm->GK.cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
-        Gint_inout inout1(this->loc->DM_R, this->charge, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GK.cal_gint(&inout1);
     }
 
@@ -107,7 +107,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
     // calculate the charge density on real space grid.
     //------------------------------------------------------------
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    Gint_inout inout(this->loc->DM, this->charge, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
     this->uhm->GG.cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
@@ -115,7 +115,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
-        Gint_inout inout1(this->loc->DM, this->charge, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GG.cal_gint(&inout1);
     }
 

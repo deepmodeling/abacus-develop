@@ -7,6 +7,11 @@
 #include <omp.h>
 #endif
 
+namespace GlobalC
+{
+Grid_Driver GridD(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
+}
+
 Grid_Driver::Grid_Driver(
 	const int &test_d_in, 
 	const int &test_gd_in, 
