@@ -117,3 +117,9 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES bessel_basis_test.cpp ../bessel_basis.cpp
 )
+
+AddTest(
+  TARGET io_output_log_test
+  LIBS base ${math_libs} device
+  SOURCES ../output_log.cpp outputlog_test.cpp
+)
