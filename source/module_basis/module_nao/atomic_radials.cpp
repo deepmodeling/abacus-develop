@@ -9,6 +9,7 @@
 
 void AtomicRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
 {
+    // deallocates all arrays and reset variables
     cleanup();
 
     std::ifstream ifs;
@@ -45,6 +46,11 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
 
     itype_ = itype;
     read_abacus_orb(ifs, ptr_log, rank);
+
+    if (rank == 0)
+    {
+        ifs.close();
+    }
 }
 
 void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, const int rank)
@@ -82,10 +88,6 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
             {
                 ifs >> orb_ecut_;
             }
-            else if (tmp == "Cutoff(a.u.)")
-            {
-                ifs >> rcut_max_; // orbitals in an ABACUS orbital file have the same cutoff radius
-            }
             else if (tmp == "Lmax")
             {
                 ifs >> lmax_;
@@ -116,44 +118,34 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
          * 3. a map from (l, izeta) to 1-d array index in chi_
          *                                                                              */
         nchi_ = 0;
-        nzeta_max_ = 0;
         for (int l = 0; l <= lmax_; ++l)
         {
             nchi_ += nzeta_[l];
-            nzeta_max_ = std::max(nzeta_[l], nzeta_max_);
         }
-
-        index_map_ = new int[(lmax_ + 1) * nzeta_max_];
-        int index_chi = 0;
-        for (int l = 0; l <= lmax_; ++l)
-        {
-            for (int izeta = 0; izeta != nzeta_max_; ++izeta)
-            {
-                if (izeta >= nzeta_[l])
-                {
-                    index_map_[l * nzeta_max_ + izeta] = -1; // -1 means no such orbital
-                }
-                else
-                {
-                    index_map_[l * nzeta_max_ + izeta] = index_chi;
-                    ++index_chi;
-                }
-            }
-        }
+        indexing(); // calculate nzeta_max_ and build index_map_
     }
 
 #ifdef __MPI
     Parallel_Common::bcast_string(symbol_);
     Parallel_Common::bcast_double(orb_ecut_);
     Parallel_Common::bcast_int(lmax_);
-    Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
 
     Parallel_Common::bcast_int(nchi_);
     Parallel_Common::bcast_int(nzeta_max_);
-    Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
 
     Parallel_Common::bcast_int(ngrid);
     Parallel_Common::bcast_double(dr);
+#endif
+
+    if (rank != 0)
+    {
+        nzeta_ = new int[lmax_ + 1];
+        index_map_ = new int[(lmax_ + 1) * nzeta_max_];
+    }
+
+#ifdef __MPI
+    Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
+    Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
 #endif
 
     double* rvalue = new double[ngrid];
@@ -210,11 +202,6 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
 
         chi_[index(l, izeta)].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype_);
         chi_[index(l, izeta)].normalize();
-    }
-
-    if (rank == 0)
-    {
-        ifs.close();
     }
 
     delete[] is_read;

@@ -792,16 +792,17 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (this->conv_elec)
     {
+        // xiaohui add "OUT_LEVEL", 2015-09-16
         if (GlobalV::OUT_LEVEL != "m")
-        {
             GlobalV::ofs_running << std::setprecision(16);
+        if (GlobalV::OUT_LEVEL != "m")
             GlobalV::ofs_running << " EFERMI = " << this->pelec->eferm.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        }
     }
     else
     {
         GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
-        std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
+        if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add "m" option, 2015-09-16
+            std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
 #ifdef __DEEPKS
