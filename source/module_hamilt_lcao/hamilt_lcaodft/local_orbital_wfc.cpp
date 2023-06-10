@@ -154,7 +154,7 @@ int Local_Orbital_wfc::localIndex(int globalindex, int nblk, int nprocs, int& my
 
 #ifdef __MPI
 void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
-                                       int out_wfc_lcao,
+                                       const int out_wfc_lcao,
                                        const double* wfc_2d,
                                        double** wfc_grid,
                                        const ModuleBase::matrix& ekb,
@@ -239,7 +239,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
 }
 
 void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
-                                       int out_wfc_lcao,
+                                       const int out_wfc_lcao,
                                        const std::complex<double>* wfc_2d,
                                        std::complex<double>** wfc_grid,
                                        int ik,
