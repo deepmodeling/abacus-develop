@@ -70,7 +70,7 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     }
 }
 
-void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer* sbt, int update)
+void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer* const sbt, const int update)
 {
     for (int itype = 0; itype < ntype_; ++itype)
     {

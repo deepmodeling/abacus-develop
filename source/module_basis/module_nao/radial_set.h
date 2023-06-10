@@ -44,7 +44,7 @@ class RadialSet
     int lmax() const { return lmax_; }
     double rcut_max() const;
 
-    int nzeta(int l) const
+    int nzeta(const int l) const
     {
         assert(l >= 0 && l <= lmax_);
         return nzeta_[l];
@@ -52,7 +52,7 @@ class RadialSet
     int nzeta_max() const { return nzeta_max_; }
     int nchi() const { return nchi_; }
 
-    const NumericalRadial& chi(int l, int izeta);
+    const NumericalRadial& chi(const int l, const int izeta);
     //!@}
 
     /*! @name property setters for all NumericalRadial objects
@@ -62,7 +62,7 @@ class RadialSet
     //!@{
     //! Set a spherical Bessel transformers for all NumericalRadial objects
     //! @see NumericalRadial::set_transformer
-    void set_transformer(ModuleBase::SphericalBesselTransformer* sbt = nullptr, int update = 0);
+    void set_transformer(ModuleBase::SphericalBesselTransformer* const sbt = nullptr, const int update = 0);
 
     //! Set a common grid for all NumericalRadial objects
     //! @see NumericalRadial::set_grid

@@ -27,7 +27,7 @@ class RadialCollection
      *                                                                      */
     //!@{
     //! element symbol of a given type
-    const std::string& symbol(int itype) const { return radset_[itype]->symbol(); }
+    const std::string& symbol(const int itype) const { return radset_[itype]->symbol(); }
 
     //! number of RadialSet objects in the collection
     int ntype() const { return ntype_; }
@@ -39,16 +39,16 @@ class RadialCollection
     double rcut_max() const;
 
     //! number of distinct radial functions of a given type and angular momentum
-    int nzeta(int itype, int l) const { return radset_[itype]->nzeta(l); }
+    int nzeta(const int itype, const int l) const { return radset_[itype]->nzeta(l); }
 
     //! maximum number of distinct radial functions of a given type among all angular momentum
-    int nzeta_max(int itype) const { return radset_[itype]->nzeta_max(); }
+    int nzeta_max(const int itype) const { return radset_[itype]->nzeta_max(); }
 
     //! total number of NumericalRadial objects in the collection
     int nchi() const { return nchi_; }
 
     //! number of NumericalRadial objects of a given type
-    int nchi(int itype) const { return radset_[itype]->nchi(); }
+    int nchi(const int itype) const { return radset_[itype]->nchi(); }
 
     //! get access to the NumericalRadial object with given type, angular momentum and zeta number
     const NumericalRadial& operator()(const int itype, const int l, const int izeta) const
@@ -72,7 +72,7 @@ class RadialCollection
     //!@{
     //! Set a spherical Bessel transformers for all RadialSet objects
     //! @see RadialSet::set_transformer
-    void set_transformer(ModuleBase::SphericalBesselTransformer* sbt = nullptr, int update = 0);
+    void set_transformer(ModuleBase::SphericalBesselTransformer* const sbt = nullptr, const int update = 0);
 
     //! Set a common grid for all RadialSet objects
     //! @see RadialSet::set_grid

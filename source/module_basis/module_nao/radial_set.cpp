@@ -105,7 +105,7 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
     return *this;
 }
 
-int RadialSet::index(int l, int izeta) const
+int RadialSet::index(const int l, const int izeta) const
 {
     assert(l >= 0 && l <= lmax_);
     assert(izeta >= 0 && izeta < nzeta_[l]);
@@ -142,14 +142,14 @@ void RadialSet::indexing()
     }
 }
 
-const NumericalRadial& RadialSet::chi(int l, int izeta)
+const NumericalRadial& RadialSet::chi(const int l, const int izeta)
 {
     int i = index_map_[l * nzeta_max_ + izeta];
     assert(i >= 0 && i < nchi_);
     return chi_[i];
 }
 
-void RadialSet::set_transformer(ModuleBase::SphericalBesselTransformer* sbt, int update)
+void RadialSet::set_transformer(ModuleBase::SphericalBesselTransformer* const sbt, const int update)
 {
     for (int i = 0; i < nchi_; i++)
         chi_[i].set_transformer(sbt, update);
