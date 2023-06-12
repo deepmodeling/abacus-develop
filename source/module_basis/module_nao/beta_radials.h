@@ -20,34 +20,38 @@
  *      O_beta.build(orb_file, element_index, ofs_log, GlobalV::MY_RANK);
  *
  *                                                                          */
-class BetaRadials: public RadialSet
+class BetaRadials : public RadialSet
 {
   public:
     BetaRadials() {}
+    BetaRadials(const BetaRadials& other) : RadialSet(other) {} //!< deep copy
+
+    using RadialSet::operator=;
+    BetaRadials* clone() const { return new BetaRadials(*this); } // covariant return type
+
     ~BetaRadials() {}
 
     //! Build the class from a pseudopotential file
-    void build(const std::string& file, //!< pseudopotential file name
-            const int itype = 0, //!< element index in calculation
-            std::ofstream* ptr_log = nullptr, //!< output file stream for logging
-            const int rank = 0 //!< MPI rank
+    void build(const std::string& file,          //!< pseudopotential file name
+               const int itype = 0,              //!< element index in calculation
+               std::ofstream* ptr_log = nullptr, //!< output file stream for logging
+               const int rank = 0                //!< MPI rank
     );
 
   private:
-
     //! Read beta projectors from a pseudopotential file of UPF 1.0.0 format
     void read_beta_upf100(std::ifstream& ifs,               //!< input file stream from orbital file
-                         std::ofstream* ptr_log = nullptr, //!< output file stream for logging
-                         const int rank = 0                //!< MPI rank
+                          std::ofstream* ptr_log = nullptr, //!< output file stream for logging
+                          const int rank = 0                //!< MPI rank
     );
 
     //! Read beta projectors from a pseudopotential file of UPF 2.0.1 format
     void read_beta_upf201(std::ifstream& ifs,               //!< input file stream from orbital file
-                         std::ofstream* ptr_log = nullptr, //!< output file stream for logging
-                         const int rank = 0                //!< MPI rank
+                          std::ofstream* ptr_log = nullptr, //!< output file stream for logging
+                          const int rank = 0                //!< MPI rank
     );
 
-    //! extract the substring between a pair of quotation marks (for UPF v2.0.1)
+    //! extract the substring between a pair of quotation marks (with whitespace removed, for UPF v2.0.1)
     std::string trim201(std::string const& str);
 };
 

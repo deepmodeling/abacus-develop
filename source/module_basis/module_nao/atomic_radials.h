@@ -24,16 +24,21 @@ class AtomicRadials : public RadialSet
 {
   public:
     AtomicRadials() {}
+    AtomicRadials(const AtomicRadials& other) : RadialSet(other), orb_ecut_(other.orb_ecut_) {}
+
+    AtomicRadials& operator=(const AtomicRadials& rhs);
+    AtomicRadials* clone() const { return new AtomicRadials(*this); } // covariant return type
+
     ~AtomicRadials() {} // ~RadialSet() is called automatically
 
-    //! Build the class from an orbital file
+    //! Builds the class from an orbital file
     void build(const std::string& file,          //!< orbital file name
                const int itype = 0,              //!< element index in calculation
                std::ofstream* ptr_log = nullptr, //!< output file stream for logging
                const int rank = 0                //!< MPI rank
     );
 
-    //! Get the energy cutoff as given by the orbital file
+    //! Gets the energy cutoff as given by the orbital file
     double orb_ecut() const { return orb_ecut_; }
 
   private:

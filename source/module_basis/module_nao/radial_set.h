@@ -21,8 +21,10 @@ class RadialSet
 {
   public:
     RadialSet() {}
-    RadialSet(const RadialSet&);            //!< deep copy
+    RadialSet(const RadialSet&); //!< deep copy
+
     RadialSet& operator=(const RadialSet&); //!< deep copy
+    virtual RadialSet* clone() const = 0;   //!< for polymorphic copy
 
     virtual ~RadialSet();
 
@@ -53,6 +55,8 @@ class RadialSet
     int nchi() const { return nchi_; }
 
     const NumericalRadial& chi(const int l, const int izeta);
+    const NumericalRadial* cbegin() { return chi_; }
+    const NumericalRadial* cend() { return chi_ + nchi_; }
     //!@}
 
     /*! @name property setters for all NumericalRadial objects
@@ -64,13 +68,17 @@ class RadialSet
     //! @see NumericalRadial::set_transformer
     void set_transformer(ModuleBase::SphericalBesselTransformer* const sbt = nullptr, const int update = 0);
 
-    //! Set a common grid for all NumericalRadial objects
+    //! Set a unified grid for all NumericalRadial objects
     //! @see NumericalRadial::set_grid
     void set_grid(const bool for_r_space, const int ngrid, const double* grid, const char mode = 'i');
 
-    //! Set a common uniform grid for all NumericalRadial objects
+    //! Set a unified uniform grid for all NumericalRadial objects
     //! @see NumericalRadial::set_uniform_grid
-    void set_uniform_grid(const bool for_r_space, const int ngrid, const double cutoff, const char mode = 'i');
+    void set_uniform_grid(const bool for_r_space,
+                          const int ngrid,
+                          const double cutoff,
+                          const char mode = 'i',
+                          const bool enable_fft = false);
     //!@}
 
   protected:
@@ -83,13 +91,12 @@ class RadialSet
     int nchi_ = 0;         //!< total number of NumericalRadial objects
 
     NumericalRadial* chi_ = nullptr; //!< array of NumericalRadial objects
-
-    int* index_map_ = nullptr; //!< map (l,izeta) to an index in chi_ array
+    int* index_map_ = nullptr;       //!< map (l,izeta) to an index in chi_ array
 
     //! deallocates memory and reset all class members to default values
     void cleanup();
 
-    //! get the index in chi_ array from (l,izeta)
+    //! gets the index in chi_ array from (l,izeta)
     int index(const int l, const int izeta) const;
 
     //! calculate nzeta_max_ and build index_map_ from nzeta_ and lmax_
