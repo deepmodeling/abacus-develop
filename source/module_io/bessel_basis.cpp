@@ -1,5 +1,5 @@
-#include "bessel_basis.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "bessel_basis.h"
 #include "module_base/parallel_common.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -25,9 +25,11 @@ void Bessel_Basis::init(
 	const bool &smooth,
 	const double &sigma,
 	const double &rcut_in,
-	const double &tol_in,	
+	const double &tol_in,
+	const UnitCell& ucell,
 	const double &dk,
-	const double &dr)
+	const double &dr
+	)
 {
 	ModuleBase::TITLE("Bessel_Basis", "init");
 	this->Dk = dk;
@@ -63,14 +65,13 @@ void Bessel_Basis::init(
 	if( start_from_file )
 	{
 		// setup C4
-		this->allocate_C4(ntype, lmax_in, GlobalC::ucell.nmax, Ecut_number);
-
+		this->allocate_C4(ntype, lmax_in, ucell.nmax, Ecut_number, ucell);
 		// check tolerence
-		this->readin_C4("INPUTs", ntype, ecut, rcut, Ecut_number, tolerence);
+		this->readin_C4("INPUTs", ntype, ecut, rcut, Ecut_number, tolerence, ucell);
 #ifdef __MPI
 		Parallel_Common::bcast_double( C4.ptr, C4.getSize() );
 #endif
-		this->init_Faln(ntype, lmax_in, GlobalC::ucell.nmax, Ecut_number);
+		this->init_Faln(ntype, lmax_in, ucell.nmax, Ecut_number, ucell);
 	}
 
 	return;
@@ -124,7 +125,8 @@ void Bessel_Basis::init_Faln(
 	const int &ntype,
 	const int &lmax,
 	const int &nmax,
-	const int &ecut_number)
+	const int &ecut_number,
+	const UnitCell& ucell)
 {
 	ModuleBase::TITLE("Bessel_Basis","init_Faln");
 	ModuleBase::timer::tick("Spillage","init_Faln");
@@ -135,9 +137,9 @@ void Bessel_Basis::init_Faln(
 	this->nwfc = 0;
 	for(int it=0; it<ntype; it++)
 	{
-		for(int il=0; il<GlobalC::ucell.atoms[it].nwl+1; il++)
+		for(int il=0; il<ucell.atoms[it].nwl+1; il++)
 		{
-			for(int in=0; in<GlobalC::ucell.atoms[it].l_nchi[il]; in++)
+			for(int in=0; in<ucell.atoms[it].l_nchi[il]; in++)
 			{
 				for(int ie=0; ie<ecut_number; ie++)
 				{
@@ -340,7 +342,8 @@ void Bessel_Basis::readin_C4(
 	const int &ecut,
 	const int &rcut,
 	const int &ecut_number,
-	const double &tolerence)
+	const double &tolerence,
+	const UnitCell& ucell)
 {
 	ModuleBase::TITLE("Bessel_Basis","readin_C4");
 
@@ -361,9 +364,9 @@ void Bessel_Basis::readin_C4(
 		{
 			std::string filec4;
 			ifs >> filec4;
-			for(int il=0; il< GlobalC::ucell.atoms[it].nwl+1; il++)
+			for(int il=0; il< ucell.atoms[it].nwl+1; il++)
 			{
-				for(int in=0; in< GlobalC::ucell.atoms[it].l_nchi[il]; in++)
+				for(int in=0; in< ucell.atoms[it].l_nchi[il]; in++)
 				{
 					//for tests
 					//std::cout << "\n" << std::setw(5) << it << std::setw(5) << il << std::setw(5) << in;
@@ -448,7 +451,8 @@ void Bessel_Basis::allocate_C4(
 	const int &ntype,
 	const int &lmax,
 	const int &nmax,
-	const int &ecut_number)
+	const int &ecut_number,
+	const UnitCell& ucell)
 {
 	ModuleBase::TITLE("Bessel_Basis","allocate_C4");
 
@@ -456,9 +460,9 @@ void Bessel_Basis::allocate_C4(
 
 	for(int it=0; it<ntype; it++)
 	{
-		for(int il=0; il<GlobalC::ucell.atoms[it].nwl+1; il++)
+		for(int il=0; il<ucell.atoms[it].nwl+1; il++)
 		{
-			for(int in=0; in<GlobalC::ucell.atoms[it].l_nchi[il]; in++)
+			for(int in=0; in<ucell.atoms[it].l_nchi[il]; in++)
 			{
 				for(int ie=0; ie<ecut_number; ie++)
 				{

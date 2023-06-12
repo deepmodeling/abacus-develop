@@ -1,0 +1,25 @@
+<COMMENT>
+Bessel Basis Unit Test. Present file will be read as C4 coefficients stored file of atom type 0.
+INPUTS tag:
+In INPUTS tag what enclosed are EnergyCutoff, CutoffRadius, Nq, Tolerance, respectively. 
+They should be totally identical with function Bessel_Basis::init_Faln(), or assert() will fail.
+C4 tag:
+The first line of this tag will be the total chi. The chi acts similarly with contracted Gaussian type
+orbitals, which means for one chi, there will be Nq spherical Bessel functions, and for each angular
+momentum l, there will be numbers of chi-s to form it. C4 file contains all information of chi-s,
+i.e., all over l(s). For example the H, whose numerical orbitals file is named as H_gga_6au_100Ry_2s1p.orb,
+which means there are 3 kinds of orbitals, 1s, 2s and 2p. The cutoff radius is 6 au, and the energy cutoff
+is 100 Ry. For orbital "1s", there will be a chi_1s, then for "2s" the chi_2s, for "2p" the chi_2p, the
+first line is thus the number chi_1s + chi_2s + chi_2p.
+The following line has contents in sequence of:
+title1 title2 title3 AtomType AngularMomentum ChiIndex C4Vaule1 C4Value2 ... C4ValueNq
+Final description:
+In unit test case, only one chi, one l is used, and EnergyCutoff, CutoffRadius are selected to have Nq=1.
+</COMMENT>
+<INPUTS>
+4 2 1 0.01
+</INPUTS>
+<C4>
+1
+TEST TEST TEST 0 0 0 1.0
+</C4>

@@ -6,6 +6,7 @@
 #include "module_io/write_dos_pw.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
+#include "module_io/output_log.h"
 
 //--------------temporary----------------------------
 #include "module_elecstate/module_charge/symmetry_rho.h"
@@ -531,19 +532,9 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
         ssw << GlobalV::global_out_dir << "WAVEFUNC";
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
-    if (this->conv_elec)
-    {
-        if (GlobalV::OUT_LEVEL != "m")
-        {
-            GlobalV::ofs_running << std::setprecision(16);
-            GlobalV::ofs_running << " EFERMI = " << this->pelec->eferm.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        }
-    }
-    else
-    {
-        GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
-        std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
-    }
+
+    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef); 
 
     if (GlobalV::OUT_LEVEL != "m")
     {

@@ -53,7 +53,9 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 		INPUT.bessel_descriptor_smooth,
 		INPUT.bessel_descriptor_sigma,
 		rcut_in,
-		tol_in );
+		tol_in,
+        GlobalC::ucell
+        );
 	this->nmax = Numerical_Descriptor::bessel_basis.get_ecut_number();
     this->init_mu_index();
     this->init_label = true;
