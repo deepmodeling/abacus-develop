@@ -11,8 +11,8 @@
 
 #include "module_base/constants.h"
 #include "module_base/cubic_spline.h"
-#include "module_base/spherical_bessel_transformer.h"
 #include "module_base/math_integral.h"
+#include "module_base/spherical_bessel_transformer.h"
 
 using ModuleBase::PI;
 
@@ -26,45 +26,45 @@ NumericalRadial::NumericalRadial()
 
 NumericalRadial::NumericalRadial(const NumericalRadial& other)
 {
-    this->symbol_ = other.symbol_;
-    this->itype_ = other.itype_;
-    this->izeta_ = other.izeta_;
-    this->l_ = other.l_;
+    symbol_ = other.symbol_;
+    itype_ = other.itype_;
+    izeta_ = other.izeta_;
+    l_ = other.l_;
 
-    this->nr_ = other.nr_;
-    this->nk_ = other.nk_;
+    nr_ = other.nr_;
+    nk_ = other.nk_;
 
-    this->is_fft_compliant_ = other.is_fft_compliant_;
+    is_fft_compliant_ = other.is_fft_compliant_;
 
-    this->pr_ = other.pr_;
-    this->pk_ = other.pk_;
+    pr_ = other.pr_;
+    pk_ = other.pk_;
 
-    this->use_internal_transformer_ = other.use_internal_transformer_;
+    use_internal_transformer_ = other.use_internal_transformer_;
 
     // deep copy
     if (other.ptr_rgrid())
     {
-        this->rgrid_ = new double[nr_];
-        this->rvalue_ = new double[nr_];
-        std::memcpy(this->rgrid_, other.rgrid_, nr_ * sizeof(double));
-        std::memcpy(this->rvalue_, other.rvalue_, nr_ * sizeof(double));
+        rgrid_ = new double[nr_];
+        rvalue_ = new double[nr_];
+        std::memcpy(rgrid_, other.rgrid_, nr_ * sizeof(double));
+        std::memcpy(rvalue_, other.rvalue_, nr_ * sizeof(double));
     }
 
     if (other.ptr_kgrid())
     {
-        this->kgrid_ = new double[nk_];
-        this->kvalue_ = new double[nk_];
-        std::memcpy(this->kgrid_, other.kgrid_, nk_ * sizeof(double));
-        std::memcpy(this->kvalue_, other.kvalue_, nk_ * sizeof(double));
+        kgrid_ = new double[nk_];
+        kvalue_ = new double[nk_];
+        std::memcpy(kgrid_, other.kgrid_, nk_ * sizeof(double));
+        std::memcpy(kvalue_, other.kvalue_, nk_ * sizeof(double));
     }
 
     if (use_internal_transformer_)
     {
-        this->sbt_ = new ModuleBase::SphericalBesselTransformer;
+        sbt_ = new ModuleBase::SphericalBesselTransformer;
     }
     else
     {
-        this->sbt_ = other.sbt_;
+        sbt_ = other.sbt_;
     }
 }
 
@@ -116,7 +116,8 @@ NumericalRadial& NumericalRadial::operator=(const NumericalRadial& rhs)
 
     if (rhs.use_internal_transformer_)
     {
-        if (!use_internal_transformer_) {
+        if (!use_internal_transformer_)
+        {
             sbt_ = new ModuleBase::SphericalBesselTransformer;
         }
     }
@@ -161,7 +162,7 @@ void NumericalRadial::build(const int l,
     assert(grid && value);
 
     // grid must be strictly increasing and every element must be non-negative
-    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<>())); // std::less<>() would allow equal values
+    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<double>())); // std::less<>() would allow equal values
     assert(grid[0] >= 0.0);
 
     symbol_ = symbol;
@@ -242,7 +243,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
     assert(ngrid > 1);
 
     // grid must be strictly increasing and every element must be non-negative
-    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<>())); // std::less<>() would allow equal values
+    assert(std::is_sorted(grid, grid + ngrid, std::less_equal<double>())); // std::less<>() would allow equal values
     assert(grid[0] >= 0.0);
 
     // tbu stands for "to be updated"
@@ -422,12 +423,12 @@ void NumericalRadial::radtab(const char op,
 
     // currently only FFT-compliant grids are supported!
     // FFT-based transform requires that two NumericalRadial objects have exactly the same grid
-    assert(this->is_fft_compliant_ && ket.is_fft_compliant_);
-    assert(this->nr_ == ket.nr_);
-    assert(this->rcut() == ket.rcut());
+    assert(is_fft_compliant_ && ket.is_fft_compliant_);
+    assert(nr_ == ket.nr_);
+    assert(rcut() == ket.rcut());
 
     double* ktmp = new double[nk_];
-    std::transform(this->kvalue_, this->kvalue_ + nk_, ket.kvalue_, ktmp, std::multiplies<double>());
+    std::transform(kvalue_, kvalue_ + nk_, ket.kvalue_, ktmp, std::multiplies<double>());
 
     int op_pk = 0;
     switch (op)
@@ -445,14 +446,14 @@ void NumericalRadial::radtab(const char op,
     { // derivative of the radial table
         if (l == 0)
         { // j'_0(x) = -j_1(x)
-            sbt_->radrfft(1, nk_, this->kcut(), ktmp, table, this->pk_ + ket.pk_ + op_pk - 1);
+            sbt_->radrfft(1, nk_, kcut(), ktmp, table, pk_ + ket.pk_ + op_pk - 1);
             std::for_each(table, table + nr_, [](double& x) { x *= -1; });
         }
         else
         { // (2*l+1) * j'_l(x) = l * j_{l-1}(x) - (l+1) * j_{l+1}(x)
             double* rtmp = new double[nr_];
-            sbt_->radrfft(l + 1, nk_, this->kcut(), ktmp, table, this->pk_ + ket.pk_ + op_pk - 1);
-            sbt_->radrfft(l - 1, nk_, this->kcut(), ktmp, rtmp, this->pk_ + ket.pk_ + op_pk - 1);
+            sbt_->radrfft(l + 1, nk_, kcut(), ktmp, table, pk_ + ket.pk_ + op_pk - 1);
+            sbt_->radrfft(l - 1, nk_, kcut(), ktmp, rtmp, pk_ + ket.pk_ + op_pk - 1);
             std::transform(table, table + nr_, rtmp, table, [l](double x, double y) {
                 return (l * y - (l + 1) * x) / (2 * l + 1);
             });
@@ -461,33 +462,38 @@ void NumericalRadial::radtab(const char op,
     }
     else
     { // radial table
-        sbt_->radrfft(l, nk_, this->kcut(), ktmp, table, this->pk_ + ket.pk_ + op_pk);
+        sbt_->radrfft(l, nk_, kcut(), ktmp, table, pk_ + ket.pk_ + op_pk);
     }
 
     delete[] ktmp;
 }
 
-void NumericalRadial::normalize(bool for_r_space) {
+void NumericalRadial::normalize(bool for_r_space)
+{
     int& ngrid = for_r_space ? nr_ : nk_;
+
+    // tbu stands for "to be updated"
     double*& grid_tbu = for_r_space ? rgrid_ : kgrid_;
     double*& value_tbu = for_r_space ? rvalue_ : kvalue_;
 
-    double factor = 0.0; 
+    double factor = 0.0;
     double* integrand = new double[ngrid];
-    double* rab = new double[ngrid-1];
+    double* rab = new double[ngrid];
 
     std::adjacent_difference(grid_tbu, grid_tbu + ngrid, rab);
-    std::transform(value_tbu, value_tbu+ngrid, grid_tbu, integrand, std::multiplies<double>());
+    std::transform(value_tbu, value_tbu + ngrid, grid_tbu, integrand, std::multiplies<double>());
     std::for_each(integrand, integrand + ngrid, [](double& x) { x *= x; });
 
+    // FIXME Simpson_Integral should use only ngrid-1 rab points!
+    rab[ngrid - 1] = rab[ngrid - 2];
     ModuleBase::Integral::Simpson_Integral(ngrid, integrand, rab, factor);
-    factor = 1./std::sqrt(factor);
+    factor = 1. / std::sqrt(factor);
 
     std::for_each(value_tbu, value_tbu + ngrid, [factor](double& x) { x *= factor; });
     transform(for_r_space);
     delete[] rab;
     delete[] integrand;
-    //unit test TBD!
+    // unit test TBD!
 }
 
 void NumericalRadial::transform(const bool forward)

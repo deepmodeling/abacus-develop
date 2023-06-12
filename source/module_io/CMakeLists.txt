@@ -19,9 +19,12 @@ list(APPEND objects
     write_input.cpp
     write_cube.cpp
     write_rho.cpp
+    write_potential.cpp
     write_dipole.cpp
     write_wfc_r.cpp
+    output_log.cpp
     output_rho.cpp
+    output_potential.cpp
 )
 
 list(APPEND objects_advanced
@@ -56,6 +59,7 @@ if(ENABLE_LCAO)
       single_R_io.cpp
       write_dm_sparse.cpp
       cal_r_overlap_R.cpp
+      output_mat_sparse.cpp
   )
 endif()
 

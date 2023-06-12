@@ -6,6 +6,7 @@
 #include "module_io/write_dos_pw.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
+#include "module_io/output_log.h"
 
 //--------------temporary----------------------------
 #include "module_elecstate/module_charge/symmetry_rho.h"
@@ -30,6 +31,7 @@
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 #include "module_io/to_wannier90.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
@@ -510,30 +512,7 @@ void ESolver_KS_PW<FPTYPE, Device>::eachiterfinish(const int iter)
 template <typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
 {
-    if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
-    {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            int precision = 3; // be consistent with esolver_ks_lcao.cpp
-            std::stringstream ssp;
-            ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
-            this->pelec->pot->write_potential(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rho->nplane,
-                this->pw_rho->startz_current,
-#endif
-                is,
-                0,
-                ssp.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(),
-                precision);
-        }
-    }
+    this->create_Output_Potential(istep).write();
 
     if (GlobalV::out_chg)
     {
@@ -553,32 +532,9 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
         ssw << GlobalV::global_out_dir << "WAVEFUNC";
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
-    if (this->conv_elec)
-    {
-        GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
-        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
-                             << std::endl;
-    }
-    else
-    {
-        GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
-    }
 
-    if (GlobalV::out_pot == 2)
-    {
-        std::stringstream ssp;
-        std::stringstream ssp_ave;
-        ssp << GlobalV::global_out_dir << "ElecStaticPot.cube";
-        // ssp_ave << GlobalV::global_out_dir << "ElecStaticPot_AVE";
-        this->pelec->pot->write_elecstat_pot(
-#ifdef __MPI
-            this->pw_big->bz,
-            this->pw_big->nbz,
-#endif
-            ssp.str(),
-            this->pw_rho,
-            this->pelec->charge); // output 'Hartree + local pseudopot'
-    }
+    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef); 
 
     if (GlobalV::OUT_LEVEL != "m")
     {

@@ -412,6 +412,28 @@ namespace ModuleESolver
                                     prefix);
     }
 
+    template <typename FPTYPE, typename Device>
+    ModuleIO::Output_Potential ESolver_KS<FPTYPE, Device>::create_Output_Potential(int iter, const std::string& prefix)
+    {
+        int precision = 3;
+        std::string tag = "POT";
+        return ModuleIO::Output_Potential(this->pw_big,
+                                          this->pw_rho,
+                                          GlobalV::NSPIN,
+                                          iter,
+                                          GlobalV::out_pot,
+                                          this->pelec->pot->get_effective_v(),
+                                          this->pelec->pot->get_fixed_v(),
+                                          &(GlobalC::ucell),
+                                          pelec->charge,
+                                          precision,
+                                          GlobalV::global_out_dir,
+                                          tag,
+                                          prefix);
+    }
+
+
+
 template class ESolver_KS<float, psi::DEVICE_CPU>;
 template class ESolver_KS<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

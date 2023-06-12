@@ -85,7 +85,7 @@ class NumericalRadial
                const int p = 0,           //!< exponent of the implicit power term in input values, @see @ref group1
                const int izeta = 0,       //!< index for the multiplicity of radial functions of the same itype and l
                const std::string symbol = "", //!< chemical symbol
-               const int itype = 0        //!< index for the element in calculation
+               const int itype = 0            //!< index for the element in calculation
     );
 
     //! Sets a SphericalBesselTransformer.
@@ -153,9 +153,6 @@ class NumericalRadial
     //! Saves the data to file (what data, in what format?)
     void save(std::string file = "" /*! file name */) const;
 
-    //! Set itype for the object.
-    void set_itype(const int itype) { itype_ = itype; }
-
     //! Computes the radial table for two-center integrals.
     /*!
      *  TODO add support for non-FFT-compliant grid
@@ -211,100 +208,60 @@ class NumericalRadial
      *                                                                                  */
     ///@{
     //! gets symbol_
-    std::string const& symbol() const
-    {
-        return symbol_;
-    }
+    std::string const& symbol() const { return symbol_; }
 
     //! gets itype_
-    int itype() const
-    {
-        return itype_;
-    }
+    int itype() const { return itype_; }
 
     //! gets izeta_
-    int izeta() const
-    {
-        return izeta_;
-    }
+    int izeta() const { return izeta_; }
 
     //! gets the angular momentum
-    int l() const
-    {
-        return l_;
-    }
+    int l() const { return l_; }
 
     //! gets the number of r-space grid points
-    int nr() const
-    {
-        return nr_;
-    }
+    int nr() const { return nr_; }
 
     //! gets the number of k-space grid points
-    int nk() const
-    {
-        return nk_;
-    }
+    int nk() const { return nk_; }
 
     //! gets r-space grid cutoff distance
     double rcut() const
     {
-        return rgrid_ ? rgrid_[nr_ - 1] : 0.0;
+        assert(rgrid_);
+        return rgrid_[nr_ - 1];
     }
 
     //! gets k-space grid cutoff distance
     double kcut() const
     {
-        return kgrid_ ? kgrid_[nk_ - 1] : 0.0;
+        assert(kgrid_);
+        return kgrid_[nk_ - 1];
     }
 
     //! gets the pointer to r-space grid points
-    const double* ptr_rgrid() const
-    {
-        return rgrid_;
-    }
+    const double* ptr_rgrid() const { return rgrid_; }
 
     //! gets the pointer to k-space grid points
-    const double* ptr_kgrid() const
-    {
-        return kgrid_;
-    }
+    const double* ptr_kgrid() const { return kgrid_; }
 
     //! gets the pointer to r-space values
-    const double* ptr_rvalue() const
-    {
-        return rvalue_;
-    }
+    const double* ptr_rvalue() const { return rvalue_; }
 
     //! gets the pointer to k-space values
-    const double* ptr_kvalue() const
-    {
-        return kvalue_;
-    }
+    const double* ptr_kvalue() const { return kvalue_; }
 
     //! gets the exponent of the pre-multiplied power term in rvalues_. @see pr_
-    double pr() const
-    {
-        return pr_;
-    }
+    double pr() const { return pr_; }
 
     //! gets the exponent of the pre-multiplied power term in kvalues_. @see pk_
-    double pk() const
-    {
-        return pk_;
-    }
+    double pk() const { return pk_; }
 
     //! gets the flag for FFT-compliancy. @see is_fft_compliant_
-    bool is_fft_compliant() const
-    {
-        return is_fft_compliant_;
-    }
+    bool is_fft_compliant() const { return is_fft_compliant_; }
 
     //! gets the pointer to the SphericalBesselTransformer
-    const ModuleBase::SphericalBesselTransformer* ptr_sbt() const
-    {
-        return sbt_;
-    }
+    const ModuleBase::SphericalBesselTransformer* ptr_sbt() const { return sbt_; }
 
     ///@}
 

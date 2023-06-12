@@ -1456,7 +1456,7 @@ TEST_F(InputTest, Check)
 
 class ReadKSpacingTest : public ::testing::Test {
 protected:
-    void SetUp() 
+    void SetUp() override 
 	{
         // create a temporary file for testing
         char tmpname[] = "tmpfile.tmp";

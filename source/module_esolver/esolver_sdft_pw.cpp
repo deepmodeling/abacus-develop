@@ -8,6 +8,7 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_istate_info.h"
+#include "module_io/output_log.h"
 
 //-------------------Temporary------------------
 #include "module_base/global_variable.h"
@@ -122,16 +123,8 @@ void ESolver_SDFT_PW::afterscf(const int istep)
                 &(GlobalC::ucell));
         }
     }
-    if(this->conv_elec)
-    {
-        GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
-        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
-                             << std::endl;
-    }
-    else
-    {
-        GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
-    }
+    
+    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
 }
 
 void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
