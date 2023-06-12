@@ -7,22 +7,24 @@
 
 #include "module_basis/module_nao/numerical_radial.h"
 
-//! An abstract class representing a related set of numerical radial functions
+//! An abstract class representing a related set of numerical radial functions.
 /*!
  *  This abstract class represents a set of numerical radial functions from
- *  a single file and of the same "itype" number. This is supposed to be the
- *  base class for concrete classes like AtomicRadials and BetaRadials, in
- *  which case "itype" is the element index in calculation, and they represent
- *  the set of all radial functions of the numerical atomic orbitals and
- *  Kleinman-Bylander beta functions of a single element respectively.
+ *  a single file. This is supposed to be the base class for concrete classes
+ *  like AtomicRadials and BetaRadials, in which case they represent the set
+ *  of all radial functions of the numerical atomic orbitals and Kleinman-
+ *  Bylander beta functions of a single element respectively.
  *
  *  @see AtomicRadials BetaRadials
  *                                                                          */
 class RadialSet
 {
   public:
-    RadialSet(){};
-    ~RadialSet();
+    RadialSet() {}
+    RadialSet(const RadialSet&);            //!< deep copy
+    RadialSet& operator=(const RadialSet&); //!< deep copy
+
+    virtual ~RadialSet();
 
     //! build the set of numerical radial functions from a file
     virtual void build(const std::string& file,                //!< orbital or pseudopotential file
@@ -37,38 +39,20 @@ class RadialSet
      *  Get access to private members.
      *                                                                      */
     //!@{
-    const std::string& symbol() const
-    {
-        return symbol_;
-    }
-    int itype() const
-    {
-        return itype_;
-    }
-    int lmax() const
-    {
-        return lmax_;
-    }
+    const std::string& symbol() const { return symbol_; }
+    int itype() const { return itype_; }
+    int lmax() const { return lmax_; }
+    double rcut_max() const;
 
-    int nzeta(int l) const
+    int nzeta(const int l) const
     {
+        assert(l >= 0 && l <= lmax_);
         return nzeta_[l];
     }
-    int nzeta_max() const
-    {
-        return nzeta_max_;
-    }
-    int nchi() const
-    {
-        return nchi_;
-    }
+    int nzeta_max() const { return nzeta_max_; }
+    int nchi() const { return nchi_; }
 
-    double rcut_max() const
-    {
-        return rcut_max_;
-    }
-
-    const NumericalRadial& chi(int l, int izeta);
+    const NumericalRadial& chi(const int l, const int izeta);
     //!@}
 
     /*! @name property setters for all NumericalRadial objects
@@ -78,7 +62,7 @@ class RadialSet
     //!@{
     //! Set a spherical Bessel transformers for all NumericalRadial objects
     //! @see NumericalRadial::set_transformer
-    void set_transformer(ModuleBase::SphericalBesselTransformer* sbt = nullptr, int update = 0);
+    void set_transformer(ModuleBase::SphericalBesselTransformer* const sbt = nullptr, const int update = 0);
 
     //! Set a common grid for all NumericalRadial objects
     //! @see NumericalRadial::set_grid
@@ -98,8 +82,6 @@ class RadialSet
     int nzeta_max_ = 0;    //!< maximum number of NumericalRadial objects among each angular momentum
     int nchi_ = 0;         //!< total number of NumericalRadial objects
 
-    double rcut_max_ = 0; //!< maximum r-space cutoff radius among all NumericalRadial objects
-
     NumericalRadial* chi_ = nullptr; //!< array of NumericalRadial objects
 
     int* index_map_ = nullptr; //!< map (l,izeta) to an index in chi_ array
@@ -109,6 +91,9 @@ class RadialSet
 
     //! get the index in chi_ array from (l,izeta)
     int index(const int l, const int izeta) const;
+
+    //! calculate nzeta_max_ and build index_map_ from nzeta_ and lmax_
+    void indexing();
 };
 
 #endif

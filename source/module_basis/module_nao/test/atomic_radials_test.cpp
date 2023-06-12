@@ -7,6 +7,7 @@
 #endif
 
 #include "module_base/constants.h"
+#include "module_base/global_variable.h"
 
 /***********************************************************
  *      Unit test of class "AtomicRadials"
@@ -14,7 +15,7 @@
 /*!
  *  Tested functions:
  *
- *  - read
+ *  - build
  *      - parse an orbital file and initialize the NumericalRadial objects
  *
  *  - all "getters"
@@ -38,8 +39,11 @@ class AtomicRadialsTest : public ::testing::Test
 
 TEST_F(AtomicRadialsTest, ReadAndGet)
 {
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+#endif
 
-    Ti_radials.build(file);
+    Ti_radials.build(file, 0, nullptr, GlobalV::MY_RANK);
 
     EXPECT_EQ(Ti_radials.lmax(), 3);
     EXPECT_EQ(Ti_radials.nzeta(0), 4);
@@ -69,9 +73,12 @@ TEST_F(AtomicRadialsTest, ReadAndGet)
 
 TEST_F(AtomicRadialsTest, BatchSet)
 {
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+#endif
 
     int itype = 5;
-    Ti_radials.build(file, itype);
+    Ti_radials.build(file, itype, nullptr, GlobalV::MY_RANK);
 
     EXPECT_EQ(Ti_radials.itype(), 5);
     EXPECT_EQ(Ti_radials.chi(0, 0).itype(), 5);

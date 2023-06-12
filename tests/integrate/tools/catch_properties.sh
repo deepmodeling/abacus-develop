@@ -51,6 +51,8 @@ get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_mat_t=`grep out_mat_t INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_mat_dh=`grep out_mat_dh INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_scan=`grep dft_functional INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
@@ -215,6 +217,22 @@ fi
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
     python3 ../tools/CompareFile.py data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
     echo "ComparerR_pass $?" >>$1
+fi
+
+#echo $has_mat_t
+if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
+    python3 ../tools/CompareFile.py data-TR-sparse_SPIN0.csr.ref OUT.autotest/data-TR-sparse_SPIN0.csr 8
+    echo "ComparerTR_pass $?" >>$1
+fi
+
+#echo $has_mat_dh
+if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
+    python3 ../tools/CompareFile.py data-dHRx-sparse_SPIN0.csr.ref OUT.autotest/data-dHRx-sparse_SPIN0.csr 8
+    echo "ComparerdHRx_pass $?" >>$1
+    python3 ../tools/CompareFile.py data-dHRy-sparse_SPIN0.csr.ref OUT.autotest/data-dHRy-sparse_SPIN0.csr 8
+    echo "ComparerdHRy_pass $?" >>$1
+    python3 ../tools/CompareFile.py data-dHRz-sparse_SPIN0.csr.ref OUT.autotest/data-dHRz-sparse_SPIN0.csr 8
+    echo "ComparerdHRz_pass $?" >>$1
 fi
 
 #echo $has_scan
