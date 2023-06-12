@@ -1,17 +1,12 @@
 #include "esolver_ks_lcao.h"
 
-#include "module_io/cal_r_overlap_R.h"
-#include "module_io/dm_io.h"
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
-#include "module_io/rho_io.h"
-#include "module_io/potential_io.h"
 #include "module_io/write_HS.h"
-#include "module_io/write_HS_R.h"
-#include "module_io/write_dm_sparse.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
+#include "module_io/output_log.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -773,31 +768,12 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     this->create_Output_Potential(istep).write();
 
-    if (this->conv_elec)
-    {
-        GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
-        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
-                             << std::endl;
-    }
+    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
 
     if (GlobalV::OUT_LEVEL != "m")
     {
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
-    }
-
-    if (this->conv_elec)
-    {
-        // xiaohui add "OUT_LEVEL", 2015-09-16
-        if (GlobalV::OUT_LEVEL != "m")
-            GlobalV::ofs_running << std::setprecision(16);
-        if (GlobalV::OUT_LEVEL != "m")
-            GlobalV::ofs_running << " EFERMI = " << this->pelec->eferm.ef * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    }
-    else
-    {
-        GlobalV::ofs_running << " !! convergence has not been achieved @_@" << std::endl;
-        if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add "m" option, 2015-09-16
-            std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
     }
 
 #ifdef __DEEPKS
@@ -831,56 +807,16 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
     }
 #endif
-    if (hsolver::HSolverLCAO::out_mat_hsR)
-    {
-        if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
-        {
-            ModuleIO::output_HS_R(istep, this->pelec->pot->get_effective_v(), this->UHM,
-                                  kv);          // LiuXh add 2019-07-15
-        }                                       // LiuXh add 2019-07-15
-    }
 
-    if (hsolver::HSolverLCAO::out_mat_t)
+    if (!md_skip_out(GlobalV::CALCULATION, istep, GlobalV::out_interval))
     {
-        if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
-        {
-            ModuleIO::output_T_R(istep, this->UHM); // LiuXh add 2019-07-15
-        }                                           // LiuXh add 2019-07-15
-    }
-
-    if (hsolver::HSolverLCAO::out_mat_dh)
-    {
-        if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
-        {
-            ModuleIO::output_dH_R(istep, this->pelec->pot->get_effective_v(), this->UHM,
-                                  kv);          // LiuXh add 2019-07-15
-        }                                       // LiuXh add 2019-07-15
-    }
-
-    // add by jingan for out r_R matrix 2019.8.14
-    if (INPUT.out_mat_r)
-    {
-        cal_r_overlap_R r_matrix;
-        r_matrix.init(*this->LOWF.ParaV);
-
-        if (hsolver::HSolverLCAO::out_mat_hsR)
-        {
-            r_matrix.out_rR_other(istep, this->LM.output_R_coor);
-        }
-        else
-        {
-            r_matrix.out_rR(istep);
-        }
-    }
-
-    // GlobalV::mulliken charge analysis
-    if (GlobalV::out_mul)
-    {
-        if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
+        this->create_Output_Mat_Sparse(istep).write();
+        // GlobalV::mulliken charge analysis
+        if (GlobalV::out_mul)
         {
             ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
-        }
-    } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
+        } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
+    }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
@@ -917,6 +853,32 @@ ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
 ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
 {
     return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv);
+}
+
+ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
+{
+    return ModuleIO::Output_Mat_Sparse(hsolver::HSolverLCAO::out_mat_hsR,
+                                       hsolver::HSolverLCAO::out_mat_t,
+                                       hsolver::HSolverLCAO::out_mat_dh,
+                                       INPUT.out_mat_r,
+                                       istep,
+                                       this->pelec->pot->get_effective_v(),
+                                       *this->LOWF.ParaV,
+                                       this->UHM,
+                                       this->LM,
+                                       this->kv);
+}
+
+bool ESolver_KS_LCAO::md_skip_out(std::string calculation, int istep, int interval)
+{
+    if (calculation == "md")
+    {
+        if (istep % interval != 0)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace ModuleESolver
