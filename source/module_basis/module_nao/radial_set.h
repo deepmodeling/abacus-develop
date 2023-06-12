@@ -55,8 +55,8 @@ class RadialSet
     int nchi() const { return nchi_; }
 
     const NumericalRadial& chi(const int l, const int izeta);
-    const NumericalRadial* cbegin() { return chi_; }
-    const NumericalRadial* cend() { return chi_ + nchi_; }
+    const NumericalRadial* cbegin() const { return chi_; }
+    const NumericalRadial* cend() const { return chi_ + nchi_; }
     //!@}
 
     /*! @name property setters for all NumericalRadial objects
