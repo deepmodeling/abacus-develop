@@ -22,11 +22,6 @@ void ModuleIO::write_cube(
 	const int &out_fermi)
 {
 	ModuleBase::TITLE("ModuleIO","write_cube");
-	
-	if (GlobalV::out_chg==0 && GlobalV::out_pot==0) 
-	{
-		return;
-	}
 
 	time_t start, end;
 	std::ofstream ofs_cube;

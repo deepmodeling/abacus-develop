@@ -367,6 +367,7 @@ OBJS_IO=input.o\
     output_log.o\
     output_rho.o\
     output_potential.o\
+    output_mat_sparse.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

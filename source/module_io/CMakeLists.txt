@@ -59,6 +59,7 @@ if(ENABLE_LCAO)
       single_R_io.cpp
       write_dm_sparse.cpp
       cal_r_overlap_R.cpp
+      output_mat_sparse.cpp
   )
 endif()
 
