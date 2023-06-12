@@ -17,9 +17,7 @@ class Output_Mat_Sparse : public Output_Interface
                       int out_mat_dh,
                       int out_mat_t,
                       int out_mat_r,
-                      bool is_md,
                       int istep,
-                      int out_interval,
                       const ModuleBase::matrix& v_eff,
                       const Parallel_Orbitals& pv,
                       LCAO_Hamilt& UHM,
@@ -32,9 +30,7 @@ class Output_Mat_Sparse : public Output_Interface
     int _out_mat_dh;
     int _out_mat_t;
     int _out_mat_r;
-    bool _is_md;
     int _istep;
-    int _out_interval;
     const ModuleBase::matrix& _v_eff;
     const Parallel_Orbitals& _pv;
     LCAO_Hamilt& _UHM;

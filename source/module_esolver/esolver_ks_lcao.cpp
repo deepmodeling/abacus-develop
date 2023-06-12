@@ -808,16 +808,15 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     }
 #endif
 
-    this->create_Output_Mat_Sparse(istep).write();
-
-    // GlobalV::mulliken charge analysis
-    if (GlobalV::out_mul)
+    if (!md_skip_out(GlobalV::CALCULATION, istep, GlobalV::out_interval))
     {
-        if (GlobalV::CALCULATION != "md" || (istep % GlobalV::out_interval == 0))
+        this->create_Output_Mat_Sparse(istep).write();
+        // GlobalV::mulliken charge analysis
+        if (GlobalV::out_mul)
         {
             ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
-        }
-    } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
+        } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
+    }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
@@ -858,19 +857,28 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
 
 ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
 {
-    bool is_md = (GlobalV::CALCULATION == "md") ? true : false;
     return ModuleIO::Output_Mat_Sparse(hsolver::HSolverLCAO::out_mat_hsR,
                                        hsolver::HSolverLCAO::out_mat_t,
                                        hsolver::HSolverLCAO::out_mat_dh,
                                        INPUT.out_mat_r,
-                                       is_md,
                                        istep,
-                                       GlobalV::out_interval,
                                        this->pelec->pot->get_effective_v(),
                                        *this->LOWF.ParaV,
                                        this->UHM,
                                        this->LM,
                                        this->kv);
+}
+
+bool ESolver_KS_LCAO::md_skip_out(std::string calculation, int istep, int interval)
+{
+    if (calculation == "md")
+    {
+        if (istep % interval != 0)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace ModuleESolver

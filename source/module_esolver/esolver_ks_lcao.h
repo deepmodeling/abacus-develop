@@ -76,6 +76,9 @@ namespace ModuleESolver
         /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
         ModuleIO::Output_Mat_Sparse create_Output_Mat_Sparse(int istep);
 
+        /// @brief check if skip the corresponding output in md calculation
+        bool md_skip_out(std::string calculation, int istep, int interval);
+
 #ifdef __EXX
         std::shared_ptr<Exx_LRI_Interface<double>> exd = nullptr;
         std::shared_ptr<Exx_LRI_Interface<std::complex<double>>> exc = nullptr;
