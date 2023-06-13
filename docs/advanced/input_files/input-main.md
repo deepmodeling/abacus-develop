@@ -1995,7 +1995,7 @@ These variables are relevant when using hybrid functionals.
 - **Type**: String
 - **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
   - `order`: Atom pairs are simply distributed by their orders. 
-  - `hmeans`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
+  - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
   - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
@@ -2025,8 +2025,8 @@ These variables are relevant when using hybrid functionals.
 
 - **Type**: Boolean
 - **Description**: 
-  - True: Enforce LIBRI to use `double` data type.
-  - False: Enforce LIBRI to use `complex` data type.
+  - True: Enforce LibRI to use `double` data type.
+  - False: Enforce LibRI to use `complex` data type.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only 
   - False: else 

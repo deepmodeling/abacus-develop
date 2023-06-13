@@ -194,6 +194,21 @@ TEST(Tensor, Reshape) {
     EXPECT_EQ(t1.shape(), new_shape1);
 }
 
+TEST(Tensor, GetValueAndInnerMostPtr) {
+    container::Tensor t(container::DataType::DT_INT, container::DeviceType::CpuDevice, {2, 2, 4});
+    std::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    EXPECT_EQ(t.shape().NumElements(), vec.size());
+    memcpy(t.data<int>(), vec.data(), sizeof(int) * vec.size());
+    EXPECT_EQ(t.get_value<int>(0, 0, 1), 2);
+    EXPECT_EQ(t.get_value<int>(1, 1, 2), 15);
+    t.reshape({4, 4});
+
+    // check the inner_most_ptr meshod
+    auto row_ptr = t.inner_most_ptr<int>(2);
+    EXPECT_EQ(row_ptr[0], 9);
+    EXPECT_EQ(row_ptr[3], 12);
+}
+
 TEST(Tensor, ReshapeDeathTest) {
     container::Tensor t(container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, {2, 3, 4});
     container::TensorShape new_shape({-1, 8});
