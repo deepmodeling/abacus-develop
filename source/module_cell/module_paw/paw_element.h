@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <iostream>
 
 class Paw_Element
 {
@@ -18,26 +20,46 @@ class Paw_Element
     ~Paw_Element(){};
 
     void read_paw_xml(std::string filename); //read info from paw file
+    void transform_ptilde(); //projectors from real to reciprocal space
 
     private:
 
-    std::string scan_file(std::ifstream &ifs, std::string pattern); //scan for line containing certain pattern from file
-
     double Zat, core, val; //atomic number, core electron & valence electron
-    char   symbol[2]; //element symbol
+    std::string symbol; //element symbol
 
     double rcut; //radius of augmentation sphere
     int    nr, nrcut; //size of radial grid; radial grid point corresponding to rcut
-    int    nl, nstates; //number of different l quantum numbers; number of channels
+    //note : nrcut will be the upper bound of later radial integrations
+    
+    int    nstates; //number of channels (quantum numbers n,l)
+    std::vector<int> lstate; //l quantum number of each channel
 
-    std::vector<int> lstate; //l quantum number of each state
-
-    int    mstates; //#. m states (for each l state, there will be 2l+1 m states)
+    int    mstates; //#. m states (for each (n,l) channel, there will be 2l+1 m states)
     std::vector<int> mstate; //m quantum number of each mstate
-    std::vector<int> im_to_il; //map from mstate to l channel (namely nstates)
+    std::vector<int> im_to_istate; //map from mstate to (n,l) channel (namely nstates)
 
     std::vector<double> rr, dr; //radial grid and increments
-    std::vector<std::vector<double>> ptilde_r; //projector functions in real and reciprocal space
+    std::vector<std::vector<double>> ptilde_r; //projector functions in real space
+
+
+    //some helper functions for reading the xml file
+    //scan for line containing certain pattern from file
+    std::string scan_file(std::ifstream &ifs, std::string pattern);
+
+    //reset input buffer to the beginning
+    void reset_buffer(std::ifstream &ifs);
+
+    //extracting values from line
+    //this part should be written with template; will try later
+    std::string extract_string(std::string line, std::string key);
+    double extract_double(std::string line, std::string key);
+    int extract_int(std::string line, std::string key);
+
+    int count_nstates(std::ifstream &ifs); //count nstates
+    void nstates_to_mstates(); //from nstates to mstates
+
+    //find grid point corresponding to rcut
+    void get_nrcut();
 
 };
 
