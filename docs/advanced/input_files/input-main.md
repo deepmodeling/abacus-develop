@@ -2160,12 +2160,11 @@ These variables are used to control molecular dynamics calculations. For more in
 ### md_prec_level
 
 - **Type**: Integer
-- **Availability**: Plane wave basis
 - **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
   - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
 
-    Currently, the option is useful only in isotropic NPT simulations.
+    Currently, the option is useful only in plane-wave-based isotropic NPT simulations.
   - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
 
 - **Default**: 0
