@@ -306,7 +306,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 
     // store wfc and Hk laststep
-    if (istep >= wf.init_wfc == "file" ? 0 : 1 && this->conv_elec)
+    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
     {
         if (this->psi_laststep == nullptr)
 #ifdef __MPI
