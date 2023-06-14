@@ -7,17 +7,21 @@
 #define PAW_ELEMENT
 
 #include <vector>
+#include <string>
+#include <fstream>
 
 class Paw_Element
 {
     public:
 
-    Paw_Element();
-    ~Paw_Element();
+    Paw_Element(){};
+    ~Paw_Element(){};
 
-    void read_paw_xml(std::vector<string> filename); //read info from paw file
+    void read_paw_xml(std::string filename); //read info from paw file
 
     private:
+
+    std::string scan_file(std::ifstream &ifs, std::string pattern); //scan for line containing certain pattern from file
 
     double Zat, core, val; //atomic number, core electron & valence electron
     char   symbol[2]; //element symbol
@@ -33,7 +37,8 @@ class Paw_Element
     std::vector<int> im_to_il; //map from mstate to l channel (namely nstates)
 
     std::vector<double> rr, dr; //radial grid and increments
-    std::vector<std::vector<double>> ptilde_r,ptilde_k; //projector functions in real and reciprocal space
+    std::vector<std::vector<double>> ptilde_r; //projector functions in real and reciprocal space
+
 };
 
 #endif
