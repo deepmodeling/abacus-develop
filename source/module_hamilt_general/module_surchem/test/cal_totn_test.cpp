@@ -78,28 +78,23 @@ TEST_F(cal_totn_test, cal_totn)
     double *vloc = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(Porter_g,npw);
 
-    ifstream fin1;
-    ifstream fin2;
-	fin1.open("./support/rho_g");
-    fin2.open("./support/vloc");
-    if (!fin1||!fin2)
-	{
-	    cerr<<"input file does not exist"<<endl;
-	}
     for (int i=0; i<npw; i++)
     {
-        fin1>>Porter_g[i];
+        Porter_g[i] = 0.1;
        
     }
-    for (int i=0; i<nrxx; i++)
+    vloc[0] = -0.5593041647;
+    vloc[1] = -0.3305673229;
+    vloc[2] = -0.1228953775;
+    for (int i=3; i<nrxx; i++)
     {
-        fin2>>vloc[i];     
+        vloc[i] = 0.1;     
     }
 
     solvent_model.cal_totn(GlobalC::ucell,GlobalC::rhopw,Porter_g,N,TOTN,vloc);
 
-    EXPECT_NEAR(TOTN[0].real(),-2.5667040718e-04,1e-10);
-    EXPECT_NEAR(TOTN[19].real(),-2.4041208488e-04,1e-10);
+    EXPECT_NEAR(TOTN[0].real(),-0.0999496256,1e-10);
+    EXPECT_NEAR(TOTN[0].imag(),-1.299621928166352e-7,1e-10);
 
     delete [] N;
     delete [] TOTN;
