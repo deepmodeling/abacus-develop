@@ -52,14 +52,13 @@ class Paw_Element
     //extracting values from line
     //this part should be written with template; will try later
     std::string extract_string(std::string line, std::string key);
-    double extract_double(std::string line, std::string key);
-    int extract_int(std::string line, std::string key);
+    double      extract_double(std::string line, std::string key);
+    int         extract_int   (std::string line, std::string key);
 
     int count_nstates(std::ifstream &ifs); //count nstates
     void nstates_to_mstates(); //from nstates to mstates
 
-    //find grid point corresponding to rcut
-    void get_nrcut();
+    void get_nrcut(); //find grid point corresponding to rcut
 
 };
 

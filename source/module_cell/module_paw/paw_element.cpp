@@ -233,6 +233,10 @@ void Paw_Element::reset_buffer(std::ifstream &ifs)
     ifs.seekg (0, std::ios::beg);
 }
 
+// s orbital : 0
+// p orbital : -1,0,1
+// d orbital : -2,-1,0,1,2
+// etc.
 void Paw_Element::nstates_to_mstates()
 {
     mstates = 0;
