@@ -102,6 +102,20 @@ class SphericalBesselTransformer
                  const int p = 0         //!< [in] exponent of the pre-multiplied power term in input values
     );
 
+    //! Performs an l-th order spherical Bessel transform via direct integration with Simpson's rule.
+    /*!
+     *  To be implemented...
+     *                                                                                      */
+    void direct(const int l,               //!< [in] order of the transform
+                const int nin,             //!< [in] size of the input array
+                const double* const igrid, //!< [in] input grid
+                const double* const in,    //!< [in] values on the input grid
+                const int nout,            //!< [in] size of the output array
+                const double* const ogrid, //!< [in] output grid
+                double* const out,         //!< [out] transformed values
+                const int p = 0            //!< [in] exponent of the pre-multiplied power term in input values
+    );
+
     //! Sets the FFTW planner flag.
     /*!
      *  Recommended flags include FFTW_MEASURE and FFTW_ESTIMATE.

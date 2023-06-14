@@ -189,17 +189,21 @@ class NumericalRadial
      *                          /  0                  l
      *
      *                                                                                  */
-    void radtab(const char op,              //!< operator, could be:
-                                            //!< - 'S' or 'I': overlap
-                                            //!< - 'T': kinetic
-                                            //!< - 'U': Coulomb
+    void radtab(const char op,              //!< [in] operator, could be:
+                                            //!<        - 'S' or 'I': overlap
+                                            //!<        - 'T': kinetic
+                                            //!<        - 'U': Coulomb
                 const NumericalRadial& ket, //!< [in] the other NumericalRadial object with which
                                             //!       the two-center integral is computed
                 const int l,                //!< [in] angular momentum of the table
                 double* const table,        //!< [out] on finish, contain the computed table
-                const bool deriv = false    //!< [in] if true, "table" would contain the derivative
+                const bool deriv = false,   //!< [in] if true, "table" would contain the derivative
                                             //!<      of the table
-    );
+                const int ngrid_table = 0,  //!< [in] size of table_grid
+                const double* const table_grid = nullptr //!< [in] grid on which the table is calculated.
+                                                         //!< if nullptr, a grid that is FFT-compliant with
+                                                         //!< the k-space grid of "this" and ket is assumed.
+    ) const;
 
     void normalize(bool for_r_space = true);
 
@@ -226,29 +230,21 @@ class NumericalRadial
     int nk() const { return nk_; }
 
     //! gets r-space grid cutoff distance
-    double rcut() const
-    {
-        assert(rgrid_);
-        return rgrid_[nr_ - 1];
-    }
+    double rcut() const { return rgrid_ ? rgrid_[nr_ - 1] : 0.0; }
 
     //! gets k-space grid cutoff distance
-    double kcut() const
-    {
-        assert(kgrid_);
-        return kgrid_[nk_ - 1];
-    }
+    double kcut() const { return kgrid_ ? kgrid_[nk_ - 1] : 0.0; }
 
-    //! gets the pointer to r-space grid points
+    //! gets the pointer to r-space grid points (read-only)
     const double* ptr_rgrid() const { return rgrid_; }
 
-    //! gets the pointer to k-space grid points
+    //! gets the pointer to k-space grid points (read-only)
     const double* ptr_kgrid() const { return kgrid_; }
 
-    //! gets the pointer to r-space values
+    //! gets the pointer to r-space values (read-only)
     const double* ptr_rvalue() const { return rvalue_; }
 
-    //! gets the pointer to k-space values
+    //! gets the pointer to k-space values (read-only)
     const double* ptr_kvalue() const { return kvalue_; }
 
     //! gets the exponent of the pre-multiplied power term in rvalues_. @see pr_
@@ -339,11 +335,11 @@ class NumericalRadial
      *                                                                              */
     void transform(const bool forward);
 
-    //! Checks whether r & k grids are FFT-compliant and set the corresponding flag.
+    //! Checks whether the given two grids are FFT-compliant
     /*!
      *  @see is_fft_compliant
      *                                                                              */
-    void check_fft_compliancy();
+    bool is_fft_compliant(const int nr, const double* const rgrid, const int nk, const double* const kgrid) const;
 };
 
 #endif

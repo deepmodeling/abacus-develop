@@ -172,6 +172,18 @@ void SphericalBesselTransformer::radrfft(const int l,
     delete[] out_tmp;
 }
 
+void SphericalBesselTransformer::direct(const int l,
+                                        const int nin,
+                                        const double* const igrid,
+                                        const double* const in,
+                                        const int nout,
+                                        const double* const ogrid,
+                                        double* const out,
+                                        const int p)
+{
+    // TBD
+}
+
 void SphericalBesselTransformer::rfft_in_place()
 {
     fftw_execute(rfft_plan_);

@@ -14,10 +14,7 @@ double RadialSet::rcut_max() const
     double rmax = 0.0;
     for (int i = 0; i != nchi_; ++i)
     {
-        if (chi_[i].rcut() > rmax)
-        {
-            rmax = chi_[i].rcut();
-        }
+        rmax = std::max(rmax, chi_[i].rcut());
     }
     return rmax;
 }

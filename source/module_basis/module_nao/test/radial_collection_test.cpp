@@ -36,8 +36,8 @@ class RadialCollectionTest : public ::testing::Test
     void TearDown();
 
     RadialCollection orb;                                     //!< object under test
-    int nfile = 0;                                            // number of orbital/pseudopotential files
-    std::string* file = nullptr;                              //!< orbitals file to read from
+    int nfile = 0;                                            //!< number of orbital/pseudopotential files
+    std::string* file = nullptr;                              //!< orbital files to read from
     std::string log_file = "./test_files/atomic_orbital.log"; //!< file for logging
 };
 
