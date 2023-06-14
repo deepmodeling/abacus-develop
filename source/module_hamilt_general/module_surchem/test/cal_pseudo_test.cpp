@@ -84,6 +84,8 @@ TEST_F(cal_pseudo_test, gauss_charge)
     EXPECT_NEAR(N[14].real(),0.002,1e-9);
     EXPECT_NEAR(N[16].real(),-0.001573534,1e-9);
 
+    delete [] N;
+
 }
 
 
@@ -155,6 +157,10 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     EXPECT_NEAR(PS_TOTN[0].real(),2.4303134311e-07,1e-10);
     EXPECT_NEAR(PS_TOTN[19].real(),-2.4402080195e-04,1e-10);
+
+    delete [] N;
+    delete [] Porter_g;
+    delete [] PS_TOTN;
 }
 
 

@@ -100,6 +100,11 @@ TEST_F(cal_totn_test, cal_totn)
 
     EXPECT_NEAR(TOTN[0].real(),-2.5667040718e-04,1e-10);
     EXPECT_NEAR(TOTN[19].real(),-2.4041208488e-04,1e-10);
+
+    delete [] N;
+    delete [] TOTN;
+    delete [] Porter_g;
+    delete [] vloc;
 }
 
 TEST_F(cal_totn_test, induced_charge)
