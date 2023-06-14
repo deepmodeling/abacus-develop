@@ -385,7 +385,7 @@ void ESolver_KS_PW<FPTYPE, Device>::eachiterinit(const int istep, const int iter
 
 // Temporary, it should be replaced by hsolver later.
 template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
+void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const double ethr)
 {
     if (this->phsol != nullptr)
     {
@@ -736,7 +736,7 @@ void ESolver_KS_PW<FPTYPE, Device>::postprocess()
 }
 
 template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::hamilt2estates(const FPTYPE ethr)
+void ESolver_KS_PW<FPTYPE, Device>::hamilt2estates(const double ethr)
 {
     if (this->phsol != nullptr)
     {
@@ -760,7 +760,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     //========================================
     // diagonalization of the KS hamiltonian
     // =======================================
-    FPTYPE diag_ethr = GlobalV::PW_DIAG_THR;
+    double diag_ethr = GlobalV::PW_DIAG_THR;
     if (diag_ethr - 1e-2 > -1e-5)
         diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, GlobalV::SCF_THR / GlobalV::nelec));
     GlobalV::ofs_running << " PW_DIAG_THR  = " << diag_ethr << std::endl;
