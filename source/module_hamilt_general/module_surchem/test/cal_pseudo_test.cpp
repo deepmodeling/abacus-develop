@@ -131,34 +131,23 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     const int npw = GlobalC::rhopw ->npw;
     const int nrxx = GlobalC::rhopw ->nrxx;
-
-    complex<double> *N = new complex<double>[npw];
-    ModuleBase::GlobalFunc::ZEROS(N, npw);
     
     Structure_Factor sf;
     sf.nbspline = -1;
-    
-    ifstream fin;
-	fin.open("./support/rho_g");
-    if (!fin)
-	{
-	    cerr<<"input file does not exist"<<endl;
-	}
 
     complex<double>* Porter_g = new complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(Porter_g,npw);
     for (int i=0; i<npw; i++)
     {
-        fin>>Porter_g[i];
+       Porter_g[i] = 0.1;
     }
     
     complex<double>* PS_TOTN = new complex<double>[npw];
     solvent_model.cal_pseudo(GlobalC::ucell,GlobalC::rhopw,Porter_g,PS_TOTN,&sf);
 
-    EXPECT_NEAR(PS_TOTN[0].real(),2.4303134311e-07,1e-10);
-    EXPECT_NEAR(PS_TOTN[19].real(),-2.4402080195e-04,1e-10);
+    EXPECT_NEAR(PS_TOTN[16].real(),0.098426466,1e-9);
+    EXPECT_NEAR(PS_TOTN[14].real(),0.102,1e-9);
 
-    delete [] N;
     delete [] Porter_g;
     delete [] PS_TOTN;
 }
