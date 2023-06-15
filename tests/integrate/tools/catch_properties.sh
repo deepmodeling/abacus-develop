@@ -38,6 +38,7 @@ has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2
 deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_lowf=`grep out_wfc_lcao INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_app_flag=`grep out_app_flag INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_r=`grep out_wfc_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_pw=`grep out_wfc_pw INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_dm=`grep "out_dm " INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -292,6 +293,11 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.dat
 		wfc_ref=LOWF_GAMMA_S1.dat.ref	
 	else
+		if ! test -z "$out_app_flag"  && [ $out_app_flag == 1 ]; then
+			wfc_name=LOWF_K_2
+		else
+			wfc_name=10_LOWF_K_1
+		fi
 		awk 'BEGIN {flag=999}
     	{
         	if($2 == "(band)") {flag=2;print $0}
@@ -303,9 +309,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/LOWF_K_2.dat > OUT.autotest/LOWF_K_2_mod.dat
-		wfc_cal=OUT.autotest/LOWF_K_2_mod.dat
-		wfc_ref=LOWF_K_2_mod.dat.ref
+    	}' OUT.autotest/$wfc_name.dat > OUT.autotest/{$wfc_name}_mod.dat
+		wfc_cal=OUT.autotest/$wfc_name_mod.dat
+		wfc_ref={$wfc_name}_mod.dat.ref
 	fi
 
 	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1
