@@ -25,7 +25,7 @@ file=$1
 #echo $1
 calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
-natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | awk '{print $6}'`
+natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
 has_force=`grep -En '(^|[[:space:]])cal_force($|[[:space:]])' INPUT | awk '{print $2}'`
 has_stress=`grep -En '(^|[[:space:]])cal_stress($|[[:space:]])' INPUT | awk '{print $2}'`
 has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{print $2}'`
@@ -65,7 +65,8 @@ test -e $1 && rm $1
 #--------------------------------------------
 if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
 && [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
-	etot=`grep ETOT_ $running_path | awk '{print $2}'`
+	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
+	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
 	echo "etotref $etot" >>$1
 	echo "etotperatomref $etotperatom" >>$1
