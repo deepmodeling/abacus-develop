@@ -293,10 +293,10 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.dat
 		wfc_ref=LOWF_GAMMA_S1.dat.ref	
 	else
-		if ! test -z "$out_app_flag"  && [ $out_app_flag == 1 ]; then
-			wfc_name=LOWF_K_2
-		else
+		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=10_LOWF_K_1
+		else
+			wfc_name=LOWF_K_2
 		fi
 		awk 'BEGIN {flag=999}
     	{
