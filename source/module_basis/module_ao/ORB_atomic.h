@@ -2,7 +2,7 @@
 #define NUMERICAL_ORBITAL_H
 
 #include <string>
-using namespace std;
+//using namespace std;
 
 #include "module_base/intarray.h"
 #include "module_base/vector3.h"
