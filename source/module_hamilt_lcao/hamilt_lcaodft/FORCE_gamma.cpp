@@ -217,7 +217,8 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
         this->UHM->genH.LM->zeros_HSgamma('S');
         this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
         bool bit = false; // LiuXh, 2017-03-21
-        ModuleIO::saving_HS(this->UHM->genH.LM->Hloc.data(),
+        ModuleIO::saving_HS(0,
+                            this->UHM->genH.LM->Hloc.data(),
                             this->UHM->genH.LM->Sloc.data(),
                             bit,
                             1,

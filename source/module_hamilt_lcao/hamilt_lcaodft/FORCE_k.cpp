@@ -277,7 +277,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
             this->UHM->genH.LM->zeros_HSk('S');
             this->UHM->genH.LM->folding_fixedH(ik, kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
-            ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
+            ModuleIO::saving_HS(0,
+                                this->UHM->genH.LM->Hloc2.data(),
                                 this->UHM->genH.LM->Sloc2.data(),
                                 bit,
                                 1,
