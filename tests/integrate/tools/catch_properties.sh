@@ -309,9 +309,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/$wfc_name.dat > OUT.autotest/{$wfc_name}_mod.dat
-		wfc_cal=OUT.autotest/$wfc_name_mod.dat
-		wfc_ref={$wfc_name}_mod.dat.ref
+    	}' OUT.autotest/"$wfc_name".dat > OUT.autotest/"$wfc_name"_mod.dat
+		wfc_cal=OUT.autotest/"$wfc_name_mod".dat
+		wfc_ref="$wfc_name"_mod.dat.ref
 	fi
 
 	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1
