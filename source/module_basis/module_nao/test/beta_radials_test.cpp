@@ -38,8 +38,8 @@ class BetaRadialsTest : public ::testing::Test
 
     BetaRadials beta; //!< object under test
 
-    std::string dir = "../../../../../tests/PP_ORB/";         //!< directory with test files
-    std::string log_file = "./test_files/atomic_orbital.log"; //!< file for logging
+    std::string dir = "../../../../../tests/PP_ORB/";       //!< directory with test files
+    std::string log_file = "./test_files/beta_radials.log"; //!< file for logging
 };
 
 void BetaRadialsTest::SetUp()

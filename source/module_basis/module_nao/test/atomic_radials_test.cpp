@@ -38,7 +38,7 @@ class AtomicRadialsTest : public ::testing::Test
 
     AtomicRadials Ti_radials;                                                        //!< object under test
     std::string file = "../../../../../tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb"; //!< orbital file to read from
-    std::string log_file = "./test_files/atomic_orbital.log";                        //!< file for logging
+    std::string log_file = "./test_files/atomic_radials.log";                        //!< file for logging
 
     double tol = 1e-12; //!< numerical tolerance for grid & values
 };

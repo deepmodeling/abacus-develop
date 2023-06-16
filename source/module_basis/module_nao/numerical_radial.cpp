@@ -420,14 +420,6 @@ void NumericalRadial::radtab(const char op,
     // if table_grid is provided, then ngrid_table must be positive
     assert((table_grid && ngrid_table > 0) || (!table_grid && ngrid_table == 0));
 
-    /***********************************************************/
-    // currently user-defined grids are not supported
-    // and only FFT-compliant grids are supported
-    // TODO add more grid support, the two restrictions shall be relaxed in the future
-    assert(is_fft_compliant_ && ket.is_fft_compliant_);
-    assert(ngrid_table == 0 && !table_grid);
-    /***********************************************************/
-
     // function to undergo a spherical Bessel transform:
     // overlap: chi1(k) * chi2(k)
     // kinetic: k^2 * chi1(k) * chi2(k)
@@ -450,6 +442,12 @@ void NumericalRadial::radtab(const char op,
     int ntab = ngrid_table ? ngrid_table : nr_;
     const double* tabgrid = table_grid ? table_grid : rgrid_;
     bool use_radrfft = is_fft_compliant(ntab, tabgrid, nk_, kgrid_);
+
+    /***********************************************************/
+    // currently only FFT-compliant grids are supported
+    // TODO add more grid support
+    assert(use_radrfft);
+    /***********************************************************/
 
     if (deriv)
     { // derivative of the radial table
