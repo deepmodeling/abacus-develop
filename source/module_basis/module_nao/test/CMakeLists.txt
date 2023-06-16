@@ -37,3 +37,16 @@ AddTest(
     ../numerical_radial.cpp
   LIBS ${math_libs} device base
 )
+
+AddTest(
+  TARGET two_center_table
+  SOURCES
+    two_center_table_test.cpp
+    ../two_center_table.cpp
+    ../radial_collection.cpp
+    ../atomic_radials.cpp
+    ../beta_radials.cpp
+    ../radial_set.cpp
+    ../numerical_radial.cpp
+  LIBS ${math_libs} device base container kernels
+)
