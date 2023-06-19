@@ -228,12 +228,16 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
         this->pelec->charge->allocate(GlobalV::NSPIN);
         this->pelec->omega = GlobalC::ucell.omega;
 
-        this->pelec->pot = new elecstate::Potential(pw_rho,
-                                                    &GlobalC::ucell,
-                                                    &(GlobalC::ppcell.vloc),
-                                                    &(sf),
-                                                    &(this->pelec->f_en.etxc),
-                                                    &(this->pelec->f_en.vtxc));
+        // Initialize the potential.
+        if (this->pelec->pot == nullptr)
+        {
+            this->pelec->pot = new elecstate::Potential(pw_rho,
+                                                        &GlobalC::ucell,
+                                                        &(GlobalC::ppcell.vloc),
+                                                        &(sf),
+                                                        &(this->pelec->f_en.etxc),
+                                                        &(this->pelec->f_en.vtxc));
+        }
     }
 }
 
