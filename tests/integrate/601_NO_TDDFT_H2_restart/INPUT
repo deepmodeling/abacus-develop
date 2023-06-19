@@ -15,21 +15,24 @@ scf_nmax		50
 ks_solver		scalapack_gvx
 basis_type		lcao
 gamma_only		0
-md_nstep		2
+md_nstep		7
 
 mixing_type		pulay
 mixing_beta		0.7
 scf_thr			1.0e-6
+
+read_file_dir 		./restart
+init_wfc	file
 
 cal_stress          1
 stress_thr      1e-6
 cal_force           1
 force_thr_ev    1.0e-3
 
-td_propagator      1
-
 md_type		nve
 md_dt			0.05
+md_restart		1
+md_tfirst	30
 init_vel                1
 ocp			1
 ocp_set			1*1 1*1 3*0	

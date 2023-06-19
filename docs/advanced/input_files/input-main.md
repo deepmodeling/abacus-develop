@@ -1299,6 +1299,8 @@ These variables are used to control the output of properties.
   - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
+  
+  Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: Flase
 
 ### out_dos
@@ -1355,7 +1357,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
 
 ### out_mat_r
@@ -1390,14 +1392,14 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information.
 - **Default**: true
 
 ### out_interval
 
 - **Type**: Integer
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
+- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info
@@ -2089,8 +2091,8 @@ These variables are used to control molecular dynamics calculations. For more in
 ### md_restart
 
 - **Type**: Boolean
-- **Description**: Control whether to restart molecular dynamics calculations. 
-  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically.
+- **Description**: Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations. 
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `LOWF_K_${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
   - False: ABACUS will start molecular dynamics calculations normally from the first step.
 - **Default**: False
 
