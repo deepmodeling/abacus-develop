@@ -119,7 +119,27 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     pelec->charge->save_rho_before_sum_band();
 
-    if (GlobalV::ESOLVER_TYPE == "tddft" && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
+    if (wf.init_wfc == "file")
+    {
+        if (istep >= 1)
+        {
+            module_tddft::Evolve_elec::solve_psi(istep,
+                                                 GlobalV::NBANDS,
+                                                 GlobalV::NLOCAL,
+                                                 this->p_hamilt,
+                                                 this->LOWF,
+                                                 this->psi,
+                                                 this->psi_laststep,
+                                                 this->Hk_laststep,
+                                                 this->pelec_td->ekb,
+                                                 td_htype,
+                                                 INPUT.propagator,
+                                                 kv.nks);
+            this->pelec_td->psiToRho_td(this->psi[0]);
+        }
+        this->pelec_td->psiToRho_td(this->psi[0]);
+    }
+    else if (istep >= 2)
     {
         module_tddft::Evolve_elec::solve_psi(istep,
                                              GlobalV::NBANDS,
@@ -224,11 +244,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             }
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-            if (this->psi != nullptr)
+            if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
+                ModuleIO::saving_HS(istep,
+                                    h_mat.p,
                                     s_mat.p,
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
@@ -236,11 +257,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     this->LOWF.ParaV[0],
                                     1); // LiuXh, 2017-03-21
             }
-            else if (this->psid != nullptr)
+            else if (this->psid != nullptr && (istep % GlobalV::out_interval == 0))
             {
                 hamilt::MatrixBlock<double> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
+                ModuleIO::saving_HS(istep,
+                                    h_mat.p,
                                     s_mat.p,
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
@@ -259,15 +281,18 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
-            if (this->psi != nullptr)
+            if (istep % GlobalV::out_interval == 0)
             {
-                this->psi[0].fix_k(ik);
-                this->pelec->print_psi(this->psi[0]);
-            }
-            else
-            {
-                this->psid[0].fix_k(ik);
-                this->pelec->print_psi(this->psid[0]);
+                if (this->psi != nullptr)
+                {
+                    this->psi[0].fix_k(ik);
+                    this->pelec->print_psi(this->psi[0], istep);
+                }
+                else
+                {
+                    this->psid[0].fix_k(ik);
+                    this->pelec->print_psi(this->psid[0], istep);
+                }
             }
         }
         elecstate::ElecStateLCAO::out_wfc_flag = 0;
@@ -287,7 +312,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 
     // store wfc and Hk laststep
-    if (istep >= 1 && this->conv_elec)
+    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
     {
         if (this->psi_laststep == nullptr)
 #ifdef __MPI

@@ -2,7 +2,7 @@
 
 #include "module_io/rho_io.h"
 #include "module_io/potential_io.h"
-
+#include "module_io/output_log.h"
 //-----------temporary-------------------------
 #include "module_base/global_function.h"
 #include "module_base/memory.h"
@@ -890,16 +890,7 @@ void ESolver_OF::printInfo()
 
 void ESolver_OF::afterOpt()
 {
-    if (this->conv)
-    {
-        GlobalV::ofs_running << "\n charge density convergence is achieved" << std::endl;
-        GlobalV::ofs_running << " final etot is " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV"
-                             << std::endl;
-    }
-    else
-    {
-        GlobalV::ofs_running << " convergence has NOT been achieved!" << std::endl;
-    }
+    ModuleIO::output_convergence_after_scf(this->conv, this->pelec->f_en.etot);
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {

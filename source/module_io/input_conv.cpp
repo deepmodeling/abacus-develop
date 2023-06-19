@@ -202,7 +202,14 @@ void Input_Conv::Convert(void)
     if (INPUT.calculation == "md" && INPUT.mdp.md_restart) // md restart  liuyu add 2023-04-12
     {
         int istep = MD_func::current_step(GlobalV::MY_RANK, GlobalV::global_readin_dir);
-        GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
+        if (INPUT.read_file_dir == "auto")
+        {
+            GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
+        }
+        else
+        {
+            GlobalV::stru_file = INPUT.stru_file = GlobalV::global_readin_dir + "STRU_MD_" + std::to_string(istep);
+        }
     }
     else if (INPUT.stru_file != "")
     {
