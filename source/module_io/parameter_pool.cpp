@@ -15,18 +15,18 @@
 #include "module_md/md_para.h"
 
 /**
- * @param input_parameters 保存所有输入参数
- * @param default_parametes_type 保存所有参数的名称与其类型
+ * @param input_parameters Save all input parameters
+ * @param default_parametes_type Save the names and types of all parameters
  */
 extern map<std::string, InputParameter> input_parameters;
 extern map<std::string, string> default_parametes_type;
 
 /**
- * @brief 将字符串sa转换为小写字母后存储到字符串sb中
- * @param sa 待转换的字符串指针
- * @param sb 存储转换后字符串的指针，需要预先分配足够的空间
+ * @brief Converts the string sa to a minor character and stores it in the string sb
+ * @param sa Pointer to the string to be converted
+ * @param sb Store a pointer to the converted string, which needs to be pre-allocated with enough space
  */
-void strtolower(char *sa, char *sb)
+void strtolower(char* sa, char* sb)
 {
     char c;
     int len = strlen(sa);
@@ -39,11 +39,12 @@ void strtolower(char *sa, char *sb)
 }
 
 /**
- * @brief 从指定文件中读取默认参数，并将其保存到全局变量default_parametes_type中
- * 
- * @param fn 指定文件的路径
- * @return true 读取成功
- * @return false 读取失败
+ * @brief Reads the default parameters from the specified file and saves them to the global variable
+ * default_parametes_type
+ *
+ * @param fn Specifies the path to the file
+ * @return true Read successfully
+ * @return false Read failure
  */
 bool default_parametes_reader(const std::string& fn)
 {
@@ -55,29 +56,29 @@ bool default_parametes_reader(const std::string& fn)
         {
             default_parametes_type[word1] = word2;
         }
-        // 关闭文件
+        // Close file
         inputFile.close();
     }
     else
     {
-        std::cout << "无法打开文件！" << std::endl;
+        std::cout << "Cannot open file !" << std::endl;
     }
 }
 /**
- * @brief 该函数用于读取输入参数文件并将其存储为键值对的形式
- * @param fn 输入参数文件的路径
+ * @brief This function is used to read the input parameter file and store it as a key-value pair
+ * @param fn Enter the path to the parameter file
  */
 bool input_parameters_get(const std::string& fn)
 {
-    // 输出模块标题信息
+    // The module title information is displayed
     ModuleBase::TITLE("Input", "Read");
-    // 如果不是主节点，则返回false
+    // If it is not the primary node, return false
     if (GlobalV::MY_RANK != 0)
         return false;
 
-    // 打开输入参数文件
+    // Open the input parameter file
     std::ifstream ifs(fn.c_str(), ios::in); // "in_datas/input_parameters"
-    // 如果打开失败，则输出错误信息并返回false
+    // If the opening fails, an error message is printed and false is returned
     if (!ifs)
     {
         std::cout << " Can't find the INPUT file." << std::endl;
@@ -88,12 +89,12 @@ bool input_parameters_get(const std::string& fn)
     char word[80], word1[80];
     int ierr = 0;
 
-    // 读取文件内容
+    // Read file contents
     ifs.rdstate();
     while (ifs.good())
     {
         ifs >> word;
-        ifs.ignore(150, '\n');// 忽略行尾
+        ifs.ignore(150, '\n'); // Ignore end of line
         if (strcmp(word, "INPUT_PARAMETERS") == 0)
         {
             ierr = 1;
@@ -101,7 +102,7 @@ bool input_parameters_get(const std::string& fn)
         }
         ifs.rdstate();
     }
-     // 如果ierr为0，则表示未找到"INPUT_PARAMETERS"这个单词，输出错误信息并返回false
+    // If ierr is 0, the word "INPUT_PARAMETERS" is not found, and an error message is printed with false
     if (ierr == 0)
     {
         std::cout << " Error parameter list." << std::endl;
@@ -117,19 +118,18 @@ bool input_parameters_get(const std::string& fn)
     SimpleVector<double> param_vector_double;
     void* param_value;
 
-    // TODO: 差个vector
-    // 读取参数值并存储为键值对
+    // Parameter values are read and stored as key-value pairs
     while (ifs.good())
     {
         ifs >> word1;
         if (ifs.eof())
             break;
         strtolower(word1, word);
-  
+
         //----------------------------------------------------------
         // main parameters
         //----------------------------------------------------------
-        // 根据参数类型读取参数值并存储为键值对
+        // The parameter values are read according to the parameter type and stored as key-value pairs
         std::string param_type = default_parametes_type[word];
         InputParameter input_param;
         if (strcmp(param_type.c_str(), "int") == 0)
@@ -143,7 +143,7 @@ bool input_parameters_get(const std::string& fn)
 
             INPUT.read_value(ifs, param_bool);
             input_param.type = BOOL;
-            input_param.set((void*)(&param_bool)); 
+            input_param.set((void*)(&param_bool));
         }
         else if (strcmp(param_type.c_str(), "double") == 0)
         {
@@ -151,18 +151,20 @@ bool input_parameters_get(const std::string& fn)
             input_param.type = DOUBLE;
             input_param.set((void*)(&param_double));
         }
-        else if (strcmp(param_type.c_str(), "string") == 0){
+        else if (strcmp(param_type.c_str(), "string") == 0)
+        {
             INPUT.read_value(ifs, param_string);
             input_param.type = STRING;
             input_param.set((void*)(&param_string));
         }
         else if (strcmp(param_type.c_str(), "vector_int") == 0)
         {
-            int count = 0,tmp;
+            int count = 0, tmp;
             std::string s;
             std::getline(ifs, s);
             std::stringstream ss(s);
-            while ((ss >> tmp)){
+            while ((ss >> tmp))
+            {
                 param_vector_int[count++] = tmp;
             }
             input_param.type = VECTOR_I;
@@ -170,11 +172,13 @@ bool input_parameters_get(const std::string& fn)
         }
         else if (strcmp(param_type.c_str(), "vector_double") == 0)
         {
-            int count = 0;double tmp;
+            int count = 0;
+            double tmp;
             std::string s;
             std::getline(ifs, s);
             std::stringstream ss(s);
-            while ((ss >> tmp)){
+            while ((ss >> tmp))
+            {
                 param_vector_double[count++] = tmp;
             }
             input_param.type = VECTOR_D;
