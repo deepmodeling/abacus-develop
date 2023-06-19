@@ -48,5 +48,5 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base container kernels
+  LIBS ${math_libs} device base #container kernels
 )
