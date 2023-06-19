@@ -75,7 +75,6 @@ class Setcell
         delete[] ucell.atoms[0].tau;
         delete[] ucell.atoms[1].tau;
         delete[] ucell.atoms[0].vel;
-        delete[] ucell.atoms[0].mbl;
         ucell.atoms[0].tau = new ModuleBase::Vector3<double>[2];
         ucell.atoms[1].tau = new ModuleBase::Vector3<double>[1];
 
