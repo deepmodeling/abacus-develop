@@ -286,7 +286,7 @@ exx_opt_orb_tolerence          0 #
 td_force_dt                    0.02 #time of force change
 td_vext                        0 #add extern potential or not
 td_vext_dire                   1 #extern potential direction
-propagator                     0 # method of propagator
+td_propagator                     0 # method of propagator
 td_stype                       0 #space domain type
 td_ttype                       0 #time domain type
 td_tstart                      1 #the start step of electric field
