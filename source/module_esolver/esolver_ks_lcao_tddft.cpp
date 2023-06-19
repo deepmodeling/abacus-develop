@@ -119,7 +119,27 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
 
     pelec->charge->save_rho_before_sum_band();
 
-    if (GlobalV::ESOLVER_TYPE == "tddft" && istep >= 2 && !GlobalV::GAMMA_ONLY_LOCAL)
+    if (wf.init_wfc == "file")
+    {
+        if (istep >= 1)
+        {
+            module_tddft::Evolve_elec::solve_psi(istep,
+                                                 GlobalV::NBANDS,
+                                                 GlobalV::NLOCAL,
+                                                 this->p_hamilt,
+                                                 this->LOWF,
+                                                 this->psi,
+                                                 this->psi_laststep,
+                                                 this->Hk_laststep,
+                                                 this->pelec_td->ekb,
+                                                 td_htype,
+                                                 INPUT.propagator,
+                                                 kv.nks);
+            this->pelec_td->psiToRho_td(this->psi[0]);
+        }
+        this->pelec_td->psiToRho_td(this->psi[0]);
+    }
+    else if (istep >= 2)
     {
         module_tddft::Evolve_elec::solve_psi(istep,
                                              GlobalV::NBANDS,
@@ -292,7 +312,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     }
 
     // store wfc and Hk laststep
-    if (istep >= 1 && this->conv_elec)
+    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
     {
         if (this->psi_laststep == nullptr)
 #ifdef __MPI
