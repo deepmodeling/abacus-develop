@@ -11,7 +11,14 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
     std::ofstream ofs;
     if (GlobalV::DRANK==0)
     {
-        ofs.open(name.c_str(), std::ofstream::app);
+        if (GlobalV::out_app_flag)
+        {
+            ofs.open(name.c_str(), std::ofstream::app);
+        }
+        else
+        {
+            ofs.open(name.c_str());
+        }
         if (!ofs)
         {
             ModuleBase::WARNING("ModuleIO::write_wfc_nao","Can't write local orbital wave functions.");
@@ -50,7 +57,14 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<doubl
     std::ofstream ofs;
     if (GlobalV::DRANK==0)
     {
-        ofs.open(name.c_str(), std::ofstream::app);
+        if (GlobalV::out_app_flag)
+        {
+            ofs.open(name.c_str(), std::ofstream::app);
+        }
+        else
+        {
+            ofs.open(name.c_str());
+        }
         if (!ofs)
         {
             ModuleBase::WARNING("ModuleIO::write_wfc_nao","Can't write local orbital wave functions.");
