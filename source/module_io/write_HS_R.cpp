@@ -52,7 +52,7 @@ void ModuleIO::output_HS_R(const int& istep,
         }
     }
 
-    ModuleIO::save_HSR_sparse(istep, *UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
+    ModuleIO::save_HSR_sparse(istep, UHM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
     UHM.destroy_all_HSR_sparse();
 
     if(!GlobalV::GAMMA_ONLY_LOCAL) //LiuXh 20181011
@@ -106,7 +106,7 @@ void ModuleIO::output_dH_R(const int& istep,
         }
     }
 
-    ModuleIO::save_dH_sparse(istep, *UHM.LM, sparse_threshold, binary);
+    ModuleIO::save_dH_sparse(istep, UHM, sparse_threshold, binary);
     UHM.destroy_dH_R_sparse();
 
     UHM.GK.destroy_pvdpR();

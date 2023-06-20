@@ -53,7 +53,7 @@ void Output_Mat_Sparse::write()
         r_matrix.init(this->_pv);
         if (_out_mat_hsR)
         {
-            r_matrix.out_rR_other(_istep, this->_LM.output_R_coor);
+            r_matrix.out_rR_other(_istep, this->_UHM.output_R_coor);
         }
         else
         {

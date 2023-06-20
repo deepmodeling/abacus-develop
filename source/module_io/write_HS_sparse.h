@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 
 #include <string>
 
@@ -13,7 +14,7 @@ namespace ModuleIO
     // jingan add 2021-6-4, modify 2021-12-2
     void save_HSR_sparse(
         const int &istep,
-        LCAO_Matrix &lm,
+        LCAO_Hamilt &UHM,
         const double& sparse_threshold,
         const bool &binary,  
         const std::string &SR_filename, 
@@ -35,7 +36,7 @@ namespace ModuleIO
     );
     void save_dH_sparse(
         const int &istep,
-        LCAO_Matrix &lm,
+        LCAO_Hamilt &UHM,
         const double& sparse_threshold,
         const bool &binary
     );
