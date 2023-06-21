@@ -4,7 +4,7 @@ ABACUS_PATH=$(awk -F "=" '$1=="ABACUS_PATH"{print $2}' ../../SETENV)
 ABACUS_NPROCS=$(awk -F "=" '$1=="ABACUS_NPROCS"{print $2}' ../../SETENV)
 ABACUS_THREADS=$(awk -F "=" '$1=="ABACUS_THREADS"{print $2}' ../../SETENV)
 
-if [[ $ABACUS_NPROCS -gt 6 ]];then
+if [[ $ABACUS_NPROCS -gt 8 ]];then
 	ABACUS_NPROCS=8
 fi
 
