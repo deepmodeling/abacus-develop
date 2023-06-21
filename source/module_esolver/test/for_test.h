@@ -22,7 +22,7 @@ UnitCell::UnitCell()
     ntype = 2;
     nat = 2;
 
-    atom_label = new string[ntype];
+    atom_label = new std::string[ntype];
     atom_label[0] = "Al";
     atom_label[1] = "Cu";
 
