@@ -25,7 +25,7 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
         {
             double diff = rho[0][ir] - rho[1][ir];
             this->tot_magnetization += diff;
-            this->abs_magnetization += abs(diff);
+            this->abs_magnetization += std::abs(diff);
         }
 #ifdef __MPI
         Parallel_Reduce::reduce_double_pool( this->tot_magnetization );

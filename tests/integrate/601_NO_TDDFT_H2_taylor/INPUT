@@ -26,7 +26,7 @@ stress_thr      1e-6
 cal_force           1
 force_thr_ev    1.0e-3
 
-propagator      1
+td_propagator      1
 
 md_type		nve
 md_dt			0.05

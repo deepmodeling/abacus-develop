@@ -1569,7 +1569,7 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_edm);
         }
-        else if (strcmp("propagator", word) == 0)
+        else if (strcmp("td_propagator", word) == 0)
         {
             read_value(ifs, propagator);
         }
