@@ -334,7 +334,7 @@ void test_deepks::compare_with_ref(
 		{
 			double num1 = std::stof(word1);
 			double num2 = std::stof(word2);
-			if(abs(num1-num2)>test_thr)
+			if(std::abs(num1-num2)>test_thr)
 			{
 				this->failed_check+=1;
 				std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;

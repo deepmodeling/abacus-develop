@@ -235,7 +235,7 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
     //It is too complex now and should be modified.
     if (iter == 1)
     {
-        if (abs(this->diag_ethr - 1.0e-2) < 1.0e-6)
+        if (std::abs(this->diag_ethr - 1.0e-2) < 1.0e-6)
         {
             if (GlobalV::init_chg == "file")
             {

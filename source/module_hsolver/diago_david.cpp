@@ -186,7 +186,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            convflag[m] = (abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR);
 
             if (!convflag[m])
             {

@@ -551,7 +551,7 @@ void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel
         ofs << GlobalC::ucell.lmax << " lmax" << std::endl;
     }
 
-    ofs << scientific;
+    ofs << std::scientific;
 
     ofs << std::setprecision(8);
     // NOTICE: ofs_warning << "\n The precison may affect the optimize result.";

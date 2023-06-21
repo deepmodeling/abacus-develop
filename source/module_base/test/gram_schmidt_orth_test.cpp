@@ -107,14 +107,14 @@ TEST_P(GramSchmidtOrthTest,CalOrth)
     while (true)
     {    
         int nbasis = new_basis.size();
-        maxip = abs(gsot.inner_product(new_basis[nbasis-1],new_basis[nbasis-2]));           
+        maxip = std::abs(gsot.inner_product(new_basis[nbasis-1],new_basis[nbasis-2]));           
         for(int i=0;i<nbasis-1;++i)
         {
             for(int j=i+1;j<nbasis;++j)
             {
                 double ip = gsot.inner_product(new_basis[i],new_basis[j]);
                 //std::cout << "i=" << i << ", j=" << j << ": " << ip << std::endl;
-                if(abs(ip) > maxip) {maxip = abs(ip);}
+                if(std::abs(ip) > maxip) {maxip = std::abs(ip);}
             }            
         }
         if (maxip < DOUBLETHRESHOLD) {pass = true; break;};

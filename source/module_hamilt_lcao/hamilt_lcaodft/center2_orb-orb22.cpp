@@ -32,7 +32,7 @@ void Center2_Orb::Orb22::init_radial_table()
 
 	const int LB1 = nB1.getL();
 	const int LB2 = nB2.getL();
-	for( int LB = abs(LB1-LB2); LB<=LB1+LB2; ++LB)
+	for( int LB = std::abs(LB1-LB2); LB<=LB1+LB2; ++LB)
 	{
 		if( (LB-std::abs(LB1-LB2))%2==1 )			// if LA+LB-LAB == odd, then Gaunt_Coefficients = 0
 			continue;
@@ -72,7 +72,7 @@ void Center2_Orb::Orb22::init_radial_table( const std::set<size_t> &radials )
 
 	const int LB1 = nB1.getL();
 	const int LB2 = nB2.getL();
-	for( int LB = abs(LB1-LB2); LB<=LB1+LB2; ++LB)
+	for( int LB = std::abs(LB1-LB2); LB<=LB1+LB2; ++LB)
 	{
 		if( (LB-std::abs(LB1-LB2))%2==1 )			// if LA+LB-LAB == odd, then Gaunt_Coefficients = 0
 			continue;

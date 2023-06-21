@@ -48,7 +48,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
         {
             // total electron charge density
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
-            double arhox = abs(rhox);
+            double arhox = std::abs(rhox);
             if (arhox > vanishing_charge)
             {
                 double exc = 0.0;
@@ -71,13 +71,13 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
         for (int ir = 0;ir < nrxx;ir++)
         {
             double rhox = chr->rho[0][ir] + chr->rho[1][ir] + chr->rho_core[ir]; //HLX(05-29-06): bug fixed
-            double arhox = abs(rhox);
+            double arhox = std::abs(rhox);
 
             if (arhox > vanishing_charge)
             {
                 double zeta = (chr->rho[0][ir] - chr->rho[1][ir]) / arhox; //HLX(05-29-06): bug fixed
 
-                if (abs(zeta)  > 1.0)
+                if (std::abs(zeta)  > 1.0)
                 {
                     zeta = (zeta > 0.0) ? 1.0 : (-1.0);
                 }
@@ -109,7 +109,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
 
-            double arhox = abs( rhox );
+            double arhox = std::abs( rhox );
 
             if ( arhox > vanishing_charge )
             {
@@ -117,7 +117,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
                 double exc = 0.0;
                 double vxc[2];
 
-                if ( abs( zeta ) > 1.0 )
+                if ( std::abs( zeta ) > 1.0 )
                 {
                     zeta = (zeta > 0.0) ? 1.0 : (-1.0);
                 }//end if
@@ -473,7 +473,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
 //XC_POLARIZED, XC_UNPOLARIZED: internal flags used in LIBXC, denote the polarized(nspin=1) or unpolarized(nspin=2) calculations, definition can be found in xc.h from LIBXC
 
 // [etxc, vtxc, v, vofk] = XC_Functional::v_xc(...)
-tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_meta(
+std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_meta(
     const int &nrxx, // number of real-space grid
     const double &omega, // volume of cell
     const double tpiba,
@@ -610,7 +610,7 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir]<rho_th || sqrt(abs(sigma[ir]))<grho_th || abs(kin_r[ir])<tau_th)
+            if ( rho[ir]<rho_th || sqrt(std::abs(sigma[ir]))<grho_th || std::abs(kin_r[ir])<tau_th)
             {
                 sgn[ir] = 0.0;
             }
@@ -623,9 +623,9 @@ tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v_xc_m
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(abs(sigma[ir*3]))<grho_th || abs(kin_r[ir*2])<tau_th)
+            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th)
                 sgn[ir*2] = 0.0;
-            if ( rho[ir*2+1]<rho_th || sqrt(abs(sigma[ir*3+2]))<grho_th || abs(kin_r[ir*2+1])<tau_th)
+            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th)
                 sgn[ir*2+1] = 0.0;
         }
     }

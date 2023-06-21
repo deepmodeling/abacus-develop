@@ -105,17 +105,17 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 			if(atom->mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
-                if( abs(force_eva(iat,0)) > max_grad) max_grad = abs(force_eva(iat,0));
+                if( std::abs(force_eva(iat,0)) > max_grad) max_grad = std::abs(force_eva(iat,0));
 			}
 			if(atom->mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
-                if( abs(force_eva(iat,1)) > max_grad) max_grad = abs(force_eva(iat,1));
+                if( std::abs(force_eva(iat,1)) > max_grad) max_grad = std::abs(force_eva(iat,1));
 			}
 			if(atom->mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
-                if( abs(force_eva(iat,2)) > max_grad) max_grad = abs(force_eva(iat,2));
+                if( std::abs(force_eva(iat,2)) > max_grad) max_grad = std::abs(force_eva(iat,2));
 			}
 			++iat;
 		}
@@ -199,7 +199,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             for (int j = 0; j < 3; j++)
             {
                 double grad = grad_cell(i,j) / (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
-                if ( largest_grad < abs(grad) ) largest_grad = abs(grad);
+                if ( largest_grad < std::abs(grad) ) largest_grad = std::abs(grad);
             }
         }
 
@@ -291,7 +291,7 @@ bool Relax::check_line_search()
         return false;
     }
 
-    if(abs(gr_sr)*std::max(gamma,1.0) > std::abs(gr_gr)/5.0 && !brent_done) //last brent line search not finished
+    if(std::abs(gr_sr)*std::max(gamma,1.0) > std::abs(gr_gr)/5.0 && !brent_done) //last brent line search not finished
     {
         return false;
     }
@@ -497,7 +497,7 @@ void Relax::move_cell_ions(const bool is_new_dir)
 
         if(INPUT.fixed_axes == "volume")
         {
-            double omega_new = abs(GlobalC::ucell.latvec.Det()) * pow(GlobalC::ucell.lat0, 3);
+            double omega_new = std::abs(GlobalC::ucell.latvec.Det()) * pow(GlobalC::ucell.lat0, 3);
             GlobalC::ucell.latvec *= pow(GlobalC::ucell.omega / omega_new, 1.0/3.0);
         }
         if(INPUT.fixed_ibrav)
@@ -591,7 +591,7 @@ void Relax::move_cell_ions(const bool is_new_dir)
 #endif
 
         GlobalC::ucell.omega
-            = abs(GlobalC::ucell.latvec.Det()) * GlobalC::ucell.lat0 * GlobalC::ucell.lat0 * GlobalC::ucell.lat0;
+            = std::abs(GlobalC::ucell.latvec.Det()) * GlobalC::ucell.lat0 * GlobalC::ucell.lat0 * GlobalC::ucell.lat0;
 
         GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
         GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();

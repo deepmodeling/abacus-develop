@@ -299,7 +299,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 							if(L==0 && is_N==1) continue;
 							if(GlobalC::ucell.atoms[it].ncpp.has_so)
 							{
-								const double j = abs(double(L+is_N) - 0.5);
+								const double j = std::abs(double(L+is_N) - 0.5);
 								if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
 								{//atomic_wfc_so
 									for(int m=0; m<2*L+1; m++)
@@ -532,7 +532,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 // 													ModuleBase::GlobalFunc::ZEROS(aux, npw);
 // 													for(int n1=0;n1<2*L+1;n1++){
 // 														const int lm = L*L +n1;
-// 														if(abs(soc.rotylm(n1,ind))>1e-8)
+// 														if(std::abs(soc.rotylm(n1,ind))>1e-8)
 // 														for(int ig=0; ig<npw;ig++)
 // 															aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
 // 													}

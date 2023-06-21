@@ -108,9 +108,9 @@ int ModuleIO::read_wfc_nao_complex(
 			error = 4;
 		}
 		else if ( 
-			abs(kx-kvec_c.x)>1.0e-5 ||
-			abs(ky-kvec_c.y)>1.0e-5 ||
-			abs(kz-kvec_c.z)>1.0e-5 )
+			std::abs(kx-kvec_c.x)>1.0e-5 ||
+			std::abs(ky-kvec_c.y)>1.0e-5 ||
+			std::abs(kz-kvec_c.z)>1.0e-5 )
 		{	
 			GlobalV::ofs_warning << " k std::vector is not correct" << std::endl;
 			GlobalV::ofs_warning << " Read in kx=" << kx << " ky = " << ky << " kz = " << kz << std::endl;
