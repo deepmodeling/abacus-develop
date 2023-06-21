@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters	(General)
 pseudo_dir              ../../../tests/PP_ORB
 orbital_dir                 ../../../tests/PP_ORB
-nbands			8
+nbands			16
 #Parameters (Accuracy)
 ecutwfc			50
 scf_nmax			20

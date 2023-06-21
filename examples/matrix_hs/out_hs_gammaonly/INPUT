@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 calculation     scf
-nbands			6
+nbands			16
 symmetry		1
 pseudo_dir	../../../tests/PP_ORB
 orbital_dir	../../../tests/PP_ORB

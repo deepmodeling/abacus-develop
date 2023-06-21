@@ -4,6 +4,10 @@ ABACUS_PATH=$(awk -F "=" '$1=="ABACUS_PATH"{print $2}' ../../SETENV)
 ABACUS_NPROCS=$(awk -F "=" '$1=="ABACUS_NPROCS"{print $2}' ../../SETENV)
 ABACUS_THREADS=$(awk -F "=" '$1=="ABACUS_THREADS"{print $2}' ../../SETENV)
 
+if [[ $ABACUS_NPROCS -gt 6 ]];then
+	ABACUS_NPROCS=8
+fi
+
 cp STRU_0 STRU
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee H2O_scf.output
 mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf_H2O.log
