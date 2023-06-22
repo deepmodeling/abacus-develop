@@ -308,27 +308,6 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
     return;
 }
 
-
-#ifdef __MPI
-// creat the 'comm_2D' stratege.
-void ORB_control::mpi_creat_cart(MPI_Comm* comm_2D,
-    int prow, int pcol, std::ofstream& ofs_running)
-{
-    ModuleBase::TITLE("ORB_control", "mpi_creat_cart");
-    // the matrix is divided as ( dim[0] * dim[1] )
-    int dim[2];
-    int period[2] = { 1,1 };
-    int reorder = 0;
-    dim[0] = prow;
-    dim[1] = pcol;
-
-    if (this->ParaV.testpb) ofs_running << " dim = " << dim[0] << " * " << dim[1] << std::endl;
-
-    MPI_Cart_create(DIAG_WORLD, 2, dim, period, reorder, comm_2D);
-    return;
-}
-#endif
-
 #ifdef __MPI
 int ORB_control::mat_2d(MPI_Comm vu,
     const int& M_A,
@@ -687,14 +666,11 @@ void ORB_control::divide_HS_2d(
     // while (GlobalV::NPROC_IN_POOL%dim0!=0)
 
     if (ks_solver == "cusolver")
-        pv->dim0 = 1; // Xu Shu add 2022-03-25
-
-    while (dsize % pv->dim0 != 0)
     {
-        pv->dim0 = pv->dim0 - 1;
-    }
-    assert(pv->dim0 > 0);
-    pv->dim1 = dsize / pv->dim0;
+        pv->dim0 = 1; pv->dim1 = dsize;
+    } // Xu Shu add 2022-03-25
+    else
+        pv->set_proc_dim(dsize);
 
     if (pv->testpb)
         ModuleBase::GlobalFunc::OUT(ofs_running, "dim0", pv->dim0);
@@ -724,7 +700,7 @@ void ORB_control::divide_HS_2d(
     this->set_parameters(ofs_running, ofs_warning);
 
     // call mpi_creat_cart
-    this->mpi_creat_cart(&pv->comm_2D, pv->dim0, pv->dim1, ofs_running);
+    pv->mpi_create_cart();
 
     // call mat_2d
     int try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb, pv->MatrixInfo, ofs_running, ofs_warning);

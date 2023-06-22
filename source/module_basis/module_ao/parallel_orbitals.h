@@ -11,35 +11,69 @@
 //The structure LocalMatrix is only used for dftu and exx
 struct LocalMatrix
 {
+    /// map from local index to global index
     std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
     std::vector<int> col_set;
     
-	int col_num;
-    int row_num;
+	int col_num;    ///< how many cols in this processors
+    int row_num;    ///< how many rows in this processors
     
 	int col_pos;
     int row_pos;
     
-	int row_b;  //row block size
-    int col_b;  //column block size
+	int row_b;  ///< how many 2D-row-blocks in this processor
+    int col_b;  ///< how many 2D-col-blocks in this processor
 };
 
-/// These stucture packs the information of 2D-block-cyclic 
-/// parallel distribution of basis, wavefunction and matrix.
-struct Parallel_Orbitals
+/// @brief  This structure packs the basic information of 2D-block-cyclic
+/// parallel distribution of an arbitrary 2D Tensor.
+struct Parallel_2D
 {
 
-    Parallel_Orbitals();
-    ~Parallel_Orbitals();
+    Parallel_2D();
+    ~Parallel_2D();
     
     /// map from global-index to local-index
-    int* trace_loc_row;
-    int* trace_loc_col;
+    int* trace_loc_row = nullptr;
+    int* trace_loc_col = nullptr;
 
     /// local size (nloc = nrow * ncol)
     int nrow;
 	int ncol;
     long nloc;
+    
+    /// block size
+    /// default value of nb is 1,
+    /// but can change to larger value from input.
+    int nb = 1;
+
+    /// the number of processors in each dimension of MPI_Cart structure
+    int dim0;
+    int dim1;
+
+#ifdef __MPI
+    int blacs_ctxt;    ///< blacs info
+    int desc[9];    ///<for matrix, nlocal*nlocal    
+    MPI_Comm comm_2D;   ///<communicator for 2D-block
+    /// create the 'comm_2D' stratege.
+    void mpi_create_cart();
+#endif
+
+    ///  set the 2D index of processors
+    void set_proc_dim(const int& dsize);
+
+    /// check whether a basis element is in this processor
+    /// (check whether local-index > 0 )
+    bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
+};
+
+/// These stucture packs the information of 2D-block-cyclic 
+/// parallel distribution of basis, wavefunction and matrix.
+struct Parallel_Orbitals : public Parallel_2D
+{
+
+    Parallel_Orbitals();
+    ~Parallel_Orbitals();
 
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
@@ -52,13 +86,6 @@ struct Parallel_Orbitals
     //ncol_bands*ncol_bands
     long nloc_Eij;
 
-    /// block size
-    int nb;
-
-    /// the number of processors in each dimension of MPI_Cart structure
-    int dim0;
-    int dim1;
-    
     int lastband_in_proc;
 	int lastband_number; 
 
@@ -71,14 +98,9 @@ struct Parallel_Orbitals
 	int *nlocstart;
     
 #ifdef __MPI
-    /// blacs info
-    int blacs_ctxt;
-    int desc[9];    //for matrix, nlocal*nlocal
     int desc_wfc[9]; //for wfc, nlocal*nbands
     int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
     int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
-    /// communicator for 2D-block
-    MPI_Comm comm_2D;
 #endif
 
     int nspin = 1;
@@ -94,10 +116,6 @@ struct Parallel_Orbitals
     // orbital index for each atom
     std::vector<int> atom_begin_row;
     std::vector<int> atom_begin_col;
-
-    /// check whether a basis element is in this processor
-    /// (check whether local-index > 0 )
-    bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
 
     // set row and col begin index for each atom
     void set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal);

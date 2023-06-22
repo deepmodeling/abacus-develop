@@ -1,15 +1,27 @@
 #include "parallel_orbitals.h"
 
+#include "module_base/memory.h"
+#include "module_basis/module_ao/ORB_control.h"
+#ifdef __MPI
+extern "C"
+{
+#include "module_base/blacs_connector.h"
+#include "module_base/scalapack_connector.h"
+}
+#endif
+Parallel_2D::Parallel_2D()
+{}
+Parallel_2D::~Parallel_2D()
+{
+    delete[] trace_loc_row;
+    delete[] trace_loc_col;
+}
+
 Parallel_Orbitals::Parallel_Orbitals()
 {
     loc_sizes = nullptr;
-    trace_loc_row = nullptr;
-    trace_loc_col = nullptr;
 
     testpb = 0; // mohan add 2011-03-16
-    // default value of nb is 1,
-    // but can change to larger value from input.
-    nb = 1;
 
     // in multi-k, 2D-block-division variables for FT (R<->k)
     nnr = 1;
@@ -19,14 +31,37 @@ Parallel_Orbitals::Parallel_Orbitals()
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-    delete[] trace_loc_row;
-    delete[] trace_loc_col;
     delete[] loc_sizes;    
     delete[] nlocdim;
     delete[] nlocstart;
 }
 
-bool Parallel_Orbitals::in_this_processor(const int& iw1_all, const int& iw2_all) const
+void Parallel_2D::set_proc_dim(const int& dsize)
+{
+    this->dim0 = (int)sqrt((double)dsize); // mohan update 2012/01/13
+    while (dsize % this->dim0 != 0)
+    {
+        this->dim0 = this->dim0 - 1;
+    }
+    assert(this->dim0 > 0);
+    this->dim1 = dsize / this->dim0;
+}
+
+#ifdef __MPI
+
+void Parallel_2D::mpi_create_cart()
+{
+    ModuleBase::TITLE("Parallel_2D", "mpi_create_cart");
+    // the matrix is divided as ( dim0 * dim1 )
+    int period[2] = { 1,1 };
+    int dim[2] = { this->dim0, this->dim1 };
+    int reorder = 0;
+    MPI_Cart_create(DIAG_WORLD, 2, dim, period, reorder, &this->comm_2D);
+    return;
+}
+#endif
+
+bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) const
 {
     if (trace_loc_row[iw1_all] == -1)
         return false;
