@@ -4,7 +4,7 @@ suffix                  abacus
 pseudo_dir              ../../../tests/PP_ORB
 orbital_dir                 ../../../tests/PP_ORB
 calculation             scf
-nbands                  6
+nbands                  16
 symmetry                0
 
 #Parameters (2.Iteration)
