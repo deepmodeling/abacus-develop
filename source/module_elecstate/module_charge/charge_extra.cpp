@@ -1,8 +1,9 @@
 #include "charge_extra.h"
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/tool_threading.h"
+#include "module_io/cube_io.h"
 
 Charge_Extra::Charge_Extra()
 {
@@ -29,7 +30,7 @@ Charge_Extra::~Charge_Extra()
     }
 }
 
-void Charge_Extra::Init_CE(const int& nrxx)
+void Charge_Extra::Init_CE(const int& natom, const int& nrxx)
 {
     if(GlobalV::chg_extrap == "none")
     {
@@ -65,9 +66,6 @@ void Charge_Extra::Init_CE(const int& nrxx)
         }
     }
 
-    natom = GlobalC::ucell.nat;
-    omega_old = GlobalC::ucell.omega;
-
     if(pot_order == 3)
     {
         dis_old1 = new ModuleBase::Vector3<double>[natom];
@@ -79,7 +77,7 @@ void Charge_Extra::Init_CE(const int& nrxx)
     beta  = 0.0;
 }
 
-void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
+void Charge_Extra::extrapolate_charge(UnitCell& ucell, Charge* chr, Structure_Factor* sf)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
     //-------------------------------------------------------
@@ -105,7 +103,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
     rho_extr = min(istep, pot_order);
     if(rho_extr == 0)
     {
-        sf->setup_structure_factor(&GlobalC::ucell, chr->rhopw);
+        sf->setup_structure_factor(&ucell, chr->rhopw);
         GlobalV::ofs_running << " charge density from previous step !" << std::endl;
         return;
     }
@@ -120,7 +118,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
         
         ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
     }
-    chr->atomic_rho(GlobalV::NSPIN, omega_old, rho_atom, sf->strucFac, GlobalC::ucell);
+    chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
@@ -129,9 +127,9 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
         for(int ir=0; ir<chr->rhopw->nrxx; ir++)
         {
             chr->rho[is][ir] -= rho_atom[is][ir];
-            if(GlobalC::ucell.cell_parameter_updated)
+            if (ucell.cell_parameter_updated)
             {
-                chr->rho[is][ir] *= omega_old;
+                chr->rho[is][ir] *= ucell.omega;
             }
         }
     }
@@ -176,7 +174,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
     {
         GlobalV::ofs_running << " second order charge density extrapolation !" << std::endl;
 
-        find_alpha_and_beta();
+        find_alpha_and_beta(ucell.nat);
 
         double **delta_rho3 = new double*[GlobalV::NSPIN];
         for(int is=0; is<GlobalV::NSPIN; is++)
@@ -205,7 +203,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
         delete[] delta_rho3;
     }
 
-    sf->setup_structure_factor(&GlobalC::ucell, chr->rhopw);
+    sf->setup_structure_factor(&ucell, chr->rhopw);
     ModuleBase::OMP_PARALLEL([&](int num_threads, int thread_id)
     {
         int irbeg, irlen;
@@ -215,7 +213,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
             ModuleBase::GlobalFunc::ZEROS(rho_atom[is] + irbeg, irlen);
         }
     });
-    chr->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho_atom, sf->strucFac, GlobalC::ucell);
+    chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
@@ -223,15 +221,13 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
     {
         for(int ir=0; ir<chr->rhopw->nrxx; ir++)
         {
-            if(GlobalC::ucell.cell_parameter_updated)
+            if (ucell.cell_parameter_updated)
             {
-                chr->rho[is][ir] /= GlobalC::ucell.omega;
+                chr->rho[is][ir] /= ucell.omega;
             }
             chr->rho[is][ir] += rho_atom[is][ir];
         }
     }
-
-    omega_old = GlobalC::ucell.omega;
 
     for(int is=0; is<GlobalV::NSPIN; is++)
     {
@@ -242,8 +238,7 @@ void Charge_Extra::extrapolate_charge(Charge* chr, Structure_Factor* sf)
 
 }
 
-
-void Charge_Extra::find_alpha_and_beta(void)
+void Charge_Extra::find_alpha_and_beta(const int& natom)
 {
     if(istep < 3) return;
 
@@ -323,4 +318,89 @@ void Charge_Extra::update_all_dis(const UnitCell& ucell)
         assert(iat == ucell.nat);
     }
     return;
+}
+
+void Charge_Extra::save_files(const UnitCell& ucell,
+                              const ModulePW::PW_Basis* pw_rho,
+                              const ModulePW::PW_Basis_Big* pw_big,
+                              Charge* chr,
+                              Structure_Factor* sf)
+{
+    std::string file_old1 = GlobalV::global_out_dir + "OLD1_SPIN1_CHG.cube";
+    std::string file_old2 = GlobalV::global_out_dir + "OLD2_SPIN1_CHG.cube";
+    std::string file_old3 = GlobalV::global_out_dir + "OLD3_SPIN1_CHG.cube";
+
+    // rename file_old2 to file_old3
+    if (file_exists(file_old2))
+    {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            std::string old_name = GlobalV::global_out_dir + "OLD2_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::string new_name = GlobalV::global_out_dir + "OLD3_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::rename(old_name.c_str(), new_name.c_str());
+        }
+    }
+
+    // rename file_old1 to file_old2
+    if (file_exists(file_old1))
+    {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            std::string old_name = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::string new_name = GlobalV::global_out_dir + "OLD2_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::rename(old_name.c_str(), new_name.c_str());
+        }
+    }
+
+    // obtain the difference between chr->rho and atomic_rho
+    double** rho_atom = new double*[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        rho_atom[is] = new double[chr->rhopw->nrxx];
+
+        ModuleBase::GlobalFunc::ZEROS(rho_atom[is], chr->rhopw->nrxx);
+    }
+    chr->atomic_rho(GlobalV::NSPIN, ucell.omega, rho_atom, sf->strucFac, ucell);
+
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        for (int ir = 0; ir < chr->rhopw->nrxx; ir++)
+        {
+            rho_atom[is][ir] = chr->rho[is][ir] - rho_atom[is][ir];
+            rho_atom[is][ir] *= ucell.omega;
+        }
+    }
+
+    // save file_old1
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        std::string filename = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+        ModuleIO::write_cube(
+#ifdef __MPI
+            pw_big->bz,
+            pw_big->nbz,
+            pw_rho->nplane,
+            pw_rho->startz_current,
+#endif
+            rho_atom[is],
+            is,
+            GlobalV::NSPIN,
+            0,
+            filename,
+            pw_rho->nx,
+            pw_rho->ny,
+            pw_rho->nz,
+            0.0,
+            &ucell,
+            12);
+    }
+
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        delete[] rho_atom[is];
+    }
+    delete[] rho_atom;
 }

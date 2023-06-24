@@ -279,7 +279,7 @@ void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
     {
         this->CE.update_all_dis(GlobalC::ucell);
-        this->CE.extrapolate_charge(this->pelec->charge, &this->sf);
+        this->CE.extrapolate_charge(GlobalC::ucell, this->pelec->charge, &this->sf);
     }
 
     // init Hamilt, this should be allocated before each scf loop

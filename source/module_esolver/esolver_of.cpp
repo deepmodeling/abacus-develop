@@ -236,7 +236,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
-    CE.Init_CE(this->pw_rho->nrxx);
+    CE.Init_CE(GlobalC::ucell.nat, this->pw_rho->nrxx);
     delete this->ptempRho;
     this->ptempRho = new Charge();
     this->ptempRho->set_rhopw(this->pw_rho);
@@ -302,7 +302,7 @@ void ESolver_OF::beforeOpt(const int istep)
     if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
     {
         CE.update_all_dis(GlobalC::ucell);
-        CE.extrapolate_charge(pelec->charge, &(sf));
+        CE.extrapolate_charge(GlobalC::ucell, pelec->charge, &(sf));
     }
 
     this->pelec->init_scf(istep, sf.strucFac);

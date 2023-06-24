@@ -284,7 +284,7 @@ namespace ModuleESolver
         if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
         {
             CE.update_all_dis(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge, &(sf));
+            CE.extrapolate_charge(GlobalC::ucell, pelec->charge, &(sf));
         }
 
         //----------------------------------------------------------
