@@ -103,9 +103,6 @@ class Charge_Extra
     ModuleBase::Vector3<double>* dis_old2 = nullptr; ///< dis_old1 = pos_now - pos_old1
     ModuleBase::Vector3<double>* dis_now = nullptr;  ///< dis_now = pos_next - pos_now
 
-    double** delta_rho1 = nullptr;
-    double** delta_rho2 = nullptr;
-
     double alpha; ///< parameter used in the second order extrapolation
     double beta;  ///< parameter used in the second order extrapolation
 

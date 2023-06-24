@@ -11,17 +11,6 @@ Charge_Extra::Charge_Extra()
 
 Charge_Extra::~Charge_Extra()
 {
-    if(pot_order > 1)
-    {
-        for(int is=0; is<GlobalV::NSPIN; is++)
-        {
-            delete[] delta_rho1[is];
-            delete[] delta_rho2[is];
-        }
-        delete[] delta_rho1;
-        delete[] delta_rho2;
-    }
-
     if(pot_order == 3)
     {
         delete[] dis_old1;
@@ -51,19 +40,6 @@ void Charge_Extra::Init_CE(const int& natom, const int& nrxx)
     else
     {
         ModuleBase::WARNING_QUIT("Charge_Extra","charge extrapolation method is not available !");
-    }
-
-    if(pot_order > 1)
-    {
-        delta_rho1 = new double*[GlobalV::NSPIN];
-        delta_rho2 = new double*[GlobalV::NSPIN];
-        for(int is=0; is<GlobalV::NSPIN; is++)
-        {
-            delta_rho1[is] = new double[nrxx];
-            delta_rho2[is] = new double[nrxx];
-            ModuleBase::GlobalFunc::ZEROS(delta_rho1[is], nrxx);
-            ModuleBase::GlobalFunc::ZEROS(delta_rho2[is], nrxx);
-        }
     }
 
     if(pot_order == 3)
