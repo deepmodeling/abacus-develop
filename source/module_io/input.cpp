@@ -2368,6 +2368,11 @@ bool Input::Read(const std::string &fn)
     {
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
+        if (esolver_type == "tddft")
+        {
+            GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
+            gamma_only_local = 0;
+        }
     }
     if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
     {
