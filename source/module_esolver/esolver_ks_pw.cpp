@@ -279,7 +279,13 @@ void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
     {
         this->CE.update_all_dis(GlobalC::ucell);
-        this->CE.extrapolate_charge(GlobalC::ucell, this->pelec->charge, &this->sf);
+        this->CE.extrapolate_charge(
+#ifdef __MPI
+            &(GlobalC::Pgrid),
+#endif
+            GlobalC::ucell,
+            this->pelec->charge,
+            &this->sf);
     }
 
     // init Hamilt, this should be allocated before each scf loop
@@ -513,6 +519,9 @@ template <typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
 {
     this->create_Output_Potential(istep).write();
+
+    // save charge difference into files for charge extrapolation
+    this->CE.save_files(istep, GlobalC::ucell, this->pw_big, this->pelec->charge, &this->sf);
 
     if (GlobalV::out_chg)
     {

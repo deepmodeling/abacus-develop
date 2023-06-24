@@ -6,6 +6,9 @@
 #include "charge.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#ifdef __MPI
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#endif
 
 using namespace std;
 
@@ -53,11 +56,18 @@ class Charge_Extra
     /**
      * @brief charge extrapolation method
      *
+     * @param Pgrid parallel grids
      * @param ucell the cell information
      * @param chr the charge density
      * @param sf the structure factor
      */
-    void extrapolate_charge(UnitCell& ucell, Charge* chr, Structure_Factor* sf);
+    void extrapolate_charge(
+#ifdef __MPI
+        Parallel_Grid* Pgrid,
+#endif
+        UnitCell& ucell,
+        Charge* chr,
+        Structure_Factor* sf);
 
     /**
      * @brief update displacements
@@ -72,14 +82,14 @@ class Charge_Extra
     /**
      * @brief save the difference of the convergent charge density and the initial atomic charge density
      *
+     * @param istep the current step
      * @param ucell the cell information
-     * @param pw_rho PW basis for charge density
      * @param pw_big big PW basis
      * @param chr the charge density
      * @param sf the structure factor
      */
-    void save_files(const UnitCell& ucell,
-                    const ModulePW::PW_Basis* pw_rho,
+    void save_files(const int& istep,
+                    const UnitCell& ucell,
                     const ModulePW::PW_Basis_Big* pw_big,
                     Charge* chr,
                     Structure_Factor* sf);
@@ -107,17 +117,26 @@ class Charge_Extra
     void find_alpha_and_beta(const int& natom);
 
     /**
-     * @brief determine whether the file exists
+     * @brief read cube files containing the charge difference of previous steps
      *
-     * @param filename name of the file
-     * @return true the file exists
-     * @return false the file does not exist
+     * @param Pgrid parallel grids
+     * @param nx number of grids along x
+     * @param ny number of grids along y
+     * @param nz number of grids along z
+     * @param ucell the cell information
+     * @param tag determine the index of files
+     * @param data the data read from files
      */
-    inline bool file_exists(const std::string& filename)
-    {
-        struct stat buffer;
-        return (stat(filename.c_str(), &buffer) == 0);
-    }
+    void read_files(
+#ifdef __MPI
+        Parallel_Grid* Pgrid,
+#endif
+        const int& nx,
+        const int& ny,
+        const int& nz,
+        const UnitCell* ucell,
+        const std::string& tag,
+        double** data);
 };
 
 #endif

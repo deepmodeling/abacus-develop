@@ -735,6 +735,9 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
+    // save charge difference into files for charge extrapolation
+    this->CE.save_files(istep, GlobalC::ucell, this->pw_big, this->pelec->charge, &this->sf);
+
     if (this->LOC.out_dm1 == 1)
     {
         this->create_Output_DM1(istep).write();

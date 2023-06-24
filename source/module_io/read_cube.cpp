@@ -1,21 +1,20 @@
 #include "module_io/cube_io.h"
 #include "module_base/global_variable.h"
 
-
 bool ModuleIO::read_cube(
 #ifdef __MPI
-		Parallel_Grid* Pgrid,
+    Parallel_Grid* Pgrid,
 #endif
-		const int &is,
-		const int &nspin,
-		const std::string &fn,
-		double* data,
-		int& nx,
-		int& ny,
-		int& nz,
-		double& ef,
-		const UnitCell* ucell,
-		int &prenspin)
+    const int& is,
+    const int& nspin,
+    const std::string& fn,
+    double* data,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    double& ef,
+    const UnitCell* ucell,
+    int& prenspin)
 {
     ModuleBase::TITLE("ModuleIO","read_cube");
     std::ifstream ifs(fn.c_str());

@@ -8,20 +8,20 @@
 
 namespace ModuleIO
 {
-	bool read_cube(
+bool read_cube(
 #ifdef __MPI
-		Parallel_Grid* Pgrid,
+    Parallel_Grid* Pgrid,
 #endif
-		const int &is,
-		const int &nspin,
-		const std::string &fn,
-		double* data,
-		int& nx,
-		int& ny,
-		int& nz,
-		double& ef,
-		const UnitCell* ucell,
-		int &prenspin);
+    const int& is,
+    const int& nspin,
+    const std::string& fn,
+    double* data,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    double& ef,
+    const UnitCell* ucell,
+    int& prenspin);
 
 	void write_cube(
 #ifdef __MPI
