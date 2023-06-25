@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters     (General)
 pseudo_dir                      ../../../tests/PP_ORB
 orbital_dir                     ../../../tests/PP_ORB
-calculation                     ienvelope
+calculation                     get_wf
 nbands                          8
 #Parameters (Methos)
 basis_type                      lcao

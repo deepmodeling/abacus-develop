@@ -4,12 +4,11 @@
 #include "module_base/timer.h"
 
 void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
-	const int &nks,
 	const int &nband,
 	const double &ef,
 	const K_Vectors& kv,
-	const Parallel_Kpoints* Pkpoints,
-	const UnitCell* ucell,
+	const Parallel_Kpoints& Pkpoints,
+	const UnitCell& ucell,
 	const ModuleBase::matrix &ekb)
 {
 	ModuleBase::TITLE("ModuleIO","nscf_fermi_surface");
@@ -29,7 +28,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 
 	for(int ik=0; ik<kv.nkstot; ik++)
 	{
-		if ( GlobalV::MY_POOL == Pkpoints->whichpool[ik] )
+		if ( GlobalV::MY_POOL == Pkpoints.whichpool[ik] )
 		{
 			if( GlobalV::RANK_IN_POOL == 0)
 			{
@@ -43,7 +42,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 					ofs << "   # this is a Band-XCRYSDEN-Structure-File" << std::endl;
 					ofs << "   # aimed at Visualization of Fermi Surface" << std::endl;
 					ofs << "   #" << std::endl;
-					ofs << "   # Case: " << ucell->latName << std::endl;
+					ofs << "   # Case: " << ucell.latName << std::endl;
 					ofs << "   #" << std::endl;	
 					ofs << " Fermi Energy: " << ef << std::endl;
 					ofs << " END_INFO" << std::endl;
@@ -53,12 +52,12 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 					ofs << " " << end-start+1 << std::endl;
 					ofs << " NKX NKY NKZ" << std::endl;
 					ofs << " 0 0 0" << std::endl;
-					ofs << " " << ucell->G.e11 << " " << ucell->G.e12 << " " << ucell->G.e13 << std::endl; 
-					ofs << " " << ucell->G.e21 << " " << ucell->G.e22 << " " << ucell->G.e23 << std::endl; 
-					ofs << " " << ucell->G.e31 << " " << ucell->G.e32 << " " << ucell->G.e33 << std::endl; 
+					ofs << " " << ucell.G.e11 << " " << ucell.G.e12 << " " << ucell.G.e13 << std::endl; 
+					ofs << " " << ucell.G.e21 << " " << ucell.G.e22 << " " << ucell.G.e23 << std::endl; 
+					ofs << " " << ucell.G.e31 << " " << ucell.G.e32 << " " << ucell.G.e33 << std::endl; 
 				}
 
-				const int ik_now = ik - Pkpoints->startk_pool[GlobalV::MY_POOL];
+				const int ik_now = ik - Pkpoints.startk_pool[GlobalV::MY_POOL];
 				ofs << "ik= " << ik << std::endl;
 				ofs << kv.kvec_c[ik_now].x << " " << kv.kvec_c[ik_now].y << " " << kv.kvec_c[ik_now].z << std::endl;  
 

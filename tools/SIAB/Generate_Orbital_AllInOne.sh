@@ -593,16 +593,16 @@ EOF
 
 
 # (1.4.2.4) get INPUTs
-cat > INPUTs << EOF
-INPUT_ORBITAL_INFORMATION
-<SPHERICAL_BESSEL>
-1           // smooth or not
-0.1         // smearing_sigma
-$ecut       // energy cutoff for spherical bessel functions(Ry)
-$rcut       // cutoff of wavefunctions(a.u.)
-1.0e-12     // tolerence
-</SPHERICAL_BESSEL>
-EOF
+# cat > INPUTs << EOF
+# INPUT_ORBITAL_INFORMATION
+# <SPHERICAL_BESSEL>
+# 1           // smooth or not
+# 0.1         // smearing_sigma
+# $ecut       // energy cutoff for spherical bessel functions(Ry)
+# $rcut       // cutoff of wavefunctions(a.u.)
+# 1.0e-12     // tolerence
+# </SPHERICAL_BESSEL>
+# EOF
 
 
 # (1.4.2.5) get INPUT
@@ -617,21 +617,22 @@ calculation         scf
 ntype               1
 nspin               1
 lmaxmax             $maxL
+bessel_nao_rcut     $rcut
 
 symmetry            0
-nbands             	${nbands[iSTRU]} 
+nbands              ${nbands[iSTRU]} 
 
 ecutwfc             $ecut
-scf_thr                 1.0e-7  // about iteration
-scf_nmax               1500
+scf_thr             1e-7  // about iteration
+scf_nmax            1500
 
-smearing_method            gauss
-smearing_sigma               $smearing_sigma
+smearing_method     gauss
+smearing_sigma      $smearing_sigma
 
 mixing_type         pulay       // about charge mixing
 mixing_beta         0.4
 mixing_ndim         8
-printe				1
+printe              1
 EOF
 
 let count++

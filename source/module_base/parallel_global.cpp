@@ -250,7 +250,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     if (GlobalV::MY_RANK != 0 )
     {
         //std::cout.rdbuf(NULL);
-		std::cout.setstate(ios::failbit);//qianrui modify 2020-10-14
+		std::cout.setstate(std::ios::failbit);//qianrui modify 2020-10-14
     }
 	// end test
 #endif //__MPI
@@ -327,7 +327,7 @@ void Parallel_Global::divide_pools(void)
     if(GlobalV::NPROC%GlobalV::NSTOGROUP!=0)
     {
         std::cout<<"\n Error! NPROC="<<GlobalV::NPROC
-        <<" must be divided evenly by BNDPAR="<<GlobalV::NSTOGROUP<<endl;
+        <<" must be divided evenly by BNDPAR="<<GlobalV::NSTOGROUP<<std::endl;
         exit(0);
     }
     GlobalV::NPROC_IN_STOGROUP = GlobalV::NPROC/GlobalV::NSTOGROUP;

@@ -40,7 +40,7 @@ void fenergy::print_all() const
     std::cout << " etxc-etxcc=" << etxc - etxcc << std::endl;
     std::cout << " ewld=" << ewald_energy << std::endl;
     std::cout << " ehart=" << hartree_energy << std::endl;
-    std::cout << " demet=" << demet << std::endl;
+    std::cout << " entropy(-TS)=" << demet << std::endl;
     std::cout << " descf=" << descf << std::endl;
     std::cout << " exx=" << exx << std::endl;
     std::cout << " efiled=" << efield << std::endl;

@@ -2,6 +2,7 @@
 #define ELECSTATE_GETTERS_H
 
 #include <string>
+
 // Description: Getters for elecstate module
 namespace elecstate
 {
@@ -26,7 +27,6 @@ double get_ucell_tot_magnetization_nc_y();
 double get_ucell_tot_magnetization_nc_z();
 /// @brief get the type of KS_SOLVER
 std::string get_ks_solver_type();
-/// @brief get the value of GlobalC::solvent_model.cal_Ael
 
 } // namespace elecstate
 

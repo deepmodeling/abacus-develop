@@ -1,347 +1,343 @@
 # Full List of INPUT Keywords
 
 - [Full List of INPUT Keywords](#full-list-of-input-keywords)
-	- [System variables](#system-variables)
-		- [suffix](#suffix)
-		- [ntype](#ntype)
-		- [calculation](#calculation)
-		- [esolver\_type](#esolver_type)
-		- [symmetry](#symmetry)
-		- [kpar](#kpar)
-		- [bndpar](#bndpar)
-		- [latname](#latname)
-		- [init\_wfc](#init_wfc)
-		- [init\_chg](#init_chg)
-		- [init\_vel](#init_vel)
-		- [nelec](#nelec)
-		- [nupdown](#nupdown)
-		- [dft\_functional](#dft_functional)
-		- [xc\_temperature](#xc_temperature)
-		- [pseudo\_rcut](#pseudo_rcut)
-		- [pseudo\_mesh](#pseudo_mesh)
-		- [mem\_saver](#mem_saver)
-		- [diago\_proc](#diago_proc)
-		- [nbspline](#nbspline)
-		- [kspacing](#kspacing)
-		- [min\_dist\_coef](#min_dist_coef)
-		- [symmetry\_prec](#symmetry_prec)
-		- [device](#device)
-	- [Variables related to input files](#variables-related-to-input-files)
-		- [stru\_file](#stru_file)
-		- [kpoint\_file](#kpoint_file)
-		- [pseudo\_dir](#pseudo_dir)
-		- [orbital\_dir](#orbital_dir)
-		- [read\_file\_dir](#read_file_dir)
-		- [wannier\_card](#wannier_card)
-	- [Plane wave related variables](#plane-wave-related-variables)
-		- [ecutwfc](#ecutwfc)
-		- [nx, ny, nz](#nx-ny-nz)
-		- [pw\_seed](#pw_seed)
-		- [pw\_diag\_thr](#pw_diag_thr)
-		- [pw\_diag\_nmax](#pw_diag_nmax)
-		- [pw\_diag\_ndim](#pw_diag_ndim)
-	- [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-		- [nb2d](#nb2d)
-		- [lmaxmax](#lmaxmax)
-		- [lcao\_ecut](#lcao_ecut)
-		- [lcao\_dk](#lcao_dk)
-		- [lcao\_dr](#lcao_dr)
-		- [lcao\_rmax](#lcao_rmax)
-		- [search\_radius](#search_radius)
-		- [search\_pbc](#search_pbc)
-		- [bx, by, bz](#bx-by-bz)
-	- [Electronic structure](#electronic-structure)
-		- [basis\_type](#basis_type)
-		- [ks\_solver](#ks_solver)
-		- [nbands](#nbands)
-		- [nbands\_istate](#nbands_istate)
-		- [nspin](#nspin)
-		- [smearing\_method](#smearing_method)
-		- [smearing\_sigma](#smearing_sigma)
-		- [smearing\_sigma\_temp](#smearing_sigma_temp)
-		- [mixing\_type](#mixing_type)
-		- [mixing\_beta](#mixing_beta)
-		- [mixing\_ndim](#mixing_ndim)
-		- [mixing\_gg0](#mixing_gg0)
-		- [mixing\_tau](#mixing_tau)
-		- [mixing\_dftu](#mixing_dftu)
-		- [gamma\_only](#gamma_only)
-		- [printe](#printe)
-		- [scf\_nmax](#scf_nmax)
-		- [scf\_thr](#scf_thr)
-		- [scf\_thr\_type](#scf_thr_type)
-		- [chg\_extrap](#chg_extrap)
-		- [lspinorb](#lspinorb)
-		- [noncolin](#noncolin)
-		- [soc\_lambda](#soc_lambda)
-	- [Electronic structure (SDFT)](#electronic-structure-sdft)
-		- [method\_sto](#method_sto)
-		- [nbands\_sto](#nbands_sto)
-		- [nche\_sto](#nche_sto)
-		- [emin\_sto](#emin_sto)
-		- [emax\_sto](#emax_sto)
-		- [seed\_sto](#seed_sto)
-		- [initsto\_freq](#initsto_freq)
-		- [npart\_sto](#npart_sto)
-	- [Geometry relaxation](#geometry-relaxation)
-		- [relax\_method](#relax_method)
-		- [relax\_new](#relax_new)
-		- [relax\_scale\_force](#relax_scale_force)
-		- [relax\_nmax](#relax_nmax)
-		- [relax\_cg\_thr](#relax_cg_thr)
-		- [cal\_force](#cal_force)
-		- [force\_thr](#force_thr)
-		- [force\_thr\_ev](#force_thr_ev)
-		- [force\_thr\_ev2](#force_thr_ev2)
-		- [relax\_bfgs\_w1](#relax_bfgs_w1)
-		- [relax\_bfgs\_w2](#relax_bfgs_w2)
-		- [relax\_bfgs\_rmax](#relax_bfgs_rmax)
-		- [relax\_bfgs\_rmin](#relax_bfgs_rmin)
-		- [relax\_bfgs\_init](#relax_bfgs_init)
-		- [cal\_stress](#cal_stress)
-		- [stress\_thr](#stress_thr)
-		- [press1, press2, press3](#press1-press2-press3)
-		- [fixed\_axes](#fixed_axes)
-		- [fixed\_ibrav](#fixed_ibrav)
-		- [fixed\_atoms](#fixed_atoms)
-		- [cell\_factor](#cell_factor)
-	- [Variables related to output information](#variables-related-to-output-information)
-		- [out\_mul](#out_mul)
-		- [out\_freq\_elec](#out_freq_elec)
-		- [out\_freq\_ion](#out_freq_ion)
-		- [out\_chg](#out_chg)
-		- [out\_pot](#out_pot)
-		- [out\_dm](#out_dm)
-		- [out\_wfc\_pw](#out_wfc_pw)
-		- [out\_wfc\_r](#out_wfc_r)
-		- [out\_wfc\_lcao](#out_wfc_lcao)
-		- [out\_dos](#out_dos)
-		- [out\_band](#out_band)
-		- [out\_proj\_band](#out_proj_band)
-		- [out\_stru](#out_stru)
-		- [out\_bandgap](#out_bandgap)
-		- [out\_level](#out_level)
-		- [out\_alllog](#out_alllog)
-		- [out\_mat\_hs](#out_mat_hs)
-		- [out\_mat\_r](#out_mat_r)
-		- [out\_mat\_hs2](#out_mat_hs2)
-		- [out\_mat\_t](#out_mat_t)
-		- [out\_mat\_dh](#out_mat_dh)
-		- [out\_app\_flag](#out_app_flag)
-		- [out\_interval](#out_interval)
-		- [out\_element\_info](#out_element_info)
-		- [restart\_save](#restart_save)
-		- [restart\_load](#restart_load)
-		- [dft\_plus\_dmft](#dft_plus_dmft)
-		- [rpa](#rpa)
-	- [Density of states](#density-of-states)
-		- [dos\_edelta\_ev](#dos_edelta_ev)
-		- [dos\_sigma](#dos_sigma)
-		- [dos\_scale](#dos_scale)
-		- [dos\_emin\_ev](#dos_emin_ev)
-		- [dos\_emax\_ev](#dos_emax_ev)
-		- [dos\_nche](#dos_nche)
-	- [NAOs](#naos)
-		- [bessel\_nao\_ecut](#bessel_nao_ecut)
-		- [bessel\_nao\_tolerence](#bessel_nao_tolerence)
-		- [bessel\_nao\_rcut](#bessel_nao_rcut)
-		- [bessel\_nao\_smooth](#bessel_nao_smooth)
-		- [bessel\_nao\_sigma](#bessel_nao_sigma)
-	- [DeePKS](#deepks)
-		- [deepks\_out\_labels](#deepks_out_labels)
-		- [deepks\_scf](#deepks_scf)
-		- [deepks\_model](#deepks_model)
-		- [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
-		- [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
-		- [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
-		- [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
-		- [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
-		- [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
-		- [deepks\_bandgap](#deepks_bandgap)
-		- [deepks\_out\_unittest](#deepks_out_unittest)
-	- [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
-		- [of\_kinetic](#of_kinetic)
-		- [of\_method](#of_method)
-		- [of\_conv](#of_conv)
-		- [of\_tole](#of_tole)
-		- [of\_tolp](#of_tolp)
-		- [of\_tf\_weight](#of_tf_weight)
-		- [of\_vw\_weight](#of_vw_weight)
-		- [of\_wt\_alpha](#of_wt_alpha)
-		- [of\_wt\_beta](#of_wt_beta)
-		- [of\_wt\_rho0](#of_wt_rho0)
-		- [of\_hold\_rho0](#of_hold_rho0)
-		- [of\_lkt\_a](#of_lkt_a)
-		- [of\_read\_kernel](#of_read_kernel)
-		- [of\_kernel\_file](#of_kernel_file)
-		- [of\_full\_pw](#of_full_pw)
-		- [of\_full\_pw\_dim](#of_full_pw_dim)
-	- [Electric field and dipole correction](#electric-field-and-dipole-correction)
-		- [efield\_flag](#efield_flag)
-		- [dip\_cor\_flag](#dip_cor_flag)
-		- [efield\_dir](#efield_dir)
-		- [efield\_pos\_max](#efield_pos_max)
-		- [efield\_pos\_dec](#efield_pos_dec)
-		- [efield\_amp](#efield_amp)
-	- [Gate field (compensating charge)](#gate-field-compensating-charge)
-		- [gate\_flag](#gate_flag)
-		- [zgate](#zgate)
-		- [block](#block)
-		- [block\_down](#block_down)
-		- [block\_up](#block_up)
-		- [block\_height](#block_height)
-	- [Exact Exchange](#exact-exchange)
-		- [exx\_hybrid\_alpha](#exx_hybrid_alpha)
-		- [exx\_hse\_omega](#exx_hse_omega)
-		- [exx\_separate\_loop](#exx_separate_loop)
-		- [exx\_hybrid\_step](#exx_hybrid_step)
-		- [exx\_mixing\_beta](#exx_mixing_beta)
-		- [exx\_lambda](#exx_lambda)
-		- [exx\_pca\_threshold](#exx_pca_threshold)
-		- [exx\_c\_threshold](#exx_c_threshold)
-		- [exx\_v\_threshold](#exx_v_threshold)
-		- [exx\_dm\_threshold](#exx_dm_threshold)
-		- [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
-		- [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
-		- [exx\_schwarz\_threshold](#exx_schwarz_threshold)
-		- [exx\_cauchy\_threshold](#exx_cauchy_threshold)
-		- [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
-		- [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
-		- [exx\_ccp\_threshold](#exx_ccp_threshold)
-		- [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
-		- [exx\_distribute\_type](#exx_distribute_type)
-		- [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
-		- [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
-		- [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
-		- [exx\_real\_number](#exx_real_number)
-	- [Molecular dynamics](#molecular-dynamics)
-		- [md\_type](#md_type)
-		- [md\_thermostat](#md_thermostat)
-		- [md\_nstep](#md_nstep)
-		- [md\_restart](#md_restart)
-		- [md\_dt](#md_dt)
-		- [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
-		- [md\_dumpfreq](#md_dumpfreq)
-		- [md\_restartfreq](#md_restartfreq)
-		- [md\_seed](#md_seed)
-		- [md\_prec\_level](#md_prec_level)
-		- [ref\_cell\_factor](#ref_cell_factor)
-		- [md\_tfreq](#md_tfreq)
-		- [md\_tchain](#md_tchain)
-		- [md\_pmode](#md_pmode)
-		- [md\_pcouple](#md_pcouple)
-		- [md\_pfirst, md\_plast](#md_pfirst-md_plast)
-		- [md\_pfreq](#md_pfreq)
-		- [md\_pchain](#md_pchain)
-		- [dump\_force](#dump_force)
-		- [dump\_vel](#dump_vel)
-		- [dump\_virial](#dump_virial)
-		- [lj\_rcut](#lj_rcut)
-		- [lj\_epsilon](#lj_epsilon)
-		- [lj\_sigma](#lj_sigma)
-		- [pot\_file](#pot_file)
-		- [msst\_direction](#msst_direction)
-		- [msst\_vel](#msst_vel)
-		- [msst\_vis](#msst_vis)
-		- [msst\_tscale](#msst_tscale)
-		- [msst\_qmass](#msst_qmass)
-		- [md\_damp](#md_damp)
-		- [md\_tolerance](#md_tolerance)
-		- [md\_nraise](#md_nraise)
-		- [cal\_syns](#cal_syns)
-		- [dmax](#dmax)
-	- [DFT+*U* correction](#dftu-correction)
-		- [dft\_plus\_u](#dft_plus_u)
-		- [orbital\_corr](#orbital_corr)
-		- [hubbard\_u](#hubbard_u)
-		- [yukawa\_potential](#yukawa_potential)
-		- [yukawa\_lambda](#yukawa_lambda)
-		- [omc](#omc)
-	- [vdW correction](#vdw-correction)
-		- [vdw\_method](#vdw_method)
-		- [vdw\_s6](#vdw_s6)
-		- [vdw\_s8](#vdw_s8)
-		- [vdw\_a1](#vdw_a1)
-		- [vdw\_a2](#vdw_a2)
-		- [vdw\_d](#vdw_d)
-		- [vdw\_abc](#vdw_abc)
-		- [vdw\_C6\_file](#vdw_c6_file)
-		- [vdw\_C6\_unit](#vdw_c6_unit)
-		- [vdw\_R0\_file](#vdw_r0_file)
-		- [vdw\_R0\_unit](#vdw_r0_unit)
-		- [vdw\_cutoff\_type](#vdw_cutoff_type)
-		- [vdw\_cutoff\_radius](#vdw_cutoff_radius)
-		- [vdw\_radius\_unit](#vdw_radius_unit)
-		- [vdw\_cutoff\_period](#vdw_cutoff_period)
-		- [vdw\_cn\_thr](#vdw_cn_thr)
-		- [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
-	- [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
-		- [berry\_phase](#berry_phase)
-		- [gdir](#gdir)
-		- [towannier90](#towannier90)
-		- [nnkpfile](#nnkpfile)
-		- [wannier\_spin](#wannier_spin)
-	- [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
-		- [td\_edm](#td_edm)
-		- [td\_print\_eij](#td_print_eij)
-		- [td\_force\_dt](#td_force_dt)
-		- [propagator](#propagator)
-		- [td\_vext](#td_vext)
-		- [td\_vext\_dire](#td_vext_dire)
-		- [td\_stype](#td_stype)
-		- [td\_ttype](#td_ttype)
-		- [td\_tstart](#td_tstart)
-		- [td\_tend](#td_tend)
-		- [td\_lcut1](#td_lcut1)
-		- [td\_lcut2](#td_lcut2)
-		- [td\_gauss\_freq](#td_gauss_freq)
-		- [td\_gauss\_phase](#td_gauss_phase)
-		- [td\_gauss\_sigma](#td_gauss_sigma)
-		- [td\_gauss\_t0](#td_gauss_t0)
-		- [td\_gauss\_amp](#td_gauss_amp)
-		- [td\_trape\_freq](#td_trape_freq)
-		- [td\_trape\_phase](#td_trape_phase)
-		- [td\_trape\_t1](#td_trape_t1)
-		- [td\_trape\_t2](#td_trape_t2)
-		- [td\_trape\_t3](#td_trape_t3)
-		- [td\_trape\_amp](#td_trape_amp)
-		- [td\_trigo\_freq1](#td_trigo_freq1)
-		- [td\_trigo\_freq2](#td_trigo_freq2)
-		- [td\_trigo\_phase1](#td_trigo_phase1)
-		- [td\_trigo\_phase2](#td_trigo_phase2)
-		- [td\_trigo\_amp](#td_trigo_amp)
-		- [td\_heavi\_t0](#td_heavi_t0)
-		- [td\_heavi\_amp](#td_heavi_amp)
-		- [out\_dipole](#out_dipole)
-		- [out\_efield](#out_efield)
-		- [ocp](#ocp)
-		- [ocp\_set](#ocp_set)
-	- [Variables useful for debugging](#variables-useful-for-debugging)
-		- [nurse](#nurse)
-		- [t\_in\_h](#t_in_h)
-		- [vl\_in\_h](#vl_in_h)
-		- [vnl\_in\_h](#vnl_in_h)
-		- [vh\_in\_h](#vh_in_h)
-		- [vion\_in\_h](#vion_in_h)
-		- [test\_force](#test_force)
-		- [test\_stress](#test_stress)
-		- [colour](#colour)
-		- [test\_skip\_ewald](#test_skip_ewald)
-	- [Electronic conductivities](#electronic-conductivities)
-		- [cal\_cond](#cal_cond)
-		- [cond\_nche](#cond_nche)
-		- [cond\_dw](#cond_dw)
-		- [cond\_wcut](#cond_wcut)
-		- [cond\_dt](#cond_dt)
-		- [cond\_dtbatch](#cond_dtbatch)
-		- [cond\_fwhm](#cond_fwhm)
-		- [cond\_nonlocal](#cond_nonlocal)
-	- [Implicit solvation model](#implicit-solvation-model)
-		- [imp\_sol](#imp_sol)
-		- [eb\_k](#eb_k)
-		- [tau](#tau)
-		- [sigma\_k](#sigma_k)
-		- [nc\_k](#nc_k)
+  - [System variables](#system-variables)
+    - [suffix](#suffix)
+    - [ntype](#ntype)
+    - [calculation](#calculation)
+    - [esolver\_type](#esolver_type)
+    - [symmetry](#symmetry)
+    - [symmetry\_prec](#symmetry_prec)
+    - [kpar](#kpar)
+    - [bndpar](#bndpar)
+    - [latname](#latname)
+    - [init\_wfc](#init_wfc)
+    - [init\_chg](#init_chg)
+    - [init\_vel](#init_vel)
+    - [nelec](#nelec)
+    - [nupdown](#nupdown)
+    - [dft\_functional](#dft_functional)
+    - [xc\_temperature](#xc_temperature)
+    - [pseudo\_rcut](#pseudo_rcut)
+    - [pseudo\_mesh](#pseudo_mesh)
+    - [mem\_saver](#mem_saver)
+    - [diago\_proc](#diago_proc)
+    - [nbspline](#nbspline)
+    - [kspacing](#kspacing)
+    - [min\_dist\_coef](#min_dist_coef)
+    - [device](#device)
+  - [Variables related to input files](#variables-related-to-input-files)
+    - [stru\_file](#stru_file)
+    - [kpoint\_file](#kpoint_file)
+    - [pseudo\_dir](#pseudo_dir)
+    - [orbital\_dir](#orbital_dir)
+    - [read\_file\_dir](#read_file_dir)
+    - [wannier\_card](#wannier_card)
+  - [Plane wave related variables](#plane-wave-related-variables)
+    - [ecutwfc](#ecutwfc)
+    - [nx, ny, nz](#nx-ny-nz)
+    - [pw\_seed](#pw_seed)
+    - [pw\_diag\_thr](#pw_diag_thr)
+    - [pw\_diag\_nmax](#pw_diag_nmax)
+    - [pw\_diag\_ndim](#pw_diag_ndim)
+  - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
+    - [nb2d](#nb2d)
+    - [lmaxmax](#lmaxmax)
+    - [lcao\_ecut](#lcao_ecut)
+    - [lcao\_dk](#lcao_dk)
+    - [lcao\_dr](#lcao_dr)
+    - [lcao\_rmax](#lcao_rmax)
+    - [search\_radius](#search_radius)
+    - [search\_pbc](#search_pbc)
+    - [bx, by, bz](#bx-by-bz)
+  - [Electronic structure](#electronic-structure)
+    - [basis\_type](#basis_type)
+    - [ks\_solver](#ks_solver)
+    - [nbands](#nbands)
+    - [nbands\_istate](#nbands_istate)
+    - [nspin](#nspin)
+    - [smearing\_method](#smearing_method)
+    - [smearing\_sigma](#smearing_sigma)
+    - [smearing\_sigma\_temp](#smearing_sigma_temp)
+    - [mixing\_type](#mixing_type)
+    - [mixing\_beta](#mixing_beta)
+    - [mixing\_ndim](#mixing_ndim)
+    - [mixing\_gg0](#mixing_gg0)
+    - [mixing\_tau](#mixing_tau)
+    - [mixing\_dftu](#mixing_dftu)
+    - [gamma\_only](#gamma_only)
+    - [printe](#printe)
+    - [scf\_nmax](#scf_nmax)
+    - [scf\_thr](#scf_thr)
+    - [scf\_thr\_type](#scf_thr_type)
+    - [chg\_extrap](#chg_extrap)
+    - [lspinorb](#lspinorb)
+    - [noncolin](#noncolin)
+    - [soc\_lambda](#soc_lambda)
+  - [Electronic structure (SDFT)](#electronic-structure-sdft)
+    - [method\_sto](#method_sto)
+    - [nbands\_sto](#nbands_sto)
+    - [nche\_sto](#nche_sto)
+    - [emin\_sto](#emin_sto)
+    - [emax\_sto](#emax_sto)
+    - [seed\_sto](#seed_sto)
+    - [initsto\_freq](#initsto_freq)
+    - [npart\_sto](#npart_sto)
+  - [Geometry relaxation](#geometry-relaxation)
+    - [relax\_method](#relax_method)
+    - [relax\_new](#relax_new)
+    - [relax\_scale\_force](#relax_scale_force)
+    - [relax\_nmax](#relax_nmax)
+    - [relax\_cg\_thr](#relax_cg_thr)
+    - [cal\_force](#cal_force)
+    - [force\_thr](#force_thr)
+    - [force\_thr\_ev](#force_thr_ev)
+    - [force\_thr\_ev2](#force_thr_ev2)
+    - [relax\_bfgs\_w1](#relax_bfgs_w1)
+    - [relax\_bfgs\_w2](#relax_bfgs_w2)
+    - [relax\_bfgs\_rmax](#relax_bfgs_rmax)
+    - [relax\_bfgs\_rmin](#relax_bfgs_rmin)
+    - [relax\_bfgs\_init](#relax_bfgs_init)
+    - [cal\_stress](#cal_stress)
+    - [stress\_thr](#stress_thr)
+    - [press1, press2, press3](#press1-press2-press3)
+    - [fixed\_axes](#fixed_axes)
+    - [fixed\_ibrav](#fixed_ibrav)
+    - [fixed\_atoms](#fixed_atoms)
+    - [cell\_factor](#cell_factor)
+  - [Variables related to output information](#variables-related-to-output-information)
+    - [out\_mul](#out_mul)
+    - [out\_freq\_elec](#out_freq_elec)
+    - [out\_chg](#out_chg)
+    - [out\_pot](#out_pot)
+    - [out\_dm](#out_dm)
+    - [out\_wfc\_pw](#out_wfc_pw)
+    - [out\_wfc\_r](#out_wfc_r)
+    - [out\_wfc\_lcao](#out_wfc_lcao)
+    - [out\_dos](#out_dos)
+    - [out\_band](#out_band)
+    - [out\_proj\_band](#out_proj_band)
+    - [out\_stru](#out_stru)
+    - [out\_bandgap](#out_bandgap)
+    - [out\_level](#out_level)
+    - [out\_alllog](#out_alllog)
+    - [out\_mat\_hs](#out_mat_hs)
+    - [out\_mat\_r](#out_mat_r)
+    - [out\_mat\_hs2](#out_mat_hs2)
+    - [out\_mat\_t](#out_mat_t)
+    - [out\_mat\_dh](#out_mat_dh)
+    - [out\_app\_flag](#out_app_flag)
+    - [out\_interval](#out_interval)
+    - [out\_element\_info](#out_element_info)
+    - [restart\_save](#restart_save)
+    - [restart\_load](#restart_load)
+    - [rpa](#rpa)
+  - [Density of states](#density-of-states)
+    - [dos\_edelta\_ev](#dos_edelta_ev)
+    - [dos\_sigma](#dos_sigma)
+    - [dos\_scale](#dos_scale)
+    - [dos\_emin\_ev](#dos_emin_ev)
+    - [dos\_emax\_ev](#dos_emax_ev)
+    - [dos\_nche](#dos_nche)
+  - [NAOs](#naos)
+    - [bessel\_nao\_ecut](#bessel_nao_ecut)
+    - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
+    - [bessel\_nao\_rcut](#bessel_nao_rcut)
+    - [bessel\_nao\_smooth](#bessel_nao_smooth)
+    - [bessel\_nao\_sigma](#bessel_nao_sigma)
+  - [DeePKS](#deepks)
+    - [deepks\_out\_labels](#deepks_out_labels)
+    - [deepks\_scf](#deepks_scf)
+    - [deepks\_model](#deepks_model)
+    - [bessel\_descriptor\_lmax](#bessel_descriptor_lmax)
+    - [bessel\_descriptor\_ecut](#bessel_descriptor_ecut)
+    - [bessel\_descriptor\_tolerence](#bessel_descriptor_tolerence)
+    - [bessel\_descriptor\_rcut](#bessel_descriptor_rcut)
+    - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
+    - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
+    - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_out\_unittest](#deepks_out_unittest)
+  - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
+    - [of\_kinetic](#of_kinetic)
+    - [of\_method](#of_method)
+    - [of\_conv](#of_conv)
+    - [of\_tole](#of_tole)
+    - [of\_tolp](#of_tolp)
+    - [of\_tf\_weight](#of_tf_weight)
+    - [of\_vw\_weight](#of_vw_weight)
+    - [of\_wt\_alpha](#of_wt_alpha)
+    - [of\_wt\_beta](#of_wt_beta)
+    - [of\_wt\_rho0](#of_wt_rho0)
+    - [of\_hold\_rho0](#of_hold_rho0)
+    - [of\_lkt\_a](#of_lkt_a)
+    - [of\_read\_kernel](#of_read_kernel)
+    - [of\_kernel\_file](#of_kernel_file)
+    - [of\_full\_pw](#of_full_pw)
+    - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [Electric field and dipole correction](#electric-field-and-dipole-correction)
+    - [efield\_flag](#efield_flag)
+    - [dip\_cor\_flag](#dip_cor_flag)
+    - [efield\_dir](#efield_dir)
+    - [efield\_pos\_max](#efield_pos_max)
+    - [efield\_pos\_dec](#efield_pos_dec)
+    - [efield\_amp](#efield_amp)
+  - [Gate field (compensating charge)](#gate-field-compensating-charge)
+    - [gate\_flag](#gate_flag)
+    - [zgate](#zgate)
+    - [block](#block)
+    - [block\_down](#block_down)
+    - [block\_up](#block_up)
+    - [block\_height](#block_height)
+  - [Exact Exchange](#exact-exchange)
+    - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
+    - [exx\_hse\_omega](#exx_hse_omega)
+    - [exx\_separate\_loop](#exx_separate_loop)
+    - [exx\_hybrid\_step](#exx_hybrid_step)
+    - [exx\_mixing\_beta](#exx_mixing_beta)
+    - [exx\_lambda](#exx_lambda)
+    - [exx\_pca\_threshold](#exx_pca_threshold)
+    - [exx\_c\_threshold](#exx_c_threshold)
+    - [exx\_v\_threshold](#exx_v_threshold)
+    - [exx\_dm\_threshold](#exx_dm_threshold)
+    - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
+    - [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
+    - [exx\_schwarz\_threshold](#exx_schwarz_threshold)
+    - [exx\_cauchy\_threshold](#exx_cauchy_threshold)
+    - [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
+    - [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
+    - [exx\_ccp\_threshold](#exx_ccp_threshold)
+    - [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
+    - [exx\_distribute\_type](#exx_distribute_type)
+    - [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
+    - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
+    - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
+    - [exx\_real\_number](#exx_real_number)
+  - [Molecular dynamics](#molecular-dynamics)
+    - [md\_type](#md_type)
+    - [md\_nstep](#md_nstep)
+    - [md\_dt](#md_dt)
+    - [md\_thermostat](#md_thermostat)
+    - [md\_tfirst, md\_tlast](#md_tfirst-md_tlast)
+    - [md\_restart](#md_restart)
+    - [md\_restartfreq](#md_restartfreq)
+    - [md\_dumpfreq](#md_dumpfreq)
+    - [dump\_force](#dump_force)
+    - [dump\_vel](#dump_vel)
+    - [dump\_virial](#dump_virial)
+    - [md\_seed](#md_seed)
+    - [md\_tfreq](#md_tfreq)
+    - [md\_tchain](#md_tchain)
+    - [md\_pmode](#md_pmode)
+    - [md\_prec\_level](#md_prec_level)
+    - [ref\_cell\_factor](#ref_cell_factor)
+    - [md\_pcouple](#md_pcouple)
+    - [md\_pfirst, md\_plast](#md_pfirst-md_plast)
+    - [md\_pfreq](#md_pfreq)
+    - [md\_pchain](#md_pchain)
+    - [lj\_rcut](#lj_rcut)
+    - [lj\_epsilon](#lj_epsilon)
+    - [lj\_sigma](#lj_sigma)
+    - [pot\_file](#pot_file)
+    - [msst\_direction](#msst_direction)
+    - [msst\_vel](#msst_vel)
+    - [msst\_vis](#msst_vis)
+    - [msst\_tscale](#msst_tscale)
+    - [msst\_qmass](#msst_qmass)
+    - [md\_damp](#md_damp)
+    - [md\_tolerance](#md_tolerance)
+    - [md\_nraise](#md_nraise)
+    - [cal\_syns](#cal_syns)
+    - [dmax](#dmax)
+  - [DFT+*U* correction](#dftu-correction)
+    - [dft\_plus\_u](#dft_plus_u)
+    - [orbital\_corr](#orbital_corr)
+    - [hubbard\_u](#hubbard_u)
+    - [yukawa\_potential](#yukawa_potential)
+    - [yukawa\_lambda](#yukawa_lambda)
+    - [omc](#omc)
+  - [vdW correction](#vdw-correction)
+    - [vdw\_method](#vdw_method)
+    - [vdw\_s6](#vdw_s6)
+    - [vdw\_s8](#vdw_s8)
+    - [vdw\_a1](#vdw_a1)
+    - [vdw\_a2](#vdw_a2)
+    - [vdw\_d](#vdw_d)
+    - [vdw\_abc](#vdw_abc)
+    - [vdw\_C6\_file](#vdw_c6_file)
+    - [vdw\_C6\_unit](#vdw_c6_unit)
+    - [vdw\_R0\_file](#vdw_r0_file)
+    - [vdw\_R0\_unit](#vdw_r0_unit)
+    - [vdw\_cutoff\_type](#vdw_cutoff_type)
+    - [vdw\_cutoff\_radius](#vdw_cutoff_radius)
+    - [vdw\_radius\_unit](#vdw_radius_unit)
+    - [vdw\_cutoff\_period](#vdw_cutoff_period)
+    - [vdw\_cn\_thr](#vdw_cn_thr)
+    - [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
+  - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
+    - [berry\_phase](#berry_phase)
+    - [gdir](#gdir)
+    - [towannier90](#towannier90)
+    - [nnkpfile](#nnkpfile)
+    - [wannier\_spin](#wannier_spin)
+  - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+    - [td\_edm](#td_edm)
+    - [td\_print\_eij](#td_print_eij)
+    - [td\_propagator](#td_propagator)
+    - [td\_vext](#td_vext)
+    - [td\_vext\_dire](#td_vext_dire)
+    - [td\_stype](#td_stype)
+    - [td\_ttype](#td_ttype)
+    - [td\_tstart](#td_tstart)
+    - [td\_tend](#td_tend)
+    - [td\_lcut1](#td_lcut1)
+    - [td\_lcut2](#td_lcut2)
+    - [td\_gauss\_freq](#td_gauss_freq)
+    - [td\_gauss\_phase](#td_gauss_phase)
+    - [td\_gauss\_sigma](#td_gauss_sigma)
+    - [td\_gauss\_t0](#td_gauss_t0)
+    - [td\_gauss\_amp](#td_gauss_amp)
+    - [td\_trape\_freq](#td_trape_freq)
+    - [td\_trape\_phase](#td_trape_phase)
+    - [td\_trape\_t1](#td_trape_t1)
+    - [td\_trape\_t2](#td_trape_t2)
+    - [td\_trape\_t3](#td_trape_t3)
+    - [td\_trape\_amp](#td_trape_amp)
+    - [td\_trigo\_freq1](#td_trigo_freq1)
+    - [td\_trigo\_freq2](#td_trigo_freq2)
+    - [td\_trigo\_phase1](#td_trigo_phase1)
+    - [td\_trigo\_phase2](#td_trigo_phase2)
+    - [td\_trigo\_amp](#td_trigo_amp)
+    - [td\_heavi\_t0](#td_heavi_t0)
+    - [td\_heavi\_amp](#td_heavi_amp)
+    - [td\_out\_dipole](#td_out_dipole)
+    - [td\_out\_efield](#td_out_efield)
+    - [ocp](#ocp)
+    - [ocp\_set](#ocp_set)
+  - [Variables useful for debugging](#variables-useful-for-debugging)
+    - [t\_in\_h](#t_in_h)
+    - [vl\_in\_h](#vl_in_h)
+    - [vnl\_in\_h](#vnl_in_h)
+    - [vh\_in\_h](#vh_in_h)
+    - [vion\_in\_h](#vion_in_h)
+    - [test\_force](#test_force)
+    - [test\_stress](#test_stress)
+    - [colour](#colour)
+    - [test\_skip\_ewald](#test_skip_ewald)
+  - [Electronic conductivities](#electronic-conductivities)
+    - [cal\_cond](#cal_cond)
+    - [cond\_nche](#cond_nche)
+    - [cond\_dw](#cond_dw)
+    - [cond\_wcut](#cond_wcut)
+    - [cond\_dt](#cond_dt)
+    - [cond\_dtbatch](#cond_dtbatch)
+    - [cond\_fwhm](#cond_fwhm)
+    - [cond\_nonlocal](#cond_nonlocal)
+  - [Implicit solvation model](#implicit-solvation-model)
+    - [imp\_sol](#imp_sol)
+    - [eb\_k](#eb_k)
+    - [tau](#tau)
+    - [sigma\_k](#sigma_k)
+    - [nc\_k](#nc_k)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -366,39 +362,52 @@ These variables are used to control general system parameters.
 - **Type**: String
 - **Description**: Specify the type of calculation.
 
-  - *scf*: do self-consistent electronic structure calculation
-  - *relax*: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want.
-  - *cell-relax*: do variable-cell relaxation calculation.
-  - *nscf*: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
-  - *istate*: For LCAO basis. Please see the explanation for variable `nbands_istate`.
-  - *ienvelope*: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`.
-  - *md*: molecular dynamics
-  - *test_memory* : checks memory required for the calculation. The number is not quite reliable, please use it with care
-  - *test_neighbour* : only performs neighbouring atom search
-  - *gen_bessel* : generates projectors (a series of Bessel functions) for DeePKS; see also keywords bessel_descriptor_lmax, bessel_descriptor_rcut and bessel_descriptor_tolerence. A file named `jle.orb` will be generated which contains the projectors. An example is provided in examples/H2O-deepks-pw.
-  - *get_S* : only works for multi-k calculation with LCAO basis. Generates and writes the overlap matrix to a file named `SR.csr` in the working directory. The format of the file will be the same as that generated by [out_mat_hs2](#out_mat_hs2).
+  - scf: do self-consistent electronic structure calculation
+  - relax: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want
+  - cell-relax: do variable-cell relaxation calculation
+  - nscf: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3
+  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_wf: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
+  - md: molecular dynamics
+  - test_memory : checks memory required for the calculation. The number is not quite reliable, please use it with care
+  - test_neighbour : only performs neighbouring atom search
+  - gen_bessel : generates projectors (a series of Bessel functions) for DeePKS; see also keywords bessel_descriptor_lmax, bessel_descriptor_rcut and bessel_descriptor_tolerence. A file named `jle.orb` will be generated which contains the projectors. An example is provided in examples/H2O-deepks-pw
+  - get_S : only works for multi-k calculation with LCAO basis. Generates and writes the overlap matrix to a file named `SR.csr` in the working directory. The format of the file will be the same as that generated by [out_mat_hs2](#out_mat_hs2)
 - **Default**: scf
 
 ### esolver_type
 
 - **Type**: String
 - **Description**: choose the energy solver.
-  - ksdft: Kohn-Sham density functional theory;
-  - ofdft: orbital-free density functional theory;
-  - sdft: [stochastic density functional theory](#electronic-structure-sdft);
-  - tddft: real-time time-dependent density functional theory (TDDFT);
-  - lj: Leonard Jones potential;
-  - dp: DeeP potential, see details in [md.md](../md.md#dpmd);
+  - ksdft: Kohn-Sham density functional theory
+  - ofdft: orbital-free density functional theory
+  - sdft: [stochastic density functional theory](#electronic-structure-sdft)
+  - tddft: real-time time-dependent density functional theory (TDDFT)
+  - lj: Leonard Jones potential
+  - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
 - **Default**: ksdft
 
 ### symmetry
 
 - **Type**: Integer
 - **Description**: takes value 1, 0 or -1.
-  - if set to 1, symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups only)
-  - if set to 0, only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
-  - if set to -1, no symmetry will be considered.
-- **Default**: 0
+  - -1: No symmetry will be considered.
+  - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
+  - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
+- **Default**: 
+  - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
+  - 0: if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*
+  - 1: else
+
+### symmetry_prec
+
+- **Type**: Real
+- **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
+  
+  Note: if *[calculation](#calculation)=cell_relax*, this value can be dynamically enlarged corresponding to the accuracy loss of the lattice parameters and atom positions during the relaxation. There will be a warning message in that case.
+
+- **Default**: 1.0e-5
+- **Unit**:  Bohr
 
 ### kpar
 
@@ -416,57 +425,70 @@ These variables are used to control general system parameters.
 
 - **Type**: String
 - **Description**: Specifies the type of Bravias lattice. When set to `none`, the three lattice vectors are supplied explicitly in STRU file. When set to a certain Bravais lattice type, there is no need to provide lattice vector, but a few lattice parameters might be required. For more information regarding this parameter, consult the [page on STRU file](stru.md).
-  Available options are (correspondence with ibrav in QE is given in parenthesis):
-  - `none`: free structure.
-  - `sc`: simple cubic. (1)
-  - `fcc`: face-centered cubic. (2)
-  - `bcc`: body-centered cubic. (3)
-  - `hexagonal`: hexagonal. (4)
-  - `trigonal`: trigonal. (5)
-  - `st`: simple tetragonal. (6)
-  - `bct`: body-centered tetragonal. (7)
-  - `so`: orthorhombic. (8)
-  - `baco`: base-centered orthorhombic. (9)
-  - `fco`: face-centered orthorhombic. (10)
-  - `bco`: body-centered orthorhombic. (11)
-  - `sm`: simple monoclinic. (12)
-  - `bacm`: base-centered monoclinic. (13)
-  - `triclinic`: triclinic. (14)
-- **Default**: `none`
+  
+  Available options are (correspondence with ibrav in QE(Quantum Espresso) is given in parenthesis):
+  - none: free structure
+  - sc: simple cubic (1)
+  - fcc: face-centered cubic (2)
+  - bcc: body-centered cubic (3)
+  - hexagonal: hexagonal (4)
+  - trigonal: trigonal (5)
+  - st: simple tetragonal (6)
+  - bct: body-centered tetragonal (7)
+  - so: orthorhombic (8)
+  - baco: base-centered orthorhombic (9)
+  - fco: face-centered orthorhombic (10)
+  - bco: body-centered orthorhombic (11)
+  - sm: simple monoclinic (12)
+  - bacm: base-centered monoclinic (13)
+  - triclinic: triclinic (14)
+- **Default**: none
 
 ### init_wfc
 
 - **Type**: String
 - **Description**: Only useful for plane wave basis only now. It is the name of the starting wave functions. In the future. we should also make this variable available for localized orbitals set.
+  
   Available options are:
-  - `atomic`: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
-  - `atomic+random`: add small random numbers on atomic pseudo-wavefunctions
-  - `file`: from file
-  - `random`: random numbers
-- **Default**:`atomic`
+  - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
+  - atomic+random: add small random numbers on atomic pseudo-wavefunctions
+  - file: from file
+  - random: random numbers
+- **Default**: atomic
 
 ### init_chg
 
 - **Type**: String
-- **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density. If set to `atomic`, the density is starting from the summation of the atomic density of single atoms. If set this to `file`, the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+- **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
+
+  - atomic: the density is starting from the summation of the atomic density of single atoms. 
+  - file: the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
 - **Default**: atomic
 
 ### init_vel
 
 - **Type**: Boolean
-- **Description**: Read the atom velocity from the atom file (STRU) if set to true. (atomic unit : 1 a.u. = 21.877 Angstrom/fs )
-- **Default**: false
+- **Description**: 
+
+  - True: read the atom velocity from the atom file (STRU) if set to true. (atomic unit : 1 a.u. = 21.877 Angstrom/fs)
+  - False: assign value to atom velocity using Gaussian distributed random numbers.
+- **Default**: False
 
 ### nelec
 
 - **Type**: Real
-- **Description**: If >0.0, this denotes the total number of electrons in the system. Must be less than 2*nbands. If set to 0.0, the total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
+- **Description**: 
+
+  - 0.0: the total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
+  - `>0.0`: this denotes the total number of electrons in the system. Must be less than 2*nbands. 
 - **Default**: 0.0
 
 ### nupdown
 
 - **Type**: Real
-- **Description**: If >0.0, this denotes the difference number of electrons between spin-up and spin-down in the system. The range of value must in [-nelec ~ nelec]. It is one method of constraint DFT, the fermi energy level will separate to E_Fermi_up and E_Fermi_down. If set to 0.0, no constrain apply to system.
+- **Description**:
+  - 0.0: no constrain apply to system.
+  - `>0.0`: this denotes the difference number of electrons between spin-up and spin-down in the system. The range of value must in [-nelec ~ nelec]. It is one method of constraint DFT, the fermi energy level will separate to E_Fermi_up and E_Fermi_down.
 - **Default**: 0.0
 
 ### dft_functional
@@ -483,31 +505,41 @@ These variables are used to control general system parameters.
 ### xc_temperature
 
 - **Type**: Real
-- **Description**: specifies temperature when using temperature-dependent XC functionals (KSDT and so on); unit in Rydberg
+- **Description**: specifies temperature when using temperature-dependent XC functionals (KSDT and so on).
 - **Default** : 0.0
+- **Unit**: Ry
 
 ### pseudo_rcut
 
 - **Type**: Real
-- **Description**: Cut-off of radial integration for pseudopotentials, in Bohr.
+- **Description**: Cut-off of radial integration for pseudopotentials
 - **Default**: 15
+- **Unit**: Bohr
 
 ### pseudo_mesh
 
 - **Type**: Integer
-- **Description**: If set to 0, then use our own mesh for radial integration of pseudopotentials; if set to 1, then use the mesh that is consistent with quantum espresso.
+- **Description**: 
+  - 0: use our own mesh for radial integration of pseudopotentials
+  - 1: use the mesh that is consistent with quantum espresso
 - **Default**: 0
 
 ### mem_saver
 
 - **Type**: Boolean
-- **Description**: Used only for nscf calculations. If set to 1, then a memory saving technique will be used for many k point calculations.
+- **Description**: Used only for nscf calculations. 
+  - 0: no memory saving techniques are used.
+  - 1: a memory saving technique will be used for many k point calculations.
+
 - **Default**: 0
 
 ### diago_proc
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then it specifies the number of threads used for carrying out diagonalization. Must be less than or equal to total number of MPI threads. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI threads. If set to 0, then it will be set to the number of MPI threads. Normally, it is fine just leave it to the default value. Only used for pw base.
+- **Availability**: pw base
+- **Description**: 
+  - 0: it will be set to the number of MPI threads. Normally, it is fine just leave it to the default value.
+  - `>0`: it specifies the number of threads used for carrying out diagonalization. Must be less than or equal to total number of MPI threads. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI threads.
 - **Default**: 0
 
 ### nbspline
@@ -522,7 +554,8 @@ These variables are used to control general system parameters.
 - **Type**: Real
 - **Description**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary, and the number of K points nk_i = max(1, int(|b_i|/KSPACING_i)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file. 
 If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c direction are all set to it; and one can also set 3 values to set the kspacing value for a/b/c direction separately (such as: `kspacing 0.5 0.6 0.7`).
-Notice: if gamma_only is set to be true, kspacing is invalid.
+
+  Note: if gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
 
 ### min_dist_coef
@@ -531,12 +564,6 @@ Notice: if gamma_only is set to be true, kspacing is invalid.
 - **Description**: a factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme conditions like high pressure, you should set this parameter as a smaller value or even 0.
 - **Default**: 0.2
 
-### symmetry_prec
-
-- **Type**: Real
-- **Description**: The accuracy for symmetry judgment. The unit is Bohr.
-- **Default**: 1.0e-5
-
 ### device
 
 - **Type**: String
@@ -544,14 +571,14 @@ Notice: if gamma_only is set to be true, kspacing is invalid.
 
   Available options are:
 
-  - `cpu`: for CPUs via Intel, AMD, or Other supported CPU devices
-  - `gpu`: for GPUs via CUDA.
+  - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
+  - gpu: for GPUs via CUDA.
 
   Known limitations:
 
-  - `pw basis`: required by the `gpu` acceleration options
-  - `cg ks_solver`: required by the `gpu` acceleration options
-- **Default**: `cpu`
+  - pw basis: required by the `gpu` acceleration options
+  - cg ks_solver: required by the `gpu` acceleration options
+- **Default**: cpu
 
 [back to top](#full-list-of-input-keywords)
 
@@ -562,37 +589,48 @@ These variables are used to control parameters related to input files.
 ### stru_file
 
 - **Type**: String
-- **Description**: This parameter specifies the name of structure file which contains various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
+- **Description**: the name of the structure file
+  - Containing various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
+  - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/stru.md)
 - **Default**: STRU
 
 ### kpoint_file
 
 - **Type**: String
-- **Description**: This parameter specifies the name of k-points file. Note that if you use atomic orbitals as basis, and you only use gamma point, you don't need to have k-point file in your directory, ABACUS will automatically generate `KPT` file. Otherwise, if you use more than one k-point, please do remember the algorithm in ABACUS is different for gamma only and various k-point dependent simulations. So first you should turn off the k-point algorithm by set `gamma_only = 0` in `INPUT` and then you should setup your own k-points file.
+- **Description**: the name of the k-points file
+  - In atomic orbitals basis with `gamma_only` set to true, the `KPT` file is unnecessary, because a `KPT` file will be generated automatically. 
+  - When more than one k-points are required, an explicit `KPT` file is mandatory.
+  - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/kpt.md)
 - **Default**: KPT
 
 ### pseudo_dir
 
 - **Type**: String
-- **Description**: This parameter specifies pseudopotential directory.
-- **Default**: ./
+- **Description**: the pseudopotential file directory
+  - This parameter is combined with the pseudopotential filenames in the STRU file to form the complete pseudopotential file paths.
+  - Example: set pseudo_dir to "../" with "Si.upf" which specified under "ATOMIC_SPECIES" in STRU file, ABACUS will open the pseudopotential file in path "../Si.upf".
+- **Default**: ""
 
 ### orbital_dir
 
 - **Type**: String
-- **Description**: This parameter specifies orbital file directory.
-- **Default**: ./
+- **Description**: the orbital file directory
+  - This parameter is combined with orbital filenames in the STRU file to form the complete orbital file paths.
+  - Example: set orbital_dir to "../" with "Si.orb" which specified under "NUMERICAL_ORBITAL" in STRU file, ABACUS will open the orbital file in path "../Si.orb".
+- **Default**: ""
 
 ### read_file_dir
 
 - **Type**: String
-- **Description**: when the program needs to read files such as electron density(`SPIN1_CHG.cube`) as a starting point, this variable tells the location of the files. For example, './' means the file is located in the working directory.
+- **Description**: Indicates the location of files, such as electron density (`SPIN1_CHG.cube`), required as a starting point. 
+  - Example: './' implies the files to be read are located in the working directory.
 - **Default**: OUT.$suffix
 
 ### wannier_card
 
 - **Type**: String
-- **Description**: Relevant when using ABACUS with wannier90. Tells the name of the input file related to wannier90.
+- **Availability**: Using ABACUS with Wannier90.
+- **Description**: The name of the input file related to Wannier90.
 - **Default**: "none"
 
 [back to top](#full-list-of-input-keywords)
@@ -661,38 +699,38 @@ These variables are used to control the numerical atomic orbitals related parame
 ### lcao_ecut
 
 - **Type**: Real
-- **Description**: Energy cutoff when calculating LCAO two-center integrals. In Ry.
-- **Default**: 50
+- **Description**: Energy cutoff (in Ry) for two-center integrals in LCAO. The two-center integration table are obtained via a k space integral whose upper limit is about sqrt(`lcao_ecut`).
+- **Default**: `ecutwfc`
 
 ### lcao_dk
 
 - **Type**: Real
-- **Description**: Delta k for 1D integration in LCAO
+- **Description**: k spacing (in Bohr${}^{-1}$) for two-center integrals. The two-center integration table are obtained via a k space integral on a uniform grid with spacing `lcao_dk`.
 - **Default**: 0.01
 
 ### lcao_dr
 
 - **Type**: Real
-- **Description**: Delta r for 1D integration in LCAO
+- **Description**: r spacing (in Bohr) of the integration table of two-center integrals.
 - **Default**: 0.01
 
 ### lcao_rmax
 
 - **Type**: Real
-- **Description**: Max R for 1D two-center integration table
+- **Description**: Maximum distance (in Bohr) for the two-center integration table.
 - **Default**: 30
 
 ### search_radius
 
 - **Type**: Real
-- **Description**: Set the search radius for finding neighbouring atoms. If set to -1, then the radius will be set to maximum of projector and orbital cut-off.
+- **Description**: Searching radius in finding the neighbouring atoms. By default the radius will be automatically determined by the cutoffs of orbitals and nonlocal beta projectors.
 - **Default**: -1
 
 ### search_pbc
 
 - **Type**: Boolean
-- **Description**: In searching for neighbouring atoms, if set to 1, then periodic images will also be searched. If set to 0, then periodic images will not be searched.
-- **Default**: 1
+- **Description**: If True, periodic images will be included in searching for the neighbouring atoms. If False, periodic images will be ignored.
+- **Default**: True
 
 ### bx, by, bz
 
@@ -711,26 +749,26 @@ calculations.
 
 - **Type**: String
 - **Description**: Choose the basis set.
-  - pw: Using plane-wave basis set only.
-  - lcao_in_pw: Expand the localized atomic set in plane-wave basis.
-  - lcao: Using localized atomic orbital sets.
+  - **pw**: Using plane-wave basis set only.
+  - **lcao**: Using localized atomic orbital sets.
+  - **lcao_in_pw**: (Unavailable currently, it will be fixed in future versions) Expand the localized atomic set in plane-wave basis.
 - **Default**: pw
 
 ### ks_solver
 
 - **Type**: String
-- **Description**: It's about the choice of diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
+- **Description**: Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
 
   For plane-wave basis,
 
-  - cg: cg method.
-  - dav: the Davidson algorithm.
+  - **cg**: cg method.
+  - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
 
-  - genelpa: This method should be used if you choose localized orbitals.
-  - scalapack-gvx: scalapack can also be used for localized orbitals.
-  - cusolver: this method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **genelpa**: This method should be used if you choose localized orbitals.
+  - **scalapack-gvx**: Scalapack can also be used for localized orbitals.
+  - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -739,7 +777,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (pw) or genelpa (lcao)
+- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set)
 
 ### nbands
 
@@ -753,27 +791,27 @@ calculations.
 ### nbands_istate
 
 - **Type**: Integer
-- **Availability**: Only used when `calculation = ienvelope` or `calculation = istate`.
-- **Description**: The number of bands around the Fermi level you would like to calculate. `ienvelope` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `istate` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Availability**: Only used when `calculation = get_wf` or `calculation = get_pchg`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
 - **Default**: 5
 
 ### nspin
 
 - **Type**: Integer
 - **Description**: The number of spin components of wave functions.
-  - 1: Spin degeneracy
-  - 2: Collinear spin polarized.
-  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified in user input.
+  - **1**: Spin degeneracy
+  - **2**: Collinear spin polarized.
+  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified by the user.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - fixed: fixed occupations.
-  - gauss or gaussian: Gaussian smearing method.
-  - mp: methfessel-paxton smearing method; recommended for metals.
-  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
+  - **fixed**: fixed occupations.
+  - **gauss** or **gaussian**: Gaussian smearing method.
+  - **mp**: methfessel-paxton smearing method; recommended for metals.
+  - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: fixed
 
 ### smearing_sigma
@@ -793,23 +831,26 @@ calculations.
 ### mixing_type
 
 - **Type**: String
+- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
-  - plain: Just simple mixing.
-  - pulay: Standard Pulay method.
-  - broyden: Broyden method.
+  - **plain**: Just simple mixing.
+  - **pulay**: Standard Pulay method.
+  - **broyden**: Broyden method.
 - **Default**: pulay
 
 ### mixing_beta
 
 - **Type**: Real
 - **Description**: mixing parameter. We recommend the following options:
-  - default: -10.0 means program will auto set **mixing_beta** and **mixing_gg0** before charge mixing method starts.
-    - Default values of transition metal system are **mixing_beta=0.2** and **mixing_gg0=1.5**;
-    - Default values of metal system (bandgap <= 1.0 eV) are **mixing_beta=0.2** and **mixing_gg0=0.0**;
-    - Default values of other systems (bandgap > 1.0eV) are **mixing_beta=0.7** and **mixing_gg0=0.0**.
-  - 0: keep charge density unchanged, usually used for restarting with **init_chg=file** or testing.
-  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try **0 < mixing_beta < 0.1**
-  - For low-dimensional large systems, the setup of **mixing_beta=0.1**, **mixing_ndim=20**, and **mixing_gg0=1.5** usually works well.
+  - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
+    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+  - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
+  - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
+  
+  Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.5` usually works well.
+
 - **Default**: -10.0
 
 ### mixing_ndim
@@ -822,22 +863,26 @@ calculations.
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  A positive number: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting mixing_gg0 = 1.5 is normally a good starting point.
-  -  0: No Kerker scaling is performed.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
+  -  **0**: No Kerker scaling is performed.
 - **Default**: 0.0
 
 ### mixing_tau
 
 - **Type**: Boolean
 - **Availability**: Only relevant for meta-GGA calculations.
-- **Description**: If set to true, then the kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+- **Description**: Whether to mix the kinetic energy density.
+  - **True**: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
+  - **False**: The kinetic energy density will not be mixed.
 - **Default**: False
 
 ### mixing_dftu
 
 - **Type**: Boolean
 - **Availability**: Only relevant for DFT+U calculations.
-- **Description**: If set to true, then the occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+- **Description**: Whether to mix the occupation matrices.
+  - **True**: The occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
+  - **False**: The occupation matrices will not be mixed.
 - **Default**: False
 
 ### gamma_only
@@ -845,11 +890,11 @@ calculations.
 - **Type**: Integer
 - **Availability**: Only used in localized orbitals set
 - **Description**: Whether to use gamma_only algorithm.
-  - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
-  - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **0**: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
+  - **1**: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
 
-  > Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
-  >
+  Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
+
 - **Default**: 0
 
 ### printe
@@ -868,38 +913,42 @@ calculations.
 
 - **Type**: Real
 - **Description**: It's the threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
-- **Default**: 1.0e-9 for PW, and 1.0e-7 for LCAO.
+- **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 
 ### scf_thr_type
 
-- **Type**: Int
+- **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion. 
-  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - 2: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
+  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
+  - **2**: the criterion is defined as $\Delta\rho_R = \int{|\Delta\rho(r)|d^3r}$.
   
-  >Note: This parameter is still under testing and the default setting is usually sufficient.
+  Note: This parameter is still under testing and the default setting is usually sufficient.
 
-- **Default**: 1 for PW, and 2 for LCAO.
+- **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
 ### chg_extrap
 
 - **Type**: String
-- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations.
-  - atomic: atomic extrapolation.
-  - first-order: first-order extrapolation.
-  - second-order: second-order extrapolation.
+- **Description**: Methods to do extrapolation of density when ABACUS is doing geometry relaxations or molecular dynamics.
+  - **atomic**: atomic extrapolation.
+  - **first-order**: first-order extrapolation.
+  - **second-order**: second-order extrapolation.
 - **Default**: atomic
 
 ### lspinorb
 
 - **Type**: Boolean
-- **Description**: Whether to consider spin-orbital coupling effect in the calculation. When set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to consider spin-orbital coupling effect in the calculation. 
+  - **True**: Consider spin-orbital coupling effect, and `nspin` is also automatically set to 4.
+  - **False**: Do not consider spin-orbital coupling effect.
 - **Default**: False
 
 ### noncolin
 
 - **Type**: Boolean
-- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. If set to 1, `nspin` is also automatically set to 4.
+- **Description**: Whether to allow non-collinear polarization, in which case the coupling between spin up and spin down will be taken into account. 
+  - **True**: Allow non-collinear polarization, and `nspin` is also automatically set to 4.
+  - **False**: Do not allow non-collinear polarization.
 - **Default**: False
 
 ### soc_lambda
@@ -1173,317 +1222,298 @@ These variables are used to control the output of properties.
 ### out_mul
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the Mulliken population analysis result. The name of the output file is mulliken.txt. In MD calculations, the output interval is controlled by [out_interval](#out_interval).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+- **Default**: False
 
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of electronic iters to output charge density (if [out_chg](#out_chg) is turned on),  wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on), and density matrix of localized orbitals (if [out_dm](#out_dm) is turned on). If set to 0, ABACUS will output them only when converged in SCF or electronic iters reach its maximum. Used for the restart of SCF.
+- **Description**: The output frequency of the charge density (controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)), and density matrix of localized orbitals (controlled by [out_dm](#out_dm)). 
+  - \>0: Output them every `out_freq_elec` iteration numbers in electronic iterations.
+  - 0: Output them when the electronic iteration is converged or reaches the maximal iteration number.
 - **Default**: 0
-
-### out_freq_ion
-
-- **Type**: Integer
-- **Description**: If set to >1, it represents the frequency of ionic steps to output charge density (if [out_chg](#out_chg) is turned on) and wavefunction (if [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r) is turned on). If set to 0, ABACUS will output them only when ionic steps reach its maximum step. Used for the restart of MD or Relax.
-- **Default**: 0
-
-> Note : out_freq_ion is currently useless.
 
 ### out_chg
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the charge density on real space grid. The name of the density file is SPIN1_CHG.cube and SPIN2_CHG.cube (if nspin = 2). Suppose each density on grid has coordinate (x; y; z). The circle order of the density on real space grid is: x is the outer loop, then y and finally z (z is moving fastest).
-- **Default**: 0
+- **Description**: Whether to output the charge density on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as: 
+  - npsin = 1: SPIN1_CHG.cube;
+  - npsin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
+  - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
+
+  The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+- **Default**: False
 
 ### out_pot
 
 - **Type**: Integer
-- **Description**: If set to 1, ABACUS will output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grid. The name of the file is SPIN1_POT.cube and SPIN2_POT.cube (if nspin = 2). If set to 2, ABACUS will output the electrostatic potential on real space grid. The name of the file is ElecStaticPot.cube. Our toolset includes a Python script located at `tools/average_pot/aveElecStatPot.py` that calculates the average electrostatic potential along the z-axis and outputs it to ElecStaticPot_AVE.
+- **Description**: 
+  - 1: Output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
+    - npsin = 1: SPIN1_POT.cube;
+    - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
+    - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
+  - 2: Output the electrostatic potential on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 - **Default**: 0
 
 ### out_dm
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABACUS will output the density matrix of localized orbitals, only useful for localized orbitals set. The name of the output file is SPIN1_DM and SPIN2_DM in the output directory.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (gamma-only algorithm)
+- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
+  - npsin = 1: SPIN1_DM;
+  - npsin = 2: SPIN1_DM, and SPIN2_DM.
+- **Default**: False
+
+### out_dm1
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (multi-k points)
+- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
+  - npsin = 1: data-DMR-sparse_SPIN0.csr;
+  - npsin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+- **Default**: False
 
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs the coefficients of wave functions into text files. The file names are WAVEFUNC$K$.txt, where $K$ is the index of k point. When set this variable to 2, results are stored in binary files. The file names are WAVEFUNC$K$.dat.
+- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
+- **Description**: 
+  - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points. 
+  - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
 - **Default**: 0
 
 ### out_wfc_r
 
 - **Type**: Boolean
-- **Description**: Only used in **planewave basis** and **ienvelope calculation in localized orbitals** set. When set this variable to 1, it outputs real-space wave functions into  `OUT.suffix/wfc_realspace/`. The file names are wfc_realspace$K$B, where $K is the index of k point, $B is the index of band.
-- **Default**: 0
+- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
+- **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
+- **Default**: False
 
 ### out_wfc_lcao
 
 - **Type**: Boolean
-- **Description**: **Only used in localized orbitals set**. If set to 1, ABACUS will output the wave functions coefficients. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as:
+  - gamma-only: `LOWF_GAMMA_S1.dat`;
+  - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
+
+  The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
+  
+  Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: Flase
 
 ### out_dos
 
-- **Type**: Integer
-- **Description**: Controls whether to output the density of state (DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For more information, refer to the [worked example](../elec_properties/dos.md).
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
+- **Default**: False
 
 ### out_band
 
 - **Type**: Boolean
-- **Description**: Controls whether to output the band structure. For more information, refer to the [worked example](../elec_properties/band.md)
-- **Default**: 0
+- **Description**: Whether to output the band structure. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Default**: False
 
 ### out_proj_band
 
 - **Type**: Boolean
-- **Description**: Controls whether to output the projected band structure. For more information, refer to the [worked example](../elec_properties/band.md)
-- **Default**: 0
+- **Description**: Whether to output the projected band structure. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Default**: False
 
 ### out_stru
 
 - **Type**: Boolean
-- **Description**: If set to 1, then the structure files will be written after each ion step
-- **Default**: 0
+- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
+- **Default**: False
 
 ### out_bandgap
 
 - **Type**: Boolean
-- **Description**: If set to 1, the bandgap will be printed out at each SCF step.
-- **Default**: 0
+- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
+  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
+  - [nupdown](#nupdown) = 0: `E_bandgap`
+- **Default**: False
 
 ### out_level
 
 - **Type**: String
-- **Description**: Controls the level of output. `ie` means write output at electron level; `i` means write additional output at ions level.
+- **Description**: Control the output level of information in `OUT.${suffix}/running_${calculation}.log`.
+  - ie: electronic iteration level, which prints useful information for electronic iterations;
+  - i: geometry relaxation level, which prints some information for geometry relaxations additionally;
+  - m: molecular dynamics level, which does not print some information for simplicity.
+
 - **Default**: ie
 
 ### out_alllog
 
 - **Type**: Boolean
-- **Description**: determines whether to write log from all ranks in an MPI run. If set to be 1, then each rank will write detained running information to a file named running_${calculation}\_(${rank}+1).log. If set to 0, log will only be written from rank 0 into a file named running_${calculation}.log.
-- **Default**: 0
+- **Description**: Whether to print information into individual logs from all ranks in an MPI run. 
+  - True: Information from each rank will be written into individual files named `OUT.${suffix}/running_${calculation}_${rank+1}.log`.
+  - False: Information will only be written from rank 0 into a file named `OUT.${suffix}/running_${calculation}.log`.
+- **Default**: False
 
 ### out_mat_hs
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs is set to 1, ABACUS will print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into a series of files in the directory `OUT.${suffix}`. The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index. The corresponding sequence of the orbitals in lcao basis set can be seen in [Basis Set](../pp_orb.md#basis-set).
-
-  For nspin = 1 and nspin = 4 calculations, there will be only one spin component, so `$k` runs from 0 up to $nkpoints - 1$. For nspin = 2, `$k` runs from $2*nkpoints - 1$. In the latter case, the files are arranged into blocks of up and down spins. For example, if there are 3 k points, then we have the following correspondence:
-
-  data-0-H : 1st k point, spin up
-  data-1-H : 2nd k point, spin up
-  data-2-H : 3rd k point, spin up
-  data-3-H : 1st k point, spin down
-  data-4-H : 2nd k point, spin down
-  data-5-H : 3rd k point, spin down
-
-  As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
-
-  The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
-
-  The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False
 
 ### out_mat_r
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_r is set to 1, ABACUS will calculate and print the matrix representation of the position matrix, namely $\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$ in a file named `data-rR-tr` in the directory `OUT.${suffix}`.
-
-  Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
-
-  ```
-  -5 -5 -5    //R (lattice vector)
-  ...
-  -5 -5 -4    //R (lattice vector)
-  ...
-  -5 -5 -3    //R (lattice vector)
-  ```
-
-  Each block here contains the matrix for the corresponding cell. There are three columns in each block, giving the matrix elements in x, y, z directions, respectively. There are altogether nbasis * nbasis lines in each block, which emulates the matrix elements.
-
-  In MD calculations, if [out_app_flag](#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, The output frequency is controlled by [out_interval](#out_interval). For example, if we are running a 10-step MD with out_interval = 3, then `$x` will be 0, 3, 6, and 9.
-
-  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print the matrix representation of the position matrix into a file named `data-rR-tr` in the directory `OUT.${suffix}`. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
+- **Default**: False
 
 ### out_mat_hs2
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_hs2 is set to 1, ABACUS will generate files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$.
-
-  For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `data-HR-sparse_SPIN0.csr` and `data-HR-sparse_SPIN1.csr` and `data-SR-sparse_SPIN0.csr` are created, where the first two contain $H(R)$ for spin up and spin down, respectively.
-
-  As for molecular dynamics calculations, the format is controlled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag) in the same manner as the position matrix as detailed in [out_mat_r](#out_mat_r).
-
-  Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
-
-  The rest of the files are arranged in blocks. Each block starts with a line giving the lattice vector `R` and the number of nonzero matrix elements, such as:
-
-  ```
-  -3 1 1 1020
-  ```
-
-  which means there are 1020 nonzero elements in the (-3,1,1) cell.
-
-  If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
-
-  The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
-
-  - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
-  - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
-
-  > Note: This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off gamma_only, and explicitly specifies that gamma point is the only k point in the KPT file.
-  >
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
+- **Default**: False
 
 ### out_mat_t
 
 - **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: 0
+- **Default**: False
 
 ### out_mat_dh
 
 - **Type**: Boolean
-- **Description**: For LCAO calculations, if out_mat_dh is set to 1, ABACUS will generate files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False
 
 ### out_app_flag
 
 - **Type**: Boolean
-- **Description**: Whether output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during MD. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information.
 - **Default**: true
 
 ### out_interval
 
 - **Type**: Integer
-- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during MD. Check input parameter [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info
 
 - **Type**: Boolean
-- **Description**: When set to 1, ABACUS will generate a new directory under OUT.suffix path named as element name such as 'Si', which contained files "Si-d1-orbital-dru.dat  Si-p2-orbital-k.dat    Si-s2-orbital-dru.dat
-  Si-d1-orbital-k.dat    Si-p2-orbital-r.dat    Si-s2-orbital-k.dat
-  Si-d1-orbital-r.dat    Si-p2-orbital-ru.dat   Si-s2-orbital-r.dat
-  Si-d1-orbital-ru.dat   Si-p-proj-k.dat        Si-s2-orbital-ru.dat
-  Si.NONLOCAL            Si-p-proj-r.dat        Si-s-proj-k.dat
-  Si-p1-orbital-dru.dat  Si-p-proj-ru.dat       Si-s-proj-r.dat
-  Si-p1-orbital-k.dat    Si-s1-orbital-dru.dat  Si-s-proj-ru.dat
-  Si-p1-orbital-r.dat    Si-s1-orbital-k.dat    v_loc_g.dat
-  Si-p1-orbital-ru.dat   Si-s1-orbital-r.dat
-  Si-p2-orbital-dru.dat  Si-s1-orbital-ru.dat" for example.
-- **Default**: 0
+- **Description**: Whether to print element information into files in the directory `OUT.${suffix}/${element_label}`, including pseudopotential and orbital information of the element.
+- **Default**: False
 
 ### restart_save
 
 - **Type**: Boolean
-- **Description**: Only for LCAO, store charge density file and H matrix file every scf step for restart.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to save charge density files and Hamiltonian matrix files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
+  - auto: These files are saved in folder `OUT.${suffix}/restart/`;
+  - other: These files are saved in folder `${read_file_dir}/restart/`.
+- **Default**: False
 
 ### restart_load
 
 - **Type**: Boolean
-- **Description**: Only for LCAO, used for restart, only if that:
-  - set restart_save as true and do scf calculation before.
-  - please ensure the suffix is the same as calculation before and density file and H matrix file exist.
-    Restart from stored density file and H matrix file.
-- **Default**: 0
-
-### dft_plus_dmft
-
-- **Type**: Boolean
-- **Description**: Whether to generate output to be used in dmft. It seems this functionality is not working anymore.
-- **Default**: 0
+- **Availability**: Numerical atomic orbital basis
+- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file and Hamiltonian matrix file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file and Hamiltonian matrix file exist.
+- **Default**: False
 
 ### rpa
 
 - **Type**: Boolean
-- **Description**: Generate output files used in rpa calculation.
-- **Default**: 0
+- **Description**: Generate output files used in rpa calculations.
+- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
 ## Density of states
 
-These variables are used to control the calculation of DOS.
+These variables are used to control the calculation of DOS. [Detailed introduction](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/elec_properties/dos.md)
 
 ### dos_edelta_ev
 
 - **Type**: Real
-- **Description**: controls the step size in writing DOS (in eV).
+- **Description**: the step size in writing Density of States (DOS) 
 - **Default**: 0.01
+- **Unit**: eV
 
 ### dos_sigma
 
 - **Type**: Real
-- **Description**: controls the width of Gaussian factor when obtaining smeared DOS (in eV).
+- **Description**: the width of the Gaussian factor when obtaining smeared Density of States (DOS)
 - **Default**: 0.07
+- **Unit**: eV
 
 ### dos_scale
 
 - **Type**: Real
-- **Description**: the energy range of dos output is given by (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
+- **Description**: Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
 - **Default**: 0.01
+- **Unit**: eV
 
 ### dos_emin_ev
 
 - **Type**: Real
-- **Description**: minimal range for dos (in eV). If we set it, "dos_scale" will be ignored.
-- **Default**: minimal eigenenergy of $\hat{H}$
+- **Description**: the minimal range for Density of States (DOS)
+  - If set, "dos_scale" will be ignored.
+- **Default**: Minimal eigenenergy of $\hat{H}$
+- **Unit**: eV
 
 ### dos_emax_ev
 
 - **Type**: Real
-- **Description**: maximal range for dos (in eV). If we set it, "dos_scale" will be ignored.
-- **Default**: maximal eigenenergy of $\hat{H}$
+- **Description**: the maximal range for Density of States (DOS)
+  - If set, "dos_scale" will be ignored.
+- **Default**: Maximal eigenenergy of $\hat{H}$
+- **Unit**: eV
 
 ### dos_nche
 
 - **Type**: Integer
-- **Description**: orders of Chebyshev expansions when using SDFT to calculate DOS
+The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
 - **Default**: 100
 
 [back to top](#full-list-of-input-keywords)
 
 ## NAOs
 
-These variables are used to control the generation of numerical atomic orbitals (NAOs). NAOs is the linear combination of bessel functions.
+These variables are used to control the generation of numerical atomic orbitals (NAOs), whose radial parts are linear combinations of spherical Bessel functions with a node (i.e., evaluate to zero) at the cutoff radius.
+In plane-wave-based calculations, necessary information will be printed into `OUT.${suffix}/orb_matrix.${i}.dat`, which serves as an input file for the generation of NAOs. Please check [SIAB package](../../../tools/SIAB/README.md#siab-package-description) for more information.
 
 ### bessel_nao_ecut
 
 - **Type**: Real
-- **Description**: energy cutoff of bessel functions.
-- **Default**: same as ecutwfc
+- **Description**: "Energy cutoff" (in Ry) of spherical Bessel functions. The number of spherical Bessel functions that constitute the radial parts of NAOs is determined by sqrt(`bessel_nao_ecut`)$\times$`bessel_nao_rcut`/$\pi$.
+- **Default**: `ecutwfc`
 
 ### bessel_nao_tolerence
 
 - **Type**: Real
-- **Description**: tolerance when searching for the zeros of bessel functions.
+- **Description**: tolerance when searching for the zeros of spherical Bessel functions.
 - **Default**: 1.0e-12
 
 ### bessel_nao_rcut
 
 - **Type**: Real
-- **Description**: cutoff radius of bessel functions.
+- **Description**: Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.
 - **Default**: 6.0
 
 ### bessel_nao_smooth
 
 - **Type**: Boolean
-- **Description**: whether the bessel functions smooth at radius cutoff.
-- **Default**: 1
+- **Description**: if True, NAOs will be smoothed near the cutoff radius by $1-\exp\left(-\frac{(r-r_{cut})^2}{2\sigma^2}\right)$. See `bessel_nao_rcut` for $r_{cut}$ and `bessel_nao_sigma` for $\sigma$.
+- **Default**: True
 
 ### bessel_nao_sigma
 
 - **Type**: Real
-- **Description**: energy range for smooth. See also `bessel_nao_smooth`.
+- **Description**: Smoothing range (in Bohr). See also `bessel_nao_smooth`.
 - **Default**: 0.1
 
 [back to top](#full-list-of-input-keywords)
@@ -1496,7 +1526,9 @@ Warning: this function is not robust enough for the current version. Please try 
 ### deepks_out_labels
 
 - **Type**: Boolean
-- **Description**: When set to 1, ABACUS will calculate and output descriptor for DeePKS training. In `LCAO` calculation, a path of *.orb file is needed to be specified under `NUMERICAL_DESCRIPTOR`in `STRU`file. For example:
+- **Availability**: numerical atomic orbital basis
+- **Description**: print energy and force labels and descriptors for DeePKS training
+- **Note**: In `LCAO` calculation, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
   ```
   NUMERICAL_ORBITAL
@@ -1506,66 +1538,81 @@ Warning: this function is not robust enough for the current version. Please try 
   NUMERICAL_DESCRIPTOR
   jle.orb
   ```
-- **Default**: 0
+- **Default**: False
 
 ### deepks_scf
 
 - **Type**: Boolean
-- **Description**: only when deepks is enabled in `LCAO` calculation can this variable set to 1. Then, a trained, traced model file is needed for self-consistent field iteration in DeePKS method.
-- **Default**: 0
+- **Availability**: numerical atomic orbital basis
+- **Description**: perform self-consistent field iteration in DeePKS method
+- **Note**: A trained, traced model file is needed.
+- **Default**: False
 
 ### deepks_model
 
 - **Type**: String
-- **Description**: the path of the trained, traced NN model file (generated by deepks-kit). used when deepks_scf is set to 1.
+- **Availability**: numerical atomic orbital basis and `deepks_scf` is true
+- **Description**: the path of the trained, traced neural network model file generated by [deepks-kit](https://github.com/deepmodeling/deepks-kit)
 - **Default**: None
 
 ### bessel_descriptor_lmax
 
 - **Type**: Integer
-- **Description**: the projectors used in DeePKS are bessel functions. To generate such projectors, set calculation type to `gen_bessel` and run ABACUS. The lmax of Bessel functions is specified using bessel_descriptor_lmax. See also [calculation](#calculation).
+- **Availability**: `gen_bessel` calculation
+- **Description**: the maximum angular momentum of the Bessel functions generated as the projectors in DeePKS
+- **NOte**: To generate such projectors, set calculation type to `gen_bessel` in ABACUS. See also [calculation](#calculation).
 - **Default**: 2
 
 ### bessel_descriptor_ecut
 
 - **Type**: Real
-- **Description**: energy cutoff of bessel functions. See also `bessel_descriptor_lmax`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: energy cutoff of Bessel functions
 - **Default**: same as ecutwfc
+- **Unit**: Ry
 
 ### bessel_descriptor_tolerence
 
 - **Type**: Real
-- **Description**: tolerance when searching for the zeros of bessel functions. See also `bessel_descriptor_lmax`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: tolerance for searching the zeros of Bessel functions
 - **Default**: 1.0e-12
 
 ### bessel_descriptor_rcut
 
 - **Type**: Real
-- **Description**: cutoff radius of bessel functions. See also `bessel_descriptor_lmax`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: cutoff radius of Bessel functions
 - **Default**: 6.0
+- **Unit**: Bohr
 
 ### bessel_descriptor_smooth
 
 - **Type**: Boolean
-- **Description**: whether the bessel functions smooth at radius cutoff. See also `bessel_descriptor_lmax`.
-- **Default**: 1
+- **Availability**: `gen_bessel` calculation
+- **Description**: smooth the Bessel functions at radius cutoff
+- **Default**: False
 
 ### bessel_descriptor_sigma
 
 - **Type**: Real
-- **Description**: energy range for smooth. See also `bessel_descriptor_smooth`.
+- **Availability**: `gen_bessel` calculation
+- **Description**: smooth parameter at the cutoff radius of projectors
 - **Default**: 0.1
+- **Unit**: Bohr
 
 ### deepks_bandgap
 
 - **Type**: Boolean
-- **Description**: whether to include deepks bandgap correction.
+- **Availability**: numerical atomic orbital basis and `deepks_scf` is true
+- **Description**: include bandgap label for DeePKS training
 - **Default**: False
 
 ### deepks_out_unittest
 
 - **Type**: Boolean
-- **Description**: this is used to generate some files for constructing DeePKS unit test. Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
+- **Description**: generate files for constructing DeePKS unit test
+- **Note**: Not relevant when running actual calculations. When set to 1, ABACUS needs to be run with only 1 process.
 - **Default**: False
 
 [back to top](#full-list-of-input-keywords)
@@ -1576,12 +1623,12 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: String
 - **Availability**: OFDFT
-- **Description**: The type of kinetic energy density functional.
-  - wt: Wang-Teter.
-  - tf: Thomas-Fermi.
-  - vw: von Weizsäcker.
-  - tf+: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
-  - lkt: Luo-Karasiev-Trickey.
+- **Description**: The type of KEDF (kinetic energy density functional).
+  - **wt**: Wang-Teter.
+  - **tf**: Thomas-Fermi.
+  - **vw**: von Weizsäcker.
+  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **lkt**: Luo-Karasiev-Trickey.
 - **Default**: wt
 
 ### of_method
@@ -1589,9 +1636,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The optimization method used in OFDFT.
-  - cg1: Polak-Ribiere. Standard CG algorithm.
-  - cg2: Hager-Zhang (generally faster than cg1).
-  - tn: Truncated Newton algorithm.
+  - **cg1**: Polak-Ribiere. Standard CG algorithm.
+  - **cg2**: Hager-Zhang (generally faster than cg1).
+  - **tn**: Truncated Newton algorithm.
 - **Default**:tn
 
 ### of_conv
@@ -1599,9 +1646,9 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: Criterion used to check the convergence of OFDFT.
-  - energy: Ttotal energy changes less than `of_tole`.
-  - potential: The norm of potential is less than `of_tolp`.
-  - both: Both energy and potential must satisfy the convergence criterion.
+  - **energy**: Ttotal energy changes less than `of_tole`.
+  - **potential**: The norm of potential is less than `of_tolp`.
+  - **both**: Both energy and potential must satisfy the convergence criterion.
 - **Default**: energy
 
 ### of_tole
@@ -1624,28 +1671,28 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
-- **Description**: Weight of TF KEDF.
+- **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
-- **Description**: Weight of vW KEDF.
+- **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter alpha of WT KEDF.
+- **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_beta
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=wt`
-- **Description**: Parameter beta of WT KEDF.
+- **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
 - **Default**: $5/6$
 
 ### of_wt_rho0
@@ -1661,15 +1708,15 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to fix the average density rho0.
-  - 0: rho0 will change if volume of system has changed.
-  - 1: rho0 will be fixed even if the volume of system has changed, it will be set to 1 automatically if of_wt_rho0 is not zero.
+  - **True**: rho0 will be fixed even if the volume of system has changed, it will be set to True automatically if `of_wt_rho0` is not zero.
+  - **False**: rho0 will change if volume of system has changed.
 - **Default**: False
 
 ### of_lkt_a
 
 - **Type**: Real
 - **Availability**: OFDFT with `of_kinetic=lkt`
-- **Description**: Parameter a of LKT KEDF.
+- **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
 
 ### of_read_kernel
@@ -1677,8 +1724,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT with `of_kinetic=wt`
 - **Description**: Whether to read in the kernel file.
-  - 0: The kernel of WT KEDF will be filled from formula.
-  - 1: The kernel of WT KEDF will be filled from the file specified by `of_kernel_file`. 
+  - **True**: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by `of_kernel_file`. 
+  - **False**: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
 - **Default**: False
 
 ### of_kernel_file
@@ -1693,8 +1740,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Boolean
 - **Availability**: OFDFT
 - **Description**: Whether to use full planewaves.
-  - 0: Only use the planewaves inside ecut, the same as KSDFT.
-  - 1: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **True**: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
+  - **False**: Only use the planewaves inside ecut, the same as KSDFT.
 - **Default**: True
 
 ### of_full_pw_dim
@@ -1702,10 +1749,12 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: Integer
 - **Availability**: OFDFT with `of_full_pw = True`
 - **Description**: Specify the parity of FFT dimensions.
-  - 0: either odd or even.
-  - 1: odd only.
-  - 2: even only.
-  >Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+  - **0**: either odd or even.
+  - **1**: odd only.
+  - **2**: even only.
+  
+  Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
+
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -1717,122 +1766,155 @@ These variables are relevant to electric field and dipole correction
 ### efield_flag
 
 - **Type**: Boolean
-- **Description**: If set to true, a saw-like potential simulating an electric field
-  is added to the bare ionic potential.
-- **Default**: false
+- **Description**: added the electric field.
+  - True: A saw-like potential simulating an electric field is added to the bare ionic potential.
+  - False: Not added the electric field.
+- **Default**: False
 
 ### dip_cor_flag
 
 - **Type**: Boolean
-- **Description**: If dip_cor_flag == true and efield_flag == true,  a dipole correction is also
-  added to the bare ionic potential. If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
-- **Default**: false
+- **Availability**: with dip_cor_flag = True and efield_flag = True.
+- **Description**: Added a dipole correction to the bare ionic potential.
+  - True：A dipole correction is also added to the bare ionic potential. 
+  - False: A dipole correction is not added to the bare ionic potential. 
+> Note: If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface alculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+- **Default**: False
 
 ### efield_dir
 
 - **Type**: Integer
-- **Description**: The direction of the electric field or dipole correction is parallel to the reciprocal lattice vector, so the potential is constant in planes defined by FFT grid points, efield_dir = 0, 1 or 2. Used only if efield_flag == true.
+- **Availability**: with efield_flag = True.
+- **Description**: The direction of the electric field or dipole correction is parallel to the reciprocal lattice vector, so the potential is constant in planes defined by FFT grid points, efield_dir can set to 0, 1 or 2.
+  - 0: parallel to $b_1=\frac{2\pi(a_2\times a_3)}{a_1\cdot(a_2\times a_3)}$
+  - 1: parallel to $b_2=\frac{2\pi(a_3\times a_1)}{a_1\cdot(a_2\times a_3)}$
+  - 2: parallel to $b_3=\frac{2\pi(a_1\times a_2)}{a_1\cdot(a_2\times a_3)}$
 - **Default**: 2
 
 ### efield_pos_max
 
 - **Type**: Real
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1. Used only if efield_flag == true.
+- **Availability**: with efield_flag = True.
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1.
 - **Default**: 0.5
 
 ### efield_pos_dec
 
 - **Type**: Real
-- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1. Used only if efield_flag == true.
+- **Availability**: with efield_flag = True.
+- **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
 - **Default**: 0.1
 
 ### efield_amp
 
 - **Type**: Real
-- **Description**: Amplitude of the electric field, in ***Hartree*** a.u.; 1 a.u. = 51.4220632*10^10 V/m. Used only if efield_flag == true. The saw-like potential increases with slope efield_amp  in the region from (efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. Important: the change of slope of this potential must be located in the empty region, or else unphysical forces will result.
+- **Availability**: with efield_flag = True.
+- **Description**: Amplitude of the electric field. The saw-like potential increases with slope efield_amp  in the region from  efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir. 
+> Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
 - **Default**: 0.0
+- **Unit**: a.u., 1 a.u. = 51.4220632*10^10 V/m.
 
 [back to top](#full-list-of-input-keywords)
 
 ## Gate field (compensating charge)
 
-These variables are relevant to gate field (compensating charge)
+These variables are relevant to gate field (compensating charge) [Detailed introduction](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/scf/advanced.md#compensating-charge)
 
 ### gate_flag
 
 - **Type**: Boolean
-- **Description**: In the case of charged cells, setting gate_flag == true represents the addition of compensating charge by a charged plate, which is placed at **zgate**. Note that the direction is specified by **efield_dir**.
+- **Description**: Controls the addition of compensating charge by a charged plate for charged cells.
+  - true: A charged plate is placed at the **zgate** position to add compensating charge. The direction is determined by **efield_dir**.
+  - false: No compensating charge is added.
 - **Default**: false
 
 ### zgate
 
 - **Type**: Real
-- **Description**: Specify the position of the charged plate in units of the unit cell (0 <= **zgate** < 1).
+- **Description**: position of the charged plate in the unit cell
+- **Unit**: Unit cell size
 - **Default**: 0.5
+- **Constraints**: 0 <= **zgate** < 1
 
 ### block
 
 - **Type**: Boolean
-- **Description**: Add a potential barrier to the total potential to avoid electrons spilling into the vacuum region for electron doping. Potential barrier is from **block_down** to **block_up** and has a height of **block_height**. If **dip_cor_flag** == true, **efield_pos_dec** is used for a smooth increase and decrease of the potential barrier.
+- **Description**: Controls the addition of a potential barrier to prevent electron spillover.
+  - true: A potential barrier is added from **block_down** to **block_up** with a height of **block_height**. If **dip_cor_flag** is set to true, **efield_pos_dec** is used to smoothly increase and decrease the potential barrier.
+  - false: No potential barrier is added.
 - **Default**: false
 
 ### block_down
 
 - **Type**: Real
-- **Description**: Lower beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Description**: lower beginning of the potential barrier
+- **Unit**: Unit cell size
 - **Default**: 0.45
+- **Constraints**: 0 <= **block_down** < **block_up** < 1
 
 ### block_up
 
 - **Type**: Real
-- **Description**: Upper beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Description**: upper beginning of the potential barrier
+- **Unit**: Unit cell size
 - **Default**: 0.55
+- **Constraints**: 0 <= **block_down** < **block_up** < 1
 
 ### block_height
 
 - **Type**: Real
-- **Description**: Height of the potential barrier in Rydberg.
+- **Description**: height of the potential barrier
+- **Unit**: Rydberg
 - **Default**: 0.1
 
 [back to top](#full-list-of-input-keywords)
 
 ## Exact Exchange
 
-These variables are relevant when using hybrid functionals
+These variables are relevant when using hybrid functionals.
+
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
 
 ### exx_hybrid_alpha
 
 - **Type**: Real
 - **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
-- **Default**: 1 if dft_functional==hf else 0.25
+- **Default**: 
+  - 1: if *[dft_functional](#dft_functional)==hf*
+  - 0.25: else
 
 ### exx_hse_omega
 
 - **Type**: Real
-- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$.
+- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
 - **Default**: 0.11
 
 ### exx_separate_loop
 
 - **Type**: Boolean
-- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. If this parameter is set to 0, it will start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations. If this parameter is set to 1, a two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
-- **Default**: 1
+- **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange. 
+  - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
+  - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration. 
+- **Default**: True
 
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Description**: This variable indicates the maximal electronic iteration number in the evaluation of Fock exchange.
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Description**: mixing_beta for outer-loop when exx_separate_loop=1
+- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
 ### exx_lambda
 
 - **Type**: Real
+- **Availability**: *[basis_type](#basis_type)==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using *lcao_in_pw* method.
 - **Default**: 0.3
 
@@ -1906,294 +1988,326 @@ These variables are relevant when using hybrid functionals
 
 - **Type**: Real
 - **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
-- **Default**: 1.5 if dft_functional==hse else 5
+- **Default**: 
+  - 1.5: if *[dft_functional](#dft_functional)==hse*
+  - 5: else
 
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. `order` is where atom pairs are simply distributed by their orders. `hmeans` is a distribution where the balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. `kmeans1` and `kmeans2` are two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+  - `order`: Atom pairs are simply distributed by their orders. 
+  - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
+  - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
 ### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. The radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. exx_opt_orb_lmax gives the maximum l of the spherical Bessel functions. A reasonable choice is 2.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 ### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. A plane wave basis is used to optimize the radial ABFs. This parameter thus gives the cut-off of plane wave expansion, in Ry. A reasonable choice is 60.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
+- **Unit**: Ry
 
 ### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Description**: See also the entry [dft_functional](#dft_functional). This parameter is only relevant when dft_functional=`opt_orb`. exx_opt_orb_tolerence determines the threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
+- **Availability**: *[dft_functional](#dft_functional)==opt_orb*
+- **Description**: The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 0
 
 ### exx_real_number
 
 - **Type**: Boolean
-- **Description**: If set to 1, it will enforce LIBRI to use `double` data type, otherwise, it will enforce LIBRI to use `complex` data type. The default value depends on the [gamma_only](#gamma_only) option.
-- **Default**: 1 if gamma_only else 0
+- **Description**: 
+  - True: Enforce LibRI to use `double` data type.
+  - False: Enforce LibRI to use `complex` data type.
+- **Default**: depends on the [gamma_only](#gamma_only) option
+  - True: if gamma_only 
+  - False: else 
 
 [back to top](#full-list-of-input-keywords)
 
 ## Molecular dynamics
 
-These variables are used to control the molecular dynamics calculations.
+These variables are used to control molecular dynamics calculations. For more information, please refer to [md.md](../md.md#molecular-dynamics) in detail.
 
 ### md_type
 
 - **Type**: String
-- **Description**: control the algorithm to integrate the equation of motion for md.
+- **Description**: Control the algorithm to integrate the equation of motion for molecular dynamics (MD), see [md.md](../md.md#molecular-dynamics) in detail.
 
-  - fire: a MD-based relaxation algorithm, named `fast inertial relaxation engine`, see details in [md.md](../md.md#fire).
+  - fire: a MD-based relaxation algorithm, named fast inertial relaxation engine.
   - nve: NVE ensemble with velocity Verlet algorithm.
   - nvt: NVT ensemble, see [md_thermostat](#md_thermostat) in detail.
   - npt: Nose-Hoover style NPT ensemble, see [md_pmode](#md_pmode) in detail.
-  - langevin: NVT ensemble with Langevin thermostat.
-  - msst: MSST method.
+  - langevin: NVT ensemble with Langevin thermostat, see [md_damp](#md_damp) in detail.
+  - msst: MSST method, see [msst_direction](#msst_direction), [msst_vel](#msst_vel), [msst_qmass](#msst_qmass), [msst_vis](#msst_vis), [msst_tscale](#msst_tscale) in detail.
 
 - **Default**: nvt
-
-### md_thermostat
-
-- **Type**: String
-- **Description**: specify the temperature control method used in NVT ensemble.
-
-  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
-  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
-  - berendsen: Berendsen thermostat, see the parameter [md_nraise](#md_nraise) in detail.
-  - rescaling: velocity Rescaling method 1, see the parameter [md_tolerance](#md_tolerance) in detail.
-  - rescale_v: velocity Rescaling method 2, see the parameter [md_nraise](#md_nraise) in detail.
-
-- **Default**: nhc
 
 ### md_nstep
 
 - **Type**: Integer
-- **Description**: the total number of md steps.
+- **Description**: The total number of molecular dynamics steps.
 - **Default**: 10
-
-### md_restart
-
-- **Type**: Boolean
-- **Description**: Control whether restart md. ABACUS read in `Restart_md.dat` to determine the current md step, then read in the corresponding `STRU_MD_$step` in the folder `OUT.$suffix/STRU/` automatically.
-  - true: ABACUS will calculate md normally.
-  - false: ABACUS will calculate md from the last step in your previous md calculation.
-- **Default**: false
 
 ### md_dt
 
 - **Type**: Real
-- **Description**: This is the time step(fs) used in md simulation.
+- **Description**: The time step used in molecular dynamics calculations.
 - **Default**: 1.0
+- **Unit**: fs
+
+### md_thermostat
+
+- **Type**: String
+- **Description**: Specify the temperature control method used in NVT ensemble.
+
+  - nhc: Nose-Hoover chain, see [md_tfreq](#md_tfreq) and [md_tchain](#md_tchain) in detail.
+  - anderson: Anderson thermostat, see [md_nraise](#md_nraise) in detail.
+  - berendsen: Berendsen thermostat, see [md_nraise](#md_nraise) in detail.
+  - rescaling: velocity Rescaling method 1, see [md_tolerance](#md_tolerance) in detail.
+  - rescale_v: velocity Rescaling method 2, see [md_nraise](#md_nraise) in detail.
+
+- **Default**: nhc
 
 ### md_tfirst, md_tlast
 
 - **Type**: Real
-- **Description**: This is the temperature (K) used in md simulation. The default value of md_tlast is md_tfirst. If md_tlast is set to be different from md_tfirst, ABACUS will automatically change the temperature from md_tfirst to md_tlast.
+- **Description**: The temperature used in molecular dynamics calculations. 
+
+  Note that `md_tlast` is only used in NVT simulations. The default value of `md_tlast` is `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
 - **Default**: No default
+- **Unit**: K
 
-### md_dumpfreq
+### md_restart
 
-- **Type**: Integer
-- **Description**: This is the frequency to dump md information.
-- **Default**: 1
+- **Type**: Boolean
+- **Description**: Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations. 
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `LOWF_K_${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+  - False: ABACUS will start molecular dynamics calculations normally from the first step.
+- **Default**: False
 
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: This is the frequency to output restart information.
+- **Description**: The output frequency of `OUT.${suffix}/Restart_md.dat` and structural files in the directory `OUT.${suffix}/STRIU/`, which are used to restart molecular dynamics calculations, see [md_restart](#md_restart) in detail.
 - **Default**: 5
 
-### md_seed
+### md_dumpfreq
 
 - **Type**: Integer
-- **Description**:
-  - md_seed < 0: No srand() in MD initialization.
-  - md_seed >= 0: srand(md_seed) in MD initialization.
-- **Default**: -1
-
-### md_prec_level
-
-- **Type**: Integer
-- **Description**: Determine the precision level of vc-md.
-
-  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell.
-  - 2: FFT grids change per MD step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
-
-  > Note: this parameter is only used in variable-cell MD!
-  >
-- **Default**: 0
-
-### ref_cell_factor
-
-- **Type**: Real
-- **Description**: 
-  Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
-- **Default**: 1.0
-
-### md_tfreq
-
-- **Type**: Real
-- **Description**: control the frequency of the temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
-- **Default**: 1/40/md_dt
-  > Note: It is an empirical parameter whose value is system-dependent, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice of its value might lead to failure of job.
-
-### md_tchain
-
-- **Type**: Integer
-- **Description**: number of thermostats coupled with the particles in the Nose Hoover Chain method.
-- **Default**: 1
-
-### md_pmode
-
-- **Type**: String
-- **Description**: specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
-  - iso: isotropic cell fluctuations.
-  - aniso: anisotropic cell fluctuations.
-  - tri: non-orthogonal (triclinic) simulation box.
-- **Default**: iso
-- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
-
-### md_pcouple
-
-- **Type**: String
-- **Description**: the coupled lattice vectors will scale proportionally.
-  - none: three lattice vectors scale independently.
-  - xyz: lattice vectors x, y, and z scale proportionally.
-  - xy: lattice vectors x and y scale proportionally.
-  - xz: lattice vectors x and z scale proportionally.
-  - yz: lattice vectors y and z scale proportionally.
-- **Default**: none
-
-### md_pfirst, md_plast
-
-- **Type**: Real
-- **Description**: This is the target pressure (KBar) used in npt ensemble simulation, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
-- **Default**: No default
-
-### md_pfreq
-
-- **Type**: Real
-- **Description**: control the frequency of the pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
-- **Default**: 1/400/md_dt
-
-### md_pchain
-
-- **Type**: Integer
-- **Description**: number of thermostats coupled with the barostat in the Nose Hoover Chain method.
+- **Description**: The output frequency of `OUT.${suffix}/MD_dump` in molecular dynamics calculations, which including the information of lattices and atoms.
 - **Default**: 1
 
 ### dump_force
 
 - **Type**: Boolean
-- **Description**: Output atomic forces into the file `MD_dump` or not. If `true`, forces will be written, otherwise forces will not be written.
-- **Default**: false
+- **Description**: Whether to output atomic forces into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
 
 ### dump_vel
 
 - **Type**: Boolean
-- **Description**: Output atomic velocities into the file `MD_dump` or not. If `true`, velocities will be written, otherwise velocities will not be written.
-- **Default**: false
+- **Description**: Whether to output atomic velocities into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
 
 ### dump_virial
 
 - **Type**: Boolean
-- **Description**: Output lattice virial into the file `MD_dump` or not. If `true`, lattice virial will be written, otherwise lattice virial will not be written.
-- **Default**: false
+- **Description**: Whether to output lattice virials into the file `OUT.${suffix}/MD_dump`.
+- **Default**: True
+### md_seed
+
+- **Type**: Integer
+- **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
+  - \< 0: No srand() function is called.
+  - \>= 0: The function srand(md_seed) is called.
+- **Default**: -1
+
+### md_tfreq
+
+- **Type**: Real
+- **Description**: Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
+
+  Note: It is a system-dependent empirical parameter, ranging from 1/(40\*md_dt) to 1/(100\*md_dt). An improper choice might lead to the failure of jobs.
+
+- **Default**: 1/40/md_dt
+- **Unit**: $\mathrm{fs^{-1}}$
+
+### md_tchain
+
+- **Type**: Integer
+- **Description**: Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+- **Default**: 1
+
+### md_pmode
+
+- **Type**: String
+- **Description**: Specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - iso: The three diagonal elements of the lattice are fluctuated isotropically. 
+  - aniso: The three diagonal elements of the lattice are fluctuated anisotropically.
+  - tri: The lattice must be a lower-triangular matrix, and all six freedoms are fluctuated.
+- **Default**: iso
+- **Relavent**: [md_tfreq](#md_tfreq), [md_tchain](#md_tchain), [md_pcouple](#md_pcouple), [md_pfreq](#md_pfreq), and [md_pchain](#md_pchain).
+
+### md_prec_level
+
+- **Type**: Integer
+- **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
+  - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
+  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
+
+    Currently, the option is useful only in plane-wave-based isotropic NPT simulations.
+  - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
+
+- **Default**: 0
+
+### ref_cell_factor
+
+- **Type**: Real
+- **Description**: Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Default**: 1.0
+
+### md_pcouple
+
+- **Type**: String
+- **Description**: The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion. 
+  - none: Three lattice vectors scale independently.
+  - xyz: Lattice vectors x, y, and z scale proportionally.
+  - xy: Lattice vectors x and y scale proportionally.
+  - xz: Lattice vectors x and z scale proportionally.
+  - yz: Lattice vectors y and z scale proportionally.
+- **Default**: none
+
+### md_pfirst, md_plast
+
+- **Type**: Real
+- **Description**: The target pressure used in NPT ensemble simulations, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
+- **Default**: No default
+- **Unit**: kbar
+
+### md_pfreq
+
+- **Type**: Real
+- **Description**: The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+
+  Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.
+- **Default**: 1/400/md_dt
+- **Unit**: $\mathrm{kbar^{-1}}$
+
+### md_pchain
+
+- **Type**: Integer
+- **Description**: The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+- **Default**: 1
 
 ### lj_rcut
 
 - **Type**: Real
-- **Description**: Cut-off radius for Leonard Jones potential (angstrom).
+- **Description**: Cut-off radius for Leonard Jones potential.
 - **Default**: 8.5 (for He)
+- **Unit**: Angstrom
 
 ### lj_epsilon
 
 - **Type**: Real
-- **Description**: The value of epsilon for Leonard Jones potential (eV).
+- **Description**: The value of epsilon for Leonard Jones potential.
 - **Default**: 0.01032 (for He)
+- **Unit**: eV
 
 ### lj_sigma
 
 - **Type**: Real
-- **Description**: The value of sigma for Leonard Jones potential (angstrom).
+- **Description**: The value of sigma for Leonard Jones potential.
 - **Default**: 3.405 (for He)
+- **Unit**: Angstrom
 
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of potential files for CMD such as DP.
+- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### msst_direction
 
 - **Type**: Integer
-- **Description**: the direction of shock wave for MSST.
-- **Default**: 2 (z direction)
+- **Description**: The direction of the shock wave in the MSST method.
+  - 0: x direction
+  - 1: y direction
+  - 2: z direction
+- **Default**: 2
 
 ### msst_vel
 
 - **Type**: Real
-- **Description**: the velocity of shock wave (Angstrom/fs) for MSST.
+- **Description**: The velocity of the shock wave in the MSST method.
 - **Default**: 0.0
+- **Unit**: Angstrom/fs
 
 ### msst_vis
 
 - **Type**: Real
-- **Description**: artificial viscosity (mass/length/time) for MSST.
+- **Description**: Artificial viscosity in the MSST method.
 - **Default**: 0.0
+- **Unit**: g/(mol\*Angstrom\*fs)
 
 ### msst_tscale
 
 - **Type**: Real
-- **Description**: reduction in initial temperature (0~1) used to compress volume in MSST.
+- **Description**: The reduction percentage of the initial temperature used to compress volume in the MSST method.
 - **Default**: 0.01
 
 ### msst_qmass
 
 - **Type**: Real
-- **Description**: Inertia of extended system variable. Used only when md_type is msst, you should set a number that is larger than 0. Note that Qmass of NHC is set by md_tfreq.
+- **Description**: Inertia of the extended system variable. You should set a number larger than 0.
 - **Default**: No default
+- **Unit**: $\mathrm{g^{2}/(mol^{2}*Angstrom^{4})}$
 
 ### md_damp
 
 - **Type**: Real
-- **Description**: damping parameter (fs) used to add force in Langevin method.
+- **Description**: The damping parameter used to add fictitious force in the Langevin method.
 - **Default**: 1.0
+- **Unit**: fs
 
 ### md_tolerance
 
 - **Type**: Real
-- **Description**: Tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance` (Kelvin).
+- **Description**: Thr temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than `md_tolerance`.
 - **Default**: 100.0
+- **Unit**: K
 
 ### md_nraise
 
 - **Type**: Integer
 - **Description**:
-  - Anderson: the "collision frequency" parameter is given as 1/`md_nraise`;
-  - Berendsen: the "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`;
-  - Rescale_v: every `md_nraise` steps the current temperature is rescaled to the target temperature;
+  - Anderson: The "collision frequency" parameter is given as 1/`md_nraise`.
+  - Berendsen: The "rise time" parameter is given in units of the time step: tau = `md_nraise`*`md_dt`, so `md_dt`/tau = 1/`md_nraise`.
+  - Rescale_v: Every `md_nraise` steps the current temperature is rescaled to the target temperature.
 - **Default**: 1
 
 ### cal_syns
 
 - **Type**: Boolean
-- **Description**:
-  If set to 1, asynchronous overlap matrix is calculated for Hefei-NAMD.
-- **Default**: 0
+- **Description**: Whether the asynchronous overlap matrix is calculated for Hefei-NAMD.
+- **Default**: False
 
 ### dmax
 
 - **Type**: Real
-- **Description**: The maximum displacement of all atoms in one step (bohr). This parameter is useful when cal_syns = 1 .
+- **Description**: The maximum displacement of all atoms in one step. This parameter is useful when [cal_syns](#cal_syns) = True.
 - **Default**: 0.01
+- **Unit**: bohr
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2204,41 +2318,52 @@ These variables are used to control DFT+U correlated parameters
 ### dft_plus_u
 
 - **Type**: Boolean
-- **Description**: If set to 1, ABCUS will calculate plus U correction, which is especially important for correlated electron.
-- **Default**: 0
+- **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
+  - True: Calculate plus U correction.
+  - False: Do not calculate plus U correction.
+- **Default**: False
 
 ### orbital_corr
 
 - **Type**: Integer
-- **Description**: $l_1,l_2,l_3,\ldots$ for atom type 1,2,3 respectively.(usually 2 for d electrons and 3 for f electrons) .Specify which orbits need plus U correction for each atom. If set to -1, the correction would not be calculated for this atom.
+- **Description**: Specifies which orbits need plus U correction for each atom type ($l_1,l_2,l_3,\ldots$ for atom type 1, 2, 3, respectively).
+  - -1: The plus U correction will not be calculated for this atom.
+  - 1: For p-electron orbits, the plus U correction is needed.
+  - 2: For d-electron orbits, the plus U correction is needed.
+  - 3: For f-electron orbits, the plus U correction is needed.
 - **Default**: None
 
 ### hubbard_u
 
 - **Type**: Real
-- **Description**: Hubbard Coulomb interaction parameter U(ev) in plus U correction, which should be specified for each atom unless Yukawa potential is used.
+- **Description**: Specifies the Hubbard Coulomb interaction parameter U (eV) in plus U correction, which should be specified for each atom unless the Yukawa potential is used.
 
-> Note : since we only implemented the simplified scheme by Duradev, the 'U' here is actually Ueff which is given by hubbard U minus hund J.
+> Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
 
 - **Default**: 0.0
 
 ### yukawa_potential
 
 - **Type**: Boolean
-- **Description**: whether to use the local screen Coulomb potential method to calculate the values of U and J. If this is set to 1, hubbard_u does not need to be specified.
-- **Default**: 0
+- **Description**: Determines whether to use the local screen Coulomb potential method to calculate the values of U and J.
+  - True: `hubbard_u` does not need to be specified.
+  - False: `hubbard_u` does need to be specified.
+- **Default**: False
 
 ### yukawa_lambda
 
 - **Type**: Real
-- **Description**: The screen length of Yukawa potential. Relevant if `yukawa_potential` is set to 1. If left to default, we will calculate the screen length as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
-- **Default**: calculated on the fly.
+- **Availability**: DFT+U with `yukawa_potential` = True.
+- **Description**: The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
+- **Default**: Calculated on the fly.
 
 ### omc
 
 - **Type**: Integer
-- **Description**: The parameter controls what form of occupation matrix control we are using. If set to 0, then no occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step. If set to 1, then the first SCF step will use an initial density matrix read from a file named `initial_onsite.dm`, but for later steps, the onsite density matrix will be updated. If set to 2, the same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
-
+- **Description**: The parameter controls the form of occupation matrix control used.
+  - 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
+  - 1: The first SCF step will use an initial density matrix read from a file named `[initial_onsite.dm](http://initial_onsite.dm/)`, but for later steps, the onsite density matrix will be updated.
+  - 2: The same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
 > Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 
 - **Default**: 0
@@ -2252,172 +2377,201 @@ These variables are used to control vdW-corrected related parameters.
 ### vdw_method
 
 - **Type**: String
-- **Description**: If set to d2 ,d3_0 or d3_bj, ABACUS will calculate corresponding vdW correction, which is DFT-D2, DFT-D3(0) or DFTD3(BJ) method. And this correction includes energy and forces. `none` means that no vdW-corrected method has been used.
+- **Description**: Specifies the method used for Van der Waals (VdW) correction. Available options are:
+	- `d2`: [Grimme's D2](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20495) dispersion correction method
+	- `d3_0`: [Grimme's DFT-D3(0)](https://aip.scitation.org/doi/10.1063/1.3382344) dispersion correction method
+	- `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method
+	- `none`: no vdW correction
 - **Default**: none
 
 ### vdw_s6
 
 - **Type**: Real
-- **Description**: This scale factor is to optimize the interaction energy deviations. For DFT-D2, it is found to be 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 0.75 if vdw_method is chosen to be d2; 1.0 if vdw_method is chosen to be d3_0 or d3_bj
+- **Availability**: `vdw_method` is set to `d2`, `d3_0`, or `d3_bj`
+- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 0.75: if `vdw_method` is set to `d2`
+  - 1.0: if `vdw_method` is set to `d3_0` or `d3_bj`
 
 ### vdw_s8
 
 - **Type**: Real
-- **Description**: This scale factor is only relevant for D3(0) and D3(BJ) methods. Recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 0.722 if vdw_method is chosen to be d3_0; 0.7875 if vdw_method is chosen to be d3_bj
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 0.722: if `vdw_method` is set to `d3_0`
+  - 0.7875: if `vdw_method` is set to `d3_bj`
 
 ### vdw_a1
 
 - **Type**: Real
-- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) methods. Recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 1.217 if vdw_method is chosen to be d3_0; 0.4289 if vdw_method is chosen to be d3_bj
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 1.217: if `vdw_method` is set to `d3_0`
+  - 0.4289: if `vdw_method` is set to `d3_bj`
 
 ### vdw_a2
 
 - **Type**: Real
-- **Description**: This damping function parameter is only relevant for the DFT-D3(BJ) approach. Recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**: 1.0 if vdw_method is chosen to be d3_0; 4.4407 if vdw_method is chosen to be d3_bj
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Default**:
+  - 1.0: if `vdw_method` is set to `d3_0`
+  - 4.4407: if `vdw_method` is set to `d3_bj`
 
 ### vdw_d
 
 - **Type**: Real
-- **Description**: The variable is to control the damping rate of damping function of DFT-D2.
+- **Availability**: `vdw_method` is set to `d2`
+- **Description**: Controls the damping rate of the damping function in the DFT-D2 method.
 - **Default**: 20
 
 ### vdw_abc
 
 - **Type**: Integer
-- **Description**: The variable is to control whether three-body terms are calculated for DFT-D3 approaches, including D3(0) and D3(BJ). If set to 1, ABACUS will calculate three-body term, otherwise, the three-body term is not included.
-- **Default**: 0
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: Determines whether three-body terms are calculated for DFT-D3 methods.
+  - True: ABACUS will calculate the three-body term.
+  - False: The three-body term is not included.
+- **Default**: False
 
 ### vdw_C6_file
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $C_6$ parameters in D2 method. It gives the name of the file which contains the list of $C_6$ parameters for each element.
-
-  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `C6_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). The unit is Jnm6/mol.
-
-  Otherwise, if user wants to manually set the $C_6$ Parameters, they should provide a file containing the $C_6$ parameters to be used. An example is given by:
-
+- **Availability**: `vdw_method` is set to `d2`
+- **Description**: Specifies the name of the file containing $C_6$ parameters for each element when using the D2 method. If not set, ABACUS uses the default $C_6$ parameters (Jnm6/mol) stored in the [program](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). To manually set the $C_6$ parameters, provide a file containing the parameters. An example is given by:
   ```
   H  0.1
   Si 9.0
   ```
-
   Namely, each line contains the element name and the corresponding $C_6$ parameter.
 - **Default**: default
 
 ### vdw_C6_unit
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $C_6$ parameters in D2 method. It specified the unit of the supplied $C_6$ parameters. Allowed values are: `Jnm6/mol` (meaning J·nm^{6}/mol) and `eVA`(meaning eV·Angstrom)
+- **Availability**: `vdw_C6_file` is not default
+- **Description**: Specifies the unit of the provided $C_6$ parameters in the D2 method. Available options are:
+  - `Jnm6/mol` (J·nm^6/mol)
+  - `eVA` (eV·Angstrom)
 - **Default**: Jnm6/mol
 
 ### vdw_R0_file
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $R_0$ parameters in D2 method.
-  If not set, ABACUS will use the default $C_6$ Parameters stored in the program. The default values of $C_6$ for elements 1_H up to 86_Rn can be found by searching for `R0_default` in the [source code](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). The unit is Angstrom.
-
-  Otherwise, if the user wants to manually set the $C_6$ Parameters, they should provide a file containing the $C_6$ parameters to be used. An example is given by:
-
+- **Availability**: `vdw_method` is set to `d2`
+- **Description**: Specifies the name of the file containing $R_0$ parameters for each element when using the D2 method. If not set, ABACUS uses the default $R_0$ parameters (Angstrom) stored in the [program](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). To manually set the $R_0$ parameters, provide a file containing the parameters. An example is given by:
   ```
   Li 1.0
   Cl 2.0
   ```
-
   Namely, each line contains the element name and the corresponding $R_0$ parameter.
 - **Default**: default
 
 ### vdw_R0_unit
 
 - **Type**: String
-- **Description**: This variable is relevant if the user wants to manually set the $R_0$ parameters in D2 method. It specified the unit of the supplied $C_6$ parameters. Allowed values are: `A`(meaning Angstrom) and `Bohr`.
+- **Availability**: `vdw_R0_file` is not default
+- **Description**: Specifies the unit for the $R_0$ parameters in the D2 method when manually set by the user. Available options are:
+  - `A` (Angstrom)
+  - `Bohr`
 - **Default**: A
 
 ### vdw_cutoff_type
 
 - **Type**: String
-- **Description**: When applying Van-der-Waals correction in periodic systems, a cutoff radius needs to be supplied to avoid infinite  summation. In ABACUS, we restrict the range of correction to a supercell centered around the unit cell at origin.
-
-  In ABACUS, we provide two ways to determine the extent of the supercell.
-
-  When `vdw_cutoff_type` is set to `radius`, the supercell is chosen such that it is contained in a sphere centered at the origin. The radius of the sphere is specified by `vdw_cutoff_radius`.
-
-  When `vdw_cutoff_type` is set to `period`, the extent of the supercell is specified explicitly using keyword `vdw_cutoff_period`.
+- **Description**: Determines the method used for specifying the cutoff radius in periodic systems when applying Van der Waals correction. Available options are:
+  - `radius`: The supercell is selected within a sphere centered at the origin with a radius defined by `vdw_cutoff_radius`.
+  - `period`: The extent of the supercell is explicitly specified using the `vdw_cutoff_period` keyword. 
 - **Default**: radius
 
 ### vdw_cutoff_radius
 
 - **Type**: Real
-- **Description**: If `vdw_cutoff_type` is set to `radius`, this variable specifies the radius of the cutoff sphere. For DFT-D2, the default value is 56.6918, while for DFT-D3, the default value is 95.
-- **Default**: 56.6918 if vdw_method is chosen to be d2; 95 if vdw_method is chosen to be d3_0 or d3_bj
+- **Availability**: `vdw_cutoff_type` is set to `radius`
+- **Description**: Defines the radius of the cutoff sphere when `vdw_cutoff_type` is set to `radius`. The default values depend on the chosen `vdw_method`. 
+- **Default**: 
+  - 56.6918 if `vdw_method` is set to `d2`
+  - 95 if `vdw_method` is set to `d3_0` or `d3_bj`
+- **Unit**: defined by `vdw_radius_unit` (default `Bohr`)
 
 ### vdw_radius_unit
 
 - **Type**: String
-- **Description**: If `vdw_cutoff_type` is set to `radius`, this variable specifies the unit of `vdw_cutoff_radius`. Two values are allowed: `A`(meaning Angstrom) and `Bohr`.
+- **Availability**: `vdw_cutoff_type` is set to `radius`
+- **Description**: specify the unit of `vdw_cutoff_radius`. Available options are: 
+  - `A`(Angstrom)
+  - `Bohr`
 - **Default**: Bohr
 
 ### vdw_cutoff_period
 
 - **Type**: Integer Integer Integer
-- **Description**: If vdw_cutoff_type is set to `period`, the three integers supplied here will explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
+- **Availability**: `vdw_cutoff_type` is set to `period`
+- **Description**: The three integers supplied here explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
 - **Default**: 3 3 3
 
 ### vdw_cn_thr
 
 - **Type**: Real
-- **Description**: Only relevant for D3 correction. The cutoff radius when calculating coordination numbers.
+- **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
+- **Description**: The cutoff radius when calculating coordination numbers.
 - **Default**: 40
+- **Unit**: defined by `vdw_cn_thr_unit` (default: `Bohr`)
 
 ### vdw_cn_thr_unit
 
 - **Type**: String
-- **Description**: Unit of the coordination number cutoff. Two values are allowed: `A`(meaning Angstrom) and `Bohr`.
+- **Description**: Unit of the coordination number cutoff (`vdw_cn_thr`). Available options are:
+  - `A`(Angstrom)
+  - `Bohr`
 - **Default**: Bohr
 
 [back to top](#full-list-of-input-keywords)
 
 ## Berry phase and wannier90 interface
 
-These variables are used to control berry phase and wannier90 interface parameters.
+These variables are used to control berry phase and wannier90 interface parameters. [Detail introduce](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/interface/Wannier90.md#wannier90)
 
 ### berry_phase
 
 - **Type**: Boolean
-- **Description**: 1, calculate berry phase; 0, not calculate berry phase.
-- **Default**: 0
+- **Description**: controls the calculation of Berry phase
+  - true: Calculate Berry phase.
+  - false: Do not calculate Berry phase.
+- **Default**: false
 
 ### gdir
 
 - **Type**: Integer
-- **Description**:
-  - 1: calculate the polarization in the direction of the lattice vector a_1 that is defined in STRU file.
-  - 2: calculate the polarization in the direction of the lattice vector a_2 that is defined in STRU file.
-  - 3: calculate the polarization in the direction of the lattice vector a_3 that is defined in STRU file.
+- **Description**: the direction of the polarization in the lattice vector for Berry phase calculation
+  - 1: Calculate the polarization in the direction of the lattice vector a_1 defined in the STRU file.
+  - 2: Calculate the polarization in the direction of the lattice vector a_2 defined in the STRU file.
+  - 3: Calculate the polarization in the direction of the lattice vector a_3 defined in the STRU file.
 - **Default**: 3
 
 ### towannier90
 
 - **Type**: Integer
-- **Description**: 1, generate files for wannier90 code; 0, no generate.
+- **Description**: Controls the generation of files for the Wannier90 code.
+  - 1: Generate files for the Wannier90 code.
+  - 0: Do not generate files for the Wannier90 code.
 - **Default**: 0
 
 ### nnkpfile
 
 - **Type**: String
-- **Description**: the file name when you run “wannier90 -pp ...”.
+- **Description**: the file name generated when running "wannier90 -pp ..." command
 - **Default**: seedname.nnkp
 
 ### wannier_spin
 
 - **Type**: String
-- **Description**: If nspin is set to 2,
-  - up: calculate spin up for wannier function.
-  - down: calculate spin down for wannier function.
-- **Default**: up
+- **Description**: the spin direction for the Wannier function calculation when nspin is set to 2
+  - "up": Calculate spin up for the Wannier function.
+  - "down": Calculate spin down for the Wannier function.
+- **Default**: "up"
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2425,29 +2579,25 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_edm
 
-- **Type**: int
-- **Description**: the method to calculate the energy density matrix.
+- **Type**: Integer
+- **Description**: the method to calculate the energy density matrix
   - 0: new method (use the original formula).
   - 1: old method (use the formula for ground state).
 - **Default**: 0
 
 ### td_print_eij
 
-- **Type**: double
-- **Description**: print the Eij(<\psi_i|H|\psi_j>) elements which are larger than td_print_eij. if td_print_eij <0, don't print Eij
+- **Type**: Real
+- **Description**:  
+  - <0: don't print $E_{ij}$.
+  - \>=0: print the $E_{ij}\ (<\psi_i|H|\psi_j>$) elements which are larger than td_print_eij.
 - **Default**: -1
 
-### td_force_dt
-
-- **Type**: Real
-- **Description**: Time-dependent evolution force changes time step. (fs)
-- **Default**: 0.02
-
-### propagator
+### td_propagator
 
 - **Type**: Integer
 - **Description**:
-  method of propagator.
+  method of propagator
   - 0: Crank-Nicolson.
   - 1: 4th Taylor expansions of exponential.
   - 2: enforced time-reversal symmetry (ETRS).
@@ -2457,15 +2607,15 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**:
-  - 1: add a laser material interaction (extern laser field).
-  - 0: no extern laser field.
-- **Default**: 0
+  - True: add a laser material interaction (extern laser field).
+  - False: no extern laser field.
+- **Default**: False
 
 ### td_vext_dire
 
 - **Type**: String
 - **Description**:
-  If `td_vext` is true, the td_vext_dire is a string to set the number of electric fields, like "1 2" representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
+  If `td_vext` is True, the td_vext_dire is a string to set the number of electric fields, like `td_vext_dire 1 2` representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
   - 1: the direction of external light field is along x axis.
   - 2: the direction of external light field is along y axis.
   - 3: the direction of external light field is along z axis.
@@ -2482,7 +2632,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ### td_ttype
 
-- **Type**: String
+- **Type**: Integer
 - **Description**:
   type of electric field in time domain
   - 0: Gaussian type function.
@@ -2496,290 +2646,306 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Integer
 - **Description**:
-  number of step where electric field start
+  number of steps where electric field starts
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
 - **Description**:
-  number of step where electric field end
+  number of steps where electric field ends
 - **Default**: 100
 
 ### td_lcut1
 
-- **Type**: Double
+- **Type**: Real
 - **Description**:
-  cut1 of interval in length gauge
-  E = E0 , cut1<x<cut2
+  cut1 of interval in length gauge\
+  E = E0 , cut1<x<cut2\
   E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
 - **Default**: 0.05
 
 ### td_lcut2
 
-- **Type**: Double
+- **Type**: Real
 - **Description**:
-  cut2 of interval in length gauge
+  cut2 of interval in length gauge\
+  E = E0 , cut1<x<cut2\
+  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
 - **Default**: 0.05
 
 ### td_gauss_freq
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency of Gauss type electric field  (fs^-1)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  frequency (freq) of Gauss type electric field  (fs^-1)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 22.13
 
 ### td_gauss_phase
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
   phase of Gauss type electric field\
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  amp\*(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.0
 
 ### td_gauss_sigma
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  sigma of Gauss type electric field  (fs)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  sigma of Gauss type electric field  (fs)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 30.0
 
 ### td_gauss_t0
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time center of Gauss type electric field\
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  step number of time center (t0) of Gauss type electric field\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 100
 
 ### td_gauss_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Gauss type electric field  (V/A)
-  amp*cos(2pi*f(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  amplitude (amp) of Gauss type electric field  (V/Angstrom)\
+  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
 - **Default**: 0.25
 
 ### td_trape_freq
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency of Trapezoid type electric field  (fs^-1)
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3
+  frequency (freq) of Trapezoid type electric field  (fs^-1)\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1.60
 
 ### td_trape_phase
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
   phase of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 0.0
 
 ### td_trape_t1
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 1 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 1 (t1) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 1875
 
 ### td_trape_t2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 2 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 2 (t2) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 5625
 
 ### td_trape_t3
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of time interval 3 of Trapezoid type electric field\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  step number of time interval 3 (t3) of Trapezoid type electric field\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 7500
 
 ### td_trape_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Trapezoid type electric field  (V/A)\
-  E = amp*cos(2pi*f*t+phase) t/t1 , t<t1\
-  E = amp*cos(2pi*f*t+phase) , t1<t<t2\
-  E = amp*cos(2pi*f*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
+  amplitude (amp) of Trapezoid type electric field  (V/Angstrom)\
+  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
+  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
+  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
   E = 0 , t>t3
 - **Default**: 2.74
 
 ### td_trigo_freq1
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency 1 of Trigonometric type electric field  (fs^-1)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  frequency 1 (freq1) of Trigonometric type electric field  (fs^-1)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 1.164656
 
 ### td_trigo_freq2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  frequency 2 of Trigonometric type electric field  (fs^-1)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  frequency 2 (freq2) of Trigonometric type electric field  (fs^-1)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.029116
 
 ### td_trigo_phase1
 
-- **Type**: String
+- **Type**:Real
 - **Description**:
-  phase 1 of Trigonometric type electric field\
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  phase 1 (phase1) of Trigonometric type electric field\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.0
 
 ### td_trigo_phase2
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  phase 2 of Trigonometric type electric field\
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  phase 2 (phase2) of Trigonometric type electric field\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 0.0
 
 ### td_trigo_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Trigonometric type electric field  (V/A)
-  amp*cos(2*pi*f1*t+phase1)*sin(2*pi*f2*t+phase2)^2
+  amplitude (amp) of Trigonometric type electric field (V/Angstrom)\
+  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
 - **Default**: 2.74
 
 ### td_heavi_t0
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  step number of switch time of Heaviside type electric field\
+  step number of switch time (t0) of Heaviside type electric field\
   E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 100
 
 ### td_heavi_amp
 
-- **Type**: String
+- **Type**: Real
 - **Description**:
-  amplitude of Heaviside type electric field  (V/A)\
+  amplitude (amp) of Heaviside type electric field  (V/Angstrom)\
   E = amp , t<t0\
   E = 0.0 , t>t0
 - **Default**: 2.74
 
-### out_dipole
+### td_out_dipole
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Description**:
-  - 1: Output dipole.
-  - 0: do not Output dipole.
-- **Default**: 0
+  - True: output dipole.
+  - False: do not output dipole.
+- **Default**: False
 
-### out_efield
+### td_out_efield
 
-- **Type**: Integer
-- **Description**:
-  - 1: Output efield.
-  - 0: do not Output efield.
-  The unit of output file is atomic unit ( 1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom ).
-- **Default**: 0
+- **Type**: Boolean
+- **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
+  - True: output efield.
+  - False: do not output efield.
+- **Default**: False
 
 ### ocp
 
 - **Type**: Boolean
-- **Description**: choose whether calculating constrained DFT or not.
+- **Availability**: 
   - For PW and LCAO codes. if set to 1, occupations of bands will be setting of "ocp_set".
   - For TDDFT in LCAO codes. if set to 1, occupations will be constrained since second ionic step.
   - For OFDFT, this feature can't be used.
-- **Default**:0
+- **Description**: 
+- True: fix the occupations of bands.
+- False: do not fix the occupations of bands.
+- **Default**: False
 
 ### ocp_set
 
-- **Type**: string
-- **Description**: If ocp is true, the ocp_set is a string to set the number of occupancy, like 1 10 * 1 0 1 representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
+- **Type**: String
+- **Description**: If ocp is True, the ocp_set is a string to set the number of occupancy, like '1 10 * 1 0 1' representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
 - **Default**: none
 
 [back to top](#full-list-of-input-keywords)
 
 ## Variables useful for debugging
 
-### nurse
-
-- **Type**: Boolean
-- **Description**: If set to 1, the Hamiltonian matrix and S matrix in each iteration will be written in output.
-- **Default**: 0
-
 ### t_in_h
 
 - **Type**: Boolean
-- **Description**: If set to 0, then kinetic term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include kinetic term in obtaining the Hamiltonian matrix.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### vl_in_h
 
 - **Type**: Boolean
-- **Description**: If set to 0, then local pseudopotential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include local pseudopotential term in obtaining the Hamiltonian matrix.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### vnl_in_h
 
 - **Type**: Boolean
-- **Description**:  If set to 0, then non-local pseudopotential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include non-local pseudopotential term in obtaining the Hamiltonian matrix.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 1
 
 ### vh_in_h
 
 - **Type**: Boolean
-- **Description**:  If set to 0, then Hartree potential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include Hartree potential term in obtaining the Hamiltonian matrix.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 1
 
 ### vion_in_h
 
 - **Type**: Boolean
-- **Description**:  If set to 0, then local ionic potential term will not be included in obtaining the Hamiltonian.
+- **Description**: Specify whether to include local ionic potential term in obtaining the Hamiltonian matrix.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 1
 
 ### test_force
 
 - **Type**: Boolean
-- **Description**: If set to 1, then detailed components in forces will be written to output.
+- **Description**: Specify whether to output the detailed components in forces.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 ### test_stress
 
 - **Type**: Boolean
-- **Description**: If set to 1, then detailed components in stress will be written to output.
+- **Description**: Specify whether to output the detailed components in stress.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 ### colour
 
 - **Type**: Boolean
-- **Description**: If set to 1, output to terminal will have some color.
+- **Description**: Specify whether to set the colorful output in terminal.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 ### test_skip_ewald
 
 - **Type**: Boolean
-- **Description**: If set to 1, then ewald energy will not be calculated.
+- **Description**: Specify whether to skip the calculation of the ewald energy.
+	- 0: No.
+	- 1: Yes.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -2880,38 +3046,39 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 
 ## Implicit solvation model
 
-These variables are used to control the usage of implicit solvation model. This approach treats the solvent as a continuous medium instead of individual “explicit” solvent molecules, which means that the solute embedded in an implicit solvent and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath.
+These variables are used to control the usage of implicit solvation model. This approach treats the solvent as a continuous medium instead of individual "explicit" solvent molecules, which means that the solute is embedded in an implicit solvent and the average over the solvent degrees of freedom becomes implicit in the properties of the solvent bath.
 
 ### imp_sol
 
 - **Type**: Boolean
-- **Description**: If set to 1, an implicit solvation correction is considered.
-- **Default**: 0
+- **Description**: calculate implicit solvation correction
+- **Default**: False
 
 ### eb_k
 
 - **Type**: Real
-- **Description**: The relative permittivity of the bulk solvent, 80 for water. Used only if `imp_sol` == true.
+- **Availability**: `imp_sol` is true.
+- **Description**: the relative permittivity of the bulk solvent, 80 for water
 - **Default**: 80
 
 ### tau
 
 - **Type**: Real
-- **Description**: The effective surface tension parameter, which describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent that are not captured by the electrostatic terms. The unit is $Ry/Bohr^{2}$.
+- **Description**: The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
 - **Default**: 1.0798e-05
+- **Unit**: $Ry/Bohr^{2}$
 
 ### sigma_k
 
 - **Type**: Real
-- **Description**: We assume a diffuse cavity that is implicitly determined by the electronic structure of the solute.
-  `sigma_k` is the parameter that describes the width of the diffuse cavity.
+- **Description**: the width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
 - **Default**: 0.6
 
 ### nc_k
 
 - **Type**: Real
-- **Description**: It determines at what value of the electron density the dielectric cavity forms.
-  The unit is $Bohr^{-3}$.
+- **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
+- **Unit**: $Bohr^{-3}$
 
 [back to top](#full-list-of-input-keywords)

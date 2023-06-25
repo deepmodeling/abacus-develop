@@ -3,6 +3,8 @@
 
 This tutorial aims to introduce the process of performing density functional theory calculations using ABACUS and calculating lattice thermal conductivity using the ShengBTE software. During the entire calculation process, the following external software are also used: 1) Phonopy for calculating second-order force constants, 2) ASE for converting atomic structures, 3) ShengBTE's thirdorder program for calculating third-order force constants, and 4) finally using ShengBTE to calculate the material's lattice thermal conductivity.
 
+Here is the announcement of ShengBTE with ABACUS: [ShengBTE - The ABACUS DFT software can now be used with ShengBTE](https://www.shengbte.org/announcements/the-abacus-dft-software-can-now-be-used-with-shengbte)
+
 Some external packages that need to be combined are mentioned above, and here it is recommended to read the relevant documentation and instructions of these packages:
 
 ShengBTE：[https://bitbucket.org/sousaw/shengbte/src/master/](https://bitbucket.org/sousaw/shengbte/src/master/)

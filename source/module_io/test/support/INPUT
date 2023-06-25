@@ -11,7 +11,7 @@ pseudo_mesh                    0 #0: use our own mesh to do radial renormalizati
 lmaxmax                        2 #maximum of l channels used
 dft_functional                 hse #exchange correlation functional
 xc_temperature                 0 #temperature for finite temperature functionals
-calculation                    scf #test; scf; relax; nscf; ienvelope; istate
+calculation                    scf #test; scf; relax; nscf; get_wf; get_pchg
 esolver_type                   ksdft #the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
 ntype                          1 #atom species number
 nspin                          1 #1: single spin; 2: up and down spin; 4: noncollinear spin
@@ -19,7 +19,7 @@ kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 wh
 min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms
 nbands                         8 #number of bands
 nbands_sto                     256 #number of stochastic bands
-nbands_istate                  5 #number of bands around Fermi level for istate calulation
+nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
 symmetry_prec                  1e-05 #accuracy for symmetry
@@ -286,7 +286,7 @@ exx_opt_orb_tolerence          0 #
 td_force_dt                    0.02 #time of force change
 td_vext                        0 #add extern potential or not
 td_vext_dire                   1 #extern potential direction
-propagator                     0 # method of propagator
+td_propagator                     0 # method of propagator
 td_stype                       0 #space domain type
 td_ttype                       0 #time domain type
 td_tstart                      1 #the start step of electric field

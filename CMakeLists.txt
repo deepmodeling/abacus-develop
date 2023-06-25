@@ -51,7 +51,7 @@ You can install Git first and reinstall abacus.")
       RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
     )
     execute_process(
-      COMMAND git log -1 --format=%cd --date=local
+      COMMAND git log -1 --format=%cd
       OUTPUT_VARIABLE GIT_COMMIT_DATE
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -111,9 +111,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
   message(WARNING "GCC4 is not fully supported.")
 endif()
-add_compile_options(-Wno-write-strings
-  -Wno-tautological-constant-compare # Suppress warnings introduced by Torch using a LLVM compiler
-)
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
 set(FETCHCONTENT_QUIET FALSE) # Notify user when cloning git repo
 
 find_program(CCACHE ccache)
@@ -189,7 +188,8 @@ target_link_libraries(${ABACUS_BIN_NAME} Threads::Threads)
 if(USE_OPENMP)
   find_package(OpenMP REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} OpenMP::OpenMP_CXX)
-  add_compile_options(${OpenMP_CXX_FLAGS})
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   add_link_options(${OpenMP_CXX_LIBRARIES})
 endif()
 

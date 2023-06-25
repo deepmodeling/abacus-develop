@@ -41,16 +41,14 @@ AddTest(
 
 AddTest(
   TARGET cell_klist_test
-  LIBS ${math_libs} base device
-  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp ../module_symmetry/symm_other.cpp 
-  	../module_symmetry/symmetry_basic.cpp ../module_symmetry/symmetry.cpp
+  LIBS ${math_libs} base device symmetry
+  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_klist_test_para1
-  LIBS ${math_libs} base device
-  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp ../module_symmetry/symm_other.cpp 
-  	../module_symmetry/symmetry_basic.cpp ../module_symmetry/symmetry.cpp
+  LIBS ${math_libs} base device symmetry
+  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
 add_test(NAME cell_klist_test_para4

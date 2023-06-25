@@ -138,7 +138,7 @@ void Veff<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
         }
     }
 
-    this->GK->folding_vl_k(ik, this->LM, GlobalC::kv.kvec_d);
+    this->GK->folding_vl_k(ik, this->LM, kvec_d);
     ModuleBase::timer::tick("Veff", "contributeHk");
 }
 

@@ -34,18 +34,13 @@ AddTest(
 AddTest(
   TARGET elecstate_print
   LIBS ${math_libs} base device
-  SOURCES elecstate_print_test.cpp ../elecstate_print.cpp
+  SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp
 )
 
 AddTest(
   TARGET elecstate_base
   LIBS ${math_libs} base device
   SOURCES elecstate_base_test.cpp ../elecstate.cpp ../occupy.cpp ../../module_psi/psi.cpp
-)
-
-AddTest(
-  TARGET potentials_base
-  SOURCES potentials_base_test.cpp
 )
 
 AddTest(
@@ -72,4 +67,74 @@ AddTest(
   TARGET elecstate_energy
   LIBS ${math_libs} base device
   SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
+)
+
+AddTest(
+  TARGET potentials_base
+  SOURCES potentials_base_test.cpp
+)
+
+AddTest(
+  TARGET potentials_new
+  LIBS ${math_libs} base device
+  SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
+)
+
+AddTest(
+  TARGET charge_test
+  LIBS ${math_libs} base device
+  SOURCES charge_test.cpp ../module_charge/charge.cpp
+    # PW_Basis dependencies
+    ../../module_basis/module_pw/pw_basis.cpp
+    ../../module_basis/module_pw/pw_init.cpp
+    ../../module_basis/module_pw/pw_distributeg.cpp
+    ../../module_basis/module_pw/pw_distributer.cpp
+    ../../module_basis/module_pw/pw_distributeg_method1.cpp
+    ../../module_basis/module_pw/pw_distributeg_method2.cpp
+    ../../module_basis/module_pw/pw_transform.cpp
+    ../../module_basis/module_pw/fft.cpp
+    # UnitCell dependencies
+    ../../module_cell/unitcell.cpp
+    ../../module_cell/read_atoms.cpp
+    ../../module_cell/read_cell_pseudopots.cpp
+    ../../module_cell/atom_spec.cpp
+    ../../module_cell/atom_pseudo.cpp
+    ../../module_cell/pseudo_nc.cpp
+    ../../module_cell/read_pp.cpp
+    ../../module_cell/read_pp_upf201.cpp
+    ../../module_cell/read_pp_upf100.cpp
+    ../../module_cell/read_pp_vwr.cpp
+    ../../module_cell/read_pp_blps.cpp
+    ../../module_io/output.cpp
+)
+
+AddTest(
+  TARGET charge_mixing
+  LIBS  base ${math_libs}  psi  device
+  SOURCES charge_mixing_test.cpp  
+  ../module_charge/charge_mixing.cpp
+  ../module_charge/charge_broyden.cpp
+  ../module_charge/charge_pulay.cpp
+      # PW_Basis dependencies
+      ../../module_basis/module_pw/pw_basis.cpp
+      ../../module_basis/module_pw/pw_init.cpp
+      ../../module_basis/module_pw/pw_distributeg.cpp
+      ../../module_basis/module_pw/pw_distributer.cpp
+      ../../module_basis/module_pw/pw_distributeg_method1.cpp
+      ../../module_basis/module_pw/pw_distributeg_method2.cpp
+      ../../module_basis/module_pw/pw_transform.cpp
+      ../../module_basis/module_pw/fft.cpp
+      # UnitCell dependencies
+      ../../module_cell/unitcell.cpp
+      ../../module_cell/read_atoms.cpp
+      ../../module_cell/read_cell_pseudopots.cpp
+      ../../module_cell/atom_spec.cpp
+      ../../module_cell/atom_pseudo.cpp
+      ../../module_cell/pseudo_nc.cpp
+      ../../module_cell/read_pp.cpp
+      ../../module_cell/read_pp_upf201.cpp
+      ../../module_cell/read_pp_upf100.cpp
+      ../../module_cell/read_pp_vwr.cpp
+      ../../module_cell/read_pp_blps.cpp
+      ../../module_io/output.cpp
 )

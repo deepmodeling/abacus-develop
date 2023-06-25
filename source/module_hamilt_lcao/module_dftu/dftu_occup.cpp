@@ -98,12 +98,12 @@ void DFTU::zero_locale()
     ModuleBase::timer::tick("DFTU", "zero_locale");
 }
 
-void DFTU::mix_locale()
+void DFTU::mix_locale(const double& mixing_beta)
 {
     ModuleBase::TITLE("DFTU", "mix_locale");
     ModuleBase::timer::tick("DFTU", "mix_locale");
 
-    double beta = GlobalC::CHR_MIX.get_mixing_beta();
+    double beta = mixing_beta;
 
     for (int T = 0; T < GlobalC::ucell.ntype; T++)
     {
@@ -138,7 +138,8 @@ void DFTU::mix_locale()
 
 void DFTU::cal_occup_m_k(const int iter, 
                         std::vector<ModuleBase::ComplexMatrix> &dm_k,
-                        const K_Vectors& kv)
+                        const K_Vectors& kv,
+                        const double& mixing_beta)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_k");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
@@ -333,7 +334,7 @@ void DFTU::cal_occup_m_k(const int iter,
 
     if(mixing_dftu && initialed_locale)
     {
-        this->mix_locale();
+        this->mix_locale(mixing_beta);
     }
 
     this->initialed_locale = true;
@@ -341,7 +342,7 @@ void DFTU::cal_occup_m_k(const int iter,
     return;
 }
 
-void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm_gamma)
+void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm_gamma, const double& mixing_beta)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
@@ -479,7 +480,7 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
 
     if(mixing_dftu && initialed_locale)
     {
-        this->mix_locale();
+        this->mix_locale(mixing_beta);
     }
 
     this->initialed_locale = true;

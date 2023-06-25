@@ -4,7 +4,7 @@
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_base/tool_threading.h"
 #include "module_io/write_HS.h"
@@ -277,7 +277,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
             this->UHM->genH.LM->zeros_HSk('S');
             this->UHM->genH.LM->folding_fixedH(ik, kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
-            ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
+            ModuleIO::saving_HS(0,
+                                this->UHM->genH.LM->Hloc2.data(),
                                 this->UHM->genH.LM->Sloc2.data(),
                                 bit,
                                 1,

@@ -6,6 +6,7 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
+#include "module_esolver/esolver_ks_lcao.h"
 #include "LRI_CV.h"
 // #include "module_xc/exx_info.h"
 // #include "module_basis/module_ao/ORB_atomic_lm.h"
@@ -39,9 +40,9 @@ template <typename Tdata> class RPA_LRI
     ~RPA_LRI(){};
     void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
     void cal_rpa_cv();
-    void cal_postSCF_exx(const MPI_Comm& mpi_comm_in,
+    void cal_postSCF_exx(const Local_Orbital_Charge& loc,
+                    const MPI_Comm& mpi_comm_in,
                     const K_Vectors& kv,
-                    const Mix_DMk_2D &mix_DMk_2D,
                     const Parallel_Orbitals& pv);
     void out_for_RPA(const Parallel_Orbitals& parav,
                      const psi::Psi<std::complex<double>> &psi,

@@ -9,7 +9,11 @@
 #include "module_basis/module_ao/ORB_control.h"
 #ifdef __EXX
 #include "module_ri/Mix_DMk_2D.h"
+#include "module_ri/Exx_LRI_interface.h"
 #endif
+#include "module_io/output_dm.h"
+#include "module_io/output_dm1.h"
+#include "module_io/output_mat_sparse.h"
 
 namespace ModuleESolver
 {
@@ -38,7 +42,6 @@ namespace ModuleESolver
         virtual void eachiterfinish(const int iter) override;
         virtual void afterscf(const int istep) override;
         virtual bool do_after_converge(int& iter) override;
-        int two_level_step = 0;
 
         virtual void othercalculation(const int istep)override;
         ORB_control orb_con;    //Basis_LCAO
@@ -48,9 +51,6 @@ namespace ModuleESolver
         LCAO_Hamilt UHM;
         LCAO_Matrix LM;
         Grid_Technique GridT;
-#ifdef __EXX
-		Mix_DMk_2D mix_DMk_2D;
-#endif
 
         // Temporarily store the stress to unify the interface with PW,
         // because it's hard to seperate force and stress calculation in LCAO.
@@ -66,6 +66,25 @@ namespace ModuleESolver
         void set_matrix_grid(Record_adj& ra);
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
+
+        /// @brief create ModuleIO::Output_DM object to output density matrix
+        ModuleIO::Output_DM create_Output_DM(int is, int iter);
+
+        /// @brief create ModuleIO::Output_DM1 object to output sparse density matrix
+        ModuleIO::Output_DM1 create_Output_DM1(int istep);
+
+        /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
+        ModuleIO::Output_Mat_Sparse create_Output_Mat_Sparse(int istep);
+
+        /// @brief check if skip the corresponding output in md calculation
+        bool md_skip_out(std::string calculation, int istep, int interval);
+
+#ifdef __EXX
+        std::shared_ptr<Exx_LRI_Interface<double>> exd = nullptr;
+        std::shared_ptr<Exx_LRI_Interface<std::complex<double>>> exc = nullptr;
+        std::shared_ptr<Exx_LRI<double>> exx_lri_double = nullptr;
+        std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
+#endif
     };
 
 

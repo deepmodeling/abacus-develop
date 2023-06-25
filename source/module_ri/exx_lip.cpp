@@ -148,13 +148,14 @@ void Exx_Lip::cal_exx()
 }
 */
 
-void Exx_Lip::init(ModuleSymmetry::Symmetry &symm,
-	K_Vectors *kv_ptr_in, 
-	wavefunc *wf_ptr_in,  
-	ModulePW::PW_Basis_K *wfc_basis_in, 
-	ModulePW::PW_Basis *rho_basis_in, 
-	UnitCell *ucell_ptr_in,
-	const elecstate::ElecState* pelec_in)
+void Exx_Lip::init(const ModuleSymmetry::Symmetry& symm,
+                   K_Vectors* kv_ptr_in,
+                   wavefunc* wf_ptr_in,
+                   const ModulePW::PW_Basis_K* wfc_basis_in,
+                   const ModulePW::PW_Basis* rho_basis_in,
+                   const Structure_Factor& sf,
+                   const UnitCell* ucell_ptr_in,
+                   const elecstate::ElecState* pelec_in)
 {
 	ModuleBase::TITLE("Exx_Lip","init");
 	try
@@ -163,17 +164,17 @@ void Exx_Lip::init(ModuleSymmetry::Symmetry &symm,
 		k_pack->kv_ptr = kv_ptr_in;
 		k_pack->wf_ptr = wf_ptr_in;
 		k_pack->pelec = pelec_in;
-		wfc_basis = wfc_basis_in;
-		rho_basis = rho_basis_in;
-		ucell_ptr = ucell_ptr_in;
+        wfc_basis = wfc_basis_in;
+        rho_basis = rho_basis_in;
+        ucell_ptr = ucell_ptr_in;
 
-		int gzero_judge(-1);
-		if (rho_basis->gg_uniq[0] < 1e-8)
-		{
-			gzero_judge = GlobalV::RANK_IN_POOL;
-		}
-	#ifdef __MPI
-		MPI_Allreduce(&gzero_judge, &gzero_rank_in_pool, 1, MPI_INT, MPI_MAX, POOL_WORLD);
+        int gzero_judge(-1);
+        if (rho_basis->gg_uniq[0] < 1e-8)
+        {
+            gzero_judge = GlobalV::RANK_IN_POOL;
+        }
+#ifdef __MPI
+        MPI_Allreduce(&gzero_judge, &gzero_rank_in_pool, 1, MPI_INT, MPI_MAX, POOL_WORLD);
 	#endif
 		k_pack->wf_wg.create(k_pack->kv_ptr->nks,GlobalV::NBANDS);
 
@@ -189,26 +190,26 @@ void Exx_Lip::init(ModuleSymmetry::Symmetry &symm,
 		}
 		else if(GlobalV::init_chg=="file")
 		{
-			read_q_pack(symm);
-		}
+            read_q_pack(symm, wfc_basis, sf);
+        }
 
-		phi = new std::complex<double>*[GlobalV::NLOCAL];
-		for( int iw=0; iw<GlobalV::NLOCAL; ++iw)
-		{
-			phi[iw] = new std::complex<double>[rho_basis->nrxx];
-		}
+        phi = new std::complex<double>*[GlobalV::NLOCAL];
+        for (int iw = 0; iw < GlobalV::NLOCAL; ++iw)
+        {
+            phi[iw] = new std::complex<double>[rho_basis->nrxx];
+        }
 
-		psi = new std::complex<double>**[q_pack->kv_ptr->nks];
-		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
-		{
-			psi[iq] = new std::complex<double> *[GlobalV::NBANDS];
+        psi = new std::complex<double>**[q_pack->kv_ptr->nks];
+        for (int iq = 0; iq < q_pack->kv_ptr->nks; ++iq)
+        {
+            psi[iq] = new std::complex<double> *[GlobalV::NBANDS];
 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
 			{
 				psi[iq][ib] = new std::complex<double>[rho_basis->nrxx];
 			}
-		}
+        }
 
-		recip_qkg2 = new double [rho_basis->npw];
+        recip_qkg2 = new double [rho_basis->npw];
 
 		b = new std::complex<double> [GlobalV::NLOCAL*rho_basis->npw];
 
@@ -672,7 +673,9 @@ void Exx_Lip::write_q_pack() const
 	return;
 }
 
-void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry &symm)
+void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry& symm,
+                          const ModulePW::PW_Basis_K* wfc_basis,
+                          const Structure_Factor& sf)
 {
 	const std::string exx_q_pack = "exx_q_pack/";
 
@@ -685,18 +688,25 @@ void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry &symm)
 
 
 	q_pack->wf_ptr = new wavefunc();
-	q_pack->wf_ptr->allocate(q_pack->kv_ptr->nks, q_pack->kv_ptr->ngk.data(), GlobalC::wfcpw->npwk_max); // mohan update 2021-02-25
-//	q_pack->wf_ptr->init(q_pack->kv_ptr->nks,q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
-	q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
+    q_pack->wf_ptr->allocate(q_pack->kv_ptr->nks,
+                             q_pack->kv_ptr->ngk.data(),
+                             wfc_basis->npwk_max); // mohan update 2021-02-25
+    //	q_pack->wf_ptr->init(q_pack->kv_ptr->nks,q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
+    q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
 //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, GlobalV::NQX);
 #ifdef __LCAO
 	Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, q_pack->wf_ptr->table_local);
 //	Wavefunc_in_pw::make_table_q(q_pack->wf_ptr->ORB_ptr->orbital_file, q_pack->wf_ptr->table_local, q_pack->wf_ptr);
 	for(int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 	{
-		Wavefunc_in_pw::produce_local_basis_in_pw(iq, GlobalC::wfcpw, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local);
-//		Wavefunc_in_pw::produce_local_basis_in_pw(iq, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local, q_pack->wf_ptr);
-	}
+        Wavefunc_in_pw::produce_local_basis_in_pw(iq,
+                                                  wfc_basis,
+                                                  sf,
+                                                  q_pack->wf_ptr->wanf2[iq],
+                                                  q_pack->wf_ptr->table_local);
+        //		Wavefunc_in_pw::produce_local_basis_in_pw(iq, q_pack->wf_ptr->wanf2[iq], q_pack->wf_ptr->table_local,
+        // q_pack->wf_ptr);
+    }
 #endif
 	q_pack->wf_wg.create(q_pack->kv_ptr->nks,GlobalV::NBANDS);
 	if(!GlobalV::RANK_IN_POOL)

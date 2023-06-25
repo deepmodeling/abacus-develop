@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "module_io/dos.h"
+#include "module_io/cal_dos.h"
 #include "module_base/global_variable.h"
 #include <string>
 #ifdef __MPI

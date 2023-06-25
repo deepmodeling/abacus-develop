@@ -3,19 +3,10 @@ if(ENABLE_LCAO)
 	numerical_atomic_orbitals
 	OBJECT
 	numerical_radial.cpp
-
-		#ORB_atomic.cpp
-      	#ORB_atomic_lm.cpp
-      	#ORB_control.cpp
-      	#ORB_gaunt_table.cpp
-      	#ORB_gen_tables.cpp
-      	#ORB_nonlocal.cpp
-      	#ORB_nonlocal_lm.cpp
-      	#ORB_read.cpp
-      	#ORB_table_alpha.cpp
-      	#ORB_table_beta.cpp
-      	#ORB_table_phi.cpp
-      	#parallel_orbitals.cpp
+    radial_set.cpp
+    atomic_radials.cpp
+    beta_radials.cpp
+    radial_collection.cpp
   )
 
   if(ENABLE_COVERAGE)

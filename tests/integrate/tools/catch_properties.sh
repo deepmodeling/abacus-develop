@@ -25,7 +25,7 @@ file=$1
 #echo $1
 calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
-natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | awk '{print $6}'`
+natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
 has_force=`grep -En '(^|[[:space:]])cal_force($|[[:space:]])' INPUT | awk '{print $2}'`
 has_stress=`grep -En '(^|[[:space:]])cal_stress($|[[:space:]])' INPUT | awk '{print $2}'`
 has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{print $2}'`
@@ -38,6 +38,7 @@ has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2
 deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_lowf=`grep out_wfc_lcao INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_app_flag=`grep out_app_flag INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_r=`grep out_wfc_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_wfc_pw=`grep out_wfc_pw INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_dm=`grep "out_dm " INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -51,6 +52,10 @@ get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_mat_t=`grep out_mat_t INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_mat_dh=`grep out_mat_dh INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_scan=`grep dft_functional INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
@@ -59,9 +64,10 @@ test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
 #--------------------------------------------
-if [ $calculation != "nscf" ] && [ $calculation != "ienvelope" ]\
-&& [ $calculation != "istate" ] && [ $calculation != "get_S" ]; then
-	etot=`grep ETOT_ $running_path | awk '{print $2}'`
+if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
+	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
+	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
 	echo "etotref $etot" >>$1
 	echo "etotperatomref $etotperatom" >>$1
@@ -215,6 +221,31 @@ if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
     echo "ComparerR_pass $?" >>$1
 fi
 
+#echo $has_mat_t
+if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
+    python3 ../tools/CompareFile.py data-TR-sparse_SPIN0.csr.ref OUT.autotest/data-TR-sparse_SPIN0.csr 8
+    echo "ComparerTR_pass $?" >>$1
+fi
+
+#echo $has_mat_dh
+if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
+    python3 ../tools/CompareFile.py data-dHRx-sparse_SPIN0.csr.ref OUT.autotest/data-dHRx-sparse_SPIN0.csr 8
+    echo "ComparerdHRx_pass $?" >>$1
+    python3 ../tools/CompareFile.py data-dHRy-sparse_SPIN0.csr.ref OUT.autotest/data-dHRy-sparse_SPIN0.csr 8
+    echo "ComparerdHRy_pass $?" >>$1
+    python3 ../tools/CompareFile.py data-dHRz-sparse_SPIN0.csr.ref OUT.autotest/data-dHRz-sparse_SPIN0.csr 8
+    echo "ComparerdHRz_pass $?" >>$1
+fi
+
+#echo $has_scan
+if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
+       ! test -z "$out_chg" && [ $out_chg == 1 ]; then
+    python3 ../tools/CompareFile.py SPIN1_CHG.cube.ref OUT.autotest/SPIN1_CHG.cube 8
+    echo "SPIN1_CHG.cube_pass $?" >>$1
+    python3 ../tools/CompareFile.py SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
+    echo "SPIN1_TAU.cube_pass $?" >>$1
+fi
+
 # echo "$has_wfc_r" ## test out_wfc_r > 0
 if ! test -z "$has_wfc_r"  && [ $has_wfc_r == 1 ]; then
 	if [[ ! -f OUT.autotest/running_scf.log ]];then
@@ -263,6 +294,11 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.dat
 		wfc_ref=LOWF_GAMMA_S1.dat.ref	
 	else
+		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
+			wfc_name=10_LOWF_K_1
+		else
+			wfc_name=LOWF_K_2
+		fi
 		awk 'BEGIN {flag=999}
     	{
         	if($2 == "(band)") {flag=2;print $0}
@@ -274,9 +310,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/LOWF_K_2.dat > OUT.autotest/LOWF_K_2_mod.dat
-		wfc_cal=OUT.autotest/LOWF_K_2_mod.dat
-		wfc_ref=LOWF_K_2_mod.dat.ref
+    	}' OUT.autotest/"$wfc_name".dat > OUT.autotest/"$wfc_name"_mod.dat
+		wfc_cal=OUT.autotest/"$wfc_name"_mod.dat
+		wfc_ref="$wfc_name"_mod.dat.ref
 	fi
 
 	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1
@@ -315,7 +351,7 @@ if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
 	echo "Compare_mulliken_pass $?" >>$1
 fi
 
-if [ $calculation == "ienvelope" ]; then
+if [ $calculation == "get_wf" ]; then
 	nfile=0
 	# envfiles=`ls OUT.autotest/ | grep ENV$`
 	# if test -z "$envfiles"; then
@@ -342,7 +378,7 @@ if [ $calculation == "ienvelope" ]; then
 	fi
 fi
 
-if [ $calculation == "istate" ]; then
+if [ $calculation == "get_pchg" ]; then
 	nfile=0
 	# chgfiles=`ls OUT.autotest/ | grep -E '_CHG$'`
 	# if test -z "$chgfiles"; then

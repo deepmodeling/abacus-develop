@@ -2,9 +2,8 @@
 
 #include "cal_dm.h"
 #include "module_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 namespace elecstate
 {
@@ -41,7 +40,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<std::complex<double>>& psi)
         }
     }
 
-    this->loc->cal_dk_k(*this->lowf->gridt, this->wg, GlobalC::kv);
+    this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10
@@ -52,13 +51,13 @@ void ElecStateLCAO::psiToRho(const psi::Psi<std::complex<double>>& psi)
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    Gint_inout inout(this->loc->DM_R, this->charge, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
     this->uhm->GK.cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
-        Gint_inout inout1(this->loc->DM_R, this->charge, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GK.cal_gint(&inout1);
     }
 
@@ -108,7 +107,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
     // calculate the charge density on real space grid.
     //------------------------------------------------------------
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    Gint_inout inout(this->loc->DM, this->charge, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
     this->uhm->GG.cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
@@ -116,7 +115,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
-        Gint_inout inout1(this->loc->DM, this->charge, Gint_Tools::job_type::tau);
+        Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GG.cal_gint(&inout1);
     }
 
@@ -126,7 +125,7 @@ void ElecStateLCAO::psiToRho(const psi::Psi<double>& psi)
     return;
 }
 
-void ElecStateLCAO::print_psi(const psi::Psi<double>& psi_in)
+void ElecStateLCAO::print_psi(const psi::Psi<double>& psi_in, const int istep)
 {
     if (!ElecStateLCAO::out_wfc_lcao)
         return;
@@ -134,11 +133,11 @@ void ElecStateLCAO::print_psi(const psi::Psi<double>& psi_in)
     // output but not do "2d-to-grid" conversion
     double** wfc_grid = nullptr;
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(out_wfc_flag, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
 #endif
     return;
 }
-void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
+void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep)
 {
     if (!ElecStateLCAO::out_wfc_lcao && !ElecStateLCAO::need_psi_grid)
         return;
@@ -151,7 +150,14 @@ void ElecStateLCAO::print_psi(const psi::Psi<std::complex<double>>& psi_in)
         wfc_grid = this->lowf->wfc_k_grid[ik];
     }
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(ElecStateLCAO::out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(istep,
+                               ElecStateLCAO::out_wfc_flag,
+                               psi_in.get_pointer(),
+                               wfc_grid,
+                               ik,
+                               this->ekb,
+                               this->wg,
+                               this->klist->kvec_c);
 #else
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
     {

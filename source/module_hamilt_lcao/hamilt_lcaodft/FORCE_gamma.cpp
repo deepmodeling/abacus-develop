@@ -3,7 +3,7 @@
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
@@ -217,7 +217,8 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
         this->UHM->genH.LM->zeros_HSgamma('S');
         this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
         bool bit = false; // LiuXh, 2017-03-21
-        ModuleIO::saving_HS(this->UHM->genH.LM->Hloc.data(),
+        ModuleIO::saving_HS(0,
+                            this->UHM->genH.LM->Hloc.data(),
                             this->UHM->genH.LM->Sloc.data(),
                             bit,
                             1,

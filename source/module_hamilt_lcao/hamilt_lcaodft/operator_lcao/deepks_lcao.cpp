@@ -5,7 +5,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 
 namespace hamilt
 {
@@ -64,8 +64,8 @@ void DeePKS<OperatorLCAO<std::complex<double>>>::contributeHR()
                                         GlobalC::GridD,
                                         this->LM->ParaV->trace_loc_row,
                                         this->LM->ParaV->trace_loc_col,
-                                        GlobalC::kv.nks,
-                                        GlobalC::kv.kvec_d);
+                                        this->nks,
+                                        this->kvec_d);
         GlobalC::ld.cal_descriptor();
         // calculate dE/dD
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);

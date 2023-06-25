@@ -24,42 +24,45 @@ public:
 
 	const Exx_Info::Exx_Info_Lip &info;
 
-	void init(ModuleSymmetry::Symmetry &symm,
-		K_Vectors *kv_ptr_in, 
-		wavefunc *wf_ptr_in, 
-		ModulePW::PW_Basis_K *wfc_basis_in, 
-		ModulePW::PW_Basis *rho_basis_in, 
-		UnitCell *ucell_ptr_in,
-		const elecstate::ElecState* pelec_in);
+    void init(const ModuleSymmetry::Symmetry& symm,
+              K_Vectors* kv_ptr_in,
+              wavefunc* wf_ptr_in,
+              const ModulePW::PW_Basis_K* wfc_basis_in,
+              const ModulePW::PW_Basis* rho_basis_in,
+              const Structure_Factor& sf,
+              const UnitCell* ucell_ptr_in,
+              const elecstate::ElecState* pelec_in);
     // void cal_exx(const int& nks);
-    const std::complex<double> *const *const *get_exx_matrix() const
+    const std::complex<double>* const* const* get_exx_matrix() const
     {
         return exx_matrix;
     }
-    double get_exx_energy() const { return exx_energy; }
+    double get_exx_energy() const
+    {
+        return exx_energy;
+    }
 
-	void write_q_pack() const;
+    void write_q_pack() const;
 
-private:
+  private:
+    bool init_finish;
 
-	bool init_finish;
+    int gzero_rank_in_pool;
 
-	int gzero_rank_in_pool;
+    struct k_package
+    {
+        K_Vectors* kv_ptr;
+        wavefunc* wf_ptr;
+        ModuleBase::matrix wf_wg;
+        ModuleBase::ComplexMatrix* hvec_array;
+        const elecstate::ElecState* pelec;
+    } *k_pack, *q_pack;
 
-	struct k_package
-	{
-		K_Vectors *kv_ptr;
-		wavefunc *wf_ptr;
-		ModuleBase::matrix wf_wg;
-		ModuleBase::ComplexMatrix *hvec_array;	
-		const elecstate::ElecState* pelec;	
-	} *k_pack, *q_pack;
+    int iq_vecik;
 
-	int iq_vecik;
-
-	std::complex<double> **phi;
-	std::complex<double> ***psi;
-	double *recip_qkg2;
+    std::complex<double>** phi;
+    std::complex<double>*** psi;
+    double *recip_qkg2;
 	double sum2_factor;
 	std::complex<double> *b;
 	std::complex<double> *b0;
@@ -79,14 +82,15 @@ private:
 	void b_sum(int iq, int ib);
 	void sum_all(int ik);
 	void exx_energy_cal();
-	void read_q_pack(const ModuleSymmetry::Symmetry &symm);
-	
-public:
+    void read_q_pack(const ModuleSymmetry::Symmetry& symm,
+                     const ModulePW::PW_Basis_K* wfc_basis,
+                     const Structure_Factor& sf);
 
-	ModulePW::PW_Basis *rho_basis;
-	ModulePW::PW_Basis_K *wfc_basis;
+  public:
+    const ModulePW::PW_Basis* rho_basis;
+    const ModulePW::PW_Basis_K* wfc_basis;
 
-	UnitCell *ucell_ptr;
+    const UnitCell* ucell_ptr;
 };
 
 

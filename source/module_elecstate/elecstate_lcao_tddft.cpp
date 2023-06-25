@@ -37,7 +37,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         }
     }
 
-    this->loc->cal_dk_k(*this->lowf->gridt, this->wg, GlobalC::kv);
+    this->loc->cal_dk_k(*this->lowf->gridt, this->wg, *(this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10
@@ -48,7 +48,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    Gint_inout inout(this->loc->DM_R, this->charge, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
     this->uhm->GK.cal_gint(&inout);
 
     this->charge->renormalize_rho();

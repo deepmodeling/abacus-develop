@@ -7,24 +7,16 @@
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
 
-#include <map>
+#include "module_elecstate/elecstate_getters.h"
 
-#include "H_Hartree_pw.h"
-#include "efield.h"
-#include "gatefield.h"
-#include "pot_local.h"
-#include "pot_surchem.hpp"
-#include "pot_xc.h"
-#ifdef __LCAO
-#include "H_TDDFT_pw.h"
-#endif
+#include <map>
 
 namespace elecstate
 {
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const UnitCell* ucell_in,
                      const ModuleBase::matrix* vloc_in,
-                     const ModuleBase::ComplexMatrix* structure_factors_in,
+                     Structure_Factor* structure_factors_in,
                      double* etxc_in,
                      double* vtxc_in)
     : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), etxc_(etxc_in), vtxc_(vtxc_in)
@@ -82,51 +74,11 @@ void Potential::pot_register(std::vector<std::string>& components_list)
     //---------------------------
     // mapping for register
     //---------------------------
-    std::map<string, int> pot_register_map
-        = {
-            {"local", 1}, 
-            {"hartree", 2}, 
-            {"xc", 3}, 
-            {"surchem", 4}, 
-            {"efield", 5}, 
-            {"gatefield", 6},
-            {"tddft", 7}
-        };
     for (auto comp: components_list)
     {
-        PotBase* tmp = nullptr;
-        int key = pot_register_map[comp];
-        switch (key)
-        {
-        case 1: //"local"
-            tmp = new PotLocal(this->vloc_, this->structure_factors_, this->rho_basis_);
-            break;
-        case 2: //"hartree"
-            tmp = new PotHartree(this->rho_basis_);
-            break;
-        case 3: //"xc"
-            tmp = new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_effective));
-            break;
-        case 4: //"surchem"
-            tmp = new PotSurChem(this->rho_basis_, this->v_effective_fixed.data(), &GlobalC::solvent_model);
-            break;
-        case 5: //"efield"
-            tmp = new PotEfield(this->rho_basis_, this->ucell_, GlobalV::DIP_COR_FLAG);
-            break;
-        case 6: //"gatefield"
-            tmp = new PotGate(this->rho_basis_, this->ucell_);
-            break;
-#ifdef __LCAO
-        case 7: //tddft
-            tmp = new H_TDDFT_pw(this->rho_basis_, this->ucell_);
-            break;
-#endif
-        default:
-            ModuleBase::WARNING_QUIT("Potential::Init", "Please input correct component of potential!");
-            break;
-        }
+        PotBase* tmp = this->get_pot_type(comp);
         this->components.push_back(tmp);
-//        GlobalV::ofs_running << "Successful completion of Potential's registration : " << comp << std::endl;
+        //        GlobalV::ofs_running << "Successful completion of Potential's registration : " << comp << std::endl;
     }
 
     // after register, reset fixed_done to false
@@ -148,7 +100,7 @@ void Potential::allocate()
     this->v_effective.create(GlobalV::NSPIN, nrxx);
     ModuleBase::Memory::record("Pot::veff", sizeof(double) * GlobalV::NSPIN * nrxx);
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
     {
         this->vofk_effective.create(GlobalV::NSPIN, nrxx);
         ModuleBase::Memory::record("Pot::vofk", sizeof(double) * GlobalV::NSPIN * nrxx);

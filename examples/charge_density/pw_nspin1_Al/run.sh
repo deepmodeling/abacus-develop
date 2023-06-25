@@ -8,7 +8,7 @@ OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | t
 
 if [[ ! -f output ]] || 
    [[ ! -f OUT.ABACUS/running_scf.log ]] ||
-   [[ ! -f OUT.ABACUS/SPIN1_CHG ]] ||
+   [[ ! -f OUT.ABACUS/SPIN1_CHG.cube ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] 
 then
 	echo "job is failed!"

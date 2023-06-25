@@ -79,11 +79,11 @@ class ElecState
     //calculate nbands and 
     void cal_nbands();
 
-    virtual void print_psi(const psi::Psi<double>& psi_in)
+    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {
         return;
     }
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in)
+    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1)
     {
         return;
     }
@@ -111,7 +111,8 @@ class ElecState
     void cal_energies(const int type);
 #ifdef __EXX
 #ifdef __LCAO
-    void set_exx();
+    void set_exx(const double& Eexx);
+    void set_exx(const std::complex<double>& Eexx);
 #endif //__LCAO
 #endif //__EXX
  

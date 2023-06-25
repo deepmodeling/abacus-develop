@@ -63,7 +63,7 @@ test:
 
   # Run end-to-end tests. This may take long time; disabled by default.
   # Unit tests are not built here.
-  # Hence, some tests(ienvelope) requiring additional validation components are expected to fail.
+  # Hence, some tests(get_wf) requiring additional validation components are expected to fail.
   # Please uncomment the codes below if necessary.
 
   #   - cd tests/integrate && bash Autotest.sh

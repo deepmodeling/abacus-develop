@@ -20,7 +20,6 @@ if [[ ! -f scf.output ]] ||
    [[ ! -f OUT.ABACUS/running_nscf.log ]] ||
    [[ ! -f OUT.ABACUS/DOS1 ]] ||
    [[ ! -f OUT.ABACUS/DOS1_smearing.dat ]] ||
-   [[ ! -f OUT.ABACUS/SPIN1_CHG ]] ||
    [[ ! -f OUT.ABACUS/SPIN1_CHG.cube ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_nscf.log)" == " Total  Time  :"* ) ]]

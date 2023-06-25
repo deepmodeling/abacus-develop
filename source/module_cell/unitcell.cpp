@@ -1036,7 +1036,7 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
 {
 	ModuleBase::TITLE("UnitCell","setup_cell_after_vc");
     assert(lat0 > 0.0);
-    this->omega = abs(latvec.Det()) * this->lat0 * lat0 * lat0;
+    this->omega = std::abs(latvec.Det()) * this->lat0 * lat0 * lat0;
     if(this->omega <= 0)
     {
         ModuleBase::WARNING_QUIT("setup_cell_after_vc", "omega <= 0 .");
@@ -1526,4 +1526,27 @@ void UnitCell::remake_cell()
 		std::cout << "latname is : " << latName << std::endl;
 		ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","latname not supported!");
 	}
+}
+
+void UnitCell::cal_nelec(double& nelec)
+{
+    ModuleBase::TITLE("UnitCell", "cal_nelec");
+    GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
+
+    if (nelec == 0)
+    {
+        for (int it = 0; it < this->ntype; it++)
+        {
+            std::stringstream ss1, ss2;
+            ss1 << "electron number of element " << this->atoms[it].label;
+            const int nelec_it = this->atoms[it].ncpp.zv * this->atoms[it].na;
+            nelec += nelec_it;
+            ss2 << "total electron number of element " << this->atoms[it].label;
+
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), this->atoms[it].ncpp.zv);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
+        }
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
+    }
+    return;
 }

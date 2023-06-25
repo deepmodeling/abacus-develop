@@ -32,7 +32,7 @@ class ESolver
     virtual void Run(int istep, UnitCell& cell) = 0;
 
     // Deal with exx and other calculation than scf/md/relax:
-    //  such as nscf, istate-charge or envelope
+    //  such as nscf, get_wf and get_pchg
     virtual void othercalculation(const int istep){};
 
     virtual double cal_Energy() = 0;

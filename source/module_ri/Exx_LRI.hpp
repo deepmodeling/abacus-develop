@@ -161,7 +161,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 }
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_elec(const Mix_DMk_2D &mix_DMk_2D, const Parallel_Orbitals &pv)
+void Exx_LRI<Tdata>::cal_exx_elec(const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
@@ -170,8 +170,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Mix_DMk_2D &mix_DMk_2D, const Parallel_O
 
 	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> Ds =
 		GlobalV::GAMMA_ONLY_LOCAL
-		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, mix_DMk_2D.get_DMk_gamma_out(), pv)
-		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, mix_DMk_2D.get_DMk_k_out(), pv);
+		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), pv)
+		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, this->mix_DMk_2D.get_DMk_k_out(), pv);
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
@@ -283,26 +283,5 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 }
 
-template<typename Tdata>
-void Exx_LRI<Tdata>::write_Hexxs(const std::string &file_name) const
-{
-	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
-	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
-	std::ofstream ofs(file_name, std::ofstream::binary);
-	cereal::BinaryOutputArchive oar(ofs);
-	oar(this->Hexxs);
-	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
-}
-
-template<typename Tdata>
-void Exx_LRI<Tdata>::read_Hexxs(const std::string &file_name)
-{
-	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
-	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
-	std::ifstream ifs(file_name, std::ofstream::binary);
-	cereal::BinaryInputArchive iar(ifs);
-	iar(this->Hexxs);
-	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
-}
 
 #endif
