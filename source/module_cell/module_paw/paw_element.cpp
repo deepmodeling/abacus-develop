@@ -75,6 +75,8 @@ void Paw_Element::read_paw_xml(std::string filename)
 // ============================================================
     line = this->scan_file(ifs, "<radial_grid");
 
+    rstep = this->extract_double(line,"a=");
+    lstep = this->extract_double(line,"d=");
     int istart = this->extract_int(line,"istart=");
     int iend   = this->extract_int(line,"iend=");
 
@@ -88,6 +90,8 @@ void Paw_Element::read_paw_xml(std::string filename)
     for(int ir = 0; ir < nr; ir ++)
     {
         ifs >> rr[ir];
+        //double tmp = rstep * (exp(lstep * double(ir)) - 1);
+        //assert(std::abs(rr[ir] - tmp) < 1e-8);
     }
 
     line = this->scan_file(ifs, "<derivatives>");

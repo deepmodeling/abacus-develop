@@ -19,28 +19,13 @@ class Paw_Element
     Paw_Element(){};
     ~Paw_Element(){};
 
+//===================================================
+// In paw_element.cpp : subroutines for reading paw xml file
+//===================================================
+
     void read_paw_xml(std::string filename); //read info from paw file
-    void transform_ptilde(); //projectors from real to reciprocal space
 
     private:
-
-    double Zat, core, val; //atomic number, core electron & valence electron
-    std::string symbol; //element symbol
-
-    double rcut; //radius of augmentation sphere
-    int    nr, nrcut; //size of radial grid; radial grid point corresponding to rcut
-    //note : nrcut will be the upper bound of later radial integrations
-    
-    int    nstates; //number of channels (quantum numbers n,l)
-    std::vector<int> lstate; //l quantum number of each channel
-
-    int    mstates; //#. m states (for each (n,l) channel, there will be 2l+1 m states)
-    std::vector<int> mstate; //m quantum number of each mstate
-    std::vector<int> im_to_istate; //map from mstate to (n,l) channel (namely nstates)
-
-    std::vector<double> rr, dr; //radial grid and increments
-    std::vector<std::vector<double>> ptilde_r; //projector functions in real space
-
 
     //some helper functions for reading the xml file
     //scan for line containing certain pattern from file
@@ -58,8 +43,65 @@ class Paw_Element
     int count_nstates(std::ifstream &ifs); //count nstates
     void nstates_to_mstates(); //from nstates to mstates
 
-    void get_nrcut(); //find grid point corresponding to rcut
+    void get_nrcut(); //find grid point corresponding to certain radius r
 
+    double Zat, core, val; //atomic number, core electron & valence electron
+    std::string symbol; //element symbol
+
+    double rcut; //radius of augmentation sphere
+    int    nr, nrcut; //size of radial grid; radial grid point corresponding to rcut
+    //note : nrcut will be the upper bound of later radial integrations
+    
+    int    nstates; //number of channels (quantum numbers n,l)
+    std::vector<int> lstate; //l quantum number of each channel
+
+    int    mstates; //#. m states (for each (n,l) channel, there will be 2l+1 m states)
+    std::vector<int> mstate; //m quantum number of each mstate
+    std::vector<int> im_to_istate; //map from mstate to (n,l) channel (namely nstates)
+
+    //for log grid, r_i = rstep * exp[(lstep * i)-1]
+    //rstep <-> a, lstep <-> d from xml file
+    double lstep, rstep;
+    std::vector<double> rr, dr; //radial grid and increments
+    std::vector<std::vector<double>> ptilde_r, ptilde_q; //projector functions in real and reciprocal space
+
+//===================================================
+// In paw_sphbes.cpp : subroutines for carrying out spherical bessel
+// transformation of the projector functions
+//===================================================
+
+    public:
+
+    // some of the functions should be put in a math lib
+    // but later
+
+    // spherical bessel function
+    static double spherical_bessel_function(const int l, const double xx);
+
+    //Note as grid information and rcut is already in this class
+    //I have chosen not to pass them around
+
+    double spherical_bessel_transform(const int l, std::vector<double> & fr, const double q);
+
+    private:
+
+    // converts projectors from real to reciprocal space
+    // ptilde_l(q) = int_0^{rc} dr r^2 ptilde_l(r) j_l(qr)
+    // this is doing the same work as calculating ffspl in libpaw
+    void transform_ptilde();
+
+    //some helper functions for carrying out spherical bessel transformation
+    //will switch to the one in math lib later
+
+    // simpson integration
+    double simpson_integration(std::vector<double> & f);
+
+    // some preparation for simpson integration
+    void prepare_simpson_integration(const double r_for_intg);
+
+    //stores factors for carrying out simpson integration
+    std::vector<double> simp_fact;
+    int simp_int_meshsz;
 };
 
 #endif
