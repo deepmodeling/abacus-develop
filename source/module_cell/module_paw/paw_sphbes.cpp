@@ -5,10 +5,13 @@
 // ptilde_l(q) = int_0^{rc} dr r ptilde_l(r) j_l(qr)
 void Paw_Element::transform_ptilde()
 {
+
     // Defining the q grid; I will be following the vnl part and make a fixed grid
     double dq = 0.01;
     int    nq = 10000;
 
+    //not ready yet
+    /*
     ptilde_q.resize(nstates);
     for(int istate = 0; istate < nstates; istate ++)
     {
@@ -23,6 +26,7 @@ void Paw_Element::transform_ptilde()
             ptilde_q[istate][iq] = this->spherical_bessel_transform(l, ptilde_r[istate], q);
         }
     }
+    */
 }
 
 // int_0^{rc} dr r fr(r) j_l(qr)
