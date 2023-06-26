@@ -3,6 +3,8 @@
 
 #include<math.h>
 
+#include "module_base/constants.h"
+
 #define doublethreshold 1e-12
 
 
@@ -96,4 +98,203 @@ TEST_F(SimpsonIntegralSinx,SimpsonIntegralAlltoinf)
     EXPECT_NEAR(asumlist[1],1.9999999506519754444,doublethreshold);
     EXPECT_NEAR(asumlist[halfmesh],expectvalue/2.0,doublethreshold);
     EXPECT_NEAR(asumlist[halfmesh-1],1.0003141592627740053,doublethreshold);
+}
+
+TEST_F(SimpsonIntegralSinx, UniformGridOdd)
+{
+    double start = 0.0;
+    int ngrid_max = std::pow(3, 7);
+    double* f = new double[ngrid_max];
+    for (int ngrid = 3; ngrid <= ngrid_max; ngrid *= 3)
+    {
+        for (double end = 0.1; end < 10*ModuleBase::PI; end += 0.5)
+        {
+            double dx = (end-start) / (ngrid-1);
+            for (int i = 0; i != ngrid; ++i)
+            {
+                f[i] = std::sin(start + i*dx);
+            
+            }
+            // error bound of composite Simpson's rule (max|sin^(4)(x)| = 1)
+            double tol = (end-start) * std::pow(dx, 4) / 180;
+            EXPECT_NEAR(std::cos(start)-std::cos(end), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
+        }
+    }
+    delete[] f;
+}
+
+TEST_F(SimpsonIntegralSinx, UniformGridEven)
+{
+    double start = 0.0;
+    int ngrid_max = std::pow(2, 12);
+    double* f = new double[ngrid_max];
+    for (int ngrid = 4; ngrid <= ngrid_max; ngrid *= 2)
+    {
+        for (double end = 0.1; end < 10*ModuleBase::PI; end += 0.5)
+        {
+            double dx = (end-start) / (ngrid-1);
+            for (int i = 0; i != ngrid; ++i)
+            {
+                f[i] = std::sin(start + i*dx);
+            
+            }
+            // error bound of composite Simpson's rule (max|sin^(4)(x)| = 1)
+            double tol = ((ngrid-4)*dx-start) * std::pow(dx, 4) / 180 + (end-(ngrid-4)*dx) * std::pow(dx, 4) / 80;
+            EXPECT_NEAR(std::cos(start)-std::cos(end), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
+        }
+    }
+    delete[] f;
+}
+
+TEST_F(SimpsonIntegralSinx, LogGridOdd)
+{
+    double start = 0.0;
+    int ngrid_max = std::pow(3, 7);
+    double* f = new double[ngrid_max];
+    double* h = new double[ngrid_max];
+    for (int ngrid = 3; ngrid <= ngrid_max; ngrid *= 3)
+    {
+        for (double w = 0.1; w < 10*ModuleBase::PI; w += 0.5)
+        {
+            double b = std::pow(1.0 + w, 1.0/(ngrid-1));
+            for (int i = 0; i != ngrid; ++i)
+            {
+                double x = std::pow(b, i) - 1.0 + start;
+                f[i] = std::sin(x);
+                h[i] = std::pow(b, i+1) - std::pow(b, i); // the last one is not used
+            }
+            // FIXME error bound for irregularly-spaced Simpson's rule should be derived
+            // the one below is a crude estimate
+            double tol = w * std::pow(h[ngrid-2], 4);
+            EXPECT_NEAR(std::cos(start)-std::cos(start+w), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
+            
+            //printf("%6i %8.4f %20.12f\n", ngrid, w, ModuleBase::Integral::simpson(ngrid, f, h));
+            //double tmp = 0.0;
+            //ModuleBase::Integral::Simpson_Integral(ngrid, f, h, tmp);
+            //EXPECT_NEAR(std::cos(start)-std::cos(end), tmp, std::max(tol, doublethreshold));
+        }
+    }
+    delete[] f;
+    delete[] h;
+}
+
+TEST_F(SimpsonIntegralSinx, LogGridEven)
+{
+    double start = 0.0;
+    int ngrid_max = std::pow(2, 12);
+    double* f = new double[ngrid_max];
+    double* h = new double[ngrid_max];
+    for (int ngrid = 4; ngrid <= ngrid_max; ngrid *= 2)
+    {
+        for (double w = 0.1; w < 10*ModuleBase::PI; w += 0.5)
+        {
+            double b = std::pow(1.0 + w, 1.0/(ngrid-1));
+            for (int i = 0; i != ngrid; ++i)
+            {
+                double x = std::pow(b, i) - 1.0 + start;
+                f[i] = std::sin(x);
+                h[i] = std::pow(b, i+1) - std::pow(b, i); // the last one is not used
+            }
+            // FIXME error bound for irregularly-spaced Simpson's rule should be derived
+            // the one below is a crude estimate
+            double tol = w * std::pow(h[ngrid-2], 4);
+            EXPECT_NEAR(std::cos(start)-std::cos(start+w), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
+
+            //double tmp = 0.0;
+            //ModuleBase::Integral::Simpson_Integral(ngrid, f, h, tmp);
+            //EXPECT_NEAR(std::cos(start)-std::cos(end), tmp, std::max(tol, doublethreshold));
+        }
+    }
+    delete[] f;
+    delete[] h;
+}
+
+TEST_F(SimpsonIntegralSinx, FourPoints)
+{
+    /*!
+     * This test checks whether "simpson" yields the exact integral for a cubic polynomial 
+     * sampled by four points. This case is handled by Simpson's 3/8 rule and should be exact.
+     *                                                                                              */
+    double A = 0.1; 
+    double B = 0.25;
+    double C = 0.40;
+    double D = 0.77;
+    double x0 = 0.52;
+    
+    auto f = [&](double x) { return A*std::pow(x-x0,3) + B*std::pow(x-x0,2) + C*(x-x0) + D;};
+    auto I = [&](double x) { return A*std::pow(x-x0,4)/4 + B*std::pow(x-x0,3)/3 + C*std::pow(x-x0,2)/2 + D*(x-x0);};
+    
+    double x[4];
+    double y[4];
+
+    // unevenly-spaced 4 points
+    x[0] = 0.11;
+    x[1] = 0.22;
+    x[2] = 0.44;
+    x[3] = 0.88;
+    
+    for (int i = 0; i != 4; ++i)
+    {
+        y[i] = f(x[i]);
+    }
+
+    double ref = I(x[3]) - I(x[0]);
+    double h[3] = {x[1]-x[0], x[2]-x[1], x[3]-x[2]};
+    EXPECT_DOUBLE_EQ(ref, ModuleBase::Integral::simpson(4, y, h));
+
+    // evenly-spaced 4 points
+    x[0] = 0.1;
+    x[1] = 0.2;
+    x[2] = 0.3;
+    x[3] = 0.4;
+    for (int i = 0; i != 4; ++i)
+    {
+        y[i] = f(x[i]);
+    }
+    
+    ref = I(x[3]) - I(x[0]);
+    EXPECT_DOUBLE_EQ(ref, ModuleBase::Integral::simpson(4, y, x[1]-x[0]));
+}
+
+TEST_F(SimpsonIntegralSinx, ThreePoints)
+{
+    /*!
+     * This test checks whether "simpson" yields the exact integral for a quadratic polynomial 
+     * sampled by three points.
+     *                                                                                              */
+    double A = 0.17; 
+    double B = 0.29;
+    double C = 0.35;
+    double x0 = 0.5;
+    
+    auto f = [&](double x) { return A*std::pow(x-x0,2) + B*(x-x0) + C;};
+    auto I = [&](double x) { return A*std::pow(x-x0,3)/3 + B*std::pow(x-x0,2)/2 + C*(x-x0);};
+    
+    double x[3];
+
+    // unevenly-spaced 3 points
+    x[0] = 0.1;
+    x[1] = 0.2;
+    x[2] = 0.4;
+    
+    double y[3];
+    y[0] = f(x[0]);
+    y[1] = f(x[1]);
+    y[2] = f(x[2]);
+
+    double h[2] = {x[1]-x[0], x[2]-x[1]};
+
+    double ref = I(x[2]) - I(x[0]);
+    EXPECT_DOUBLE_EQ(ref, ModuleBase::Integral::simpson(3, y, h));
+
+    // evenly-spaced 4 points
+    x[0] = 0.1;
+    x[1] = 0.2;
+    x[2] = 0.3;
+    y[0] = f(x[0]);
+    y[1] = f(x[1]);
+    y[2] = f(x[2]);
+    
+    ref = I(x[2]) - I(x[0]);
+    EXPECT_DOUBLE_EQ(ref, ModuleBase::Integral::simpson(3, y, x[1]-x[0]));
 }
