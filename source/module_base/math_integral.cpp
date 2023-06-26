@@ -1,6 +1,9 @@
 #include "math_integral.h"
 #include <stddef.h> // use size_t
 #include <cassert>
+#include <algorithm>
+#include <functional>
+#include <cmath>
 
 namespace ModuleBase
 {
@@ -220,6 +223,75 @@ void Integral::Simpson_Integral_alltoinf
         asum[i] = asum_all - asum[i];
 	}
 	return;
+}
+
+double Integral::simpson(const int n, const double* const f, const double dx) 
+{
+    assert(n >= 2);
+    if (n == 4)
+    { // Simpson's 3/8 rule
+        return 3.0 * dx / 8 * (f[0] + 3.0 * f[1] + 3.0 * f[2] + f[3]);
+    }
+
+    if (n == 2)
+    {
+        return 0.5 * dx * (f[0] + f[1]);
+    }
+
+    if (n % 2 == 1)
+    { // composite Simpson's 1/3 rule
+        double sum = 0.0;
+        for (int i = 1; i != n-2; i += 2) 
+        {
+            sum += 2.0 * f[i] + f[i+1];
+        }
+        sum += 2.0 * f[n-2];
+        sum *= 2.0;
+        sum += f[0] + f[n-1];
+        return sum * dx / 3.0;
+    }
+    else
+    { // composite Simpson's 1/3 rule for the first n-4 intervals plus Simpson's 3/8 rule for the last 3 intervals
+        return simpson(n-3, f, dx) + simpson(4, &f[n-4], dx);
+    }
+}
+
+double Integral::simpson(const int n, const double* const f, const double* const h)
+{   
+    // Simpson's rule for irregularly-spaced grid
+    // The treatment for even number of grid points is the same as that of the regularly-spaced grid case.
+    assert( n >= 2 );
+    assert( std::all_of(h, h+(n-1), [](double x){return x > 0.0;}) );
+
+    if (n == 4)
+    {
+        double w = h[0] + h[1] + h[2];
+        return w / 12.0 * ( 2.0 + ((h[1]+h[2])/h[0]-1.0) * (h[2]/(h[0]+h[1])-1.0) ) * f[0]
+            + std::pow(w,3) / 12.0 * (h[0]+h[1]-h[2]) / (h[0]*h[1]*(h[1]+h[2])) * f[1]
+            + std::pow(w,3) / 12.0 * (h[2]+h[1]-h[0]) / (h[2]*h[1]*(h[1]+h[0])) * f[2]
+            + w / 12.0 * ( 2.0 + ((h[1]+h[0])/h[2]-1.0) * (h[0]/(h[2]+h[1])-1.0) ) * f[3];
+    }
+
+    if (n == 2)
+    {
+        return 0.5 * h[0] * (f[0] + f[1]);
+    }
+
+    if (n % 2 == 1)
+    {
+        double sum = 0.0;
+        for (int i = 0; i < n/2; ++i)
+        {
+            double hrp = h[2*i+1] / h[2*i];
+            double hrm = h[2*i] / h[2*i+1];
+            sum += (h[2*i+1] + h[2*i]) / 6.0 * ( (2.0-hrp)*f[2*i] + (2.0+hrp+hrm)*f[2*i+1] + (2.0-hrm) * f[2*i+2]);
+        }
+        return sum;
+    }
+    else
+    {
+        return simpson(n-3, f, h) + simpson(4, &f[n-4], &h[n-4]);
+    }
 }
 
 }
