@@ -39,8 +39,8 @@ class ElecStateLCAO : public ElecState
     // update charge density for next scf step
     // void getNewRho() override;
 
-    virtual void print_psi(const psi::Psi<double>& psi_in) override;
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in) override;
+    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1) override;
+    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1) override;
 
     static int out_wfc_lcao;
     static int out_wfc_flag;
