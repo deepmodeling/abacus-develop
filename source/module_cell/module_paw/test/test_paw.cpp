@@ -13,6 +13,7 @@ class Test_Read_Paw : public testing::Test
 TEST_F(Test_Read_Paw, test_paw)
 {
     paw_element.read_paw_xml("H.LDA_PW-JTH.xml");
+    // I have not done any checks for now; will add later
 }
 
 class Test_SphBes_Func : public testing::Test
@@ -67,14 +68,14 @@ TEST_F(Test_SphBes_Transform, test_paw)
         ifs_fr >> fr[ir];
     }
 
-    while (!ifs_q.eof())
+    qlist.resize(2999);
+    for(int iq=0; iq<2999; iq++)
     {
         double q;
-        ifs_q >> q;
-        qlist.push_back(q);
+        ifs_q >> qlist[iq];
     }
 
-    for(int iq=0; iq<qlist.size(); iq++)
+    for(int iq=0; iq<2999; iq++)
     {
         double fq = paw_element.spherical_bessel_transform(0, fr, qlist[iq]);
         double fq_ref;
