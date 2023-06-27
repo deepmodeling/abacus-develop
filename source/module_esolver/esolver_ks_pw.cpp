@@ -521,7 +521,13 @@ void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
     this->create_Output_Potential(istep).write();
 
     // save charge difference into files for charge extrapolation
-    this->CE.save_files(istep, GlobalC::ucell, this->pw_big, this->pelec->charge, &this->sf);
+    this->CE.save_files(istep,
+                        GlobalC::ucell,
+#ifdef __MPI
+                        this->pw_big,
+#endif
+                        this->pelec->charge,
+                        &this->sf);
 
     if (GlobalV::out_chg)
     {

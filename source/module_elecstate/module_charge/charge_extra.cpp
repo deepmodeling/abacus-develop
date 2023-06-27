@@ -19,7 +19,7 @@ Charge_Extra::~Charge_Extra()
     }
 }
 
-void Charge_Extra::Init_CE(const int& natom, const int& nrxx)
+void Charge_Extra::Init_CE(const int& natom)
 {
     if(GlobalV::chg_extrap == "none")
     {
@@ -317,7 +317,9 @@ void Charge_Extra::update_all_dis(const UnitCell& ucell)
 
 void Charge_Extra::save_files(const int& istep,
                               const UnitCell& ucell,
+#ifdef __MPI
                               const ModulePW::PW_Basis_Big* pw_big,
+#endif
                               Charge* chr,
                               Structure_Factor* sf)
 {

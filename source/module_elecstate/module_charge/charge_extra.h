@@ -1,8 +1,6 @@
 #ifndef CHARGE_EXTRA_H
 #define CHARGE_EXTRA_H
 
-#include <sys/stat.h>
-
 #include "charge.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -49,9 +47,8 @@ class Charge_Extra
      * Init_CE will be removed and everything put back in the constructor
      *
      * @param natom the number of atoms
-     * @param nrxx the number of grids per processor
      */
-    void Init_CE(const int& natom, const int& nrxx);
+    void Init_CE(const int& natom);
 
     /**
      * @brief charge extrapolation method
@@ -90,7 +87,9 @@ class Charge_Extra
      */
     void save_files(const int& istep,
                     const UnitCell& ucell,
+#ifdef __MPI
                     const ModulePW::PW_Basis_Big* pw_big,
+#endif
                     Charge* chr,
                     Structure_Factor* sf);
 

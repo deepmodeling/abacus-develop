@@ -138,3 +138,22 @@ AddTest(
       ../../module_cell/read_pp_blps.cpp
       ../../module_io/output.cpp
 )
+
+AddTest(
+  TARGET charge_extra
+  LIBS ${math_libs} base device
+  SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../module_io/read_cube.cpp ../../module_io/write_cube.cpp
+  # UnitCell dependencies
+  ../../module_cell/unitcell.cpp
+  ../../module_cell/read_atoms.cpp
+  ../../module_cell/read_cell_pseudopots.cpp
+  ../../module_cell/atom_spec.cpp
+  ../../module_cell/atom_pseudo.cpp
+  ../../module_cell/pseudo_nc.cpp
+  ../../module_cell/read_pp.cpp
+  ../../module_cell/read_pp_upf201.cpp
+  ../../module_cell/read_pp_upf100.cpp
+  ../../module_cell/read_pp_vwr.cpp
+  ../../module_cell/read_pp_blps.cpp
+  ../../module_io/output.cpp
+)

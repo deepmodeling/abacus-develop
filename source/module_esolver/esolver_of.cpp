@@ -236,7 +236,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
-    CE.Init_CE(GlobalC::ucell.nat, this->pw_rho->nrxx);
+    CE.Init_CE(GlobalC::ucell.nat);
     delete this->ptempRho;
     this->ptempRho = new Charge();
     this->ptempRho->set_rhopw(this->pw_rho);
@@ -899,7 +899,13 @@ void ESolver_OF::afterOpt(const int istep)
     ModuleIO::output_convergence_after_scf(this->conv, this->pelec->f_en.etot);
 
     // save charge difference into files for charge extrapolation
-    this->CE.save_files(istep, GlobalC::ucell, this->pw_big, this->pelec->charge, &this->sf);
+    this->CE.save_files(istep,
+                        GlobalC::ucell,
+#ifdef __MPI
+                        this->pw_big,
+#endif
+                        this->pelec->charge,
+                        &this->sf);
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
