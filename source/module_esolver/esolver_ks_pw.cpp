@@ -276,7 +276,7 @@ void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     {
         this->init_after_vc(INPUT, GlobalC::ucell);
     }
-    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+    if (GlobalC::ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(GlobalC::ucell);
         this->CE.extrapolate_charge(

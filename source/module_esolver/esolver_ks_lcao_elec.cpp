@@ -281,7 +281,7 @@ namespace ModuleESolver
         {
             this->init_after_vc(INPUT, GlobalC::ucell);
         }
-        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+        if (GlobalC::ucell.ionic_position_updated)
         {
             CE.update_all_dis(GlobalC::ucell);
             CE.extrapolate_charge(
