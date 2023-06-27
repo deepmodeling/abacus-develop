@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "../surchem.h"
-
+#include "../../module_xc/xc_functional.h"
 #include "setcell.h"
 /************************************************
  *  unit test of functions in cal_vcav.cpp
