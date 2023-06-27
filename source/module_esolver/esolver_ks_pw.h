@@ -22,8 +22,8 @@ namespace ModuleESolver
         double cal_Energy() override;
         void cal_Force(ModuleBase::matrix& force) override;
         void cal_Stress(ModuleBase::matrix& stress) override;
-        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr) override;
-        virtual void hamilt2estates(const FPTYPE ethr) override;
+        virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+        virtual void hamilt2estates(const double ethr) override;
         virtual void nscf() override;
         void postprocess() override;
         //calculate conductivities with Kubo-Greenwood formula

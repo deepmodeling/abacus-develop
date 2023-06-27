@@ -1,0 +1,35 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix          autotest
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+	
+nbands			8
+calculation     md
+read_file_dir   ./
+
+#Parameters (Accuracy)
+ecutwfc			20
+scf_nmax			20
+
+basis_type		lcao
+md_nstep           10
+
+cal_stress          1
+stress_thr      1e-6
+cal_force           1
+force_thr_ev    1.0e-3
+
+ks_solver       scalapack_gvx
+mixing_type     pulay
+mixing_beta     0.7
+
+out_wfc_lcao	1
+out_interval	2
+out_app_flag	0
+
+md_type          nve
+md_tfirst        10
+md_dt            1
+md_restart         0
+init_vel         1

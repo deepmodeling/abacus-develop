@@ -589,37 +589,48 @@ These variables are used to control parameters related to input files.
 ### stru_file
 
 - **Type**: String
-- **Description**: This parameter specifies the name of structure file which contains various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
+- **Description**: the name of the structure file
+  - Containing various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
+  - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/stru.md)
 - **Default**: STRU
 
 ### kpoint_file
 
 - **Type**: String
-- **Description**: This parameter specifies the name of k-points file. Note that if you use atomic orbitals as basis, and you only use gamma point, you don't need to have k-point file in your directory, ABACUS will automatically generate `KPT` file. Otherwise, if you use more than one k-point, please do remember the algorithm in ABACUS is different for gamma only and various k-point dependent simulations. So first you should turn off the k-point algorithm by set `gamma_only = 0` in `INPUT` and then you should setup your own k-points file.
+- **Description**: the name of the k-points file
+  - In atomic orbitals basis with `gamma_only` set to true, the `KPT` file is unnecessary, because a `KPT` file will be generated automatically. 
+  - When more than one k-points are required, an explicit `KPT` file is mandatory.
+  - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/kpt.md)
 - **Default**: KPT
 
 ### pseudo_dir
 
 - **Type**: String
-- **Description**: This parameter specifies pseudopotential directory.
-- **Default**: ./
+- **Description**: the pseudopotential file directory
+  - This parameter is combined with the pseudopotential filenames in the STRU file to form the complete pseudopotential file paths.
+  - Example: set pseudo_dir to "../" with "Si.upf" which specified under "ATOMIC_SPECIES" in STRU file, ABACUS will open the pseudopotential file in path "../Si.upf".
+- **Default**: ""
 
 ### orbital_dir
 
 - **Type**: String
-- **Description**: This parameter specifies orbital file directory.
-- **Default**: ./
+- **Description**: the orbital file directory
+  - This parameter is combined with orbital filenames in the STRU file to form the complete orbital file paths.
+  - Example: set orbital_dir to "../" with "Si.orb" which specified under "NUMERICAL_ORBITAL" in STRU file, ABACUS will open the orbital file in path "../Si.orb".
+- **Default**: ""
 
 ### read_file_dir
 
 - **Type**: String
-- **Description**: when the program needs to read files such as electron density(`SPIN1_CHG.cube`) as a starting point, this variable tells the location of the files. For example, './' means the file is located in the working directory.
+- **Description**: Indicates the location of files, such as electron density (`SPIN1_CHG.cube`), required as a starting point. 
+  - Example: './' implies the files to be read are located in the working directory.
 - **Default**: OUT.$suffix
 
 ### wannier_card
 
 - **Type**: String
-- **Description**: Relevant when using ABACUS with wannier90. Tells the name of the input file related to wannier90.
+- **Availability**: Using ABACUS with Wannier90.
+- **Description**: The name of the input file related to Wannier90.
 - **Default**: "none"
 
 [back to top](#full-list-of-input-keywords)
@@ -1288,6 +1299,8 @@ These variables are used to control the output of properties.
   - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
+  
+  Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: Flase
 
 ### out_dos
@@ -1344,7 +1357,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
 
 ### out_mat_r
@@ -1379,14 +1392,14 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, and $dH(R)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information.
+- **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information.
 - **Default**: true
 
 ### out_interval
 
 - **Type**: Integer
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), and [out_mat_dh](#out_mat_dh) for more information, respectively.
+- **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
 
 ### out_element_info
@@ -1421,42 +1434,49 @@ These variables are used to control the output of properties.
 
 ## Density of states
 
-These variables are used to control the calculation of DOS.
+These variables are used to control the calculation of DOS. [Detailed introduction](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/elec_properties/dos.md)
 
 ### dos_edelta_ev
 
 - **Type**: Real
-- **Description**: controls the step size in writing DOS (in eV).
+- **Description**: the step size in writing Density of States (DOS) 
 - **Default**: 0.01
+- **Unit**: eV
 
 ### dos_sigma
 
 - **Type**: Real
-- **Description**: controls the width of Gaussian factor when obtaining smeared DOS (in eV).
+- **Description**: the width of the Gaussian factor when obtaining smeared Density of States (DOS)
 - **Default**: 0.07
+- **Unit**: eV
 
 ### dos_scale
 
 - **Type**: Real
-- **Description**: the energy range of dos output is given by (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
+- **Description**: Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.
 - **Default**: 0.01
+- **Unit**: eV
 
 ### dos_emin_ev
 
 - **Type**: Real
-- **Description**: minimal range for dos (in eV). If we set it, "dos_scale" will be ignored.
-- **Default**: minimal eigenenergy of $\hat{H}$
+- **Description**: the minimal range for Density of States (DOS)
+  - If set, "dos_scale" will be ignored.
+- **Default**: Minimal eigenenergy of $\hat{H}$
+- **Unit**: eV
 
 ### dos_emax_ev
 
 - **Type**: Real
-- **Description**: maximal range for dos (in eV). If we set it, "dos_scale" will be ignored.
-- **Default**: maximal eigenenergy of $\hat{H}$
+- **Description**: the maximal range for Density of States (DOS)
+  - If set, "dos_scale" will be ignored.
+- **Default**: Maximal eigenenergy of $\hat{H}$
+- **Unit**: eV
 
 ### dos_nche
 
 - **Type**: Integer
-- **Description**: orders of Chebyshev expansions when using SDFT to calculate DOS
+The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
 - **Default**: 100
 
 [back to top](#full-list-of-input-keywords)
@@ -1798,42 +1818,53 @@ These variables are relevant to electric field and dipole correction
 
 ## Gate field (compensating charge)
 
-These variables are relevant to gate field (compensating charge)
+These variables are relevant to gate field (compensating charge) [Detailed introduction](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/scf/advanced.md#compensating-charge)
 
 ### gate_flag
 
 - **Type**: Boolean
-- **Description**: In the case of charged cells, setting gate_flag == true represents the addition of compensating charge by a charged plate, which is placed at **zgate**. Note that the direction is specified by **efield_dir**.
+- **Description**: Controls the addition of compensating charge by a charged plate for charged cells.
+  - true: A charged plate is placed at the **zgate** position to add compensating charge. The direction is determined by **efield_dir**.
+  - false: No compensating charge is added.
 - **Default**: false
 
 ### zgate
 
 - **Type**: Real
-- **Description**: Specify the position of the charged plate in units of the unit cell (0 <= **zgate** < 1).
+- **Description**: position of the charged plate in the unit cell
+- **Unit**: Unit cell size
 - **Default**: 0.5
+- **Constraints**: 0 <= **zgate** < 1
 
 ### block
 
 - **Type**: Boolean
-- **Description**: Add a potential barrier to the total potential to avoid electrons spilling into the vacuum region for electron doping. Potential barrier is from **block_down** to **block_up** and has a height of **block_height**. If **dip_cor_flag** == true, **efield_pos_dec** is used for a smooth increase and decrease of the potential barrier.
+- **Description**: Controls the addition of a potential barrier to prevent electron spillover.
+  - true: A potential barrier is added from **block_down** to **block_up** with a height of **block_height**. If **dip_cor_flag** is set to true, **efield_pos_dec** is used to smoothly increase and decrease the potential barrier.
+  - false: No potential barrier is added.
 - **Default**: false
 
 ### block_down
 
 - **Type**: Real
-- **Description**: Lower beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Description**: lower beginning of the potential barrier
+- **Unit**: Unit cell size
 - **Default**: 0.45
+- **Constraints**: 0 <= **block_down** < **block_up** < 1
 
 ### block_up
 
 - **Type**: Real
-- **Description**: Upper beginning of the potential barrier in units of the unit cell size (0 <= **block_down** < **block_up** < 1).
+- **Description**: upper beginning of the potential barrier
+- **Unit**: Unit cell size
 - **Default**: 0.55
+- **Constraints**: 0 <= **block_down** < **block_up** < 1
 
 ### block_height
 
 - **Type**: Real
-- **Description**: Height of the potential barrier in Rydberg.
+- **Description**: height of the potential barrier
+- **Unit**: Rydberg
 - **Default**: 0.1
 
 [back to top](#full-list-of-input-keywords)
@@ -1966,7 +1997,7 @@ These variables are relevant when using hybrid functionals.
 - **Type**: String
 - **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
   - `order`: Atom pairs are simply distributed by their orders. 
-  - `hmeans`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
+  - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
   - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
 - **Default**: `htime`
 
@@ -1996,8 +2027,8 @@ These variables are relevant when using hybrid functionals.
 
 - **Type**: Boolean
 - **Description**: 
-  - True: Enforce LIBRI to use `double` data type.
-  - False: Enforce LIBRI to use `complex` data type.
+  - True: Enforce LibRI to use `double` data type.
+  - False: Enforce LibRI to use `complex` data type.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only 
   - False: else 
@@ -2060,8 +2091,8 @@ These variables are used to control molecular dynamics calculations. For more in
 ### md_restart
 
 - **Type**: Boolean
-- **Description**: Control whether to restart molecular dynamics calculations. 
-  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically.
+- **Description**: Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations. 
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `LOWF_K_${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
   - False: ABACUS will start molecular dynamics calculations normally from the first step.
 - **Default**: False
 
@@ -2131,12 +2162,11 @@ These variables are used to control molecular dynamics calculations. For more in
 ### md_prec_level
 
 - **Type**: Integer
-- **Availability**: Plane wave basis
 - **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
   - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
 
-    Currently, the option is useful only in isotropic NPT simulations.
+    Currently, the option is useful only in plane-wave-based isotropic NPT simulations.
   - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
 
 - **Default**: 0
@@ -2502,42 +2532,46 @@ These variables are used to control vdW-corrected related parameters.
 
 ## Berry phase and wannier90 interface
 
-These variables are used to control berry phase and wannier90 interface parameters.
+These variables are used to control berry phase and wannier90 interface parameters. [Detail introduce](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/interface/Wannier90.md#wannier90)
 
 ### berry_phase
 
 - **Type**: Boolean
-- **Description**: 1, calculate berry phase; 0, not calculate berry phase.
-- **Default**: 0
+- **Description**: controls the calculation of Berry phase
+  - true: Calculate Berry phase.
+  - false: Do not calculate Berry phase.
+- **Default**: false
 
 ### gdir
 
 - **Type**: Integer
-- **Description**:
-  - 1: calculate the polarization in the direction of the lattice vector a_1 that is defined in STRU file.
-  - 2: calculate the polarization in the direction of the lattice vector a_2 that is defined in STRU file.
-  - 3: calculate the polarization in the direction of the lattice vector a_3 that is defined in STRU file.
+- **Description**: the direction of the polarization in the lattice vector for Berry phase calculation
+  - 1: Calculate the polarization in the direction of the lattice vector a_1 defined in the STRU file.
+  - 2: Calculate the polarization in the direction of the lattice vector a_2 defined in the STRU file.
+  - 3: Calculate the polarization in the direction of the lattice vector a_3 defined in the STRU file.
 - **Default**: 3
 
 ### towannier90
 
 - **Type**: Integer
-- **Description**: 1, generate files for wannier90 code; 0, no generate.
+- **Description**: Controls the generation of files for the Wannier90 code.
+  - 1: Generate files for the Wannier90 code.
+  - 0: Do not generate files for the Wannier90 code.
 - **Default**: 0
 
 ### nnkpfile
 
 - **Type**: String
-- **Description**: the file name when you run “wannier90 -pp ...”.
+- **Description**: the file name generated when running "wannier90 -pp ..." command
 - **Default**: seedname.nnkp
 
 ### wannier_spin
 
 - **Type**: String
-- **Description**: If nspin is set to 2,
-  - up: calculate spin up for wannier function.
-  - down: calculate spin down for wannier function.
-- **Default**: up
+- **Description**: the spin direction for the Wannier function calculation when nspin is set to 2
+  - "up": Calculate spin up for the Wannier function.
+  - "down": Calculate spin down for the Wannier function.
+- **Default**: "up"
 
 [back to top](#full-list-of-input-keywords)
 

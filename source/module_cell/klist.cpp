@@ -621,7 +621,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
             GlobalV::ofs_running << "Error: Bravais lattice type of reciprocal lattice is not compatible with that of real space lattice:" << std::endl;
             GlobalV::ofs_running << "ibrav of real space lattice: " << symm.ilattname << std::endl;
             GlobalV::ofs_running << "ibrav of reciprocal lattice: " << bbrav_name << std::endl;
-            GlobalV::ofs_running << "(which should be" << ibrav_a2b[symm.real_brav] << ")." << std::endl;
+            GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
             match = false;
             return;
         }

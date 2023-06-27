@@ -34,6 +34,7 @@
 106_PW_PK_chargemixing
 106_PW_PL_chargemixing
 106_PW_PU_chargemixing
+107_PW_CHG_mismatch
 107_PW_OBOD_MemSaver
 107_PW_OB_outputbands
 107_PW_OD_outputdos
@@ -134,6 +135,7 @@
 207_NO_KP_OH
 207_NO_KP_OH2
 207_NO_KP_OHS_SPIN4
+207_NO_KP_OTdH
 207_NO_OK
 207_NO_KP_OS
 208_NO_KP_CF_RE
@@ -150,7 +152,9 @@
 216_NO_scan_Si2
 217_NO_out_pot
 220_NO_KP_MD_MSST
+220_NO_KP_MD_MSST_level2
 220_NO_KP_MD_NVT
+220_NO_KP_MD_wfc_out
 #230_NO_KP_MD_TD
 240_NO_KP_15_SO
 240_NO_KP_15_SO_average
@@ -192,6 +196,7 @@
 315_NO_sol_H2O
 316_NO_scan_Si2
 320_NO_GO_MD_MSST
+320_NO_GO_MD_MSST_level2
 320_NO_GO_MD_NVT
 345_NO_GO_BS
 360_NO_15_GO_PU_AF
@@ -209,6 +214,7 @@
 601_NO_TDDFT_H2_etrs
 601_NO_TDDFT_H2_kpoint
 601_NO_TDDFT_H2_oldedm
+601_NO_TDDFT_H2_restart
 601_NO_TDDFT_CO
 601_NO_TDDFT_CO_occ
 601_NO_TDDFT_graphene_kpoint

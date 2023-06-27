@@ -18,7 +18,6 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
@@ -203,7 +202,14 @@ void Input_Conv::Convert(void)
     if (INPUT.calculation == "md" && INPUT.mdp.md_restart) // md restart  liuyu add 2023-04-12
     {
         int istep = MD_func::current_step(GlobalV::MY_RANK, GlobalV::global_readin_dir);
-        GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
+        if (INPUT.read_file_dir == "auto")
+        {
+            GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
+        }
+        else
+        {
+            GlobalV::stru_file = INPUT.stru_file = GlobalV::global_readin_dir + "STRU_MD_" + std::to_string(istep);
+        }
     }
     else if (INPUT.stru_file != "")
     {

@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 pseudo_dir                      ../../../tests/PP_ORB
 orbital_dir                     ../../../tests/PP_ORB
 calculation                     scf      
-nbands                          8
+nbands                          16
 #Parameters (Methos)
 basis_type                      lcao
 symmetry                        0       

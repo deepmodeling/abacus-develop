@@ -1,6 +1,5 @@
 #include "exx_opt_orb.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "exx_abfs.h"
 #include "exx_abfs-abfs_index.h"

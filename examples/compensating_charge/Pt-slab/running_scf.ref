@@ -55,33 +55,6 @@
                       L=1, number of zeta = 1
                       L=2, number of zeta = 1
              number of atom for this type = 27
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
 
                         TOTAL ATOM NUMBER = 27
 
@@ -895,7 +868,7 @@ Adding potential to prevent interaction between lower and upper part of unit cel
     E_Hartree                +35359.0518925                +481084.581615
          E_xc                -634.577232217                -8633.86617922
       E_Ewald                +29678.9985233                 +403803.49085
-      E_entropy (-TS)      -0.0892771920843                -1.21467851379
+      E_entropy(-TS)       -0.0892771920843                -1.21467851379
       E_descf                            +0                            +0
         E_exx                            +0                            +0
   E_gatefield                -82.1196854771                -1117.29564046

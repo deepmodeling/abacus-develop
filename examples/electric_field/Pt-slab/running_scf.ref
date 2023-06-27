@@ -56,33 +56,6 @@
                       L=1, number of zeta = 1
                       L=2, number of zeta = 1
              number of atom for this type = 27
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
-                      start magnetization = FALSE
 
                         TOTAL ATOM NUMBER = 27
 
@@ -726,7 +699,7 @@
     E_Hartree                +35398.6450101                +481623.273616
          E_xc                -634.364166778                 -8630.9672752
       E_Ewald                +29678.9985233                 +403803.49085
-      E_entropy (-TS)      -0.0749083107075                -1.01917985318
+      E_entropy(-TS)       -0.0749083107075                -1.01917985318
       E_descf                            +0                            +0
      E_efield                +65.8831689157                 +896.38649955
         E_exx                            +0                            +0

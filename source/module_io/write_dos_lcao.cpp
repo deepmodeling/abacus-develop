@@ -10,7 +10,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
 #include <vector>

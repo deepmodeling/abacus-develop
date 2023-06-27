@@ -264,6 +264,52 @@ class Tensor {
      */
     static Allocator* GetAllocator(DeviceType device);
 
+    /**
+     * @brief Get the element at the specified indices.
+     *
+     * @param indices A vector of integers representing the indices of the element.
+     *
+     * @return The element at the specified indices.
+     *
+     * @note The number of indices must match the number of dimensions of the tensor.
+     * If the indices are out of bounds, the behavior is undefined.
+     */
+    template <typename T, typename... Indices>
+    T& get_value(Indices... indices) const {
+        if (sizeof...(Indices) != shape_.ndim()) {
+            throw std::invalid_argument("Incorrect number of indices.");
+        }
+
+        // Calculate the linear index corresponding to the given indices
+        size_t linearIndex = calculateLinearIndex(indices...);
+
+        // Access the element at the calculated linear index
+        return *reinterpret_cast<T*>(data<T>() + linearIndex);
+    }
+
+    /**
+     * @brief Get the pointer to the specified row.
+     *
+     * @param row The row index.
+     *
+     * @return The pointer to the specified row.
+     *
+     * @note This function assumes the tensor is treated as a matrix, where each row
+     * is a contiguous block of memory.
+     * If the row index is out of bounds, the behavior is undefined.
+     */
+    template <typename T>
+    T* inner_most_ptr(const int &index) const {
+        if (shape_.ndim() > 2) {
+            throw std::invalid_argument("Invalid call, inner_most_ptr only support tensor rank <= 2!");
+        }
+        if (index > shape_.dim_size(static_cast<int>(shape_.ndim() - 2))) {
+            throw std::invalid_argument("Invalid index, index of the inner-most must less than the inner-most shape size!");
+        }
+
+        return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
+    }
+
 private:
 
     /**
@@ -291,6 +337,30 @@ private:
      */
     TensorBuffer buffer_;
 
+    /**
+     * @brief Calculates the linear index corresponding to the given indices.
+     *
+     * @tparam Indices The types of the indices.
+     * @param indices The indices to calculate the linear index from.
+     *
+     * @return The calculated linear index.
+     *
+     * @note This function assumes that the provided indices are valid and within the bounds of the tensor's shape.
+     * It calculates the linear index by iterating over the dimensions of the tensor in reverse order and
+     * multiplying each index by the corresponding stride.
+     */
+    template <typename... Indices>
+    size_t calculateLinearIndex(Indices... indices) const {
+        size_t stride = 1;
+        size_t linearIndex = 0;
+        size_t indexArray[] = { static_cast<size_t>(indices)... };
+
+        for (int ii = static_cast<int>(shape_.ndim()) - 1; ii >= 0; --ii) {
+            linearIndex += indexArray[ii] * stride;
+            stride *= shape_.dim_size(ii);
+        }
+        return linearIndex;
+    }
 
 };
 

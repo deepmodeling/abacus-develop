@@ -1,3 +1,6 @@
+#ifndef NUMERICAL_RADIAL_H_
+#define NUMERICAL_RADIAL_H_
+
 #include <cassert>
 #include <string>
 
@@ -11,7 +14,7 @@
  *  is associated with some angular momentum l and whose r & k space
  *  values are related by an l-th order spherical Bessel transform.
  *
- *  A NumericalRadial object can be initialized by "build", which requires 
+ *  A NumericalRadial object can be initialized by "build", which requires
  *  the angular momentum, the number of grid points, the grid and the
  *  corresponding values. One can initialize the object in either r or
  *  k space. After initialization, one can set the grid in the other
@@ -25,7 +28,7 @@
  *
  *      int l = 1;
  *      int itype = 3;
- *      int ichi = 5;
+ *      int izeta = 5;
  *      std::string symbol = "Au";
  *
  *      // Prepares the grid & values to initialize the objects
@@ -39,7 +42,8 @@
  *      }
  *
  *      // The class will interpret the input values as r^p * F(r)
- *      // where F is the underlying radial function.
+ *      // where F is the underlying radial function that the class object
+ *      // actually represents.
  *      int p1 = 0;
  *      int p2 = -2;
  *
@@ -47,9 +51,8 @@
  *      chi1.build(0, true, sz, grid, f, p1);
  *      chi2.build(2, true, sz, grid, f, p2);
  *
- *      // Now chi1 represents exp(-r^2), while chi2 actually represents
- *      // r^2*exp(-r^2), even though the values stored inside them are
- *      // both exp(-r^2).
+ *      // Now chi1 represents exp(-r^2); chi2 actually represents
+ *      // r^2*exp(-r^2), even though the values stored is also exp(-r^2).
  *
  *      // Adds the k-space grid.
  *      chi1.set_uniform_grid(false, sz, PI/dr, 't');
@@ -58,7 +61,7 @@
  *
  *      // calculates various radial tables between chi1 & chi2
  *      double* table = new double[sz];
- *      chi.radtab('S', chi, 0, table);
+ *      chi1.radtab('S', chi2, 0, table);
  *
  *                                                                          */
 class NumericalRadial
@@ -74,15 +77,15 @@ class NumericalRadial
     ~NumericalRadial();
 
     //! Initializes the object by providing the grid & values in one space.
-    void build(const int l,                  //!< angular momentum
-               const bool for_r_space,       //!< specifies whether the input corresponds to r or k space
-               const int ngrid,              //!< number of input grid points
-               const double* const grid,     //!< input grid
-               const double* const value,    //!< values on the grid
-               const int p = 0,              //!< exponent of the implicit power term in input values, @see @ref group1
-               const int itype = 0,          //!< usually the index for elements
-               const int ichi = 0,           //!< further index after itype and l
-               const std::string symbol = "" //!< usually the chemical symbol
+    void build(const int l,               //!< angular momentum
+               const bool for_r_space,    //!< specifies whether the input corresponds to r or k space
+               const int ngrid,           //!< number of input grid points
+               const double* const grid,  //!< must be strictly increasing, and every element must be larger than zero
+               const double* const value, //!< values on the grid
+               const int p = 0,           //!< exponent of the implicit power term in input values, @see @ref group1
+               const int izeta = 0,       //!< index for the multiplicity of radial functions of the same itype and l
+               const std::string symbol = "", //!< chemical symbol
+               const int itype = 0            //!< index for the element in calculation
     );
 
     //! Sets a SphericalBesselTransformer.
@@ -99,15 +102,15 @@ class NumericalRadial
                                                                                 //!< an an internal transformer.
                          int update = 0 //!< Specifies whether and how values are recomputed with the new transformer.
                                         //!< Accepted values are:
-                                        //!< -  0: does not recompute values;
-                                        //!< -  1: calls a forward transform
-                                        //!< - -1: calls a backward transform
+                                        //!< *  0: does not recompute values;
+                                        //!< *  1: calls a forward transform
+                                        //!< * -1: calls a backward transform
     );
 
     //! Sets up a new grid
     void set_grid(const bool for_r_space,   //!< specifies whether to set grid for the r or k space
                   const int ngrid,          //!< number of grid points
-                  const double* const grid, //!< grid
+                  const double* const grid, //!< must be stricly increasing, and every element must be larger than zero
                   const char mode = 'i'     //!< specifies how values are updated, could be 'i' or 't'.
                                             //!< - 'i': new values are obtained by interpolating and zero-padding
                                             //!<        the existing values from current space.
@@ -186,115 +189,87 @@ class NumericalRadial
      *                          /  0                  l
      *
      *                                                                                  */
-    void radtab(const char op, const NumericalRadial& ket, const int l, double* const table, const bool deriv = false);
+    void radtab(const char op,              //!< operator, could be:
+                                            //!< - 'S' or 'I': overlap
+                                            //!< - 'T': kinetic
+                                            //!< - 'U': Coulomb
+                const NumericalRadial& ket, //!< [in] the other NumericalRadial object with which
+                                            //!       the two-center integral is computed
+                const int l,                //!< [in] angular momentum of the table
+                double* const table,        //!< [out] on finish, contain the computed table
+                const bool deriv = false    //!< [in] if true, "table" would contain the derivative
+                                            //!<      of the table
+    );
+
+    void normalize(bool for_r_space = true);
 
     /*!
      *  @name Getters
      *                                                                                  */
     ///@{
     //! gets symbol_
-    std::string const& symbol() const
-    {
-        return symbol_;
-    }
+    std::string const& symbol() const { return symbol_; }
 
     //! gets itype_
-    int itype() const
-    {
-        return itype_;
-    }
+    int itype() const { return itype_; }
 
-    //! gets ichi_
-    int ichi() const
-    {
-        return ichi_;
-    }
+    //! gets izeta_
+    int izeta() const { return izeta_; }
 
     //! gets the angular momentum
-    int l() const
-    {
-        return l_;
-    }
+    int l() const { return l_; }
 
     //! gets the number of r-space grid points
-    int nr() const
-    {
-        return nr_;
-    }
+    int nr() const { return nr_; }
 
     //! gets the number of k-space grid points
-    int nk() const
-    {
-        return nk_;
-    }
+    int nk() const { return nk_; }
 
     //! gets r-space grid cutoff distance
     double rcut() const
     {
-        return rgrid_ ? rgrid_[nr_ - 1] : 0.0;
+        assert(rgrid_);
+        return rgrid_[nr_ - 1];
     }
 
     //! gets k-space grid cutoff distance
     double kcut() const
     {
-        return kgrid_ ? kgrid_[nk_ - 1] : 0.0;
+        assert(kgrid_);
+        return kgrid_[nk_ - 1];
     }
 
     //! gets the pointer to r-space grid points
-    double* ptr_rgrid() const
-    {
-        return rgrid_;
-    }
+    const double* ptr_rgrid() const { return rgrid_; }
 
     //! gets the pointer to k-space grid points
-    double* ptr_kgrid() const
-    {
-        return kgrid_;
-    }
+    const double* ptr_kgrid() const { return kgrid_; }
 
     //! gets the pointer to r-space values
-    double* ptr_rvalue() const
-    {
-        return rvalue_;
-    }
+    const double* ptr_rvalue() const { return rvalue_; }
 
     //! gets the pointer to k-space values
-    double* ptr_kvalue() const
-    {
-        return kvalue_;
-    }
+    const double* ptr_kvalue() const { return kvalue_; }
 
     //! gets the exponent of the pre-multiplied power term in rvalues_. @see pr_
-    double pr() const
-    {
-        return pr_;
-    }
+    double pr() const { return pr_; }
 
     //! gets the exponent of the pre-multiplied power term in kvalues_. @see pk_
-    double pk() const
-    {
-        return pk_;
-    }
+    double pk() const { return pk_; }
 
     //! gets the flag for FFT-compliancy. @see is_fft_compliant_
-    bool is_fft_compliant() const
-    {
-        return is_fft_compliant_;
-    }
+    bool is_fft_compliant() const { return is_fft_compliant_; }
 
     //! gets the pointer to the SphericalBesselTransformer
-    ModuleBase::SphericalBesselTransformer* sbt() const
-    {
-        return sbt_;
-    }
+    const ModuleBase::SphericalBesselTransformer* ptr_sbt() const { return sbt_; }
 
     ///@}
 
   private:
-    std::string symbol_ = ""; //!< usually the chemical symbol
-    int itype_ = 0;           //!< usually the index for element
-    int ichi_ = 0;            //!< further index for NumericalRadial objects with the same itype_ and l_
+    std::string symbol_ = ""; //!< chemical symbol
+    int itype_ = 0;           //!< element index in calculation
     int l_ = -1;              //!< angular momentum
+    int izeta_ = 0;           //!< further index for NumericalRadial objects with the same itype_and l_
 
     int nr_ = 0; //!< number of r-space grid points
     int nk_ = 0; //!< number of k-space grid points
@@ -370,3 +345,5 @@ class NumericalRadial
      *                                                                              */
     void check_fft_compliancy();
 };
+
+#endif

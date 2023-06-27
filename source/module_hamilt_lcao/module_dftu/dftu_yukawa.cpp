@@ -6,7 +6,6 @@
 #include "module_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "dftu.h"
 
 #include <cmath>

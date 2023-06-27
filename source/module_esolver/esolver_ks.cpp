@@ -167,7 +167,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
+    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const double ethr)
     {
         ModuleBase::timer::tick(this->classname, "hamilt2density");
         //Temporarily, before HSolver is constructed, it should be overrided by
@@ -194,7 +194,7 @@ namespace ModuleESolver
 	    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	    ofs << "\n\n\n\n";
         ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
-        FPTYPE ecut = INPUT.ecutwfc;
+        double ecut = INPUT.ecutwfc;
         if(abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
         {
             ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
@@ -244,7 +244,7 @@ namespace ModuleESolver
 #else
                 auto iterstart = std::chrono::system_clock::now();
 #endif
-                FPTYPE diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
+                double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
                 
@@ -259,7 +259,7 @@ namespace ModuleESolver
                     // EState should be used after it is constructed.
 
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
-                    FPTYPE hsolver_error = 0.0;
+                    double hsolver_error = 0.0;
                     if (firstscf)
                     {
                         firstscf = false;
@@ -316,7 +316,7 @@ namespace ModuleESolver
                 updatepot(istep, iter);
                 eachiterfinish(iter);
 #ifdef __MPI
-                FPTYPE duration = (FPTYPE)(MPI_Wtime() - iterstart);
+                double duration = (double)(MPI_Wtime() - iterstart);
 #else
                 FPTYPE duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<FPTYPE>(1e6);
 #endif
@@ -352,7 +352,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const FPTYPE drho, const FPTYPE duration, const FPTYPE ethr)
+    void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
     {
         this->pelec->print_etot(this->conv_elec, iter, drho, duration, INPUT.printe, ethr);
     }
@@ -411,6 +411,28 @@ namespace ModuleESolver
                                     tag,
                                     prefix);
     }
+
+    template <typename FPTYPE, typename Device>
+    ModuleIO::Output_Potential ESolver_KS<FPTYPE, Device>::create_Output_Potential(int iter, const std::string& prefix)
+    {
+        int precision = 3;
+        std::string tag = "POT";
+        return ModuleIO::Output_Potential(this->pw_big,
+                                          this->pw_rho,
+                                          GlobalV::NSPIN,
+                                          iter,
+                                          GlobalV::out_pot,
+                                          this->pelec->pot->get_effective_v(),
+                                          this->pelec->pot->get_fixed_v(),
+                                          &(GlobalC::ucell),
+                                          pelec->charge,
+                                          precision,
+                                          GlobalV::global_out_dir,
+                                          tag,
+                                          prefix);
+    }
+
+
 
 template class ESolver_KS<float, psi::DEVICE_CPU>;
 template class ESolver_KS<double, psi::DEVICE_CPU>;

@@ -22,7 +22,6 @@
 #include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/global_fp.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 extern "C"

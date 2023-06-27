@@ -1,24 +1,33 @@
 # Phonopy
 
-[Phonopy](https://github.com/phonopy/phonopy) (Note: please use the `develop` branch, rather than the `master` branch until the abacus interface has been merged into phonopy's `master` branch.) is a powerful package to calculate phonon and related properties. It has provided interface with ABACUS. In the following, we take the FCC aluminum as an example:
+[Phonopy](https://phonopy.github.io/phonopy) is a powerful package to calculate phonon and related properties. The ABACUS interface has been added in Phonopy v.2.19.1. In the following, we take the FCC aluminum as an example:
 
 1. To obtain supercells ($2\times 2\times 2$) with displacements, run phonopy:
+
 ```
 phonopy -d --dim="2 2 2" --abacus
 ```
+
 2. Calculate forces on atoms in the supercells with displacements. For each SCF calculation, you should specify `stru_file` with `STRU-{number}` and `cal_force=1` in INPUT in order to calculate force using ABACUS. Be careful not to relax the structures
+
 ```
 echo 'stru_file ./STRU-001' >> INPUT
 ```
+
 3. Then create 'FORCE_SETS' file using ABACUS inteface:
+
 ```
 phonopy -f ./disp-{number}/OUT*/running*.log
 ```
+
 4. Calculate the phonon dispersion:
+
 ```
 phonopy band.conf --abacus
 ```
+
 using the following `band.conf` file:
+
 ```
 ATOM_NAME = Al
 DIM = 2 2 2

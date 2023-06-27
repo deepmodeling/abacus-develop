@@ -11,6 +11,7 @@
 #include "module_hsolver/hsolver.h"
 #include "module_io/cal_test.h"
 #include "module_io/output_rho.h"
+#include "module_io/output_potential.h"
 #include "string.h"
 
 namespace ModuleESolver
@@ -23,8 +24,8 @@ namespace ModuleESolver
         ESolver_KS();
         virtual ~ESolver_KS();
         // HSolver* phsol;
-        FPTYPE scf_thr;   // scf threshold
-        FPTYPE drho;      // the difference between rho_in (before HSolver) and rho_out (After HSolver)
+        double scf_thr;   // scf threshold
+        double drho;      // the difference between rho_in (before HSolver) and rho_out (After HSolver)
         int maxniter;     // maximum iter steps for scf
         int niter;        // iter steps actually used in scf
         bool conv_elec;   // If electron density is converged in scf.
@@ -36,10 +37,10 @@ namespace ModuleESolver
         virtual void Run(const int istep, UnitCell& cell) override;
 
         // calculate electron density from a specific Hamiltonian
-        virtual void hamilt2density(const int istep, const int iter, const FPTYPE ethr);
+        virtual void hamilt2density(const int istep, const int iter, const double ethr);
 
         // calculate electron states from a specific Hamiltonian
-        virtual void hamilt2estates(const FPTYPE ethr){};
+        virtual void hamilt2estates(const double ethr){};
 
         // get current step of Ionic simulation
         virtual int getniter() override;
@@ -65,7 +66,7 @@ namespace ModuleESolver
         void printhead();
         // Print inforamtion in each iter
         // G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
-        void printiter(const int iter, const FPTYPE drho, const FPTYPE duration, const FPTYPE ethr);
+        void printiter(const int iter, const double drho, const double duration, const double ethr);
         // Write the headline in the running_log file
         // "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
         void writehead(std::ofstream& ofs_running, const int istep, const int iter);
@@ -76,6 +77,8 @@ namespace ModuleESolver
         /// @brief create a new ModuleIO::Output_Rho object to print kinetic energy density
         ModuleIO::Output_Rho create_Output_Kin(int is, int iter, const std::string& prefix = "None");
 
+        /// @brief create a new ModuleIO::Output_Potential object to print potential
+        ModuleIO::Output_Potential create_Output_Potential(int iter, const std::string& prefix = "None");
         // TODO: control single precision at input files
 
         hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;

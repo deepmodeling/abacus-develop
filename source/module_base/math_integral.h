@@ -86,6 +86,17 @@ class Integral
         double * const asum
     );     
 
+    //! Numerical integration on an evenly-spaced grid using Simpson's rule
+    static double simpson(const int n,           //!< number of grid points
+                          const double* const f, //!< function values at grid points
+                          const double dx        //!< grid spacing
+    );
+
+    //! Numerical integration on an irregularly-spaced grid using Simpson's rule
+    static double simpson(const int n,           //!< number of grid points
+                          const double* const f, //!< function values at grid points
+                          const double* const h  //!< grid spacing of length n-1, must be positive
+    );
 };
 
 }
