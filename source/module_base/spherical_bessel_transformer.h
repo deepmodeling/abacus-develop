@@ -30,16 +30,9 @@ namespace ModuleBase
  *
  *          out[j] = G(y[j])
  *
- *  Currently the supported grids must satisfy
+ *  Usage1:
  *
- *          x[i] = i*dx             i = 0, 1, 2, ..., N
- *          y[j] = j*pi/(N*dx)      j = 0, 1, 2, ..., N
- *
- *  That is, the input grid must be uniform and starts from 0, and there is no
- *  freedom to choose the output grid once the input grid is specified.
- *
- *
- *  Usage:
+ *      // FFT-based method
  *
  *      SphericalBesselTransformer sbt;
  *
@@ -58,6 +51,22 @@ namespace ModuleBase
  *      sbt.radrfft(0, 5000, ...);
  *      sbt.radrfft(1, 5000, ...);
  *      sbt.radrfft(2, 5000, ...);
+ *
+ *
+ *  Usage2:
+ *
+ *      // Quadrature (Simpson's rule)
+ *
+ *      ModuleBase::SphericalBesselTransformer::direct(
+ *          l,         // order of transform
+ *          ngrid_in,  // number of input grid points
+ *          grid_in,   // input grid
+ *          value_in,  // input values
+ *          ngrid_out, // number of output grid points
+ *          grid_out,  // output grid
+ *          value_out  // transformed values on the output grid
+ *      );
+ *
  *                                                                              */
 class SphericalBesselTransformer
 {
@@ -76,7 +85,7 @@ class SphericalBesselTransformer
      *                   p
      *          in[i] = x [i] F(x[i])
      *
-     *  where p is an arbitrary integer, and
+     *  where p <= 2 is an integer, and
      *
      *                     cutoff
      *          x[i] = i * -------          i = 0, 1, 2,..., ngrid-1.
@@ -93,13 +102,46 @@ class SphericalBesselTransformer
      *  @note   F(x) is supposed to be exactly zero at and after cutoff. Results would make
      *          no sense if the input is truncated at a place where F(x) is still significantly
      *          non-zero.
+     *  @note   FFT-based algorithm is not accurate for high l at small y. Numerical
+     *          integration in used to handle this case.
+     *  @note   p must not exceed 2 as required by numerical integration, @see @ref direct
      *                                                                                      */
     void radrfft(const int l,            //!< [in] order of the transform
                  const int ngrid,        //!< [in] size of the input array
                  const double cutoff,    //!< [in] cutoff distance of input values
                  const double* const in, //!< [in] input values
                  double* const out,      //!< [out] transformed values
-                 const int p = 0         //!< [in] exponent of the pre-multiplied power term in input values
+                 const int p = 0         //!< [in] exponent of the pre-multiplied power term in input values,
+                                         //!<      must not exceed 2
+    );
+
+    //! Performs an l-th order spherical Bessel transform via numerical integration with Simpson's rule.
+    /*!
+     *  This function computes the spherical Bessel transform F(x) -> G(y) with input values
+     *
+     *                   p
+     *          in[i] = x [i] F(x[i])
+     *
+     *  where p <= 2 is an integer. On finish, out[j] = G(y[j]). x & y are specified by
+     *  grid_in & grid_out, respectively.
+     *
+     *  @note   This function does not allocate memory for output; it must be pre-allocated.
+     *  @note   Even if the input grid forms a good sampling of F(x), results would still be
+     *          inaccurate for very large y values (y*dx ~ pi) because the oscillation of
+     *          j_l(y*x) in this case is poorly sampled, in which case Simpson's 1/3 rule
+     *          could be a bad approximation.
+     *  @note   p is limited to p <= 2 in order to avoid the problem of determining
+     *          x^2*F(x) at x = 0 from x[i]^p*F(x[i])
+     *                                                                                      */
+    static void direct(const int l,                  //!< [in] order of the transform
+                       const int ngrid_in,           //!< [in] size of the input array
+                       const double* const grid_in,  //!< [in] input grid
+                       const double* const in,       //!< [in] input values
+                       const int ngrid_out,          //!< [in] size of the output array
+                       const double* const grid_out, //!< [in] output grid
+                       double* const out,            //!< [out] transformed values
+                       const int p = 0               //!< [in] exponent of the pre-multiplied power
+                                                     //!<      term in input values, must not exceed 2
     );
 
     //! Sets the FFTW planner flag.
@@ -155,7 +197,7 @@ class SphericalBesselTransformer
      *  @return The polynomial coefficient of the n-th power term in the sin & cos expression
      *          of the l-th order spherical Bessel functions of the first kind.
      *                                                                                      */
-    int spherical_bessel_sincos_polycoef(
+    long long int spherical_bessel_sincos_polycoef(
         const bool get_sine, //!< [in] specifies if the returned coefficient is associated with sine
         const int l,         //!< [in] order of the spherical Bessel function
         const int n          //!< [in] degree of the polynomial term whose coefficient is computed
