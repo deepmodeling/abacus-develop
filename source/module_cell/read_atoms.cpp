@@ -903,7 +903,14 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 		{
             ofs << orbital_fn[it] << std::endl;
 		}
-	}
+
+        // liuyu add 2023-06-25
+        if (GlobalV::deepks_setorb)
+        {
+            ofs << "\nNUMERICAL_DESCRIPTOR" << std::endl;
+            ofs << descriptor_file << std::endl;
+        }
+    }
 
 	ofs << "\nLATTICE_CONSTANT" << std::endl;
         //modified by zhengdy 2015-07-24
