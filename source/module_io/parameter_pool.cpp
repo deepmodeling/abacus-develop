@@ -1,11 +1,11 @@
 #include "module_io/parameter_pool.h"
 
-
-#include <sstream>
-#include <vector>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <vector>
+
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -22,7 +22,6 @@
 namespace ModuleIO
 {
 
-int acc;
 std::map<std::string, InputParameter> input_parameters;
 std::map<std::string, std::string> default_parametes_type;
 std::map<std::string, InputParameter> default_parametes_value;
@@ -36,11 +35,11 @@ std::map<std::string, InputParameter> default_parametes_value;
  * @param input_value_path parameter input value file path
  */
 bool Init(const std::string& default_type_path,
-                    const std::string& default_value_path,
-                    const std::string& input_value_path)
+          const std::string& default_value_path,
+          const std::string& input_value_path)
 {
     // ModuleBase::timer::tick("Input", "Init");
-    default_parametes_reader(default_type_path,default_parametes_type);
+    default_parametes_reader(default_type_path, default_parametes_type);
     input_parameters_get(default_value_path, default_parametes_value);
     input_parameters_set(default_parametes_value);
     input_parameters_get(input_value_path, input_parameters);
@@ -71,7 +70,7 @@ void strtolower(char* sa, char* sb)
  * @return true Read successfully
  * @return false Read failure
  */
-bool default_parametes_reader(const std::string& fn,std::map<std::string, std::string> &default_parametes_type)
+bool default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type)
 {
     std::ifstream inputFile(fn.c_str());
     if (inputFile.is_open())
@@ -79,7 +78,7 @@ bool default_parametes_reader(const std::string& fn,std::map<std::string, std::s
         std::string word1, word2;
         while (inputFile >> word1 >> word2)
         {
-            //default_parametes_type["word1"] = word2.c_str();
+            // default_parametes_type["word1"] = word2.c_str();
         }
         // Close file
         inputFile.close();
@@ -323,7 +322,7 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
         if (vec_D.size() == 0 || vec_D.size() == 2)
         {
             std::cout << "kspacing can only accept one or three double values." << std::endl;
-            //ifs.setstate(std::ios::failbit);
+            // ifs.setstate(std::ios::failbit);
         }
         // if only read one value, set all to kspacing[0]
         if (vec_D.size() == 1)
@@ -886,7 +885,7 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("mdp") != 0)
     {
-        //INPUT.mdp = static_cast<MD_para>(input_parameters["mdp"].get());
+        // INPUT.mdp = static_cast<MD_para>(input_parameters["mdp"].get());
     }
     else if (input_parameters.count("efield_flag") != 0)
     {
@@ -1006,7 +1005,7 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("vdw_cutoff_period") != 0)
     {
-        //INPUT.vdw_cutoff_period = static_cast<ModuleBase::Vector3<int>>(input_parameters["vdw_cutoff_period"].get());
+        // INPUT.vdw_cutoff_period = static_cast<ModuleBase::Vector3<int>>(input_parameters["vdw_cutoff_period"].get());
     }
     else if (input_parameters.count("ocp") != 0)
     {
@@ -1473,4 +1472,4 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
 }
 // namespace ModuleIO
-}
+} // namespace ModuleIO

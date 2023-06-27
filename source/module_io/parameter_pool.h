@@ -23,7 +23,6 @@ enum ParameterType
 namespace ModuleIO
 {
 
-
 class InputParameter
 {
   public:
@@ -234,12 +233,13 @@ class InputParameter
         }
     }
 };
-bool Init(const std::string& default_type_path,const std::string& default_value_path,const std::string& input_value_path);
-bool default_parametes_reader(const std::string& fn,std::map<std::string, std::string> &default_parametes_type);
+bool Init(const std::string& default_type_path,
+          const std::string& default_value_path,
+          const std::string& input_value_path);
+bool default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type);
 bool input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input);
 bool input_parameters_set(std::map<std::string, InputParameter> input_parameters);
 
-extern int acc;
 extern std::map<std::string, InputParameter> input_parameters;
 extern std::map<std::string, std::string> default_parametes_type;
 extern std::map<std::string, InputParameter> default_parametes_value;

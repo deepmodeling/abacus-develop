@@ -1,6 +1,15 @@
 #include <cstring>
 #include <iostream>
 
+/**
+ * @brief   This class is a simple string class that contains an array of characters and a variable that represents the
+ * length of the string. It has a default constructor, a copy constructor, and two public functions that return the
+ * length and content of the string, respectively. The assignment operator is also overridden to be able to copy one
+ * SimpleString object to another.
+ *
+ * @param m_data store the value of string
+ * @param m_length the length of string
+ */
 class SimpleString
 {
   private:

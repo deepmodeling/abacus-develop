@@ -20,8 +20,8 @@ AddTest(
 install(FILES input_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
 add_test(NAME io_input_test_para4
-  COMMAND ${BASH} input_test_para.sh
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${BASH} input_test_para.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
@@ -67,12 +67,14 @@ AddTest(
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry
+  LIBS ${math_libs} base device
   SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/unitcell.cpp
-  ../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
-  ../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
-  ../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
-  ../../module_cell/read_pp_blps.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
+  	../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
+	../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
+	../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
+	../../module_cell/read_pp_blps.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp 
+	../../module_cell/module_symmetry/symm_other.cpp ../../module_cell/module_symmetry/symmetry_basic.cpp
+	../../module_cell/module_symmetry/symmetry.cpp
 )
 
 AddTest(
@@ -85,10 +87,10 @@ AddTest(
   TARGET io_single_R_test
   LIBS ${math_libs}
   SOURCES single_R_io_test.cpp ../single_R_io.cpp
-  ../../module_base/global_variable.cpp
-  ../../module_base/parallel_reduce.cpp
-  ../../module_base/parallel_common.cpp
-  ../../module_base/parallel_global.cpp
+  	../../module_base/global_variable.cpp
+	../../module_base/parallel_reduce.cpp
+	../../module_base/parallel_common.cpp
+	../../module_base/parallel_global.cpp
 )
 
 AddTest(
@@ -101,10 +103,10 @@ AddTest(
   TARGET io_write_orb_info
   LIBS ${math_libs} base device
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp ../../module_cell/unitcell.cpp
-  ../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
-  ../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
-  ../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
-  ../../module_cell/read_pp_blps.cpp
+	../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
+	../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
+	../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
+	../../module_cell/read_pp_blps.cpp
 )
 
 AddTest(
@@ -123,8 +125,14 @@ AddTest(
   LIBS base ${math_libs} device
   SOURCES ../output_log.cpp outputlog_test.cpp
 )
+# AddTest(
+#   TARGET io_new_parse_test
+#   LIBS base ${math_libs} device
+#   SOURCES parameter_pool_test.cpp
+# )
+
 AddTest(
-  TARGET io_new_parse-set_test
+  TARGET io_new_parse_set_test
   LIBS ${math_libs} base device
-  SOURCES parameter_pool_set_test.cpp ../../module_io/parameter_pool.cpp ../../module_io/input.cpp ../input_conv.cpp
+  SOURCES parameter_pool_set_test.cpp  ../parameter_pool.cpp ../input.cpp
 )
