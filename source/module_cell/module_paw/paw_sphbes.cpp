@@ -5,32 +5,26 @@
 // ptilde_l(q) = int_0^{rc} dr r ptilde_l(r) j_l(qr)
 void Paw_Element::transform_ptilde()
 {
-
-    // Defining the q grid; I will be following the vnl part and make a fixed grid
+    // Defining the q grid; I will be following Quantum Espresso here
     double dq = 0.01;
-    int    nq = 10000;
+    int    nq = int( (std::sqrt(ecutwfc) / dq + 4) * cell_factor );
 
-    //not ready yet
-    /*
     ptilde_q.resize(nstates);
     for(int istate = 0; istate < nstates; istate ++)
     {
         ptilde_q[istate].resize(nq);
         int l = lstate[istate]; // the l quantum number
 
-        // q = 0 : to be added later!!
-
-        for (int iq = 1; iq < nq; iq++)
+        for (int iq = 0; iq < nq; iq++)
         {
             double q = double(iq) * dq;
             ptilde_q[istate][iq] = this->spherical_bessel_transform(l, ptilde_r[istate], q);
         }
     }
-    */
 }
 
 // int_0^{rc} dr r fr(r) j_l(qr)
-double Paw_Element::spherical_bessel_transform(const int l, std::vector<double> & fr, const double q)
+double Paw_Element::spherical_bessel_transform(const int l, std::vector<double> & fr, const double q) const
 {
 
     assert(fr.size() == nr);
@@ -123,7 +117,7 @@ double Paw_Element::spherical_bessel_function(const int l, const double xx)
 // Only radial grid a*(exp(d*i)-1) for now (will add more if needed later)
 // which corresponds to mesh_type=2 in simp_gen
 // search for case("r=a*(exp(d*i)-1)") in m_pawpsp.F90, for example
-double Paw_Element::simpson_integration(std::vector<double> & f)
+double Paw_Element::simpson_integration(std::vector<double> & f) const
 {
     int ir=nr;
     while (std::abs(f[ir]) < 1e-20)
@@ -131,8 +125,12 @@ double Paw_Element::simpson_integration(std::vector<double> & f)
        ir=ir-1;
     }
 
+    //stores factors for carrying out simpson integration
+    std::vector<double> simp_fact;
+    int simp_int_meshsz;
+
     int mmax=std::min(ir+1,nr);
-    this->prepare_simpson_integration(rr[mmax]);
+    this->prepare_simpson_integration(rr[mmax], simp_int_meshsz, simp_fact);
 
     double val = 0.0;
     for (int i=0; i<simp_int_meshsz; i++)
@@ -143,7 +141,7 @@ double Paw_Element::simpson_integration(std::vector<double> & f)
     return val;
 }
 
-void Paw_Element::prepare_simpson_integration(const double r_for_intg)
+void Paw_Element::prepare_simpson_integration(const double r_for_intg, int & meshsz, std::vector<double> & simp_fact) const
 {
 // generate rad_factor
     std::vector<double> rad_fact;
@@ -162,7 +160,7 @@ void Paw_Element::prepare_simpson_integration(const double r_for_intg)
     }
 
 // get mesh for integration
-    int meshsz = nr;
+    meshsz = nr;
     if (r_for_intg > 0.0)
     {
         int nr_for_intg = int(1e-8+std::log(1.0+r_for_intg/rstep)/lstep)+1;
@@ -194,7 +192,6 @@ void Paw_Element::prepare_simpson_integration(const double r_for_intg)
     }
     
     simp_fact[ir_last] = 0.5 * simp_fact[ir_last];
-    simp_int_meshsz = meshsz;
 
     //for(int ir=0;ir<nr;ir++)
     //{

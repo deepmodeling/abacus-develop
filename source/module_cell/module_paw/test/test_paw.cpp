@@ -12,6 +12,10 @@ class Test_Read_Paw : public testing::Test
 
 TEST_F(Test_Read_Paw, test_paw)
 {
+    double ecutpaw = 50;
+    double cellfac = 1.2;
+    
+    paw_element.init_paw(ecutpaw, cellfac);
     paw_element.read_paw_xml("H.LDA_PW-JTH.xml");
     // I have not done any checks for now; will add later
 }

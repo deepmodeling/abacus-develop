@@ -81,7 +81,7 @@ class Paw_Element
     //Note as grid information and rcut is already in this class
     //I have chosen not to pass them around
 
-    double spherical_bessel_transform(const int l, std::vector<double> & fr, const double q);
+    double spherical_bessel_transform(const int l, std::vector<double> & fr, const double q) const;
 
     private:
 
@@ -94,14 +94,25 @@ class Paw_Element
     //will switch to the one in math lib later
 
     // simpson integration
-    double simpson_integration(std::vector<double> & f);
+    double simpson_integration(std::vector<double> & f) const;
 
     // some preparation for simpson integration
-    void prepare_simpson_integration(const double r_for_intg);
+    void prepare_simpson_integration(const double r_for_intg, int & meshsz, std::vector<double> & simp_fact) const;
 
-    //stores factors for carrying out simpson integration
-    std::vector<double> simp_fact;
-    int simp_int_meshsz;
+//===================================================
+// In paw_interface.cpp : communication with ABACUS main program body
+//===================================================
+
+    public:
+
+    // ecutwfc_in : unit in Rydberg
+    void init_paw(const double ecutwfc_in, const double cell_factor_in);
+
+    private:
+
+    double ecutwfc;
+    double cell_factor;
+
 };
 
 #endif

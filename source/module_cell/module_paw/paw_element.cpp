@@ -119,6 +119,13 @@ void Paw_Element::read_paw_xml(std::string filename)
             ifs >> ptilde_r[istate][ir];
         }
     }
+
+// ============================================================
+// 6. reciprocal-space projector functions
+// performing spherical bessel transformation
+// ============================================================
+
+    this -> transform_ptilde();
 }
 
 std::string Paw_Element::scan_file(std::ifstream &ifs, std::string pattern)
