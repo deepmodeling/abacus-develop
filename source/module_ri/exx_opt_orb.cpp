@@ -51,7 +51,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv) const
 // ofs_mpi<<range_abfs<<std::endl;
 // ofs_mpi<<range_jys<<std::endl;
 
-	std::map<size_t,std::map<size_t,set<double>>> radial_R = get_radial_R();
+	std::map<size_t,std::map<size_t,std::set<double>>> radial_R = get_radial_R();
 #if TEST_EXX_RADIAL==2
 	{
 		for(const auto & rA : radial_R)
@@ -348,10 +348,10 @@ std::vector<std::vector<RI::Tensor<double>>> Exx_Opt_Orb::cal_I(
 	}
 }
 
-std::map<size_t,std::map<size_t,set<double>>> Exx_Opt_Orb::get_radial_R() const
+std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R() const
 {
 	ModuleBase::TITLE("Exx_Opt_Orb::get_radial_R");
-	std::map<size_t,std::map<size_t,set<double>>> radial_R;
+	std::map<size_t,std::map<size_t,std::set<double>>> radial_R;
 	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA )
 		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
 			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB )

@@ -1,0 +1,149 @@
+[  0%] Built target driver
+[  4%] Built target device
+[ 13%] Built target base
+[ 14%] Built target symmetry
+[ 18%] Built target cell
+[ 20%] Built target neighbor
+[ 21%] Built target psi
+[ 24%] Built target ri
+[ 24%] Built target hamilt_general
+[ 26%] Built target vdw
+[ 29%] Built target surchem
+[ 37%] Built target elecstate
+[ 40%] Built target xc_
+[ 41%] Built target hamilt_ofdft
+[ 43%] Built target hamilt_stodft
+[ 50%] Built target hamilt_pwdft
+[ 51%] Built target tddft
+[ 51%] Built target hcontainer
+[ 53%] Built target dftu
+[ 54%] Built target genelpa
+[ 56%] Built target hsolver
+[ 59%] Built target orb
+[ 67%] Built target hamilt_lcao
+[ 69%] Built target planewave
+[ 71%] Built target md
+[ 71%] Building CXX object source/module_esolver/CMakeFiles/esolver.dir/esolver_ks_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 74%] Built target io_advanced
+[ 79%] Built target gint
+[ 80%] Building CXX object source/module_esolver/CMakeFiles/esolver.dir/esolver_ks_lcao_elec.cpp.o
+[ 80%] Building CXX object source/module_esolver/CMakeFiles/esolver.dir/esolver_ks_lcao_tddft.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 90%] Built target io_basic
+[ 90%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_driver.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 90%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_new/relax.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 90%] Building CXX object source/module_cell/module_paw/CMakeFiles/paw.dir/paw_element.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 90%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_new/line_search.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 91%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/relax_old.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 91%] Built target paw
+[ 91%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/bfgs_basic.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 91%] Building CXX object source/module_hamilt_pw/hamilt_pwdft/operator_pw/CMakeFiles/operator_ks_pw.dir/operator_pw.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 92%] Building CXX object source/module_hamilt_pw/hamilt_pwdft/operator_pw/CMakeFiles/operator_ks_pw.dir/ekinetic_pw.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 92%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/ions_move_basic.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 92%] Building CXX object source/module_hamilt_pw/hamilt_pwdft/operator_pw/CMakeFiles/operator_ks_pw.dir/veff_pw.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 92%] Building CXX object source/module_hamilt_pw/hamilt_pwdft/operator_pw/CMakeFiles/operator_ks_pw.dir/nonlocal_pw.cpp.o
+[ 92%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/ions_move_bfgs.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 92%] Building CXX object source/module_hamilt_pw/hamilt_pwdft/operator_pw/CMakeFiles/operator_ks_pw.dir/meta_pw.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 93%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/ions_move_cg.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 93%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/ions_move_sd.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 94%] Building CXX object source/module_hamilt_pw/hamilt_pwdft/operator_pw/CMakeFiles/operator_ks_pw.dir/velocity_pw.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 94%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/ions_move_methods.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 94%] Built target operator_ks_pw
+[ 94%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/lattice_change_basic.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 94%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/ekinetic_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 95%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/lattice_change_cg.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 96%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/nonlocal_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 96%] Building CXX object source/module_relax/CMakeFiles/relax.dir/relax_old/lattice_change_methods.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 96%] Built target relax
+[ 96%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/op_exx_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 96%] Building CXX object source/module_basis/module_nao/CMakeFiles/numerical_atomic_orbitals.dir/numerical_radial.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 96%] Building CXX object source/module_basis/module_nao/CMakeFiles/numerical_atomic_orbitals.dir/radial_set.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 97%] Building CXX object source/module_basis/module_nao/CMakeFiles/numerical_atomic_orbitals.dir/atomic_radials.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 97%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/op_dftu_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 97%] Building CXX object source/module_basis/module_nao/CMakeFiles/numerical_atomic_orbitals.dir/beta_radials.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 97%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/meta_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 97%] Building CXX object source/module_basis/module_nao/CMakeFiles/numerical_atomic_orbitals.dir/radial_collection.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 97%] Built target numerical_atomic_orbitals
+[ 98%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/veff_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 98%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/overlap_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 98%] Building CXX object source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/CMakeFiles/operator_ks_lcao.dir/deepks_lcao.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[ 98%] Built target operator_ks_lcao
+[100%] Built target esolver
+[100%] Building CXX object CMakeFiles/abacus.dir/source/main.cpp.o
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[100%] Linking CXX executable abacus
+icpc: remark #10441: The Intel(R) C++ Compiler Classic (ICC) is deprecated and will be removed from product release in the second half of 2023. The Intel(R) oneAPI DPC++/C++ Compiler (ICX) is the recommended compiler moving forward. Please transition to use this compiler. Use '-diag-disable=10441' to disable this message.
+icpc: command line warning #10148: option '-Wno-tautological-constant-compare' not supported
+[100%] Built target abacus
