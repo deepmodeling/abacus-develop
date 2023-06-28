@@ -91,9 +91,28 @@ struct Parallel_Orbitals
     // test parameter
     int testpb;
 
+    // orbital index for each atom
+    std::vector<int> atom_begin_row;
+    std::vector<int> atom_begin_col;
+
     /// check whether a basis element is in this processor
     /// (check whether local-index > 0 )
     bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
+
+    // set row and col begin index for each atom
+    void set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal);
+
+    /**
+     * @brief dimension getters for 2D-block-cyclic division of Hamiltonian matrix
+     * get_col_size() : total number of columns of Hamiltonian matrix in this processor
+     * get_row_size() : total number of rows of Hamiltonian matrix in this processor
+     * get_col_size(iat) : number of columns of Hamiltonian matrix in atom iat
+     * get_row_size(iat) : number of rows of Hamiltonian matrix in atom iat
+    */
+    int get_col_size()const;
+    int get_row_size()const;
+    int get_col_size(int iat) const;
+    int get_row_size(int iat) const;
 
 };
 
