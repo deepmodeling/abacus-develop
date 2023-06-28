@@ -1,4 +1,5 @@
 remove_definitions(-D__LCAO )
+remove definitions(-DUSE_LIBXC)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND depend_files 
