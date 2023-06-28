@@ -183,7 +183,7 @@ void FIRE::check_fire()
         negative_count++;
         if (negative_count >= n_min)
         {
-            mdp.md_dt = min(mdp.md_dt * finc, dt_max);
+            mdp.md_dt = std::min(mdp.md_dt * finc, dt_max);
             alpha *= f_alpha;
         }
     }

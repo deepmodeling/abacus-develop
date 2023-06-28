@@ -91,7 +91,7 @@ void Input::Init(const std::string &fn)
                          << std::endl; 
     GlobalV::ofs_running << "                      Commit: " << commit
                          << std::endl << std::endl;
-    GlobalV::ofs_running << std::setiosflags(ios::right);
+    GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
 #ifdef __MPI
     // GlobalV::ofs_running << "    Version: Parallel, under ALPHA test" << std::endl;
@@ -109,8 +109,8 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << " ------------------------------------------------------------------------------------"
                          << std::endl;
 
-    GlobalV::ofs_running << std::setiosflags(ios::left);
-    std::cout << std::setiosflags(ios::left);
+    GlobalV::ofs_running << std::setiosflags(std::ios::left);
+    std::cout << std::setiosflags(std::ios::left);
 
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", GlobalV::global_out_dir);
@@ -592,7 +592,7 @@ bool Input::Read(const std::string &fn)
     if (GlobalV::MY_RANK != 0)
         return false;
 
-    std::ifstream ifs(fn.c_str(), ios::in); // "in_datas/input_parameters"
+    std::ifstream ifs(fn.c_str(), std::ios::in); // "in_datas/input_parameters"
 
     if (!ifs)
     {
@@ -2607,7 +2607,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         cal_force = 1;
         if (mdp.md_nstep == 0)
         {
-            GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << endl;
+            GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
             mdp.md_nstep = 50;
         }
         if (!out_md_control)
@@ -3722,7 +3722,7 @@ int Input::count_ntype(const std::string &fn)
     // Only RANK0 core can reach here, because this function is called during Input::Read.
     assert(GlobalV::MY_RANK == 0);
 
-    std::ifstream ifa(fn.c_str(), ios::in);
+    std::ifstream ifa(fn.c_str(), std::ios::in);
     if (!ifa)
     {
         GlobalV::ofs_warning << fn;

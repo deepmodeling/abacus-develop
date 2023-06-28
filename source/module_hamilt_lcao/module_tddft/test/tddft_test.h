@@ -5,7 +5,6 @@
 #include "gtest/gtest.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 
-using namespace std;
 extern int myprow, nprow, ictxt, mypcol, npcol;
 
 class TDDFTTEST : public testing::Test

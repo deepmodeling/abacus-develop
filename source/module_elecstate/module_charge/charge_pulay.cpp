@@ -598,7 +598,7 @@ void Charge_Mixing::generate_datas(const int &irstep, const int &idstep, const i
 			for(int ig=0; ig<this->rhopw->npw; ig++)
 			{
 				double gg = this->rhopw->gg[ig];
-				double filter_g = max(gg / (gg + gg0), 0.1);
+				double filter_g = std::max(gg / (gg + gg0), 0.1);
 				kerpulay[ig] = (1 - filter_g) * kerpulay[ig];
 			}
 

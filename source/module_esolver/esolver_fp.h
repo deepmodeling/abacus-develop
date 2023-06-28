@@ -36,7 +36,7 @@ namespace ModuleESolver
         K_Vectors kv;
 
       private:
-        void print_rhofft(Input& inp, ofstream &ofs);
+        void print_rhofft(Input& inp, std::ofstream &ofs);
     };
 }
 

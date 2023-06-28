@@ -5,8 +5,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "charge.h"
 
-using namespace std;
-
 //--------------------------------
 // charge extrapolation method
 // written by Xiaohui 2014

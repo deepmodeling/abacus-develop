@@ -196,7 +196,7 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
     {
         if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
         {
-            g1.open(ssdm.str().c_str(), ios::app);
+            g1.open(ssdm.str().c_str(), std::ios::app);
         }
         else
         {

@@ -179,7 +179,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, ofstream &ofs)
+    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
     {
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;

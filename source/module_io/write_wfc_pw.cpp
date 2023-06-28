@@ -83,7 +83,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 #endif
                     if(INPUT.out_wfc_pw==1)
                     {
-                        std::ofstream ofs2( wfilename[ikstot].c_str(),ios::app);
+                        std::ofstream ofs2( wfilename[ikstot].c_str(),std::ios::app);
                         if(id==0)
                         {
                             ofs2<<std::setprecision(6);
@@ -156,7 +156,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 #endif
                         if(INPUT.out_wfc_pw==1)
                         {
-                            std::ofstream ofs2( wfilename[ikstot].c_str(),ios::app);
+                            std::ofstream ofs2( wfilename[ikstot].c_str(),std::ios::app);
                             if(id==0)   ofs2 << "\n< Band "<<ib+1 <<" >" <<std::endl; 
 							ofs2 << std::scientific;
 							
