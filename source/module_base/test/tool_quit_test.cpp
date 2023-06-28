@@ -76,7 +76,7 @@ TEST_F(ToolQuitTest,warningquit)
 {
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter"),
-			::testing::ExitedWithCode(1), "");
+			::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
@@ -94,6 +94,28 @@ TEST_F(ToolQuitTest,warningquit)
 	ifs.close();
 }
 
+// use EXPECT_EXIT to test exit codes
+TEST_F(ToolQuitTest,warningquit_with_ret)
+{
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter",1),
+			::testing::ExitedWithCode(1), "");
+	output = testing::internal::GetCapturedStdout();
+	// test output on screening
+	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
+	GlobalV::ofs_warning.close();
+	GlobalV::ofs_running.close();
+	ifs.open("warning.log");
+	getline(ifs,output);
+	// test output in warning.log file
+	EXPECT_THAT(output,testing::HasSubstr("warning"));
+	ifs.close();
+	ifs.open("running.log");
+	getline(ifs,output);
+	// test output in running.log file
+	EXPECT_THAT(output,testing::HasSubstr("!!!!!!!"));
+	ifs.close();
+}
 // use __MPI to activate parallel environment
 #ifdef __MPI
 int main(int argc, char **argv)

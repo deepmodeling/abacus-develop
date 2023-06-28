@@ -65,6 +65,11 @@ void QUIT(int ret)
 
 void WARNING_QUIT(const std::string &file,const std::string &description)
 {
+	WARNING_QUIT(file, description, 0);
+}
+
+void WARNING_QUIT(const std::string &file,const std::string &description,int ret)
+{
 #ifdef __NORMAL
 
 		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
@@ -130,9 +135,8 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
 
 #endif
 
-    QUIT(1);
+    QUIT(ret);
 }
-
 
 //Check and print warning information for all cores.
 //Maybe in the future warning.log should be replaced by error.log.
