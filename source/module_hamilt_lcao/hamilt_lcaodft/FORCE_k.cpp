@@ -730,7 +730,7 @@ void Force_LCAO_k::test(double* mmm, const std::string& name)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
         {
-            if (abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+            if (std::abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
                 std::cout << std::setw(12) << test[i * GlobalV::NLOCAL + j];
             else
                 std::cout << std::setw(12) << "0";

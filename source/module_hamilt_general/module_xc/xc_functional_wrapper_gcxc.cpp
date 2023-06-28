@@ -249,7 +249,7 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
     sc = 0.00;
     v1cup = 0.00; v1cdw = 0.00;
     v2c = 0.00;
-    if (abs(zeta) - 1.0 > small || rho <= small || sqrt(abs(grho)) <= small)
+    if (std::abs(zeta) - 1.0 > small || rho <= small || sqrt(std::abs(grho)) <= small)
     {
         return;
     }
@@ -257,7 +257,7 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
     {
         // ... ( - 1.0 + epsr )  <  zeta  <  ( 1.0 - epsr )
         // zeta = SIGN( MIN( ABS( zeta ), ( 1.D0 - epsr ) ) , zeta )
-        x = std::min(abs(zeta), (1.0 - epsr));
+        x = std::min(std::abs(zeta), (1.0 - epsr));
 		if(zeta>0)
 		{
 			zeta = x;
@@ -361,9 +361,9 @@ void XC_Functional::gcxc_spin_libxc(double rhoup, double rhodw,
             xc_gga_exc_vxc( &func, 1, rho, grho, &s, v1xc, v2xc);
             if(func.info->kind==XC_CORRELATION)
             {
-                if ( rho[0]<rho_threshold || sqrt(abs(grho[0]))<grho_threshold )
+                if ( rho[0]<rho_threshold || sqrt(std::abs(grho[0]))<grho_threshold )
                     sgn[0] = 0.0;
-                if ( rho[1]<rho_threshold || sqrt(abs(grho[2]))<grho_threshold )
+                if ( rho[1]<rho_threshold || sqrt(std::abs(grho[2]))<grho_threshold )
                     sgn[1] = 0.0;
             }
             sxc += s * (rho[0] * sgn[0] + rho[1] * sgn[1]);

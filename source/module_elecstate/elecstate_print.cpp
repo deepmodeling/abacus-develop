@@ -18,7 +18,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     {
         for (int ib = 0; ib < this->ekb.nc; ++ib)
         {
-            if (abs(this->ekb(ik, ib)) > 1.0e10)
+            if (std::abs(this->ekb(ik, ib)) > 1.0e10)
             {
                 GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
                                      << std::endl;
@@ -108,7 +108,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
     bool wrong = false;
     for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
     {
-        if (abs(this->ekb(ik, ib)) > 1.0e10)
+        if (std::abs(this->ekb(ik, ib)) > 1.0e10)
         {
             GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
                                  << std::endl;

@@ -30,21 +30,21 @@ void Stress_Func<FPTYPE, Device>::print_stress(const std::string &name, const Mo
 	for (int i=0;i<3;i++)
 	{
 		GlobalV::ofs_running << std::setw(15)<< " ";
-		if( abs(f(i,0)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(i,0) * fac;
+		if( std::abs(f(i,0)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(i,0) * fac;
 		else GlobalV::ofs_running << std::setw(15) << "0";
-		if( abs(f(i,1)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(i,1) * fac;
+		if( std::abs(f(i,1)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(i,1) * fac;
 		else GlobalV::ofs_running << std::setw(15) << "0";
-		if( abs(f(i,2)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(i,2) * fac;
+		if( std::abs(f(i,2)) >output_acc) GlobalV::ofs_running << std::setw(15) << f(i,2) * fac;
 		else GlobalV::ofs_running << std::setw(15) << "0";
 		GlobalV::ofs_running << std::endl;
 
 		if(screen)
 		{
-			if( abs(f(i,0)) >output_acc) std::cout << std::setw(15) << f(i,0)*fac;
+			if( std::abs(f(i,0)) >output_acc) std::cout << std::setw(15) << f(i,0)*fac;
 			else std::cout << std::setw(15) << "0";
-			if( abs(f(i,1)) >output_acc) std::cout << std::setw(15) << f(i,1)*fac;
+			if( std::abs(f(i,1)) >output_acc) std::cout << std::setw(15) << f(i,1)*fac;
 			else std::cout << std::setw(15) << "0";
-			if( abs(f(i,2)) >output_acc) std::cout << std::setw(15) << f(i,2)*fac;
+			if( std::abs(f(i,2)) >output_acc) std::cout << std::setw(15) << f(i,2)*fac;
 			else std::cout << std::setw(15) << "0";
 			std::cout << std::endl;
 		}	

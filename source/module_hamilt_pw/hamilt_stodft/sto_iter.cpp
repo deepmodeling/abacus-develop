@@ -203,7 +203,7 @@ void Stochastic_Iter::check_precision(const double ref, const double thr, const 
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &error, 1, MPI_DOUBLE, MPI_SUM , MPI_COMM_WORLD);
 #endif
-    double relative_error = abs(error/ref);
+    double relative_error = std::abs(error/ref);
     GlobalV::ofs_running<<info<<"Relative Chebyshev Precision: "<<relative_error*1e9<<"E-09"<<std::endl;
     if(relative_error > thr)
     {
@@ -280,7 +280,7 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
         {
             mu2 = mu3;
         }
-        Dne = abs(targetne - ne3);
+        Dne = std::abs(targetne - ne3);
 
         count++;
         if (count > 60)
@@ -556,7 +556,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     MPI_Allreduce(MPI_IN_PLACE,sto_rho,nrxx,MPI_DOUBLE,MPI_SUM,PARAPW_WORLD);
 #endif
     double factor = targetne/(KS_ne+sto_ne);
-    if(abs(factor-1) > 1e-10)
+    if(std::abs(factor-1) > 1e-10)
     {
         GlobalV::ofs_running<<"Renormalize rho from ne = "<<sto_ne+KS_ne<<" to targetne = "<<targetne<<endl;
     }

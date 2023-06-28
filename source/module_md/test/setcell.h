@@ -91,7 +91,7 @@ class Setcell
             ucell.atoms[0].mbl[ia].set(1, 1, 1);
         }
 
-        ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
         ucell.GT = ucell.latvec.Inverse();
         ucell.G = ucell.GT.Transpose();

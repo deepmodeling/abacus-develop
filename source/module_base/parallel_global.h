@@ -7,7 +7,6 @@
 #define PARALLEL_GLOBAL_H
 
 #include <complex>
-//using namespace std;
 
 #ifdef __MPI
 #include "mpi.h"

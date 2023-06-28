@@ -86,7 +86,7 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     {
         sdoty += s[i] * y[i];
     }
-    if (abs(sdoty) < 1.0e-16)
+    if (std::abs(sdoty) < 1.0e-16)
     {
         GlobalV::ofs_running << " WARINIG: unexpected behaviour in update_inverse_hessian" << std::endl;
         GlobalV::ofs_running << " Resetting bfgs history " << std::endl;
@@ -146,7 +146,7 @@ void BFGS_Basic::check_wolfe_conditions(void)
     // if the force is still very large, enlarge the trust radius,
     // otherwise the dot should be very small, in this case,
     // enlarge trst radius is not good.
-    bool wolfe2 = abs(dot) > -this->relax_bfgs_w2 * dot_p;
+    bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
 
     if (GlobalV::test_relax_method)
     {
@@ -402,7 +402,7 @@ double BFGS_Basic::check_move(const double &lat0, const double &pos, const doubl
     for (int cell = -1; cell <= 1; ++cell)
     {
         const double now_move = direct_move + cell;
-        if (abs(now_move) < abs(shortest_move))
+        if (std::abs(now_move) < std::abs(shortest_move))
         {
             shortest_move = now_move;
         }

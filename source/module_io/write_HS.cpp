@@ -1286,22 +1286,22 @@ void ModuleIO::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
                             // g2 << " " << lineS[j-i];
                             if (GlobalV::NSPIN != 4)
                             {
-                                if (abs(lineH[j]) < 1.0e-12)
+                                if (std::abs(lineH[j]) < 1.0e-12)
                                     lineH[j] = 0.0;
-                                if (abs(lineS[j]) < 1.0e-12)
+                                if (std::abs(lineS[j]) < 1.0e-12)
                                     lineS[j] = 0.0;
                                 g1 << " " << lineH[j];
                                 g2 << " " << lineS[j];
                             }
                             else
                             {
-                                if (abs(lineH_soc[j].real()) < 1.0e-12)
+                                if (std::abs(lineH_soc[j].real()) < 1.0e-12)
                                     lineH_soc[j] = std::complex<double>(0.0, lineH_soc[j].imag());
-                                if (abs(lineH_soc[j].imag()) < 1.0e-12)
+                                if (std::abs(lineH_soc[j].imag()) < 1.0e-12)
                                     lineH_soc[j] = std::complex<double>(lineH_soc[j].real(), 0.0);
-                                if (abs(lineS_soc[j].real()) < 1.0e-12)
+                                if (std::abs(lineS_soc[j].real()) < 1.0e-12)
                                     lineS_soc[j] = std::complex<double>(0.0, lineS_soc[j].imag());
-                                if (abs(lineS_soc[j].imag()) < 1.0e-12)
+                                if (std::abs(lineS_soc[j].imag()) < 1.0e-12)
                                     lineS_soc[j] = std::complex<double>(lineS_soc[j].real(), 0.0);
                                 g1 << " " << lineH_soc[j];
                                 g2 << " " << lineS_soc[j];

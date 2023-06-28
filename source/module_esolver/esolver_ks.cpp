@@ -195,7 +195,7 @@ namespace ModuleESolver
 	    ofs << "\n\n\n\n";
         ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
         double ecut = INPUT.ecutwfc;
-        if(abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
+        if(std::abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
         {
             ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
             ofs<<"Energy cutoff for wavefunc is incompatible with nx, ny, nz and it will be reduced!"<<std::endl;

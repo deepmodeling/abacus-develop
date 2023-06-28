@@ -86,8 +86,8 @@ TEST_F(PWTEST,test1_5)
                         if (modulusgk <= ggecut)
                         {
                             tmp[ix*ny*nz + iy*nz + iz]=1.0/(modulusgk+1);
-                            if(vy > 0) tmp[ix*ny*nz + iy*nz + iz]+=ModuleBase::IMAG_UNIT / (abs(v.x+1) + 1);
-                            else if(vy < 0) tmp[ix*ny*nz + iy*nz + iz]-=ModuleBase::IMAG_UNIT / (abs(-v.x+1) + 1);
+                            if(vy > 0) tmp[ix*ny*nz + iy*nz + iz]+=ModuleBase::IMAG_UNIT / (std::abs(v.x+1) + 1);
+                            else if(vy < 0) tmp[ix*ny*nz + iy*nz + iz]-=ModuleBase::IMAG_UNIT / (std::abs(-v.x+1) + 1);
                         }
                     }
                 }   
@@ -126,8 +126,8 @@ TEST_F(PWTEST,test1_5)
             ModuleBase::Vector3<double> f = pwtest.getgdirect(ik,ig);
             if(f.y > 0) 
             {
-                rhog[ig]+=ModuleBase::IMAG_UNIT / (abs(f.x+1) + 1);
-                rhogr[ig]+=ModuleBase::IMAG_UNIT / (abs(f.x+1) + 1);
+                rhog[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
+                rhogr[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
             }
         }    
 #ifdef __ENABLE_FLOAT_FFTW
@@ -138,8 +138,8 @@ TEST_F(PWTEST,test1_5)
             ModuleBase::Vector3<double> f = pwtest.getgdirect(ik,ig);
             if(f.y > 0) 
             {
-                rhofg[ig]+=ModuleBase::IMAG_UNIT / (abs(f.x+1) + 1);
-                rhofgr[ig]+=ModuleBase::IMAG_UNIT / (abs(f.x+1) + 1);
+                rhofg[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
+                rhofgr[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
             }
         }  
 #endif

@@ -7,7 +7,6 @@
 #include "../module_base/global_variable.h"
 #include "../module_io/output.h"
 
-using namespace std;
 
 class Pseudopot_upf
 {
