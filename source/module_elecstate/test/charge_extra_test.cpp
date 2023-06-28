@@ -184,22 +184,16 @@ TEST_F(ChargeExtraTest, SaveFiles)
 
     CE.save_files(istep, *ucell.get(), &charge, &sf);
 
-    std::string file_name = "./support/NOW_SPIN1_CHG.cube";
-    std::ifstream input1(file_name);
-    bool file_exists = input1.good();
-    EXPECT_TRUE(file_exists);
+    std::ifstream input1("./support/NOW_SPIN1_CHG.cube");
+    EXPECT_TRUE(input1.good());
     input1.close();
 
-    file_name = "./support/OLD1_SPIN1_CHG.cube";
-    std::ifstream input2(file_name);
-    file_exists = input2.good();
-    EXPECT_TRUE(file_exists);
+    std::ifstream input2("./support/OLD1_SPIN1_CHG.cube");
+    EXPECT_TRUE(input2.good());
     input2.close();
 
-    file_name = "./support/OLD2_SPIN1_CHG.cube";
-    std::ifstream input3(file_name);
-    file_exists = input3.good();
-    EXPECT_TRUE(file_exists);
+    std::ifstream input3("./support/OLD2_SPIN1_CHG.cube");
+    EXPECT_TRUE(input3.good());
     input3.close();
 }
 

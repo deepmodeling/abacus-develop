@@ -324,24 +324,34 @@ void Charge_Extra::save_files(const int& istep,
                               Structure_Factor* sf)
 {
     // rename OLD1_SPIN*_CHG.cube to OLD2_SPIN*_CHG.cube
-    if (istep > 1 && pot_order == 3)
+    if (istep > 1 && pot_order == 3 && GlobalV::MY_RANK == 0)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
             std::string old_name = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
             std::string new_name = GlobalV::global_out_dir + "OLD2_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            std::rename(old_name.c_str(), new_name.c_str());
+            if (std::rename(old_name.c_str(), new_name.c_str()) == -1)
+            {
+                std::cout << "old file: " << old_name << std::endl;
+                std::cout << "new file: " << new_name << std::endl;
+                std::cout << "std::rename error: " << strerror(errno) << std::endl;
+            }
         }
     }
 
     // rename NOW_SPIN*_CHG.cube to OLD1_SPIN*_CHG.cube
-    if (istep > 0 && pot_order > 1)
+    if (istep > 0 && pot_order > 1 && GlobalV::MY_RANK == 0)
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
             std::string old_name = GlobalV::global_out_dir + "NOW_SPIN" + std::to_string(is + 1) + "_CHG.cube";
             std::string new_name = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            std::rename(old_name.c_str(), new_name.c_str());
+            if (std::rename(old_name.c_str(), new_name.c_str()) == -1)
+            {
+                std::cout << "old file: " << old_name << std::endl;
+                std::cout << "new file: " << new_name << std::endl;
+                std::cout << "std::rename error: " << strerror(errno) << std::endl;
+            }
         }
     }
 
