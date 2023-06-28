@@ -101,9 +101,9 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             GlobalC::ld.check_v_delta(pv->nrow, pv->ncol);
 
             GlobalC::ld.cal_e_delta_band(loc.dm_gamma, pv->trace_loc_row, pv->trace_loc_col, pv->nrow);
-            ofstream ofs("E_delta_bands.dat");
+            std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-            ofstream ofs1("E_delta.dat");
+            std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
             GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
         }
