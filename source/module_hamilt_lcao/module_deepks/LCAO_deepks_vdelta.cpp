@@ -135,7 +135,7 @@ void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
 
 void LCAO_Deepks::check_v_delta(const int nrow, const int ncol)
 {
-	ofstream ofs("H_V_delta.dat");
+	std::ofstream ofs("H_V_delta.dat");
 	ofs << std::setprecision(10);
 	for(int irow=0;irow<nrow;irow++)
 	{
@@ -367,7 +367,7 @@ void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
 
 void LCAO_Deepks::check_v_delta_k(const int nnr)
 {
-	ofstream ofs("H_V_deltaR.dat");
+	std::ofstream ofs("H_V_deltaR.dat");
 	ofs<<std::setprecision(10);
 	for(int iir=0;iir<nnr;iir++)
 	{

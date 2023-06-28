@@ -78,7 +78,7 @@ void LCAO_Deepks::check_descriptor(const UnitCell &ucell)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_descriptor");
     if(GlobalV::MY_RANK!=0) return;
-    ofstream ofs("descriptor.dat");
+    std::ofstream ofs("descriptor.dat");
     ofs<<std::setprecision(10);
     for (int it = 0; it < ucell.ntype; it++)
     {
@@ -182,9 +182,9 @@ void LCAO_Deepks::cal_gvx(const int nat)
 void LCAO_Deepks::check_gvx(const int nat)
 {
     std::stringstream ss;
-    ofstream ofs_x;
-    ofstream ofs_y;
-    ofstream ofs_z;
+    std::ofstream ofs_x;
+    std::ofstream ofs_y;
+    std::ofstream ofs_z;
 
     ofs_x<<std::setprecision(12);
     ofs_y<<std::setprecision(12);
@@ -338,7 +338,7 @@ void LCAO_Deepks::cal_gvdm(const int nat)
     return;
 }
 
-void LCAO_Deepks::load_model(const string& deepks_model)
+void LCAO_Deepks::load_model(const std::string& deepks_model)
 {
     ModuleBase::TITLE("LCAO_Deepks", "load_model");
 
@@ -394,7 +394,7 @@ void LCAO_Deepks::cal_gedm(const int nat)
 
 void LCAO_Deepks::check_gedm()
 {
-    ofstream ofs("gedm.dat");
+    std::ofstream ofs("gedm.dat");
     for(int inl=0;inl<inlmax;inl++)
     {
         int nm = 2 * inl_l[inl] + 1;
