@@ -170,8 +170,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0., 0.}, {0.5, 0.5, 0.5},
-    }}}, "D"},
+            {0., 0., 0.}, {0.5, 0.5, 0.5}}}}, "D",
+        std::vector<int>{0, 1},
+        {},
+        {}},
     // bct, 2
     stru_{2,
         "D_4h",
@@ -180,8 +182,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1.2, 0., 0., 0., 1., 0., 0., 0., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0., 0.}, {0.5, 0.5, 0.5},
-    }}} , "D"},
+            {0., 0., 0.}, {0.5, 0.5, 0.5},}}} , "D",
+        std::vector<int>{0, 1},
+        {},
+        {}},
     //bct, 2
     stru_{2,
         "D_2h",
@@ -190,8 +194,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1.2, 0., 0., 0., 1.1, 0., 0., 0., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0., 0.}, {0.5, 0.5, 0.5},
-    }}} , "D"},
+            {0., 0., 0.}, {0.5, 0.5, 0.5}}}} , "D",
+        std::vector<int>{0, 1},
+        {},
+        {}},
     //fcc, 4
     stru_{4,
         "O_h",
@@ -200,8 +206,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0., 0.}, {0.5, 0.5, 0.},{0.5, 0., 0.5},{0., 0.5, 0.5},
-    }}} , "D"},
+            {0., 0., 0.}, {0.5, 0.5, 0.},{0.5, 0., 0.5},{0., 0.5, 0.5}}}} , "D",
+        std::vector<int>{0, 1, 2, 3},
+        {},
+        {}},
     //fco, 4
     stru_{4,
         "D_2h",
@@ -210,8 +218,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1.2, 0., 0., 0., 1.1, 0., 0., 0., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0., 0.}, {0.5, 0.5, 0.},{0.5, 0., 0.5},{0., 0.5, 0.5},
-    }}} , "D"},
+            {0., 0., 0.}, {0.5, 0.5, 0.},{0.5, 0., 0.5},{0., 0.5, 0.5}}}} , "D",
+        std::vector<int>{0, 1, 2, 3},
+        {},
+        {}},
     //3 in x
     stru_{3,
         "C_1h",
@@ -220,8 +230,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{3., -3., -3., -1., 1., -1., -1., -1., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0.1, 0.5}, {1./3., 0.1, 0.5},{2./3., 0.1, 0.5},
-    }}} , "D"},
+            {0., 0.1, 0.5}, {1. / 3., 0.1, 0.5},{2. / 3., 0.1, 0.5}}}} , "D",
+        std::vector<int>{1},
+        std::map<int,int>{{0, 2}},
+        {}},
     //3 in y
     stru_{3,
         "C_1h",
@@ -230,8 +242,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1., -1., -1., -3., 3., -3., -1., -1., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0.4, 0., 0.1}, {0.4, 1./3., 0.1},{0.4, 2./3., 0.1},
-    }}} , "D"},
+            {0.4, 0., 0.1}, {0.4, 1. / 3., 0.1},{0.4, 2. / 3., 0.1}}}} , "D",
+        std::vector<int>{2},
+        std::map<int,int>{{0, 1}},
+        {}},
     //3 in z
     stru_{3,
         "C_1h",
@@ -240,8 +254,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1., -1., -1., -1., 1., -1., -3., -3., 3.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0.3, 0.1, 0.}, {0.3, 0.1, 1./3.},{0.3, 0.1, 2./3.},
-    }}} , "D"},
+            {0.3, 0.1, 0.}, {0.3, 0.1, 1. / 3.},{0.3, 0.1, 2. / 3.}}}} , "D",
+        std::vector<int>{1},
+        std::map<int,int>{{0, 2}},
+        {}},
     //6 in xy
     stru_{6,
         "C_1",
@@ -250,8 +266,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{2., -2., -2., -3., 3., -3., -1., -1., 1.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0., 0.1}, {0., 1./3., 0.1},{0., 2./3., 0.1},{0.5, 0., 0.1}, {0.5, 1./3., 0.1},{0.5, 2./3., 0.1},
-    }}} , "D"},
+            {0., 0., 0.1}, {0., 1. / 3., 0.1},{0., 2. / 3., 0.1},{0.5, 0., 0.1}, {0.5, 1. / 3., 0.1},{0.5, 2. / 3., 0.1}}}} , "D",
+        std::vector<int>{0, 3},
+        std::map<int,int>{{1, 2}, {4, 5}},
+        {} },
     //6 in yz
     stru_{6,
         "C_1",
@@ -260,8 +278,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{1., -1., -1., -2., 2., -2., -3., -3., 3.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0.1, 0., 0.}, {0.1, 0., 1./3.},{0.1, 0., 2./3.},{0.1, 0.5, 0.}, {0.1, 0.5, 1./3.},{0.1, 0.5, 2./3.},
-    }}} , "D"},
+            {0.1, 0., 0.}, {0.1, 0., 1. / 3.},{0.1, 0., 2. / 3.},{0.1, 0.5, 0.}, {0.1, 0.5, 1. / 3.},{0.1, 0.5, 2. / 3.}}}} , "D",
+        std::vector<int>{2, 5},
+        std::map<int,int>{{0, 1}, {3, 4}},
+        {} },
     //6 in zx
     stru_{6,
         "C_1",
@@ -270,8 +290,10 @@ std::vector<stru_> supercell_lib{
         std::vector<double>{3., -3., -3., -1., 1., -1., -2., -2., 2.},
         std::vector<atomtype_>{atomtype_{"C",
         std::vector<std::vector<double>>{
-            {0., 0.1, 0.}, {1./3., 0.1, 0.},{2./3., 0.1, 0.},  {0., 0.1, 0.5}, {1./3., 0.1, 0.5},{2./3., 0.1, 0.5},
-    }}} , "D"},
+            {0., 0.1, 0.}, {1. / 3., 0.1, 0.},{2. / 3., 0.1, 0.},  {0., 0.1, 0.5}, {1. / 3., 0.1, 0.5},{2. / 3., 0.1, 0.5}}}} , "D",
+        std::vector<int>{0, 3},
+        std::map<int,int>{{1, 2}, {4, 5}},
+        {} },
     //hex: 3 in a1 - 231
     stru_{3,
         "C_1h",
@@ -287,5 +309,8 @@ std::vector<stru_> supercell_lib{
             {1./3., 0.2642317, 0.11111111}, {1./3., 0.1077433, 0.11111111},{1./3., 0.2642317, 0.44444444},
             {1./3., 0.1077433, 0.44444444}, {1./3., 0.2642317, 0.77777777},{1./3., 0.1077433, 0.77777777},
     }}}
-    , "D"},
+    , "D",
+        {},
+        {},
+        std::vector<std::vector<int>>{{3, 4, 0, 1, 0}, {5, 6, 0, 1, 0}, {7, 8, 0, 1, 0}} },
 };

@@ -20,6 +20,9 @@ struct stru_
     std::vector<double> cell;
     std::vector<atomtype_> all_type;
     std::string coordtype; // caltesian or direct
+    std::vector<int> force_zero_iat;   // the index of atoms whose force should be zero
+    std::map<int, int> force_oppo_iat;    // the index of atoms  pairs whose forces should be opposite
+    std::vector<std::vector<int>> force_oppo_iat_xyz; //{ia1, ia2, xoppo(1)/eq(0), yoppo, zoppo}
 };
 
 class SymmetryTest : public testing::Test

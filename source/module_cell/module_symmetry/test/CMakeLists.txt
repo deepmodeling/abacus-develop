@@ -7,3 +7,8 @@ AddTest(
   LIBS base ${math_libs} device symmetry
   SOURCES symmetry_test.cpp symmetry_test_analysis.cpp
 )
+AddTest(
+  TARGET symmetry_symtrz
+  LIBS base ${math_libs} device symmetry
+  SOURCES symmetry_test.cpp symmetry_test_symtrz.cpp
+)
