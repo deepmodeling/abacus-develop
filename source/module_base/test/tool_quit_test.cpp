@@ -62,11 +62,20 @@ TEST_F(ToolQuitTest,quit)
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
 }
 
+TEST_F(ToolQuitTest,quit_with_ret)
+{
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(ModuleBase::QUIT(1), ::testing::ExitedWithCode(1), "");
+	output = testing::internal::GetCapturedStdout();
+	// test output on screen
+	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
+}
+
 // use EXPECT_EXIT to test exit codes
 TEST_F(ToolQuitTest,warningquit)
 {
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter"), 
+	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter"),
 			::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening

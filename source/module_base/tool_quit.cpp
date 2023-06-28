@@ -39,6 +39,11 @@ void WARNING(const std::string &file,const std::string &description)
 
 void QUIT(void)
 {
+	QUIT(0);
+}
+
+void QUIT(int ret)
+{
 
 #ifdef __NORMAL
 
@@ -54,7 +59,7 @@ void QUIT(void)
     std::cout<<" See output information in : "<<GlobalV::global_out_dir<<std::endl;
 #endif
 
-    exit(0);
+    exit(ret);
 }
 
 
@@ -125,7 +130,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
 
 #endif
 
-    QUIT();
+    QUIT(1);
 }
 
 
@@ -140,12 +145,12 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 	{
 		//All cores will print inforamtion
 		std::cout.clear();
-		if(!GlobalV::ofs_running.is_open()) 
+		if(!GlobalV::ofs_running.is_open())
 		{
 			std::string logfile = GlobalV::global_out_dir + "running_" + GlobalV::CALCULATION + ".log";
 			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
 		}
-		if(!GlobalV::ofs_warning.is_open()) 
+		if(!GlobalV::ofs_warning.is_open())
 		{
 			std::string warningfile = GlobalV::global_out_dir + "warning.log";
 			GlobalV::ofs_warning.open( warningfile.c_str(), std::ios::app );
@@ -160,7 +165,7 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 		GlobalV::ofs_warning << std::endl;
 		GlobalV::ofs_warning << " ERROR! " << file << ", core " << GlobalV::MY_RANK+1 << ": " << description << std::endl;
 		GlobalV::ofs_warning << std::endl;
-		exit(0);
+		exit(1);
 	}
 #endif
 	return;

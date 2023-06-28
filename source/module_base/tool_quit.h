@@ -34,6 +34,7 @@ void WARNING(const std::string &file, const std::string &description);
  *
  */
 void QUIT(void);
+void QUIT(int ret);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
