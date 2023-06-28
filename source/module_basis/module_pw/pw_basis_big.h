@@ -155,9 +155,9 @@ public:
                 double modulus = f * (this->GGT * f);
                 if(modulus <= this->gridecut_lat)
                 {
-                    if(n1 < abs(igx)) n1 = abs(igx);
-                    if(n2 < abs(igy)) n2 = abs(igy);
-                    if(n3 < abs(igz)) n3 = abs(igz);
+                    if(n1 < std::abs(igx)) n1 = std::abs(igx);
+                    if(n2 < std::abs(igy)) n2 = std::abs(igy);
+                    if(n3 < std::abs(igz)) n3 = std::abs(igz);
                 }
             }
         }
@@ -306,7 +306,7 @@ public:
                 {
                     ++count;
                     if(count%this->poolnproc != this->poolrank) continue;
-                    if(abs(igx)<=ibox[0]-1 && abs(igy)<=ibox[1]-1 && abs(igz)<=ibox[2]-1 ) continue;
+                    if(std::abs(igx)<=ibox[0]-1 && std::abs(igy)<=ibox[1]-1 && std::abs(igz)<=ibox[2]-1 ) continue;
                     ModuleBase::Vector3<double> f;
                     f.x = igx;
                     f.y = igy;

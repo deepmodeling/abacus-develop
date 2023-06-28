@@ -82,7 +82,7 @@ class Setcell
         ucell.atoms[0].ncpp.zv = 1;
         ucell.atoms[1].ncpp.zv = 6;
 
-        ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+        ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
     };
 };

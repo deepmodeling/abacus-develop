@@ -32,7 +32,7 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
     {
         num_elec += ocp_kb[i];
     }
-    if (abs(num_elec - GlobalV::nelec) > 1.0e-5)
+    if (std::abs(num_elec - GlobalV::nelec) > 1.0e-5)
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "total number of occupations is wrong , please check ocp_set");

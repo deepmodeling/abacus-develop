@@ -210,7 +210,7 @@ template <class c2o>
 void test_orb::set_single_c2o(int TA, int TB, int LA, int NA, int LB, int NB)
 {
 	this->test_center2_orb11[TA][TB][LA][NA][LB].insert(
-	make_pair(NB, std::make_unique<c2o>(ORB.Phi[TA].PhiLN(LA, NA),
+	std::make_pair(NB, std::make_unique<c2o>(ORB.Phi[TA].PhiLN(LA, NA),
 		ORB.Phi[TB].PhiLN(LB, NB), OGT.MOT, Center2_MGT)));
 }
 double test_orb::randr(double Rmax)

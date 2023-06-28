@@ -75,8 +75,8 @@ TEST_F(PWTEST,test6_3_1)
                     if (modulus <= ggecut || full_pw)
                     {
                         tmp[ix*ny*nz + iy*nz + iz] = 1.0/(modulus+1);
-                        if(vy > 0) tmp[ix*ny*nz + iy*nz + iz]+=ModuleBase::IMAG_UNIT / (abs(v.x+1) + 1);
-                        else if(vy < 0) tmp[ix*ny*nz + iy*nz + iz]-=ModuleBase::IMAG_UNIT / (abs(-v.x+1) + 1);
+                        if(vy > 0) tmp[ix*ny*nz + iy*nz + iz]+=ModuleBase::IMAG_UNIT / (std::abs(v.x+1) + 1);
+                        else if(vy < 0) tmp[ix*ny*nz + iy*nz + iz]-=ModuleBase::IMAG_UNIT / (std::abs(-v.x+1) + 1);
                     }
                 }
             }   
@@ -112,8 +112,8 @@ TEST_F(PWTEST,test6_3_1)
         rhogr[ig] = 1.0/(pwtest.gg[ig]+1);
         if(pwtest.gdirect[ig].y > 0) 
         {
-            rhog[ig]+=ModuleBase::IMAG_UNIT / (abs(pwtest.gdirect[ig].x+1) + 1);
-            rhogr[ig]+=ModuleBase::IMAG_UNIT / (abs(pwtest.gdirect[ig].x+1) + 1);
+            rhog[ig]+=ModuleBase::IMAG_UNIT / (std::abs(pwtest.gdirect[ig].x+1) + 1);
+            rhogr[ig]+=ModuleBase::IMAG_UNIT / (std::abs(pwtest.gdirect[ig].x+1) + 1);
         }
     }    
     double * rhor = new double [nrxx];
@@ -127,8 +127,8 @@ TEST_F(PWTEST,test6_3_1)
         rhofgr[ig] = 1.0/(pwtest.gg[ig]+1);
         if(pwtest.gdirect[ig].y > 0) 
         {
-            rhofg[ig]+=ModuleBase::IMAG_UNIT / (abs(pwtest.gdirect[ig].x+1) + 1);
-            rhofgr[ig]+=ModuleBase::IMAG_UNIT / (abs(pwtest.gdirect[ig].x+1) + 1);
+            rhofg[ig]+=ModuleBase::IMAG_UNIT / (std::abs(pwtest.gdirect[ig].x+1) + 1);
+            rhofgr[ig]+=ModuleBase::IMAG_UNIT / (std::abs(pwtest.gdirect[ig].x+1) + 1);
         }
     }    
     float * rhofr = new float [nrxx];

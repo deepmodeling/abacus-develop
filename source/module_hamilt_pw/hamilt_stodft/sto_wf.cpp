@@ -53,7 +53,7 @@ void Init_Sto_Orbitals
     }
     else
     {
-        srand((unsigned)abs(seed_in) + GlobalV::MY_RANK * 10000);
+        srand((unsigned)std::abs(seed_in) + GlobalV::MY_RANK * 10000);
     }
 
     bool firstrankmore = false;

@@ -292,7 +292,7 @@ void WF_atomic::atomic_wfc(const int ik,
                                               ModuleBase::GlobalFunc::ZEROS(aux, np);
                                               for(int n1=0;n1<2*l+1;n1++){
                                                  const int lm = l*l +n1;
-                                                 if(abs(soc.rotylm(n1,ind))>1e-8)
+                                                 if(std::abs(soc.rotylm(n1,ind))>1e-8)
                                                    for(int ig=0; ig<np;ig++)
                                                       aux[ig] += soc.rotylm(n1,ind)* ylm(lm,ig);
                                               }

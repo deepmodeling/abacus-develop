@@ -148,7 +148,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 #endif
 		for(int ir=0; ir<this->rhopw->nrxx; ir++)
 		{
-			scf_thr2 += abs( chr->rho[is][ir] - chr->rho_save[is][ir] );
+			scf_thr2 += std::abs( chr->rho[is][ir] - chr->rho_save[is][ir] );
 		}
 	}
 

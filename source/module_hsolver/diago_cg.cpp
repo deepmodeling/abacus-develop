@@ -441,7 +441,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
 
-    if (abs(eigenvalue - e0) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
+    if (std::abs(eigenvalue - e0) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR)
     {
         // ModuleBase::timer::tick("DiagoCG","update");
         return 1;

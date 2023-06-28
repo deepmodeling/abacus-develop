@@ -833,13 +833,13 @@ void unkOverlap_lcao::test(const Grid_Technique& gt, std::complex<double>*** wfc
     */
     /*
     ModuleBase::Vector3<double> dk = kv.kvec_c[0] - kv.kvec_c[0];
-    GlobalV::ofs_running << "(" << 0 << "," << 0 << ") = " << abs(this->unkdotp_LCAO(0,0,0,0,dk)) << std::endl;
+    GlobalV::ofs_running << "(" << 0 << "," << 0 << ") = " << std::abs(this->unkdotp_LCAO(0,0,0,0,dk)) << std::endl;
     */
     /*
     ModuleBase::Vector3<double> dk = kv.kvec_c[0] - kv.kvec_c[0];
     for(int ib = 0; ib < GlobalV::NBANDS; ib++)
         for(int ib2 = 0; ib2 < GlobalV::NBANDS; ib2++)
-            GlobalV::ofs_running << "(" << ib2 << "," << ib << ") = " << abs(this->unkdotp_LCAO(0,0,ib2,ib,dk)) <<
+            GlobalV::ofs_running << "(" << ib2 << "," << ib << ") = " << std::abs(this->unkdotp_LCAO(0,0,ib2,ib,dk)) <<
     std::endl;
     */
     /*

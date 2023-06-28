@@ -340,7 +340,7 @@ sumkg:
         ef = (eup + elw) / 2.0;
         const double sumkmid = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
 
-        if (abs(sumkmid - nelec) < eps)
+        if (std::abs(sumkmid - nelec) < eps)
         {
             return;
         }
@@ -513,7 +513,7 @@ double Occupy::w1gauss(const double &x, const int n)
     //=======================
     if (n == -99)
     {
-        if (abs(x) <= 36.0)
+        if (std::abs(x) <= 36.0)
         {
             const double f = 1.00 / (1.00 + exp(-x));
             const double onemf = 1.00 - f;
@@ -778,7 +778,7 @@ double Occupy::wsweight(const ModuleBase::Vector3<double> &r, ModuleBase::Vector
             break;
         }
 
-        if (abs(ck) < eps)
+        if (std::abs(ck) < eps)
         {
             nreq++;
         }
@@ -854,14 +854,14 @@ void Occupy::efermit(double** ekb,const int nband,const int nks,const double &ne
         ef = (eup + elw) / 2.0;
         sumkmid = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, ef);
 
-        if (abs(sumkmid - nelec) < better)
+        if (std::abs(sumkmid - nelec) < better)
         {
-            better = abs(sumkmid - nelec);
+            better = std::abs(sumkmid - nelec);
             efbetter = ef;
         }
 
         // converged
-        if (abs(sumkmid - nelec) < eps)
+        if (std::abs(sumkmid - nelec) < eps)
         {
             converge = true;
             break;

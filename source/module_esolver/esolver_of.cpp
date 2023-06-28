@@ -812,13 +812,13 @@ bool ESolver_OF::checkExit()
     if (this->normdLdphi < this->of_tolp)
         potConv = true;
     if (this->iter >= 3
-        && abs(this->normdLdphi - this->normdLdphi_last) < 1e-10
-        && abs(this->normdLdphi - this->normdLdphi_llast) < 1e-10)
+        && std::abs(this->normdLdphi - this->normdLdphi_last) < 1e-10
+        && std::abs(this->normdLdphi - this->normdLdphi_llast) < 1e-10)
         potHold = true;
 
     if (this->iter >= 3
-        && abs(this->energy_current - this->energy_last) < this->of_tole
-        && abs(this->energy_current - this->energy_llast) < this->of_tole)
+        && std::abs(this->energy_current - this->energy_last) < this->of_tole
+        && std::abs(this->energy_current - this->energy_llast) < this->of_tole)
         energyConv = true;
 
     if (this->of_conv == "energy" && energyConv)

@@ -265,7 +265,7 @@ void Force_LCAO_gamma::test_gamma(double* mm, const std::string& name)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
         {
-            if (abs(mm[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+            if (std::abs(mm[i * GlobalV::NLOCAL + j]) > 1.0e-5)
             {
                 std::cout << std::setw(12) << mm[i * GlobalV::NLOCAL + j];
             }
