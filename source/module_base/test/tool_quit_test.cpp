@@ -76,7 +76,7 @@ TEST_F(ToolQuitTest,warningquit)
 {
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter"),
-			::testing::ExitedWithCode(0), "");
+			::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
