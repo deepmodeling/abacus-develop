@@ -36,7 +36,7 @@ void Input::Init(const std::string &fn)
 #endif
     if (input_error == 1)
     {
-        ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT");
+        ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT", 1);
     }
 
 #ifdef __MPI
@@ -44,7 +44,7 @@ void Input::Init(const std::string &fn)
 #endif
     if (!success)
     {
-        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.");
+        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
     }
 #ifdef __MPI
     Bcast();
@@ -88,7 +88,7 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
                          << std::endl;
     GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
-                         << std::endl; 
+                         << std::endl;
     GlobalV::ofs_running << "                      Commit: " << commit
                          << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
@@ -452,7 +452,7 @@ void Input::Default(void)
     td_gauss_freq = "22.13"; // fs^-1
     td_gauss_phase = "0.0";
     td_gauss_sigma = "30.0"; // fs
-    td_gauss_t0 = "100.0"; 
+    td_gauss_t0 = "100.0";
     td_gauss_amp = "0.25"; // V/A
 
     // Trapezoid
@@ -2930,7 +2930,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(deepks_bandgap);
     Parallel_Common::bcast_bool(deepks_out_unittest);
     Parallel_Common::bcast_string(deepks_model);
-    
+
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);
