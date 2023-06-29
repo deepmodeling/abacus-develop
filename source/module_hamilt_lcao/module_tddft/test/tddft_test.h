@@ -12,31 +12,31 @@ class TDDFTTEST : public testing::Test
   public:
     static void SetUpTestCase()
     {
-        cout << "\033[32m"
+        std::cout << "\033[32m"
              << "============================"
-             << "\033[0m" << endl;
-        cout << "\033[32m"
+             << "\033[0m" << std::endl;
+        std::cout << "\033[32m"
              << "=    TDDFT MODULE TEST START  ="
-             << "\033[0m" << endl;
-        cout << "\033[32m"
+             << "\033[0m" << std::endl;
+        std::cout << "\033[32m"
              << "============================"
-             << "\033[0m" << endl;
+             << "\033[0m" << std::endl;
     }
     static void TearDownTestCase()
     {
-        cout << "\033[32m"
+        std::cout << "\033[32m"
              << "============================"
-             << "\033[0m" << endl;
-        cout << "\033[32m"
+             << "\033[0m" << std::endl;
+        std::cout << "\033[32m"
              << "=     TDDFT MODULE TEST END   ="
-             << "\033[0m" << endl;
-        cout << "\033[32m"
+             << "\033[0m" << std::endl;
+        std::cout << "\033[32m"
              << "============================"
-             << "\033[0m" << endl;
+             << "\033[0m" << std::endl;
     }
     void SetUp()
     {
-        cout << "\033[32m"
+        std::cout << "\033[32m"
              << "[    CASE  ]"
              << "\033[0m"
              << " ";
