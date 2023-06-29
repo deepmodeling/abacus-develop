@@ -116,6 +116,7 @@ void Paw_Element::read_paw_xml(std::string filename)
 
         for(int ir = 0; ir < nr; ir ++)
         {
+            // Note that in ABINIT, tproj stores r*p(r), not p(r) as in here
             ifs >> ptilde_r[istate][ir];
         }
     }

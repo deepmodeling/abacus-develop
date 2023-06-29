@@ -106,7 +106,7 @@ class Paw_Element
     public:
 
     // ecutwfc_in : unit in Rydberg
-    void init_paw(const double ecutwfc_in, const double cell_factor_in);
+    void init_paw_element(const double ecutwfc_in, const double cell_factor_in);
 
     private:
 
