@@ -66,7 +66,7 @@ TEST_F(cal_vel_test, eps_pot)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -160,7 +160,7 @@ TEST_F(cal_vel_test, cal_vel)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 

@@ -35,7 +35,7 @@ TEST_F(cal_vcav_test, lapl_rho)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -142,7 +142,7 @@ TEST_F(cal_vcav_test, createcavity)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -205,7 +205,7 @@ TEST_F(cal_vcav_test, cal_vcav)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
