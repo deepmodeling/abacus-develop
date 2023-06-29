@@ -117,14 +117,6 @@ void Paw_Element::read_paw_xml(std::string filename)
         for(int ir = 0; ir < nr; ir ++)
         {
             ifs >> ptilde_r[istate][ir];
-
-            // Note : for some reason what is stored in the xml file
-            // turns out to be ptilde / r, so I need to multiply it back
-            // see, for example, around line 3400 of m_pawpsp.F90 in ABINIT
-            // which reads:
-            //   tproj(1+shft:tproj_mesh%mesh_size,ib)=paw_setuploc%projector_function(ib)%data(1:tproj_mesh%mesh_size-shft)&
-            //         &   *tproj_mesh%rad(1+shft:tproj_mesh%mesh_size)
-            ptilde_r[istate][ir] *= rr[ir];
         }
     }
 

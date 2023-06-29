@@ -35,7 +35,7 @@ double Paw_Element::spherical_bessel_transform(const int l, std::vector<double> 
     {
         double x = rr[ir] * q;
         double sph_bes = spherical_bessel_function(l,x);
-        integrand[ir] = sph_bes * fr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
+        integrand[ir] = sph_bes * fr[ir] * rr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
     }
 
     return this->simpson_integration(integrand);
