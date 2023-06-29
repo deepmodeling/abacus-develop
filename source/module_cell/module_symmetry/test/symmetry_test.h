@@ -23,6 +23,8 @@ struct stru_
     std::vector<int> force_zero_iat;   // the index of atoms whose force should be zero
     std::map<int, int> force_oppo_iat;    // the index of atoms  pairs whose forces should be opposite
     std::vector<std::vector<int>> force_oppo_iat_xyz; //{ia1, ia2, xoppo(1)/eq(0), yoppo, zoppo}
+    std::vector<std::pair<int, int>> stress_zero; //a set of elements in the stress tensor that should be zero
+    std::vector<std::vector<std::pair<int, int>>> stress_eq; //a set of elements in the stress tensor that should be equal
 };
 
 class SymmetryTest : public testing::Test
