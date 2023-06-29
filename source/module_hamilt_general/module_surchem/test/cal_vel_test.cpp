@@ -52,8 +52,8 @@ TEST_F(cal_vel_test, shape_gradn)
 
     for (int ir = 0; ir < nrxx; ir++)
     {
-        epr_z = log(max(PS_TOTN_real[ir], min) / GlobalV::nc_k) / sqrt(2) / GlobalV::sigma_k;
-        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / max(PS_TOTN_real[ir], min);
+        epr_z = log(std::max(PS_TOTN_real[ir], min) / GlobalV::nc_k) / sqrt(2) / GlobalV::sigma_k;
+        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
 
     EXPECT_NEAR(eprime[0],5.0729550913,1e-10);
