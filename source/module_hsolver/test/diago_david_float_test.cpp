@@ -170,7 +170,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 	DIAGOTEST::readh(ifs,hmatrix);
 	ifs.close();
 	DIAGOTEST::hmatrix_f = hmatrix;
-	int nband = max(DIAGOTEST::npw/20,1);
+	int nband = std::max(DIAGOTEST::npw/20,1);
 
 	DiagoDavPrepare ddp(nband,DIAGOTEST::npw,0,2,1e-5,500);
 	
