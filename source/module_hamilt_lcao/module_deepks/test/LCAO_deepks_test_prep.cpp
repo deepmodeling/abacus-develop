@@ -97,7 +97,7 @@ void test_deepks::set_ekcut()
 			GlobalV::ofs_running << "error : cannot find LCAO file : " << ucell.orbital_fn[it] << std::endl;
 		}
 
-		string word;
+		std::string word;
 		while (in_ao.good())
 		{
 			in_ao >> word;
