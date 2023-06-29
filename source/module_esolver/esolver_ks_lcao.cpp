@@ -739,13 +739,16 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
     // save charge difference into files for charge extrapolation
-    this->CE.save_files(istep,
-                        GlobalC::ucell,
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
 #ifdef __MPI
-                        this->pw_big,
+                            this->pw_big,
 #endif
-                        this->pelec->charge,
-                        &this->sf);
+                            this->pelec->charge,
+                            &this->sf);
+    }
 
     if (this->LOC.out_dm1 == 1)
     {

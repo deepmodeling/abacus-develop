@@ -90,8 +90,8 @@ class Charge_Extra
 #ifdef __MPI
                     const ModulePW::PW_Basis_Big* pw_big,
 #endif
-                    Charge* chr,
-                    Structure_Factor* sf);
+                    const Charge* chr,
+                    const Structure_Factor* sf) const;
 
   private:
     int istep = 0; ///< the current step

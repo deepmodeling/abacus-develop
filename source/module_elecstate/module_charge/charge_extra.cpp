@@ -320,8 +320,8 @@ void Charge_Extra::save_files(const int& istep,
 #ifdef __MPI
                               const ModulePW::PW_Basis_Big* pw_big,
 #endif
-                              Charge* chr,
-                              Structure_Factor* sf)
+                              const Charge* chr,
+                              const Structure_Factor* sf) const
 {
     // rename OLD1_SPIN*_CHG.cube to OLD2_SPIN*_CHG.cube
     if (istep > 1 && pot_order == 3 && GlobalV::MY_RANK == 0)

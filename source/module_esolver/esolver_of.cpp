@@ -899,13 +899,16 @@ void ESolver_OF::afterOpt(const int istep)
     ModuleIO::output_convergence_after_scf(this->conv, this->pelec->f_en.etot);
 
     // save charge difference into files for charge extrapolation
-    this->CE.save_files(istep,
-                        GlobalC::ucell,
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
 #ifdef __MPI
-                        this->pw_big,
+                            this->pw_big,
 #endif
-                        this->pelec->charge,
-                        &this->sf);
+                            this->pelec->charge,
+                            &this->sf);
+    }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
