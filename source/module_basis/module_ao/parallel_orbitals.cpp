@@ -70,6 +70,68 @@ bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) cons
     return true;
 }
 
+void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
+    bool& div_2d, std::ofstream& ofs_running)
+{
+    ModuleBase::TITLE("Parallel_Orbitals", "set_global2local");
+
+    this->init_global2local(M_A, N_A, ofs_running);
+    if (!div_2d) // xiaohui add 2013-09-02
+    {
+        std::cout << " common settings for trace_loc_row and trace_loc_col " << std::endl;
+        for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = i;
+        for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = i;
+        this->nrow = M_A;
+        this->ncol = N_A;
+        this->nloc = this->nrow * this->ncol;
+    }
+    else
+    {
+        // ofs_running << " nrow=" << nrow << std::endl;
+        for (int irow = 0; irow < this->nrow; irow++)
+        {
+            int global_row = this->row_set[irow];
+            this->trace_loc_row[global_row] = irow;
+            // ofs_running << " global_row=" << global_row
+            // << " trace_loc_row=" << this->trace_loc_row[global_row] << std::endl;
+        }
+
+        // ofs_running << " ncol=" << ncol << std::endl;
+        for (int icol = 0; icol < this->ncol; icol++)
+        {
+            int global_col = this->col_set[icol];
+            this->trace_loc_col[global_col] = icol;
+            // ofs_running << " global_col=" << global_col
+            // << " trace_loc_col=" << this->trace_loc_row[global_col] << std::endl;
+        }
+    }
+
+    return;
+}
+
+void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstream& ofs_running)
+{
+    ModuleBase::TITLE("Parallel_Orbitals", "init_global2local");
+    assert(M_A > 0);
+    assert(N_A > 0);
+
+    delete[] this->trace_loc_row;
+    delete[] this->trace_loc_col;
+
+    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_row dimension", M_A);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_col dimension", N_A);
+
+    this->trace_loc_row = new int[M_A];
+    this->trace_loc_col = new int[N_A];
+
+    for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = -1;
+    for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = -1;
+
+    ModuleBase::Memory::record("trace_row_col", sizeof(int) * M_A);
+    ModuleBase::Memory::record("trace_row_col", sizeof(int) * N_A);
+    return;
+}
+
 #ifdef __MPI
 int Parallel_Orbitals::set_local2global(
     const int& M_A,

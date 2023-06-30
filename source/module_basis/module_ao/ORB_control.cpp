@@ -200,10 +200,21 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
         this->ParaV.nloc = nlocal * nlocal;
     }
 
+    // determine whether 2d-division or not according to ks_solver
+    bool div_2d;
+    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav") div_2d = false;
+#ifdef __MPI
+    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver") div_2d = true;
+#endif
+    else
+    {
+        std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver << std::endl;
+        ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_global2local", "Check ks_solver.");
+    }
     // (2) set the trace, then we can calculate the nnr.
     // for 2d: calculate po.nloc first, then trace_loc_row and trace_loc_col
     // for O(N): calculate the three together.
-    this->set_trace(ofs_running);
+    this->ParaV.set_global2local(nlocal, nlocal, div_2d, ofs_running);
 }
 
 
@@ -304,91 +315,6 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
 
     if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_in_proc", pv->lastband_in_proc);
     if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_number", pv->lastband_number);
-
-    return;
-}
-
-//set_trace, related to Parallel_Oribtals
-void ORB_control::set_trace(std::ofstream& ofs_running)
-{
-    ModuleBase::TITLE("ORB_control", "set_trace");
-    assert(nlocal > 0);
-
-    Parallel_Orbitals* pv = &this->ParaV;
-
-    delete[] pv->trace_loc_row;
-    delete[] pv->trace_loc_col;
-
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_row dimension", nlocal);
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_col dimension", nlocal);
-
-    pv->trace_loc_row = new int[nlocal];
-    pv->trace_loc_col = new int[nlocal];
-    // mohan update 2011-04-07
-    for (int i = 0; i < nlocal; i++)
-    {
-        pv->trace_loc_row[i] = -1;
-        pv->trace_loc_col[i] = -1;
-    }
-
-    ModuleBase::Memory::record("ORB::trace_row_col", sizeof(int) * 2 * nlocal);
-
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav") // xiaohui add 2013-09-02
-    {
-        std::cout << " common settings for trace_loc_row and trace_loc_col " << std::endl;
-        for (int i = 0; i < nlocal; i++)
-        {
-            pv->trace_loc_row[i] = i;
-            pv->trace_loc_col[i] = i;
-        }
-        pv->nrow = nlocal;
-        pv->ncol = nlocal;
-    }
-#ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver") // xiaohui add 2013-09-02
-    {
-        // ofs_running << " nrow=" << nrow << std::endl;
-        for (int irow = 0; irow < pv->nrow; irow++)
-        {
-            int global_row = pv->row_set[irow];
-            pv->trace_loc_row[global_row] = irow;
-            // ofs_running << " global_row=" << global_row
-            // << " trace_loc_row=" << pv->trace_loc_row[global_row] << std::endl;
-        }
-
-        // ofs_running << " ncol=" << ncol << std::endl;
-        for (int icol = 0; icol < pv->ncol; icol++)
-        {
-            int global_col = pv->col_set[icol];
-            pv->trace_loc_col[global_col] = icol;
-            // ofs_running << " global_col=" << global_col
-            // << " trace_loc_col=" << pv->trace_loc_row[global_col] << std::endl;
-        }
-    }
-#endif
-    else
-    {
-        std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver << std::endl;
-        ModuleBase::WARNING_QUIT("ORB_control::set_trace", "Check ks_solver.");
-    }
-
-    //---------------------------
-    // print the trace for test.
-    //---------------------------
-    /*
-    ofs_running << " " << std::setw(10) << "GlobalRow" << std::setw(10) << "LocalRow" << std::endl;
-    for(int i=0; i<nlocal; i++)
-    {
-        ofs_running << " " << std::setw(10) << i << std::setw(10) << pv->trace_loc_row[i] << std::endl;
-
-    }
-
-    ofs_running << " " << std::setw(10) << "GlobalCol" << std::setw(10) << "LocalCol" << std::endl;
-    for(int j=0; j<nlocal; j++)
-    {
-        ofs_running << " " << std::setw(10) << j << std::setw(10) << trace_loc_col[j] << std::endl;
-    }
-    */
 
     return;
 }

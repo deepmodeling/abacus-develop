@@ -52,6 +52,16 @@ struct Parallel_2D
     /// check whether a basis element is in this processor
     /// (check whether local-index > 0 )
     bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
+
+    void set_global2local(const int& M_A,
+        const int& N_A,
+        bool& div_2d,
+        std::ofstream& ofs_running);
+
+protected:
+    void init_global2local(const int& M_A,
+        const int& N_A,
+        std::ofstream& ofs_running);
 };
 
 /// These stucture packs the information of 2D-block-cyclic 

@@ -118,7 +118,5 @@ private:
     void set_parameters(std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
 
-    void set_trace(std::ofstream& ofs_running);
-
 };
 #endif
