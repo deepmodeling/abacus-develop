@@ -10,7 +10,9 @@ extern "C"
 }
 #endif
 Parallel_2D::Parallel_2D()
-{}
+{
+    this->nb = 1;
+}
 Parallel_2D::~Parallel_2D()
 {
     delete[] trace_loc_row;
@@ -196,6 +198,7 @@ int Parallel_2D::set_local2global(
     std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("Parallel_2D", "set_local2global");
+    assert(this->nb > 0);
 
     int dim[2];
     int period[2];
@@ -402,6 +405,24 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     this->nloc_Eij = this->ncol_bands * this->ncol_bands;
 
     return 0;
+}
+#else
+void Parallel_2D::set_serial(const int& M_A, const int& N_A)
+{
+    ModuleBase::TITLE("Parallel_Orbitals", "set_serial");
+    this->nrow = M_A;
+    this->ncol = N_A;
+    this->nloc = this->nrow * this->ncol;
+    this->row_set.resize(this->nrow);
+    this->col_set.resize(this->ncol);
+    for (int i = 0; i < this->nrow; i++)
+    {
+        this->row_set[i] = i;
+    }
+    for (int i = 0; i < this->ncol; i++)
+    {
+        this->col_set[i] = i;
+    }
 }
 #endif
 

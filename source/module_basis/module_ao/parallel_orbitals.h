@@ -57,11 +57,15 @@ struct Parallel_2D
         const int& gc/**< global col size*/,
         const int& lld/**< leading local dimension*/);
 
-    /// set the map from local index to global index
+    /// set the map from local index to global index,
+    /// and set local sizes (nrow, ncol, nloc) by the way
     int set_local2global(const int& M_A/**< global row size*/,
         const int& N_A/**< global col size*/,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
+#else
+    void set_serial(const int& M_A/**< global row size*/,
+        const int& N_A/**< global col size*/);
 #endif
 
     /// set the 2D-structure of processors in each dimension.

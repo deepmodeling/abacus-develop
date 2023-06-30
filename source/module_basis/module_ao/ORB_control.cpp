@@ -396,21 +396,8 @@ void ORB_control::divide_HS_2d(
         pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
     }
 #else // single processor used.
-    pv->nb = nlocal;
-    pv->nrow = nlocal;
-    pv->ncol = nlocal;
-    pv->nloc = nlocal * nlocal;
+    pv->set_serial(nlocal, nlocal);
     this->set_parameters(ofs_running, ofs_warning);
-    pv->row_set.resize(nlocal);
-	for(int i=0; i<nlocal; i++)
-	{
-        pv->row_set[i] = i;
-	}
-    pv->col_set.resize(nlocal);
-	for(int i=0; i<nlocal; i++)
-	{
-        pv->col_set[i] = i;
-    }
 #endif
 
     assert(pv->nloc > 0);
