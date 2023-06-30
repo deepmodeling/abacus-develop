@@ -57,8 +57,11 @@ struct Parallel_2D
         std::ofstream& ofs_warning);
 #endif
 
-    ///  set the 2D index of processors
-    void set_proc_dim(const int& dsize);
+    /// set the 2D-structure of processors in each dimension.
+    /// dim0 and dim1 will be set as close to sqrt(nproc) as possible, 
+    /// for example, if nproc = 12, dim0 = 3, dim1 = 4. 
+    /// if mode==0, dim0 <= dim1; else, dim0 >= dim1.
+    void set_proc_dim(const int& dsize, bool mode = 0);
 
     /// check whether a basis element is in this processor
     /// (check whether local-index > 0 )

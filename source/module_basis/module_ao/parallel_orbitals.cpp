@@ -36,15 +36,28 @@ Parallel_Orbitals::~Parallel_Orbitals()
     delete[] nlocstart;
 }
 
-void Parallel_2D::set_proc_dim(const int& dsize)
+void Parallel_2D::set_proc_dim(const int& dsize, bool mode /*= 0*/)
 {
-    this->dim0 = (int)sqrt((double)dsize); // mohan update 2012/01/13
-    while (dsize % this->dim0 != 0)
+    if (mode) //dim0 >= dim1
     {
-        this->dim0 = this->dim0 - 1;
+        this->dim1 = (int)sqrt((double)dsize);
+        while (dsize % this->dim1 != 0)
+        {
+            this->dim1 = this->dim1 - 1;
+        }
+        assert(this->dim1 > 0);
+        this->dim0 = dsize / this->dim1;
     }
-    assert(this->dim0 > 0);
-    this->dim1 = dsize / this->dim0;
+    else    //dim0 <= dim1
+    {
+        this->dim0 = (int)sqrt((double)dsize);
+        while (dsize % this->dim0 != 0)
+        {
+            this->dim0 = this->dim0 - 1;
+        }
+        assert(this->dim0 > 0);
+        this->dim1 = dsize / this->dim0;
+    }
 }
 
 #ifdef __MPI
