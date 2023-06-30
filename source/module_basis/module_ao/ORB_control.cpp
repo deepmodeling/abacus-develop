@@ -319,47 +319,6 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
     return;
 }
 
-#ifdef __MPI
-#include "module_base/scalapack_connector.h"
-inline int cart2blacs(MPI_Comm comm_2D,
-                      int nprows,
-                      int npcols,
-                      int Nlocal,
-                      int Nbands,
-                      int nblk,
-                      int lld,
-                      int* desc,
-                      int* desc_wfc,
-                      int* desc_wfc1,
-                      int* desc_Eij)
-{
-    int my_blacs_ctxt;
-    int myprow, mypcol;
-    int* usermap = new int[nprows * npcols];
-    int info = 0;
-    for (int i = 0; i < nprows; ++i)
-    {
-        for (int j = 0; j < npcols; ++j)
-        {
-            int pcoord[2] = {i, j};
-            MPI_Cart_rank(comm_2D, pcoord, &usermap[i + j * nprows]);
-        }
-    }
-    MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
-    Cblacs_get(comm_2D_f, 0, &my_blacs_ctxt);
-    Cblacs_gridmap(&my_blacs_ctxt, usermap, nprows, nprows, npcols);
-    Cblacs_gridinfo(my_blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    delete[] usermap;
-    int ISRC = 0;
-    descinit_(desc, &Nlocal, &Nlocal, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-    descinit_(desc_wfc, &Nlocal, &Nbands, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-    descinit_(desc_wfc1, &Nbands, &Nlocal, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-    descinit_(desc_Eij, &Nbands, &Nbands, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-
-    return my_blacs_ctxt;
-}
-#endif
-
 // divide the H&S matrix using 2D block algorithms.
 void ORB_control::divide_HS_2d(
 #ifdef __MPI
@@ -433,17 +392,8 @@ void ORB_control::divide_HS_2d(
     // init blacs context for genelpa
     if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
     {
-        pv->blacs_ctxt = cart2blacs(pv->comm_2D,
-                                    pv->dim0,
-                                    pv->dim1,
-                                    nlocal,
-                                    nbands,
-                                    pv->nb,
-                                    pv->nrow,
-                                    pv->desc,
-                                    pv->desc_wfc,
-                                    pv->desc_wfc1,
-                                    pv->desc_Eij);
+        pv->set_desc(nlocal, nlocal, pv->nrow);
+        pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
     }
 #else // single processor used.
     pv->nb = nlocal;

@@ -47,12 +47,19 @@ struct Parallel_2D
     int blacs_ctxt;    ///< blacs info
     int desc[9];    ///<for matrix, nlocal*nlocal    
     MPI_Comm comm_2D;   ///<communicator for 2D-block
+
     /// create the 'comm_2D' stratege.
     void mpi_create_cart();
 
+    ///@brief set the desc[9] of the 2D-block-cyclic distribution
+    ///@return blacs_ctxt
+    void set_desc(const int& gr/**< global row size*/,
+        const int& gc/**< global col size*/,
+        const int& lld/**< leading local dimension*/);
+
     /// set the map from local index to global index
-    int set_local2global(const int& M_A, ///< global row size
-        const int& N_A, ///< global col size
+    int set_local2global(const int& M_A/**< global row size*/,
+        const int& N_A/**< global col size*/,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
 #endif
@@ -74,8 +81,8 @@ struct Parallel_2D
 
 protected:
     /// set the map from local index to global index
-    void init_global2local(const int& M_A, ///< global row size
-        const int& N_A, ///< global col size
+    void init_global2local(const int& M_A/**< global row size*/,
+        const int& N_A/**< global col size*/,
         std::ofstream& ofs_running);
 };
 
@@ -113,10 +120,17 @@ struct Parallel_Orbitals : public Parallel_2D
     int desc_wfc[9]; //for wfc, nlocal*nbands
     int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
     int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
+
     /// set the local size of wavefunction and Eij
-    int set_nloc_wfc_Eij(const int& N_A,  ///< global col size
+    int set_nloc_wfc_Eij(const int& N_A/**< global row size*/,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
+
+    ///@brief set the desc[9] of the 2D-block-cyclic distribution of wavefunction and Eij
+    ///@return blacs_ctxt
+    void set_desc_wfc_Eij(const int& nbasis,
+        const int& nbands,
+        const int& lld);
 #endif
 
     int nspin = 1;
