@@ -418,6 +418,7 @@ void ORB_control::divide_HS_2d(
     pv->mpi_create_cart();
 
     int try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
+    try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     if (try_nb == 1)
     {
         ofs_running << " parameter nb2d is too large: nb2d = " << pv->nb << std::endl;
@@ -426,6 +427,7 @@ void ORB_control::divide_HS_2d(
                     << std::endl;
         pv->nb = 1;
         try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
+        try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     }
 
     // init blacs context for genelpa

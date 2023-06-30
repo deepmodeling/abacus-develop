@@ -133,24 +133,24 @@ void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstrea
 }
 
 #ifdef __MPI
-int Parallel_Orbitals::set_local2global(
+int Parallel_2D::set_local2global(
     const int& M_A,
     const int& N_A,
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "set_local2global");
+    ModuleBase::TITLE("Parallel_2D", "set_local2global");
 
     int dim[2];
     int period[2];
-    int coord[2];
-    int i, j, k, end_id;
-    int block;
+    int j, end_id, block;
     int row_b, col_b;
 
     // (0) every processor get it's id on the 2D comm
     // : ( coord[0], coord[1] )
     MPI_Cart_get(this->comm_2D, 2, dim, period, coord);
+    assert(dim[0] == this->dim0);
+    assert(dim[1] == this->dim1);
 
     // (1.1) how many blocks at least
     // eg. M_A = 6400, nb = 64;
@@ -223,9 +223,9 @@ int Parallel_Orbitals::set_local2global(
     // belongs to which row in the global matrix.
     this->row_set.resize(this->nrow);
     j = 0;
-    for (i = 0; i < row_b; i++)
+    for (int i = 0; i < row_b; i++)
     {
-        for (k = 0; k < nb && (coord[0] * nb + i * nb * dim[0] + k < M_A); k++, j++)
+        for (int k = 0; k < nb && (coord[0] * nb + i * nb * dim[0] + k < M_A); k++, j++)
         {
             this->row_set[j] = coord[0] * nb + i * nb * dim[0] + k;
             // ofs_running << " j=" << j << " row_set=" << this->row_set[j] << std::endl;
@@ -285,23 +285,31 @@ int Parallel_Orbitals::set_local2global(
     this->col_set.resize(this->ncol);
 
     j = 0;
-    for (i = 0; i < col_b; i++)
+    for (int i = 0; i < col_b; i++)
     {
-        for (k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < M_A); k++, j++)
+        for (int k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < M_A); k++, j++)
         {
             this->col_set[j] = coord[1] * nb + i * nb * dim[1] + k;
         }
     }
+}
 
+int Parallel_Orbitals::set_nloc_wfc_Eij(
+    const int& N_A,
+    std::ofstream& ofs_running,
+    std::ofstream& ofs_warning)
+{
+    ModuleBase::TITLE("Parallel_Orbitals", "set_local2global");
     // for wavefuncton , calculate nbands_loc
-    block = N_A / nb;
+    int end_id;
+    int block = N_A / nb;
     if (block * nb < N_A)
     {
         block++;
     }
-    if (dim[1] > block)
+    if (dim1 > block)
     {
-        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
+        ofs_warning << " cpu 2D distribution : " << dim0 << "*" << dim1 << std::endl;
         ofs_warning << " but, the number of bands-row-block is " << block << std::endl;
         if (nb > 1)
         {
@@ -312,18 +320,18 @@ int Parallel_Orbitals::set_local2global(
             ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no bands-row-blocks.");
         }
     }
-    int col_b_bands = block / dim[1];
-    if (coord[1] < block % dim[1])
+    int col_b_bands = block / dim1;
+    if (coord[1] < block % dim1)
     {
         col_b_bands++;
     }
-    if (block % dim[1] == 0)
+    if (block % dim1 == 0)
     {
-        end_id = dim[1] - 1;
+        end_id = dim1 - 1;
     }
     else
     {
-        end_id = block % dim[1] - 1;
+        end_id = block % dim1 - 1;
     }
     if (coord[1] == end_id)
     {

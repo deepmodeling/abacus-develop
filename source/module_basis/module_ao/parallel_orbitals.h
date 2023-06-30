@@ -37,6 +37,11 @@ struct Parallel_2D
     /// the number of processors in each dimension of MPI_Cart structure
     int dim0;
     int dim1;
+    /// the coordinate of current processor in each dimension of MPI_Cart structure
+    int coord[2];
+
+    /// test parameter
+    int testpb;
 
 #ifdef __MPI
     int blacs_ctxt;    ///< blacs info
@@ -44,6 +49,12 @@ struct Parallel_2D
     MPI_Comm comm_2D;   ///<communicator for 2D-block
     /// create the 'comm_2D' stratege.
     void mpi_create_cart();
+
+    /// set the map from local index to global index
+    int set_local2global(const int& M_A, ///< global row size
+        const int& N_A, ///< global col size
+        std::ofstream& ofs_running,
+        std::ofstream& ofs_warning);
 #endif
 
     ///  set the 2D index of processors
@@ -59,8 +70,9 @@ struct Parallel_2D
         std::ofstream& ofs_running);
 
 protected:
-    void init_global2local(const int& M_A,
-        const int& N_A,
+    /// set the map from local index to global index
+    void init_global2local(const int& M_A, ///< global row size
+        const int& N_A, ///< global col size
         std::ofstream& ofs_running);
 };
 
@@ -98,8 +110,8 @@ struct Parallel_Orbitals : public Parallel_2D
     int desc_wfc[9]; //for wfc, nlocal*nbands
     int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
     int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
-    int set_local2global(const int& M_A,
-        const int& N_A,
+    /// set the local size of wavefunction and Eij
+    int set_nloc_wfc_Eij(const int& N_A,  ///< global col size
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
 #endif
@@ -107,9 +119,6 @@ struct Parallel_Orbitals : public Parallel_2D
     int nspin = 1;
     int* loc_sizes;
     int loc_size;
-
-    // test parameter
-    int testpb;
 
     // orbital index for each atom
     std::vector<int> atom_begin_row;
