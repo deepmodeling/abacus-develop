@@ -7,6 +7,8 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D_OPENMP)
 
+install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 AddTest(
   TARGET Elecstate_Op_UTs
   LIBS ${math_libs} psi base device
