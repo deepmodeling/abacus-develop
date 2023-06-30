@@ -203,12 +203,12 @@ void DFTU::cal_force_k(const int ik,
 
         for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
         {
-            const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
+            const int iwt1 = this->LM->ParaV->row_set[ir];
             const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
             for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
             {
-                const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+                const int iwt2 = this->LM->ParaV->col_set[ic];
                 const int irc = ic * this->LM->ParaV->nrow + ir;
 
                 if (iwt1 == iwt2) force_dftu(iat1, dim) += dm_VU_dSm[irc].real();
@@ -299,10 +299,10 @@ void DFTU::cal_stress_k(const int ik,
 
             for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
             {
-                const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
+                const int iwt1 = this->LM->ParaV->row_set[ir];
                 for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
                 {
-                    const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+                    const int iwt2 = this->LM->ParaV->col_set[ic];
                     const int irc = ic * this->LM->ParaV->nrow + ir;
 
                     if (iwt1 == iwt2) stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc].real();
@@ -345,12 +345,12 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
 
         for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
         {
-            const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
+            const int iwt1 = this->LM->ParaV->row_set[ir];
             const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
             for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
             {
-                const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+                const int iwt2 = this->LM->ParaV->col_set[ic];
                 const int irc = ic * this->LM->ParaV->nrow + ir;
 
                 if (iwt1 == iwt2) force_dftu(iat1, dim) += dm_VU_dSm[irc];
@@ -441,11 +441,11 @@ void DFTU::cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dft
 
             for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
             {
-                const int iwt1 = this->LM->ParaV->MatrixInfo.row_set[ir];
+                const int iwt1 = this->LM->ParaV->row_set[ir];
 
                 for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
                 {
-                    const int iwt2 = this->LM->ParaV->MatrixInfo.col_set[ic];
+                    const int iwt2 = this->LM->ParaV->col_set[ic];
                     const int irc = ic * this->LM->ParaV->nrow + ir;
 
                     if (iwt1 == iwt2) stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc];

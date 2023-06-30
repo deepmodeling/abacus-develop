@@ -308,217 +308,6 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
     return;
 }
 
-#ifdef __MPI
-int ORB_control::mat_2d(MPI_Comm vu,
-    const int& M_A,
-    const int& N_A,
-    const int& nb,
-    LocalMatrix& LM,
-    std::ofstream& ofs_running,
-    std::ofstream& ofs_warning)
-{
-    ModuleBase::TITLE("ORB_control", "mat_2d");
-
-    Parallel_Orbitals* pv = &this->ParaV;
-
-    int dim[2];
-    int period[2];
-    int coord[2];
-    int i, j, k, end_id;
-    int block;
-
-    // (0) every processor get it's id on the 2D comm
-    // : ( coord[0], coord[1] )
-    MPI_Cart_get(vu, 2, dim, period, coord);
-
-    // (1.1) how many blocks at least
-    // eg. M_A = 6400, nb = 64;
-    // so block = 10;
-    block = M_A / nb;
-
-    // (1.2) If data remain, add 1.
-    if (block * nb < M_A)
-    {
-        block++;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Total Row Blocks Number", block);
-
-    // mohan add 2010-09-12
-    if (dim[0] > block)
-    {
-        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
-        ofs_warning << " but, the number of row blocks is " << block << std::endl;
-        if (nb > 1)
-        {
-            return 1;
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ORB_control::mat_2d", "some processor has no row blocks, try a smaller 'nb2d' parameter.");
-        }
-    }
-
-    // (2.1) row_b : how many blocks for this processor. (at least)
-    LM.row_b = block / dim[0];
-
-    // (2.2) row_b : how many blocks in this processor.
-    // if there are blocks remain, some processors add 1.
-    if (coord[0] < block % dim[0])
-    {
-        LM.row_b++;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local Row Block Number", LM.row_b);
-
-    // (3) end_id indicates the last block belong to
-    // which processor.
-    if (block % dim[0] == 0)
-    {
-        end_id = dim[0] - 1;
-    }
-    else
-    {
-        end_id = block % dim[0] - 1;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Ending Row Block in processor", end_id);
-
-    // (4) row_num : how many rows in this processors :
-    // the one owns the last block is different.
-    if (coord[0] == end_id)
-    {
-        LM.row_num = (LM.row_b - 1) * nb + (M_A - (block - 1) * nb);
-    }
-    else
-    {
-        LM.row_num = LM.row_b * nb;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local rows (including nb)", LM.row_num);
-
-    // (5) row_set, it's a global index :
-    // save explicitly : every row in this processor
-    // belongs to which row in the global matrix.
-    LM.row_set.resize(LM.row_num);
-    j = 0;
-    for (i = 0; i < LM.row_b; i++)
-    {
-        for (k = 0; k < nb && (coord[0] * nb + i * nb * dim[0] + k < M_A); k++, j++)
-        {
-            LM.row_set[j] = coord[0] * nb + i * nb * dim[0] + k;
-            // ofs_running << " j=" << j << " row_set=" << LM.row_set[j] << std::endl;
-        }
-    }
-
-    // the same procedures for columns.
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Total Col Blocks Number", block);
-
-    if (dim[1] > block)
-    {
-        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
-        ofs_warning << " but, the number of column blocks is " << block << std::endl;
-        if (nb > 1)
-        {
-            return 1;
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ORB_control::mat_2d", "some processor has no column blocks.");
-        }
-    }
-
-    LM.col_b = block / dim[1];
-    if (coord[1] < block % dim[1])
-    {
-        LM.col_b++;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local Row Block Number", LM.col_b);
-
-    if (block % dim[1] == 0)
-    {
-        end_id = dim[1] - 1;
-    }
-    else
-    {
-        end_id = block % dim[1] - 1;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Ending Row Block in processor", end_id);
-
-    if (coord[1] == end_id)
-    {
-        LM.col_num = (LM.col_b - 1) * nb + (M_A - (block - 1) * nb);
-    }
-    else
-    {
-        LM.col_num = LM.col_b * nb;
-    }
-
-    if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local columns (including nb)", LM.row_num);
-
-    LM.col_set.resize(LM.col_num);
-
-    j = 0;
-    for (i = 0; i < LM.col_b; i++)
-    {
-        for (k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < M_A); k++, j++)
-        {
-            LM.col_set[j] = coord[1] * nb + i * nb * dim[1] + k;
-        }
-    }
-    LM.col_pos = 0;
-    LM.row_pos = 0;
-
-    // for wavefuncton , calculate nbands_loc
-    block = N_A / nb;
-    if (block * nb < N_A)
-    {
-        block++;
-    }
-    if (dim[1] > block)
-    {
-        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
-        ofs_warning << " but, the number of bands-row-block is " << block << std::endl;
-        if (nb > 1)
-        {
-            return 1;
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ORB_control::mat_2d", "some processor has no bands-row-blocks.");
-        }
-    }
-    int col_b_bands = block / dim[1];
-    if (coord[1] < block % dim[1])
-    {
-        col_b_bands++;
-    }
-    if (block % dim[1] == 0)
-    {
-        end_id = dim[1] - 1;
-    }
-    else
-    {
-        end_id = block % dim[1] - 1;
-    }
-    if (coord[1] == end_id)
-    {
-        pv->ncol_bands = (col_b_bands - 1) * nb + (N_A - (block - 1) * nb);
-    }
-    else
-    {
-        pv->ncol_bands = col_b_bands * nb;
-    }
-    pv->nloc_wfc = pv->ncol_bands * LM.row_num;
-
-    pv->nloc_Eij= pv->ncol_bands * pv->ncol_bands;
-    
-    return 0;
-}
-#endif
-
 //set_trace, related to Parallel_Oribtals
 void ORB_control::set_trace(std::ofstream& ofs_running)
 {
@@ -561,7 +350,7 @@ void ORB_control::set_trace(std::ofstream& ofs_running)
         // ofs_running << " nrow=" << nrow << std::endl;
         for (int irow = 0; irow < pv->nrow; irow++)
         {
-            int global_row = pv->MatrixInfo.row_set[irow];
+            int global_row = pv->row_set[irow];
             pv->trace_loc_row[global_row] = irow;
             // ofs_running << " global_row=" << global_row
             // << " trace_loc_row=" << pv->trace_loc_row[global_row] << std::endl;
@@ -570,7 +359,7 @@ void ORB_control::set_trace(std::ofstream& ofs_running)
         // ofs_running << " ncol=" << ncol << std::endl;
         for (int icol = 0; icol < pv->ncol; icol++)
         {
-            int global_col = pv->MatrixInfo.col_set[icol];
+            int global_col = pv->col_set[icol];
             pv->trace_loc_col[global_col] = icol;
             // ofs_running << " global_col=" << global_col
             // << " trace_loc_col=" << pv->trace_loc_row[global_col] << std::endl;
@@ -702,8 +491,7 @@ void ORB_control::divide_HS_2d(
     // call mpi_creat_cart
     pv->mpi_create_cart();
 
-    // call mat_2d
-    int try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb, pv->MatrixInfo, ofs_running, ofs_warning);
+    int try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
     if (try_nb == 1)
     {
         ofs_running << " parameter nb2d is too large: nb2d = " << pv->nb << std::endl;
@@ -711,13 +499,8 @@ void ORB_control::divide_HS_2d(
                        "during diagonalization."
                     << std::endl;
         pv->nb = 1;
-        try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb, pv->MatrixInfo, ofs_running, ofs_warning);
+        try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
     }
-
-    // mohan add 2010-06-29
-    pv->nrow = pv->MatrixInfo.row_num;
-    pv->ncol = pv->MatrixInfo.col_num;
-    pv->nloc = pv->MatrixInfo.col_num * pv->MatrixInfo.row_num;
 
     // init blacs context for genelpa
     if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
@@ -740,30 +523,23 @@ void ORB_control::divide_HS_2d(
     pv->ncol = nlocal;
     pv->nloc = nlocal * nlocal;
     this->set_parameters(ofs_running, ofs_warning);
-    pv->MatrixInfo.row_b = 1;
-	pv->MatrixInfo.row_num = nlocal;
-	pv->MatrixInfo.row_set.resize(nlocal);
+    pv->row_set.resize(nlocal);
 	for(int i=0; i<nlocal; i++)
 	{
-		pv->MatrixInfo.row_set[i]=i;
+        pv->row_set[i] = i;
 	}
-	pv->MatrixInfo.row_pos=0;
-
-	pv->MatrixInfo.col_b = 1;
-	pv->MatrixInfo.col_num = nlocal;
-	pv->MatrixInfo.col_set.resize(nlocal);
+    pv->col_set.resize(nlocal);
 	for(int i=0; i<nlocal; i++)
 	{
-		pv->MatrixInfo.col_set[i]=i;
-	}
-	pv->MatrixInfo.col_pos=0;
+        pv->col_set[i] = i;
+    }
 #endif
 
     assert(pv->nloc > 0);
     if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "MatrixInfo.row_num", pv->MatrixInfo.row_num);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "this->nrow", pv->nrow);
     if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "MatrixInfo.col_num", pv->MatrixInfo.col_num);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "this->ncol", pv->ncol);
     if (pv->testpb)
         ModuleBase::GlobalFunc::OUT(ofs_running, "nloc", pv->nloc);
     return;

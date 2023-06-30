@@ -120,14 +120,5 @@ private:
 
     void set_trace(std::ofstream& ofs_running);
 
-#ifdef __MPI
-    int mat_2d(MPI_Comm vu,
-        const int& M_A, const int& N_A,
-        const int& NB, LocalMatrix& loc_A,
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning);
-
-#endif
-
 };
 #endif

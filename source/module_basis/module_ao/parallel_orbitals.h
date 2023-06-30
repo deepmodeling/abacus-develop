@@ -8,23 +8,6 @@
 #include <mpi.h>
 #endif
 
-//The structure LocalMatrix is only used for dftu and exx
-struct LocalMatrix
-{
-    /// map from local index to global index
-    std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
-    std::vector<int> col_set;
-    
-	int col_num;    ///< how many cols in this processors
-    int row_num;    ///< how many rows in this processors
-    
-	int col_pos;
-    int row_pos;
-    
-	int row_b;  ///< how many 2D-row-blocks in this processor
-    int col_b;  ///< how many 2D-col-blocks in this processor
-};
-
 /// @brief  This structure packs the basic information of 2D-block-cyclic
 /// parallel distribution of an arbitrary 2D Tensor.
 struct Parallel_2D
@@ -36,6 +19,10 @@ struct Parallel_2D
     /// map from global-index to local-index
     int* trace_loc_row = nullptr;
     int* trace_loc_col = nullptr;
+
+    /// map from local index to global index
+    std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
+    std::vector<int> col_set;
 
     /// local size (nloc = nrow * ncol)
     int nrow;
@@ -101,14 +88,15 @@ struct Parallel_Orbitals : public Parallel_2D
     int desc_wfc[9]; //for wfc, nlocal*nbands
     int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
     int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
+    int set_local2global(const int& M_A,
+        const int& N_A,
+        std::ofstream& ofs_running,
+        std::ofstream& ofs_warning);
 #endif
 
     int nspin = 1;
     int* loc_sizes;
     int loc_size;
-
-    /// used in dftu and exx
-    LocalMatrix MatrixInfo;
 
     // test parameter
     int testpb;

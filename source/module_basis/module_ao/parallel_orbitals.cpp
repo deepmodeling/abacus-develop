@@ -70,6 +70,216 @@ bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) cons
     return true;
 }
 
+#ifdef __MPI
+int Parallel_Orbitals::set_local2global(
+    const int& M_A,
+    const int& N_A,
+    std::ofstream& ofs_running,
+    std::ofstream& ofs_warning)
+{
+    ModuleBase::TITLE("Parallel_Orbitals", "set_local2global");
+
+    int dim[2];
+    int period[2];
+    int coord[2];
+    int i, j, k, end_id;
+    int block;
+    int row_b, col_b;
+
+    // (0) every processor get it's id on the 2D comm
+    // : ( coord[0], coord[1] )
+    MPI_Cart_get(this->comm_2D, 2, dim, period, coord);
+
+    // (1.1) how many blocks at least
+    // eg. M_A = 6400, nb = 64;
+    // so block = 10;
+    block = M_A / nb;
+
+    // (1.2) If data remain, add 1.
+    if (block * nb < M_A)
+    {
+        block++;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Total Row Blocks Number", block);
+
+    // mohan add 2010-09-12
+    if (dim[0] > block)
+    {
+        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
+        ofs_warning << " but, the number of row blocks is " << block << std::endl;
+        if (nb > 1)
+        {
+            return 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no row blocks, try a smaller 'nb2d' parameter.");
+        }
+    }
+
+    // (2.1) row_b : how many blocks for this processor. (at least)
+    row_b = block / dim[0];
+
+    // (2.2) row_b : how many blocks in this processor.
+    // if there are blocks remain, some processors add 1.
+    if (coord[0] < block % dim[0])
+    {
+        row_b++;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local Row Block Number", row_b);
+
+    // (3) end_id indicates the last block belong to
+    // which processor.
+    if (block % dim[0] == 0)
+    {
+        end_id = dim[0] - 1;
+    }
+    else
+    {
+        end_id = block % dim[0] - 1;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Ending Row Block in processor", end_id);
+
+    // (4) this->nrow : how many rows in this processors :
+    // the one owns the last block is different.
+    if (coord[0] == end_id)
+    {
+        this->nrow = (row_b - 1) * nb + (M_A - (block - 1) * nb);
+    }
+    else
+    {
+        this->nrow = row_b * nb;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local rows (including nb)", this->nrow);
+
+    // (5) row_set, it's a global index :
+    // save explicitly : every row in this processor
+    // belongs to which row in the global matrix.
+    this->row_set.resize(this->nrow);
+    j = 0;
+    for (i = 0; i < row_b; i++)
+    {
+        for (k = 0; k < nb && (coord[0] * nb + i * nb * dim[0] + k < M_A); k++, j++)
+        {
+            this->row_set[j] = coord[0] * nb + i * nb * dim[0] + k;
+            // ofs_running << " j=" << j << " row_set=" << this->row_set[j] << std::endl;
+        }
+    }
+
+    // the same procedures for columns.
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Total Col Blocks Number", block);
+
+    if (dim[1] > block)
+    {
+        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
+        ofs_warning << " but, the number of column blocks is " << block << std::endl;
+        if (nb > 1)
+        {
+            return 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no column blocks.");
+        }
+    }
+
+    col_b = block / dim[1];
+    if (coord[1] < block % dim[1])
+    {
+        col_b++;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local Row Block Number", col_b);
+
+    if (block % dim[1] == 0)
+    {
+        end_id = dim[1] - 1;
+    }
+    else
+    {
+        end_id = block % dim[1] - 1;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Ending Row Block in processor", end_id);
+
+    if (coord[1] == end_id)
+    {
+        this->ncol = (col_b - 1) * nb + (M_A - (block - 1) * nb);
+    }
+    else
+    {
+        this->ncol = col_b * nb;
+    }
+
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local columns (including nb)", this->ncol);
+
+    //set nloc
+    this->nloc = this->nrow * this->ncol;
+
+    this->col_set.resize(this->ncol);
+
+    j = 0;
+    for (i = 0; i < col_b; i++)
+    {
+        for (k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < M_A); k++, j++)
+        {
+            this->col_set[j] = coord[1] * nb + i * nb * dim[1] + k;
+        }
+    }
+
+    // for wavefuncton , calculate nbands_loc
+    block = N_A / nb;
+    if (block * nb < N_A)
+    {
+        block++;
+    }
+    if (dim[1] > block)
+    {
+        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
+        ofs_warning << " but, the number of bands-row-block is " << block << std::endl;
+        if (nb > 1)
+        {
+            return 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no bands-row-blocks.");
+        }
+    }
+    int col_b_bands = block / dim[1];
+    if (coord[1] < block % dim[1])
+    {
+        col_b_bands++;
+    }
+    if (block % dim[1] == 0)
+    {
+        end_id = dim[1] - 1;
+    }
+    else
+    {
+        end_id = block % dim[1] - 1;
+    }
+    if (coord[1] == end_id)
+    {
+        this->ncol_bands = (col_b_bands - 1) * nb + (N_A - (block - 1) * nb);
+    }
+    else
+    {
+        this->ncol_bands = col_b_bands * nb;
+    }
+    this->nloc_wfc = this->ncol_bands * this->nrow;
+
+    this->nloc_Eij = this->ncol_bands * this->ncol_bands;
+
+    return 0;
+}
+#endif
+
+
 void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal)
 {
     this->atom_begin_col.resize(nat);

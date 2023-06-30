@@ -53,8 +53,8 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tma
 			{
 				const int iwt0 =
 					ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()
-					? pv.MatrixInfo.col_set[iwt0_2D]
-					: pv.MatrixInfo.row_set[iwt0_2D];
+                    ? pv.col_set[iwt0_2D]
+                    : pv.row_set[iwt0_2D];
 				int iat0, iw0_b, is0_b;
 				std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(iwt0);
 				const int it0 = GlobalC::ucell.iat2it[iat0];
@@ -62,8 +62,8 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tma
 				{
 					const int iwt1 =
 						ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()
-						? pv.MatrixInfo.row_set[iwt1_2D]
-						: pv.MatrixInfo.col_set[iwt1_2D];
+                        ? pv.row_set[iwt1_2D]
+                        : pv.col_set[iwt1_2D];
 					int iat1, iw1_b, is1_b;
 					std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(iwt1);
 					const int it1 = GlobalC::ucell.iat2it[iat1];
