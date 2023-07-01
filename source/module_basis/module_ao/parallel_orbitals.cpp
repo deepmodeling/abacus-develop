@@ -120,9 +120,11 @@ int Parallel_Orbitals::get_row_size(int iat) const
 void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, const int& lld)
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
+#ifdef __DEBUG
     assert(this->comm_2D != MPI_COMM_NULL);
     assert(nbasis > 0 && nbands > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
+#endif
     int ISRC = 0;
     int info = 0;
     descinit_(desc_wfc, &nbasis, &nbands, &this->nb, &this->nb, &ISRC, &ISRC, &this->blacs_ctxt, &lld, &info);

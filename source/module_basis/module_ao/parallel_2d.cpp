@@ -45,7 +45,7 @@ bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) cons
 void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
     const bool& div_2d, std::ofstream& ofs_running)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "set_global2local");
+    ModuleBase::TITLE("Parallel_2D", "set_global2local");
 
     this->init_global2local(M_A, N_A, ofs_running);
     if (!div_2d) // xiaohui add 2013-09-02
@@ -82,7 +82,7 @@ void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
 
 void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstream& ofs_running)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "init_global2local");
+    ModuleBase::TITLE("Parallel_2D", "init_global2local");
     assert(M_A > 0);
     assert(N_A > 0);
 
@@ -113,8 +113,10 @@ extern "C"
 void Parallel_2D::mpi_create_cart(const MPI_Comm& diag_world)
 {
     ModuleBase::TITLE("Parallel_2D", "mpi_create_cart");
+#ifdef __DEBUG
     assert(this->comm_2D != MPI_COMM_NULL);
     assert(this->dim0 > 0 && this->dim1 > 0);
+#endif
     // the matrix is divided as ( dim0 * dim1 )
     int period[2] = { 1,1 };
     int dim[2] = { this->dim0, this->dim1 };
@@ -126,10 +128,11 @@ void Parallel_2D::mpi_create_cart(const MPI_Comm& diag_world)
 void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld)
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc");
+#ifdef __DEBUG
     assert(this->comm_2D != MPI_COMM_NULL);
     assert(gr > 0 && gc > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
-
+#endif
     int myprow, mypcol;
     int* usermap = new int[this->dim0 * this->dim1];
     int info = 0;
@@ -157,7 +160,10 @@ int Parallel_2D::set_local2global(
     std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("Parallel_2D", "set_local2global");
+#ifdef __DEBUG
+    assert(M_A > 0 && N_A > 0);
     assert(this->nb > 0);
+#endif
 
     int dim[2];
     int period[2];
@@ -194,7 +200,7 @@ int Parallel_2D::set_local2global(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no row blocks, try a smaller 'nb2d' parameter.");
+            ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no row blocks, try a smaller 'nb2d' parameter.");
         }
     }
 
@@ -256,7 +262,7 @@ int Parallel_2D::set_local2global(
     {
         block++;
     }
-    ModuleBase::GlobalFunc::OUT(ofs_running, "Total Col Blocks Number", block);
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Total Col Blocks Number", block);
 
     if (dim[1] > block)
     {
@@ -268,7 +274,7 @@ int Parallel_2D::set_local2global(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no column blocks.");
+            ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no column blocks.");
         }
     }
 
@@ -319,7 +325,7 @@ int Parallel_2D::set_local2global(
 #else
 void Parallel_2D::set_serial(const int& M_A, const int& N_A)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "set_serial");
+    ModuleBase::TITLE("Parallel_2D", "set_serial");
     this->nrow = M_A;
     this->ncol = N_A;
     this->nloc = this->nrow * this->ncol;

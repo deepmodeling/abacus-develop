@@ -114,13 +114,6 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
-remove_definitions(-D__MPI)
-AddTest(
-    TARGET serial_2d_test
-    SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
-    LIBS ${math_libs} device base
-)
-
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 

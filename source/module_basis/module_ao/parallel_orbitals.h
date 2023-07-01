@@ -1,7 +1,8 @@
-#pragma once
+#ifndef _PARALLEL_ORBITALS_H_
+#define _PARALLEL_ORBITALS_H_
 #include "parallel_2d.h"
 
-/// These stucture packs the information of 2D-block-cyclic 
+/// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.
 class Parallel_Orbitals : public Parallel_2D
 {
@@ -42,7 +43,6 @@ public:
         std::ofstream& ofs_warning);
 
     ///@brief set the desc[9] of the 2D-block-cyclic distribution of wavefunction and Eij
-    ///@return blacs_ctxt
     void set_desc_wfc_Eij(const int& nbasis,
         const int& nbands,
         const int& lld);
@@ -73,3 +73,4 @@ public:
     std::vector<int> atom_begin_col;
 
 };
+#endif

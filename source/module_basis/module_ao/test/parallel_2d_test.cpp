@@ -1,5 +1,38 @@
 #include "gtest/gtest.h"
 #include "../parallel_2d.h"
+/***********************************************************
+ *      unit test of class "Parallel_2D"
+ ***********************************************************/
+
+ /* Tested functions (in order):
+  *
+  * - set_proc_dim
+  *   set the 2D-structure of processors in each dimension.
+  *
+  * - mpi_create_cart (parallel)
+  *   create a 2D MPI_Cart structure.
+  *
+  * - set_local2global (parallel)
+  *   set the map from local index to global index and the local sizes.
+  *
+  * - set_desc (parallel)
+  *   set the desc[9] of the 2D-block-cyclic distribution.
+  *
+  * - set_global2local
+  *   set the map from global index to local index.
+  *
+  * - set_serial (serial)
+  *   set the local(=global) sizes.
+  *
+  * - some getters:
+  *  - get_row_size, get_col_size, get_local_size, get_block_size
+  *  - in_this_processor
+  *
+  * Result check:
+  * - local sizes
+  * - index maps
+  * - desc[9]
+  ***********************************************************/
 class test_para2d : public testing::Test
 {
 protected:
@@ -12,10 +45,14 @@ protected:
     void SetUp() override
     {
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
-        ofs_running << "dsize = " << dsize << std::endl;
         MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+        this->ofs_running.open("log" + std::to_string(my_rank) + ".txt");
+        ofs_running << "dsize(nproc) = " << dsize << std::endl;
         ofs_running << "my_rank = " << my_rank << std::endl;
-        //this->ofs_running = std::ofstream("log" + std::to_string(my_rank) + ".txt");
+    }
+    void TearDown() override
+    {
+        ofs_running.close();
     }
 #endif
 };
@@ -82,6 +119,9 @@ TEST_F(test_para2d, Divide2D)
                     };
                 EXPECT_EQ(sum_array(p2d.trace_loc_row, gr), lr * (lr - 1) / 2 - (gr - lr));
                 EXPECT_EQ(sum_array(p2d.trace_loc_col, gc), lc * (lc - 1) / 2 - (gc - lc));
+                for (int i = 0;i < lr;++i)
+                    for (int j = 0;j < lc;++j)
+                        EXPECT_TRUE(p2d.in_this_processor(p2d.row_set[i], p2d.col_set[j]));
             }
         }
     }
