@@ -1,6 +1,6 @@
 add_executable(
     test_deepks
-    main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp nnr.cpp parallel_2d.cpp parallel_orbitals.cpp
+    main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp nnr.cpp parallel_orbitals.cpp
 )
 
 if(ENABLE_COVERAGE)
