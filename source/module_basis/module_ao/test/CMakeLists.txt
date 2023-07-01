@@ -35,6 +35,7 @@ list(APPEND depend_files
   ../ORB_table_phi.cpp
   ../ORB_table_alpha.cpp
   ../ORB_gen_tables.cpp
+  ../parallel_2d.cpp
   ../parallel_orbitals.cpp
   ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
   )

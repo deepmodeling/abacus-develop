@@ -6,6 +6,7 @@ VERSION= ABACUS-deepks
 HEADERS= *.h
 
 OBJS_MAIN=klist_1.o\
+parallel_2d.o\
 parallel_orbitals.o\
 nnr.o\
 LCAO_deepks.o\
