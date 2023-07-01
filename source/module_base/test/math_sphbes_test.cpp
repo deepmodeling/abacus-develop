@@ -24,6 +24,7 @@
  *      - Spherical_Bessel.
  *      - Spherical_Bessel_Roots
  *      - overloading of Spherical_Bessel. This funnction sets sjp[i] to 1.0 when i < msh.
+ *      - sphbesj
  */
 
 double mean(const double* vect, const int totN)
@@ -195,6 +196,37 @@ TEST_F(Sphbes,SphericalBesselRoots)
     delete [] eign;
 }
 
+
+TEST_F(Sphbes, SeriesAndRecurrence)
+{
+    // This test checks that the old and new versions of the spherical Bessel function agree with each other
+    // on a coarse grid for a range of l and q values.
+    int lmax = 8;
+    int nr = 5000;
+    double rcut = 50;
+    double dr = rcut / (nr - 1);
+    double* r = new double[nr];
+    for (int i = 0; i < nr; ++i)
+    {
+        r[i] = i * dr;
+    }
+
+    double* jl_old = new double[nr];
+    double* jl_new = new double[nr];
+    for (int l = 0; l <= lmax; ++l)
+    {
+        for (double q = 0.1; q < 10; q += 0.1)
+        {
+            ModuleBase::Sphbes::Spherical_Bessel(nr, r, q, 0, jl_old);
+            ModuleBase::Sphbes::sphbesj(nr, r, q, 0, jl_new);
+            for (int i = 0; i < nr; ++i)
+            {
+                EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
+            }
+        }
+    }
+
+}
 
 int main(int argc, char **argv)
 {
