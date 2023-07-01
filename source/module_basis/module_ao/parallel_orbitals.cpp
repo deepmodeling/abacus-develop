@@ -415,14 +415,8 @@ void Parallel_2D::set_serial(const int& M_A, const int& N_A)
     this->nloc = this->nrow * this->ncol;
     this->row_set.resize(this->nrow);
     this->col_set.resize(this->ncol);
-    for (int i = 0; i < this->nrow; i++)
-    {
-        this->row_set[i] = i;
-    }
-    for (int i = 0; i < this->ncol; i++)
-    {
-        this->col_set[i] = i;
-    }
+    for (int i = 0; i < this->nrow; i++) this->row_set[i] = i;
+    for (int i = 0; i < this->ncol; i++) this->col_set[i] = i;
 }
 #endif
 

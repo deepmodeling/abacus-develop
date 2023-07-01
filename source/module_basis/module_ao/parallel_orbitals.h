@@ -8,11 +8,11 @@
 #include <mpi.h>
 #endif
 
-/// @brief  This structure packs the basic information of 2D-block-cyclic
-/// parallel distribution of an arbitrary 2D Tensor.
-struct Parallel_2D
+/// @brief  This structure packs the basic information of
+/// 2D-block-cyclic parallel distribution of an arbitrary matrix.
+class Parallel_2D
 {
-
+public:
     Parallel_2D();
     ~Parallel_2D();
     
@@ -43,6 +43,25 @@ struct Parallel_2D
     /// test parameter
     int testpb;
 
+    /// total number of columns of matrix in this processor
+    int get_col_size()const { return this->ncol; };
+
+    /// total number of rows of matrix in this processor
+    int get_row_size()const { return this->nrow; };
+
+    /// total number of elements of matrix in this processor
+    int get_local_size()const { return this->nloc; };
+
+    /// check whether a basis element is in this processor
+    /// (check whether local-index > 0 )
+    bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
+
+    /// set the 2D-structure of processors in each dimension.
+    /// dim0 and dim1 will be set as close to sqrt(nproc) as possible, 
+    /// for example, if nproc = 12, dim0 = 3, dim1 = 4. 
+    /// if mode==0, dim0 <= dim1; else, dim0 >= dim1.
+    void set_proc_dim(const int& dsize, bool mode = 0);
+
 #ifdef __MPI
     int blacs_ctxt;    ///< blacs info
     int desc[9];    ///<for matrix, nlocal*nlocal    
@@ -68,16 +87,6 @@ struct Parallel_2D
         const int& N_A/**< global col size*/);
 #endif
 
-    /// set the 2D-structure of processors in each dimension.
-    /// dim0 and dim1 will be set as close to sqrt(nproc) as possible, 
-    /// for example, if nproc = 12, dim0 = 3, dim1 = 4. 
-    /// if mode==0, dim0 <= dim1; else, dim0 >= dim1.
-    void set_proc_dim(const int& dsize, bool mode = 0);
-
-    /// check whether a basis element is in this processor
-    /// (check whether local-index > 0 )
-    bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
-
     void set_global2local(const int& M_A,
         const int& N_A,
         bool& div_2d,
@@ -92,9 +101,9 @@ protected:
 
 /// These stucture packs the information of 2D-block-cyclic 
 /// parallel distribution of basis, wavefunction and matrix.
-struct Parallel_Orbitals : public Parallel_2D
+class Parallel_Orbitals : public Parallel_2D
 {
-
+public:
     Parallel_Orbitals();
     ~Parallel_Orbitals();
 
@@ -141,10 +150,6 @@ struct Parallel_Orbitals : public Parallel_2D
     int* loc_sizes;
     int loc_size;
 
-    // orbital index for each atom
-    std::vector<int> atom_begin_row;
-    std::vector<int> atom_begin_col;
-
     // set row and col begin index for each atom
     void set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal);
 
@@ -159,6 +164,11 @@ struct Parallel_Orbitals : public Parallel_2D
     int get_row_size()const;
     int get_col_size(int iat) const;
     int get_row_size(int iat) const;
+
+    // private:
+        // orbital index for each atom
+    std::vector<int> atom_begin_row;
+    std::vector<int> atom_begin_col;
 
 };
 
