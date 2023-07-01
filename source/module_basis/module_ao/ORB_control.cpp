@@ -377,7 +377,7 @@ void ORB_control::divide_HS_2d(
     // call mpi_creat_cart
     pv->mpi_create_cart(DIAG_WORLD);
 
-    int try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
+    int try_nb = pv->set_local2global(nlocal, nlocal, ofs_running, ofs_warning);
     try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     if (try_nb == 1)
     {
@@ -386,7 +386,7 @@ void ORB_control::divide_HS_2d(
                        "during diagonalization."
                     << std::endl;
         pv->set_block_size(1);
-        try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
+        try_nb = pv->set_local2global(nlocal, nlocal, ofs_running, ofs_warning);
         try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     }
 
