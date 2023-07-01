@@ -1,6 +1,5 @@
 #include "parallel_orbitals.h"
 
-#include "module_base/memory.h"
 #ifdef __MPI
 extern "C"
 {
@@ -26,29 +25,6 @@ Parallel_Orbitals::~Parallel_Orbitals()
     delete[] loc_sizes;    
     delete[] nlocdim;
     delete[] nlocstart;
-}
-
-void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstream& ofs_running)
-{
-    ModuleBase::TITLE("Parallel_Orbitals", "init_global2local");
-    assert(M_A > 0);
-    assert(N_A > 0);
-
-    delete[] this->trace_loc_row;
-    delete[] this->trace_loc_col;
-
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_row dimension", M_A);
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_col dimension", N_A);
-
-    this->trace_loc_row = new int[M_A];
-    this->trace_loc_col = new int[N_A];
-
-    for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = -1;
-    for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = -1;
-
-    ModuleBase::Memory::record("trace_row_col", sizeof(int) * M_A);
-    ModuleBase::Memory::record("trace_row_col", sizeof(int) * N_A);
-    return;
 }
 
 void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal)

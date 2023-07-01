@@ -5,6 +5,7 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/blacs_connector.h"
 #include "module_base/memory.h"
+#include "module_base/parallel_global.h"
 
 //#include "build_st_pw.h"
 
@@ -356,35 +357,35 @@ void ORB_control::divide_HS_2d(
     if (nb2d == 0)
     {
         if (nlocal > 0)
-            pv->nb = 1;
+            pv->set_block_size(1);
         if (nlocal > 500)
-            pv->nb = 32;
+            pv->set_block_size(32);
         if (nlocal > 1000)
-            pv->nb = 64;
+            pv->set_block_size(64);
     }
     else if (nb2d > 0)
     {
-        pv->nb = nb2d; // mohan add 2010-06-28
+        pv->set_block_size(nb2d); // mohan add 2010-06-28
     }
 
     if (ks_solver == "cusolver")
-        pv->nb = 1; // Xu Shu add 2022-03-25
-    ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->nb);
+        pv->set_block_size(1); // Xu Shu add 2022-03-25
+    ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->get_block_size());
 
     this->set_parameters(ofs_running, ofs_warning);
 
     // call mpi_creat_cart
-    pv->mpi_create_cart();
+    pv->mpi_create_cart(DIAG_WORLD);
 
     int try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
     try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     if (try_nb == 1)
     {
-        ofs_running << " parameter nb2d is too large: nb2d = " << pv->nb << std::endl;
+        ofs_running << " parameter nb2d is too large: nb2d = " << pv->get_block_size() << std::endl;
         ofs_running << " reset nb2d to value 1, this set would make the program keep working but maybe get slower "
                        "during diagonalization."
                     << std::endl;
-        pv->nb = 1;
+        pv->set_block_size(1);
         try_nb = pv->set_local2global(nlocal, nbands, ofs_running, ofs_warning);
         try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     }

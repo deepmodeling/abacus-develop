@@ -54,6 +54,9 @@ public:
     /// (check whether local-index > 0 )
     bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
 
+    void set_block_size(const int& nb_in) { this->nb = nb_in; };
+    int get_block_size()const { return this->nb; };
+
     /// set the 2D-structure of processors in each dimension.
     /// dim0 and dim1 will be set as close to sqrt(nproc) as possible, 
     /// for example, if nproc = 12, dim0 = 3, dim1 = 4. 
@@ -66,13 +69,7 @@ public:
     MPI_Comm comm_2D;   ///<communicator for 2D-block
 
     /// create the 'comm_2D' stratege.
-    void mpi_create_cart();
-
-    ///@brief set the desc[9] of the 2D-block-cyclic distribution
-    ///@return blacs_ctxt
-    void set_desc(const int& gr/**< global row size*/,
-        const int& gc/**< global col size*/,
-        const int& lld/**< leading local dimension*/);
+    void mpi_create_cart(const MPI_Comm& diag_world);
 
     /// set the map from local index to global index,
     /// and set local sizes (nrow, ncol, nloc) by the way
@@ -80,6 +77,12 @@ public:
         const int& N_A/**< global col size*/,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
+
+    ///@brief set the desc[9] of the 2D-block-cyclic distribution
+    ///@return blacs_ctxt
+    void set_desc(const int& gr/**< global row size*/,
+        const int& gc/**< global col size*/,
+        const int& lld/**< leading local dimension*/);
 #else
     void set_serial(const int& M_A/**< global row size*/,
         const int& N_A/**< global col size*/);
@@ -87,7 +90,7 @@ public:
 
     void set_global2local(const int& M_A,
         const int& N_A,
-        bool& div_2d,
+        const bool& div_2d,
         std::ofstream& ofs_running);
 
 protected:

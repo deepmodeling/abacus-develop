@@ -1,4 +1,5 @@
 #include "parallel_2d.h"
+#include "module_base/memory.h"
 
 Parallel_2D::Parallel_2D()
 {}
@@ -42,14 +43,13 @@ bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) cons
 }
 
 void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
-    bool& div_2d, std::ofstream& ofs_running)
+    const bool& div_2d, std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Parallel_Orbitals", "set_global2local");
 
     this->init_global2local(M_A, N_A, ofs_running);
     if (!div_2d) // xiaohui add 2013-09-02
     {
-        std::cout << " common settings for trace_loc_row and trace_loc_col " << std::endl;
         for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = i;
         for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = i;
         this->nrow = M_A;
@@ -80,16 +80,37 @@ void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
     return;
 }
 
+void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstream& ofs_running)
+{
+    ModuleBase::TITLE("Parallel_Orbitals", "init_global2local");
+    assert(M_A > 0);
+    assert(N_A > 0);
+
+    delete[] this->trace_loc_row;
+    delete[] this->trace_loc_col;
+
+    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_row dimension", M_A);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_col dimension", N_A);
+
+    this->trace_loc_row = new int[M_A];
+    this->trace_loc_col = new int[N_A];
+
+    for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = -1;
+    for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = -1;
+
+    ModuleBase::Memory::record("trace_row_col", sizeof(int) * M_A);
+    ModuleBase::Memory::record("trace_row_col", sizeof(int) * N_A);
+    return;
+}
+
 #ifdef __MPI
 extern "C"
 {
 #include "module_base/blacs_connector.h"
 #include "module_base/scalapack_connector.h"
 }
-#include "module_base/scalapack_connector.h"
-#include "module_base/parallel_global.h"
 
-void Parallel_2D::mpi_create_cart()
+void Parallel_2D::mpi_create_cart(const MPI_Comm& diag_world)
 {
     ModuleBase::TITLE("Parallel_2D", "mpi_create_cart");
     assert(this->comm_2D != MPI_COMM_NULL);
@@ -98,7 +119,7 @@ void Parallel_2D::mpi_create_cart()
     int period[2] = { 1,1 };
     int dim[2] = { this->dim0, this->dim1 };
     int reorder = 0;
-    MPI_Cart_create(DIAG_WORLD, 2, dim, period, reorder, &this->comm_2D);
+    MPI_Cart_create(diag_world, 2, dim, period, reorder, &this->comm_2D);
     return;
 }
 
@@ -230,7 +251,12 @@ int Parallel_2D::set_local2global(
     }
 
     // the same procedures for columns.
-    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Total Col Blocks Number", block);
+    block = N_A / nb;
+    if (block * nb < N_A)
+    {
+        block++;
+    }
+    ModuleBase::GlobalFunc::OUT(ofs_running, "Total Col Blocks Number", block);
 
     if (dim[1] > block)
     {
@@ -252,7 +278,7 @@ int Parallel_2D::set_local2global(
         col_b++;
     }
 
-    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local Row Block Number", col_b);
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local Col Block Number", col_b);
 
     if (block % dim[1] == 0)
     {
@@ -263,11 +289,11 @@ int Parallel_2D::set_local2global(
         end_id = block % dim[1] - 1;
     }
 
-    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Ending Row Block in processor", end_id);
+    if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Ending Col Block in processor", end_id);
 
     if (coord[1] == end_id)
     {
-        this->ncol = (col_b - 1) * nb + (M_A - (block - 1) * nb);
+        this->ncol = (col_b - 1) * nb + (N_A - (block - 1) * nb);
     }
     else
     {
@@ -284,7 +310,7 @@ int Parallel_2D::set_local2global(
     j = 0;
     for (int i = 0; i < col_b; i++)
     {
-        for (int k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < M_A); k++, j++)
+        for (int k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < N_A); k++, j++)
         {
             this->col_set[j] = coord[1] * nb + i * nb * dim[1] + k;
         }
