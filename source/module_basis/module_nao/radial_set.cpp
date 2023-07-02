@@ -161,10 +161,14 @@ void RadialSet::set_grid(const bool for_r_space, const int ngrid, const double* 
         chi_[i].set_grid(for_r_space, ngrid, grid, mode);
 }
 
-void RadialSet::set_uniform_grid(const bool for_r_space, const int ngrid, const double cutoff, const char mode)
+void RadialSet::set_uniform_grid(const bool for_r_space,
+                                 const int ngrid,
+                                 const double cutoff,
+                                 const char mode,
+                                 const bool enable_fft)
 {
     for (int i = 0; i < nchi_; i++)
-        chi_[i].set_uniform_grid(for_r_space, ngrid, cutoff, mode);
+        chi_[i].set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
 }
 
 void RadialSet::cleanup()
