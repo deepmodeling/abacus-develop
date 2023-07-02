@@ -321,6 +321,7 @@ int Parallel_2D::set_local2global(
             this->col_set[j] = coord[1] * nb + i * nb * dim[1] + k;
         }
     }
+    return 0;
 }
 #else
 void Parallel_2D::set_serial(const int& M_A, const int& N_A)
