@@ -1,6 +1,7 @@
 remove_definitions(-D__MPI)
 
 install(FILES H.LDA_PW-JTH.xml sphbes_ref.dat func.dat qlist.dat fq_ref.dat
+  qlist1.dat fq.dat d2fq_ref.dat qlist2.dat fq_fit_ref.dat
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
@@ -17,6 +18,12 @@ AddTest(
 
 AddTest(
   TARGET Test_SphBes_Transform
+  LIBS ${math_libs} base device
+  SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_interface.cpp
+)
+
+AddTest(
+  TARGET Test_Spline
   LIBS ${math_libs} base device
   SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_interface.cpp
 )
