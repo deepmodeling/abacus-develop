@@ -505,15 +505,15 @@ void K_Vectors::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, cons
     for (int x = 1;x <= mpnx;x++)
     {
         double v1 = Monkhorst_Pack_formula( k_type, koffset_in[0], x, mpnx);
-		if( abs(v1) < 1.0e-10 ) v1 = 0.0; //mohan update 2012-06-10
+		if( std::abs(v1) < 1.0e-10 ) v1 = 0.0; //mohan update 2012-06-10
         for (int y = 1;y <= mpny;y++)
         {
             double v2 = Monkhorst_Pack_formula( k_type, koffset_in[1], y, mpny);
-		    if( abs(v2) < 1.0e-10 ) v2 = 0.0;
+		    if( std::abs(v2) < 1.0e-10 ) v2 = 0.0;
             for (int z = 1;z <= mpnz;z++)
             {
                 double v3 = Monkhorst_Pack_formula( k_type, koffset_in[2], z, mpnz);
-				if( abs(v3) < 1.0e-10 ) v3 = 0.0;
+				if( std::abs(v3) < 1.0e-10 ) v3 = 0.0;
                 // index of nks kpoint
                 const int i = mpnx * mpny * (z - 1) + mpnx * (y - 1) + (x - 1);
                 kvec_d[i].set(v1, v2, v3);
@@ -723,9 +723,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         // kvec.x = fmod(kvec.x + 100 + symm.epsilon, 1) - symm.epsilon;
         // kvec.y = fmod(kvec.y + 100 + symm.epsilon, 1) - symm.epsilon;
         // kvec.z = fmod(kvec.z + 100 + symm.epsilon, 1) - symm.epsilon;
-        if(abs(kvec.x) < symm.epsilon) kvec.x = 0.0;
-        if(abs(kvec.y) < symm.epsilon) kvec.y = 0.0;
-        if(abs(kvec.z) < symm.epsilon) kvec.z = 0.0;
+        if(std::abs(kvec.x) < symm.epsilon) kvec.x = 0.0;
+        if(std::abs(kvec.y) < symm.epsilon) kvec.y = 0.0;
+        if(std::abs(kvec.z) < symm.epsilon) kvec.z = 0.0;
         return;
     };
     // for output in kpoints file
@@ -919,16 +919,16 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
         {
 //wrong!!   kvec_c[i] = G * kvec_d[i];
 // mohan fixed bug 2010-1-10
-			if( abs(kvec_d[i].x) < 1.0e-10 ) kvec_d[i].x = 0.0;
-			if( abs(kvec_d[i].y) < 1.0e-10 ) kvec_d[i].y = 0.0;
-			if( abs(kvec_d[i].z) < 1.0e-10 ) kvec_d[i].z = 0.0;
+			if( std::abs(kvec_d[i].x) < 1.0e-10 ) kvec_d[i].x = 0.0;
+			if( std::abs(kvec_d[i].y) < 1.0e-10 ) kvec_d[i].y = 0.0;
+			if( std::abs(kvec_d[i].z) < 1.0e-10 ) kvec_d[i].z = 0.0;
 
 			kvec_c[i] = kvec_d[i] * G;
 
 			// mohan add2012-06-10
-			if( abs(kvec_c[i].x) < 1.0e-10 ) kvec_c[i].x = 0.0;
-			if( abs(kvec_c[i].y) < 1.0e-10 ) kvec_c[i].y = 0.0;
-			if( abs(kvec_c[i].z) < 1.0e-10 ) kvec_c[i].z = 0.0;
+			if( std::abs(kvec_c[i].x) < 1.0e-10 ) kvec_c[i].x = 0.0;
+			if( std::abs(kvec_c[i].y) < 1.0e-10 ) kvec_c[i].y = 0.0;
+			if( std::abs(kvec_c[i].z) < 1.0e-10 ) kvec_c[i].z = 0.0;
         }
         kc_done = true;
     }
@@ -1303,16 +1303,16 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
         {
 //wrong!!   kvec_c[i] = G * kvec_d[i];
 // mohan fixed bug 2010-1-10
-			if( abs(kvec_d[i].x) < 1.0e-10 ) kvec_d[i].x = 0.0;
-			if( abs(kvec_d[i].y) < 1.0e-10 ) kvec_d[i].y = 0.0;
-			if( abs(kvec_d[i].z) < 1.0e-10 ) kvec_d[i].z = 0.0;
+			if( std::abs(kvec_d[i].x) < 1.0e-10 ) kvec_d[i].x = 0.0;
+			if( std::abs(kvec_d[i].y) < 1.0e-10 ) kvec_d[i].y = 0.0;
+			if( std::abs(kvec_d[i].z) < 1.0e-10 ) kvec_d[i].z = 0.0;
 
 			kvec_c[i] = kvec_d[i] * G;
 
 			// mohan add2012-06-10
-			if( abs(kvec_c[i].x) < 1.0e-10 ) kvec_c[i].x = 0.0;
-			if( abs(kvec_c[i].y) < 1.0e-10 ) kvec_c[i].y = 0.0;
-			if( abs(kvec_c[i].z) < 1.0e-10 ) kvec_c[i].z = 0.0;
+			if( std::abs(kvec_c[i].x) < 1.0e-10 ) kvec_c[i].x = 0.0;
+			if( std::abs(kvec_c[i].y) < 1.0e-10 ) kvec_c[i].y = 0.0;
+			if( std::abs(kvec_c[i].z) < 1.0e-10 ) kvec_c[i].z = 0.0;
         }
         kc_done = true;
     }

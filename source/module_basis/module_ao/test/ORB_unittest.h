@@ -14,8 +14,6 @@
 #include <map>
 #include <set>
 
-using namespace std;
-
 class test_orb : public testing::Test
 {
 protected:

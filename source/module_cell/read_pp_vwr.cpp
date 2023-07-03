@@ -217,9 +217,9 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 	// we need to choose a threshold for the deviation of the
 	// norm of pseudo atomic orbitals, I set 0.2
 	// mohan 2013-06-28
-	if( abs(units-1.0) > 0.2 && (iTB_s==1 || iref_s==1)) {return 3;}
-	if( abs(unitp-1.0) > 0.2 && (iTB_p==1 || iref_p==1)) {return 3;}
-	if( abs(unitd-1.0) > 0.2 && (iTB_d==1 || iref_d==1)) {return 3;}
+	if( std::abs(units-1.0) > 0.2 && (iTB_s==1 || iref_s==1)) {return 3;}
+	if( std::abs(unitp-1.0) > 0.2 && (iTB_p==1 || iref_p==1)) {return 3;}
+	if( std::abs(unitd-1.0) > 0.2 && (iTB_d==1 || iref_d==1)) {return 3;}
 
 
 	// calculate the phi*r*sqrt(4pi)
@@ -351,7 +351,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		// suppose wave function have sqrt(4pi) already
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        coef=1.0/sqrt(abs(coef));
+        coef=1.0/sqrt(std::abs(coef));
 		GlobalV::ofs_running << std::setw(25) << "1/sqrt(<phi|deltaV|phi>)" << std::setw(15) << coef << std::endl;
 		for(int ir=0; ir<mesh; ++ir)
 		{

@@ -71,8 +71,8 @@ TEST_F(PWTEST,test2_3)
                     if (modulus <= ggecut)
                     {
                         tmp[ix*ny*nz + iy*nz + iz] = 1.0/(modulus+1);
-                        if(vy > 0) tmp[ix*ny*nz + iy*nz + iz]+=ModuleBase::IMAG_UNIT / (abs(v.x+1) + 1);
-                        else if(vy < 0) tmp[ix*ny*nz + iy*nz + iz]-=ModuleBase::IMAG_UNIT / (abs(-v.x+1) + 1);
+                        if(vy > 0) tmp[ix*ny*nz + iy*nz + iz]+=ModuleBase::IMAG_UNIT / (std::abs(v.x+1) + 1);
+                        else if(vy < 0) tmp[ix*ny*nz + iy*nz + iz]-=ModuleBase::IMAG_UNIT / (std::abs(-v.x+1) + 1);
                     }
                 }
             }   
@@ -104,7 +104,7 @@ TEST_F(PWTEST,test2_3)
     for(int ig = 0 ; ig < npw ; ++ig)
     {
         rhog[ig] = 1.0/(pwtest.gg[ig]+1);
-        if(pwtest.gdirect[ig].y > 0) rhog[ig]+=ModuleBase::IMAG_UNIT / (abs(pwtest.gdirect[ig].x+1) + 1);
+        if(pwtest.gdirect[ig].y > 0) rhog[ig]+=ModuleBase::IMAG_UNIT / (std::abs(pwtest.gdirect[ig].x+1) + 1);
     }    
     double * rhor = new double [nrxx];
     pwtest.recip2real(rhog,rhor);

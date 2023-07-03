@@ -415,7 +415,10 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.Beta);
 
     if (this->orb_con.setup_2d)
+    {
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
+        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.iat2iwt.data(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+    }
 }
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)

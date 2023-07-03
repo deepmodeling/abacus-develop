@@ -112,9 +112,9 @@ void ModuleIO::write_cube(
 						 << " " << fac*ucell->atoms[it].tau[ia].z << std::endl;
 			}
 		}
-		ofs_cube.unsetf(ostream::fixed);
+		ofs_cube.unsetf(std::ostream::fixed);
 		ofs_cube << std::setprecision(precision);
-		ofs_cube << scientific;
+		ofs_cube << std::scientific;
 	}
 
 #ifdef __MPI

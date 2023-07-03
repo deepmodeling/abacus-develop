@@ -588,7 +588,7 @@ void XC_Functional::grad_wfc( const std::complex<double> *rhog, const int ik,
 			// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
 			double kplusg = wfc_basis->getgpluskcar(ik,ig)[ipol] * tpiba;
 			// calculate the charge density gradient in reciprocal space.
-			Porter[ig] = complex<double>(0.0,kplusg) * rhog[ig];
+			Porter[ig] = std::complex<double>(0.0,kplusg) * rhog[ig];
 		}
 
 		// bring the gdr from G --> R

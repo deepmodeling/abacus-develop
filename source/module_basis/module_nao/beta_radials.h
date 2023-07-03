@@ -24,6 +24,11 @@ class BetaRadials: public RadialSet
 {
   public:
     BetaRadials() {}
+    BetaRadials(const BetaRadials& other) : RadialSet(other) {} //!< deep copy
+
+    using RadialSet::operator=;
+    BetaRadials* clone() const { return new BetaRadials(*this); } // covariant return type
+
     ~BetaRadials() {}
 
     //! Build the class from a pseudopotential file

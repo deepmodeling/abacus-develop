@@ -354,15 +354,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             if (ry) // output Rydberg Unit
             {
                 GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 0);
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 1);
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 2);
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
@@ -371,15 +371,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             else
             {
                 GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 0) * fac;
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 1) * fac;
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 2) * fac;
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
@@ -389,15 +389,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             if (GlobalV::TEST_FORCE && ry)
             {
                 std::cout << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 0);
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 1);
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 2);
                 else
                     std::cout << std::setw(20) << "0";
@@ -406,15 +406,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             else if (GlobalV::TEST_FORCE)
             {
                 std::cout << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 0) * fac;
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 1) * fac;
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 2) * fac;
                 else
                     std::cout << std::setw(20) << "0";
