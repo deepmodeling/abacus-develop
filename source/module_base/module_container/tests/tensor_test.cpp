@@ -15,7 +15,7 @@ TEST(Tensor, Constructor) {
     // Test constructor with specified device type
     container::Tensor t2(container::DataType::DT_DOUBLE, container::DeviceType::GpuDevice, container::TensorShape({3, 4}));
     EXPECT_EQ(t2.data_type(), container::DataType::DT_DOUBLE);
-    EXPECT_EQ(t2.device_type(), container::DeviceType::CpuDevice);
+    EXPECT_EQ(t2.device_type(), container::DeviceType::GpuDevice);
     EXPECT_EQ(t2.shape().dims(), std::vector<int>({3, 4}));
     EXPECT_EQ(t2.NumElements(), 12);
 #endif
@@ -192,6 +192,21 @@ TEST(Tensor, Reshape) {
     container::TensorShape new_shape1({2, 3, 4});
     ASSERT_NO_THROW(t1.reshape(new_shape1));
     EXPECT_EQ(t1.shape(), new_shape1);
+}
+
+TEST(Tensor, GetValueAndInnerMostPtr) {
+    container::Tensor t(container::DataType::DT_INT, container::DeviceType::CpuDevice, {2, 2, 4});
+    std::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    EXPECT_EQ(t.shape().NumElements(), vec.size());
+    memcpy(t.data<int>(), vec.data(), sizeof(int) * vec.size());
+    EXPECT_EQ(t.get_value<int>(0, 0, 1), 2);
+    EXPECT_EQ(t.get_value<int>(1, 1, 2), 15);
+    t.reshape({4, 4});
+
+    // check the inner_most_ptr meshod
+    auto row_ptr = t.inner_most_ptr<int>(2);
+    EXPECT_EQ(row_ptr[0], 9);
+    EXPECT_EQ(row_ptr[3], 12);
 }
 
 TEST(Tensor, ReshapeDeathTest) {

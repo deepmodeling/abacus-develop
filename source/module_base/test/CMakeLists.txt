@@ -165,7 +165,7 @@ AddTest(
 
 AddTest(
   TARGET spherical_bessel_transformer
-  SOURCES spherical_bessel_transformer_test.cpp ../spherical_bessel_transformer.cpp
+  SOURCES spherical_bessel_transformer_test.cpp ../spherical_bessel_transformer.cpp ../math_sphbes.cpp ../math_integral.cpp ../timer.cpp
   LIBS ${math_libs}
 )
 

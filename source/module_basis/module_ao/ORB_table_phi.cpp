@@ -264,7 +264,7 @@ void ORB_table_phi::cal_ST_Phi12_R
     const int &l,
     const Numerical_Orbital_Lm &n1,
     const Numerical_Orbital_Lm &n2,
-	const set<size_t> &radials,
+	const std::set<size_t> &radials,
     double* rs,
 	double* drs
 ) const
@@ -478,7 +478,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 							}
 
 							//L=|L1-L2|,|L1-L2|+2,...,L1+L2
-							const int SL = abs(L1-L2);
+							const int SL = std::abs(L1-L2);
 							const int AL = L1+L2;
 
 							for (int L=0; L < L2plus1 ; L++)
@@ -684,7 +684,7 @@ void ORB_table_phi::init_OV_Tpair(LCAO_Orbitals &orb)
 
 			++index;
 			/// (2) pairs about lmax
-			this->OV_L2plus1(T1,T2) = max(orb.Phi[T1].getLmax(), orb.Phi[T2].getLmax() )*2+1;
+			this->OV_L2plus1(T1,T2) = std::max(orb.Phi[T1].getLmax(), orb.Phi[T2].getLmax() )*2+1;
 			this->OV_L2plus1(T2,T1) = this->OV_L2plus1(T1,T2);
         }
     }
@@ -783,7 +783,7 @@ void ORB_table_phi::init_Lmax (
 					Lmax_used = 2*Lmax + 1;
 					break;
 				case 2:			// used in <jY|jY> or <Abfs|Abfs>
-					Lmax = max(Lmax, Lmax_exx);
+					Lmax = std::max(Lmax, Lmax_exx);
 					Lmax_used = 2*Lmax + 1;
 					break;
 				case 3:                // used in berryphase by jingan
@@ -802,7 +802,7 @@ void ORB_table_phi::init_Lmax (
 				case 1:			// used in <jY|PhiPhi> or <Abfs|PhiPhi>
 					cal_Lmax_Phi(Lmax,orb);
 					Lmax_used = 2*Lmax + 1;
-					Lmax = max(Lmax, Lmax_exx);
+					Lmax = std::max(Lmax, Lmax_exx);
 					Lmax_used += Lmax_exx;
 					break;
 				default:
@@ -875,6 +875,6 @@ void ORB_table_phi::plot_table(
 	ofs << "ir    table_entry" << std::endl;
 	for(int ir=0;ir<rmesh;ir++)
 	{
-		ofs<<setw(4) << ir << "  " << column[ir]<<std::endl;
+		ofs<< std::setw(4) << ir << "  " << column[ir]<< std::endl;
 	}
 }

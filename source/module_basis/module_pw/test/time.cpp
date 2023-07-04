@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 
         for(int i  = 0 ; i < nbands*npw; ++i)
         {
-            double error = abs(psiout2[i]-psiout[i]);
+            double error = std::abs(psiout2[i]-psiout[i]);
             if(error > 1e-4) 
             {
                 cout<<"Wrong"<<endl;

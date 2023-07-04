@@ -111,7 +111,7 @@ public:
 		ucell->G = ucell->GT.Transpose();
 		ucell->GGT = ucell->G*ucell->GT;
 		ucell->invGGT = ucell->GGT.Inverse();
-		ucell->omega = abs(ucell->latvec.Det())*(ucell->lat0)*(ucell->lat0)*(ucell->lat0);
+		ucell->omega = std::abs(ucell->latvec.Det())*(ucell->lat0)*(ucell->lat0)*(ucell->lat0);
 		//atomic info
 		ucell->Coordinate = this->coor_type;
 		ucell->atoms = new Atom[ucell->ntype];

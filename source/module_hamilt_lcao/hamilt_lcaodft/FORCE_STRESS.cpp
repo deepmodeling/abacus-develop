@@ -499,7 +499,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                 GlobalV::ofs_running << " " << std::setw(8) << iat;
                 for (int i = 0; i < 3; i++)
                 {
-                    if (abs(fcs(iat, i) * ModuleBase::Ry_to_eV / 0.529177)
+                    if (std::abs(fcs(iat, i) * ModuleBase::Ry_to_eV / 0.529177)
                         < Force_Stress_LCAO::force_invalid_threshold_ev)
                     {
                         fcs(iat, i) = 0.0;

@@ -36,12 +36,26 @@ void WARNING(const std::string &file, const std::string &description);
 void QUIT(void);
 
 /**
+ * @brief Close .log files and exit
+ *
+ */
+void QUIT(int ret);
+
+/**
  * @brief Combine the functions of WARNING and QUIT
  *
  * @param file The file where warning happens
  * @param description The warning information
  */
 void WARNING_QUIT(const std::string &file, const std::string &description);
+
+/**
+ * @brief Combine the functions of WARNING and QUIT
+ *
+ * @param file The file where warning happens
+ * @param description The warning information
+ */
+void WARNING_QUIT(const std::string &file, const std::string &description, int ret);
 
 /**
  * @brief Check, if true, WARNING_QUIT

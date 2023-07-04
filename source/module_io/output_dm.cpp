@@ -27,11 +27,11 @@ Output_DM::Output_DM(const Grid_Technique& GridT,
 {
     if (gamma_only_local)
     {
-        this->_fn = this->_directory + "/tmp_SPIN" + std::to_string(this->_is + 1) + "_DM";
+        this->_fn = this->_directory + "/SPIN" + std::to_string(this->_is + 1) + "_DM";
     }
     else
     {
-        this->_fn = this->_directory + "/tmp_SPIN" + std::to_string(this->_is + 1) + "_DM_R";
+        this->_fn = this->_directory + "/SPIN" + std::to_string(this->_is + 1) + "_DM_R";
     }
 }
 void Output_DM::write()

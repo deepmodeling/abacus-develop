@@ -135,5 +135,7 @@ void UnitCell::cal_ux()
     magnet.lsign_ = true;
 }
 
+#ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){};
 InfoNonlocal::~InfoNonlocal(){};
+#endif

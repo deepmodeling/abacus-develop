@@ -23,6 +23,7 @@ class RadialSet
     RadialSet() {}
     RadialSet(const RadialSet&);            //!< deep copy
     RadialSet& operator=(const RadialSet&); //!< deep copy
+    virtual RadialSet* clone() const = 0;   //!< for polymorphic copy
 
     virtual ~RadialSet();
 
@@ -53,6 +54,8 @@ class RadialSet
     int nchi() const { return nchi_; }
 
     const NumericalRadial& chi(const int l, const int izeta);
+    const NumericalRadial* cbegin() const { return chi_; }
+    const NumericalRadial* cend() const { return chi_ + nchi_; }
     //!@}
 
     /*! @name property setters for all NumericalRadial objects
@@ -70,7 +73,11 @@ class RadialSet
 
     //! Set a common uniform grid for all NumericalRadial objects
     //! @see NumericalRadial::set_uniform_grid
-    void set_uniform_grid(const bool for_r_space, const int ngrid, const double cutoff, const char mode = 'i');
+    void set_uniform_grid(const bool for_r_space,
+                          const int ngrid,
+                          const double cutoff,
+                          const char mode = 'i',
+                          const bool enable_fft = false);
     //!@}
 
   protected:

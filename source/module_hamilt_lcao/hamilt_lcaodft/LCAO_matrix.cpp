@@ -442,7 +442,7 @@ void LCAO_Matrix::print_HSk(const char &mtype, const char &vtype, const double &
                 if(mtype=='S')	v = Sloc2[index];
                 else if(mtype=='T') v = Hloc_fixed2[index];
                 else if(mtype=='H') v = Hloc2[index];
-                auto threshold = [accuracy]( const double v ){ return abs(v)>accuracy ? v : 0.0; };
+                auto threshold = [accuracy]( const double v ){ return std::abs(v)>accuracy ? v : 0.0; };
                 os << '(' << threshold(v.real()) << ',' << threshold(v.imag()) << "\t";
             }
             else
@@ -467,7 +467,7 @@ void LCAO_Matrix::print_HSk(const char &mtype, const char &vtype, const double &
                     else if(mtype=='H') v = Hloc2[index].imag();
                 }
 
-                if( abs(v) > accuracy )
+                if( std::abs(v) > accuracy )
                 {
     //				os << std::setw(15) << v;
                     os << v << "\t";
@@ -505,7 +505,7 @@ void LCAO_Matrix::print_HSgamma(const char &mtype, std::ostream &os)
             for(int j=0; j<GlobalV::NLOCAL; ++j)
             {
                 double v = Sloc[i*this->ParaV->ncol+j];
-                if( abs(v) > 1.0e-8)
+                if( std::abs(v) > 1.0e-8)
                 {
                     os << std::setw(15) << v;
                 }
@@ -525,7 +525,7 @@ void LCAO_Matrix::print_HSgamma(const char &mtype, std::ostream &os)
             for(int j=0; j<GlobalV::NLOCAL; ++j)
             {
                 double v = Hloc_fixed[i*this->ParaV->ncol+j];
-                if( abs(v) > 1.0e-8)
+                if( std::abs(v) > 1.0e-8)
                 {
                     os << std::setw(15) << v;
                 }
@@ -545,7 +545,7 @@ void LCAO_Matrix::print_HSgamma(const char &mtype, std::ostream &os)
             for(int j=0; j<GlobalV::NLOCAL; ++j)
             {
                 double v = Hloc[i*this->ParaV->ncol+j];
-                if( abs(v) > 1.0e-8)
+                if( std::abs(v) > 1.0e-8)
                 {
                     os << std::setw(15) << v;
                 }

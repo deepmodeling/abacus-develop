@@ -122,7 +122,7 @@ void construct_ucell(stru_ &stru, UnitCell &ucell)
         }
     }
 
-    ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
     ucell.itia2iat.create(ucell.ntype, nmax);
 	int iat=0;
 	for(int it = 0;it < ucell.ntype;it++)

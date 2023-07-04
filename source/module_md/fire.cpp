@@ -137,9 +137,9 @@ void FIRE::check_force()
     {
         for (int j = 0; j < 3; ++j)
         {
-            if (max < abs(force[i][j]))
+            if (max < std::abs(force[i][j]))
             {
-                max = abs(force[i][j]);
+                max = std::abs(force[i][j]);
             }
         }
     }

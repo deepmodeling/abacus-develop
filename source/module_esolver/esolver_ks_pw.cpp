@@ -276,10 +276,16 @@ void ESolver_KS_PW<FPTYPE, Device>::beforescf(int istep)
     {
         this->init_after_vc(INPUT, GlobalC::ucell);
     }
-    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+    if (GlobalC::ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(GlobalC::ucell);
-        this->CE.extrapolate_charge(this->pelec->charge, &this->sf);
+        this->CE.extrapolate_charge(
+#ifdef __MPI
+            &(GlobalC::Pgrid),
+#endif
+            GlobalC::ucell,
+            this->pelec->charge,
+            &this->sf);
     }
 
     // init Hamilt, this should be allocated before each scf loop
@@ -385,7 +391,7 @@ void ESolver_KS_PW<FPTYPE, Device>::eachiterinit(const int istep, const int iter
 
 // Temporary, it should be replaced by hsolver later.
 template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const FPTYPE ethr)
+void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const double ethr)
 {
     if (this->phsol != nullptr)
     {
@@ -513,6 +519,18 @@ template <typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::afterscf(const int istep)
 {
     this->create_Output_Potential(istep).write();
+
+    // save charge difference into files for charge extrapolation
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
+#ifdef __MPI
+                            this->pw_big,
+#endif
+                            this->pelec->charge,
+                            &this->sf);
+    }
 
     if (GlobalV::out_chg)
     {
@@ -736,7 +754,7 @@ void ESolver_KS_PW<FPTYPE, Device>::postprocess()
 }
 
 template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::hamilt2estates(const FPTYPE ethr)
+void ESolver_KS_PW<FPTYPE, Device>::hamilt2estates(const double ethr)
 {
     if (this->phsol != nullptr)
     {
@@ -760,7 +778,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     //========================================
     // diagonalization of the KS hamiltonian
     // =======================================
-    FPTYPE diag_ethr = GlobalV::PW_DIAG_THR;
+    double diag_ethr = GlobalV::PW_DIAG_THR;
     if (diag_ethr - 1e-2 > -1e-5)
         diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, GlobalV::SCF_THR / GlobalV::nelec));
     GlobalV::ofs_running << " PW_DIAG_THR  = " << diag_ethr << std::endl;

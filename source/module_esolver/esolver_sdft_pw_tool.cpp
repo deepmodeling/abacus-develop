@@ -134,11 +134,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     stoiter.stofunc.t = dt * nbatch;
     chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
     chet2.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
-    cout<<"Relative Chebyshev precision: "<<abs(chet.coef_complex[nche_KG-1]/chet.coef_complex[0])<<endl;
+    cout<<"Relative Chebyshev precision: "<<std::abs(chet.coef_complex[nche_KG-1]/chet.coef_complex[0])<<endl;
     ofstream cheofs("Chebycoef");
     for(int i  = 0 ; i < nche_KG ; ++i)
     {
-        cheofs<<setw(5)<<i<<setw(20)<<abs(chet.coef_complex[i]/chet.coef_complex[0])<<endl;
+        cheofs<<setw(5)<<i<<setw(20)<<std::abs(chet.coef_complex[i]/chet.coef_complex[0])<<endl;
     }
     cheofs.close();
     std::complex<double>* batchcoef = nullptr;
@@ -747,7 +747,7 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
         ofsdos<<setw(8)<<"## E(eV) "<<setw(20)<<"dos(eV^-1)"<<setw(20)<<"sum"<<setw(20)<<"Error(eV^-1)"<<endl;
         for(int ie = 0 ; ie < ndos ; ++ie)
         {
-            double tmperror = 2.0 * abs(error[ie]);
+            double tmperror = 2.0 * std::abs(error[ie]);
             if(maxerror < tmperror) maxerror = tmperror;
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;

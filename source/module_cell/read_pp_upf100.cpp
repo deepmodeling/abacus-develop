@@ -174,7 +174,7 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	
 	// dft functional enforced to modify
 	// mohan add 2010-07-15
-	string xc_func1 = GlobalV::DFT_FUNCTIONAL;
+	std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
 	transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
 	if(GlobalV::DFT_FUNCTIONAL!="default" && xc_func1 != xc_func)
 	{

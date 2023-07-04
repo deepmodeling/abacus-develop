@@ -36,7 +36,7 @@ void Input::Init(const std::string &fn)
 #endif
     if (input_error == 1)
     {
-        ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT");
+        ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT", 1);
     }
 
 #ifdef __MPI
@@ -44,7 +44,7 @@ void Input::Init(const std::string &fn)
 #endif
     if (!success)
     {
-        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.");
+        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
     }
 #ifdef __MPI
     Bcast();
@@ -88,7 +88,7 @@ void Input::Init(const std::string &fn)
     GlobalV::ofs_running << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
                          << std::endl;
     GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
-                         << std::endl; 
+                         << std::endl;
     GlobalV::ofs_running << "                      Commit: " << commit
                          << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(ios::right);
@@ -452,7 +452,7 @@ void Input::Default(void)
     td_gauss_freq = "22.13"; // fs^-1
     td_gauss_phase = "0.0";
     td_gauss_sigma = "30.0"; // fs
-    td_gauss_t0 = "100.0"; 
+    td_gauss_t0 = "100.0";
     td_gauss_amp = "0.25"; // V/A
 
     // Trapezoid
@@ -1569,7 +1569,7 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, td_edm);
         }
-        else if (strcmp("propagator", word) == 0)
+        else if (strcmp("td_propagator", word) == 0)
         {
             read_value(ifs, propagator);
         }
@@ -2368,6 +2368,11 @@ bool Input::Read(const std::string &fn)
     {
         gamma_only_local = 1;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
+        if (esolver_type == "tddft")
+        {
+            GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
+            gamma_only_local = 0;
+        }
     }
     if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
     {
@@ -2701,6 +2706,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             lcao_ecut = ecutwfc;
             ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
         }
+
+        // if calculation is get_wf, function source/module_basis/module_pw/pw_basis_k_big.h/distribute_r()
+        // will calculate nbx/nby/nbz by divide nx/ny/nz by bx/by/bz, so bx/by/bz should not be 0
+        if (calculation == "get_wf")
+        {
+            if (!bx)
+                bx = 1;
+            if (!by)
+                by = 1;
+            if (!bz)
+                bz = 1;
+        }
     }
 
     if (basis_type == "pw" || basis_type == "lcao_in_pw")
@@ -2913,7 +2930,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(deepks_bandgap);
     Parallel_Common::bcast_bool(deepks_out_unittest);
     Parallel_Common::bcast_string(deepks_model);
-    
+
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);

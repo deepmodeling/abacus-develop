@@ -18,6 +18,12 @@
  *  - build
  *      - parse a pseudopotential file and initialize individual NumericalRadial objects
  *
+ *  - copy constructor, assignment operator & polymorphic clone
+ *      - enabling deep copy
+ *
+ *  - cbegin & cend
+ *      - pointers to the first and one-past-last read-only NumericalRadial objects
+ *
  *  - all "getters"
  *      - Get access to private members.
  *
@@ -33,7 +39,7 @@ class BetaRadialsTest : public ::testing::Test
     BetaRadials beta; //!< object under test
 
     std::string dir = "../../../../../tests/PP_ORB/"; //!< directory with test files
-    std::string log_file = "./test_files/atomic_orbital.log"; //!< file for logging
+    std::string log_file = "./test_files/beta_radials.log"; //!< file for logging
 };
 
 void BetaRadialsTest::SetUp() {
@@ -175,6 +181,138 @@ TEST_F(BetaRadialsTest, BatchSet)
             EXPECT_EQ(beta.chi(l, izeta).ptr_rgrid()[4], 4.4);
         }
     }
+}
+
+TEST_F(BetaRadialsTest, Copy)
+{
+    /*
+     * This test checks whether
+     *
+     * 1. copy constructor
+     * 2. assignment operator
+     * 3. polymorphic clone
+     *
+     * work as expected.
+     *                                                                  */
+    std::string file201 = "Pb_ONCV_PBE-1.0.upf"; //!< a UPF 2.0.1 file to read from
+    beta.build(dir + file201, 999, nullptr, GlobalV::MY_RANK);
+
+    // copy constructor
+    BetaRadials Pb_copy(beta);
+
+    EXPECT_EQ(Pb_copy.itype(), 999);
+    EXPECT_EQ(Pb_copy.symbol(), "Pb");
+    EXPECT_EQ(Pb_copy.lmax(), 3);
+    EXPECT_EQ(Pb_copy.nzeta(0), 2);
+    EXPECT_EQ(Pb_copy.nzeta(1), 2);
+    EXPECT_EQ(Pb_copy.nzeta(2), 2);
+    EXPECT_EQ(Pb_copy.nzeta(3), 2);
+    EXPECT_EQ(Pb_copy.nzeta_max(), 2);
+    EXPECT_EQ(Pb_copy.nchi(), 8);
+
+    EXPECT_DOUBLE_EQ(Pb_copy.rcut_max(), 3.68);
+
+    EXPECT_EQ(Pb_copy.chi(0, 0).rcut(), 3.64);
+    EXPECT_EQ(Pb_copy.chi(0, 0).nr(), 365);
+    EXPECT_EQ(Pb_copy.chi(0, 0).izeta(), 0);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(0, 0).ptr_rgrid()[0], 0.0000);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(0, 0).ptr_rgrid()[8], 0.0800);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(0, 0).ptr_rgrid()[364], 3.6400);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(0, 0).ptr_rvalue()[0], 0.0000000000e+00);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(0, 0).ptr_rvalue()[4], 5.9689893417e-02);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(0, 0).ptr_rvalue()[364], -4.5888625103e-07);
+
+    EXPECT_EQ(Pb_copy.chi(3, 1).rcut(), 3.68);
+    EXPECT_EQ(Pb_copy.chi(3, 1).nr(), 369);
+    EXPECT_EQ(Pb_copy.chi(3, 1).izeta(), 1);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(3, 1).ptr_rgrid()[0], 0.0000);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(3, 1).ptr_rgrid()[8], 0.0800);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(3, 1).ptr_rgrid()[368], 3.6800);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(3, 1).ptr_rvalue()[0], 0.0000000000e+00);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(3, 1).ptr_rvalue()[4], 1.7908487484e-06);
+    EXPECT_DOUBLE_EQ(Pb_copy.chi(3, 1).ptr_rvalue()[368], -7.0309158570e-06);
+
+    // assignment operator
+    BetaRadials Pb_assign;
+    Pb_assign = beta;
+
+    EXPECT_EQ(Pb_assign.itype(), 999);
+    EXPECT_EQ(Pb_assign.symbol(), "Pb");
+    EXPECT_EQ(Pb_assign.lmax(), 3);
+    EXPECT_EQ(Pb_assign.nzeta(0), 2);
+    EXPECT_EQ(Pb_assign.nzeta(1), 2);
+    EXPECT_EQ(Pb_assign.nzeta(2), 2);
+    EXPECT_EQ(Pb_assign.nzeta(3), 2);
+    EXPECT_EQ(Pb_assign.nzeta_max(), 2);
+    EXPECT_EQ(Pb_assign.nchi(), 8);
+
+    EXPECT_DOUBLE_EQ(Pb_assign.rcut_max(), 3.68);
+
+    EXPECT_EQ(Pb_assign.chi(0, 0).rcut(), 3.64);
+    EXPECT_EQ(Pb_assign.chi(0, 0).nr(), 365);
+    EXPECT_EQ(Pb_assign.chi(0, 0).izeta(), 0);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(0, 0).ptr_rgrid()[0], 0.0000);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(0, 0).ptr_rgrid()[8], 0.0800);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(0, 0).ptr_rgrid()[364], 3.6400);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(0, 0).ptr_rvalue()[0], 0.0000000000e+00);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(0, 0).ptr_rvalue()[4], 5.9689893417e-02);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(0, 0).ptr_rvalue()[364], -4.5888625103e-07);
+
+    EXPECT_EQ(Pb_assign.chi(3, 1).rcut(), 3.68);
+    EXPECT_EQ(Pb_assign.chi(3, 1).nr(), 369);
+    EXPECT_EQ(Pb_assign.chi(3, 1).izeta(), 1);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(3, 1).ptr_rgrid()[0], 0.0000);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(3, 1).ptr_rgrid()[8], 0.0800);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(3, 1).ptr_rgrid()[368], 3.6800);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(3, 1).ptr_rvalue()[0], 0.0000000000e+00);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(3, 1).ptr_rvalue()[4], 1.7908487484e-06);
+    EXPECT_DOUBLE_EQ(Pb_assign.chi(3, 1).ptr_rvalue()[368], -7.0309158570e-06);
+
+    // polymorphic clone
+    RadialSet* Pb_clone = beta.clone();
+
+    EXPECT_EQ(Pb_clone->itype(), 999);
+    EXPECT_EQ(Pb_clone->symbol(), "Pb");
+    EXPECT_EQ(Pb_clone->lmax(), 3);
+    EXPECT_EQ(Pb_clone->nzeta(0), 2);
+    EXPECT_EQ(Pb_clone->nzeta(1), 2);
+    EXPECT_EQ(Pb_clone->nzeta(2), 2);
+    EXPECT_EQ(Pb_clone->nzeta(3), 2);
+    EXPECT_EQ(Pb_clone->nzeta_max(), 2);
+    EXPECT_EQ(Pb_clone->nchi(), 8);
+
+    EXPECT_DOUBLE_EQ(Pb_clone->rcut_max(), 3.68);
+
+    EXPECT_EQ(Pb_clone->chi(0, 0).rcut(), 3.64);
+    EXPECT_EQ(Pb_clone->chi(0, 0).nr(), 365);
+    EXPECT_EQ(Pb_clone->chi(0, 0).izeta(), 0);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(0, 0).ptr_rgrid()[0], 0.0000);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(0, 0).ptr_rgrid()[8], 0.0800);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(0, 0).ptr_rgrid()[364], 3.6400);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(0, 0).ptr_rvalue()[0], 0.0000000000e+00);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(0, 0).ptr_rvalue()[4], 5.9689893417e-02);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(0, 0).ptr_rvalue()[364], -4.5888625103e-07);
+
+    EXPECT_EQ(Pb_clone->chi(3, 1).rcut(), 3.68);
+    EXPECT_EQ(Pb_clone->chi(3, 1).nr(), 369);
+    EXPECT_EQ(Pb_clone->chi(3, 1).izeta(), 1);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(3, 1).ptr_rgrid()[0], 0.0000);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(3, 1).ptr_rgrid()[8], 0.0800);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(3, 1).ptr_rgrid()[368], 3.6800);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(3, 1).ptr_rvalue()[0], 0.0000000000e+00);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(3, 1).ptr_rvalue()[4], 1.7908487484e-06);
+    EXPECT_DOUBLE_EQ(Pb_clone->chi(3, 1).ptr_rvalue()[368], -7.0309158570e-06);
+
+    delete Pb_clone;
+}
+
+TEST_F(BetaRadialsTest, BeginAndEnd)
+{
+    std::string file201 = "Pb_ONCV_PBE-1.0.upf"; //!< a UPF 2.0.1 file to read from
+    beta.build(dir + file201, 999, nullptr, GlobalV::MY_RANK);
+
+    EXPECT_EQ(beta.cbegin(), &beta.chi(0, 0));
+    EXPECT_EQ(beta.cend() - 1, &beta.chi(3, 1));
 }
 
 int main(int argc, char** argv)

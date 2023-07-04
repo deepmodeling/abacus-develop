@@ -16,7 +16,7 @@ namespace Test_Deepks
 
         int* trace_loc_row;
         int* trace_loc_col;
-        void set_trace(void);
+        void set_global2local(void);
 
         int ncol;
         int nrow;

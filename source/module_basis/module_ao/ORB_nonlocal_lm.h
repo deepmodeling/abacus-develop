@@ -2,7 +2,6 @@
 #define NUMERICAL_NONLOCAL_LM
 
 #include <string>
-using namespace std;
 
 /**
  * \class Numerical_Nonlocal_Lm

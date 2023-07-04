@@ -228,9 +228,9 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
         this->pelec->charge->allocate(GlobalV::NSPIN);
         this->pelec->omega = GlobalC::ucell.omega;
 
-        if (this->pelec->pot != nullptr)
+        // Initialize the potential.
+        if (this->pelec->pot == nullptr)
         {
-            delete this->pelec->pot;
             this->pelec->pot = new elecstate::Potential(pw_rho,
                                                         &GlobalC::ucell,
                                                         &(GlobalC::ppcell.vloc),
@@ -415,7 +415,10 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.Beta);
 
     if (this->orb_con.setup_2d)
+    {
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
+        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.iat2iwt.data(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+    }
 }
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
@@ -620,11 +623,12 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
             }
             bool bit = false; // LiuXh, 2017-03-21
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
-            if (this->psi != nullptr)
+            if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(h_mat.p,
+                ModuleIO::saving_HS(istep,
+                                    h_mat.p,
                                     s_mat.p,
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
@@ -632,9 +636,10 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     this->LOWF.ParaV[0],
                                     1); // LiuXh, 2017-03-21
             }
-            else if (this->psid != nullptr)
+            else if (this->psid != nullptr && (istep % GlobalV::out_interval == 0))
             { // gamma_only case, Hloc and Sloc are correct H and S matrix
-                ModuleIO::saving_HS(this->LM.Hloc.data(),
+                ModuleIO::saving_HS(istep,
+                                    this->LM.Hloc.data(),
                                     this->LM.Sloc.data(),
                                     bit,
                                     hsolver::HSolverLCAO::out_mat_hs,
@@ -653,15 +658,18 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
-            if (this->psi != nullptr)
+            if (istep % GlobalV::out_interval == 0)
             {
-                this->psi[0].fix_k(ik);
-                this->pelec->print_psi(this->psi[0]);
-            }
-            else
-            {
-                this->psid[0].fix_k(ik);
-                this->pelec->print_psi(this->psid[0]);
+                if (this->psi != nullptr)
+                {
+                    this->psi[0].fix_k(ik);
+                    this->pelec->print_psi(this->psi[0], istep);
+                }
+                else
+                {
+                    this->psid[0].fix_k(ik);
+                    this->pelec->print_psi(this->psid[0], istep);
+                }
             }
         }
         elecstate::ElecStateLCAO::out_wfc_flag = 0;
@@ -730,6 +738,18 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
+    // save charge difference into files for charge extrapolation
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
+#ifdef __MPI
+                            this->pw_big,
+#endif
+                            this->pelec->charge,
+                            &this->sf);
+    }
+
     if (this->LOC.out_dm1 == 1)
     {
         this->create_Output_DM1(istep).write();
