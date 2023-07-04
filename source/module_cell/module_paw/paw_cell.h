@@ -16,14 +16,14 @@ class Paw_Cell
 {
     public:
 
-    Paw_Cell();
-    ~Paw_Cell();
+    Paw_Cell(){};
+    ~Paw_Cell(){};
 
     void init_paw_cell(
         const double ecutwfc_in, const double cell_factor_in,
         const int nat_in, const int ntyp_in,
         const int * atom_type_in, const double ** atom_coord_in,
-        const std::vector<std::string> filename_list_in,
+        const std::vector<std::string> & filename_list_in,
         const int nx_in, const int ny_in, const int nz_in,
         const double * eigts1_in, const double * eigts2_in, const double * eigts3_in);
 
@@ -31,10 +31,34 @@ class Paw_Cell
         const int npw, const double * kpt,
         const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz);
 
+    int get_nproj_tot(){return nproj_tot;}
+    // map projector to atom
+    std::vector<int> get_iprj_to_ia(){return iprj_to_ia;}
+    // map projector to mstate of that element
+    std::vector<int> get_iprj_to_im(){return iprj_to_im;}
+    // map projector to lstate of that element
+    std::vector<int> get_iprj_to_il(){return iprj_to_il;}
+    // map projector to l quantum number of that element
+    std::vector<int> get_iprj_to_l() {return iprj_to_l;}
+    // map projector to m quantum number of that element
+    std::vector<int> get_iprj_to_m() {return iprj_to_m;}
+
     private:
+
+    // based on list of atom type, calculate total number of projectors
+    // of this system, then map each projector to atom index, mstate and lstate
+    // record in iproj_to_ia/im/il
+    void map_paw_proj();
 
     // array of paw_element
     std::vector<Paw_Element> paw_element_list;
+
+    int nproj_tot; // total number of projectors
+    std::vector<int> iprj_to_ia; // map projector to atom
+    std::vector<int> iprj_to_im; // map projector to mstate of that element
+    std::vector<int> iprj_to_il; // map projector to lstate of that element
+    std::vector<int> iprj_to_l;  // map projector to l quantum number of that element
+    std::vector<int> iprj_to_m;  // map projector to m quantum number of that element
 
     // atomic positions and types
     int nat;

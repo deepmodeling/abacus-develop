@@ -122,10 +122,15 @@ class Paw_Element
     // ecutwfc_in : unit in Rydberg
     void init_paw_element(const double ecutwfc_in, const double cell_factor_in);
 
+    //#. m states (for each (n,l) channel, there will be 2l+1 m states)
     int get_mstates(){return mstates;}
+    //number of channels (quantum numbers n,l)
     int get_nstates(){return nstates;}
+    //l quantum number of each channel
     std::vector<int> get_lstate(){return lstate;}
+    //m quantum number of each mstate
     std::vector<int> get_mstate(){return mstate;}
+    //map from mstate to (n,l) channel (namely nstates)
     std::vector<int> get_im_to_istate(){return im_to_istate;}
 
     // return ptilde_q for a given channel at a given q_in, using spline

@@ -5,7 +5,7 @@ void Paw_Cell::init_paw_cell(
     const double ecutwfc_in, const double cell_factor_in,
     const int nat_in, const int ntyp_in,
     const int * atom_type_in, const double ** atom_coord_in,
-    const std::vector<std::string> filename_list_in,
+    const std::vector<std::string> & filename_list_in,
     const int nx_in, const int ny_in, const int nz_in,
     const double * eigts1_in, const double * eigts2_in, const double * eigts3_in)
 {
@@ -37,6 +37,8 @@ void Paw_Cell::init_paw_cell(
         paw_element_list[ityp].init_paw_element(ecutwfc_in, cell_factor_in);
         paw_element_list[ityp].read_paw_xml(filename_list_in[ityp]);
     }
+
+    this->map_paw_proj();
 
     eigts1.resize(nat);
     eigts2.resize(nat);
@@ -98,4 +100,49 @@ void Paw_Cell::set_paw_k(
             struc_fact[iat][ipw] = kphase * eigts1[iat][ix] * eigts2[iat][iy] * eigts3[iat][iz];
         }
     }
+}
+
+void Paw_Cell::map_paw_proj()
+{
+    ModuleBase::TITLE("Paw_Element","map_paw_proj");
+
+    nproj_tot = 0;
+    
+    for(int ia = 0; ia < nat; ia ++)
+    {
+        int it = atom_type[ia];
+        nproj_tot += paw_element_list[it].get_mstates();
+    }
+
+    // Not sure if all of them will be used, but it doesn't
+    // hurt to prepare them I suppose
+    // Doesn't take much time, also not much space
+
+    iprj_to_ia.resize(nproj_tot);
+    iprj_to_im.resize(nproj_tot);
+    iprj_to_il.resize(nproj_tot);
+    iprj_to_l.resize(nproj_tot);
+    iprj_to_m.resize(nproj_tot);
+
+    int iproj = 0;
+    for(int ia = 0; ia < nat; ia ++)
+    {
+        int it = atom_type[ia];
+        int mstates = paw_element_list[it].get_mstates();
+        std::vector<int> im_to_istate = paw_element_list[it].get_im_to_istate();
+        std::vector<int> lstate = paw_element_list[it].get_lstate();
+        std::vector<int> mstate = paw_element_list[it].get_mstate();
+
+        for(int im = 0; im < mstates; im ++)
+        {
+            iprj_to_ia[iproj] = ia;
+            iprj_to_im[iproj] = im;
+            iprj_to_il[iproj] = im_to_istate[im];
+            iprj_to_l [iproj] = lstate[im_to_istate[im]];
+            iprj_to_m [iproj] = mstate[im];
+            iproj ++;
+        }
+    }
+
+    assert(iproj == nproj_tot);
 }

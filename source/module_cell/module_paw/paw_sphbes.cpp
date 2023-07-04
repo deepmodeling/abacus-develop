@@ -65,16 +65,28 @@ void Paw_Element::transform_ptilde()
 double Paw_Element::spherical_bessel_transform(const int l, std::vector<double> & fr, const double q) const
 {
 
+    if(std::abs(q) < 1e-8 && l != 0) return 0.0;
+
     assert(fr.size() == nr);
     std::vector<double> integrand;
     integrand.resize(nr);
 
-    for(int ir = 0; ir < nr; ir++)
+    if(std::abs(q) < 1e-8)
     {
-        double x = rr[ir] * q;
-        double sph_bes, tmp;
-        this-> spherical_bessel_function(l,x,sph_bes,tmp,0);
-        integrand[ir] = sph_bes * fr[ir] * rr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
+        for(int ir = 0; ir < nr; ir++)
+        {
+            integrand[ir] = fr[ir] * rr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
+        }        
+    }
+    else
+    {
+        for(int ir = 0; ir < nr; ir++)
+        {
+            double x = rr[ir] * q;
+            double sph_bes, tmp;
+            this-> spherical_bessel_function(l,x,sph_bes,tmp,0);
+            integrand[ir] = sph_bes * fr[ir] * rr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
+        }
     }
 
     return this->simpson_integration(integrand);
