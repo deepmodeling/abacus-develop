@@ -237,16 +237,16 @@ public:
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const ORB_gen_tables &UOT);
 
     void check_psialpha(const bool& cal_deri/**< [in] 0 for 2-center intergration, 1 for its derivation*/,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const ORB_gen_tables &UOT);
 
 //-------------------
@@ -278,14 +278,14 @@ public:
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col);
+        const int* global2local_row,
+        const int* global2local_col);
     void cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d);
     void check_projected_dm(void);
@@ -296,15 +296,15 @@ public:
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const bool isstress);
     void cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const bool isstress);
@@ -334,15 +334,15 @@ public:
     void add_v_delta(const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
 	    const int nrow,
         const int ncol);
     void add_v_delta_k(const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const int nnr_in);
     
     void check_v_delta(const int nrow, const int ncol);
@@ -350,12 +350,12 @@ public:
 
     ///calculate tr(\rho V_delta)
     void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const int nrow);
     void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const int nks,
         const int nrow,
         const int ncol);
@@ -379,8 +379,8 @@ public:
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const bool isstress, ModuleBase::matrix& svnl_dalpha);
 
     //for multi-k, pulay and HF terms of force are calculated together
@@ -388,8 +388,8 @@ public:
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        const int* global2local_row,
+        const int* global2local_col,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const bool isstress, ModuleBase::matrix& svnl_dalpha);

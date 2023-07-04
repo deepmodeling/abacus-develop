@@ -44,8 +44,8 @@ void Force_LCAO_gamma::cal_foverlap(
         const int iat = GlobalC::ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = loc.ParaV->trace_loc_row[j];
-            const int nu = loc.ParaV->trace_loc_col[i];
+            const int mu = loc.ParaV->global2local_row[j];
+            const int nu = loc.ParaV->global2local_col[i];
             if(mu>=0 && nu>=0)
             {
                 const int index = mu * loc.ParaV->ncol + nu;

@@ -185,13 +185,13 @@ void ModuleIO::save_HS_triangle(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL - i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL - i);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = i; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -286,13 +286,13 @@ void ModuleIO::save_HS_triangle(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL - i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL - i);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = i; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -429,13 +429,13 @@ void ModuleIO::save_HS_complete(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -530,13 +530,13 @@ void ModuleIO::save_HS_complete(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -705,13 +705,13 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL - i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL - i);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = i; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -806,13 +806,13 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL - i);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL - i);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = i; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -950,13 +950,13 @@ void ModuleIO::save_HS_complex_complete(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -1051,13 +1051,13 @@ void ModuleIO::save_HS_complex_complete(const int istep,
             ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL);
             ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL);
 
-            ir = pv.trace_loc_row[i];
+            ir = pv.global2local_row[i];
             if (ir >= 0)
             {
                 // data collection
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
-                    ic = pv.trace_loc_col[j];
+                    ic = pv.global2local_col[j];
                     if (ic >= 0)
                     {
                         int iic;
@@ -1219,13 +1219,13 @@ void ModuleIO::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
                     // ModuleBase::GlobalFunc::ZEROS(lineH, GlobalV::NLOCAL);
                     // ModuleBase::GlobalFunc::ZEROS(lineS, GlobalV::NLOCAL);
 
-                    ir = lm.ParaV->trace_loc_row[i];
+                    ir = lm.ParaV->global2local_row[i];
                     if (ir >= 0)
                     {
                         // for(int j=i; j<GlobalV::NLOCAL; j++)
                         for (int j = 0; j < GlobalV::NLOCAL; j++)
                         {
-                            ic = lm.ParaV->trace_loc_col[j];
+                            ic = lm.ParaV->global2local_col[j];
                             if (ic >= 0)
                             {
                                 // lineH[j-i] = H[ir*lm.ParaV->ncol+ic];

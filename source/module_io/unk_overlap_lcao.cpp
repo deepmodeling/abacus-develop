@@ -697,8 +697,8 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
 	{
 		for (int iw_col = 0; iw_col < GlobalV::NLOCAL; iw_col++) // global
 		{
-			int ir = pv.trace_loc_row[ iw_row ]; // local
-			int ic = pv.trace_loc_col[ iw_col ]; // local
+			int ir = pv.global2local_row[ iw_row ]; // local
+			int ic = pv.global2local_col[ iw_col ]; // local
 			
 			if(ir >= 0 && ic >= 0)
 			{
@@ -761,8 +761,8 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
 
 	for(int i = 0; i < occBands; i++) // global
 	{	
-		int ir = lowf.ParaV->trace_loc_row[ i ]; // local
-		int ic = lowf.ParaV->trace_loc_col[ i ]; // local
+		int ir = lowf.ParaV->global2local_row[ i ]; // local
+		int ic = lowf.ParaV->global2local_col[ i ]; // local
 		if(ir >= 0 && ic >= 0)
 		{
 			int index = ic*lowf.ParaV->nrow+ir;

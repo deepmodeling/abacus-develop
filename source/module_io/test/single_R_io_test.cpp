@@ -15,12 +15,12 @@ Parallel_2D::Parallel_2D(){}
 Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
-	trace_loc_row = nullptr;
+	global2local_row = nullptr;
 }
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-	delete[] trace_loc_row;
+	delete[] global2local_row;
 }
 
 TEST(ModuleIOTest, OutputSingleR)
@@ -36,12 +36,12 @@ TEST(ModuleIOTest, OutputSingleR)
     const bool binary = false;
     Parallel_Orbitals pv;
     GlobalV::NLOCAL=5;
-    pv.trace_loc_row = new int[GlobalV::NLOCAL];
-    pv.trace_loc_row[0] = 0;
-    pv.trace_loc_row[1] = 1;
-    pv.trace_loc_row[2] = -1;
-    pv.trace_loc_row[3] = 2;
-    pv.trace_loc_row[4] = -1; //Some rows have trace_loc_row < 0
+    pv.global2local_row = new int[GlobalV::NLOCAL];
+    pv.global2local_row[0] = 0;
+    pv.global2local_row[1] = 1;
+    pv.global2local_row[2] = -1;
+    pv.global2local_row[3] = 2;
+    pv.global2local_row[4] = -1; //Some rows have global2local_row < 0
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
         {1, {{0, 0.2}, {2, 0.4}}},

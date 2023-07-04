@@ -16,8 +16,8 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
-    const int* trace_loc_row,
-    const int* trace_loc_col,
+    const int* global2local_row,
+    const int* global2local_col,
     const ORB_gen_tables &UOT)
 {
     ModuleBase::TITLE("LCAO_Deepks", "build_psialpha");
@@ -83,8 +83,8 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 				for (int iw1=0; iw1<nw1_tot; ++iw1)
 				{
 					const int iw1_all = start1 + iw1;
-					const int iw1_local = trace_loc_row[iw1_all];
-					const int iw2_local = trace_loc_col[iw1_all];
+					const int iw1_local = global2local_row[iw1_all];
+					const int iw2_local = global2local_col[iw1_all];
 					if(iw1_local < 0 && iw2_local < 0)continue;
 					const int iw1_0 = iw1/GlobalV::NPOL;
 					std::vector<std::vector<double>> nlm;
@@ -132,8 +132,8 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD,
-    const int* trace_loc_row,
-    const int* trace_loc_col,
+    const int* global2local_row,
+    const int* global2local_col,
     const ORB_gen_tables &UOT)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_psialpha");
@@ -226,8 +226,8 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                     ofs_x << "iw : " << iw1_all << std::endl;
                     ofs_y << "iw : " << iw1_all << std::endl;
                     ofs_z << "iw : " << iw1_all << std::endl;
-					const int iw1_local = trace_loc_row[iw1_all];
-					const int iw2_local = trace_loc_col[iw1_all];
+					const int iw1_local = global2local_row[iw1_all];
+					const int iw2_local = global2local_col[iw1_all];
 					if(iw1_local < 0 && iw2_local < 0)continue;
 					const int iw1_0 = iw1/GlobalV::NPOL;
 

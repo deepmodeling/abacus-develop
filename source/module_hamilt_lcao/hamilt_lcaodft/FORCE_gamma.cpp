@@ -66,16 +66,16 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
                                      GlobalC::ucell,
                                      GlobalC::ORB,
                                      GlobalC::GridD,
-                                     pv->trace_loc_row,
-                                     pv->trace_loc_col);
+                                     pv->global2local_row,
+                                     pv->global2local_col);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
         GlobalC::ld.cal_f_delta_gamma(loc.dm_gamma[0],
                                       GlobalC::ucell,
                                       GlobalC::ORB,
                                       GlobalC::GridD,
-                                      pv->trace_loc_row,
-                                      pv->trace_loc_col,
+                                      pv->global2local_row,
+                                      pv->global2local_col,
                                       isstress,
                                       svnl_dalpha);
 #ifdef __MPI
@@ -94,13 +94,13 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             GlobalC::ld.add_v_delta(GlobalC::ucell,
                                     GlobalC::ORB,
                                     GlobalC::GridD,
-                                    pv->trace_loc_row,
-                                    pv->trace_loc_col,
+                                    pv->global2local_row,
+                                    pv->global2local_col,
                                     pv->nrow,
                                     pv->ncol);
             GlobalC::ld.check_v_delta(pv->nrow, pv->ncol);
 
-            GlobalC::ld.cal_e_delta_band(loc.dm_gamma, pv->trace_loc_row, pv->trace_loc_col, pv->nrow);
+            GlobalC::ld.cal_e_delta_band(loc.dm_gamma, pv->global2local_row, pv->global2local_col, pv->nrow);
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");

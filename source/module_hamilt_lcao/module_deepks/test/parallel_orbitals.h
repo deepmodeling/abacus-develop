@@ -14,8 +14,8 @@ namespace Test_Deepks
         Parallel_Orbitals();
         ~Parallel_Orbitals();
 
-        int* trace_loc_row;
-        int* trace_loc_col;
+        int* global2local_row;
+        int* global2local_col;
         void set_global2local(void);
 
         int ncol;

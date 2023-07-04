@@ -33,13 +33,13 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
         {
-            while (ib_local != ParaV->trace_loc_col[ib_global])
+            while (ib_local != ParaV->global2local_col[ib_global])
             {
                 ++ib_global;
                 if (ib_global >= wg.nc)
                 {
                     break;
-                    ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check trace_loc_col!");
+                    ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
             if (ib_global >= wg.nc) continue;
@@ -91,13 +91,13 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
         {
-            while (ib_local != ParaV->trace_loc_col[ib_global])
+            while (ib_local != ParaV->global2local_col[ib_global])
             {
                 ++ib_global;
                 if (ib_global >= wg.nc)
                 {
                     break;
-                    ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check trace_loc_col!");
+                    ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
             if (ib_global >= wg.nc) continue;

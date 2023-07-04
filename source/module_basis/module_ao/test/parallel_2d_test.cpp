@@ -117,11 +117,11 @@ TEST_F(test_para2d, Divide2D)
                             sum += arr[i];
                         return sum;
                     };
-                EXPECT_EQ(sum_array(p2d.trace_loc_row, gr), lr * (lr - 1) / 2 - (gr - lr));
-                EXPECT_EQ(sum_array(p2d.trace_loc_col, gc), lc * (lc - 1) / 2 - (gc - lc));
+                EXPECT_EQ(sum_array(p2d.global2local_row, gr), lr * (lr - 1) / 2 - (gr - lr));
+                EXPECT_EQ(sum_array(p2d.global2local_col, gc), lc * (lc - 1) / 2 - (gc - lc));
                 for (int i = 0;i < lr;++i)
                     for (int j = 0;j < lc;++j)
-                        EXPECT_TRUE(p2d.in_this_processor(p2d.row_set[i], p2d.col_set[j]));
+                        EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row[i], p2d.local2global_col[j]));
             }
         }
     }
@@ -149,9 +149,9 @@ TEST_F(test_para2d, Serial)
         //3. set_global2local
         p2d.set_global2local(gr, gc, false, ofs_running);
         for (int i = 0;i < gr;++i)
-            EXPECT_EQ(p2d.trace_loc_row[i], i);
+            EXPECT_EQ(p2d.global2local_row[i], i);
         for (int i = 0;i < gc;++i)
-            EXPECT_EQ(p2d.trace_loc_col[i], i);
+            EXPECT_EQ(p2d.global2local_col[i], i);
     }
 }
 #endif

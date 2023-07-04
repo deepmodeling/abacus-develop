@@ -16,12 +16,12 @@ public:
     ~Parallel_2D();
 
     /// map from global index to local index
-    int* trace_loc_row = nullptr;
-    int* trace_loc_col = nullptr;
+    int* global2local_row = nullptr;
+    int* global2local_col = nullptr;
 
     /// map from local index to global index
-    std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
-    std::vector<int> col_set;
+    std::vector<int> local2global_row;				// Peize Lin change int* to vector 2022.08.03
+    std::vector<int> local2global_col;
 
     /// local size (nloc = nrow * ncol)
     int nrow;

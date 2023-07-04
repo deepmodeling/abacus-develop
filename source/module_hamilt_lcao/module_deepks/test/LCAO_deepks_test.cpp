@@ -35,16 +35,16 @@ void test_deepks::check_psialpha(void)
 		ucell,
 		ORB,
 		Test_Deepks::GridD,
-		ParaO.trace_loc_row,
-		ParaO.trace_loc_col,
+		ParaO.global2local_row,
+		ParaO.global2local_col,
 		OGT);
 
 	ld.check_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
 		Test_Deepks::GridD,
-		ParaO.trace_loc_row,
-		ParaO.trace_loc_col,
+		ParaO.global2local_row,
+		ParaO.global2local_col,
 		OGT);
 	this->compare_with_ref("psialpha.dat","psialpha_ref.dat");
 	this->compare_with_ref("dpsialpha_x.dat","dpsialpha_x_ref.dat");
@@ -101,8 +101,8 @@ void test_deepks::check_pdm(void)
 			ucell,
 			ORB,
 			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col);
+			ParaO.global2local_row,
+			ParaO.global2local_col);
 	}
 	else
 	{
@@ -111,8 +111,8 @@ void test_deepks::check_pdm(void)
 			ucell,
 			ORB,
 			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+			ParaO.global2local_row,
+			ParaO.global2local_col,
 			kv.nkstot,
 			kv.kvec_d);		
 	}
@@ -129,8 +129,8 @@ void test_deepks::check_gdmx(void)
 			ucell,
 			ORB,
 			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+			ParaO.global2local_row,
+			ParaO.global2local_col,
 			0);
 	}
 	else
@@ -139,8 +139,8 @@ void test_deepks::check_gdmx(void)
 			ucell,
 			ORB,
 			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+			ParaO.global2local_row,
+			ParaO.global2local_col,
 			kv.nkstot,
 			kv.kvec_d,
 			0);			
@@ -235,16 +235,16 @@ void test_deepks::check_e_deltabands(void)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		this->ld.cal_e_delta_band(dm,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+			ParaO.global2local_row,
+			ParaO.global2local_col,
 			ParaO.nrow);
 	}
 	else
 	{
 		this->folding_nnr(kv);
 		this->ld.cal_e_delta_band_k(dm_k,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+			ParaO.global2local_row,
+			ParaO.global2local_col,
 			kv.nkstot,
 			ParaO.nrow,
 			ParaO.ncol);
@@ -263,8 +263,8 @@ void test_deepks::check_v_delta()
 		this->ld.add_v_delta(ucell,
             ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-            ParaO.trace_loc_col,
+            ParaO.global2local_row,
+            ParaO.global2local_col,
             ParaO.nrow,
             ParaO.ncol);
 		this->ld.check_v_delta(ParaO.nrow,ParaO.ncol);
@@ -277,8 +277,8 @@ void test_deepks::check_v_delta()
 		this->ld.add_v_delta_k(ucell,
         	ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+            ParaO.global2local_row,
+			ParaO.global2local_col,
 			nnr);
 		this->ld.check_v_delta_k(nnr);
 		this->compare_with_ref("H_V_deltaR.dat","H_V_deltaR_ref.dat");
@@ -295,8 +295,8 @@ void test_deepks::check_f_delta()
             ucell,
             ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+            ParaO.global2local_row,
+			ParaO.global2local_col,
             1, svnl_dalpha);
 	}
 	else
@@ -305,8 +305,8 @@ void test_deepks::check_f_delta()
 			ucell,
             ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+            ParaO.global2local_row,
+			ParaO.global2local_col,
 			kv.nkstot,
 			kv.kvec_d,
 			1,svnl_dalpha);

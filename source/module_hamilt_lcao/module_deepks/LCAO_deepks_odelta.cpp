@@ -22,8 +22,8 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
         {
             for (int j = 0; j < GlobalV::NLOCAL; ++j)
             {
-                const int mu = ParaO.trace_loc_row[j];
-                const int nu = ParaO.trace_loc_col[i];
+                const int mu = ParaO.global2local_row[j];
+                const int nu = ParaO.global2local_col[i];
             
                 if (mu >= 0 && nu >= 0)
                 {                
@@ -58,8 +58,8 @@ void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::Comple
             {
                 for (int j = 0; j < GlobalV::NLOCAL; ++j)
                 {
-                    const int mu = ParaO.trace_loc_row[j];
-                    const int nu = ParaO.trace_loc_col[i];
+                    const int mu = ParaO.global2local_row[j];
+                    const int nu = ParaO.global2local_col[i];
             
                     if (mu >= 0 && nu >= 0)
                     {                

@@ -19,18 +19,18 @@ auto RI_2D_Comm::get_2D_judge(const Parallel_Orbitals &pv)
 	const std::map<int,int> nspin_b = {{1,1}, {2,1}, {4,2}};
 
 	std::vector<std::set<TA>> iat0_list(nspin_b.at(GlobalV::NSPIN));
-    for (int iwt0_2D = 0; iwt0_2D < pv.row_set.size(); ++iwt0_2D)
+    for (int iwt0_2D = 0; iwt0_2D < pv.local2global_row.size(); ++iwt0_2D)
 	{
-        const int iwt0 = pv.row_set[iwt0_2D];
+        const int iwt0 = pv.local2global_row[iwt0_2D];
 		int iat0, iw0_b, is0_b;
 		std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(iwt0);
 		iat0_list[is0_b].insert(iat0);
 	}
 
 	std::vector<std::set<TA>> iat1_list(nspin_b.at(GlobalV::NSPIN));
-    for (int iwt1_2D = 0; iwt1_2D < pv.col_set.size(); ++iwt1_2D)
+    for (int iwt1_2D = 0; iwt1_2D < pv.local2global_col.size(); ++iwt1_2D)
 	{
-        const int iwt1 = pv.col_set[iwt1_2D];
+        const int iwt1 = pv.local2global_col[iwt1_2D];
 		int iat1, iw1_b, is1_b;
 		std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(iwt1);
 		iat1_list[is1_b].insert(iat1);

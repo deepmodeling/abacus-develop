@@ -118,11 +118,11 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
         // so it is printed no matter even if deepks_out_labels is not used
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            ld->cal_projected_DM(dm_gamma[0], ucell, orb, GridD, ParaV->trace_loc_row, ParaV->trace_loc_col);
+            ld->cal_projected_DM(dm_gamma[0], ucell, orb, GridD, ParaV->global2local_row, ParaV->global2local_col);
         }
         else
         {
-            ld->cal_projected_DM_k(dm_k, ucell, orb, GridD, ParaV->trace_loc_row, ParaV->trace_loc_col, nks, kvec_d);
+            ld->cal_projected_DM_k(dm_k, ucell, orb, GridD, ParaV->global2local_row, ParaV->global2local_col, nks, kvec_d);
         }
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor();     // final descriptor
@@ -136,11 +136,11 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            ld->cal_e_delta_band(dm_gamma, ParaV->trace_loc_row, ParaV->trace_loc_col, ParaV->nrow);
+            ld->cal_e_delta_band(dm_gamma, ParaV->global2local_row, ParaV->global2local_col, ParaV->nrow);
         }
         else
         {
-            ld->cal_e_delta_band_k(dm_k, ParaV->trace_loc_row, ParaV->trace_loc_col, nks, ParaV->nrow, ParaV->ncol);
+            ld->cal_e_delta_band_k(dm_k, ParaV->global2local_row, ParaV->global2local_col, nks, ParaV->nrow, ParaV->ncol);
         }
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"

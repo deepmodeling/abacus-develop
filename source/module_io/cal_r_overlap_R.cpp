@@ -291,12 +291,12 @@ void cal_r_overlap_R::out_rR(const int &istep)
         int ir, ic;
         for(int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
         {
-            ir = this->ParaV->trace_loc_row[iw1];	
+            ir = this->ParaV->global2local_row[iw1];	
             if(ir >= 0)
             {
                 for(int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
                 {							
-                    ic = this->ParaV->trace_loc_col[iw2];
+                    ic = this->ParaV->global2local_col[iw2];
                     if(ic >= 0)
                     {
                         int orb_index_row = iw1 / GlobalV::NPOL;
@@ -528,12 +528,12 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
         int ir, ic;
         for(int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
         {
-            ir = this->ParaV->trace_loc_row[iw1];	
+            ir = this->ParaV->global2local_row[iw1];	
             if(ir >= 0)
             {
                 for(int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
                 {							
-                    ic = this->ParaV->trace_loc_col[iw2];
+                    ic = this->ParaV->global2local_col[iw2];
                     if(ic >= 0)
                     {
                         int orb_index_row = iw1 / GlobalV::NPOL;

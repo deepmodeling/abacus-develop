@@ -252,8 +252,8 @@ namespace ModuleESolver
                 GlobalC::ucell,
                 GlobalC::ORB,
                 GlobalC::GridD,
-                pv->trace_loc_row,
-                pv->trace_loc_col,
+                pv->global2local_row,
+                pv->global2local_col,
                 GlobalC::UOT);
 
             if (GlobalV::deepks_out_unittest)
@@ -262,8 +262,8 @@ namespace ModuleESolver
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD,
-                    pv->trace_loc_row,
-                    pv->trace_loc_col,
+                    pv->global2local_row,
+                    pv->global2local_col,
                     GlobalC::UOT);
             }
         }
@@ -598,8 +598,8 @@ namespace ModuleESolver
                                          GlobalC::ucell,
                                          GlobalC::ORB,
                                          GlobalC::GridD,
-                                         pv->trace_loc_row,
-                                         pv->trace_loc_col);
+                                         pv->global2local_row,
+                                         pv->global2local_col);
             }
             else
             {
@@ -607,8 +607,8 @@ namespace ModuleESolver
                                                GlobalC::ucell,
                                                GlobalC::ORB,
                                                GlobalC::GridD,
-                                               pv->trace_loc_row,
-                                               pv->trace_loc_col,
+                                               pv->global2local_row,
+                                               pv->global2local_col,
                                                this->kv.nks,
                                                this->kv.kvec_d);
             }
@@ -619,8 +619,8 @@ namespace ModuleESolver
                 GlobalC::ld.add_v_delta(GlobalC::ucell,
                                         GlobalC::ORB,
                                         GlobalC::GridD,
-                                        pv->trace_loc_row,
-                                        pv->trace_loc_col,
+                                        pv->global2local_row,
+                                        pv->global2local_col,
                                         pv->nrow,
                                         pv->ncol);
             }
@@ -629,8 +629,8 @@ namespace ModuleESolver
                 GlobalC::ld.add_v_delta_k(GlobalC::ucell, 
                                           GlobalC::ORB, 
                                           GlobalC::GridD, 
-                                          pv->trace_loc_row,
-                                          pv->trace_loc_col,
+                                          pv->global2local_row,
+                                          pv->global2local_col,
                                           pv->nnr);
             }
         }

@@ -41,7 +41,7 @@ void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, con
         //find the first row index of atom iat
         for(int i=0;i<max;i++)
         {
-            if(this->trace_loc_row[irow]!=-1)
+            if (this->global2local_row[irow] != -1)
             {
                 this->atom_begin_row[iat] = irow;
                 break;
@@ -51,7 +51,7 @@ void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, con
         //find the first col index of atom iat
         for(int i=0;i<max;i++)
         {
-            if(this->trace_loc_col[icol]!=-1)
+            if (this->global2local_col[icol] != -1)
             {
                 this->atom_begin_col[iat] = icol;
                 break;

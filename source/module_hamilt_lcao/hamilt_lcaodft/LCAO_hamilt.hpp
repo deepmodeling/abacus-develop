@@ -47,12 +47,12 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(
 				for(size_t iw0=0; iw0<Hexx.shape[0]; ++iw0)
 				{
 					const int iwt0 = RI_2D_Comm::get_iwt(iat0, iw0, is0_b);
-					const int iwt0_local = this->LM->ParaV->trace_loc_row[iwt0];		
+					const int iwt0_local = this->LM->ParaV->global2local_row[iwt0];		
 					if(iwt0_local<0)	continue;
 					for(size_t iw1=0; iw1<Hexx.shape[1]; ++iw1)
 					{
 						const int iwt1 = RI_2D_Comm::get_iwt(iat1, iw1, is1_b);
-						const int iwt1_local = this->LM->ParaV->trace_loc_col[iwt1];		
+						const int iwt1_local = this->LM->ParaV->global2local_col[iwt1];		
 						if(iwt1_local<0)	continue;
 
 						if(std::abs(Hexx(iw0,iw1)) > sparse_threshold)

@@ -72,12 +72,12 @@ void Local_Orbital_Charge::cal_dm_R(
                     for (int iw1 = 0;iw1 < GlobalC::ucell.atoms[T1].nw;++iw1)
                     {
                         int iw1_all = start1 + iw1;
-                        int mu = this->ParaV->trace_loc_row[iw1_all];
+                        int mu = this->ParaV->global2local_row[iw1_all];
                         if (mu < 0)continue;
                         for (int iw2 = 0;iw2 < GlobalC::ucell.atoms[T2].nw;++iw2)
                         {
                             int iw2_all = start2 + iw2;
-                            int nu = this->ParaV->trace_loc_col[iw2_all];
+                            int nu = this->ParaV->global2local_col[iw2_all];
                             if (nu < 0)continue;
                             //Caution: output of pzgemm_ : col first in **each** proc itself !!
                             dm2d[ispin][irrstart + count] += (dm_k[ik](nu, mu) * phase).real();

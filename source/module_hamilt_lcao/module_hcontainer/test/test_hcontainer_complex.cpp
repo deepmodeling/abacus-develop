@@ -553,14 +553,14 @@ TEST_F(HContainerTest, atompair_funcs)
     hamilt::AtomPair<std::complex<double>> atom_ij5(0, 1, 1, 1, 1, &PO, correct_array);
     hamilt::AtomPair<std::complex<double>> atom_ij6(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, correct_array);
     hamilt::AtomPair<std::complex<double>> atom_ij7(1, 1, 1, 1, 1, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, correct_array);
-    // get_matrix_value will use trace_loc_row and trace_loc_col in Parallel_Orbitals
+    // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
     // so we need to set them
-    PO.trace_loc_col = new int[4];
-    PO.trace_loc_row = new int[4];
+    PO.global2local_col = new int[4];
+    PO.global2local_row = new int[4];
     for(int i=0;i<4;++i)
     {
-        PO.trace_loc_col[i] = i;
-        PO.trace_loc_row[i] = i;
+        PO.global2local_col[i] = i;
+        PO.global2local_row[i] = i;
     }
     for(int i=0;i<4;++i)
     {

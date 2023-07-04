@@ -376,8 +376,8 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                                          GlobalC::ucell,
                                          GlobalC::ORB,
                                          GlobalC::GridD,
-                                         pv->trace_loc_row,
-                                         pv->trace_loc_col,
+                                         pv->global2local_row,
+                                         pv->global2local_col,
                                          isstress);
                 }
                 else
@@ -386,8 +386,8 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                                            GlobalC::ucell,
                                            GlobalC::ORB,
                                            GlobalC::GridD,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
+                                           pv->global2local_row,
+                                           pv->global2local_col,
                                            kv.nks,
                                            kv.kvec_d,
                                            isstress);

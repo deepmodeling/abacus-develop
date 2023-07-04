@@ -54,8 +54,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 			for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-				const int iw1_local = this->ParaV->trace_loc_row[iw1_all];
-				const int iw2_local = this->ParaV->trace_loc_col[iw1_all];
+                const int iw1_local = this->ParaV->global2local_row[iw1_all];
+                const int iw2_local = this->ParaV->global2local_col[iw1_all];
 				if(iw1_local < 0 && iw2_local < 0) continue;
                 
                 std::vector<std::vector<double>> nlm;
@@ -114,12 +114,12 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                 for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
                 {
                     const int iw1_all = start1 + iw1;
-                    const int iw1_local = this->ParaV->trace_loc_row[iw1_all];
+                    const int iw1_local = this->ParaV->global2local_row[iw1_all];
                     if(iw1_local < 0)continue;
                     for (int iw2=0; iw2<GlobalC::ucell.atoms[T2].nw; ++iw2)
                     {
                         const int iw2_all = start2 + iw2;
-                        const int iw2_local = this->ParaV->trace_loc_col[iw2_all];
+                        const int iw2_local = this->ParaV->global2local_col[iw2_all];
                         if(iw2_local < 0)continue;
 
                         double nlm[3] = {0,0,0};
@@ -232,8 +232,8 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
         const int iat = GlobalC::ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = this->ParaV->trace_loc_row[j];
-            const int nu = this->ParaV->trace_loc_col[i];
+            const int mu = this->ParaV->global2local_row[j];
+            const int nu = this->ParaV->global2local_col[i];
 
             if (mu >= 0 && nu >= 0 )
             {
