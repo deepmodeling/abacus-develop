@@ -23,6 +23,21 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
     if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
     {
         this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
+
+        // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
+        // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            const double pi = 3.141592653589790;
+            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
+            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            {
+                for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+                {
+                    kin_r[is][ir] = fact * pow(std::abs(rho[is][ir]) * GlobalV::NSPIN, 5.0 / 3.0) / GlobalV::NSPIN;
+                }
+            }
+        }
     }
     else if (GlobalV::init_chg == "file")
     {

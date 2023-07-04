@@ -279,6 +279,7 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_table_alpha.o\
       ORB_table_beta.o\
       ORB_table_phi.o\
+      parallel_2d.o\
       parallel_orbitals.o\
 
 OBJS_PSI=psi.o\

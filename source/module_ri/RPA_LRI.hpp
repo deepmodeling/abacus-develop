@@ -130,7 +130,7 @@ void RPA_LRI<Tdata>::out_eigen_vector(const Parallel_Orbitals &parav, const psi:
 
                 if (ib_local >= 0)
                     for (int ir = 0; ir < psi.get_nbasis(); ir++)
-                        wfc_iks[parav.MatrixInfo.row_set[ir]] = psi(ik + nks_tot * is, ib_local, ir);
+                        wfc_iks[parav.row_set[ir]] = psi(ik + nks_tot * is, ib_local, ir);
 
                 std::vector<std::complex<double>> tmp = wfc_iks;
 #ifdef __MPI

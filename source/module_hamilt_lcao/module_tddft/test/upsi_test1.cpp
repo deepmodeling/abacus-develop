@@ -17,7 +17,8 @@
  *   - upsi
  *     - apply U_operator to the wave function of the previous step for new wave function.
  */
-
+Parallel_2D::Parallel_2D(){}
+Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
 }
