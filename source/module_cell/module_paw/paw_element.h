@@ -54,6 +54,7 @@ class Paw_Element
     
     int    nstates; //number of channels (quantum numbers n,l)
     std::vector<int> lstate; //l quantum number of each channel
+    int    lmax; // max of quantum number l
 
     int    mstates; //#. m states (for each (n,l) channel, there will be 2l+1 m states)
     std::vector<int> mstate; //m quantum number of each mstate
@@ -132,6 +133,8 @@ class Paw_Element
     std::vector<int> get_mstate(){return mstate;}
     //map from mstate to (n,l) channel (namely nstates)
     std::vector<int> get_im_to_istate(){return im_to_istate;}
+    //max quantum nubmer l
+    int get_lmax(){return lmax;}
 
     // return ptilde_q for a given channel at a given q_in, using spline
     double get_ptilde(const int istate_in, const double q_in);

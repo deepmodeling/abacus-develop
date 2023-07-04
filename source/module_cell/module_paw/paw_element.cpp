@@ -51,11 +51,13 @@ void Paw_Element::read_paw_xml(std::string filename)
     this->reset_buffer(ifs);
 
     lstate.resize(nstates);
+    lmax = 0;
     for(int istate = 0; istate < nstates; istate ++)
     {
         line = this->scan_file(ifs, "<state");
 
         this->lstate[istate] = this->extract_int(line,"l=");
+        lmax = std::max(lmax, lstate[istate]);
     }
 
     this->nstates_to_mstates();
