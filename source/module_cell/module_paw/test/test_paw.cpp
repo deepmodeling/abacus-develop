@@ -24,6 +24,7 @@ TEST_F(Test_Read_Paw, test_paw)
     std::vector<int> lstate = paw_element.get_lstate();
     std::vector<int> mstate = paw_element.get_mstate();
     std::vector<int> im_to_istate = paw_element.get_im_to_istate();
+    int lmax = paw_element.get_lmax();
 
 // The states of H*xml are:
 //  <state n=" 1" l="0" f=" 1.0000000E+00" rc=" 0.9949503343" e="-2.3345876E-01" id=  "H1"/>
@@ -52,6 +53,7 @@ TEST_F(Test_Read_Paw, test_paw)
     EXPECT_EQ(im_to_istate[2],2);
     EXPECT_EQ(im_to_istate[3],2);
     EXPECT_EQ(im_to_istate[4],2);
+    EXPECT_EQ(lmax,1);
 }
 
 class Test_SphBes_Func : public testing::Test

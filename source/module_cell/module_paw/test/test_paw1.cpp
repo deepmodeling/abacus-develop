@@ -62,7 +62,7 @@ TEST_F(Test_Paw_Cell, test_paw)
     eigts3_in = new double [nz];
 
     paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp, 
-        atom_type, atom_coord, filename_list,
+        atom_type, (const double **) atom_coord, filename_list,
         nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
 
     int nproj_tot = paw_cell.get_nproj_tot();
