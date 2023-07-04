@@ -30,12 +30,12 @@ void OperatorLCAO<double>::get_hs_pointers()
 #endif
         this->new_e_iteration = false;
     }
+    ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
 }
 
 template<>
 void OperatorLCAO<std::complex<double>>::get_hs_pointers()
 {
-    ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->LM->Hloc2.data();
     this->smatrix_k = this->LM->Sloc2.data();
 }
