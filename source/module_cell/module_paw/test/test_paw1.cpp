@@ -14,8 +14,8 @@ class Test_Paw_Cell : public testing::Test
     int atom_type[5] = {0,1,2,1,2}; // Fe,O,H,O,H
     std::vector<std::string> filename_list;
     int nx = 1, ny = 1, nz = 1;
-    const double ** atom_coord;
-    const double *eigts1_in, *eigts2_in, *eigts3_in;
+    double ** atom_coord;
+    double *eigts1_in, *eigts2_in, *eigts3_in;
 };
 
 TEST_F(Test_Paw_Cell, test_paw)
