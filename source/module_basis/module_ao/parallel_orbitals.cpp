@@ -136,7 +136,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "set_local2global");
+    ModuleBase::TITLE("Parallel_Orbitals", "set_nloc_wfc_Eij");
     // for wavefuncton , calculate nbands_loc
     int end_id;
     int block = N_A / nb;
@@ -154,7 +154,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no bands-row-blocks.");
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij", "some processor has no bands-row-blocks.");
         }
     }
     int col_b_bands = block / dim1;
