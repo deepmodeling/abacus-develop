@@ -199,8 +199,10 @@ TEST_F(Sphbes,SphericalBesselRoots)
 
 TEST_F(Sphbes, SeriesAndRecurrence)
 {
-    // This test checks that the old and new versions of the spherical Bessel function agree with each other
+    // This test checks whether Spherical_Bessel and sphbesj agree with each other
     // on a coarse grid for a range of l and q values.
+    //
+    // NOTE: this test should be removed once Spherical_Bessel is removed from the code.
     int lmax = 8;
     int nr = 5000;
     double rcut = 50;
@@ -226,6 +228,9 @@ TEST_F(Sphbes, SeriesAndRecurrence)
         }
     }
 
+    delete[] r;
+    delete[] jl_old;
+    delete[] jl_new;
 }
 
 int main(int argc, char **argv)
