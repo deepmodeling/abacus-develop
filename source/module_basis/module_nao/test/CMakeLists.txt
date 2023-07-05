@@ -37,3 +37,13 @@ AddTest(
     ../numerical_radial.cpp
   LIBS ${math_libs} device base
 )
+
+AddTest(
+  TARGET real_gaunt_table
+  SOURCES
+    real_gaunt_table_test.cpp
+    ../real_gaunt_table.cpp
+    ../../module_ao/ORB_gaunt_table.cpp
+  LIBS ${math_libs} device base container kernels
+)
+
