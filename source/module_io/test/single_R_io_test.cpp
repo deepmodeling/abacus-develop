@@ -11,6 +11,8 @@
  *   - ModuleIO::output_single_R
  *     - output single R data
  */
+Parallel_2D::Parallel_2D(){}
+Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
 	trace_loc_row = nullptr;

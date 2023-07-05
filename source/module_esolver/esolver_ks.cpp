@@ -139,7 +139,7 @@ namespace ModuleESolver
         this->sf.setup_structure_factor(&GlobalC::ucell, this->pw_rho);
 
         // Initialize charge extrapolation
-        CE.Init_CE(this->pw_rho->nrxx);
+        CE.Init_CE(GlobalC::ucell.nat);
     }
 
     template<typename FPTYPE, typename Device>

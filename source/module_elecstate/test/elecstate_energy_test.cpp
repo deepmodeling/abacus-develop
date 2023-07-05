@@ -78,7 +78,6 @@ class MockElecState : public ElecState
         GlobalV::ESOLVER_TYPE = "ksdft";
         GlobalV::LSPINORB = false;
         GlobalV::BASIS_TYPE = "pw";
-        GlobalV::md_prec_level = 0;
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
     }

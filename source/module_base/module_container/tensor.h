@@ -306,7 +306,9 @@ class Tensor {
         if (index > shape_.dim_size(static_cast<int>(shape_.ndim() - 2))) {
             throw std::invalid_argument("Invalid index, index of the inner-most must less than the inner-most shape size!");
         }
-
+        if (shape_.ndim() == 1) {
+            return data<T>() + index;
+        }
         return data<T>() + index * shape_.dim_size(static_cast<int>(shape_.ndim()) - 1);
     }
 

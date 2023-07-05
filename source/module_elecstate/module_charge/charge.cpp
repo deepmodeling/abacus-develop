@@ -571,21 +571,6 @@ void Charge::atomic_rho(const int spin_number_need,
         for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
             rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
 
-    // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
-    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
-    {
-        const double pi = 3.141592653589790;
-        double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
-        int nspin = spin_number_need;
-        // ofstream test_tau0("tau0");
-        for (int is = 0; is < spin_number_need; ++is)
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
-            {
-                kin_r[is][ir] = fact * pow(std::abs(rho_in[is][ir]) * nspin, 5.0 / 3.0) / nspin;
-                // test_tau0 << rho_in[is][ir] << " " << kin_r[is][ir] << endl;
-            }
-    }
-
     ModuleBase::timer::tick("Charge", "atomic_rho");
     return;
 }

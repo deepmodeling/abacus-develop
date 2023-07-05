@@ -4,7 +4,7 @@ list(APPEND kernels_srcs
     memory_op.cpp
 )
 
-if(ENABLE_CUDA_TOOLKIT)
+if(USE_CUDA)
     list(APPEND kernels_srcs
         cuda/memory_op.cu
         cuda/lapack_op.cu
@@ -12,7 +12,7 @@ if(ENABLE_CUDA_TOOLKIT)
     )
 endif()
 
-if(ENABLE_HIP_TOOLKIT)
+if(USE_ROCM)
     hip_add_library(kernels_rocm STATIC
         rocm/memory_op.hip.cu
     )
