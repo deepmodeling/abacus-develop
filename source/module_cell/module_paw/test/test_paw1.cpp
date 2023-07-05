@@ -68,6 +68,9 @@ TEST_F(Test_Paw_Cell, test_paw)
     int nproj_tot = paw_cell.get_nproj_tot();
     EXPECT_EQ(nproj_tot,44);// 18 + 2 * 8 + 2 * 5 = 44
 
+    int lmax = paw_cell.get_lmax();
+    EXPECT_EQ(lmax,2);
+
     std::vector<int> iprj_to_ia = paw_cell.get_iprj_to_ia();
     EXPECT_EQ(iprj_to_ia.size(),44);
     for(int ip = 0; ip < 18; ip ++) EXPECT_EQ(iprj_to_ia[ip],0);
@@ -120,6 +123,57 @@ TEST_F(Test_Paw_Cell, test_paw)
     delete[] eigts1_in;
     delete[] eigts2_in;
     delete[] eigts3_in;
+}
 
+class Test_Ylm : public testing::Test
+{
+    protected:
+};
 
+TEST_F(Test_Ylm, test_paw)
+{
+
+    std::ifstream ifs_kpg("kpg.dat");
+    std::ifstream ifs_ylm("ylm_ref.dat");
+
+    int nkpg = 1491;
+
+    for(int ikpg = 0; ikpg < nkpg; ikpg ++)
+    {
+        double r[3];
+        ifs_kpg >> r[0] >> r[1] >> r[2];
+
+        int lmax = 5;
+
+        std::vector<double> ylm = Paw_Cell::calc_ylm(lmax, r);
+        EXPECT_EQ(ylm.size(), 36);
+
+        for(int i = 0; i < 36; i ++)
+        {
+            double ylm_ref;
+            ifs_ylm >> ylm_ref;
+            EXPECT_NEAR(ylm_ref,ylm[i],1e-8);
+        }
+    }
+}
+
+class Test_Leg_Pol : public testing::Test
+{
+    protected:
+};
+
+TEST_F(Test_Leg_Pol, test_paw)
+{
+
+    std::ifstream ifs("leg_pol.dat");
+
+    int count = 29820;
+    for(int i = 0; i < count; i ++)
+    {
+        int l,m;
+        double arg,ref;
+        ifs >> l >> m >> arg >> ref;
+        double result = Paw_Cell::ass_leg_pol(l,m,arg);
+        EXPECT_NEAR(ref,result,1e-8);
+    }
 }
