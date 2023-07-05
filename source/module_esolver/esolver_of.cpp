@@ -236,7 +236,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
-    CE.Init_CE(this->pw_rho->nrxx);
+    CE.Init_CE(GlobalC::ucell.nat);
     delete this->ptempRho;
     this->ptempRho = new Charge();
     this->ptempRho->set_rhopw(this->pw_rho);
@@ -285,7 +285,7 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         this->iter++;
     }
 
-    this->afterOpt();
+    this->afterOpt(istep);
 
     ModuleBase::timer::tick("ESolver_OF", "Run");
 }
@@ -299,10 +299,16 @@ void ESolver_OF::beforeOpt(const int istep)
     {
         this->init_after_vc(INPUT, GlobalC::ucell);
     }
-    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+    if (GlobalC::ucell.ionic_position_updated)
     {
         CE.update_all_dis(GlobalC::ucell);
-        CE.extrapolate_charge(pelec->charge, &(sf));
+        CE.extrapolate_charge(
+#ifdef __MPI
+            &(GlobalC::Pgrid),
+#endif
+            GlobalC::ucell,
+            pelec->charge,
+            &(sf));
     }
 
     this->pelec->init_scf(istep, sf.strucFac);
@@ -888,9 +894,21 @@ void ESolver_OF::printInfo()
     // =============================================================
 }
 
-void ESolver_OF::afterOpt()
+void ESolver_OF::afterOpt(const int istep)
 {
     ModuleIO::output_convergence_after_scf(this->conv, this->pelec->f_en.etot);
+
+    // save charge difference into files for charge extrapolation
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
+#ifdef __MPI
+                            this->pw_big,
+#endif
+                            this->pelec->charge,
+                            &this->sf);
+    }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {

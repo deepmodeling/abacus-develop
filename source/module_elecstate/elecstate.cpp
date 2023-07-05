@@ -208,7 +208,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     // (2) other effective potentials need charge density,
     // choose charge density from ionic step 0.
     //--------------------------------------------------------------------
-    if (istep == 0 || GlobalV::md_prec_level == 2)
+    if (istep == 0)
     {
         this->charge->init_rho(this->eferm, strucfac);
     }

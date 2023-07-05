@@ -35,6 +35,7 @@ list(APPEND depend_files
   ../ORB_table_phi.cpp
   ../ORB_table_alpha.cpp
   ../ORB_gen_tables.cpp
+  ../parallel_2d.cpp
   ../parallel_orbitals.cpp
   ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
   )
@@ -107,6 +108,11 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
+AddTest(
+    TARGET parallel_2d_test
+    SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
+    LIBS ${math_libs} device base
+)
 
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)

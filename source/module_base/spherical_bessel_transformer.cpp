@@ -186,6 +186,11 @@ void SphericalBesselTransformer::direct(const int l,
                                         double* const out,
                                         const int p)
 {
+    // TODO:
+    // 1. avoid new/delete rab/r2f/integrand/jl every time; use some buffer class member instead
+    // 2. cache the spherical Bessel function values for given (l, grid_in, grid_out). This should be done
+    //    alongside the change of for-loop sequence in building TwoCenterTable.
+
     assert(p <= 2);
     assert(grid_in[0] >= 0.0 && std::is_sorted(grid_in, grid_in + ngrid_in, std::less_equal<double>()));
     assert(grid_out[0] >= 0.0 && std::is_sorted(grid_out, grid_out + ngrid_out, std::less_equal<double>()));
@@ -207,23 +212,15 @@ void SphericalBesselTransformer::direct(const int l,
 
     double* integrand = new double[ngrid_in];
 
-    // ModuleBase::Sphbes::Spherical_Bessel has potential risk for small function arguments
+    // TODO cache the calculated jl
     double* jl = new double[ngrid_in];
     for (int i_out = 0; i_out != ngrid_out; ++i_out)
     {
-        ModuleBase::Sphbes::Spherical_Bessel(ngrid_in, grid_in, grid_out[i_out], l, jl);
+        ModuleBase::Sphbes::sphbesj(ngrid_in, grid_in, grid_out[i_out], l, jl);
         std::transform(r2f, r2f + ngrid_in, jl, integrand, std::multiplies<double>());
         out[i_out] = ModuleBase::Integral::simpson(ngrid_in, integrand, &rab[1]);
     }
     delete[] jl;
-
-    // for (int i_out = 0; i_out != ngrid_out; ++i_out)
-    //{
-    //     std::transform(grid_in, grid_in + ngrid_in, r2f, integrand, [&](double x, double v) {
-    //         return ModuleBase::Sphbes::sphbesj(l, grid_out[i_out] * x) * v;
-    //     });
-    //     out[i_out] = ModuleBase::Integral::simpson(ngrid_in, integrand, &rab[1]);
-    // }
 
     std::for_each(out, out + ngrid_out, [pref](double& x) { x *= pref; });
 
