@@ -8,12 +8,10 @@
 
 /**
  * - Tested Functions:
- *   - delete_vector()
- *     - delete vector offset and box
- *   - assertCoordinateIsRight()
- *     - confirm that the coordinate is right
- *   - Index()
- *     - Use ternary to represent coordinates     
+ *   - SetWithoutExpand()
+ *     - set box index without expand
+ *   - SetWithExpand()
+ *     - set box index with expand
  */
 
 class sltkAdjacentSet : public testing::Test
@@ -69,7 +67,7 @@ TEST_F(sltkAdjacentSet, SetWithoutExpand)
     EXPECT_EQ(test.offset.size(), 0);
 }
 
-TEST_F(sltkAdjacentSet, SetExpand)
+TEST_F(sltkAdjacentSet, SetWithExpand)
 {
     // set parameters
     test.setDx(6);

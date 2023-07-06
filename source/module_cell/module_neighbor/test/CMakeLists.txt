@@ -5,12 +5,12 @@ remove_definitions(-D__EXX)
 
 AddTest(
   TARGET cell_neighbor_sltk_adjacent_set
-  SOURCES ../sltk_adjacent_set.cpp ./sltk_adjacent_set_test.cpp
+  SOURCES sltk_adjacent_set_test.cpp ../sltk_adjacent_set.cpp
 )
 
 AddTest(
   TARGET cell_neighbor_sltk_atom
-  SOURCES ../sltk_atom.cpp ./sltk_atom_test.cpp ../sltk_adjacent_set.cpp ./sltk_adjacent_set_test.cpp
+  SOURCES sltk_atom_test.cpp ../sltk_atom.cpp ../sltk_adjacent_set.cpp
 )
 
 AddTest(
