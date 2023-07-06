@@ -26,7 +26,7 @@ Parallel_Orbitals::~Parallel_Orbitals()
 void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
     const bool& div_2d, std::ofstream& ofs_running)
 {
-    this->global2local_row_ = new int[5];
+    this->global2local_row_ = new int[M_A];
     this->global2local_row_[0] = 0;
     this->global2local_row_[1] = 1;
     this->global2local_row_[2] = -1;
@@ -46,7 +46,8 @@ TEST(ModuleIOTest, OutputSingleR)
     const double sparse_threshold = 1e-8;
     const bool binary = false;
     Parallel_Orbitals pv;
-    pv.set_global2local(5, 5, false, ofs);
+    GlobalV::NLOCAL = 5;
+    pv.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, ofs);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
         {1, {{0, 0.2}, {2, 0.4}}},
