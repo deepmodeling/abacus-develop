@@ -5,6 +5,10 @@
 #include <mpi.h>
 #endif
 
+#include <chrono>
+using iclock = std::chrono::high_resolution_clock;
+
+#include "module_base/constants.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 
 /***********************************************************
@@ -36,11 +40,24 @@ class RealGauntTableTest : public ::testing::Test
 
 TEST_F(RealGauntTableTest, LegacyConsistency)
 {
+    //iclock::time_point start;
+    //std::chrono::duration<double> dur;
+
     // this test checks whether the coefficients in RealGauntTable is consistent with those of ORB_gaunt_table
     // this test shall be removed in the future once the refactoring is finished
     ORB_gaunt_table ogt;
+
+    //start = iclock::now();
     ogt.init_Gaunt_CH(lmax);
     ogt.init_Gaunt(lmax);
+    //dur = iclock::now() - start;
+    //std::cout << "time elased = " << dur.count() << " s" << std::endl;
+
+    //RealGauntTable rgt2;
+    //start = iclock::now();
+    //rgt2.build(lmax);
+    //dur = iclock::now() - start;
+    //std::cout << "time elased = " << dur.count() << " s" << std::endl;
 
     for (int l1 = 0; l1 <= lmax; ++l1)
     {
@@ -76,7 +93,18 @@ TEST_F(RealGauntTableTest, SanityCheck)
 {
     EXPECT_EQ(rgt.lmax(), lmax);
 
-    //EXPECT_NEAR(rgt(0, 0, 0, 0, 0, 0), 1.0, tol);
+    EXPECT_NEAR(rgt(0, 0, 0, 0, 0, 0), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+
+    EXPECT_NEAR(rgt(4, 0, 4, 3, 0, 3), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(rgt(4, 0, 4, -3, 0, -3), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+
+    EXPECT_NEAR(rgt(2, 2, 2, 2, -1, -1), -std::sqrt(15.0) / 7.0 * ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(rgt(2, 2, 2, -1, 2, -1), -std::sqrt(15.0) / 7.0 * ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+
+    EXPECT_NEAR(rgt(3, 3, 2, 2, 1, 1), ModuleBase::SQRT_INVERSE_FOUR_PI / std::sqrt(6.0), tol);
+    EXPECT_NEAR(rgt(2, 3, 3, 1, 1, 2), ModuleBase::SQRT_INVERSE_FOUR_PI / std::sqrt(6.0), tol);
+
+    EXPECT_NEAR(rgt(4, 5, 7, 3, -2, -5), ModuleBase::SQRT_INVERSE_FOUR_PI * std::sqrt(210.0) / 221.0, tol);
 }
 
 int main(int argc, char** argv)

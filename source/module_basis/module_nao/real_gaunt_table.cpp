@@ -25,7 +25,7 @@ void RealGauntTable::build(const int lmax)
             {
                 for (int m3 = 0; m3 <= l3; ++m3)
                 {
-                    int m2_max = l1 - m3 > l2 ? l2 : l1 - m3; // ensure min(m1) >= l1
+                    int m2_max = (l1 - m3) > l2 ? l2 : l1 - m3; // ensure min(m1) >= l1
                     for (int m2 = -l2; m2 <= m2_max; ++m2)
                     {
                         int m1 = -m2 - m3;
@@ -90,104 +90,23 @@ double RealGauntTable::real_gaunt_lookup(const int l1, const int l2, const int l
         return 0.0;
     }
 
+    std::array<int, 3> m = {std::abs(m1), std::abs(m2), std::abs(m3)};
+    int& m_absmax = *std::max_element(m.begin(), m.end());
+
     if ( m1 == 0 || m2 == 0 || m3 == 0 )
     {
-        if ( m1 == 0 && m2 == 0 && m3 == 0 )
-        {
-            return gaunt_lookup(l1, l2, l3, 0, 0, 0);
-        }
-        else if ( m1 == 0 && m2 == m3 )
-        {
-            return minus_1_pow(m2) * gaunt_lookup(l1, l2, l3, 0, m2, -m3);
-        }
-        else if ( m2 == 0 && m3 == m1 )
-        {
-            return minus_1_pow(m3) * gaunt_lookup(l1, l2, l3, -m1, 0, m3);
-        }
-        else
-        {
-            assert( m3 == 0 && m1 == m2 );
-            return minus_1_pow(m1) * gaunt_lookup(l1, l2, l3, m1, -m2, 0);
-        }
+        m_absmax = -m_absmax;
+        return minus_1_pow(m_absmax) * gaunt_lookup(l1, l2, l3, m[0], m[1], m[2]);
+    }
+    else if ( m1 + m2 + m3 == 0 )
+    {
+        return ModuleBase::SQRT2 / 2.0 * minus_1_pow(m_absmax + 1) * gaunt_lookup(l1, l2, l3, m1, m2, m3);
+
     }
     else
-    { // no m is zero
-
-        const double isqrt2 = ModuleBase::SQRT2 / 2.0;
-
-        if ( m1 > 0 && m2 < 0 && m3 < 0 )
-        {
-            if ( m1 + m2 == m3 )
-            {
-                return isqrt2 * minus_1_pow(m2) * gaunt_lookup(l1, l2, l3, m1, m2, -m3);
-            }
-            else if ( m3 + m1 == m2 )
-            {
-                return isqrt2 * minus_1_pow(m3) * gaunt_lookup(l1, l2, l3, m1, -m2, m3);
-            }
-            else
-            {
-                assert( m1 + m2 + m3 == 0 );
-                return isqrt2 * minus_1_pow(m1 + 1) * gaunt_lookup(l1, l2, l3, m1, m2, m3);
-            }
-        }
-        else if ( m2 > 0 && m3 < 0 && m1 < 0 )
-        {
-            if ( m2 + m3 == m1 )
-            {
-                return isqrt2 * minus_1_pow(m3) * gaunt_lookup(l1, l2, l3, -m1, m2, m3);
-            }
-            else if ( m1 + m2 == m3 )
-            {
-                return isqrt2 * minus_1_pow(m1) * gaunt_lookup(l1, l2, l3, m1, m2, -m3);
-            }
-            else
-            {
-                assert( m1 + m2 + m3 == 0 );
-                return isqrt2 * minus_1_pow(m2 + 1) * gaunt_lookup(l1, l2, l3, m1, m2, m3);
-            }
-        }
-        else if ( m3 > 0 && m1 < 0 && m2 < 0 )
-        {
-            if ( m2 + m3 == m1 )
-            {
-                return isqrt2 * minus_1_pow(m2) * gaunt_lookup(l1, l2, l3 ,-m1, m2, m3);
-            }
-            else if ( m1 + m3 == m2 )
-            {
-                return isqrt2 * minus_1_pow(m1) * gaunt_lookup(l1, l2, l3, m1, -m2, m3);
-            }
-            else
-            {
-                assert( m1 + m2 + m3 == 0 );
-                return isqrt2 * minus_1_pow(m3 + 1) * gaunt_lookup(l1, l2, l3, m1, m2, m3);
-            }
-        }
-        else
-        {
-            assert( m1 > 0 && m2 > 0 && m3 > 0 );
-            if ( m1 + m2 == m3 )
-            {
-                return isqrt2 * minus_1_pow(m3) * gaunt_lookup(l1, l2, l3, m1, m2, -m3);
-            }
-            else if ( m2 + m3 == m1 )
-            {
-                return isqrt2 * minus_1_pow(m1) * gaunt_lookup(l1, l2, l3, -m1, m2, m3);
-            }
-            else 
-            {
-                assert( m3 + m1 == m2 );
-                return isqrt2 * minus_1_pow(m2) * gaunt_lookup(l1, l2, l3, m1, -m2, m3);
-            }
-
-            //=================================================
-            // The following code is a more general implementation
-            //std::array<int, 3> m = {m1, m2, m3};
-            //int& m_max = *std::max_element(m.begin(), m.end());
-            //m_max = -m_max;
-            //return isqrt2 * minus_1_pow(m_max) * gaunt_lookup(l1, m[0], l2, m[1], l3, m[2]);
-
-        }
+    {
+        m_absmax = -m_absmax;
+        return ModuleBase::SQRT2 / 2.0 * minus_1_pow(m_absmax) * gaunt_lookup(l1, l2, l3, m[0], m[1], m[2]);
     }
 }
 
