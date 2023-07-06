@@ -15,7 +15,7 @@
  *   - atom_arrange::delete_vector(void)
  *     - delete vector
  *   - atom_arrange::set_sr_NL
- * 	   - set the sr
+ * 	   - set the sr: search radius including nonlocal beta
  */
 
 class sltkatomarrange : public testing::Test
