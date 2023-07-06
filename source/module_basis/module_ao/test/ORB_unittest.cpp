@@ -51,7 +51,7 @@ void test_orb::set_ekcut()
 			std::cout << "error : cannot find LCAO file : " << ORB.orbital_file[it] << std::endl;
 		}
 		ORB.orbital_file[it] = this->case_dir + ORB.orbital_file[it].c_str();
-		string word;
+		std::string word;
 		while (in_ao.good())
 		{
 			in_ao >> word;
@@ -115,7 +115,7 @@ void test_orb::set_files()
 
 	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs,"NUMERICAL_ORBITAL");
 
-    orbital_fn = new string [ntype_read];
+    orbital_fn = new std::string [ntype_read];
 
 	for(int it=0;it<ntype_read;it++)
 	{

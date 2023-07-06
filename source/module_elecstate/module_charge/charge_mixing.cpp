@@ -309,7 +309,7 @@ void Charge_Mixing::plain_mixing(Charge* chr) const
 			for(int ig=0; ig<this->rhopw->npw; ig++)
 			{
 				double gg = this->rhopw->gg[ig];
-				filter_g[ig] = max(gg / (gg + gg0), 0.1);
+				filter_g[ig] = std::max(gg / (gg + gg0), 0.1);
 
 				kerpulay[ig] = (1 - filter_g[ig]) * kerpulay[ig];
 			}

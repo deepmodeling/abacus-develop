@@ -38,7 +38,7 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
     }
     if (GlobalV::VL_IN_H)
     {
-        std::vector<string> pot_register_in;
+        std::vector<std::string> pot_register_in;
         if (GlobalV::VION_IN_H)
         {
             pot_register_in.push_back("local");

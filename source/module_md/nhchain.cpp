@@ -504,7 +504,7 @@ void Nose_Hoover::particle_thermo()
 
             /// update rescale factor of particle velocity
             scale *= exp(-v_eta[0] * delta / 2.0);
-            if (!isfinite(scale))
+            if (!std::isfinite(scale))
             {
                 ModuleBase::WARNING_QUIT("Nose_Hoover", "Please set a proper md_tfreq!");
             }
@@ -863,7 +863,7 @@ void Nose_Hoover::couple_stress()
         p_current[2] = stress(2, 2);
     }
 
-    if (!isfinite(p_current[0]) || !isfinite(p_current[1]) || !isfinite(p_current[2]))
+    if (!std::isfinite(p_current[0]) || !std::isfinite(p_current[1]) || !std::isfinite(p_current[2]))
     {
         ModuleBase::WARNING_QUIT("Nose_Hoover", "Non-numeric stress component!");
     }
@@ -872,7 +872,7 @@ void Nose_Hoover::couple_stress()
     p_current[4] = stress(0, 2);
     p_current[5] = stress(0, 1);
 
-    if (!isfinite(p_current[3]) || !isfinite(p_current[4]) || !isfinite(p_current[5]))
+    if (!std::isfinite(p_current[3]) || !std::isfinite(p_current[4]) || !std::isfinite(p_current[5]))
     {
         ModuleBase::WARNING_QUIT("Nose_Hoover", "Non-numeric stress component!");
     }

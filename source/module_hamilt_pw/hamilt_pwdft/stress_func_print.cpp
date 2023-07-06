@@ -19,7 +19,7 @@ void Stress_Func<FPTYPE, Device>::print_stress(const std::string &name, const Mo
 	}
 
 	std::cout << std::setprecision(5);
-	std::cout << std::setiosflags(ios::showpos);
+	std::cout << std::setiosflags(std::ios::showpos);
 
 	if(screen)
 	{
@@ -51,7 +51,7 @@ void Stress_Func<FPTYPE, Device>::print_stress(const std::string &name, const Mo
 	}
 
 
-	std::cout << std::resetiosflags(ios::showpos);
+	std::cout << std::resetiosflags(std::ios::showpos);
 
     return;
 }
@@ -70,7 +70,7 @@ void Stress_Func<FPTYPE, Device>::printstress_total(const ModuleBase::matrix& sc
 //	std::cout.setf(ios::fixed);
 
 	//GlobalV::ofs_running << std::setiosflags(ios::right);
- 	GlobalV::ofs_running << std::setprecision(6) << std::setiosflags(ios::showpos) << std::setiosflags(ios::fixed) << std::endl;
+ 	GlobalV::ofs_running << std::setprecision(6) << std::setiosflags(std::ios::showpos) << std::setiosflags(std::ios::fixed) << std::endl;
 	ModuleBase::GlobalFunc::NEW_PART("TOTAL-STRESS (KBAR)");//Ryd/(a.u.)^3
     std::cout << " ><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
     std::cout << " TOTAL-STRESS (KBAR):" << std::endl;
@@ -94,8 +94,8 @@ void Stress_Func<FPTYPE, Device>::printstress_total(const ModuleBase::matrix& sc
 	FPTYPE pressure = (scs(0,0)+scs(1,1)+scs(2,2))/3.0*unit_transform;
     std::cout << " TOTAL-PRESSURE: " <<pressure<<" KBAR"<< std::endl;
 	GlobalV::ofs_running << " TOTAL-PRESSURE: " <<pressure<<" KBAR"<< std::endl;
-	GlobalV::ofs_running << std::setiosflags(ios::left);
-	std::cout << std::resetiosflags(ios::showpos);
+	GlobalV::ofs_running << std::setiosflags(std::ios::left);
+	std::cout << std::resetiosflags(std::ios::showpos);
 
     return;
 }

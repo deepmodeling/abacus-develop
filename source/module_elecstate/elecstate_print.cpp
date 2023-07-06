@@ -42,7 +42,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     for (int ik = 0; ik < this->klist->nks; ik++)
     {
         ofs << std::setprecision(5);
-        ofs << std::setiosflags(ios::showpoint);
+        ofs << std::setiosflags(std::ios::showpoint);
         if (ik == 0)
         {
             ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
@@ -87,7 +87,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         }
 
         ofs << std::setprecision(6);
-        ofs << std::setiosflags(ios::showpoint);
+        ofs << std::setiosflags(std::ios::showpoint);
         for (int ib = 0; ib < this->ekb.nc; ib++)
         {
             ofs << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(15)
@@ -127,7 +127,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
             GlobalV::ofs_running << std::setprecision(6);
             GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN + 1
                                  << " K-point=" << ik + 1 << std::endl;
-            GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+            GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
                 GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
@@ -165,7 +165,7 @@ void ElecState::print_etot(const bool converged,
     const int nxyz = this->charge->nxyz;
 
     GlobalV::ofs_running << std::setprecision(12);
-    GlobalV::ofs_running << std::setiosflags(ios::right);
+    GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
@@ -303,7 +303,7 @@ void ElecState::print_etot(const bool converged,
         // std::cout << std::setiosflags(ios::showpos);
         if (scientific)
         {
-            std::cout << std::setiosflags(ios::scientific);
+            std::cout << std::setiosflags(std::ios::scientific);
         }
 
         if (GlobalV::COLOUR)
@@ -340,7 +340,7 @@ void ElecState::print_etot(const bool converged,
                 // 34 is blue
                 printf("\e[36m%-15f\e[0m", this->f_en.etot * ModuleBase::Ry_to_eV);
                 std::cout << std::setprecision(3);
-                std::cout << std::resetiosflags(ios::scientific);
+                std::cout << std::resetiosflags(std::ios::scientific);
 
                 std::cout << std::setw(11) << duration;
                 std::cout << std::endl;
@@ -378,12 +378,12 @@ void ElecState::print_etot(const bool converged,
 /// @param value: value
 void ElecState::print_format(const std::string& name, const double& value)
 {
-    GlobalV::ofs_running << std::setiosflags(ios::showpos);
+    GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
     std::stringstream name2;
     name2 << name;
     GlobalV::ofs_running << " " << std::setw(16) << name2.str() << std::setw(30) << value << std::setw(30)
                          << value * ModuleBase::Ry_to_eV << std::endl;
-    GlobalV::ofs_running << std::resetiosflags(ios::showpos);
+    GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
     return;
 }
 

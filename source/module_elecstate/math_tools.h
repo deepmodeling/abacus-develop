@@ -47,7 +47,7 @@ inline void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
                          const int* desc_dm)
 {
     ModuleBase::timer::tick("psiMulPsiMpi","pdgemm");
-    const complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
+    const std::complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
     const int nlocal = desc_dm[2];

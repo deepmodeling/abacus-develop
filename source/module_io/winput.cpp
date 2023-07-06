@@ -99,7 +99,7 @@ void winput::Read(const std::string &fn)
 	
 	if(GlobalV::MY_RANK!=0) return;
 
-	std::ifstream ifs(fn.c_str(), ios::in);
+	std::ifstream ifs(fn.c_str(), std::ios::in);
 	if (!ifs)
 	{
 		//xiaohui move warning 2015-09-30
@@ -548,7 +548,7 @@ void winput::Print(const std::string &fn)
 	if(GlobalV::MY_RANK!=0) return;
  
 	std::ofstream ofs(fn.c_str());
-	ofs << std::setiosflags(ios::left);
+	ofs << std::setiosflags(std::ios::left);
 	ofs << "WANNIER_PARAMETERS" << std::endl;
 
 	ofs << "#Parameters (General)" << std::endl;

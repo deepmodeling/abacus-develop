@@ -266,8 +266,8 @@ void ModuleIO::save_HS_triangle(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), ofstream::app);
-                g2.open(sss.str().c_str(), ofstream::app);
+                g1.open(ssh.str().c_str(), std::ofstream::app);
+                g2.open(sss.str().c_str(), std::ofstream::app);
             }
             else
             {
@@ -510,8 +510,8 @@ void ModuleIO::save_HS_complete(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), ofstream::app);
-                g2.open(sss.str().c_str(), ofstream::app);
+                g1.open(ssh.str().c_str(), std::ofstream::app);
+                g2.open(sss.str().c_str(), std::ofstream::app);
             }
             else
             {
@@ -786,8 +786,8 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), ofstream::app);
-                g2.open(sss.str().c_str(), ofstream::app);
+                g1.open(ssh.str().c_str(), std::ofstream::app);
+                g2.open(sss.str().c_str(), std::ofstream::app);
             }
             else
             {
@@ -1031,8 +1031,8 @@ void ModuleIO::save_HS_complex_complete(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), ofstream::app);
-                g2.open(sss.str().c_str(), ofstream::app);
+                g1.open(ssh.str().c_str(), std::ofstream::app);
+                g2.open(sss.str().c_str(), std::ofstream::app);
             }
             else
             {

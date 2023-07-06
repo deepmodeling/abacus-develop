@@ -2,7 +2,6 @@
 #define TOWannier90_H
 
 #include <iostream>
-using namespace std;
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

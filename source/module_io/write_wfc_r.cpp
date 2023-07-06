@@ -149,7 +149,7 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
 			char recv_tmp;
 			MPI_Recv( &recv_tmp, 1, MPI_CHAR, GlobalV::RANK_IN_POOL-1, mpi_tag, POOL_WORLD, MPI_STATUS_IGNORE);
 
-			ofs.open(file_name, ofstream::app);
+			ofs.open(file_name, std::ofstream::app);
 		}
 #endif
 

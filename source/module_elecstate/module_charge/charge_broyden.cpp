@@ -20,7 +20,7 @@ void Charge_Mixing::Simplified_Broyden_mixing(const int &iter,
 	// (1)
 	this->allocate_Broyden();
 	
-	int iter_used = min(iter-1, mixing_ndim);
+	int iter_used = std::min(iter-1, mixing_ndim);
 	int ipos = iter-2 - int((iter-2)/mixing_ndim) * mixing_ndim;
 	if(iter > 1)
 	{

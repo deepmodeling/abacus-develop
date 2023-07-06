@@ -5,8 +5,6 @@
 #include <stdexcept>
 #include <iostream>
 
-using namespace std;
-
 class out_of_range;
 
 //==========================================================

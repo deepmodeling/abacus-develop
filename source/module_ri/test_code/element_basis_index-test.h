@@ -7,7 +7,6 @@
 #define ELEMENT_BASIS_INDEX_TEST_H
 
 #include <iostream>
-using namespace std;
 
 static std::ostream & operator << (std::ostream & os, const ModuleBase::Element_Basis_Index::Range & range)
 {

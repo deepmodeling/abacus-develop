@@ -195,9 +195,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
-        int nk1 = max(1,static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING[0] / GlobalC::ucell.lat0 + 1));
-        int nk2 = max(1,static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING[1] / GlobalC::ucell.lat0 + 1));
-        int nk3 = max(1,static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING[2] / GlobalC::ucell.lat0 + 1));
+        int nk1 = std::max(1,static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING[0] / GlobalC::ucell.lat0 + 1));
+        int nk2 = std::max(1,static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING[1] / GlobalC::ucell.lat0 + 1));
+        int nk3 = std::max(1,static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING[2] / GlobalC::ucell.lat0 + 1));
 
         GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
 		std::ofstream ofs(fn.c_str());
@@ -215,7 +215,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 		return 0;
     }
 
-    ifk >> std::setiosflags(ios::uppercase);
+    ifk >> std::setiosflags(std::ios::uppercase);
 
     ifk.clear();
     ifk.seekg(0);

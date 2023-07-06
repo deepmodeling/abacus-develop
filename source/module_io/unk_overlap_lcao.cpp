@@ -183,7 +183,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 						for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
 						{
 							center2_orb11[TA][TB][LA][NA][LB].insert( 
-								make_pair(NB, Center2_Orb::Orb11(
+								std::make_pair(NB, Center2_Orb::Orb11(
 									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),								
 									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
 									MOT, MGT)));
@@ -207,7 +207,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 						for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
 						{
 							center2_orb21_r[TA][TB][LA][NA][LB].insert( 
-								make_pair(NB, Center2_Orb::Orb21(
+								std::make_pair(NB, Center2_Orb::Orb21(
 									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),	
 									orb_r,									
 									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
