@@ -54,7 +54,7 @@ void RealGauntTable::build(const int lmax)
                 for (int m2 = -l2; m2 <= l2; ++m2)
                 {
                     int index2 = index_map(l2, m2);
-                    for (int l3 = std::abs(l1 - l2); l3 <= 2 * lmax; l3 += 2)
+                    for (int l3 = std::abs(l1 - l2); l3 <= l1 + l2; l3 += 2)
                     {
                         for (int m3 = -l3; m3 <= l3; ++m3)
                         {

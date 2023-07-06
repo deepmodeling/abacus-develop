@@ -9,7 +9,7 @@
 //! Table of Gaunt coefficients of real spherical harmonics
 /*!
  *  This class computes and stores the Gaunt coefficients of real spherical harmonics
- *  used in two-centerl integrals.
+ *  used in two-center integrals.
  *                                                                                      */
 class RealGauntTable
 {
