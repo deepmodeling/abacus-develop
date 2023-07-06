@@ -33,7 +33,7 @@ void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::m
         // line = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if(pv.global2local_row[row] >= 0)
+        if(pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -146,7 +146,7 @@ void ModuleIO::output_soc_single_R(std::ofstream &ofs, const std::map<size_t, st
         // line = new std::complex<double>[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if(pv.global2local_row[row] >= 0)
+        if(pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())

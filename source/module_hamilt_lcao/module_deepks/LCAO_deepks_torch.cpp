@@ -417,8 +417,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
     const int nat,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const Parallel_Orbitals &ParaO)
+    Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "calc_orbital_precalc");
     
@@ -467,13 +466,13 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1; // this is \mu
-						const int iw1_local = ParaO.global2local_row[iw1_all];
+                        const int iw1_local = pv->global2local_row(iw1_all);
 						if(iw1_local < 0)continue;
 						const int iw1_0 = iw1/GlobalV::NPOL;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2; // this is \nu
-							const int iw2_local = ParaO.global2local_col[iw2_all];
+                            const int iw2_local = pv->global2local_col(iw2_all);
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
 
@@ -588,8 +587,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
     const std::vector<ModuleBase::Vector3<double>> &kvec_d,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const Parallel_Orbitals &ParaO)
+    Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "calc_orbital_precalc_k");
     
@@ -644,13 +642,13 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1; // this is \mu
-						const int iw1_local = ParaO.global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
 						if(iw1_local < 0)continue;
 						
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2; // this is \nu
-							const int iw2_local = ParaO.global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
 							if(iw2_local < 0)continue;
                             for(int ik=0;ik<nks;ik++)
                             {

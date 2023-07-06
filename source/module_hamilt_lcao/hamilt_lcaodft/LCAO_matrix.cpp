@@ -47,16 +47,17 @@ void LCAO_Matrix::divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &pv, c
 		GlobalC::ld.init(GlobalC::ORB,
             GlobalC::ucell.nat,
             GlobalC::ucell.ntype,
+            pv,
             na);
         if(GlobalV::deepks_scf)
         {
             if(isGamma)
             {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, pv.nloc);
+                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat);
             }
             else
             {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, pv.nloc, nks);
+                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, nks);
             }
         }
 	}
@@ -146,8 +147,8 @@ void LCAO_Matrix::set_HSgamma(
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may be < 0 !!!
-    const int ir = this->ParaV->global2local_row[ iw1_all ];
-    const int ic = this->ParaV->global2local_col[ iw2_all ];
+    const int ir = this->ParaV->global2local_row(iw1_all);
+    const int ic = this->ParaV->global2local_col(iw2_all);
 
     //const int index = ir * ParaO.ncol + ic;
     long index=0;
@@ -183,8 +184,8 @@ void LCAO_Matrix::set_HSk(const int &iw1_all, const int &iw2_all, const std::com
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may < 0!!!!!!!!!!!!!!!!
-    const int ir = this->ParaV->global2local_row[ iw1_all ];
-    const int ic = this->ParaV->global2local_col[ iw2_all ];
+    const int ir = this->ParaV->global2local_row(iw1_all);
+    const int ic = this->ParaV->global2local_col(iw2_all);
     //const int index = ir * this->ParaV->ncol + ic;
     long index;
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
@@ -228,8 +229,8 @@ void LCAO_Matrix::set_force
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may < 0!!!!!!!!!!!!!!!!
-    const int ir = this->ParaV->global2local_row[ iw1_all ];
-    const int ic = this->ParaV->global2local_col[ iw2_all ];
+    const int ir = this->ParaV->global2local_row(iw1_all);
+    const int ic = this->ParaV->global2local_col(iw2_all);
     const long index = ir * this->ParaV->ncol + ic;
     
     if( index >= this->ParaV->nloc)
@@ -278,8 +279,8 @@ void LCAO_Matrix::set_stress
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may < 0!!!!!!!!!!!!!!!!
-    const int ir = this->ParaV->global2local_row[ iw1_all ];
-    const int ic = this->ParaV->global2local_col[ iw2_all ];
+    const int ir = this->ParaV->global2local_row(iw1_all);
+    const int ic = this->ParaV->global2local_col(iw2_all);
     const long index = ir * this->ParaV->ncol + ic;
 
     if( index >= this->ParaV->nloc)
@@ -855,8 +856,8 @@ void LCAO_Matrix::destroy_Hloc_fixedR_tr(void)
 
 void LCAO_Matrix::set_HR_tr(const int &Rx, const int &Ry, const int &Rz, const int &iw1_all, const int &iw2_all, const double &v)
 {
-    const int ir = this->ParaV->global2local_row[ iw1_all ];
-    const int ic = this->ParaV->global2local_col[ iw2_all ];
+    const int ir = this->ParaV->global2local_row(iw1_all);
+    const int ic = this->ParaV->global2local_col(iw2_all);
 
 //std::cout<<"ir: "<<ir<<std::endl;
 //std::cout<<"ic: "<<ic<<std::endl;
@@ -890,8 +891,8 @@ void LCAO_Matrix::set_HR_tr(const int &Rx, const int &Ry, const int &Rz, const i
 //LiuXh add 2019-07-16
 void LCAO_Matrix::set_HR_tr_soc(const int &Rx, const int &Ry, const int &Rz, const int &iw1_all, const int &iw2_all, const std::complex<double> &v)
 {
-    const int ir = this->ParaV->global2local_row[ iw1_all ];
-    const int ic = this->ParaV->global2local_col[ iw2_all ];
+    const int ir = this->ParaV->global2local_row(iw1_all);
+    const int ic = this->ParaV->global2local_col(iw2_all);
 
 //std::cout<<"ir: "<<ir<<std::endl;
 //std::cout<<"ic: "<<ic<<std::endl;

@@ -50,13 +50,13 @@ void test_deepks::cal_nnr(void)
 						// the index of orbitals in this processor
 						// according to HPSEPS's division method.
 						const int iw1_all = start1 + ii;
-						const int mu = ParaO.global2local_row[iw1_all];
+						const int mu = ParaO.global2local_row(iw1_all);
 						if(mu<0)continue;
 
 						for(int jj=0; jj<nw2; jj++)
 						{
 							const int iw2_all = start2 + jj;
-							const int nu = ParaO.global2local_col[iw2_all];
+							const int nu = ParaO.global2local_col(iw2_all);
 							if(nu<0)continue;
 							++nnr;
 						}// end jj
@@ -88,13 +88,13 @@ void test_deepks::cal_nnr(void)
 							for(int ii=0; ii<nw1; ++ii)
 							{
 								const int iw1_all = start1 + ii;
-								const int mu = ParaO.global2local_row[iw1_all];
+								const int mu = ParaO.global2local_row(iw1_all);
 								if(mu<0)continue;
 
 								for(int jj=0; jj<nw2; ++jj)
 								{
 									const int iw2_all = start2 + jj;
-									const int nu = ParaO.global2local_col[iw2_all];
+									const int nu = ParaO.global2local_col(iw2_all);
 									if(nu<0)continue;
 									++nnr;
 								}
@@ -202,13 +202,13 @@ void test_deepks::folding_nnr(const Test_Deepks::K_Vectors &kv)
 						{
 							// the index of orbitals in this processor
 							const int iw1_all = start + ii;
-							const int mu = ParaO.global2local_row[iw1_all];
+							const int mu = ParaO.global2local_row(iw1_all);
 							if(mu<0)continue;
 
 							for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
 							{
 								int iw2_all = start2 + jj;
-								const int nu = ParaO.global2local_col[iw2_all];
+								const int nu = ParaO.global2local_col(iw2_all);
 
 								if(nu<0)continue;
 								int iic;

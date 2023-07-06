@@ -215,16 +215,16 @@ void DFTU::cal_occup_m_k(const int iter,
                             for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
-                                const int mu = this->LM->ParaV->global2local_row[iwt0];
-                                const int mu_prime = this->LM->ParaV->global2local_col[iwt0];
+                                const int mu = this->LM->ParaV->global2local_row(iwt0);
+                                const int mu_prime = this->LM->ParaV->global2local_col(iwt0);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
-                                        const int nu = this->LM->ParaV->global2local_col[iwt1];
-                                        const int nu_prime = this->LM->ParaV->global2local_row[iwt1];
+                                        const int nu = this->LM->ParaV->global2local_col(iwt1);
+                                        const int nu_prime = this->LM->ParaV->global2local_row(iwt1);
 
                                         const int irc = nu * this->LM->ParaV->nrow + mu;
                                         const int irc_prime = mu_prime * this->LM->ParaV->nrow + nu_prime;
@@ -409,16 +409,16 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
                             for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
-                                const int mu = this->LM->ParaV->global2local_row[iwt0];
-                                const int mu_prime = this->LM->ParaV->global2local_col[iwt0];
+                                const int mu = this->LM->ParaV->global2local_row(iwt0);
+                                const int mu_prime = this->LM->ParaV->global2local_col(iwt0);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
                                     for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
-                                        const int nu = this->LM->ParaV->global2local_col[iwt1];
-                                        const int nu_prime = this->LM->ParaV->global2local_row[iwt1];
+                                        const int nu = this->LM->ParaV->global2local_col(iwt1);
+                                        const int nu_prime = this->LM->ParaV->global2local_row(iwt1);
 
                                         const int irc = nu * this->LM->ParaV->nrow + mu;
                                         const int irc_prime = mu_prime * this->LM->ParaV->nrow + nu_prime;

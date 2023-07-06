@@ -525,8 +525,8 @@ void AtomPair<T>::add_to_array(std::complex<T>* array, const std::complex<T>& kp
 template <typename T>
 T& AtomPair<T>::get_matrix_value(const size_t& i_row_global, const size_t& j_col_global) const
 {
-    int i_row_local = this->paraV == nullptr? i_row_global : this->paraV->global2local_row[i_row_global];
-    int j_col_local = this->paraV == nullptr? j_col_global : this->paraV->global2local_col[j_col_global];
+    int i_row_local = this->paraV == nullptr ? i_row_global : this->paraV->global2local_row(i_row_global);
+    int j_col_local = this->paraV == nullptr ? j_col_global : this->paraV->global2local_col(j_col_global);
 #ifdef __DEBUG
     assert(i_row_local != -1 && j_col_local != -1);
     assert(current_R < this->values.size());

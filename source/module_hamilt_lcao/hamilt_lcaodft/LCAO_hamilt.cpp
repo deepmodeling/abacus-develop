@@ -147,14 +147,14 @@ void LCAO_Hamilt::calculate_STN_R_sparse(const int &current_spin, const double &
                     for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = this->LM->ParaV->global2local_row[iw1_all];
+                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
 
                         if(mu<0)continue;
 
                         for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->global2local_col[iw2_all];
+                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
 
                             if(nu<0)continue;
 
@@ -269,14 +269,14 @@ void LCAO_Hamilt::calculate_STN_R_sparse_for_S(const double &sparse_threshold)
                     for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = this->LM->ParaV->global2local_row[iw1_all];
+                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
 
                         if(mu<0)continue;
 
                         for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->global2local_col[iw2_all];
+                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
 
                             if(nu<0)continue;
 
@@ -450,14 +450,14 @@ void LCAO_Hamilt::calculate_STN_R_sparse_for_T(const double &sparse_threshold)
                     for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = this->LM->ParaV->global2local_row[iw1_all];
+                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
 
                         if(mu<0)continue;
 
                         for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->global2local_col[iw2_all];
+                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
 
                             if(nu<0)continue;
 
@@ -552,10 +552,10 @@ void LCAO_Hamilt::calculat_HR_dftu_sparse(const int &current_spin, const double 
             {
                 for (auto &row_loop : iter->second)
                 {
-                    ir = this->LM->ParaV->global2local_row[row_loop.first];
+                    ir = this->LM->ParaV->global2local_row(row_loop.first);
                     for (auto &col_loop : row_loop.second)
                     {
-                        ic = this->LM->ParaV->global2local_col[col_loop.first];
+                        ic = this->LM->ParaV->global2local_col(col_loop.first);
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                         {
                             iic = ir + ic * this->LM->ParaV->nrow;
@@ -573,12 +573,12 @@ void LCAO_Hamilt::calculat_HR_dftu_sparse(const int &current_spin, const double 
 
             for (int i = 0; i < GlobalV::NLOCAL; ++i)
             {
-                ir = this->LM->ParaV->global2local_row[i];
+                ir = this->LM->ParaV->global2local_row(i);
                 if (ir >= 0)
                 {
                     for (int j = 0; j < GlobalV::NLOCAL; ++j)
                     {
-                        ic = this->LM->ParaV->global2local_col[j];
+                        ic = this->LM->ParaV->global2local_col(j);
                         if (ic >= 0)
                         {
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
@@ -664,10 +664,10 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
             {
                 for (auto &row_loop : iter->second)
                 {
-                    ir = this->LM->ParaV->global2local_row[row_loop.first];
+                    ir = this->LM->ParaV->global2local_row(row_loop.first);
                     for (auto &col_loop : row_loop.second)
                     {
-                        ic = this->LM->ParaV->global2local_col[col_loop.first];
+                        ic = this->LM->ParaV->global2local_col(col_loop.first);
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                         {
                             iic = ir + ic * this->LM->ParaV->nrow;
@@ -685,12 +685,12 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
 
             for (int i = 0; i < GlobalV::NLOCAL; ++i)
             {
-                ir = this->LM->ParaV->global2local_row[i];
+                ir = this->LM->ParaV->global2local_row(i);
                 if (ir >= 0)
                 {
                     for (int j = 0; j < GlobalV::NLOCAL; ++j)
                     {
-                        ic = this->LM->ParaV->global2local_col[j];
+                        ic = this->LM->ParaV->global2local_col(j);
                         if (ic >= 0)
                         {
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
@@ -891,14 +891,14 @@ void LCAO_Hamilt::calculate_dSTN_R_sparse(const int &current_spin, const double 
                     for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = this->LM->ParaV->global2local_row[iw1_all];
+                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
 
                         if(mu<0)continue;
 
                         for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->global2local_col[iw2_all];
+                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
 
                             if(nu<0)continue;
 

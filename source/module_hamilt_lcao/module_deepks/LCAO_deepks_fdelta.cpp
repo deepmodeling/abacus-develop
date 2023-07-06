@@ -37,9 +37,7 @@ void stress_fill(
 void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* global2local_row,
-    const int* global2local_col,
+    Grid_Driver& GridD,
     const bool isstress, ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_f_delta_gamma");
@@ -100,13 +98,13 @@ void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
                     for (int iw1=0; iw1<nw1_tot; ++iw1)
                     {
                         const int iw1_all = start1 + iw1;
-                        const int iw1_local = global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
                         if(iw1_local < 0)continue;
 
                         for (int iw2=0; iw2<nw2_tot; ++iw2)
                         {
                             const int iw2_all = start2 + iw2;
-                            const int iw2_local = global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
                             if(iw2_local < 0)continue;
 
                             double nlm[3]={0,0,0};
@@ -215,9 +213,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
 void LCAO_Deepks::cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* global2local_row,
-    const int* global2local_col,
+    Grid_Driver& GridD,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d,
     const bool isstress, ModuleBase::matrix& svnl_dalpha)
@@ -287,13 +283,13 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm
                     for (int iw1=0; iw1<nw1_tot; ++iw1)
                     {
                         const int iw1_all = start1 + iw1;
-                        const int iw1_local = global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
                         if(iw1_local < 0)continue;
 
                         for (int iw2=0; iw2<nw2_tot; ++iw2)
                         {
                             const int iw2_all = start2 + iw2;
-                            const int iw2_local = global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
                             if(iw2_local < 0)continue;
                             double dm_current;
                             std::complex<double> tmp = 0.0;

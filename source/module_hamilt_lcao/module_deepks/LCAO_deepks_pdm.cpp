@@ -28,9 +28,7 @@
 void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm, 
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* global2local_row,
-    const int* global2local_col)
+    Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
     ModuleBase::timer::tick("LCAO_Deepks","cal_projected_DM");
@@ -109,14 +107,14 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1;
-						const int iw1_local = global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
 						if(iw1_local < 0)continue;
 						const int iw1_0 = iw1/GlobalV::NPOL;
 
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2;
-							const int iw2_local = global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
 
@@ -160,9 +158,7 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
 void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* global2local_row,
-    const int* global2local_col,
+    Grid_Driver& GridD,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d)
 {
@@ -249,13 +245,13 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1;
-						const int iw1_local = global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
 						if(iw1_local < 0)continue;
 						const int iw1_0 = iw1/GlobalV::NPOL;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2;
-							const int iw2_local = global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
  
@@ -333,9 +329,7 @@ void LCAO_Deepks::check_projected_dm(void)
 void LCAO_Deepks::cal_gdmx(const ModuleBase::matrix &dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* global2local_row,
-    const int* global2local_col,
+    Grid_Driver& GridD,
     const bool isstress)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
@@ -422,13 +416,13 @@ void LCAO_Deepks::cal_gdmx(const ModuleBase::matrix &dm,
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1;
-						const int iw1_local = global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
 						if(iw1_local < 0)continue;
 						const int iw1_0 = iw1/GlobalV::NPOL;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2;
-							const int iw2_local = global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
                             
@@ -547,9 +541,7 @@ void LCAO_Deepks::cal_gdmx(const ModuleBase::matrix &dm,
 void LCAO_Deepks::cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* global2local_row,
-    const int* global2local_col,
+    Grid_Driver& GridD,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d,
     const bool isstress)
@@ -642,13 +634,13 @@ void LCAO_Deepks::cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1;
-						const int iw1_local = global2local_col[iw1_all];
+                        const int iw1_local = pv->global2local_col(iw1_all);
 						if(iw1_local < 0)continue;
 						const int iw1_0 = iw1/GlobalV::NPOL;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2;
-							const int iw2_local = global2local_row[iw2_all];
+                            const int iw2_local = pv->global2local_row(iw2_all);
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
 

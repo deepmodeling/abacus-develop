@@ -73,10 +73,10 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                         }
                     }
 
-                    ld->cal_orbital_precalc(dm_bandgap_gamma, nat, ucell, orb, GridD, *ParaV);
+                    ld->cal_orbital_precalc(dm_bandgap_gamma, nat, ucell, orb, GridD);
 
                     ld->save_npy_orbital_precalc(nat, nks);
-                    ld->cal_o_delta(dm_bandgap_gamma, *ParaV);
+                    ld->cal_o_delta(dm_bandgap_gamma);
                     ld->save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks);
                 }    // end deepks_scf gamma-only;
                 else // multi-k bandgap label
@@ -98,9 +98,9 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                     }
 
                     // ld->cal_o_delta_k(dm_bandgap_k, ParaV, nks);
-                    ld->cal_orbital_precalc_k(dm_bandgap_k, nat, nks, kvec_d, ucell, orb, GridD, *ParaV);
+                    ld->cal_orbital_precalc_k(dm_bandgap_k, nat, nks, kvec_d, ucell, orb, GridD);
                     ld->save_npy_orbital_precalc(nat, nks);
-                    ld->cal_o_delta_k(dm_bandgap_k, *ParaV, nks);
+                    ld->cal_o_delta_k(dm_bandgap_k, nks);
                     ld->save_npy_o(deepks_bands - ld->o_delta, "o_base.npy", nks);
                 } // end deepks_scf multi-k
             }     // end deepks_scf == 1
@@ -118,11 +118,11 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
         // so it is printed no matter even if deepks_out_labels is not used
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            ld->cal_projected_DM(dm_gamma[0], ucell, orb, GridD, ParaV->global2local_row, ParaV->global2local_col);
+            ld->cal_projected_DM(dm_gamma[0], ucell, orb, GridD);
         }
         else
         {
-            ld->cal_projected_DM_k(dm_k, ucell, orb, GridD, ParaV->global2local_row, ParaV->global2local_col, nks, kvec_d);
+            ld->cal_projected_DM_k(dm_k, ucell, orb, GridD, nks, kvec_d);
         }
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor();     // final descriptor
@@ -136,11 +136,11 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            ld->cal_e_delta_band(dm_gamma, ParaV->global2local_row, ParaV->global2local_col, ParaV->nrow);
+            ld->cal_e_delta_band(dm_gamma);
         }
         else
         {
-            ld->cal_e_delta_band_k(dm_k, ParaV->global2local_row, ParaV->global2local_col, nks, ParaV->nrow, ParaV->ncol);
+            ld->cal_e_delta_band_k(dm_k, nks);
         }
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"

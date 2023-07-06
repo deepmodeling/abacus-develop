@@ -273,11 +273,11 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 					{
 						for(int jj=0; jj<atom1->nw * GlobalV::NPOL; ++jj)
 						{
-							const int mu = pv->global2local_row[start1+jj];
+                            const int mu = pv->global2local_row(start1 + jj);
 							if(mu<0)continue; 
 							for(int kk=0; kk<atom2->nw * GlobalV::NPOL; ++kk)
 							{
-								const int nu = pv->global2local_col[start2+kk];
+                                const int nu = pv->global2local_col(start2 + kk);
 								if(nu<0)continue;
 								++total_nnr;
 								++nnr;
@@ -396,8 +396,8 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 			for (int iw1=0; iw1<nw1_tot; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-				const int iw1_local = pv->global2local_row[iw1_all];
-				const int iw2_local = pv->global2local_col[iw1_all];
+                const int iw1_local = pv->global2local_row(iw1_all);
+                const int iw2_local = pv->global2local_col(iw1_all);
 				if(iw1_local < 0 && iw2_local < 0)continue;
 				const int iw1_0 = iw1/GlobalV::NPOL;
 				std::vector<std::vector<double>> nlm;
@@ -590,7 +590,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						{
 							const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
 							const int iw1_all = start1 + j;
-							const int mu = pv->global2local_row[iw1_all];
+                            const int mu = pv->global2local_row(iw1_all);
 							if(mu < 0)continue; 
 
 							// fix a serious bug: atom2[T2] -> atom2
@@ -599,7 +599,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 							{
 								const int k0 = k/GlobalV::NPOL;
 								const int iw2_all = start2 + k;
-								const int nu = pv->global2local_col[iw2_all];						
+                                const int nu = pv->global2local_col(iw2_all);
 								if(nu < 0)continue;
 
 								if(!calc_deri)
@@ -737,7 +737,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 					{
 						const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
 						const int iw1_all = start1 + j;
-						const int mu = pv->global2local_row[iw1_all];
+                        const int mu = pv->global2local_row(iw1_all);
 						if(mu < 0)continue; 
 
 						// fix a serious bug: atom2[T2] -> atom2
@@ -746,7 +746,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						{
 							const int k0 = k/GlobalV::NPOL;
 							const int iw2_all = start2 + k;
-							const int nu = pv->global2local_col[iw2_all];						
+                            const int nu = pv->global2local_col(iw2_all);
 							if(nu < 0)continue;
 							total_nnr++;
 							nnr++;
@@ -844,8 +844,8 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                 for(int iw1=0; iw1<nw1_tot; ++iw1)
                 {
                     const int iw1_all = start1 + iw1;
-                    const int iw1_local = pv->global2local_row[iw1_all];
-                    const int iw2_local = pv->global2local_col[iw1_all];
+                    const int iw1_local = pv->global2local_row(iw1_all);
+                    const int iw2_local = pv->global2local_col(iw1_all);
 
                     if(iw1_local < 0 && iw2_local < 0) continue;
 
@@ -908,13 +908,13 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                     for(int iw1=0; iw1<nw1_tot; ++iw1)
                     {
                         const int iw1_all = start1 + iw1;
-                        const int iw1_local = pv->global2local_row[iw1_all];
+                        const int iw1_local = pv->global2local_row(iw1_all);
                         if(iw1_local < 0) continue;
                         const int iw1_0 = iw1/GlobalV::NPOL;
                         for(int iw2=0; iw2<nw2_tot; ++iw2)
                         {
                             const int iw2_all = start2 + iw2;
-                            const int iw2_local = pv->global2local_col[iw2_all];
+                            const int iw2_local = pv->global2local_col(iw2_all);
                             if(iw2_local < 0) continue;
                             const int iw2_0 = iw2/GlobalV::NPOL;
                             #ifdef _OPENMP
@@ -948,8 +948,8 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                             }
                             assert(ib==nlm1.size());
 
-                            const int ir = pv->global2local_row[ iw1_all ];
-                            const int ic = pv->global2local_col[ iw2_all ];
+                            const int ir = pv->global2local_row(iw1_all);
+                            const int ic = pv->global2local_col(iw2_all);
                             long index=0;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                             {

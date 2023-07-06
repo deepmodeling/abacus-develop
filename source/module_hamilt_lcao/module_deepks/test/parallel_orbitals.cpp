@@ -31,8 +31,8 @@ namespace Test_Deepks
         // mohan update 2011-04-07
         for(int i=0; i<GlobalV::NLOCAL; i++)
         {
-            global2local_row[i] = -1;
-            global2local_col[i] = -1;
+            global2local_row(i) = -1;
+            global2local_col(i) = -1;
         }
 
         ModuleBase::Memory::record("PO::global2local_row",sizeof(int) * GlobalV::NLOCAL);
@@ -40,8 +40,8 @@ namespace Test_Deepks
 
         for (int i=0; i<GlobalV::NLOCAL; i++)
         {
-            global2local_row[i] = i;
-            global2local_col[i] = i;
+            global2local_row(i) = i;
+            global2local_col(i) = i;
         }
         this->nrow = GlobalV::NLOCAL;
         this->ncol = GlobalV::NLOCAL;

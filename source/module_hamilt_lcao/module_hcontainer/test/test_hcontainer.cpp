@@ -447,8 +447,6 @@ TEST_F(HContainerTest, atompair_funcs)
         PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
         PO.atom_begin_col[i] = i*2;
     }
-    PO.nrow = 4;
-    PO.ncol = 4;
     hamilt::AtomPair<double> atom_ij(0, 0, &PO, nullptr);
     hamilt::AtomPair<double> atom_ij2(0, 1, 1, 1, 1, &PO, nullptr);
     hamilt::AtomPair<double> atom_ij3(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, nullptr);
@@ -596,13 +594,8 @@ TEST_F(HContainerTest, atompair_funcs)
     hamilt::AtomPair<double> atom_ij7(1, 1, 1, 1, 1, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, correct_array);
     // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
     // so we need to set them
-    PO.global2local_col = new int[4];
-    PO.global2local_row = new int[4];
-    for(int i=0;i<4;++i)
-    {
-        PO.global2local_col[i] = i;
-        PO.global2local_row[i] = i;
-    }
+    std::ofstream ofs("test_hcontainer.log");
+    PO.set_global2local(4, 4, false, ofs);
     for(int i=0;i<4;++i)
     {
         for(int j=0;j<4;++j)

@@ -110,18 +110,21 @@ TEST_F(test_para2d, Divide2D)
 
                 //5. set_global2local
                 p2d.set_global2local(gr, gc, true, ofs_running);
-                auto sum_array = [](const int* arr, const int& size) -> int
+                auto sum_array = [&p2d](const int& gr, const int& gc) -> std::pair<int, int>
                     {
-                        int sum = 0;
-                        for (int i = 0; i < size; ++i)
-                            sum += arr[i];
-                        return sum;
+                        int sum_row = 0; int sum_col = 0;
+                        for (int i = 0; i < gr; ++i)
+                            sum_row += p2d.global2local_row(i);
+                        for (int i = 0; i < gc; ++i)
+                            sum_col += p2d.global2local_col(i);
+                        return { sum_row, sum_col };
                     };
-                EXPECT_EQ(sum_array(p2d.global2local_row, gr), lr * (lr - 1) / 2 - (gr - lr));
-                EXPECT_EQ(sum_array(p2d.global2local_col, gc), lc * (lc - 1) / 2 - (gc - lc));
+                std::pair<int, int> sumrc = sum_array(gr, gc);
+                EXPECT_EQ(std::get<0>(sumrc), lr * (lr - 1) / 2 - (gr - lr));
+                EXPECT_EQ(std::get<1>(sumrc), lc * (lc - 1) / 2 - (gc - lc));
                 for (int i = 0;i < lr;++i)
                     for (int j = 0;j < lc;++j)
-                        EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row[i], p2d.local2global_col[j]));
+                        EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row(i), p2d.local2global_col(j)));
             }
         }
     }
@@ -149,9 +152,9 @@ TEST_F(test_para2d, Serial)
         //3. set_global2local
         p2d.set_global2local(gr, gc, false, ofs_running);
         for (int i = 0;i < gr;++i)
-            EXPECT_EQ(p2d.global2local_row[i], i);
+            EXPECT_EQ(p2d.global2local_row(i), i);
         for (int i = 0;i < gc;++i)
-            EXPECT_EQ(p2d.global2local_col[i], i);
+            EXPECT_EQ(p2d.global2local_col(i), i);
     }
 }
 #endif
