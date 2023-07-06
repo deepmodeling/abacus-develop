@@ -1947,8 +1947,12 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
     auto near_equal = [this] (double x, double y) {return fabs(x-y) < 10*epsilon;};
     ModuleBase::matrix s = s3.to_matrix();
     for (int i=0;i<3;++i)
-        for(int j=0;j<3;++j)
-            assert(near_equal(s(i, j), std::round(s(i, j))));
+        for (int j = 0;j < 3;++j)
+        {
+            double sij_round = std::round(s(i, j));
+            assert(near_equal(s(i, j), sij_round));
+            s(i, j) = sij_round;
+        }
 
     // convert Matrix3 to matrix
     ModuleBase::matrix h=s, b(3, 3, true);
