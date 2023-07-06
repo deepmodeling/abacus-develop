@@ -10,8 +10,8 @@ void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis
     double min = 1e-10;
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
-        epr_z = log(max(PS_TOTN_real[ir], min) / GlobalV::nc_k) / sqrt(2) / GlobalV::sigma_k;
-        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / max(PS_TOTN_real[ir], min);
+        epr_z = log(std::max(PS_TOTN_real[ir], min) / GlobalV::nc_k) / sqrt(2) / GlobalV::sigma_k;
+        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
 }
 

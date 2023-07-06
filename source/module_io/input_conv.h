@@ -15,8 +15,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 namespace Input_Conv
 {
 void Convert(void);

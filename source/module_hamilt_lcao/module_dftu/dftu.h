@@ -13,8 +13,6 @@
 
 #include <string>
 
-using namespace std;
-
 //==========================================================
 // CLASS :
 // NAME : DTFU (DFT+U)

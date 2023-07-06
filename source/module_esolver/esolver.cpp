@@ -17,9 +17,9 @@ namespace ModuleESolver
         std::cout << classname << std::endl;
     }
 
-    string determine_type()
+    std::string determine_type()
     {
-        string esolver_type = "none";
+        std::string esolver_type = "none";
         if (GlobalV::BASIS_TYPE == "pw")
         {
             if(GlobalV::ESOLVER_TYPE == "sdft")
@@ -87,7 +87,7 @@ namespace ModuleESolver
     void init_esolver(ESolver*& p_esolver)
     {
         //determine type of esolver based on INPUT information
-        string esolver_type = determine_type();
+        std::string esolver_type = determine_type();
 
         //initialize the corresponding Esolver child class
         if (esolver_type == "ksdft_pw")

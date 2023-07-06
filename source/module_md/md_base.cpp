@@ -153,7 +153,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
 
-    ofs.unsetf(ios::fixed);
+    ofs.unsetf(std::ios::fixed);
     ofs << std::setprecision(8) << std::endl;
     ofs << std::endl;
     ofs << " ------------------------------------------------------------------------------------------------"

@@ -63,7 +63,7 @@ void Stochastic_Iter::init(int* nchip_in, const int method_in, K_Vectors* pkv_in
         MPI_Allreduce(MPI_IN_PLACE, &tot, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
 #endif
         tot /= double(1073741824); //convert B to GB
-        if(tot > 64)    cout<<" WARNING: POOL 0 uses memories of over "<<tot<<" GB."<<endl;
+        if(tot > 64)    std::cout<<" WARNING: POOL 0 uses memories of over "<<tot<<" GB."<<std::endl;
         this->chiallorder = new ModuleBase::ComplexMatrix[stowf.nks];
         for (int ik = 0; ik < nks; ++ik)
         {
@@ -181,7 +181,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     }
 }
 
-void Stochastic_Iter::check_precision(const double ref, const double thr, const string info)
+void Stochastic_Iter::check_precision(const double ref, const double thr, const std::string info)
 {
     //==============================
     //precision check
@@ -207,14 +207,14 @@ void Stochastic_Iter::check_precision(const double ref, const double thr, const 
     GlobalV::ofs_running<<info<<"Relative Chebyshev Precision: "<<relative_error*1e9<<"E-09"<<std::endl;
     if(relative_error > thr)
     {
-        stringstream ss;
+        std::stringstream ss;
         ss<<relative_error;
-        string fractxt,tartxt;
+        std::string fractxt,tartxt;
         ss>>fractxt;
         ss.clear();
         ss<<thr;
         ss>>tartxt;
-        string warningtxt = "( "+info+" relative Chebyshev error = "+fractxt+" > threshold = "+tartxt+" ) Maybe you should increase the parameter \"nche_sto\" for more accuracy.";
+        std::string warningtxt = "( "+info+" relative Chebyshev error = "+fractxt+" > threshold = "+tartxt+" ) Maybe you should increase the parameter \"nche_sto\" for more accuracy.";
         ModuleBase::WARNING("Stochastic_Chebychev", warningtxt);
     }
     //===============================
@@ -558,7 +558,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     double factor = targetne/(KS_ne+sto_ne);
     if(std::abs(factor-1) > 1e-10)
     {
-        GlobalV::ofs_running<<"Renormalize rho from ne = "<<sto_ne+KS_ne<<" to targetne = "<<targetne<<endl;
+        GlobalV::ofs_running<<"Renormalize rho from ne = "<<sto_ne+KS_ne<<" to targetne = "<<targetne<< std::endl;
     }
     else
         factor = 1;

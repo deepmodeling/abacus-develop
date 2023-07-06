@@ -603,8 +603,8 @@ void berryphase::Macroscopic_polarization(const int npwx,
 			
 			GlobalV::ofs_running << " VALUES OF POLARIZATION" << std::endl;
 			GlobalV::ofs_running << std::endl;
-			GlobalV::ofs_running << "  The Ionic Phase: " << std::setw(10) << fixed << std::setprecision(5) << polarization_ion[0] << std::endl;
-			GlobalV::ofs_running << " Electronic Phase: " << std::setw(10) << fixed << std::setprecision(5) << pdl_elec_tot << std::endl;
+			GlobalV::ofs_running << "  The Ionic Phase: " << std::setw(10) << std::fixed << std::setprecision(5) << polarization_ion[0] << std::endl;
+			GlobalV::ofs_running << " Electronic Phase: " << std::setw(10) << std::fixed << std::setprecision(5) << pdl_elec_tot << std::endl;
 			//GlobalV::ofs_running << " the electronic part polarization is P(ele) = " << rmod * pdl_elec_tot << "   (e/Omega).bohr   in R1 direction" << std::endl;
 			
 			// calculate total polarization,add electron part and ions part
@@ -638,8 +638,8 @@ void berryphase::Macroscopic_polarization(const int npwx,
 			
 			GlobalV::ofs_running << " VALUES OF POLARIZATION" << std::endl;
 			GlobalV::ofs_running << std::endl;
-			GlobalV::ofs_running << "  The Ionic Phase: " << std::setw(10) << fixed << std::setprecision(5) << polarization_ion[1] << std::endl;
-			GlobalV::ofs_running << " Electronic Phase: " << std::setw(10) << fixed << std::setprecision(5) << pdl_elec_tot << std::endl;
+			GlobalV::ofs_running << "  The Ionic Phase: " << std::setw(10) << std::fixed << std::setprecision(5) << polarization_ion[1] << std::endl;
+			GlobalV::ofs_running << " Electronic Phase: " << std::setw(10) << std::fixed << std::setprecision(5) << pdl_elec_tot << std::endl;
 			//GlobalV::ofs_running << " the electronic part polarization is P(ele) = " << rmod * pdl_elec_tot << "   (e/Omega).bohr   in R2 direction" << std::endl;
 		
 			// calculate total polarization,add electron part and ions part
@@ -673,8 +673,8 @@ void berryphase::Macroscopic_polarization(const int npwx,
 			
 			GlobalV::ofs_running << " VALUES OF POLARIZATION" << std::endl;
 			GlobalV::ofs_running << std::endl;
-			GlobalV::ofs_running << "  The Ionic Phase: " << std::setw(10) << fixed << std::setprecision(5) << polarization_ion[2] << std::endl;
-			GlobalV::ofs_running << " Electronic Phase: " << std::setw(10) << fixed << std::setprecision(5) << pdl_elec_tot << std::endl;
+			GlobalV::ofs_running << "  The Ionic Phase: " << std::setw(10) << std::fixed << std::setprecision(5) << polarization_ion[2] << std::endl;
+			GlobalV::ofs_running << " Electronic Phase: " << std::setw(10) << std::fixed << std::setprecision(5) << pdl_elec_tot << std::endl;
 			//GlobalV::ofs_running << " the electronic part polarization is P(ele) = " << rmod * pdl_elec_tot << "   (e/Omega).bohr   in R3 direction" << std::endl;
 		
 			// calculate total polarization,add electron part and ions part
@@ -703,11 +703,11 @@ void berryphase::Macroscopic_polarization(const int npwx,
 std::string berryphase::outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project)
 {
 	std::stringstream outStr;
-	outStr << std::setw(12) << fixed << std::setprecision(7) << polarization << "  (mod " ;
-	outStr << std::setw(12) << fixed << std::setprecision(7) << modulus << ")  (";
-	outStr << std::setw(12) << fixed << std::setprecision(7) << project.x << ",";
-	outStr << std::setw(12) << fixed << std::setprecision(7) << project.y << ",";
-	outStr << std::setw(12) << fixed << std::setprecision(7) << project.z << ") ";
+	outStr << std::setw(12) << std::fixed << std::setprecision(7) << polarization << "  (mod " ;
+	outStr << std::setw(12) << std::fixed << std::setprecision(7) << modulus << ")  (";
+	outStr << std::setw(12) << std::fixed << std::setprecision(7) << project.x << ",";
+	outStr << std::setw(12) << std::fixed << std::setprecision(7) << project.y << ",";
+	outStr << std::setw(12) << std::fixed << std::setprecision(7) << project.z << ") ";
 	
 	return outStr.str();
 }

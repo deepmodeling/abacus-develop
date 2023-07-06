@@ -65,7 +65,7 @@ void Matrix_Orbs21::init_radial(
 							for( int LB=0; LB!=orb_B[TB].size(); ++LB )
 								for( size_t NB=0; NB!=orb_B[TB][LB].size(); ++NB )
 									center2_orb21_s[TA][TB][LA1][NA1][LA2][NA2][LB].insert(
-										make_pair(NB, Center2_Orb::Orb21(
+										std::make_pair(NB, Center2_Orb::Orb21(
 											orb_A1[TA][LA1][NA1],
 											orb_A2[TA][LA2][NA2],
 											orb_B[TB][LB][NB],
@@ -91,7 +91,7 @@ void Matrix_Orbs21::init_radial(
 							for( int LB=0; LB<=orb_B.Phi[TB].getLmax(); ++LB )
 								for( size_t NB=0; NB!=orb_B.Phi[TB].getNchi(LB); ++NB )
 									center2_orb21_s[TA][TB][LA1][NA1][LA2][NA2][LB].insert(
-										make_pair(NB, Center2_Orb::Orb21(
+										std::make_pair(NB, Center2_Orb::Orb21(
 											orb_A1[TA][LA1][NA1],
 											orb_A2.Phi[TA].PhiLN(LA2,NA2),
 											orb_B.Phi[TB].PhiLN(LB,NB),

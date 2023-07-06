@@ -35,7 +35,7 @@ TEST_F(cal_vcav_test, lapl_rho)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -128,8 +128,8 @@ TEST_F(cal_vcav_test, shape_gradn)
 
     for (int ir = 0; ir < nrxx; ir++)
     {
-        epr_z = log(max(PS_TOTN_real[ir], min) / nc_k) / sqrt(2) / sigma_k;
-        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / max(PS_TOTN_real[ir], min);
+        epr_z = log(std::max(PS_TOTN_real[ir], min) / nc_k) / sqrt(2) / sigma_k;
+        eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
 
     EXPECT_NEAR(eprime[0],5.0729550913,1e-10);
@@ -142,7 +142,7 @@ TEST_F(cal_vcav_test, createcavity)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -205,7 +205,7 @@ TEST_F(cal_vcav_test, cal_vcav)
 {   
     Setcell::setupcell(GlobalC::ucell);
 
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 

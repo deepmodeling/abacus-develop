@@ -82,7 +82,7 @@ void Charge_Extra::extrapolate_charge(
     //                         + \beta_0\ ( \tau(t-dt) - \tau(t-2 dt) ). \]
     //-------------------------------------------------------
 
-    rho_extr = min(istep, pot_order);
+    rho_extr = std::min(istep, pot_order);
     if(rho_extr == 0)
     {
         sf->setup_structure_factor(&ucell, chr->rhopw);

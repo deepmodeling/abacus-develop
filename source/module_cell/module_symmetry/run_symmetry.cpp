@@ -5,7 +5,6 @@
 #include "symmetry.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_global.h"
-using namespace std;
 
 void calculate();
 

@@ -423,7 +423,7 @@ bool DiagoCG<FPTYPE, Device>::update_psi(FPTYPE &cg_norm, FPTYPE &theta, FPTYPE 
         theta += ModuleBase::PI_HALF;
     }
 
-    eigenvalue = min(e1, e2);
+    eigenvalue = std::min(e1, e2);
     //	OUT("eigenvalue",eigenvalue);
 
     const FPTYPE cost = cos(theta);
@@ -586,7 +586,7 @@ void DiagoCG<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device> *phm_in, psi::
         ++ntry;
     } while (DiagoIterAssist<FPTYPE, Device>::test_exit_cond(ntry, this->notconv));
 
-    if (notconv > max(5, psi.get_nbands() / 4)) {
+    if (notconv > std::max(5, psi.get_nbands() / 4)) {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoCG::diag', too many bands are not converged! \n";
     }

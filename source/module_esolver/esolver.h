@@ -49,10 +49,10 @@ class ESolver
     {
         return 0;
     }
-    string classname;
+    std::string classname;
 };
 
-string determine_type();
+std::string determine_type();
 void init_esolver(ESolver*& p_esolver);
 void clean_esolver(ESolver*& pesolver);
 

@@ -64,7 +64,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
                 }
                 else
                 {
-                    GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << endl;
+                    GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
                     ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
                 }
             }
@@ -529,7 +529,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 										atoms[it].angle2[ia]=0;
 										atoms[it].m_loc_[ia].set(0,0,0);
 
-                                        string tmpid;
+                                        std::string tmpid;
                                         tmpid = ifpos.get();
 
 										if( (int)tmpid[0] < 0 )
@@ -612,7 +612,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                                         {
                                                 tmpid = ifpos.get();
                                         }
-					string mags;
+					std::string mags;
 					//cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
 
 					if(GlobalV::NSPIN==4)
@@ -1186,7 +1186,7 @@ void UnitCell::check_dtau(void)
 #ifdef __LCAO
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
-	std::ifstream ifs(orb_file.c_str(), ios::in);  // pengfei 2014-10-13
+	std::ifstream ifs(orb_file.c_str(), std::ios::in);  // pengfei 2014-10-13
 	// mohan add return 2021-04-26
 	if (!ifs)
 	{

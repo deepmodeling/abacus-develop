@@ -421,7 +421,7 @@ void Exx_Lip::judge_singularity( int ik)
 	}
 	else if(GlobalV::init_chg=="file")
 	{
-		double min_q_minus_k(numeric_limits<double>::max());
+		double min_q_minus_k(std::numeric_limits<double>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 		{
 			const double q_minus_k ( (q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik]).norm2() );
