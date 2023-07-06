@@ -8,7 +8,7 @@ void Paw_Cell::init_paw_cell(
     const int * atom_type_in, const double ** atom_coord_in,
     const std::vector<std::string> & filename_list_in,
     const int nx_in, const int ny_in, const int nz_in,
-    const double * eigts1_in, const double * eigts2_in, const double * eigts3_in)
+    const std::complex<double> * eigts1_in, const std::complex<double> * eigts2_in, const std::complex<double> * eigts3_in)
 {
     ModuleBase::TITLE("Paw_Element","init_paw_cell");
 

@@ -15,7 +15,7 @@ class Test_Paw_Cell : public testing::Test
     std::vector<std::string> filename_list;
     int nx = 1, ny = 1, nz = 1;
     double ** atom_coord;
-    double *eigts1_in, *eigts2_in, *eigts3_in;
+    std::complex<double> *eigts1_in, *eigts2_in, *eigts3_in;
 };
 
 TEST_F(Test_Paw_Cell, test_paw)
@@ -57,9 +57,9 @@ TEST_F(Test_Paw_Cell, test_paw)
         atom_coord[ia] = new double [3];
     }
 
-    eigts1_in = new double [nx];
-    eigts2_in = new double [ny];
-    eigts3_in = new double [nz];
+    eigts1_in = new std::complex<double> [nx];
+    eigts2_in = new std::complex<double> [ny];
+    eigts3_in = new std::complex<double> [nz];
 
     paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp, 
         atom_type, (const double **) atom_coord, filename_list,
@@ -176,4 +176,102 @@ TEST_F(Test_Leg_Pol, test_paw)
         double result = Paw_Cell::ass_leg_pol(l,m,arg);
         EXPECT_NEAR(ref,result,1e-8);
     }
+}
+
+class Test_PAW_Cell_k : public testing::Test
+{
+    protected:
+
+    Paw_Cell paw_cell;
+
+    double ecut = 20.0, cell_factor = 1.2;
+    int nat = 2, ntyp = 1;
+    int atom_type[2] = {0,0}; // Si, Si
+    std::vector<std::string> filename_list;
+    int nx = 24, ny = 24, nz = 24;
+    double ** atom_coord;
+    std::complex<double> *eigts1_in, *eigts2_in, *eigts3_in;
+};
+
+TEST_F(Test_PAW_Cell_k, test_paw)
+{
+    // The subroutines are executed but the results are not checked yet;
+    // it is because the results are only intermediate and are private members of the class
+    // I will check the final results later once I finish them
+
+    atom_coord = new double * [2];
+    atom_coord[0] = new double [3];
+    atom_coord[0][0] = 0.0; atom_coord[0][1] = 0.0; atom_coord[0][2] = 0.0;
+    atom_coord[1] = new double [3];
+    atom_coord[1][0] = 0.25; atom_coord[1][1] = 0.25; atom_coord[1][2] = 0.25;
+
+    eigts1_in = new std::complex<double> [nat * (2 * nx + 1)];
+    eigts2_in = new std::complex<double> [nat * (2 * ny + 1)];
+    eigts3_in = new std::complex<double> [nat * (2 * nz + 1)];
+
+    filename_list.resize(1);
+    filename_list[0] = "Si.GGA_PBE-JTH.xml";
+
+    std::ifstream ifs_eigts("eigts.dat");
+
+    for(int i = 0; i < nat*(2*nx+1); i ++)
+    {
+        ifs_eigts >> eigts1_in[i];
+    }
+    for(int i = 0; i < nat*(2*ny+1); i ++)
+    {
+        ifs_eigts >> eigts2_in[i];
+    }
+    for(int i = 0; i < nat*(2*nz+1); i ++)
+    {
+        ifs_eigts >> eigts3_in[i];
+    }
+
+    paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp,
+        atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
+        eigts1_in, eigts2_in, eigts3_in);
+
+    for(int ia = 0; ia < nat; ia ++)
+    {
+        delete[] atom_coord[ia];
+    }
+    delete[] atom_coord;
+
+    delete[] eigts1_in;
+    delete[] eigts2_in;
+    delete[] eigts3_in;
+
+    //=========================================
+
+    int npw = 410;
+    int *ig_to_ix, *ig_to_iy, *ig_to_iz;
+    double ** kpg = new double * [npw];    
+    double kpt[3] = {0.0,0.0,0.0};
+
+    ig_to_ix = new int[npw];
+    ig_to_iy = new int[npw];
+    ig_to_iz = new int[npw];
+
+    std::ifstream ifs_igxyz("igxyz.dat");
+    std::ifstream ifs_kpg("kpg1.dat");
+
+    int ig;
+    for(int i = 0; i < npw; i++)
+    {
+        ifs_igxyz >> ig >> ig_to_ix[i] >> ig_to_iy[i] >> ig_to_iz[i];
+        kpg[i] = new double[3];
+        ifs_kpg >> ig >> kpg[i][0] >> kpg[i][1] >> kpg[i][2];
+    }
+
+    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg);
+
+    delete[] ig_to_ix;
+    delete[] ig_to_iy;
+    delete[] ig_to_iz;
+    for(int i = 0; i < npw; i++)
+    {
+        delete[] kpg[i];
+    }
+    delete[] kpg;
+
 }
