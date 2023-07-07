@@ -35,6 +35,7 @@ Magnetism::~Magnetism()
 
 /**
  * - Tested Functions:
+ *   - Init: Grid::init()
  *   - Getters
  *     - get the dx, dy, dz, dx_min, dy_min, dz_min
  */
@@ -68,14 +69,14 @@ class SltkGridTest : public testing::Test
 
 using SltkGridDeathTest = SltkGridTest;
 
-TEST_F(SltkGridTest, Foo)
+TEST_F(SltkGridTest, Init)
 {
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 2;
     GlobalV::test_grid = 1;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    Grid LatGrid;
+    Grid LatGrid(GlobalV::test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
     ofs.close();
 }
