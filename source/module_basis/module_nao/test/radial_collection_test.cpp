@@ -259,10 +259,16 @@ TEST_F(RadialCollectionTest, Iteration)
 {
     orb.build(nfile, file, 'o');
     EXPECT_EQ(*orb.cbegin(), &orb(0, 0, 0));
-    EXPECT_EQ(*(orb.cbegin() + 5), &orb(1, 0, 0));
-    EXPECT_EQ(*(orb.cbegin() + 8), &orb(2, 0, 0));
-    EXPECT_EQ(*(orb.cbegin() + 13), &orb(3, 0, 0));
+    EXPECT_EQ(*(orb.cbegin() + 2), &orb(1, 0, 0));
+    EXPECT_EQ(*(orb.cbegin() + 9), &orb(3, 0, 3));
+    EXPECT_EQ(*(orb.cbegin() + 10), &orb(0, 1, 0));
+    EXPECT_EQ(*(orb.cbegin() + 17), &orb(0, 2, 0));
+    EXPECT_EQ(*(orb.cbegin() + 21), &orb(3, 3, 0));
     EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
+    //EXPECT_EQ(*(orb.cbegin() + 5), &orb(1, 0, 0));
+    //EXPECT_EQ(*(orb.cbegin() + 8), &orb(2, 0, 0));
+    //EXPECT_EQ(*(orb.cbegin() + 13), &orb(3, 0, 0));
+    //EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
 }
 
 int main(int argc, char** argv)
