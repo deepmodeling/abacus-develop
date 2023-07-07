@@ -221,9 +221,14 @@ TEST_F(SltkAtomInputTest, ConstructorNoExpand)
     ucell->check_dtau();
     test_atom_in = 1;
     GlobalV::test_grid = 1;
-    //radius = 0.5;
+    // this is a bug if radius is too small
+    // because the expand_flag will be false!
     radius = 1e-1000;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
+    EXPECT_FALSE(Atom_inp.getExpandFlag());
+    // call set_FAtom and Load_atom
+    FAtom fa;
+    EXPECT_NO_THROW(Atom_inp.set_FAtom(*ucell, fa));
     ofs.close();
     ifs.open("test.out");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -237,5 +242,34 @@ TEST_F(SltkAtomInputTest, ConstructorNoExpand)
     EXPECT_THAT(str, testing::HasSubstr("glayer+ = [ 2, 2, 2 ]"));
     EXPECT_THAT(str, testing::HasSubstr("glayer- = [ 0, 0, 0 ]"));
     ifs.close();
-    //remove("test.out");
+    remove("test.out");
+}
+
+TEST_F(SltkAtomInputTest, ConstructorSmallSearchRadius)
+{
+    ofs.open("test.out");
+    ucell->check_dtau();
+    test_atom_in = 1;
+    GlobalV::test_grid = 1;
+    radius = 0.5;
+    Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
+    EXPECT_TRUE(Atom_inp.getExpandFlag());
+    // call set_FAtom and Load_atom
+    FAtom fa;
+    EXPECT_NO_THROW(Atom_inp.set_FAtom(*ucell, fa));
+    ofs.close();
+    ifs.open("test.out");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("ntype = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("Amount(atom number) = 2"));
+    EXPECT_THAT(str, testing::HasSubstr("Periodic_boundary = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("Searching radius(lat0) = 0.5"));
+    EXPECT_THAT(str, testing::HasSubstr("CellLength(unit: lat0) = [ 0.707107, 0.707107, 0.707107 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("min_tau = [ -0.75, 0, 0 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("max_tau = [ 0, 0.75, 0.75 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("glayer+ = [ 2, 2, 2 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("glayer- = [ 2, 2, 2 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("CellDim = [ 4, 4, 4 ]"));
+    ifs.close();
+    remove("test.out");
 }
