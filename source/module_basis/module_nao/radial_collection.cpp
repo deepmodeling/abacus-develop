@@ -63,6 +63,7 @@ RadialCollection::~RadialCollection()
     }
     delete[] radset_;
     delete[] iter_; // iterator does not control memory; simply delete the pointer array
+    delete[] nl_;
 }
 
 void RadialCollection::cleanup()
@@ -77,6 +78,9 @@ void RadialCollection::cleanup()
     delete[] iter_; // iterator does not control memory; simply delete the pointer array
     iter_ = nullptr;
 
+    delete[] nl_;
+    nl_ = nullptr;
+
     ntype_ = 0;
     lmax_ = -1;
     nchi_ = 0;
@@ -88,16 +92,27 @@ void RadialCollection::iter_build()
     /*
      * collect the addresses of NumericalRadial objects from different RadialSet objects
      * so that all NumericalRadial objects can be iterated over in a single loop
+     *
+     * objects are sorted by l first, by itype next, by izeta last.
      *                                                                                      */
     delete[] iter_; // iterator does not control memory; simply delete the pointer array
+    delete[] nl_;
+
+    nl_ = new int[lmax_ + 1];
     iter_ = new const NumericalRadial*[nchi_];
+
     int i = 0;
-    for (int itype = 0; itype < ntype_; ++itype)
+    std::fill(nl_, nl_ + lmax_ + 1, 0);
+    for (int l = 0; l <= lmax_; ++l)
     {
-        for (const NumericalRadial* it = radset_[itype]->cbegin(); it != radset_[itype]->cend(); ++it)
+        for (int itype = 0; itype != ntype_; ++itype)
         {
-            iter_[i] = it;
-            ++i;
+            for (int izeta = 0; izeta < radset_[itype]->nzeta(l); ++izeta)
+            {
+                iter_[i] = &radset_[itype]->chi(l, izeta);
+                ++i;
+                ++nl_[l];
+            }
         }
     }
 }

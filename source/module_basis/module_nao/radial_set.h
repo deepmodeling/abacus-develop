@@ -45,11 +45,7 @@ class RadialSet
     int lmax() const { return lmax_; }
     double rcut_max() const;
 
-    int nzeta(const int l) const
-    {
-        assert(l >= 0 && l <= lmax_);
-        return nzeta_[l];
-    }
+    int nzeta(const int l) const { return (l >= 0 && l <= lmax_) ? nzeta_[l] : 0; }
     int nzeta_max() const { return nzeta_max_; }
     int nchi() const { return nchi_; }
 

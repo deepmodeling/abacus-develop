@@ -1,6 +1,7 @@
 #ifndef RADIAL_COLLECTION_H_
 #define RADIAL_COLLECTION_H_
 
+#include <numeric>
 #include <string>
 
 #include "module_basis/module_nao/radial_set.h"
@@ -76,23 +77,38 @@ class RadialCollection
         assert(itype >= 0 && itype < ntype_);
         return *radset_[itype];
     }
+    //!@}
 
-    //! *(this->cbegin()) returns the address of the first NumericalRadial object in the collection
+    /*! @name Iterators
+     *
+     *  Enable iteration through all NumericalRadial objects in the collection.
+     *  Objects are sorted by l first, by itype next, by izeta last.
+     *                                                                      */
+    //!@{
     const NumericalRadial** cbegin() const
     {
         assert(ntype_ > 0);
         return iter_;
     }
 
-    //! *(this->cend()-1) returns the address of the last NumericalRadial object in the collection
-    /*!
-     *  CAVEAT: *(this->cend()) and this->radset_[ntype_-1]->cend() are not equal!
-     *  In general users should never dereference the end iterator.
-     *                                                                                              */
     const NumericalRadial** cend() const
     {
         assert(ntype_ > 0);
         return iter_ + nchi_;
+    }
+
+    //! *(this->cbegin(l)) returns the address of the first NumericalRadial object with angular momentum l
+    const NumericalRadial** cbegin(const int l) const
+    {
+        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate(nl_, nl_ + l, 0);
+    }
+
+    //! *(this->cbegin(l)) returns the address of one-past last NumericalRadial object with angular momentum l
+    const NumericalRadial** cend(const int l) const
+    {
+        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate(nl_, nl_ + l + 1, 0);
     }
     //!@}
 
@@ -144,6 +160,9 @@ class RadialCollection
      *   which iter_ iterates.
      *                                                                                      */
     const NumericalRadial** iter_ = nullptr;
+
+    //! number of NumericalRadial objects for each angular momentum
+    int* nl_ = nullptr;
 
     //! Deallocates all RadialSet objects and resets all members to default.
     void cleanup();
