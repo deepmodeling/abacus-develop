@@ -405,23 +405,19 @@ void NumericalRadial::radtab(const char op,
                              const NumericalRadial& ket,
                              const int l,
                              double* const table,
-                             const bool deriv,
-                             int ntab,
-                             const double* tabgrid) const
+                             const int nr_tab,
+                             const double* const rgrid_tab,
+                             const bool deriv) const
 {
     assert(op == 'S' || op == 'I' || op == 'T' || op == 'U');
     assert(l >= 0);
+    assert(rgrid_tab && nr_tab > 0);
 
-    // radtab requires that two NumericalRadial objects have exactly the same kgrid_
+    // radtab requires that two NumericalRadial objects have exactly the same (non-null) kgrid_
     assert(nk_ > 0 && nk_ == ket.nk_);
     assert(std::equal(kgrid_, kgrid_ + nk_, ket.kgrid_));
 
-    // either tabgrid or rgrid_ exists
-    assert((tabgrid && ntab > 0) || (!tabgrid && ntab == 0 && rgrid_ && nr_ > 0));
-
-    ntab = ntab ? ntab : nr_;
-    tabgrid = tabgrid ? tabgrid : rgrid_;
-    bool use_radrfft = is_fft_compliant(ntab, tabgrid, nk_, kgrid_);
+    bool use_radrfft = is_fft_compliant(nr_tab, rgrid_tab, nk_, kgrid_);
 
     // function to undergo a spherical Bessel transform:
     // overlap: chi1(k) * chi2(k)
@@ -452,13 +448,13 @@ void NumericalRadial::radtab(const char op,
             }
             else
             {
-                sbt_->direct(1, nk_, kgrid_, fk, ntab, tabgrid, table, pk_ + ket.pk_ + op_pk - 1);
+                sbt_->direct(1, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk - 1);
             }
             std::for_each(table, table + nr_, [](double& x) { x *= -1; });
         }
         else
         { // (2*l+1) * j'_l(x) = l * j_{l-1}(x) - (l+1) * j_{l+1}(x)
-            double* frtmp = new double[ntab];
+            double* frtmp = new double[nr_tab];
             if (use_radrfft)
             {
                 sbt_->radrfft(l + 1, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk - 1);
@@ -466,10 +462,10 @@ void NumericalRadial::radtab(const char op,
             }
             else
             {
-                sbt_->direct(l + 1, nk_, kgrid_, fk, ntab, tabgrid, table, pk_ + ket.pk_ + op_pk - 1);
-                sbt_->direct(l - 1, nk_, kgrid_, fk, ntab, tabgrid, frtmp, pk_ + ket.pk_ + op_pk - 1);
+                sbt_->direct(l + 1, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk - 1);
+                sbt_->direct(l - 1, nk_, kgrid_, fk, nr_tab, rgrid_tab, frtmp, pk_ + ket.pk_ + op_pk - 1);
             }
-            std::transform(table, table + ntab, frtmp, table, [l](double x, double y) {
+            std::transform(table, table + nr_tab, frtmp, table, [l](double x, double y) {
                 return (l * y - (l + 1) * x) / (2 * l + 1);
             });
             delete[] frtmp;
@@ -483,7 +479,7 @@ void NumericalRadial::radtab(const char op,
         }
         else
         {
-            sbt_->direct(l, nk_, kgrid_, fk, ntab, tabgrid, table, pk_ + ket.pk_ + op_pk);
+            sbt_->direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk);
         }
     }
 
@@ -492,7 +488,7 @@ void NumericalRadial::radtab(const char op,
     // spherical Bessel transform has a prefactor of sqrt(2/pi) while the prefactor for the radial table 
     // of two-center integrals is 4*pi
     double pref = ModuleBase::FOUR_PI * std::sqrt(ModuleBase::PI / 2.0);
-    std::for_each(table, table + ntab, [pref](double& x) { x *= pref; });
+    std::for_each(table, table + nr_tab, [pref](double& x) { x *= pref; });
 }
 
 void NumericalRadial::normalize(bool for_r_space)

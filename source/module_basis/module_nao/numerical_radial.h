@@ -191,21 +191,29 @@ class NumericalRadial
      *                          /  0                  l
      *
      *                                                                                  */
-    void radtab(const char op,              //!< [in] operator, could be:
-                                            //!<        - 'S' or 'I': overlap
-                                            //!<        - 'T': kinetic
-                                            //!<        - 'U': Coulomb
-                const NumericalRadial& ket, //!< [in] the other NumericalRadial object with which
-                                            //!       the two-center integral is computed
-                const int l,                //!< [in] angular momentum of the table
-                double* const table,        //!< [out] on finish, contain the computed table
-                const bool deriv = false,   //!< [in] if true, "table" would contain the derivative
-                                            //!<      of the table
-                int ntab = 0,               //!< [in] size of tabgrid
-                const double* tabgrid = nullptr  //!< [in] grid on which the table is calculated.
-                                                 //!< if nullptr, this->rgrid_ is assumed.
+    void radtab(const char op,                 //!< [in] operator, could be:
+                                               //!<        - 'S' or 'I': overlap
+                                               //!<        - 'T': kinetic
+                                               //!<        - 'U': Coulomb
+                const NumericalRadial& ket,    //!< [in] the other NumericalRadial object with which
+                                               //!       the two-center integral is computed
+                const int l,                   //!< [in] angular momentum of the table
+                double* const table,           //!< [out] on finish, contain the computed table
+                const int nr_tab,              //!< [in] size of table grid
+                const double* const rgrid_tab, //!< [in] grid on which the table is calculated.
+                const bool deriv = false       //!< [in] if true, calculates the derivative of the table 
     ) const;
 
+    //! Normalizes the radial function.
+    /*!
+     *  The radial function is normalized such that
+     *
+     *      / +inf     2
+     *      |      dx x  f(x) = 1
+     *      /  0            
+     *
+     *  where x is r or k.
+     *                                                                                  */
     void normalize(bool for_r_space = true);
 
     /*!
