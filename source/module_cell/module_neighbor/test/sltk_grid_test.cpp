@@ -75,6 +75,8 @@ TEST_F(SltkGridTest, Foo)
     test_atom_in = 2;
     GlobalV::test_grid = 1;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
+    Grid LatGrid;
+    LatGrid.init(ofs, *ucell, Atom_inp);
     ofs.close();
 }
 

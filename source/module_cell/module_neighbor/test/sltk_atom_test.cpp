@@ -21,13 +21,13 @@
  *     - including d_x, d_y, d_z, type, natom
  */
 
-class sltkatom : public testing::Test
+class SltkAtomTest : public testing::Test
 {
 protected:
     FAtom test;
 };
 
-TEST_F(sltkatom, AllocateAdjacentSet)
+TEST_F(SltkAtomTest, AllocateAdjacentSet)
 {
     test.allocate_AdjacentSet();
     std::shared_ptr<AdjacentSet> a = test.getAdjacentSet();
@@ -44,7 +44,7 @@ TEST_F(sltkatom, AllocateAdjacentSet)
     EXPECT_EQ(b->box.size(), 0);
 }
 
-TEST_F(sltkatom, SetterGetters)
+TEST_F(SltkAtomTest, SetterGetters)
 {
     test.setX(1.0);
     test.setY(2.0);

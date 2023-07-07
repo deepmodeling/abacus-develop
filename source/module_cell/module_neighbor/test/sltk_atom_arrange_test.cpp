@@ -18,11 +18,11 @@
  * 	   - set the sr: search radius including nonlocal beta
  */
 
-class sltkatomarrange : public testing::Test
+class SltkAtomArrangeTest : public testing::Test
 {
 };
 
-TEST_F(sltkatomarrange,setsrNL)
+TEST_F(SltkAtomArrangeTest, setsrNL)
 {
     atom_arrange test;
     std::string teststring="m";
@@ -66,7 +66,7 @@ TEST_F(sltkatomarrange,setsrNL)
     remove("./to_test_arrange");
 }
 
-TEST_F(sltkatomarrange,DeleteVector)
+TEST_F(SltkAtomArrangeTest, DeleteVector)
 {
 	atom_arrange test;
 	std::ofstream ofs("./testforarrange.txt");
@@ -102,7 +102,7 @@ TEST_F(sltkatomarrange,DeleteVector)
 	
 }
 
-TEST_F(sltkatomarrange,DeleteVector2)
+TEST_F(SltkAtomArrangeTest, DeleteVector2)
 {
 	std::ofstream ofs("./testforarrange.txt");
 	atom_arrange test2;

@@ -14,13 +14,13 @@
  *     - set box index with expand
  */
 
-class sltkAdjacentSet : public testing::Test
+class SltkAdjacentSetTest : public testing::Test
 {
 protected:
     AdjacentSet test;
 };
 
-TEST_F(sltkAdjacentSet, SetWithoutExpand)
+TEST_F(SltkAdjacentSetTest, SetWithoutExpand)
 {
     // set parameters
     test.setDx(3);
@@ -67,7 +67,7 @@ TEST_F(sltkAdjacentSet, SetWithoutExpand)
     EXPECT_EQ(test.offset.size(), 0);
 }
 
-TEST_F(sltkAdjacentSet, SetWithExpand)
+TEST_F(SltkAdjacentSetTest, SetWithExpand)
 {
     // set parameters
     test.setDx(6);
