@@ -37,7 +37,32 @@ Magnetism::~Magnetism()
 
 /**
  * - Tested Functions:
- *  - read_atom()
+ *  - Constructor:
+ *    - the constructor of Atom_input do almost everything
+ *      - (1) it finds the boundary of atomic coordinates (x_min, x_max, etc.),
+ *      - (2) expands the unitcell according to the boundary condition
+ *      and the searching radius, which is (2 * rcutmax_Phi + 0.01) in
+ *      gamma_only calculation and (2 * (rcutmax_Phi +rcutmax_Beta) + 0.01)
+ *      in multi-k calculation (see atom_arrange::set_sr_NL). And determine
+ *      the number of positive and negative layers in each direction in
+ *      Check_Expand_Condition()
+ *      - (3) records the amount of expanding (d_amount_expand) and sets the
+ *      required lattice grids, including their coordinates and their
+ *      atomic coordinates inside in Expand_Grid()
+ *      - (4) and calculate the number of unitcells in x, y, z directions
+ *      in calculate_cells()
+ *   - Getters:
+ *     - get the values obtained in constructor, for example
+ *       - Clength0() is to get the length in x direction of the expanded big cell in
+ *       unit of lat0
+ *       - minX() will return x_min if no expanding, or -glayerX_minus in case of
+ *       expansion
+ *       - getCellX() will return the number of unitcells in x direction
+ *       - getCellXLength() will return search radius if no expanding, or 1 in case of
+ *       expansion
+ *       - getRadius() will return the search radius
+ *       - getLatNow() will return lat0 in Bohr
+ *       - getAmount() will return the total number of lattice grids after expansion
  */
 
 void SetGlobalV()

@@ -70,7 +70,12 @@ using SltkGridDeathTest = SltkGridTest;
 
 TEST_F(SltkGridTest, Foo)
 {
-    std::cout << ucell->ntype << std::endl;
+    ofs.open("test.out");
+    ucell->check_dtau();
+    test_atom_in = 2;
+    GlobalV::test_grid = 1;
+    Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
+    ofs.close();
 }
 
 /*
