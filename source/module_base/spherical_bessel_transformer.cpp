@@ -19,6 +19,9 @@ SphericalBesselTransformer::~SphericalBesselTransformer()
 {
     fftw_destroy_plan(rfft_plan_);
     fftw_free(f_);
+    delete[] grid_in_;
+    delete[] grid_out_;
+    delete[] jl_;
 }
 
 long long int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(const bool get_sine,
@@ -186,47 +189,38 @@ void SphericalBesselTransformer::direct(const int l,
                                         double* const out,
                                         const int p)
 {
-    // TODO:
-    // 1. avoid new/delete rab/r2f/integrand/jl every time; use some buffer class member instead
-    // 2. cache the spherical Bessel function values for given (l, grid_in, grid_out). This should be done
-    //    alongside the change of for-loop sequence in building TwoCenterTable.
-
     assert(p <= 2);
     assert(grid_in[0] >= 0.0 && std::is_sorted(grid_in, grid_in + ngrid_in, std::less_equal<double>()));
     assert(grid_out[0] >= 0.0 && std::is_sorted(grid_out, grid_out + ngrid_out, std::less_equal<double>()));
 
-    double pref = std::sqrt(2.0 / ModuleBase::PI);
+    double* buffer = new double[3 * ngrid_in];
 
     // NOTE: std::adjacent_difference returns an array of the same size as the input array
     // with rab[0] = grid_in[0] and rab[i] = grid_in[i] - grid[i-1] for i > 0
-    double* rab = new double[ngrid_in];
+    double* rab = buffer;
     std::adjacent_difference(grid_in, grid_in + ngrid_in, rab);
 
     // r^2*f(r) (integrand without j_l)
-    double* r2f = new double[ngrid_in];
+    double* r2f = buffer + ngrid_in;
     std::memcpy(r2f, in, ngrid_in * sizeof(double));
     std::for_each(r2f, r2f + ngrid_in, [&](double& x) { x *= std::pow(grid_in[&x - r2f], 2 - p); });
 
     // there's no need to use a temporary output array even if the transform is in-place
     // because "in" is not referenced after the construction of r2f.
 
-    double* integrand = new double[ngrid_in];
+    cache(l, ngrid_in, grid_in, ngrid_out, grid_out);
 
-    // TODO cache the calculated jl
-    double* jl = new double[ngrid_in];
+    double* integrand = buffer + 2 * ngrid_in;
     for (int i_out = 0; i_out != ngrid_out; ++i_out)
     {
-        ModuleBase::Sphbes::sphbesj(ngrid_in, grid_in, grid_out[i_out], l, jl);
-        std::transform(r2f, r2f + ngrid_in, jl, integrand, std::multiplies<double>());
+        std::transform(r2f, r2f + ngrid_in, &jl_[i_out * ngrid_in_], integrand, std::multiplies<double>());
         out[i_out] = ModuleBase::Integral::simpson(ngrid_in, integrand, &rab[1]);
     }
-    delete[] jl;
 
+    double pref = std::sqrt(2.0 / ModuleBase::PI);
     std::for_each(out, out + ngrid_out, [pref](double& x) { x *= pref; });
 
-    delete[] r2f;
-    delete[] integrand;
-    delete[] rab;
+    delete[] buffer;
 }
 
 void SphericalBesselTransformer::rfft_in_place()
@@ -261,6 +255,41 @@ void SphericalBesselTransformer::set_fftw_plan_flag(const unsigned new_flag)
         fftw_destroy_plan(rfft_plan_);
         rfft_plan_ = nullptr;
         fftw_plan_flag_ = new_flag;
+    }
+}
+
+void SphericalBesselTransformer::cache(const int l,
+                                       const int ngrid_in,
+                                       const double* const grid_in,
+                                       const int ngrid_out,
+                                       const double* const grid_out)
+{
+    // TODO: if the given input grid matchs the cached output grid and vice versa,
+    // we can just swap the cached grids and transpose jl_.
+    bool is_cached = l == l_ && ngrid_in <= ngrid_in_ && ngrid_out <= ngrid_out_
+                     && std::equal(grid_in, grid_in + ngrid_in, grid_in_)
+                     && std::equal(grid_out, grid_out + ngrid_out, grid_out_);
+
+    if (!is_cached)
+    {
+        delete[] jl_;
+        delete[] grid_in_;
+        delete[] grid_out_;
+
+        l_ = l;
+        ngrid_in_ = ngrid_in;
+        ngrid_out_ = ngrid_out;
+
+        grid_in_ = new double[ngrid_in];
+        grid_out_ = new double[ngrid_out];
+        std::memcpy(grid_in_, grid_in, ngrid_in * sizeof(double));
+        std::memcpy(grid_out_, grid_out, ngrid_out * sizeof(double));
+
+        jl_ = new double[ngrid_in * ngrid_out];
+        for (int i_out = 0; i_out != ngrid_out; ++i_out)
+        {
+            ModuleBase::Sphbes::sphbesj(ngrid_in, grid_in, grid_out[i_out], l, &jl_[i_out * ngrid_in]);
+        }
     }
 }
 

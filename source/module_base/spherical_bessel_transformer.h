@@ -133,15 +133,15 @@ class SphericalBesselTransformer
      *  @note   p is limited to p <= 2 in order to avoid the problem of determining
      *          x^2*F(x) at x = 0 from x[i]^p*F(x[i])
      *                                                                                      */
-    static void direct(const int l,                  //!< [in] order of the transform
-                       const int ngrid_in,           //!< [in] size of the input array
-                       const double* const grid_in,  //!< [in] input grid
-                       const double* const in,       //!< [in] input values
-                       const int ngrid_out,          //!< [in] size of the output array
-                       const double* const grid_out, //!< [in] output grid
-                       double* const out,            //!< [out] transformed values
-                       const int p = 0               //!< [in] exponent of the pre-multiplied power
-                                                     //!<      term in input values, must not exceed 2
+    void direct(const int l,                  //!< [in] order of the transform
+                const int ngrid_in,           //!< [in] size of the input array
+                const double* const grid_in,  //!< [in] input grid
+                const double* const in,       //!< [in] input values
+                const int ngrid_out,          //!< [in] size of the output array
+                const double* const grid_out, //!< [in] output grid
+                double* const out,            //!< [out] transformed values
+                const int p = 0               //!< [in] exponent of the pre-multiplied power
+                                              //!<      term in input values, must not exceed 2
     );
 
     //! Sets the FFTW planner flag.
@@ -202,6 +202,27 @@ class SphericalBesselTransformer
         const int l,         //!< [in] order of the spherical Bessel function
         const int n          //!< [in] degree of the polynomial term whose coefficient is computed
     );
+
+    //! Computes & stores the spherical Bessel function of the first kind on the given transform grid
+    void cache(const int l,
+               const int ngrid_in,
+               const double* const grid_in,
+               const int ngrid_out,
+               const double* const grid_out);
+
+    /*!
+     *  @name Cached spherical Bessel function values
+     *                                                                                  */
+    //!@{
+    int l_; //!< order of the cached spherical Bessel function
+    int ngrid_in_ = 0;
+    int ngrid_out_ = 0;
+    double* grid_in_ = nullptr;
+    double* grid_out_ = nullptr;
+
+    //! jl_[i*ngrid_in_ + j] = sphbesj(l, grid_out_[i] * grid_in_[j])
+    double* jl_ = nullptr;
+    //!@}
 
 }; // class SphericalBesselTransformer
 
