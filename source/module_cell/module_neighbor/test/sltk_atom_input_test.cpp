@@ -46,8 +46,8 @@ Magnetism::~Magnetism()
  *      in multi-k calculation (see atom_arrange::set_sr_NL). And determine
  *      the number of positive and negative layers in each direction in
  *      Check_Expand_Condition()
- *      - (3) records the amount of expanding (d_amount_expand) and sets the
- *      required lattice grids, including their coordinates and their
+ *      - (3) records the amount of atoms after expansion (d_amount_expand) and
+ *      sets the expanded lattice grids, including their coordinates and their
  *      atomic coordinates inside in Expand_Grid()
  *      - (4) and calculate the number of unitcells in x, y, z directions
  *      in calculate_cells()
