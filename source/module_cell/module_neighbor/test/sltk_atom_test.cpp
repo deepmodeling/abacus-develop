@@ -8,10 +8,17 @@
 
 /**
  * - Tested Functions:
- *   - FAtom::delete_vector(void)
- *     - delete the vector
+ *   - AllocateAdjacentSet
+ *     - FAtom::allocate_AdjacentSet()
+ *       - FAtom has a member "as", which is a shared_ptr of AdjacentSet
+ *       - allocate_AdjacentSet() is a function of FAtom to
+ *         allocate "as"
+ *     - FAtom::delete_vector()
+ *       - this function will call AdjacentSet::delete_vector() to
+ *       - delete the box and offset vectors in AdjacentSet
  *   - SetterGetters:
- *     - the setter and getter of the class
+ *     - the setter and getter of FAtom
+ *     - including d_x, d_y, d_z, type, natom
  */
 
 class sltkatom : public testing::Test
@@ -20,7 +27,7 @@ protected:
     FAtom test;
 };
 
-TEST_F(sltkatom,deleteVector)
+TEST_F(sltkatom, AllocateAdjacentSet)
 {
     test.allocate_AdjacentSet();
     std::shared_ptr<AdjacentSet> a = test.getAdjacentSet();

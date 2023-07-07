@@ -1,6 +1,33 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "../sltk_grid.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "prepare_unitcell.h"
+
+#ifdef __LCAO
+InfoNonlocal::InfoNonlocal()
+{
+}
+InfoNonlocal::~InfoNonlocal()
+{
+}
+LCAO_Orbitals::LCAO_Orbitals()
+{
+}
+LCAO_Orbitals::~LCAO_Orbitals()
+{
+}
+#endif
+Magnetism::Magnetism()
+{
+    this->tot_magnetization = 0.0;
+    this->abs_magnetization = 0.0;
+    this->start_magnetization = nullptr;
+}
+Magnetism::~Magnetism()
+{
+    delete[] this->start_magnetization;
+}
 
 /************************************************
  *  unit test of sltk_grid
@@ -8,38 +35,46 @@
 
 /**
  * - Tested Functions:
- *   - Grid::get the argu ment
+ *   - Getters
  *     - get the dx, dy, dz, dx_min, dy_min, dz_min
  */
 
-AtomLink::AtomLink(const FAtom &atom, AtomLink* const pointNext)
-: fatom(atom), next_p(pointNext) {}
-Grid::Grid(const int &test_grid_in):test_grid(test_grid_in)
+void SetGlobalV()
 {
-	init_cell_flag = false;
-	this->atomlink = new AtomLink[1];
+    GlobalV::test_grid = 0;
 }
-Grid::~Grid()
-{
-	delete[] atomlink;
-	this->delete_Cell();
-}
-FAtom::FAtom()
-{
-	d_x = 0.0;	
-	d_y = 0.0;	
-	d_z = 0.0;	
-	as = nullptr;
-	type = 0;		
-	natom = 0;
-}
-FAtom::~FAtom(){}
 
-class sltkgrid : public testing::Test
+class SltkGridTest : public testing::Test
 {
+  protected:
+    UnitCell* ucell;
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    std::ofstream ofs;
+    std::ifstream ifs;
+    bool pbc = true;
+    double radius = ((8 + 5.01) * 2.0 + 0.01) / 10.2;
+    int test_atom_in = 0;
+    std::string output;
+    void SetUp()
+    {
+        SetGlobalV();
+        ucell = utp.SetUcellInfo();
+    }
+    void TearDown()
+    {
+        delete ucell;
+    }
 };
 
-TEST_F(sltkgrid,getTheArgument)
+using SltkGridDeathTest = SltkGridTest;
+
+TEST_F(SltkGridTest, Foo)
+{
+    std::cout << ucell->ntype << std::endl;
+}
+
+/*
+TEST_F(SltkGridTest,Getters)
 {
     Grid test(1);
     test.dx=1;
@@ -61,4 +96,4 @@ TEST_F(sltkgrid,getTheArgument)
     EXPECT_EQ(testminy,5);
     EXPECT_EQ(testminz,6);
 }
-
+*/

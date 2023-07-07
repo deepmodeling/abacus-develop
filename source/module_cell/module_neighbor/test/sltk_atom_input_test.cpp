@@ -69,6 +69,30 @@ class SltkAtomInputTest : public ::testing::Test
 
 using SltkAtomInputDeathTest = SltkAtomInputTest;
 
+TEST_F(SltkAtomInputTest, Constructor)
+{
+    ofs.open("test.out");
+    ucell->check_dtau();
+    test_atom_in = 2;
+    GlobalV::test_grid = 1;
+    Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
+    ofs.close();
+    ifs.open("test.out");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("ntype = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("Amount(atom number) = 2"));
+    EXPECT_THAT(str, testing::HasSubstr("Periodic_boundary = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("Searching radius(lat0) = 2.55"));
+    EXPECT_THAT(str, testing::HasSubstr("CellLength(unit: lat0) = [ 0.707107, 0.707107, 0.707107 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("min_tau = [ -0.75, 0, 0 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("max_tau = [ 0, 0.75, 0.75 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("glayer+ = [ 6, 6, 6 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("glayer- = [ 5, 5, 5 ]"));
+    EXPECT_THAT(str, testing::HasSubstr("CellDim = [ 11, 11, 11 ]"));
+    ifs.close();
+    remove("test.out");
+}
+
 TEST_F(SltkAtomInputDeathTest, ConstructorWarning1)
 {
     ofs.open("test.out");
@@ -154,30 +178,6 @@ TEST_F(SltkAtomInputTest, ConstructorSmall)
     EXPECT_THAT(str, testing::HasSubstr("glayer+ = [ 2, 2, 2 ]"));
     EXPECT_THAT(str, testing::HasSubstr("glayer- = [ 2, 2, 2 ]"));
     EXPECT_THAT(str, testing::HasSubstr("CellDim = [ 4, 4, 4 ]"));
-    ifs.close();
-    remove("test.out");
-}
-
-TEST_F(SltkAtomInputTest, Constructor)
-{
-    ofs.open("test.out");
-    ucell->check_dtau();
-    test_atom_in = 2;
-    GlobalV::test_grid = 1;
-    Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    ofs.close();
-    ifs.open("test.out");
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("ntype = 1"));
-    EXPECT_THAT(str, testing::HasSubstr("Amount(atom number) = 2"));
-    EXPECT_THAT(str, testing::HasSubstr("Periodic_boundary = 1"));
-    EXPECT_THAT(str, testing::HasSubstr("Searching radius(lat0) = 2.55"));
-    EXPECT_THAT(str, testing::HasSubstr("CellLength(unit: lat0) = [ 0.707107, 0.707107, 0.707107 ]"));
-    EXPECT_THAT(str, testing::HasSubstr("min_tau = [ -0.75, 0, 0 ]"));
-    EXPECT_THAT(str, testing::HasSubstr("max_tau = [ 0, 0.75, 0.75 ]"));
-    EXPECT_THAT(str, testing::HasSubstr("glayer+ = [ 6, 6, 6 ]"));
-    EXPECT_THAT(str, testing::HasSubstr("glayer- = [ 5, 5, 5 ]"));
-    EXPECT_THAT(str, testing::HasSubstr("CellDim = [ 11, 11, 11 ]"));
     ifs.close();
     remove("test.out");
 }
