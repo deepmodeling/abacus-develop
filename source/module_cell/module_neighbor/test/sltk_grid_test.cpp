@@ -1,7 +1,8 @@
-#include "../sltk_grid.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#define private public
+#include "../sltk_grid.h"
 #include "prepare_unitcell.h"
 
 #ifdef __LCAO
@@ -36,8 +37,10 @@ Magnetism::~Magnetism()
 /**
  * - Tested Functions:
  *   - Init: Grid::init()
- *   - Getters
- *     - get the dx, dy, dz, dx_min, dy_min, dz_min
+ *     - setMemberVariables: really set member variables
+ *       (like dx, dy, dz and d_minX, d_minY, d_minZ) by
+ *       reading from getters of Atom_input, and construct the
+ *       member Cell as a 3D array of CellSet
  */
 
 void SetGlobalV()
@@ -78,30 +81,32 @@ TEST_F(SltkGridTest, Init)
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     Grid LatGrid(GlobalV::test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
+    EXPECT_TRUE(LatGrid.init_cell_flag);
+    EXPECT_EQ(LatGrid.getCellX(), 11);
+    EXPECT_EQ(LatGrid.getCellY(), 11);
+    EXPECT_EQ(LatGrid.getCellZ(), 11);
+    EXPECT_EQ(LatGrid.getD_minX(), -5);
+    EXPECT_EQ(LatGrid.getD_minY(), -5);
+    EXPECT_EQ(LatGrid.getD_minZ(), -5);
     ofs.close();
+    remove("test.out");
 }
 
 /*
-TEST_F(SltkGridTest,Getters)
+// This test cannot pass because setAtomLinkArray() is unsuccessful
+// if expand_flag is false
+TEST_F(SltkGridTest, InitNoExpand)
 {
-    Grid test(1);
-    test.dx=1;
-    test.dy=2;
-    test.dz=3;
-    test.d_minX=4;
-    test.d_minY=5;
-    test.d_minZ=6;
-    double testx=test.getCellX();
-    double testy=test.getCellY();
-    double testz=test.getCellZ();
-    double testminx=test.getD_minX();
-    double testminy=test.getD_minY();
-    double testminz=test.getD_minZ();
-    EXPECT_EQ(testx,1);
-    EXPECT_EQ(testy,2);
-    EXPECT_EQ(testz,3);
-    EXPECT_EQ(testminx,4);
-    EXPECT_EQ(testminy,5);
-    EXPECT_EQ(testminz,6);
+    ofs.open("test.out");
+    ucell->check_dtau();
+    test_atom_in = 2;
+    GlobalV::test_grid = 1;
+    double radius = 1e-1000;
+    Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
+    Grid LatGrid(GlobalV::test_grid);
+    LatGrid.init(ofs, *ucell, Atom_inp);
+    ofs.close();
 }
 */
+
+#undef private

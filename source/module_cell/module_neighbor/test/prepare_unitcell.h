@@ -70,7 +70,7 @@ public:
 	{
 		//basic info
 		this->ntype = this->elements.size();
-		UnitCell* ucell = new UnitCell;
+		UnitCell* const ucell = new UnitCell;
 		ucell->setup(this->latname,
 				this->ntype,
 				this->lmaxmax,
