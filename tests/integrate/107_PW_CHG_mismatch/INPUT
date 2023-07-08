@@ -1,0 +1,29 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation             scf
+
+nspin                   2
+nbands			6
+symmetry		1
+pseudo_dir	        ../../PP_ORB
+
+init_chg                file
+read_file_dir           ./
+
+#Parameters (2.Iteration)
+ecutwfc			40
+scf_thr			1e-9
+scf_nmax		100
+
+
+#Parameters (3.Basis)
+basis_type		pw
+
+#Parameters (4.Smearing)
+smearing_method		gauss
+smearing_sigma	        0.002
+
+#Parameters (5.Mixing)
+mixing_type		pulay
+mixing_beta		0.7

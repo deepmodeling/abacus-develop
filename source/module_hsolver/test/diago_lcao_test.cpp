@@ -214,7 +214,7 @@ template<class T> class DiagoPrepare
         for (int i = 0; i < nbands; i++)
         {
             //EXPECT_NEAR(e_lapack[i], e_solver[i], PASSTHRESHOLD);
-            double error = abs(e_lapack[i] - e_solver[i]);
+            double error = std::abs(e_lapack[i] - e_solver[i]);
             if (error > maxerror)
             {
                 maxerror = error;

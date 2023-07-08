@@ -155,10 +155,12 @@ class NumericalRadial
 
     //! Computes the radial table for two-center integrals.
     /*!
-     *  TODO add support for non-FFT-compliant grid
-     *  Currently this function requires that "this" and "ket" have exactly the same
-     *  grid and are FFT-compliant. On finish, table is filled with values on the same
-     *  rgrid_ of each object.
+     *  This function requires that both "this" and "ket" have existing kgrid_, and the
+     *  two kgrid_ be identical.
+     *
+     *  On finish, table is filled with values on tabgrid. If tabgrid is not given, the
+     *  rgrid_ of "this" is assumed (it would be an error if rgrid_ does not exist in
+     *  this case).
      *
      *  op could be:
      *
@@ -189,17 +191,20 @@ class NumericalRadial
      *                          /  0                  l
      *
      *                                                                                  */
-    void radtab(const char op,              //!< operator, could be:
-                                            //!< - 'S' or 'I': overlap
-                                            //!< - 'T': kinetic
-                                            //!< - 'U': Coulomb
+    void radtab(const char op,              //!< [in] operator, could be:
+                                            //!<        - 'S' or 'I': overlap
+                                            //!<        - 'T': kinetic
+                                            //!<        - 'U': Coulomb
                 const NumericalRadial& ket, //!< [in] the other NumericalRadial object with which
                                             //!       the two-center integral is computed
                 const int l,                //!< [in] angular momentum of the table
                 double* const table,        //!< [out] on finish, contain the computed table
-                const bool deriv = false    //!< [in] if true, "table" would contain the derivative
+                const bool deriv = false,   //!< [in] if true, "table" would contain the derivative
                                             //!<      of the table
-    );
+                int ntab = 0,               //!< [in] size of tabgrid
+                const double* tabgrid = nullptr  //!< [in] grid on which the table is calculated.
+                                                 //!< if nullptr, this->rgrid_ is assumed.
+    ) const;
 
     void normalize(bool for_r_space = true);
 
@@ -226,18 +231,10 @@ class NumericalRadial
     int nk() const { return nk_; }
 
     //! gets r-space grid cutoff distance
-    double rcut() const
-    {
-        assert(rgrid_);
-        return rgrid_[nr_ - 1];
-    }
+    double rcut() const { return rgrid_ ? rgrid_[nr_ - 1] : 0.0; }
 
     //! gets k-space grid cutoff distance
-    double kcut() const
-    {
-        assert(kgrid_);
-        return kgrid_[nk_ - 1];
-    }
+    double kcut() const { return kgrid_ ? kgrid_[nk_ - 1] : 0.0; }
 
     //! gets the pointer to r-space grid points
     const double* ptr_rgrid() const { return rgrid_; }
@@ -339,11 +336,11 @@ class NumericalRadial
      *                                                                              */
     void transform(const bool forward);
 
-    //! Checks whether r & k grids are FFT-compliant and set the corresponding flag.
+    //! Checks whether the given two grids are FFT-compliant
     /*!
      *  @see is_fft_compliant
      *                                                                              */
-    void check_fft_compliancy();
+    bool is_fft_compliant(const int nr, const double* const rgrid, const int nk, const double* const kgrid) const;
 };
 
 #endif

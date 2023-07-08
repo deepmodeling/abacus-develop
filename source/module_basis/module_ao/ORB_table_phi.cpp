@@ -478,7 +478,7 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 							}
 
 							//L=|L1-L2|,|L1-L2|+2,...,L1+L2
-							const int SL = abs(L1-L2);
+							const int SL = std::abs(L1-L2);
 							const int AL = L1+L2;
 
 							for (int L=0; L < L2plus1 ; L++)

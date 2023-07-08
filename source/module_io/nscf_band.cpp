@@ -42,7 +42,7 @@ void ModuleIO::nscf_band(
 			{ 
 				if ( GlobalV::RANK_IN_POOL == 0)
 				{
-					std::ofstream ofs(out_band_dir.c_str(),ios::app);
+					std::ofstream ofs(out_band_dir.c_str(),std::ios::app);
 					ofs << std::setprecision(8);
 					//start from 1
 					ofs << ik+1;

@@ -10,7 +10,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-using namespace std;
 
 template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 {
@@ -131,7 +130,7 @@ void RPA_LRI<Tdata>::out_eigen_vector(const Parallel_Orbitals &parav, const psi:
 
                 if (ib_local >= 0)
                     for (int ir = 0; ir < psi.get_nbasis(); ir++)
-                        wfc_iks[parav.MatrixInfo.row_set[ir]] = psi(ik + nks_tot * is, ib_local, ir);
+                        wfc_iks[parav.row_set[ir]] = psi(ik + nks_tot * is, ib_local, ir);
 
                 std::vector<std::complex<double>> tmp = wfc_iks;
 #ifdef __MPI
@@ -278,7 +277,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
 
         for (int ik = 0; ik != nks_tot; ik++)
         {
-            map<size_t, RI::Tensor<complex<double>>> Vq_k_IJ;
+            std::map<size_t, RI::Tensor<std::complex<double>>> Vq_k_IJ;
             for (auto &JPp: Ip.second)
             {
                 auto J = JPp.first.first;
@@ -286,14 +285,14 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
                 auto R = JPp.first.second;
                 if (J < I)
                     continue;
-                RI::Tensor<complex<double>> tmp_VR = RI::Global_Func::convert<complex<double>>(JPp.second);
+                RI::Tensor<std::complex<double>> tmp_VR = RI::Global_Func::convert<std::complex<double>>(JPp.second);
 
                 const double arg = 1
                                    * (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * GlobalC::ucell.latvec))
                                    * ModuleBase::TWO_PI; // latvec
-                const complex<double> kphase = complex<double>(cos(arg), sin(arg));
+                const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
                 if (Vq_k_IJ[J].empty())
-                    Vq_k_IJ[J] = RI::Tensor<complex<double>>({tmp_VR.shape[0], tmp_VR.shape[1]});
+                    Vq_k_IJ[J] = RI::Tensor<std::complex<double>>({tmp_VR.shape[0], tmp_VR.shape[1]});
                 Vq_k_IJ[J] = Vq_k_IJ[J] + tmp_VR * kphase;
             }
             for (auto &vq_Jp: Vq_k_IJ)

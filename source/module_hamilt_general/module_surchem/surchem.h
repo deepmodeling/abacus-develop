@@ -75,7 +75,7 @@ class surchem
     void cal_Acomp(const UnitCell& cell,
                    const ModulePW::PW_Basis* rho_basis,
                    const double* const* const rho,
-                   vector<double>& res);
+                   std::vector<double>& res);
 
     void minimize_cg(const UnitCell& ucell,
                      const ModulePW::PW_Basis* rho_basis,

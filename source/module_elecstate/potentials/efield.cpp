@@ -84,7 +84,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole (Ry a.u.)", tot_dipole);
     }
-    if (abs(efield_amp) > 0.0)
+    if (std::abs(efield_amp) > 0.0)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Amplitute of Efield (Hartree)", efield_amp);
     }

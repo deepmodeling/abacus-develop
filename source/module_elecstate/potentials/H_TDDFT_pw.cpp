@@ -79,7 +79,7 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     {
         return;
     }
-    std::cout << "calculate electric potential" << endl;
+    std::cout << "calculate electric potential" << std::endl;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
@@ -100,7 +100,7 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
             as << GlobalV::global_out_dir << "efield_" << count << ".dat";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
-                << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << endl;
+                << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
             ofs.close();
         }
 
@@ -130,7 +130,7 @@ void H_TDDFT_pw::cal_v_space(std::vector<double> &vext_space, int direc)
         break;
 
     default:
-        std::cout << "space_domain_type of electric field is wrong" << endl;
+        std::cout << "space_domain_type of electric field is wrong" << std::endl;
         break;
     }
 
@@ -169,7 +169,7 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
             break;
 
         default:
-            std::cout << "direction of electric field is wrong" << endl;
+            std::cout << "direction of electric field is wrong" << std::endl;
             break;
         }
     }
@@ -228,7 +228,7 @@ double H_TDDFT_pw::cal_v_time(int t_type)
         //     break;
 
     default:
-        std::cout << "time_domain_type of electric field is wrong" << endl;
+        std::cout << "time_domain_type of electric field is wrong" << std::endl;
         break;
     }
     return vext_time;

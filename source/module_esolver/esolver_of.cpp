@@ -127,7 +127,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
                                                 &(this->pelec->f_en.etxc),
                                                 &(this->pelec->f_en.vtxc));
     //There is no Operator in ESolver_OF, register Potentials here!
-    std::vector<string> pot_register_in;
+    std::vector<std::string> pot_register_in;
     if (GlobalV::VION_IN_H)
     {
         pot_register_in.push_back("local");
@@ -236,7 +236,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
-    CE.Init_CE(this->pw_rho->nrxx);
+    CE.Init_CE(GlobalC::ucell.nat);
     delete this->ptempRho;
     this->ptempRho = new Charge();
     this->ptempRho->set_rhopw(this->pw_rho);
@@ -285,7 +285,7 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         this->iter++;
     }
 
-    this->afterOpt();
+    this->afterOpt(istep);
 
     ModuleBase::timer::tick("ESolver_OF", "Run");
 }
@@ -299,10 +299,16 @@ void ESolver_OF::beforeOpt(const int istep)
     {
         this->init_after_vc(INPUT, GlobalC::ucell);
     }
-    if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+    if (GlobalC::ucell.ionic_position_updated)
     {
         CE.update_all_dis(GlobalC::ucell);
-        CE.extrapolate_charge(pelec->charge, &(sf));
+        CE.extrapolate_charge(
+#ifdef __MPI
+            &(GlobalC::Pgrid),
+#endif
+            GlobalC::ucell,
+            pelec->charge,
+            &(sf));
     }
 
     this->pelec->init_scf(istep, sf.strucFac);
@@ -450,12 +456,12 @@ void ESolver_OF::solveV()
     {
         if (dEdtheta[is] > dEdthetaThre)
         {
-            cout << "dEdtheta    " << dEdtheta[is] << endl;
+            std::cout << "dEdtheta    " << dEdtheta[is] << std::endl;
             ModuleBase::WARNING_QUIT("esolver_of.cpp", "dE/dtheta is too large.");
         }
         else if (dEdtheta[is] > 0)
         {
-            GlobalV::ofs_warning << "ESolver_OF: WARNING " << "dEdphi > 0, replace direct with steepest descent method." << endl;
+            GlobalV::ofs_warning << "ESolver_OF: WARNING " << "dEdphi > 0, replace direct with steepest descent method." << std::endl;
             for (int ir = 0; ir < this->nrxx; ++ir)
             {
                 this->pdirect[is][ir] = - this->pdLdphi[is][ir];
@@ -464,12 +470,12 @@ void ESolver_OF::solveV()
             this->caldEdtheta(ptempPhi, this->ptempRho, tempTheta, dEdtheta);
             if (dEdtheta[is] > dEdthetaThre)
             {
-                cout << "dEdtheta    " << dEdtheta[is] << endl;
+                std::cout << "dEdtheta    " << dEdtheta[is] << std::endl;
                 ModuleBase::WARNING_QUIT("esolver_of.cpp", "dE/dtheta is too large.");
             }
             else if (dEdtheta[is] > 0)
             {
-                GlobalV::ofs_warning << "ESolver_OF: WARNING " << "when use steepest dencent method, dEdphi > 0, so we might get minimum." << endl;
+                GlobalV::ofs_warning << "ESolver_OF: WARNING " << "when use steepest dencent method, dEdphi > 0, so we might get minimum." << std::endl;
             }
         }
     }
@@ -538,7 +544,7 @@ void ESolver_OF::solveV()
 
                 if (numDC > this->maxDCsrch)
                 {
-                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter number." << endl;
+                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter number." << std::endl;
                     break;
                 }
             }
@@ -549,13 +555,13 @@ void ESolver_OF::solveV()
             else if (strncmp(this->task, "WA", 2) == 0) // warning of line search
             {
                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
-                cout << this->task << endl;
+                std::cout << this->task << std::endl;
                 break;
             }
             else if (strncmp(this->task, "ER", 2) == 0) // ERROR in line search
             {
                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
-                cout << this->task << endl;
+                std::cout << this->task << std::endl;
                 break;
             }
         }
@@ -711,7 +717,7 @@ void ESolver_OF::getNextDirect()
         }
 
         tempTheta = normDir/tempTheta;
-        this->theta[0] = min(this->theta[0], tempTheta);
+        this->theta[0] = std::min(this->theta[0], tempTheta);
     }
     else if (GlobalV::NSPIN == 2) // theta = 0
     {
@@ -806,13 +812,13 @@ bool ESolver_OF::checkExit()
     if (this->normdLdphi < this->of_tolp)
         potConv = true;
     if (this->iter >= 3
-        && abs(this->normdLdphi - this->normdLdphi_last) < 1e-10
-        && abs(this->normdLdphi - this->normdLdphi_llast) < 1e-10)
+        && std::abs(this->normdLdphi - this->normdLdphi_last) < 1e-10
+        && std::abs(this->normdLdphi - this->normdLdphi_llast) < 1e-10)
         potHold = true;
 
     if (this->iter >= 3
-        && abs(this->energy_current - this->energy_last) < this->of_tole
-        && abs(this->energy_current - this->energy_llast) < this->of_tole)
+        && std::abs(this->energy_current - this->energy_last) < this->of_tole
+        && std::abs(this->energy_current - this->energy_llast) < this->of_tole)
         energyConv = true;
 
     if (this->of_conv == "energy" && energyConv)
@@ -829,7 +835,7 @@ bool ESolver_OF::checkExit()
     else if (this->of_conv == "potential" && potHold)
     {
         GlobalV::ofs_warning << "ESolver_OF WARNING: " <<
-        "The convergence of potential has not been reached, but the norm of potential nearly remains unchanged, set of_full_pw = 1 may work." << endl;
+        "The convergence of potential has not been reached, but the norm of potential nearly remains unchanged, set of_full_pw = 1 may work." << std::endl;
         return true;
     }
     // ====================================================================
@@ -854,8 +860,8 @@ bool ESolver_OF::checkExit()
 void ESolver_OF::printInfo()
 {
     if (this->iter == 0){
-        cout << "======================== Running OFDFT ========================" <<  endl;
-        cout << "Iter        Etot(Ha)          Theta      PotNorm     deltaE(Ha)" << endl;
+        std::cout << "======================== Running OFDFT ========================" <<  std::endl;
+        std::cout << "Iter        Etot(Ha)          Theta      PotNorm     deltaE(Ha)" << std::endl;
         // cout << "======================================== Running OFDFT ========================================" <<  endl;
         // cout << "Iter        Etot(Ha)          Theta       PotNorm        min/max(den)          min/max(dE/dPhi)" << endl;
         // cout << "============================================ OFDFT ========================================" <<  endl;
@@ -873,11 +879,11 @@ void ESolver_OF::printInfo()
     //     if (this->pdEdphi[0][i] < minPot) minPot = this->pdEdphi[0][i];
     //     if (this->pdEdphi[0][i] > maxPot) maxPot = this->pdEdphi[0][i];
     // }
-    cout << setw(6) << this->iter
-    << setw(22) << setiosflags(ios::scientific) << setprecision(12) << this->energy_current/2.
-    << setw(12) << setprecision(3) << this->theta[0]
-    << setw(12) << this->normdLdphi
-    << setw(12) << (this->energy_current - this->energy_last)/2. << endl;
+    std::cout << std::setw(6) << this->iter
+    << std::setw(22) << std::setiosflags(std::ios::scientific) << std::setprecision(12) << this->energy_current/2.
+    << std::setw(12) << std::setprecision(3) << this->theta[0]
+    << std::setw(12) << this->normdLdphi
+    << std::setw(12) << (this->energy_current - this->energy_last)/2. << std::endl;
     // ============ test new convergence criterion =================
     // << setw(12) << this->deltaRhoG
     // << setw(12) << this->deltaRhoR
@@ -888,9 +894,21 @@ void ESolver_OF::printInfo()
     // =============================================================
 }
 
-void ESolver_OF::afterOpt()
+void ESolver_OF::afterOpt(const int istep)
 {
     ModuleIO::output_convergence_after_scf(this->conv, this->pelec->f_en.etot);
+
+    // save charge difference into files for charge extrapolation
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
+#ifdef __MPI
+                            this->pw_big,
+#endif
+                            this->pelec->charge,
+                            &this->sf);
+    }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {

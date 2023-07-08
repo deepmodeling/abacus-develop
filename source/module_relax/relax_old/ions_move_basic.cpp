@@ -94,7 +94,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     const int total_freedom = ucell.nat * 3;
     for (int i = 0; i < total_freedom; i++)
     {
-        if (abs(move[i]) > move_threshold)
+        if (std::abs(move[i]) > move_threshold)
         {
             pos[i] += move[i];
         }
@@ -120,9 +120,9 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     Ions_Move_Basic::largest_grad = 0.0;
     for (int i = 0; i < dim; i++)
     {
-        if (Ions_Move_Basic::largest_grad < abs(grad[i]))
+        if (Ions_Move_Basic::largest_grad < std::abs(grad[i]))
         {
-            Ions_Move_Basic::largest_grad = abs(grad[i]);
+            Ions_Move_Basic::largest_grad = std::abs(grad[i]);
         }
     }
     // mohan add 2010-08-06

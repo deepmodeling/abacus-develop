@@ -240,7 +240,7 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
     ofs << "Virial Term is " << virial_scalar * unit_transform << " kbar " << std::endl;
     ofs << "Kinetic Term is " << (stress_scalar - virial_scalar) * unit_transform << " kbar " << std::endl;
 
-    ofs.unsetf(ios::fixed);
+    ofs.unsetf(std::ios::fixed);
     ofs << std::setprecision(8) << std::endl;
     ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
     for (int i = 0; i < 3; i++)
@@ -248,7 +248,7 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
         ofs << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15) << stress(i, 1) * unit_transform
             << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
     }
-    ofs << std::setiosflags(ios::left);
+    ofs << std::setiosflags(std::ios::left);
 }
 
 void dump_info(const int& step,
@@ -267,11 +267,11 @@ void dump_info(const int& step,
     std::ofstream ofs;
     if (step == 0)
     {
-        ofs.open(file.str(), ios::trunc);
+        ofs.open(file.str(), std::ios::trunc);
     }
     else
     {
-        ofs.open(file.str(), ios::app);
+        ofs.open(file.str(), std::ios::app);
     }
 
     const double unit_pos = unit_in.lat0 / ModuleBase::ANGSTROM_AU;                                  ///< Angstrom
@@ -280,7 +280,7 @@ void dump_info(const int& step,
     const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;                   ///< eV/Angstrom
 
     ofs << "MDSTEP:  " << step << std::endl;
-    ofs << std::setprecision(12) << std::setiosflags(ios::fixed);
+    ofs << std::setprecision(12) << std::setiosflags(std::ios::fixed);
 
     ofs << "LATTICE_CONSTANT: " << unit_in.lat0_angstrom << " Angstrom" << std::endl;
 

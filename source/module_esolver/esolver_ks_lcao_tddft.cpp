@@ -180,23 +180,23 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
     {
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
-            << endl;
-        GlobalV::ofs_running << "occupation : " << endl;
-        GlobalV::ofs_running << "ik  iband     occ " << endl;
+            << std::endl;
+        GlobalV::ofs_running << "occupation : " << std::endl;
+        GlobalV::ofs_running << "ik  iband     occ " << std::endl;
         GlobalV::ofs_running << std::setprecision(6);
-        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+        GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
         for (int ik = 0; ik < kv.nks; ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
                 std::setprecision(6);
-                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib) << endl;
+                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib) << std::endl;
             }
         }
-        GlobalV::ofs_running << endl;
+        GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
-            << endl;
+            << std::endl;
     }
 
     for (int ik = 0; ik < kv.nks; ++ik)
@@ -365,23 +365,23 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     {
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
-            << endl;
-        GlobalV::ofs_running << "Eii : " << endl;
-        GlobalV::ofs_running << "ik  iband    Eii (eV)" << endl;
+            << std::endl;
+        GlobalV::ofs_running << "Eii : " << std::endl;
+        GlobalV::ofs_running << "ik  iband    Eii (eV)" << std::endl;
         GlobalV::ofs_running << std::setprecision(6);
-        GlobalV::ofs_running << std::setiosflags(ios::showpoint);
+        GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
         for (int ik = 0; ik < kv.nks; ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
                 GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      "
-                                     << this->pelec_td->ekb(ik, ib) * ModuleBase::Ry_to_eV << endl;
+                                     << this->pelec_td->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::endl;
             }
         }
-        GlobalV::ofs_running << endl;
+        GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
-            << endl;
+            << std::endl;
     }
 }
 

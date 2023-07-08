@@ -199,9 +199,9 @@ void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const Modul
     double *r = new double [rho_basis->nxyz]; 
     double *tmpr = new double[rho_basis->nrxx];
     double *zpiece = new double[rho_basis->nxy];
-    complex<double> *b1 = new complex<double> [rho_basis->nx];
-    complex<double> *b2 = new complex<double> [rho_basis->ny];
-    complex<double> *b3 = new complex<double> [rho_basis->nz];
+    std::complex<double> *b1 = new std::complex<double> [rho_basis->nx];
+    std::complex<double> *b2 = new std::complex<double> [rho_basis->ny];
+    std::complex<double> *b3 = new std::complex<double> [rho_basis->nz];
 
     for (int it=0; it<Ucell->ntype; it++)
     {
@@ -297,7 +297,7 @@ void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const Modul
     return;
 }
 
-void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, complex<double> *b3, 
+void Structure_Factor:: bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                         const int nx, const int ny, const int nz, const int norder)
 {
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
@@ -311,7 +311,7 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
 #endif
     for(int ix = 0 ; ix < nx ; ++ix)
     {
-        complex<double> fracx=0;
+        std::complex<double> fracx=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
             fracx += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(ix)/double(nx)*double(io));
@@ -323,7 +323,7 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
 #endif
     for(int iy = 0 ; iy < ny ; ++iy)
     {
-        complex<double> fracy=0;
+        std::complex<double> fracy=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
             fracy += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iy)/double(ny)*double(io));
@@ -335,7 +335,7 @@ void Structure_Factor:: bsplinecoef(complex<double> *b1, complex<double> *b2, co
 #endif
     for(int iz = 0 ; iz < nz ; ++iz)
     {
-        complex<double> fracz=0;
+        std::complex<double> fracz=0;
         for(int io = 0 ; io < norder - 1 ; ++io)
         {
             fracz += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iz)/double(nz)*double(io));

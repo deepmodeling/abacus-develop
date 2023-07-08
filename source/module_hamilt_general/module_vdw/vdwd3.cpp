@@ -58,9 +58,9 @@ void Vdwd3::set_criteria(double rthr, const std::vector<ModuleBase::Vector3<doub
     double cos10 = norm1 * lat_[0];
     double cos21 = norm2 * lat_[1];
     double cos32 = norm3 * lat_[2];
-    tau_max[0] = abs(r_cutoff / cos10);
-    tau_max[1] = abs(r_cutoff / cos21);
-    tau_max[2] = abs(r_cutoff / cos32);
+    tau_max[0] = std::abs(r_cutoff / cos10);
+    tau_max[1] = std::abs(r_cutoff / cos21);
+    tau_max[2] = std::abs(r_cutoff / cos32);
 }
 
 std::vector<double> Vdwd3::atom_kind()

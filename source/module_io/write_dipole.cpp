@@ -22,7 +22,7 @@ void ModuleIO::write_dipole(const double* rho_save,
     {
         start = time(NULL);
 
-        ofs.open(fn.c_str(), ofstream::app);
+        ofs.open(fn.c_str(), std::ofstream::app);
         if (!ofs)
         {
             ModuleBase::WARNING("ModuleIO", "Can't create Charge File!");

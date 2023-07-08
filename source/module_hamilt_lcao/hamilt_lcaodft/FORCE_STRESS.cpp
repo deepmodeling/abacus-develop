@@ -425,8 +425,8 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
             }
 
             GlobalV::ofs_running << "\n PARTS OF FORCE: " << std::endl;
-            GlobalV::ofs_running << std::setiosflags(ios::showpos);
-            GlobalV::ofs_running << std::setiosflags(ios::fixed) << std::setprecision(8) << std::endl;
+            GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
+            GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(8) << std::endl;
             //-----------------------------
             // regular force terms test.
             //-----------------------------
@@ -485,7 +485,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 #endif
         }
 
-        GlobalV::ofs_running << std::setiosflags(ios::left);
+        GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
         // this->printforce_total(ry, istestf, fcs);
         f_pw.print("   TOTAL-FORCE (eV/Angstrom)", fcs, 0);
@@ -499,7 +499,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                 GlobalV::ofs_running << " " << std::setw(8) << iat;
                 for (int i = 0; i < 3; i++)
                 {
-                    if (abs(fcs(iat, i) * ModuleBase::Ry_to_eV / 0.529177)
+                    if (std::abs(fcs(iat, i) * ModuleBase::Ry_to_eV / 0.529177)
                         < Force_Stress_LCAO::force_invalid_threshold_ev)
                     {
                         fcs(iat, i) = 0.0;
@@ -614,8 +614,8 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
             }
 
             GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
-            GlobalV::ofs_running << std::setiosflags(ios::showpos);
-            GlobalV::ofs_running << std::setiosflags(ios::fixed) << std::setprecision(10) << std::endl;
+            GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
+            GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
             sc_pw.print_stress("OVERLAP  STRESS", soverlap, GlobalV::TEST_STRESS, ry);
             // test
             sc_pw.print_stress("T        STRESS", stvnl_dphi, GlobalV::TEST_STRESS, ry);
@@ -642,7 +642,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
             sc_pw.print_stress("TOTAL    STRESS", scs, GlobalV::TEST_STRESS, ry);
 
         } // end of test
-        GlobalV::ofs_running << std::setiosflags(ios::left);
+        GlobalV::ofs_running << std::setiosflags(std::ios::left);
         // print total stress
         sc_pw.printstress_total(scs, ry);
 

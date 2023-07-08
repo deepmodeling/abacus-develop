@@ -7,7 +7,7 @@ list(APPEND container_srcs
     tensor_types.cpp
 )
 
-if(ENABLE_CUDA_TOOLKIT)
+if(USE_CUDA)
     list(APPEND container_srcs gpu_allocator.cpp)
 endif()
 

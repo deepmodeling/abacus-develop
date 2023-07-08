@@ -266,7 +266,7 @@ double KEDF_WT::WTkernel(double eta, double tf_weight, double vw_weight)
         return 1. - tf_weight + eta * eta * (1./3. - 3. * vw_weight);
     }
     // around the singularity
-    else if (abs(eta - 1.) < 1e-10)
+    else if (std::abs(eta - 1.) < 1e-10)
     {
         return 2. - tf_weight - 3. * vw_weight + 20. * (eta - 1);
     }
@@ -296,7 +296,7 @@ double KEDF_WT::WTkernel(double eta, double tf_weight, double vw_weight)
     }
     else
     {
-        return 1. / (0.5 + 0.25 * (1. - eta * eta) / eta * log((1 + eta)/abs(1 - eta)))
+        return 1. / (0.5 + 0.25 * (1. - eta * eta) / eta * log((1 + eta)/std::abs(1 - eta)))
                  - 3. * vw_weight * eta * eta - tf_weight;
     }
 }
@@ -311,16 +311,16 @@ double KEDF_WT::diffLinhard(double eta, double vw_weight)
     {
         return 2. * eta * (1./3. - 3. * vw_weight);
     }
-    else if (abs(eta - 1.) < 1e-10)
+    else if (std::abs(eta - 1.) < 1e-10)
     {
         return 40.;
     }
     else
     {
         double eta2 = eta * eta;
-        return ((eta2 + 1.) * 0.25 / eta2 * log(abs((1. + eta)/
+        return ((eta2 + 1.) * 0.25 / eta2 * log(std::abs((1. + eta)/
              (1.-eta))) - 0.5/eta) / std::pow((0.5 + 0.25 * (1. - eta2)
-             * log((1. + eta) / abs(1. - eta))/eta) , 2) - 6. * eta * vw_weight;
+             * log((1. + eta) / std::abs(1. - eta))/eta) , 2) - 6. * eta * vw_weight;
     }
 }
 

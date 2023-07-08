@@ -8,7 +8,7 @@
 #include "../module_base/complexarray.h"
 #include "../module_base/complexmatrix.h"
 #include "pseudo_nc.h"
-using namespace std;
+
 
 class Atom_pseudo : public pseudo_nc
 {

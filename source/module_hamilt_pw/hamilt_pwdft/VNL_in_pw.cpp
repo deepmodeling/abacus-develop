@@ -735,7 +735,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // 			mu = static_cast<int>( nhtolm(it, ih)) - lu * lu;
 // 			nb = static_cast<int>( indv(it, ih));
 			
-// 			for (int L= abs(lu - 1); L<= (lu + 1); L++)
+// 			for (int L= std::abs(lu - 1); L<= (lu + 1); L++)
 // 			{
 // 				for (ig = 0;ig < npw;ig++)
 // 				{

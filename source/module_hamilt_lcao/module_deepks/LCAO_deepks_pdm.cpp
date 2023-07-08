@@ -38,7 +38,7 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
     const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
     {
-        ifstream ifs("pdm.dat");
+        std::ifstream ifs("pdm.dat");
         if (!ifs)
         {
             ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM", "Can not find the file pdm.dat . Please do DeePKS SCF calculation first.");
@@ -170,7 +170,7 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
 
     if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
     {
-        ifstream ifs("pdm.dat");
+        std::ifstream ifs("pdm.dat");
         if (!ifs)
         {
             ModuleBase::WARNING_QUIT("LCAO_Deepks::cal_projected_DM_k","Can not find the file pdm.dat . Please do DeePKS SCF calculation first.");
@@ -311,7 +311,7 @@ void LCAO_Deepks::cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix
 
 void LCAO_Deepks::check_projected_dm(void)
 {
-    ofstream ofs("pdm.dat");
+    std::ofstream ofs("pdm.dat");
     const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     ofs<<std::setprecision(10);
     for(int inl=0;inl<inlmax;inl++)
@@ -782,9 +782,9 @@ void LCAO_Deepks::cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
 void LCAO_Deepks::check_gdmx(const int nat)
 {
     std::stringstream ss;
-    ofstream ofs_x;
-    ofstream ofs_y;
-    ofstream ofs_z;
+    std::ofstream ofs_x;
+    std::ofstream ofs_y;
+    std::ofstream ofs_z;
 
     ofs_x<<std::setprecision(10);
     ofs_y<<std::setprecision(10);

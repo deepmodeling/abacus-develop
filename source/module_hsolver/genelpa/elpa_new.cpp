@@ -18,9 +18,7 @@
 #include <omp.h>
 #endif
 
-using namespace std;
-
-map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
+std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
 ELPA_Solver::ELPA_Solver(const bool isReal,
                          const MPI_Comm comm,
@@ -120,7 +118,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     allocate_work();
 
     int error;
-    static map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
+    static std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
     static int total_handle;
 
 #ifdef _OPENMP
@@ -169,7 +167,7 @@ void ELPA_Solver::setLoglevel(int loglevel)
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "debug", wantDebug, &error);
         if (!isLogfileInited)
         {
-            stringstream logfilename;
+            std::stringstream logfilename;
             logfilename.str("");
             logfilename << "GenELPA_" << myid << ".log";
             logfile.open(logfilename.str());
@@ -214,31 +212,31 @@ int ELPA_Solver::read_cpuflag()
 {
     int cpuflag = 0;
 
-    ifstream f_cpuinfo("/proc/cpuinfo");
-    string cpuinfo_line;
-    regex cpuflag_ex("flags.*");
-    regex cpuflag_avx512(".*avx512.*");
-    regex cpuflag_avx2(".*avx2.*");
-    regex cpuflag_avx(".*avx.*");
-    regex cpuflag_sse(".*sse.*");
+    std::ifstream f_cpuinfo("/proc/cpuinfo");
+    std::string cpuinfo_line;
+    std::regex cpuflag_ex("flags.*");
+    std::regex cpuflag_avx512(".*avx512.*");
+    std::regex cpuflag_avx2(".*avx2.*");
+    std::regex cpuflag_avx(".*avx.*");
+    std::regex cpuflag_sse(".*sse.*");
     while (getline(f_cpuinfo, cpuinfo_line))
     {
-        if (regex_match(cpuinfo_line, cpuflag_ex))
+        if (std::regex_match(cpuinfo_line, cpuflag_ex))
         {
             // cout<<cpuinfo_line<<endl;
-            if (regex_match(cpuinfo_line, cpuflag_avx512))
+            if (std::regex_match(cpuinfo_line, cpuflag_avx512))
             {
                 cpuflag = 4;
             }
-            else if (regex_match(cpuinfo_line, cpuflag_avx2))
+            else if (std::regex_match(cpuinfo_line, cpuflag_avx2))
             {
                 cpuflag = 3;
             }
-            else if (regex_match(cpuinfo_line, cpuflag_avx))
+            else if (std::regex_match(cpuinfo_line, cpuflag_avx))
             {
                 cpuflag = 2;
             }
-            else if (regex_match(cpuinfo_line, cpuflag_sse))
+            else if (std::regex_match(cpuinfo_line, cpuflag_sse))
             {
                 cpuflag = 1;
             }
@@ -453,32 +451,32 @@ void ELPA_Solver::timer(int myid, const char function[], const char step[], doub
     {
         t0 = MPI_Wtime();
         t0 = (double)clock()/CLOCKS_PER_SEC;
-        logfile << "DEBUG: Process " << myid << " Call " << function << endl;
+        logfile << "DEBUG: Process " << myid << " Call " << function << std::endl;
     }
     else
     {
         t1 = MPI_Wtime();
         t1 = (double)clock()/CLOCKS_PER_SEC;
         logfile << "DEBUG: Process " << myid << " Step " << step << " " << function << " time: " << t1 - t0 << " s"
-                << endl;
+                << std::endl;
     }
 }
 
 void ELPA_Solver::outputParameters()
 {
-    logfile << "myid " << myid << ": comm id(in FORTRAN):" << MPI_Comm_c2f(comm) << endl;
-    logfile << "myid " << myid << ": nprows: " << nprows << " npcols: " << npcols << endl;
-    logfile << "myid " << myid << ": myprow: " << myprow << " mypcol: " << mypcol << endl;
-    logfile << "myid " << myid << ": nFull: " << nFull << " nev: " << nev << endl;
-    logfile << "myid " << myid << ": narows: " << narows << " nacols: " << nacols << endl;
-    logfile << "myid " << myid << ": blacs parameters setting" << endl;
-    logfile << "myid " << myid << ": blacs ctxt:" << cblacs_ctxt << endl;
+    logfile << "myid " << myid << ": comm id(in FORTRAN):" << MPI_Comm_c2f(comm) << std::endl;
+    logfile << "myid " << myid << ": nprows: " << nprows << " npcols: " << npcols << std::endl;
+    logfile << "myid " << myid << ": myprow: " << myprow << " mypcol: " << mypcol << std::endl;
+    logfile << "myid " << myid << ": nFull: " << nFull << " nev: " << nev << std::endl;
+    logfile << "myid " << myid << ": narows: " << narows << " nacols: " << nacols << std::endl;
+    logfile << "myid " << myid << ": blacs parameters setting" << std::endl;
+    logfile << "myid " << myid << ": blacs ctxt:" << cblacs_ctxt << std::endl;
     logfile << "myid " << myid << ": desc: ";
     for (int i = 0; i < 9; ++i)
         logfile << desc[i] << " ";
-    logfile << endl;
-    logfile << "myid " << myid << ": nblk: " << nblk << " lda: " << lda << endl;
-    logfile << "myid " << myid << ": useQR: " << useQR << " kernel:" << kernel_id << endl;
+    logfile << std::endl;
+    logfile << "myid " << myid << ": nblk: " << nblk << " lda: " << lda << std::endl;
+    logfile << "myid " << myid << ": useQR: " << useQR << " kernel:" << kernel_id << std::endl;
     ;
-    logfile << "myid " << myid << ": wantDebug: " << wantDebug << " loglevel: " << loglevel << endl;
+    logfile << "myid " << myid << ": wantDebug: " << wantDebug << " loglevel: " << loglevel << std::endl;
 }

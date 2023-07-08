@@ -24,7 +24,7 @@ class TestDiagoIterAssist : public ::testing::Test
 
 	std::string method_test = "none";
 
-	ofstream temp_ofs;
+	std::ofstream temp_ofs;
 };
 
 TEST_F(TestDiagoIterAssist, diagH_subspace)

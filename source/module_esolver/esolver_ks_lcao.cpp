@@ -415,7 +415,10 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.Beta);
 
     if (this->orb_con.setup_2d)
+    {
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
+        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.iat2iwt.data(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+    }
 }
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
@@ -735,6 +738,18 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
 
 void ESolver_KS_LCAO::afterscf(const int istep)
 {
+    // save charge difference into files for charge extrapolation
+    if (GlobalV::CALCULATION != "scf")
+    {
+        this->CE.save_files(istep,
+                            GlobalC::ucell,
+#ifdef __MPI
+                            this->pw_big,
+#endif
+                            this->pelec->charge,
+                            &this->sf);
+    }
+
     if (this->LOC.out_dm1 == 1)
     {
         this->create_Output_DM1(istep).write();

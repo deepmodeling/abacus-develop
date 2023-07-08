@@ -735,8 +735,8 @@ These variables are used to control the numerical atomic orbitals related parame
 ### bx, by, bz
 
 - **Type**: Integer
-- **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed.
-- **Default**: 2
+- **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
+- **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
 

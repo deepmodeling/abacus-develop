@@ -7,6 +7,13 @@
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
 
+AtomicRadials& AtomicRadials::operator=(const AtomicRadials& rhs)
+{
+    RadialSet::operator=(rhs);
+    orb_ecut_ = rhs.orb_ecut_;
+    return *this;
+}
+
 void AtomicRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
 {
     // deallocates all arrays and reset variables

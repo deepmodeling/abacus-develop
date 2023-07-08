@@ -88,6 +88,22 @@ class Sphbes
         const double &rcut
     );
 
+    //! spherical Bessel function of the first kind
+    /*!
+     *  This function computes j_l(x) by series expansion for x < l
+     *  and by ascending recurrence for x >= l.
+     *                                                              */
+    static double sphbesj(const int l,   //!< [in] order
+                          const double x //!< [in] argument
+    );
+
+    static void sphbesj(const int n,
+                        const double* const r,
+                        const double q,
+                        const int l,
+                        double* const jl
+    );
+
 private:
 
     static double Spherical_Bessel_7(const int n, const double &x);
@@ -100,6 +116,10 @@ private:
     static double CHEBEV(double a, double b, double c[], int m, double x);
 
     static int IMAX(int a, int b);
+
+    // utility functions for sphbesj
+    static double _sphbesj_ascending_recurrence(int l, double x);
+    static double _sphbesj_series(int l, double x);
 };
 
 }

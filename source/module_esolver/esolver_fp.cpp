@@ -96,7 +96,7 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
-    void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)
+    void ESolver_FP::print_rhofft(Input&inp, std::ofstream &ofs)
     {
         std::cout << " UNIFORM GRID DIM     : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz
                   << std::endl;
