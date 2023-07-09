@@ -149,7 +149,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl;
             ofs_running << " Changed `symmetry_prec` to " << epsilon <<"." << std::endl;
         }
-        else if (tmp_nrotk > this->nrotk)
+        if (tmp_nrotk > this->nrotk)
         {
             this->nrotk = tmp_nrotk;
             ofs_running << "Find new symmtry operations during cell-relax." << std::endl;
