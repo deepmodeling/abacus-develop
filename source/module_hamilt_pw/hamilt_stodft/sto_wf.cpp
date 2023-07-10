@@ -90,7 +90,7 @@ void Init_Sto_Orbitals
             for (int i = 0; i < stowf.chi0[ik].size; ++i)
             {
                 const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
-                stowf.chi0[ik].c[i] = complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
+                stowf.chi0[ik].c[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
             }
         }
         else
@@ -127,7 +127,7 @@ void Update_Sto_Orbitals
             for (int i = 0; i < stowf.chi0[ik].size; ++i)
             {
                 const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
-                stowf.chi0[ik].c[i] = complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
+                stowf.chi0[ik].c[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
             }
         }
         else

@@ -246,13 +246,13 @@ void Grid_Technique::cal_max_box_index(void)
 			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
 			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
 			{
-				this->maxB1 = max( GlobalC::GridD.getBox(ad).x, maxB1 ); 
-				this->maxB2 = max( GlobalC::GridD.getBox(ad).y, maxB2 ); 
-				this->maxB3 = max( GlobalC::GridD.getBox(ad).z, maxB3 ); 
+				this->maxB1 = std::max( GlobalC::GridD.getBox(ad).x, maxB1 ); 
+				this->maxB2 = std::max( GlobalC::GridD.getBox(ad).y, maxB2 ); 
+				this->maxB3 = std::max( GlobalC::GridD.getBox(ad).z, maxB3 ); 
 
-				this->minB1 = min( GlobalC::GridD.getBox(ad).x, minB1 ); 
-				this->minB2 = min( GlobalC::GridD.getBox(ad).y, minB2 ); 
-				this->minB3 = min( GlobalC::GridD.getBox(ad).z, minB3 ); 
+				this->minB1 = std::min( GlobalC::GridD.getBox(ad).x, minB1 ); 
+				this->minB2 = std::min( GlobalC::GridD.getBox(ad).y, minB2 ); 
+				this->minB3 = std::min( GlobalC::GridD.getBox(ad).z, minB3 ); 
 			}
 		}
 	}

@@ -135,10 +135,9 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
 
 void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
 {
-    using namespace std;
     char FileName[80];
     int myid;
-    ofstream matrixFile;
+    std::ofstream matrixFile;
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #else
@@ -274,10 +273,9 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
 
 void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::complex<double>* a)
 {
-    using namespace std;
     char FileName[80];
     int myid;
-    ofstream matrixFile;
+    std::ofstream matrixFile;
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #else

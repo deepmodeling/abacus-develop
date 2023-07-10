@@ -98,15 +98,15 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
 {
      ModuleBase::TITLE(this->classname,"sKG");
     ModuleBase::timer::tick(this->classname,"sKG");
-    cout<<"Calculating conductivity...."<<endl;
+    std::cout<<"Calculating conductivity...."<<std::endl;
     
     int nw = ceil(wcut/dw_in);
     double dw =  dw_in / ModuleBase::Ry_to_eV; //converge unit in eV to Ry 
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
     double dt = dt_in; //unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     int nt = ceil(sqrt(20)/sigma/dt);
-    cout<<"nw: "<<nw<<" ; dw: "<<dw*ModuleBase::Ry_to_eV<<" eV"<<endl;
-    cout<<"nt: "<<nt<<" ; dt: "<<dt<<" a.u.(ry^-1)"<<endl;
+    std::cout<<"nw: "<<nw<<" ; dw: "<<dw*ModuleBase::Ry_to_eV<<" eV"<<std::endl;
+    std::cout<<"nt: "<<nt<<" ; dt: "<<dt<<" a.u.(ry^-1)"<<std::endl;
     assert(nw >= 1);
     assert(nt >= 1);
     const int ndim = 3;
@@ -134,11 +134,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     stoiter.stofunc.t = dt * nbatch;
     chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
     chet2.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
-    cout<<"Relative Chebyshev precision: "<<std::abs(chet.coef_complex[nche_KG-1]/chet.coef_complex[0])<<endl;
-    ofstream cheofs("Chebycoef");
+    std::cout<<"Relative Chebyshev precision: "<<std::abs(chet.coef_complex[nche_KG-1]/chet.coef_complex[0])<<std::endl;
+    std::ofstream cheofs("Chebycoef");
     for(int i  = 0 ; i < nche_KG ; ++i)
     {
-        cheofs<<setw(5)<<i<<setw(20)<<std::abs(chet.coef_complex[i]/chet.coef_complex[0])<<endl;
+        cheofs<<std::setw(5)<<i<<std::setw(20)<<std::abs(chet.coef_complex[i]/chet.coef_complex[0])<<std::endl;
     }
     cheofs.close();
     std::complex<double>* batchcoef = nullptr;
@@ -392,10 +392,10 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
                 expsfpsi(ib,ig) = sfpsi0(ib,ig);
             }
         }
-        cout<<"ik="<<ik<<": ";
+        std::cout<<"ik="<<ik<<": ";
         for (int it = 1 ;it < nt ; ++it)
         {
-            if(it%20==0) cout<<it<<" ";
+            if(it%20==0) std::cout<<it<<" ";
             ModuleBase::timer::tick(this->classname,"evolution_ks");
             for(int ib = 0; ib < ksbandper; ++ib)
             {
@@ -562,7 +562,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             ModuleBase::timer::tick(this->classname,"ddot_real");
             
         }
-        cout<<endl;
+        std::cout<<std::endl;
         if(ksbandper > 0)   delete[] en;
         delete poly_psi;
         delete poly_sfpsi;
@@ -593,9 +593,9 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
 {
     ModuleBase::TITLE(this->classname,"caldos");
     ModuleBase::timer::tick(this->classname,"caldos");
-    cout<<"========================="<<endl;
-    cout<<"###Calculating Dos....###"<<endl;
-    cout<<"========================="<<endl;
+    std::cout<<"========================="<<std::endl;
+    std::cout<<"###Calculating Dos....###"<<std::endl;
+    std::cout<<"========================="<<std::endl;
     ModuleBase::Chebyshev<double> che(nche_dos);
     const int nk = kv.nks;
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
@@ -617,10 +617,10 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
         allorderchi = new std::complex<double> [nchip_new * npwx * nche_dos];
     }
     ModuleBase::timer::tick(this->classname,"Tracepoly");
-    cout<<"1. TracepolyA:"<<endl;
+    std::cout<<"1. TracepolyA:"<<std::endl;
     for (int ik = 0;ik < nk;ik++)
 	{
-        cout<<"ik: "<<ik+1<<endl;
+        std::cout<<"ik: "<<ik+1<<std::endl;
 		if(nk > 1) 
         {
             this->p_hamilt->updateHk(ik);
@@ -670,12 +670,12 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
     }
     if(stoiter.method == 2) delete[] allorderchi;
 
-    ofstream ofsdos;
+    std::ofstream ofsdos;
     int ndos = int((emax-emin) / de)+1;
     stoiter.stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
     ModuleBase::timer::tick(this->classname,"Tracepoly");
 
-    cout<<"2. Dos:"<<endl;
+    std::cout<<"2. Dos:"<<std::endl;
     ModuleBase::timer::tick(this->classname,"DOS Loop");
     int n10 = ndos/10;
     int percent = 10;
@@ -726,7 +726,7 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
 
         if(ie%n10 == n10 -1) 
         {
-            cout<<percent<<"%"<<" ";
+            std::cout<<percent<<"%"<<" ";
             percent+=10;
         }
         sto_dos[ie] = tmpsto;
@@ -740,22 +740,22 @@ void ESolver_SDFT_PW:: caldos( const int nche_dos, const double sigmain, const d
 #endif
     if(GlobalV::MY_RANK == 0)
     {
-        string dosfile = GlobalV::global_out_dir+"DOS1_smearing.dat";
+        std::string dosfile = GlobalV::global_out_dir+"DOS1_smearing.dat";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0; 
-        ofsdos<<setw(8)<<"## E(eV) "<<setw(20)<<"dos(eV^-1)"<<setw(20)<<"sum"<<setw(20)<<"Error(eV^-1)"<<endl;
+        ofsdos<<std::setw(8)<<"## E(eV) "<<std::setw(20)<<"dos(eV^-1)"<<std::setw(20)<<"sum"<<std::setw(20)<<"Error(eV^-1)"<<std::endl;
         for(int ie = 0 ; ie < ndos ; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
             if(maxerror < tmperror) maxerror = tmperror;
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
-	    	ofsdos <<setw(8)<< emin + ie * de <<setw(20)<< dos <<setw(20)<< sum * de <<setw(20)<< tmperror <<endl;
+	    	ofsdos <<std::setw(8)<< emin + ie * de <<std::setw(20)<< dos <<std::setw(20)<< sum * de <<std::setw(20)<< tmperror <<std::endl;
         }
-        cout<<endl;
-        cout<<"Finish DOS"<<endl;
-        cout<<scientific<<"DOS max absolute Chebyshev Error: "<<maxerror<<endl;
+        std::cout<<std::endl;
+        std::cout<<"Finish DOS"<<std::endl;
+        std::cout<<std::scientific<<"DOS max absolute Chebyshev Error: "<<maxerror<<std::endl;
         ofsdos.close();
     }
     delete[] sto_dos;

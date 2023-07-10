@@ -65,7 +65,7 @@ std::vector<std::vector<std::pair<std::vector<double>, RI::Tensor<double>>>> Exx
 	m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos );
 //ofs<<"TIME@m_abfslcaos_lcaos.init_radial\t"<<time_during(t_start)<<std::endl;
 
-	std::map<size_t,std::map<size_t,set<double>>> delta_R;
+	std::map<size_t,std::map<size_t,std::set<double>>> delta_R;
 	for( size_t it=0; it!=abfs.size(); ++it )
 		delta_R[it][it] = {0.0};
 //gettimeofday( &t_start, NULL);

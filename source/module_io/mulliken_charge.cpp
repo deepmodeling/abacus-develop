@@ -275,7 +275,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Cha
         }
         else
         {
-            os.open(as.str().c_str(), ios::app);
+            os.open(as.str().c_str(), std::ios::app);
         }
         os << "STEP: " << step << std::endl;
         os << "CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM" << std::endl;

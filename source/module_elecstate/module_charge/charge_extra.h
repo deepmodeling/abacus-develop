@@ -8,8 +8,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #endif
 
-using namespace std;
-
 /**
  * @brief charge extrapolation method
  *
@@ -30,6 +28,7 @@ using namespace std;
  *  \[ \tau(t+dt) = \tau(t) + \alpha_0\ ( \tau(t)    - \tau(t-dt)   )
  *                          + \beta_0\ ( \tau(t-dt) - \tau(t-2 dt) ). \]
  */
+
 class Charge_Extra
 {
     public:

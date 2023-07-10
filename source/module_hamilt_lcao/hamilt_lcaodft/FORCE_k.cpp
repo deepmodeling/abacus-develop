@@ -146,9 +146,9 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                            kv.nks,
                                            pv->nrow,
                                            pv->ncol);
-            ofstream ofs("E_delta_bands.dat");
+            std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-            ofstream ofs1("E_delta.dat");
+            std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
             GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
         }
