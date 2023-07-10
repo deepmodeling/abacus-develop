@@ -108,6 +108,13 @@ TEST_F(SltkAtomArrangeTest, Search)
     ucell->check_dtau();
     Grid_Driver grid_d(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
     ofs.open("test.out");
-    atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in);
+    bool test_only = true;
+    atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in, test_only);
+    EXPECT_EQ(grid_d.getType(0),0);
+    EXPECT_EQ(grid_d.getNatom(0), 1); // adjacent atom is 1
     ofs.close();
+    ifs.open("test.out");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("search neighboring atoms done."));
+    remove("test.out");
 }
