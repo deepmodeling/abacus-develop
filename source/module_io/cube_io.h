@@ -21,27 +21,28 @@ bool read_cube(
     const int& nz,
     double& ef,
     const UnitCell* ucell,
-    int& prenspin);
+    int& prenspin,
+    const bool& warning_flag = true);
 
-	void write_cube(
+void write_cube(
 #ifdef __MPI
-		const int& bz,
-		const int& nbz,
-		const int& nplane,
-		const int& startz_current,
+    const int& bz,
+    const int& nbz,
+    const int& nplane,
+    const int& startz_current,
 #endif
-		const double* data,
-		const int& is,
-		const int& nspin,
-		const int& iter,
-		const std::string& fn,
-		const int& nx,
-		const int& ny,
-		const int& nz,
-		const double& ef,
-		const UnitCell* ucell,
-		const int &precision = 11,
-		const int &out_fermi = 1);//mohan add 2007-10-17
+    const double* data,
+    const int& is,
+    const int& nspin,
+    const int& iter,
+    const std::string& fn,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    const double& ef,
+    const UnitCell* ucell,
+    const int& precision = 11,
+    const int& out_fermi = 1); // mohan add 2007-10-17
 
     /**
      * @brief The trilinear interpolation method

@@ -438,6 +438,7 @@ void Charge_Extra::read_files(
             nz,
             ef,
             ucell,
-            prenspin);
+            prenspin,
+            false);
     }
 }
