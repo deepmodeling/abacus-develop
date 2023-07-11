@@ -146,9 +146,9 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                            kv.nks,
                                            pv->nrow,
                                            pv->ncol);
-            ofstream ofs("E_delta_bands.dat");
+            std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-            ofstream ofs1("E_delta.dat");
+            std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
             GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
         }
@@ -277,7 +277,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
             this->UHM->genH.LM->zeros_HSk('S');
             this->UHM->genH.LM->folding_fixedH(ik, kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
-            ModuleIO::saving_HS(this->UHM->genH.LM->Hloc2.data(),
+            ModuleIO::saving_HS(0,
+                                this->UHM->genH.LM->Hloc2.data(),
                                 this->UHM->genH.LM->Sloc2.data(),
                                 bit,
                                 1,
@@ -729,7 +730,7 @@ void Force_LCAO_k::test(double* mmm, const std::string& name)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
         {
-            if (abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+            if (std::abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
                 std::cout << std::setw(12) << test[i * GlobalV::NLOCAL + j];
             else
                 std::cout << std::setw(12) << "0";

@@ -112,7 +112,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     ucell.a3.y = ucell.latvec.e32;
     ucell.a3.z = ucell.latvec.e33;
 
-    ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
     ucell.GT = ucell.latvec.Inverse();
     ucell.G = ucell.GT.Transpose();
@@ -157,13 +157,13 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < abs(stress(i, i)))
-                stress_ii_max = abs(stress(i, i));
+            if (stress_ii_max < std::abs(stress(i, i)))
+                stress_ii_max = std::abs(stress(i, i));
             for (int j = 0; j < 3; j++)
             {
-                if (Lattice_Change_Basic::largest_grad < abs(stress(i, j)))
+                if (Lattice_Change_Basic::largest_grad < std::abs(stress(i, j)))
                 {
-                    Lattice_Change_Basic::largest_grad = abs(stress(i, j));
+                    Lattice_Change_Basic::largest_grad = std::abs(stress(i, j));
                 }
             }
         }
@@ -172,9 +172,9 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 9; i++)
         {
-            if (Lattice_Change_Basic::largest_grad < abs(grad[i]))
+            if (Lattice_Change_Basic::largest_grad < std::abs(grad[i]))
             {
-                Lattice_Change_Basic::largest_grad = abs(grad[i]);
+                Lattice_Change_Basic::largest_grad = std::abs(grad[i]);
             }
         }
     }

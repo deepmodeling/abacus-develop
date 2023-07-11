@@ -54,7 +54,7 @@ void test_deepks::check_psialpha(void)
 
 void test_deepks::read_dm(void)
 {
-    ifstream ifs("dm");
+    std::ifstream ifs("dm");
     dm.resize(1);
     dm[0].create(GlobalV::NLOCAL, GlobalV::NLOCAL);
 
@@ -72,12 +72,12 @@ void test_deepks::read_dm(void)
 void test_deepks::read_dm_k(const int nks)
 {
 	dm_k.resize(nks);
-	stringstream ss;
+	std::stringstream ss;
 	for(int ik=0;ik<nks;ik++)
 	{
         ss.str("");
         ss<<"dm_"<<ik;
-        ifstream ifs(ss.str().c_str());
+        std::ifstream ifs(ss.str().c_str());
 		dm_k[ik].create(GlobalV::NLOCAL,GlobalV::NLOCAL);
 
 		for (int mu=0;mu<GlobalV::NLOCAL;mu++)
@@ -149,8 +149,8 @@ void test_deepks::check_gdmx(void)
 
 	for(int ia=0;ia<ucell.nat;ia++)
 	{
-		stringstream ss;
-		stringstream ss1;
+		std::stringstream ss;
+		std::stringstream ss1;
 		ss.str("");
         ss<<"gdmx_"<<ia<<".dat";
 		ss1.str("");
@@ -186,8 +186,8 @@ void test_deepks::check_gvx(void)
 
 	for(int ia=0;ia<ucell.nat;ia++)
 	{
-		stringstream ss;
-		stringstream ss1;
+		std::stringstream ss;
+		std::stringstream ss1;
 		ss.str("");
         ss<<"gvx_"<<ia<<".dat";
 		ss1.str("");
@@ -221,7 +221,7 @@ void test_deepks::check_edelta(void)
 	}
 	this->ld.cal_gedm(ucell.nat);
 
-	ofstream ofs("E_delta.dat");
+	std::ofstream ofs("E_delta.dat");
 	ofs << std::setprecision(10) << this->ld.E_delta << std::endl;
 	ofs.close();
 	this->compare_with_ref("E_delta.dat","E_delta_ref.dat");
@@ -250,7 +250,7 @@ void test_deepks::check_e_deltabands(void)
 			ParaO.ncol);
 	}
 
-	ofstream ofs("E_delta_bands.dat");
+	std::ofstream ofs("E_delta_bands.dat");
 	ofs << std::setprecision(10) << this->ld.e_delta_band << std::endl;
 	ofs.close();
 	this->compare_with_ref("E_delta_bands.dat","E_delta_bands_ref.dat");
@@ -321,8 +321,8 @@ void test_deepks::compare_with_ref(
 	const std::string f2)
 {
 	this->total_check+=1;
-	ifstream file1(f1.c_str());
-	ifstream file2(f2.c_str());
+	std::ifstream file1(f1.c_str());
+	std::ifstream file2(f2.c_str());
 	double test_thr=1e-8;
 
 	std::string word1;
@@ -334,7 +334,7 @@ void test_deepks::compare_with_ref(
 		{
 			double num1 = std::stof(word1);
 			double num2 = std::stof(word2);
-			if(abs(num1-num2)>test_thr)
+			if(std::abs(num1-num2)>test_thr)
 			{
 				this->failed_check+=1;
 				std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;

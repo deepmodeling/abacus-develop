@@ -101,9 +101,9 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             GlobalC::ld.check_v_delta(pv->nrow, pv->ncol);
 
             GlobalC::ld.cal_e_delta_band(loc.dm_gamma, pv->trace_loc_row, pv->trace_loc_col, pv->nrow);
-            ofstream ofs("E_delta_bands.dat");
+            std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-            ofstream ofs1("E_delta.dat");
+            std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
             GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
         }
@@ -217,7 +217,8 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
         this->UHM->genH.LM->zeros_HSgamma('S');
         this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
         bool bit = false; // LiuXh, 2017-03-21
-        ModuleIO::saving_HS(this->UHM->genH.LM->Hloc.data(),
+        ModuleIO::saving_HS(0,
+                            this->UHM->genH.LM->Hloc.data(),
                             this->UHM->genH.LM->Sloc.data(),
                             bit,
                             1,
@@ -264,7 +265,7 @@ void Force_LCAO_gamma::test_gamma(double* mm, const std::string& name)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
         {
-            if (abs(mm[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+            if (std::abs(mm[i * GlobalV::NLOCAL + j]) > 1.0e-5)
             {
                 std::cout << std::setw(12) << mm[i * GlobalV::NLOCAL + j];
             }

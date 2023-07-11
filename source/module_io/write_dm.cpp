@@ -107,7 +107,7 @@ void ModuleIO::write_dm(
 		ofs << "\n  " << GlobalV::NLOCAL << " " << GlobalV::NLOCAL << std::endl;
 
 		ofs << std::setprecision(precision);
-		ofs << scientific;
+		ofs << std::scientific;
 
 	}
 

@@ -6,8 +6,6 @@
 #include "module_base/matrix.h"
 #include "module_base/vector3.h"
 
-using namespace std;
-
 class Occupy
 {
 

@@ -7,7 +7,6 @@
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
 
 
-using namespace std;
 
 Pseudopot_upf::Pseudopot_upf()
 {
@@ -57,7 +56,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 {
     ModuleBase::TITLE("Pseudopot_upf","init");
     // First check if this pseudo-potential has spin-orbit information
-    std::ifstream ifs(fn.c_str(), ios::in);
+    std::ifstream ifs(fn.c_str(), std::ios::in);
 
 	// can't find the file.
 	if (!ifs)
@@ -107,7 +106,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 //----------------------------------------------------------
 int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //zws add
 {
-    std::ifstream pptype_ifs(fn.c_str(), ios::in);
+    std::ifstream pptype_ifs(fn.c_str(), std::ios::in);
     std::string dummy;
 	std::string strversion;
 
@@ -166,19 +165,19 @@ int Pseudopot_upf::average_p(const double& lambda)
 	}
 	//ModuleBase::WARNING_QUIT("average_p", "no soc upf used for lspinorb calculation, error!");
 
-	if(!this->has_so || (GlobalV::LSPINORB && abs(lambda_ - 1.0) < 1.0e-8) )
+	if(!this->has_so || (GlobalV::LSPINORB && std::abs(lambda_ - 1.0) < 1.0e-8) )
 	{
 		return error; 
 	}
 
-	//if(abs(lambda_)<1.0e-8)
+	//if(std::abs(lambda_)<1.0e-8)
 	if(!GlobalV::LSPINORB)
 	{
 		int new_nbeta = 0; //calculate the new nbeta
 		for(int nb=0; nb< this->nbeta; nb++)
 		{
 			new_nbeta++;
-			if(this->lll[nb] != 0 && abs(this->jjj[nb] - this->lll[nb] - 0.5) < 1e-6) //two J = l +- 0.5 average to one
+			if(this->lll[nb] != 0 && std::abs(this->jjj[nb] - this->lll[nb] - 0.5) < 1e-6) //two J = l +- 0.5 average to one
 			{
 				new_nbeta--;
 			}
@@ -196,12 +195,12 @@ int Pseudopot_upf::average_p(const double& lambda)
 			int ind=0, ind1=0;
 			if(l != 0)
 			{
-				if(abs(this->jjj[old_nbeta] - this->lll[old_nbeta] + 0.5) < 1e-6)
+				if(std::abs(this->jjj[old_nbeta] - this->lll[old_nbeta] + 0.5) < 1e-6)
 				{
-					if(abs(this->jjj[old_nbeta+1]-this->lll[old_nbeta+1]-0.5)>1e-6) 
+					if(std::abs(this->jjj[old_nbeta+1]-this->lll[old_nbeta+1]-0.5)>1e-6) 
 					{
 						error = 1;
-						std::cout<<"warning_quit! error beta function 1 !" <<endl;
+						std::cout<<"warning_quit! error beta function 1 !" <<std::endl;
 						return error;
 					}
 					ind = old_nbeta +1;
@@ -209,10 +208,10 @@ int Pseudopot_upf::average_p(const double& lambda)
 				}
 				else
 				{
-					if(abs(this->jjj[old_nbeta+1]-this->lll[old_nbeta+1]+0.5)>1e-6)
+					if(std::abs(this->jjj[old_nbeta+1]-this->lll[old_nbeta+1]+0.5)>1e-6)
 					{
 						error = 1;
-						std::cout<<"warning_quit! error beta function 2 !" <<endl;
+						std::cout<<"warning_quit! error beta function 2 !" <<std::endl;
 						return error;
 					}
 					ind = old_nbeta;
@@ -261,7 +260,7 @@ int Pseudopot_upf::average_p(const double& lambda)
 		for(int nb=0; nb<this->nwfc; nb++)
 		{
 			new_nwfc++;
-			if(this->lchi[nb] != 0 && abs(this->jchi[nb] - this->lchi[nb] - 0.5)<1e-6)
+			if(this->lchi[nb] != 0 && std::abs(this->jchi[nb] - this->lchi[nb] - 0.5)<1e-6)
 			{
 				new_nwfc--;
 			}
@@ -276,18 +275,18 @@ int Pseudopot_upf::average_p(const double& lambda)
 			int ind=0, ind1=0;
 			if(l!=0)
 			{
-				if(abs(this->jchi[old_nwfc] - this->lchi[old_nwfc] + 0.5) < 1e-6)
+				if(std::abs(this->jchi[old_nwfc] - this->lchi[old_nwfc] + 0.5) < 1e-6)
 				{
-					if(abs(this->jchi[old_nwfc+1]-this->lchi[old_nwfc+1]-0.5)>1e-6) 
-					{error++; std::cout<<"warning_quit! error chi function 1 !"<<endl; return error;}
+					if(std::abs(this->jchi[old_nwfc+1]-this->lchi[old_nwfc+1]-0.5)>1e-6) 
+					{error++; std::cout<<"warning_quit! error chi function 1 !"<<std::endl; return error;}
 	//					ModuleBase::WARNING_QUIT("average_p", "error chi function 1 !");
 					ind = old_nwfc +1;
 					ind1 = old_nwfc;
 				}
 				else
 				{
-					if(abs(this->jchi[old_nwfc+1]-this->lchi[old_nwfc+1]+0.5)>1e-6)
-					{error++; std::cout<<"warning_quit! error chi function 2 !"<<endl; return error;}
+					if(std::abs(this->jchi[old_nwfc+1]-this->lchi[old_nwfc+1]+0.5)>1e-6)
+					{error++; std::cout<<"warning_quit! error chi function 2 !"<<std::endl; return error;}
 	//					ModuleBase::WARNING_QUIT("average_p", "error chi function 2 !");
 					ind = old_nwfc;
 					ind1 = old_nwfc +1;
@@ -317,12 +316,12 @@ int Pseudopot_upf::average_p(const double& lambda)
 			int ind=0, ind1=0;
 			if(l != 0)
 			{
-				if(abs(this->jjj[nb] - this->lll[nb] + 0.5) < 1e-6)
+				if(std::abs(this->jjj[nb] - this->lll[nb] + 0.5) < 1e-6)
 				{
-					if(abs(this->jjj[nb+1]-this->lll[nb+1]-0.5)>1e-6) 
+					if(std::abs(this->jjj[nb+1]-this->lll[nb+1]-0.5)>1e-6) 
 					{
 						error = 1;
-						std::cout<<"warning_quit! error beta function 1 !" <<endl;
+						std::cout<<"warning_quit! error beta function 1 !" <<std::endl;
 						return error;
 					}
 					ind = nb +1;
@@ -330,17 +329,17 @@ int Pseudopot_upf::average_p(const double& lambda)
 				}
 				else
 				{
-					if(abs(this->jjj[nb+1]-this->lll[nb+1]+0.5)>1e-6)
+					if(std::abs(this->jjj[nb+1]-this->lll[nb+1]+0.5)>1e-6)
 					{
 						error = 1;
-						std::cout<<"warning_quit! error beta function 2 !" <<endl;
+						std::cout<<"warning_quit! error beta function 2 !" <<std::endl;
 						return error;
 					}
 					ind = nb;
 					ind1 = nb +1;
 				}
 				double vion1 = ((l+1.0) * this->dion(ind,ind) + l * this->dion(ind1,ind1)) / (2.0*l+1.0);
-				if(abs(vion1)<1.0e-10) vion1 = 0.1;
+				if(std::abs(vion1)<1.0e-10) vion1 = 0.1;
 				//average beta (betar)
 				const double sqrtDplus = sqrt(std::abs(this->dion(ind,ind) / vion1));
 				const double sqrtDminus = sqrt(std::abs(this->dion(ind1,ind1) / vion1));
@@ -371,17 +370,17 @@ int Pseudopot_upf::average_p(const double& lambda)
 			int ind=0, ind1=0;
 			if(l!=0)
 			{
-				if(abs(this->jchi[nb] - this->lchi[nb] + 0.5) < 1e-6)
+				if(std::abs(this->jchi[nb] - this->lchi[nb] + 0.5) < 1e-6)
 				{
-					if(abs(this->jchi[nb+1]-this->lchi[nb+1]-0.5)>1e-6) 
-					{error++; std::cout<<"warning_quit! error chi function 1 !"<<endl; return error;}
+					if(std::abs(this->jchi[nb+1]-this->lchi[nb+1]-0.5)>1e-6) 
+					{error++; std::cout<<"warning_quit! error chi function 1 !"<<std::endl; return error;}
 					ind = nb +1;
 					ind1 = nb;
 				}
 				else
 				{
-					if(abs(this->jchi[nb+1]-this->lchi[nb+1]+0.5)>1e-6)
-					{error++; std::cout<<"warning_quit! error chi function 2 !"<<endl; return error;}
+					if(std::abs(this->jchi[nb+1]-this->lchi[nb+1]+0.5)>1e-6)
+					{error++; std::cout<<"warning_quit! error chi function 2 !"<<std::endl; return error;}
 					ind = nb;
 					ind1 = nb +1;
 				}

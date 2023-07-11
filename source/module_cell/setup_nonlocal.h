@@ -37,7 +37,7 @@ class InfoNonlocal
 			const int& kmesh,
 			const double& dk,
 			const double& dr_uniform,
-			const string& nonlocalFile);
+			const std::string& nonlocalFile);
 		//workflow to setup nonlocal part for LCAO
 		void setupNonlocal(
 			const int& ntype,

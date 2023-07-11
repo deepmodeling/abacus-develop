@@ -24,6 +24,11 @@ class AtomicRadials : public RadialSet
 {
   public:
     AtomicRadials() {}
+    AtomicRadials(const AtomicRadials& other) : RadialSet(other), orb_ecut_(other.orb_ecut_) {}
+
+    AtomicRadials& operator=(const AtomicRadials& rhs);
+    AtomicRadials* clone() const { return new AtomicRadials(*this); } // covariant return type
+
     ~AtomicRadials() {} // ~RadialSet() is called automatically
 
     //! Build the class from an orbital file

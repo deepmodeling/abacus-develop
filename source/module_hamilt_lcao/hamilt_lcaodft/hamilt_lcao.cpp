@@ -84,7 +84,7 @@ HamiltLCAO<T>::HamiltLCAO(
     // in general case, target HR is Gint::pvpR_grid, while target HK is LCAO_Matrix::Hloc
     if(GlobalV::VL_IN_H)
     {
-        std::vector<string> pot_register_in;
+        std::vector<std::string> pot_register_in;
         if (GlobalV::VION_IN_H)
         {
             pot_register_in.push_back("local");

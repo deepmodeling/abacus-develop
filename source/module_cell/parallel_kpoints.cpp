@@ -299,7 +299,7 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
 #else
     // data transfer ends.
     const int begin = ik * dim2 * dim3 * dim4;
-    complex<double> * p = &w.ptr[begin];
+    std::complex<double> * p = &w.ptr[begin];
     for (int i=0; i<dim; i++)
     {
         value[i] = *p;

@@ -15,7 +15,7 @@ TEST(Tensor, Constructor) {
     // Test constructor with specified device type
     container::Tensor t2(container::DataType::DT_DOUBLE, container::DeviceType::GpuDevice, container::TensorShape({3, 4}));
     EXPECT_EQ(t2.data_type(), container::DataType::DT_DOUBLE);
-    EXPECT_EQ(t2.device_type(), container::DeviceType::CpuDevice);
+    EXPECT_EQ(t2.device_type(), container::DeviceType::GpuDevice);
     EXPECT_EQ(t2.shape().dims(), std::vector<int>({3, 4}));
     EXPECT_EQ(t2.NumElements(), 12);
 #endif

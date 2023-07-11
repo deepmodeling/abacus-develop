@@ -588,8 +588,8 @@ namespace Gint_Tools
 							{
 								delete[] dpsi[i][j];
 							}
-							delete dpsi[i];
-						}
+                            delete[] dpsi[i];
+                        }
 						delete[] dpsi;
 
 						delete[] dr1;

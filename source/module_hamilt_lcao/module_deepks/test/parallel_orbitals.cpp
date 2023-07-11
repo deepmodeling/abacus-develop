@@ -15,7 +15,7 @@ namespace Test_Deepks
         delete[] trace_loc_col;
     }
 
-    void Parallel_Orbitals::set_trace(void)
+    void Parallel_Orbitals::set_global2local(void)
     {
         ModuleBase::TITLE("Parallel_Orbitals","set_trace");
         assert(GlobalV::NLOCAL>0);

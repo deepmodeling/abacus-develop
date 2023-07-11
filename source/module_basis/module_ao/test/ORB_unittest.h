@@ -14,8 +14,6 @@
 #include <map>
 #include <set>
 
-using namespace std;
-
 class test_orb : public testing::Test
 {
 protected:
@@ -70,8 +68,8 @@ public:
 
 	int lmax=1;
 	double lat0 = 1.0;
-	string case_dir = "./GaAs/";
-    string *orbital_fn;
-    string descriptor_file;
+	std::string case_dir = "./GaAs/";
+    std::string *orbital_fn;
+    std::string descriptor_file;
 };
 #endif

@@ -43,11 +43,11 @@ UnitCell::UnitCell()
     tpiba2 = 0.0;
     omega = 0.0;
 
-    atom_label = new string[1];
+    atom_label = new std::string[1];
     atom_mass = nullptr;
-    pseudo_fn = new string[1];
-    pseudo_type = new string[1];
-    orbital_fn = new string[1];
+    pseudo_fn = new std::string[1];
+    pseudo_type = new std::string[1];
+    orbital_fn = new std::string[1];
 
     atoms = new Atom[ntype];
     set_atom_flag = true;

@@ -107,9 +107,9 @@ private:
     ModuleBase::Opt_CG *opt_cg_mag = NULL; // for spin2 case, under testing
 
     // from Input
-    string of_kinetic = "wt";   // Kinetic energy functional, such as TF, VW, WT
-    string of_method = "tn";    // optimization method, include cg1, cg2, tn (default), bfgs
-    string of_conv = "energy";  // select the convergence criterion, potential, energy (default), or both
+    std::string of_kinetic = "wt";   // Kinetic energy functional, such as TF, VW, WT
+    std::string of_method = "tn";    // optimization method, include cg1, cg2, tn (default), bfgs
+    std::string of_conv = "energy";  // select the convergence criterion, potential, energy (default), or both
     double of_tole = 2e-6;      // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
     double of_tolp = 1e-5;      // tolerance of potential for determining the convergence, default=1e-5 in a.u.
     int maxIter = 50;           // scf_nmax
@@ -157,7 +157,7 @@ private:
     void updateRho();
     bool checkExit();
     void printInfo();
-    void afterOpt();
+    void afterOpt(const int istep);
 
     // tools
     void calV(double *ptempPhi, double *rdLdphi);

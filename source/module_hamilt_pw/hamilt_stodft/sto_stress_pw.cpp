@@ -76,9 +76,9 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
 	if(GlobalV::TEST_STRESS) 
 	{               
-		GlobalV::ofs_running << "\n PARTS OF STRESS: " << endl;
-		GlobalV::ofs_running << setiosflags(ios::showpos);
-		GlobalV::ofs_running << setiosflags(ios::fixed) << setprecision(10) << endl;
+		GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
+		GlobalV::ofs_running << setiosflags(std::ios::showpos);
+		GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
 		this->print_stress("KINETIC    STRESS",sigmakin,GlobalV::TEST_STRESS,ry);
 		this->print_stress("LOCAL    STRESS",sigmaloc,GlobalV::TEST_STRESS,ry);
 		this->print_stress("HARTREE    STRESS",sigmahar,GlobalV::TEST_STRESS,ry);

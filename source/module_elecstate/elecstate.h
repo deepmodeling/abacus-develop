@@ -79,11 +79,11 @@ class ElecState
     //calculate nbands and 
     void cal_nbands();
 
-    virtual void print_psi(const psi::Psi<double>& psi_in)
+    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {
         return;
     }
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in)
+    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1)
     {
         return;
     }

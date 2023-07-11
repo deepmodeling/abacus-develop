@@ -411,7 +411,7 @@ void LCAO_Deepks::check_f_delta(const int nat, ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_F_delta");
 
-    ofstream ofs("F_delta.dat");
+    std::ofstream ofs("F_delta.dat");
     ofs<<std::setprecision(10);
 
     for (int iat=0; iat<nat; iat++)
@@ -419,7 +419,7 @@ void LCAO_Deepks::check_f_delta(const int nat, ModuleBase::matrix& svnl_dalpha)
         ofs << F_delta(iat,0) << " " << F_delta(iat,1) << " " << F_delta(iat,2) << std::endl;
     }
 
-    ofstream ofs1("stress_delta.dat");
+    std::ofstream ofs1("stress_delta.dat");
     ofs1<<std::setprecision(10);
     for (int ipol=0; ipol<3; ipol++)
     {

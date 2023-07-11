@@ -11,7 +11,7 @@ void surchem::cal_epsilon(const ModulePW::PW_Basis* rho_basis,
     double *shapefunc = new double[rho_basis->nrxx];
     for (int i = 0; i < rho_basis->nrxx; i++)
     {
-        shapefunc[i] = erfc((log(max(PS_TOTN_real[i], 1e-10) / GlobalV::nc_k)) / sqrt(2.0) / GlobalV::sigma_k) / 2;
+        shapefunc[i] = erfc((log(std::max(PS_TOTN_real[i], 1e-10) / GlobalV::nc_k)) / sqrt(2.0) / GlobalV::sigma_k) / 2;
         epsilon[i] = 1 + (GlobalV::eb_k - 1) * shapefunc[i];
         epsilon0[i] = 1.0;
     }

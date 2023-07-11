@@ -9,8 +9,6 @@
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
 
-using namespace std;
-
 class Input
 {
   public:
@@ -58,7 +56,7 @@ class Input
       -1, no symmetry at all; 
       0, only basic time reversal would be considered; 
       1, point group symmetry would be considered*/
-    string symmetry; 
+    std::string symmetry; 
     double symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
     int kpar; // ecch pool is for one k point
 
@@ -485,7 +483,7 @@ class Input
 
     bool deepks_out_unittest; // if set 1, prints intermediate quantities that shall be used for making unit test
 
-    string deepks_model; // needed when deepks_scf=1
+    std::string deepks_model; // needed when deepks_scf=1
 
     //==========================================================
     //    implicit solvation model       Menglin Sun added on 2022-04-04
@@ -499,9 +497,9 @@ class Input
     //==========================================================
     // OFDFT  sunliang added on 2022-05-05
     //==========================================================
-    string of_kinetic; // Kinetic energy functional, such as TF, VW, WT, TF+
-    string of_method;  // optimization method, include cg1, cg2, tn (default), bfgs
-    string of_conv;    // select the convergence criterion, potential, energy (default), or both
+    std::string of_kinetic; // Kinetic energy functional, such as TF, VW, WT, TF+
+    std::string of_method;  // optimization method, include cg1, cg2, tn (default), bfgs
+    std::string of_conv;    // select the convergence criterion, potential, energy (default), or both
     double of_tole;    // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
     double of_tolp;    // tolerance of potential for determining the convergence, default=1e-5 in a.u.
     double of_tf_weight;  // weight of TF KEDF
@@ -514,7 +512,7 @@ class Input
     bool of_full_pw;    // If set to 1, ecut will be ignored while collecting planewaves, so that all planewaves will be used.
     int of_full_pw_dim; // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
     bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
-    string of_kernel_file; // The name of WT kernel file.
+    std::string of_kernel_file; // The name of WT kernel file.
 
     //==========================================================
     // spherical bessel  Peize Lin added on 2022-12-15
@@ -523,14 +521,14 @@ class Input
 		//int		bessel_nao_lmax;		// lmax used in descriptor
 	bool	bessel_nao_smooth;		// spherical bessel smooth or not
 	double	bessel_nao_sigma;		// spherical bessel smearing_sigma
-	string	bessel_nao_ecut;		// energy cutoff for spherical bessel functions(Ry)
+	std::string	bessel_nao_ecut;		// energy cutoff for spherical bessel functions(Ry)
 	double	bessel_nao_rcut;		// radial cutoff for spherical bessel functions(a.u.)
 	double	bessel_nao_tolerence;	// tolerence for spherical bessel root
     // the following are used when generating jle.orb
 	int		bessel_descriptor_lmax;			// lmax used in descriptor
 	bool	bessel_descriptor_smooth;		// spherical bessel smooth or not
 	double	bessel_descriptor_sigma;		// spherical bessel smearing_sigma
-	string	bessel_descriptor_ecut;			// energy cutoff for spherical bessel functions(Ry)
+	std::string	bessel_descriptor_ecut;			// energy cutoff for spherical bessel functions(Ry)
 	double	bessel_descriptor_rcut;			// radial cutoff for spherical bessel functions(a.u.)
 	double	bessel_descriptor_tolerence;	// tolerence for spherical bessel root
 

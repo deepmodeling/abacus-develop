@@ -223,13 +223,13 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	{
 		for (int j = 0;j < ucell.atoms[i].na;j++)
 		{
-			dminX = min( dminX, ucell.atoms[i].taud[j].x );
-			dminY = min( dminY, ucell.atoms[i].taud[j].y );
-			dminZ = min( dminZ, ucell.atoms[i].taud[j].z );
+			dminX = std::min( dminX, ucell.atoms[i].taud[j].x );
+			dminY = std::min( dminY, ucell.atoms[i].taud[j].y );
+			dminZ = std::min( dminZ, ucell.atoms[i].taud[j].z );
 
-			dmaxX = max( dmaxX, ucell.atoms[i].taud[j].x );
-			dmaxY = max( dmaxY, ucell.atoms[i].taud[j].y );
-			dmaxZ = max( dmaxZ, ucell.atoms[i].taud[j].z );
+			dmaxX = std::max( dmaxX, ucell.atoms[i].taud[j].x );
+			dmaxY = std::max( dmaxY, ucell.atoms[i].taud[j].y );
+			dmaxZ = std::max( dmaxZ, ucell.atoms[i].taud[j].z );
 		}
 	}
 

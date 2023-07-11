@@ -54,7 +54,7 @@ void Verlet::apply_thermostat()
     else if (mdp.md_thermostat == "rescaling")
     {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, mdp.md_tfirst, mdp.md_tlast);
-        if (abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
+        if (std::abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
         {
             thermalize(0, t_current, t_target);
         }

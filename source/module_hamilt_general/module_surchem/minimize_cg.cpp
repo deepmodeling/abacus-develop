@@ -99,7 +99,7 @@ void surchem::minimize_cg(const UnitCell& ucell,
     {
         if (sqrt(r2) > 1e6)
         {
-            cout << "CG ERROR!!!" << endl;
+            std::cout << "CG ERROR!!!" << std::endl;
             break;
         }
 

@@ -421,7 +421,7 @@ void Exx_Lip::judge_singularity( int ik)
 	}
 	else if(GlobalV::init_chg=="file")
 	{
-		double min_q_minus_k(numeric_limits<double>::max());
+		double min_q_minus_k(std::numeric_limits<double>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->nks; ++iq)
 		{
 			const double q_minus_k ( (q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik]).norm2() );
@@ -442,7 +442,7 @@ void Exx_Lip::qkg2_exp(int ik, int iq)
 		const double qkg2 = ( (q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik] + rho_basis->gcar[ig]) *(ModuleBase::TWO_PI/ucell_ptr->lat0)).norm2();
 		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 		{
-			if( abs(qkg2)<1e-10 )
+			if( std::abs(qkg2)<1e-10 )
 				recip_qkg2[ig] = 0.0;												// 0 to ignore bb/qkg2 when qkg2==0
 			else
 				recip_qkg2[ig] = 1.0/qkg2;
@@ -451,7 +451,7 @@ void Exx_Lip::qkg2_exp(int ik, int iq)
 		}
 		else if( Conv_Coulomb_Pot_K::Ccp_Type::Hse==info.ccp_type )
 		{
-			if( abs(qkg2)<1e-10 )
+			if( std::abs(qkg2)<1e-10 )
 				recip_qkg2[ig] = 1.0/(2*info.hse_omega);
 			else
 				recip_qkg2[ig] = sqrt( (1-exp(-qkg2/(4*info.hse_omega*info.hse_omega))) /qkg2);

@@ -122,7 +122,7 @@ void construct_ucell(stru_ &stru, UnitCell &ucell)
         }
     }
 
-    ucell.omega = abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
     ucell.itia2iat.create(ucell.ntype, nmax);
 	int iat=0;
 	for(int it = 0;it < ucell.ntype;it++)
@@ -179,7 +179,7 @@ class vdwd2Test: public testing::Test
 
 TEST_F(vdwd2Test, D2Default)
 {
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
 
     vdwd2_test->parameter().initial_parameters(input);
     vdwd2_test->parameter().initset(ucell);
@@ -227,7 +227,7 @@ TEST_F(vdwd2Test, D2ReadFile)
 {
     input.vdw_C6_file = "c6.txt";
     input.vdw_R0_file = "r0.txt";
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
     
     vdwd2_test->parameter().initial_parameters(input);
     double Si_C6 = 9.13*1e6 / (ModuleBase::ELECTRONVOLT_SI * ModuleBase::NA) / pow(ModuleBase::BOHR_TO_A, 6)/ ModuleBase::Ry_to_eV;
@@ -239,7 +239,7 @@ TEST_F(vdwd2Test, D2ReadFileError)
 {
     input.vdw_C6_file = "c6_wrong.txt";
     input.vdw_R0_file = "r0_wrong.txt";
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
     
     testing::internal::CaptureStdout();
     EXPECT_EXIT(vdwd2_test->parameter().C6_input(input.vdw_C6_file, input.vdw_C6_unit), ::testing::ExitedWithCode(0), "");
@@ -250,7 +250,7 @@ TEST_F(vdwd2Test, D2ReadFileError)
 TEST_F(vdwd2Test, D2c6UniteVA6)
 {
     input.vdw_C6_unit = "eVA6";
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
 
     vdwd2_test->parameter().initial_parameters(input);
     double Si_C6 = 9.23 / pow(ModuleBase::BOHR_TO_A, 6) * ModuleBase::Ry_to_eV;
@@ -260,7 +260,7 @@ TEST_F(vdwd2Test, D2c6UniteVA6)
 TEST_F(vdwd2Test, D2r0UnitBohr)
 {
     input.vdw_R0_unit = "Bohr";
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
 
     vdwd2_test->parameter().initial_parameters(input);
     EXPECT_EQ(vdwd2_test->parameter().R0_["Si"], 1.716);
@@ -270,7 +270,7 @@ TEST_F(vdwd2Test, D2WrongUnit)
 {
     input.vdw_R0_unit = "B";
     input.vdw_C6_unit = "eV";
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(vdwd2_test->parameter().C6_input(input.vdw_C6_file, input.vdw_C6_unit), ::testing::ExitedWithCode(0), "");
@@ -283,7 +283,7 @@ TEST_F(vdwd2Test, D2RadiusUnitAngstrom)
     input.vdw_cutoff_radius = "56.6918";
     input.vdw_radius_unit = "Angstrom";
     
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
     vdwd2_test->parameter().initial_parameters(input);
     EXPECT_EQ(vdwd2_test->parameter().radius_, 56.6918/ModuleBase::BOHR_TO_A);
 }
@@ -293,14 +293,14 @@ TEST_F(vdwd2Test, D2CutoffTypePeriod)
     input.vdw_cutoff_type = "period";
     input.vdw_cutoff_period = {3,3,3};
     
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
     vdwd2_test->parameter().initial_parameters(input);
     EXPECT_EQ(vdwd2_test->parameter().period(), input.vdw_cutoff_period);
 }
 
 TEST_F(vdwd2Test, D2R0ZeroQuit)
 {   
-    std::unique_ptr<vdw::Vdwd2> vdwd2_test = make_unique<vdw::Vdwd2>(ucell);
+    std::unique_ptr<vdw::Vdwd2> vdwd2_test = std::make_unique<vdw::Vdwd2>(ucell);
     vdwd2_test->parameter().initial_parameters(input);
     vdwd2_test->parameter().R0_["Si"] = 0.0;
     
@@ -381,7 +381,7 @@ class vdwd3Test: public testing::Test
 
 TEST_F(vdwd3Test, D30Default)
 {
-    std::unique_ptr<vdw::Vdwd3> vdwd3_test = make_unique<vdw::Vdwd3>(ucell);
+    std::unique_ptr<vdw::Vdwd3> vdwd3_test = std::make_unique<vdw::Vdwd3>(ucell);
 
     vdwd3_test->parameter().initial_parameters(input);
 
@@ -400,7 +400,7 @@ TEST_F(vdwd3Test, D30UnitA)
 {
     input.vdw_radius_unit = "A";
     input.vdw_cn_thr_unit = "A";
-    std::unique_ptr<vdw::Vdwd3> vdwd3_test = make_unique<vdw::Vdwd3>(ucell);
+    std::unique_ptr<vdw::Vdwd3> vdwd3_test = std::make_unique<vdw::Vdwd3>(ucell);
 
     vdwd3_test->parameter().initial_parameters(input);
 
@@ -411,7 +411,7 @@ TEST_F(vdwd3Test, D30UnitA)
 TEST_F(vdwd3Test, D30Period)
 {
     input.vdw_cutoff_type = "period";
-    std::unique_ptr<vdw::Vdwd3> vdwd3_test = make_unique<vdw::Vdwd3>(ucell);
+    std::unique_ptr<vdw::Vdwd3> vdwd3_test = std::make_unique<vdw::Vdwd3>(ucell);
 
     vdwd3_test->parameter().initial_parameters(input);
     vdwd3_test->init();

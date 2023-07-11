@@ -29,14 +29,14 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const int nche_KG, const double fwhmin, c
     //-----------------------------------------------------------
     //               KS conductivity
     //-----------------------------------------------------------
-    cout << "Calculating conductivity..." << endl;
+    std::cout << "Calculating conductivity..." << std::endl;
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
     double dt = dt_in; // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     int nt = ceil(sqrt(20) / sigma / dt);
-    cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << endl;
-    cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << endl;
+    std::cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << std::endl;
+    std::cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << std::endl;
     assert(nw >= 1);
     assert(nt >= 1);
     const int nk = this->kv.nks;
@@ -85,8 +85,8 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     const int reducenb2 = (nbands - 1) * nbands / 2;
     bool gamma_only = false; //ABACUS do not support gamma_only yet.
     std::complex<double> *levc = &(this->psi[0](ik, 0, 0));
-    complex<double> *prevc = new complex<double>[3 * npwx * nbands];
-    complex<double> *pij = new complex<double>[nbands * nbands];
+    std::complex<double> *prevc = new std::complex<double>[3 * npwx * nbands];
+    std::complex<double> *pij = new std::complex<double>[nbands * nbands];
     double *pij2 = new double[reducenb2];
     ModuleBase::GlobalFunc::ZEROS(pij2, reducenb2);
     // px|right>
@@ -124,7 +124,7 @@ void ESolver_KS_PW<FPTYPE, Device>:: jjcorr_ks(const int ik, const int nt, const
     {
         int nkstot = this->kv.nkstot;
         int ikglobal = this->kv.getik_global(ik);
-        stringstream ss;
+        std::stringstream ss;
         ss<<GlobalV::global_out_dir<<"vmatrix"<<ikglobal+1<<".dat";
         Binstream binpij(ss.str(), "w");
         binpij<<8*reducenb2;
@@ -189,13 +189,13 @@ void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
-    ofstream ofscond("je-je.txt");
-    ofscond << setw(8) << "#t(a.u.)" << setw(15) << "c11(t)" << setw(15) << "c12(t)" << setw(15) << "c22(t)" << setw(15)
-            << "decay" << endl;
+    std::ofstream ofscond("je-je.txt");
+    ofscond << std::setw(8) << "#t(a.u.)" << std::setw(15) << "c11(t)" << std::setw(15) << "c12(t)" << std::setw(15) << "c22(t)" << std::setw(15)
+            << "decay" << std::endl;
     for (int it = 0; it < nt; ++it)
     {
-        ofscond << setw(8) << (it)*dt << setw(15) << -2 * ct11[it] << setw(15) << -2 * ct12[it] << setw(15)
-                << -2 * ct22[it] << setw(15) << exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) << endl;
+        ofscond << std::setw(8) << (it)*dt << std::setw(15) << -2 * ct11[it] << std::setw(15) << -2 * ct12[it] << std::setw(15)
+                << -2 * ct22[it] << std::setw(15) << exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) << std::endl;
     }
     ofscond.close();
     double *cw11 = new double[nw];
@@ -218,8 +218,8 @@ void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
         }
     }
     ofscond.open("Onsager.txt");
-    ofscond << setw(8) << "## w(eV) " << setw(20) << "sigma(Sm^-1)" << setw(20) << "kappa(W(mK)^-1)" << setw(20)
-            << "L12/e(Am^-1)" << setw(20) << "L22/e^2(Wm^-1)" << endl;
+    ofscond << std::setw(8) << "## w(eV) " << std::setw(20) << "sigma(Sm^-1)" << std::setw(20) << "kappa(W(mK)^-1)" << std::setw(20)
+            << "L12/e(Am^-1)" << std::setw(20) << "L22/e^2(Wm^-1)" << std::endl;
     for (int iw = 0; iw < nw; ++iw)
     {
         cw11[iw] *= double(2) / ndim / GlobalC::ucell.omega * factor; // unit in Sm^-1
@@ -229,12 +229,12 @@ void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
                     * pow(2.17987092759e-18 / 1.6021766208e-19, 2); // unit in Wm^-1
         kappa[iw] = (cw22[iw] - pow(cw12[iw], 2) / cw11[iw]) / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV
                     / 11604.518026;
-        ofscond << setw(8) << (iw + 0.5) * dw * ModuleBase::Ry_to_eV << setw(20) << cw11[iw] << setw(20) << kappa[iw]
-                << setw(20) << cw12[iw] << setw(20) << cw22[iw] << endl;
+        ofscond << std::setw(8) << (iw + 0.5) * dw * ModuleBase::Ry_to_eV << std::setw(20) << cw11[iw] << std::setw(20) << kappa[iw]
+                << std::setw(20) << cw12[iw] << std::setw(20) << cw22[iw] << std::endl;
     }
-    cout << setprecision(6) << "DC electrical conductivity: " << cw11[0] - (cw11[1] - cw11[0]) * 0.5 << " Sm^-1"
-         << endl;
-    cout << setprecision(6) << "Thermal conductivity: " << kappa[0] - (kappa[1] - kappa[0]) * 0.5 << " W(mK)^-1" << endl;
+    std::cout << std::setprecision(6) << "DC electrical conductivity: " << cw11[0] - (cw11[1] - cw11[0]) * 0.5 << " Sm^-1"
+         << std::endl;
+    std::cout << std::setprecision(6) << "Thermal conductivity: " << kappa[0] - (kappa[1] - kappa[0]) * 0.5 << " W(mK)^-1" << std::endl;
     ;
     ofscond.close();
 
