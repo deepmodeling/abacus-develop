@@ -51,11 +51,13 @@ void Paw_Element::read_paw_xml(std::string filename)
     this->reset_buffer(ifs);
 
     lstate.resize(nstates);
+    lmax = 0;
     for(int istate = 0; istate < nstates; istate ++)
     {
         line = this->scan_file(ifs, "<state");
 
         this->lstate[istate] = this->extract_int(line,"l=");
+        lmax = std::max(lmax, lstate[istate]);
     }
 
     this->nstates_to_mstates();
@@ -116,15 +118,8 @@ void Paw_Element::read_paw_xml(std::string filename)
 
         for(int ir = 0; ir < nr; ir ++)
         {
+            // Note that in ABINIT, tproj stores r*p(r), not p(r) as in here
             ifs >> ptilde_r[istate][ir];
-
-            // Note : for some reason what is stored in the xml file
-            // turns out to be ptilde / r, so I need to multiply it back
-            // see, for example, around line 3400 of m_pawpsp.F90 in ABINIT
-            // which reads:
-            //   tproj(1+shft:tproj_mesh%mesh_size,ib)=paw_setuploc%projector_function(ib)%data(1:tproj_mesh%mesh_size-shft)&
-            //         &   *tproj_mesh%rad(1+shft:tproj_mesh%mesh_size)
-            ptilde_r[istate][ir] *= rr[ir];
         }
     }
 
