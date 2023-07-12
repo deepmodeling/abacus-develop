@@ -2044,7 +2044,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
     ModuleBase::matrix check_zeros =s3.to_matrix() * b -h;
     for (int i=0;i<3;++i)
         for(int j=0;j<3;++j)
-            assert(equal(check_zeros(i, j), 0));
+            assert(near_equal(check_zeros(i, j), 0));
     return;
 }
 }
