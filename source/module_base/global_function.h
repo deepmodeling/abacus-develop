@@ -147,7 +147,8 @@ template <class T>
 static void READ_VALUE(std::ifstream &ifs, T &v)
 {
     ifs >> v;
-    ifs.ignore(150, '\n');
+    std::string line;
+    getline(ifs, line);
     return;
 }
 

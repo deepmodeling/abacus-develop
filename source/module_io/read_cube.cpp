@@ -14,7 +14,8 @@ bool ModuleIO::read_cube(
     const int& nz,
     double& ef,
     const UnitCell* ucell,
-    int& prenspin)
+    int& prenspin,
+    const bool& warning_flag)
 {
     ModuleBase::TITLE("ModuleIO","read_cube");
     std::ifstream ifs(fn.c_str());
@@ -56,31 +57,50 @@ bool ModuleIO::read_cube(
     int ny_read = 0;
     int nz_read = 0;
     double fac = ucell->lat0;
-    ifs >> nx_read;
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e11 / double(nx), quit);
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e12 / double(nx), quit);
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e13 / double(nx), quit);
-    ifs >> ny_read;
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e21 / double(ny), quit);
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e22 / double(ny), quit);
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e23 / double(ny), quit);
-    ifs >> nz_read;
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e31 / double(nz), quit);
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e32 / double(nz), quit);
-    ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e33 / double(nz), quit);
+    std::string temp;
+    if (warning_flag)
+    {
+        ifs >> nx_read;
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e11 / double(nx), quit);
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e12 / double(nx), quit);
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e13 / double(nx), quit);
+        ifs >> ny_read;
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e21 / double(ny), quit);
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e22 / double(ny), quit);
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e23 / double(ny), quit);
+        ifs >> nz_read;
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e31 / double(nz), quit);
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e32 / double(nz), quit);
+        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e33 / double(nz), quit);
+    }
+    else
+    {
+        ifs >> nx_read;
+        ifs >> temp >> temp >> temp;
+        ifs >> ny_read;
+        ifs >> temp >> temp >> temp;
+        ifs >> nz_read;
+        ifs >> temp >> temp >> temp;
+    }
 
     const bool same = (nx == nx_read && ny == ny_read && nz == nz_read) ? true : false;
 
-    int temp = 0;
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
         {
             ifs >> temp; // skip atomic number
             ifs >> temp; // skip Z valance
-            ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].x, quit);
-            ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].y, quit);
-            ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].z, quit);
+            if (warning_flag)
+            {
+                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].x, quit);
+                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].y, quit);
+                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].z, quit);
+            }
+            else
+            {
+                ifs >> temp >> temp >> temp;
+            }
         }
     }
 
