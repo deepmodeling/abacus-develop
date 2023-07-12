@@ -97,11 +97,25 @@ class Sphbes
                           const double x //!< [in] argument
     );
 
-    static void sphbesj(const int n,
-                        const double* const r,
-                        const double q,
-                        const int l,
-                        double* const jl
+    //! derivative of spherical Bessel function
+    static double dsphbesj(const int l,   //!< [in] order
+                          const double x  //!< [in] argument
+    );
+
+    //! computes the values of l-th order spherical Bessel function at q*r[ir]
+    static void sphbesj(const int n,           //!< [in] number of r grid points
+                        const double* const r, //!< [in] r grid
+                        const double q,        //!< [in] wave vector
+                        const int l,           //!< [in] order of the spherical Bessel function
+                        double* const jl       //!< [out] results
+    );
+
+    //! computes the derivative of l-th order spherical Bessel function at q*r[ir]
+    static void dsphbesj(const int n,          //!< [in] number of r grid points
+                        const double* const r, //!< [in] r grid
+                        const double q,        //!< [in] wave vector
+                        const int l,           //!< [in] order of the spherical Bessel function
+                        double* const djl      //!< [out] results
     );
 
 private:

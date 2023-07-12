@@ -201,7 +201,7 @@ class NumericalRadial
                 double* const table,           //!< [out] on finish, contain the computed table
                 const int nr_tab,              //!< [in] size of table grid
                 const double* const rgrid_tab, //!< [in] grid on which the table is calculated.
-                const bool deriv = false       //!< [in] if true, calculates the derivative of the table 
+                const bool deriv = false       //!< [in] if true, calculates the derivative of the table
     ) const;
 
     //! Normalizes the radial function.
@@ -210,7 +210,7 @@ class NumericalRadial
      *
      *      / +inf     2
      *      |      dx x  f(x) = 1
-     *      /  0            
+     *      /  0
      *
      *  where x is r or k.
      *                                                                                  */
@@ -329,10 +329,10 @@ class NumericalRadial
     /*!
      *  @see set_transformer
      *                                                                              */
-    ModuleBase::SphericalBesselTransformer* sbt_ = nullptr;
+    ModuleBase::SphericalBesselTransformer* sbt_;
 
     //! A flag that marks the ownership of sbt_
-    bool use_internal_transformer_ = true;
+    bool use_internal_transformer_;
 
     //! Transforms the r-space values to get k-space values, or vice versa.
     /*!

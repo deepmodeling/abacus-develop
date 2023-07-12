@@ -17,7 +17,7 @@
 class RadialCollection
 {
   public:
-    RadialCollection(){};
+    RadialCollection();
     RadialCollection(const RadialCollection& other); //!< deep copy
 
     RadialCollection& operator=(const RadialCollection& rhs); //!< deep copy
@@ -135,9 +135,9 @@ class RadialCollection
     //!@}
 
   private:
-    int ntype_ = 0; //!< number of RadialSet in the collection
-    int lmax_ = -1; //!< maximum angular momentum of all NumericalRadial objects in the collection
-    int nchi_ = 0;  //!< total number of NumericalRadial objects in the collection
+    int ntype_ = 0;     //!< number of RadialSet in the collection
+    int lmax_ = -1;     //!< maximum angular momentum of all NumericalRadial objects in the collection
+    int nchi_ = 0;      //!< total number of NumericalRadial objects in the collection
     int nzeta_max_ = 0; //!< maximum number of distinct radial functions given a type & angular momentum
 
     //! array of RadialSet objects
@@ -163,6 +163,16 @@ class RadialCollection
 
     //! number of NumericalRadial objects for each angular momentum
     int* nl_ = nullptr;
+
+    //! Pointer to the object that provides spherical Bessel transforms
+    /*!
+     *  All NumericalRadial objects within this class should share the same
+     *  spherical Bessel transformer.
+     *                                                                      */
+    ModuleBase::SphericalBesselTransformer* sbt_;
+
+    //! A flag that marks the ownership of sbt_
+    bool use_internal_transformer_;
 
     //! Deallocates all RadialSet objects and resets all members to default.
     void cleanup();

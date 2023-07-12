@@ -775,15 +775,34 @@ double Sphbes::sphbesj(const int l, const double x)
     }
 }
 
+double Sphbes::dsphbesj(const int l, const double x)
+{
+    assert( l >= 0 );
+    assert( x >= 0 );
+    return l == 0 ? -sphbesj(1, x) : ( l * sphbesj(l - 1, x) - (l + 1) * sphbesj(l + 1, x) ) / (2 * l + 1);
+}
+
 void Sphbes::sphbesj(const int n,
-             const double* const r,
-             const double q,
-             const int l,
-             double* const jl)
+                     const double* const r,
+                     const double q,
+                     const int l,
+                     double* const jl)
 {
     for (int i = 0; i != n; ++i)
     {
         jl[i] = Sphbes::sphbesj(l, q * r[i]);
+    }
+}
+
+void Sphbes::dsphbesj(const int n,
+             const double* const r,
+             const double q,
+             const int l,
+             double* const djl)
+{
+    for (int i = 0; i != n; ++i)
+    {
+        djl[i] = Sphbes::dsphbesj(l, q * r[i]);
     }
 }
 

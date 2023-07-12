@@ -76,13 +76,13 @@ void TwoCenterTableTest::TearDown()
 TEST_F(TwoCenterTableTest, BuildOverlapAndKinetic)
 {
     orb.build(nfile, file, 'o');
-    ModuleBase::SphericalBesselTransformer sbt;
     double rmax = orb.rcut_max() * 2.0;
     double dr = 0.01;
     int nr = static_cast<int>(rmax / dr) + 1;
     
-    sbt.set_fftw_plan_flag(FFTW_MEASURE);
-    orb.set_transformer(&sbt, 0);
+    //ModuleBase::SphericalBesselTransformer sbt;
+    //sbt.set_fftw_plan_flag(FFTW_MEASURE); // not necessarily worth it!
+    //orb.set_transformer(&sbt, 0);
     orb.set_uniform_grid(true, nr, rmax, 'i', true);
 
     const double* rgrid = orb(0,0,0).ptr_rgrid();
@@ -122,12 +122,12 @@ TEST_F(TwoCenterTableTest, LegacyConsistency)
     nfile = 3;
 
     orb.build(nfile, file, 'o');
-    ModuleBase::SphericalBesselTransformer sbt;
     double rmax = orb.rcut_max() * 2.0;
     double dr = 0.01;
     int nr = static_cast<int>(rmax / dr) + 1;
     
-    orb.set_transformer(&sbt, 0);
+    //ModuleBase::SphericalBesselTransformer sbt;
+    //orb.set_transformer(&sbt, 0);
     orb.set_uniform_grid(true, nr, rmax, 'i', true);
 
     const double* rgrid = orb(0,0,0).ptr_rgrid();

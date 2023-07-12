@@ -1,9 +1,9 @@
 #ifndef TWO_CENTER_TABLE_H
 #define TWO_CENTER_TABLE_H
 
+#include "module_base/module_container/tensor.h"
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/radial_collection.h"
-#include "module_base/module_container/tensor.h"
 
 class TwoCenterTable
 {
@@ -16,7 +16,7 @@ class TwoCenterTable
                const char op,               //!< [in] operator of the two-center integral
                const int nr,                //!< [in] number of table grid points
                const double* const rgrid,   //!< [in] table grid
-               const bool deriv = false     //!< [in] whether to build the derivative of radial table
+               const bool deriv = false     //!< [in] if the target is a derivative table
     );
 
     /*!
@@ -53,19 +53,19 @@ class TwoCenterTable
     //!@}
 
   private:
-    char op_ = '\0'; //!< operator of the two-center integral
+    char op_ = '\0';        //!< operator of the two-center integral
     bool is_deriv_ = false; //!< if true, table_ stores the derivative of the radial table
 
-    int nr_ = 0; //!< number of radial points of each table
+    int nr_ = 0;              //!< number of radial points of each table
     double* rgrid_ = nullptr; //!< radial grid of each table
 
     int ntab_ = 0; //!< number of table entries
 
     //! two-center integral radial table, stored as a row-major matrix
-    container::Tensor table_{ container::DataType::DT_DOUBLE, container::TensorShape({0}) };
+    container::Tensor table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
     //! map (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index in the table
-    container::Tensor index_map_{ container::DataType::DT_INT, container::TensorShape({0}) };
+    container::Tensor index_map_{container::DataType::DT_INT, container::TensorShape({0})};
 
     //! returns the row-index of the table corresponding to the given two radial functions and l
     int& table_index(const NumericalRadial* ptr_rad1, const NumericalRadial* ptr_rad2, const int l);
@@ -74,7 +74,13 @@ class TwoCenterTable
     void cleanup();
 
     //! returns whether the given indices map to an entry in the table
-    bool is_present(const int itype1, const int l1, const int izeta1, const int itype2, const int l2, const int izeta2, const int l) const;
+    bool is_present(const int itype1,
+                    const int l1,
+                    const int izeta1,
+                    const int itype2,
+                    const int l2,
+                    const int izeta2,
+                    const int l) const;
 };
 
 #endif

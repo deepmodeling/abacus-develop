@@ -2,10 +2,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <fstream>
-#include <functional>
-#include <iomanip>
-#include <iterator>
 #include <limits>
 #include <numeric>
 
@@ -16,31 +12,25 @@
 
 using ModuleBase::PI;
 
-NumericalRadial::NumericalRadial()
+NumericalRadial::NumericalRadial() :
+    sbt_(new ModuleBase::SphericalBesselTransformer),
+    use_internal_transformer_(true)
 {
-    if (use_internal_transformer_)
-    {
-        sbt_ = new ModuleBase::SphericalBesselTransformer;
-    }
 }
 
-NumericalRadial::NumericalRadial(const NumericalRadial& other)
+NumericalRadial::NumericalRadial(const NumericalRadial& other) :
+    symbol_(other.symbol_),
+    itype_(other.itype_),
+    l_(other.l_),
+    izeta_(other.izeta_),
+    nr_(other.nr_),
+    nk_(other.nk_),
+    is_fft_compliant_(other.is_fft_compliant_),
+    pr_(other.pr_),
+    pk_(other.pk_),
+    sbt_(other.use_internal_transformer_ ? new ModuleBase::SphericalBesselTransformer : other.sbt_),
+    use_internal_transformer_(other.use_internal_transformer_)
 {
-    symbol_ = other.symbol_;
-    itype_ = other.itype_;
-    izeta_ = other.izeta_;
-    l_ = other.l_;
-
-    nr_ = other.nr_;
-    nk_ = other.nk_;
-
-    is_fft_compliant_ = other.is_fft_compliant_;
-
-    pr_ = other.pr_;
-    pk_ = other.pk_;
-
-    use_internal_transformer_ = other.use_internal_transformer_;
-
     // deep copy
     if (other.ptr_rgrid())
     {
@@ -56,15 +46,6 @@ NumericalRadial::NumericalRadial(const NumericalRadial& other)
         kvalue_ = new double[nk_];
         std::memcpy(kgrid_, other.kgrid_, nk_ * sizeof(double));
         std::memcpy(kvalue_, other.kvalue_, nk_ * sizeof(double));
-    }
-
-    if (use_internal_transformer_)
-    {
-        sbt_ = new ModuleBase::SphericalBesselTransformer;
-    }
-    else
-    {
-        sbt_ = other.sbt_;
     }
 }
 
@@ -109,22 +90,7 @@ NumericalRadial& NumericalRadial::operator=(const NumericalRadial& rhs)
         std::memcpy(kvalue_, rhs.kvalue_, nk_ * sizeof(double));
     }
 
-    if (rhs.use_internal_transformer_)
-    {
-        if (!use_internal_transformer_)
-        {
-            sbt_ = new ModuleBase::SphericalBesselTransformer;
-        }
-    }
-    else
-    {
-        if (use_internal_transformer_)
-        {
-            delete sbt_;
-        }
-        sbt_ = rhs.sbt_;
-    }
-    use_internal_transformer_ = rhs.use_internal_transformer_;
+    set_transformer(rhs.use_internal_transformer_ ? nullptr : rhs.sbt_, 0);
 
     return *this;
 }
@@ -191,28 +157,22 @@ void NumericalRadial::build(const int l,
 
 void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer* sbt, int update)
 {
-
     assert(update == 0 || update == 1 || update == -1);
 
-    if (sbt)
-    {
-        //! if an external transformer is provided, delete the internal one if any
-        if (use_internal_transformer_)
-        {
-            delete sbt_;
-            use_internal_transformer_ = false;
-        }
+    if (use_internal_transformer_ && sbt)
+    { // internal -> external
+        delete sbt_;
+        use_internal_transformer_ = false;
         sbt_ = sbt;
     }
-    else
-    {
-        // if no external transformer is provided, use an internal one
-        if (!use_internal_transformer_)
-        {
-            sbt_ = new ModuleBase::SphericalBesselTransformer;
-            use_internal_transformer_ = true;
-        }
-        // do nothing if an internal one is already in use
+    else if (!use_internal_transformer_ && !sbt)
+    { // external -> internal
+        sbt_ = new ModuleBase::SphericalBesselTransformer;
+        use_internal_transformer_ = true;
+    }
+    else if (!use_internal_transformer_ && sbt)
+    { // external -> another external
+        sbt_ = sbt;
     }
 
     switch (update)
@@ -308,13 +268,12 @@ void NumericalRadial::set_uniform_grid(const bool for_r_space,
     }
 
     set_grid(for_r_space, ngrid, grid, mode);
+    delete[] grid;
 
     if (enable_fft)
     {
         set_uniform_grid(!for_r_space, ngrid, PI / dx, 't', false);
     }
-
-    delete[] grid;
 }
 
 void NumericalRadial::set_value(const bool for_r_space, const double* const value, const int p)
@@ -438,54 +397,18 @@ void NumericalRadial::radtab(const char op,
     default:; // for overlap integral op_pk = 0
     }
 
-    if (deriv)
-    { // derivative of the radial table
-        if (l == 0)
-        { // j'_0(x) = -j_1(x)
-            if (use_radrfft)
-            {
-                sbt_->radrfft(1, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk - 1);
-            }
-            else
-            {
-                sbt_->direct(1, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk - 1);
-            }
-            std::for_each(table, table + nr_, [](double& x) { x *= -1; });
-        }
-        else
-        { // (2*l+1) * j'_l(x) = l * j_{l-1}(x) - (l+1) * j_{l+1}(x)
-            double* frtmp = new double[nr_tab];
-            if (use_radrfft)
-            {
-                sbt_->radrfft(l + 1, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk - 1);
-                sbt_->radrfft(l - 1, nk_, kcut(), fk, frtmp, pk_ + ket.pk_ + op_pk - 1);
-            }
-            else
-            {
-                sbt_->direct(l + 1, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk - 1);
-                sbt_->direct(l - 1, nk_, kgrid_, fk, nr_tab, rgrid_tab, frtmp, pk_ + ket.pk_ + op_pk - 1);
-            }
-            std::transform(table, table + nr_tab, frtmp, table, [l](double x, double y) {
-                return (l * y - (l + 1) * x) / (2 * l + 1);
-            });
-            delete[] frtmp;
-        }
+    if (use_radrfft)
+    {
+        sbt_->radrfft(l, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
     }
     else
-    { // radial table
-        if (use_radrfft)
-        {
-            sbt_->radrfft(l, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk);
-        }
-        else
-        {
-            sbt_->direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk);
-        }
+    {
+        sbt_->direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk, deriv);
     }
 
     delete[] fk;
 
-    // spherical Bessel transform has a prefactor of sqrt(2/pi) while the prefactor for the radial table 
+    // spherical Bessel transform has a prefactor of sqrt(2/pi) while the prefactor for the radial table
     // of two-center integrals is 4*pi
     double pref = ModuleBase::FOUR_PI * std::sqrt(ModuleBase::PI / 2.0);
     std::for_each(table, table + nr_tab, [pref](double& x) { x *= pref; });

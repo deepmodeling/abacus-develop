@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 
+#include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/numerical_radial.h"
 
 //! An abstract class representing a related set of numerical radial functions.
@@ -20,7 +21,7 @@
 class RadialSet
 {
   public:
-    RadialSet() {}
+    RadialSet();
     RadialSet(const RadialSet&);            //!< deep copy
     RadialSet& operator=(const RadialSet&); //!< deep copy
     virtual RadialSet* clone() const = 0;   //!< for polymorphic copy
@@ -88,6 +89,16 @@ class RadialSet
     NumericalRadial* chi_ = nullptr; //!< array of NumericalRadial objects
 
     int* index_map_ = nullptr; //!< map (l,izeta) to an index in chi_ array
+
+    //! Pointer to the object that provides spherical Bessel transforms
+    /*!
+     *  All NumericalRadial objects within this class should share the same
+     *  spherical Bessel transformer.
+     *                                                                      */
+    ModuleBase::SphericalBesselTransformer* sbt_;
+
+    //! A flag that marks the ownership of sbt_
+    bool use_internal_transformer_;
 
     //! deallocates memory and reset all class members to default values
     void cleanup();
