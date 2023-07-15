@@ -473,28 +473,28 @@ TEST_F(NumericalRadialTest, RadialTable)
     double* table = new double[sz];
     double table_pref = ModuleBase::FOUR_PI * std::sqrt(ModuleBase::PI / 2.0);
 
-    chi1.radtab('S', chi2, 0, table);
+    chi1.radtab('S', chi2, 0, table, chi1.nr(), chi1.ptr_rgrid());
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (3 - R * R) / 32 * std::exp(-R * R / 2), tol);
     }
 
-    chi1.radtab('S', chi2, 2, table);
+    chi1.radtab('S', chi2, 2, table, chi1.nr(), chi1.ptr_rgrid());
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * R * R / 32 * std::exp(-R * R / 2), tol);
     }
 
-    chi1.radtab('T', chi2, 0, table);
+    chi1.radtab('T', chi2, 0, table, chi1.nr(), chi1.ptr_rgrid());
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (std::pow(R, 4) - 10 * R * R + 15) / 32 * std::exp(-R * R / 2), tol);
     }
 
-    chi1.radtab('U', chi2, 0, table);
+    chi1.radtab('U', chi2, 0, table, chi1.nr(), chi1.ptr_rgrid());
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
@@ -502,28 +502,28 @@ TEST_F(NumericalRadialTest, RadialTable)
     }
 
     // derivative of radial tables
-    chi1.radtab('S', chi2, 0, table, true);
+    chi1.radtab('S', chi2, 0, table, chi1.nr(), chi1.ptr_rgrid(), true);
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (std::pow(R, 3) - 5 * R) / 32 * std::exp(-R * R / 2), tol);
     }
 
-    chi1.radtab('S', chi2, 2, table, true);
+    chi1.radtab('S', chi2, 2, table, chi1.nr(), chi1.ptr_rgrid(), true);
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (2 * R - std::pow(R, 3)) / 32 * std::exp(-R * R / 2), tol);
     }
 
-    chi1.radtab('T', chi2, 0, table, true);
+    chi1.radtab('T', chi2, 0, table, chi1.nr(), chi1.ptr_rgrid(), true);
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (-std::pow(R, 5) + 14 * std::pow(R, 3) - 35 * R) / 32 * std::exp(-R * R / 2), tol);
     }
 
-    chi1.radtab('U', chi2, 0, table, true);
+    chi1.radtab('U', chi2, 0, table, chi1.nr(), chi1.ptr_rgrid(), true);
     for (int i = 0; i != sz; ++i)
     {
         double R = i * dr;

@@ -11,12 +11,12 @@ namespace ModuleBase
  *  The spherical Bessel transform of a function F(x) is defined as
  *
  *                               / +inf     2
- *          G(y) = sqrt(2/pi) *  |      dx x  F(x) j (x)
+ *          G(y) = sqrt(2/pi) *  |      dx x  F(x) j (y*x)
  *                               /  0               l
  *
  *  where
  *
- *          j (x)
+ *          j 
  *           l
  *
  *  is the l-th order spherical Bessel function of the first kind.
@@ -28,7 +28,7 @@ namespace ModuleBase
  *
  *  and, on finish, fills the output array with
  *
- *          out[j] = G(y[j])
+ *          out[j] = G(y[j])   or  out[j] = dG(y[j])/dy
  *
  *  Usage1:
  *
@@ -80,7 +80,8 @@ class SphericalBesselTransformer
 
     //! Performs an l-th order spherical Bessel transform via real-input fast Fourier transforms.
     /*!
-     *  This function computes the spherical Bessel transform F(x) -> G(y) with input values
+     *  This function computes the spherical Bessel transform F(x) -> G(y) (or G's derivative)
+     *  with input values
      *
      *                   p
      *          in[i] = x [i] F(x[i])
@@ -91,7 +92,7 @@ class SphericalBesselTransformer
      *          x[i] = i * -------          i = 0, 1, 2,..., ngrid-1.
      *                     ngrid-1
      *
-     *  On finish, out[j] = G(y[j]) where
+     *  On finish, out[j] = G(y[j]) or dG(y[j])/dy where
      *
      *                      pi
      *          y[j] = j * ------           j = 0, 1, 2,..., ngrid-1.
@@ -103,45 +104,47 @@ class SphericalBesselTransformer
      *          no sense if the input is truncated at a place where F(x) is still significantly
      *          non-zero.
      *  @note   FFT-based algorithm is not accurate for high l at small y. Numerical
-     *          integration in used to handle this case.
+     *          integration is automatically invoked to handle this case.
      *  @note   p must not exceed 2 as required by numerical integration, @see @ref direct
      *                                                                                      */
-    void radrfft(const int l,            //!< [in] order of the transform
-                 const int ngrid,        //!< [in] size of the input array
-                 const double cutoff,    //!< [in] cutoff distance of input values
-                 const double* const in, //!< [in] input values
-                 double* const out,      //!< [out] transformed values
-                 const int p = 0         //!< [in] exponent of the pre-multiplied power term in input values,
-                                         //!<      must not exceed 2
+    void radrfft(const int l,             //!< [in] order of the transform
+                 const int ngrid,         //!< [in] size of the input array
+                 const double cutoff,     //!< [in] cutoff distance of input values
+                 const double* const in,  //!< [in] input values
+                 double* const out,       //!< [out] transformed values
+                 const int p = 0,         //!< [in] exponent of the extra power term in input values, must not exceed 2
+                 const bool deriv = false //!< [in] whether to compute the derivative of the transform
     );
 
     //! Performs an l-th order spherical Bessel transform via numerical integration with Simpson's rule.
     /*!
-     *  This function computes the spherical Bessel transform F(x) -> G(y) with input values
+     *  This function computes the spherical Bessel transform F(x) -> G(y) (or G's derivative)
+     *  with input values
      *
      *                   p
      *          in[i] = x [i] F(x[i])
      *
-     *  where p <= 2 is an integer. On finish, out[j] = G(y[j]). x & y are specified by
-     *  grid_in & grid_out, respectively.
+     *  where p <= 2 is an integer. On finish, out[j] = G(y[j]) or dG(y[j])/dy. 
+     *  x & y are specified by grid_in & grid_out, respectively.
      *
      *  @note   This function does not allocate memory for output; it must be pre-allocated.
      *  @note   Even if the input grid forms a good sampling of F(x), results would still be
      *          inaccurate for very large y values (y*dx ~ pi) because the oscillation of
      *          j_l(y*x) in this case is poorly sampled, in which case Simpson's 1/3 rule
      *          could be a bad approximation.
-     *  @note   p is limited to p <= 2 in order to avoid the problem of determining
-     *          x^2*F(x) at x = 0 from x[i]^p*F(x[i])
+     *  @note   p is restricted to p <= 2 in order to avoid the situation that one has to
+     *          determine x^2*F(x) at x = 0 from x[i]^p*F(x[i]).
      *                                                                                      */
-    static void direct(const int l,                  //!< [in] order of the transform
-                       const int ngrid_in,           //!< [in] size of the input array
-                       const double* const grid_in,  //!< [in] input grid
-                       const double* const in,       //!< [in] input values
-                       const int ngrid_out,          //!< [in] size of the output array
-                       const double* const grid_out, //!< [in] output grid
-                       double* const out,            //!< [out] transformed values
-                       const int p = 0               //!< [in] exponent of the pre-multiplied power
-                                                     //!<      term in input values, must not exceed 2
+    void direct(const int l,                  //!< [in] order of the transform
+                const int ngrid_in,           //!< [in] size of the input array
+                const double* const grid_in,  //!< [in] input grid
+                const double* const in,       //!< [in] input values
+                const int ngrid_out,          //!< [in] size of the output array
+                const double* const grid_out, //!< [in] output grid
+                double* const out,            //!< [out] transformed values
+                const int p = 0,              //!< [in] exponent of the extra power term in input values, 
+                                              //!<      must not exceed 2!
+                const bool deriv = false      //!< [in] whether to compute the derivative of the transform
     );
 
     //! Sets the FFTW planner flag.
@@ -160,6 +163,15 @@ class SphericalBesselTransformer
     void set_fftw_plan_flag(const unsigned new_flag /*!< [in] FFTW planner flag */);
 
   private:
+    //! core function for performing the transform with FFT
+    void _radrfft_base(const int l,
+                       const int ngrid,
+                       const double cutoff,
+                       const double* const in,
+                       double* const out,
+                       const int p = 0
+    );
+
     //! Internal buffer used for in-place real-input FFT (interpreted as double* on input)
     fftw_complex* f_ = nullptr;
 
@@ -202,6 +214,30 @@ class SphericalBesselTransformer
         const int l,         //!< [in] order of the spherical Bessel function
         const int n          //!< [in] degree of the polynomial term whose coefficient is computed
     );
+
+    //! Computes & stores the spherical Bessel function of the first kind on the given transform grid
+    void cache(const int l,
+               const int ngrid_in,
+               const double* const grid_in,
+               const int ngrid_out,
+               const double* const grid_out,
+               const bool deriv);
+
+    /*!
+     *  @name Cached function values
+     *                                                                                  */
+    //!@{
+    bool is_deriv_ = false; //!< if true, the cached values are derivatives of the spherical Bessel function
+    int l_ = -1;            //!< order of the cached spherical Bessel function
+
+    int ngrid_in_ = 0;
+    int ngrid_out_ = 0;
+    double* grid_in_ = nullptr;
+    double* grid_out_ = nullptr;
+
+    //! jl_[i*ngrid_in_ + j] = f(l, grid_out_[i] * grid_in_[j]) where f is sphbesj or dsphbesj
+    double* jl_ = nullptr;
+    //!@}
 
 }; // class SphericalBesselTransformer
 

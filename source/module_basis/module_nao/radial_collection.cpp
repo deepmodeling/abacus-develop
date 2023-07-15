@@ -4,17 +4,33 @@
 #include "module_basis/module_nao/atomic_radials.h"
 #include "module_basis/module_nao/beta_radials.h"
 
-RadialCollection::RadialCollection(const RadialCollection& other)
+RadialCollection::RadialCollection() :
+    sbt_(new ModuleBase::SphericalBesselTransformer),
+    use_internal_transformer_(true)
 {
-    ntype_ = other.ntype_;
-    lmax_ = other.lmax_;
-    nchi_ = other.nchi_;
-    nzeta_max_ = other.nzeta_max_;
+}
+
+RadialCollection::RadialCollection(const RadialCollection& other) :
+    ntype_(other.ntype_),
+    lmax_(other.lmax_),
+    nchi_(other.nchi_),
+    nzeta_max_(other.nzeta_max_),
+    radset_(nullptr),
+    iter_(nullptr),
+    nl_(nullptr),
+    sbt_(other.use_internal_transformer_ ? new ModuleBase::SphericalBesselTransformer : other.sbt_),
+    use_internal_transformer_(other.use_internal_transformer_)
+{
+    if (ntype_ == 0)
+    {
+        return;
+    }
 
     radset_ = new RadialSet*[ntype_];
     for (int itype = 0; itype < ntype_; ++itype)
     {
         radset_[itype] = other.radset_[itype]->clone();
+        radset_[itype]->set_transformer(sbt_, 0);
     }
 
     iter_build();
@@ -42,17 +58,9 @@ RadialCollection& RadialCollection::operator=(const RadialCollection& rhs)
 
     iter_build();
 
-    return *this;
-}
+    set_transformer(rhs.use_internal_transformer_ ? nullptr : rhs.sbt_, 0);
 
-double RadialCollection::rcut_max() const
-{
-    double rmax = 0.0;
-    for (int itype = 0; itype < ntype_; ++itype)
-    {
-        rmax = std::max(rmax, radset_[itype]->rcut_max());
-    }
-    return rmax;
+    return *this;
 }
 
 RadialCollection::~RadialCollection()
@@ -63,6 +71,22 @@ RadialCollection::~RadialCollection()
     }
     delete[] radset_;
     delete[] iter_; // iterator does not control memory; simply delete the pointer array
+    delete[] nl_;
+
+    if (use_internal_transformer_)
+    {
+        delete sbt_;
+    }
+}
+
+double RadialCollection::rcut_max() const
+{
+    double rmax = 0.0;
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        rmax = std::max(rmax, radset_[itype]->rcut_max());
+    }
+    return rmax;
 }
 
 void RadialCollection::cleanup()
@@ -77,6 +101,9 @@ void RadialCollection::cleanup()
     delete[] iter_; // iterator does not control memory; simply delete the pointer array
     iter_ = nullptr;
 
+    delete[] nl_;
+    nl_ = nullptr;
+
     ntype_ = 0;
     lmax_ = -1;
     nchi_ = 0;
@@ -88,16 +115,27 @@ void RadialCollection::iter_build()
     /*
      * collect the addresses of NumericalRadial objects from different RadialSet objects
      * so that all NumericalRadial objects can be iterated over in a single loop
+     *
+     * objects are sorted by l first, by itype next, by izeta last.
      *                                                                                      */
     delete[] iter_; // iterator does not control memory; simply delete the pointer array
+    delete[] nl_;
+
+    nl_ = new int[lmax_ + 1];
     iter_ = new const NumericalRadial*[nchi_];
+
     int i = 0;
-    for (int itype = 0; itype < ntype_; ++itype)
+    std::fill(nl_, nl_ + lmax_ + 1, 0);
+    for (int l = 0; l <= lmax_; ++l)
     {
-        for (const NumericalRadial* it = radset_[itype]->cbegin(); it != radset_[itype]->cend(); ++it)
+        for (int itype = 0; itype != ntype_; ++itype)
         {
-            iter_[i] = it;
-            ++i;
+            for (int izeta = 0; izeta < radset_[itype]->nzeta(l); ++izeta)
+            {
+                iter_[i] = &radset_[itype]->chi(l, izeta);
+                ++i;
+                ++nl_[l];
+            }
         }
     }
 }
@@ -137,13 +175,34 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     }
 
     iter_build();
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype]->set_transformer(sbt_, 0);
+    }
 }
 
 void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer* const sbt, const int update)
 {
+    if (use_internal_transformer_ && sbt)
+    { // internal -> external
+        delete sbt_;
+        use_internal_transformer_ = false;
+        sbt_ = sbt;
+    }
+    else if (!use_internal_transformer_ && !sbt)
+    { // external -> internal
+        sbt_ = new ModuleBase::SphericalBesselTransformer;
+        use_internal_transformer_ = true;
+    }
+    else if (!use_internal_transformer_ && sbt)
+    { // external -> another external
+        sbt_ = sbt;
+    }
+
     for (int itype = 0; itype < ntype_; ++itype)
     {
-        radset_[itype]->set_transformer(sbt, update);
+        radset_[itype]->set_transformer(sbt_, update);
     }
 }
 
