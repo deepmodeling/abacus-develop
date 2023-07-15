@@ -203,12 +203,12 @@ void DFTU::cal_force_k(const int ik,
 
         for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
         {
-            const int iwt1 = this->LM->ParaV->row_set[ir];
+            const int iwt1 = this->LM->ParaV->local2global_row(ir);
             const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
             for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
             {
-                const int iwt2 = this->LM->ParaV->col_set[ic];
+                const int iwt2 = this->LM->ParaV->local2global_col(ic);
                 const int irc = ic * this->LM->ParaV->nrow + ir;
 
                 if (iwt1 == iwt2) force_dftu(iat1, dim) += dm_VU_dSm[irc].real();
@@ -250,8 +250,8 @@ void DFTU::cal_force_k(const int ik,
                             for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-                                const int mu = this->LM->ParaV->trace_loc_row[iwt];
-                                const int nu = this->LM->ParaV->trace_loc_col[iwt];
+                                const int mu = this->LM->ParaV->global2local_row(iwt);
+                                const int nu = this->LM->ParaV->global2local_col(iwt);
                                 if (mu < 0 || nu < 0) continue;
 
                                 force_dftu(iat, dim) += dm_VU_dSm[nu * this->LM->ParaV->nrow + mu].real();
@@ -299,10 +299,10 @@ void DFTU::cal_stress_k(const int ik,
 
             for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
             {
-                const int iwt1 = this->LM->ParaV->row_set[ir];
+                const int iwt1 = this->LM->ParaV->local2global_row(ir);
                 for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
                 {
-                    const int iwt2 = this->LM->ParaV->col_set[ic];
+                    const int iwt2 = this->LM->ParaV->local2global_col(ic);
                     const int irc = ic * this->LM->ParaV->nrow + ir;
 
                     if (iwt1 == iwt2) stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc].real();
@@ -345,12 +345,12 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
 
         for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
         {
-            const int iwt1 = this->LM->ParaV->row_set[ir];
+            const int iwt1 = this->LM->ParaV->local2global_row(ir);
             const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
             for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
             {
-                const int iwt2 = this->LM->ParaV->col_set[ic];
+                const int iwt2 = this->LM->ParaV->local2global_col(ic);
                 const int irc = ic * this->LM->ParaV->nrow + ir;
 
                 if (iwt1 == iwt2) force_dftu(iat1, dim) += dm_VU_dSm[irc];
@@ -394,8 +394,8 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
                             for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-                                const int mu = this->LM->ParaV->trace_loc_row[iwt];
-                                const int nu = this->LM->ParaV->trace_loc_col[iwt];
+                                const int mu = this->LM->ParaV->global2local_row(iwt);
+                                const int nu = this->LM->ParaV->global2local_col(iwt);
                                 if (mu < 0 || nu < 0) continue;
 
                                 force_dftu(iat, dim) += dm_VU_dSm[nu * this->LM->ParaV->nrow + mu];
@@ -441,11 +441,11 @@ void DFTU::cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dft
 
             for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
             {
-                const int iwt1 = this->LM->ParaV->row_set[ir];
+                const int iwt1 = this->LM->ParaV->local2global_row(ir);
 
                 for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
                 {
-                    const int iwt2 = this->LM->ParaV->col_set[ic];
+                    const int iwt2 = this->LM->ParaV->local2global_col(ic);
                     const int irc = ic * this->LM->ParaV->nrow + ir;
 
                     if (iwt1 == iwt2) stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc];

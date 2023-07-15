@@ -93,8 +93,8 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
                     if (pv->in_this_processor(j, i))
                     {
 
-                        const int ir = pv->trace_loc_row[j];
-                        const int ic = pv->trace_loc_col[i];
+                        const int ir = pv->global2local_row(j);
+                        const int ic = pv->global2local_col(i);
                         weightk(is, i * GlobalV::NLOCAL + j) = Mulk[0](ic, ir) * psid[0](ic, ir);
                     }
                 }
@@ -175,8 +175,8 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
                             if (pv->in_this_processor(j, i))
                             {
 
-                                const int ir = pv->trace_loc_row[j];
-                                const int ic = pv->trace_loc_col[i];
+                                const int ir = pv->global2local_row(j);
+                                const int ic = pv->global2local_col(i);
 
                                 weightk(ik, i * GlobalV::NLOCAL + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                             }
