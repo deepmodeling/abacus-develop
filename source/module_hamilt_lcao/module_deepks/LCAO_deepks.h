@@ -189,10 +189,11 @@ public:
     void init(const LCAO_Orbitals &orb,
         const int nat,
         const int ntype,
+        const Parallel_Orbitals& pv_in,
         std::vector<int> na);
 
     ///Allocate memory for correction to Hamiltonian
-    void allocate_V_delta(const int nat,const int nloc, const int nks=1);
+    void allocate_V_delta(const int nat, const int nks = 1);
     void allocate_V_deltaR(const int nnr);
 
     // array for storing gdmx, used for calculating gvx
@@ -236,17 +237,13 @@ public:
     void build_psialpha(const bool& cal_deri/**< [in] 0 for 2-center intergration, 1 for its derivation*/,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const ORB_gen_tables &UOT);
 
     void check_psialpha(const bool& cal_deri/**< [in] 0 for 2-center intergration, 1 for its derivation*/,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const ORB_gen_tables &UOT);
 
 //-------------------
@@ -277,15 +274,11 @@ public:
     void cal_projected_DM(const ModuleBase::matrix& dm/**< [in] density matrix*/,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col);
+        Grid_Driver& GridD);
     void cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d);
     void check_projected_dm(void);
@@ -295,16 +288,12 @@ public:
     void cal_gdmx(const ModuleBase::matrix& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const bool isstress);
     void cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const bool isstress);
@@ -333,32 +322,19 @@ public:
     ///add dV to the Hamiltonian matrix
     void add_v_delta(const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
-	    const int nrow,
-        const int ncol);
+        Grid_Driver& GridD);
     void add_v_delta_k(const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const int nnr_in);
-    
-    void check_v_delta(const int nrow, const int ncol);
+
+    void check_v_delta();
     void check_v_delta_k(const int nnr);
 
     ///calculate tr(\rho V_delta)
-    void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
-        const int nrow);
+    void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
     void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
-        const int nks,
-        const int nrow,
-        const int ncol);
+        const int nks);
 
 //-------------------
 // LCAO_deepks_fdelta.cpp
@@ -378,18 +354,14 @@ public:
     void cal_f_delta_gamma(const ModuleBase::matrix& dm/**< [in] density matrix*/,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const bool isstress, ModuleBase::matrix& svnl_dalpha);
 
     //for multi-k, pulay and HF terms of force are calculated together
     void cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const int* trace_loc_row,
-        const int* trace_loc_col,
+        Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const bool isstress, ModuleBase::matrix& svnl_dalpha);
@@ -409,10 +381,8 @@ public:
 
 public:
     
-    void cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/,
-        const Parallel_Orbitals &ParaO);
+    void cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/);
     void cal_o_delta_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl/**<[in] modified density matrix that contains HOMO and LUMO only*/,
-        const Parallel_Orbitals &ParaO,
         const int nks);
 
 //-------------------
@@ -484,8 +454,7 @@ public:
         const int nat,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const Parallel_Orbitals &ParaO);
+        Grid_Driver& GridD);
     
     //calculates orbital_precalc for multi-k case
     void cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl/**<[in] density matrix*/,
@@ -494,11 +463,11 @@ public:
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver &GridD,
-        const Parallel_Orbitals &ParaO);
+        Grid_Driver& GridD);
 
 
 private:
+    const Parallel_Orbitals* pv;
     void cal_gvdm(const int nat);
 
 //-------------------

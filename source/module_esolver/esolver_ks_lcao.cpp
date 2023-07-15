@@ -577,12 +577,12 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         const Parallel_Orbitals* pv = this->LOWF.ParaV;
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            GlobalC::ld.cal_e_delta_band(this->LOC.dm_gamma, pv->trace_loc_row, pv->trace_loc_col, pv->nrow);
+            GlobalC::ld.cal_e_delta_band(this->LOC.dm_gamma);
         }
         else
         {
             GlobalC::ld
-                .cal_e_delta_band_k(this->LOC.dm_k, pv->trace_loc_row, pv->trace_loc_col, kv.nks, pv->nrow, pv->ncol);
+                .cal_e_delta_band_k(this->LOC.dm_k, kv.nks);
         }
     }
 #endif

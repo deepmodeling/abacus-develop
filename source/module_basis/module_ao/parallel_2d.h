@@ -15,14 +15,6 @@ public:
     Parallel_2D();
     ~Parallel_2D();
 
-    /// map from global index to local index
-    int* trace_loc_row = nullptr;
-    int* trace_loc_col = nullptr;
-
-    /// map from local index to global index
-    std::vector<int> row_set;				// Peize Lin change int* to vector 2022.08.03
-    std::vector<int> col_set;
-
     /// local size (nloc = nrow * ncol)
     int nrow;
     int ncol;
@@ -50,6 +42,30 @@ public:
 
     /// total number of elements of matrix in this processor
     int get_local_size()const { return this->nloc; };
+
+    /// get the local index of a global index (row)
+    int global2local_row(const int& igr) const
+    {
+        return this->global2local_row_[igr];
+    }
+
+    /// get the local index of a global index (col)
+    int global2local_col(const int& igc) const
+    {
+        return this->global2local_col_[igc];
+    }
+
+    /// get the global index of a local index (row)
+    int local2global_row(const int& ilr) const
+    {
+        return this->local2global_row_[ilr];
+    }
+
+    /// get the global index of a local index (col)
+    int local2global_col(const int& ilc) const
+    {
+        return this->local2global_col_[ilc];
+    }
 
     /// check whether an element is in this processor
     /// (check whether local-index > 0 )
@@ -94,6 +110,15 @@ public:
         std::ofstream& ofs_running);
 
 protected:
+
+    /// map from global index to local index
+    int* global2local_row_ = nullptr;
+    int* global2local_col_ = nullptr;
+
+    /// map from local index to global index
+    std::vector<int> local2global_row_;				// Peize Lin change int* to vector 2022.08.03
+    std::vector<int> local2global_col_;
+
     /// set the map from local index to global index
     void init_global2local(const int& M_A/**< global row size*/,
         const int& N_A/**< global col size*/,

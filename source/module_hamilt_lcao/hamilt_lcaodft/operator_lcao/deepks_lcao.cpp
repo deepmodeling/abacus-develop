@@ -26,18 +26,12 @@ void DeePKS<OperatorLCAO<double>>::contributeHR()
         GlobalC::ld.cal_projected_DM(this->loc->dm_gamma[0],
             GlobalC::ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            pv->trace_loc_row,
-            pv->trace_loc_col);
+            GlobalC::GridD);
         GlobalC::ld.cal_descriptor();        
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
         GlobalC::ld.add_v_delta(GlobalC::ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            pv->trace_loc_row,
-            pv->trace_loc_col,
-            pv->nrow,
-            pv->ncol);
+            GlobalC::GridD);
 
         GlobalC::ld.set_hr_cal(false);
 
@@ -59,20 +53,18 @@ void DeePKS<OperatorLCAO<std::complex<double>>>::contributeHR()
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
         GlobalC::ld.cal_projected_DM_k(this->loc->dm_k,
-                                        GlobalC::ucell,
-                                        GlobalC::ORB,
-                                        GlobalC::GridD,
-                                        this->LM->ParaV->trace_loc_row,
-                                        this->LM->ParaV->trace_loc_col,
-                                        this->nks,
-                                        this->kvec_d);
+            GlobalC::ucell,
+            GlobalC::ORB,
+            GlobalC::GridD,
+            this->nks,
+            this->kvec_d);
         GlobalC::ld.cal_descriptor();
         // calculate dE/dD
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
         // calculate H_V_deltaR from saved <alpha(0)|psi(R)>
         GlobalC::ld
-            .add_v_delta_k(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->trace_loc_row, this->LM->ParaV->trace_loc_col, this->LM->ParaV->nnr);
+            .add_v_delta_k(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
         
         GlobalC::ld.set_hr_cal(false);
         

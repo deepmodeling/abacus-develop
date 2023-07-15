@@ -110,11 +110,11 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
                 
                 Parallel_Reduce::reduce_double_pool(tmp, GlobalV::NLOCAL);
 
-                if (LM->ParaV->trace_loc_row[row] >= 0)
+                if (LM->ParaV->global2local_row(row) >= 0)
                 {
                     for(int col = 0; col < GlobalV::NLOCAL; ++col)
                     {
-                        if(LM->ParaV->trace_loc_col[col] >= 0)
+                        if(LM->ParaV->global2local_col(col) >= 0)
                         {
                             if (std::abs(tmp[col]) > sparse_threshold)
                             {
@@ -266,11 +266,11 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
                 
                 Parallel_Reduce::reduce_complex_double_pool(tmp_soc, GlobalV::NLOCAL);
 
-                if (LM->ParaV->trace_loc_row[row] >= 0)
+                if (LM->ParaV->global2local_row(row) >= 0)
                 {
                     for(int col = 0; col < GlobalV::NLOCAL; ++col)
                     {
-                        if(LM->ParaV->trace_loc_col[col] >= 0)
+                        if(LM->ParaV->global2local_col(col) >= 0)
                         {
                             if (std::abs(tmp_soc[col]) > sparse_threshold)
                             {

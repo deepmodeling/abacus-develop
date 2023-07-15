@@ -364,7 +364,6 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         // DeePKS force, caoyu add 2021-06-03
         if (GlobalV::deepks_out_labels) // not parallelized yet
         {
-            const Parallel_Orbitals* pv = loc.ParaV;
             GlobalC::ld.save_npy_f(fcs, "f_tot.npy", GlobalC::ucell.nat); // Ty/Bohr, F_tot
             if (GlobalV::deepks_scf)
             {
@@ -373,24 +372,20 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                 if (GlobalV::GAMMA_ONLY_LOCAL)
                 {
                     GlobalC::ld.cal_gdmx(loc.dm_gamma[0],
-                                         GlobalC::ucell,
-                                         GlobalC::ORB,
-                                         GlobalC::GridD,
-                                         pv->trace_loc_row,
-                                         pv->trace_loc_col,
-                                         isstress);
+                        GlobalC::ucell,
+                        GlobalC::ORB,
+                        GlobalC::GridD,
+                        isstress);
                 }
                 else
                 {
                     GlobalC::ld.cal_gdmx_k(loc.dm_k,
-                                           GlobalC::ucell,
-                                           GlobalC::ORB,
-                                           GlobalC::GridD,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           kv.nks,
-                                           kv.kvec_d,
-                                           isstress);
+                        GlobalC::ucell,
+                        GlobalC::ORB,
+                        GlobalC::GridD,
+                        kv.nks,
+                        kv.kvec_d,
+                        isstress);
                 }
                 if (GlobalV::deepks_out_unittest)
                     GlobalC::ld.check_gdmx(GlobalC::ucell.nat);
