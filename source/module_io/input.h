@@ -575,7 +575,8 @@ class Input
     template <class T> static void read_value(std::ifstream &ifs, T &var)
     {
         ifs >> var;
-        ifs.ignore(150, '\n');
+        std::string line;
+        getline(ifs, line);
         return;
     }
     void read_kspacing(std::ifstream &ifs)

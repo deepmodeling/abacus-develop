@@ -1,6 +1,7 @@
 #ifndef RADIAL_COLLECTION_H_
 #define RADIAL_COLLECTION_H_
 
+#include <numeric>
 #include <string>
 
 #include "module_basis/module_nao/radial_set.h"
@@ -16,7 +17,7 @@
 class RadialCollection
 {
   public:
-    RadialCollection(){};
+    RadialCollection();
     RadialCollection(const RadialCollection& other); //!< deep copy
 
     RadialCollection& operator=(const RadialCollection& rhs); //!< deep copy
@@ -76,23 +77,38 @@ class RadialCollection
         assert(itype >= 0 && itype < ntype_);
         return *radset_[itype];
     }
+    //!@}
 
-    //! *(this->cbegin()) returns the address of the first NumericalRadial object in the collection
+    /*! @name Iterators
+     *
+     *  Enable iteration through all NumericalRadial objects in the collection.
+     *  Objects are sorted by l first, by itype next, by izeta last.
+     *                                                                      */
+    //!@{
     const NumericalRadial** cbegin() const
     {
         assert(ntype_ > 0);
         return iter_;
     }
 
-    //! *(this->cend()-1) returns the address of the last NumericalRadial object in the collection
-    /*!
-     *  CAVEAT: *(this->cend()) and this->radset_[ntype_-1]->cend() are not equal!
-     *  In general users should never dereference the end iterator.
-     *                                                                                              */
     const NumericalRadial** cend() const
     {
         assert(ntype_ > 0);
         return iter_ + nchi_;
+    }
+
+    //! *(this->cbegin(l)) returns the address of the first NumericalRadial object with angular momentum l
+    const NumericalRadial** cbegin(const int l) const
+    {
+        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate(nl_, nl_ + l, 0);
+    }
+
+    //! *(this->cbegin(l)) returns the address of one-past last NumericalRadial object with angular momentum l
+    const NumericalRadial** cend(const int l) const
+    {
+        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate(nl_, nl_ + l + 1, 0);
     }
     //!@}
 
@@ -119,9 +135,9 @@ class RadialCollection
     //!@}
 
   private:
-    int ntype_ = 0; //!< number of RadialSet in the collection
-    int lmax_ = -1; //!< maximum angular momentum of all NumericalRadial objects in the collection
-    int nchi_ = 0;  //!< total number of NumericalRadial objects in the collection
+    int ntype_ = 0;     //!< number of RadialSet in the collection
+    int lmax_ = -1;     //!< maximum angular momentum of all NumericalRadial objects in the collection
+    int nchi_ = 0;      //!< total number of NumericalRadial objects in the collection
     int nzeta_max_ = 0; //!< maximum number of distinct radial functions given a type & angular momentum
 
     //! array of RadialSet objects
@@ -144,6 +160,19 @@ class RadialCollection
      *   which iter_ iterates.
      *                                                                                      */
     const NumericalRadial** iter_ = nullptr;
+
+    //! number of NumericalRadial objects for each angular momentum
+    int* nl_ = nullptr;
+
+    //! Pointer to the object that provides spherical Bessel transforms
+    /*!
+     *  All NumericalRadial objects within this class should share the same
+     *  spherical Bessel transformer.
+     *                                                                      */
+    ModuleBase::SphericalBesselTransformer* sbt_;
+
+    //! A flag that marks the ownership of sbt_
+    bool use_internal_transformer_;
 
     //! Deallocates all RadialSet objects and resets all members to default.
     void cleanup();

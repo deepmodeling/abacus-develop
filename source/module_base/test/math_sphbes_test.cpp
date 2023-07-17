@@ -225,6 +225,14 @@ TEST_F(Sphbes, SeriesAndRecurrence)
             {
                 EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
             }
+
+            // derivative
+            ModuleBase::Sphbes::dSpherical_Bessel_dx(nr, r, q, 0, jl_old);
+            ModuleBase::Sphbes::dsphbesj(nr, r, q, 0, jl_new);
+            for (int i = 0; i < nr; ++i)
+            {
+                EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
+            }
         }
     }
 

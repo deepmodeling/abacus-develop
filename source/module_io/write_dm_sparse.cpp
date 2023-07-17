@@ -90,14 +90,14 @@ void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbita
                     for(int ii=0; ii<atom1->nw; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = ParaV->trace_loc_row[iw1_all];
+                        const int mu = ParaV->global2local_row(iw1_all);
 
                         if(mu<0)continue;
 
                         for(int jj=0; jj<atom2->nw; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = ParaV->trace_loc_col[iw2_all];
+                            const int nu = ParaV->global2local_col(iw2_all);
 
                             if(nu<0)continue;
 

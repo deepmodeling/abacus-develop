@@ -36,7 +36,7 @@ public:
 
 	UnitCell ucell;
 
-	Test_Deepks::Parallel_Orbitals ParaO;
+    Parallel_Orbitals ParaO;
 	Test_Deepks::K_Vectors kv;
 	LCAO_Deepks ld;
 
