@@ -137,9 +137,9 @@ void FIRE::check_force()
     {
         for (int j = 0; j < 3; ++j)
         {
-            if (max < abs(force[i][j]))
+            if (max < std::abs(force[i][j]))
             {
-                max = abs(force[i][j]);
+                max = std::abs(force[i][j]);
             }
         }
     }
@@ -183,7 +183,7 @@ void FIRE::check_fire()
         negative_count++;
         if (negative_count >= n_min)
         {
-            mdp.md_dt = min(mdp.md_dt * finc, dt_max);
+            mdp.md_dt = std::min(mdp.md_dt * finc, dt_max);
             alpha *= f_alpha;
         }
     }

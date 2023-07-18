@@ -237,7 +237,7 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 						{
 							//m1 + m2 + m3 == 0
 							int m1 = -m2 - m3;
-							assert(abs(m1) <= l1);
+							assert(std::abs(m1) <= l1);
 
 							// Peize Lin delete assert 2016-08-26
 //							assert(ic1 < 5000);
@@ -320,7 +320,7 @@ double ORB_gaunt_table::Get_Gaunt_CH
 	
 	if(l_sum % 2 == 1) return 0.0;
 	
-	if(abs(m1) > l1 || abs(m2) > l2 || abs(m3) > l3) return 0.0;
+	if(std::abs(m1) > l1 || std::abs(m2) > l2 || std::abs(m3) > l3) return 0.0;
 
 	if( (m1 + m2 + m3) != 0) return 0.0;
 

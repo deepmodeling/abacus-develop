@@ -187,7 +187,7 @@ CG_begin:
                 f_cal(move0, grad, dim, fb);
                 f_cal(move0, move0, dim, xb);
 
-                if ((abs(fb) < abs((fa) / 10.0)))
+                if ((std::abs(fb) < std::abs((fa) / 10.0)))
                 {
                     sd = true;
                     trial = true;
@@ -234,12 +234,12 @@ CG_begin:
                 double xtemp, ftemp;
                 f_cal(move0, grad, dim, fc);
 
-                fmin = abs(fc);
+                fmin = std::abs(fc);
                 nbrent++;
                 // cout<<"nbrent = "<<nbrent<<endl;
                 // cout<<"xa = "<<xa<<" xb = "<<xb<<" xc = "<<xc<<" fa = "<<fa<<" fb = "<<fb<<" fc = "<<fc<<endl;
 
-                if ((fmin < abs((fmax) / 10.0)) || (nbrent > 3))
+                if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3))
                 {
                     nbrent = 0;
                     sd = true;
@@ -372,7 +372,7 @@ void Lattice_Change_CG::third_order(const double &e0,
     dmove1 = -k2 * (1 - sqrt(1 - 4 * k1 * k3 / (k2 * k2))) / (2 * k3);
     dmove2 = -k2 * (1 + sqrt(1 - 4 * k1 * k3 / (k2 * k2))) / (2 * k3);
 
-    if ((abs(k3 / k1) < 0.01) || ((k1 * k3 / (k2 * k2)) >= 0.25)) // this condition may be wrong
+    if ((std::abs(k3 / k1) < 0.01) || ((k1 * k3 / (k2 * k2)) >= 0.25)) // this condition may be wrong
     {
         dmove = dmoveh;
     }

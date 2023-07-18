@@ -15,8 +15,6 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_psi/psi.h"
 
-using namespace std;
-
 class unkOverlap_pw
 {
   public:

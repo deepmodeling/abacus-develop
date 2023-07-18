@@ -1,7 +1,5 @@
 #include "parallel_orbitals.h"
 
-#include "module_base/memory.h"
-#include "module_basis/module_ao/ORB_control.h"
 #ifdef __MPI
 extern "C"
 {
@@ -9,16 +7,12 @@ extern "C"
 #include "module_base/scalapack_connector.h"
 }
 #endif
+
 Parallel_Orbitals::Parallel_Orbitals()
 {
     loc_sizes = nullptr;
-    trace_loc_row = nullptr;
-    trace_loc_col = nullptr;
 
     testpb = 0; // mohan add 2011-03-16
-    // default value of nb is 1,
-    // but can change to larger value from input.
-    nb = 1;
 
     // in multi-k, 2D-block-division variables for FT (R<->k)
     nnr = 1;
@@ -28,268 +22,166 @@ Parallel_Orbitals::Parallel_Orbitals()
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-    delete[] trace_loc_row;
-    delete[] trace_loc_col;
     delete[] loc_sizes;    
     delete[] nlocdim;
     delete[] nlocstart;
 }
 
-bool Parallel_Orbitals::in_this_processor(const int& iw1_all, const int& iw2_all) const
+void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal)
 {
-    if (trace_loc_row[iw1_all] == -1)
-        return false;
-    else if (trace_loc_col[iw2_all] == -1)
-        return false;
-    return true;
+    this->atom_begin_col.resize(nat);
+    this->atom_begin_row.resize(nat);
+    for(int iat=0;iat<nat-1;iat++)
+    {
+        this->atom_begin_col[iat] = -1;
+        this->atom_begin_row[iat] = -1;
+        int irow = iat2iwt[iat];
+        int icol = iat2iwt[iat];
+        const int max = (iat == nat-1) ? (nlocal - irow): (iat2iwt[iat+1] - irow);
+        //find the first row index of atom iat
+        for(int i=0;i<max;i++)
+        {
+            if (this->global2local_row_[irow] != -1)
+            {
+                this->atom_begin_row[iat] = irow;
+                break;
+            }
+            irow++;
+        }
+        //find the first col index of atom iat
+        for(int i=0;i<max;i++)
+        {
+            if (this->global2local_col_[icol] != -1)
+            {
+                this->atom_begin_col[iat] = icol;
+                break;
+            }
+            icol++;
+        }
+    }
 }
 
-void ORB_control::set_trace(std::ofstream& ofs_running)
+// Get the number of columns of the parallel orbital matrix
+int Parallel_Orbitals::get_col_size()const
 {
-    ModuleBase::TITLE("ORB_control", "set_trace");
-    assert(nlocal > 0);
-
-    Parallel_Orbitals* pv = &this->ParaV;
-
-    delete[] pv->trace_loc_row;
-    delete[] pv->trace_loc_col;
-
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_row dimension", nlocal);
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_col dimension", nlocal);
-
-    pv->trace_loc_row = new int[nlocal];
-    pv->trace_loc_col = new int[nlocal];
-    // mohan update 2011-04-07
-    for (int i = 0; i < nlocal; i++)
+    return this->ncol;
+}
+// Get the number of rows of the parallel orbital matrix
+int Parallel_Orbitals::get_row_size()const
+{
+    return this->nrow;
+}
+// Get the number of columns of the orbital matrix of the iat-th atom
+int Parallel_Orbitals::get_col_size(int iat) const
+{
+    int size = this->atom_begin_col[iat];
+    // If the iat-th atom does not have an orbital matrix, return 0
+    if(size == -1)
     {
-        pv->trace_loc_row[i] = -1;
-        pv->trace_loc_col[i] = -1;
+        return 0;
     }
-
-    ModuleBase::Memory::record("ORB::trace_row_col", sizeof(int) * 2 * nlocal);
-
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav") // xiaohui add 2013-09-02
+    iat += 1;
+    // Traverse the orbital matrices of the atom and calculate the number of columns
+    while(this->atom_begin_col[iat] <= this->ncol)
     {
-        std::cout << " common settings for trace_loc_row and trace_loc_col " << std::endl;
-        for (int i = 0; i < nlocal; i++)
+        if(this->atom_begin_col[iat] != -1)
         {
-            pv->trace_loc_row[i] = i;
-            pv->trace_loc_col[i] = i;
+            size = this->atom_begin_col[iat] - size;
+            return size;
         }
-        pv->nrow = nlocal;
-        pv->ncol = nlocal;
+        iat++;
     }
+    // If the orbital matrix is not found after all atoms are traversed, throw an exception
+    throw std::string("error in get_col_size(iat)");
+}
+// Get the number of rows of the orbital matrix of the iat-th atom
+int Parallel_Orbitals::get_row_size(int iat) const
+{
+    int size = this->atom_begin_row[iat];
+    if(size == -1)
+    {
+        return 0;
+    }
+    iat += 1;
+    while(this->atom_begin_row[iat] <= this->ncol)
+    {
+        if(this->atom_begin_row[iat] != -1)
+        {
+            size = this->atom_begin_row[iat] - size;
+            return size;
+        }
+        iat++;
+    }
+    // If the orbital matrix is not found after all atoms are traversed, throw an exception
+    throw std::string("error in get_col_size(iat)");
+}
+
 #ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver") // xiaohui add 2013-09-02
-    {
-        // ofs_running << " nrow=" << nrow << std::endl;
-        for (int irow = 0; irow < pv->nrow; irow++)
-        {
-            int global_row = pv->MatrixInfo.row_set[irow];
-            pv->trace_loc_row[global_row] = irow;
-            // ofs_running << " global_row=" << global_row
-            // << " trace_loc_row=" << pv->trace_loc_row[global_row] << std::endl;
-        }
-
-        // ofs_running << " ncol=" << ncol << std::endl;
-        for (int icol = 0; icol < pv->ncol; icol++)
-        {
-            int global_col = pv->MatrixInfo.col_set[icol];
-            pv->trace_loc_col[global_col] = icol;
-            // ofs_running << " global_col=" << global_col
-            // << " trace_loc_col=" << pv->trace_loc_row[global_col] << std::endl;
-        }
-    }
+void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, const int& lld)
+{
+    ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
+#ifdef __DEBUG
+    assert(this->comm_2D != MPI_COMM_NULL);
+    assert(nbasis > 0 && nbands > 0 && lld > 0);
+    assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
 #endif
-    else
-    {
-        std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver << std::endl;
-        ModuleBase::WARNING_QUIT("ORB_control::set_trace", "Check ks_solver.");
-    }
-
-    //---------------------------
-    // print the trace for test.
-    //---------------------------
-    /*
-    ofs_running << " " << std::setw(10) << "GlobalRow" << std::setw(10) << "LocalRow" << std::endl;
-    for(int i=0; i<nlocal; i++)
-    {
-        ofs_running << " " << std::setw(10) << i << std::setw(10) << pv->trace_loc_row[i] << std::endl;
-
-    }
-
-    ofs_running << " " << std::setw(10) << "GlobalCol" << std::setw(10) << "LocalCol" << std::endl;
-    for(int j=0; j<nlocal; j++)
-    {
-        ofs_running << " " << std::setw(10) << j << std::setw(10) << trace_loc_col[j] << std::endl;
-    }
-    */
-
-    return;
-}
-
-#ifdef __MPI
-inline int cart2blacs(MPI_Comm comm_2D,
-                      int nprows,
-                      int npcols,
-                      int Nlocal,
-                      int Nbands,
-                      int nblk,
-                      int lld,
-                      int* desc,
-                      int* desc_wfc,
-                      int* desc_wfc1,
-                      int* desc_Eij)
-{
-    int my_blacs_ctxt;
-    int myprow, mypcol;
-    int* usermap = new int[nprows * npcols];
-    int info = 0;
-    for (int i = 0; i < nprows; ++i)
-    {
-        for (int j = 0; j < npcols; ++j)
-        {
-            int pcoord[2] = {i, j};
-            MPI_Cart_rank(comm_2D, pcoord, &usermap[i + j * nprows]);
-        }
-    }
-    MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
-    Cblacs_get(comm_2D_f, 0, &my_blacs_ctxt);
-    Cblacs_gridmap(&my_blacs_ctxt, usermap, nprows, nprows, npcols);
-    Cblacs_gridinfo(my_blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    delete[] usermap;
     int ISRC = 0;
-    descinit_(desc, &Nlocal, &Nlocal, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-    descinit_(desc_wfc, &Nlocal, &Nbands, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-    descinit_(desc_wfc1, &Nbands, &Nlocal, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-    descinit_(desc_Eij, &Nbands, &Nbands, &nblk, &nblk, &ISRC, &ISRC, &my_blacs_ctxt, &lld, &info);
-
-    return my_blacs_ctxt;
+    int info = 0;
+    descinit_(desc_wfc, &nbasis, &nbands, &this->nb, &this->nb, &ISRC, &ISRC, &this->blacs_ctxt, &lld, &info);
+    descinit_(desc_wfc1, &nbands, &nbasis, &this->nb, &this->nb, &ISRC, &ISRC, &this->blacs_ctxt, &lld, &info);
+    descinit_(desc_Eij, &nbands, &nbands, &this->nb, &this->nb, &ISRC, &ISRC, &this->blacs_ctxt, &lld, &info);
 }
-#endif
-
-void ORB_control::divide_HS_2d(
-#ifdef __MPI
-    MPI_Comm DIAG_WORLD,
-#endif
+int Parallel_Orbitals::set_nloc_wfc_Eij(
+    const int& N_A,
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning)
 {
-    ModuleBase::TITLE("ORB_control", "divide_HS_2d");
-    assert(nlocal > 0);
-    assert(dsize > 0);
-    Parallel_Orbitals* pv = &this->ParaV;
-
-    if (dcolor != 0)
-        return; // mohan add 2012-01-13
-
-    // get the 2D index of computer.
-    pv->dim0 = (int)sqrt((double)dsize); // mohan update 2012/01/13
-    // while (GlobalV::NPROC_IN_POOL%dim0!=0)
-
-    if (ks_solver == "cusolver")
-        pv->dim0 = 1; // Xu Shu add 2022-03-25
-
-    while (dsize % pv->dim0 != 0)
+    ModuleBase::TITLE("Parallel_Orbitals", "set_nloc_wfc_Eij");
+    // for wavefuncton , calculate nbands_loc
+    int end_id;
+    int block = N_A / nb;
+    if (block * nb < N_A)
     {
-        pv->dim0 = pv->dim0 - 1;
+        block++;
     }
-    assert(pv->dim0 > 0);
-    pv->dim1 = dsize / pv->dim0;
-
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "dim0", pv->dim0);
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "dim1", pv->dim1);
-
-#ifdef __MPI
-    // mohan add 2011-04-16
-    if (nb2d == 0)
+    if (dim1 > block)
     {
-        if (nlocal > 0)
-            pv->nb = 1;
-        if (nlocal > 500)
-            pv->nb = 32;
-        if (nlocal > 1000)
-            pv->nb = 64;
+        ofs_warning << " cpu 2D distribution : " << dim0 << "*" << dim1 << std::endl;
+        ofs_warning << " but, the number of bands-row-block is " << block << std::endl;
+        if (nb > 1)
+        {
+            return 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij", "some processor has no bands-row-blocks.");
+        }
     }
-    else if (nb2d > 0)
+    int col_b_bands = block / dim1;
+    if (coord[1] < block % dim1)
     {
-        pv->nb = nb2d; // mohan add 2010-06-28
+        col_b_bands++;
     }
-
-    if (ks_solver == "cusolver")
-        pv->nb = 1; // Xu Shu add 2022-03-25
-    ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->nb);
-
-    this->set_parameters(ofs_running, ofs_warning);
-
-    // call mpi_creat_cart
-    this->mpi_creat_cart(&pv->comm_2D, pv->dim0, pv->dim1, ofs_running);
-
-    // call mat_2d
-    int try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb, pv->MatrixInfo, ofs_running, ofs_warning);
-    if (try_nb == 1)
+    if (block % dim1 == 0)
     {
-        ofs_running << " parameter nb2d is too large: nb2d = " << pv->nb << std::endl;
-        ofs_running << " reset nb2d to value 1, this set would make the program keep working but maybe get slower "
-                       "during diagonalization."
-                    << std::endl;
-        pv->nb = 1;
-        try_nb = this->mat_2d(pv->comm_2D, nlocal, nbands, pv->nb, pv->MatrixInfo, ofs_running, ofs_warning);
+        end_id = dim1 - 1;
     }
-
-    // mohan add 2010-06-29
-    pv->nrow = pv->MatrixInfo.row_num;
-    pv->ncol = pv->MatrixInfo.col_num;
-    pv->nloc = pv->MatrixInfo.col_num * pv->MatrixInfo.row_num;
-
-    // init blacs context for genelpa
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
+    else
     {
-        pv->blacs_ctxt = cart2blacs(pv->comm_2D,
-                                    pv->dim0,
-                                    pv->dim1,
-                                    nlocal,
-                                    nbands,
-                                    pv->nb,
-                                    pv->nrow,
-                                    pv->desc,
-                                    pv->desc_wfc,
-                                    pv->desc_wfc1,
-                                    pv->desc_Eij);
+        end_id = block % dim1 - 1;
     }
-#else // single processor used.
-    pv->nb = nlocal;
-    pv->nrow = nlocal;
-    pv->ncol = nlocal;
-    pv->nloc = nlocal * nlocal;
-    this->set_parameters(ofs_running, ofs_warning);
-    pv->MatrixInfo.row_b = 1;
-	pv->MatrixInfo.row_num = nlocal;
-	pv->MatrixInfo.row_set.resize(nlocal);
-	for(int i=0; i<nlocal; i++)
-	{
-		pv->MatrixInfo.row_set[i]=i;
-	}
-	pv->MatrixInfo.row_pos=0;
+    if (coord[1] == end_id)
+    {
+        this->ncol_bands = (col_b_bands - 1) * nb + (N_A - (block - 1) * nb);
+    }
+    else
+    {
+        this->ncol_bands = col_b_bands * nb;
+    }
+    this->nloc_wfc = this->ncol_bands * this->nrow;
 
-	pv->MatrixInfo.col_b = 1;
-	pv->MatrixInfo.col_num = nlocal;
-	pv->MatrixInfo.col_set.resize(nlocal);
-	for(int i=0; i<nlocal; i++)
-	{
-		pv->MatrixInfo.col_set[i]=i;
-	}
-	pv->MatrixInfo.col_pos=0;
-#endif
+    this->nloc_Eij = this->ncol_bands * this->ncol_bands;
 
-    assert(pv->nloc > 0);
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "MatrixInfo.row_num", pv->MatrixInfo.row_num);
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "MatrixInfo.col_num", pv->MatrixInfo.col_num);
-    if (pv->testpb)
-        ModuleBase::GlobalFunc::OUT(ofs_running, "nloc", pv->nloc);
-    return;
+    return 0;
 }
+#endif

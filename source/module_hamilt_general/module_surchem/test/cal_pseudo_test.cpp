@@ -32,7 +32,7 @@ protected:
 
 TEST_F(cal_pseudo_test, gauss_charge)
 {   
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -91,7 +91,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
 
 TEST_F(cal_pseudo_test, cal_pseudo)
 {   
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 

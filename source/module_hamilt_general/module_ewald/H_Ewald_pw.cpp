@@ -116,7 +116,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         {
             rhon += static_cast<double>(cell.atoms[it].ncpp.zv) * conj(strucFac(it, ig));
         }
-        ewaldg += fact * abs(rhon) * abs(rhon)
+        ewaldg += fact * std::abs(rhon) * std::abs(rhon)
                   * exp(- rho_basis->gg[ig] * cell.tpiba2 / alpha / 4.0 ) / rho_basis->gg[ig] / cell.tpiba2;
     }
 
@@ -302,7 +302,7 @@ void H_Ewald_pw::rgen(
 
                 tt = t.x * t.x + t.y * t.y + t.z * t.z;
 
-                if (tt <= rmax * rmax && abs(tt) > 1.e-10)
+                if (tt <= rmax * rmax && std::abs(tt) > 1.e-10)
                 {
                     if (nrm > mxr)
                     {

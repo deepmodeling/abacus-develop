@@ -1,8 +1,6 @@
 #include "sltk_atom.h"
 #include <iostream>
 
-using namespace std;
-
 class AdjacentSet;
 
 //int FAtom::count1 = 0;

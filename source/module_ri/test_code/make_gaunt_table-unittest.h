@@ -14,7 +14,7 @@ static void cout_MGT ( const ORB_gaunt_table & MGT, const int Lmax )
 	{
 		for( int LB=0; LB<=Lmax; ++LB )
 		{
-			for( int LAB=abs(LA-LB); LAB<=LA+LB; ++LAB )
+			for( int LAB=std::abs(LA-LB); LAB<=LA+LB; ++LAB )
 			{
 				for( int mA=0; mA!=2*LA+1; ++mA )
 				{

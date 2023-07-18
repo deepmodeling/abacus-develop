@@ -153,7 +153,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         delete[] pos;
     }
 
- 	GlobalV::ofs_running << setiosflags(ios::fixed) << setprecision(6) << endl;
+ 	GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
 	if(GlobalV::TEST_FORCE)
 	{
 		Sto_Forces::print("LOCAL    FORCE (Ry/Bohr)", forcelc);
@@ -167,7 +167,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 	
 		
 	// output force in unit eV/Angstrom
-	GlobalV::ofs_running << endl;
+	GlobalV::ofs_running << std::endl;
     
 	if(GlobalV::TEST_FORCE)
 	{
@@ -188,7 +188,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
                                   const ModuleBase::matrix& wg,
                                   K_Vectors* p_kv,
                                   ModulePW::PW_Basis_K* wfc_basis,
-                                  const psi::Psi<complex<double>>* psi_in,
+                                  const psi::Psi<std::complex<double>>* psi_in,
                                   Stochastic_WF& stowf)
 {
 	ModuleBase::TITLE("Sto_Forces","cal_force_nl");

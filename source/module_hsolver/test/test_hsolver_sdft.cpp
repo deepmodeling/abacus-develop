@@ -143,7 +143,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 
 	std::string method_test = "cg";
 
-	ofstream temp_ofs;
+	std::ofstream temp_ofs;
 };
 
 TEST_F(TestHSolverPW_SDFT, solve)

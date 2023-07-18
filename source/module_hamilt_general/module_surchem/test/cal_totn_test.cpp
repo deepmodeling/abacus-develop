@@ -30,7 +30,7 @@ protected:
 
 TEST_F(cal_totn_test, cal_totn)
 {   
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -104,7 +104,7 @@ TEST_F(cal_totn_test, cal_totn)
 
 TEST_F(cal_totn_test, induced_charge)
 {   
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 

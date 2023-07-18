@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 
+#include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/numerical_radial.h"
 
 //! An abstract class representing a related set of numerical radial functions.
@@ -20,9 +21,10 @@
 class RadialSet
 {
   public:
-    RadialSet() {}
+    RadialSet();
     RadialSet(const RadialSet&);            //!< deep copy
     RadialSet& operator=(const RadialSet&); //!< deep copy
+    virtual RadialSet* clone() const = 0;   //!< for polymorphic copy
 
     virtual ~RadialSet();
 
@@ -44,15 +46,13 @@ class RadialSet
     int lmax() const { return lmax_; }
     double rcut_max() const;
 
-    int nzeta(const int l) const
-    {
-        assert(l >= 0 && l <= lmax_);
-        return nzeta_[l];
-    }
+    int nzeta(const int l) const { return (l >= 0 && l <= lmax_) ? nzeta_[l] : 0; }
     int nzeta_max() const { return nzeta_max_; }
     int nchi() const { return nchi_; }
 
     const NumericalRadial& chi(const int l, const int izeta);
+    const NumericalRadial* cbegin() const { return chi_; }
+    const NumericalRadial* cend() const { return chi_ + nchi_; }
     //!@}
 
     /*! @name property setters for all NumericalRadial objects
@@ -70,7 +70,11 @@ class RadialSet
 
     //! Set a common uniform grid for all NumericalRadial objects
     //! @see NumericalRadial::set_uniform_grid
-    void set_uniform_grid(const bool for_r_space, const int ngrid, const double cutoff, const char mode = 'i');
+    void set_uniform_grid(const bool for_r_space,
+                          const int ngrid,
+                          const double cutoff,
+                          const char mode = 'i',
+                          const bool enable_fft = false);
     //!@}
 
   protected:
@@ -85,6 +89,16 @@ class RadialSet
     NumericalRadial* chi_ = nullptr; //!< array of NumericalRadial objects
 
     int* index_map_ = nullptr; //!< map (l,izeta) to an index in chi_ array
+
+    //! Pointer to the object that provides spherical Bessel transforms
+    /*!
+     *  All NumericalRadial objects within this class should share the same
+     *  spherical Bessel transformer.
+     *                                                                      */
+    ModuleBase::SphericalBesselTransformer* sbt_;
+
+    //! A flag that marks the ownership of sbt_
+    bool use_internal_transformer_;
 
     //! deallocates memory and reset all class members to default values
     void cleanup();

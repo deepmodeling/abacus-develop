@@ -7,9 +7,16 @@
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
 
+AtomicRadials& AtomicRadials::operator=(const AtomicRadials& rhs)
+{
+    RadialSet::operator=(rhs);
+    orb_ecut_ = rhs.orb_ecut_;
+    return *this;
+}
+
 void AtomicRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
 {
-    // deallocates all arrays and reset variables
+    // deallocates all arrays and reset variables (excluding sbt_)
     cleanup();
 
     std::ifstream ifs;
@@ -50,6 +57,11 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
     if (rank == 0)
     {
         ifs.close();
+    }
+
+    for (int i = 0; i < nchi_; i++)
+    {
+        chi_[i].set_transformer(sbt_, 0);
     }
 }
 

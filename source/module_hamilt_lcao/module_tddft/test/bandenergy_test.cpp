@@ -20,7 +20,8 @@
 
 #define doublethreshold 1e-8
 double module_tddft::Evolve_elec::td_print_eij = -1;
-
+Parallel_2D::Parallel_2D(){}
+Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
 }

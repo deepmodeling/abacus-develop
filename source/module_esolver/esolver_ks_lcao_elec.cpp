@@ -252,8 +252,6 @@ namespace ModuleESolver
                 GlobalC::ucell,
                 GlobalC::ORB,
                 GlobalC::GridD,
-                pv->trace_loc_row,
-                pv->trace_loc_col,
                 GlobalC::UOT);
 
             if (GlobalV::deepks_out_unittest)
@@ -262,8 +260,6 @@ namespace ModuleESolver
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD,
-                    pv->trace_loc_row,
-                    pv->trace_loc_col,
                     GlobalC::UOT);
             }
         }
@@ -281,10 +277,16 @@ namespace ModuleESolver
         {
             this->init_after_vc(INPUT, GlobalC::ucell);
         }
-        if (GlobalC::ucell.ionic_position_updated && GlobalV::md_prec_level != 2)
+        if (GlobalC::ucell.ionic_position_updated)
         {
             CE.update_all_dis(GlobalC::ucell);
-            CE.extrapolate_charge(pelec->charge, &(sf));
+            CE.extrapolate_charge(
+#ifdef __MPI
+                &(GlobalC::Pgrid),
+#endif
+                GlobalC::ucell,
+                pelec->charge,
+                &(sf));
         }
 
         //----------------------------------------------------------
@@ -589,43 +591,33 @@ namespace ModuleESolver
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
                 GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma[0],
-                                         GlobalC::ucell,
-                                         GlobalC::ORB,
-                                         GlobalC::GridD,
-                                         pv->trace_loc_row,
-                                         pv->trace_loc_col);
+                    GlobalC::ucell,
+                    GlobalC::ORB,
+                    GlobalC::GridD);
             }
             else
             {
                 GlobalC::ld.cal_projected_DM_k(this->LOC.dm_k,
-                                               GlobalC::ucell,
-                                               GlobalC::ORB,
-                                               GlobalC::GridD,
-                                               pv->trace_loc_row,
-                                               pv->trace_loc_col,
-                                               this->kv.nks,
-                                               this->kv.kvec_d);
+                    GlobalC::ucell,
+                    GlobalC::ORB,
+                    GlobalC::GridD,
+                    this->kv.nks,
+                    this->kv.kvec_d);
             }
             GlobalC::ld.cal_descriptor(); // final descriptor
             GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
                 GlobalC::ld.add_v_delta(GlobalC::ucell,
-                                        GlobalC::ORB,
-                                        GlobalC::GridD,
-                                        pv->trace_loc_row,
-                                        pv->trace_loc_col,
-                                        pv->nrow,
-                                        pv->ncol);
+                    GlobalC::ORB,
+                    GlobalC::GridD);
             }
             else
             {
                 GlobalC::ld.add_v_delta_k(GlobalC::ucell, 
-                                          GlobalC::ORB, 
-                                          GlobalC::GridD, 
-                                          pv->trace_loc_row,
-                                          pv->trace_loc_col,
-                                          pv->nnr);
+                    GlobalC::ORB,
+                    GlobalC::GridD,
+                    pv->nnr);
             }
         }
 #endif

@@ -408,7 +408,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
 	
 	if(GlobalV::DFT_FUNCTIONAL!="default")
 	{
-		string xc_func1 = GlobalV::DFT_FUNCTIONAL;
+		std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
 		transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
 		if(xc_func1 != xc_func)
 		{

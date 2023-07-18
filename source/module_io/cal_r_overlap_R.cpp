@@ -105,7 +105,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                         for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
                         {
                              center2_orb11[TA][TB][LA][NA][LB].insert( 
-                                make_pair(NB, Center2_Orb::Orb11(
+                                std::make_pair(NB, Center2_Orb::Orb11(
                                     orbs[TA][LA][NA],
                                     orbs[TB][LB][NB],
                                     MOT, MGT))
@@ -130,7 +130,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                         for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb21_r[TA][TB][LA][NA][LB].insert( 
-                                make_pair(NB, Center2_Orb::Orb21(
+                                std::make_pair(NB, Center2_Orb::Orb21(
                                     orbs[TA][LA][NA],	
                                     orb_r,									
                                     orbs[TB][LB][NB],
@@ -270,7 +270,7 @@ void cal_r_overlap_R::out_rR(const int &istep)
     {
         if (binary)
         {
-            ofs_tem1.open(tem1.str().c_str(), ios::binary);
+            ofs_tem1.open(tem1.str().c_str(), std::ios::binary);
         }
         else
         {
@@ -291,12 +291,12 @@ void cal_r_overlap_R::out_rR(const int &istep)
         int ir, ic;
         for(int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
         {
-            ir = this->ParaV->trace_loc_row[iw1];	
+            ir = this->ParaV->global2local_row(iw1);
             if(ir >= 0)
             {
                 for(int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
                 {							
-                    ic = this->ParaV->trace_loc_col[iw2];
+                    ic = this->ParaV->global2local_col(iw2);
                     if(ic >= 0)
                     {
                         int orb_index_row = iw1 / GlobalV::NPOL;
@@ -418,17 +418,17 @@ void cal_r_overlap_R::out_rR(const int &istep)
             ofs_tem1.close();
             if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
             {
-                out_r.open(ssr.str().c_str(), ios::binary | ios::app);
+                out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
             }
             else
             {
-                out_r.open(ssr.str().c_str(), ios::binary);
+                out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char *>(&step), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&output_R_number), sizeof(int));
 
-            ifs_tem1.open(tem1.str().c_str(), ios::binary);
+            ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
             out_r << ifs_tem1.rdbuf();
             ifs_tem1.close();
             out_r.close();
@@ -438,7 +438,7 @@ void cal_r_overlap_R::out_rR(const int &istep)
             ofs_tem1.close();
             if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
             {
-                out_r.open(ssr.str().c_str(), ios::app);
+                out_r.open(ssr.str().c_str(), std::ios::app);
             }
             else
             {
@@ -489,11 +489,11 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
         {
             if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
             {
-                out_r.open(ssr.str().c_str(), ios::binary | ios::app);
+                out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
             }
             else
             {
-                out_r.open(ssr.str().c_str(), ios::binary);
+                out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char *>(&step), sizeof(int));
             out_r.write(reinterpret_cast<char *>(&GlobalV::NLOCAL), sizeof(int));
@@ -503,7 +503,7 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
         {
             if(GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
             {
-                out_r.open(ssr.str().c_str(), ios::app);
+                out_r.open(ssr.str().c_str(), std::ios::app);
             }
             else
             {
@@ -528,12 +528,12 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
         int ir, ic;
         for(int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
         {
-            ir = this->ParaV->trace_loc_row[iw1];	
+            ir = this->ParaV->global2local_row(iw1);
             if(ir >= 0)
             {
                 for(int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
                 {							
-                    ic = this->ParaV->trace_loc_col[iw2];
+                    ic = this->ParaV->global2local_col(iw2);
                     if(ic >= 0)
                     {
                         int orb_index_row = iw1 / GlobalV::NPOL;

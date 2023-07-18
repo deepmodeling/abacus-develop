@@ -13,7 +13,8 @@ void test_deepks::preparation()
 	this->set_orbs(ucell.lat0);
 	this->prep_neighbour();
 
-	this->ParaO.set_trace();
+    this->ParaO.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL,
+        false, GlobalV::ofs_running);
 }
 
 void test_deepks::set_parameters()
@@ -97,7 +98,7 @@ void test_deepks::set_ekcut()
 			GlobalV::ofs_running << "error : cannot find LCAO file : " << ucell.orbital_fn[it] << std::endl;
 		}
 
-		string word;
+		std::string word;
 		while (in_ao.good())
 		{
 			in_ao >> word;

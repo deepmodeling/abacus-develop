@@ -7,6 +7,7 @@ if(ENABLE_LCAO)
     atomic_radials.cpp
     beta_radials.cpp
     radial_collection.cpp
+    real_gaunt_table.cpp
   )
 
   if(ENABLE_COVERAGE)

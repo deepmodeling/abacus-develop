@@ -32,7 +32,7 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
     {
         num_elec += ocp_kb[i];
     }
-    if (abs(num_elec - GlobalV::nelec) > 1.0e-5)
+    if (std::abs(num_elec - GlobalV::nelec) > 1.0e-5)
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "total number of occupations is wrong , please check ocp_set");
@@ -208,7 +208,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     // (2) other effective potentials need charge density,
     // choose charge density from ionic step 0.
     //--------------------------------------------------------------------
-    if (istep == 0 || GlobalV::md_prec_level == 2)
+    if (istep == 0)
     {
         this->charge->init_rho(this->eferm, strucfac);
     }

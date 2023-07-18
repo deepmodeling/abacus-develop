@@ -12,11 +12,9 @@
 #include "my_math.hpp"
 #include "utils.h"
 
-using namespace std;
+extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
-extern map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
-
-int ELPA_Solver::eigenvector(complex<double>* A, double* EigenValue, complex<double>* EigenVector)
+int ELPA_Solver::eigenvector(std::complex<double>* A, double* EigenValue, std::complex<double>* EigenVector)
 {
     int info;
     int allinfo;
@@ -37,8 +35,8 @@ int ELPA_Solver::eigenvector(complex<double>* A, double* EigenValue, complex<dou
     return allinfo;
 }
 
-int ELPA_Solver::generalized_eigenvector(complex<double>* A, complex<double>* B, int& DecomposedState,
-                                         double* EigenValue, complex<double>* EigenVector)
+int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<double>* B, int& DecomposedState,
+                                         double* EigenValue, std::complex<double>* EigenVector)
 {
     int info, allinfo;
     double t;
@@ -155,7 +153,7 @@ int ELPA_Solver::generalized_eigenvector(complex<double>* A, complex<double>* B,
     return allinfo;
 }
 
-int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, complex<double>* EigenVector, int& DecomposedState)
+int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValue, std::complex<double>* EigenVector, int& DecomposedState)
 {
     int info=0;
     int allinfo=0;
@@ -301,7 +299,7 @@ int ELPA_Solver::decomposeRightMatrix(complex<double>* B, double* EigenValue, co
     return allinfo;
 }
 
-int ELPA_Solver::composeEigenVector(int DecomposedState, complex<double>* B, complex<double>* EigenVector)
+int ELPA_Solver::composeEigenVector(int DecomposedState, std::complex<double>* B, std::complex<double>* EigenVector)
 {
     double t;
     if(DecomposedState==1 || DecomposedState==2)
@@ -341,13 +339,13 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, complex<double>* B, com
 // D: Diagonal matrix of eigenvalue
 // maxError: maximum absolute value of error
 // meanError: mean absolute value of error
-void ELPA_Solver::verify(complex<double>* A, double* EigenValue, complex<double>* EigenVector,
+void ELPA_Solver::verify(std::complex<double>* A, double* EigenValue, std::complex<double>* EigenVector,
                          double &maxError, double &meanError)
 {
-    complex<double>* V=EigenVector;
+    std::complex<double>* V=EigenVector;
     const int naloc=narows*nacols;
-    complex<double>* D=new complex<double>[naloc];
-    complex<double>* R=zwork.data();
+    std::complex<double>* D=new std::complex<double>[naloc];
+    std::complex<double>* R=zwork.data();
 
     for(int i=0; i<naloc; ++i)
         D[i]=0;
@@ -380,7 +378,7 @@ void ELPA_Solver::verify(complex<double>* A, double* EigenValue, complex<double>
     maxError=0;
     for(int i=1; i<=nev; ++i)
     {
-        complex<double> E;
+        std::complex<double> E;
         Cpzdotc(nFull, E, R, 1, i, 1,
                          R, 1, i, 1, desc);
         double abs_E=std::abs(E);
@@ -399,14 +397,14 @@ void ELPA_Solver::verify(complex<double>* A, double* EigenValue, complex<double>
 // D: Diagonal matrix of eigenvalue
 // maxError: maximum absolute value of error
 // meanError: mean absolute value of error
-void ELPA_Solver::verify(complex<double>* A, complex<double>* B,
-                        double* EigenValue, complex<double>* EigenVector,
+void ELPA_Solver::verify(std::complex<double>* A, std::complex<double>* B,
+                        double* EigenValue, std::complex<double>* EigenVector,
                         double &maxError, double &meanError)
 {
-    complex<double>* V=EigenVector;
+    std::complex<double>* V=EigenVector;
     const int naloc=narows*nacols;
-    complex<double>* D=new complex<double>[naloc];
-    complex<double>* R=new complex<double>[naloc];
+    std::complex<double>* D=new std::complex<double>[naloc];
+    std::complex<double>* R=new std::complex<double>[naloc];
 
     for(int i=0; i<naloc; ++i)
         D[i]=0;
@@ -442,7 +440,7 @@ void ELPA_Solver::verify(complex<double>* A, complex<double>* B,
     maxError=0;
     for(int i=1; i<=nev; ++i)
     {
-        complex<double> E;
+        std::complex<double> E;
         Cpzdotc(nFull, E, R, 1, i, 1,
                          R, 1, i, 1, desc);
         double abs_E=std::abs(E);

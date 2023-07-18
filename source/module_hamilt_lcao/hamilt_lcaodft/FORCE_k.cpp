@@ -98,9 +98,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         GlobalC::ld.cal_projected_DM_k(loc.dm_k,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
-                                       GlobalC::GridD,
-                                       pv->trace_loc_row,
-                                       pv->trace_loc_col,
+            GlobalC::GridD,
                                        kv.nks,
                                        kv.kvec_d);
         GlobalC::ld.cal_descriptor();
@@ -109,9 +107,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         GlobalC::ld.cal_f_delta_k(loc.dm_k,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
-                                  GlobalC::GridD,
-                                  pv->trace_loc_row,
-                                  pv->trace_loc_col,
+            GlobalC::GridD,
                                   kv.nks,
                                   kv.kvec_d,
                                   isstress,
@@ -130,25 +126,19 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
             GlobalC::ld.add_v_delta_k(GlobalC::ucell,
-                                      GlobalC::ORB,
-                                      GlobalC::GridD,
-                                      pv->trace_loc_row,
-                                      pv->trace_loc_col,
-                                      pv->nnr);
+                GlobalC::ORB,
+                GlobalC::GridD,
+                pv->nnr);
             GlobalC::ld.check_v_delta_k(pv->nnr);
             for (int ik = 0; ik < kv.nks; ik++)
             {
                 uhm.LM->folding_fixedH(ik, kv.kvec_d);
             }
             GlobalC::ld.cal_e_delta_band_k(loc.dm_k,
-                                           pv->trace_loc_row,
-                                           pv->trace_loc_col,
-                                           kv.nks,
-                                           pv->nrow,
-                                           pv->ncol);
-            ofstream ofs("E_delta_bands.dat");
+                kv.nks);
+            std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-            ofstream ofs1("E_delta.dat");
+            std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
             GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
         }
@@ -442,7 +432,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                 const int iw1_all = start1 + jj;
 
                 // HPSEPS
-                const int mu = pv->trace_loc_row[iw1_all];
+                const int mu = pv->global2local_row(iw1_all);
                 if (mu < 0)
                     continue;
 
@@ -451,7 +441,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                     const int iw2_all = start2 + kk;
 
                     // HPSEPS
-                    const int nu = pv->trace_loc_col[iw2_all];
+                    const int nu = pv->global2local_col(iw2_all);
                     if (nu < 0)
                         continue;
                     //==============================================================
@@ -597,13 +587,13 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(double** dm2d,
             for (int jj = 0; jj < atom1->nw; ++jj)
             {
                 const int iw1_all = start1 + jj;
-                const int mu = pv->trace_loc_row[iw1_all];
+                const int mu = pv->global2local_row(iw1_all);
                 if (mu < 0)
                     continue;
                 for (int kk = 0; kk < atom2->nw; ++kk)
                 {
                     const int iw2_all = start2 + kk;
-                    const int nu = pv->trace_loc_col[iw2_all];
+                    const int nu = pv->global2local_col(iw2_all);
                     if (nu < 0)
                         continue;
                     //==============================================================
@@ -730,7 +720,7 @@ void Force_LCAO_k::test(double* mmm, const std::string& name)
     {
         for (int j = 0; j < GlobalV::NLOCAL; j++)
         {
-            if (abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+            if (std::abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
                 std::cout << std::setw(12) << test[i * GlobalV::NLOCAL + j];
             else
                 std::cout << std::setw(12) << "0";
@@ -806,8 +796,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
             for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
             {
                 const int iw1_all = start1 + iw1;
-                const int iw1_local = pv->trace_loc_row[iw1_all];
-                const int iw2_local = pv->trace_loc_col[iw1_all];
+                const int iw1_local = pv->global2local_row(iw1_all);
+                const int iw2_local = pv->global2local_col(iw1_all);
                 if (iw1_local < 0 && iw2_local < 0)
                     continue;
                 const int iw1_0 = iw1 / GlobalV::NPOL;
@@ -1002,7 +992,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                         {
                             const int j0 = j / GlobalV::NPOL; // added by zhengdy-soc
                             const int iw1_all = start1 + j;
-                            const int mu = pv->trace_loc_row[iw1_all];
+                            const int mu = pv->global2local_row(iw1_all);
                             if (mu < 0)
                                 continue;
 
@@ -1010,7 +1000,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                             {
                                 const int k0 = k / GlobalV::NPOL;
                                 const int iw2_all = start2 + k;
-                                const int nu = pv->trace_loc_col[iw2_all];
+                                const int nu = pv->global2local_col(iw2_all);
                                 if (nu < 0)
                                     continue;
 
@@ -1106,7 +1096,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                     {
                         const int j0 = j / GlobalV::NPOL; // added by zhengdy-soc
                         const int iw1_all = start1 + j;
-                        const int mu = pv->trace_loc_row[iw1_all];
+                        const int mu = pv->global2local_row(iw1_all);
                         if (mu < 0)
                             continue;
 
@@ -1116,7 +1106,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                         {
                             const int k0 = k / GlobalV::NPOL;
                             const int iw2_all = start2 + k;
-                            const int nu = pv->trace_loc_col[iw2_all];
+                            const int nu = pv->global2local_col(iw2_all);
                             if (nu < 0)
                                 continue;
                             total_nnr++;

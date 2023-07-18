@@ -70,14 +70,14 @@ void DFTU::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma)
                     {
                         const int jj0 = jj / GlobalV::NPOL;
                         const int iw1_all = start1 + jj0;
-                        const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
+                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
                         if (mu < 0) continue;
 
                         for (int kk = 0; kk < atom2->nw * GlobalV::NPOL; ++kk)
                         {
                             const int kk0 = kk / GlobalV::NPOL;
                             const int iw2_all = start2 + kk0;
-                            const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
+                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
                             if (nu < 0) continue;
 
                             dSR_gamma[nu * this->LM->ParaV->nrow + mu] += dS_ptr[nnr] * this->LM->DH_r[nnr * 3 + dim2];
@@ -188,13 +188,13 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                     {
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
-                        const int mu = this->LM->ParaV->trace_loc_row[iw1_all];
+                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
                         if (mu < 0) continue;
 
                         for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->trace_loc_col[iw2_all];
+                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
                             if (nu < 0) continue;
 
                             int iic;

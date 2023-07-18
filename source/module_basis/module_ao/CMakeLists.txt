@@ -13,6 +13,7 @@ if(ENABLE_LCAO)
       ORB_table_alpha.cpp
       ORB_table_beta.cpp
       ORB_table_phi.cpp
+      parallel_2d.cpp
       parallel_orbitals.cpp
   )
 

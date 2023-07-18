@@ -48,7 +48,7 @@ void InfoNonlocal::Set_NonLocal(
 		int lmaxkb = - 1;
 		for (int ibeta = 0; ibeta < atom->ncpp.nbeta; ibeta++)
 		{
-			lmaxkb = max( lmaxkb, atom->ncpp.lll[ibeta]);
+			lmaxkb = std::max( lmaxkb, atom->ncpp.lll[ibeta]);
 		}
 		Soc soc;
 		if(atom->ncpp.has_so)
@@ -115,7 +115,7 @@ void InfoNonlocal::Set_NonLocal(
 			int cut_mesh = atom->ncpp.mesh; 
 			for(int ir=atom->ncpp.mesh-1; ir>=0; --ir)
 			{
-				if( abs( atom->ncpp.betar(p1,ir) ) > 1.0e-10 )
+				if( std::abs( atom->ncpp.betar(p1,ir) ) > 1.0e-10 )
 				{
 					cut_mesh = ir; 
 					break;
@@ -178,7 +178,7 @@ void InfoNonlocal::Read_NonLocal(
     const int& kmesh,
     const double& dk,
     const double& dr_uniform,
-    const string& nonlocalFile)
+    const std::string& nonlocalFile)
 {
 	ModuleBase::TITLE("InfoNonlocal","Read_NonLocal");
 
