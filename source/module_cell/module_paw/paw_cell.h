@@ -11,6 +11,7 @@
 #include <string>
 
 #include "paw_element.h"
+#include "paw_atom.h"
 
 class Paw_Cell
 {
@@ -29,11 +30,17 @@ class Paw_Cell
 
     // Given a list of k points, calculate the structure factors
     // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
-    // as well as the spherical harmonics Ylm(k+G)
+    // as well as the spherical harmonics Ylm(k+G), and gnorm
     void set_paw_k(
-        const int npw, const double * kpt,
+        const int npw_in, const double * kpt,
         const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz,
-        const double ** kpg);
+        const double ** kpg, const double tpiba);
+
+    // This is one of the core functionalities of this class, which reads a wavefunction
+    // psi(G), calculates its overlap with all projectors <psi(G)|ptilde(G)>,
+    // then accumulates the contribution of this wavefunction to rhoij
+    // Note k-point information is not passed here, but prepared in set_paw_k
+    void accumulate_rhoij(const double * psi, const double weight);
 
     int get_nproj_tot(){return nproj_tot;}
     // map projector to atom
@@ -65,6 +72,9 @@ class Paw_Cell
     // array of paw_element
     std::vector<Paw_Element> paw_element_list;
 
+    // array of paw_atom
+    std::vector<Paw_Atom> paw_atom_list;
+
     int nproj_tot; // total number of projectors
     std::vector<int> iprj_to_ia; // map projector to atom
     std::vector<int> iprj_to_im; // map projector to mstate of that element
@@ -84,6 +94,8 @@ class Paw_Cell
     // FFT grid
     int nx, ny, nz;
 
+    int npw;
+
     // structure factor ('eigts1-3' from structure_factor class)
     // stores exp(- i G R_I) where G = (Gx,0,0), (0,Gy,0) and (0,0,Gz)
     std::vector<std::vector<std::complex<double>>> eigts1;
@@ -91,12 +103,24 @@ class Paw_Cell
     std::vector<std::vector<std::complex<double>>> eigts3;
 
     // structure factor of (k+G) for current k point
+    // dimension : natom * npw
     std::vector<std::vector<std::complex<double>>> struc_fact;
 
     // spherical harmonics Y_lm (k+G) for current k point
+    // dimension : npw * #. (l,m) channels
+    // This thing is calculated on the fly in treatment of nonlocal PP in ABACUS
+    // but is calculated and stored in ABINIT
+    // I'm going to follow the latter
     std::vector<std::vector<double>> ylm_k;
 
-    void set_ylm(const int npw, const double ** kpg);
+    // dimension : npw
+    // norm of (k+G), used for interpolation of ptilde(G)
+    // this is also calculated on the fly in nonlocal PP
+    // but since it has same dimension of dim 1 of ylm_k
+    // I'd rather also calculate it once and save it
+    std::vector<double> gnorm;
+
+    void set_ylm(const int npw_in, const double ** kpg);
 
 };
 

@@ -2,6 +2,11 @@
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
 
+double Paw_Element::get_ptilde(const int istate_in, const double q_in)
+{
+    return this->splint(qgrid, ptilde_q[istate_in], d2ptilde_q[istate_in], q_in);
+}
+
 // ptilde_l(q) = int_0^{rc} dr r ptilde_l(r) j_l(qr)
 // and 2nd derivative d2ptilde_l(q) for spline
 void Paw_Element::transform_ptilde()

@@ -263,7 +263,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         ifs_kpg >> ig >> kpg[i][0] >> kpg[i][1] >> kpg[i][2];
     }
 
-    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg);
+    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, 1.0);
 
     delete[] ig_to_ix;
     delete[] ig_to_iy;

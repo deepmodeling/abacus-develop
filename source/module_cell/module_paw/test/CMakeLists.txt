@@ -10,13 +10,13 @@ install(FILES sphbes_ref.dat func.dat qlist.dat fq_ref.dat
 AddTest(
   TARGET Test_Paw
   LIBS ${math_libs} base device
-  SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_interface.cpp
+  SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_atom.cpp
 )
 
 AddTest(
   TARGET Test_Paw1
   LIBS ${math_libs} base device
-  SOURCES test_paw1.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_interface.cpp ../paw_cell.cpp
+  SOURCES test_paw1.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
 
 AddTest(

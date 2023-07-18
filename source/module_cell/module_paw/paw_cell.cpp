@@ -41,6 +41,14 @@ void Paw_Cell::init_paw_cell(
 
     this->map_paw_proj();
 
+    paw_atom_list.resize(nat);
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        int it = atom_type[iat];
+        int nproj = paw_element_list[it].get_mstates();
+        paw_atom_list[iat].init_paw_atom(nproj);
+    }
+
     eigts1.resize(nat);
     eigts2.resize(nat);
     eigts3.resize(nat);
@@ -70,14 +78,16 @@ void Paw_Cell::init_paw_cell(
 
 // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
 void Paw_Cell::set_paw_k(
-    const int npw, const double * kpt,
+    const int npw_in, const double * kpt,
     const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz,
-    const double ** kpg)
+    const double ** kpg, const double tpiba)
 {
     ModuleBase::TITLE("Paw_Element","set_paw_k");
 
     const double pi = 3.141592653589793238462643383279502884197;
     const double twopi = 2.0 * pi;
+
+    this -> npw = npw_in;
 
     struc_fact.resize(nat);
     for(int iat = 0; iat < nat; iat ++)
@@ -103,6 +113,12 @@ void Paw_Cell::set_paw_k(
     }
 
     this -> set_ylm(npw, kpg);
+    
+    gnorm.resize(npw);
+    for(int ipw = 0; ipw < npw; ipw ++)
+    {
+        gnorm[ipw] = std::sqrt(kpg[ipw][0]*kpg[ipw][0] + kpg[ipw][1]*kpg[ipw][1] + kpg[ipw][2]*kpg[ipw][2]) * tpiba;
+    }
 }
 
 void Paw_Cell::map_paw_proj()
@@ -156,10 +172,10 @@ void Paw_Cell::map_paw_proj()
     assert(iproj == nproj_tot);
 }
 
-void Paw_Cell::set_ylm(const int npw, const double ** kpg)
+void Paw_Cell::set_ylm(const int npw_in, const double ** kpg)
 {
-    ylm_k.resize(npw);
-    for(int ipw = 0; ipw < npw; ipw ++)
+    ylm_k.resize(npw_in);
+    for(int ipw = 0; ipw < npw_in; ipw ++)
     {
         ylm_k[ipw] = calc_ylm(lmax, kpg[ipw]);
     }
@@ -288,5 +304,46 @@ double Paw_Cell::ass_leg_pol(const int l, const int m, const double arg)
             }
             return pll;
         }
+    }
+}
+
+void Paw_Cell::accumulate_rhoij(const double * psi, const double weight)
+{
+    ModuleBase::TITLE("Paw_Cell","accumulate_rhoij");
+
+    const std::complex<double> neg_i = std::complex<double>(0.0,-1.0);
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        // ca : <ptilde(G)|psi(G)>
+        // = \sum_G [\int f(r)r^2j_l(r)dr] * [(-i)^l] * [ylm(\hat{G})] * [exp(-GR_I)] *psi(G)
+        // = \sum_ipw ptilde * fact * ylm * sk * psi (in the code below)
+        std::vector<std::complex<double>> ca;
+
+        int it = atom_type[iat];
+        int nproj = paw_element_list[it].get_mstates();
+
+        ca.resize(nproj);
+
+        for(int ip = 0; ip < nproj; ip ++)
+        {
+            const int l = paw_element_list[it].get_lstate()[ip];
+            const int m = paw_element_list[it].get_mstate()[ip];
+            const int lm_ind = l*l + l + m;
+            const std::complex<double> fact = std::pow(neg_i,l);
+
+            ca[ip] = 0.0;
+            for(int ipw = 0; ipw < npw; ipw ++)
+            {
+                const double ptilde = paw_element_list[it].get_ptilde(ip,gnorm[ipw]);
+                const double ylm = ylm_k[ipw][lm_ind];
+                const std::complex<double> sk = struc_fact[iat][ipw];
+
+                ca[ip] += fact * ptilde * ylm * sk * psi[ipw];
+            }
+        }
+
+        paw_atom_list[iat].set_ca(ca, weight);
+        paw_atom_list[iat].accumulate_rhoij();
     }
 }
