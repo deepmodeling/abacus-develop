@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <limits>
 
 TwoCenterTable::~TwoCenterTable() { delete[] rgrid_; }
 
@@ -13,7 +14,7 @@ void TwoCenterTable::build(const RadialCollection& bra,
                            const double* const rgrid,
                            const bool deriv)
 {
-    assert(nr > 0 && rgrid);
+    assert(nr >= 4 && rgrid); // nr >= 4 required for polynomial interpolation
     cleanup();
 
     op_ = op;
@@ -23,9 +24,18 @@ void TwoCenterTable::build(const RadialCollection& bra,
     rgrid_ = new double[nr_];
     std::memcpy(rgrid_, rgrid, nr_ * sizeof(double));
 
+    double tol = 4.0 * std::numeric_limits<double>::epsilon();
+    double dr = rgrid[nr - 1] / (nr - 1);
+    is_uniform_ = std::all_of(rgrid, rgrid + nr, [&](const double& r) { return std::abs(r - (&r - rgrid) * dr) < tol; });
+
     // index the table by generating a map from (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index
-    index_map_.resize({bra.ntype(), bra.lmax() + 1, bra.nzeta_max(),
-                       ket.ntype(), ket.lmax() + 1, ket.nzeta_max(), bra.lmax() + ket.lmax() + 1});
+    index_map_.resize({bra.ntype(),
+                       bra.lmax() + 1,
+                       bra.nzeta_max(),
+                       ket.ntype(),
+                       ket.lmax() + 1,
+                       ket.nzeta_max(),
+                       bra.lmax() + ket.lmax() + 1});
     std::fill(index_map_.data<int>(), index_map_.data<int>() + index_map_.NumElements(), -1);
 
     ntab_ = 0;
@@ -85,6 +95,54 @@ const double* TwoCenterTable::ptr_table(const int itype1,
 {
     assert(is_present(itype1, l1, izeta1, itype2, l2, izeta2, l));
     return table_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l));
+}
+
+double TwoCenterTable::lookup(const int itype1,
+                              const int l1,
+                              const int izeta1,
+                              const int itype2,
+                              const int l2,
+                              const int izeta2,
+                              const int l,
+                              const double R) const
+{
+    assert(R >= 0 && R <= rmax());
+    const double* table = ptr_table(itype1, l1, izeta1, itype2, l2, izeta2, l);
+
+    // find the maximum ir satisfying rgrid_[ir] <= R
+    int ir = is_uniform_ ? static_cast<int>(R / rgrid_[1]) : std::upper_bound(rgrid_, rgrid_ + nr_, R) - rgrid_ - 1;
+
+    // adjust ir so that (ir-1, ir, ir+1, ir+2) all fall within the boundary
+    ir += (ir == 0);
+    ir = ir >= nr_ - 2 ? nr_ - 3 : ir;
+
+    // use Lagrange interpolation for data points with indices ir-1, ir, ir+1, ir+2
+    if (is_uniform_)
+    {
+        // dxi = (R - rgrid_[ir-i-1]) / dr
+        double dx0 = (R - rgrid_[ir - 1]) / rgrid_[1];
+        double dx1 = dx0 - 1.0;
+        double dx2 = dx1 - 1.0;
+        double dx3 = dx2 - 1.0;
+
+        // return - table[ir-1] * dx1 * dx2 * dx3 / 6.0
+        //        + table[ir  ] * dx0 * dx2 * dx3 / 2.0
+        //        - table[ir+1] * dx0 * dx1 * dx3 / 2.0
+        //        + table[ir+2] * dx0 * dx1 * dx2 / 6.0;
+        return dx1 * dx2 * (-table[ir - 1] * dx3 + table[ir + 2] * dx0) / 6.0
+               + dx0 * dx3 * (table[ir] * dx2 - table[ir + 1] * dx1) / 2.0;
+    }
+    else
+    {
+        return table[ir - 1] * (R - rgrid_[ir]) * (R - rgrid_[ir + 1]) * (R - rgrid_[ir + 2]) /
+            ((rgrid_[ir - 1] - rgrid_[ir]) * (rgrid_[ir - 1] - rgrid_[ir + 1]) * (rgrid_[ir - 1] - rgrid_[ir + 2]))
+            + table[ir] * (R - rgrid_[ir - 1]) * (R - rgrid_[ir + 1]) * (R - rgrid_[ir + 2]) /
+            ((rgrid_[ir] - rgrid_[ir - 1]) * (rgrid_[ir] - rgrid_[ir + 1]) * (rgrid_[ir] - rgrid_[ir + 2]))
+            + table[ir + 1] * (R - rgrid_[ir - 1]) * (R - rgrid_[ir]) * (R - rgrid_[ir + 2]) /
+            ((rgrid_[ir + 1] - rgrid_[ir - 1]) * (rgrid_[ir + 1] - rgrid_[ir]) * (rgrid_[ir + 1] - rgrid_[ir + 2]))
+            + table[ir + 2] * (R - rgrid_[ir - 1]) * (R - rgrid_[ir]) * (R - rgrid_[ir + 1]) /
+            ((rgrid_[ir + 2] - rgrid_[ir - 1]) * (rgrid_[ir + 2] - rgrid_[ir]) * (rgrid_[ir + 2] - rgrid_[ir + 1]));
+    }
 }
 
 int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadial* it2, const int l)

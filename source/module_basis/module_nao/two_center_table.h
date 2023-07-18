@@ -32,6 +32,9 @@ class TwoCenterTable
     //! returns the number of radial points of each table
     int nr() const { return nr_; }
 
+    //! returns true if the radial grid is uniform
+    bool is_uniform() const { return is_uniform_; }
+
     // returns the number of table entries
     int ntab() const { return ntab_; }
 
@@ -50,6 +53,16 @@ class TwoCenterTable
                             const int izeta2, //!< [in] zeta number of chi2
                             const int l       //!< [in] angular momentum of the entry
     ) const;
+
+    double lookup(const int itype1, //!< [in] element index of chi1
+                  const int l1,     //!< [in] angular momentum of chi1
+                  const int izeta1, //!< [in] zeta number of chi1
+                  const int itype2, //!< [in] element index of chi2
+                  const int l2,     //!< [in] angular momentum of chi2
+                  const int izeta2, //!< [in] zeta number of chi2
+                  const int l,      //!< [in] angular momentum of the entry
+                  const double R    //!< [in] distance between the two centers
+    ) const;
     //!@}
 
   private:
@@ -58,6 +71,7 @@ class TwoCenterTable
 
     int nr_ = 0;              //!< number of radial points of each table
     double* rgrid_ = nullptr; //!< radial grid of each table
+    bool is_uniform_ = false; //!< true if rgrid_ satisfies rgrid_[i] = i*dr
 
     int ntab_ = 0; //!< number of table entries
 

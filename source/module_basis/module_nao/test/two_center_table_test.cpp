@@ -114,6 +114,26 @@ TEST_F(TwoCenterTableTest, BuildOverlapAndKinetic)
             EXPECT_NEAR(df_fd, df[ir], 1e-5);
         }
     }
+
+    EXPECT_EQ(S_tab.is_uniform(), true);
+    EXPECT_EQ(T_tab.is_uniform(), true);
+    EXPECT_EQ(S_dtab.is_uniform(), true);
+    EXPECT_EQ(T_dtab.is_uniform(), true);
+
+    EXPECT_EQ(S_tab.is_deriv(), false);
+    EXPECT_EQ(T_tab.is_deriv(), false);
+    EXPECT_EQ(S_dtab.is_deriv(), true);
+    EXPECT_EQ(T_dtab.is_deriv(), true);
+
+    EXPECT_EQ(S_tab.nr(), nr);
+    EXPECT_EQ(T_tab.nr(), nr);
+    EXPECT_EQ(S_dtab.nr(), nr);
+    EXPECT_EQ(T_dtab.nr(), nr);
+
+    EXPECT_EQ(S_tab.rmax(), rmax);
+    EXPECT_EQ(T_tab.rmax(), rmax);
+    EXPECT_EQ(S_dtab.rmax(), rmax);
+    EXPECT_EQ(T_dtab.rmax(), rmax);
 }
 
 TEST_F(TwoCenterTableTest, LegacyConsistency)
