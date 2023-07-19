@@ -25,7 +25,7 @@ int Symmetry::symm_flag=0;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
-    const double MAX_EPS = std::max(1e-3, epsilon);
+    const double MAX_EPS = std::max(1e-3, epsilon_input * 1.001);
     const double MULT_EPS = 2.0;
     if (available == false) return;
     ModuleBase::TITLE("Symmetry","init");
@@ -99,65 +99,126 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     s2 = a2;
     s3 = a3;
 
-    //a: optimized config
-    // find the lattice type accordiing to lattice vectors.
-    this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3, 
-             this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
-             
-    ofs_running<<"(for optimal symmetric configuration:)"<<std::endl;
-    ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS TYPE", real_brav);
-    ModuleBase::GlobalFunc::OUT(ofs_running,"BRAVAIS LATTICE NAME", ilattname);
-    ModuleBase::GlobalFunc::OUT(ofs_running,"ibrav", real_brav);
-    Symm_Other::print1(real_brav, cel_const, ofs_running);
-  //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
-  //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
-  //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
-	optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
-	optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
-	optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
+    auto lattice_to_group = [&, this](int& nrot_out, int& nrotk_out, std::ofstream& ofs_running) -> void {
+        //a: optimized config
+        // find the lattice type accordiing to lattice vectors.
+        this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3,
+            this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
 
-    this->pricell(this->newpos);         // pengfei Li 2018-05-14 
-         //for( iat =0 ; iat < ucell.nat ; iat++)   
+        ofs_running << "(for optimal symmetric configuration:)" << std::endl;
+        ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS TYPE", real_brav);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS LATTICE NAME", ilattname);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "ibrav", real_brav);
+        Symm_Other::print1(real_brav, cel_const, ofs_running);
+        //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
+        //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
+        //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
+        optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
+        optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
+        optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
+
+        this->pricell(this->newpos);         // pengfei Li 2018-05-14 
+        //for( iat =0 ; iat < ucell.nat ; iat++)   
 //         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-	test_brav = true; // output the real ibrav and point group
-    this->setgroup(this->symop, this->nop, this->real_brav);
-    
+        test_brav = true; // output the real ibrav and point group
+        this->setgroup(this->symop, this->nop, this->real_brav);
+        this->getgroup(nrot_out, nrotk_out, ofs_running);
+        };
+
     if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
     {
+        std::ofstream no_out;   // to screen the output when trying new epsilon
+        if (this->nrotk > this->max_nrotk)this->max_nrotk = this->nrotk;
         int tmp_nrot, tmp_nrotk;
-        this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
+        lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
         //some different method to enlarge symmetry_prec
-        bool eps_changed = false;
+        bool eps_enlarged = false;
         auto eps_mult = [this](double mult) {epsilon *= mult;};
         auto eps_to = [this](double new_eps) {epsilon = new_eps;};
+
+        // store the symmetry_prec and nrotk for each try
+        std::vector<double> precs_try;
+        std::vector<int> nrotks_try;
+        // store the initial result
+        precs_try.push_back(epsilon);
+        nrotks_try.push_back(tmp_nrotk);
         //enlarge epsilon and regenerate pointgroup
-        while (tmp_nrotk < this->nrotk && epsilon < MAX_EPS) 
+        std::cout << "tmp_nrotk=" << tmp_nrotk << std::endl;
+        std::cout << "max_nrotk=" << this->max_nrotk << std::endl;
+
+        while (tmp_nrotk < this->max_nrotk && epsilon < MAX_EPS)
         {
             eps_mult(MULT_EPS);
-            eps_changed = true;
-            this->getgroup(tmp_nrot, tmp_nrotk, ofs_running);
-        }
-        if (epsilon > MAX_EPS)
-        {
-            ofs_running << "ERROR: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl;
-            ofs_running << "Please set `symmetry` to 0 or -1 in INPUT file.  " << std::endl;
-            ModuleBase::QUIT();
-        }
-            
-        if (eps_changed)
-        {
-            ofs_running << "WARNING: current `symmetry_prec` is too small to give the right number of symmtry operations." << std::endl;
-            ofs_running << " Changed `symmetry_prec` to " << epsilon <<"." << std::endl;
+            eps_enlarged = true;
+            // lattice_to_group(tmp_nrot, tmp_nrotk, no_out);
+            lattice_to_group(tmp_nrot, tmp_nrotk, no_out);
+            precs_try.push_back(epsilon);
+            nrotks_try.push_back(tmp_nrotk);
+            std::cout << "epsilon=" << epsilon << ", tmp_nrotk=" << tmp_nrotk << std::endl;
         }
         if (tmp_nrotk > this->nrotk)
         {
             this->nrotk = tmp_nrotk;
             ofs_running << "Find new symmtry operations during cell-relax." << std::endl;
+            if (this->nrotk > this->max_nrotk)this->max_nrotk = this->nrotk;
         }
-        assert(tmp_nrotk == this->nrotk);
+        if (eps_enlarged)
+        {
+            if (epsilon > MAX_EPS)
+            {
+                ofs_running << "WARNING: Symmetry cannot be kept due to the lost of accuracy with atom position during cell-relax." << std::endl;
+                ofs_running << "Continue cell-relax with a lower symmetry. " << std::endl;
+                // find the smallest epsilon that gives the current number of symmetry operations
+                int valid_index = nrotks_try.size() - 1;
+                while (valid_index > 0 && tmp_nrotk <= nrotks_try[valid_index - 1])--valid_index;
+                eps_to(precs_try[valid_index]);
+                if (valid_index > 0) ofs_running << " Enlarging `symmetry_prec` to " << epsilon << " ..." << std::endl;
+                else eps_enlarged = false;
+
+                std::cout << "valid_index=" << valid_index << ", nrotk_try=" << nrotks_try[valid_index] << ", tmp_nrotk=" << tmp_nrotk << std::endl;
+
+                // regenerate pointgroup after change epsilon (may not give the same result)
+                lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
+                std::cout << "tmp_nrotk after regenerate with epsilon=" << epsilon << " : " << tmp_nrotk << std::endl;
+                this->nrotk = tmp_nrotk;
+            }
+            else ofs_running << " Enlarging `symmetry_prec` to " << epsilon << " ..." << std::endl;
+        }
+        if (!eps_enlarged && epsilon > epsilon_input * 1.001)   // not "else" here. "eps_enlarged" can be set to false in the above "if"
+        {   // try a smaller symmetry_prec until the number of symmetry operations decreases
+            precs_try.erase(precs_try.begin() + 1, precs_try.end());
+            nrotks_try.erase(nrotks_try.begin() + 1, nrotks_try.end());
+            double eps_current = epsilon; // record the current symmetry_prec
+            do {
+                eps_mult(1 / MULT_EPS);
+                lattice_to_group(tmp_nrot, tmp_nrotk, no_out);
+                precs_try.push_back(epsilon);
+                nrotks_try.push_back(tmp_nrotk);
+                std::cout << "tmp_nrotk=" << tmp_nrotk << std::endl;
+                std::cout << "nrotk_current=" << nrotks_try[0] << std::endl;
+                std::cout << "nrotk_last=" << this->nrotk << std::endl;
+            } while (tmp_nrotk >= nrotks_try[0] && precs_try.size() < 5);
+            int valid_index = (tmp_nrotk < nrotks_try[0]) ? nrotks_try.size() - 2 : nrotks_try.size() - 1;
+            std::cout << "valid_index=" << valid_index << std::endl;
+            // #ifdef __DEBUG
+            assert(valid_index >= 0);
+            assert(nrotks_try[valid_index] >= nrotks_try[0]);
+            // #endif
+            epsilon = precs_try[valid_index];
+            // regenerate pointgroup after change epsilon
+            lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
+            this->nrotk = tmp_nrotk;
+            if (valid_index > 0)//epsilon is set smaller
+                ofs_running << " Narrowing `symmetry_prec` from " << eps_current << " to " << epsilon << " ..." << std::endl;
+        }
+        // final number of symmetry operations
+// #ifdef __DEBUG
+        ofs_running << "symmetry_prec(epsilon) in current ion step: " << this->epsilon << std::endl;
+        ofs_running << "number of symmetry operations in current ion step: " << this->nrotk << std::endl;
+        // #endif
     }
     else
-        this->getgroup(this->nrot, this->nrotk, ofs_running);
+        lattice_to_group(this->nrot, this->nrotk, ofs_running);
 
 	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
