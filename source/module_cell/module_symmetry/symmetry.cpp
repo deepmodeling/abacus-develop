@@ -143,9 +143,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         precs_try.push_back(epsilon);
         nrotks_try.push_back(tmp_nrotk);
         //enlarge epsilon and regenerate pointgroup
-        std::cout << "tmp_nrotk=" << tmp_nrotk << std::endl;
-        std::cout << "max_nrotk=" << this->max_nrotk << std::endl;
-
         while (tmp_nrotk < this->max_nrotk && epsilon < MAX_EPS)
         {
             eps_mult(MULT_EPS);
@@ -154,7 +151,6 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             lattice_to_group(tmp_nrot, tmp_nrotk, no_out);
             precs_try.push_back(epsilon);
             nrotks_try.push_back(tmp_nrotk);
-            std::cout << "epsilon=" << epsilon << ", tmp_nrotk=" << tmp_nrotk << std::endl;
         }
         if (tmp_nrotk > this->nrotk)
         {
@@ -174,12 +170,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
                 eps_to(precs_try[valid_index]);
                 if (valid_index > 0) ofs_running << " Enlarging `symmetry_prec` to " << epsilon << " ..." << std::endl;
                 else eps_enlarged = false;
-
-                std::cout << "valid_index=" << valid_index << ", nrotk_try=" << nrotks_try[valid_index] << ", tmp_nrotk=" << tmp_nrotk << std::endl;
-
                 // regenerate pointgroup after change epsilon (may not give the same result)
                 lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
-                std::cout << "tmp_nrotk after regenerate with epsilon=" << epsilon << " : " << tmp_nrotk << std::endl;
                 this->nrotk = tmp_nrotk;
             }
             else ofs_running << " Enlarging `symmetry_prec` to " << epsilon << " ..." << std::endl;
@@ -194,16 +186,12 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
                 lattice_to_group(tmp_nrot, tmp_nrotk, no_out);
                 precs_try.push_back(epsilon);
                 nrotks_try.push_back(tmp_nrotk);
-                std::cout << "tmp_nrotk=" << tmp_nrotk << std::endl;
-                std::cout << "nrotk_current=" << nrotks_try[0] << std::endl;
-                std::cout << "nrotk_last=" << this->nrotk << std::endl;
             } while (tmp_nrotk >= nrotks_try[0] && precs_try.size() < 5);
             int valid_index = (tmp_nrotk < nrotks_try[0]) ? nrotks_try.size() - 2 : nrotks_try.size() - 1;
-            std::cout << "valid_index=" << valid_index << std::endl;
-            // #ifdef __DEBUG
+#ifdef __DEBUG
             assert(valid_index >= 0);
             assert(nrotks_try[valid_index] >= nrotks_try[0]);
-            // #endif
+#endif
             epsilon = precs_try[valid_index];
             // regenerate pointgroup after change epsilon
             lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
@@ -212,10 +200,10 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
                 ofs_running << " Narrowing `symmetry_prec` from " << eps_current << " to " << epsilon << " ..." << std::endl;
         }
         // final number of symmetry operations
-// #ifdef __DEBUG
+#ifdef __DEBUG
         ofs_running << "symmetry_prec(epsilon) in current ion step: " << this->epsilon << std::endl;
         ofs_running << "number of symmetry operations in current ion step: " << this->nrotk << std::endl;
-        // #endif
+#endif
     }
     else
         lattice_to_group(this->nrot, this->nrotk, ofs_running);
