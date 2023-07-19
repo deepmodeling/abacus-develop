@@ -22,6 +22,7 @@ class Paw_Cell
 
     void init_paw_cell(
         const double ecutwfc_in, const double cell_factor_in,
+        const double omega_in,
         const int nat_in, const int ntyp_in,
         const int * atom_type_in, const double ** atom_coord_in,
         const std::vector<std::string> & filename_list_in,
@@ -90,6 +91,9 @@ class Paw_Cell
     int ntyp;
     std::vector<int> atom_type; // the element type of each atom
     std::vector<std::vector<double>> atom_coord; // Cartesian coordinate of each atom (in Bohr)
+
+    // volume of cell
+    double omega;
 
     // FFT grid
     int nx, ny, nz;

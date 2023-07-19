@@ -83,6 +83,12 @@ void Paw_Element::read_paw_xml(std::string filename)
 // ============================================================
     line = this->scan_file(ifs, "<radial_grid");
 
+    std::string grid_type = this->extract_string(line,"eq=");
+    if(grid_type != "r=a*(exp(d*i)-1)")
+    {
+        ModuleBase::WARNING_QUIT("read_paw_xml","grid type not implemented yet!");
+    }
+
     rstep = this->extract_double(line,"a=");
     lstep = this->extract_double(line,"d=");
     int istart = this->extract_int(line,"istart=");

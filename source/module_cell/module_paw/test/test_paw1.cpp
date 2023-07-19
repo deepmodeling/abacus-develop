@@ -9,7 +9,7 @@ class Test_Paw_Cell : public testing::Test
 
     Paw_Cell paw_cell;
 
-    double ecut = 50.0, cell_factor = 1.2;
+    double ecut = 50.0, cell_factor = 1.2, omega = 1.0;
     int nat = 5, ntyp = 3;
     int atom_type[5] = {0,1,2,1,2}; // Fe,O,H,O,H
     std::vector<std::string> filename_list;
@@ -61,7 +61,7 @@ TEST_F(Test_Paw_Cell, test_paw)
     eigts2_in = new std::complex<double> [ny];
     eigts3_in = new std::complex<double> [nz];
 
-    paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp, 
+    paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp, 
         atom_type, (const double **) atom_coord, filename_list,
         nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
 
@@ -184,7 +184,7 @@ class Test_PAW_Cell_k : public testing::Test
 
     Paw_Cell paw_cell;
 
-    double ecut = 20.0, cell_factor = 1.2;
+    double ecut = 20.0, cell_factor = 1.2, omega = 1.0;
     int nat = 2, ntyp = 1;
     int atom_type[2] = {0,0}; // Si, Si
     std::vector<std::string> filename_list;
@@ -227,7 +227,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         ifs_eigts >> eigts3_in[i];
     }
 
-    paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp,
+    paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp,
         atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
         eigts1_in, eigts2_in, eigts3_in);
 

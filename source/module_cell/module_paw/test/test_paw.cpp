@@ -194,3 +194,42 @@ TEST_F(Test_Spline, test_paw)
     }
 
 }
+
+class Test_Ptilde : public testing::Test
+{
+    protected:
+
+    Paw_Element paw_element;
+    const double omega = 265.302;
+};
+
+TEST_F(Test_Ptilde, test_paw)
+{
+    paw_element.read_paw_xml("Si_test.xml");
+
+    const int npw = 411;
+    std::ifstream ifs_gnorm("gnorm.dat");
+    std::ifstream ifs_ptilde("ptilde_ref.dat");
+    std::vector<double> gnorm;
+    gnorm.resize(npw);
+
+    for(int ipw = 0; ipw < npw; ipw ++)
+    {
+        ifs_gnorm >> gnorm[ipw];
+    }
+
+    const int nstates = paw_element.get_nstates();
+
+    for(int istate = 0; istate < nstates; istate ++)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            const double ptilde = paw_element.get_ptilde(istate, gnorm[ipw], omega);
+            double ptilde_ref;
+            ifs_ptilde >> ptilde_ref;
+
+            EXPECT_NEAR(ptilde,ptilde_ref,1e-8);
+        }
+    }
+
+}

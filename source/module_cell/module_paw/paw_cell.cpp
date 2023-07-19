@@ -4,6 +4,7 @@
 
 void Paw_Cell::init_paw_cell(
     const double ecutwfc_in, const double cell_factor_in,
+    const double omega_in,
     const int nat_in, const int ntyp_in,
     const int * atom_type_in, const double ** atom_coord_in,
     const std::vector<std::string> & filename_list_in,
@@ -17,6 +18,7 @@ void Paw_Cell::init_paw_cell(
     this -> nx = nx_in;
     this -> ny = ny_in;
     this -> nz = nz_in;
+    this -> omega = omega_in;
 
     atom_coord.resize(nat);
     atom_type.resize(nat);
@@ -335,7 +337,7 @@ void Paw_Cell::accumulate_rhoij(const double * psi, const double weight)
             ca[ip] = 0.0;
             for(int ipw = 0; ipw < npw; ipw ++)
             {
-                const double ptilde = paw_element_list[it].get_ptilde(ip,gnorm[ipw]);
+                const double ptilde = paw_element_list[it].get_ptilde(ip,gnorm[ipw],omega);
                 const double ylm = ylm_k[ipw][lm_ind];
                 const std::complex<double> sk = struc_fact[iat][ipw];
 
