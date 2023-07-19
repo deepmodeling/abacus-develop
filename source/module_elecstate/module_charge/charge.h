@@ -50,7 +50,7 @@ class Charge
 
     void set_rhopw(ModulePW::PW_Basis* rhopw_in);
 
-    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac);
+    void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz);
     // mohan update 2021-02-20
     void allocate(const int &nspin_in);
 
@@ -82,8 +82,25 @@ class Charge
     void init_final_scf(); //LiuXh add 20180619
 
 	public:
+    /**
+     * @brief init some arrays for mpi_inter_pools, rho_mpi
+     * 
+     * @param nbz number of bigz in big grids
+     * @param bz  number of z for each bigz
+     */
+    void init_chgmpi(const int& nbz, const int& bz);
 
-    void rho_mpi(const int& nbz, const int& bz);
+    //sum rho of all pools
+    void rho_mpi();
+
+	  /**
+	   * @brief 	Reduce among different pools 
+     *          If NPROC_IN_POOLs are all the same, use GlobalV::INTER_POOL
+     *          else, gather rho in a POOL, and then reduce among different POOLs
+	   * 
+	   * @param array_rho f(rho): an array [nrxx]
+	   */
+	  void reduce_diff_pools(double* array_rho) const;
 
     // mohan add 2021-02-20
     int nrxx; // number of r vectors in this processor
@@ -99,6 +116,13 @@ class Charge
     bool allocate_rho;
 
     bool allocate_rho_final_scf; // LiuXh add 20180606
+#ifdef __MPI
+  private:
+    bool use_intel_pool = false; //use INTER_POOL when NPROC_IN_POOLs are all the same
+    int *rec = nullptr; //The number of elements each process should receive into the receive buffer.
+    int *dis = nullptr; //The displacement (relative to recvbuf) for each process in the receive buffer.
+#endif
+    
 };
 
 #endif // charge

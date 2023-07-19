@@ -146,7 +146,11 @@ class XCTest_GRADWFC : public testing::Test
 {
     protected:
 
-        std::complex<double> ** grad;
+        std::complex<double> * grad = nullptr;
+        ~XCTest_GRADWFC()
+        {
+            delete[] grad;
+        }
 
         void SetUp()
         {
@@ -163,11 +167,7 @@ class XCTest_GRADWFC : public testing::Test
             }
             double tpiba = 1;
 
-            grad = new std::complex<double>*[5];
-            for(int i=0;i<5;i++)
-            {
-                grad[i] = new std::complex<double>[3];
-            }
+            grad = new std::complex<double>[15];
 
             XC_Functional::grad_wfc(rhog, 0, grad, &rhopw, tpiba);
         }
@@ -176,12 +176,12 @@ class XCTest_GRADWFC : public testing::Test
 TEST_F(XCTest_GRADWFC, set_xc_type)
 {
 
-    for(int i=0;i<5;i++)
+    for (int j=0;j<3;j++)
     {
-        for (int j=0;j<3;j++)
+        for (int i=0;i<5;i++)
         {
-            EXPECT_NEAR(grad[i][j].real(),double(i*(j+1)),1e-8);
-            EXPECT_NEAR(grad[i][j].imag(),0,1e-8);
+            EXPECT_NEAR(grad[i+j*5].real(),double(i*(j+1)),1e-8);
+            EXPECT_NEAR(grad[i+j*5].imag(),0,1e-8);
         }
     }
 }

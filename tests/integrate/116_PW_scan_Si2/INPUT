@@ -2,6 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 calculation     scf
+kpar            2
 
 pseudo_dir	../../PP_ORB
 
