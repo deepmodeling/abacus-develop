@@ -186,7 +186,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
                 lattice_to_group(tmp_nrot, tmp_nrotk, no_out);
                 precs_try.push_back(epsilon);
                 nrotks_try.push_back(tmp_nrotk);
-            } while (tmp_nrotk >= nrotks_try[0] && precs_try.size() < 5);
+            } while (tmp_nrotk >= nrotks_try[0] && epsilon > epsilon_input * 1.001 && precs_try.size() < 5);
             int valid_index = (tmp_nrotk < nrotks_try[0]) ? nrotks_try.size() - 2 : nrotks_try.size() - 1;
 #ifdef __DEBUG
             assert(valid_index >= 0);
