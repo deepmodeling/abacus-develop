@@ -11,3 +11,8 @@ AddTest(
   LIBS ${math_libs} psi base device planewave
   SOURCES charge_mpi_test.cpp ../module_charge/charge_mpi.cpp
 )
+
+add_test(NAME charge_mpi_test_4np
+      COMMAND mpirun -np 4 ./charge_mpi_test;
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
