@@ -73,6 +73,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         delete[] psi;
     } // k loop
 
+#ifdef __MPI
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         for (int ipol = 0; ipol < 6; ++ipol)
@@ -80,6 +81,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
             chr->reduce_diff_pools(crosstaus[is] + ipol * nrxx);
         }
     }
+#endif
 
     delete[] gradwfc;
 
