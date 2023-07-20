@@ -87,7 +87,7 @@ TEST_F(PWTEST,test4_4)
                         double modulusgk = (v+kk) * (GGT * (v+kk));
                         if (modulusgk <= ggecut)
                         {
-                            tmp[ix*ny*nz + iy*nz + iz]=1.0/(modulusgk+1) + ModuleBase::IMAG_UNIT / (abs(v.x+1) + 1);
+                            tmp[ix*ny*nz + iy*nz + iz]=1.0/(modulusgk+1) + ModuleBase::IMAG_UNIT / (std::abs(v.x+1) + 1);
                         }
                     }
                 }   
@@ -121,14 +121,14 @@ TEST_F(PWTEST,test4_4)
 #endif
         for(int ig = 0 ; ig < npwk ; ++ig)
         {
-            rhog[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
-            rhogr[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
+            rhog[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwtest.getgdirect(ik,ig).x+1) + 1);
+            rhogr[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwtest.getgdirect(ik,ig).x+1) + 1);
         }    
 #ifdef __ENABLE_FLOAT_FFTW
         for(int ig = 0 ; ig < npwk ; ++ig)
         {
-            rhofg[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
-            rhofgr[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (abs(pwtest.getgdirect(ik,ig).x+1) + 1);
+            rhofg[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwtest.getgdirect(ik,ig).x+1) + 1);
+            rhofgr[ig] = 1.0/(pwtest.getgk2(ik,ig)+1) + ModuleBase::IMAG_UNIT / (std::abs(pwtest.getgdirect(ik,ig).x+1) + 1);
         }  
 #endif
 

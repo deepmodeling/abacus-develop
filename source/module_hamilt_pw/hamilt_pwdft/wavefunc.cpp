@@ -136,7 +136,7 @@ int wavefunc::get_starting_nw(void)const
             << GlobalV::NBANDS - GlobalC::ucell.natomwfc
             << " random wave functions." << std::endl;
         }
-        return max(GlobalC::ucell.natomwfc,  GlobalV::NBANDS);
+        return std::max(GlobalC::ucell.natomwfc,  GlobalV::NBANDS);
     }
     else if (init_wfc == "random")
     {

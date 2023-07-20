@@ -16,14 +16,14 @@ void KEDF_vW::set_para(int nx, double dV, double vw_weight)
 //
 double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
 {
-    // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
+    // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
     double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            tempPhi[is][ir] = abs(pphi[is][ir]);
+            tempPhi[is][ir] = std::abs(pphi[is][ir]);
         }
     }
 
@@ -68,14 +68,14 @@ double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
 
 double KEDF_vW::get_energy_density(double **pphi, int is, int ir, ModulePW::PW_Basis *pw_rho)
 {
-    // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
+    // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
     double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            tempPhi[is][ir] = abs(pphi[is][ir]);
+            tempPhi[is][ir] = std::abs(pphi[is][ir]);
         }
     }
 
@@ -105,14 +105,14 @@ void KEDF_vW::vW_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho
 {
     ModuleBase::timer::tick("KEDF_vW", "vw_potential");
 
-    // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
+    // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
     double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            tempPhi[is][ir] = abs(pphi[is][ir]);
+            tempPhi[is][ir] = std::abs(pphi[is][ir]);
         }
     }
 
@@ -175,14 +175,14 @@ void KEDF_vW::vW_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho
 
 void KEDF_vW::get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho, double inpt_vWenergy)
 {
-    // since pphi may contain minus element, we define tempPhi = abs(phi), which is true sqrt(rho)
+    // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
     double **tempPhi = new double *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < this->nx; ++ir)
         {
-            tempPhi[is][ir] = abs(pphi[is][ir]);
+            tempPhi[is][ir] = std::abs(pphi[is][ir]);
         }
     }
 

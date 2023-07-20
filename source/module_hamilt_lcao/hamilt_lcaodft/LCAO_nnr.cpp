@@ -86,8 +86,8 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 						if(distance < rcut - 1.0e-15)
 						{
 							//storing the indexed for nnrg
-							const int mu = pv->trace_loc_row[iat];
-							const int nu = pv->trace_loc_col[iat2];
+							const int mu = pv->global2local_row(iat);
+							const int nu = pv->global2local_col(iat2);
 							this->nnrg_index.push_back(gridIntegral::gridIndex{this->nnrg, mu, nu, GlobalC::GridD.getBox(ad), atom1->nw, atom2->nw});
 							
 							const int nelement = atom1->nw * atom2->nw;
@@ -246,13 +246,13 @@ void Grid_Technique::cal_max_box_index(void)
 			GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
 			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ad++)
 			{
-				this->maxB1 = max( GlobalC::GridD.getBox(ad).x, maxB1 ); 
-				this->maxB2 = max( GlobalC::GridD.getBox(ad).y, maxB2 ); 
-				this->maxB3 = max( GlobalC::GridD.getBox(ad).z, maxB3 ); 
+				this->maxB1 = std::max( GlobalC::GridD.getBox(ad).x, maxB1 ); 
+				this->maxB2 = std::max( GlobalC::GridD.getBox(ad).y, maxB2 ); 
+				this->maxB3 = std::max( GlobalC::GridD.getBox(ad).z, maxB3 ); 
 
-				this->minB1 = min( GlobalC::GridD.getBox(ad).x, minB1 ); 
-				this->minB2 = min( GlobalC::GridD.getBox(ad).y, minB2 ); 
-				this->minB3 = min( GlobalC::GridD.getBox(ad).z, minB3 ); 
+				this->minB1 = std::min( GlobalC::GridD.getBox(ad).x, minB1 ); 
+				this->minB2 = std::min( GlobalC::GridD.getBox(ad).y, minB2 ); 
+				this->minB3 = std::min( GlobalC::GridD.getBox(ad).z, minB3 ); 
 			}
 		}
 	}
@@ -460,12 +460,12 @@ void LCAO_Matrix::folding_fixedH(
 					{															\
 						/* the index of orbitals in this processor */			\
 						const int iw1_all = start + ii;							\
-						const int mu = pv->trace_loc_row[iw1_all];				\
+						const int mu = pv->global2local_row(iw1_all);				\
 						if(mu<0) {continue;}									\
 						for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)			\
 						{														\
 							int iw2_all = start2 + jj;							\
-							const int nu = pv->trace_loc_col[iw2_all];			\
+							const int nu = pv->global2local_col(iw2_all);			\
 							if(nu<0) {continue;}
 
 								// DO STH.

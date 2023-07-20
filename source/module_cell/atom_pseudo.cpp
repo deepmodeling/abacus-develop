@@ -113,8 +113,8 @@ void Atom_pseudo::set_d_so(
 									this->d_so(is, L1, L2)
 										= d_so_in(L1 + nproj_soc*is1, L2 + nproj_soc*is2);
 								}
-								if(abs(this->d_so(is, L1, L2).real())>1.0e-8
-										|| abs(this->d_so(is, L1, L2).imag())>1.0e-8)
+								if(std::abs(this->d_so(is, L1, L2).real())>1.0e-8
+										|| std::abs(this->d_so(is, L1, L2).imag())>1.0e-8)
 								{
 									this->index1_soc[is][non_zero_count_soc[is]] = L1;
 									this->index2_soc[is][non_zero_count_soc[is]] = L2;

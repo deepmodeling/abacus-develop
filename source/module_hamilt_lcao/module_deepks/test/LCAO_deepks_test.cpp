@@ -28,23 +28,20 @@ void test_deepks::check_psialpha(void)
 	}
 	ld.init(ORB,
 		ucell.nat,
-		ucell.ntype,
-		na);
+        ucell.ntype,
+        ParaO,
+        na);
 
 	ld.build_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
-		Test_Deepks::GridD,
-		ParaO.trace_loc_row,
-		ParaO.trace_loc_col,
+        Test_Deepks::GridD,
 		OGT);
 
 	ld.check_psialpha(GlobalV::CAL_FORCE,
 		ucell,
 		ORB,
-		Test_Deepks::GridD,
-		ParaO.trace_loc_row,
-		ParaO.trace_loc_col,
+        Test_Deepks::GridD,
 		OGT);
 	this->compare_with_ref("psialpha.dat","psialpha_ref.dat");
 	this->compare_with_ref("dpsialpha_x.dat","dpsialpha_x_ref.dat");
@@ -54,7 +51,7 @@ void test_deepks::check_psialpha(void)
 
 void test_deepks::read_dm(void)
 {
-    ifstream ifs("dm");
+    std::ifstream ifs("dm");
     dm.resize(1);
     dm[0].create(GlobalV::NLOCAL, GlobalV::NLOCAL);
 
@@ -72,12 +69,12 @@ void test_deepks::read_dm(void)
 void test_deepks::read_dm_k(const int nks)
 {
 	dm_k.resize(nks);
-	stringstream ss;
+	std::stringstream ss;
 	for(int ik=0;ik<nks;ik++)
 	{
         ss.str("");
         ss<<"dm_"<<ik;
-        ifstream ifs(ss.str().c_str());
+        std::ifstream ifs(ss.str().c_str());
 		dm_k[ik].create(GlobalV::NLOCAL,GlobalV::NLOCAL);
 
 		for (int mu=0;mu<GlobalV::NLOCAL;mu++)
@@ -100,9 +97,7 @@ void test_deepks::check_pdm(void)
 		this->ld.cal_projected_DM(dm[0],
 			ucell,
 			ORB,
-			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col);
+            Test_Deepks::GridD);
 	}
 	else
 	{
@@ -110,9 +105,7 @@ void test_deepks::check_pdm(void)
 		this->ld.cal_projected_DM_k(dm_k,
 			ucell,
 			ORB,
-			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+            Test_Deepks::GridD,
 			kv.nkstot,
 			kv.kvec_d);		
 	}
@@ -128,9 +121,7 @@ void test_deepks::check_gdmx(void)
 		this->ld.cal_gdmx(dm[0],
 			ucell,
 			ORB,
-			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+            Test_Deepks::GridD,
 			0);
 	}
 	else
@@ -138,9 +129,7 @@ void test_deepks::check_gdmx(void)
 		this->ld.cal_gdmx_k(dm_k,
 			ucell,
 			ORB,
-			Test_Deepks::GridD,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
+            Test_Deepks::GridD,
 			kv.nkstot,
 			kv.kvec_d,
 			0);			
@@ -149,8 +138,8 @@ void test_deepks::check_gdmx(void)
 
 	for(int ia=0;ia<ucell.nat;ia++)
 	{
-		stringstream ss;
-		stringstream ss1;
+		std::stringstream ss;
+		std::stringstream ss1;
 		ss.str("");
         ss<<"gdmx_"<<ia<<".dat";
 		ss1.str("");
@@ -186,8 +175,8 @@ void test_deepks::check_gvx(void)
 
 	for(int ia=0;ia<ucell.nat;ia++)
 	{
-		stringstream ss;
-		stringstream ss1;
+		std::stringstream ss;
+		std::stringstream ss1;
 		ss.str("");
         ss<<"gvx_"<<ia<<".dat";
 		ss1.str("");
@@ -213,15 +202,15 @@ void test_deepks::check_edelta(void)
 	this->ld.load_model("model.ptg");
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		this->ld.allocate_V_delta(ucell.nat,ParaO.nloc);
+        this->ld.allocate_V_delta(ucell.nat);
 	}
 	else
 	{
-		this->ld.allocate_V_delta(ucell.nat,ParaO.nloc,kv.nkstot);
+        this->ld.allocate_V_delta(ucell.nat, kv.nkstot);
 	}
 	this->ld.cal_gedm(ucell.nat);
 
-	ofstream ofs("E_delta.dat");
+	std::ofstream ofs("E_delta.dat");
 	ofs << std::setprecision(10) << this->ld.E_delta << std::endl;
 	ofs.close();
 	this->compare_with_ref("E_delta.dat","E_delta_ref.dat");
@@ -234,23 +223,15 @@ void test_deepks::check_e_deltabands(void)
 {
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		this->ld.cal_e_delta_band(dm,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
-			ParaO.nrow);
+        this->ld.cal_e_delta_band(dm);
 	}
 	else
 	{
 		this->folding_nnr(kv);
-		this->ld.cal_e_delta_band_k(dm_k,
-			ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
-			kv.nkstot,
-			ParaO.nrow,
-			ParaO.ncol);
+        this->ld.cal_e_delta_band_k(dm_k, kv.nkstot);
 	}
 
-	ofstream ofs("E_delta_bands.dat");
+	std::ofstream ofs("E_delta_bands.dat");
 	ofs << std::setprecision(10) << this->ld.e_delta_band << std::endl;
 	ofs.close();
 	this->compare_with_ref("E_delta_bands.dat","E_delta_bands_ref.dat");
@@ -262,12 +243,8 @@ void test_deepks::check_v_delta()
 	{
 		this->ld.add_v_delta(ucell,
             ORB,
-            Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-            ParaO.trace_loc_col,
-            ParaO.nrow,
-            ParaO.ncol);
-		this->ld.check_v_delta(ParaO.nrow,ParaO.ncol);
+            Test_Deepks::GridD);
+        this->ld.check_v_delta();
 		this->compare_with_ref("H_V_delta.dat","H_V_delta_ref.dat");
 	}
 	else
@@ -277,8 +254,6 @@ void test_deepks::check_v_delta()
 		this->ld.add_v_delta_k(ucell,
         	ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
 			nnr);
 		this->ld.check_v_delta_k(nnr);
 		this->compare_with_ref("H_V_deltaR.dat","H_V_deltaR_ref.dat");
@@ -295,8 +270,6 @@ void test_deepks::check_f_delta()
             ucell,
             ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
             1, svnl_dalpha);
 	}
 	else
@@ -305,8 +278,6 @@ void test_deepks::check_f_delta()
 			ucell,
             ORB,
             Test_Deepks::GridD,
-            ParaO.trace_loc_row,
-			ParaO.trace_loc_col,
 			kv.nkstot,
 			kv.kvec_d,
 			1,svnl_dalpha);
@@ -321,8 +292,8 @@ void test_deepks::compare_with_ref(
 	const std::string f2)
 {
 	this->total_check+=1;
-	ifstream file1(f1.c_str());
-	ifstream file2(f2.c_str());
+	std::ifstream file1(f1.c_str());
+	std::ifstream file2(f2.c_str());
 	double test_thr=1e-8;
 
 	std::string word1;
@@ -334,7 +305,7 @@ void test_deepks::compare_with_ref(
 		{
 			double num1 = std::stof(word1);
 			double num2 = std::stof(word2);
-			if(abs(num1-num2)>test_thr)
+			if(std::abs(num1-num2)>test_thr)
 			{
 				this->failed_check+=1;
 				std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;

@@ -361,7 +361,7 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
                         else if (!GlobalV::NONCOLIN) // GlobalV::DOMAG_Z
                         {
                             this->DM_R[1][gstart + iv] = 0.0;
-                            this->DM_R[1][gstart + iv] = 0.0;
+                            this->DM_R[2][gstart + iv] = 0.0;
                             this->DM_R[3][gstart + iv] = DM_ATOM[0][iv].real() - DM_ATOM[3][iv].real();
                         }
                         else // soc with no mag

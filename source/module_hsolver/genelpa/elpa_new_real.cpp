@@ -11,8 +11,7 @@
 #include <mpi.h>
 #include <regex>
 
-using namespace std;
-extern map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
+extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
 int ELPA_Solver::eigenvector(double* A, double* EigenValue, double* EigenVector)
 {

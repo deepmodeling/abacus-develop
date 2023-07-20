@@ -6,7 +6,6 @@
 #include "module_base/parallel_common.h"
 #include <algorithm>
 #include "module_base/timer.h"
-using namespace std;
 
 //==============================
 // Define an object here! 

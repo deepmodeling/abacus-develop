@@ -231,7 +231,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         delete[] pos;
     }
 
-    GlobalV::ofs_running << std::setiosflags(ios::fixed) << std::setprecision(6) << std::endl;
+    GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
     /*if(GlobalV::TEST_FORCE)
     {
         Forces::print("LOCAL    FORCE (Ry/Bohr)", forcelc);
@@ -296,7 +296,7 @@ void Forces<FPTYPE, Device>::print_to_files(std::ofstream& ofs, const std::strin
 
     if (GlobalV::TEST_FORCE)
     {
-        std::cout << std::setiosflags(ios::showpos);
+        std::cout << std::setiosflags(std::ios::showpos);
         std::cout << " " << name;
         std::cout << std::setprecision(8);
     }
@@ -317,8 +317,8 @@ void Forces<FPTYPE, Device>::print_to_files(std::ofstream& ofs, const std::strin
         }
     }
 
-    GlobalV::ofs_running << std::resetiosflags(ios::showpos);
-    std::cout << std::resetiosflags(ios::showpos);
+    GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
+    std::cout << std::resetiosflags(std::ios::showpos);
     return;
 }
 
@@ -329,7 +329,7 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
 
     GlobalV::ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y"
                          << std::setw(15) << "z" << std::endl;
-    GlobalV::ofs_running << std::setiosflags(ios::showpos);
+    GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
     GlobalV::ofs_running << std::setprecision(8);
 
     const double fac = ModuleBase::Ry_to_eV / 0.529177;
@@ -339,7 +339,7 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
         std::cout << " --------------- " << name << " ---------------" << std::endl;
         std::cout << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15)
                   << "z" << std::endl;
-        std::cout << std::setiosflags(ios::showpos);
+        std::cout << std::setiosflags(std::ios::showpos);
         std::cout << std::setprecision(6);
     }
 
@@ -354,15 +354,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             if (ry) // output Rydberg Unit
             {
                 GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 0);
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 1);
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 2);
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
@@ -371,15 +371,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             else
             {
                 GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 0) * fac;
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 1) * fac;
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     GlobalV::ofs_running << std::setw(20) << f(iat, 2) * fac;
                 else
                     GlobalV::ofs_running << std::setw(20) << "0";
@@ -389,15 +389,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             if (GlobalV::TEST_FORCE && ry)
             {
                 std::cout << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 0);
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 1);
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 2);
                 else
                     std::cout << std::setw(20) << "0";
@@ -406,15 +406,15 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
             else if (GlobalV::TEST_FORCE)
             {
                 std::cout << " " << std::setw(8) << ss.str();
-                if (abs(f(iat, 0)) > Forces::output_acc)
+                if (std::abs(f(iat, 0)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 0) * fac;
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 1)) > Forces::output_acc)
+                if (std::abs(f(iat, 1)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 1) * fac;
                 else
                     std::cout << std::setw(20) << "0";
-                if (abs(f(iat, 2)) > Forces::output_acc)
+                if (std::abs(f(iat, 2)) > Forces::output_acc)
                     std::cout << std::setw(20) << f(iat, 2) * fac;
                 else
                     std::cout << std::setw(20) << "0";
@@ -425,8 +425,8 @@ void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::ma
         }
     }
 
-    GlobalV::ofs_running << std::resetiosflags(ios::showpos);
-    std::cout << std::resetiosflags(ios::showpos);
+    GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
+    std::cout << std::resetiosflags(std::ios::showpos);
     return;
 }
 

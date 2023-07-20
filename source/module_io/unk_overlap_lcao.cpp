@@ -183,7 +183,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 						for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
 						{
 							center2_orb11[TA][TB][LA][NA][LB].insert( 
-								make_pair(NB, Center2_Orb::Orb11(
+								std::make_pair(NB, Center2_Orb::Orb11(
 									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),								
 									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
 									MOT, MGT)));
@@ -207,7 +207,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 						for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
 						{
 							center2_orb21_r[TA][TB][LA][NA][LB].insert( 
-								make_pair(NB, Center2_Orb::Orb21(
+								std::make_pair(NB, Center2_Orb::Orb21(
 									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),	
 									orb_r,									
 									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
@@ -697,8 +697,8 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
 	{
 		for (int iw_col = 0; iw_col < GlobalV::NLOCAL; iw_col++) // global
 		{
-			int ir = pv.trace_loc_row[ iw_row ]; // local
-			int ic = pv.trace_loc_col[ iw_col ]; // local
+            int ir = pv.global2local_row(iw_row); // local
+            int ic = pv.global2local_col(iw_col); // local
 			
 			if(ir >= 0 && ic >= 0)
 			{
@@ -761,8 +761,8 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
 
 	for(int i = 0; i < occBands; i++) // global
 	{	
-		int ir = lowf.ParaV->trace_loc_row[ i ]; // local
-		int ic = lowf.ParaV->trace_loc_col[ i ]; // local
+        int ir = lowf.ParaV->global2local_row(i); // local
+        int ic = lowf.ParaV->global2local_col(i); // local
 		if(ir >= 0 && ic >= 0)
 		{
 			int index = ic*lowf.ParaV->nrow+ir;
@@ -833,13 +833,13 @@ void unkOverlap_lcao::test(const Grid_Technique& gt, std::complex<double>*** wfc
     */
     /*
     ModuleBase::Vector3<double> dk = kv.kvec_c[0] - kv.kvec_c[0];
-    GlobalV::ofs_running << "(" << 0 << "," << 0 << ") = " << abs(this->unkdotp_LCAO(0,0,0,0,dk)) << std::endl;
+    GlobalV::ofs_running << "(" << 0 << "," << 0 << ") = " << std::abs(this->unkdotp_LCAO(0,0,0,0,dk)) << std::endl;
     */
     /*
     ModuleBase::Vector3<double> dk = kv.kvec_c[0] - kv.kvec_c[0];
     for(int ib = 0; ib < GlobalV::NBANDS; ib++)
         for(int ib2 = 0; ib2 < GlobalV::NBANDS; ib2++)
-            GlobalV::ofs_running << "(" << ib2 << "," << ib << ") = " << abs(this->unkdotp_LCAO(0,0,ib2,ib,dk)) <<
+            GlobalV::ofs_running << "(" << ib2 << "," << ib << ") = " << std::abs(this->unkdotp_LCAO(0,0,ib2,ib,dk)) <<
     std::endl;
     */
     /*

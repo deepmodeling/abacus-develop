@@ -154,7 +154,7 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 			for(int id=0; id<nd; ++id)
 			{
 				if(id>0 && id%8==0) ofs << std::endl;
-			//	if(abs(d[id]>1.0e-9)) ofs << d[id] << " ";
+			//	if(std::abs(d[id]>1.0e-9)) ofs << d[id] << " ";
 			//	else ofs << "0 ";
 				ofs << d[id] << " ";
 			}

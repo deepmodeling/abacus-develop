@@ -165,8 +165,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                     if (pv->in_this_processor(j, i))
                     {
 
-                        const int ir = pv->trace_loc_row[j];
-                        const int ic = pv->trace_loc_col[i];
+                        const int ir = pv->global2local_row(j);
+                        const int ic = pv->global2local_col(i);
                         waveg[j] = Mulk[0](ic, ir) * psid[0](ic, ir);
                         const double x = waveg[j].real();
                         BlasConnector::axpy(np, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
@@ -264,8 +264,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                             if (pv->in_this_processor(j, i))
                             {
 
-                                const int ir = pv->trace_loc_row[j];
-                                const int ic = pv->trace_loc_col[i];
+                                const int ir = pv->global2local_row(j);
+                                const int ic = pv->global2local_col(i);
 
                                 waveg[j] = Mulk[0](ic, ir) * psi[0](ic, ir);
                                 const double x = waveg[j].real();

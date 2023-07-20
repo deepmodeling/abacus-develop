@@ -86,9 +86,9 @@ void compute_ekb(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = Eij[i * pv->ncol + j].real();
                 bb = Eij[i * pv->ncol + j].imag();
-                if (abs(aa) < Evolve_elec::td_print_eij)
+                if (std::abs(aa) < Evolve_elec::td_print_eij)
                     aa = 0.0;
-                if (abs(bb) < Evolve_elec::td_print_eij)
+                if (std::abs(bb) < Evolve_elec::td_print_eij)
                     bb = 0.0;
                 if (aa > 0.0 || bb > 0.0)
                 {

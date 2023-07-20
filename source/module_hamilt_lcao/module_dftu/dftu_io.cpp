@@ -157,7 +157,7 @@ void DFTU::read_occup_m(const std::string &fn)
     if (GlobalV::MY_RANK != 0)
         return;
 
-    std::ifstream ifdftu(fn.c_str(), ios::in);
+    std::ifstream ifdftu(fn.c_str(), std::ios::in);
 
     if (!ifdftu)
     {

@@ -48,7 +48,7 @@ class TestHSolverPW : public ::testing::Test
 
     std::vector<float> ekb_f;
 
-    ofstream temp_ofs;
+    std::ofstream temp_ofs;
 };
 
 TEST_F(TestHSolverPW, solve)

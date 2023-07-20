@@ -139,7 +139,7 @@ namespace ModuleESolver
         this->sf.setup_structure_factor(&GlobalC::ucell, this->pw_rho);
 
         // Initialize charge extrapolation
-        CE.Init_CE(this->pw_rho->nrxx);
+        CE.Init_CE(GlobalC::ucell.nat);
     }
 
     template<typename FPTYPE, typename Device>
@@ -179,7 +179,7 @@ namespace ModuleESolver
     }
 
     template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, ofstream &ofs)
+    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
     {
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -195,7 +195,7 @@ namespace ModuleESolver
 	    ofs << "\n\n\n\n";
         ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
         double ecut = INPUT.ecutwfc;
-        if(abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
+        if(std::abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
         {
             ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
             ofs<<"Energy cutoff for wavefunc is incompatible with nx, ny, nz and it will be reduced!"<<std::endl;

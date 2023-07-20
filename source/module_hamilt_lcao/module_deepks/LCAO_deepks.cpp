@@ -66,10 +66,11 @@ LCAO_Deepks::~LCAO_Deepks()
 }
 
 void LCAO_Deepks::init(
-    const LCAO_Orbitals &orb,
+    const LCAO_Orbitals& orb,
     const int nat,
     const int ntype,
-    std::vector<int> na) 
+    const Parallel_Orbitals& pv_in,
+    std::vector<int> na)
 {
     ModuleBase::TITLE("LCAO_Deepks", "init");
 
@@ -112,6 +113,8 @@ void LCAO_Deepks::init(
 
     this->init_index(ntype, nat, na, tot_inl, orb);
     this->allocate_nlm(nat);
+
+    this->pv = &pv_in;
 
     return;
 }
@@ -256,7 +259,7 @@ void LCAO_Deepks::del_gdmepsl()
 }
 
 
-void LCAO_Deepks::allocate_V_delta(const int nat, const int nloc, const int nks)
+void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
 
@@ -264,16 +267,16 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nloc, const int nks)
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
         delete[] this->H_V_delta;
-        this->H_V_delta = new double[nloc];
-        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta, nloc);
+        this->H_V_delta = new double[pv->nloc];
+        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta, pv->nloc);
     }
     else
     {
         H_V_delta_k = new std::complex<double>* [nks];
         for(int ik=0;ik<nks;ik++)
         {
-            this->H_V_delta_k[ik] = new std::complex<double>[nloc];
-            ModuleBase::GlobalFunc::ZEROS(this->H_V_delta_k[ik], nloc);
+            this->H_V_delta_k[ik] = new std::complex<double>[pv->nloc];
+            ModuleBase::GlobalFunc::ZEROS(this->H_V_delta_k[ik], pv->nloc);
         }
     }
 

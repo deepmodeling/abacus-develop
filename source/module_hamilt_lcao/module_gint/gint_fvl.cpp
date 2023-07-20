@@ -164,11 +164,11 @@ void Gint::gint_kernel_force_meta(
 	{
 		double diff;
 		diff = (dpsir_ylm_x1.ptr_1D[i] - dpsir_ylm_x.ptr_1D[i]) - 0.001 * ddpsir_ylm_xz.ptr_1D[i];
-		if(abs(diff)>1.0e-6) std::cout << "xdiff : " << i << " " << 0.001 * ddpsir_ylm_xz.ptr_1D[i] <<" " << dpsir_ylm_x.ptr_1D[i] << " " <<  (dpsir_ylm_x1.ptr_1D[i] - dpsir_ylm_x.ptr_1D[i]) <<" " << diff << std::endl; 
+		if(std::abs(diff)>1.0e-6) std::cout << "xdiff : " << i << " " << 0.001 * ddpsir_ylm_xz.ptr_1D[i] <<" " << dpsir_ylm_x.ptr_1D[i] << " " <<  (dpsir_ylm_x1.ptr_1D[i] - dpsir_ylm_x.ptr_1D[i]) <<" " << diff << std::endl; 
 		diff = (dpsir_ylm_y1.ptr_1D[i] - dpsir_ylm_y.ptr_1D[i]) - 0.001 * ddpsir_ylm_yz.ptr_1D[i];
-		if(abs(diff)>1.0e-6) std::cout << "ydiff : " << i << " " << 0.001 * ddpsir_ylm_yz.ptr_1D[i] <<" " << dpsir_ylm_y.ptr_1D[i] << " " << (dpsir_ylm_y1.ptr_1D[i] - dpsir_ylm_y.ptr_1D[i]) <<" " << diff << std::endl; 
+		if(std::abs(diff)>1.0e-6) std::cout << "ydiff : " << i << " " << 0.001 * ddpsir_ylm_yz.ptr_1D[i] <<" " << dpsir_ylm_y.ptr_1D[i] << " " << (dpsir_ylm_y1.ptr_1D[i] - dpsir_ylm_y.ptr_1D[i]) <<" " << diff << std::endl; 
 		diff = (dpsir_ylm_z1.ptr_1D[i] - dpsir_ylm_z.ptr_1D[i]) - 0.001 * ddpsir_ylm_zz.ptr_1D[i];
-		if(abs(diff)>1.0e-6) std::cout << "zdiff : " << i << " " << 0.001 * ddpsir_ylm_zz.ptr_1D[i] <<" " << dpsir_ylm_z.ptr_1D[i] << " " << (dpsir_ylm_z1.ptr_1D[i] - dpsir_ylm_z.ptr_1D[i]) <<" " << diff << std::endl; 
+		if(std::abs(diff)>1.0e-6) std::cout << "zdiff : " << i << " " << 0.001 * ddpsir_ylm_zz.ptr_1D[i] <<" " << dpsir_ylm_z.ptr_1D[i] << " " << (dpsir_ylm_z1.ptr_1D[i] - dpsir_ylm_z.ptr_1D[i]) <<" " << diff << std::endl; 
 	}
 	*/
 

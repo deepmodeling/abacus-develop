@@ -15,8 +15,8 @@ namespace ModuleESolver
         pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
         sf.set(INPUT.nbspline);
 
-        this->symm.epsilon = INPUT.symmetry_prec;
-    }
+        this->symm.epsilon = this->symm.epsilon_input = INPUT.symmetry_prec;
+}
     ESolver_FP::~ESolver_FP()
     {
         if (this->psi != nullptr)
@@ -96,7 +96,7 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
-    void ESolver_FP::print_rhofft(Input&inp, ofstream &ofs)
+    void ESolver_FP::print_rhofft(Input&inp, std::ofstream &ofs)
     {
         std::cout << " UNIFORM GRID DIM     : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz
                   << std::endl;

@@ -16,7 +16,7 @@ void Input::Print(const std::string &fn) const
     // output the information in INPUT.
     //----------------------------------
     ofs << "INPUT_PARAMETERS" << std::endl;
-    ofs << std::setiosflags(ios::left);
+    ofs << std::setiosflags(std::ios::left);
 
     ofs << "#Parameters (1.General)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "suffix", suffix, "the name of main output directory");

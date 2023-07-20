@@ -181,7 +181,7 @@ void IState_Charge::idmatrix(const int& ib, elecstate::ElecState* pelec)
     for (int is = 0; is != GlobalV::NSPIN; ++is)
     {
         std::vector<double> wg_local(this->loc->ParaV->ncol, 0.0);
-        const int ib_local = this->loc->ParaV->trace_loc_col[ib];
+        const int ib_local = this->loc->ParaV->global2local_col(ib);
 
         int fermi_band = 0;
         fermi_band = static_cast<int>((GlobalV::nelec + 1) / 2 + 1.0e-8);

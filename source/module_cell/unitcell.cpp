@@ -7,7 +7,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "unitcell.h"
-using namespace std;
 
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
@@ -51,11 +50,11 @@ UnitCell::UnitCell()
     tpiba2 = 0.0;
     omega = 0.0;
 
-    atom_label = new string[1];
+    atom_label = new std::string[1];
     atom_mass = nullptr;
-    pseudo_fn = new string[1];
-    pseudo_type = new string[1];
-    orbital_fn = new string[1];
+    pseudo_fn = new std::string[1];
+    pseudo_type = new std::string[1];
+    orbital_fn = new std::string[1];
 
     set_atom_flag = false;
 }
@@ -519,7 +518,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 	if(GlobalV::MY_RANK == 0)
 	{
 		// open "atom_unitcell" file.
-		std::ifstream ifa(fn.c_str(), ios::in);
+		std::ifstream ifa(fn.c_str(), std::ios::in);
 		if (!ifa)
 		{
 			GlobalV::ofs_warning << fn;
@@ -598,9 +597,10 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 	// Firstly, latvec must be read in.
 	//========================================================
 	assert(lat0 > 0.0);
-	this->omega = abs( latvec.Det() ) * this->lat0 * lat0 * lat0 ;
+	this->omega = std::abs( latvec.Det() ) * this->lat0 * lat0 * lat0 ;
 	if(this->omega<=0)
-	{
+	{	
+		std::cout << "The volume is negative: " << this->omega<<std::endl;
 		ModuleBase::WARNING_QUIT("setup_cell","omega <= 0 .");
 	}
 	else
@@ -640,7 +640,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     return;
 }
 
-void UnitCell::read_pseudo(ofstream &ofs)
+void UnitCell::read_pseudo(std::ofstream &ofs)
 {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n\n\n";
@@ -707,7 +707,7 @@ void UnitCell::read_pseudo(ofstream &ofs)
                 int cut_mesh = atom->ncpp.mesh; 
                 for(int j=atom->ncpp.mesh-1; j>=0; --j)
                 {
-                    if( abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
+                    if( std::abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
                     {
                         cut_mesh = j; 
                         break;
@@ -1280,7 +1280,7 @@ void UnitCell::check_structure(double factor)
 
 								if (bond_length < covalent_length*factor || bond_length < covalent_length*warning_coef)
 								{
-									errorlog.setf(ios_base::fixed, ios_base::floatfield);
+									errorlog.setf(std::ios_base::fixed, std::ios_base::floatfield);
 									errorlog << std::setw(3) << ia1+1 << "-th " << std::setw(3) << this->atoms[it1].label << ", "; 
 									errorlog << std::setw(3) << ia2+1 << "-th " << std::setw(3) << this->atoms[it2].label;
 									errorlog << " (cell:" << std::setw(2) << a << " " << std::setw(2) << b << " " << std::setw(2) << c << ")"; 

@@ -186,7 +186,7 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            convflag[m] = (abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR);
 
             if (!convflag[m])
             {
@@ -591,7 +591,7 @@ void DiagoDavid<FPTYPE, Device>::diag_zhegvx(const int& nbase,
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
     if (GlobalV::RANK_IN_POOL == 0)
     {
-        assert(nbase_x >= max(1, nbase));
+        assert(nbase_x >= std::max(1, nbase));
 
         if (this->device == psi::GpuDevice)
         {
@@ -981,7 +981,7 @@ void DiagoDavid<FPTYPE, Device>::diag(hamilt::Hamilt<FPTYPE, Device>* phm_in,
         ++ntry;
     } while (DiagoIterAssist<FPTYPE, Device>::test_exit_cond(ntry, this->notconv));
 
-    if (notconv > max(5, psi.get_nbands() / 4))
+    if (notconv > std::max(5, psi.get_nbands() / 4))
     {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";

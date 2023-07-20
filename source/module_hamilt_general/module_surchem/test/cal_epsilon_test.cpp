@@ -40,7 +40,7 @@ protected:
 
 TEST_F(cal_epsilon_test, cal_epsilon)
 {   
-    string precision_flag, device_flag;
+    std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
 
@@ -85,11 +85,11 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     const int nrxx = GlobalC::rhopw ->nrxx;
 
 
-    ifstream fin;
+    std::ifstream fin;
 	fin.open("./support/PS_TOTN_real.in");
     if (!fin)
 	{
-	    cerr<<"input file does not exist"<<endl;
+	    std::cerr<<"input file does not exist"<<std::endl;
 		return ;
 	}
     

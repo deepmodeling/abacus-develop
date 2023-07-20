@@ -1,6 +1,7 @@
 #ifndef RADIAL_COLLECTION_H_
 #define RADIAL_COLLECTION_H_
 
+#include <numeric>
 #include <string>
 
 #include "module_basis/module_nao/radial_set.h"
@@ -16,7 +17,11 @@
 class RadialCollection
 {
   public:
-    RadialCollection(){};
+    RadialCollection();
+    RadialCollection(const RadialCollection& other); //!< deep copy
+
+    RadialCollection& operator=(const RadialCollection& rhs); //!< deep copy
+
     ~RadialCollection();
 
     void build(const int nfile, const std::string* const file, const char type = 'o');
@@ -32,8 +37,14 @@ class RadialCollection
     //! number of RadialSet objects in the collection
     int ntype() const { return ntype_; }
 
+    //! maximum angular momentum of the itype-th RadialSet in the collection
+    int lmax(const int itype) const { return radset_[itype]->lmax(); }
+
     //! maximum angular momentum of all NumericalRadial objects in the collection
     int lmax() const { return lmax_; }
+
+    //! maximum cutoff radius of a give type
+    double rcut_max(const int itype) const { return radset_[itype]->rcut_max(); }
 
     //! maximum cutoff radius of all NumericalRadial objects in the collection
     double rcut_max() const;
@@ -43,6 +54,9 @@ class RadialCollection
 
     //! maximum number of distinct radial functions of a given type among all angular momentum
     int nzeta_max(const int itype) const { return radset_[itype]->nzeta_max(); }
+
+    //! maximum number of distinct radial functions of a given type among all angular momentum
+    int nzeta_max() const { return nzeta_max_; }
 
     //! total number of NumericalRadial objects in the collection
     int nchi() const { return nchi_; }
@@ -65,6 +79,39 @@ class RadialCollection
     }
     //!@}
 
+    /*! @name Iterators
+     *
+     *  Enable iteration through all NumericalRadial objects in the collection.
+     *  Objects are sorted by l first, by itype next, by izeta last.
+     *                                                                      */
+    //!@{
+    const NumericalRadial** cbegin() const
+    {
+        assert(ntype_ > 0);
+        return iter_;
+    }
+
+    const NumericalRadial** cend() const
+    {
+        assert(ntype_ > 0);
+        return iter_ + nchi_;
+    }
+
+    //! *(this->cbegin(l)) returns the address of the first NumericalRadial object with angular momentum l
+    const NumericalRadial** cbegin(const int l) const
+    {
+        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate(nl_, nl_ + l, 0);
+    }
+
+    //! *(this->cbegin(l)) returns the address of one-past last NumericalRadial object with angular momentum l
+    const NumericalRadial** cend(const int l) const
+    {
+        assert(ntype_ > 0 && l >= 0 && l <= lmax_);
+        return iter_ + std::accumulate(nl_, nl_ + l + 1, 0);
+    }
+    //!@}
+
     /*! @name property setters for all RadialSet objects
      *
      *  @see RadialSet
@@ -80,13 +127,18 @@ class RadialCollection
 
     //! Set a common uniform grid for all RadialSet objects
     //! @see RadialSet::set_uniform_grid
-    void set_uniform_grid(const bool for_r_space, const int ngrid, const double cutoff, const char mode = 'i');
+    void set_uniform_grid(const bool for_r_space,
+                          const int ngrid,
+                          const double cutoff,
+                          const char mode = 'i',
+                          const bool enable_fft = false);
     //!@}
 
   private:
-    int ntype_ = 0; //!< number of RadialSet in the collection
-    int lmax_ = -1; //!< maximum angular momentum of all NumericalRadial objects in the collection
-    int nchi_ = 0;  //!< total number of NumericalRadial objects in the collection
+    int ntype_ = 0;     //!< number of RadialSet in the collection
+    int lmax_ = -1;     //!< maximum angular momentum of all NumericalRadial objects in the collection
+    int nchi_ = 0;      //!< total number of NumericalRadial objects in the collection
+    int nzeta_max_ = 0; //!< maximum number of distinct radial functions given a type & angular momentum
 
     //! array of RadialSet objects
     /*!
@@ -99,7 +151,34 @@ class RadialCollection
      *                                                                                    */
     RadialSet** radset_ = nullptr;
 
+    //! "Iterator" for all NumericalRadial objects
+    /*!
+     *   "iter_" iterates through all NumericalRadial objects from all RadialSet objects
+     *   in the collection. Since NumericalRadial objects from different RadialSet objects
+     *   are not contiguous, the iteration has to be done on pointers, i.e., the addresses
+     *   of NumericalRadial objects are collected into a contiguous pointer array through
+     *   which iter_ iterates.
+     *                                                                                      */
+    const NumericalRadial** iter_ = nullptr;
+
+    //! number of NumericalRadial objects for each angular momentum
+    int* nl_ = nullptr;
+
+    //! Pointer to the object that provides spherical Bessel transforms
+    /*!
+     *  All NumericalRadial objects within this class should share the same
+     *  spherical Bessel transformer.
+     *                                                                      */
+    ModuleBase::SphericalBesselTransformer* sbt_;
+
+    //! A flag that marks the ownership of sbt_
+    bool use_internal_transformer_;
+
+    //! Deallocates all RadialSet objects and resets all members to default.
     void cleanup();
+
+    //! Builds iter_ from radset_
+    void iter_build();
 };
 
 #endif

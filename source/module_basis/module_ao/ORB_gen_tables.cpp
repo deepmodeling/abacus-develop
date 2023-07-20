@@ -312,7 +312,7 @@ void ORB_gen_tables::snap_psibeta_half(
 			{
 				//triangle rule for gaunt coefficients
 				int AL = L1 + L0;
-				int SL = abs(L1 - L0);
+				int SL = std::abs(L1 - L0);
 				if ((L > AL) || (L < SL) || ((L - SL) % 2 == 1))
 				{
 					continue;
@@ -558,7 +558,7 @@ void ORB_gen_tables::snap_psipsi(
 			// triangle rule for L and sum of L, L1, L2 should be even
 			//===========================================================
 			int AL = L1 + L2;
-			int SL = abs(L1 - L2);
+			int SL = std::abs(L1 - L2);
 
 			if ((L > AL) || (L < SL) || ((L - SL) % 2 == 1))
 				continue;
@@ -661,7 +661,7 @@ void ORB_gen_tables::snap_psipsi(
 		for (int L = 0; L < dim3; L++)
 		{
 			int AL = L1 + L2;
-			int SL = abs(L1 - L2);
+			int SL = std::abs(L1 - L2);
 
 			if ((L > AL) || (L < SL) || ((L - SL) % 2 == 1))
 				continue;
@@ -918,7 +918,7 @@ void ORB_gen_tables::snap_psialpha_half(
 				{
 					//triangle rule for gaunt coefficients
 					int AL = L1 + L0;
-					int SL = abs(L1 - L0);
+					int SL = std::abs(L1 - L0);
 					if ((L > AL) || (L < SL) || ((L - SL) % 2 == 1))
 					{
 						continue;
