@@ -17,8 +17,9 @@ class Symmetry_Basic
 	 Symmetry_Basic();
 	~Symmetry_Basic();
 
-	double epsilon;
-	
+    double epsilon;
+    double epsilon_input;   ///< the input value of symmetry_prec, should not  be changed
+
 	// control accuray
 	bool equal(const double &m, const double &n)const;
 	void check_boundary(double &x)const;
