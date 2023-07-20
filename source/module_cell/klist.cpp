@@ -98,7 +98,16 @@ void K_Vectors::set(
         {
             std::cout<< "Optimized lattice type of reciprocal lattice cannot match the optimized real lattice. " <<std::endl;
             std::cout << "It is often because the inaccuracy of lattice parameters in STRU." << std::endl;
-            ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint", "Refine the lattice parameters in STRU or use a different`symmetry_prec`. ");
+            if (ModuleSymmetry::Symmetry::symm_autoclose)
+            {
+                ModuleBase::WARNING("K_Vectors::ibz_kpoint", "Automatically set symmetry to 0 and continue ...");
+                std::cout << "Automatically set symmetry to 0 and continue ..." << std::endl;
+                ModuleSymmetry::Symmetry::symm_flag = 0;
+                match = true;
+                this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
+            }
+            else
+                ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint", "Refine the lattice parameters in STRU or use a different`symmetry_prec`. ");
         }
         if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {

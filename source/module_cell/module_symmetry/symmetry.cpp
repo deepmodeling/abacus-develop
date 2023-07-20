@@ -20,7 +20,8 @@ Symmetry::~Symmetry()
 }
 
 
-int Symmetry::symm_flag=0;
+int Symmetry::symm_flag = 0;
+bool Symmetry::symm_autoclose = false;
 
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
