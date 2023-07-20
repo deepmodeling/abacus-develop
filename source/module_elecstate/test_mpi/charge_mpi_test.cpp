@@ -172,12 +172,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         delete rhopw;
     }
 
-    GlobalV::NPROC = 1;
-    charge->rho_mpi();
-
-    GlobalV::NPROC = 4;
-    GlobalV::ESOLVER_TYPE = "sdft";
-    GlobalV::NPROC_IN_STOGROUP = 1;
+    GlobalV::KPAR = 1;
     charge->rho_mpi();
 }
 

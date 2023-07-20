@@ -50,8 +50,16 @@ class Charge
 
     void set_rhopw(ModulePW::PW_Basis* rhopw_in);
 
+    /**
+     * @brief Init charge density from file or atomic pseudo-wave-functions
+     * 
+     * @param eferm_iout fermi energy to be initialized
+     * @param strucFac [in] structure factor 
+     * @param nbz [in] number of big grids in z direction
+     * @param bz [in] number of small grids in big grids for z dirction
+     */
     void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz);
-    // mohan update 2021-02-20
+    
     void allocate(const int &nspin_in);
 
     void atomic_rho(const int spin_number_need,

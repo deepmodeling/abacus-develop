@@ -123,10 +123,8 @@ void Charge::reduce_diff_pools(double* array_rho) const
 void Charge::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
-    if (GlobalV::NPROC == 1)
+    if (GlobalV::KPAR <= 1)
         return;
-    if (GlobalV::ESOLVER_TYPE == "sdft" && GlobalV::NPROC_IN_STOGROUP == 1)
-        return; // qinarui add it temporarily.
     ModuleBase::timer::tick("Charge", "rho_mpi");
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
