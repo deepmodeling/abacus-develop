@@ -415,17 +415,9 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			// start magnetization
 			//=======================================
 			ModuleBase::GlobalFunc::READ_VALUE(ifpos, atoms[it].label);
-			bool sequence_match = false;
-			for(int it2=0; it2<ntype; it2++)
+			if(this->atoms[it].label != this->atom_label[it])
 			{
-				if( this->atoms[it].label == this->atom_label[it2] )
-				{	
-					if (it2 == it) sequence_match = true;
-				}
-			}
-			if(!sequence_match)
-			{
-				ofs_warning << " Label sequences in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
+				ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
 				ofs_warning << " Label read from ATOMIC_POSITIONS is " << this->atoms[it].label << std::endl; 
 				ofs_warning << " Label from ATOMIC_SPECIES is " << this->atom_label[it] << std::endl;
 				return 0;
