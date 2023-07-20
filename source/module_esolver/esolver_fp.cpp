@@ -15,8 +15,8 @@ namespace ModuleESolver
         pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
         sf.set(INPUT.nbspline);
 
-        this->symm.epsilon = INPUT.symmetry_prec;
-    }
+        this->symm.epsilon = this->symm.epsilon_input = INPUT.symmetry_prec;
+}
     ESolver_FP::~ESolver_FP()
     {
         if (this->psi != nullptr)
