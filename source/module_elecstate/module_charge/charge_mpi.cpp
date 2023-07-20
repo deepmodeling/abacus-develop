@@ -31,6 +31,8 @@ void Charge::init_chgmpi(const int& nbz, const int& bz)
 
 void Charge::reduce_diff_pools(double* array_rho) const
 {
+    ModuleBase::TITLE("Charge", "reduce_diff_pools");
+    ModuleBase::timer::tick("Charge", "reduce_diff_pools");
     if (this->use_intel_pool)
     {
         MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, INTER_POOL);
@@ -115,6 +117,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
         delete[] array_tot;
         delete[] array_tmp;
     }
+    ModuleBase::timer::tick("Charge", "reduce_diff_pools");
 }
 
 void Charge::rho_mpi()
