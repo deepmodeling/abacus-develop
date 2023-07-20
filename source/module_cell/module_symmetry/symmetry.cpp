@@ -1992,14 +1992,18 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
 {
     ModuleBase::TITLE("Symmetry","hermite_normal_form");
     // check the non-singularity and integer elements of s
+#ifdef __DEBUG
     assert(!equal(s3.Det(), 0.0));
-    auto near_equal = [this] (double x, double y) {return fabs(x-y) < 10*epsilon;};
+#endif
+    auto near_equal = [this](double x, double y) {return fabs(x - y) < 10 * epsilon;};
     ModuleBase::matrix s = s3.to_matrix();
     for (int i=0;i<3;++i)
         for (int j = 0;j < 3;++j)
         {
             double sij_round = std::round(s(i, j));
+#ifdef __DEBUG
             assert(near_equal(s(i, j), sij_round));
+#endif
             s(i, j) = sij_round;
         }
 
@@ -2090,10 +2094,12 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
     b3.e31=b(2, 0); b3.e32=b(2, 1); b3.e33=b(2, 2);
 
     //check s*b=h
-    ModuleBase::matrix check_zeros =s3.to_matrix() * b -h;
-    for (int i=0;i<3;++i)
+    ModuleBase::matrix check_zeros = s3.to_matrix() * b - h;
+#ifdef __DEBUG
+    for (int i = 0;i < 3;++i)
         for(int j=0;j<3;++j)
-            assert(equal(check_zeros(i, j), 0));
+            assert(near_equal(check_zeros(i, j), 0));
+#endif
     return;
 }
 }
