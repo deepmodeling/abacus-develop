@@ -98,7 +98,10 @@ class Charge
      */
     void init_chgmpi(const int& nbz, const int& bz);
 
-    //sum rho of all pools
+    /**
+     * @brief Sum rho at different pools (k-point parallelism).
+     *        Only used when GlobalV::KPAR > 1
+     */
     void rho_mpi();
 
 	  /**
