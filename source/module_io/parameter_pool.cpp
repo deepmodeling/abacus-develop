@@ -25,6 +25,41 @@ namespace ModuleIO
 std::map<std::string, InputParameter> input_parameters;
 std::map<std::string, std::string> default_parametes_type;
 std::map<std::string, InputParameter> default_parametes_value;
+
+// Conut how many types of atoms are listed in STRU
+int count_ntype(const std::string& fn)
+{
+    // Only RANK0 core can reach here, because this function is called during Input::Read.
+    assert(GlobalV::MY_RANK == 0);
+
+    std::ifstream ifa(fn.c_str(), std::ios::in);
+    if (!ifa)
+    {
+        GlobalV::ofs_warning << fn;
+        ModuleBase::WARNING_QUIT("Input::count_ntype", "Can not find the file containing atom positions.!");
+    }
+
+    int ntype_stru = 0;
+    std::string temp;
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES"))
+    {
+        while (true)
+        {
+            ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+                || ifa.eof())
+            {
+                break;
+            }
+            else if (isalpha(temp[0]))
+            {
+                ntype_stru += 1;
+            }
+        }
+    }
+    return ntype_stru;
+}
+
 /**
  * @brief New param init function. First, the default parameter types are read,
  *        then the default parameter values file is read and populated,
@@ -1564,40 +1599,6 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.test_skip_ewald = *static_cast<bool*>(input_parameters["test_skip_ewald"].get());
     }
-}
-
-// Conut how many types of atoms are listed in STRU
-int count_ntype(const std::string& fn)
-{
-    // Only RANK0 core can reach here, because this function is called during Input::Read.
-    assert(GlobalV::MY_RANK == 0);
-
-    std::ifstream ifa(fn.c_str(), std::ios::in);
-    if (!ifa)
-    {
-        GlobalV::ofs_warning << fn;
-        ModuleBase::WARNING_QUIT("Input::count_ntype", "Can not find the file containing atom positions.!");
-    }
-
-    int ntype_stru = 0;
-    std::string temp;
-    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES"))
-    {
-        while (true)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
-                || ifa.eof())
-            {
-                break;
-            }
-            else if (isalpha(temp[0]))
-            {
-                ntype_stru += 1;
-            }
-        }
-    }
-    return ntype_stru;
 }
 
 // namespace ModuleIO
