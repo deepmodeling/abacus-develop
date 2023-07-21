@@ -48,4 +48,7 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(test)
+  if(ENABLE_MPI)
+    add_subdirectory(test_mpi)
+  endif()
 endif()
