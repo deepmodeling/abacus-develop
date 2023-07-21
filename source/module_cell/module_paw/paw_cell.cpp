@@ -33,6 +33,27 @@ void Paw_Cell::init_paw_cell(
         atom_type[iat] = atom_type_in[iat];
     }
 
+    nat_type.resize(ntyp);
+    atom_map.resize(nat);
+
+    // Not sure if these will be used, but it doesn't
+    // hurt to prepare them I suppose
+    // Doesn't take much time, also not much space
+    int ind = 0;
+    for(int it = 0; it < ntyp; it ++)
+    {
+        nat_type[it] = 0;
+        for(int iat = 0; iat < nat; iat ++)
+        {
+            if(atom_type[iat] == it)
+            {
+                nat_type[it] ++;
+                atom_map[ind] = iat;
+                ind ++;
+            }
+        }
+    }
+
     paw_element_list.resize(ntyp);
     assert(filename_list_in.size() == ntyp);
     for(int ityp = 0; ityp < ntyp; ityp ++)
@@ -144,10 +165,12 @@ void Paw_Cell::map_paw_proj()
     iprj_to_il.resize(nproj_tot);
     iprj_to_l.resize(nproj_tot);
     iprj_to_m.resize(nproj_tot);
+    start_iprj_ia.resize(nat);
 
     int iproj = 0;
     for(int ia = 0; ia < nat; ia ++)
     {
+        start_iprj_ia[ia] = iproj;
         int it = atom_type[ia];
         int mstates = paw_element_list[it].get_mstates();
         std::vector<int> im_to_istate = paw_element_list[it].get_im_to_istate();
@@ -309,43 +332,159 @@ double Paw_Cell::ass_leg_pol(const int l, const int m, const double arg)
     }
 }
 
-void Paw_Cell::accumulate_rhoij(const double * psi, const double weight)
+void Paw_Cell::get_vkb()
 {
-    ModuleBase::TITLE("Paw_Cell","accumulate_rhoij");
+    ModuleBase::TITLE("Paw_Cell","get_vkb");
+
+    // Not sure if the loop structure is the best
+    // may need to improve the efficiency later
+
+    // vkb = ptilde(G)
+    // = [\int f(r)r^2j_l(r)dr] * [(-i)^l] * [ylm(\hat{G})] * [exp(-GR_I)]
+    // = ptilde * fact * ylm * sk (in the code below)
+    vkb.resize(nproj_tot);
+    for(int iproj = 0; iproj < nproj_tot; iproj ++)
+    {
+        vkb[iproj].resize(npw);
+    }
 
     const std::complex<double> neg_i = std::complex<double>(0.0,-1.0);
+
+    for(int ipw = 0; ipw < npw; ipw ++)
+    {
+        int ind_at = 0;
+        for(int it = 0; it < ntyp; it ++)
+        {
+            const int nstates = paw_element_list[it].get_nstates(); // number of l channels
+            const int nproj = paw_element_list[it].get_mstates(); // number of (l,m) channels
+
+            std::vector<double> ptilde;
+            ptilde.resize(nproj);
+
+            int iproj = 0;
+            for(int istate = 0; istate < nstates; istate ++)
+            {
+                const double tmp = paw_element_list[it].get_ptilde(istate,gnorm[ipw],omega);
+                const int l = paw_element_list[it].get_lstate()[istate];
+
+                for(int im = 0; im < 2*l+1; im ++)
+                {
+                    ptilde[iproj] = tmp;
+                    iproj ++;
+                }
+            }
+            assert(iproj == nproj);
+
+            const int na = nat_type[it];
+            for(int ia = 0; ia < na; ia ++)
+            {
+                const int iat = atom_map[ind_at+ia];
+                const int proj_start = start_iprj_ia[iat];
+
+                for(int ip = 0; ip < nproj; ip ++)
+                {
+                    const int il = paw_element_list[it].get_im_to_istate()[ip];
+                    const int l  = paw_element_list[it].get_lstate()[il];
+                    const int m  = paw_element_list[it].get_mstate()[ip];
+
+                    // I put these codes in comment here as a reminder of
+                    // how this part is treated differently from nonlocal PP
+                    // First of all, the order of m quantum number
+                    // in nonlocal PP (calculated using ylm_real) is 0,1,-1,2,-2,...
+                    // but -l,-l+1,-l+2,...,l here
+                    // Secondly, there is a factor (-1)^m which is present here
+                    // but not in ylm_real
+
+                    /*
+                    int m1 = 0;
+                    if(l==1 && m == -1) m1 = 0;
+                    if(l==1 && m == 0 ) m1 = 1;
+                    if(l==1 && m == 1 ) m1 = -1;
+                    */
+
+                    //const int lm_ind = l*l + l + m1;
+                    const int lm_ind = l*l + l + m;
+
+                    const std::complex<double> fact = std::pow(neg_i,l);
+
+                    //const double ylm = ylm_k[ipw][lm_ind] * std::pow(-1.0,m1);
+                    const double ylm = ylm_k[ipw][lm_ind];
+
+                    const std::complex<double> sk = struc_fact[iat][ipw];
+
+                    vkb[ip+proj_start][ipw] = fact * ptilde[ip] * ylm * sk;
+                }
+            }
+            
+            ind_at += na;
+        }
+        assert(ind_at == nat);
+    }
+}
+
+void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double weight)
+{
+    ModuleBase::TITLE("Paw_Cell","accumulate_rhoij");
 
     for(int iat = 0; iat < nat; iat ++)
     {
         // ca : <ptilde(G)|psi(G)>
         // = \sum_G [\int f(r)r^2j_l(r)dr] * [(-i)^l] * [ylm(\hat{G})] * [exp(-GR_I)] *psi(G)
         // = \sum_ipw ptilde * fact * ylm * sk * psi (in the code below)
+        // This is what is called 'becp' in nonlocal pp
         std::vector<std::complex<double>> ca;
 
-        int it = atom_type[iat];
-        int nproj = paw_element_list[it].get_mstates();
+        const int it = atom_type[iat];
+        const int nproj = paw_element_list[it].get_mstates();
+        const int proj_start = start_iprj_ia[iat];
 
         ca.resize(nproj);
 
-        for(int ip = 0; ip < nproj; ip ++)
+        for(int iproj = 0; iproj < nproj; iproj ++)
         {
-            const int l = paw_element_list[it].get_lstate()[ip];
-            const int m = paw_element_list[it].get_mstate()[ip];
-            const int lm_ind = l*l + l + m;
-            const std::complex<double> fact = std::pow(neg_i,l);
-
-            ca[ip] = 0.0;
+            ca[iproj] = 0.0;
+            
+            // consider use blas subroutine for this part later
             for(int ipw = 0; ipw < npw; ipw ++)
             {
-                const double ptilde = paw_element_list[it].get_ptilde(ip,gnorm[ipw],omega);
-                const double ylm = ylm_k[ipw][lm_ind];
-                const std::complex<double> sk = struc_fact[iat][ipw];
-
-                ca[ip] += fact * ptilde * ylm * sk * psi[ipw];
+                ca[iproj] += psi[ipw] * std::conj(vkb[iproj+proj_start][ipw]);
             }
         }
 
+        // ca should be summed over MPI ranks since planewave basis is distributed
+        // but not for now (I'll make sure serial version works first)
+        // Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+
         paw_atom_list[iat].set_ca(ca, weight);
         paw_atom_list[iat].accumulate_rhoij();
+    }
+}
+
+std::vector<std::vector<double>> Paw_Cell::get_rhoij()
+{
+    std::vector<std::vector<double>> rhoij_all;
+    rhoij_all.resize(nat);
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        rhoij_all[iat] = paw_atom_list[iat].get_rhoij();
+    }
+
+    return rhoij_all;
+}
+
+void Paw_Cell::get_rhoijp(std::vector<std::vector<double>> & rhoijp,
+        std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel)
+{
+
+    rhoijp.resize(nat);
+    rhoijselect.resize(nat);
+    nrhoijsel.resize(nat);
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        paw_atom_list[iat].convert_rhoij();
+        rhoijp[iat] = paw_atom_list[iat].get_rhoijp();
+        rhoijselect[iat] = paw_atom_list[iat].get_rhoijselect();
+        nrhoijsel[iat] = paw_atom_list[iat].get_nrhoijsel();
     }
 }

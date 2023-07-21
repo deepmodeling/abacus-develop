@@ -41,7 +41,21 @@ class Paw_Cell
     // psi(G), calculates its overlap with all projectors <psi(G)|ptilde(G)>,
     // then accumulates the contribution of this wavefunction to rhoij
     // Note k-point information is not passed here, but prepared in set_paw_k
-    void accumulate_rhoij(const double * psi, const double weight);
+    void accumulate_rhoij(const std::complex<double> * psi, const double weight);
+
+    // returns rhoij for each atom
+    std::vector<std::vector<double>> get_rhoij();
+    // returns rhoijp and related info for each atom
+    void get_rhoijp(std::vector<std::vector<double>> & rhoijp,
+        std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel);
+
+    // calculates vkb, which stores the reciprocal space projectors
+    // it is of size (nproj_tot,npw), and named vkb according to
+    // its counterpart in nonlocal PP
+    void get_vkb();
+
+    //returns vkb
+    std::vector<std::vector<std::complex<double>>> output_vkb(){return vkb;}
 
     int get_nproj_tot(){return nproj_tot;}
     // map projector to atom
@@ -54,6 +68,8 @@ class Paw_Cell
     std::vector<int> get_iprj_to_l() {return iprj_to_l;}
     // map projector to m quantum number of that element
     std::vector<int> get_iprj_to_m() {return iprj_to_m;}
+    // start index of projector on atom ia
+    std::vector<int> get_start_iprj() {return start_iprj_ia;}
     // max l quantum number of all elements
     int get_lmax(){return lmax;}
 
@@ -82,6 +98,7 @@ class Paw_Cell
     std::vector<int> iprj_to_il; // map projector to lstate of that element
     std::vector<int> iprj_to_l;  // map projector to l quantum number of that element
     std::vector<int> iprj_to_m;  // map projector to m quantum number of that element
+    std::vector<int> start_iprj_ia; // start index of projector on atom ia
 
     // max l quantum number of all elements
     int lmax;
@@ -91,14 +108,22 @@ class Paw_Cell
     int ntyp;
     std::vector<int> atom_type; // the element type of each atom
     std::vector<std::vector<double>> atom_coord; // Cartesian coordinate of each atom (in Bohr)
+    std::vector<int> nat_type; // #. atoms of each type
+    // This array arranges the indexes of atoms according to element type
+    // For example, if atom_type equals 0,1,2,1,2, then
+    // atom_map is 0,1,3,2,4
+    std::vector<int> atom_map;
 
     // volume of cell
     double omega;
 
     // FFT grid
     int nx, ny, nz;
-
     int npw;
+
+    // The reciprocal space projectors; it is called vkb
+    // to be consistent with non-local PP
+    std::vector<std::vector<std::complex<double>>> vkb;
 
     // structure factor ('eigts1-3' from structure_factor class)
     // stores exp(- i G R_I) where G = (Gx,0,0), (0,Gy,0) and (0,0,Gz)
