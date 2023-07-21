@@ -112,7 +112,7 @@ template<typename FPTYPE, typename Device>
 void ElecStatePW<FPTYPE, Device>::parallelK()
 {
 #ifdef __MPI
-    this->charge->rho_mpi(this->bigpw->nbz, this->bigpw->bz);
+    this->charge->rho_mpi();
     if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
 	{
         this->f_en.eband /= GlobalV::NPROC_IN_POOL;
