@@ -19,6 +19,7 @@
 
 #if defined __MPI
 MPI_Comm POOL_WORLD;
+MPI_Comm INTER_POOL;
 MPI_Comm STO_WORLD;
 MPI_Comm PARAPW_WORLD; // qianrui add it for sto-dft 2021-4-14
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13z
@@ -261,6 +262,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 void Parallel_Global::finalize_mpi()
 {
 	MPI_Comm_free(&POOL_WORLD);
+    MPI_Comm_free(&INTER_POOL);
 	MPI_Comm_free(&STO_WORLD);
 	MPI_Comm_free(&PARAPW_WORLD);
 	MPI_Comm_free(&GRID_WORLD);
@@ -367,7 +369,13 @@ void Parallel_Global::divide_pools(void)
     // Note: The color must be non-negative or MPI_UNDEFINED.
     //========================================================
     MPI_Comm_split(STO_WORLD,GlobalV::MY_POOL,key,&POOL_WORLD);
-	int color = GlobalV::MY_RANK % GlobalV::NPROC_IN_STOGROUP;
+
+    if (GlobalV::NPROC_IN_STOGROUP % GlobalV::KPAR == 0)
+    {
+        MPI_Comm_split(STO_WORLD, GlobalV::RANK_IN_POOL, key, &INTER_POOL);
+    }
+
+    int color = GlobalV::MY_RANK % GlobalV::NPROC_IN_STOGROUP;
 	MPI_Comm_split(MPI_COMM_WORLD, color, key, &PARAPW_WORLD);
 
     return;

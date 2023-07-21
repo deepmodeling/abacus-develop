@@ -194,33 +194,48 @@ class XC_Functional
 // 5. noncolin_rho, which diagonalizes the spin density matrix
 //  and gives the spin up and spin down components of the charge.
 
-	static void gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
-		const Charge* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
-		std::vector<double> &stress_gga, const bool is_stress = 0);
-	static void grad_wfc( const std::complex<double> *rhog, const int ik,
-		std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis, const double tpiba);
+    static void gradcorr(double& etxc,
+                         double& vtxc,
+                         ModuleBase::matrix& v,
+                         const Charge* const chr,
+                         ModulePW::PW_Basis* rhopw,
+                         const UnitCell* ucell,
+                         std::vector<double>& stress_gga,
+                         const bool is_stress = 0);
+    static void grad_wfc(const std::complex<double>* rhog,
+                         const int ik,
+                         std::complex<double>* grad,
+                         const ModulePW::PW_Basis_K* wfc_basis,
+                         const double tpiba);
     static void grad_rho(const std::complex<double>* rhog,
                          ModuleBase::Vector3<double>* gdr,
                          const ModulePW::PW_Basis* rho_basis,
                          const double tpiba);
-    static void grad_dot( const ModuleBase::Vector3<double> *h, double *dh,
-		ModulePW::PW_Basis *rho_basis, const double tpiba);
-	static void noncolin_rho(double *rhoout1,double *rhoout2,double *seg,
-		const double*const*const rho, const int nrxx, const double* ux_, const bool lsign_);
+    static void grad_dot(const ModuleBase::Vector3<double>* h,
+                         double* dh,
+                         ModulePW::PW_Basis* rho_basis,
+                         const double tpiba);
+    static void noncolin_rho(double* rhoout1,
+                             double* rhoout2,
+                             double* seg,
+                             const double* const* const rho,
+                             const int nrxx,
+                             const double* ux_,
+                             const bool lsign_);
 
-//-------------------
-//  xc_funct_exch_lda.cpp
-//-------------------
+    //-------------------
+    //  xc_funct_exch_lda.cpp
+    //-------------------
 
-// This file contains realization of LDA exchange functionals
-// Spin unpolarized ones:
-//  1. slater: ordinary Slater exchange with alpha=2/3
-//  2. slater1: Slater exchange with alpha=1
-//  3. slater_rxc : Slater exchange with alpha=2/3 and Relativistic exchange
-// And their spin polarized counterparts:
-//  1. slater_spin
-//  2. slater1_spin
-//  3. slater_rxc_spin
+    // This file contains realization of LDA exchange functionals
+    // Spin unpolarized ones:
+    //  1. slater: ordinary Slater exchange with alpha=2/3
+    //  2. slater1: Slater exchange with alpha=1
+    //  3. slater_rxc : Slater exchange with alpha=2/3 and Relativistic exchange
+    // And their spin polarized counterparts:
+    //  1. slater_spin
+    //  2. slater1_spin
+    //  3. slater_rxc_spin
 
 	// For LDA exchange energy
 	static void slater(const double &rs, double &ex, double &vx);

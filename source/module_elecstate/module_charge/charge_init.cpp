@@ -15,7 +15,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
 
-void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac)
+void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", GlobalV::init_chg);
 
@@ -152,6 +152,9 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
+#ifdef __MPI
+    this->init_chgmpi(nbz, bz);
+#endif
 }
 
 //==========================================================
