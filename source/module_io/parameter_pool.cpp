@@ -80,7 +80,7 @@ bool default_parametes_reader(const std::string& fn, std::map<std::string, std::
         while (inputFile >> word1 >> word2)
         {
             // default_parametes_type[word1] = word2.c_str();
-            default_parametes_type.insert(pair<std::string, std::string>(word1, word2));
+            default_parametes_type.insert(std::pair<std::string, std::string>(word1, word2));
         }
         // Close file
         inputFile.close();
@@ -264,7 +264,7 @@ bool input_parameters_get(const std::string& fn, std::map<std::string, InputPara
     if (INPUT.ntype == 0)
     {
         INPUT.ntype = ntype_stru;
-        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << this->ntype
+        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << INPUT.ntype
                              << " according to STRU" << std::endl;
     }
     else if (INPUT.ntype != ntype_stru)
