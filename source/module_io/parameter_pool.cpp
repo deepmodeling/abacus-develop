@@ -17,7 +17,7 @@
 
 /**
  * @param input_parameters Save all input parameters
- * @param default_parametes_type Save the names and types of all parameters
+ * @param default_parametes_type Save   the names and types of all parameters
  */
 namespace ModuleIO
 {
@@ -38,10 +38,11 @@ bool Init(const std::string& default_type_path,
           const std::string& default_value_path,
           const std::string& input_value_path)
 {
-    // ModuleBase::timer::tick("Input", "Init");
+    ModuleBase::timer::tick("Input", "Init");
     default_parametes_reader(default_type_path, default_parametes_type);
     input_parameters_get(default_value_path, default_parametes_value);
     input_parameters_set(default_parametes_value);
+
     input_parameters_get(input_value_path, input_parameters);
     input_parameters_set(input_parameters);
 }
@@ -78,7 +79,8 @@ bool default_parametes_reader(const std::string& fn, std::map<std::string, std::
         std::string word1, word2;
         while (inputFile >> word1 >> word2)
         {
-            // default_parametes_type["word1"] = word2.c_str();
+            // default_parametes_type[word1] = word2.c_str();
+            default_parametes_type.insert(pair<std::string, std::string>(word1, word2));
         }
         // Close file
         inputFile.close();
@@ -101,7 +103,7 @@ bool input_parameters_get(const std::string& fn, std::map<std::string, InputPara
         return false;
 
     // Open the input parameter file
-    std::ifstream ifs(fn.c_str(), ios::in); // "in_datas/input_parameters"
+    std::ifstream ifs(fn.c_str(), std::ios::in); // "in_datas/input_parameters"
     // If the opening fails, an error message is printed and false is returned
     if (!ifs)
     {
@@ -209,8 +211,67 @@ bool input_parameters_get(const std::string& fn, std::map<std::string, InputPara
             input_param.type = VECTOR_D;
             input_param.set((void*)(&param_vector_double));
         }
+        else
+        {
+            // xiaohui add 2015-09-15
+            if (word[0] != '#' && word[0] != '/')
+            {
+                INPUT.input_error = 1;
+                std::cout << " THE PARAMETER NAME '" << word << "' IS NOT USED!" << std::endl;
+            }
+            // mohan screen this 2012-06-30
+            //			std::cout << " THE PARAMETER NAME '" << word
+            //			<< "' IS NOT USED!" << std::endl;
+            ifs.ignore(150, '\n');
+        }
+        ifs.rdstate();
+
+        /*if(gamma_only == 1)
+        {
+           gamma_only_local = 1;      //pengfei 2014-10-15
+           gamma_only = 0;
+           std::cout << "gamma_only_local = " << gamma_only_local <<std::endl;
+        }*/
+
+        if (ifs.eof() != 0)
+        {
+            break;
+        }
+        else if (ifs.bad() != 0)
+        {
+            std::cout << " Bad input parameters. " << std::endl;
+            return false;
+        }
+        else if (ifs.fail() != 0)
+        {
+            std::cout << " word = " << word << std::endl;
+            std::cout << " Fail to read parameters. " << std::endl;
+            ifs.clear();
+            return false;
+        }
+        else if (ifs.good() == 0)
+        {
+            break;
+        }
         input[word] = input_param;
     }
+
+    if (INPUT.stru_file == "")
+    {
+        INPUT.stru_file = "STRU";
+    }
+    double ntype_stru = count_ntype(INPUT.stru_file);
+    if (INPUT.ntype == 0)
+    {
+        INPUT.ntype = ntype_stru;
+        GlobalV::ofs_running << "ntype in INPUT is 0, and it is automatically set to " << this->ntype
+                             << " according to STRU" << std::endl;
+    }
+    else if (INPUT.ntype != ntype_stru)
+    {
+        ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
+    }
+
     return true;
 }
 
@@ -1274,15 +1335,48 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("orbital_corr") != 0)
     {
-        INPUT.orbital_corr = static_cast<int*>(input_parameters["orbital_corr"].get());
-    }
-    else if (input_parameters.count("orbital_corr") != 0)
-    {
-        INPUT.orbital_corr = static_cast<int*>(input_parameters["orbital_corr"].get());
+        INPUT.dft_plus_u = 0;
+        bool dmft_flag = false;
+        SimpleVector<double> vec_D = *static_cast<SimpleVector<double>*>(input_parameters["orbital_corr"].get());
+        for (int i = 0; i < INPUT.ntype; i++)
+        {
+            INPUT.orbital_corr[i] = vec_D[i];
+            if ((INPUT.orbital_corr[i] != -1) && (INPUT.orbital_corr[i] != 0) && (INPUT.orbital_corr[i] != 1)
+                && (INPUT.orbital_corr[i] != 2) && (INPUT.orbital_corr[i] != 3))
+            {
+                std::cout << " WRONG ARGUMENTS OF orbital_corr " << std::endl;
+                exit(0);
+            }
+            if (INPUT.orbital_corr[i] != -1)
+            {
+                dmft_flag = true;
+                INPUT.dft_plus_u = 1;
+            }
+        }
+        if (!dmft_flag)
+        {
+            std::cout << "No atoms are correlated!!!" << std::endl;
+            exit(0);
+        }
+
+        if (strcmp("lcao", INPUT.basis_type.c_str()) != 0)
+        {
+            std::cout << " WRONG ARGUMENTS OF basis_type, only lcao is support " << std::endl;
+            exit(0);
+        }
     }
     else if (input_parameters.count("hubbard_u") != 0)
     {
-        INPUT.hubbard_u = static_cast<double*>(input_parameters["hubbard_u"].get());
+        SimpleVector<double> vec_D = *static_cast<SimpleVector<double>*>(input_parameters["hubbard_u"].get());
+        for (int i = 0; i < INPUT.ntype; i++)
+        {
+            INPUT.hubbard_u[i] = vec_D[i] / ModuleBase::Ry_to_eV;
+            if (INPUT.hubbard_u[i] < -1.0e-3)
+            {
+                std::cout << " WRONG ARGUMENTS OF hubbard_u " << std::endl;
+                exit(0);
+            }
+        }
     }
     else if (input_parameters.count("omc") != 0)
     {
@@ -1471,5 +1565,40 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
         INPUT.test_skip_ewald = *static_cast<bool*>(input_parameters["test_skip_ewald"].get());
     }
 }
+
+// Conut how many types of atoms are listed in STRU
+int count_ntype(const std::string& fn)
+{
+    // Only RANK0 core can reach here, because this function is called during Input::Read.
+    assert(GlobalV::MY_RANK == 0);
+
+    std::ifstream ifa(fn.c_str(), std::ios::in);
+    if (!ifa)
+    {
+        GlobalV::ofs_warning << fn;
+        ModuleBase::WARNING_QUIT("Input::count_ntype", "Can not find the file containing atom positions.!");
+    }
+
+    int ntype_stru = 0;
+    std::string temp;
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES"))
+    {
+        while (true)
+        {
+            ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+                || ifa.eof())
+            {
+                break;
+            }
+            else if (isalpha(temp[0]))
+            {
+                ntype_stru += 1;
+            }
+        }
+    }
+    return ntype_stru;
+}
+
 // namespace ModuleIO
 } // namespace ModuleIO

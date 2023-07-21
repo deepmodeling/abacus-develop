@@ -9,8 +9,16 @@
 #include <sstream>
 #include <vector>
 
+#include "module_base/constants.h"
+#include "module_base/global_file.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/parallel_common.h"
+#include "module_base/timer.h"
+#include "module_io/input.h"
 #include "module_io/parameter_string.h"
 #include "module_io/parameter_vector.h"
+#include "version.h"
 enum ParameterType
 {
     BOOL,
