@@ -11,6 +11,22 @@ install(FILES parallel_kpoints_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES klist_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES unitcell_test_parallel.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+list(APPEND cell_simple_srcs
+    ../unitcell.cpp
+    ../read_atoms.cpp
+    ../read_cell_pseudopots.cpp
+    ../atom_spec.cpp
+    ../atom_pseudo.cpp
+    ../pseudo_nc.cpp
+    ../read_pp.cpp
+    ../read_pp_upf201.cpp
+    ../read_pp_upf100.cpp
+    ../read_pp_vwr.cpp
+    ../read_pp_blps.cpp
+)
+
+add_library(cell_simple OBJECT ${cell_simple_srcs})
+
 AddTest(
   TARGET cell_read_pp
   LIBS ${math_libs} base device
