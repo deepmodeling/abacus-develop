@@ -36,7 +36,8 @@ void ModuleIO::output_HS_R(const int& istep,
                     GlobalV::CURRENT_SPIN = kv.isk[ik];
                 }
 
-                const double* vr_eff1 = &(v_eff(GlobalV::CURRENT_SPIN, 0));
+                //note: some MPI process will not have grids when MPI cores is too many, v_eff in these processes are empty
+                const double* vr_eff1 = v_eff.nc * v_eff.nr > 0? &(v_eff(GlobalV::CURRENT_SPIN, 0)):nullptr;
                     
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
@@ -90,7 +91,8 @@ void ModuleIO::output_dH_R(const int& istep,
                     GlobalV::CURRENT_SPIN = kv.isk[ik];
                 }
 
-                const double* vr_eff1 = &(v_eff(GlobalV::CURRENT_SPIN, 0));
+                //note: some MPI process will not have grids when MPI cores is too many, v_eff in these processes are empty
+                const double* vr_eff1 = v_eff.nc * v_eff.nr > 0? &(v_eff(GlobalV::CURRENT_SPIN, 0)):nullptr;
                     
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
