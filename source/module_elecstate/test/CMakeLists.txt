@@ -80,19 +80,34 @@ AddTest(
     ../../module_io/output.cpp
 )
 
+list(APPEND cell_simple_srcs
+    ../../module_cell/unitcell.cpp
+    ../../module_cell/read_atoms.cpp
+    ../../module_cell/read_cell_pseudopots.cpp
+    ../../module_cell/atom_spec.cpp
+    ../../module_cell/atom_pseudo.cpp
+    ../../module_cell/pseudo_nc.cpp
+    ../../module_cell/read_pp.cpp
+    ../../module_cell/read_pp_upf201.cpp
+    ../../module_cell/read_pp_upf100.cpp
+    ../../module_cell/read_pp_vwr.cpp
+    ../../module_cell/read_pp_blps.cpp
+)
+
 AddTest(
   TARGET charge_mixing
-  LIBS  base ${math_libs}  psi  device planewave_serial cell_simple
+  LIBS  base ${math_libs}  psi  device planewave_serial
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
   ../module_charge/charge_broyden.cpp
   ../module_charge/charge_pulay.cpp
   ../../module_io/output.cpp
+  ${cell_simple_srcs}
 )
 
 AddTest(
   TARGET charge_extra
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../module_io/read_cube.cpp ../../module_io/write_cube.cpp
-  ../../module_io/output.cpp
+  ../../module_io/output.cpp ${cell_simple_srcs}
 )
