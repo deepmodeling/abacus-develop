@@ -16,10 +16,11 @@ extern "C"
 }
 
 #ifdef __MPI
-int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt, int nblk)
+int DMgamma_2dtoGrid::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt, int nblk, const int& loc_grid_dim, const int* global2local_grid)
 {
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"enter setAlltoallvParameter, nblk", nblk);
-    ModuleBase::timer::tick("LOC","Alltoall");
+    ModuleBase::timer::tick("LOC", "Alltoall");
+    this->comm_2D = comm_2D;
     // setup blacs parameters
     int nprows=0;	
 	int npcols=0;
@@ -45,7 +46,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"lgd_now",lgd_now);
     memory_sender += nprocs * 2 * sizeof(int);
     
-    receiver_size=lgd_now*lgd_now;
+    receiver_size = loc_grid_dim * loc_grid_dim;
     delete[] receiver_size_process;
     receiver_size_process=new int[nprocs];
     delete[] receiver_displacement_process;
@@ -57,16 +58,15 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
 
     memory_receiver += nprocs * 2 * sizeof(int) + receiver_size * (sizeof(int) + sizeof(double));
     
-    int *trace_2D_row=new int[lgd_now];
-    int *trace_2D_col=new int[lgd_now];
-    int *trace_2D_prow=new int[lgd_now];
-    int *trace_2D_pcol=new int[lgd_now];
-    //int *trace_global=new int[lgd_now];
+    int* trace_2D_row = new int[loc_grid_dim];
+    int* trace_2D_col = new int[loc_grid_dim];
+    int* trace_2D_prow = new int[loc_grid_dim];
+    int* trace_2D_pcol = new int[loc_grid_dim];
 
     int *nRow_in_proc=new int[nprows];
     int *nCol_in_proc=new int[npcols];
 
-    memory_other += (lgd_now * 4 + nprows + npcols) * sizeof(int);
+    memory_other += (loc_grid_dim * 4 + nprows + npcols) * sizeof(int);
 
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nprows",nprows);
     // ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npcols",npcols);
@@ -83,7 +83,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     // count the number of elements to be received from each process
     for(int iGlobal=0; iGlobal<GlobalV::NLOCAL; ++iGlobal)
     {
-        int iLocalGrid=this->LOWF->gridt->trace_lo[iGlobal];
+        int iLocalGrid = global2local_grid[iGlobal];
         if(iLocalGrid>=0)
         {
             //trace_global[iLocalGrid]=iGlobal;
@@ -128,11 +128,11 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
     memory_other += nprocs * sizeof(int);
     memory_receiver += receiver_size * sizeof(int);
 
-    for(int i=0; i<lgd_now; ++i)
+    for (int i = 0; i < loc_grid_dim; ++i)
     {
         int src_row=trace_2D_row[i];
         int src_prow=trace_2D_prow[i];
-        for(int j=0; j<lgd_now; ++j)
+        for (int j = 0; j < loc_grid_dim; ++j)
         {
             int src_col=trace_2D_col[j];
             int src_idx=src_row*GlobalV::NLOCAL+src_col; // leanding dimension is set to GlobalV::NLOCAL for all processes
@@ -141,7 +141,7 @@ int Local_Orbital_Charge::setAlltoallvParameter(MPI_Comm comm_2D, int blacs_ctxt
             int src_proc=Cblacs_pnum(blacs_ctxt, src_prow, src_pcol);
 
             receiver_2D_index[pos[src_proc]]=src_idx;
-            receiver_local_index[pos[src_proc]]=i*lgd_now+j;
+            receiver_local_index[pos[src_proc]] = i * loc_grid_dim + j;
             ++pos[src_proc];
         }
     }
@@ -268,7 +268,7 @@ void Local_Orbital_Charge::allocate_gamma(
     }
     
 #ifdef __MPI
-    setAlltoallvParameter(this->ParaV->comm_2D, this->ParaV->blacs_ctxt, this->ParaV->nb);
+    this->dm2g.setAlltoallvParameter(this->ParaV->comm_2D, this->ParaV->blacs_ctxt, this->ParaV->nb, this->lgd_now, this->LOWF->gridt->trace_lo);
 #endif
 
 	// Peize Lin test 2019-01-16
@@ -343,18 +343,24 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub(void)
 {
     ModuleBase::TITLE("Local_Orbital_Charge","cal_dk_gamma_from_2D_pub");
 
-	cal_dk_gamma_from_2D();
+    this->dm2g.cal_dk_gamma_from_2D(this->dm_gamma, this->DM, GlobalV::NSPIN, GlobalV::NLOCAL, this->lgd_now, GlobalV::ofs_running);
 }
 // calculate the grid distributed DM matrix from 2D block-cyclic distributed DM matrix
 // transform dm_gamma[is].c to this->DM[is]
-void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
+void DMgamma_2dtoGrid::cal_dk_gamma_from_2D(
+    std::vector<ModuleBase::matrix>& dm_gamma_2d,
+    double*** dm_gamma_grid,
+    int& nspin,
+    int& nbasis,
+    int& loc_grid_dim,
+    std::ofstream& ofs_running)
 {
     ModuleBase::timer::tick("LCAO_Charge","dm_2dTOgrid");
 #ifdef __DEBUG
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"cal_dk_gamma_from_2D, NSPIN", GlobalV::NSPIN);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "cal_dk_gamma_from_2D, NSPIN", NSPIN);
 #endif
 
-    for(int is=0; is<GlobalV::NSPIN; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         // int myid;
         // MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -386,21 +392,21 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
             const int icol=idx%GlobalV::NLOCAL;
             const int irow=(idx-icol)/GlobalV::NLOCAL;
             // sender_buffer[i]=wfc_dm_2d.dm_gamma[is](irow,icol);
-            sender_buffer[i]=this->dm_gamma[is](icol,irow); // sender_buffer is clomun major, 
+            sender_buffer[i] = dm_gamma_2d[is](icol, irow); // sender_buffer is clomun major, 
                                                                 // so the row and column index should be switched
             if(sender_buffer[i]!=0) ++nNONZERO;
         }
 
 #ifdef __DEBUG
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of non-zero elements in sender_buffer",nNONZERO);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"sender_size",sender_size);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"last sender_buffer",sender_buffer[sender_size-1]);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "number of non-zero elements in sender_buffer", nNONZERO);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "sender_size", sender_size);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "last sender_buffer", sender_buffer[sender_size - 1]);
 #endif
 
         // transform data via MPI_Alltoallv
         #ifdef __MPI
         MPI_Alltoallv(sender_buffer, sender_size_process, sender_displacement_process, MPI_DOUBLE,
-                      receiver_buffer, receiver_size_process, receiver_displacement_process, MPI_DOUBLE, this->ParaV->comm_2D);
+            receiver_buffer, receiver_size_process, receiver_displacement_process, MPI_DOUBLE, this->comm_2D);
         #endif
         // put data from receiver buffer to this->DM[is]
         nNONZERO=0;
@@ -415,17 +421,17 @@ void Local_Orbital_Charge::cal_dk_gamma_from_2D(void)
         for(int i=0; i<receiver_size; ++i)
         {
             const int idx=receiver_local_index[i];
-            const int icol=idx%lgd_now;
-            const int irow=(idx-icol)/lgd_now;
-            DM[is][irow][icol]=receiver_buffer[i];
+            const int icol = idx % loc_grid_dim;
+            const int irow = (idx - icol) / loc_grid_dim;
+            dm_gamma_grid[is][irow][icol] = receiver_buffer[i];
             //DM[is][icol][irow]=receiver_buffer[i];
             if(receiver_buffer[i]!=0) ++nNONZERO;
         }
 
 #ifdef __DEBUG
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of non-zero elements in receiver_buffer",nNONZERO);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"receiver_size",receiver_size);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"last receiver_buffer",receiver_buffer[receiver_size-1]);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "number of non-zero elements in receiver_buffer", nNONZERO);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "receiver_size", receiver_size);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "last receiver_buffer", receiver_buffer[receiver_size - 1]);
 #endif
         // GlobalV::ofs_running<<"DM[0][0:1][0:1] after receiver:"<<std::endl;
         // int idx0=GlobalC::GridT.trace_lo[0];
