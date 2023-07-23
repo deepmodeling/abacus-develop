@@ -75,14 +75,14 @@ AddTest(
 
 AddTest(
   TARGET charge_test
-  LIBS ${math_libs} planewave_serial base device cell_simple
+  LIBS ${math_libs} planewave_serial base device cell_info
   SOURCES charge_test.cpp ../module_charge/charge.cpp
     ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET charge_mixing
-  LIBS  base ${math_libs}  psi  device planewave_serial cell_simple
+  LIBS  base ${math_libs}  psi  device planewave_serial cell_info
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
   ../module_charge/charge_broyden.cpp
@@ -92,7 +92,7 @@ AddTest(
 
 AddTest(
   TARGET charge_extra
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device cell_info
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../module_io/read_cube.cpp ../../module_io/write_cube.cpp
   ../../module_io/output.cpp
 )

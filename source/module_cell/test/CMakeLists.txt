@@ -25,7 +25,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_blps.cpp
 )
 
-add_library(cell_simple OBJECT ${cell_simple_srcs})
+add_library(cell_info OBJECT ${cell_simple_srcs})
 
 AddTest(
   TARGET cell_read_pp
@@ -98,25 +98,25 @@ add_test(NAME cell_parallel_kpoints_test
 
 AddTest(
   TARGET cell_unitcell_test
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device cell_info
   SOURCES unitcell_test.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_readpp
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device cell_info
   SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_para
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device cell_info
   SOURCES unitcell_test_para.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_setupcell
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device cell_info
   SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp
 )
 

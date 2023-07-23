@@ -67,7 +67,7 @@ AddTest(
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry cell_simple
+  LIBS ${math_libs} base device symmetry cell_info
   SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
@@ -95,7 +95,7 @@ AddTest(
 
 AddTest(
   TARGET io_write_orb_info
-  LIBS ${math_libs} base device cell_simple
+  LIBS ${math_libs} base device cell_info
   SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
