@@ -24,7 +24,6 @@
 class SparseMatrixTest : public testing::Test
 {
   protected:
-    ModuleIO::SparseMatrix<std::complex<double>> smc0;
     ModuleIO::SparseMatrix<double> smd = ModuleIO::SparseMatrix<double>(4, 4);
     ModuleIO::SparseMatrix<std::complex<double>> smc = ModuleIO::SparseMatrix<std::complex<double>>(4, 4);
     std::string output;
