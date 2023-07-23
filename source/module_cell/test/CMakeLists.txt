@@ -82,34 +82,26 @@ add_test(NAME cell_parallel_kpoints_test
 
 AddTest(
   TARGET cell_unitcell_test
-  LIBS ${math_libs} base device
-  SOURCES unitcell_test.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
-	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
-	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+  LIBS ${math_libs} base device cell_simple
+  SOURCES unitcell_test.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_readpp
-  LIBS ${math_libs} base device
-  SOURCES unitcell_test_readpp.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
-	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
-	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+  LIBS ${math_libs} base device cell_simple
+  SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_para
-  LIBS ${math_libs} base device
-  SOURCES unitcell_test_para.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
-	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
-	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+  LIBS ${math_libs} base device cell_simple
+  SOURCES unitcell_test_para.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_unitcell_test_setupcell
-  LIBS ${math_libs} base device
-  SOURCES unitcell_test_setupcell.cpp ../unitcell.cpp ../read_atoms.cpp ../read_cell_pseudopots.cpp ../atom_spec.cpp
-	../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
-	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
+  LIBS ${math_libs} base device cell_simple
+  SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp
 )
 
 add_test(NAME cell_unitcell_test_parallel
