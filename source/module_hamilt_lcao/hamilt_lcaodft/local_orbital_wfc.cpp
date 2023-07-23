@@ -2,7 +2,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_base/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 

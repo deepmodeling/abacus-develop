@@ -27,6 +27,7 @@ if(ENABLE_LCAO)
         center2_orb-orb21.cpp
         center2_orb-orb22.cpp
         DM_gamma.cpp
+        DM_gamma_2d_to_grid.cpp
         DM_k.cpp
         local_orbital_charge.cpp
         local_orbital_wfc.cpp

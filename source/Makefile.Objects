@@ -393,6 +393,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_dm_sparse.o\
 
 OBJS_LCAO=DM_gamma.o\
+      DM_gamma_2d_to_grid.o\
       DM_k.o\
       evolve_elec.o\
       evolve_psi.o\

@@ -57,30 +57,6 @@ Local_Orbital_Charge::~Local_Orbital_Charge()
     }
 }
 
-DMgamma_2dtoGrid::DMgamma_2dtoGrid()
-{
-    sender_2D_index = nullptr;
-    sender_size_process = nullptr;
-    sender_displacement_process = nullptr;
-    sender_buffer = nullptr;
-
-    receiver_local_index = nullptr;
-    receiver_size_process = nullptr;
-    receiver_displacement_process = nullptr;
-    receiver_buffer = nullptr;
-}
-DMgamma_2dtoGrid::~DMgamma_2dtoGrid()
-{
-    delete[] sender_2D_index;
-    delete[] sender_size_process;
-    delete[] sender_displacement_process;
-    delete[] sender_buffer;
-
-    delete[] receiver_local_index;
-    delete[] receiver_size_process;
-    delete[] receiver_displacement_process;
-    delete[] receiver_buffer;
-}
 
 void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
                                            elecstate::ElecState *pelec,
