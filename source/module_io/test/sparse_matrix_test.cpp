@@ -163,6 +163,12 @@ TEST_F(SparseMatrixTest, CSRDouble)
     {
         EXPECT_EQ(smd0.getCSRRowPtr()[i], smd1.getCSRRowPtr()[i]);
     }
+    for (int i = 0; i < 8; i++)
+    {
+        EXPECT_EQ(std::get<0>(smd0.getData()[i]), std::get<0>(smd1.getData()[i]));
+        EXPECT_EQ(std::get<1>(smd0.getData()[i]), std::get<1>(smd1.getData()[i]));
+        EXPECT_DOUBLE_EQ(std::get<2>(smd0.getData()[i]), std::get<2>(smd1.getData()[i]));
+    }
 }
 
 TEST_F(SparseMatrixTest, CSRComplex)
@@ -220,5 +226,12 @@ TEST_F(SparseMatrixTest, CSRComplex)
     for (int i = 0; i < 5; i++)
     {
         EXPECT_EQ(smc0.getCSRRowPtr()[i], smc1.getCSRRowPtr()[i]);
+    }
+    for (int i = 0; i < 8; i++)
+    {
+        EXPECT_EQ(std::get<0>(smc0.getData()[i]), std::get<0>(smc1.getData()[i]));
+        EXPECT_EQ(std::get<1>(smc0.getData()[i]), std::get<1>(smc1.getData()[i]));
+        EXPECT_DOUBLE_EQ((std::get<2>(smc0.getData()[i])).real(), (std::get<2>(smc1.getData()[i])).real());
+        EXPECT_DOUBLE_EQ((std::get<2>(smc0.getData()[i])).imag(), (std::get<2>(smc1.getData()[i])).imag());
     }
 }
