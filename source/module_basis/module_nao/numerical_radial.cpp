@@ -365,16 +365,20 @@ void NumericalRadial::radtab(const char op,
                              const int l,
                              double* const table,
                              const int nr_tab,
-                             const double* const rgrid_tab,
+                             const double rmax_tab,
                              const bool deriv) const
 {
     assert(op == 'S' || op == 'I' || op == 'T' || op == 'U');
     assert(l >= 0);
-    assert(rgrid_tab && nr_tab > 0);
+    assert(rmax_tab > 0 && nr_tab > 0);
 
     // radtab requires that two NumericalRadial objects have exactly the same (non-null) kgrid_
     assert(nk_ > 0 && nk_ == ket.nk_);
     assert(std::equal(kgrid_, kgrid_ + nk_, ket.kgrid_));
+
+    double* rgrid_tab = new double[nr_tab];
+    double dr = rmax_tab / (nr_tab - 1);
+    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr,&rgrid_tab](double& r) { r = dr * (&r - rgrid_tab); });
 
     bool use_radrfft = is_fft_compliant(nr_tab, rgrid_tab, nk_, kgrid_);
 
@@ -407,6 +411,7 @@ void NumericalRadial::radtab(const char op,
     }
 
     delete[] fk;
+    delete[] rgrid_tab;
 
     // spherical Bessel transform has a prefactor of sqrt(2/pi) while the prefactor for the radial table
     // of two-center integrals is 4*pi

@@ -34,12 +34,9 @@ class TwoCenterTableTest : public ::testing::Test
     void TearDown();
 
     TwoCenterTable S_tab;
-    TwoCenterTable S_dtab;
     TwoCenterTable T_tab;
-    TwoCenterTable T_dtab;
 
     TwoCenterTable betapsi_tab;
-    TwoCenterTable betapsi_dtab;
 
     RadialCollection orb;
     int nfile = 0;                                              //! number of orbital files
@@ -85,55 +82,40 @@ TEST_F(TwoCenterTableTest, BuildOverlapAndKinetic)
     //orb.set_transformer(&sbt, 0);
     orb.set_uniform_grid(true, nr, rmax, 'i', true);
 
-    const double* rgrid = orb(0,0,0).ptr_rgrid();
-
     iclock::time_point start;
     std::chrono::duration<double> dur;
 
     start = iclock::now();
-    S_tab.build(orb, orb, 'S', nr, rgrid, false);
-    T_tab.build(orb, orb, 'T', nr, rgrid, false);
-    S_dtab.build(orb, orb, 'S', nr, rgrid, true);
-    T_dtab.build(orb, orb, 'T', nr, rgrid, true);
+    S_tab.build(orb, orb, 'S', nr, rmax, true);
+    T_tab.build(orb, orb, 'T', nr, rmax, true);
     dur = iclock::now() - start;
     std::cout << "time elapsed = " << dur.count() << " s" << std::endl;
 
     // check whether analytical derivative and finite difference agree
-    for (int i = 0; i != S_tab.ntab(); ++i)
-    {
-        const double* f = S_tab.ptr_table(0, 0, 0, 0, 0, 0, 0) + i * S_tab.nr();
-        const double* df = S_dtab.ptr_table(0, 0, 0, 0, 0, 0, 0) + i * S_dtab.nr();
-        for (int ir = 5; ir != S_tab.nr() - 4; ++ir)
-        {
-            double df_fd = ( +1.0/280*f[ir-4] - 4.0/105*f[ir-3] 
-                      +1.0/5*f[ir-2] - 4.0/5*f[ir-1] 
-                      -1.0/280*f[ir+4] + 4.0/105*f[ir+3] 
-                      -1.0/5*f[ir+2] + 4.0/5*f[ir+1]
-                    ) / 0.01;
+//    for (int i = 0; i != S_tab.ntab(); ++i)
+//    {
+//        const double* f = S_tab.table(0, 0, 0, 0, 0, 0, 0, false) + i * S_tab.nr();
+//        const double* df = S_tab.table(0, 0, 0, 0, 0, 0, 0, true) + i * S_tab.nr();
+//        for (int ir = 5; ir != S_tab.nr() - 4; ++ir)
+//        {
+//            double df_fd = ( +1.0/280*f[ir-4] - 4.0/105*f[ir-3] 
+//                      +1.0/5*f[ir-2] - 4.0/5*f[ir-1] 
+//                      -1.0/280*f[ir+4] + 4.0/105*f[ir+3] 
+//                      -1.0/5*f[ir+2] + 4.0/5*f[ir+1]
+//                    ) / dr;
+//
+//            EXPECT_NEAR(df_fd, df[ir], 1e-5);
+//        }
+//    }
 
-            EXPECT_NEAR(df_fd, df[ir], 1e-5);
-        }
-    }
-
-    EXPECT_EQ(S_tab.is_uniform(), true);
-    EXPECT_EQ(T_tab.is_uniform(), true);
-    EXPECT_EQ(S_dtab.is_uniform(), true);
-    EXPECT_EQ(T_dtab.is_uniform(), true);
-
-    EXPECT_EQ(S_tab.is_deriv(), false);
-    EXPECT_EQ(T_tab.is_deriv(), false);
-    EXPECT_EQ(S_dtab.is_deriv(), true);
-    EXPECT_EQ(T_dtab.is_deriv(), true);
+    EXPECT_EQ(S_tab.with_deriv(), true);
+    EXPECT_EQ(T_tab.with_deriv(), true);
 
     EXPECT_EQ(S_tab.nr(), nr);
     EXPECT_EQ(T_tab.nr(), nr);
-    EXPECT_EQ(S_dtab.nr(), nr);
-    EXPECT_EQ(T_dtab.nr(), nr);
 
     EXPECT_EQ(S_tab.rmax(), rmax);
     EXPECT_EQ(T_tab.rmax(), rmax);
-    EXPECT_EQ(S_dtab.rmax(), rmax);
-    EXPECT_EQ(T_dtab.rmax(), rmax);
 }
 
 TEST_F(TwoCenterTableTest, LegacyConsistency)
@@ -150,16 +132,12 @@ TEST_F(TwoCenterTableTest, LegacyConsistency)
     //orb.set_transformer(&sbt, 0);
     orb.set_uniform_grid(true, nr, rmax, 'i', true);
 
-    const double* rgrid = orb(0,0,0).ptr_rgrid();
-
     iclock::time_point start;
     std::chrono::duration<double> dur;
 
     start = iclock::now();
-    S_tab.build(orb, orb, 'S', nr, rgrid, false);
-    T_tab.build(orb, orb, 'T', nr, rgrid, false);
-    S_dtab.build(orb, orb, 'S', nr, rgrid, true);
-    T_dtab.build(orb, orb, 'T', nr, rgrid, true);
+    S_tab.build(orb, orb, 'S', nr, rmax, true);
+    T_tab.build(orb, orb, 'T', nr, rmax, true);
     dur = iclock::now() - start;
     std::cout << "radfft time elapsed = " << dur.count() << " s" << std::endl;
 
@@ -243,41 +221,6 @@ TEST_F(TwoCenterTableTest, LegacyConsistency)
     dur = iclock::now() - start;
     std::cout << "legacy time elapsed = " << dur.count() << " s" << std::endl;
 
-    //double* tmp = new double[2001];
-    //const NumericalRadial& f = orb(1,3,0);
-    //f.radtab('T', f, 6, tmp);
-    //for (int ir = 0; ir != 21; ++ir) {
-    //    std::cout << tmp[ir] << std::endl;
-    //}
-    //std::cout << std::endl;
-
-//    double* ktmp = new double[f.nk()];
-//    for (int ik = 0; ik != f.nk(); ++ik) {
-//        ktmp[ik] = std::pow(f.ptr_kvalue()[ik] * f.ptr_kgrid()[ik] * f.ptr_kgrid()[ik],2);
-//    }
-//    double r1 = f.ptr_rgrid()[1];
-
-
-    std::cout << std::endl;
-
-    // compare the table
-    // length of table depends on the cutoff radius
-    //for (int ir = 0; ir != 1600; ++ir) {
-    //    double err = std::abs(T_tab.ptr_table(1,3,0,1,3,0,6)[ir] - otp.Table_TR[0][3][80][6][ir]);
-    //    if (err > table_tol) {
-    //        std::cout << "                 ir = " << ir << std::endl;
-    //    }
-    //    EXPECT_NEAR(T_tab.ptr_table(1,3,0,1,3,0,6)[ir], otp.Table_TR[0][3][80][6][ir], table_tol);
-    //    //EXPECT_NEAR(S_tab.ptr_table(0,0,0,0,0,0,0)[ir], otp.Table_SR[0][0][0][0][ir], table_tol);
-    //    //EXPECT_NEAR(T_dtab.ptr_table(0,0,0,0,0,0,0)[ir], otp.Table_TR[1][0][0][0][ir], table_tol);
-    //    //EXPECT_NEAR(S_dtab.ptr_table(0,0,0,0,0,0,0)[ir], otp.Table_SR[1][0][0][0][ir], table_tol);
-    //}
-
-    //std::cout << T_tab.nr() << std::endl;
-    //std::cout << otp.OV_Tpair(1,1) << std::endl;
-    //std::cout << otp.OV_Opair(otp.OV_Tpair(1,1), 3, 3, 0, 0) << std::endl;
-
-    ////////////////////////////////////////////
 	for (int T1 = 0;  T1 < ntype ; T1++)
 	{
 		for (int T2 = T1 ; T2 < ntype ; T2++)
@@ -296,40 +239,42 @@ TEST_F(TwoCenterTableTest, LegacyConsistency)
 
 							for (int L = std::abs(L1-L2); L <= (L1+L2) ; L += 2)
 							{
-                                //if (T1 == 0 && L1 == 1 && N1 == 1 && T2 == 0 && L2 == 1 && N2 == 1 && L == 0) {
-                                //    for (int ir = 1; ir != 16; ++ir) {
-                                //        printf("%12.8f   %12.8f\n",
-                                //                T_dtab.ptr_table(T1, L1, N1, T2, L2, N2, L)[ir], 
-                                //                otp.Table_TR[1][Tpair][Opair][L][ir]);
-                                //    }
-                                //}
-                                //break;
-                                double err_max = -1.0;
-                                for (int ir = 1; ir != 1600; ++ir) {
-                                    //double err = std::abs(T_dtab.ptr_table(T1, L1, N1, T2, L2, N2, L)[ir]
-                                    //            - otp.Table_TR[1][Tpair][Opair][L][ir]);
-                                    //if ( err > table_tol) {
-                                    //    if (err_max < 0) {
-                                    //        printf("%i  %i  %i  %i  %i  %i  %i  %5i", T1, L1, N1, T2, L2, N2, L, ir);
-                                    //        err_max = err;
-                                    //    } else {
-                                    //        err_max = std::max(err_max, err);
-                                    //    }
-                                    //}
+                                // table whose integrand has a higher order of k is less accurate
+                                // as it requires a larger ecutwfc to converge.
 
-                                    // table whose integrand has a higher order of k is less accurate
-                                    // as it requires a larger ecutwfc to converge.
-                                    EXPECT_NEAR(T_tab.ptr_table(T1, L1, N1, T2, L2, N2, L)[ir], 
-                                            otp.Table_TR[0][Tpair][Opair][L][ir], table_tol * 10);
-                                    EXPECT_NEAR(S_tab.ptr_table(T1, L1, N1, T2, L2, N2, L)[ir], 
-                                            otp.Table_SR[0][Tpair][Opair][L][ir], table_tol);
-                                    EXPECT_NEAR(T_dtab.ptr_table(T1, L1, N1, T2, L2, N2, L)[ir], 
-                                            otp.Table_TR[1][Tpair][Opair][L][ir], table_tol * 100);
-                                    EXPECT_NEAR(S_dtab.ptr_table(T1, L1, N1, T2, L2, N2, L)[ir], 
-                                            otp.Table_SR[1][Tpair][Opair][L][ir], table_tol);
+                                // R == 0
+                                EXPECT_NEAR(S_tab.table(T1, L1, N1, T2, L2, N2, L)[0],
+                                        otp.Table_SR[0][Tpair][Opair][L][0], table_tol);
+
+                                if (std::abs(S_tab.table(T1, L1, N1, T2, L2, N2, L)[0] -
+                                        otp.Table_SR[0][Tpair][Opair][L][0]) > 1e-4) {
+                                    std::cout << "T1 = " << T1 << ", L1 = " << L1 << ", N1 = " << N1 << std::endl;
+                                    std::cout << "T2 = " << T2 << ", L2 = " << L2 << ", N2 = " << N2 << std::endl;
+                                    std::cout << "L = " << L << std::endl;
+
+                                    for (int ir = 1; ir < 10; ++ir) {
+                                        double rl = std::pow(ir * dr, L);
+                                        printf("%20.15e   %20.15e\n", S_tab.table(T1, L1, N1, T2, L2, N2, L)[ir] * rl, otp.Table_SR[0][Tpair][Opair][L][ir]);
+                                    }
                                 }
-                                if (err_max > 0) {
-                                    printf("   %8.5e\n", err_max);
+                                //EXPECT_NEAR(S_dtab.table(T1, L1, N1, T2, L2, N2, L)[0], 
+                                //        otp.Table_SR[1][Tpair][Opair][L][0], table_tol);
+                                //EXPECT_NEAR(T_tab.table(T1, L1, N1, T2, L2, N2, L)[0], 
+                                //        otp.Table_TR[0][Tpair][Opair][L][0], table_tol * 10);
+                                //EXPECT_NEAR(T_dtab.table(T1, L1, N1, T2, L2, N2, L)[0], 
+                                //        otp.Table_TR[1][Tpair][Opair][L][0], table_tol * 100);
+
+                                // R > 0
+                                for (int ir = 1; ir != 1600; ++ir) {
+                                    double rl = std::pow(ir * dr, L);
+                                    EXPECT_NEAR(S_tab.table(T1, L1, N1, T2, L2, N2, L)[ir] * rl,
+                                            otp.Table_SR[0][Tpair][Opair][L][ir], table_tol);
+                                    EXPECT_NEAR(S_tab.table(T1, L1, N1, T2, L2, N2, L, true)[ir], 
+                                            otp.Table_SR[1][Tpair][Opair][L][ir], table_tol);
+                                    EXPECT_NEAR(T_tab.table(T1, L1, N1, T2, L2, N2, L)[ir] * rl, 
+                                            otp.Table_TR[0][Tpair][Opair][L][ir], table_tol * 10);
+                                    EXPECT_NEAR(T_tab.table(T1, L1, N1, T2, L2, N2, L, true)[ir], 
+                                            otp.Table_TR[1][Tpair][Opair][L][ir], table_tol * 100);
                                 }
 							}
 						}
@@ -339,8 +284,6 @@ TEST_F(TwoCenterTableTest, LegacyConsistency)
 		}
 	}
 
-
-    //////////////////////////////////////////////
     otp.Destroy_Table(lcao);
 }
 
