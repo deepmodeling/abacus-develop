@@ -98,7 +98,8 @@ public:
     ///@brief set the desc[9] of the 2D-block-cyclic distribution
     void set_desc(const int& gr/**< global row size*/,
         const int& gc/**< global col size*/,
-        const int& lld/**< leading local dimension*/);
+        const int& lld/**< leading local dimension*/,
+        bool first_time = true/**< true: call `Cblacs_get`; false: use `this->blacs_ctxt`*/);
 #else
     void set_serial(const int& M_A/**< global row size*/,
         const int& N_A/**< global col size*/);
