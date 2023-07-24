@@ -3,13 +3,12 @@
 
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_io/output_interface.h"
 
-namespace ModuleIO
+namespace hamilt
 {
 
 template <typename T>
-class Output_HContainer : public Output_Interface
+class Output_HContainer
 {
   public:
     Output_HContainer(hamilt::HContainer<T>* hcontainer,
@@ -19,7 +18,7 @@ class Output_HContainer : public Output_Interface
                       double sparse_threshold,
                       int precision);
     // write the matrices of all R vectors to the output stream
-    void write() override;
+    void write();
 
     // write the matrix of a single R vector to the output stream
     // rx_in, ry_in, rz_in: the R vector from the input

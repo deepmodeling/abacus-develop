@@ -51,7 +51,6 @@ if(ENABLE_LCAO)
       output_dm.cpp
       output_dm1.cpp
       sparse_matrix.cpp
-      output_hcontainer.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

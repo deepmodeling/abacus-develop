@@ -1,10 +1,10 @@
-#include "module_io/output_hcontainer.h"
+#include "output_hcontainer.h"
 
 #include <fstream>
 
 #include "module_io/sparse_matrix.h"
 
-namespace ModuleIO
+namespace hamilt
 {
 
 template <typename T>
@@ -108,4 +108,4 @@ template class Output_HContainer<double>;
 // to do: explicit instantiation of template class with std::complex<double> type
 // template class Output_HContainer<std::complex<double>>;
 
-} // namespace ModuleIO
+} // namespace hamilt
