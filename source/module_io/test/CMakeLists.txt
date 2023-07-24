@@ -124,6 +124,7 @@ AddTest(
 
 AddTest(
   TARGET io_output_hcontainer_test
-  LIBS base ${math_libs} device hcontainer
-  SOURCES output_hcontainer_test.cpp ../output_hcontainer.cpp ../../module_basis/module_ao/parallel_2d.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../sparse_matrix.cpp tmp_mocks.cpp
+  LIBS base ${math_libs} device
+  SOURCES output_hcontainer_test.cpp ../output_hcontainer.cpp ../../module_basis/module_ao/parallel_2d.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../sparse_matrix.cpp tmp_mocks.cpp ../../module_hamilt_lcao/module_hcontainer/hcontainer.cpp
+  ../../module_hamilt_lcao/module_hcontainer/atom_pair.cpp ../../module_hamilt_lcao/module_hcontainer/base_matrix.cpp
 )
