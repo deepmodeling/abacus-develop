@@ -121,3 +121,9 @@ AddTest(
   LIBS base ${math_libs} device
   SOURCES sparse_matrix_test.cpp ../sparse_matrix.cpp
 )
+
+AddTest(
+  TARGET io_output_hcontainer_test
+  LIBS base ${math_libs} device hcontainer
+  SOURCES output_hcontainer_test.cpp ../output_hcontainer.cpp ../../module_basis/module_ao/parallel_2d.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../sparse_matrix.cpp tmp_mocks.cpp
+)
