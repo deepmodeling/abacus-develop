@@ -31,6 +31,8 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
 {
     std::complex<double>* Htmp;
     std::complex<double>* Hlaststep;
+    std::complex<double>* Stmp;
+    std::complex<double>* Slaststep;
     int nband = 3;
     int nlocal = 4;
     bool print_matrix = false;
@@ -49,6 +51,8 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     // Initialize data
     Htmp = new std::complex<double>[nlocal * nlocal];
     Hlaststep = new std::complex<double>[nlocal * nlocal];
+    Stmp = new std::complex<double>[nlocal * nlocal];
+    Slaststep = new std::complex<double>[nlocal * nlocal];
 
     for (int i = 0; i < nlocal; ++i)
     {
@@ -58,16 +62,19 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
             {
                 Htmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
                 Hlaststep[i * nlocal + j] = std::complex<double>(1.0 + 0.2 * (i * nlocal + j), 0.0);
+                Stmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
+                Slaststep[i * nlocal + j] = std::complex<double>(1.0 + 0.2 * (i * nlocal + j), 0.0);
             }
             else
             {
                 Hlaststep[i * nlocal + j] = std::complex<double>(0.2 * (i * nlocal + j), 0.0);
+                Slaststep[i * nlocal + j] = std::complex<double>(0.2 * (i * nlocal + j), 0.0);
             }
         }
     }
 
     // Call the function
-    module_tddft::half_Hmatrix(pv, nband, nlocal, Htmp, nullptr, Hlaststep, nullptr, print_matrix);
+    module_tddft::half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, Hlaststep, Slaststep, print_matrix);
 
     // Check the results
     EXPECT_NEAR(Htmp[0].real(), 1.0, doublethreshold);
@@ -103,6 +110,41 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     EXPECT_NEAR(Htmp[15].real(), 2.5, doublethreshold);
     EXPECT_NEAR(Htmp[15].imag(), 0.0, doublethreshold);
 
+    EXPECT_NEAR(Stmp[0].real(), 1.0, doublethreshold);
+    EXPECT_NEAR(Stmp[0].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[1].real(), 0.1, doublethreshold);
+    EXPECT_NEAR(Stmp[1].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[2].real(), 0.2, doublethreshold);
+    EXPECT_NEAR(Stmp[2].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[3].real(), 0.3, doublethreshold);
+    EXPECT_NEAR(Stmp[3].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[4].real(), 0.4, doublethreshold);
+    EXPECT_NEAR(Stmp[4].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[5].real(), 1.5, doublethreshold);
+    EXPECT_NEAR(Stmp[5].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[6].real(), 0.6, doublethreshold);
+    EXPECT_NEAR(Stmp[6].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[7].real(), 0.7, doublethreshold);
+    EXPECT_NEAR(Stmp[7].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[8].real(), 0.8, doublethreshold);
+    EXPECT_NEAR(Stmp[8].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[9].real(), 0.9, doublethreshold);
+    EXPECT_NEAR(Stmp[9].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[10].real(), 2.0, doublethreshold);
+    EXPECT_NEAR(Stmp[10].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[11].real(), 1.1, doublethreshold);
+    EXPECT_NEAR(Stmp[11].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[12].real(), 1.2, doublethreshold);
+    EXPECT_NEAR(Stmp[12].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[13].real(), 1.3, doublethreshold);
+    EXPECT_NEAR(Stmp[13].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[14].real(), 1.4, doublethreshold);
+    EXPECT_NEAR(Stmp[14].imag(), 0.0, doublethreshold);
+    EXPECT_NEAR(Stmp[15].real(), 2.5, doublethreshold);
+    EXPECT_NEAR(Stmp[15].imag(), 0.0, doublethreshold);
+
     delete[] Htmp;
     delete[] Hlaststep;
+    delete[] Stmp;
+    delete[] Slaststep;
 }
