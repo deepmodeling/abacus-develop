@@ -70,7 +70,6 @@ class SparseMatrix
     int _rows;
     int _cols;
     std::vector<std::tuple<int, int, T>> data;
-    std::vector<int> csr_row_ptr;
 }; // class SparseMatrix
 
 } // namespace ModuleIO

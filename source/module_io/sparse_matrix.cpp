@@ -42,6 +42,7 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, double threshold, int precis
     });
 
     // Initialize the CSR arrays
+    std::vector<int> csr_row_ptr;
     csr_row_ptr.assign(_rows + 1, 0);
 
     // print the CSR values
@@ -90,12 +91,10 @@ void SparseMatrix<T>::readCSR(const std::vector<T>& values,
         ModuleBase::WARNING_QUIT("SparseMatrix::readCSR", "Column indices and values size mismatch");
     }
 
-    csr_row_ptr = row_ptr;
-
     data.clear();
     for (int row = 0; row < _rows; row++)
     {
-        for (int idx = csr_row_ptr[row]; idx < csr_row_ptr[row + 1]; idx++)
+        for (int idx = row_ptr[row]; idx < row_ptr[row + 1]; idx++)
         {
             data.push_back(std::make_tuple(row, col_ind[idx], values[idx]));
         }
