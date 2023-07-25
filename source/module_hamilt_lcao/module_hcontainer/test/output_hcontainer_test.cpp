@@ -58,6 +58,7 @@ class OutputHContainerTest : public testing::Test
     {
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
+        delete[] ucell.iat2ia;
         delete[] ucell.iwt2iat;
         delete[] ucell.iwt2iw;
     }
