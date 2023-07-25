@@ -18,6 +18,7 @@ void evolve_psi(const int nband,
                 std::complex<double>* psi_k,
                 std::complex<double>* psi_k_laststep,
                 std::complex<double>* H_laststep,
+                std::complex<double>* S_laststep,
                 double* ekb,
                 int htype,
                 int propagator);

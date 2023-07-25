@@ -19,7 +19,7 @@
   *   set the desc[9] of the 2D-block-cyclic distribution.
   *
   * - set_global2local
-  *   set the map from global index to local index.
+  *   set the map from global index to local index (init, reuse).
   *
   * - set_serial (serial)
   *   set the local(=global) sizes.
@@ -127,6 +127,39 @@ TEST_F(test_para2d, Divide2D)
                         EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row(i), p2d.local2global_col(j)));
             }
         }
+    }
+}
+
+TEST_F(test_para2d, DescReuseCtxt)
+{
+    for (auto nb : nbs)
+    {
+        Parallel_2D p1;
+        p1.set_block_size(nb);
+        p1.set_proc_dim(dsize);
+        p1.mpi_create_cart(MPI_COMM_WORLD);
+        p1.set_local2global(sizes[0].first, sizes[0].second, ofs_running, ofs_running);
+        p1.set_desc(sizes[0].first, sizes[0].second, p1.get_row_size());
+
+        Parallel_2D p2;    // use 2 different sizes, but they can share the same ctxt
+        p2.set_block_size(nb);
+        p2.set_proc_dim(dsize);
+        p2.comm_2D = p1.comm_2D;
+        p2.blacs_ctxt = p1.blacs_ctxt;
+        p2.set_local2global(sizes[1].first, sizes[1].second, ofs_running, ofs_running);
+        p2.set_desc(sizes[1].first, sizes[1].second, p2.get_row_size(), false);
+
+        EXPECT_EQ(p1.desc[1], p2.desc[1]);
+
+        Parallel_2D p3;    // using default `set_desc`, p3 can't share the same ctxt with p1
+        p3.set_block_size(nb);
+        p3.set_proc_dim(dsize);
+        p3.comm_2D = p1.comm_2D;
+        p3.blacs_ctxt = p1.blacs_ctxt;
+        p3.set_local2global(sizes[2].first, sizes[2].second, ofs_running, ofs_running);
+        p3.set_desc(sizes[2].first, sizes[2].second, p3.get_row_size());
+
+        EXPECT_NE(p1.desc[1], p3.desc[1]);
     }
 }
 #else

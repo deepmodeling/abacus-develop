@@ -2,6 +2,14 @@
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
 
+double Paw_Element::get_ptilde(const int istate_in, const double q_in, const double omega)
+{
+    // multiply by a factor 4pi / sqrt(omega)
+    const double factor = 4.0 * 3.141592653589793238462643383279502884197 / std::sqrt(omega);
+
+    return this->splint(qgrid, ptilde_q[istate_in], d2ptilde_q[istate_in], q_in) * factor;
+}
+
 // ptilde_l(q) = int_0^{rc} dr r ptilde_l(r) j_l(qr)
 // and 2nd derivative d2ptilde_l(q) for spline
 void Paw_Element::transform_ptilde()
@@ -75,7 +83,7 @@ double Paw_Element::spherical_bessel_transform(const int l, std::vector<double> 
     {
         for(int ir = 0; ir < nr; ir++)
         {
-            integrand[ir] = fr[ir] * rr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
+            integrand[ir] = fr[ir] * rr[ir] * rr[ir]; // r^2 j_l(qr) ptilde(r)
         }        
     }
     else
@@ -85,7 +93,7 @@ double Paw_Element::spherical_bessel_transform(const int l, std::vector<double> 
             double x = rr[ir] * q;
             double sph_bes, tmp;
             this-> spherical_bessel_function(l,x,sph_bes,tmp,0);
-            integrand[ir] = sph_bes * fr[ir] * rr[ir] * rr[ir]; // r j_l(qr) ptilde(r)
+            integrand[ir] = sph_bes * fr[ir] * rr[ir] * rr[ir]; // r^2 j_l(qr) ptilde(r)
         }
     }
 
