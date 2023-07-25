@@ -9,6 +9,8 @@ void Paw_Atom::init_paw_atom(const int nproj_in)
     rhoij.resize(nproj*(nproj + 1) / 2);
     rhoijp.resize(nproj*(nproj + 1) / 2);
     rhoijselect.resize(nproj*(nproj + 1) / 2);
+
+    this -> reset_rhoij();
 }
 
 void Paw_Atom::set_ca(std::vector<std::complex<double>> & ca_in, const double weight_in)
