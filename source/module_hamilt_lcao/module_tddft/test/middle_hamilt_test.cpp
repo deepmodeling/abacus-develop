@@ -67,7 +67,7 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     }
 
     // Call the function
-    module_tddft::half_Hmatrix(pv, nband, nlocal, Htmp, Hlaststep, print_matrix);
+    module_tddft::half_Hmatrix(pv, nband, nlocal, Htmp, nullptr, Hlaststep, nullptr, print_matrix);
 
     // Check the results
     EXPECT_NEAR(Htmp[0].real(), 1.0, doublethreshold);
