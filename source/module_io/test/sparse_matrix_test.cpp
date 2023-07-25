@@ -138,9 +138,8 @@ TEST_F(SparseMatrixTest, CSRDouble)
     smd0.addValue(2, 3, 6.0);
     smd0.addValue(2, 4, 7.0);
     smd0.addValue(3, 5, 8.0);
-    smd0.convertToCSR(0.0);
     testing::internal::CaptureStdout();
-    smd0.printCSR(std::cout, 2);
+    smd0.printToCSR(std::cout, 0.0, 2);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("1.00e+00 2.00e+00 3.00e+00 4.00e+00 5.00e+00 6.00e+00 7.00e+00 8.00e+00"));
     EXPECT_THAT(output, testing::HasSubstr("0 1 1 3 2 3 4 5"));
@@ -154,15 +153,6 @@ TEST_F(SparseMatrixTest, CSRDouble)
     smd1.setCols(6);
     smd1.readCSR(expected_csr_values, expected_csr_col_ind, expected_csr_row_ptr);
 
-    for (int i = 0; i < 8; i++)
-    {
-        EXPECT_DOUBLE_EQ(smd0.getCSRValues()[i], smd1.getCSRValues()[i]);
-        EXPECT_EQ(smd0.getCSRColInd()[i], smd1.getCSRColInd()[i]);
-    }
-    for (int i = 0; i < 5; i++)
-    {
-        EXPECT_EQ(smd0.getCSRRowPtr()[i], smd1.getCSRRowPtr()[i]);
-    }
     for (int i = 0; i < 8; i++)
     {
         EXPECT_EQ(std::get<0>(smd0.getData()[i]), std::get<0>(smd1.getData()[i]));
@@ -194,9 +184,8 @@ TEST_F(SparseMatrixTest, CSRComplex)
     smc0.addValue(2, 3, std::complex<double>(6.0, 0.0));
     smc0.addValue(2, 4, std::complex<double>(7.0, 0.0));
     smc0.addValue(3, 5, std::complex<double>(8.0, 0.0));
-    smc0.convertToCSR(0.5);
     testing::internal::CaptureStdout();
-    smc0.printCSR(std::cout, 1);
+    smc0.printToCSR(std::cout, 0.5, 1);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("(1.0e+00,0.0e+00) (2.0e+00,0.0e+00) (3.0e+00,0.0e+00) (4.0e+00,0.0e+00) (5.0e+00,0.0e+00) (6.0e+00,0.0e+00) (7.0e+00,0.0e+00) (8.0e+00,0.0e+00)"));
     EXPECT_THAT(output, testing::HasSubstr("0 1 1 3 2 3 4 5"));
@@ -217,16 +206,6 @@ TEST_F(SparseMatrixTest, CSRComplex)
     smc1.setCols(6);
     smc1.readCSR(expected_csr_values, expected_csr_col_ind, expected_csr_row_ptr);
 
-    for (int i = 0; i < 8; i++)
-    {
-        EXPECT_DOUBLE_EQ(smc0.getCSRValues()[i].real(), smc1.getCSRValues()[i].real());
-        EXPECT_DOUBLE_EQ(smc0.getCSRValues()[i].imag(), smc1.getCSRValues()[i].imag());
-        EXPECT_EQ(smc0.getCSRColInd()[i], smc1.getCSRColInd()[i]);
-    }
-    for (int i = 0; i < 5; i++)
-    {
-        EXPECT_EQ(smc0.getCSRRowPtr()[i], smc1.getCSRRowPtr()[i]);
-    }
     for (int i = 0; i < 8; i++)
     {
         EXPECT_EQ(std::get<0>(smc0.getData()[i]), std::get<0>(smc1.getData()[i]));

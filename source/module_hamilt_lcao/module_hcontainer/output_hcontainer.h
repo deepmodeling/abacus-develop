@@ -7,6 +7,9 @@
 namespace hamilt
 {
 
+/**
+ * @brief A class to output the HContainer
+ */
 template <typename T>
 class Output_HContainer
 {
@@ -20,12 +23,16 @@ class Output_HContainer
     // write the matrices of all R vectors to the output stream
     void write();
 
-    // write the matrix of a single R vector to the output stream
-    // rx_in, ry_in, rz_in: the R vector from the input
+    /**
+     * write the matrix of a single R vector to the output stream
+     * rx_in, ry_in, rz_in: the R vector from the input
+     */
     void write(int rx_in, int ry_in, int rz_in);
 
-    // write the matrix of a single R vector to the output stream
-    // rx, ry, rz: the R vector from the HContainer
+    /**
+     * write the matrix of a single R vector to the output stream
+     * rx, ry, rz: the R vector from the HContainer
+     */
     void write_single_R(int rx, int ry, int rz);
 
   private:

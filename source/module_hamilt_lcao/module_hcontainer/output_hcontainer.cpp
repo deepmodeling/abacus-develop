@@ -7,6 +7,10 @@
 namespace hamilt
 {
 
+/**
+ * @brief Constructor of Output_HContainer
+ * @attention ofs should be open outside of this interface
+ */
 template <typename T>
 Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
                                         const Parallel_Orbitals* ParaV,
@@ -97,8 +101,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     if (nonzero != 0)
     {
         _ofs << rx << " " << ry << " " << rz << " " << nonzero << std::endl;
-        sparse_matrix.convertToCSR(_sparse_threshold);
-        sparse_matrix.printCSR(_ofs, _precision);
+        sparse_matrix.printToCSR(_ofs, _sparse_threshold, _precision);
     }
     this->_hcontainer->unfix_R();
 }

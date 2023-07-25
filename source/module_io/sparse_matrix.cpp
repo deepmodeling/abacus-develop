@@ -21,10 +21,10 @@ void SparseMatrix<T>::addValue(int row, int col, T value)
 }
 
 /**
- * @brief Convert to CSR format
+ * @brief Print to CSR format
  */
 template <typename T>
-void SparseMatrix<T>::convertToCSR(double threshold)
+void SparseMatrix<T>::printToCSR(std::ostream& ofs, double threshold, int precision)
 {
     // Filter elements greater than the threshold
     auto it = std::remove_if(data.begin(), data.end(), [threshold](const std::tuple<int, int, T>& elem) {
@@ -43,44 +43,29 @@ void SparseMatrix<T>::convertToCSR(double threshold)
 
     // Initialize the CSR arrays
     csr_row_ptr.assign(_rows + 1, 0);
-    csr_col_ind.clear();
-    csr_values.clear();
 
-    // Fill the CSR arrays
-    for (const auto& elem: data)
+    // print the CSR values
+    for (int i = 0; i < data.size(); i++)
     {
-        int row = std::get<0>(elem);
-        int col = std::get<1>(elem);
-        T value = std::get<2>(elem);
-
-        csr_col_ind.push_back(col);
-        csr_values.push_back(value);
+        ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << std::get<2>(data[i]);
+    }
+    ofs << std::endl;
+    // print the CSR column indices
+    for (int i = 0; i < data.size(); i++)
+    {
+        ofs << " " << std::get<1>(data[i]);
+        int row = std::get<0>(data[i]);
         csr_row_ptr[row + 1]++;
     }
+    ofs << std::endl;
 
     // Compute the row pointers
     for (int i = 1; i <= _rows; i++)
     {
         csr_row_ptr[i] += csr_row_ptr[i - 1];
     }
-}
 
-/**
- * @brief Print data in CSR format
- */
-template <typename T>
-void SparseMatrix<T>::printCSR(std::ostream& ofs, int precision)
-{
-    for (int i = 0; i < csr_values.size(); i++)
-    {
-        ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << csr_values[i];
-    }
-    ofs << std::endl;
-    for (int i = 0; i < csr_col_ind.size(); i++)
-    {
-        ofs << " " << csr_col_ind[i];
-    }
-    ofs << std::endl;
+    // print the CSR row pointers
     for (int i = 0; i < csr_row_ptr.size(); i++)
     {
         ofs << " " << csr_row_ptr[i];
@@ -106,17 +91,13 @@ void SparseMatrix<T>::readCSR(const std::vector<T>& values,
     }
 
     csr_row_ptr = row_ptr;
-    csr_col_ind = col_ind;
-    csr_values = values;
 
     data.clear();
     for (int row = 0; row < _rows; row++)
     {
         for (int idx = csr_row_ptr[row]; idx < csr_row_ptr[row + 1]; idx++)
         {
-            int col = csr_col_ind[idx];
-            T value = csr_values[idx];
-            data.push_back(std::make_tuple(row, col, value));
+            data.push_back(std::make_tuple(row, col_ind[idx], values[idx]));
         }
     }
 }
