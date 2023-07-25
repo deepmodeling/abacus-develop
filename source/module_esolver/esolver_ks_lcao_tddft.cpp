@@ -49,6 +49,14 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
         }
         delete Hk_laststep;
     }
+    if (Sk_laststep != nullptr)
+    {
+        for (int ik = 0; ik < kv.nks; ++ik)
+        {
+            delete Sk_laststep[ik];
+        }
+        delete Sk_laststep;
+    }
 }
 
 void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
@@ -131,6 +139,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                                  this->psi,
                                                  this->psi_laststep,
                                                  this->Hk_laststep,
+                                                 this->Sk_laststep,
                                                  this->pelec_td->ekb,
                                                  td_htype,
                                                  INPUT.propagator,
@@ -149,6 +158,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                              this->psi,
                                              this->psi_laststep,
                                              this->Hk_laststep,
+                                             this->Sk_laststep,
                                              this->pelec_td->ekb,
                                              td_htype,
                                              INPUT.propagator,
@@ -335,6 +345,15 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                     ModuleBase::GlobalFunc::ZEROS(Hk_laststep[ik], this->LOC.ParaV->nloc);
                 }
             }
+            if (this->Sk_laststep == nullptr)
+            {
+                this->Sk_laststep = new std::complex<double>*[kv.nks];
+                for (int ik = 0; ik < kv.nks; ++ik)
+                {
+                    this->Sk_laststep[ik] = new std::complex<double>[this->LOC.ParaV->nloc];
+                    ModuleBase::GlobalFunc::ZEROS(Sk_laststep[ik], this->LOC.ParaV->nloc);
+                }
+            }
         }
 
         for (int ik = 0; ik < kv.nks; ++ik)
@@ -352,11 +371,12 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
                 BlasConnector::copy(this->LOC.ParaV->nloc, h_mat.p, 1, Hk_laststep[ik], 1);
+                BlasConnector::copy(this->LOC.ParaV->nloc, s_mat.p, 1, Sk_laststep[ik], 1);
             }
         }
 
         // calculate energy density matrix for tddft
-        if (istep > 1 && module_tddft::Evolve_elec::td_edm == 0)
+        if (istep >= (wf.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
             this->cal_edm_tddft();
     }
 
