@@ -195,7 +195,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
-        /* b(i)/lat0*2pi will get un-rescaled Cartesian b(i) */
         int nk1 = std::max(1,static_cast<int>(b1 * ModuleBase::TWO_PI / GlobalV::KSPACING[0] / GlobalC::ucell.lat0 + 1));
         int nk2 = std::max(1,static_cast<int>(b2 * ModuleBase::TWO_PI / GlobalV::KSPACING[1] / GlobalC::ucell.lat0 + 1));
         int nk3 = std::max(1,static_cast<int>(b3 * ModuleBase::TWO_PI / GlobalV::KSPACING[2] / GlobalC::ucell.lat0 + 1));
@@ -204,10 +203,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 		std::ofstream ofs(fn.c_str());
 		ofs << "K_POINTS" << std::endl;
 		ofs << "0" << std::endl;
-		ofs << "Gamma" << std::endl; /* it means the center is gamma point. */
+		ofs << "Gamma" << std::endl;
 		ofs << nk1 << " " << nk2 << " " << nk3 <<" 0 0 0" << std::endl;
 		ofs.close();
-        /* so KPT file is directly omitted and rewritten if kspacing this keyword is set */
     }
 
     std::ifstream ifk(fn.c_str());
@@ -691,12 +689,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 
     // convert kgmatrix to k-lattice
     ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3 [nrotkm];
-    symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, gk); /* does not convert anything? */
-    /* for not symm case, kkmatrix == kgmatrix */
+    symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, gk);
     // direct coordinates of k-points in k-lattice
     std::vector<ModuleBase::Vector3<double>> kvec_d_k(nkstot);
-    for (int i=0;i<nkstot;++i) kvec_d_k[i]=kvec_d[i]*ucell.G*gk.Inverse(); /* span to extended BZ */
-    /* kvec_d_k is the nk(i) multiplied version of kvec_d? */
+    for (int i=0;i<nkstot;++i) kvec_d_k[i]=kvec_d[i]*ucell.G*gk.Inverse();
+
     // use operation : kgmatrix to find
     // the new set kvec_d : ir_kpt
     this->nkstot_ibz = 0;
@@ -712,7 +709,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     ModuleBase::Vector3<double> kvec_rot;
     ModuleBase::Vector3<double> kvec_rot_k;
 
-    /// @brief PBC, wrap kvec_d into [-0.5, 0.5)
+
+//	for(int i=0; i<nrotkm; i++)
+//	{
+//		out.printM3("rot matrix",kgmatrix[i]);
+//	}
     auto restrict_kpt = [&symm](ModuleBase::Vector3<double> &kvec){
         // in (-0.5, 0.5]
         kvec.x = fmod(kvec.x + 100.5-0.5*symm.epsilon, 1)-0.5+0.5*symm.epsilon;
@@ -729,18 +730,17 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     };
     // for output in kpoints file
     int ibz_index[nkstot];
-	// search in all presently degenerated k-poins.
+	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
-        //restrict to [-0.5, 0.5)
+        //restrict to [0, 1)
         restrict_kpt(kvec_d[i]);
 
 		//std::cout << "\n kpoint = " << i << std::endl;
 		//std::cout << "\n kvec_d = " << kvec_d[i].x << " " << kvec_d[i].y << " " << kvec_d[i].z;
         bool already_exist = false;
 		int exist_number = -1;
-        
-        /// @note try every single symmetrical operation
+
         for (int j = 0; j < nrotkm; ++j)
         {
             if (!already_exist)
@@ -753,7 +753,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 				// fix the bug like kvec_d * G; is wrong
 				kvec_rot = kvec_d[i] * kgmatrix[j]; //wrong for total energy, but correct for nonlocal force.
 				//kvec_rot = kgmatrix[j] * kvec_d[i]; //correct for total energy, but wrong for nonlocal force.
-                restrict_kpt(kvec_rot); /* fold to inteval [-0.5, +0.5) */
+                restrict_kpt(kvec_rot);
 
                 kvec_rot_k = kvec_d_k[i] * kkmatrix[j];   //k-lattice rotation
                 kvec_rot_k = kvec_rot_k * gk * ucell.G.Inverse(); //convert to recip lattice
@@ -768,7 +768,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 
 //				std::cout << "\n kvec_rot = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
 
-                /// @note scan already saved irreducible k-points
                 for (int k=0; k< this->nkstot_ibz; ++k)
                 {
                     if (    symm.equal(kvec_rot.x, this->kvec_d_ibz[k].x) &&
