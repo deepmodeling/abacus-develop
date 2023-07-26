@@ -86,16 +86,16 @@ TEST_F(OutputHContainerTest, Write)
     remove("output_hcontainer.log");
     hamilt::HContainer<double> HR(&ParaV);
     double correct_array[16] = {1, 2, 0, 4, 5, 0, 7, 0, 3, 0, 5, 6, 7, 8, 0, 10};
+    double correct_array1[16] = {1, 2, 0, 4, 5, 0, 7, 0, 3, 0, 5, 6, 7, 8, 0, 10};
     // correct_array represent a matrix of
     // 1 2 0 4
     // 5 0 7 0
     // 3 0 5 6
     // 7 8 0 10
     hamilt::AtomPair<double> ap1(0, 1, 0, 1, 1, &ParaV, correct_array);
-    hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, correct_array);
+    hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, correct_array1);
     HR.insert_pair(ap1);
     HR.insert_pair(ap2);
-    /*
     for (int ir = 0; ir < HR.size_R_loop(); ++ir)
     {
         int rx, ry, rz;
@@ -130,7 +130,6 @@ TEST_F(OutputHContainerTest, Write)
         }
         HR.unfix_R();
     }
-    */
     double sparse_threshold = 0.1;
     hamilt::Output_HContainer<double> output_HR(&HR, &ParaV, ucell, std::cout, sparse_threshold, 2);
     // the first R
