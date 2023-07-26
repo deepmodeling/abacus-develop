@@ -13,8 +13,11 @@
 #include "module_base/timer.h"
 
 #include <RI/global/Global_Func-2.h>
+#include <RI/ri/Cell_Nearest.h>
 
+#include <array>
 #include <vector>
+#include <map>
 #include <string>
 #include <stdexcept>
 
@@ -31,6 +34,18 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(
 
 	const Tdata frac = GlobalC::exx_info.info_global.hybrid_alpha;
 
+	std::map<int,std::array<double,3>> atoms_pos;
+	for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+		atoms_pos[iat] = RI_Util::Vector3_to_array3( GlobalC::ucell.atoms[ GlobalC::ucell.iat2it[iat] ].tau[ GlobalC::ucell.iat2ia[iat] ] );
+	const std::array<std::array<double,3>,3> latvec
+		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
+		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
+		   RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
+	const std::array<int,3> Rs_period = {nmp[0], nmp[1], nmp[2]};
+
+	RI::Cell_Nearest<int,int,3,double,3> cell_nearest;
+	cell_nearest.init(atoms_pos, latvec, Rs_period);	
+
 	const std::vector<int> is_list = (GlobalV::NSPIN!=4) ? std::vector<int>{current_spin} : std::vector<int>{0,1,2,3};
 	for(const int is : is_list)
     {
@@ -42,7 +57,9 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(
 			for(const auto &HexxB : HexxA.second)
 			{
 				const int iat1 = HexxB.first.first;
-				const Abfs::Vector3_Order<int> R = ModuleBase::Vector3<int>(HexxB.first.second);
+				const Abfs::Vector3_Order<int> R = RI_Util::array3_to_Vector3(
+					cell_nearest.get_cell_nearest_discrete(iat0, iat1, HexxB.first.second));
+				this->LM->all_R_coor.insert(R);
 				const RI::Tensor<Tdata> &Hexx = HexxB.second;
 				for(size_t iw0=0; iw0<Hexx.shape[0]; ++iw0)
 				{
@@ -83,12 +100,6 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(
 			}
 		}
 	}
-
-	const Abfs::Vector3_Order<int> Rs_period(nmp[0], nmp[1], nmp[2]);
-	for(int Rx=0; Rx<Rs_period.x; ++Rx)
-		for(int Ry=0; Ry<Rs_period.y; ++Ry)
-			for(int Rz=0; Rz<Rs_period.z; ++Rz)
-				this->LM->all_R_coor.insert(Abfs::Vector3_Order<int>{Rx,Ry,Rz} % Rs_period);
 
 	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
 }
