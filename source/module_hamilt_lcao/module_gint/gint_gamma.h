@@ -33,7 +33,7 @@ class Gint_Gamma : public Gint
     // there is an additional step in calculating vlocal for gamma point
     // namely the redistribution of Hamiltonian from grid to 2D block format
     // hence we have an additional layer outside the unified interface
-	void cal_vlocal(Gint_inout *inout, const bool new_e_iteration);
+    void cal_vlocal(Gint_inout* inout, LCAO_Matrix* lm, const bool new_e_iteration);
 
     //------------------------------------------------------
     // in gint_gamma_env.cpp 

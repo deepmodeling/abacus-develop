@@ -26,7 +26,7 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 }
 
-void Gint_Gamma::cal_vlocal(Gint_inout *inout, const bool new_e_iteration)
+void Gint_Gamma::cal_vlocal(Gint_inout* inout, LCAO_Matrix* lm, bool new_e_iteration)
 {
 	const int max_size = this->gridt->max_atom;
 	const int lgd = this->gridt->lgd;
@@ -40,10 +40,8 @@ void Gint_Gamma::cal_vlocal(Gint_inout *inout, const bool new_e_iteration)
         }
 
         this->cal_gint(inout);
-        Parallel_2D* p2d = dynamic_cast<Parallel_2D*>(inout->lm->ParaV);
-        this->vl_grid_to_2D(pvpR_grid, *p2d, lgd, new_e_iteration, inout->lm->Hloc.data(),
-            std::bind(&LCAO_Matrix::set_HSgamma, inout->lm, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-        p2d = nullptr;
+        this->vl_grid_to_2D(pvpR_grid, *lm->ParaV, lgd, new_e_iteration, lm->Hloc.data(),
+            std::bind(&LCAO_Matrix::set_HSgamma, lm, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
         if (max_size > 0 && lgd > 0) delete[] pvpR_grid;
 	}

@@ -6,7 +6,6 @@
 #include "grid_technique.h"
 #include <cstdlib>
 #include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 namespace Gint_Tools
 {
@@ -28,7 +27,6 @@ class Gint_inout
         bool isforce;
         bool isstress;
         int ispin;
-		LCAO_Matrix *lm;
 
     //output
         double** rho;
@@ -129,19 +127,17 @@ class Gint_inout
         }
 
 	// vlocal, gamma point
-		Gint_inout(const double* vl_in, LCAO_Matrix *lm_in, Gint_Tools::job_type job_in)
+        Gint_inout(const double* vl_in, Gint_Tools::job_type job_in)
         {
             vl = vl_in;
-            lm = lm_in;
             job = job_in;
         }
 
 	// mGGA vlocal, gamma point
-		Gint_inout(const double* vl_in, const double* vofk_in, LCAO_Matrix *lm_in, Gint_Tools::job_type job_in)
+        Gint_inout(const double* vl_in, const double* vofk_in, Gint_Tools::job_type job_in)
         {
             vl = vl_in;
-			vofk = vofk_in;
-            lm = lm_in;
+            vofk = vofk_in;
             job = job_in;
         }
 };
