@@ -121,3 +121,15 @@ AddTest(
   LIBS base ${math_libs} device
   SOURCES sparse_matrix_test.cpp ../sparse_matrix.cpp
 )
+
+AddTest(
+  TARGET io_file_reader_test
+  LIBS base ${math_libs} device
+  SOURCES file_reader_test.cpp ../file_reader.cpp
+)
+
+AddTest(
+  TARGET io_csr_reader_test
+  LIBS base ${math_libs} device
+  SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
+)
