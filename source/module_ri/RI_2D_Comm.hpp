@@ -122,7 +122,7 @@ void RI_2D_Comm::add_Hexx(
 						if(GlobalV::GAMMA_ONLY_LOCAL)
 							lm.set_HSgamma(iwt0, iwt1,
 								RI::Global_Func::convert<double>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<double>(frac),
-								'L', lm.Hloc.data());
+                                lm.Hloc.data());
 						else
 							lm.set_HSk(iwt0, iwt1,
 								RI::Global_Func::convert<std::complex<double>>(H(iw0_b, iw1_b)) * frac,
