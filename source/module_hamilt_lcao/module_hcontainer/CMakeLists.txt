@@ -2,6 +2,7 @@ list(APPEND objects
     base_matrix.cpp
     atom_pair.cpp
     hcontainer.cpp
+    output_hcontainer.cpp
 )
 
 add_library(

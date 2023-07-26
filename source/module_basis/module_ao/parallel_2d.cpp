@@ -121,7 +121,7 @@ void Parallel_2D::mpi_create_cart(const MPI_Comm& diag_world)
     return;
 }
 
-void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld)
+void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld, bool first_time)
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc");
 #ifdef __DEBUG
@@ -129,23 +129,26 @@ void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld)
     assert(gr > 0 && gc > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
 #endif
-    int myprow, mypcol;
-    int* usermap = new int[this->dim0 * this->dim1];
-    int info = 0;
-    for (int i = 0; i < this->dim0; ++i)
+    if (first_time)
     {
-        for (int j = 0; j < this->dim1; ++j)
+        int myprow, mypcol;
+        int* usermap = new int[this->dim0 * this->dim1];
+        for (int i = 0; i < this->dim0; ++i)
         {
-            int pcoord[2] = { i, j };
-            MPI_Cart_rank(comm_2D, pcoord, &usermap[i + j * this->dim0]);
+            for (int j = 0; j < this->dim1; ++j)
+            {
+                int pcoord[2] = { i, j };
+                MPI_Cart_rank(comm_2D, pcoord, &usermap[i + j * this->dim0]);
+            }
         }
+        MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
+        Cblacs_get(comm_2D_f, 0, &this->blacs_ctxt);
+        Cblacs_gridmap(&this->blacs_ctxt, usermap, this->dim0, this->dim0, this->dim1);
+        Cblacs_gridinfo(this->blacs_ctxt, &this->dim0, &this->dim1, &myprow, &mypcol);
+        delete[] usermap;
     }
-    MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
-    Cblacs_get(comm_2D_f, 0, &this->blacs_ctxt);
-    Cblacs_gridmap(&this->blacs_ctxt, usermap, this->dim0, this->dim0, this->dim1);
-    Cblacs_gridinfo(this->blacs_ctxt, &this->dim0, &this->dim1, &myprow, &mypcol);
-    delete[] usermap;
     int ISRC = 0;
+    int info = 0;
     descinit_(desc, &gr, &gc, &this->nb, &this->nb, &ISRC, &ISRC, &this->blacs_ctxt, &lld, &info);
 }
 

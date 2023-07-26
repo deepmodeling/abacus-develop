@@ -67,12 +67,8 @@ AddTest(
 
 AddTest(
   TARGET io_print_info
-  LIBS ${math_libs} base device symmetry
-  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/unitcell.cpp
-  ../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
-  ../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
-  ../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
-  ../../module_cell/read_pp_blps.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
+  LIBS ${math_libs} base device symmetry cell_info
+  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
 AddTest(
@@ -99,12 +95,8 @@ AddTest(
 
 AddTest(
   TARGET io_write_orb_info
-  LIBS ${math_libs} base device
-  SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp ../../module_cell/unitcell.cpp
-	../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
-	../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
-	../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
-	../../module_cell/read_pp_blps.cpp
+  LIBS ${math_libs} base device cell_info
+  SOURCES write_orb_info_test.cpp ../write_orb_info.cpp ../output.cpp
 )
 
 AddTest(
@@ -122,4 +114,10 @@ AddTest(
   TARGET io_output_log_test
   LIBS base ${math_libs} device
   SOURCES ../output_log.cpp outputlog_test.cpp
+)
+
+AddTest(
+  TARGET io_sparse_matrix_test
+  LIBS base ${math_libs} device
+  SOURCES sparse_matrix_test.cpp ../sparse_matrix.cpp
 )

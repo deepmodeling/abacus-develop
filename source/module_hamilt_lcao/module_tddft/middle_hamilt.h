@@ -26,7 +26,9 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
+                  std::complex<double>* Stmp,
                   const std::complex<double>* H_laststep,
+                  const std::complex<double>* S_laststep,
                   const int print_matrix);
 #endif
 } // namespace module_tddft

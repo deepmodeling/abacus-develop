@@ -14,7 +14,9 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
                   const int nband,
                   const int nlocal,
                   std::complex<double>* Htmp,
+                  std::complex<double>* Stmp,
                   const std::complex<double>* H_laststep,
+                  const std::complex<double>* S_laststep,
                   const int print_matrix)
 {
     if (print_matrix)
@@ -48,6 +50,7 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
     std::complex<double> alpha = {0.5, 0.0};
     std::complex<double> beta = {0.5, 0.0};
     ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->desc, beta, Htmp, 1, 1, pv->desc);
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->desc, beta, Stmp, 1, 1, pv->desc);
 
     if (print_matrix)
     {
