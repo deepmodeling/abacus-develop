@@ -8,7 +8,7 @@ fi
 dpgen -h
 
 for ifolder in "init_and_run" \
-#	"autotest"
+	"autotest"
 do
 	cd $ifolder
 	
