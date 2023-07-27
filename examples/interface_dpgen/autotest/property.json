@@ -7,12 +7,6 @@
         "potcars":      {"Al": "Al.PD04.PBE.UPF"},
 	"orb_files": {"Al":"Al_gga_10au_100Ry_3s3p2d.orb"}
     },
-    "_relaxation": {
-            "cal_type": "relaxation",
-            "cal_setting":{
-                    "input_prop": "./INPUT.rlx"
-            }
-     },
     "properties": [
         {
          "type":         "eos",

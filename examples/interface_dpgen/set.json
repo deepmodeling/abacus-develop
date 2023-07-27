@@ -1,0 +1,4 @@
+{
+	"image": "registry.dp.tech/dptech/dpgen:0.11.0",
+	"scass_type": "c2_m4_cpu"
+}

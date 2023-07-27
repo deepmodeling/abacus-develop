@@ -9,9 +9,9 @@
         "context_type": "DpCloudServerContext",
         "local_root" : "./",
         "remote_profile":{
-          "email": "xxx@xxx.xxx",
+          "email": "xxx",
           "password": "xxx",
-          "program_id": 000,
+          "program_id": 0,
             "input_data":{
                 "api_version":2,
                 "job_type": "indicate",
@@ -43,9 +43,9 @@
         "context_type": "DpCloudServerContext",
         "local_root" : "./",
         "remote_profile":{
-          "email": "xxx@xxx.xxx",
+          "email": "xxx",
           "password": "xxx",
-          "program_id": 000,
+          "program_id": 0,
             "input_data":{
               "api_version":2,
               "job_type": "indicate",
@@ -77,9 +77,9 @@
         "context_type": "DpCloudServerContext",
         "local_root" : "./",
         "remote_profile":{
-          "email": "xxx@xxx.xxx",
-          "password": "xxx",
-          "program_id": 000,
+          "email": "xxx",
+          "password": "xx",
+          "program_id": 0,
             "input_data":{
               "api_version":2,
               "job_type": "indicate",
@@ -89,7 +89,7 @@
               "disk_size": 100,
               "scass_type":"c32_m128_cpu",
               "platform": "ali",
-              "image_name":"XXXXX",
+              "image_name":"registry.dp.tech/deepmodeling/abacus-intel:latest",
               "on_demand":0
             }
         }
