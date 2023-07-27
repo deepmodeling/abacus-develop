@@ -9,7 +9,7 @@ class Test_Paw_Cell : public testing::Test
 
     Paw_Cell paw_cell;
 
-    double ecut = 50.0, cell_factor = 1.2;
+    double ecut = 50.0, cell_factor = 1.2, omega = 1.0;
     int nat = 5, ntyp = 3;
     int atom_type[5] = {0,1,2,1,2}; // Fe,O,H,O,H
     std::vector<std::string> filename_list;
@@ -61,7 +61,7 @@ TEST_F(Test_Paw_Cell, test_paw)
     eigts2_in = new std::complex<double> [ny];
     eigts3_in = new std::complex<double> [nz];
 
-    paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp, 
+    paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp, 
         atom_type, (const double **) atom_coord, filename_list,
         nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
 
@@ -112,6 +112,14 @@ TEST_F(Test_Paw_Cell, test_paw)
     for(int ip = 0; ip < 44; ip ++)
     {
         EXPECT_EQ(iprj_to_m[ip],iprj_to_m_ref[ip]);
+    }
+
+    std::vector<int> start_iprj = paw_cell.get_start_iprj();
+    EXPECT_EQ(start_iprj.size(),5);
+    std::vector<int> start_iprj_ref = {0, 18, 26, 31, 39};
+    for(int ia = 0; ia < 5; ia ++)
+    {
+        EXPECT_EQ(start_iprj[ia],start_iprj_ref[ia]);
     }
 
     for(int ia = 0; ia < nat; ia ++)
@@ -184,7 +192,7 @@ class Test_PAW_Cell_k : public testing::Test
 
     Paw_Cell paw_cell;
 
-    double ecut = 20.0, cell_factor = 1.2;
+    double ecut = 20.0, cell_factor = 1.2, omega = 265.302, tpiba = 0.6159985595;
     int nat = 2, ntyp = 1;
     int atom_type[2] = {0,0}; // Si, Si
     std::vector<std::string> filename_list;
@@ -210,7 +218,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     eigts3_in = new std::complex<double> [nat * (2 * nz + 1)];
 
     filename_list.resize(1);
-    filename_list[0] = "Si.GGA_PBE-JTH.xml";
+    filename_list[0] = "Si_test.xml";
 
     std::ifstream ifs_eigts("eigts.dat");
 
@@ -227,7 +235,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         ifs_eigts >> eigts3_in[i];
     }
 
-    paw_cell.init_paw_cell(ecut, cell_factor, nat, ntyp,
+    paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp,
         atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
         eigts1_in, eigts2_in, eigts3_in);
 
@@ -243,7 +251,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
 
     //=========================================
 
-    int npw = 410;
+    int npw = 411;
     int *ig_to_ix, *ig_to_iy, *ig_to_iz;
     double ** kpg = new double * [npw];    
     double kpt[3] = {0.0,0.0,0.0};
@@ -263,7 +271,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         ifs_kpg >> ig >> kpg[i][0] >> kpg[i][1] >> kpg[i][2];
     }
 
-    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg);
+    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba);
 
     delete[] ig_to_ix;
     delete[] ig_to_iy;
@@ -274,4 +282,78 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     }
     delete[] kpg;
 
+    paw_cell.get_vkb();
+    auto vkb = paw_cell.output_vkb();
+
+    EXPECT_EQ(vkb.size(),16);
+    EXPECT_EQ(vkb[0].size(),npw);
+
+    std::ifstream ifs_vkb("vkb_ref.dat");
+    for(int iproj = 0; iproj < 16; iproj ++)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            std::complex<double> tmp;
+            ifs_vkb >> tmp;
+            EXPECT_NEAR(tmp.real(),vkb[iproj][ipw].real(),1e-8);
+            EXPECT_NEAR(tmp.imag(),vkb[iproj][ipw].imag(),1e-8);
+        }
+    }
+
+    std::complex<double> *psi;
+    psi = new std::complex<double>[npw];
+    const int nband = 6;
+    std::vector<double> weight={2,2,2,2,0,0};
+
+    std::ifstream ifs_psi("psi.dat");
+
+    for(int iband = 0; iband < nband; iband ++)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            ifs_psi >> psi[ipw];
+        }
+        paw_cell.accumulate_rhoij(psi,weight[iband]);
+    }
+
+    delete[] psi;
+
+    std::ifstream ifs_rhoij("rhoij1.dat");
+
+    std::vector<std::vector<double>> rhoij = paw_cell.get_rhoij();
+    EXPECT_EQ(rhoij.size(),nat);
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        EXPECT_EQ(rhoij[iat].size(),36);
+        for(int i = 0; i < 36; i ++)
+        {
+            double tmp;
+            ifs_rhoij >> tmp;
+
+            EXPECT_NEAR(tmp,rhoij[iat][i],1e-8);
+        }
+    }
+
+    std::vector<std::vector<double>> rhoijp;
+    std::vector<std::vector<int>> rhoijselect;
+    std::vector<int> nrhoijsel;
+
+    paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+    EXPECT_EQ(rhoijp.size(),nat);
+    EXPECT_EQ(rhoijselect.size(),nat);
+    EXPECT_EQ(nrhoijsel.size(),nat);
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        // As all entries are larger than 1e-10, rhoijp is the same as rhoij
+        EXPECT_EQ(rhoijp[iat].size(),36);
+        EXPECT_EQ(rhoijselect[iat].size(),36);
+        EXPECT_EQ(nrhoijsel[iat],36);
+        for(int i = 0; i < 36; i ++)
+        {
+            EXPECT_EQ(rhoijselect[iat][i],i);
+            EXPECT_NEAR(rhoijp[iat][i],rhoij[iat][i],1e-8);
+        }
+    }
 }

@@ -137,7 +137,7 @@ class Paw_Element
     int get_lmax(){return lmax;}
 
     // return ptilde_q for a given channel at a given q_in, using spline
-    double get_ptilde(const int istate_in, const double q_in);
+    double get_ptilde(const int istate_in, const double q_in, const double omega);
 
     private:
 

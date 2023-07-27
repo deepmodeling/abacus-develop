@@ -20,4 +20,18 @@ AddTest(
   SOURCES test_hcontainer_time.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
+
+AddTest(
+  TARGET test_hcontainer_output
+  LIBS base ${math_libs} device
+  SOURCES output_hcontainer_test.cpp
+    tmp_mocks.cpp
+    ../output_hcontainer.cpp
+    ../base_matrix.cpp
+    ../hcontainer.cpp
+    ../atom_pair.cpp
+    ../../../module_basis/module_ao/parallel_2d.cpp
+    ../../../module_basis/module_ao/parallel_orbitals.cpp
+    ../../../module_io/sparse_matrix.cpp
+)
 endif() 

@@ -113,7 +113,7 @@ Configure your VS Code settings as `"C_Cpp.clang_format_style": "file"` (you can
 
 ## Adding a unit test
 
-We use GoogleTest as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
+We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
 
 - Add a folder named `test` under the module.
 - Append the content below to `CMakeLists.txt` of the module:
@@ -142,8 +142,9 @@ To add a unit test:
     )
     ```
 
-- Build with `-D BUILD_TESTING=1` flag. You can find built testing programs under `build/source/<module_name>/test`.
+- Build with `-D BUILD_TESTING=1` flag, `cmake` will look for `GoogleTest` in the default path (usually `/usr/local`); if not found, you can specify the path with `-D GTEST_DIR`. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
+- Considering `-D BUILD_TESTING=1`, the compilation will be slower compared with the case `-D BUILD_TESTING=0`.
 
 ## Debugging the codes
 
@@ -186,6 +187,8 @@ This feature requires using GCC compiler. We use `gcov` and `lcov` to generate c
     ```bash
     cmake --build build --target test ARGS="-V --timeout 21600"
     ```
+
+If configuration fails unfortunately, you can find [required files](https://github.com/baixiaokuang/CMake-codecov/tree/master/cmake) (including three *.cmake and llvm-cov-wrapper), and copy these four files into `/abacus-develop/cmake`. Alternatively, you can define the path with option `-D CMAKE_CURRENT_SOURCE_DIR`.
 
 3. Generate HTML report.
 
