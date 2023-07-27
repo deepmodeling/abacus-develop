@@ -68,13 +68,7 @@ AddTest(
 AddTest(
   TARGET io_print_info
   LIBS ${math_libs} base device symmetry cell_info
-  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/unitcell.cpp
-  	../../module_cell/read_atoms.cpp ../../module_cell/read_cell_pseudopots.cpp ../../module_cell/atom_spec.cpp
-	../../module_cell/atom_pseudo.cpp ../../module_cell/pseudo_nc.cpp ../../module_cell/read_pp.cpp
-	../../module_cell/read_pp_upf201.cpp ../../module_cell/read_pp_upf100.cpp ../../module_cell/read_pp_vwr.cpp
-	../../module_cell/read_pp_blps.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp 
-	../../module_cell/module_symmetry/symm_other.cpp ../../module_cell/module_symmetry/symmetry_basic.cpp
-	../../module_cell/module_symmetry/symmetry.cpp
+  SOURCES print_info_test.cpp ../print_info.cpp ../input.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
 )
 
 AddTest(
