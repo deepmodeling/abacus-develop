@@ -66,7 +66,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
     this->_hcontainer->fix_R(rx, ry, rz);
     ModuleIO::SparseMatrix<T> sparse_matrix = ModuleIO::SparseMatrix<T>(this->_ParaV->nrow, this->_ParaV->ncol);
-    int nonzero = 0;
+    sparse_matrix.setSparseThreshold(this->_sparse_threshold);
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
         auto atom_pair = this->_hcontainer->get_atom_pair(iap);
@@ -86,22 +86,16 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
             for (int iw2 = 0; iw2 < size2; ++iw2)
             {
                 const int global_index2 = start2 + iw2;
-
                 T tmp_matrix_value = atom_pair.get_matrix_value(global_index1, global_index2);
-
-                if (std::abs(tmp_matrix_value) > _sparse_threshold)
-                {
-                    nonzero++;
-                    sparse_matrix.addValue(global_index1, global_index2, tmp_matrix_value);
-                    // to do: consider 2D block-cyclic distribution
-                }
+                sparse_matrix.insert(global_index1, global_index2, tmp_matrix_value);
+                // to do: consider 2D block-cyclic distribution
             }
         }
     }
-    if (nonzero != 0)
+    if (sparse_matrix.getNNZ() != 0)
     {
-        _ofs << rx << " " << ry << " " << rz << " " << nonzero << std::endl;
-        sparse_matrix.printToCSR(_ofs, _sparse_threshold, _precision);
+        _ofs << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;
+        sparse_matrix.printToCSR(_ofs, _precision);
     }
     this->_hcontainer->unfix_R();
 }
