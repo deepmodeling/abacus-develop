@@ -1,18 +1,23 @@
 #ifndef SPARSE_MATRIX_H
 #define SPARSE_MATRIX_H
 
-#include <algorithm>
 #include <iostream>
-#include <tuple>
+#include <map>
+#include <utility>
 #include <vector>
 
 namespace ModuleIO
 {
 
 /**
- * @brief Sparse matrix class
- *
- * @tparam T
+ * @brief Sparse matrix class designed mainly for csr format input and output.
+ * @details
+ *   The sparse matrix is stored in a map.
+ *   The map key is a pair of row and column indices.
+ *   The map value is the matrix element.
+ *   The matrix element is stored only if its absolute value is greater than the threshold.
+ *   The threshold is set to 1.0e-10 by default.
+ * @tparam T data type, it can be double or std::complex<double>
  */
 template <typename T>
 class SparseMatrix
@@ -28,16 +33,10 @@ class SparseMatrix
     }
 
     // add value to the matrix with row and column indices
-    void addValue(int row, int col, T value);
-
-    // get data vector
-    const std::vector<std::tuple<int, int, T>>& getData() const
-    {
-        return data;
-    }
+    void insert(int row, int col, T value);
 
     // print data in CSR (Compressed Sparse Row) format
-    void printToCSR(std::ostream& ofs, double threshold, int precision = 8);
+    void printToCSR(std::ostream& ofs, int precision = 8);
 
     // read CSR data from arrays
     void readCSR(const std::vector<T>& values, const std::vector<int>& col_ind, const std::vector<int>& row_ptr);
@@ -66,10 +65,38 @@ class SparseMatrix
         return _cols;
     }
 
+    // define the operator to index a matrix element
+    T operator()(int row, int col);
+
+    // set the threshold
+    void setSparseThreshold(double sparse_threshold)
+    {
+        _sparse_threshold = sparse_threshold;
+    }
+
+    // get the threshold
+    double getSparseThreshold() const
+    {
+        return _sparse_threshold;
+    }
+
+    // get the number of non-zero elements
+    int getNNZ() const
+    {
+        return elements.size();
+    }
+
+    // get elements
+    const std::map<std::pair<int, int>, T>& getElements() const
+    {
+        return elements;
+    }
+
   private:
     int _rows;
     int _cols;
-    std::vector<std::tuple<int, int, T>> data;
+    std::map<std::pair<int, int>, T> elements;
+    double _sparse_threshold = 1.0e-10;
 }; // class SparseMatrix
 
 } // namespace ModuleIO
