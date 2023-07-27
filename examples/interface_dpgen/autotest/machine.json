@@ -89,7 +89,7 @@
               "disk_size": 100,
               "scass_type":"c32_m128_cpu",
               "platform": "ali",
-              "image_name":"registry.dp.tech/deepmodeling/abacus-intel:latest",
+              "image_name":"XXX",
               "on_demand":0
             }
         }

@@ -1,16 +1,17 @@
 This is a test of dpgen+abacus.
 
-This test will use bohrium machine to run ABACUS, you need to have bohrium
-account. The ABACUS bohrium image can be found in bohrium website, or you can 
-use "registry.dp.tech/deepmodeling/abacus-intel:latest", which is the latest
-ABACUS compiled by intel.
+The usage of dpgen can be found in
+https://docs.deepmodeling.com/projects/dpgen/en/latest/overview/overview.html
 
-Before run the tests, you need to install dpgen and dpdata:
+Before run the test, you need install dpgen and dpdata:
 `pip install dpgen`
 `pip install dpdata`
 
+You need to modify the machine.json file in each sub-path, and a detail of machine.json 
+can be found in https://docs.deepmodeling.com/projects/dpgen/en/latest/init/init-bulk-mdata.html.
+Here, the machine.json file is a format based on bohrium platform.
 
-There are two ways to run this test:
+There has two ways to run this test:
 1. Autotest by runall.sh:
 	a. Set enviroment variables:
 		`export BOHRIUM_USERNAME=<replace by your bohrium username>`
@@ -39,4 +40,5 @@ There are two ways to run this test:
 		`dpgen autotest make property.json`
 		`dpgen autotest run property.json machine.json`
 		`dpgen autotest post property.json`
+		`cd ..`
 
