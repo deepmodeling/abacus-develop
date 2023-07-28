@@ -33,6 +33,23 @@ Magnetism::~Magnetism()
 }
 // mocke functions
 
+class TEST_Parallel_Orbitals : public Parallel_Orbitals
+{
+    public:
+    TEST_Parallel_Orbitals() : Parallel_Orbitals()
+    {
+    }
+    ~TEST_Parallel_Orbitals()
+    {
+    }
+    void set_serial(int& nrow_in, const int& ncol_in)
+    {
+        this->nrow = nrow_in;
+        this->ncol = ncol_in;
+        this->nloc = this->nrow * this->ncol;
+    }
+}
+
 class ReadHContainerTest : public testing::Test
 {
   protected:
@@ -58,4 +75,5 @@ TEST_F(ReadHContainerTest, Foo)
     std::cout << "csr.getMatrixDimension " << csr.getMatrixDimension() << std::endl;
     std::cout << "csr.getNumberOfR " << csr.getNumberOfR() << std::endl;
     std::cout << "nlocal " << nlocal << std::endl;
+    Parallel_Orbitals ParaV;
 }
