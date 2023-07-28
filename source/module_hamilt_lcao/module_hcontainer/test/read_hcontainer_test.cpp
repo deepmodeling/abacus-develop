@@ -33,23 +33,6 @@ Magnetism::~Magnetism()
 }
 // mocke functions
 
-class TEST_Parallel_Orbitals : public Parallel_Orbitals
-{
-    public:
-    TEST_Parallel_Orbitals() : Parallel_Orbitals()
-    {
-    }
-    ~TEST_Parallel_Orbitals()
-    {
-    }
-    void set_serial(int& nrow_in, const int& ncol_in)
-    {
-        this->nrow = nrow_in;
-        this->ncol = ncol_in;
-        this->nloc = this->nrow * this->ncol;
-    }
-}
-
 class ReadHContainerTest : public testing::Test
 {
   protected:
@@ -75,5 +58,13 @@ TEST_F(ReadHContainerTest, Foo)
     std::cout << "csr.getMatrixDimension " << csr.getMatrixDimension() << std::endl;
     std::cout << "csr.getNumberOfR " << csr.getNumberOfR() << std::endl;
     std::cout << "nlocal " << nlocal << std::endl;
-    Parallel_Orbitals ParaV;
+    Parallel_Orbitals paraV;
+    std::ofstream ofs("test.log");
+    paraV.set_global2local(nlocal, nlocal, false, ofs);
+    ofs.close();
+    remove("test.log");
+    paraV.set_atomic_trace(ucell->iat2iwt.data(), ucell->nat, nlocal);
+    std::cout << paraV.atom_begin_col[0] << " " << paraV.atom_begin_col[1] << std::endl;
+    std::cout << paraV.atom_begin_row[0] << " " << paraV.atom_begin_row[1] << std::endl;
+
 }
