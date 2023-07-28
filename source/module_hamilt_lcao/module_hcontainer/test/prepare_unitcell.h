@@ -66,8 +66,8 @@ public:
 	int ntype;
 	int atomic_index;
 
-	UnitCell* SetUcellInfo()
-	{
+    UnitCell* SetUcellInfo(const std::vector<int>& nw, int& nlocal)
+    {
 		//basic info
 		this->ntype = this->elements.size();
 		UnitCell* ucell = new UnitCell;
@@ -136,22 +136,24 @@ public:
 		for(int it=0;it<ucell->ntype;++it)
 		{
 			ucell->atoms[it].label = this->elements[it];
-			ucell->atoms[it].nw = 0;
-			ucell->atoms[it].nwl = 2;
-			delete[] ucell->atoms[it].l_nchi;
-			ucell->atoms[it].l_nchi = new int[ ucell->atoms[it].nwl+1];
-			for(int L=0; L<ucell->atoms[it].nwl+1; L++)
-			{
-				ucell->atoms[it].l_nchi[L] = 1;
-				ucell->atoms[it].nw += (2*L + 1) * ucell->atoms[it].l_nchi[L];
-			}
-			ucell->atoms[it].na = this->natom[it];
-			//coordinates and related physical quantities
-			delete[] ucell->atoms[it].tau;
-			delete[] ucell->atoms[it].dis;
-			delete[] ucell->atoms[it].taud;
-			delete[] ucell->atoms[it].vel;
-			delete[] ucell->atoms[it].mag;
+            /*
+            ucell->atoms[it].nw = 0;
+            ucell->atoms[it].nwl = 2;
+            delete[] ucell->atoms[it].l_nchi;
+            ucell->atoms[it].l_nchi = new int[ ucell->atoms[it].nwl+1];
+            for(int L=0; L<ucell->atoms[it].nwl+1; L++)
+            {
+                ucell->atoms[it].l_nchi[L] = 1;
+                ucell->atoms[it].nw += (2*L + 1) * ucell->atoms[it].l_nchi[L];
+            }
+            */
+            ucell->atoms[it].na = this->natom[it];
+            // coordinates and related physical quantities
+            delete[] ucell->atoms[it].tau;
+            delete[] ucell->atoms[it].dis;
+            delete[] ucell->atoms[it].taud;
+            delete[] ucell->atoms[it].vel;
+            delete[] ucell->atoms[it].mag;
 			delete[] ucell->atoms[it].angle1;
 			delete[] ucell->atoms[it].angle2;
 			delete[] ucell->atoms[it].m_loc_;
@@ -215,8 +217,55 @@ public:
 			}
 		}
 		ucell->nat = this->natom.sum();
-		return ucell;
-	}
+        // set_nw
+        assert(nw.size() == ucell->ntype);
+        for (int it = 0; it < ucell->ntype; ++it)
+        {
+            ucell->atoms[it].nw = nw[it];
+        }
+        // cal_nloc
+        for (int it = 0; it < ucell->ntype; ++it)
+        {
+            nlocal += ucell->atoms[it].na * ucell->atoms[it].nw;
+        }
+        // cal_namax
+        int namax = 0;
+        for (int it = 0; it < ucell->ntype; ++it)
+        {
+            namax = std::max(namax, ucell->atoms[it].na);
+        }
+        ucell->namax = namax;
+        // cal_index
+        assert(nlocal > 0);
+        delete[] ucell->iwt2iat;
+        delete[] ucell->iwt2iw;
+        ucell->iwt2iat = new int[nlocal];
+        ucell->iwt2iw = new int[nlocal];
+
+        ucell->itia2iat.create(ucell->ntype, ucell->namax);
+        // ucell->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
+        ucell->iat2iwt.resize(ucell->nat);
+        int iat = 0;
+        int iwt = 0;
+        for (int it = 0; it < ucell->ntype; it++)
+        {
+            for (int ia = 0; ia < ucell->atoms[it].na; ia++)
+            {
+                ucell->itia2iat(it, ia) = iat;
+                // ucell->iat2ia[iat] = ia;
+                ucell->iat2iwt[iat] = iwt;
+                for (int iw = 0; iw < ucell->atoms[it].nw; iw++)
+                {
+                    // ucell->itiaiw2iwt(it, ia, iw) = iwt;
+                    ucell->iwt2iat[iwt] = iat;
+                    ucell->iwt2iw[iwt] = iw;
+                    ++iwt;
+                }
+                ++iat;
+            }
+        }
+        return ucell;
+    }
 };
 
 UcellTestPrepare::UcellTestPrepare(std::string latname_in,

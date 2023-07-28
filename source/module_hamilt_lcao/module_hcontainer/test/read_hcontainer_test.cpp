@@ -38,9 +38,11 @@ class ReadHContainerTest : public testing::Test
   protected:
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
+    std::vector<int> nw = {13};
+    int nlocal;
     void SetUp() override
     {
-        ucell = utp.SetUcellInfo();
+        ucell = utp.SetUcellInfo(nw, nlocal);
     }
     void TearDown() override
     {
@@ -55,5 +57,5 @@ TEST_F(ReadHContainerTest, Foo)
     std::cout << "csr.getStep " << csr.getStep() << std::endl;
     std::cout << "csr.getMatrixDimension " << csr.getMatrixDimension() << std::endl;
     std::cout << "csr.getNumberOfR " << csr.getNumberOfR() << std::endl;
-
+    std::cout << "nlocal " << nlocal << std::endl;
 }
