@@ -9,6 +9,16 @@
 
 /**
  * Tested functions:
+ *  - set_atomic_trace
+ *    - set atom_begin_row and atom_begin_col
+ *  - get_col_size()
+ *    - get the number of columns of the parallel orbital matrix
+ *  - get_row_size()
+ *    - get the number of rows of the parallel orbital matrix
+ *  - get_col_size(int iat)
+ *    - get the number of columns of the orbital matrix of the iat-th atom
+ *  - get_row_size(int iat)
+ *    - get the number of rows of the orbital matrix of the iat-th atom
  */
 
 class Test_Parallel_Orbitals : public Parallel_Orbitals
