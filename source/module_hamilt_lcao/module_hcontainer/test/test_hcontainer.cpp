@@ -440,8 +440,8 @@ TEST_F(HContainerTest, atompair_funcs)
 {
     // 1. constructor
     Parallel_Orbitals PO;
-    PO.atom_begin_row.resize(3); // natom = 2, size should be natom + 1
-    PO.atom_begin_col.resize(3);
+    PO.atom_begin_row.resize(2);
+    PO.atom_begin_col.resize(2);
     for(int i=0;i<3;i++)
     {
         PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
