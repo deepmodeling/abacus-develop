@@ -22,7 +22,7 @@ Parallel_Orbitals::Parallel_Orbitals()
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-    delete[] loc_sizes;    
+    delete[] loc_sizes;
     delete[] nlocdim;
     delete[] nlocstart;
 }
@@ -31,7 +31,7 @@ void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, con
 {
     this->atom_begin_col.resize(nat);
     this->atom_begin_row.resize(nat);
-    for(int iat=0;iat<nat-1;iat++)
+    for (int iat = 0; iat < nat; iat++)
     {
         this->atom_begin_col[iat] = -1;
         this->atom_begin_row[iat] = -1;
@@ -80,16 +80,23 @@ int Parallel_Orbitals::get_col_size(int iat) const
     {
         return 0;
     }
-    iat += 1;
-    // Traverse the orbital matrices of the atom and calculate the number of columns
-    while(this->atom_begin_col[iat] <= this->ncol)
+    if (iat == this->atom_begin_col.size() - 1)
     {
-        if(this->atom_begin_col[iat] != -1)
+        return this->ncol - size;
+    }
+    else
+    {
+        iat += 1;
+        // Traverse the orbital matrices of the atom and calculate the number of columns
+        while (this->atom_begin_col[iat] <= this->ncol)
         {
-            size = this->atom_begin_col[iat] - size;
-            return size;
+            if (this->atom_begin_col[iat] != -1)
+            {
+                size = this->atom_begin_col[iat] - size;
+                return size;
+            }
+            iat++;
         }
-        iat++;
     }
     // If the orbital matrix is not found after all atoms are traversed, throw an exception
     throw std::string("error in get_col_size(iat)");
@@ -102,15 +109,22 @@ int Parallel_Orbitals::get_row_size(int iat) const
     {
         return 0;
     }
-    iat += 1;
-    while(this->atom_begin_row[iat] <= this->ncol)
+    if (iat == this->atom_begin_row.size() - 1)
     {
-        if(this->atom_begin_row[iat] != -1)
+        return this->nrow - size;
+    }
+    else
+    {
+        iat += 1;
+        while (this->atom_begin_row[iat] <= this->nrow)
         {
-            size = this->atom_begin_row[iat] - size;
-            return size;
+            if (this->atom_begin_row[iat] != -1)
+            {
+                size = this->atom_begin_row[iat] - size;
+                return size;
+            }
+            iat++;
         }
-        iat++;
     }
     // If the orbital matrix is not found after all atoms are traversed, throw an exception
     throw std::string("error in get_col_size(iat)");
