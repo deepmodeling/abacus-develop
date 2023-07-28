@@ -67,16 +67,9 @@ class OutputHContainerTest : public testing::Test
 TEST_F(OutputHContainerTest, Write)
 {
     Parallel_Orbitals ParaV;
-    ParaV.atom_begin_row.resize(3);
-    ParaV.atom_begin_col.resize(3);
-    // Here is a bug, "nat" is 2 in this test, but
-    // the Parallel_Orbitals::get_col_size function
-    // will run "iat += 1" even if iat == nat - 1
-    // resulting in wrong indexing of atom_begin_col
-    // so it is resized to 3 to avoid this bug temporarily
-    // @ 2023-07-26
-    // this bug is expected to be fixed soon
-    for (int i = 0; i < 3; i++)
+    ParaV.atom_begin_row.resize(2);
+    ParaV.atom_begin_col.resize(2);
+    for (int i = 0; i < 2; i++)
     {
         ParaV.atom_begin_row[i] = i * 2;
         ParaV.atom_begin_col[i] = i * 2;
