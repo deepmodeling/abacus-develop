@@ -175,12 +175,18 @@ TEST_F(test_para2d, Serial)
         //1. set dim0 and dim1
         p2d.set_proc_dim(1);
         EXPECT_EQ(p2d.dim0 * p2d.dim1, 1);
+        EXPECT_EQ(p2d.dim0, 1);
+        EXPECT_EQ(p2d.dim1, 1);
 
         //2. set_serial
         p2d.set_serial(gr, gc);
         EXPECT_EQ(p2d.get_row_size(), gr);
         EXPECT_EQ(p2d.get_col_size(), gc);
         EXPECT_EQ(p2d.get_local_size(), gr * gc);
+        for (int i = 0; i < gr; ++i)
+            EXPECT_EQ(p2d.local2global_row(i), i);
+        for (int i = 0; i < gc; ++i)
+            EXPECT_EQ(p2d.local2global_col(i), i);
 
         //3. set_global2local
         p2d.set_global2local(gr, gc, false, ofs_running);
