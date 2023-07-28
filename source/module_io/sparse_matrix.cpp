@@ -1,5 +1,6 @@
 #include "sparse_matrix.h"
 
+#include <algorithm>
 #include <complex>
 
 #include "module_base/tool_quit.h"
@@ -11,51 +12,39 @@ namespace ModuleIO
  * @brief Add value to the matrix with row and column indices
  */
 template <typename T>
-void SparseMatrix<T>::addValue(int row, int col, T value)
+void SparseMatrix<T>::insert(int row, int col, T value)
 {
     if (row < 0 || row >= _rows || col < 0 || col >= _cols)
     {
         ModuleBase::WARNING_QUIT("SparseMatrix::addValue", "row or col index out of range");
     }
-    data.push_back(std::make_tuple(row, col, value));
+    if (std::abs(value) > _sparse_threshold)
+    {
+        elements[std::make_pair(row, col)] = value;
+    }
 }
 
 /**
  * @brief Print to CSR format
  */
 template <typename T>
-void SparseMatrix<T>::printToCSR(std::ostream& ofs, double threshold, int precision)
+void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
 {
-    // Filter elements greater than the threshold
-    auto it = std::remove_if(data.begin(), data.end(), [threshold](const std::tuple<int, int, T>& elem) {
-        return std::abs(std::get<2>(elem)) <= threshold;
-    });
-    data.erase(it, data.end());
-
-    // Sort data by row, then by column
-    std::sort(data.begin(), data.end(), [](const std::tuple<int, int, T>& a, const std::tuple<int, int, T>& b) {
-        if (std::get<0>(a) == std::get<0>(b))
-        {
-            return std::get<1>(a) < std::get<1>(b);
-        }
-        return std::get<0>(a) < std::get<0>(b);
-    });
-
     // Initialize the CSR arrays
     std::vector<int> csr_row_ptr;
     csr_row_ptr.assign(_rows + 1, 0);
 
     // print the CSR values
-    for (int i = 0; i < data.size(); i++)
+    for (const auto &element : elements)
     {
-        ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << std::get<2>(data[i]);
+        ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << element.second;
     }
     ofs << std::endl;
     // print the CSR column indices
-    for (int i = 0; i < data.size(); i++)
+    for (const auto &element : elements)
     {
-        ofs << " " << std::get<1>(data[i]);
-        int row = std::get<0>(data[i]);
+        ofs << " " << element.first.second;
+        int row = element.first.first;
         csr_row_ptr[row + 1]++;
     }
     ofs << std::endl;
@@ -91,13 +80,32 @@ void SparseMatrix<T>::readCSR(const std::vector<T>& values,
         ModuleBase::WARNING_QUIT("SparseMatrix::readCSR", "Column indices and values size mismatch");
     }
 
-    data.clear();
+    elements.clear();
     for (int row = 0; row < _rows; row++)
     {
         for (int idx = row_ptr[row]; idx < row_ptr[row + 1]; idx++)
         {
-            data.push_back(std::make_tuple(row, col_ind[idx], values[idx]));
+            elements[std::make_pair(row, col_ind[idx])] = values[idx];
         }
+    }
+}
+
+// define the operator to index a matrix element
+template <typename T>
+T SparseMatrix<T>::operator()(int row, int col)
+{
+    if (row < 0 || row >= _rows || col < 0 || col >= _cols)
+    {
+        ModuleBase::WARNING_QUIT("SparseMatrix::operator()", "row or col index out of range");
+    }
+    auto it = elements.find(std::make_pair(row, col));
+    if (it != elements.end())
+    {
+        return it->second;
+    }
+    else
+    {
+        return static_cast<T>(0);
     }
 }
 

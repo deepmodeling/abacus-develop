@@ -67,9 +67,16 @@ class OutputHContainerTest : public testing::Test
 TEST_F(OutputHContainerTest, Write)
 {
     Parallel_Orbitals ParaV;
-    ParaV.atom_begin_row.resize(2);
-    ParaV.atom_begin_col.resize(2);
-    for (int i = 0; i < 2; i++)
+    ParaV.atom_begin_row.resize(3);
+    ParaV.atom_begin_col.resize(3);
+    // Here is a bug, "nat" is 2 in this test, but
+    // the Parallel_Orbitals::get_col_size function
+    // will run "iat += 1" even if iat == nat - 1
+    // resulting in wrong indexing of atom_begin_col
+    // so it is resized to 3 to avoid this bug temporarily
+    // @ 2023-07-26
+    // this bug is expected to be fixed soon
+    for (int i = 0; i < 3; i++)
     {
         ParaV.atom_begin_row[i] = i * 2;
         ParaV.atom_begin_col[i] = i * 2;
@@ -86,16 +93,16 @@ TEST_F(OutputHContainerTest, Write)
     remove("output_hcontainer.log");
     hamilt::HContainer<double> HR(&ParaV);
     double correct_array[16] = {1, 2, 0, 4, 5, 0, 7, 0, 3, 0, 5, 6, 7, 8, 0, 10};
+    double correct_array1[16] = {1, 2, 0, 4, 5, 0, 7, 0, 3, 0, 5, 6, 7, 8, 0, 10};
     // correct_array represent a matrix of
     // 1 2 0 4
     // 5 0 7 0
     // 3 0 5 6
     // 7 8 0 10
     hamilt::AtomPair<double> ap1(0, 1, 0, 1, 1, &ParaV, correct_array);
-    hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, correct_array);
+    hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, correct_array1);
     HR.insert_pair(ap1);
     HR.insert_pair(ap2);
-    /*
     for (int ir = 0; ir < HR.size_R_loop(); ++ir)
     {
         int rx, ry, rz;
@@ -130,7 +137,6 @@ TEST_F(OutputHContainerTest, Write)
         }
         HR.unfix_R();
     }
-    */
     double sparse_threshold = 0.1;
     hamilt::Output_HContainer<double> output_HR(&HR, &ParaV, ucell, std::cout, sparse_threshold, 2);
     // the first R
