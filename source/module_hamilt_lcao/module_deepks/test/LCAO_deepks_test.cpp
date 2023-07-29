@@ -94,7 +94,7 @@ void test_deepks::check_pdm(void)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		this->read_dm();
-		this->ld.cal_projected_DM(dm[0],
+		this->ld.cal_projected_DM(dm,
 			ucell,
 			ORB,
             Test_Deepks::GridD);
@@ -266,7 +266,7 @@ void test_deepks::check_f_delta()
 	svnl_dalpha.create(3,3);
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		ld.cal_f_delta_gamma(dm[0],
+		ld.cal_f_delta_gamma(dm,
             ucell,
             ORB,
             Test_Deepks::GridD,

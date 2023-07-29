@@ -94,6 +94,8 @@ namespace ModuleESolver
         dp.compute(dp_potential, f, v, coord, atype, cell);
 
         dp_potential /= ModuleBase::Ry_to_eV;
+        GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV
+                             << " eV" << std::endl;
 
         const double fact_f = ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU;
         const double fact_v = ucell.omega * ModuleBase::Ry_to_eV;

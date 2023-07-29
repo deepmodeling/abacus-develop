@@ -23,7 +23,7 @@ void DeePKS<OperatorLCAO<double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
         const Parallel_Orbitals* pv = this->LM->ParaV;
-        GlobalC::ld.cal_projected_DM(this->loc->dm_gamma[0],
+        GlobalC::ld.cal_projected_DM(this->loc->dm_gamma,
             GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD);

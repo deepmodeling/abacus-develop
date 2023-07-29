@@ -22,6 +22,7 @@ void evolve_psi(const int nband,
                 std::complex<double>* psi_k,
                 std::complex<double>* psi_k_laststep,
                 std::complex<double>* H_laststep,
+                std::complex<double>* S_laststep,
                 double* ekb,
                 int htype,
                 int propagator)
@@ -58,7 +59,7 @@ void evolve_psi(const int nband,
     /// @output Htmp
     if (htype == 1 && propagator != 2)
     {
-        half_Hmatrix(pv, nband, nlocal, Htmp, H_laststep, print_matrix);
+        half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
     }
 
     // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

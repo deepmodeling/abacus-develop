@@ -25,6 +25,7 @@ list(APPEND objects
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
+    parameter_pool.cpp
 )
 
 list(APPEND objects_advanced
@@ -50,6 +51,9 @@ if(ENABLE_LCAO)
       dos_nao.cpp
       output_dm.cpp
       output_dm1.cpp
+      sparse_matrix.cpp
+      file_reader.cpp
+      csr_reader.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
