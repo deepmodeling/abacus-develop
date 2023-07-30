@@ -1363,6 +1363,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     {
         symflag[i] = -1;
         isymflag[i] = -1;
+        table_column[i] = 0;
     }
     int group_index = 0;
 
