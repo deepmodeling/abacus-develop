@@ -118,7 +118,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
         // so it is printed no matter even if deepks_out_labels is not used
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            ld->cal_projected_DM(dm_gamma[0], ucell, orb, GridD);
+            ld->cal_projected_DM(dm_gamma, ucell, orb, GridD);
         }
         else
         {
