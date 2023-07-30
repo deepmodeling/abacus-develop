@@ -240,7 +240,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
         // grid_end is the first grid point that is strictly greater than grid_tbu[ngrid_tbu-1]
         double* grid_end = std::upper_bound(grid_new, grid_new + ngrid, grid_tbu[ngrid_tbu - 1]);
 
-        cubspl.get(std::distance(grid_start, grid_end), grid_start, value_new + std::distance(grid_new, grid_start));
+        cubspl.interp(std::distance(grid_start, grid_end), grid_start, value_new + std::distance(grid_new, grid_start));
 
         delete[] grid_tbu;
         delete[] value_tbu;
