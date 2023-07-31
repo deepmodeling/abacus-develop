@@ -4,6 +4,8 @@
 #include "../output_hcontainer.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "module_base/complexmatrix.h"
+#include "module_base/lapack_connector.h"
 #include "module_io/csr_reader.h"
 #include "prepare_unitcell.h"
 
@@ -221,8 +223,11 @@ TEST_F(HContainerFTTest, ReadAndOutputHContainer)
     // output HR
     std::cout << HR.size_R_loop() << std::endl;
 
-    std::complex<double> SGamma[nlocal * nlocal] = {(0.0, 0.0)};
-    std::complex<double> HGamma[nlocal * nlocal] = {(0.0, 0.0)};
+    ModuleBase::ComplexMatrix SGamma(nlocal, nlocal);
+    ModuleBase::ComplexMatrix HGamma(nlocal, nlocal);
+
+    // std::complex<double> SGamma[nlocal * nlocal] = {(0.0, 0.0)};
+    // std::complex<double> HGamma[nlocal * nlocal] = {(0.0, 0.0)};
     const std::complex<double> kphase = std::complex<double>(1.0, 0.0);
     for (int i = 0; i < HR.size_R_loop(); ++i)
     {
@@ -236,9 +241,22 @@ TEST_F(HContainerFTTest, ReadAndOutputHContainer)
         for (int j = 0; j < HR.size_atom_pairs(); ++j)
         {
             // Hk += HR * e^ikR
-            HR.get_atom_pair(j).add_to_matrix(HGamma, nlocal, kphase, 0);
+            HR.get_atom_pair(j).add_to_matrix(HGamma.c, nlocal, kphase, 0);
         }
     }
+    /*
+    std::cout << "HGamma " << std::endl;
+    for (int i = 0; i < nlocal; i++)
+    {
+        for (int j = i; j < nlocal; j++)
+        {
+            if (abs(HGamma(i, j)) > 1e-10)
+                std::cout << "i = " << i << " j = " << j << HGamma(i, j) << " " << HGamma(j, i) << std::endl;
+        }
+        std::cout << std::endl;
+    }
+    */
+
     for (int i = 0; i < SR.size_R_loop(); ++i)
     {
         // get R index
@@ -251,7 +269,19 @@ TEST_F(HContainerFTTest, ReadAndOutputHContainer)
         for (int j = 0; j < SR.size_atom_pairs(); ++j)
         {
             // Hk += HR * e^ikR
-            SR.get_atom_pair(j).add_to_matrix(SGamma, nlocal, kphase, 0);
+            SR.get_atom_pair(j).add_to_matrix(SGamma.c, nlocal, kphase, 0);
         }
     }
+    /*
+     std::cout << "SGamma " << std::endl;
+     for (int i = 0; i < nlocal; i++)
+     {
+         for (int j = i; j < nlocal; j++)
+         {
+            if (abs(SGamma(i,j)) > 1e-10)
+             std::cout << "i = " << i << " j = " << j << SGamma(i,j) << " " << SGamma(j,i) << std::endl;
+         }
+         std::cout << std::endl;
+     }
+     */
 }
