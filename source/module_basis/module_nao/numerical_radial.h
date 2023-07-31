@@ -191,17 +191,17 @@ class NumericalRadial
      *                          /  0                  l
      *
      *                                                                                  */
-    void radtab(const char op,                 //!< [in] operator, could be:
-                                               //!<        - 'S' or 'I': overlap
-                                               //!<        - 'T': kinetic
-                                               //!<        - 'U': Coulomb
-                const NumericalRadial& ket,    //!< [in] the other NumericalRadial object with which
-                                               //!       the two-center integral is computed
-                const int l,                   //!< [in] angular momentum of the table
-                double* const table,           //!< [out] on finish, contain the computed table
-                const int nr_tab,              //!< [in] size of table grid
-                const double* const rgrid_tab, //!< [in] grid on which the table is calculated.
-                const bool deriv = false       //!< [in] if true, calculates the derivative of the table
+    void radtab(const char op,              //!< [in] operator, could be:
+                                            //!<        - 'S' or 'I': overlap
+                                            //!<        - 'T': kinetic
+                                            //!<        - 'U': Coulomb
+                const NumericalRadial& ket, //!< [in] the other NumericalRadial object with which
+                                            //!       the two-center integral is computed
+                const int l,                //!< [in] angular momentum of the table
+                double* const table,        //!< [out] on finish, contain the computed table
+                const int nr_tab,           //!< [in] size of table grid
+                const double rmax_tab,      //!< [in] cutoff radius of table grid
+                const bool deriv = false    //!< [in] if true, calculates the derivative of the table
     ) const;
 
     //! Normalizes the radial function.

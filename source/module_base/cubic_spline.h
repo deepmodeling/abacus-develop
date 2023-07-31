@@ -36,7 +36,10 @@ namespace ModuleBase
  *                            CubicSpline::BoundaryCondition::periodic );
  *
  *      // calculate the values of interpolant at x_interp[i]
- *      cubspl.get(n_interp, x_interp, y_interp);
+ *      cubspl.interp(n_interp, x_interp, y_interp);
+ *
+ *      // calculate the values & derivatives of interpolant at x_interp[i]
+ *      cubspl.interp(n_interp, x_interp, y_interp, dy_interp);
  *                                                                                  */
 class CubicSpline
 {
@@ -85,13 +88,27 @@ class CubicSpline
     //! Calculates the values of interpolant.
     /*!
      *  This function evaluates the interpolant at x_interp[i].
-     *  On finish, values are placed in y_interp.
+     *  On finish, interpolated values are placed in y_interp,
+     *  and the derivatives at x_interp[i] are placed in dy_interp.
+     *
+     *  If y_interp or dy_interp is nullptr, the corresponding values are
+     *  not calculated. y_interp and dy_interp must not be both nullptr.
      *                                                                              */
-    void get(const int n,                  //!< [in]  number of points to evaluate the interpolant
-             const double* const x_interp, //!< [in]  places where the interpolant is evaluated;
-                                           //!<       must be within [x_[0], x_[n-1]]
-             double* const y_interp        //!< [out] interpolated values
+    void interp(const int n,                       //!< [in]  number of points to evaluate the interpolant
+                const double* const x_interp,      //!< [in]  places where the interpolant is evaluated;
+                                                   //!<       must be within [x_[0], x_[n-1]]
+                double* const y_interp,            //!< [out] interpolated values
+                double* const dy_interp = nullptr  //!< [out] derivatives at x_interp
     );
+
+    /// knots of the interpolant
+    const double* x() const { return x_; }
+
+    /// values at knots
+    const double* y() const { return y_; }
+
+    /// first-order derivatives at knots
+    const double* s() const { return s_; }
 
   private:
     //! number of data points
@@ -100,17 +117,11 @@ class CubicSpline
     //! knots (x coordinates of data points)
     double* x_ = nullptr;
 
-    /*! @name Polynomial coefficients of the interpolant.
-     *
-     * The i-th piece polynomial P[i](x) (i=0,1,...) is given by
-     * P[i](x) = c0[i] + c1[i]*(x-x[i]) + c2[i]*(x-x[i])^2 + c3[i]*(x-x[i])^3
-     *                                                                              */
-    ///@{
-    double* c0_ = nullptr;
-    double* c1_ = nullptr;
-    double* c2_ = nullptr;
-    double* c3_ = nullptr;
-    ///@}
+    //! values at knots
+    double* y_ = nullptr;
+
+    //! first-order derivatives at knots
+    double* s_ = nullptr;
 
     //! A flag that tells whether the knots are evenly spaced.
     bool is_uniform_ = false;
@@ -159,6 +170,22 @@ class CubicSpline
 
     //! Wipes off the interpolant (if any) and deallocates memories.
     void cleanup();
+
+    static void _eval_y(double w, double c0, double c1, double c2, double c3, double* y, double*)
+    {
+        *y = ((c3 * w + c2) * w + c1) * w + c0;
+    }
+
+    static void _eval_dy(double w, double, double c1, double c2, double c3, double*, double* dy)
+    {
+        *dy = (3.0 * c3 * w + 2.0 * c2) * w + c1;
+    }
+
+    static void _eval_y_dy(double w, double c0, double c1, double c2, double c3, double* y, double* dy)
+    {
+        *y = ((c3 * w + c2) * w + c1) * w + c0;
+        *dy = (3.0 * c3 * w + 2.0 * c2) * w + c1;
+    }
 };
 
 }; // namespace ModuleBase
