@@ -50,6 +50,8 @@ class ReadHContainerTest : public testing::Test
   protected:
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
+    // nw is the number of orbitals of each atom
+    // it should container ucell.nat elements
     std::vector<int> nw = {13};
     int nlocal;
     void SetUp() override
