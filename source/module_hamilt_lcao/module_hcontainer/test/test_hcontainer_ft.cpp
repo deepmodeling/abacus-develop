@@ -220,4 +220,38 @@ TEST_F(HContainerFTTest, ReadAndOutputHContainer)
 
     // output HR
     std::cout << HR.size_R_loop() << std::endl;
+
+    std::complex<double> SGamma[nlocal * nlocal] = {(0.0, 0.0)};
+    std::complex<double> HGamma[nlocal * nlocal] = {(0.0, 0.0)};
+    const std::complex<double> kphase = std::complex<double>(1.0, 0.0);
+    for (int i = 0; i < HR.size_R_loop(); ++i)
+    {
+        // get R index
+        int rx, ry, rz;
+        HR.loop_R(i, rx, ry, rz);
+        // only deal with current_R for hR
+        HR.fix_R(rx, ry, rz);
+
+        // loop_atom_pairs
+        for (int j = 0; j < HR.size_atom_pairs(); ++j)
+        {
+            // Hk += HR * e^ikR
+            HR.get_atom_pair(j).add_to_matrix(HGamma, nlocal, kphase, 0);
+        }
+    }
+    for (int i = 0; i < SR.size_R_loop(); ++i)
+    {
+        // get R index
+        int rx, ry, rz;
+        SR.loop_R(i, rx, ry, rz);
+        // only deal with current_R for hR
+        SR.fix_R(rx, ry, rz);
+
+        // loop_atom_pairs
+        for (int j = 0; j < SR.size_atom_pairs(); ++j)
+        {
+            // Hk += HR * e^ikR
+            SR.get_atom_pair(j).add_to_matrix(SGamma, nlocal, kphase, 0);
+        }
+    }
 }
