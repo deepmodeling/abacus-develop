@@ -78,7 +78,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // std::cout << paraV.atom_begin_col[0] << " " << paraV.atom_begin_col[1] << std::endl;
     // std::cout << paraV.atom_begin_row[0] << " " << paraV.atom_begin_row[1] << std::endl;
     //
-    // construct SR with empty matrix
+    // construct SR
     hamilt::HContainer<double> SR(&paraV);
     int numberofR = csr.getNumberOfR();
     for (int i = 0; i < numberofR; i++)
