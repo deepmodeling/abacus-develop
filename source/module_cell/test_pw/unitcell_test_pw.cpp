@@ -40,7 +40,7 @@ protected:
 	void SetUp()
 {
     	ucell->lmaxmax = 2;
-}
+    }
 };
 
 TEST_F(UcellTest,ReadAtomSpecies)
