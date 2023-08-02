@@ -64,7 +64,7 @@ protected:
 	void SetUp()
     {
     	ucell->lmaxmax = 2;
-}
+    }
 };
 
 using UcellDeathTest = UcellTest;
