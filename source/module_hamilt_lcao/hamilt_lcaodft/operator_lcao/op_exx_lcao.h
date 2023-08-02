@@ -1,8 +1,8 @@
 #ifndef OPEXXLCAO_H
 #define OPEXXLCAO_H
 #include "module_base/timer.h"
-#include "operator_lcao.h"
 #include "module_cell/klist.h"
+#include "operator_lcao.h"
 
 namespace hamilt
 {
@@ -25,9 +25,8 @@ class OperatorEXX<OperatorLCAO<T>> : public OperatorLCAO<T>
                                  std::vector<double>* HR_pointer_in,
                                  std::vector<T>* HK_pointer_in,
                                  const K_Vectors& kv_in)
-        : HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), kv(kv_in), OperatorLCAO<T>(kv_in.kvec_d)
+        : HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), kv(kv_in), OperatorLCAO<T>(LM_in, kv_in.kvec_d)
     {
-        this->LM = LM_in;
         this->cal_type = lcao_exx;
     }
 

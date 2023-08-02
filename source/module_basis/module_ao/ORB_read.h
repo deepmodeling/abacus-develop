@@ -22,6 +22,9 @@ class LCAO_Orbitals
 	LCAO_Orbitals();
 	~LCAO_Orbitals();
 
+	// static function to get global instance
+	static const LCAO_Orbitals& get_const_instance();
+
 	void Read_Orbitals(
 		std::ofstream &ofs_in, // mohan add 2021-05-07
 		const int &ntype_in,

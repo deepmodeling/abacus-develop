@@ -121,6 +121,12 @@ add_test(NAME parallel_2d_test_para4
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+AddTest(
+    TARGET parallel_orbitals_test
+    SOURCES parallel_orbitals_test.cpp ../parallel_2d.cpp ../parallel_orbitals.cpp
+    LIBS ${math_libs} device base
+)
+
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 

@@ -141,19 +141,26 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 
 							olm[0] = olm[1] = olm[2] = 0.0;
 
-							std::complex<double> olm1[4]={ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO};
-							std::complex<double> *olm2 = &olm1[0];
 							if(!calc_deri)
 							{
 								// PLEASE use UOT as an input parameter of this subroutine
 								// mohan add 2021-03-30
 			
-								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, tau1, 
-										T1, L1, m1, N1, adjs.adjacent_tau[ad], 
-										T2, L2, m2, N2, GlobalV::NSPIN,
-										olm2,//for soc
+								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, 
+										tau1, T1, L1, m1, N1,                  // info of atom1
+										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2 
 										cal_syns,
 										dmax);
+								// When NSPIN == 4 , only diagonal term is calculated for T or S Operators
+								// use olm1 to store the diagonal term with complex data type.
+								std::complex<double> olm1[4];
+								if(GlobalV::NSPIN == 4)
+								{
+									olm1[0] = std::complex<double>(olm[0], 0.0);
+									olm1[1] = ModuleBase::ZERO;
+									olm1[2] = ModuleBase::ZERO;
+									olm1[3] = std::complex<double>(olm[0], 0.0);
+								}
 
 								if(GlobalV::GAMMA_ONLY_LOCAL)
 								{
@@ -174,7 +181,8 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
                                         if (GlobalV::NSPIN != 4) HSloc[nnr] = olm[0];
                                         else
 										{//only has diagonal term here.
-												int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											// SlocR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->SlocR_soc[nnr] = olm1[is];
                                         }
                                     }
@@ -183,7 +191,8 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 										if(GlobalV::NSPIN!=4) HSloc[nnr] = olm[0];// <phi|kin|d phi>
 										else
 										{//only has diagonal term here.
-												int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											// Hloc_fixedR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->Hloc_fixedR_soc[nnr] = olm1[is];
                                         }
                                     }
@@ -195,7 +204,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							{
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 1, dtype, 
 									tau1, T1, L1, m1, N1,
-									adjs.adjacent_tau[ad], T2, L2, m2, N2, GlobalV::NSPIN
+									adjs.adjacent_tau[ad], T2, L2, m2, N2
 									);
 
 								if(GlobalV::GAMMA_ONLY_LOCAL)

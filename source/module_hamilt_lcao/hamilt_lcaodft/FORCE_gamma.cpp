@@ -62,13 +62,13 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM(loc.dm_gamma[0],
+        GlobalC::ld.cal_projected_DM(loc.dm_gamma,
             GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-        GlobalC::ld.cal_f_delta_gamma(loc.dm_gamma[0],
+        GlobalC::ld.cal_f_delta_gamma(loc.dm_gamma,
             GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD,

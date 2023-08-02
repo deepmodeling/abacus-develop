@@ -590,7 +590,7 @@ namespace ModuleESolver
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma[0],
+                GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma,
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD);

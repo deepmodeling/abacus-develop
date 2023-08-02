@@ -1,8 +1,10 @@
 #include "cubic_spline.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <functional>
 
 namespace ModuleBase
 {
@@ -15,16 +17,12 @@ CubicSpline::~CubicSpline()
 void CubicSpline::cleanup()
 {
     delete[] x_;
-    delete[] c0_;
-    delete[] c1_;
-    delete[] c2_;
-    delete[] c3_;
+    delete[] y_;
+    delete[] s_;
 
     x_ = nullptr;
-    c0_ = nullptr;
-    c1_ = nullptr;
-    c2_ = nullptr;
-    c3_ = nullptr;
+    y_ = nullptr;
+    s_ = nullptr;
 }
 
 void CubicSpline::sanity_check(const int n,
@@ -65,35 +63,26 @@ void CubicSpline::build(const int n,
 
     n_ = n;
     x_ = new double[n];
+    y_ = new double[n];
     std::memcpy(x_, x, sizeof(double) * n);
+    std::memcpy(y_, y, sizeof(double) * n);
 
-    c0_ = new double[n_ - 1];
-    c1_ = new double[n_ - 1];
-    c2_ = new double[n_ - 1];
-    c3_ = new double[n_ - 1];
+    // to be computed
+    s_ = new double[n];
 
     if (n == 2 && bc_start == BoundaryCondition::periodic)
-    {
-        // in this case the polynomial is a constant
-        c0_[0] = y[0];
-        c1_[0] = c2_[0] = c3_[0] = 0.0;
+    { // in this case the polynomial is a constant
+        s_[0] = s_[1] = 0.0;
     }
     else if (n == 3 && bc_start == BoundaryCondition::not_a_knot && bc_end == BoundaryCondition::not_a_knot)
-    {
-        // in this case two conditions coincide; simply build a parabola that passes through the three data points
+    { // in this case two conditions coincide; simply build a parabola that passes through the three data points
         double idx10 = 1. / (x[1] - x[0]);
         double idx21 = 1. / (x[2] - x[1]);
         double idx20 = 1. / (x[2] - x[0]);
 
-        c0_[0] = y[0];
-        c1_[0] = -y[0] * (idx10 + idx20) + y[1] * (idx21 + idx10) + y[2] * (idx20 - idx21);
-        c2_[0] = y[0] * idx10 * idx20 - y[1] * idx10 * idx21 + y[2] * idx20 * idx21;
-        c3_[0] = 0.0;
-
-        c0_[1] = y[1];
-        c1_[1] = -y[1] * (-idx10 + idx21) + y[0] * (idx20 - idx10) + y[2] * (idx21 - idx20);
-        c2_[1] = -y[1] * idx10 * idx21 + y[0] * idx10 * idx20 + y[2] * idx21 * idx20;
-        c3_[1] = 0.0;
+        s_[0] = -y[0] * (idx10 + idx20) + y[1] * (idx21 + idx10) + y[2] * (idx20 - idx21);
+        s_[1] = -y[1] * (-idx10 + idx21) + y[0] * (idx20 - idx10) + y[2] * (idx21 - idx20);
+        s_[2] = s_[1] + 2.0 * (-y[1] * idx10 + y[2] * idx20) + 2.0 * y[0] * idx10 * idx20 * (x[2] - x[1]);
     }
     else
     {
@@ -104,7 +93,6 @@ void CubicSpline::build(const int n,
         double* diag = new double[n];
         double* subdiag = new double[n - 1];
         double* supdiag = new double[n - 1];
-        double* s = new double[n];
 
         is_uniform_ = true;
         double dx_avg = (x[n - 1] - x[0]) / (n - 1);
@@ -126,7 +114,7 @@ void CubicSpline::build(const int n,
             diag[i] = 2.0 * (dx[i - 1] + dx[i]);
             supdiag[i] = dx[i - 1];
             subdiag[i - 1] = dx[i];
-            s[i] = 3.0 * (dd[i - 1] * dx[i] + dd[i] * dx[i - 1]);
+            s_[i] = 3.0 * (dd[i - 1] * dx[i] + dd[i] * dx[i - 1]);
         }
 
         if (bc_start == BoundaryCondition::periodic)
@@ -136,56 +124,49 @@ void CubicSpline::build(const int n,
             diag[0] = 2.0 * (dx[n - 2] + dx[0]);
             supdiag[0] = dx[n - 2];
             subdiag[n - 2] = dx[0];
-            s[0] = 3.0 * (dd[0] * dx[n - 2] + dd[n - 2] * dx[0]);
+            s_[0] = 3.0 * (dd[0] * dx[n - 2] + dd[n - 2] * dx[0]);
             ;
-            solve_cyctri(n - 1, diag, supdiag, subdiag, s);
-            s[n - 1] = s[0];
+            solve_cyctri(n - 1, diag, supdiag, subdiag, s_);
+            s_[n - 1] = s_[0];
         }
         else
         {
-
             switch (bc_start)
             {
-            case BoundaryCondition::not_a_knot:
-                diag[0] = dx[1];
-                supdiag[0] = x[2] - x[0];
-                s[0] = (dd[0] * dx[1] * (dx[0] + 2 * (x[2] - x[0])) + dd[1] * dx[0] * dx[0]) / (x[2] - x[0]);
-                break;
             case BoundaryCondition::first_deriv:
                 diag[0] = 1.0 * dx[0];
                 supdiag[0] = 0.0;
-                s[0] = deriv_start * dx[0];
+                s_[0] = deriv_start * dx[0];
                 break;
             case BoundaryCondition::second_deriv:
                 diag[0] = 2.0 * dx[0];
                 supdiag[0] = 1.0 * dx[0];
-                s[0] = (3.0 * dd[0] - 0.5 * deriv_start * dx[0]) * dx[0];
+                s_[0] = (3.0 * dd[0] - 0.5 * deriv_start * dx[0]) * dx[0];
                 break;
-            default:
-                assert(false && "CubicSpline: BoundaryCondition error!"); // not supposed to happend
+            default: // BoundaryCondition::not_a_knot
+                diag[0] = dx[1];
+                supdiag[0] = x[2] - x[0];
+                s_[0] = (dd[0] * dx[1] * (dx[0] + 2 * (x[2] - x[0])) + dd[1] * dx[0] * dx[0]) / (x[2] - x[0]);
             }
 
             switch (bc_end)
             {
-            case BoundaryCondition::not_a_knot:
-                diag[n - 1] = dx[n - 3];
-                subdiag[n - 2] = x[n - 1] - x[n - 3];
-                s[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (x[n - 1] - x[n - 3]))
-                            + dd[n - 3] * dx[n - 2] * dx[n - 2])
-                           / (x[n - 1] - x[n - 3]);
-                break;
             case BoundaryCondition::first_deriv:
                 diag[n - 1] = 1.0 * dx[n - 2];
                 subdiag[n - 2] = 0.0;
-                s[n - 1] = deriv_end * dx[n - 2];
+                s_[n - 1] = deriv_end * dx[n - 2];
                 break;
             case BoundaryCondition::second_deriv:
                 diag[n - 1] = 2.0 * dx[n - 2];
                 subdiag[n - 2] = 1.0 * dx[n - 2];
-                s[n - 1] = (3.0 * dd[n - 2] + 0.5 * deriv_end * dx[n - 2]) * dx[n - 2];
+                s_[n - 1] = (3.0 * dd[n - 2] + 0.5 * deriv_end * dx[n - 2]) * dx[n - 2];
                 break;
-            default:
-                assert(false && "CubicSpline: BoundaryCondition error!"); // not supposed to happend
+            default: // BoundaryCondition::not_a_knot
+                diag[n - 1] = dx[n - 3];
+                subdiag[n - 2] = x[n - 1] - x[n - 3];
+                s_[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (x[n - 1] - x[n - 3]))
+                            + dd[n - 3] * dx[n - 2] * dx[n - 2])
+                           / (x[n - 1] - x[n - 3]);
             }
 
             int NRHS = 1;
@@ -193,15 +174,7 @@ void CubicSpline::build(const int n,
             int INFO = 0;
             int N = n;
 
-            dgtsv_(&N, &NRHS, subdiag, diag, supdiag, s, &LDB, &INFO);
-        }
-
-        std::memcpy(c0_, y, sizeof(double) * (n - 1));
-        std::memcpy(c1_, s, sizeof(double) * (n - 1));
-        for (int i = 0; i != n - 1; ++i)
-        {
-            c3_[i] = (s[i] + s[i + 1] - 2 * dd[i]) / (dx[i] * dx[i]);
-            c2_[i] = (dd[i] - s[i]) / dx[i] - c3_[i] * dx[i];
+            dgtsv_(&N, &NRHS, subdiag, diag, supdiag, s_, &LDB, &INFO);
         }
 
         delete[] diag;
@@ -209,52 +182,44 @@ void CubicSpline::build(const int n,
         delete[] supdiag;
         delete[] dx;
         delete[] dd;
-        delete[] s;
     }
 }
 
-void CubicSpline::get(const int n, const double* const x, double* const y)
+void CubicSpline::interp(const int n, const double* const x, double* const y, double* const dy)
 {
-    assert(x_ && c0_ && c1_ && c2_ && c3_); // make sure the interpolant exists
+    assert(x_ && y_ && s_); // make sure the interpolant exists
+    assert(y || dy); // make sure at least one of y or dy is not null
 
-    int p = 0;
-    double w = 0.0;
+    // check that x is in the range of the interpolant
+    assert(std::all_of(x, x + n, [this](double x) -> bool { return x >= x_[0] && x <= x_[n_ - 1]; }));
 
-    for (int i = 0; i != n; ++i)
-    {
-        assert(x[i] >= x_[0] && x[i] <= x_[n_ - 1]);
-    }
-
+    std::function<int(double)> search;
     if (is_uniform_)
     {
         double dx = x_[1] - x_[0];
-        for (int i = 0; i != n; ++i)
-        {
-            p = x[i] == x_[n_ - 1] ? n_ - 2 : x[i] / dx;
-            w = x[i] - x_[p];
-            y[i] = ((c3_[p] * w + c2_[p]) * w + c1_[p]) * w + c0_[p];
-        }
+        search = [this, dx](double x) -> int { return x == x_[n_ - 1] ? n_ - 2 : x / dx; };
     }
     else
     {
-        for (int i = 0; i != n; ++i)
-        {
-            int q = n_ - 1;
-            while (q - p > 1)
-            {
-                int m = (p + q) / 2;
-                if (x_[m] > x[i])
-                {
-                    q = m;
-                }
-                else
-                {
-                    p = m;
-                }
-            }
-            w = x[i] - x_[p];
-            y[i] = ((c3_[p] * w + c2_[p]) * w + c1_[p]) * w + c0_[p];
-        }
+        search = [this](double x) -> int { return (std::upper_bound(x_, x_ + n_, x) - x_) - 1; };
+    }
+
+    void (*eval)(double, double, double, double, double, double*, double*) = y ? (dy ? _eval_y_dy : _eval_y) : _eval_dy;
+
+    for (int i = 0; i != n; ++i)
+    {
+        int p = search(x[i]);
+        double w = x[i] - x_[p];
+
+        double dx = x_[p + 1] - x_[p];
+        double dd = (y_[p + 1] - y_[p]) / dx;
+
+        double c0 = y_[p];
+        double c1 = s_[p];
+        double c3 = (s_[p] + s_[p + 1] - 2.0 * dd) / (dx * dx);
+        double c2 = (dd - s_[p]) / dx - c3 * dx;
+
+        eval(w, c0, c1, c2, c3, y + i, dy + i);
     }
 }
 

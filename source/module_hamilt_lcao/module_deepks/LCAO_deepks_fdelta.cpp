@@ -34,7 +34,7 @@ void stress_fill(
 
 //force for gamma only calculations
 //Pulay and HF terms are calculated together
-void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
+void LCAO_Deepks::cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD,
@@ -142,15 +142,18 @@ void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
                             }
                             assert(ib==nlm1.size());
 
-                            // HF term is minus, only one projector for each atom force.
-                            this->F_delta(iat, 0) -= 2 * dm(iw1_local, iw2_local) * nlm[0];
-                            this->F_delta(iat, 1) -= 2 * dm(iw1_local, iw2_local) * nlm[1];
-                            this->F_delta(iat, 2) -= 2 * dm(iw1_local, iw2_local) * nlm[2];
+                            for(int is = 0; is < GlobalV::NSPIN; is ++)
+                            {
+                                // HF term is minus, only one projector for each atom force.
+                                this->F_delta(iat, 0) -= 2 * dm[is](iw1_local, iw2_local) * nlm[0];
+                                this->F_delta(iat, 1) -= 2 * dm[is](iw1_local, iw2_local) * nlm[1];
+                                this->F_delta(iat, 2) -= 2 * dm[is](iw1_local, iw2_local) * nlm[2];
 
-                            // Pulay term is plus, only one projector for each atom force.
-                            this->F_delta(ibt, 0) += 2 * dm(iw1_local, iw2_local) * nlm[0];
-                            this->F_delta(ibt, 1) += 2 * dm(iw1_local, iw2_local) * nlm[1];
-                            this->F_delta(ibt, 2) += 2 * dm(iw1_local, iw2_local) * nlm[2];
+                                // Pulay term is plus, only one projector for each atom force.
+                                this->F_delta(ibt, 0) += 2 * dm[is](iw1_local, iw2_local) * nlm[0];
+                                this->F_delta(ibt, 1) += 2 * dm[is](iw1_local, iw2_local) * nlm[1];
+                                this->F_delta(ibt, 2) += 2 * dm[is](iw1_local, iw2_local) * nlm[2];
+                            }
 
                             if(isstress)
                             {
@@ -188,7 +191,10 @@ void LCAO_Deepks::cal_f_delta_gamma(const ModuleBase::matrix& dm,
                                 {
                                     for(int jpol=ipol;jpol<3;jpol++)
                                     {
-                                        svnl_dalpha(ipol, jpol) += dm(iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
+                                        for(int is = 0; is < GlobalV::NSPIN; is ++)
+                                        {
+                                            svnl_dalpha(ipol, jpol) += dm[is](iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
+                                        }
                                     }
                                 }
                             }

@@ -22,6 +22,13 @@ AddTest(
 )
 
 AddTest(
+  TARGET test_func_folding
+  LIBS ${math_libs} psi base device
+  SOURCES test_func_folding.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
+  ../func_folding.cpp ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+)
+
+AddTest(
   TARGET test_hcontainer_output
   LIBS base ${math_libs} device
   SOURCES output_hcontainer_test.cpp

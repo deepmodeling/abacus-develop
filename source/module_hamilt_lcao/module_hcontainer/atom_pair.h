@@ -148,7 +148,7 @@ class AtomPair
     T& get_value(const int& i) const;
     T& get_value(const int& row, const int& col) const;
     T& get_matrix_value(const size_t& i_row_global, const size_t& j_col_global) const;
-    T* get_pointer() const;
+    T* get_pointer(int ir=-1) const;
 
     // add another BaseMatrix<T> to this->values with specific R index.
     void convert_add(const BaseMatrix<T>& target, int rx_in, int ry_in, int rz_in);

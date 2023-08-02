@@ -25,7 +25,7 @@
 
 //this subroutine performs the calculation of projected density matrices
 //pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
-void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm, 
+void LCAO_Deepks::cal_projected_DM(const std::vector<ModuleBase::matrix> &dm, 
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD)
@@ -54,7 +54,7 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
         return;
     }
 
-    if(dm.nr == 0 && dm.nc ==0)
+    if(dm[0].nr == 0 && dm[0].nc ==0)
     {
         return;
     }
@@ -134,7 +134,10 @@ void LCAO_Deepks::cal_projected_DM(const ModuleBase::matrix &dm,
                                         for (int m2 = 0; m2 < 2 * L0 + 1; ++m2)
                                         {
                                             int ind = m1*nm + m2;
-                                            pdm[inl][ind] += dm(iw1_local, iw2_local)*nlm1[ib+m1]*nlm2[ib+m2];
+                                            for(int is = 0; is < dm.size(); ++is)
+                                            {
+                                                pdm[inl][ind] += dm[is](iw1_local, iw2_local)*nlm1[ib+m1]*nlm2[ib+m2];
+                                            }
                                         }
                                     }
                                     ib+=nm;

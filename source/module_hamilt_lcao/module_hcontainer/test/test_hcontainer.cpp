@@ -356,6 +356,7 @@ TEST_F(HContainerTest, data)
     double* data_ptr = HR->data(0, 1);
     // check if data pointer is correct
     EXPECT_EQ(data_ptr, HR->get_atom_pair(0, 1).get_pointer());
+    EXPECT_EQ(data_ptr, HR->get_atom_pair(0, 1).get_pointer(0));
     int r_index[3] = {0, 0, 0};
     EXPECT_EQ(data_ptr, HR->data(0, 1, r_index));
     EXPECT_EQ(HR->data(0, 10), nullptr);

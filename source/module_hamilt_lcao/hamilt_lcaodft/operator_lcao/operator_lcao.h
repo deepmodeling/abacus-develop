@@ -12,7 +12,8 @@ template <typename T>
 class OperatorLCAO : public Operator<T>
 {
   public:
-    OperatorLCAO(const std::vector<ModuleBase::Vector3<double>>& kvec_d_in):kvec_d(kvec_d_in){};
+    OperatorLCAO(LCAO_Matrix* LM_in, const std::vector<ModuleBase::Vector3<double>>& kvec_d_in)
+        : LM(LM_in), kvec_d(kvec_d_in){};
     virtual ~OperatorLCAO()
     {
         if (this->allocated_smatrix)
