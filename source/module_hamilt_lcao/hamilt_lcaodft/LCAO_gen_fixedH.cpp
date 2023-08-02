@@ -169,7 +169,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 									// according to global2local_row and global2local_col
 									// the last paramete: 1 for Sloc, 2 for Hloc
 									// and 3 for Hloc_fixed.
-									this->LM->set_HSgamma(iw1_all, iw2_all, olm[0], dtype, HSloc);
+                                    this->LM->set_HSgamma(iw1_all, iw2_all, olm[0], HSloc);
 								}
 								else // k point algorithm
 								{
@@ -651,7 +651,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 											// mohan add 2010-12-20
 											if( nlm_tmp!=0.0 )
 											{
-												this->LM->set_HSgamma(iw1_all,iw2_all,nlm_tmp,'N', NLloc);//N stands for nonlocal.
+                                                this->LM->set_HSgamma(iw1_all, iw2_all, nlm_tmp, NLloc);//N stands for nonlocal.
 											}
 										}
 										else

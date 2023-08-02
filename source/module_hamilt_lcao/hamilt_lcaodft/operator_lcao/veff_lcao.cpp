@@ -59,13 +59,13 @@ void Veff<OperatorLCAO<double>>::contributeHk(int ik)
 
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, this->LM, Gint_Tools::job_type::vlocal_meta);
-        this->GG->cal_vlocal(&inout, new_e_iteration);
+        Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
+        this->GG->cal_vlocal(&inout, this->LM, new_e_iteration);
     }
     else
     {
-        Gint_inout inout(vr_eff1, this->LM, Gint_Tools::job_type::vlocal);
-        this->GG->cal_vlocal(&inout, new_e_iteration);
+        Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
+        this->GG->cal_vlocal(&inout, this->LM, new_e_iteration);
     }
 
     this->new_e_iteration = false;

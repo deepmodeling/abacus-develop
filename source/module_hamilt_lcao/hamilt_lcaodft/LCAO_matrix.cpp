@@ -141,8 +141,7 @@ void LCAO_Matrix::allocate_HS_R(const int &nnR)
 void LCAO_Matrix::set_HSgamma(
     const int &iw1_all, // index i for atomic orbital (row)
     const int &iw2_all, // index j for atomic orbital (column)
-    const double &v, // value for matrix element (i,j) 
-    const char &dtype, // type of the matrix
+    const double& v, // value for matrix element (i,j) 
     double* HSloc) //input pointer for store the matrix
 {
     // use iw1_all and iw2_all to set Hloc

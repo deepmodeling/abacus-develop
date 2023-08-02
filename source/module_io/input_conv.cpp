@@ -317,6 +317,7 @@ void Input_Conv::Convert(void)
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 
     ModuleSymmetry::Symmetry::symm_flag = std::stoi(INPUT.symmetry);
+    ModuleSymmetry::Symmetry::symm_autoclose = INPUT.symmetry_autoclose;
     GlobalV::BASIS_TYPE = INPUT.basis_type;
     GlobalV::KS_SOLVER = INPUT.ks_solver;
     GlobalV::SEARCH_RADIUS = INPUT.search_radius;

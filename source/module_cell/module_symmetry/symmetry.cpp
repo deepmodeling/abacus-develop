@@ -20,7 +20,8 @@ Symmetry::~Symmetry()
 }
 
 
-int Symmetry::symm_flag=0;
+int Symmetry::symm_flag = 0;
+bool Symmetry::symm_autoclose = false;
 
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
@@ -199,16 +200,17 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
             if (valid_index > 0)//epsilon is set smaller
                 ofs_running << " Narrowing `symmetry_prec` from " << eps_current << " to " << epsilon << " ..." << std::endl;
         }
-        // final number of symmetry operations
-#ifdef __DEBUG
-        ofs_running << "symmetry_prec(epsilon) in current ion step: " << this->epsilon << std::endl;
-        ofs_running << "number of symmetry operations in current ion step: " << this->nrotk << std::endl;
-#endif
     }
     else
         lattice_to_group(this->nrot, this->nrotk, ofs_running);
 
-	this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+    // final number of symmetry operations
+#ifdef __DEBUG
+    ofs_running << "symmetry_prec(epsilon) in current ion step: " << this->epsilon << std::endl;
+    ofs_running << "number of symmetry operations in current ion step: " << this->nrotk << std::endl;
+#endif
+
+    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);

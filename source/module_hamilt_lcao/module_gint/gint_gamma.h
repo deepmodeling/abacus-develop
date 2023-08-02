@@ -33,7 +33,7 @@ class Gint_Gamma : public Gint
     // there is an additional step in calculating vlocal for gamma point
     // namely the redistribution of Hamiltonian from grid to 2D block format
     // hence we have an additional layer outside the unified interface
-	void cal_vlocal(Gint_inout *inout, const bool new_e_iteration);
+    void cal_vlocal(Gint_inout* inout, LCAO_Matrix* lm, const bool new_e_iteration);
 
     //------------------------------------------------------
     // in gint_gamma_env.cpp 
@@ -45,12 +45,18 @@ private:
 
     double***  DM;   //pointer to LOC.DM
 
-    //------------------------------------------------------
-    // in gint_gamma_vl.cpp 
-    //------------------------------------------------------
-    // method for redistributing the Hamiltonian
-    // from grid to 2D format
-    void vl_grid_to_2D(const int lgd, LCAO_Matrix& lm, const bool new_e_iteration);
+    ///------------------------------------------------------
+    /// in gint_gamma_vl.cpp 
+    ///------------------------------------------------------
+    /// method for redistributing the Hamiltonian
+    /// from grid to 2D format
+    /// pass a setter function to customize row/col major and outputs
+    void vl_grid_to_2D(const double* vl_grid,
+        const Parallel_2D& p2d,
+        const int loc_grid_dim,
+        const bool new_e_iteration,
+        double* vl_2d,
+        std::function<void(const int&, const int&, const double&, double*)> setfunc);
 
     ///===============================
     /// Use MPI_Alltoallv to convert a grid distributed matrix

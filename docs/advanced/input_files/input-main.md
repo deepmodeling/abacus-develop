@@ -403,11 +403,18 @@ These variables are used to control general system parameters.
 
 - **Type**: Real
 - **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
-  
-  Note: if *[calculation](#calculation)=cell_relax*, this value can be dynamically enlarged corresponding to the accuracy loss of the lattice parameters and atom positions during the relaxation. There will be a warning message in that case.
-
+  > Note: if *[calculation](#calculation)==cell_relax*, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation. The new value will be printed in `OUT.${suffix}/running_cell-relax.log` in that case.
 - **Default**: 1.0e-5
 - **Unit**:  Bohr
+
+### symmetry_autoclose
+
+- **Type**: Boolean
+- **Availability**: *[symmetry](#symmetry)==1*
+- **Description**: Control how to deal with error in symmetry analysis due to inaccurate lattice parameters or atom positions in STRU file, especially useful when *[calculation](#calculation)==cell-relax*
+  - False: quit with an error message
+  - True: automatically set symmetry to 0 and continue running without symmetry analysis
+- **Default**: False
 
 ### kpar
 
