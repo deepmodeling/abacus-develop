@@ -12,6 +12,7 @@ namespace hamilt
 template <typename T>
 AtomPair<T>::~AtomPair()
 {
+    this->values.clear();
 }
 
 template <typename T>
@@ -590,13 +591,17 @@ T& AtomPair<T>::get_value(const int& row, const int& col) const
 
 // get_pointer
 template <typename T>
-T* AtomPair<T>::get_pointer() const
+T* AtomPair<T>::get_pointer(int ir) const
 {
+    if(ir<0)
+    { 
+        ir = current_R;
+    }
 #ifdef __DEBUG
     assert(current_R < this->values.size());
     assert(current_R >= 0);
 #endif
-    return this->values[current_R].get_pointer();
+    return this->values[ir].get_pointer();
 }
 
 // get_R_size

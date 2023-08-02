@@ -27,9 +27,12 @@ class DeePKS<OperatorLCAO<T>> : public OperatorLCAO<T>
                             std::vector<double>* HR_pointer_in,
                             std::vector<T>* HK_pointer_in,
                             const int& nks_in)
-        : loc(loc_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), nks(nks_in), OperatorLCAO<T>(kvec_d_in)
+        : loc(loc_in),
+          HR_pointer(HR_pointer_in),
+          HK_pointer(HK_pointer_in),
+          nks(nks_in),
+          OperatorLCAO<T>(LM_in, kvec_d_in)
     {
-        this->LM = LM_in;
         this->cal_type = lcao_deepks;
     }
 

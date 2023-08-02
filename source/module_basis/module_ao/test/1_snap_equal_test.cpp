@@ -45,13 +45,13 @@ TEST_F(test_orb, equal_test)
 								OGT.snap_psipsi(
 									ORB, olm_0, 0, 'S',
 									R1, T1, L1, m1, N1,
-									R2, T2, L2, m2, N2,
-									1, NULL);
+									R2, T2, L2, m2, N2
+									);
 								OGT.snap_psipsi(
 									ORB, olm_1, 1, 'S',
 									R1, T1, L1, m1, N1,
-									R2, T2, L2, m2, N2,
-									1, NULL);
+									R2, T2, L2, m2, N2
+									);
 								//std::cout << this->mock_center2_orb11[T1][T2][L1][N1][L2][N2]->cal_overlap(R1, R2, m1, m2);
 								clm_0 =
 									test_center2_orb11[T1][T2][L1][N1][L2][N2]->cal_overlap(R1, R2, m1, m2);
