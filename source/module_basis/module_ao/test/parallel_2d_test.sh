@@ -3,7 +3,7 @@
 np=`cat /proc/cpuinfo | grep "cpu cores" | uniq| awk '{print $NF}'`
 echo "nprocs in this machine is $np"
 
-for i in 4;do
+for i in 2 3 4; do
     if [[ $i -gt $np ]];then
         continue
     fi
