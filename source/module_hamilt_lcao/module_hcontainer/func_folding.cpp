@@ -78,7 +78,7 @@ void folding_HR(const hamilt::HContainer<double>& hR,
 
         // loop_atom_pairs
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp for schedule(static, 16)
 #endif
         for (int j = 0; j < hR.size_atom_pairs(); ++j)
         {

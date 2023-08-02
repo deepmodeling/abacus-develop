@@ -1,5 +1,6 @@
 #include "atom_pair.h"
 #include <complex>
+#include "module_base/blas_connector.h"
 
 namespace hamilt
 {
@@ -438,6 +439,7 @@ void AtomPair<T>::add_to_matrix(std::complex<T>* hk,
                                 const int hk_type) const
 {
     const BaseMatrix<T>& matrix = values[current_R];
+    T* hr_tmp = matrix.get_pointer();
     std::complex<T>* hk_tmp = hk;
     // row major
     if (hk_type == 0)
@@ -445,11 +447,14 @@ void AtomPair<T>::add_to_matrix(std::complex<T>* hk,
         hk_tmp += this->row_ap * ld_hk + this->col_ap;
         for (int mu = 0; mu < this->row_size; mu++)
         {
+            //BlasConnector::axpy(this->col_size, kphase, hr_tmp, 1, hk_tmp, 1);
             for (int nu = 0; nu < this->col_size; nu++)
             {
-                hk_tmp[nu] += matrix.get_value(mu, nu) * kphase;
+                //hk_tmp[nu] += matrix.get_value(mu, nu) * kphase;
+                hk_tmp[nu] += hr_tmp[nu] * kphase;
             }
             hk_tmp += ld_hk;
+            hr_tmp += this->ldc;
         }
     }
     // column major
@@ -458,11 +463,14 @@ void AtomPair<T>::add_to_matrix(std::complex<T>* hk,
         hk_tmp += this->col_ap * ld_hk + this->row_ap;
         for (int nu = 0; nu < this->col_size; nu++)
         {
+            //BlasConnector::axpy(this->row_size, kphase, hr_tmp, this->ldc, hk_tmp, 1);
             for (int mu = 0; mu < this->row_size; mu++)
             {
-                hk_tmp[mu] += matrix.get_value(mu, nu) * kphase;
+                //hk_tmp[mu] += matrix.get_value(mu, nu) * kphase;
+                hk_tmp[mu] += hr_tmp[mu * this->ldc] * kphase;
             }
             hk_tmp += ld_hk;
+            hr_tmp++;
         }
     }
 }
@@ -472,6 +480,7 @@ template <typename T>
 void AtomPair<T>::add_to_matrix(T* hk, const int ld_hk, const T& kphase, const int hk_type) const
 {
     const BaseMatrix<T>& matrix = values[current_R];
+    T* hr_tmp = matrix.get_pointer();
     T* hk_tmp = hk;
     // row major
     if (hk_type == 0)
@@ -479,11 +488,13 @@ void AtomPair<T>::add_to_matrix(T* hk, const int ld_hk, const T& kphase, const i
         hk_tmp += this->row_ap * ld_hk + this->col_ap;
         for (int mu = 0; mu < this->row_size; mu++)
         {
-            for (int nu = 0; nu < this->col_size; nu++)
+            BlasConnector::axpy(this->col_size, kphase, hr_tmp, 1, hk_tmp, 1);
+            /*for (int nu = 0; nu < this->col_size; nu++)
             {
                 hk_tmp[nu] += matrix.get_value(mu, nu) * kphase;
-            }
+            }*/
             hk_tmp += ld_hk;
+            hr_tmp += this->ldc;
         }
     }
     // column major
@@ -492,11 +503,13 @@ void AtomPair<T>::add_to_matrix(T* hk, const int ld_hk, const T& kphase, const i
         hk_tmp += this->col_ap * ld_hk + this->row_ap;
         for (int nu = 0; nu < this->col_size; nu++)
         {
-            for (int mu = 0; mu < this->row_size; mu++)
+            BlasConnector::axpy(this->row_size, kphase, hr_tmp, this->ldc, hk_tmp, 1);
+            /*for (int mu = 0; mu < this->row_size; mu++)
             {
                 hk_tmp[mu] += matrix.get_value(mu, nu) * kphase;
-            }
+            }*/
             hk_tmp += ld_hk;
+            hr_tmp++;
         }
     }
 }

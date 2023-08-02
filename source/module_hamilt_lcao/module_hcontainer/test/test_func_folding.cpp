@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "../hcontainer_funcs.h"
 #include "../hcontainer.h"
+#include <chrono>
+#include <omp.h>
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
@@ -46,6 +48,7 @@ class FoldingTest : public ::testing::Test
 // using TEST_F to test folding_HR
 TEST_F(FoldingTest, folding_HR_cd2cd)
 {
+    srand((unsigned)time(NULL));
     // fill HR with constant value
     for (int i = 0; i < HR->size_atom_pairs(); i++)
     {
@@ -59,12 +62,15 @@ TEST_F(FoldingTest, folding_HR_cd2cd)
     }
     std::vector<std::complex<double>> hk(test_size * test_nw * test_size * test_nw, std::complex<double>(0.0, 0.0));
     ModuleBase::Vector3<double> kvec_d_in(0.1, 0.2, 0.3);
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::folding_HR(*HR, hk.data(), kvec_d_in, test_size * test_nw, 0);
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     for (int i = 0; i < test_size * test_nw * test_size * test_nw; i++)
     {
         EXPECT_NEAR(hk[i].real(), 0.55753651583505226, 1e-10);
         EXPECT_NEAR(hk[i].imag(), -1.7936044933348412, 1e-10);
         //std::cout<<__FILE__<<__LINE__<<" hk["<<i<<"] = "<<hk[i]<<std::endl;
     }
-    EXPECT_EQ(1, 1);
+    std::cout << "Elapsed time: " << elapsed_time.count() << " seconds." << std::endl;
 }
