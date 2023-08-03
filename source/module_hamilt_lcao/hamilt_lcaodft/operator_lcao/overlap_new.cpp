@@ -43,8 +43,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::initialize_SR(Grid_Driver
 			const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<TR> tmp(iat1, iat2, paraV);
-            tmp.get_HR_values(R_index.x, R_index.y, R_index.z);
+            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
             SR->insert_pair(tmp);
         }
     }
