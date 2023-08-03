@@ -35,6 +35,58 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 - `tests`: End-to-end test cases;
 - `tools`: the script for generating the numerical atomic orbitals.
 
+For those who are interested in the source code, the following figure shows the structure of the source code.
+
+```
+|-- module_base                 A basic module including 
+|   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
+|   |                           (2) Custom data classes: matrix, vector definitions and related functions;
+|   |                           (3) Parallelization functions: MPI, OpenMP;
+|   |                           (4) Utility functions: timer, random number generator, etc.
+|   |                           (5) Global parameters: input parameters, element names, mathematical and physical constants.
+|   |-- module_container        The container module for storing data and performing operations on them and on different architectures.
+|-- module_basis                Basis means the basis set to expand the wave function.
+|   |-- module_ao               Atomic orbital basis set to be refactored.
+|   |-- module_nao              New numerical atomic orbital basis set for two-center integrals in LCAO calculations
+|   `-- module_pw               Plane wave basis set for PW calculations
+|-- module_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
+|   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
+|   |-- module_paw              The module for performing PAW calculations.
+|   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
+|-- module_elecstate            The module for defining the electronic state and its operations.
+|   |-- module_charge           The module for calculating the charge density, charge mixing
+|   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
+|-- module_esolver              The module for solving the eigenvalue problem with different theories including Kohn-Sham DFT, Stochastic DFT,
+|   |                           TDDFT, Orbital-free DFT, etc.
+|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations. 
+|   |-- module_ewald            The module for calculating the Ewald summation.
+|   |-- module_surchem          The module for calculating the surface charge correction.
+|   |-- module_vdw              The module for calculating the van der Waals correction.
+|   |-- module_xc               The module for calculating the exchange-correlation energy and potential.
+|-- module_hamilt_lcao          The module for defining the Hamiltonian in LCAO calculations.
+|   |-- hamilt_lcaodft          The module for defining the Hamiltonian in LCAO-DFT calculations.
+|   |   |-- operator_lcao       The module for defining the operators in LCAO-DFT calculations.
+|   |-- module_deepks           The module for defining the Hamiltonian in DeepKS calculations.
+|   |-- module_dftu             The module for defining the Hamiltonian in DFT+U calculations.
+|   |-- module_gint             The module for performing grid integral in LCAO calculations.
+|   |-- module_hcontainer       The module for storing the Hamiltonian matrix in LCAO calculations.
+|   `-- module_tddft            The module for defining the Hamiltonian in TDDFT calculations.
+|-- module_hamilt_pw            The module for defining the Hamiltonian in PW calculations.
+|   |-- hamilt_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
+|   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
+|   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
+|   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
+|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW 
+|   |                           calculations, and scalapack and genelpa in LCAO calculations.
+|-- module_io                   The module for output properties including band structure, density of states, charge density, etc.
+|-- module_md                   The module for performing molecular dynamics.
+|-- module_psi                  The module for defining the wave function and its operations.
+|-- module_relax                The module for performing structural optimization.
+|   |-- relax_new               The module for performing structural optimization with new algorithm, optimized for cell and ion simultaneously.
+|   `-- relax_old               The module for performing structural optimization with old algorithm, optimized for cell and ion separately.
+|-- module_ri                   The module for performing RI calculations.
+```
+
 ## Submitting an Issue
 
 Before you submit an issue, please search the issue tracker, and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
