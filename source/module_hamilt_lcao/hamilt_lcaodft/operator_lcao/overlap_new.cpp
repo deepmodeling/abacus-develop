@@ -93,8 +93,12 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(
     this->ucell->iat2iait(iat2, &I2, &T2);
     Atom& atom1 = this->ucell->atoms[T1];
     Atom& atom2 = this->ucell->atoms[T2];
-    int nw1 = atom1.nw;
-    int nw2 = atom2.nw;
+
+    // npol is the number of polarizations, 
+    // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down), 
+    // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
+    const int npol = this->ucell->get_npol(); 
+
     const int* iw2l1 = atom1.iw2l;
     const int* iw2n1 = atom1.iw2n;
     const int* iw2m1 = atom1.iw2m;
@@ -114,15 +118,16 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(
     double olm[3] = {0, 0, 0};
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
-    for (int iw1l = 0; iw1l < row_indexes.size(); ++iw1l)
+    const int step_trace = col_indexes.size() + 1;
+    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
     {
-        const int iw1 = row_indexes[iw1l];
+        const int iw1 = row_indexes[iw1l] / npol;
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
-        for (int iw2l = 0; iw2l < col_indexes.size(); ++iw2l)
+        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
-            const int iw2 = col_indexes[iw2l];
+            const int iw2 = col_indexes[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
@@ -131,8 +136,13 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(
                             tau1, T1, L1, m1, N1, // info of atom1
                             tau2, T2, L2, m2, N2 // info of atom2
             );
-            *data_pointer++ = olm[0];
+            for(int ipol = 0; ipol < npol; ipol++)
+            {
+                data_pointer[ipol * step_trace] += olm[0];
+            }
+            data_pointer += npol;
         }
+        data_pointer += (npol-1) * col_indexes.size();
     }
 }
 

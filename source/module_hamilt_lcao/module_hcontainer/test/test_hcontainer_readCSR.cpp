@@ -76,7 +76,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     paraV.set_global2local(nlocal, nlocal, false, ofs);
     ofs.close();
     remove("test.log");
-    paraV.set_atomic_trace(ucell->iat2iwt.data(), ucell->nat, nlocal);
+    paraV.set_atomic_trace(ucell->get_iat2iwt(), ucell->nat, nlocal);
     // std::cout << paraV.atom_begin_col[0] << " " << paraV.atom_begin_col[1] << std::endl;
     // std::cout << paraV.atom_begin_row[0] << " " << paraV.atom_begin_row[1] << std::endl;
     //
