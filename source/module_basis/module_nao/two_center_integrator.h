@@ -6,7 +6,7 @@
 #include "module_basis/module_nao/radial_collection.h"
 #include "module_base/vector3.h"
 
-/**
+/*!
  * @brief A class to compute two-center integrals
  *
  * This class computes two-center integrals
@@ -38,10 +38,10 @@ class TwoCenterIntegrator
     TwoCenterIntegrator(const TwoCenterIntegrator&) = delete;
     TwoCenterIntegrator& operator=(const TwoCenterIntegrator&) = delete;
 
-    ~TwoCenterIntegrator();
+    ~TwoCenterIntegrator() {}
 
-    /**
-     * @brief Tabulate the radial part of the two-center integrals
+    /*!
+     * @brief Tabulates the radial part of a two-center integral.
      *
      * @param[in] bra          The radial functions of the first collection.
      * @param[in] ket          The radial functions of the second collection.
@@ -50,19 +50,17 @@ class TwoCenterIntegrator
      * @param[in] cutoff       r-space cutoff radius.
      * @param[in] with_deriv   If true, the derivative of radial table is also tabulated.
      *                         This is necessary to compute the gradient of integrals.
-     * @param[in] rgt          Pointer to a real Gaunt table.
      *                                                                                  */
     void tabulate(const RadialCollection& bra,
                   const RadialCollection& ket,
                   const char op,
                   const int nr,
                   const double cutoff,
-                  const bool with_deriv,
-                  RealGauntTable* const rgt = nullptr
+                  const bool with_deriv
     );
 
-    /**
-     * @brief Compute the two-center integrals
+    /*!
+     * @brief Compute the two-center integrals.
      *
      * This function calculates the two-center integral
      *
@@ -103,13 +101,11 @@ class TwoCenterIntegrator
 
     char op_;
     bool with_deriv_;
-    bool use_internal_gaunt_;
 
     TwoCenterTable table_;
-    RealGauntTable* rgt_;
 
-    /**
-     * @brief Compute the index of (l,m) in the array of spherical harmonics
+    /*!
+     * @brief Returns the index of (l,m) in the array of spherical harmonics.
      *
      * Spherical harmonics in ABACUS are stored in the following order:
      *

@@ -3,21 +3,11 @@
 #include "module_base/vector3.h"
 #include "module_base/ylm.h"
 
-TwoCenterIntegrator::TwoCenterIntegrator() : 
+TwoCenterIntegrator::TwoCenterIntegrator():
     is_tabulated_(false),
     op_('\0'),
-    with_deriv_(false),
-    use_internal_gaunt_(false),
-    rgt_(nullptr)
+    with_deriv_(false)
 {
-}
-
-TwoCenterIntegrator::~TwoCenterIntegrator()
-{
-    if (use_internal_gaunt_)
-    {
-        delete rgt_;
-    }
 }
 
 void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
@@ -25,32 +15,12 @@ void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
                                  const char op,
                                  const int nr,
                                  const double cutoff,
-                                 const bool with_deriv,
-                                 RealGauntTable* const rgt)
+                                 const bool with_deriv)
 {
     op_ = op;
     with_deriv_ = with_deriv;
     table_.build(bra, ket, op, nr, cutoff, with_deriv);
-
-    if (rgt)
-    { // if an external gaunt table is provided
-        if (use_internal_gaunt_)
-        {
-            delete rgt_;    
-            use_internal_gaunt_ = false;
-        }
-        rgt_ = rgt;
-    }
-    else
-    { // if no external gaunt table is provided (which implies an internal one)
-        if (!use_internal_gaunt_)
-        {
-            rgt_ = new RealGauntTable;
-            use_internal_gaunt_ = true;
-        }
-    }
-
-    rgt_->build(std::max(bra.lmax(), ket.lmax()));
+    RealGauntTable::instance().build(std::max(bra.lmax(), ket.lmax()));
     is_tabulated_ = true;
 }
 
@@ -102,7 +72,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
 
 		for (int m = -l; m < l; ++m)
         {
-            double G = (*rgt_)(l1, l2, l, m1, m2, m);
+            double G = RealGauntTable::instance()(l1, l2, l, m1, m2, m);
 
             if (deriv)
             {
