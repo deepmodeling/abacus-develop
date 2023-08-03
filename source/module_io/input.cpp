@@ -2712,10 +2712,17 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
         }
 
-        // set bx, by, bz
-        if (!bx) bx = 1;
-        if (!by) by = 1;
-        if (!bz) bz = 1;
+        // if calculation is get_wf, function source/module_basis/module_pw/pw_basis_k_big.h/distribute_r()
+        // will calculate nbx/nby/nbz by divide nx/ny/nz by bx/by/bz, so bx/by/bz should not be 0
+        if (calculation == "get_wf")
+        {
+            if (!bx)
+                bx = 1;
+            if (!by)
+                by = 1;
+            if (!bz)
+                bz = 1;
+        }
     }
 
     if (basis_type == "pw" || basis_type == "lcao_in_pw")
