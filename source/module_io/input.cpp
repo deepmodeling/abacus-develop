@@ -2712,6 +2712,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("lcao_ecut", ecutwfc);
         }
 
+        // set bx, by, bz
         if (!bx) bx = 1;
         if (!by) by = 1;
         if (!bz) bz = 1;
