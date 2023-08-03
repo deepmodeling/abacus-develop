@@ -8,5 +8,5 @@ for i in 2 3 4; do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./parallel_2d_test
+    mpirun -np $i ./parallel_orbitals_test
 done
