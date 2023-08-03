@@ -184,19 +184,21 @@ We also support [Gitpod](https://www.gitpod.io/): [Open in Gitpod](https://gitpo
 
 ## Install by conda
 
-Conda is a package management system with a separated environment, not requiring system privileges. A pre-built ABACUS binary with all requirements is available at [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus).
+Conda is a package management system with a separated environment, not requiring system privileges. A pre-built ABACUS binary with all requirements is available at [conda-forge](https://anaconda.org/conda-forge/abacus). Conda will install the GPU-accelerated version of ABACUS if a valid GPU driver is present.
 
 ```bash
 # Install
 # We recommend installing ABACUS in a new environment to avoid potential conflicts:
-conda create -n abacus_env abacus -c deepmodeling -c conda-forge
+conda create -n abacus_env abacus -c conda-forge
 
 # Run
 conda activate abacus_env
 OMP_NUM_THREADS=1 mpirun -n 4 abacus
 
 # Update
-conda update -n abacus_env abacus -c deepmodeling -c conda-forge
+conda update -n abacus_env abacus -c conda-forge
 ```
 
-For more details on building a conda package of ABACUS, please refer to the [conda recipe file](/conda/meta.yaml) [online](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).
+For more details on building a conda package of ABACUS, please refer to the [conda recipe file](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).
+
+> Note: The [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus) offers historical versions of ABACUS.
