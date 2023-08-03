@@ -18,4 +18,11 @@ AddTest(
   tmp_mocks.cpp
 )
 
+install(FILES parallel_overlapnew_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME test_overlap_new_para
+      COMMAND ${BASH} parallel_overlapnew_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 endif() 
