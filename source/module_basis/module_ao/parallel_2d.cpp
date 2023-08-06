@@ -5,8 +5,8 @@ Parallel_2D::Parallel_2D()
 {}
 Parallel_2D::~Parallel_2D()
 {
-    delete[] trace_loc_row;
-    delete[] trace_loc_col;
+    delete[] global2local_row_;
+    delete[] global2local_col_;
 }
 
 void Parallel_2D::set_proc_dim(const int& dsize, bool mode /*= 0*/)
@@ -35,9 +35,9 @@ void Parallel_2D::set_proc_dim(const int& dsize, bool mode /*= 0*/)
 
 bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) const
 {
-    if (trace_loc_row[iw1_all] == -1)
+    if (global2local_row(iw1_all) == -1)
         return false;
-    else if (trace_loc_col[iw2_all] == -1)
+    else if (global2local_col(iw2_all) == -1)
         return false;
     return true;
 }
@@ -50,8 +50,8 @@ void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
     this->init_global2local(M_A, N_A, ofs_running);
     if (!div_2d) // xiaohui add 2013-09-02
     {
-        for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = i;
-        for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = i;
+        for (int i = 0; i < M_A; i++) this->global2local_row_[i] = i;
+        for (int i = 0; i < N_A; i++) this->global2local_col_[i] = i;
         this->nrow = M_A;
         this->ncol = N_A;
         this->nloc = this->nrow * this->ncol;
@@ -61,19 +61,15 @@ void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
         // ofs_running << " nrow=" << nrow << std::endl;
         for (int irow = 0; irow < this->nrow; irow++)
         {
-            int global_row = this->row_set[irow];
-            this->trace_loc_row[global_row] = irow;
-            // ofs_running << " global_row=" << global_row
-            // << " trace_loc_row=" << this->trace_loc_row[global_row] << std::endl;
+            int global_row = this->local2global_row(irow);
+            this->global2local_row_[global_row] = irow;
         }
 
         // ofs_running << " ncol=" << ncol << std::endl;
         for (int icol = 0; icol < this->ncol; icol++)
         {
-            int global_col = this->col_set[icol];
-            this->trace_loc_col[global_col] = icol;
-            // ofs_running << " global_col=" << global_col
-            // << " trace_loc_col=" << this->trace_loc_row[global_col] << std::endl;
+            int global_col = this->local2global_col(icol);
+            this->global2local_col_[global_col] = icol;
         }
     }
 
@@ -86,17 +82,17 @@ void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstrea
     assert(M_A > 0);
     assert(N_A > 0);
 
-    delete[] this->trace_loc_row;
-    delete[] this->trace_loc_col;
+    delete[] this->global2local_row_;
+    delete[] this->global2local_col_;
 
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_row dimension", M_A);
-    ModuleBase::GlobalFunc::OUT(ofs_running, "trace_loc_col dimension", N_A);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "global2local_row dimension", M_A);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "global2local_col dimension", N_A);
 
-    this->trace_loc_row = new int[M_A];
-    this->trace_loc_col = new int[N_A];
+    this->global2local_row_ = new int[M_A];
+    this->global2local_col_ = new int[N_A];
 
-    for (int i = 0; i < M_A; i++) this->trace_loc_row[i] = -1;
-    for (int i = 0; i < N_A; i++) this->trace_loc_col[i] = -1;
+    for (int i = 0; i < M_A; i++) this->global2local_row_[i] = -1;
+    for (int i = 0; i < N_A; i++) this->global2local_col_[i] = -1;
 
     ModuleBase::Memory::record("trace_row_col", sizeof(int) * M_A);
     ModuleBase::Memory::record("trace_row_col", sizeof(int) * N_A);
@@ -125,7 +121,7 @@ void Parallel_2D::mpi_create_cart(const MPI_Comm& diag_world)
     return;
 }
 
-void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld)
+void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld, bool first_time)
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc");
 #ifdef __DEBUG
@@ -133,23 +129,26 @@ void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld)
     assert(gr > 0 && gc > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
 #endif
-    int myprow, mypcol;
-    int* usermap = new int[this->dim0 * this->dim1];
-    int info = 0;
-    for (int i = 0; i < this->dim0; ++i)
+    if (first_time)
     {
-        for (int j = 0; j < this->dim1; ++j)
+        int myprow, mypcol;
+        int* usermap = new int[this->dim0 * this->dim1];
+        for (int i = 0; i < this->dim0; ++i)
         {
-            int pcoord[2] = { i, j };
-            MPI_Cart_rank(comm_2D, pcoord, &usermap[i + j * this->dim0]);
+            for (int j = 0; j < this->dim1; ++j)
+            {
+                int pcoord[2] = { i, j };
+                MPI_Cart_rank(comm_2D, pcoord, &usermap[i + j * this->dim0]);
+            }
         }
+        MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
+        Cblacs_get(comm_2D_f, 0, &this->blacs_ctxt);
+        Cblacs_gridmap(&this->blacs_ctxt, usermap, this->dim0, this->dim0, this->dim1);
+        Cblacs_gridinfo(this->blacs_ctxt, &this->dim0, &this->dim1, &myprow, &mypcol);
+        delete[] usermap;
     }
-    MPI_Fint comm_2D_f = MPI_Comm_c2f(comm_2D);
-    Cblacs_get(comm_2D_f, 0, &this->blacs_ctxt);
-    Cblacs_gridmap(&this->blacs_ctxt, usermap, this->dim0, this->dim0, this->dim1);
-    Cblacs_gridinfo(this->blacs_ctxt, &this->dim0, &this->dim1, &myprow, &mypcol);
-    delete[] usermap;
     int ISRC = 0;
+    int info = 0;
     descinit_(desc, &gr, &gc, &this->nb, &this->nb, &ISRC, &ISRC, &this->blacs_ctxt, &lld, &info);
 }
 
@@ -242,17 +241,16 @@ int Parallel_2D::set_local2global(
 
     if (this->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "Local rows (including nb)", this->nrow);
 
-    // (5) row_set, it's a global index :
+    // (5) local2global_row, it's a global index :
     // save explicitly : every row in this processor
     // belongs to which row in the global matrix.
-    this->row_set.resize(this->nrow);
+    this->local2global_row_.resize(this->nrow);
     j = 0;
     for (int i = 0; i < row_b; i++)
     {
         for (int k = 0; k < nb && (coord[0] * nb + i * nb * dim[0] + k < M_A); k++, j++)
         {
-            this->row_set[j] = coord[0] * nb + i * nb * dim[0] + k;
-            // ofs_running << " j=" << j << " row_set=" << this->row_set[j] << std::endl;
+            this->local2global_row_[j] = coord[0] * nb + i * nb * dim[0] + k;
         }
     }
 
@@ -311,14 +309,14 @@ int Parallel_2D::set_local2global(
     //set nloc
     this->nloc = this->nrow * this->ncol;
 
-    this->col_set.resize(this->ncol);
+    this->local2global_col_.resize(this->ncol);
 
     j = 0;
     for (int i = 0; i < col_b; i++)
     {
         for (int k = 0; k < nb && (coord[1] * nb + i * nb * dim[1] + k < N_A); k++, j++)
         {
-            this->col_set[j] = coord[1] * nb + i * nb * dim[1] + k;
+            this->local2global_col_[j] = coord[1] * nb + i * nb * dim[1] + k;
         }
     }
     return 0;
@@ -330,9 +328,9 @@ void Parallel_2D::set_serial(const int& M_A, const int& N_A)
     this->nrow = M_A;
     this->ncol = N_A;
     this->nloc = this->nrow * this->ncol;
-    this->row_set.resize(this->nrow);
-    this->col_set.resize(this->ncol);
-    for (int i = 0; i < this->nrow; i++) this->row_set[i] = i;
-    for (int i = 0; i < this->ncol; i++) this->col_set[i] = i;
+    this->local2global_row_.resize(this->nrow);
+    this->local2global_col_.resize(this->ncol);
+    for (int i = 0; i < this->nrow; i++) this->local2global_row_[i] = i;
+    for (int i = 0; i < this->ncol; i++) this->local2global_col_[i] = i;
 }
 #endif

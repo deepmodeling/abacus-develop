@@ -94,6 +94,8 @@ namespace ModuleESolver
         dp.compute(dp_potential, f, v, coord, atype, cell);
 
         dp_potential /= ModuleBase::Ry_to_eV;
+        GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV
+                             << " eV" << std::endl;
 
         const double fact_f = ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU;
         const double fact_v = ucell.omega * ModuleBase::Ry_to_eV;
@@ -113,7 +115,7 @@ namespace ModuleESolver
             }
         }
 #else
-        ModuleBase::WARNING_QUIT("DP_pot", "Please recompile with -D__DPMD");
+        ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
         ModuleBase::timer::tick("ESolver_DP", "Run");
     }
@@ -195,12 +197,18 @@ namespace ModuleESolver
 
                     for (int it = 0; it < ucell.ntype; ++it)
                     {
+                        bool consistent = false;
                         for (int it2 = 0; it2 < ntype_dp; ++it2)
                         {
                             if (ucell.atom_label[it] == label[it2])
                             {
                                 dp_type[it] = it2;
+                                consistent = true;
                             }
+                        }
+                        if (!consistent)
+                        {
+                            ModuleBase::WARNING_QUIT("ESolver_DP", "Unsupported atom types for the DP model");
                         }
                     }
                     delete[] label;
@@ -217,7 +225,7 @@ namespace ModuleESolver
 
         if (!ok)
         {
-            ModuleBase::WARNING_QUIT("type_map", "can not find the DP model");
+            ModuleBase::WARNING_QUIT("ESolver_DP", "can not find the DP model");
         }
         return find_type;
     }

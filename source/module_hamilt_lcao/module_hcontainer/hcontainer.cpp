@@ -53,6 +53,16 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
 {
     this->gamma_only = false;
     this->current_R = -1;
+    std::vector<int> atom_begin_row(ucell_.nat+1, 0);
+    std::vector<int> atom_begin_col(ucell_.nat+1, 0);
+    int begin = 0;
+    for(int i=0;i<ucell_.nat;++i)
+    {
+        int it = ucell_.iat2it[i];
+        begin += ucell_.atoms[it].nw;
+        atom_begin_row[i+1] = begin;
+        atom_begin_col[i+1] = begin;
+    }
     // initialize atom_pairs and sparse_ap
     this->atom_pairs.reserve(ucell_.nat * ucell_.nat);
     this->sparse_ap.resize(ucell_.nat);
@@ -63,10 +73,7 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
         this->sparse_ap_index[i].resize(ucell_.nat);
         for (int j = 0; j < ucell_.nat; j++)
         {
-            AtomPair<T> atom_ij(i, j);
-            int it1 = ucell_.iat2it[i];
-            int it2 = ucell_.iat2it[j];
-            atom_ij.set_size(ucell_.atoms[it1].nw, ucell_.atoms[it2].nw);
+            AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
             ModuleBase::GlobalFunc::ZEROS(atom_ij.get_HR_values(0, 0, 0).get_pointer(), atom_ij.get_size());
             this->atom_pairs.push_back(atom_ij);
             this->sparse_ap[i][j] = j;

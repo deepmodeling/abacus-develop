@@ -58,6 +58,7 @@ class Input
       1, point group symmetry would be considered*/
     std::string symmetry; 
     double symmetry_prec; // LiuXh add 2021-08-12, accuracy for symmetry
+    bool symmetry_autoclose; // whether to close symmetry automatically when error occurs in symmetry analysis
     int kpar; // ecch pool is for one k point
 
     bool berry_phase; // berry phase calculation
@@ -575,7 +576,8 @@ class Input
     template <class T> static void read_value(std::ifstream &ifs, T &var)
     {
         ifs >> var;
-        ifs.ignore(150, '\n');
+        std::string line;
+        getline(ifs, line);
         return;
     }
     void read_kspacing(std::ifstream &ifs)

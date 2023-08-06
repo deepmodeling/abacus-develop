@@ -284,7 +284,9 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * (3.0 - k * k) / std::pow(k * k + 1, 3);
     });
 
-    ModuleBase::SphericalBesselTransformer::direct(0, sz_in, grid_in, f, sz_out, grid_out, g);
+    ModuleBase::SphericalBesselTransformer sbt;
+
+    sbt.direct(0, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 
     // first-order transform
@@ -293,7 +295,7 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * 4.0 * k / std::pow(k * k + 1, 3);
     });
 
-    ModuleBase::SphericalBesselTransformer::direct(1, sz_in, grid_in, f, sz_out, grid_out, g);
+    sbt.direct(1, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 
     // second-order transform
@@ -302,7 +304,7 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * 4.0 * k * k / std::pow(k * k + 1, 3);
     });
 
-    ModuleBase::SphericalBesselTransformer::direct(2, sz_in, grid_in, f, sz_out, grid_out, g);
+    sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 }
 
@@ -331,6 +333,8 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
         y = pref * k * k / std::pow(k * k + 1, 4);
     });
 
+    ModuleBase::SphericalBesselTransformer sbt;
+
     for (int p = -2; p <= 2; ++p)
     {
         std::for_each(f, f + sz_in, [&](double& x) {
@@ -338,7 +342,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
             x = std::pow(r, 2 + p) * std::exp(-r);
         });
 
-        ModuleBase::SphericalBesselTransformer::direct(2, sz_in, grid_in, f, sz_out, grid_out, g, p);
+        sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, g, p);
         EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
     }
 }
@@ -372,7 +376,9 @@ TEST_F(SphericalBesselTransformTest, DirectInPlace)
         y = pref * k * k * std::exp(-k * k / 4);
     });
 
-    ModuleBase::SphericalBesselTransformer::direct(2, sz_in, grid_in, f, sz_out, grid_out, f);
+    ModuleBase::SphericalBesselTransformer sbt;
+
+    sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, f);
     EXPECT_LT(max_diff(sz_out, g_ref, f), tol);
 }
 
@@ -403,7 +409,7 @@ TEST_F(SphericalBesselTransformTest, HighOrder)
     SphericalBesselTransformer sbt;
     sbt.radrfft(l, sz, rcut, f, g);
 
-    ModuleBase::SphericalBesselTransformer::direct(l, sz, grid_in, f, sz, grid_out, g_ref);
+    sbt.direct(l, sz, grid_in, f, sz, grid_out, g_ref);
 
     // NOTE: Simpson's integration gets increasingly inaccurate as k gets large
     // since the factor of (k*dr)^4 in its error becomes significant when k*dr

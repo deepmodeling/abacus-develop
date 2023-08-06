@@ -14,3 +14,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(operator_ks_lcao)
 endif()
+
+IF (BUILD_TESTING)
+  add_subdirectory(test)
+endif()

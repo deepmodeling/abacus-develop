@@ -19,28 +19,20 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
 
     int current_spin = 0;
+    const int nrxx = wfc_basis->nrxx;
 
-    std::complex<FPTYPE>** gradwfc;
     std::complex<FPTYPE>* psi;
-
-    FPTYPE*** crosstaus;
-
     int ipol2xy[3][3];
     FPTYPE sigma_mgga[3][3];
 
-    gradwfc = new std::complex<FPTYPE>*[wfc_basis->nrxx];
-    crosstaus = new FPTYPE**[wfc_basis->nrxx];
+    std::complex<FPTYPE>* gradwfc = new std::complex<FPTYPE>[nrxx * 3];
+    ModuleBase::GlobalFunc::ZEROS(gradwfc, nrxx * 3);
 
-    for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+    FPTYPE** crosstaus = new FPTYPE*[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        crosstaus[ir] = new FPTYPE*[6];
-        gradwfc[ir] = new std::complex<FPTYPE>[3];
-        ModuleBase::GlobalFunc::ZEROS(gradwfc[ir], 3);
-        for (int j = 0; j < 6; j++)
-        {
-            crosstaus[ir][j] = new FPTYPE[GlobalV::NSPIN];
-            ModuleBase::GlobalFunc::ZEROS(crosstaus[ir][j], GlobalV::NSPIN);
-        }
+        crosstaus[is] = new FPTYPE[nrxx * 6];
+        ModuleBase::GlobalFunc::ZEROS(crosstaus[is], GlobalV::NSPIN);
     }
 
     for (int ik = 0; ik < p_kv->nks; ik++)
@@ -68,11 +60,11 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
                 {
                     ipol2xy[ix][iy] = ipol;
                     ipol2xy[iy][ix] = ipol;
-                    for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+                    for (int ir = 0; ir < nrxx; ir++)
                     {
-                        crosstaus[ir][ipol][current_spin] += 2.0 * w1
-                                                             * (gradwfc[ir][ix].real() * gradwfc[ir][iy].real()
-                                                                + gradwfc[ir][ix].imag() * gradwfc[ir][iy].imag());
+                        crosstaus[current_spin][ipol*nrxx + ir] += 2.0 * w1
+                                                             * (gradwfc[ix*nrxx + ir].real() * gradwfc[iy*nrxx + ir].real()
+                                                                + gradwfc[ix*nrxx + ir].imag() * gradwfc[iy*nrxx + ir].imag());
                     }
                     ipol += 1;
                 }
@@ -81,14 +73,16 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         delete[] psi;
     } // k loop
 
-    // if we are using kpools, then there should be a
-    // reduction of crosstaus w.r.t. kpools here.
-    // will check later
-
-    for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+#ifdef __MPI
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        delete[] gradwfc[ir];
+        for (int ipol = 0; ipol < 6; ++ipol)
+        {
+            chr->reduce_diff_pools(crosstaus[is] + ipol * nrxx);
+        }
     }
+#endif
+
     delete[] gradwfc;
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -101,22 +95,19 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
                 if (ix == iy)
                     delta = 1.0;
                 sigma_mgga[ix][iy] = 0.0;
-                for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+                for (int ir = 0; ir < nrxx; ir++)
                 {
-                    FPTYPE x = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[ir][ipol2xy[ix][iy]][is]);
+                    FPTYPE x
+                        = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus[is][ipol2xy[ix][iy] * nrxx + ir]);
                     sigma_mgga[ix][iy] += x;
                 }
             }
         }
     }
 
-    for (int ir = 0; ir < wfc_basis->nrxx; ir++)
+    for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        for (int j = 0; j < 6; j++)
-        {
-            delete[] crosstaus[ir][j];
-        }
-        delete[] crosstaus[ir];
+        delete[] crosstaus[is];
     }
     delete[] crosstaus;
 
@@ -125,7 +116,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     {
         for (int m = 0; m < 3; m++)
         {
-            Parallel_Reduce::reduce_double_all(sigma_mgga[l][m]);
+            Parallel_Reduce::reduce_double_pool(sigma_mgga[l][m]);
         }
     }
 #endif

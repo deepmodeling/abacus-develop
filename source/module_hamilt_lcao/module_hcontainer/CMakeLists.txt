@@ -2,6 +2,8 @@ list(APPEND objects
     base_matrix.cpp
     atom_pair.cpp
     hcontainer.cpp
+    output_hcontainer.cpp
+    func_folding.cpp
 )
 
 add_library(

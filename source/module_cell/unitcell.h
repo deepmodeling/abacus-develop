@@ -142,6 +142,18 @@ public:
         return false;
     }
 
+    // get tau for atom iat
+    inline const ModuleBase::Vector3<double>& get_tau(const int &iat) const
+    {
+        return atoms[iat2it[iat]].tau[iat2ia[iat]];
+    }
+
+    // calculate vector between two atoms with R cell
+    inline const ModuleBase::Vector3<double> cal_dtau(const int &iat1, const int &iat2, const ModuleBase::Vector3<int> &R) const
+    {
+        return get_tau(iat2) + double(R.x) * a1 + double(R.y) * a2 + double(R.z) * a3 - get_tau(iat1);
+    }
+
     //LiuXh add 20180515
     ModuleBase::Matrix3 G0;
     ModuleBase::Matrix3 GT0;

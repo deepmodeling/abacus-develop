@@ -12,6 +12,7 @@ namespace hamilt
 template <typename T>
 AtomPair<T>::~AtomPair()
 {
+    this->values.clear();
 }
 
 template <typename T>
@@ -525,8 +526,8 @@ void AtomPair<T>::add_to_array(std::complex<T>* array, const std::complex<T>& kp
 template <typename T>
 T& AtomPair<T>::get_matrix_value(const size_t& i_row_global, const size_t& j_col_global) const
 {
-    int i_row_local = this->paraV == nullptr? i_row_global : this->paraV->trace_loc_row[i_row_global];
-    int j_col_local = this->paraV == nullptr? j_col_global : this->paraV->trace_loc_col[j_col_global];
+    int i_row_local = this->paraV == nullptr ? i_row_global : this->paraV->global2local_row(i_row_global);
+    int j_col_local = this->paraV == nullptr ? j_col_global : this->paraV->global2local_col(j_col_global);
 #ifdef __DEBUG
     assert(i_row_local != -1 && j_col_local != -1);
     assert(current_R < this->values.size());
@@ -590,13 +591,17 @@ T& AtomPair<T>::get_value(const int& row, const int& col) const
 
 // get_pointer
 template <typename T>
-T* AtomPair<T>::get_pointer() const
+T* AtomPair<T>::get_pointer(int ir) const
 {
+    if(ir<0)
+    { 
+        ir = current_R;
+    }
 #ifdef __DEBUG
     assert(current_R < this->values.size());
     assert(current_R >= 0);
 #endif
-    return this->values[current_R].get_pointer();
+    return this->values[ir].get_pointer();
 }
 
 // get_R_size

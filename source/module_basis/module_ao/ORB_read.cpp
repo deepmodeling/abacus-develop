@@ -38,6 +38,11 @@ LCAO_Orbitals::~LCAO_Orbitals()
 	delete[] Alpha;
 }
 
+const LCAO_Orbitals& LCAO_Orbitals::get_const_instance()
+{
+	return GlobalC::ORB;
+}
+
 #ifdef __MPI
 // be called in UnitCell.
 void LCAO_Orbitals::bcast_files(

@@ -23,9 +23,9 @@ class Overlap<OperatorLCAO<T>> : public OperatorLCAO<T>
                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                std::vector<double>* SR_pointer_in,
                                std::vector<T>* SK_pointer_in)
-          : genH(genH_in), SR_pointer(SR_pointer_in), SK_pointer(SK_pointer_in), OperatorLCAO<T>(kvec_d_in)
+          : genH(genH_in), SR_pointer(SR_pointer_in), SK_pointer(SK_pointer_in), 
+          OperatorLCAO<T>(LM_in, kvec_d_in)
       {
-          this->LM = LM_in;
           this->cal_type = lcao_fixed;
       }
 

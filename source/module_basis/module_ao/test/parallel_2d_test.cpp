@@ -19,7 +19,7 @@
   *   set the desc[9] of the 2D-block-cyclic distribution.
   *
   * - set_global2local
-  *   set the map from global index to local index.
+  *   set the map from global index to local index (init, reuse).
   *
   * - set_serial (serial)
   *   set the local(=global) sizes.
@@ -110,20 +110,56 @@ TEST_F(test_para2d, Divide2D)
 
                 //5. set_global2local
                 p2d.set_global2local(gr, gc, true, ofs_running);
-                auto sum_array = [](const int* arr, const int& size) -> int
+                auto sum_array = [&p2d](const int& gr, const int& gc) -> std::pair<int, int>
                     {
-                        int sum = 0;
-                        for (int i = 0; i < size; ++i)
-                            sum += arr[i];
-                        return sum;
+                        int sum_row = 0; int sum_col = 0;
+                        for (int i = 0; i < gr; ++i)
+                            sum_row += p2d.global2local_row(i);
+                        for (int i = 0; i < gc; ++i)
+                            sum_col += p2d.global2local_col(i);
+                        return { sum_row, sum_col };
                     };
-                EXPECT_EQ(sum_array(p2d.trace_loc_row, gr), lr * (lr - 1) / 2 - (gr - lr));
-                EXPECT_EQ(sum_array(p2d.trace_loc_col, gc), lc * (lc - 1) / 2 - (gc - lc));
+                std::pair<int, int> sumrc = sum_array(gr, gc);
+                EXPECT_EQ(std::get<0>(sumrc), lr * (lr - 1) / 2 - (gr - lr));
+                EXPECT_EQ(std::get<1>(sumrc), lc * (lc - 1) / 2 - (gc - lc));
                 for (int i = 0;i < lr;++i)
                     for (int j = 0;j < lc;++j)
-                        EXPECT_TRUE(p2d.in_this_processor(p2d.row_set[i], p2d.col_set[j]));
+                        EXPECT_TRUE(p2d.in_this_processor(p2d.local2global_row(i), p2d.local2global_col(j)));
             }
         }
+    }
+}
+
+TEST_F(test_para2d, DescReuseCtxt)
+{
+    for (auto nb : nbs)
+    {
+        Parallel_2D p1;
+        p1.set_block_size(nb);
+        p1.set_proc_dim(dsize);
+        p1.mpi_create_cart(MPI_COMM_WORLD);
+        p1.set_local2global(sizes[0].first, sizes[0].second, ofs_running, ofs_running);
+        p1.set_desc(sizes[0].first, sizes[0].second, p1.get_row_size());
+
+        Parallel_2D p2;    // use 2 different sizes, but they can share the same ctxt
+        p2.set_block_size(nb);
+        p2.set_proc_dim(dsize);
+        p2.comm_2D = p1.comm_2D;
+        p2.blacs_ctxt = p1.blacs_ctxt;
+        p2.set_local2global(sizes[1].first, sizes[1].second, ofs_running, ofs_running);
+        p2.set_desc(sizes[1].first, sizes[1].second, p2.get_row_size(), false);
+
+        EXPECT_EQ(p1.desc[1], p2.desc[1]);
+
+        Parallel_2D p3;    // using default `set_desc`, p3 can't share the same ctxt with p1
+        p3.set_block_size(nb);
+        p3.set_proc_dim(dsize);
+        p3.comm_2D = p1.comm_2D;
+        p3.blacs_ctxt = p1.blacs_ctxt;
+        p3.set_local2global(sizes[2].first, sizes[2].second, ofs_running, ofs_running);
+        p3.set_desc(sizes[2].first, sizes[2].second, p3.get_row_size());
+
+        EXPECT_NE(p1.desc[1], p3.desc[1]);
     }
 }
 #else
@@ -139,19 +175,25 @@ TEST_F(test_para2d, Serial)
         //1. set dim0 and dim1
         p2d.set_proc_dim(1);
         EXPECT_EQ(p2d.dim0 * p2d.dim1, 1);
+        EXPECT_EQ(p2d.dim0, 1);
+        EXPECT_EQ(p2d.dim1, 1);
 
         //2. set_serial
         p2d.set_serial(gr, gc);
         EXPECT_EQ(p2d.get_row_size(), gr);
         EXPECT_EQ(p2d.get_col_size(), gc);
         EXPECT_EQ(p2d.get_local_size(), gr * gc);
+        for (int i = 0; i < gr; ++i)
+            EXPECT_EQ(p2d.local2global_row(i), i);
+        for (int i = 0; i < gc; ++i)
+            EXPECT_EQ(p2d.local2global_col(i), i);
 
         //3. set_global2local
         p2d.set_global2local(gr, gc, false, ofs_running);
         for (int i = 0;i < gr;++i)
-            EXPECT_EQ(p2d.trace_loc_row[i], i);
+            EXPECT_EQ(p2d.global2local_row(i), i);
         for (int i = 0;i < gc;++i)
-            EXPECT_EQ(p2d.trace_loc_col[i], i);
+            EXPECT_EQ(p2d.global2local_col(i), i);
     }
 }
 #endif

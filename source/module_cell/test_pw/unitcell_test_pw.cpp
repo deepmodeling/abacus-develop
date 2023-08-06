@@ -37,6 +37,10 @@ class UcellTest : public ::testing::Test
 protected:
 	std::unique_ptr<UnitCell> ucell{new UnitCell};
 	std::string output;
+	void SetUp()
+    {
+    	ucell->lmaxmax = 2;
+    }
 };
 
 TEST_F(UcellTest,ReadAtomSpecies)

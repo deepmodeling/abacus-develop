@@ -23,6 +23,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO
 
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
     std::complex<double>** Hk_laststep = nullptr;
+    std::complex<double>** Sk_laststep = nullptr;
     //same as pelec
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
     int td_htype = 1;

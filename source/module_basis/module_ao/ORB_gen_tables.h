@@ -23,6 +23,9 @@ class ORB_gen_tables
 	ORB_gen_tables();
 	~ORB_gen_tables();
 
+	// static function to get global instance
+	static const ORB_gen_tables& get_const_instance();
+
 	void gen_tables(
 		std::ofstream &ofs_in, // mohan add 2021-05-07
 		LCAO_Orbitals &orb,
@@ -49,8 +52,6 @@ class ORB_gen_tables
     	const int &l2,
     	const int &m2,
 		const int &n2,
-		const int &nspin,
-		std::complex<double> *olm1=NULL,
 		bool cal_syns = false,
 		double dmax = 0.0)const;
 

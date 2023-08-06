@@ -571,9 +571,11 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	return;
 }
 
-void XC_Functional::grad_wfc( const std::complex<double> *rhog, const int ik,
-	std::complex<double> **grad, ModulePW::PW_Basis_K *wfc_basis,
-	const double tpiba)
+void XC_Functional::grad_wfc(const std::complex<double>* rhog,
+                             const int ik,
+                             std::complex<double>* grad,
+                             const ModulePW::PW_Basis_K* wfc_basis,
+                             const double tpiba)
 {
 	const int npw_k = wfc_basis->npwk[ik];
 	std::complex<double> *Porter = new std::complex<double> [wfc_basis->nmaxgr];
@@ -597,9 +599,9 @@ void XC_Functional::grad_wfc( const std::complex<double> *rhog, const int ik,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-		for(int ir=0; ir<wfc_basis->nrxx; ++ir)
-			grad[ir][ipol]= Porter[ir];
-	}//end loop ipol
+        for (int ir = 0; ir < wfc_basis->nrxx; ++ir)
+            grad[ipol * wfc_basis->nrxx + ir] = Porter[ir];
+    }//end loop ipol
 	delete[] Porter;
 	return;
 }

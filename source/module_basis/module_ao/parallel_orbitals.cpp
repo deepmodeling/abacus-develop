@@ -29,36 +29,41 @@ Parallel_Orbitals::~Parallel_Orbitals()
 
 void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal)
 {
-    this->atom_begin_col.resize(nat);
-    this->atom_begin_row.resize(nat);
-    for(int iat=0;iat<nat-1;iat++)
+    ModuleBase::TITLE("Parallel_Orbitals", "set_atomic_trace");
+    this->iat2iwt_ = iat2iwt;
+    int nat_plus_1 = nat + 1;
+    this->atom_begin_col.resize(nat_plus_1);
+    this->atom_begin_row.resize(nat_plus_1);
+    for(int iat=0;iat<nat;iat++)
     {
         this->atom_begin_col[iat] = -1;
         this->atom_begin_row[iat] = -1;
         int irow = iat2iwt[iat];
         int icol = iat2iwt[iat];
-        const int max = (iat == nat-1) ? (nlocal - irow): (iat2iwt[iat+1] - irow);
-        //find the first row index of atom iat
-        for(int i=0;i<max;i++)
+        const int nw_global = (iat == nat-1) ? (nlocal - irow): (iat2iwt[iat+1] - irow);
+        //find the first local row index of atom iat
+        for(int i=0;i<nw_global;i++)
         {
-            if(this->trace_loc_row[irow]!=-1)
+            if (this->global2local_row_[irow] != -1)
             {
-                this->atom_begin_row[iat] = irow;
+                this->atom_begin_row[iat] = this->global2local_row_[irow];
                 break;
             }
             irow++;
         }
-        //find the first col index of atom iat
-        for(int i=0;i<max;i++)
+        //find the first local col index of atom iat
+        for(int i=0;i<nw_global;i++)
         {
-            if(this->trace_loc_col[icol]!=-1)
+            if (this->global2local_col_[icol] != -1)
             {
-                this->atom_begin_col[iat] = icol;
+                this->atom_begin_col[iat] = this->global2local_col_[icol];
                 break;
             }
             icol++;
         }
     }
+    this->atom_begin_row[nat] = this->nrow;
+    this->atom_begin_col[nat] = this->ncol;
 }
 
 // Get the number of columns of the parallel orbital matrix
@@ -103,7 +108,7 @@ int Parallel_Orbitals::get_row_size(int iat) const
         return 0;
     }
     iat += 1;
-    while(this->atom_begin_row[iat] <= this->ncol)
+    while(this->atom_begin_row[iat] <= this->nrow)
     {
         if(this->atom_begin_row[iat] != -1)
         {
@@ -114,6 +119,77 @@ int Parallel_Orbitals::get_row_size(int iat) const
     }
     // If the orbital matrix is not found after all atoms are traversed, throw an exception
     throw std::string("error in get_col_size(iat)");
+}
+
+// Get the global indexes of the rows of the parallel orbital matrix
+std::vector<int> Parallel_Orbitals::get_indexes_row() const
+{
+    std::vector<int> indexes(this->nrow);
+    for(int i = 0; i < this->nrow; i++)
+    {
+#ifdef __MPI
+        indexes[i] = this->local2global_row(i);
+#else
+        indexes[i] = i;
+#endif
+    }
+    return indexes;
+}
+// Get the global indexes of the columns of the parallel orbital matrix
+std::vector<int> Parallel_Orbitals::get_indexes_col() const
+{
+    std::vector<int> indexes(this->ncol);
+    for(int i = 0; i < this->ncol; i++)
+    {
+#ifdef __MPI
+        indexes[i] = this->local2global_col(i);
+#else
+        indexes[i] = i;
+#endif
+    }
+    return indexes;
+}
+// Get the global indexes of the rows of the orbital matrix of the iat-th atom
+std::vector<int> Parallel_Orbitals::get_indexes_row(int iat) const
+{
+    int size = this->get_row_size(iat);
+    if(size == 0)
+    {
+        return std::vector<int>();
+    }
+    std::vector<int> indexes(size);
+    int irow = this->atom_begin_row[iat];
+    int begin = this->iat2iwt_[iat];
+    for(int i = 0; i < size; ++i)
+    {
+#ifdef __MPI
+        indexes[i] = this->local2global_row(irow + i) - begin;
+#else
+        indexes[i] = i;
+#endif
+    }
+    return indexes;
+}
+// Get the global indexes of the columns of the orbital matrix of the iat-th atom
+std::vector<int> Parallel_Orbitals::get_indexes_col(int iat) const
+{
+    int size = this->get_col_size(iat);
+    if(size == 0)
+    {
+        return std::vector<int>();
+    }
+    std::vector<int> indexes(size);
+    int icol = this->atom_begin_col[iat];
+    int begin = this->iat2iwt_[iat];
+    for(int i = 0; i < size; ++i)
+    {
+#ifdef __MPI
+        indexes[i] = this->local2global_col(icol + i) - begin;
+#else
+        indexes[i] = i;
+#endif
+    }
+    return indexes;
 }
 
 #ifdef __MPI
@@ -136,7 +212,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning)
 {
-    ModuleBase::TITLE("Parallel_Orbitals", "set_local2global");
+    ModuleBase::TITLE("Parallel_Orbitals", "set_nloc_wfc_Eij");
     // for wavefuncton , calculate nbands_loc
     int end_id;
     int block = N_A / nb;
@@ -154,7 +230,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_local2global", "some processor has no bands-row-blocks.");
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij", "some processor has no bands-row-blocks.");
         }
     }
     int col_b_bands = block / dim1;

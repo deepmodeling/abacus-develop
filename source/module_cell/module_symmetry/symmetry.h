@@ -17,7 +17,8 @@ public:
 	//-1 : no symmetry at all, k points would be total nks in KPT
 	//0 : only basic time-reversal symmetry is considered, point k and -k would fold to k
 	//1 : point group symmetry is considered
-	static int symm_flag;
+    static int symm_flag;
+    static bool symm_autoclose;
 
 	void analy_sys(const UnitCell &ucell, std::ofstream &ofs_running);
 	bool available;
@@ -62,8 +63,9 @@ public:
 	int nop;	//the number of point group operations of the pure bravais lattice without basis
 	int s_flag;	//whether the current matrix is one of all space group operations
 	int nrot;	//the number of pure point group rotations
-	int nrotk=-1; 	//the number of all space group operations
-	int pgnumber;	//the serial number of point group
+    int nrotk = -1; 	//the number of all space group operations
+    int max_nrotk = -1;  ///< record the maximum number of symmetry operations during cell-relax
+    int pgnumber;	//the serial number of point group
 	int spgnumber;	//the serial number of point group in space group
 	std::string pgname;	//the Schoenflies name of the point group R in {R|0}
 	std::string spgname;	//the Schoenflies name of the point group R in the space group {R|t}

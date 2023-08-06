@@ -199,13 +199,21 @@ class NumericalRadial
                                             //!       the two-center integral is computed
                 const int l,                //!< [in] angular momentum of the table
                 double* const table,        //!< [out] on finish, contain the computed table
-                const bool deriv = false,   //!< [in] if true, "table" would contain the derivative
-                                            //!<      of the table
-                int ntab = 0,               //!< [in] size of tabgrid
-                const double* tabgrid = nullptr  //!< [in] grid on which the table is calculated.
-                                                 //!< if nullptr, this->rgrid_ is assumed.
+                const int nr_tab,           //!< [in] size of table grid
+                const double rmax_tab,      //!< [in] cutoff radius of table grid
+                const bool deriv = false    //!< [in] if true, calculates the derivative of the table
     ) const;
 
+    //! Normalizes the radial function.
+    /*!
+     *  The radial function is normalized such that
+     *
+     *      / +inf     2
+     *      |      dx x  f(x) = 1
+     *      /  0
+     *
+     *  where x is r or k.
+     *                                                                                  */
     void normalize(bool for_r_space = true);
 
     /*!
@@ -321,10 +329,10 @@ class NumericalRadial
     /*!
      *  @see set_transformer
      *                                                                              */
-    ModuleBase::SphericalBesselTransformer* sbt_ = nullptr;
+    ModuleBase::SphericalBesselTransformer* sbt_;
 
     //! A flag that marks the ownership of sbt_
-    bool use_internal_transformer_ = true;
+    bool use_internal_transformer_;
 
     //! Transforms the r-space values to get k-space values, or vice versa.
     /*!

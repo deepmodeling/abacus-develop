@@ -2,6 +2,12 @@
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
 
+void Paw_Element::init_paw_element(const double ecutwfc_in, const double cell_factor_in)
+{
+    this -> ecutwfc = ecutwfc_in;
+    this -> cell_factor = cell_factor_in;
+}
+
 void Paw_Element::read_paw_xml(std::string filename)
 {
     ModuleBase::TITLE("Paw_Element","read_paw_xml");
@@ -76,6 +82,12 @@ void Paw_Element::read_paw_xml(std::string filename)
 //  </derivatives>
 // ============================================================
     line = this->scan_file(ifs, "<radial_grid");
+
+    std::string grid_type = this->extract_string(line,"eq=");
+    if(grid_type != "r=a*(exp(d*i)-1)")
+    {
+        ModuleBase::WARNING_QUIT("read_paw_xml","grid type not implemented yet!");
+    }
 
     rstep = this->extract_double(line,"a=");
     lstep = this->extract_double(line,"d=");

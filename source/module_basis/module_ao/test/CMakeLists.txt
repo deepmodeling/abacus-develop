@@ -114,6 +114,26 @@ AddTest(
     LIBS ${math_libs} device base
 )
 
+install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME parallel_2d_test_para
+      COMMAND ${BASH} parallel_2d_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
+    TARGET parallel_orbitals_test
+    SOURCES parallel_orbitals_test.cpp ../parallel_2d.cpp ../parallel_orbitals.cpp
+    LIBS ${math_libs} device base
+)
+
+install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME parallel_orbitals_test_para
+      COMMAND ${BASH} parallel_orbitals_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 

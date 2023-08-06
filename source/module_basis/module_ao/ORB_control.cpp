@@ -213,7 +213,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
         ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_global2local", "Check ks_solver.");
     }
     // (2) set the trace, then we can calculate the nnr.
-    // for 2d: calculate po.nloc first, then trace_loc_row and trace_loc_col
+    // for 2d: calculate po.nloc first, then global2local_row and global2local_col
     // for O(N): calculate the three together.
     this->ParaV.set_global2local(nlocal, nlocal, div_2d, ofs_running);
 }

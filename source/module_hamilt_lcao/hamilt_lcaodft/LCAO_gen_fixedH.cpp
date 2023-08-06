@@ -131,8 +131,8 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							// the difference is that here we use {L,N,m} for ccycle,
 							// build_Nonlocal_mu use atom.nw for cycle.
 							// so, here we use ParaO::in_this_processor,
-							// in build_Non... use trace_loc_row
-                            // and trace_loc_col directly,
+							// in build_Non... use global2local_row
+                            // and global2local_col directly,
                             if (!pv->in_this_processor(iw1_all, iw2_all))
 							{
 								++iw2_all;
@@ -141,28 +141,35 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 
 							olm[0] = olm[1] = olm[2] = 0.0;
 
-							std::complex<double> olm1[4]={ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO};
-							std::complex<double> *olm2 = &olm1[0];
 							if(!calc_deri)
 							{
 								// PLEASE use UOT as an input parameter of this subroutine
 								// mohan add 2021-03-30
 			
-								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, tau1, 
-										T1, L1, m1, N1, adjs.adjacent_tau[ad], 
-										T2, L2, m2, N2, GlobalV::NSPIN,
-										olm2,//for soc
+								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, 
+										tau1, T1, L1, m1, N1,                  // info of atom1
+										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2 
 										cal_syns,
 										dmax);
+								// When NSPIN == 4 , only diagonal term is calculated for T or S Operators
+								// use olm1 to store the diagonal term with complex data type.
+								std::complex<double> olm1[4];
+								if(GlobalV::NSPIN == 4)
+								{
+									olm1[0] = std::complex<double>(olm[0], 0.0);
+									olm1[1] = ModuleBase::ZERO;
+									olm1[2] = ModuleBase::ZERO;
+									olm1[3] = std::complex<double>(olm[0], 0.0);
+								}
 
 								if(GlobalV::GAMMA_ONLY_LOCAL)
 								{
 									// mohan add 2010-06-29
 									// set the value in Hloc and Sloc
-									// according to trace_loc_row and trace_loc_col
+									// according to global2local_row and global2local_col
 									// the last paramete: 1 for Sloc, 2 for Hloc
 									// and 3 for Hloc_fixed.
-									this->LM->set_HSgamma(iw1_all, iw2_all, olm[0], dtype, HSloc);
+                                    this->LM->set_HSgamma(iw1_all, iw2_all, olm[0], HSloc);
 								}
 								else // k point algorithm
 								{
@@ -174,7 +181,8 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
                                         if (GlobalV::NSPIN != 4) HSloc[nnr] = olm[0];
                                         else
 										{//only has diagonal term here.
-												int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											// SlocR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->SlocR_soc[nnr] = olm1[is];
                                         }
                                     }
@@ -183,7 +191,8 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 										if(GlobalV::NSPIN!=4) HSloc[nnr] = olm[0];// <phi|kin|d phi>
 										else
 										{//only has diagonal term here.
-												int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											// Hloc_fixedR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->Hloc_fixedR_soc[nnr] = olm1[is];
                                         }
                                     }
@@ -195,7 +204,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							{
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 1, dtype, 
 									tau1, T1, L1, m1, N1,
-									adjs.adjacent_tau[ad], T2, L2, m2, N2, GlobalV::NSPIN
+									adjs.adjacent_tau[ad], T2, L2, m2, N2
 									);
 
 								if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -273,11 +282,11 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 					{
 						for(int jj=0; jj<atom1->nw * GlobalV::NPOL; ++jj)
 						{
-							const int mu = pv->trace_loc_row[start1+jj];
+                            const int mu = pv->global2local_row(start1 + jj);
 							if(mu<0)continue; 
 							for(int kk=0; kk<atom2->nw * GlobalV::NPOL; ++kk)
 							{
-								const int nu = pv->trace_loc_col[start2+kk];
+                                const int nu = pv->global2local_col(start2 + kk);
 								if(nu<0)continue;
 								++total_nnr;
 								++nnr;
@@ -396,8 +405,8 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 			for (int iw1=0; iw1<nw1_tot; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-				const int iw1_local = pv->trace_loc_row[iw1_all];
-				const int iw2_local = pv->trace_loc_col[iw1_all];
+                const int iw1_local = pv->global2local_row(iw1_all);
+                const int iw2_local = pv->global2local_col(iw1_all);
 				if(iw1_local < 0 && iw2_local < 0)continue;
 				const int iw1_0 = iw1/GlobalV::NPOL;
 				std::vector<std::vector<double>> nlm;
@@ -590,7 +599,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						{
 							const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
 							const int iw1_all = start1 + j;
-							const int mu = pv->trace_loc_row[iw1_all];
+                            const int mu = pv->global2local_row(iw1_all);
 							if(mu < 0)continue; 
 
 							// fix a serious bug: atom2[T2] -> atom2
@@ -599,7 +608,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 							{
 								const int k0 = k/GlobalV::NPOL;
 								const int iw2_all = start2 + k;
-								const int nu = pv->trace_loc_col[iw2_all];						
+                                const int nu = pv->global2local_col(iw2_all);
 								if(nu < 0)continue;
 
 								if(!calc_deri)
@@ -642,7 +651,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 											// mohan add 2010-12-20
 											if( nlm_tmp!=0.0 )
 											{
-												this->LM->set_HSgamma(iw1_all,iw2_all,nlm_tmp,'N', NLloc);//N stands for nonlocal.
+                                                this->LM->set_HSgamma(iw1_all, iw2_all, nlm_tmp, NLloc);//N stands for nonlocal.
 											}
 										}
 										else
@@ -737,7 +746,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 					{
 						const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
 						const int iw1_all = start1 + j;
-						const int mu = pv->trace_loc_row[iw1_all];
+                        const int mu = pv->global2local_row(iw1_all);
 						if(mu < 0)continue; 
 
 						// fix a serious bug: atom2[T2] -> atom2
@@ -746,7 +755,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						{
 							const int k0 = k/GlobalV::NPOL;
 							const int iw2_all = start2 + k;
-							const int nu = pv->trace_loc_col[iw2_all];						
+                            const int nu = pv->global2local_col(iw2_all);
 							if(nu < 0)continue;
 							total_nnr++;
 							nnr++;
@@ -844,8 +853,8 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                 for(int iw1=0; iw1<nw1_tot; ++iw1)
                 {
                     const int iw1_all = start1 + iw1;
-                    const int iw1_local = pv->trace_loc_row[iw1_all];
-                    const int iw2_local = pv->trace_loc_col[iw1_all];
+                    const int iw1_local = pv->global2local_row(iw1_all);
+                    const int iw2_local = pv->global2local_col(iw1_all);
 
                     if(iw1_local < 0 && iw2_local < 0) continue;
 
@@ -908,13 +917,13 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                     for(int iw1=0; iw1<nw1_tot; ++iw1)
                     {
                         const int iw1_all = start1 + iw1;
-                        const int iw1_local = pv->trace_loc_row[iw1_all];
+                        const int iw1_local = pv->global2local_row(iw1_all);
                         if(iw1_local < 0) continue;
                         const int iw1_0 = iw1/GlobalV::NPOL;
                         for(int iw2=0; iw2<nw2_tot; ++iw2)
                         {
                             const int iw2_all = start2 + iw2;
-                            const int iw2_local = pv->trace_loc_col[iw2_all];
+                            const int iw2_local = pv->global2local_col(iw2_all);
                             if(iw2_local < 0) continue;
                             const int iw2_0 = iw2/GlobalV::NPOL;
                             #ifdef _OPENMP
@@ -948,8 +957,8 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                             }
                             assert(ib==nlm1.size());
 
-                            const int ir = pv->trace_loc_row[ iw1_all ];
-                            const int ic = pv->trace_loc_col[ iw2_all ];
+                            const int ir = pv->global2local_row(iw1_all);
+                            const int ic = pv->global2local_col(iw2_all);
                             long index=0;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                             {

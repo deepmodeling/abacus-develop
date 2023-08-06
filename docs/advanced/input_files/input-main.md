@@ -403,11 +403,18 @@ These variables are used to control general system parameters.
 
 - **Type**: Real
 - **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
-  
-  Note: if *[calculation](#calculation)=cell_relax*, this value can be dynamically enlarged corresponding to the accuracy loss of the lattice parameters and atom positions during the relaxation. There will be a warning message in that case.
-
+  > Note: if *[calculation](#calculation)==cell_relax*, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation. The new value will be printed in `OUT.${suffix}/running_cell-relax.log` in that case.
 - **Default**: 1.0e-5
 - **Unit**:  Bohr
+
+### symmetry_autoclose
+
+- **Type**: Boolean
+- **Availability**: *[symmetry](#symmetry)==1*
+- **Description**: Control how to deal with error in symmetry analysis due to inaccurate lattice parameters or atom positions in STRU file, especially useful when *[calculation](#calculation)==cell-relax*
+  - False: quit with an error message
+  - True: automatically set symmetry to 0 and continue running without symmetry analysis
+- **Default**: False
 
 ### kpar
 
@@ -2388,7 +2395,7 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d2`, `d3_0`, or `d3_bj`
-- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
 - **Default**:
   - 0.75: if `vdw_method` is set to `d2`
   - 1.0: if `vdw_method` is set to `d3_0` or `d3_bj`
@@ -2397,7 +2404,7 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
 - **Default**:
   - 0.722: if `vdw_method` is set to `d3_0`
   - 0.7875: if `vdw_method` is set to `d3_bj`
@@ -2406,7 +2413,7 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
 - **Default**:
   - 1.217: if `vdw_method` is set to `d3_0`
   - 0.4289: if `vdw_method` is set to `d3_bj`
@@ -2415,7 +2422,7 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
 - **Default**:
   - 1.0: if `vdw_method` is set to `d3_0`
   - 4.4407: if `vdw_method` is set to `d3_bj`

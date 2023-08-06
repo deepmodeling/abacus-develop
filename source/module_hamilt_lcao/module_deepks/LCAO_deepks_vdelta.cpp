@@ -23,15 +23,11 @@
 //for gamma_only calculations
 void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* trace_loc_row,
-    const int* trace_loc_col,
-	const int nrow,
-	const int ncol)
+    Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_DESCRIPTOR", "add_v_delta");
     ModuleBase::timer::tick ("LCAO_gen_fixedH","add_v_delta");
-    ModuleBase::GlobalFunc::ZEROS(this->H_V_delta,nrow*ncol); //init before calculate
+    ModuleBase::GlobalFunc::ZEROS(this->H_V_delta, pv->nrow * pv->ncol); //init before calculate
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
@@ -76,13 +72,13 @@ void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1;
-						const int iw1_local = trace_loc_row[iw1_all];
+                        const int iw1_local = pv->global2local_row(iw1_all);
 						if(iw1_local < 0)continue;
 						const int iw1_0 = iw1/GlobalV::NPOL;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2;
-							const int iw2_local = trace_loc_col[iw2_all];
+                            const int iw2_local = pv->global2local_col(iw2_all);
 							if(iw2_local < 0)continue;
 							const int iw2_0 = iw2/GlobalV::NPOL;
 
@@ -115,11 +111,11 @@ void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
 
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                             {
-                                iic=iw1_local+iw2_local*nrow;
+                                iic = iw1_local + iw2_local * pv->nrow;
                             }
                             else
                             {
-                                iic=iw1_local*ncol+iw2_local;
+                                iic = iw1_local * pv->ncol + iw2_local;
                             }
                             this->H_V_delta[iic] += nlm;
 						}//iw2
@@ -133,22 +129,22 @@ void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
 	return;
 }
 
-void LCAO_Deepks::check_v_delta(const int nrow, const int ncol)
+void LCAO_Deepks::check_v_delta()
 {
 	std::ofstream ofs("H_V_delta.dat");
 	ofs << std::setprecision(10);
-	for(int irow=0;irow<nrow;irow++)
+    for (int irow = 0;irow < pv->nrow;irow++)
 	{
-		for (int icol=0;icol<ncol;icol++)
+        for (int icol = 0;icol < pv->ncol;icol++)
 		{
 			int iic;
             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
 			{
-				iic=irow+icol*nrow;
+                iic = irow + icol * pv->nrow;
 			}
 			else
 			{
-				iic=irow*ncol+icol;
+                iic = irow * pv->ncol + icol;
 			}
 			ofs<<H_V_delta[iic]<< " ";
 		}
@@ -160,9 +156,7 @@ void LCAO_Deepks::check_v_delta(const int nrow, const int ncol)
 //used in multi-k calculations
 void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver &GridD,
-    const int* trace_loc_row,
-    const int* trace_loc_col,
+    Grid_Driver& GridD,
     const int nnr_in)
 {
     ModuleBase::TITLE("LCAO_DESCRIPTOR", "add_v_delta_k");
@@ -290,7 +284,7 @@ void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
 						for (int iw1=0; iw1<atom1->nw*GlobalV::NPOL; iw1++)
 						{
 							const int iw1_all = start1 + iw1;
-							const int mu = trace_loc_row[iw1_all];
+                            const int mu = pv->global2local_row(iw1_all);
 							if(mu < 0)continue; 
 
 							// fix a serious bug: atom2[T2] -> atom2
@@ -298,7 +292,7 @@ void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
 							for (int iw2=0; iw2<atom2->nw*GlobalV::NPOL; iw2++)
 							{
 								const int iw2_all = start2 + iw2;
-								const int nu = trace_loc_col[iw2_all];						
+                                const int nu = pv->global2local_col(iw2_all);
 								if(nu < 0)continue;
   
                                 std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][iw1_all][0];
@@ -336,7 +330,7 @@ void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
 					{
 						const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
 						const int iw1_all = start1 + j;
-						const int mu = trace_loc_row[iw1_all];
+                        const int mu = pv->global2local_row(iw1_all);
 						if(mu < 0)continue; 
 
 						// fix a serious bug: atom2[T2] -> atom2
@@ -345,7 +339,7 @@ void LCAO_Deepks::add_v_delta_k(const UnitCell &ucell,
 						{
 							const int k0 = k/GlobalV::NPOL;
 							const int iw2_all = start2 + k;
-							const int nu = trace_loc_col[iw2_all];						
+                            const int nu = pv->global2local_col(iw2_all);
 							if(nu < 0)continue;
 
 							nnr++;
@@ -378,10 +372,7 @@ void LCAO_Deepks::check_v_delta_k(const int nnr)
 
 //calculating sum of correction band energies
 //for gamma_only calculations
-void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix> &dm,
-	const int* trace_loc_row,
-    const int* trace_loc_col,
-	const int nrow)
+void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
     this->e_delta_band = 0;
@@ -389,12 +380,12 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix> &dm,
     {
         for (int j = 0; j < GlobalV::NLOCAL; ++j)
         {
-            const int mu = trace_loc_row[j];
-            const int nu = trace_loc_col[i];
+            const int mu = pv->global2local_row(j);
+            const int nu = pv->global2local_col(i);
             
             if (mu >= 0 && nu >= 0)
             {                
-                const int index=nu*nrow+mu;
+                const int index = nu * pv->nrow + mu;
                 for (int is = 0; is < dm.size(); ++is)  //dm.size() == GlobalV::NSPIN
                 {
                     this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
@@ -410,12 +401,8 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix> &dm,
 
 //calculating sum of correction band energies
 //for multi_k calculations
-void LCAO_Deepks::cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
-    const int* trace_loc_row,
-    const int* trace_loc_col,
-    const int nks,
-	const int nrow,
-	const int ncol)
+void LCAO_Deepks::cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
+    const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
     std::complex<double> e_delta_band_k=std::complex<double>(0.0,0.0);
@@ -423,19 +410,19 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix
     {
         for (int j = 0; j < GlobalV::NLOCAL; ++j)
         {
-            const int mu = trace_loc_row[j];
-            const int nu = trace_loc_col[i];
+            const int mu = pv->global2local_row(j);
+            const int nu = pv->global2local_col(i);
             
             if (mu >= 0 && nu >= 0)
             {                
                 int iic;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                 {
-                    iic=mu+nu*nrow;
+                    iic = mu + nu * pv->nrow;
                 }
                 else
                 {
-                    iic=mu*ncol+nu;
+                    iic = mu * pv->ncol + nu;
                 }
                 for(int ik=0;ik<nks;ik++)
                 {

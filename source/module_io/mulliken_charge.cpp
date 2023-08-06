@@ -67,8 +67,8 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
                 if(uhm.LM->ParaV->in_this_processor(i, i))
                 {
-                    const int ir = uhm.LM->ParaV->trace_loc_row[i];
-                    const int ic = uhm.LM->ParaV->trace_loc_col[i];
+                    const int ir = uhm.LM->ParaV->global2local_row(i);
+                    const int ic = uhm.LM->ParaV->global2local_col(i);
                     MecMulP(is, i) += mud(ic, ir);
                 }
         }
@@ -85,26 +85,26 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
                     const int k2 = 2*j+1;
                     if(uhm.LM->ParaV->in_this_processor(k1, k1))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k1];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k1];
+                        const int ir = uhm.LM->ParaV->global2local_row(k1);
+                        const int ic = uhm.LM->ParaV->global2local_col(k1);
                         MecMulP(0, j) += mud(ir, ic);
                     }
                     if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k1];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k2];
+                        const int ir = uhm.LM->ParaV->global2local_row(k1);
+                        const int ic = uhm.LM->ParaV->global2local_col(k2);
                         MecMulP(1, j) += mud(ir, ic);
                     }
                     if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k2];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k1];
+                        const int ir = uhm.LM->ParaV->global2local_row(k2);
+                        const int ic = uhm.LM->ParaV->global2local_col(k1);
                         MecMulP(2, j) += mud(ir, ic);
                     }
                     if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k2];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k2];
+                        const int ir = uhm.LM->ParaV->global2local_row(k2);
+                        const int ic = uhm.LM->ParaV->global2local_col(k2);
                         MecMulP(3, j) += mud(ir, ic);
                     }
                 }
@@ -171,8 +171,8 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
                 if(uhm.LM->ParaV->in_this_processor(i, i))
                 {
-                    const int ir = uhm.LM->ParaV->trace_loc_row[i];
-                    const int ic = uhm.LM->ParaV->trace_loc_col[i];
+                    const int ir = uhm.LM->ParaV->global2local_row(i);
+                    const int ic = uhm.LM->ParaV->global2local_col(i);
                     MecMulP(spin, i) += mud(ic, ir).real();
                 }
         }
@@ -188,29 +188,29 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
                     const int k2 = 2*j+1;
                     if(uhm.LM->ParaV->in_this_processor(k1, k1))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k1];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k1];
+                        const int ir = uhm.LM->ParaV->global2local_row(k1);
+                        const int ic = uhm.LM->ParaV->global2local_col(k1);
                         MecMulP(0, j) += mud(ic, ir).real();
                         MecMulP(3, j) += mud(ic, ir).real();
                     }
                     if(uhm.LM->ParaV->in_this_processor(k1, k2))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k1];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k2];
+                        const int ir = uhm.LM->ParaV->global2local_row(k1);
+                        const int ic = uhm.LM->ParaV->global2local_col(k2);
                         MecMulP(1, j) += mud(ic, ir).real();
                         MecMulP(2, j) += mud(ic, ir).imag();
                     }
                     if(uhm.LM->ParaV->in_this_processor(k2, k1))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k2];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k1];
+                        const int ir = uhm.LM->ParaV->global2local_row(k2);
+                        const int ic = uhm.LM->ParaV->global2local_col(k1);
                         MecMulP(1, j) += mud(ic, ir).real();
                         MecMulP(2, j) -= mud(ic, ir).imag();
                     }
                     if(uhm.LM->ParaV->in_this_processor(k2, k2))
                     {
-                        const int ir = uhm.LM->ParaV->trace_loc_row[k2];
-                        const int ic = uhm.LM->ParaV->trace_loc_col[k2];
+                        const int ir = uhm.LM->ParaV->global2local_row(k2);
+                        const int ic = uhm.LM->ParaV->global2local_col(k2);
                         MecMulP(0, j) += mud(ic, ir).real();
                         MecMulP(3, j) -= mud(ic, ir).real();
                     }
