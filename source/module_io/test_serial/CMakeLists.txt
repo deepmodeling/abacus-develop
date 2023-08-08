@@ -89,7 +89,7 @@ AddTest(
 
 AddTest(
   TARGET io_nscf_band
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES nscf_band_test.cpp ../nscf_band.cpp
 )
 
