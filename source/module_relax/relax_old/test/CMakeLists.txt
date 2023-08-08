@@ -51,6 +51,6 @@ AddTest(
 
 AddTest(
   TARGET ions_move_sd_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES ions_move_sd_test.cpp ../ions_move_sd.cpp ../ions_move_basic.cpp
 )
