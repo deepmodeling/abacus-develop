@@ -39,7 +39,7 @@ AddTest(
 
 AddTest(
   TARGET ions_move_bfgs_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES ions_move_bfgs_test.cpp ../ions_move_bfgs.cpp ../ions_move_basic.cpp ../bfgs_basic.cpp
 )
 
