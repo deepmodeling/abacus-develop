@@ -41,7 +41,7 @@ AddTest(
 
 AddTest(
   TARGET HSolver_pw
-  LIBS ${math_libs} psi device base
+  LIBS ${math_libs} psi device base_serial
   SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp
 )
 
