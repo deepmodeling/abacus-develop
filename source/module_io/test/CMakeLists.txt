@@ -130,7 +130,7 @@ AddTest(
 
 AddTest(
   TARGET io_file_reader_test
-  LIBS base ${math_libs} device
+  LIBS base_serial ${math_libs} device
   SOURCES file_reader_test.cpp ../file_reader.cpp
 )
 
