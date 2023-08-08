@@ -95,6 +95,6 @@ AddTest(
 
 AddTest(
   TARGET io_read_wfc_nao_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES read_wfc_nao_test.cpp ../read_wfc_nao.cpp ../../module_psi/psi.cpp
 )
