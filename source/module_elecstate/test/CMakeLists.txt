@@ -17,7 +17,7 @@ AddTest(
 
 AddTest(
   TARGET elecstate_occupy
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES elecstate_occupy_test.cpp ../occupy.cpp
 )
 
