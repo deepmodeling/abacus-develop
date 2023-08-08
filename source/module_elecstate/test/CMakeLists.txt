@@ -29,7 +29,7 @@ AddTest(
 
 AddTest(
   TARGET elecstate_fp_energy
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp
 )
 
