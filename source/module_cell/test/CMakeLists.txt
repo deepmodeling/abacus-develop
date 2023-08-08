@@ -29,7 +29,7 @@ add_library(cell_info OBJECT ${cell_simple_srcs})
 
 AddTest(
   TARGET cell_read_pp
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES read_pp_test.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
   ../../module_io/output.cpp
 )
@@ -98,7 +98,7 @@ add_test(NAME cell_parallel_kpoints_test
 
 AddTest(
   TARGET cell_unitcell_test
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base_serial device cell_serial
   SOURCES unitcell_test.cpp ../../module_io/output.cpp
 )
 

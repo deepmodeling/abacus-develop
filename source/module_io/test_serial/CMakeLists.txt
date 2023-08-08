@@ -57,6 +57,22 @@ add_library(
     ${LIBM_SRC_serial}
 )
 
+add_library(
+    cell_serial
+    OBJECT
+    ../../module_cell/unitcell.cpp
+    ../../module_cell/read_atoms.cpp
+    ../../module_cell/read_cell_pseudopots.cpp
+    ../../module_cell/atom_spec.cpp
+    ../../module_cell/atom_pseudo.cpp
+    ../../module_cell/pseudo_nc.cpp
+    ../../module_cell/read_pp.cpp
+    ../../module_cell/read_pp_upf201.cpp
+    ../../module_cell/read_pp_upf100.cpp
+    ../../module_cell/read_pp_vwr.cpp
+    ../../module_cell/read_pp_blps.cpp
+)
+
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
@@ -67,19 +83,8 @@ AddTest(
 
 AddTest(
   TARGET io_dm_io
-  LIBS ${math_libs} base_serial device
+  LIBS ${math_libs} base_serial device cell_serial
   SOURCES dm_io_test.cpp ../read_dm.cpp ../write_dm.cpp ../output.cpp
-  ../../module_cell/unitcell.cpp
-  ../../module_cell/read_atoms.cpp
-  ../../module_cell/read_cell_pseudopots.cpp
-  ../../module_cell/atom_spec.cpp
-  ../../module_cell/atom_pseudo.cpp
-  ../../module_cell/pseudo_nc.cpp
-  ../../module_cell/read_pp.cpp
-  ../../module_cell/read_pp_upf201.cpp
-  ../../module_cell/read_pp_upf100.cpp
-  ../../module_cell/read_pp_vwr.cpp
-  ../../module_cell/read_pp_blps.cpp
 )
 
 AddTest(

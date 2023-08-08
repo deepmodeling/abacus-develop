@@ -124,7 +124,7 @@ AddTest(
 
 AddTest(
   TARGET io_sparse_matrix_test
-  LIBS base ${math_libs} device
+  LIBS base_serial ${math_libs} device
   SOURCES sparse_matrix_test.cpp ../sparse_matrix.cpp
 )
 
