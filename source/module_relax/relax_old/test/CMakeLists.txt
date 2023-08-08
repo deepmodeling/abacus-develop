@@ -21,7 +21,7 @@ AddTest(
 
 AddTest(
   TARGET bfgs_basic_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES bfgs_basic_test.cpp ../bfgs_basic.cpp
 )
 
