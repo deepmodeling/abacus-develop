@@ -75,7 +75,7 @@ AddTest(
 
 AddTest(
   TARGET charge_test
-  LIBS ${math_libs} planewave_serial base device cell_info
+  LIBS ${math_libs} planewave_serial base_serial device cell_serial
   SOURCES charge_test.cpp ../module_charge/charge.cpp
     ../../module_io/output.cpp
 )
