@@ -29,6 +29,6 @@ AddTest(
 
 AddTest(
   TARGET basis_pw_k_serial
-  LIBS ${math_libs} planewave_serial device base
+  LIBS ${math_libs} planewave_serial device base_serial
   SOURCES pw_basis_k_test.cpp
 )
