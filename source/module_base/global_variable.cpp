@@ -204,6 +204,7 @@ bool FINAL_SCF = false; // LiuXh add 20180619
 bool deepks_out_labels = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
 bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
 bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
+int deepks_v_delta = 0;//for v_delta label. xinyuan added 2023-2-15
 bool deepks_out_unittest = false;
 
 bool deepks_setorb = false;

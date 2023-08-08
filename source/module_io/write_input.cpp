@@ -187,6 +187,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_out_labels", deepks_out_labels, ">0 compute descriptor for deepks");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_scf", deepks_scf, ">0 add V_delta to Hamiltonian");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_bandgap", deepks_bandgap, ">0 for bandgap label");
+    ModuleBase::GlobalFunc::OUTP(ofs, "deepks_v_delta", deepks_v_delta, ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for psialpha and grad_evdm ( can save memory )");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "deepks_out_unittest",
                                  deepks_out_unittest,

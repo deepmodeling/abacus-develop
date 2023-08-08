@@ -109,6 +109,61 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                 ld->save_npy_o(deepks_bands, "o_base.npy", nks); // no scf, o_tot=o_base
             }                                                    // end deepks_scf == 0
         }                                                        // end bandgap label
+        if(GlobalV::deepks_v_delta)//gamma only now
+        {
+            if(GlobalV::GAMMA_ONLY_LOCAL)
+            {
+                ModuleBase::matrix h_tot;
+                h_tot.create(GlobalV::NLOCAL,GlobalV::NLOCAL);
+
+                ld->collect_h_mat(ld->h_mat,h_tot,GlobalV::NLOCAL);
+                ld->save_npy_h(h_tot, "h_tot.npy",GlobalV::NLOCAL);
+
+                if(GlobalV::deepks_scf)
+                {
+                    ModuleBase::matrix v_delta;
+                    v_delta.create(GlobalV::NLOCAL,GlobalV::NLOCAL);
+                    ld->collect_h_mat(ld->H_V_delta,v_delta,GlobalV::NLOCAL);
+                    ld->save_npy_h(h_tot-v_delta, "h_base.npy",GlobalV::NLOCAL);
+                    ld->save_npy_h(v_delta, "v_delta.npy",GlobalV::NLOCAL);
+
+                    if(GlobalV::deepks_v_delta==1)//v_delta_precalc storage method 1
+                    {
+                        ld->cal_v_delta_precalc(GlobalV::NLOCAL,
+                                nat,
+                                ucell,
+                                orb,
+                                GridD);
+                    
+                        ld->save_npy_v_delta_precalc(nat, 1, GlobalV::NLOCAL);
+                    }
+                    else if(GlobalV::deepks_v_delta==2)//v_delta_precalc storage method 2:overlap_part
+                    {
+                        ld->prepare_psialpha(GlobalV::NLOCAL,
+                                    nat,
+                                    ucell,
+                                    orb,
+                                    GridD);
+                        
+                        ld->save_npy_psialpha(nat, 1, GlobalV::NLOCAL);
+
+                        ld->prepare_gevdm(
+                                    nat,
+                                    orb);
+
+                        ld->save_npy_gevdm(nat);
+                    }
+                }
+                else //deepks_scf == 0
+                {
+                    ld->save_npy_h(h_tot, "h_base.npy",GlobalV::NLOCAL);
+                }
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "V_delta label has not been developed for multi-k now!");
+            }
+        }//end v_delta label
     }                                                            // end deepks_out_labels
 
     // DeePKS PDM and descriptor
