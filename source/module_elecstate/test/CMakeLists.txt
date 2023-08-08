@@ -41,7 +41,7 @@ AddTest(
 
 AddTest(
   TARGET elecstate_base
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES elecstate_base_test.cpp ../elecstate.cpp ../occupy.cpp ../../module_psi/psi.cpp
 )
 
