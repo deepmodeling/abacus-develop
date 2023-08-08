@@ -92,7 +92,7 @@ AddTest(
 
 AddTest(
   TARGET charge_extra
-  LIBS ${math_libs} base device cell_info
+  LIBS ${math_libs} base_serial device cell_serial
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../module_io/read_cube.cpp ../../module_io/write_cube.cpp
   ../../module_io/output.cpp
 )
