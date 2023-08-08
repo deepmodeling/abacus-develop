@@ -23,7 +23,7 @@ add_library(
 
 AddTest(
   TARGET basis_pw_serial
-  LIBS ${math_libs} planewave_serial device base
+  LIBS ${math_libs} planewave_serial device base_serial
   SOURCES pw_basis_test.cpp
 )
 
