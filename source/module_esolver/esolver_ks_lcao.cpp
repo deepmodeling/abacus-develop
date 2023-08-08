@@ -611,13 +611,13 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO::out_mat_hs)
+        if (!GlobalV::GAMMA_ONLY_LOCAL && (hsolver::HSolverLCAO::out_mat_hs || GlobalV::deepks_v_delta))
         {
             this->UHM.GK.renew(true);
         }
         for (int ik = 0; ik < kv.nks; ++ik)
         {
-            if (hsolver::HSolverLCAO::out_mat_hs)
+            if (hsolver::HSolverLCAO::out_mat_hs || GlobalV::deepks_v_delta)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -646,6 +646,12 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                                     "data-" + std::to_string(ik),
                                     this->LOWF.ParaV[0],
                                     1); // LiuXh, 2017-03-21
+#ifdef __DEEPKS
+                if(GlobalV::deepks_v_delta)
+                {
+                    GlobalC::ld.save_h_mat(this->LM.Hloc.data(),this->LOWF.ParaV[0].nloc);
+                }
+#endif
             }
         }
     }

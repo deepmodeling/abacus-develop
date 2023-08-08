@@ -56,6 +56,9 @@ public:
     ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
     ModuleBase::matrix	o_delta;
 
+    ///(Unit: Ry) Hamiltonian matrix
+    double* h_mat;
+
     ///Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
     double* H_V_delta;
     ///Correction term to Hamiltonian, for multi-k
@@ -140,6 +143,12 @@ private:
     //orbital_precalc:[1,NAt,NDscrpt]; gvdm*orbital_pdm_shell
     torch::Tensor orbital_precalc_tensor;
 
+    double***** v_delta_pdm_shell;
+    torch::Tensor v_delta_precalc_tensor;
+    //for v_delta==2 , new v_delta_precalc storage method
+    torch::Tensor psialpha_tensor;
+    torch::Tensor gevdm_tensor;
+
     ///size of descriptor(projector) basis set
     int n_descriptor;
 
@@ -219,6 +228,10 @@ private:
     void init_orbital_pdm_shell(const int nks);
     void del_orbital_pdm_shell(const int nks);
 
+    //for v_delta label calculation; xinyuan added on 2023-2-22
+    void init_v_delta_pdm_shell(const int nks,const int nlocal);
+    void del_v_delta_pdm_shell(const int nks,const int nlocal);
+    
 //-------------------
 // LCAO_deepks_psialpha.cpp
 //-------------------
@@ -418,6 +431,12 @@ public:
 //11. cal_orbital_precalc_k : orbital_precalc is usted for training with orbital label, 
 //                         for multi-k case, which equals gvdm * orbital_pdm_shell, 
 //                         orbital_pdm_shell[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
+//12. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
+//                         which equals gvdm * v_delta_pdm_shell,
+//                         v_delta_pdm_shell = overlap * overlap
+//13. check_v_delta_precalc : check v_delta_precalc
+//14. prepare_psialpha : prepare psialpha for outputting npy file
+//15. prepare_gevdm : prepare gevdm for outputting npy file
 
 public:
 
@@ -465,6 +484,24 @@ public:
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD);
 
+    //calculates v_delta_precalc
+    void cal_v_delta_precalc(const int nlocal,
+        const int nat,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        Grid_Driver &GridD);
+    
+    void check_v_delta_precalc(const int nlocal,const int nat);
+
+    void prepare_psialpha(const int nlocal,
+        const int nat,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        Grid_Driver &GridD);
+    
+    void prepare_gevdm(
+        const int nat,
+        const LCAO_Orbitals &orb);
 
 private:
     const Parallel_Orbitals* pv;
@@ -491,6 +528,10 @@ private:
 //7. save_npy_s : stress
 //8. save_npy_o: orbital
 //9. save_npy_orbital_precalc: orbital_precalc -> orbital_precalc.npy
+//10. save_npy_h : Hamiltonian
+//11. save_npy_v_delta_precalc : v_delta_precalc
+//12. save_npy_psialpha : psialpha
+//13. save_npy_gevdm : grav_evdm , can use psialpha and gevdm to calculate v_delta_precalc
 
 public:
   
@@ -523,6 +564,12 @@ public:
     void save_npy_o(const ModuleBase::matrix &bandgap/**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/, const std::string &o_file, const int nks);
     void save_npy_orbital_precalc(const int nat, const int nks);
 
+    //xinyuan added on 2023-2-20
+    void save_npy_h(const ModuleBase::matrix &H,const std::string &h_file,const int nlocal);//just for gamma only
+    void save_npy_v_delta_precalc(const int nat, const int nks,const int nlocal);
+    void save_npy_psialpha(const int nat, const int nks,const int nlocal);
+    void save_npy_gevdm(const int nat);
+
 //-------------------
 // LCAO_deepks_mpi.cpp
 //-------------------
@@ -540,6 +587,14 @@ public:
         int ndim, //second dimension
         double** mat); //the array being reduced 
 #endif
+
+//-------------------
+// LCAO_deepks_hmat.cpp
+//-------------------
+    void save_h_mat(const double *h_mat_in,const int nloc);
+    void save_h_mat(const std::complex<double> *h_mat_in,const int nloc);
+    //Collect data in h_in to matrix h_out. Note that left lower trianger in h_out is filled
+    void collect_h_mat(const double *h_in,ModuleBase::matrix &h_out,const int nlocal);
 
 };
 

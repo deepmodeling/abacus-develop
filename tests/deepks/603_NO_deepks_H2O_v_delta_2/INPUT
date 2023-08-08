@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+suffix autotest
+calculation scf
+
+ecutwfc 100.000000
+scf_thr 5.000000e-07
+scf_nmax 35
+pseudo_dir ../../PP_ORB
+orbital_dir ../../PP_ORB
+basis_type lcao
+dft_functional pbe
+gamma_only 1
+mixing_type pulay
+mixing_beta 0.400000
+smearing_method gaussian
+smearing_sigma 0.020000
+cal_force 0
+cal_stress 0
+deepks_scf 1
+deepks_model model.ptg
+deepks_out_labels 1
+deepks_v_delta 2
