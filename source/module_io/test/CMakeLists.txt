@@ -89,7 +89,7 @@ AddTest(
 
 AddTest(
   TARGET io_write_wfc_nao
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp
 )
 
