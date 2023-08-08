@@ -69,7 +69,7 @@ AddTest(
 
 AddTest(
   TARGET potentials_new
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base_serial device
   SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
 )
 
