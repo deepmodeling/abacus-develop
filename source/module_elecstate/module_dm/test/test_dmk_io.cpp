@@ -52,7 +52,7 @@ protected:
 	int nnrg = 26*26;
 	int nks = 2;
 	std::vector<int> nw = {13};
-    int nlocal;
+	int nlocal = 0;
 	UnitCell* ucell;
 	std::vector<ModuleBase::ComplexMatrix> DMK;
 	K_Vectors* kv = nullptr;
