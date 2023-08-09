@@ -2,7 +2,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 
-// output DM_k
+// output the density matrix in k-space
 void elecstate::write_dmk(
     const K_Vectors& kv,
     const int& ik,
@@ -58,7 +58,7 @@ void elecstate::write_dmk(
     return;
 }
 
-
+// read the density matrix in k-space
 void elecstate::read_dmk(
     const K_Vectors& kv,
     const int& ik,
