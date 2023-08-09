@@ -166,12 +166,28 @@ class Paw_Cell
     // Input is latvec and lat0, will calculate the required info
     void set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double lat0);
     // FFT grid information, sets ngfft and ngfftdg
-    void set_libpaw_fft(const int * ngfft_in, const int * ngfftdg_in);
+    void set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
+        const int nxdg_in, const int nydg_in, const int nzdg_in);
     // Sets natom, ntypat, typat and xred
     void set_libpaw_atom(const int natom_in, const int ntypat_in, const int * typat_in, const double * xred_in);
     // Sets filename_list
     void set_libpaw_files();
     
+    // Extract the information
+    double get_libpaw_ecut() {return ecut;}
+    double get_libpaw_ecutpaw() {return ecutpaw;}
+    std::vector<double> get_libpaw_rprimd() {return rprimd;}
+    std::vector<double> get_libpaw_gprimd() {return gprimd;}
+    std::vector<double> get_libpaw_gmet() {return gmet;}
+    double get_libpaw_ucvol() {return ucvol;}
+    std::vector<int> get_libpaw_ngfft() {return ngfft;}
+    std::vector<int> get_libpaw_ngfftdg() {return ngfftdg;}
+    int get_libpaw_natom() {return natom;}
+    int get_libpaw_ntypat() {return ntypat;}
+    std::vector<int> get_libpaw_typat() {return typat;}
+    std::vector<double> get_libpaw_xred() {return xred;}
+    char* get_libpaw_filename_list() {return filename_list;}
+
     private:
 // Info to be passed to libpaw_interface:
 // 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
