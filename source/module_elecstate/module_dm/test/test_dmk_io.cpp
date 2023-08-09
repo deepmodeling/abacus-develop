@@ -95,21 +95,21 @@ TEST_F(DMKIOTest,IO)
 	for (int ik = 0;ik < kv->nks;++ik){
         ssdk = "./support/" + std::to_string(ik) + ".dmk";
 		//std::cout << ssdk << std::endl;
-        ModuleIO::read_dmk(*kv,ik,ssdk,DMK);
+        elecstate::read_dmk(*kv,ik,ssdk,DMK);
     }
 
 	// write
     int precision = 3;
     for (int ik = 0;ik < kv->nks;++ik){
         ssdk = "./support/" + std::to_string(ik) + ".dmk1";
-        ModuleIO::write_dmk(*kv,ik,ssdk,precision,DMK);
+        elecstate::write_dmk(*kv,ik,ssdk,precision,DMK);
     }
 
 	// read again
 	auto dmk = DMK;
 	for (int ik = 0;ik < kv->nks;++ik){
         ssdk = "./support/" + std::to_string(ik) + ".dmk";
-        ModuleIO::read_dmk(*kv,ik,ssdk,dmk);
+        elecstate::read_dmk(*kv,ik,ssdk,dmk);
     }
 
 	// compare DMK and dmk

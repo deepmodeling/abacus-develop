@@ -3,16 +3,16 @@
 #include "module_base/timer.h"
 
 // output DM_k
-void ModuleIO::write_dmk(
+void elecstate::write_dmk(
     const K_Vectors& kv,
     const int& ik,
 	const std::string &fn, 
 	const int &precision,
 	std::vector<ModuleBase::ComplexMatrix> &dm_k)
 {
-    ModuleBase::TITLE("ModuleIO","write_dm");
+    ModuleBase::TITLE("elecstate","write_dmk");
 
-	ModuleBase::timer::tick("ModuleIO","write_dm");
+	ModuleBase::timer::tick("elecstate","write_dmk");
 
 	time_t start, end;
 	std::ofstream ofs;
@@ -24,7 +24,7 @@ void ModuleIO::write_dmk(
 		ofs.open(fn.c_str());
 		if (!ofs)
 		{
-			ModuleBase::WARNING("ModuleIO::write_dm","Can't create DENSITY MATRIX File!");
+			ModuleBase::WARNING("elecstate::write_dmk","Can't create DENSITY MATRIX File!");
 		}
 
         ofs << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z << std::endl;
@@ -50,16 +50,16 @@ void ModuleIO::write_dmk(
 	if(GlobalV::MY_RANK==0)
 	{
 		end = time(NULL);
-		ModuleBase::GlobalFunc::OUT_TIME("write_dm",start,end);
+		ModuleBase::GlobalFunc::OUT_TIME("write_dmk",start,end);
 		ofs.close();
 	}
-	ModuleBase::timer::tick("ModuleIO","write_dm");
+	ModuleBase::timer::tick("elecstate","write_dmk");
 
     return;
 }
 
 
-void ModuleIO::read_dmk(
+void elecstate::read_dmk(
     const K_Vectors& kv,
     const int& ik,
 	const std::string &fn,
