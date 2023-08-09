@@ -190,3 +190,25 @@ TEST_F(PWBasisKTEST, CollectLocalPW)
 
 #undef private
 #undef protected
+
+// It is weird to init MPI again in this serial test, but it is necessary
+// to avoid "Attempting to use an MPI routine before initializing MPICH" in intel compiler.
+// The error happens somewhere in the SetupTransform test. 
+#include "mpi.h"
+int main(int argc, char **argv)
+{
+    MPI_Init(&argc, &argv);
+    testing::InitGoogleTest(&argc, argv);
+
+    int nproc;
+    int my_rank;
+
+    MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+
+    int result = RUN_ALL_TESTS();
+
+    MPI_Finalize();
+
+    return result;
+}

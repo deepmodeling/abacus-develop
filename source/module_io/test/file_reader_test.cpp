@@ -71,3 +71,22 @@ TEST_F(FileReaderTest, ReadLine)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("End of file"));
 }
+
+#include "mpi.h"
+int main(int argc, char **argv)
+{
+        MPI_Init(&argc, &argv);
+        testing::InitGoogleTest(&argc, argv);
+
+        int nproc;
+        int my_rank;
+
+        MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+        MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+
+        int result = RUN_ALL_TESTS();
+
+        MPI_Finalize();
+
+        return result;
+}

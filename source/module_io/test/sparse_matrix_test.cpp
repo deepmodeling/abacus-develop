@@ -232,3 +232,22 @@ TEST_F(SparseMatrixTest, CSRComplex)
     EXPECT_DOUBLE_EQ(smc1(1, 2).imag(), 0.0);
     EXPECT_DOUBLE_EQ(smc1(1, 2).real(), 0.0);
 }
+
+#include "mpi.h"
+int main(int argc, char **argv)
+{
+        MPI_Init(&argc, &argv);
+        testing::InitGoogleTest(&argc, argv);
+
+        int nproc;
+        int my_rank;
+
+        MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+        MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+
+        int result = RUN_ALL_TESTS();
+
+        MPI_Finalize();
+
+        return result;
+}
