@@ -56,7 +56,7 @@ For those who are interested in the source code, the following figure shows the 
 |-- module_elecstate            The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
-|-- module_esolver              The module for solving the eigenvalue problem with different theories including Kohn-Sham DFT, Stochastic DFT,
+|-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
 |-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations. 
 |   |-- module_ewald            The module for calculating the Ewald summation.
