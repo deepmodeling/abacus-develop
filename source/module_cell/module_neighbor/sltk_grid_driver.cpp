@@ -363,3 +363,20 @@ std::vector<AdjacentAtomInfo> Grid_Driver::get_adjs(const UnitCell& ucell_in)
     }
     return adjs;
 }
+
+// filter_adjs delete not adjacent atoms in adjs
+void filter_adjs(const std::vector<bool>& is_adj, AdjacentAtomInfo& adjs)
+{
+	const int size = adjs.adj_num+1;
+	for(int i = size-1; i >= 0; --i)
+	{
+		if(!is_adj[i])
+		{
+			adjs.adj_num--;
+			adjs.ntype.erase(adjs.ntype.begin()+i);
+			adjs.natom.erase(adjs.natom.begin()+i);
+			adjs.adjacent_tau.erase(adjs.adjacent_tau.begin()+i);
+			adjs.box.erase(adjs.box.begin()+i);
+		}
+	}
+}
