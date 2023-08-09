@@ -36,10 +36,10 @@ bool berryphase::berry_phase_flag=0;
 
 /**
  * - Tested Functions:
- *   - read_dm()
+ *   - read_dmk()
  *     - the function to read density matrix from file
  *     - the serial version without MPI
- *   - write_dm()
+ *   - write_dmk()
  *     - the function to write density matrix to file
  *     - the serial version without MPI
  */
@@ -84,39 +84,34 @@ TEST_F(DMKIOTest,IO)
 	GlobalV::NLOCAL = lgd;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo(nw, nlocal);
-	//std::cout << kv->nks << std::endl;
-	//for(int i=0; i<kv->nks; ++i)
-    //{
-    //    std::cout << "k" << i+1 << " " << kv->kvec_d[i].x << " " << kv->kvec_d[i].y<< " " <<kv->kvec_d[i].z<< std::endl;
-    //}
 
 	// read
 	std::string ssdk;
 	for (int ik = 0;ik < kv->nks;++ik){
-        ssdk = "./support/" + std::to_string(ik) + ".dmk";
+		ssdk = "./support/" + std::to_string(ik) + ".dmk";
 		//std::cout << ssdk << std::endl;
-        elecstate::read_dmk(*kv,ik,ssdk,DMK);
-    }
+		elecstate::read_dmk(*kv,ik,ssdk,DMK);
+	}
 
 	// write
-    int precision = 3;
-    for (int ik = 0;ik < kv->nks;++ik){
-        ssdk = "./support/" + std::to_string(ik) + ".dmk1";
-        elecstate::write_dmk(*kv,ik,ssdk,precision,DMK);
-    }
+	int precision = 3;
+	for (int ik = 0;ik < kv->nks;++ik){
+		ssdk = "./support/" + std::to_string(ik) + ".dmk1";
+		elecstate::write_dmk(*kv,ik,ssdk,precision,DMK);
+	}
 
 	// read again
 	auto dmk = DMK;
 	for (int ik = 0;ik < kv->nks;++ik){
-        ssdk = "./support/" + std::to_string(ik) + ".dmk";
-        elecstate::read_dmk(*kv,ik,ssdk,dmk);
-    }
+		ssdk = "./support/" + std::to_string(ik) + ".dmk";
+		elecstate::read_dmk(*kv,ik,ssdk,dmk);
+	}
 
 	// compare DMK and dmk
 	EXPECT_NEAR(DMK[0](0,0).real(),dmk[0](0,0).real(),1e-6);
 	EXPECT_NEAR(DMK[1](25,25).real(),dmk[1](25,25).real(),1e-6);
 	//for (int ik = 0;ik < kv->nks;++ik){
-        //ssdk = "./support/" + std::to_string(ik) + ".dmk1";
-        //remove(ssdk);
-    //}
+		//ssdk = "./support/" + std::to_string(ik) + ".dmk1";
+		//remove(ssdk);
+	//}
 }

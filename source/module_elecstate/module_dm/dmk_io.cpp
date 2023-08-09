@@ -81,11 +81,10 @@ void elecstate::read_dmk(
             // if the number is not match,
             // quit the program or not.
             bool quit=false;
-
+            
             ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].x,quit);
             ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].y,quit);
             ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].z,quit);
-
             ModuleBase::CHECK_INT(ifs, GlobalV::NLOCAL);
             ModuleBase::CHECK_INT(ifs, GlobalV::NLOCAL);
         }// If file exist, read in data.
