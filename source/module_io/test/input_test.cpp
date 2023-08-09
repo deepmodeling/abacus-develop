@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
+#include "mpi.h"
 /************************************************
  *  unit test of input.cpp
  ***********************************************/
@@ -1509,4 +1510,23 @@ TEST_F(ReadKSpacingTest, InvalidInput) {
 	std::string output;
 	output = testing::internal::GetCapturedStdout();
     EXPECT_TRUE(ifs.fail());
+}
+
+int main(int argc, char **argv)
+{
+        MPI_Init(&argc, &argv);
+        testing::InitGoogleTest(&argc, argv);
+
+        int nproc;
+        int my_rank;
+
+        MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+        MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+        //========================================
+
+        int result = RUN_ALL_TESTS();
+
+        MPI_Finalize();
+
+        return result;
 }
