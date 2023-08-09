@@ -78,7 +78,7 @@ For those who are interested in the source code, the following figure shows the 
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
 |-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW 
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
-|-- module_io                   The module for output properties including band structure, density of states, charge density, etc.
+|-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- module_md                   The module for performing molecular dynamics.
 |-- module_psi                  The module for defining the wave function and its operations.
 |-- module_relax                The module for performing structural optimization.
