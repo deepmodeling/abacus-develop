@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include<memory>
+#include <memory>
+#include "mpi.h"
 
 /************************************************
  *  unit test of read_pp
@@ -564,3 +565,21 @@ TEST_F(ReadPPTest, AverageLSPINORB1)
 	EXPECT_TRUE(upf->has_so); // has soc info
 }
 #undef private
+
+int main(int argc, char **argv)
+{
+        MPI_Init(&argc, &argv);
+        testing::InitGoogleTest(&argc, argv);
+
+        int nproc;
+        int my_rank;
+
+        MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+        MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+
+        int result = RUN_ALL_TESTS();
+
+        MPI_Finalize();
+
+        return result;
+}
