@@ -3,39 +3,37 @@
 #include "module_base/timer.h"
 
 // output the density matrix in k-space
+// weiqing add 2023/8/9
 void elecstate::write_dmk(
     const K_Vectors& kv,
     const int& ik,
-	const std::string &fn, 
-	const int &precision,
-	std::vector<ModuleBase::ComplexMatrix> &dm_k)
+    const std::string &fn, 
+    const int &precision,
+    std::vector<ModuleBase::ComplexMatrix> &dm_k)
 {
     ModuleBase::TITLE("elecstate","write_dmk");
+    ModuleBase::timer::tick("elecstate","write_dmk");
 
-	ModuleBase::timer::tick("elecstate","write_dmk");
+    time_t start, end;
+    std::ofstream ofs;
 
-	time_t start, end;
-	std::ofstream ofs;
-
-	if(GlobalV::MY_RANK==0)
-	{
-		start = time(NULL);
-
-		ofs.open(fn.c_str());
-		if (!ofs)
-		{
-			ModuleBase::WARNING("elecstate::write_dmk","Can't create DENSITY MATRIX File!");
-		}
-
+    if(GlobalV::MY_RANK==0)
+    {
+        start = time(NULL);
+        ofs.open(fn.c_str());
+        if (!ofs)
+        {
+            ModuleBase::WARNING("elecstate::write_dmk","Can't create DENSITY MATRIX File!");
+        }
         ofs << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z << std::endl;
-		//ofs << "\n " << ef << " (fermi energy)";
+        //ofs << "\n " << ef << " (fermi energy)";
 
-		ofs << "\n  " << GlobalV::NLOCAL << " " << GlobalV::NLOCAL << std::endl;
+        ofs << "\n  " << GlobalV::NLOCAL << " " << GlobalV::NLOCAL << std::endl;
 
-		ofs << std::setprecision(precision);
-		ofs << std::scientific;
+        ofs << std::setprecision(precision);
+        ofs << std::scientific;
 
-	}
+    }
 
     for(int i=0; i<GlobalV::NLOCAL; ++i)
     {
@@ -47,13 +45,13 @@ void elecstate::write_dmk(
         }
     }
 
-	if(GlobalV::MY_RANK==0)
-	{
-		end = time(NULL);
-		ModuleBase::GlobalFunc::OUT_TIME("write_dmk",start,end);
-		ofs.close();
-	}
-	ModuleBase::timer::tick("elecstate","write_dmk");
+    if(GlobalV::MY_RANK==0)
+    {
+        end = time(NULL);
+        ModuleBase::GlobalFunc::OUT_TIME("write_dmk",start,end);
+        ofs.close();
+    }
+    ModuleBase::timer::tick("elecstate","write_dmk");
 
     return;
 }
@@ -65,7 +63,7 @@ void elecstate::read_dmk(
 	const std::string &fn,
 	std::vector<ModuleBase::ComplexMatrix> &dm_k)
 {
-    //weiqing modify 2023-8-7
+    //
     bool quit_abacus = false;
 
     std::ifstream ifs;
