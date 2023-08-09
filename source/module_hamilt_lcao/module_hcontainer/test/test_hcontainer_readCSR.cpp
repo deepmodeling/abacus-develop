@@ -53,7 +53,7 @@ class ReadHContainerTest : public testing::Test
     // nw is the number of orbitals of each atom
     // it should container ucell.nat elements
     std::vector<int> nw = {13};
-    int nlocal;
+    int nlocal = 0;
     void SetUp() override
     {
         ucell = utp.SetUcellInfo(nw, nlocal);
