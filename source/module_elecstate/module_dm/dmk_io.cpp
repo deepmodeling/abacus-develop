@@ -1,14 +1,13 @@
 #include "dmk_io.h"
-#include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 
 // output the density matrix in k-space
 // weiqing add 2023/8/9
 void elecstate::write_dmk(
-    const K_Vectors& kv,
-    const int& ik,
-    const std::string &fn, 
-    const int &precision,
+    const K_Vectors& kv, // k-vectors
+    const int& ik, // index of k-vector
+    const int& nlocal, // number of local orbitals
+    const std::string &fn, // file name
     std::vector<ModuleBase::ComplexMatrix> &dm_k)
 {
     ModuleBase::TITLE("elecstate","write_dmk");
@@ -17,27 +16,18 @@ void elecstate::write_dmk(
     time_t start, end;
     std::ofstream ofs;
 
-    if(GlobalV::MY_RANK==0)
+    start = time(NULL);
+    ofs.open(fn.c_str());
+    if (!ofs)
     {
-        start = time(NULL);
-        ofs.open(fn.c_str());
-        if (!ofs)
-        {
-            ModuleBase::WARNING("elecstate::write_dmk","Can't create DENSITY MATRIX File!");
-        }
-        ofs << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z << std::endl;
-        //ofs << "\n " << ef << " (fermi energy)";
-
-        ofs << "\n  " << GlobalV::NLOCAL << " " << GlobalV::NLOCAL << std::endl;
-
-        ofs << std::setprecision(precision);
-        ofs << std::scientific;
-
+        ModuleBase::WARNING("elecstate::write_dmk","Can't create DENSITY MATRIX File!");
     }
-
-    for(int i=0; i<GlobalV::NLOCAL; ++i)
+    ofs << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z << std::endl;
+    ofs << "\n  " << nlocal << " " << nlocal << std::endl;
+    
+    for(int i=0; i<nlocal; ++i)
     {
-        for(int j=0; j<GlobalV::NLOCAL; ++j)
+        for(int j=0; j<nlocal; ++j)
         {
             if(j%8==0) ofs << "\n";
             ofs << " " << dm_k[ik](i,j).real();
@@ -45,21 +35,21 @@ void elecstate::write_dmk(
         }
     }
 
-    if(GlobalV::MY_RANK==0)
-    {
-        end = time(NULL);
-        ModuleBase::GlobalFunc::OUT_TIME("write_dmk",start,end);
-        ofs.close();
-    }
+    end = time(NULL);
+    ModuleBase::GlobalFunc::OUT_TIME("write_dmk",start,end);
+    ofs.close();
+    
     ModuleBase::timer::tick("elecstate","write_dmk");
 
     return;
 }
 
 // read the density matrix in k-space
+// weiqing add 2023/8/9
 void elecstate::read_dmk(
     const K_Vectors& kv,
     const int& ik,
+    const int& nlocal,
 	const std::string &fn,
 	std::vector<ModuleBase::ComplexMatrix> &dm_k)
 {
@@ -67,32 +57,29 @@ void elecstate::read_dmk(
     bool quit_abacus = false;
 
     std::ifstream ifs;
-    if(GlobalV::MY_RANK==0)
-    {
-        ifs.open(fn.c_str());
-        if (!ifs)
-        {
-            //xiaohui modify 2015-03-25
-            //quit_mesia = true;
-            quit_abacus = true;
-        }
-        else
-        {
-            // if the number is not match,
-            // quit the program or not.
-            bool quit=false;
-            
-            ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].x,quit);
-            ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].y,quit);
-            ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].z,quit);
-            ModuleBase::CHECK_INT(ifs, GlobalV::NLOCAL);
-            ModuleBase::CHECK_INT(ifs, GlobalV::NLOCAL);
-        }// If file exist, read in data.
-    } // Finish reading the first part of density matrix.
 
-    for(int i=0; i<GlobalV::NLOCAL; ++i)
+    ifs.open(fn.c_str());
+    if (!ifs)
     {
-        for(int j=0; j<GlobalV::NLOCAL; ++j)
+        quit_abacus = true;
+    }
+    else
+    {
+        // if the number is not match,
+        // quit the program or not.
+        bool quit=false;
+            
+        ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].x,quit);
+        ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].y,quit);
+        ModuleBase::CHECK_DOUBLE(ifs,kv.kvec_d[ik].z,quit);
+        ModuleBase::CHECK_INT(ifs, nlocal);
+        ModuleBase::CHECK_INT(ifs, nlocal);
+    }// If file exist, read in data.
+    // Finish reading the first part of density matrix.
+
+    for(int i=0; i<nlocal; ++i)
+    {
+        for(int j=0; j<nlocal; ++j)
         {
             ifs >> dm_k[ik](i,j);
         }

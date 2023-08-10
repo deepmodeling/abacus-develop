@@ -49,7 +49,6 @@ class DMKIOTest : public ::testing::Test
 protected:
 	int nspin = 1;
 	int lgd = 26;
-	int nnrg = 26*26;
 	int nks = 2;
 	std::vector<int> nw = {13};
 	int nlocal = 0;
@@ -81,7 +80,6 @@ protected:
 
 TEST_F(DMKIOTest,IO)
 {
-	GlobalV::NLOCAL = lgd;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo(nw, nlocal);
 
@@ -90,21 +88,21 @@ TEST_F(DMKIOTest,IO)
 	for (int ik = 0;ik < kv->nks;++ik){
 		ssdk = "./support/" + std::to_string(ik) + ".dmk";
 		//std::cout << ssdk << std::endl;
-		elecstate::read_dmk(*kv,ik,ssdk,DMK);
+		elecstate::read_dmk(*kv,ik,nlocal,ssdk,DMK);
 	}
 
 	// write
 	int precision = 3;
 	for (int ik = 0;ik < kv->nks;++ik){
 		ssdk = "./support/" + std::to_string(ik) + ".dmk1";
-		elecstate::write_dmk(*kv,ik,ssdk,precision,DMK);
+		elecstate::write_dmk(*kv,ik,nlocal,ssdk,DMK);
 	}
 
 	// read again
 	auto dmk = DMK;
 	for (int ik = 0;ik < kv->nks;++ik){
 		ssdk = "./support/" + std::to_string(ik) + ".dmk";
-		elecstate::read_dmk(*kv,ik,ssdk,dmk);
+		elecstate::read_dmk(*kv,ik,nlocal,ssdk,dmk);
 	}
 
 	// compare DMK and dmk

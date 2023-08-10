@@ -9,9 +9,9 @@
 namespace elecstate
 {
 	// write density matrix dm(k) into *.dmk
-	void write_dmk(const K_Vectors& kv,const int& ik,const std::string &fn, const int &precision,std::vector<ModuleBase::ComplexMatrix> &dm_k);
+	void write_dmk(const K_Vectors& kv,const int& ik,const int& nlocal,const std::string &fn,std::vector<ModuleBase::ComplexMatrix> &dm_k);
 	// read *.dmk into density matrix dm(k)
-	void read_dmk(const K_Vectors& kv,const int& ik,const std::string &fn,std::vector<ModuleBase::ComplexMatrix> &dm_k);
+	void read_dmk(const K_Vectors& kv,const int& ik,const int& nlocal,const std::string &fn,std::vector<ModuleBase::ComplexMatrix> &dm_k);
 };
 
 #endif
