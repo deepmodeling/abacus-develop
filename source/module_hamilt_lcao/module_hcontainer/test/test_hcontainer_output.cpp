@@ -36,13 +36,12 @@ class OutputHContainerTest : public testing::Test
             ucell.iat2ia[iat] = iat;
             ucell.iat2it[iat] = 0;
         }
+        ucell.atoms[0].na = 2;
         ucell.atoms[0].nw = 2;
         ucell.iwt2iat = new int[4];
         ucell.iwt2iw = new int[4];
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
-        ucell.iat2iwt.resize(ucell.nat);
-        ucell.iat2iwt[0] = 0;
-        ucell.iat2iwt[1] = 2;
+        ucell.set_iat2iwt(1);
         ucell.itia2iat(0, 0) = 0;
         ucell.itia2iat(0, 1) = 1;
         ucell.iwt2iat[0] = 0;
