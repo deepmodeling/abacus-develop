@@ -91,7 +91,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 		{
 #ifdef __MPI
 			int is_initialized;
-    			MPI_Initialized(&is_initialized);
+    		MPI_Initialized(&is_initialized);
 			if(is_initialized)
 			{
 				timer_one.cpu_start = MPI_Wtime();
@@ -106,7 +106,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 		{
 #ifdef __MPI
 			int is_initialized;
-    			MPI_Initialized(&is_initialized);
+    		MPI_Initialized(&is_initialized);
 			if(is_initialized)
 			{
 				timer_one.cpu_second += MPI_Wtime() - timer_one.cpu_start;
