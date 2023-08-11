@@ -45,32 +45,40 @@ void csrFileReader<T>::parseFile()
         readLine();
         ss >> RCoord[0] >> RCoord[1] >> RCoord[2] >> nonZero;
         RCoordinates.push_back(RCoord);
-
-        std::vector<T> csr_values(nonZero);
-        std::vector<int> csr_col_ind(nonZero);
-        std::vector<int> csr_row_ptr(matrixDimension + 1);
-
-        // read CSR values
-        readLine();
-        for (int i = 0; i < nonZero; i++)
+        if (nonZero > matrixDimension * matrixDimension)
         {
-            ss >> csr_values[i];
+            ModuleBase::WARNING_QUIT("csrFileReader::parseFile",
+                                     "Number of non-zero elements is larger than matrix dimension");
         }
-        // read column indices
-        readLine();
-        for (int i = 0; i < nonZero; i++)
-        {
-            ss >> csr_col_ind[i];
-        }
-        // read row pointers
-        readLine();
-        for (int i = 0; i < matrixDimension + 1; i++)
-        {
-            ss >> csr_row_ptr[i];
-        }
-
         SparseMatrix<T> matrix(matrixDimension, matrixDimension);
-        matrix.readCSR(csr_values, csr_col_ind, csr_row_ptr);
+        if (nonZero > 0)
+        {
+
+            std::vector<T> csr_values(nonZero);
+            std::vector<int> csr_col_ind(nonZero);
+            std::vector<int> csr_row_ptr(matrixDimension + 1);
+
+            // read CSR values
+            readLine();
+            for (int i = 0; i < nonZero; i++)
+            {
+                ss >> csr_values[i];
+            }
+            // read column indices
+            readLine();
+            for (int i = 0; i < nonZero; i++)
+            {
+                ss >> csr_col_ind[i];
+            }
+            // read row pointers
+            readLine();
+            for (int i = 0; i < matrixDimension + 1; i++)
+            {
+                ss >> csr_row_ptr[i];
+            }
+
+            matrix.readCSR(csr_values, csr_col_ind, csr_row_ptr);
+        }
         sparse_matrices.push_back(matrix);
     }
 }

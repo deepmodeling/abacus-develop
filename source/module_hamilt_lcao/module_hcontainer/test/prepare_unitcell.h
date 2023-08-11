@@ -132,17 +132,6 @@ public:
         for (int it = 0; it < ucell.ntype; ++it)
         {
             ucell.atoms[it].label = this->elements[it];
-            /*
-            ucell.atoms[it].nw = 0;
-            ucell.atoms[it].nwl = 2;
-            delete[] ucell.atoms[it].l_nchi;
-            ucell.atoms[it].l_nchi = new int[ ucell.atoms[it].nwl+1];
-            for(int L=0; L<ucell.atoms[it].nwl+1; L++)
-            {
-                ucell.atoms[it].l_nchi[L] = 1;
-                ucell.atoms[it].nw += (2*L + 1) * ucell.atoms[it].l_nchi[L];
-            }
-            */
             ucell.atoms[it].na = this->natom[it];
             // coordinates and related physical quantities
             delete[] ucell.atoms[it].tau;
@@ -229,6 +218,7 @@ public:
             ucell.atoms[it].nw = nw[it];
         }
         // cal_nloc
+        nlocal = 0;
         for (int it = 0; it < ucell.ntype; ++it)
         {
             nlocal += ucell.atoms[it].na * ucell.atoms[it].nw;
