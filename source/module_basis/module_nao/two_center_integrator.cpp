@@ -70,7 +70,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
                 - l / R * S_by_Rl
             : 0.0;
 
-		for (int m = -l; m < l; ++m)
+		for (int m = -l; m <= l; ++m)
         {
             double G = RealGauntTable::instance()(l1, l2, l, m1, m2, m);
 
