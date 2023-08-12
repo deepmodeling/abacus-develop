@@ -130,6 +130,8 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
+	cubic_spline.o\
+	spherical_bessel_transformer.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
