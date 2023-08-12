@@ -19,6 +19,8 @@ VPATH=./src_global:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
+./module_base/module_container:\
+./module_base/module_container/kernels:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -88,6 +90,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_CONTAINER}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -513,4 +516,14 @@ OBJS_DFTU=dftu.o\
       dftu_io.o\
       dftu_tools.o\
       dftu_occup.o\
-      dftu_hamilt.o
+      dftu_hamilt.o\
+
+OBJS_CONTAINER=cpu_allocator.o\
+			   tensor.o\
+			   tensor_buffer.o\
+			   tensor_map.o\
+			   tensor_shape.o\
+			   tensor_types.o\
+			   blas_op.o\
+    		   lapack_op.o\
+    		   memory_op.o
