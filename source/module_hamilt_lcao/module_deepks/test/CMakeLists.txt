@@ -15,6 +15,7 @@ target_link_libraries(
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
     pthread vdw dftu
     deepks device
+    numerical_atomic_orbitals
     ${ABACUS_LINK_LIBRARIES}
 )
 if(USE_ELPA)
