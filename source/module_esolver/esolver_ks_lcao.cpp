@@ -443,11 +443,7 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     {
         file_orb[it] = GlobalV::global_orbital_dir + ucell.orbital_fn[it];
         file_pp[it] = GlobalV::global_pseudo_dir + ucell.pseudo_fn[it];;
-        std::cout << "file_orb[it] = " << file_orb[it] << std::endl;
-        std::cout << "file_pp[it] = " << file_pp[it] << std::endl;
     }
-    std::cout << "GlobalV::deepks_setorb =  " << GlobalV::deepks_setorb << std::endl;
-    std::cout << "descriptor_file =  " << ucell.descriptor_file << std::endl;
 
     two_center_bundle->build(ucell.ntype, file_orb, ucell.ntype, file_pp, GlobalV::deepks_setorb, &ucell.descriptor_file);
 
