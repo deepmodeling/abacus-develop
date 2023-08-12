@@ -13,6 +13,7 @@ HEADERS = *.h
 
 VPATH=./src_global:\
 ./module_basis/module_ao:\
+./module_basis/module_nao:\
 ./module_cell/module_neighbor:\
 ./module_cell/module_symmetry:\
 ./module_cell:\
@@ -281,6 +282,15 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
+	  atomic_radials.o\
+	  beta_radials.o\
+	  numerical_radial.o\
+	  radial_collection.o\
+	  radial_set.o\
+	  real_gaunt_table.o\
+	  two_center_bundle.o\
+	  two_center_integrator.o\
+	  two_center_table.o\
 
 OBJS_PSI=psi.o\
     memory_op.o\
