@@ -873,7 +873,7 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 
 	this->itia2iat.create(ntype, namax);
 	//this->itiaiw2iwt.create(ntype, namax, nwmax*GlobalV::NPOL);
-	this->iat2iwt.resize(nat);
+	this->set_iat2iwt(GlobalV::NPOL);
 	int iat=0;
 	int iwt=0;
 	for(int it = 0;it < ntype;it++)
@@ -882,7 +882,6 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 		{
 			this->itia2iat(it, ia) = iat;
 			//this->iat2ia[iat] = ia;
-			this->iat2iwt[iat] = iwt;
 			for(int iw=0; iw<atoms[it].nw * GlobalV::NPOL; iw++)
 			{
 				//this->itiaiw2iwt(it, ia, iw) = iwt;
@@ -961,6 +960,29 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 		//}
 	}
 
+	return;
+}
+
+void UnitCell::set_iat2iwt(const int& npol_in)
+{
+#ifdef __DEBUG
+	assert(npol_in == 1 || npol_in == 2);
+	assert(this->nat > 0);
+	assert(this->ntype > 0);
+#endif
+	this->iat2iwt.resize(this->nat);
+	this->npol = npol_in;
+	int iat=0;
+	int iwt=0;
+	for(int it = 0;it < this->ntype; it++)
+	{
+		for(int ia=0; ia<atoms[it].na; ia++)
+		{
+			this->iat2iwt[iat] = iwt;
+			iwt += atoms[it].nw * this->npol;
+			++iat;
+		}	
+	}
 	return;
 }
 

@@ -182,10 +182,11 @@ template <typename T>
 bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
 {
     // clear and reallocate the memory of this->tmp_atom_pairs
-    this->tmp_atom_pairs.clear();
-    this->tmp_atom_pairs.shrink_to_fit();
-    this->tmp_atom_pairs.reserve(this->atom_pairs.size());
-
+    //this->tmp_atom_pairs.clear();
+    //this->tmp_atom_pairs.shrink_to_fit();
+    //this->tmp_atom_pairs.reserve(this->atom_pairs.size());
+    this->tmp_atom_pairs.resize(this->atom_pairs.size());
+    int iter = 0;
     // find (rx, ry, rz) in this->atom_pairs[i].R_values
     for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
@@ -193,10 +194,11 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
         {
             // push bach the pointer of AtomPair to this->tmp_atom_pairs
             const AtomPair<T>* tmp_pointer = &(*it);
-            this->tmp_atom_pairs.push_back(tmp_pointer);
+            this->tmp_atom_pairs[iter++] = tmp_pointer;
+            //this->tmp_atom_pairs.push_back(tmp_pointer);
         }
     }
-    if (this->tmp_atom_pairs.size() == 0)
+    if (iter == 0)
     {
         std::cout << "Error: no atom pair found in fix_R" << std::endl;
         this->current_R = -1;
@@ -206,6 +208,7 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
     {
         //set current_R
         this->current_R = this->find_R(rx_in, ry_in, rz_in);
+        this->tmp_atom_pairs.resize(iter);
         return true;
     }
 }
