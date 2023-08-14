@@ -3,6 +3,19 @@
 
 #include "../paw_element.h"
 
+/*
+Subroutines related to the processing of PAW xml files:
+
+1. init_paw_element, which prepares some related values
+2. read_paw_xml, which reads the xml file and stores the information
+
+plus subroutines related to the processing of projector functions:
+1. spherical_bessel_function: helper functions, returns values of spherical bessel functions
+2. spherical_bessel_transform: carries out spherical bessel transform
+3. splint and spline: performs cubic spline interpolation
+
+*/
+
 class Test_Read_Paw : public testing::Test
 {
     protected:

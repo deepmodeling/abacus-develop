@@ -4,6 +4,19 @@
 
 #include "../paw_cell.h"
 
+/*
+
+Unit Test for the following subroutines, which are used to pass information
+from main ABACUS program to LibPAW:
+
+1. set_libpaw_ecut, which sets kinetic energy cutoff
+2. set_libpaw_cell, which sets quantities related to cell parameters
+3. set_libpaw_fft, which sets the real-space FFT grid
+4. set_libpaw_atom, which sets information of atoms in the unit cell
+5. set_libpaw_files, which sets the names of PAW xml files
+
+*/
+
 class Test_Libpaw_Cell : public testing::Test
 {
     protected:
