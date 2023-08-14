@@ -52,21 +52,29 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            if(this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0 > orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
-            {
-                continue;
-            }
-            else
+            if(this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0 <= orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
             {
                 is_adj[ad1] = true;
             }
-            
+        }
+        filter_adjs(is_adj, adjs);
+        this->adjs_all.push_back(adjs);
+        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+        {
+            const int T1 = adjs.ntype[ad1];
+            const int I1 = adjs.natom[ad1];
+            const int iat1 = ucell->itia2iat(T1, I1);
+            const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];    
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+                if(paraV->get_col_size(iat2)<=0 || paraV->get_row_size(iat1) <= 0)
+                {
+                    continue;
+                }
                 hamilt::AtomPair<TR> tmp(iat1,
                                          iat2,
                                          R_index2.x - R_index1.x,
@@ -76,9 +84,8 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
                 HR->insert_pair(tmp);
             }
         }
-        filter_adjs(is_adj, adjs);
-        this->adjs_all.push_back(adjs);
     }
+    HR->allocate(1);
 }
 
 template <typename TK, typename TR>
@@ -97,6 +104,9 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
         std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
         nlm_tot.resize(adjs.adj_num + 1);
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
             const int T1 = adjs.ntype[ad];
@@ -154,9 +164,11 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
                 ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
-                hamilt::AtomPair<TR>& tmp = this->HR->get_atom_pair(iat1, iat2);
-                TR* data_pointer = tmp.get_HR_values(R_vector[0], R_vector[1], R_vector[2]).get_pointer();
-                this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], data_pointer);
+                hamilt::BaseMatrix<TR>* tmp = this->HR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                if (tmp != nullptr)
+                {
+                    this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
+                }
             }
         }
     }

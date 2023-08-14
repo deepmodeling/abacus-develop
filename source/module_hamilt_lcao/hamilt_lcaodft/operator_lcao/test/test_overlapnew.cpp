@@ -81,7 +81,7 @@ class OverlapNewTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->set_block_size(2/* nb_2d set to be 2*/);
+        paraV->set_block_size(10/* nb_2d set to be 2*/);
         paraV->set_proc_dim(dsize, 0);
         paraV->mpi_create_cart(MPI_COMM_WORLD);
         paraV->set_local2global(global_row, global_col, ofs_running, ofs_running);

@@ -74,12 +74,12 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
         for (int j = 0; j < ucell_.nat; j++)
         {
             AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            ModuleBase::GlobalFunc::ZEROS(atom_ij.get_HR_values(0, 0, 0).get_pointer(), atom_ij.get_size());
             this->atom_pairs.push_back(atom_ij);
             this->sparse_ap[i][j] = j;
             this->sparse_ap_index[i][j] = this->atom_pairs.size() - 1;
         }
     }
+    this->allocate(1);
 }
 
 //HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr);
@@ -105,6 +105,26 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer)
     this->sparse_ap_index.resize(natom);
 }
 
+// allocate
+template <typename T>
+void HContainer<T>::allocate(bool is_zero)
+{
+    for(int it=0;it<this->atom_pairs.size();it++)
+    {
+        this->atom_pairs[it].allocate(is_zero);
+    }
+}
+
+// set_zero
+template <typename T>
+void HContainer<T>::set_zero()
+{
+    for(auto& it : this->atom_pairs)
+    {
+        it.set_zero();
+    }
+}
+
 template <typename T>
 AtomPair<T>* HContainer<T>::find_pair(int atom_i, int atom_j) const
 {
@@ -122,6 +142,35 @@ AtomPair<T>* HContainer<T>::find_pair(int atom_i, int atom_j) const
     else
     {
         return nullptr;
+    }
+}
+
+// find_matrix
+template <typename T>
+const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry, int rz) const
+{
+    AtomPair<T>* tmp = this->find_pair(atom_i, atom_j);
+    if(tmp == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return tmp->find_matrix(rx, ry, rz);
+    }
+}
+
+template <typename T>
+BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry, int rz)
+{
+    AtomPair<T>* tmp = this->find_pair(atom_i, atom_j);
+    if(tmp == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return tmp->find_matrix(rx, ry, rz);
     }
 }
 

@@ -45,11 +45,16 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
+            if(paraV->get_row_size(iat1)<= 0 || paraV->get_col_size(iat2)<= 0)
+            {
+                continue;
+            }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
             HR->insert_pair(tmp);
         }
     }
+    HR->allocate(1);
 }
 
 template <typename TK, typename TR>

@@ -185,6 +185,17 @@ class HContainer
     */
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr);
 
+    /**
+     * @brief allocate memory for all <IJR> matrix
+     * @param if_zero if true, set all values to zero
+    */
+    void allocate(bool if_zero = false);
+
+    /**
+     * @brief set values of all <IJR> matrix to zero
+    */
+    void set_zero();
+
 
     /**
      * @brief a AtomPair object can be inserted into HContainer, two steps:
@@ -207,6 +218,15 @@ class HContainer
      * @return AtomPair<T>*
      */
     AtomPair<T>* find_pair(int i, int j) const;
+
+    /**
+     * @brief find BaseMatrix with atom index atom_i and atom_j and R index (rx, ry, rz)
+     * This interface can be used to find BaseMatrix in AtomPair,
+     * if found, return pointer will be the exist one,
+     * if not found, return pointer will be nullptr.
+    */
+    BaseMatrix<T>* find_matrix(int i, int j, int rx, int ry, int rz);
+    const BaseMatrix<T>* find_matrix(int i, int j, int rx, int ry, int rz) const;
 
     /**
      * @brief return a reference of AtomPair with index of atom I and J in atom_pairs

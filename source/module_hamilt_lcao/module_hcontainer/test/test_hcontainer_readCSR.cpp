@@ -113,6 +113,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
                 if (nnz != 0)
                 {
                     auto tmp_ap = hamilt::AtomPair<double>(iat, jat, RCoord[0], RCoord[1], RCoord[2], &paraV);
+                    tmp_ap.allocate(1);
                     tmp_ap.convert_add(tmp_matrix, RCoord[0], RCoord[1], RCoord[2]);
                     SR.insert_pair(tmp_ap);
                 }

@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "../nonlocal_new.h"
+#include <chrono>
 
 
 //---------------------------------------
@@ -16,8 +17,8 @@
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
-int test_size = 2;
-int test_nw = 5;
+int test_size = 10;
+int test_nw = 10;
 class NonlocalNewTest : public ::testing::Test
 {
   protected:
@@ -102,7 +103,7 @@ class NonlocalNewTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->set_block_size(2/* nb_2d set to be 2*/);
+        paraV->set_block_size(10/* nb_2d set to be 2*/);
         paraV->set_proc_dim(dsize, 0);
         paraV->mpi_create_cart(MPI_COMM_WORLD);
         paraV->set_local2global(global_row, global_col, ofs_running, ofs_running);
@@ -134,6 +135,7 @@ TEST_F(NonlocalNewTest, constructHRd2d)
     // check some input values
     EXPECT_EQ(ucell.infoNL.Beta[0].get_rcut_max(), 1.0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::NonlocalNew<hamilt::OperatorLCAO<double>, double> op(
         nullptr, 
         kvec_d_in, 
@@ -143,7 +145,12 @@ TEST_F(NonlocalNewTest, constructHRd2d)
         &gd,
         paraV
     );
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    start_time = std::chrono::high_resolution_clock::now();
     op.contributeHR();
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of HR
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
     {
@@ -155,16 +162,20 @@ TEST_F(NonlocalNewTest, constructHRd2d)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 10.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 5.0*test_size);
         }
     }
     // calculate SK
+    start_time = std::chrono::high_resolution_clock::now();
     op.contributeHk(0);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of SK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_EQ(hk[i], 10.0);
+        EXPECT_EQ(hk[i], 5.0*test_size);
     }
+    std::cout << "Elapsed time: " << elapsed_time.count()<<" "<<elapsed_time1.count()<<" "<<elapsed_time2.count() << " seconds." << std::endl;
 }
 
 TEST_F(NonlocalNewTest, constructHRd2cd)
@@ -194,7 +205,7 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
         int nwt = indexes1.size() * indexes2.size();
         for (int i = 0; i < nwt; ++i)
         {
-            EXPECT_EQ(tmp.get_pointer(0)[i], 10.0);
+            EXPECT_EQ(tmp.get_pointer(0)[i], 5.0*test_size);
         }
     }
     // calculate SK for gamma point
@@ -202,7 +213,7 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
     // check the value of SK of gamma point
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_EQ(hk[i].real(), 10.0);
+        EXPECT_EQ(hk[i].real(), 5.0*test_size);
         EXPECT_EQ(hk[i].imag(), 0.0);
     }
     // calculate HK for k point
@@ -211,7 +222,7 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
     // check the value of HK
     for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
     {
-        EXPECT_NEAR(hk[i].real(), 10.0, 1e-10);
+        EXPECT_NEAR(hk[i].real(), 5.0*test_size, 1e-10);
         EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
     }
 }

@@ -172,6 +172,26 @@ AtomPair<T>::AtomPair(const AtomPair<T>& other)
 {
 }
 
+//allocate
+template <typename T>
+void AtomPair<T>::allocate(bool is_zero)
+{
+    for(int value=0;value<this->values.size();++value)
+    {
+        this->values[value].allocate(is_zero);
+    }
+}
+
+// set_zero
+template <typename T>
+void AtomPair<T>::set_zero()
+{
+    for(auto& value : values)
+    {
+        value.set_zero();
+    }
+}
+
 // The copy assignment operator
 template <typename T>
 AtomPair<T>& AtomPair<T>::operator=(const AtomPair<T>& other)
@@ -343,6 +363,7 @@ BaseMatrix<T>& AtomPair<T>::get_HR_values(int rx_in, int ry_in, int rz_in)
     R_index.push_back(ry_in);
     R_index.push_back(rz_in);
     values.push_back(BaseMatrix<T>(this->row_size, this->col_size));
+    values.back().allocate(1);
     // return the last BaseMatrix reference in values
     return this->values.back();
 }
@@ -364,6 +385,17 @@ const BaseMatrix<T>& AtomPair<T>::get_HR_values(int rx_in, int ry_in, int rz_in)
     }
 }
 
+// get_HR_values with index
+template <typename T>
+BaseMatrix<T>& AtomPair<T>::get_HR_values(const int& index) const
+{
+    if (index >= this->values.size())
+    {
+        throw std::string("AtomPair::get_HR_values: index out of range");
+    }
+    return const_cast<BaseMatrix<T>&>(this->values[index]);
+}
+
 // find_R
 template <typename T>
 bool AtomPair<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) const
@@ -377,6 +409,34 @@ bool AtomPair<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) c
         }
     }
     return false;
+}
+
+// find_matrix
+template <typename T>
+const BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const
+{
+    if(!this->find_R(rx_in, ry_in, rz_in))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &(this->values[this->current_R]);
+    }
+}
+
+// find_matrix
+template <typename T>
+BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, const int& rz_in)
+{
+    if(!this->find_R(rx_in, ry_in, rz_in))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &(this->values[this->current_R]);
+    }
 }
 
 template <typename T>
@@ -406,8 +466,25 @@ void AtomPair<T>::merge(const AtomPair<T>& other, bool skip_R)
             ry = other.R_index[i + 1];
             rz = other.R_index[i + 2];
         }
-        const BaseMatrix<T>& matrix = other.get_HR_values(rx, ry, rz);
-        convert_add(matrix, rx, ry, rz);
+        const BaseMatrix<T>& matrix_tmp = other.get_HR_values(i / 3);
+        //if not found, push_back this BaseMatrix to this->values
+        if (!this->find_R(rx, ry, rz))
+        {
+            this->R_index.push_back(rx);
+            this->R_index.push_back(ry);
+            this->R_index.push_back(rz);
+            this->values.push_back(matrix_tmp);
+        }
+        //if found but not allocated, skip this BaseMatrix values
+        else if (this->values[current_R].get_pointer() == nullptr || matrix_tmp.get_pointer() == nullptr)
+        {
+            continue;
+        }
+        // if found and allocated, add data
+        else
+        {
+            this->values[current_R].add_array(matrix_tmp.get_pointer());
+        }
     }
 }
 
@@ -420,6 +497,7 @@ void AtomPair<T>::merge_to_gamma()
     this->R_index.resize(3, 0);
     // merge all values to first BaseMatrix
     BaseMatrix<T> tmp(this->row_size, this->col_size);
+    tmp.allocate(1);
     for (int i = 0; i < this->values.size(); i++)
     {
         tmp.add_array(this->values[i].get_pointer());
