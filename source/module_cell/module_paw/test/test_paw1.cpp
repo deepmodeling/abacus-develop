@@ -3,6 +3,19 @@
 
 #include "../paw_cell.h"
 
+/*
+Unit Test for subroutines related to the calculation of rhoij,
+where reciprocal space wavefunctions are passed from outside, and rhoij is calculated:
+
+1. init_paw_cell and set_paw_k, which collects necessary information
+2. accumulate_rhoij, which calculates sum_n <psi_n|p_i><p_j|psi_n>
+
+plus two mathematical subroutines:
+3. calc_ylm, which gives values of spherical harmonics
+4. ass_leg_pol, which gives values of legendre polynomials
+
+*/
+
 class Test_Paw_Cell : public testing::Test
 {
     protected:
