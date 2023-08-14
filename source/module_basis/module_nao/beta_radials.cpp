@@ -1,5 +1,7 @@
 #include "module_basis/module_nao/beta_radials.h"
 
+#include <regex>
+
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
 
@@ -402,15 +404,19 @@ void BetaRadials::read_beta_upf201(std::ifstream& ifs, std::ofstream* ptr_log, c
             }
             assert(!ifs.eof());
 
-            while (std::getline(ifs, line))
+            // multiple key-value pairs may appear in the same line
+            // and they may appear in the same line as "<PP_BETA"
+            // see, e.g., Si.pz-n-nc.UPF
+            do
             {
                 if (line.find("angular_momentum") != std::string::npos)
                 {
-                    l = std::stoi(trim201(line));
+                    l = std::stoi(extract201(line, "angular_momentum"));
                 }
-                else if (line.find("size") != std::string::npos)
+
+                if (line.find("size") != std::string::npos)
                 {
-                    ngrid = std::stoi(trim201(line));
+                    ngrid = std::stoi(extract201(line, "size"));
                 }
                 // neither "cutoff_radius_index" nor "cutoff_radius" is reliable!
                 // the code will read all the values first and then reverse scan to determine the grid size
@@ -420,7 +426,7 @@ void BetaRadials::read_beta_upf201(std::ifstream& ifs, std::ofstream* ptr_log, c
                     is_good &= (l >= 0) && (l <= lmax_) && (ngrid > 0) && (ngrid <= ngrid_max);
                     break;
                 }
-            }
+            } while (std::getline(ifs, line));
 
             if (l == l_last)
             {
@@ -497,4 +503,12 @@ std::string BetaRadials::trim201(std::string const& str)
     start = tmp.find_first_not_of(" \t");
     end = tmp.find_last_not_of(" \t");
     return tmp.substr(start, end + 1 - start);
+}
+
+std::string BetaRadials::extract201(std::string const& str, std::string const& keyword) {
+    std::smatch match;
+    std::string regex_string = ".*" + keyword + "=\" *(.+) *\".*";
+    std::regex re(regex_string);
+    std::regex_match(str, match, re);
+    return match[1].str();
 }

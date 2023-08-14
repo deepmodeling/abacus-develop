@@ -37,6 +37,8 @@
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
 
+#include "module_base/parallel_common.h"
+
 namespace ModuleESolver
 {
 
@@ -400,15 +402,6 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  GlobalV::CAL_FORCE,
                                  GlobalV::MY_RANK);
 
-    std::cout << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>DEBUG>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    std::cout << "global_orbital_dir = " << GlobalV::global_orbital_dir << std::endl;
-    std::cout << "orbital_fn = " << *(ucell.orbital_fn) << std::endl;
-    std::cout << "pseudo_fn = " << *(ucell.pseudo_fn) << std::endl;
-    std::cout << "global_pseudo_dir = " << GlobalV::global_pseudo_dir << std::endl;
-    std::cout << "ntype = " << ucell.ntype << std::endl;
-    std::cout << "deepks_setorb = " << GlobalV::deepks_setorb << std::endl;
-    std::cout << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
 
     int Lmax = 0;
@@ -436,14 +429,24 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     //-------------------------------------
     delete two_center_bundle;
     two_center_bundle = new TwoCenterBundle;
-    std::string* file_orb = new std::string[ucell.ntype];
-    std::string* file_pp = new std::string[ucell.ntype];
 
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        file_orb[it] = GlobalV::global_orbital_dir + ucell.orbital_fn[it];
-        file_pp[it] = GlobalV::global_pseudo_dir + ucell.pseudo_fn[it];;
+    int ntype = 0;
+    if (GlobalV::MY_RANK == 0)
+        ntype = ucell.ntype;
+    Parallel_Common::bcast_int(ntype);
+
+    std::string* file_orb = new std::string[ntype];
+    std::string* file_pp = new std::string[ntype];
+
+    if (GlobalV::MY_RANK == 0) {
+        for (int it = 0; it < ntype; ++it)
+        {
+            file_orb[it] = GlobalV::global_orbital_dir + ucell.orbital_fn[it];
+            file_pp[it] = GlobalV::global_pseudo_dir + ucell.pseudo_fn[it];;
+        }
     }
+    Parallel_Common::bcast_string(file_orb, ntype);
+    Parallel_Common::bcast_string(file_pp, ntype);
 
     two_center_bundle->build(ucell.ntype, file_orb, ucell.ntype, file_pp, GlobalV::deepks_setorb, &ucell.descriptor_file);
 
