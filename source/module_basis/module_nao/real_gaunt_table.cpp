@@ -1,8 +1,8 @@
 #include "module_basis/module_nao/real_gaunt_table.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
-#include <algorithm>
 
 #include "module_base/constants.h"
 
@@ -15,6 +15,10 @@ void RealGauntTable::build(const int lmax)
     {
         return;
     }
+
+    // TODO
+    // If the table already exists and lmax is larger than the current lmax_,
+    // we should extend the table instead of rebuilding it from scratch.
 
     // build the standard Gaunt table (with symmetry & selection rule considered)
     for (int l1 = 0; l1 <= 2 * lmax; ++l1)
@@ -67,7 +71,6 @@ void RealGauntTable::build(const int lmax)
             }
         }
     }
-
 }
 
 const double& RealGauntTable::operator()(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const
@@ -101,7 +104,6 @@ double RealGauntTable::real_gaunt_lookup(const int l1, const int l2, const int l
     else if ( m1 + m2 + m3 == 0 )
     {
         return ModuleBase::SQRT2 / 2.0 * minus_1_pow(m_absmax + 1) * gaunt_lookup(l1, l2, l3, m1, m2, m3);
-
     }
     else
     {
@@ -123,10 +125,10 @@ double RealGauntTable::gaunt(const int l1, const int l2, const int l3, const int
     int g = (l1 + l2 + l3) / 2;
     double pref = std::sqrt( (2 * l1 + 1) * (2 * l2 + 1) * (2 * l3 + 1) / ModuleBase::FOUR_PI);
     double tri = std::sqrt( factorial(l1 + l2 - l3) * factorial(l2 + l3 - l1) * factorial(l3 + l1 - l2)
-                            / factorial(l1+l2+l3+1) );
+                            / factorial(l1 + l2 + l3 + 1) );
 
     // wigner3j(l1,l2,l3,0,0,0)
-    double wigner1 = minus_1_pow(g) * tri * factorial(g) / factorial(g-l1) / factorial(g-l2) / factorial(g-l3);
+    double wigner1 = minus_1_pow(g) * tri * factorial(g) / factorial(g - l1) / factorial(g - l2) / factorial(g - l3);
 
     // wigner3j(l1,l2,l3,m1,m2,m3)
     int kmin = std::max(l2 - l3 - m1, l1 - l3 + m2);
@@ -162,10 +164,10 @@ bool RealGauntTable::gaunt_select_l(const int l1, const int l2, const int l3) co
 
 bool RealGauntTable::real_gaunt_select_m(const int m1, const int m2, const int m3) const
 {
-    return  ( ( static_cast<int>(m1 < 0) + static_cast<int>(m2 < 0) + static_cast<int>(m3 < 0) ) % 2 == 0 ) && 
-        ( std::abs(m1) + std::abs(m2) == std::abs(m3) || 
-          std::abs(m2) + std::abs(m3) == std::abs(m1) || 
-          std::abs(m3) + std::abs(m1) == std::abs(m2) );
+    return  ( ( (m1 < 0) + (m2 < 0) + (m3 < 0) ) % 2 == 0 ) &&
+            ( std::abs(m1) + std::abs(m2) == std::abs(m3) || 
+              std::abs(m2) + std::abs(m3) == std::abs(m1) || 
+              std::abs(m3) + std::abs(m1) == std::abs(m2) );
 }
 
 double RealGauntTable::gaunt_lookup(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const
@@ -173,8 +175,9 @@ double RealGauntTable::gaunt_lookup(const int l1, const int l2, const int l3, co
     assert( is_valid_lm(l1, l2, l3, m1, m2, m3) );
     assert( l1 <= 2 * lmax_ && l2 <= 2 * lmax_ && l3 <= 2 * lmax_ );
 
-    return ( gaunt_select_l(l1, l2, l3) && gaunt_select_m(m1, m2, m3) ) ?
-        gaunt_table_.at( gaunt_key(l1, l2, l3, m1, m2, m3) ) : 0.0;
+    return ( gaunt_select_l(l1, l2, l3) && gaunt_select_m(m1, m2, m3) )
+            ? gaunt_table_.at( gaunt_key(l1, l2, l3, m1, m2, m3) )
+            : 0.0;
 }
 
 std::array<int, 6> RealGauntTable::gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const

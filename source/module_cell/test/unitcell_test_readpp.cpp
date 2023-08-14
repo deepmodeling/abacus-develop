@@ -272,10 +272,10 @@ TEST_F(UcellTest,CalNwfc1)
 	EXPECT_EQ(ucell->itia2iat(1,0), 1);
 	EXPECT_EQ(ucell->itia2iat(1,1), 2);
 	//check iat2iwt
-	EXPECT_EQ(ucell->iat2iwt.size(), 3);
-	EXPECT_EQ(ucell->iat2iwt[0], 0);
-	EXPECT_EQ(ucell->iat2iwt[1], 9);
-	EXPECT_EQ(ucell->iat2iwt[2], 18);
+	EXPECT_EQ(ucell->get_npol(), 1);
+	EXPECT_EQ(ucell->get_iat2iwt()[0], 0);
+	EXPECT_EQ(ucell->get_iat2iwt()[1], 9);
+	EXPECT_EQ(ucell->get_iat2iwt()[2], 18);
 	//check itiaiw2iwt
 	EXPECT_EQ(ucell->itiaiw2iwt(0, 0, 0), 0);
 	EXPECT_EQ(ucell->itiaiw2iwt(0, 0, 1), 1);

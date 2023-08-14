@@ -30,11 +30,11 @@ using iclock = std::chrono::high_resolution_clock;
 class RealGauntTableTest : public ::testing::Test
 {
   protected:
-    void SetUp() { rgt.build(lmax); }
+    void SetUp() { /*rgt.build(lmax);*/ }
     void TearDown() {}
 
     int lmax = 10;      //!< maximum angular momentum
-    RealGauntTable rgt; //!< object under test
+    //RealGauntTable rgt; //!< object under test
     const double tol = 1e-12; //!< numerical error tolerance for individual Gaunt coefficient
 };
 
@@ -46,6 +46,8 @@ TEST_F(RealGauntTableTest, LegacyConsistency)
     // this test checks whether the coefficients in RealGauntTable is consistent with those of ORB_gaunt_table
     // this test shall be removed in the future once the refactoring is finished
     ORB_gaunt_table ogt;
+
+    RealGauntTable::instance().build(lmax);
 
     //start = iclock::now();
     ogt.init_Gaunt_CH(lmax);
@@ -80,7 +82,8 @@ TEST_F(RealGauntTableTest, LegacyConsistency)
                             int m2 = ogt.Index_M(mm2);
                             int m3 = ogt.Index_M(mm3);
 
-                            EXPECT_NEAR(rgt(l1, l2, l3, m1, m2, m3), ogt.Gaunt_Coefficients(index1, index2, index3), tol);
+                            EXPECT_NEAR(RealGauntTable::instance()(l1, l2, l3, m1, m2, m3), 
+                                    ogt.Gaunt_Coefficients(index1, index2, index3), tol);
                         }
                     }
                 }
@@ -91,20 +94,20 @@ TEST_F(RealGauntTableTest, LegacyConsistency)
 
 TEST_F(RealGauntTableTest, SanityCheck)
 {
-    EXPECT_EQ(rgt.lmax(), lmax);
+    EXPECT_EQ(RealGauntTable::instance().lmax(), lmax);
 
-    EXPECT_NEAR(rgt(0, 0, 0, 0, 0, 0), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(RealGauntTable::instance()(0, 0, 0, 0, 0, 0), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
 
-    EXPECT_NEAR(rgt(4, 0, 4, 3, 0, 3), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
-    EXPECT_NEAR(rgt(4, 0, 4, -3, 0, -3), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(RealGauntTable::instance()(4, 0, 4, 3, 0, 3), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(RealGauntTable::instance()(4, 0, 4, -3, 0, -3), ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
 
-    EXPECT_NEAR(rgt(2, 2, 2, 2, -1, -1), -std::sqrt(15.0) / 7.0 * ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
-    EXPECT_NEAR(rgt(2, 2, 2, -1, 2, -1), -std::sqrt(15.0) / 7.0 * ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(RealGauntTable::instance()(2, 2, 2, 2, -1, -1), -std::sqrt(15.0) / 7.0 * ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
+    EXPECT_NEAR(RealGauntTable::instance()(2, 2, 2, -1, 2, -1), -std::sqrt(15.0) / 7.0 * ModuleBase::SQRT_INVERSE_FOUR_PI, tol);
 
-    EXPECT_NEAR(rgt(3, 3, 2, 2, 1, 1), ModuleBase::SQRT_INVERSE_FOUR_PI / std::sqrt(6.0), tol);
-    EXPECT_NEAR(rgt(2, 3, 3, 1, 1, 2), ModuleBase::SQRT_INVERSE_FOUR_PI / std::sqrt(6.0), tol);
+    EXPECT_NEAR(RealGauntTable::instance()(3, 3, 2, 2, 1, 1), ModuleBase::SQRT_INVERSE_FOUR_PI / std::sqrt(6.0), tol);
+    EXPECT_NEAR(RealGauntTable::instance()(2, 3, 3, 1, 1, 2), ModuleBase::SQRT_INVERSE_FOUR_PI / std::sqrt(6.0), tol);
 
-    EXPECT_NEAR(rgt(4, 5, 7, 3, -2, -5), ModuleBase::SQRT_INVERSE_FOUR_PI * std::sqrt(210.0) / 221.0, tol);
+    EXPECT_NEAR(RealGauntTable::instance()(4, 5, 7, 3, -2, -5), ModuleBase::SQRT_INVERSE_FOUR_PI * std::sqrt(210.0) / 221.0, tol);
 }
 
 int main(int argc, char** argv)
