@@ -98,6 +98,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
                 int end_col = paraV.atom_begin_col[jat + 1];
                 int numberofCol = end_col - begin_col;
                 hamilt::BaseMatrix<double> tmp_matrix(numberofRow, numberofCol);
+                tmp_matrix.allocate(1);
                 int nnz = 0;
                 for (const auto& element: sparse_matrix.getElements())
                 {
