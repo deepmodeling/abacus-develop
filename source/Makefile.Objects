@@ -298,7 +298,7 @@ OBJS_ORBITAL=ORB_atomic.o\
 	  two_center_table.o\
 
 OBJS_PSI=psi.o\
-    memory_op.o\
+    psi_memory_op.o\
     device.o\
 
 OBJS_PW=fft.o\
