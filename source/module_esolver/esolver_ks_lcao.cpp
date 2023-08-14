@@ -908,8 +908,8 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
 ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
 {
     return ModuleIO::Output_Mat_Sparse(hsolver::HSolverLCAO::out_mat_hsR,
-                                       hsolver::HSolverLCAO::out_mat_t,
                                        hsolver::HSolverLCAO::out_mat_dh,
+                                       hsolver::HSolverLCAO::out_mat_t,
                                        INPUT.out_mat_r,
                                        istep,
                                        this->pelec->pot->get_effective_v(),
