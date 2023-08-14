@@ -229,6 +229,7 @@ public:
             ucell.atoms[it].nw = nw[it];
         }
         // cal_nloc
+        nlocal = 0;
         for (int it = 0; it < ucell.ntype; ++it)
         {
             nlocal += ucell.atoms[it].na * ucell.atoms[it].nw;
