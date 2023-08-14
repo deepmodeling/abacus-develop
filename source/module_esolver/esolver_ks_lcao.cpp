@@ -430,13 +430,17 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     delete two_center_bundle;
     two_center_bundle = new TwoCenterBundle;
 
-    int ntype = 0;
-    if (GlobalV::MY_RANK == 0)
-        ntype = ucell.ntype;
+    int ntype = ucell.ntype;
+    bool deepks_on = GlobalV::deepks_setorb;
+
+#ifdef __MPI
     Parallel_Common::bcast_int(ntype);
+    Parallel_Common::bcast_bool(deepks_on);
+#endif
 
     std::string* file_orb = new std::string[ntype];
     std::string* file_pp = new std::string[ntype];
+    std::string file_desc = ucell.descriptor_file;
 
     if (GlobalV::MY_RANK == 0) {
         for (int it = 0; it < ntype; ++it)
@@ -445,10 +449,13 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
             file_pp[it] = GlobalV::global_pseudo_dir + ucell.pseudo_fn[it];;
         }
     }
+#ifdef __MPI
     Parallel_Common::bcast_string(file_orb, ntype);
     Parallel_Common::bcast_string(file_pp, ntype);
+    Parallel_Common::bcast_string(file_desc);
+#endif
 
-    two_center_bundle->build(ucell.ntype, file_orb, ucell.ntype, file_pp, GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle->build(ntype, file_orb, ntype, file_pp, deepks_on, &file_desc);
 
     delete[] file_orb;
     delete[] file_pp;
