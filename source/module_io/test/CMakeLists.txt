@@ -4,6 +4,7 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET io_input_test

@@ -283,6 +283,36 @@ public:
         this->nx = nx_in;
         this->ny = ny_in;
         this->nz = nz_in;
+        // autoset bx/by/bz if not set in INPUT
+        if (!this->bz)
+        {
+        this->autoset_big_cell_size(this->bz, nz, this->poolnproc);
+        }
+        if (!this->bx)
+        {
+        // if cz == cx, autoset bx==bz for keeping same symmetry
+        if (nx == nz)
+        {
+            this->bx = this->bz;
+        }
+        else
+        {
+            this->autoset_big_cell_size(this->bx, nx);
+        }
+        }
+        if (!this->by)
+        {
+        // if cz == cy, autoset by==bz for keeping same symmetry
+        if (ny == nz)
+        {
+            this->by = this->bz;
+        }
+        else
+        {
+            this->autoset_big_cell_size(this->by, ny);
+        }
+        }
+        this->bxyz = this->bx * this->by * this->bz;
         if(this->nx%this->bx != 0) this->nx += (this->bx - this->nx % this->bx);
         if(this->ny%this->by != 0) this->ny += (this->by - this->ny % this->by);
         if(this->nz%this->bz != 0) this->nz += (this->bz - this->nz % this->bz);

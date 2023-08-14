@@ -167,25 +167,9 @@ void WF_atomic::print_PAOs(void)const
     {
         for (int icc=0; icc<GlobalC::ucell.atoms[it].ncpp.nchi ;icc++)
         {
-            int ic = icc;
-            if(GlobalV::NSPIN==4) ic = icc/2;
-            std::string orbital_type;
-            if (ic == 0)  orbital_type = "S";
-            else if (ic == 1) orbital_type = "P";
-            else if (ic == 2) orbital_type = "D";
-			else if (ic == 3) orbital_type = "F"; // mohan add 2009-12-15
-			else if (ic == 4) orbital_type = "G"; // liuyu add 2021-05-07
-            else
-            {
-				GlobalV::ofs_warning << "\n nchi = " << GlobalC::ucell.atoms[it].ncpp.nchi << std::endl;
-                ModuleBase::WARNING_QUIT("WF_atomic::print_PAOs", "unknown PAO type.");
-            }
-
             std::stringstream ss;
-            ss << GlobalV::global_out_dir
-            << GlobalC::ucell.atoms[it].label << "/"
-            << GlobalC::ucell.atoms[it].label << "-"
-            << orbital_type << ".ORBITAL";
+            ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
+               << "-" << GlobalC::ucell.atoms[it].ncpp.els[icc] << ".ORBITAL";
 
             std::ofstream ofs(ss.str().c_str());
             ofs << "Mesh " << GlobalC::ucell.atoms[it].ncpp.msh;

@@ -262,7 +262,10 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 void Parallel_Global::finalize_mpi()
 {
 	MPI_Comm_free(&POOL_WORLD);
-    MPI_Comm_free(&INTER_POOL);
+    if (GlobalV::NPROC_IN_STOGROUP % GlobalV::KPAR == 0)
+    {
+        MPI_Comm_free(&INTER_POOL);
+    }
 	MPI_Comm_free(&STO_WORLD);
 	MPI_Comm_free(&PARAPW_WORLD);
 	MPI_Comm_free(&GRID_WORLD);

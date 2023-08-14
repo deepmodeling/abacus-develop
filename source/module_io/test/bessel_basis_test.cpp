@@ -524,7 +524,11 @@ TEST_F(TestBesselBasis, PolynomialInterpolationTest) {
     /* 
       Therefore Faln is expected to have dimension 1*1*1*6
     */
-    
+    #ifdef __MPI
+        int argc = 0;
+        char** argv = NULL;
+        MPI_Init(&argc, &argv);
+    #endif
     besselBasis.init(
         b_TestFaln, d_EnergyCutoff, i_Ntype, i_Lmax, b_Smooth, 
         d_SmoothSigma, d_CutoffRadius, d_Tolerance, 

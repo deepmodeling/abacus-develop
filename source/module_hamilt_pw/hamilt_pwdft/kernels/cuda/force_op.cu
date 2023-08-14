@@ -1,4 +1,5 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
+#include "module_psi/kernels/device.h"
 
 #include <complex>
 
