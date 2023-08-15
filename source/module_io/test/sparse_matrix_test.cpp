@@ -1,7 +1,6 @@
 #include "module_io/sparse_matrix.h"
 
 #include <complex>
-#include <fstream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
