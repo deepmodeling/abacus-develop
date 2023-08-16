@@ -13,6 +13,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
+- [Running unit tests](#running-unit-tests)
 - [Debugging the codes](#debugging-the-codes)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Commit message guidelines](#commit-message-guidelines)
@@ -197,6 +198,71 @@ To add a unit test:
 - Build with `-D BUILD_TESTING=1` flag, `cmake` will look for `GoogleTest` in the default path (usually `/usr/local`); if not found, you can specify the path with `-D GTEST_DIR`. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
 - Considering `-D BUILD_TESTING=1`, the compilation will be slower compared with the case `-D BUILD_TESTING=0`.
+
+## Running unit tests
+
+1. Compiling ABACUS with unit tests.   
+
+    In order to run unit tests, ABACUS needs to be configured with `-D BUILD_TESTING=ON` flag. For example:
+    ```bash
+    camke -B build -DBUILD_TESTING=ON
+    ``` 
+    then build ABACUS and unit testing with 
+    ```bash
+    cmake --build build -j${number of processors}
+    ```
+    It is import to run the folloing command before running unit tests:
+    ```bash
+    camke --install build
+    ```
+    to install mandatory supporting input files for unit tests.  
+    If you modified the unit tests to add new tests or learn how to write unit tests, it is convenient to run
+    ```bash
+    cmake --build build -j${number of processors} --target ${unit test name}
+    ```
+    to build a specific unit test. And please remember to run `cmake --install build` after building the unit test if the unit test requires supporting input files.
+
+2. Running unit tests
+
+    The test cases are located in `build/source/${module_name}/test` directory. Note that there are other directory names for unit tests, for example, `test_parallel` for running parallel unit tests, `test_pw` for running unit tests only used in plane wave basis calculation.  
+
+    You can run a single test in the specific directory. For example, run
+    ```
+    ./cell_unitcell_test
+    ```
+    in the director of `build/source/cell/test` to run the test `cell_unitcell_test`.  
+    However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
+    ```bash
+    ctest -N
+    ```
+    The results will be shown as  
+    ```
+    Test project /root/abacus/build
+    Test   #1: integrated_test
+    Test   #2: Container_UTs
+    Test   #3: base_blas_connector
+    Test   #4: base_blacs_connector
+    Test   #5: base_timer
+    ...
+    ```
+    Note that the first one is integrated test, which is not a unit test. It is the test
+    suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory.
+
+    To run a subset of tests, run the following command 
+    ```bash
+    ctest -R <test-match-pattern> -V
+    ```
+    For example, `ctest -R cell` will perform tests with name matched by `cell`.  
+    You can also run a single test with 
+    ```
+    ctest -R <test-name>
+    ```
+    For example, `ctest -R cell_unitcell_test_readpp` will   perform test `cell_unitcell_test_readpp`.  
+    To run all the unit tests, together with the integrated test, run
+    ```bash
+    cmake --build build --target test ARGS="-V --timeout 21600"
+    ```
+    in the `abacus-develop` directory.
 
 ## Debugging the codes
 
