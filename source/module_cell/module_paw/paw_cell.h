@@ -13,6 +13,7 @@
 #include "paw_element.h"
 #include "paw_atom.h"
 #include "module_base/matrix3.h"
+#include "module_base/matrix3.h"
 
 class Paw_Cell
 {
