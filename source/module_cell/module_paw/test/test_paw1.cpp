@@ -369,4 +369,55 @@ TEST_F(Test_PAW_Cell_k, test_paw)
             EXPECT_NEAR(rhoijp[iat][i],rhoij[iat][i],1e-8);
         }
     }
+
+    const int nproj = 8;
+    std::vector<double> dij;
+    dij.resize(nproj * nproj);
+    for(int i = 0; i < dij.size(); i ++)
+    {
+        dij[i] = 0.0;
+    }
+    dij[0] = 13.407893;
+    dij[9] = 0.8201733412;
+    dij[18] = 5.491609854;
+    dij[27] = 5.491609854;
+    dij[36] = 5.491609854;
+    dij[45] = 0.59649632;
+    dij[54] = 0.59649632;
+    dij[63] = 0.59649632;
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        paw_cell.set_dij(iat,dij.data());
+    }
+
+    psi = new std::complex<double>[npw];
+    std::complex<double> *vnlpsi;
+    vnlpsi = new std::complex<double>[npw];
+
+    ifs_psi.clear();
+    ifs_psi.seekg (0, std::ios::beg);
+
+    std::ifstream ifs_vnlpsi("vnlpsi_ref.dat");
+    for(int iband = 0; iband < nband; iband ++)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            ifs_psi >> psi[ipw];
+            vnlpsi[ipw] = 0.0;
+        }
+        paw_cell.paw_vnl_psi(psi, vnlpsi);
+
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            std::complex<double> tmp;
+            ifs_vnlpsi >> tmp;
+            EXPECT_NEAR(tmp.real(),vnlpsi[ipw].real(),1e-8);
+            EXPECT_NEAR(tmp.imag(),vnlpsi[ipw].imag(),1e-8);
+        }
+    }
+
+    delete[] psi;
+    delete[] vnlpsi;
+
 }
