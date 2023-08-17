@@ -363,7 +363,7 @@ BaseMatrix<T>& AtomPair<T>::get_HR_values(int rx_in, int ry_in, int rz_in)
     R_index.push_back(ry_in);
     R_index.push_back(rz_in);
     values.push_back(BaseMatrix<T>(this->row_size, this->col_size));
-    values.back().allocate(1);
+    values.back().allocate(true);
     // return the last BaseMatrix reference in values
     return this->values.back();
 }
@@ -497,7 +497,7 @@ void AtomPair<T>::merge_to_gamma()
     this->R_index.resize(3, 0);
     // merge all values to first BaseMatrix
     BaseMatrix<T> tmp(this->row_size, this->col_size);
-    tmp.allocate(1);
+    tmp.allocate(true);
     for (int i = 0; i < this->values.size(); i++)
     {
         tmp.add_array(this->values[i].get_pointer());

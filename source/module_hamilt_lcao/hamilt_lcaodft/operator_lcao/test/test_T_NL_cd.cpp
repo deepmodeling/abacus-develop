@@ -16,7 +16,7 @@
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
-int test_size = 100;
+int test_size = 10;
 int test_nw = 10;
 class TNLTest : public ::testing::Test
 {

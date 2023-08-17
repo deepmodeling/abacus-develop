@@ -98,7 +98,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
                 int end_col = paraV.atom_begin_col[jat + 1];
                 int numberofCol = end_col - begin_col;
                 hamilt::BaseMatrix<double> tmp_matrix(numberofRow, numberofCol);
-                tmp_matrix.allocate(1);
+                tmp_matrix.allocate(true);
                 int nnz = 0;
                 for (const auto& element: sparse_matrix.getElements())
                 {
@@ -114,7 +114,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
                 if (nnz != 0)
                 {
                     auto tmp_ap = hamilt::AtomPair<double>(iat, jat, RCoord[0], RCoord[1], RCoord[2], &paraV);
-                    tmp_ap.allocate(1);
+                    tmp_ap.allocate(true);
                     tmp_ap.convert_add(tmp_matrix, RCoord[0], RCoord[1], RCoord[2]);
                     SR.insert_pair(tmp_ap);
                 }

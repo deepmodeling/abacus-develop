@@ -81,7 +81,7 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
             this->sparse_ap_index[i][j] = this->atom_pairs.size() - 1;
         }
     }
-    this->allocate(1);
+    this->allocate(true);
 }
 
 //HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr);

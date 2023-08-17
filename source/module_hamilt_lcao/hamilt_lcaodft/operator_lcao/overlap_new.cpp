@@ -60,7 +60,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::initialize_SR(Grid_Driver
             SR->insert_pair(tmp);
         }
     }
-    SR->allocate(1);
+    // allocate the memory of BaseMatrix in SR, and set the new values to zero
+    SR->allocate(true);
 }
 
 template <typename TK, typename TR>

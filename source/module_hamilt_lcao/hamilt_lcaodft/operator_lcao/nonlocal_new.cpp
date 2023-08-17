@@ -97,7 +97,8 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
             }
         }
     }
-    HR->allocate(1);
+    // allocate the memory of BaseMatrix in HR, and set the new values to zero
+    HR->allocate(true);
 }
 
 template <typename TK, typename TR>
