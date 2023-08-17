@@ -66,7 +66,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 // mock of OperatorLCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 
-template<typename FPTYPE, typename Device>
+/* template<typename FPTYPE, typename Device>
 hamilt::Operator<FPTYPE, Device>::Operator(){}
 
 template<typename FPTYPE, typename Device>
@@ -97,12 +97,23 @@ FPTYPE* hamilt::Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
 }
 
 template class hamilt::Operator<double, psi::DEVICE_CPU>;
-template class hamilt::Operator<std::complex<double>, psi::DEVICE_CPU>;
+template class hamilt::Operator<std::complex<double>, psi::DEVICE_CPU>;*/
 
 // mock of OperatorLCAO
 template<typename TK>
 void hamilt::OperatorLCAO<TK>::init(const int ik_in)
 {
+    if(!this->hr_done)
+    {
+        OperatorLCAO<TK>* last = this;
+        while(last != nullptr)
+        {
+            last->contributeHR();
+            last = dynamic_cast<OperatorLCAO<TK>*>(last->next_sub_op);
+        }
+        this->hr_done = true;
+    }
+    this->contributeHk(ik_in);
     return;
 }
 template<typename TK>

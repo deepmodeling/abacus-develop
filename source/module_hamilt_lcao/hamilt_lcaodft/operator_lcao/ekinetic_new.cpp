@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
+// Constructor
 template <typename TK, typename TR>
 hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::EkineticNew(
     LCAO_Matrix* LM_in,
@@ -16,6 +17,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::EkineticNew(
     const Parallel_Orbitals* paraV)
     : hamilt::OperatorLCAO<TK>(LM_in, kvec_d_in)
 {
+    this->cal_type = lcao_fixed;
     this->ucell = ucell_in;
     this->HR = HR_in;
     this->HK_pointer = HK_pointer_in;
@@ -26,6 +28,16 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::EkineticNew(
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
     this->initialize_HR(GridD_in, paraV);
+}
+
+// destructor
+template <typename TK, typename TR>
+hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::~EkineticNew()
+{
+    if (this->allocated)
+    {
+        delete this->HR_fixed;
+    }
 }
 
 // initialize_HR()
@@ -40,15 +52,32 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
+        std::vector<bool> is_adj(adjs.adj_num + 1, false);
+        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+        {
+            const int T2 = adjs.ntype[ad1];
+            const int I2 = adjs.natom[ad1];
+            const int iat2 = ucell->itia2iat(T2, I2);
+            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            {
+                continue;
+            }
+            const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
+            // choose the real adjacent atoms
+            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
+            if (this->ucell->cal_dtau(iat1, iat2, R_index2).norm() * this->ucell->lat0
+                <= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+            {
+                is_adj[ad1] = true;
+            }
+        }
+        filter_adjs(is_adj, adjs);
+        this->adjs_all.push_back(adjs);
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
-            if(paraV->get_row_size(iat1)<= 0 || paraV->get_col_size(iat2)<= 0)
-            {
-                continue;
-            }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
             HR->insert_pair(tmp);
@@ -60,23 +89,33 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
 template <typename TK, typename TR>
 void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
 {
+    const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int iap = 0; iap < this->HR->size_atom_pairs(); ++iap)
+    for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
-        hamilt::AtomPair<TR>& tmp = this->HR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
-        const Parallel_Orbitals* paraV = tmp.get_paraV();
-
-        for (int iR = 0; iR < tmp.get_R_size(); ++iR)
+        auto tau1 = ucell->get_tau(iat1);
+        int T1, I1;
+        ucell->iat2iait(iat1, &I1, &T1);
+        AdjacentAtomInfo& adjs = this->adjs_all[iat1];
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
-            const int* R_index = tmp.get_R_index(iR);
-            ModuleBase::Vector3<int> R_vector(R_index[0], R_index[1], R_index[2]);
-            auto dtau = ucell->cal_dtau(iat1, iat2, R_vector);
-            TR* data_pointer = tmp.get_pointer(iR);
-            this->cal_HR_IJR(iat1, iat2, paraV, dtau, data_pointer);
+            const int T2 = adjs.ntype[ad];
+            const int I2 = adjs.natom[ad];
+            const int iat2 = ucell->itia2iat(T2, I2);
+            const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad];
+            ModuleBase::Vector3<double> dtau = this->ucell->cal_dtau(iat1, iat2, R_index2);
+
+            hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2.x, R_index2.y, R_index2.z);
+            if (tmp != nullptr)
+            {
+                this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer());
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("hamilt::EkineticNew::calculate_HR", "R_index not found in HR");
+            }
         }
     }
 }
@@ -163,24 +202,60 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& ia
     }
 }
 
+// set_HR_fixed()
+template <typename TK, typename TR>
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::set_HR_fixed(void* HR_fixed_in)
+{
+    this->HR_fixed = static_cast<hamilt::HContainer<TR>*>(HR_fixed_in);
+    this->allocated = false;
+}
+
 // contributeHR()
 template <typename TK, typename TR>
 void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
 {
-    if (this->HR_fixed_done)
+    if (!this->HR_fixed_done)
     {
-        return;
+        // if this Operator is the first node of the sub_chain, then HR_fixed is nullptr
+        if (this->HR_fixed == nullptr)
+        {
+            this->HR_fixed = new hamilt::HContainer<TR>(*this->HR);
+            this->allocated = true;
+        }
+        else
+        {
+            this->HR_fixed->synchronize(*this->HR);
+        }
+        if(this->next_sub_op != nullptr)
+        {
+            // pass pointer of HR_fixed to the next node
+            static_cast<OperatorLCAO<TK>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
+        }
+        // calculate the values in HR_fixed
+        this->calculate_HR();
+        this->HR_fixed_done = true;
     }
-    this->calculate_HR();
-    this->HR_fixed_done = true;
+    // last node of sub-chain, add HR_fixed into HR
+    if(this->next_sub_op == nullptr)
+    {
+        this->HR->add(*(this->HR_fixed));
+    }
+    return;
 }
 
 // contributeHk()
 template <typename TK, typename TR>
 void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::contributeHk(int ik)
 {
-    const int ncol = this->HR->get_atom_pair(0).get_paraV()->get_col_size();
-    hamilt::folding_HR(*this->HR, this->HK_pointer, this->kvec_d[ik], ncol, 0);
+    if (!this->is_first_node)
+    {
+        return;
+    }
+    else
+    {
+        const int ncol = this->HR->get_atom_pair(0).get_paraV()->get_col_size();
+        hamilt::folding_HR(*this->HR, this->HK_pointer, this->kvec_d[ik], ncol, 0);
+    }
 }
 
 template class hamilt::EkineticNew<hamilt::OperatorLCAO<double>, double>;

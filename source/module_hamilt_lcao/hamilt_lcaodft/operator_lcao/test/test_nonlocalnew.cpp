@@ -17,7 +17,7 @@
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
-int test_size = 10;
+int test_size = 100;
 int test_nw = 10;
 class NonlocalNewTest : public ::testing::Test
 {
@@ -94,6 +94,7 @@ class NonlocalNewTest : public ::testing::Test
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
+        delete[] ucell.infoNL.Beta;
     }
 
 #ifdef __MPI
@@ -175,7 +176,27 @@ TEST_F(NonlocalNewTest, constructHRd2d)
     {
         EXPECT_EQ(hk[i], 5.0*test_size);
     }
-    std::cout << "Elapsed time: " << elapsed_time.count()<<" "<<elapsed_time1.count()<<" "<<elapsed_time2.count() << " seconds." << std::endl;
+    // calculate HR again
+    start_time = std::chrono::high_resolution_clock::now();
+    op.contributeHR();
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time3 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    // check the value of HR
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
+    {
+        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
+        int iat1 = tmp.get_atom_i();
+        int iat2 = tmp.get_atom_j();
+        auto indexes1 = paraV->get_indexes_row(iat1);
+        auto indexes2 = paraV->get_indexes_col(iat2);
+        int nwt = indexes1.size() * indexes2.size();
+        for (int i = 0; i < nwt; ++i)
+        {
+            EXPECT_EQ(tmp.get_pointer(0)[i], 10.0*test_size);
+        }
+    }
+    std::cout << "Test terms:   " <<std::setw(15)<< "initialize_HR" <<std::setw(15)<< "contributeHR" <<std::setw(15)<< "contributeHk"<<std::setw(15) << "2nd-calHR" << std::endl;
+    std::cout << "Elapsed time: " <<std::setw(15)<< elapsed_time.count()<<std::setw(15)<<elapsed_time1.count()<<std::setw(15)<<elapsed_time2.count() <<std::setw(15)<<elapsed_time3.count()<< " seconds." << std::endl;
 }
 
 TEST_F(NonlocalNewTest, constructHRd2cd)

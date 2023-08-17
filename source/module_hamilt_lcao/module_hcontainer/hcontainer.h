@@ -259,6 +259,11 @@ class HContainer
      */
     //T& operator()(int atom_i, int atom_j, int rx_in, int ry_in, int rz_in, int mu, int nu) const;
 
+    /**
+     * @brief add another HContainer to this HContainer
+    */
+    void add(const HContainer<T>& other);
+
     // save atom-pair pointers into this->tmp_atom_pairs for selected R index
     /**
      * @brief save atom-pair pointers into this->tmp_atom_pairs for selected R index
@@ -350,6 +355,12 @@ class HContainer
      * @brief get total memory bites of HContainer
     */
     size_t get_memory_size() const;
+
+    /**
+     * @brief synchronization of atom-pairs for read-in HContainer
+     * new <IJR> pair from read-in HContainer will be inserted into this->atom-pairs
+    */
+    void synchronize(const HContainer<T>& other);
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)

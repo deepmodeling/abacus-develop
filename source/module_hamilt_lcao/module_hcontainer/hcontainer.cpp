@@ -21,6 +21,7 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in)
     this->sparse_ap = HR_in.sparse_ap;
     this->sparse_ap_index = HR_in.sparse_ap_index;
     this->gamma_only = HR_in.gamma_only;
+    this->paraV = HR_in.paraV;
     this->current_R = -1;
     // tmp terms not copied
 }
@@ -33,6 +34,7 @@ HContainer<T>::HContainer(HContainer<T>&& HR_in)
     this->sparse_ap = std::move(HR_in.sparse_ap);
     this->sparse_ap_index = std::move(HR_in.sparse_ap_index);
     this->gamma_only = HR_in.gamma_only;
+    this->paraV = HR_in.paraV;
     this->current_R = -1;
     // tmp terms not moved
 }
@@ -224,6 +226,17 @@ AtomPair<T>& HContainer<T>::get_atom_pair(int index) const
     else
     {
         return const_cast<AtomPair<T>&>(this->atom_pairs[index]);
+    }
+}
+
+// add function
+template <typename T>
+void HContainer<T>::add(const HContainer<T>& other)
+{
+    for(int iap=0;iap<other.size_atom_pairs();iap++)
+    {
+        auto tmp = other.get_atom_pair(iap);
+        this->insert_pair(tmp);
     }
 }
 
@@ -501,6 +514,46 @@ size_t HContainer<T>::get_memory_size() const
     memory += this->tmp_atom_pairs.capacity() * sizeof(AtomPair<T>*);
     memory += this->tmp_R_index.capacity() * sizeof(int);
     return memory;
+}
+
+// synchronize
+template <typename T>
+void HContainer<T>::synchronize(const HContainer<T>& other)
+{
+    // check paraV pointer
+    if (this->paraV != other.paraV)
+    {
+        ModuleBase::WARNING_QUIT("HContainer::synchronize", "paraV pointer not match");
+    }
+    // synchronize atom_pairs
+    for (int i = 0; i < other.atom_pairs.size(); ++i)
+    {
+        const int iat1 = other.atom_pairs[i].get_atom_i();
+        const int iat2 = other.atom_pairs[i].get_atom_j();
+        AtomPair<T>* tmp_pointer = this->find_pair(iat1, iat2);
+        if (tmp_pointer == nullptr)
+        {
+            this->insert_pair(other.atom_pairs[i]);
+            // the new AtomPair should be zero
+            this->atom_pairs.back().set_zero();
+        }
+        else
+        {
+            for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
+            {
+                int* R_pointer = other.atom_pairs[i].get_R_index(ir);
+                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]))
+                {
+                    // do nothing
+                }
+                else
+                {
+                    // insert the new BaseMatrix
+                    tmp_pointer->get_HR_values(R_pointer[0], R_pointer[1], R_pointer[2]);
+                }
+            }
+        }
+    }
 }
 
 // T of HContainer can be double or complex<double>

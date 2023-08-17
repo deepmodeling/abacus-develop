@@ -141,6 +141,22 @@ TEST_F(EkineticNewTest, constructHRd2d)
     {
         EXPECT_EQ(hk[i], 2.0);
     }
+    // calculate HR again
+    op.contributeHR();
+    // check the value of HR
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
+    {
+        hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
+        int iat1 = tmp.get_atom_i();
+        int iat2 = tmp.get_atom_j();
+        auto indexes1 = paraV->get_indexes_row(iat1);
+        auto indexes2 = paraV->get_indexes_col(iat2);
+        int nwt = indexes1.size() * indexes2.size();
+        for (int i = 0; i < nwt; ++i)
+        {
+            EXPECT_EQ(tmp.get_pointer(0)[i], 4.0);
+        }
+    }
 }
 
 TEST_F(EkineticNewTest, constructHRd2cd)
