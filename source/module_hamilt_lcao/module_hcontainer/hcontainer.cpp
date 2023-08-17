@@ -66,19 +66,22 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
         atom_begin_col[i+1] = begin;
     }
     // initialize atom_pairs and sparse_ap
-    this->atom_pairs.reserve(ucell_.nat * ucell_.nat);
+    this->atom_pairs.resize(ucell_.nat * ucell_.nat, AtomPair<T>(0,0));
     this->sparse_ap.resize(ucell_.nat);
     this->sparse_ap_index.resize(ucell_.nat);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int i = 0; i < ucell_.nat; i++)
     {
         this->sparse_ap[i].resize(ucell_.nat);
         this->sparse_ap_index[i].resize(ucell_.nat);
         for (int j = 0; j < ucell_.nat; j++)
         {
-            AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            this->atom_pairs.push_back(atom_ij);
+            //AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
+            this->atom_pairs[i * ucell_.nat + j] = AtomPair<T>(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
             this->sparse_ap[i][j] = j;
-            this->sparse_ap_index[i][j] = this->atom_pairs.size() - 1;
+            this->sparse_ap_index[i][j] = i * ucell_.nat + j;
         }
     }
     this->allocate(true);
@@ -111,6 +114,9 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer)
 template <typename T>
 void HContainer<T>::allocate(bool is_zero)
 {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for(int it=0;it<this->atom_pairs.size();it++)
     {
         this->atom_pairs[it].allocate(is_zero);
@@ -291,9 +297,12 @@ void HContainer<T>::fix_gamma()
     // every AtomPair in this->atom_pairs has the (0, 0, 0) cell index
     // fix every AtomPair in this->atom_pairs to only center cell
     this->gamma_only = true;
-    for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int it =0; it< this->atom_pairs.size(); ++it)
     {
-        it->merge_to_gamma();
+        this->atom_pairs[it].merge_to_gamma();
     }
     // in gamma_only case, R_index is not needed, tmp_R_index should be empty
     if (this->current_R != -1)
