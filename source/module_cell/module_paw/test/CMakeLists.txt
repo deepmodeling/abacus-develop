@@ -6,6 +6,7 @@ install(FILES sphbes_ref.dat func.dat qlist.dat fq_ref.dat
   eigts.dat ca.dat rhoij.dat vkb_ref.dat
   Si_test.xml gnorm.dat ptilde_ref.dat psi.dat rhoij1.dat
   H.LDA_PW-JTH.xml Fe.GGA_PBE-JTH.xml O.GGA_PBE-JTH.xml Si.GGA_PBE-JTH.xml
+  STRU
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
@@ -24,4 +25,10 @@ AddTest(
   TARGET Test_Paw2
   LIBS ${math_libs} base device
   SOURCES test_paw2.cpp ../paw_atom.cpp
+)
+
+AddTest(
+  TARGET Test_Paw3
+  LIBS ${math_libs} base device
+  SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
 )
