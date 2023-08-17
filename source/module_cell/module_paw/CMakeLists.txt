@@ -4,6 +4,7 @@ add_library(
     paw_element.cpp
     paw_sphbes.cpp
     paw_cell.cpp
+    paw_cell_libpaw.cpp
 )
 
 if(ENABLE_COVERAGE)
