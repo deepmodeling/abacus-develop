@@ -102,7 +102,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 
                     std::vector<std::vector<double>> nlm2;
                     GlobalC::UOT.two_center_bundle->overlap_orb_alpha->snap(
-                            T1, L1, N1, M1, 0, dtau * GlobalC::ucell.lat0, calc_deri, nlm2);
+                            T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm2);
 
 #ifdef USE_NEW_TWO_CENTER
                     nlm = nlm2;
