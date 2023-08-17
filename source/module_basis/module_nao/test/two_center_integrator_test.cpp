@@ -20,13 +20,13 @@ using iclock = std::chrono::high_resolution_clock;
 #endif
 
 /***********************************************************
- *      Unit test of class "TwoCenterTable"
+ *      Unit test of class "TwoCenterIntegrator"
  ***********************************************************/
 /*!
  *  Tested functions:
  *
  *  - build
- *      - builds a two-center integral radial table from two RadialCollection objects
+ *      - builds an object for doing a specific two-center integral
  *                                                                      */
 class TwoCenterIntegratorTest : public ::testing::Test
 {

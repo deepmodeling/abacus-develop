@@ -89,14 +89,49 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 					//2D, dim 0 contains the overlap <psi|alpha>
                     //dim 1-3 contains the gradient of overlap
 
-					//inner loop : all projectors (N,L,M)
-					UOT.snap_psialpha_half(
+
+                    //=================================================================
+                    //          new two-center integral (temporary)
+                    //=================================================================
+                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                    int L1 = atom1->iw2l[ iw1_0 ];
+                    int N1 = atom1->iw2n[ iw1_0 ];
+                    int m1 = atom1->iw2m[ iw1_0 ];
+                    int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+                    ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
+
+                    std::vector<std::vector<double>> nlm2;
+                    GlobalC::UOT.two_center_bundle->overlap_orb_alpha->snap(
+                            T1, L1, N1, M1, 0, dtau * GlobalC::ucell.lat0, calc_deri, nlm2);
+
+#ifdef USE_NEW_TWO_CENTER
+                    nlm = nlm2;
+#else
+                    //inner loop : all projectors (N,L,M)
+                    UOT.snap_psialpha_half(
                         orb,
-						nlm, job, tau1, T1,
-						atom1->iw2l[ iw1_0 ], // L1
-						atom1->iw2m[ iw1_0 ], // m1
-						atom1->iw2n[ iw1_0 ], // N1
-						ucell.atoms[T0].tau[I0], T0, I0); //R0,T0
+                        nlm, job, tau1, T1,
+                        atom1->iw2l[ iw1_0 ], // L1
+                        atom1->iw2m[ iw1_0 ], // m1
+                        atom1->iw2n[ iw1_0 ], // N1
+                        ucell.atoms[T0].tau[I0], T0, I0); //R0,T0
+
+                    for (size_t j = 0; j < nlm.size(); ++j)
+                    {
+                        for (size_t i = 0; i < nlm[j].size(); ++i)
+                        {
+                            if (std::abs(nlm[j][i]-nlm2[j][i]) > 1e-4)
+                            {
+                                printf("t1 = %i   l1 = %i   izeta1 = %i   m1 = % i   "
+                                       "t2 = %i   i2 = %li   job = alpha%li   old = % 8.5e   new = % 8.5e\n",
+                                       T1, L1, N1, M1, it, i, j, nlm[j][i], nlm2[j][i]);
+                            }
+                        }
+                    }
+#endif
+                    //=================================================================
+                    //          end of new two-center integral (temporary)
+                    //=================================================================
 
                     if(GlobalV::GAMMA_ONLY_LOCAL)
                     {

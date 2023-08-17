@@ -53,6 +53,9 @@ class BetaRadials : public RadialSet
 
     //! extract the substring between a pair of quotation marks (for UPF v2.0.1)
     std::string trim201(std::string const& str);
+
+    /// extract value string from a string of the form keyword=" value"
+    std::string extract201(std::string const& str, std::string const& keyword);
 };
 
 #endif

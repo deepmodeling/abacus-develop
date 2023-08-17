@@ -1,5 +1,7 @@
 #include "esolver_ks_lcao.h"
 
+#include "module_base/global_variable.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
@@ -35,6 +37,8 @@
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
+
+#include "module_base/parallel_common.h"
 
 namespace ModuleESolver
 {
@@ -419,6 +423,51 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
         this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     }
+
+    //-------------------------------------
+    //  new two-center integral module
+    //-------------------------------------
+    two_center_bundle.reset(new TwoCenterBundle);
+
+//    int ntype = ucell.ntype;
+//    bool deepks_on = GlobalV::deepks_setorb;
+//
+//#ifdef __MPI
+//    Parallel_Common::bcast_int(ntype);
+//    Parallel_Common::bcast_bool(deepks_on);
+//#endif
+//
+//    std::string* file_orb = new std::string[ntype];
+//    std::string* file_pp = new std::string[ntype];
+//    std::string file_desc = ucell.descriptor_file;
+//
+//    if (GlobalV::MY_RANK == 0) {
+//        for (int it = 0; it < ntype; ++it)
+//        {
+//            file_orb[it] = GlobalV::global_orbital_dir + ucell.orbital_fn[it];
+//            file_pp[it] = GlobalV::global_pseudo_dir + ucell.pseudo_fn[it];;
+//        }
+//    }
+//#ifdef __MPI
+//    Parallel_Common::bcast_string(file_orb, ntype);
+//    Parallel_Common::bcast_string(file_pp, ntype);
+//    Parallel_Common::bcast_string(file_desc);
+//#endif
+
+    // NOTE: ucell.orbital_fn & ucell.pseudo_fn does not include the path,
+    // GlobalV::global_orbital_dir & GlobalV::global_pseudo_dir is prepended inside build()
+    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.ntype, ucell.pseudo_fn,
+            GlobalV::deepks_setorb, &ucell.descriptor_file);
+    // currently deepks only use one descriptor file
+
+    //delete[] file_orb;
+    //delete[] file_pp;
+
+    // transfer the ownership to UOT
+    // this is a temporary solution during refactoring
+    // the final version will get rid of UOT
+    // and transfer individual ownership of TwoCenterIntegrator to corresponding operator
+    GlobalC::UOT.two_center_bundle = std::move(two_center_bundle);
 }
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)

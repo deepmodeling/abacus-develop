@@ -13,11 +13,14 @@ HEADERS = *.h
 
 VPATH=./src_global:\
 ./module_basis/module_ao:\
+./module_basis/module_nao:\
 ./module_cell/module_neighbor:\
 ./module_cell/module_symmetry:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
+./module_base/module_container:\
+./module_base/module_container/kernels:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -87,6 +90,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_CONTAINER}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -126,6 +130,8 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
+	cubic_spline.o\
+	spherical_bessel_transformer.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -281,9 +287,18 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
+	  atomic_radials.o\
+	  beta_radials.o\
+	  numerical_radial.o\
+	  radial_collection.o\
+	  radial_set.o\
+	  real_gaunt_table.o\
+	  two_center_bundle.o\
+	  two_center_integrator.o\
+	  two_center_table.o\
 
 OBJS_PSI=psi.o\
-    memory_op.o\
+    psi_memory_op.o\
     device.o\
 
 OBJS_PW=fft.o\
@@ -504,3 +519,13 @@ OBJS_DFTU=dftu.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o
+
+OBJS_CONTAINER=cpu_allocator.o\
+			   tensor.o\
+			   tensor_buffer.o\
+			   tensor_map.o\
+			   tensor_shape.o\
+			   tensor_types.o\
+			   blas_op.o\
+			   lapack_op.o\
+			   memory_op.o

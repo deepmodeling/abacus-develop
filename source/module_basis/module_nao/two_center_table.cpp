@@ -8,6 +8,7 @@
 
 #include "module_base/constants.h"
 #include "module_base/math_integral.h"
+#include "module_base/cubic_spline.h"
 
 void TwoCenterTable::build(const RadialCollection& bra,
                            const RadialCollection& ket,
@@ -26,9 +27,15 @@ void TwoCenterTable::build(const RadialCollection& bra,
     nr_ = nr;
     rmax_ = cutoff;
 
-    double* rgrid = new double[nr_];
+    nchi_ket_.resize({ket.ntype(), ket.lmax() + 1});
+    std::fill(nchi_ket_.data<int>(), nchi_ket_.data<int>() + nchi_ket_.NumElements(), 0);
+    for (int itype = 0; itype < ket.ntype(); ++itype)
+        for (int l = 0; l <= ket.lmax(itype); ++l)
+            nchi_ket_.get_value<int>(itype, l) = ket.nzeta(itype, l);
+
+    rgrid_ = new double[nr_];
     double dr = rmax_ / (nr_ - 1);
-    std::for_each(rgrid, rgrid + nr_, [&rgrid, dr](double& r) { r = (&r - rgrid) * dr; });
+    std::for_each(rgrid_, rgrid_ + nr_, [this, dr](double& r) { r = (&r - rgrid_) * dr; });
 
     // index the table by generating a map from (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index
     index_map_.resize({bra.ntype(), bra.lmax() + 1, bra.nzeta_max(),
@@ -48,6 +55,9 @@ void TwoCenterTable::build(const RadialCollection& bra,
         dtable_.resize({ntab_, nr_});
         two_center_loop(bra, ket, &TwoCenterTable::_tabulate_d);
     }
+
+    // there's no need to store the uniform grid
+    delete[] rgrid_;
 }
 
 const double* TwoCenterTable::table(const int itype1,
@@ -111,10 +121,13 @@ void TwoCenterTable::cleanup()
     op_ = '\0';
     with_deriv_ = false;
     nr_ = 0;
+    delete[] rgrid_;
+    rgrid_ = nullptr;
 
     table_.resize({0});
     dtable_.resize({0});
     index_map_.resize({0});
+    nchi_ket_.resize({0});
 }
 
 bool TwoCenterTable::is_present(const int itype1,
@@ -230,6 +243,13 @@ void TwoCenterTable::_tabulate_d(const NumericalRadial* it1, const NumericalRadi
     // and we choose to store dS/dR or dT/dR directly.
     //
     // See the developer's document for more details.
-    it1->radtab(op_, *it2, l, dtable_.inner_most_ptr<double>(table_index(it1, it2, l)), nr_, rmax_, true);
+    //it1->radtab(op_, *it2, l, dtable_.inner_most_ptr<double>(table_index(it1, it2, l)), nr_, rmax_, true);
+
+    using ModuleBase::CubicSpline;
+
+    int itab = table_index(it1, it2, l);
+    CubicSpline::build(nr_, rgrid_, table_.inner_most_ptr<double>(itab), dtable_.inner_most_ptr<double>(itab),
+            CubicSpline::BoundaryCondition::first_deriv, CubicSpline::BoundaryCondition::first_deriv,
+            0.0, 0.0);
 }
 

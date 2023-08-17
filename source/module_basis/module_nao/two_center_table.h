@@ -64,6 +64,21 @@ class TwoCenterTable
     ) const;
     //!@}
 
+    // NOTE: "nchi_ket" and "lmax_ket" are added for the purpose of "snap" in TwoCenterIntegrator
+    // which generates a batch of two-center integrals depending on those information.
+    // This might not be the intended purpose of this class.
+
+    /// number of NumericalRadial objects in the ket with given itype and l
+    int nchi_ket(const int itype, const int l) const
+    {
+        assert(itype >= 0 && itype < nchi_ket_.shape().dim_size(0));
+        assert(l >= 0 && l < nchi_ket_.shape().dim_size(1));
+        return nchi_ket_.get_value<int>(itype, l);
+    }
+
+    /// maximum angular momentum of the ket
+    int lmax_ket() const { return nchi_ket_.shape().dim_size(1) - 1; }
+
   private:
     char op_ = '\0';          //!< operator of the two-center integral
     bool with_deriv_ = false; //!< if true, dtable_ is also built
@@ -71,24 +86,27 @@ class TwoCenterTable
     int ntab_ = 0;     //!< number of table entries
     int nr_ = 0;       //!< number of radial points of each table
     double rmax_= 0.0; //!< cutoff radius of the table
+    double* rgrid_ = nullptr;
 
+    /// Table of size ntype x lmax that stores the number of radial functions of given type and l
+    container::Tensor nchi_ket_{container::DataType::DT_INT, container::TensorShape({0})};
 
-    //! two-center integral radial table, stored as a row-major matrix
+    /// two-center integral radial table, stored as a row-major matrix
     container::Tensor table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
-    //! derivative of table_, built if with_deriv_ is true
+    /// derivative of table_, built if with_deriv_ is true
     container::Tensor dtable_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
-    //! map (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index in the table
+    /// map (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index in the table
     container::Tensor index_map_{container::DataType::DT_INT, container::TensorShape({0})};
 
-    //! returns the row-index of the table corresponding to the given two radial functions and l
+    /// returns the row-index of the table corresponding to the given two radial functions and l
     int& table_index(const NumericalRadial* ptr_rad1, const NumericalRadial* ptr_rad2, const int l);
 
-    //! deallocates memory and reset variables to default.
+    /// deallocates memory and reset variables to default.
     void cleanup();
 
-    //! returns whether the given indices map to an entry in the table
+    /// returns whether the given indices map to an entry in the table
     bool is_present(const int itype1,
                     const int l1,
                     const int izeta1,

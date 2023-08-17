@@ -24,6 +24,8 @@ list(APPEND depend_files
   ../../../module_base/global_file.cpp
   ../../../module_base/libm/branred.cpp
   ../../../module_base/libm/sincos.cpp
+  ../../../module_base/spherical_bessel_transformer.cpp
+  ../../../module_base/cubic_spline.cpp
   ../ORB_control.cpp
   ../ORB_read.cpp
   ../ORB_atomic.cpp
@@ -41,7 +43,7 @@ list(APPEND depend_files
   )
 AddTest(
   TARGET orbital_equal_test
-  LIBS ${math_libs} device
+  LIBS ${math_libs} device numerical_atomic_orbitals container kernels
   SOURCES 1_snap_equal_test.cpp ORB_unittest.cpp
   ../../../module_base/parallel_reduce.cpp ../../../module_base/parallel_global.cpp ../../../module_base/parallel_common.cpp
   ${depend_files}

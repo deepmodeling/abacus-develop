@@ -39,12 +39,17 @@ void TwoCenterIntegrator::calculate(const int itype1,
     assert( is_tabulated_ );
     assert( (deriv && with_deriv_) || !deriv );
 
+    std::fill(out, out + (deriv ? 3 : 1), 0.0);
+
     double R = vR.norm();
+    if (R > table_.rmax())
+    {
+        return;
+    }
 
     // unit vector along R
     ModuleBase::Vector3<double> uR = (R == 0.0 ? ModuleBase::Vector3<double>(0., 0., 1.) : vR / R);
 
-    std::fill(out, out + (deriv ? 3 : 1), 0.0);
 
     // generate all necessary real spherical harmonics (multiplied by R^l)
 	std::vector<double> Rl_Y;
@@ -59,18 +64,16 @@ void TwoCenterIntegrator::calculate(const int itype1,
 		ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
 	}
 
-    int sign = 1;
+    // the sign is given by i^(l1-l2-l) = (-1)^((l1-l2-l)/2)
+    int sign = (l1 - l2 - std::abs(l1 - l2)) % 4 == 0 ? 1 : -1;
     for (int l = std::abs(l1 - l2); l <= l1 + l2; l += 2)
     {
         double S_by_Rl = table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, false);
 
-        // tmp is (d/dR)(S/R^l)
-        double tmp = (deriv && R > 1e-6) ? 
-            table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, true) / std::pow(R, l)
-                - l / R * S_by_Rl
-            : 0.0;
+        // (d/dR)(S/R^l)
+        double d_S_by_Rl = deriv ? table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, true) : 0.0;
 
-		for (int m = -l; m < l; ++m)
+		for (int m = -l; m <= l; ++m)
         {
             double G = RealGauntTable::instance()(l1, l2, l, m1, m2, m);
 
@@ -78,7 +81,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
             {
                 for (int i = 0; i < 3; ++i)
                 {
-                    out[i] += sign * G * ( tmp * uR[i] * Rl_Y[ylm_index(l, m)] 
+                    out[i] += sign * G * ( d_S_by_Rl * uR[i] * Rl_Y[ylm_index(l, m)]
                                             + S_by_Rl * grad_Rl_Y[ylm_index(l, m)][i] );
                 }
             }
@@ -88,6 +91,64 @@ void TwoCenterIntegrator::calculate(const int itype1,
             }
         }
         sign = -sign;
+    }
+}
+
+void TwoCenterIntegrator::snap(const int itype1, 
+                               const int l1, 
+                               const int izeta1, 
+                               const int m1, 
+                               const int itype2,
+	                           const ModuleBase::Vector3<double>& vR,
+                               const bool deriv,
+                               std::vector<std::vector<double>>& out) const
+{
+    assert( is_tabulated_ );
+    assert( (deriv && with_deriv_) || !deriv );
+
+    out.resize(deriv ? 4 : 1);
+
+    // total number of ket functions (including all m!)
+    int num_ket = 0;
+    for (int l2 = 0; l2 <= table_.lmax_ket(); ++l2)
+    {
+        num_ket += (2 * l2 + 1) * table_.nchi_ket(itype2, l2);
+    }
+
+    if (num_ket == 0)
+    {
+        return;
+    }
+
+	for(size_t i = 0; i < out.size(); ++i)
+	{
+		out[i].resize(num_ket);
+        std::fill(out[i].begin(), out[i].end(), 0.0);
+	}
+
+    int index = 0;
+    for (int l2 = 0; l2 <= table_.lmax_ket(); ++l2)
+    {
+        for (int izeta2 = 0; izeta2 < table_.nchi_ket(itype2, l2); ++izeta2)
+        {
+            // NOTE: here the order of m is consistent with the rest of ABACUS
+            // i.e., 0, 1, -1, 2, -2, 3, -3, ...
+            // whether it should be rearranged to -l, -l+1, ..., l will be studied later
+            for (int mm2 = 0; mm2 <= 2*l2; ++mm2)
+            {
+                int m2 = (mm2 % 2 == 0) ? -mm2 / 2 : (mm2 + 1) / 2;
+                calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, false, &out[0][index]);
+                if (deriv)
+                {
+                    double tmp[3] = {0.0, 0.0, 0.0};
+                    calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, true, tmp);
+                    out[1][index] = tmp[0];
+                    out[2][index] = tmp[1];
+                    out[3][index] = tmp[2];
+                }
+                ++index;
+            }
+        }
     }
 }
 

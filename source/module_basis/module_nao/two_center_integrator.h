@@ -96,6 +96,22 @@ class TwoCenterIntegrator
                    double* out
     ) const;
 
+    /*!
+     * @brief Compute a batch of two-center integrals.
+     *
+     * This function calculates the two-center integrals (and optionally their gradients)
+     * between one orbital and all orbitals of a certain type from the other collection.
+     *                                                                                  */
+    void snap(const int itype1, 
+              const int l1, 
+              const int izeta1, 
+              const int m1, 
+              const int itype2,
+	          const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+              const bool deriv,
+              std::vector<std::vector<double>>& out
+    ) const;
+
   private:
     bool is_tabulated_;
 
