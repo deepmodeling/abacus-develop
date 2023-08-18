@@ -63,6 +63,8 @@ class TNLTest : public ::testing::Test
         ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
         ucell.atoms[0].ncpp.d_so.zero_out();
         ucell.atoms[0].ncpp.non_zero_count_soc[0] = 5;
+        ucell.atoms[0].ncpp.non_zero_count_soc[1] = 0;
+        ucell.atoms[0].ncpp.non_zero_count_soc[2] = 0;
         ucell.atoms[0].ncpp.non_zero_count_soc[3] = 5;
         ucell.atoms[0].ncpp.index1_soc[0] = new int[5];
         ucell.atoms[0].ncpp.index2_soc[0] = new int[5];
@@ -92,10 +94,15 @@ class TNLTest : public ::testing::Test
         delete[] ucell.atoms[0].iw2l;
         delete[] ucell.atoms[0].iw2m;
         delete[] ucell.atoms[0].iw2n;
+        delete[] ucell.atoms[0].ncpp.index1_soc[0];
+        delete[] ucell.atoms[0].ncpp.index2_soc[0];
+        delete[] ucell.atoms[0].ncpp.index1_soc[3];
+        delete[] ucell.atoms[0].ncpp.index2_soc[3];
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
         delete[] ucell.infoNL.Beta;
+
     }
 
 #ifdef __MPI
@@ -145,7 +152,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         &gd,
         paraV
     );
-    hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>> op1(
+    hamilt::Operator<std::complex<double>> *op1 = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>>(
         nullptr, 
         kvec_d_in, 
         HR, 
@@ -155,7 +162,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
         paraV
     );
     // merge two Operators to a chain
-    op->add(&op1);
+    op->add(op1);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
@@ -245,6 +252,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
             ++i;
         }
     }
+    delete op;
 }
 
 int main(int argc, char** argv)
