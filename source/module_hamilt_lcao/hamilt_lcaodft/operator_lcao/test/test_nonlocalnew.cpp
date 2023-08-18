@@ -62,6 +62,8 @@ class NonlocalNewTest : public ::testing::Test
         ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
         ucell.atoms[0].ncpp.d_so.zero_out();
         ucell.atoms[0].ncpp.non_zero_count_soc[0] = 5;
+        ucell.atoms[0].ncpp.non_zero_count_soc[1] = 0;
+        ucell.atoms[0].ncpp.non_zero_count_soc[2] = 0;
         ucell.atoms[0].ncpp.non_zero_count_soc[3] = 5;
         ucell.atoms[0].ncpp.index1_soc[0] = new int[5];
         ucell.atoms[0].ncpp.index2_soc[0] = new int[5];
@@ -91,6 +93,10 @@ class NonlocalNewTest : public ::testing::Test
         delete[] ucell.atoms[0].iw2l;
         delete[] ucell.atoms[0].iw2m;
         delete[] ucell.atoms[0].iw2n;
+        delete[] ucell.atoms[0].ncpp.index1_soc[0];
+        delete[] ucell.atoms[0].ncpp.index2_soc[0];
+        delete[] ucell.atoms[0].ncpp.index1_soc[3];
+        delete[] ucell.atoms[0].ncpp.index2_soc[3];
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
