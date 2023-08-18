@@ -8,8 +8,9 @@ for i in 2 3 4; do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./test_overlap_new_cd
-    mpirun -np $i ./test_overlap_new
-    mpirun -np $i ./test_ekinetic_new
-    mpirun -np $i ./test_nonlocal_new
+    mpirun -np $i ./operator_overlap_cd_test
+    mpirun -np $i ./operator_overlap_test
+    mpirun -np $i ./operator_ekinetic_test
+    mpirun -np $i ./operator_nonlocal_test
+    mpirun -np $i ./operator_T_NL_cd_test
 done
