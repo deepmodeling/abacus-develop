@@ -200,6 +200,7 @@ AtomPair<T>& HContainer<T>::get_atom_pair(int atom_i, int atom_j) const
     else
     {
         ModuleBase::WARNING_QUIT("HContainer", "atom pair not found in get_atom_pair");
+        return const_cast<AtomPair<T>&>(this->atom_pairs[0]);
     }
 }
 
@@ -527,7 +528,7 @@ size_t HContainer<T>::get_memory_size() const
 
 // synchronize
 template <typename T>
-void HContainer<T>::synchronize(const HContainer<T>& other)
+void HContainer<T>::shape_synchron( const HContainer<T>& other)
 {
     // check paraV pointer
     if (this->paraV != other.paraV)

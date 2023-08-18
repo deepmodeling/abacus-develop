@@ -225,7 +225,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
         }
         else
         {
-            this->HR_fixed->synchronize(*this->HR);
+            this->HR_fixed->shape_synchron( *this->HR);
         }
         if(this->next_sub_op != nullptr)
         {

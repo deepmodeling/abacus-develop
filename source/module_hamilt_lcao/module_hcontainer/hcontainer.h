@@ -360,7 +360,7 @@ class HContainer
      * @brief synchronization of atom-pairs for read-in HContainer
      * new <IJR> pair from read-in HContainer will be inserted into this->atom-pairs
     */
-    void synchronize(const HContainer<T>& other);
+    void shape_synchron( const HContainer<T>& other);
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
