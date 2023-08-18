@@ -944,8 +944,8 @@ void ESolver_OF::afterOpt(const int istep)
             ssp << GlobalV::global_out_dir << "SPIN" << is + 1 << "_POT.cube";
             ModuleIO::write_potential(
 #ifdef __MPI
-                pw_big->bz,
-                pw_big->nbz,
+                this->pw_big->bz,
+                this->pw_big->nbz,
                 this->pw_rho->nplane,
                 this->pw_rho->startz_current,
 #endif
@@ -958,6 +958,23 @@ void ESolver_OF::afterOpt(const int istep)
                 this->pelec->pot->get_effective_v(),
                 precision);
         }
+    }
+    if (GlobalV::out_pot == 2) // output the static electronic potential, sunliang 2023-08-11
+    {
+        int precision = 3;
+        std::stringstream ssp;
+        ssp << GlobalV::global_out_dir << "/ElecStaticPot.cube";
+        ModuleIO::write_elecstat_pot(
+#ifdef __MPI
+            this->pw_big->bz,
+            this->pw_big->nbz,
+#endif
+            ssp.str(),
+            this->pw_rho,
+            this->pelec->charge,
+            &(GlobalC::ucell),
+            this->pelec->pot->get_fixed_v()
+        );
     }
 }
 

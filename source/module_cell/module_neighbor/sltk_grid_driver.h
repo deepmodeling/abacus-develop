@@ -26,6 +26,8 @@ public:
 	std::vector<ModuleBase::Vector3<int>> box;
 };
 
+void filter_adjs(const std::vector<bool>& is_adj, AdjacentAtomInfo& adjs);
+
 class Grid_Driver : public Grid
 {
 public:

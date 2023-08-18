@@ -236,7 +236,7 @@ void DMgamma_2dtoGrid::cal_dk_gamma_from_2D(
 {
     ModuleBase::timer::tick("LCAO_Charge", "dm_2dTOgrid");
 #ifdef __DEBUG
-    ModuleBase::GlobalFunc::OUT(ofs_running, "cal_dk_gamma_from_2D, NSPIN", NSPIN);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "cal_dk_gamma_from_2D, NSPIN", nspin);
 #endif
 
     for (int is = 0; is < nspin; ++is)

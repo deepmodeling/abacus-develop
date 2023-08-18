@@ -32,6 +32,20 @@ class BaseMatrix
     ~BaseMatrix();
 
     /**
+     * @brief allocate memory for the matrix
+     * if this->value_begin is not nullptr, it will be neglected
+     * if this->value_begin is nullptr, it will allocate memory with size nrow_local * ncol_local
+    */
+    void allocate(bool if_zero = false);
+
+    /**
+     * @brief set value in the matrix to zero
+     * if memory_type == 1 , it will set all value in the matrix to zero
+     * if memory_type == 2 , it will set all value in the submatrix to zero
+    */
+    void set_zero();
+
+    /**
      * @brief save an array to the matrix
      *
      * @param array array to be saved

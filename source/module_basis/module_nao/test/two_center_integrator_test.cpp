@@ -89,9 +89,8 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
 
     start = iclock::now();
 
-    RealGauntTable rgt;
-    S_intor.tabulate(orb, orb, 'S', nr, rmax, true, &rgt);
-    T_intor.tabulate(orb, orb, 'T', nr, rmax, true, &rgt);
+    S_intor.tabulate(orb, orb, 'S', nr, rmax, true);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax, true);
 
     dur = iclock::now() - start;
     std::cout << "time elapsed = " << dur.count() << " s" << std::endl;
