@@ -188,7 +188,10 @@ void AtomPair<T>::set_zero()
 {
     for(auto& value : values)
     {
+        if (value.get_pointer() != nullptr)
+        {
         value.set_zero();
+        }
     }
 }
 
