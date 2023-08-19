@@ -42,6 +42,8 @@ Magnetism::~Magnetism()
  *     - delete vector
  *   - atom_arrange::set_sr_NL
  * 	   - set the sr: search radius including nonlocal beta
+ *   - filter_adjs function
+ *     - filter AdjacentAtomInfo to the minimized adjacent atoms
  */
 
 void SetGlobalV()
@@ -117,4 +119,36 @@ TEST_F(SltkAtomArrangeTest, Search)
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("search neighboring atoms done."));
     remove("test.out");
+}
+
+TEST_F(SltkAtomArrangeTest, Filteradjs)
+{
+    ucell->check_dtau();
+    Grid_Driver grid_d(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
+    ofs.open("test.out");
+    bool test_only = true;
+    atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in, test_only);
+    EXPECT_EQ(grid_d.getType(0),0);
+    EXPECT_EQ(grid_d.getNatom(0), 1); // adjacent atom is 1
+    ofs.close();
+    ifs.open("test.out");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("search neighboring atoms done."));
+    remove("test.out");
+
+    AdjacentAtomInfo adjs;
+    grid_d.Find_atom(*ucell, ucell->atoms[0].tau[0], 0, 0, &adjs);
+    EXPECT_EQ(adjs.adj_num, 0);
+    // add one adjacent atom
+    adjs.adj_num++;
+    adjs.adjacent_tau.push_back(ModuleBase::Vector3<double>(0,0,0));
+    adjs.box.push_back(ModuleBase::Vector3<int>(0,0,0));
+    adjs.natom.push_back(1);
+    adjs.ntype.push_back(0);
+    EXPECT_EQ(adjs.adj_num, 1);
+    // filter adjs to no adjacent status
+    std::vector<bool> is_adjs(adjs.adj_num + 1, false);
+    is_adjs[0] = true;
+    filter_adjs(is_adjs, adjs);
+    EXPECT_EQ(adjs.adj_num, 0);
 }

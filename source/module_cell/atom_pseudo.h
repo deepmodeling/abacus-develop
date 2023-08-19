@@ -30,6 +30,18 @@ public:
 		const int &nproj_in,
 		const int &nproj_in_so,
 		const bool has_so);
+
+
+	inline void get_d(const int& is, const int& p1, const int& p2, const std::complex<double>*& tmp_d)
+	{
+		tmp_d = &this->d_so(is, p1, p2);
+		return;
+	}
+	inline void get_d(const int& is, const int& p1, const int& p2, const double*& tmp_d)
+	{
+		tmp_d = &this->dion(p1, p2);
+		return;
+	}
 	
 
 #ifdef __MPI

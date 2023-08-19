@@ -66,7 +66,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 // mock of OperatorLCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 
-template<typename FPTYPE, typename Device>
+/* template<typename FPTYPE, typename Device>
 hamilt::Operator<FPTYPE, Device>::Operator(){}
 
 template<typename FPTYPE, typename Device>
@@ -97,12 +97,23 @@ FPTYPE* hamilt::Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
 }
 
 template class hamilt::Operator<double, psi::DEVICE_CPU>;
-template class hamilt::Operator<std::complex<double>, psi::DEVICE_CPU>;
+template class hamilt::Operator<std::complex<double>, psi::DEVICE_CPU>;*/
 
 // mock of OperatorLCAO
 template<typename TK>
 void hamilt::OperatorLCAO<TK>::init(const int ik_in)
 {
+    if(!this->hr_done)
+    {
+        OperatorLCAO<TK>* last = this;
+        while(last != nullptr)
+        {
+            last->contributeHR();
+            last = dynamic_cast<OperatorLCAO<TK>*>(last->next_sub_op);
+        }
+        this->hr_done = true;
+    }
+    this->contributeHk(ik_in);
     return;
 }
 template<typename TK>
@@ -149,7 +160,38 @@ void ORB_gen_tables::snap_psipsi(
     bool cal_syns,
     double dmax)const
 {
-    olm[0] = 1.0;
+    if(dtype == 'S')
+    {
+        olm[0] = 1.0;
+    }
+    else if(dtype == 'T')
+    {
+        olm[0] = 2.0;
+    }
+    else if(dtype == 'D')
+    {
+        olm[0] = 3.0;
+    }
+}
+
+void ORB_gen_tables::snap_psibeta_half(
+	const LCAO_Orbitals &orb,
+	const InfoNonlocal &infoNL_,
+	std::vector<std::vector<double>> &nlm,
+	const ModuleBase::Vector3<double> &R1,
+	const int &T1,
+	const int &L1,
+	const int &m1,
+	const int &N1,
+	const ModuleBase::Vector3<double> &R0, // The projector.
+	const int &T0,
+	const bool &calc_deri)const // mohan add 2021-04-25)
+{
+    nlm.resize(1);
+    for(int i = 0; i < nlm.size(); ++i)
+    {
+        nlm[i].resize(5, 1.0);
+    }
 }
 
 #include "module_basis/module_ao/ORB_read.h"
@@ -158,8 +200,8 @@ const LCAO_Orbitals& LCAO_Orbitals::get_const_instance()
     static LCAO_Orbitals instance;
     return instance;
 }
-LCAO_Orbitals::LCAO_Orbitals() {}
-LCAO_Orbitals::~LCAO_Orbitals() {}
+LCAO_Orbitals::LCAO_Orbitals() {this->Phi = new Numerical_Orbital[1];}
+LCAO_Orbitals::~LCAO_Orbitals() { delete[] Phi; }
 
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
@@ -190,3 +232,36 @@ Grid_Driver::Grid_Driver(const int &test_d_in,
 		const int &test_gd_in, 
 		const int &test_grid_in) :Grid(test_grid_in), test_deconstructor(test_d_in), test_grid_driver(test_gd_in) {}
 Grid_Driver::~Grid_Driver() {}
+
+// filter_adjs delete not adjacent atoms in adjs
+void filter_adjs(const std::vector<bool>& is_adj, AdjacentAtomInfo& adjs)
+{
+	const int size = adjs.adj_num+1;
+	for(int i = size-1; i >= 0; --i)
+	{
+		if(!is_adj[i])
+		{
+			adjs.adj_num--;
+			adjs.ntype.erase(adjs.ntype.begin()+i);
+			adjs.natom.erase(adjs.natom.begin()+i);
+			adjs.adjacent_tau.erase(adjs.adjacent_tau.begin()+i);
+			adjs.box.erase(adjs.box.begin()+i);
+		}
+	}
+}
+
+Numerical_Nonlocal::Numerical_Nonlocal()
+{
+    this->rcut_max = 1.0;
+}
+Numerical_Nonlocal::~Numerical_Nonlocal()
+{
+}
+
+Numerical_Orbital::Numerical_Orbital()
+{
+    this->rcut = 1.0;
+}
+Numerical_Orbital::~Numerical_Orbital()
+{
+}
