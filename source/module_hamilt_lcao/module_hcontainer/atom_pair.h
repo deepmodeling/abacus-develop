@@ -94,6 +94,16 @@ class AtomPair
     ~AtomPair();
 
     /**
+     * @brief allocate memory for all the BaseMatrix
+    */
+    void allocate(bool if_zero = false);
+
+    /**
+     * @brief set values in every BaseMatrix to zero
+    */
+    void set_zero();
+
+    /**
      * @brief get col_size for this AtomPair
     */
     int get_col_size() const;
@@ -127,14 +137,29 @@ class AtomPair
     bool identify(const int& atom_i_, const int& atom_j_) const;
 
     /**
-     * @brief get target matrix of target cell
+     * @brief get target BaseMatrix of target cell
      * for const AtomPair, it will return a const BaseMatrix<T> object,
      * and if not found, it will throw a error message
      * for non-const AtomPair, it will return a BaseMatrix<T> object,
      * and if not found, it will insert a new one and return it
+     * 
+     * @param rx_in x coordinate of cell
+     * @param ry_in y coordinate of cell
+     * @param rz_in z coordinate of cell
+     * @return BaseMatrix<T>&
      */
     BaseMatrix<T>& get_HR_values(int rx_in, int ry_in, int rz_in);
     const BaseMatrix<T>& get_HR_values(int rx_in, int ry_in, int rz_in) const;
+    
+    /**
+     * @brief get target BaseMatrix of index of this->values
+     * it will return a BaseMatrix<T> object,
+     * and if not found, it will throw a error message
+     * 
+     * @param index index of this->values
+     * @return BaseMatrix<T>&
+     */
+    BaseMatrix<T>& get_HR_values(const int& index) const;
 
     // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be int[3]
     int* get_R_index(const int& index) const;
@@ -142,6 +167,10 @@ class AtomPair
     int* get_R_index() const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     bool find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
+    // and return BaseMatrix<T>* of this->values[index]
+    const BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in);
 
     // this interface will call get_value in this->values
     // these four interface can be used only when R-index has been choosed (current_R >= 0)

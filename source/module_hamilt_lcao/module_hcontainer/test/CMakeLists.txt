@@ -1,35 +1,35 @@
 
 if(ENABLE_LCAO)
 AddTest(
-  TARGET test_hcontainer
+  TARGET hcontainer_test
   LIBS ${math_libs} psi base device
   SOURCES test_hcontainer.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET test_hcontainer_complex
+  TARGET hcontainer_complex_test
   LIBS ${math_libs} psi base device
   SOURCES test_hcontainer_complex.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET test_hcontainer_cost
+  TARGET hcontainer_cost_test
   LIBS ${math_libs} psi base device
   SOURCES test_hcontainer_time.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET test_func_folding
+  TARGET func_folding_test
   LIBS ${math_libs} psi base device
   SOURCES test_func_folding.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../func_folding.cpp ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
-  TARGET test_hcontainer_output
+  TARGET hcontainer_output_test
   LIBS base ${math_libs} device
   SOURCES test_hcontainer_output.cpp
     tmp_mocks.cpp
@@ -45,7 +45,7 @@ AddTest(
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
-  TARGET test_hcontainer_readCSR
+  TARGET hcontainer_readCSR_test
   LIBS base ${math_libs} device cell_info
   SOURCES test_hcontainer_readCSR.cpp
     ../base_matrix.cpp
