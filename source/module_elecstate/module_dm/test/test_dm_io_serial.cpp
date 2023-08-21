@@ -93,15 +93,15 @@ TEST_F(DMIOTest, DMKIO)
     remove("test.log");
     paraV.set_atomic_trace(ucell->get_iat2iwt(), ucell->nat, nlocal);
     // construct DM
-    elecstate::DensityMatrix<double> DM(nlocal,kv,&paraV);
+    elecstate::DensityMatrix<double> DM(kv,&paraV);
     // read DMK
-    DM.read_all_dmk("./support/");
+    DM.set_DMK_files("./support/");
     // write DMK
-    DM.write_all_dmk("./support/output");
+    DM.output_DMK("./support/output");
     // construct a new DM
-    elecstate::DensityMatrix<double> DM1(nlocal,kv,&paraV);
-    DM1.read_all_dmk("./support/output");
+    elecstate::DensityMatrix<double> DM1(kv,&paraV);
+    DM1.set_DMK_files("./support/output");
     // compare DMK1 with DMK
-    EXPECT_NEAR(DM.get_dmK(0,0,0),DM1.get_dmK(0,0,0),1e-6);
-	EXPECT_NEAR(DM.get_dmK(1,25,25),DM1.get_dmK(1,25,25),1e-6);
+    EXPECT_NEAR(DM.get_DMK(0,0,0),DM1.get_DMK(0,0,0),1e-6);
+	EXPECT_NEAR(DM.get_DMK(1,25,25),DM1.get_DMK(1,25,25),1e-6);
 }

@@ -1,6 +1,5 @@
 if(ENABLE_LCAO)
   list(APPEND objects
-      dmk_io.cpp
       density_matrix.cpp
   )
 endif()

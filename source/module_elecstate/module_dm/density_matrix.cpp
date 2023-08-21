@@ -4,7 +4,7 @@ namespace elecstate
 {
 
 //----------------------------------------------------
-// atom pair class
+// density matrix class
 //----------------------------------------------------
 
 // destructor
@@ -16,26 +16,151 @@ DensityMatrix<T>::~DensityMatrix()
 
 // use unitcell to initialize atom_pairs
 template <typename T>
-DensityMatrix<T>::DensityMatrix(const int nlocal_in, const K_Vectors* kv_in, const Parallel_Orbitals* paraV_in)
+DensityMatrix<T>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbitals* paraV_in)
 {
-    this->_nlocal = nlocal_in;
     this->_kv = kv_in;
     this->_paraV = paraV_in;
-    this->_dmR = new hamilt::HContainer<T>(this->_paraV);
-    this->_dmK.reserve(this->_kv->nks);
-    ModuleBase::ComplexMatrix zero_dmK(nlocal_in,nlocal_in);
-    for (int ik=0;ik<this->_kv->nks;ik++)
+    this->_DMR = new hamilt::HContainer<T>(this->_paraV);
+    this->_DMK.reserve(this->_kv->nks);
+    ModuleBase::ComplexMatrix zero_DMK(this->_paraV->nrow, this->_paraV->ncol);
+    for (int ik = 0; ik < this->_kv->nks; ik++)
     {
-        this->_dmK.push_back(zero_dmK);
+        this->_DMK.push_back(zero_DMK);
     }
 }
 
+// initialize density matrix DMR from UnitCell (mainly used in UnitTest)
+template <typename T>
+void DensityMatrix<T>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell)
+{
+    // set up a HContainer
+    this->_DMR = new hamilt::HContainer<T>(this->_paraV);
+    for (int iat1 = 0; iat1 < ucell->nat; iat1++)
+    {
+        auto tau1 = ucell->get_tau(iat1);
+        int T1, I1;
+        ucell->iat2iait(iat1, &I1, &T1);
+        AdjacentAtomInfo adjs;
+        GridD_in->Find_atom(*ucell, tau1, T1, I1, &adjs);
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+        {
+            const int T2 = adjs.ntype[ad];
+            const int I2 = adjs.natom[ad];
+            int iat2 = ucell->itia2iat(T2, I2);
+            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0)
+            {
+                continue;
+            }
+            ModuleBase::Vector3<int>& R_index = adjs.box[ad];
+            hamilt::AtomPair<T> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, this->_paraV);
+            this->_DMR->insert_pair(tmp);
+        }
+    }
+    // allocate the memory of BaseMatrix in SR, and set the new values to zero
+    this->_DMR->allocate(true);
+}
+
+// initialize density matrix DMR from another HContainer
+template <typename T>
+void DensityMatrix<T>::init_DMR(const hamilt::HContainer<T>& DMR_in)
+{
+    // set up a HContainer
+    this->_DMR = new hamilt::HContainer<T>(this->_paraV);
+    // synchronize shape
+    this->_DMR->shape_synchron(DMR_in);
+}
+
+// get _DMR
+template <typename T>
+hamilt::HContainer<T>* DensityMatrix<T>::get_DMR_pointer()
+{
+    return this->_DMR;
+}
+
+// set _DMK element
+template <typename T>
+void DensityMatrix<T>::set_DMK(const int ik, const int i, const int j, const T value)
+{
+    this->_DMK[ik](i, j) = value;
+}
+
+// get _DMK nks, nrow, ncol
+template <typename T>
+int DensityMatrix<T>::get_DMK_nks() const
+{
+    return this->_DMK.size();
+}
+
+template <typename T>
+int DensityMatrix<T>::get_DMK_nrow() const
+{
+    return this->_DMK[0].nr;
+}
+
+template <typename T>
+int DensityMatrix<T>::get_DMK_ncol() const
+{
+    return this->_DMK[0].nc;
+}
+
+/*
+// calculate DMR from DMK
+template <typename T>
+void DensityMatrix<T>::cal_DMR()
+{
+//#ifdef _OPENMP
+//#pragma omp parallel for
+//#endif
+    for (int i = 0; i < this->_DMR->size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<T>& tmp_ap = hR.get_atom_pair(i);
+        for(int ir = 0;ir < tmp_ap.get_R_size(); ++ir )
+        {
+            const int* r_index = tmp_ap.get_R_index(ir);
+            hamilt::BaseMatrix<T> tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+            std::complex<double> tmp_res = 0.0;
+            // cal k_phase
+            // if TK==std::complex<double>, kphase is e^{ikR}
+            for (int ik = 0;ik < this->_kv->nks;++ik)
+            {
+                const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+                const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
+                double sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                for (int i = 0; i < this->_paraV->nrow; ++i)
+                {
+                    for (int j = 0; j < this->_paraV->ncol; ++j)
+                    {
+                        tmp_res = kphase * this->_DMK[ik](i, j);
+                        tmp_matrix.add_element(i, j, tmp_res);
+                    }
+                }
+            }
+
+        }
+    }
+    // set up a HContainer
+    this->_DMR = new hamilt::HContainer<T>(this->_paraV);
+    for (int ik = 0; ik < this->_kv->nks; ++ik)
+    {
+        for (int i = 0; i < this->_paraV->nrow; ++i)
+        {
+            for (int j = 0; j < this->_paraV->ncol; ++j)
+            {
+                this->_DMR->add_to_matrix(i, j, this->_DMK[ik](i, j));
+            }
+        }
+    }
+}
+*/
+
 // read *.dmk into density matrix dm(k)
 template <typename T>
-void DensityMatrix<T>::read_dmk(const std::string directory, const int ik)
+void DensityMatrix<T>::read_DMK(const std::string directory, const int ik)
 {
     // read
-	std::string fn;
+    std::string fn;
     fn = directory + std::to_string(ik) + ".dmk";
     //
     bool quit_abacus = false;
@@ -51,21 +176,21 @@ void DensityMatrix<T>::read_dmk(const std::string directory, const int ik)
     {
         // if the number is not match,
         // quit the program or not.
-        bool quit=false;
-            
-        ModuleBase::CHECK_DOUBLE(ifs,this->_kv->kvec_d[ik].x,quit);
-        ModuleBase::CHECK_DOUBLE(ifs,this->_kv->kvec_d[ik].y,quit);
-        ModuleBase::CHECK_DOUBLE(ifs,this->_kv->kvec_d[ik].z,quit);
-        ModuleBase::CHECK_INT(ifs, this->_nlocal);
-        ModuleBase::CHECK_INT(ifs, this->_nlocal);
-    }// If file exist, read in data.
+        bool quit = false;
+
+        ModuleBase::CHECK_DOUBLE(ifs, this->_kv->kvec_d[ik].x, quit);
+        ModuleBase::CHECK_DOUBLE(ifs, this->_kv->kvec_d[ik].y, quit);
+        ModuleBase::CHECK_DOUBLE(ifs, this->_kv->kvec_d[ik].z, quit);
+        ModuleBase::CHECK_INT(ifs, this->_paraV->nrow);
+        ModuleBase::CHECK_INT(ifs, this->_paraV->ncol);
+    } // If file exist, read in data.
     // Finish reading the first part of density matrix.
 
-    for(int i=0; i<this->_nlocal; ++i)
+    for (int i = 0; i < this->_paraV->nrow; ++i)
     {
-        for(int j=0; j<this->_nlocal; ++j)
+        for (int j = 0; j < this->_paraV->ncol; ++j)
         {
-            ifs >> this->_dmK[ik](i,j);
+            ifs >> this->_DMK[ik](i, j);
         }
     }
     ifs.close();
@@ -73,9 +198,9 @@ void DensityMatrix<T>::read_dmk(const std::string directory, const int ik)
 
 // output density matrix dm(k) into *.dmk
 template <typename T>
-void DensityMatrix<T>::write_dmk(const std::string directory, const int ik)
+void DensityMatrix<T>::write_DMK(const std::string directory, const int ik)
 {
-    
+
     // write
     std::string fn;
     fn = directory + std::to_string(ik) + ".dmk";
@@ -83,53 +208,55 @@ void DensityMatrix<T>::write_dmk(const std::string directory, const int ik)
     ofs.open(fn.c_str());
     if (!ofs)
     {
-        ModuleBase::WARNING("elecstate::write_dmk","Can't create DENSITY MATRIX File!");
+        ModuleBase::WARNING("elecstate::write_dmk", "Can't create DENSITY MATRIX File!");
     }
     ofs << this->_kv->kvec_d[ik].x << " " << this->_kv->kvec_d[ik].y << " " << this->_kv->kvec_d[ik].z << std::endl;
-    ofs << "\n  " << this->_nlocal << " " << this->_nlocal << std::endl;
-    
+    ofs << "\n  " << this->_paraV->nrow << " " << this->_paraV->ncol << std::endl;
+
     ofs << std::setprecision(3);
-	ofs << std::scientific;
-    
-    for(int i=0; i<this->_nlocal; ++i)
+    ofs << std::scientific;
+
+    for (int i = 0; i < this->_paraV->nrow; ++i)
     {
-        for(int j=0; j<this->_nlocal; ++j)
+        for (int j = 0; j < this->_paraV->ncol; ++j)
         {
-            if(j%8==0) ofs << "\n";
-            ofs << " " << this->_dmK[ik](i,j).real();
-            //ofs << " " << DM[is][i][j];
+            if (j % 8 == 0)
+                ofs << "\n";
+            ofs << " " << this->_DMK[ik](i, j).real();
+            // ofs << " " << DM[is][i][j];
         }
     }
 
     ofs.close();
-
 }
 
 // read *.dmk into density matrix dm(k)
 template <typename T>
-void DensityMatrix<T>::read_all_dmk(const std::string directory)
+void DensityMatrix<T>::set_DMK_files(const std::string directory)
 {
     // read
-	for (int ik = 0;ik < this->_kv->nks;++ik){
-		this->read_dmk(directory,ik);
-	}
+    for (int ik = 0; ik < this->_kv->nks; ++ik)
+    {
+        this->read_DMK(directory, ik);
+    }
 }
 
 // write density matrix dm(k) into *.dmk with all k-points
 template <typename T>
-void DensityMatrix<T>::write_all_dmk(const std::string directory)
+void DensityMatrix<T>::output_DMK(const std::string directory)
 {
     // write
-	for (int ik = 0;ik < this->_kv->nks;++ik){
-		this->write_dmk(directory,ik);
-	}
+    for (int ik = 0; ik < this->_kv->nks; ++ik)
+    {
+        this->write_DMK(directory, ik);
+    }
 }
 
 // get a matrix element of density matrix dm(k)
 template <typename T>
-T DensityMatrix<T>::get_dmK(const int ik, const int i, const int j) const
+T DensityMatrix<T>::get_DMK(const int ik, const int i, const int j) const
 {
-    return this->_dmK[ik](i,j).real();
+    return this->_DMK[ik](i, j).real();
 }
 
 // T of HContainer can be double or complex<double>

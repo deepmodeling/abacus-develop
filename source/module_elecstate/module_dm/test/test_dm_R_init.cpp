@@ -110,41 +110,40 @@ class DMTest : public testing::Test
 #endif
 };
 
-TEST_F(DMTest, DMConstructor1)
+TEST_F(DMTest, DMInit1)
 {
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double> DM(kv, paraV);
+    // initialize this->_DMR
+    Grid_Driver gd(0,0,0);
+    DM.init_DMR(&gd, &ucell);
     // compare
-    EXPECT_EQ(DM.get_DMK_nks(), kv->nks);
-    EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
-    EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
-
-    // set elements of DMK
-    for (int ik = 0; ik < kv->nks; ik++)
-    {
-        for (int i = 0; i < paraV->nrow; i++)
-        {
-            for (int j = 0; j < paraV->ncol; j++)
-            {
-                DM.set_DMK(ik, i, j, ik*i+j);
-            }
-        }
-    }
-    // compare
-    for (int ik = 0; ik < kv->nks; ik++)
-    {
-        for (int i = 0; i < paraV->nrow; i++)
-        {
-            for (int j = 0; j < paraV->ncol; j++)
-            {
-                EXPECT_EQ(DM.get_DMK(ik,i,j), ik*i+j);
-            }
-        }
-    }
+    EXPECT_EQ(DM.get_DMR_pointer()->size_atom_pairs(), test_size * test_size);
+    EXPECT_EQ(DM.get_DMR_pointer()->get_atom_pair(2, 2).get_atom_i(), 2);
+    EXPECT_EQ(DM.get_DMR_pointer()->get_atom_pair(2, 2).get_atom_j(), 2);
+    EXPECT_EQ(DM.get_DMR_pointer()->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
+    EXPECT_EQ(DM.get_DMR_pointer()->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
 }
 
+TEST_F(DMTest, DMInit2)
+{
+    // construct a DM
+    elecstate::DensityMatrix<double> DM(kv, paraV);
+    Grid_Driver gd(0,0,0);
+    DM.init_DMR(&gd, &ucell);
+    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    // construct another DM
+    elecstate::DensityMatrix<double> DM1(kv, paraV);
+    DM1.init_DMR(*DM.get_DMR_pointer());
+    // compare
+    EXPECT_EQ(DM1.get_DMR_pointer()->size_atom_pairs(), test_size * test_size);
+    EXPECT_EQ(DM1.get_DMR_pointer()->get_atom_pair(2, 2).get_atom_i(), 2);
+    EXPECT_EQ(DM1.get_DMR_pointer()->get_atom_pair(2, 2).get_atom_j(), 2);
+    EXPECT_EQ(DM1.get_DMR_pointer()->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
+    EXPECT_EQ(DM1.get_DMR_pointer()->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+}
 
 int main(int argc, char** argv)
 {
