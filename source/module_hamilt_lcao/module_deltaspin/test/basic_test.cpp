@@ -19,6 +19,7 @@ class BasicFuncsTest : public testing::Test
         {4.0, 5.0, 6.0},
         {7.0, 8.0, 9.0}
     };
+    std::string output;
 };
 
 TEST_F(BasicFuncsTest, MaxvalAbs2d)
@@ -166,5 +167,10 @@ TEST_F(BasicFuncsTest, Print2D)
         {4.0, 5.0, 6.0},
         {7.0, 8.0, 9.0}
     };
+    testing::internal::CaptureStdout();
     print_2d(array);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("1 2 3"));
+    EXPECT_THAT(output, testing::HasSubstr("4 5 6"));
+    EXPECT_THAT(output, testing::HasSubstr("7 8 9"));
 }

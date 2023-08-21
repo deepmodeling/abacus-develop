@@ -1,5 +1,6 @@
 list(APPEND objects
     basic_funcs.cpp
+    lambda_field.cpp
 )
 
 add_library(
