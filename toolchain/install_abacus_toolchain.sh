@@ -255,6 +255,7 @@ fi
 with_acml="__SYSTEM__"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
+with_cereal="__INSTALL__"
 with_libtorch="__DONTUSE__"
 # for MPI, we try to detect system MPI variant
 if (command -v mpiexec > /dev/null 2>&1); then
