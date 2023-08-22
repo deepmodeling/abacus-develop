@@ -249,8 +249,117 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
 
     ESolver_FP::init_after_vc(inp,ucell);
 
+    this->nrxx = this->pw_rho->nrxx;
+    this->dV = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
+
+    if (GlobalV::md_prec_level == 2)
+    {
+        // initialize the real-space uniform grid for FFT and parallel
+        // distribution of plane waves
+        GlobalC::Pgrid.init(this->pw_rho->nx,
+                            this->pw_rho->ny,
+                            this->pw_rho->nz,
+                            this->pw_rho->nplane,
+                            this->pw_rho->nrxx,
+                            pw_big->nbz,
+                            pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+
+        // Calculate Structure factor
+        this->sf.setup_structure_factor(&ucell, this->pw_rho);
+    }
+
+    delete this->pelec;
+    this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
+
+    this->pelec->charge->allocate(GlobalV::NSPIN);
+    this->pelec->omega = GlobalC::ucell.omega;
+
+    delete this->pelec->pot;
+    this->pelec->pot = new elecstate::Potential(this->pw_rho,
+                                                &GlobalC::ucell,
+                                                &(GlobalC::ppcell.vloc),
+                                                &(this->sf),
+                                                &(this->pelec->f_en.etxc),
+                                                &(this->pelec->f_en.vtxc));
+    //There is no Operator in ESolver_OF, register Potentials here!
+    std::vector<std::string> pot_register_in;
+    if (GlobalV::VION_IN_H)
+    {
+        pot_register_in.push_back("local");
+    }
+    if (GlobalV::VH_IN_H)
+    {
+        pot_register_in.push_back("hartree");
+    }
+    //no variable can choose xc, maybe it is necessary
+    pot_register_in.push_back("xc");
+    if (GlobalV::imp_sol)
+    {
+        pot_register_in.push_back("surchem");
+    }
+    if (GlobalV::EFIELD_FLAG)
+    {
+        pot_register_in.push_back("efield");
+    }
+    if (GlobalV::GATE_FLAG)
+    {
+        pot_register_in.push_back("gatefield");
+    }
+    //only Potential is not empty, Veff and Meta are available
+    if(pot_register_in.size()>0)
+    {
+        //register Potential by gathered operator
+        this->pelec->pot->pot_register(pot_register_in);
+    }
+
+    // ================================
+    // Initialize optimization methods
+    // ================================
+    if (this->of_method == "tn")
+    {
+        this->opt_tn.allocate(this->nrxx);
+        this->opt_tn.setPara(this->dV);
+    }
+    else if (this->of_method == "cg1" || this->of_method == "cg2")
+    {
+        this->opt_cg.allocate(this->nrxx);
+        this->opt_cg.setPara(this->dV);
+        this->opt_dcsrch.set_paras(1e-4,1e-2);
+    }
+    else if (this->of_method == "bfgs")
+    {
+        ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
+        return;
+    }
+
     GlobalC::ppcell.init_vnl(GlobalC::ucell);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
+
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        delete[] this->pdLdphi[is];
+        delete[] this->pdEdphi[is];
+        delete[] this->pdirect[is];
+        delete[] this->precipDir[is];
+        this->pdLdphi[is] = new double[this->nrxx];
+        this->pdEdphi[is] = new double[this->nrxx];
+        this->pdirect[is] = new double[this->nrxx];
+        this->precipDir[is] = new std::complex<double>[pw_rho->npw];
+    }
+
+    // ===================================
+    // Initialize KEDF
+    // ===================================
+    this->tf.set_para(this->nrxx, this->dV, GlobalV::of_tf_weight);
+    this->vw.set_para(this->nrxx, this->dV, GlobalV::of_vw_weight);
+    this->wt.set_para(this->nrxx, this->dV, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
+    this->lkt.set_para(this->nrxx, this->dV, GlobalV::of_lkt_a);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
+
+    delete this->ptempRho;
+    this->ptempRho = new Charge();
+    this->ptempRho->set_rhopw(this->pw_rho);
+    this->ptempRho->allocate(GlobalV::NSPIN);
 }
 
 void ESolver_OF::Run(int istep, UnitCell& ucell)
