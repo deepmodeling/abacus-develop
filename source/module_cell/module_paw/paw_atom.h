@@ -26,6 +26,9 @@ class Paw_Atom
     void set_dij(const double* dij_in); //sets dij from input
     void reset_dij(); //set dij = 0
 
+    void set_sij(const double* sij_in); //sets sij from input
+    void reset_sij(); //set sij = 0
+
     // not sure this is gonna be used, but it is nice to have
     // an interface that returns rhoij and rhoijp I suppose
     std::vector<double> get_rhoij(){return rhoij;}
@@ -36,6 +39,7 @@ class Paw_Atom
     void convert_rhoij(); //convert to format in libpaw
 
     std::vector<double> get_dij(){return dij;}
+    std::vector<double> get_sij(){return sij;}
 
     private:
 
@@ -45,6 +49,7 @@ class Paw_Atom
     std::vector<double> rhoij; //on-site density matrix, upper triangular
 
     std::vector<double> dij; //nonlocal pseudopotential strength
+    std::vector<double> sij; //<phi|phi> - <phitilde|phitilde>
 
     double weight; //weight of current band
     
