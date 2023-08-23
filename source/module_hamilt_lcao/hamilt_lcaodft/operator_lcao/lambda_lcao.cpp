@@ -71,6 +71,13 @@ void OperatorLambda<OperatorLCAO<T>>::set_lambda(const std::vector<ModuleBase::V
     this->lambda_ = lambda_in;
 }
 
+// get lambda
+template <typename T>
+std::vector<ModuleBase::Vector3<double>> OperatorLambda<OperatorLCAO<T>>::get_lambda()
+{
+    return this->lambda_;
+}
+
 template <typename T>
 void OperatorLambda<OperatorLCAO<T>>::cal_weight_func(const std::vector<T>& Sloc2)
 {
