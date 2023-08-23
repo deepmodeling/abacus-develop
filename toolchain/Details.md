@@ -7,8 +7,7 @@ Inspired by cp2k-toolchain, still in improvement.
 
 ## Options
 
-Before you use the toolchain installer, you SHOULD put it 
-under the path of ABACUS
+Before you use the toolchain installer, you SHOULD put it under the path of ABACUS
 
 ```shell
 > mv abacus_toolchain path/to/abacus/
@@ -33,11 +32,6 @@ may be enough. This will use your system gcc, and mpi library (if
 existing) and build scalapack, fftw, openblas (MKL will be used
 instead if MKLROOT env variable is found) and libxc from scratch, 
 and give you compiled libraries that allow you to compile ABACUS.
-
-## Notices
-CEREAL and LIBNPY are not included in the toolchain installation
-since they are header-only libraries. 
-They are directly included in `libs` directory.
 
 
 ## Complete toolchain build

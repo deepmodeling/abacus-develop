@@ -182,10 +182,14 @@ The --with-PKG options follow the rules:
   --with-scalapack        Parallel linear algebra library, needed for parallel
                           calculations.
                           Default = install
+  --with-cereal         Enable cereal for ABACUS LCAO
+                          Default = install
   --with-elpa             Eigenvalue SoLvers for Petaflop-Applications library.
                           Fast library for large parallel jobs.
                           Default = install
-  --with-libtorch         Enable libtorch the machine learning framework needed for NequIP and Allegro
+  --with-libtorch         Enable libtorch the machine learning framework needed for DeePKS
+                          Default = no
+  --with-libnpy         Enable libnpy the machine learning framework needed for DeePKS
                           Default = no
 
 FURTHER INSTRUCTIONS
@@ -222,7 +226,7 @@ EOF
 tool_list="gcc intel cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl acml openblas"
-lib_list="fftw libxc scalapack elpa cereal libtorch"
+lib_list="fftw libxc scalapack elpa cereal libtorch libnpy"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
 
@@ -257,6 +261,7 @@ with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
 with_libtorch="__DONTUSE__"
+with_libnpy="__DONTUSE__"
 # for MPI, we try to detect system MPI variant
 if (command -v mpiexec > /dev/null 2>&1); then
   # check if we are dealing with openmpi, mpich or intelmpi
@@ -291,13 +296,14 @@ enable_tsan="__FALSE__"
 enable_opencl="__FALSE__"
 enable_cuda="__FALSE__"
 enable_hip="__FALSE__"
-export intel_classic="no"
+export intel_classic="yes" 
+# no, then icc->icx, icpc->icpx, 
+# which cannot compile elpa-2021 and fftw.3.3.10
+# due to some cross-compile problem
+# zhaoqing by 2023.08.23
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
-
-# default for libint
-export LIBINT_LMAX="5"
 
 # default for log file dump size
 export LOG_LINES="200"
@@ -530,6 +536,12 @@ while [ $# -ge 1 ]; do
       ;;
     --with-libtorch*)
       with_libtorch=$(read_with "${1}")
+      ;;
+    --with-cereal*)
+      with_cereal=$(read_with "${1}")
+      ;;
+    --with-libnpy*)
+      with_libnpy=$(read_with "${1}")
       ;;
     --help*)
       show_help

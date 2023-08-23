@@ -14,14 +14,14 @@ cd $ABACUS_DIR
 PREFIX=./bin/abacus/
 BUILD_DIR=build_abacus
 ELPA=$TOOL/install/elpa-2021.11.002/cpu
-CEREAL=$TOOL/libs/cereal-1.3.2/
+CEREAL=$TOOL/install/cereal-1.3.2
 LIBXC=$TOOL/install/libxc-6.2.2
 # LIBTORCH=$TOOL/install/libtorch-2.0.1/share/cmake/Torch
-# LIBNPY=$TOOL/libs/libnpy-0.1.0/
+# LIBNPY=$TOOL/install/libnpy-0.1.0/
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd
 
-CC=icx
-CXX=icpx
+CC=icc
+CXX=icpc
 F90=ifort
 F77=ifort
 

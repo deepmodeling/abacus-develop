@@ -4,5 +4,6 @@
 # shellcheck disable=all
 
 ./scripts/stage4/install_libtorch.sh
+./scripts/stage4/install_libnpy.sh
 
 # EOF
