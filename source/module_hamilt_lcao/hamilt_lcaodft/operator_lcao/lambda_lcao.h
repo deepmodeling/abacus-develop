@@ -43,17 +43,23 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     void set_nloc(int nloc_in);
 
+    void set_npol(int npol_in);
+
     void set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in);
 
     void set_iwt2iat(const std::vector<int>& iwt2iat_in);
+
+    void cal_weight_func(const std::vector<T>& Sloc2);
 
   private:
     std::vector<double>* HR_pointer = nullptr;
     std::vector<T>* HK_pointer = nullptr;
     int nloc_;
     int nat_;
+    int npol_;
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<int> iwt2iat_;
+    std::vector<T> W_i_;
 };
 
 } // namespace hamilt

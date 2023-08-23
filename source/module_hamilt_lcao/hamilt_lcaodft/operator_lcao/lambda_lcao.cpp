@@ -55,6 +55,18 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_nloc(int nloc_in)
 }
 
 template <>
+void OperatorLambda<OperatorLCAO<double>>::set_npol(int npol_in)
+{
+    this->npol_ = npol_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_npol(int npol_in)
+{
+    this->npol_ = npol_in;
+}
+
+template <>
 void OperatorLambda<OperatorLCAO<double>>::set_iwt2iat(const std::vector<int>& iwt2iat_in)
 {
     if (iwt2iat_in.size() != this->nloc_)
@@ -96,6 +108,38 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_lambda(
 }
 
 template <>
+void OperatorLambda<OperatorLCAO<double>>::cal_weight_func(const std::vector<double>& Sloc2)
+{
+    this->W_i_.reserve(this->nloc_ * this->npol_);
+    for (int i = 0; i < nloc_ * npol_; i++)
+    {
+        int iat = iwt2iat_[i];
+        for (int j = i; j < nloc_ * npol_; j++)
+        {
+            int jat = iwt2iat_[j];
+            this->W_i_[i * nloc_ * npol_ + j]
+                = (iat == jat) ? Sloc2[i * nloc_ * npol_ + j] : Sloc2[i * nloc_ * npol_ + j] * 0.5;
+        }
+    }
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<std::complex<double>>>::cal_weight_func(const std::vector<std::complex<double>>& Sloc2)
+{
+    this->W_i_.reserve(this->nloc_ * this->npol_);
+    for (int i = 0; i < nloc_ * npol_; i++)
+    {
+        int iat = iwt2iat_[i];
+        for (int j = i; j < nloc_ * npol_; j++)
+        {
+            int jat = iwt2iat_[j];
+            this->W_i_[i * nloc_ * npol_ + j]
+                = (iat == jat) ? Sloc2[i * nloc_ * npol_ + j] : Sloc2[i * nloc_ * npol_ + j] * 0.5;
+        }
+    }
+}
+
+template <>
 void OperatorLambda<OperatorLCAO<double>>::cal_h_lambda(int ik, double* h_lambda)
 {
 }
@@ -105,36 +149,42 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::cal_h_lambda(int ik, st
 {
     ModuleBase::TITLE("OperatorLambda", "cal_h_lambda");
     ModuleBase::timer::tick("OperatorLambda", "cal_h_lambda");
-    // Pauli matrix is here
-    std::vector<std::vector<std::complex<double>>> sigma_x;
-    std::vector<std::vector<std::complex<double>>> sigma_y;
-    std::vector<std::vector<std::complex<double>>> sigma_z;
-    sigma_x = {
-        {std::complex<double>(0, 0), std::complex<double>(1, 0)},
-        {std::complex<double>(1, 0), std::complex<double>(0, 0)}
-    };
-
-    sigma_y = {
-        {std::complex<double>(0, 0), std::complex<double>(0, -1)},
-        {std::complex<double>(0, 1), std::complex<double>(0, 0) }
-    };
-
-    sigma_z = {
-        {std::complex<double>(1, 0), std::complex<double>(0,  0)},
-        {std::complex<double>(0, 0), std::complex<double>(-1, 0)}
-    };
-    // lambda is transferred from outside in the constructor of this class
-    // this->loc_lambda;
-    // W_mu_nu is temporarily just the overlap matrix
-    // this->LM->Sloc2;
-    for (int i = 0; i < nloc_; i++)
+    // h_lambda = W_i * (lambda_x *sigma_x + lambda_y * sigma_y + lambda_z * sigma_z)
+    // Pauli matrix is used implicitly
+    for (int i = 0; i < nloc_ * npol_; i++)
     {
-        for (int j = i; j < nloc_; j++)
+        int iat = iwt2iat_[i];
+        for (int j = i; j < nloc_ * npol_; j++)
         {
-            this->LM->Sloc2[i * nloc_ + j];
+            int index = i * nloc_ * npol_ + j;
+            if (i % 2 == 0)
+            {
+                if (j % 2 == 0)
+                {
+                    // H11
+                    h_lambda[index] = W_i_[index] * lambda_[iat][2];
+                }
+                else
+                {
+                    // H12
+                    h_lambda[index] = W_i_[index] * (lambda_[iat][0] + lambda_[iat][1] * std::complex<double>(0, -1));
+                }
+            }
+            else
+            {
+                if (j % 2 == 0)
+                {
+                    // H21
+                    h_lambda[index] = W_i_[index] * (lambda_[iat][0] + lambda_[iat][1] * std::complex<double>(0, 1));
+                }
+                else
+                {
+                    // H22
+                    h_lambda[index] = W_i_[index] * (-lambda_[iat][2]);
+                }
+            }
         }
     }
-    // h_lambda = W_i * (lambda_x *sigma_x + lambda_y * sigma_y + lambda_z * sigma_z)
     ModuleBase::timer::tick("OperatorLambda", "cal_h_lambda");
 }
 
@@ -152,7 +202,7 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
     this->cal_h_lambda(ik, &h_lambda[0]);
 
-    for (int irc = 0; irc < this->LM->ParaV->nloc; irc++)
+    for (int irc = 0; irc < nloc_; irc++)
     {
         this->LM->Hloc2[irc] += h_lambda[irc];
     }
