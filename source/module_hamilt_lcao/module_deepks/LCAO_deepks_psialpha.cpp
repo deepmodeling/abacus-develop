@@ -124,7 +124,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                             {
                                 printf("t1 = %i   l1 = %i   izeta1 = %i   m1 = % i   "
                                        "t2 = %i   i2 = %li   job = alpha%li   old = % 8.5e   new = % 8.5e\n",
-                                       T1, L1, N1, M1, it, i, j, nlm[j][i], nlm2[j][i]);
+                                       T1, L1, N1, M1, T0, i, j, nlm[j][i], nlm2[j][i]);
                             }
                         }
                     }
