@@ -110,7 +110,7 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_lambda(
 template <>
 void OperatorLambda<OperatorLCAO<double>>::cal_weight_func(const std::vector<double>& Sloc2)
 {
-    this->W_i_.reserve(this->nloc_ * this->npol_);
+    this->W_i_.reserve(nloc_ * npol_ * nloc_ * npol_);
     for (int i = 0; i < nloc_ * npol_; i++)
     {
         int iat = iwt2iat_[i];
@@ -126,7 +126,7 @@ void OperatorLambda<OperatorLCAO<double>>::cal_weight_func(const std::vector<dou
 template <>
 void OperatorLambda<OperatorLCAO<std::complex<double>>>::cal_weight_func(const std::vector<std::complex<double>>& Sloc2)
 {
-    this->W_i_.reserve(this->nloc_ * this->npol_);
+    this->W_i_.reserve(nloc_ * npol_ * nloc_ * npol_);
     for (int i = 0; i < nloc_ * npol_; i++)
     {
         int iat = iwt2iat_[i];
