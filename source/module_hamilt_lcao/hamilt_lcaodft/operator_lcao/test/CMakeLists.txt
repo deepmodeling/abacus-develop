@@ -57,7 +57,6 @@ AddTest(
   LIBS ${math_libs} psi base device
   SOURCES test_lambda_lcao.cpp
   ../lambda_lcao.cpp
-  #../operator_lcao.cpp
   ../../../../module_hamilt_general/operator.cpp
 )
 
