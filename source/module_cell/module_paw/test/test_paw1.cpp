@@ -386,19 +386,48 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     dij[54] = 0.59649632;
     dij[63] = 0.59649632;
 
+    std::vector<double> sij;
+    sij.resize(nproj * nproj);
+    for(int i = 0; i < sij.size(); i ++)
+    {
+        sij[i] = 0.0;
+    }
+    sij[0] = -4.902127221589223E-002;
+    sij[9] = -9.18672607663861;
+    sij[18] = -6.319002149104143E-003;
+    sij[27] = -6.319002149104143E-003;
+    sij[36] = -6.319002149104143E-003;
+    sij[45] = -2.38515151080165;
+    sij[54] = -2.38515151080165;
+    sij[63] = -2.38515151080165;
+    
+    sij[1] = 0.726604973599628;
+    sij[8] = 0.726604973599628;
+    sij[21] = 0.156822922280989;
+    sij[30] = 0.156822922280989;
+    sij[39] = 0.156822922280989;
+    sij[42] = 0.156822922280989;
+    sij[51] = 0.156822922280989;
+    sij[60] = 0.156822922280989;
+
     for(int iat = 0; iat < nat; iat ++)
     {
         paw_cell.set_dij(iat,dij.data());
+        paw_cell.set_sij(iat,sij.data());
     }
 
     psi = new std::complex<double>[npw];
-    std::complex<double> *vnlpsi;
+    std::complex<double> *vnlpsi, *snlpsi;
     vnlpsi = new std::complex<double>[npw];
+    snlpsi = new std::complex<double>[npw];
 
     ifs_psi.clear();
     ifs_psi.seekg (0, std::ios::beg);
 
     std::ifstream ifs_vnlpsi("vnlpsi_ref.dat");
+    std::ifstream ifs_snlpsi("snlpsi_ref.dat");
+
+    std::cout << std::setprecision(10);
     for(int iband = 0; iband < nband; iband ++)
     {
         for(int ipw = 0; ipw < npw; ipw ++)
@@ -406,7 +435,9 @@ TEST_F(Test_PAW_Cell_k, test_paw)
             ifs_psi >> psi[ipw];
             vnlpsi[ipw] = 0.0;
         }
-        paw_cell.paw_vnl_psi(psi, vnlpsi);
+
+        paw_cell.paw_nl_psi(0, psi, vnlpsi);
+        paw_cell.paw_nl_psi(1, psi, snlpsi);
 
         for(int ipw = 0; ipw < npw; ipw ++)
         {
@@ -414,10 +445,15 @@ TEST_F(Test_PAW_Cell_k, test_paw)
             ifs_vnlpsi >> tmp;
             EXPECT_NEAR(tmp.real(),vnlpsi[ipw].real(),1e-8);
             EXPECT_NEAR(tmp.imag(),vnlpsi[ipw].imag(),1e-8);
+
+            ifs_snlpsi >> tmp;
+            EXPECT_NEAR(tmp.real(),snlpsi[ipw].real(),1e-8);
+            EXPECT_NEAR(tmp.imag(),snlpsi[ipw].imag(),1e-8);
         }
     }
 
     delete[] psi;
     delete[] vnlpsi;
+    delete[] snlpsi;
 
 }
