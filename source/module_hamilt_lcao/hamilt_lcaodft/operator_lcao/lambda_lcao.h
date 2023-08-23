@@ -48,7 +48,7 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     void set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in);
 
-    void set_iwt2iat(const std::vector<int>& iwt2iat_in);
+    void set_iwt2iat(const int* iwt2iat_in);
 
     // getters
     int get_nat();
@@ -58,6 +58,8 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
     int get_npol();
 
     std::vector<ModuleBase::Vector3<double>> get_lambda();
+
+    std::vector<int> get_iwt2iat();
 
     void cal_weight_func(const std::vector<T>& Sloc2);
 

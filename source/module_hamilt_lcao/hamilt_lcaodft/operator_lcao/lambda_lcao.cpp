@@ -52,13 +52,19 @@ int OperatorLambda<OperatorLCAO<T>>::get_npol()
 }
 
 template <typename T>
-void OperatorLambda<OperatorLCAO<T>>::set_iwt2iat(const std::vector<int>& iwt2iat_in)
+void OperatorLambda<OperatorLCAO<T>>::set_iwt2iat(const int* iwt2iat_in)
 {
-    if (iwt2iat_in.size() != this->nloc_)
+    this->iwt2iat_.resize(nloc_ * npol_);
+    for (int i = 0; i < nloc_ * npol_; i++)
     {
-        ModuleBase::WARNING_QUIT("OperatorLambda::set_iwt2iat", "iwt2iat_in size mismatch with nloc");
+        this->iwt2iat_[i] = iwt2iat_in[i];
     }
-    this->iwt2iat_ = iwt2iat_in;
+}
+
+template <typename T>
+std::vector<int> OperatorLambda<OperatorLCAO<T>>::get_iwt2iat()
+{
+    return this->iwt2iat_;
 }
 
 template <typename T>
