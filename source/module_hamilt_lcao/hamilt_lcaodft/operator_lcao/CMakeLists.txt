@@ -9,6 +9,7 @@ add_library(
     veff_lcao.cpp
     overlap_lcao.cpp
     deepks_lcao.cpp
+    lambda_lcao.cpp
 )
 
 if(ENABLE_COVERAGE)

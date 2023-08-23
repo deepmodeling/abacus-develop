@@ -173,8 +173,12 @@ void OperatorLCAO<T>::init(const int ik_in)
 
             break;
         }
-        default:
-        {
+        case lcao_constrained_m: {
+            // only HK need to be updated when cal_type=lcao_constrained_m
+            this->contributeHk(ik_in);
+            break;
+        }
+        default: {
             ModuleBase::WARNING_QUIT("OperatorLCAO::init", "unknown cal_type");
             break;
         }

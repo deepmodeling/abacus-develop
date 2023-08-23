@@ -286,5 +286,8 @@ extern double nelec;
 extern bool out_bandgap;
 extern int out_interval;
 
+// constrained spin dft calculation in lcao
+extern bool I_CONSTRAINED_M;
+
 } // namespace GlobalV
 #endif

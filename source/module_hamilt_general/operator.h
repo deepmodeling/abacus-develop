@@ -22,6 +22,7 @@ enum calculation_type
     lcao_deepks,
     lcao_exx,
     lcao_dftu,
+    lcao_constrained_m,
 };
 
 // Basic class for operator module, 

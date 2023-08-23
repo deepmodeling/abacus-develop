@@ -11,15 +11,16 @@
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
 #endif
-#include "operator_lcao/op_dftu_lcao.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hsolver/hsolver_lcao.h"
 #include "operator_lcao/ekinetic_lcao.h"
+#include "operator_lcao/lambda_lcao.h"
 #include "operator_lcao/meta_lcao.h"
 #include "operator_lcao/nonlocal_lcao.h"
+#include "operator_lcao/op_dftu_lcao.h"
 #include "operator_lcao/op_exx_lcao.h"
 #include "operator_lcao/overlap_lcao.h"
 #include "operator_lcao/veff_lcao.h"
-#include "module_hsolver/hsolver_lcao.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
 
 namespace hamilt
 {
@@ -320,7 +321,16 @@ HamiltLCAO<T>::HamiltLCAO(
         );
         this->ops->add(dftu);
     }
-
+    // constrained spin dft calculation
+    if (GlobalV::I_CONSTRAINED_M)
+    {
+        Operator<std::complex<double>>* lambda
+            = new OperatorLambda<OperatorLCAO<std::complex<double>>>(LM_in,
+                                                                     kv.kvec_d,
+                                                                     nullptr, // no explicit call
+                                                                     &(LM_in->Hloc2));
+        this->ops->add(lambda);
+    }
 }
 
 // case for multi-k-points
