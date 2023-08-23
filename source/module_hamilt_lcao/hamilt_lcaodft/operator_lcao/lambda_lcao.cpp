@@ -87,6 +87,10 @@ std::vector<ModuleBase::Vector3<double>> OperatorLambda<OperatorLCAO<T>>::get_la
 template <typename T>
 void OperatorLambda<OperatorLCAO<T>>::cal_weight_func(const std::vector<T>& Sloc2)
 {
+    if (Sloc2.size() != nloc_ * npol_ * nloc_ * npol_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorLambda::cal_weight_func", "Sloc2 size mismatch with nloc * npol");
+    }
     this->W_i_.reserve(nloc_ * npol_ * nloc_ * npol_);
     for (int i = 0; i < nloc_ * npol_; i++)
     {

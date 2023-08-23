@@ -63,6 +63,8 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     void cal_weight_func(const std::vector<T>& Sloc2);
 
+    std::vector<T> W_i_;
+
   private:
     std::vector<double>* HR_pointer = nullptr;
     std::vector<T>* HK_pointer = nullptr;
@@ -71,7 +73,6 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
     int npol_;
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<int> iwt2iat_;
-    std::vector<T> W_i_;
 };
 
 } // namespace hamilt
