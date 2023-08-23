@@ -9,10 +9,9 @@ TwoCenterBundle::~TwoCenterBundle()
 {
 }
 
-void TwoCenterBundle::build(const int nfile_orb,
+void TwoCenterBundle::build(int ntype,
                             const std::string* file_orb0,
-                            const int nfile_pp,
-                            const std::string* file_pp0,
+                            Numerical_Nonlocal* nl,
                             const int nfile_desc,
                             const std::string* file_desc0)
 {
@@ -22,37 +21,31 @@ void TwoCenterBundle::build(const int nfile_orb,
     // NOTE: only RANK-0 has the complete file name information; a broadcast is necessary
     // NOTE: the passed-in file names do not contain the directory information
 
-    // currently the number of orbital files and pseudo files are the same
-    int ntype = nfile_orb; 
 #ifdef __MPI
     Parallel_Common::bcast_int(ntype);
 #endif
 
     std::string* file_orb = new std::string[ntype];
-    std::string* file_pp = new std::string[ntype];
     if (GlobalV::MY_RANK == 0) {
         for (int it = 0; it < ntype; ++it)
         {
             file_orb[it] = GlobalV::global_orbital_dir + file_orb0[it];
-            file_pp[it] = GlobalV::global_pseudo_dir + file_pp0[it];;
         }
     }
 #ifdef __MPI
     Parallel_Common::bcast_string(file_orb, ntype);
-    Parallel_Common::bcast_string(file_pp, ntype);
 #endif
 
     // build RadialCollection objects
     orb_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-    orb_->build(nfile_orb, file_orb, 'o');
+    orb_->build(ntype, file_orb, 'o');
 
     beta_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-    beta_->build(nfile_pp, file_pp, 'p');
+    beta_->build(ntype, nl);
 
     double rmax = std::max(orb_->rcut_max(), beta_->rcut_max());
 
     delete[] file_orb;
-    delete[] file_pp;
 
     //========== DeePKS =========
     bool deepks_on = GlobalV::deepks_setorb;

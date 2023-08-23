@@ -31,14 +31,21 @@ class BetaRadials : public RadialSet
 
     ~BetaRadials() {}
 
-    //! Build the class from a pseudopotential file
+    /// Build the class from a Numerical_Nonlocal object
+    void build(const Numerical_Nonlocal& nl,
+               const int itype = 0,
+               std::ofstream* const ptr_log = nullptr);
+
+    /*
     void build(const std::string& file,          //!< pseudopotential file name
                const int itype = 0,              //!< element index in calculation
                std::ofstream* ptr_log = nullptr, //!< output file stream for logging
                const int rank = 0                //!< MPI rank
     );
+    */
 
   private:
+    /*
     //! Read beta projectors from a pseudopotential file of UPF 1.0.0 format
     void read_beta_upf100(std::ifstream& ifs,               //!< input file stream from orbital file
                           std::ofstream* ptr_log = nullptr, //!< output file stream for logging
@@ -56,6 +63,7 @@ class BetaRadials : public RadialSet
 
     /// extract value string from a string of the form keyword=" value"
     std::string extract201(std::string const& str, std::string const& keyword);
+    */
 };
 
 #endif

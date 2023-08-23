@@ -429,39 +429,11 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     //-------------------------------------
     two_center_bundle.reset(new TwoCenterBundle);
 
-//    int ntype = ucell.ntype;
-//    bool deepks_on = GlobalV::deepks_setorb;
-//
-//#ifdef __MPI
-//    Parallel_Common::bcast_int(ntype);
-//    Parallel_Common::bcast_bool(deepks_on);
-//#endif
-//
-//    std::string* file_orb = new std::string[ntype];
-//    std::string* file_pp = new std::string[ntype];
-//    std::string file_desc = ucell.descriptor_file;
-//
-//    if (GlobalV::MY_RANK == 0) {
-//        for (int it = 0; it < ntype; ++it)
-//        {
-//            file_orb[it] = GlobalV::global_orbital_dir + ucell.orbital_fn[it];
-//            file_pp[it] = GlobalV::global_pseudo_dir + ucell.pseudo_fn[it];;
-//        }
-//    }
-//#ifdef __MPI
-//    Parallel_Common::bcast_string(file_orb, ntype);
-//    Parallel_Common::bcast_string(file_pp, ntype);
-//    Parallel_Common::bcast_string(file_desc);
-//#endif
-
-    // NOTE: ucell.orbital_fn & ucell.pseudo_fn does not include the path,
+    // NOTE: ucell.orbital_fn does not include the path,
     // GlobalV::global_orbital_dir & GlobalV::global_pseudo_dir is prepended inside build()
-    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.ntype, ucell.pseudo_fn,
+    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.infoNL.Beta,
             GlobalV::deepks_setorb, &ucell.descriptor_file);
-    // currently deepks only use one descriptor file
-
-    //delete[] file_orb;
-    //delete[] file_pp;
+    // currently deepks only use one descriptor file, so use bool as int
 
     // transfer the ownership to UOT
     // this is a temporary solution during refactoring

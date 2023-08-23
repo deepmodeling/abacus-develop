@@ -12,10 +12,16 @@ class TwoCenterBundle
     TwoCenterBundle() {}
     ~TwoCenterBundle();
 
-    void build(const int nfile_orb,
+    //void build(const int nfile_orb,
+    //           const std::string* file_orb,
+    //           const int nfile_pp,
+    //           const std::string* file_pp,
+    //           const int nfile_desc = 0,
+    //           const std::string* file_desc = nullptr);
+
+    void build(const int ntype,
                const std::string* file_orb,
-               const int nfile_pp,
-               const std::string* file_pp,
+               Numerical_Nonlocal* const nl,
                const int nfile_desc = 0,
                const std::string* file_desc = nullptr);
 

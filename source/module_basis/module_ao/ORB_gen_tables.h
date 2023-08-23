@@ -5,7 +5,7 @@
 // if USE_NEW_TWO_CENTER is defined, the new two-center method is used
 // to replace the old UOT.snap_xxx
 // otherwise the new method is calculated but merely used to compare with the old method
-#define USE_NEW_TWO_CENTER
+//#define USE_NEW_TWO_CENTER
 
 #include <memory>
 #include "ORB_gaunt_table.h"
