@@ -31,6 +31,39 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::contributeHR()
 }
 
 template <>
+void OperatorLambda<OperatorLCAO<double>>::set_nat(int nat_in)
+{
+    this->nat_ = nat_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_nat(int nat_in)
+{
+    this->nat_ = nat_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<double>>::set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in)
+{
+    if (lambda_in.size() != this->nat_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorLambda::set_loc_lambda", "lambda_in size mismatch with nat");
+    }
+    this->loc_lambda = lambda_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_lambda(
+    const std::vector<ModuleBase::Vector3<double>>& lambda_in)
+{
+    if (lambda_in.size() != this->nat_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorLambda::set_loc_lambda", "lambda_in size mismatch with nat");
+    }
+    this->loc_lambda = lambda_in;
+}
+
+template <>
 void OperatorLambda<OperatorLCAO<double>>::cal_h_lambda(int ik, double* h_lambda)
 {
 }
@@ -40,6 +73,29 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::cal_h_lambda(int ik, st
 {
     ModuleBase::TITLE("OperatorLambda", "cal_h_lambda");
     ModuleBase::timer::tick("OperatorLambda", "cal_h_lambda");
+    // Pauli matrix is here
+    std::vector<std::vector<std::complex<double>>> sigma_x;
+    std::vector<std::vector<std::complex<double>>> sigma_y;
+    std::vector<std::vector<std::complex<double>>> sigma_z;
+    sigma_x = {
+        {std::complex<double>(0, 0), std::complex<double>(1, 0)},
+        {std::complex<double>(1, 0), std::complex<double>(0, 0)}
+    };
+
+    sigma_y = {
+        {std::complex<double>(0, 0), std::complex<double>(0, -1)},
+        {std::complex<double>(0, 1), std::complex<double>(0, 0) }
+    };
+
+    sigma_z = {
+        {std::complex<double>(1, 0), std::complex<double>(0,  0)},
+        {std::complex<double>(0, 0), std::complex<double>(-1, 0)}
+    };
+    // lambda is transferred from outside in the constructor of this class
+    // this->loc_lambda;
+    // W_mu_nu is temporarily just the overlap matrix
+    // this->LM->Sloc2;
+    // h_lambda = W_i * (lambda_x *sigma_x + lambda_y * sigma_y + lambda_z * sigma_z)
     ModuleBase::timer::tick("OperatorLambda", "cal_h_lambda");
 }
 
