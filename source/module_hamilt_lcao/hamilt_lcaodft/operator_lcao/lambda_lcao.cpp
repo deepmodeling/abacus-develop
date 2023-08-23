@@ -199,10 +199,10 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorLambda", "contributeHk");
     ModuleBase::timer::tick("OperatorLambda", "contributeHk");
-    std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
+    std::vector<std::complex<double>> h_lambda(nloc_ * npol_ * nloc_ * npol_);
     this->cal_h_lambda(ik, &h_lambda[0]);
 
-    for (int irc = 0; irc < nloc_; irc++)
+    for (int irc = 0; irc < nloc_ * npol_; irc++)
     {
         this->LM->Hloc2[irc] += h_lambda[irc];
     }
