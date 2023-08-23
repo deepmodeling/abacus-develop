@@ -41,13 +41,19 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     void set_nat(int nat_in);
 
+    void set_nloc(int nloc_in);
+
     void set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in);
+
+    void set_iwt2iat(const std::vector<int>& iwt2iat_in);
 
   private:
     std::vector<double>* HR_pointer = nullptr;
     std::vector<T>* HK_pointer = nullptr;
+    int nloc_;
     int nat_;
-    std::vector<ModuleBase::Vector3<double>> loc_lambda;
+    std::vector<ModuleBase::Vector3<double>> lambda_;
+    std::vector<int> iwt2iat_;
 };
 
 } // namespace hamilt

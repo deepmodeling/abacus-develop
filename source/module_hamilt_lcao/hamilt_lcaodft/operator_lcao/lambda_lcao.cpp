@@ -43,13 +43,45 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_nat(int nat_in)
 }
 
 template <>
+void OperatorLambda<OperatorLCAO<double>>::set_nloc(int nloc_in)
+{
+    this->nloc_ = nloc_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_nloc(int nloc_in)
+{
+    this->nloc_ = nloc_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<double>>::set_iwt2iat(const std::vector<int>& iwt2iat_in)
+{
+    if (iwt2iat_in.size() != this->nloc_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorLambda::set_iwt2iat", "iwt2iat_in size mismatch with nloc");
+    }
+    this->iwt2iat_ = iwt2iat_in;
+}
+
+template <>
+void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_iwt2iat(const std::vector<int>& iwt2iat_in)
+{
+    if (iwt2iat_in.size() != this->nloc_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorLambda::set_iwt2iat", "iwt2iat_in size mismatch with nloc");
+    }
+    this->iwt2iat_ = iwt2iat_in;
+}
+
+template <>
 void OperatorLambda<OperatorLCAO<double>>::set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in)
 {
     if (lambda_in.size() != this->nat_)
     {
-        ModuleBase::WARNING_QUIT("OperatorLambda::set_loc_lambda", "lambda_in size mismatch with nat");
+        ModuleBase::WARNING_QUIT("OperatorLambda::set_lambda", "lambda_in size mismatch with nat");
     }
-    this->loc_lambda = lambda_in;
+    this->lambda_ = lambda_in;
 }
 
 template <>
@@ -58,9 +90,9 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::set_lambda(
 {
     if (lambda_in.size() != this->nat_)
     {
-        ModuleBase::WARNING_QUIT("OperatorLambda::set_loc_lambda", "lambda_in size mismatch with nat");
+        ModuleBase::WARNING_QUIT("OperatorLambda::set_lambda", "lambda_in size mismatch with nat");
     }
-    this->loc_lambda = lambda_in;
+    this->lambda_ = lambda_in;
 }
 
 template <>
@@ -95,6 +127,13 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::cal_h_lambda(int ik, st
     // this->loc_lambda;
     // W_mu_nu is temporarily just the overlap matrix
     // this->LM->Sloc2;
+    for (int i = 0; i < nloc_; i++)
+    {
+        for (int j = i; j < nloc_; j++)
+        {
+            this->LM->Sloc2[i * nloc_ + j];
+        }
+    }
     // h_lambda = W_i * (lambda_x *sigma_x + lambda_y * sigma_y + lambda_z * sigma_z)
     ModuleBase::timer::tick("OperatorLambda", "cal_h_lambda");
 }
