@@ -36,6 +36,8 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     virtual void contributeHk(int ik) override;
 
+    void cal_h_lambda(int ik, T* h_lambda);
+
   private:
     std::vector<double>* HR_pointer = nullptr;
     std::vector<T>* HK_pointer = nullptr;
