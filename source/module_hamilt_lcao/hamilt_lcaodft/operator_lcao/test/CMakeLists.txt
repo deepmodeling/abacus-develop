@@ -52,4 +52,13 @@ add_test(NAME operators_para_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-endif() 
+AddTest(
+  TARGET operator_lambda_test
+  LIBS ${math_libs} psi base device
+  SOURCES test_lambda_lcao.cpp
+  ../lambda_lcao.cpp
+  #../operator_lcao.cpp
+  ../../../../module_hamilt_general/operator.cpp
+)
+
+endif()

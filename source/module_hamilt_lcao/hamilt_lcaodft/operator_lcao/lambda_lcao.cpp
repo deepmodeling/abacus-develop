@@ -34,6 +34,24 @@ void OperatorLambda<OperatorLCAO<T>>::set_npol(int npol_in)
 }
 
 template <typename T>
+int OperatorLambda<OperatorLCAO<T>>::get_nat()
+{
+    return this->nat_;
+}
+
+template <typename T>
+int OperatorLambda<OperatorLCAO<T>>::get_nloc()
+{
+    return this->nloc_;
+}
+
+template <typename T>
+int OperatorLambda<OperatorLCAO<T>>::get_npol()
+{
+    return this->npol_;
+}
+
+template <typename T>
 void OperatorLambda<OperatorLCAO<T>>::set_iwt2iat(const std::vector<int>& iwt2iat_in)
 {
     if (iwt2iat_in.size() != this->nloc_)

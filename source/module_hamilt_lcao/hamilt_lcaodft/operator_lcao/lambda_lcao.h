@@ -39,11 +39,18 @@ class OperatorLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     void cal_h_lambda(int ik, T* h_lambda);
 
+    // setters
     void set_nat(int nat_in);
 
     void set_nloc(int nloc_in);
 
     void set_npol(int npol_in);
+    // getters
+    int get_nat();
+
+    int get_nloc();
+
+    int get_npol();
 
     void set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in);
 
