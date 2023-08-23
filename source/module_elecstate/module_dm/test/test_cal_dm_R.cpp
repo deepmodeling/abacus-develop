@@ -15,8 +15,8 @@
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
-int test_size = 10;
-int test_nw = 26;
+int test_size = 1000;
+int test_nw = 13;
 
 class DMTest : public testing::Test
 {
@@ -110,37 +110,108 @@ class DMTest : public testing::Test
 #endif
 };
 
-TEST_F(DMTest, DMConstructor1)
+TEST_F(DMTest, cal_DMR)
 {
+    // get my rank of this process
+    int my_rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+#endif
+    // output dim and nrow, ncol
+    if (my_rank == 0)
+    {
+        std::cout << "my rank: " << my_rank << " dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    }
+    else
+    {
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    }
     // construct DM
-    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
-    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double> DM(kv, paraV);
-    // compare
-    EXPECT_EQ(DM.get_DMK_nks(), kv->nks);
-    EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
-    EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
-
-    // set elements of DMK
+    // set this->_DMK
     for (int ik = 0; ik < kv->nks; ik++)
     {
         for (int i = 0; i < paraV->nrow; i++)
         {
             for (int j = 0; j < paraV->ncol; j++)
             {
-                DM.set_DMK(ik, i, j, ik * i + j);
+                DM.set_DMK(ik, i, j, 0.77 * (ik + 1));
             }
         }
     }
-    // compare
+    // initialize this->_DMR
+    Grid_Driver gd(0, 0, 0);
+    DM.init_DMR(&gd, &ucell);
+    // calculate this->_DMR
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    DM.cal_DMR();
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "my rank: " << my_rank << " elapsed time: " << elapsed_time.count() << std::endl;
+    // compare the result
+    for (int i = 0; i < DM.get_DMR_pointer()->size_atom_pairs(); i++)
+    {
+        double* ptr1 = DM.get_DMR_pointer()->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        //
+        for (int j = 0; j < DM.get_DMR_pointer()->get_atom_pair(i).get_size(); j++)
+        {
+            // std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
+            EXPECT_NEAR(ptr1[j], -0.77, 1e-10);
+        }
+    }
+}
+
+TEST_F(DMTest, cal_DMR_blas)
+{
+    // get my rank of this process
+    int my_rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+#endif
+    // output dim and nrow, ncol
+    if (my_rank == 0)
+    {
+        std::cout << "my rank: " << my_rank << " dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    }
+    else
+    {
+        std::cout << "my rank: " << my_rank << " nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    }
+    // construct DM
+    elecstate::DensityMatrix<double> DM(kv, paraV);
+    // set this->_DMK
     for (int ik = 0; ik < kv->nks; ik++)
     {
         for (int i = 0; i < paraV->nrow; i++)
         {
             for (int j = 0; j < paraV->ncol; j++)
             {
-                EXPECT_EQ(DM.get_DMK(ik, i, j), ik * i + j);
+                DM.set_DMK(ik, i, j, 0.77 * (ik + 1));
             }
+        }
+    }
+    // initialize this->_DMR
+    Grid_Driver gd(0, 0, 0);
+    DM.init_DMR(&gd, &ucell);
+    // calculate this->_DMR
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    DM.cal_DMR_blas();
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "my rank: " << my_rank << " elapsed time blas: " << elapsed_time.count() << std::endl;
+    // compare the result
+    for (int i = 0; i < DM.get_DMR_pointer()->size_atom_pairs(); i++)
+    {
+        double* ptr1 = DM.get_DMR_pointer()->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        //
+        for (int j = 0; j < DM.get_DMR_pointer()->get_atom_pair(i).get_size(); j++)
+        {
+            // std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
+            EXPECT_NEAR(ptr1[j], -0.77, 1e-10);
         }
     }
 }

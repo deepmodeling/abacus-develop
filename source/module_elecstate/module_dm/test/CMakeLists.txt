@@ -4,39 +4,17 @@ remove_definitions(-D__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-#[[
 AddTest(
   TARGET dm_io_test_serial
   LIBS base ${math_libs} base device cell_info
-  SOURCES test_dm_io_serial.cpp ../density_matrix.cpp tmp_mocks.cpp
+  SOURCES test_dm_io.cpp ../density_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
-  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/output_hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
   ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/sparse_matrix.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/csr_reader.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/file_reader.cpp
   ${ABACUS_SOURCE_DIR}/module_io/output.cpp
 )
-
-AddTest(
-  TARGET dm_io_test_mpi
-  LIBS base ${math_libs} base device cell_info
-  SOURCES test_dm_io_mpi.cpp ../density_matrix.cpp tmp_mocks.cpp
-  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
-  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
-  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
-  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/output_hcontainer.cpp
-  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
-  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/sparse_matrix.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/csr_reader.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/file_reader.cpp
-  ${ABACUS_SOURCE_DIR}/module_io/output.cpp
-)
-]]
 
 AddTest(
   TARGET dm_constructor_test
@@ -53,6 +31,17 @@ AddTest(
   TARGET dm_init_test
   LIBS base ${math_libs} base device
   SOURCES test_dm_R_init.cpp ../density_matrix.cpp tmp_mocks.cpp
+  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
+  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
+  ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
+  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
+  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
+)
+
+AddTest(
+  TARGET dm_cal_DMR_test
+  LIBS base ${math_libs} base device
+  SOURCES test_cal_dm_R.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp

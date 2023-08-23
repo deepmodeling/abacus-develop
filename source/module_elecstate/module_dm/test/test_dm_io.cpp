@@ -2,8 +2,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "module_cell/unitcell.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "prepare_unitcell.h"
 
 // mock functions
@@ -30,6 +30,39 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
     delete[] this->start_magnetization;
+}
+
+#include "module_cell/klist.h"
+
+K_Vectors::K_Vectors()
+{
+}
+
+K_Vectors::~K_Vectors()
+{
+}
+
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+// mock find_atom() function
+void Grid_Driver::Find_atom(const UnitCell& ucell,
+                            const ModuleBase::Vector3<double>& tau,
+                            const int& T,
+                            const int& I,
+                            AdjacentAtomInfo* adjs)
+{
+}
+Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
+{
+}
+Grid::~Grid()
+{
+}
+Grid_Driver::Grid_Driver(const int& test_d_in, const int& test_gd_in, const int& test_grid_in)
+    : Grid(test_grid_in), test_deconstructor(test_d_in), test_grid_driver(test_gd_in)
+{
+}
+Grid_Driver::~Grid_Driver()
+{
 }
 // mocke functions
 
@@ -120,7 +153,7 @@ class DMTest : public testing::Test
 
 TEST_F(DMTest, DMConstructor1)
 {
-    // 
+    //
     // construct DM
     std::cout << paraV->nrow << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double> DM(kv, paraV);
@@ -129,11 +162,11 @@ TEST_F(DMTest, DMConstructor1)
     // write DMK
     DM.output_DMK("./support/output");
     // construct a new DM
-    elecstate::DensityMatrix<double> DM1(kv,paraV);
+    elecstate::DensityMatrix<double> DM1(kv, paraV);
     DM1.set_DMK_files("./support/output");
     // compare DMK1 with DMK
-    EXPECT_NEAR(DM.get_DMK(0,0,0),DM1.get_DMK(0,0,0),1e-6);
-	EXPECT_NEAR(DM.get_DMK(1,25,25),DM1.get_DMK(1,25,25),1e-6);
+    EXPECT_NEAR(DM.get_DMK(0, 0, 0), DM1.get_DMK(0, 0, 0), 1e-6);
+    EXPECT_NEAR(DM.get_DMK(1, 25, 25), DM1.get_DMK(1, 25, 25), 1e-6);
 }
 
 int main(int argc, char** argv)

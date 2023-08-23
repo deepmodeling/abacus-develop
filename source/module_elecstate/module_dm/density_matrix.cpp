@@ -1,5 +1,7 @@
 #include "density_matrix.h"
 
+#include "module_base/libm/libm.h"
+
 namespace elecstate
 {
 
@@ -34,7 +36,6 @@ template <typename T>
 void DensityMatrix<T>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell)
 {
     // set up a HContainer
-    this->_DMR = new hamilt::HContainer<T>(this->_paraV);
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -42,6 +43,7 @@ void DensityMatrix<T>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell)
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD_in->Find_atom(*ucell, tau1, T1, I1, &adjs);
+        // std::cout << "adjs.adj_num: " <<adjs.adj_num << std::endl;
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
             const int T2 = adjs.ntype[ad];
@@ -52,6 +54,7 @@ void DensityMatrix<T>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell)
                 continue;
             }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
+            // std::cout << "R_index: " << R_index.x << " " << R_index.y << " " << R_index.z << std::endl;
             hamilt::AtomPair<T> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, this->_paraV);
             this->_DMR->insert_pair(tmp);
         }
@@ -103,57 +106,131 @@ int DensityMatrix<T>::get_DMK_ncol() const
     return this->_DMK[0].nc;
 }
 
-/*
 // calculate DMR from DMK
 template <typename T>
 void DensityMatrix<T>::cal_DMR()
 {
-//#ifdef _OPENMP
-//#pragma omp parallel for
-//#endif
+    // #ifdef _OPENMP
+    // #pragma omp parallel for
+    // #endif
     for (int i = 0; i < this->_DMR->size_atom_pairs(); ++i)
     {
-        hamilt::AtomPair<T>& tmp_ap = hR.get_atom_pair(i);
-        for(int ir = 0;ir < tmp_ap.get_R_size(); ++ir )
+        hamilt::AtomPair<T>& tmp_ap = this->_DMR->get_atom_pair(i);
+        int iat1 = tmp_ap.get_atom_i();
+        int iat2 = tmp_ap.get_atom_j();
+        // get global indexes of whole matrix for each atom in this process
+        int row_ap = this->_paraV->atom_begin_row[iat1];
+        int col_ap = this->_paraV->atom_begin_col[iat2];
+        if (row_ap == -1 || col_ap == -1)
+        {
+            throw std::string("Atom-pair not belong this process");
+        }
+        for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
         {
             const int* r_index = tmp_ap.get_R_index(ir);
-            hamilt::BaseMatrix<T> tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
-            std::complex<double> tmp_res = 0.0;
-            // cal k_phase
-            // if TK==std::complex<double>, kphase is e^{ikR}
-            for (int ik = 0;ik < this->_kv->nks;++ik)
+            hamilt::BaseMatrix<T>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+#ifdef __DEBUG
+            if (tmp_matrix == nullptr)
             {
+                std::cout << "tmp_matrix is nullptr" << std::endl;
+                continue;
+            }
+#endif
+            std::complex<T> tmp_res;
+            // loop over k-points
+            for (int ik = 0; ik < this->_kv->nks; ++ik)
+            {
+                // cal k_phase
+                // if TK==std::complex<double>, kphase is e^{ikR}
                 const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
+                const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                 double sinp, cosp;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                for (int i = 0; i < this->_paraV->nrow; ++i)
+                // set DMR element
+                for (int i = 0; i < this->_paraV->get_row_size(iat1); ++i)
                 {
-                    for (int j = 0; j < this->_paraV->ncol; ++j)
+                    for (int j = 0; j < this->_paraV->get_col_size(iat2); ++j)
                     {
-                        tmp_res = kphase * this->_DMK[ik](i, j);
-                        tmp_matrix.add_element(i, j, tmp_res);
+                        // since DMK is column-major, we need to transpose it
+                        tmp_res = kphase * this->_DMK[ik](row_ap + i, col_ap + j);
+                        tmp_matrix->add_element(i, j, tmp_res.real());
                     }
                 }
-            }
-
-        }
-    }
-    // set up a HContainer
-    this->_DMR = new hamilt::HContainer<T>(this->_paraV);
-    for (int ik = 0; ik < this->_kv->nks; ++ik)
-    {
-        for (int i = 0; i < this->_paraV->nrow; ++i)
-        {
-            for (int j = 0; j < this->_paraV->ncol; ++j)
-            {
-                this->_DMR->add_to_matrix(i, j, this->_DMK[ik](i, j));
             }
         }
     }
 }
-*/
+
+// calculate DMR from DMK using blas
+template <typename T>
+void DensityMatrix<T>::cal_DMR_blas()
+{
+    // #ifdef _OPENMP
+    // #pragma omp parallel for
+    // #endif
+    for (int i = 0; i < this->_DMR->size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<T>& tmp_ap = this->_DMR->get_atom_pair(i);
+        int iat1 = tmp_ap.get_atom_i();
+        int iat2 = tmp_ap.get_atom_j();
+        // get global indexes of whole matrix for each atom in this process
+        int row_ap = this->_paraV->atom_begin_row[iat1];
+        int col_ap = this->_paraV->atom_begin_col[iat2];
+        if (row_ap == -1 || col_ap == -1)
+        {
+            throw std::string("Atom-pair not belong this process");
+        }
+        for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
+        {
+            const int* r_index = tmp_ap.get_R_index(ir);
+            hamilt::BaseMatrix<T>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+#ifdef __DEBUG
+            if (tmp_matrix == nullptr)
+            {
+                std::cout << "tmp_matrix is nullptr" << std::endl;
+                continue;
+            }
+#endif
+            // loop over k-points
+            for (int ik = 0; ik < this->_kv->nks; ++ik)
+            {
+                // cal k_phase
+                // if TK==std::complex<double>, kphase is e^{ikR}
+                const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+                const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                double sinp, cosp;
+                ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                // set DMR element
+                T* tmp_DMR = tmp_matrix->get_pointer();
+                std::complex<double>* tmp_DMK = this->_DMK[ik].c;
+                T* DMK_real_pointer = nullptr;
+                T* DMK_imag_pointer = nullptr;
+                tmp_DMK += row_ap * this->_paraV->ncol + col_ap;
+                for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+                {
+                    DMK_real_pointer = (T*)tmp_DMK;
+                    DMK_imag_pointer = DMK_real_pointer + 1;
+                    BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                                        kphase.real(),
+                                        DMK_real_pointer,
+                                        2,
+                                        tmp_DMR,
+                                        1);
+                    BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                                        kphase.imag(),
+                                        DMK_imag_pointer,
+                                        2,
+                                        tmp_DMR,
+                                        1);
+                    tmp_DMK += this->_paraV->get_col_size(iat2);
+                    tmp_DMR += this->_paraV->get_col_size(iat2);
+                }
+            }
+        }
+    }
+}
 
 // read *.dmk into density matrix dm(k)
 template <typename T>
@@ -261,6 +338,5 @@ T DensityMatrix<T>::get_DMK(const int ik, const int i, const int j) const
 
 // T of HContainer can be double or complex<double>
 template class DensityMatrix<double>;
-template class DensityMatrix<std::complex<double>>;
 
 } // namespace elecstate

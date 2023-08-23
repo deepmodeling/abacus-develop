@@ -117,7 +117,7 @@ TEST_F(DMTest, DMInit1)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double> DM(kv, paraV);
     // initialize this->_DMR
-    Grid_Driver gd(0,0,0);
+    Grid_Driver gd(0, 0, 0);
     DM.init_DMR(&gd, &ucell);
     // compare
     EXPECT_EQ(DM.get_DMR_pointer()->size_atom_pairs(), test_size * test_size);
@@ -131,7 +131,7 @@ TEST_F(DMTest, DMInit2)
 {
     // construct a DM
     elecstate::DensityMatrix<double> DM(kv, paraV);
-    Grid_Driver gd(0,0,0);
+    Grid_Driver gd(0, 0, 0);
     DM.init_DMR(&gd, &ucell);
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     // construct another DM
