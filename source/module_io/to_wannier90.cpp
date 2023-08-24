@@ -1767,7 +1767,7 @@ void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw,
     {
         delete this->unk_inLcao;
     }
-    this->unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, GlobalV::NBANDS, npwx, nullptr);
+    this->unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, GlobalV::NBANDS, npwx, kv.ngk.data());
     ModuleBase::ComplexMatrix *orbital_in_G = new ModuleBase::ComplexMatrix[num_kpts];
 
     for (int ik = 0; ik < num_kpts; ik++)
