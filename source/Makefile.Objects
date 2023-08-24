@@ -235,6 +235,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
+    lambda_lcao.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
