@@ -2,7 +2,8 @@
 Version 2023.2
 
 ## Author
-QuantumMisaka (Zhaoqing Liu) @PKU @AISI
+[QuantumMisaka](https://github.com/QuantumMisaka) 
+(Zhaoqing Liu) @PKU @AISI
 
 Inspired by cp2k-toolchain, still in improvement.
 
