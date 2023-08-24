@@ -239,9 +239,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         ModuleBase::Memory::record("SDFT::j2psi", memory_cost);
         //(1-f)*j*sqrt(f)|psi>
         psi::Psi<std::complex<double>> j1sfpsi(1, ndim * totbands_per, npwx, kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
+        ModuleBase::Memory::record("SDFT::j1sfpsi", memory_cost);
         psi::Psi<std::complex<double>> j2sfpsi(1, ndim * totbands_per, npwx, kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
+        ModuleBase::Memory::record("SDFT::j2sfpsi", memory_cost);
         double* en;
         if(ksbandper > 0)   en = new double [ksbandper];
         for(int ib = 0 ; ib < ksbandper ; ++ib)
@@ -474,6 +474,10 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             // const int dim_jmatrix = totbands_per*totbands;
             ModuleBase::ComplexMatrix j1l(ndim,dim_jmatrix), j2l(ndim,dim_jmatrix);
             ModuleBase::ComplexMatrix j1r(ndim,dim_jmatrix), j2r(ndim,dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j1l", sizeof(std::complex<double>) * ndim * dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j2l", sizeof(std::complex<double>) * ndim * dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j1r", sizeof(std::complex<double>) * ndim * dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j2r", sizeof(std::complex<double>) * ndim * dim_jmatrix);
             char transa = 'C';
             char transb = 'N';
             int totbands_per3 = ndim*totbands_per;
