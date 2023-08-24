@@ -143,4 +143,5 @@ TYPED_TEST(LambdaLCAOTest, CalWeightFunc)
             EXPECT_DOUBLE_EQ(get_imag_value(expected), get_imag_value(actual));
         }
     }
+    delete[] iwt2iat_in;
 }

@@ -116,10 +116,16 @@ void OperatorLambda<OperatorLCAO<std::complex<double>>>::cal_h_lambda(int ik, st
     ModuleBase::timer::tick("OperatorLambda", "cal_h_lambda");
     // h_lambda = W_i * (lambda_x *sigma_x + lambda_y * sigma_y + lambda_z * sigma_z)
     // Pauli matrix is used implicitly
+    // Pauli matrices
+    // sigma_x = {{0, 1}, {1, 0}}
+    // sigma_y = {{0, -i}, {i, 0}}
+    // sigma_z = {{1, 0}, {0, -1}}
+    // lambda_x * sigma_x + lambda_y * sigma_y + lambda_z * sigma_z
+    // = {{lambda_z, lambda_x - i * lambda_y}, {lambda_x + i * lambda_y, -lambda_z}}
     for (int i = 0; i < nloc_ * npol_; i++)
     {
         int iat = iwt2iat_[i];
-        for (int j = i; j < nloc_ * npol_; j++)
+        for (int j = 0; j < nloc_ * npol_; j++)
         {
             int index = i * nloc_ * npol_ + j;
             if (i % 2 == 0)

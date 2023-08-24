@@ -60,4 +60,12 @@ AddTest(
   ../../../../module_hamilt_general/operator.cpp
 )
 
+AddTest(
+  TARGET cal_h_lambda_test
+  LIBS ${math_libs} psi base device
+  SOURCES test_cal_h_lambda.cpp
+  ../lambda_lcao.cpp
+  ../../../../module_hamilt_general/operator.cpp
+)
+
 endif()
