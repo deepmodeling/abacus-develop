@@ -25,6 +25,7 @@ and give setup files that you can use to compile ABACUS.
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
 - [ ] A better `setup` and toolchain code structure.
 - [ ] Modulefile generation scripts.
+- [ ] Support for `acml` toolchain (scripts are partly in toolchain now)
 - [ ] Support for [LIBRI](https://github.com/abacusmodeling/LibRI).
 - [ ] Support for GPU compilation.
 
