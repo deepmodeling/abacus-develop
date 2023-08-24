@@ -229,6 +229,7 @@ public:
             ucell.atoms[it].nw = nw[it];
         }
         // cal_nloc
+        nlocal = 0;
         for (int it = 0; it < ucell.ntype; ++it)
         {
             nlocal += ucell.atoms[it].na * ucell.atoms[it].nw;
@@ -251,7 +252,7 @@ public:
         ucell.iat2it = new int[ucell.nat];
         ucell.iat2ia = new int[ucell.nat]; // set_iat2itia
         ucell.itia2iat.create(ucell.ntype, ucell.namax);
-        ucell.iat2iwt.resize(ucell.nat);
+        ucell.set_iat2iwt(1);
         int iat = 0;
         int iwt = 0;
         for (int it = 0; it < ucell.ntype; it++)
@@ -261,7 +262,6 @@ public:
                 ucell.iat2it[iat] = it;
                 ucell.iat2ia[iat] = ia;
                 ucell.itia2iat(it, ia) = iat;
-                ucell.iat2iwt[iat] = iwt;
                 for (int iw = 0; iw < ucell.atoms[it].nw; iw++)
                 {
                     ucell.iwt2iat[iwt] = iat;

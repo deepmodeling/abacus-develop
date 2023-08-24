@@ -417,7 +417,7 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     if (this->orb_con.setup_2d)
     {
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
-        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.iat2iwt.data(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     }
 }
 
@@ -878,8 +878,8 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
 ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
 {
     return ModuleIO::Output_Mat_Sparse(hsolver::HSolverLCAO::out_mat_hsR,
-                                       hsolver::HSolverLCAO::out_mat_t,
                                        hsolver::HSolverLCAO::out_mat_dh,
+                                       hsolver::HSolverLCAO::out_mat_t,
                                        INPUT.out_mat_r,
                                        istep,
                                        this->pelec->pot->get_effective_v(),

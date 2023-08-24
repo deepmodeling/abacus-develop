@@ -3,6 +3,15 @@
 #include <iostream>
 
 #include "../paw_atom.h"
+/*
+
+Unit Test for subroutines related to the processing of rhoij,
+the on-site density matrix to be used for PAW:
+1. set_ca, which passes <psi|ptilde> from outside and saves it
+2. accumulate_rhoij, which accumulates the contribution of one band
+3. convert_rhoij, which converts rhoij to format required by PAW
+
+*/
 
 class Test_Paw_Atom : public testing::Test
 {

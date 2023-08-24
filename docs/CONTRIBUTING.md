@@ -13,6 +13,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Code formatting style](#code-formatting-style)
 - [Generating code coverage report](#generating-code-coverage-report)
 - [Adding a unit test](#adding-a-unit-test)
+- [Running unit tests](#running-unit-tests)
 - [Debugging the codes](#debugging-the-codes)
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Commit message guidelines](#commit-message-guidelines)
@@ -34,6 +35,58 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 - `source`: the source code in separated modules, under which a `test` folder for its unit tests;
 - `tests`: End-to-end test cases;
 - `tools`: the script for generating the numerical atomic orbitals.
+
+For those who are interested in the source code, the following figure shows the structure of the source code.
+
+```
+|-- module_base                 A basic module including 
+|   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
+|   |                           (2) Custom data classes: matrix, vector definitions and related functions;
+|   |                           (3) Parallelization functions: MPI, OpenMP;
+|   |                           (4) Utility functions: timer, random number generator, etc.
+|   |                           (5) Global parameters: input parameters, element names, mathematical and physical constants.
+|   |-- module_container        The container module for storing data and performing operations on them and on different architectures.
+|-- module_basis                Basis means the basis set to expand the wave function.
+|   |-- module_ao               Atomic orbital basis set to be refactored.
+|   |-- module_nao              New numerical atomic orbital basis set for two-center integrals in LCAO calculations
+|   `-- module_pw               Data structures and relevant methods for planewave involved calculations
+|-- module_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
+|   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
+|   |-- module_paw              The module for performing PAW calculations.
+|   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
+|-- module_elecstate            The module for defining the electronic state and its operations.
+|   |-- module_charge           The module for calculating the charge density, charge mixing
+|   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
+|-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
+|   |                           TDDFT, Orbital-free DFT, etc.
+|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations. 
+|   |-- module_ewald            The module for calculating the Ewald summation.
+|   |-- module_surchem          The module for calculating the surface charge correction.
+|   |-- module_vdw              The module for calculating the van der Waals correction.
+|   |-- module_xc               The module for calculating the exchange-correlation energy and potential.
+|-- module_hamilt_lcao          The module for defining the Hamiltonian in LCAO calculations.
+|   |-- hamilt_lcaodft          The module for defining the Hamiltonian in LCAO-DFT calculations.
+|   |   |-- operator_lcao       The module for defining the operators in LCAO-DFT calculations.
+|   |-- module_deepks           The module for defining the Hamiltonian in DeepKS calculations.
+|   |-- module_dftu             The module for defining the Hamiltonian in DFT+U calculations.
+|   |-- module_gint             The module for performing grid integral in LCAO calculations.
+|   |-- module_hcontainer       The module for storing the Hamiltonian matrix in LCAO calculations.
+|   `-- module_tddft            The module for defining the Hamiltonian in TDDFT calculations.
+|-- module_hamilt_pw            The module for defining the Hamiltonian in PW calculations.
+|   |-- hamilt_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
+|   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
+|   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
+|   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
+|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW 
+|   |                           calculations, and scalapack and genelpa in LCAO calculations.
+|-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
+|-- module_md                   The module for performing molecular dynamics.
+|-- module_psi                  The module for defining the wave function and its operations.
+|-- module_relax                The module for performing structural optimization.
+|   |-- relax_new               The module for performing structural optimization with new algorithm, optimized for cell and ion simultaneously.
+|   `-- relax_old               The module for performing structural optimization with old algorithm, optimized for cell and ion separately.
+|-- module_ri                   The module for performing RI calculations.
+```
 
 ## Submitting an Issue
 
@@ -145,6 +198,71 @@ To add a unit test:
 - Build with `-D BUILD_TESTING=1` flag, `cmake` will look for `GoogleTest` in the default path (usually `/usr/local`); if not found, you can specify the path with `-D GTEST_DIR`. You can find built testing programs under `build/source/<module_name>/test`.
 - Follow the installing procedure of CMake. The tests will move to `build/test`.
 - Considering `-D BUILD_TESTING=1`, the compilation will be slower compared with the case `-D BUILD_TESTING=0`.
+
+## Running unit tests
+
+1. Compiling ABACUS with unit tests.   
+
+    In order to run unit tests, ABACUS needs to be configured with `-D BUILD_TESTING=ON` flag. For example:
+    ```bash
+    camke -B build -DBUILD_TESTING=ON
+    ``` 
+    then build ABACUS and unit testing with 
+    ```bash
+    cmake --build build -j${number of processors}
+    ```
+    It is import to run the folloing command before running unit tests:
+    ```bash
+    camke --install build
+    ```
+    to install mandatory supporting input files for unit tests.  
+    If you modified the unit tests to add new tests or learn how to write unit tests, it is convenient to run
+    ```bash
+    cmake --build build -j${number of processors} --target ${unit test name}
+    ```
+    to build a specific unit test. And please remember to run `cmake --install build` after building the unit test if the unit test requires supporting input files.
+
+2. Running unit tests
+
+    The test cases are located in `build/source/${module_name}/test` directory. Note that there are other directory names for unit tests, for example, `test_parallel` for running parallel unit tests, `test_pw` for running unit tests only used in plane wave basis calculation.  
+
+    You can run a single test in the specific directory. For example, run
+    ```
+    ./cell_unitcell_test
+    ```
+    in the director of `build/source/cell/test` to run the test `cell_unitcell_test`.  
+    However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
+    ```bash
+    ctest -N
+    ```
+    The results will be shown as  
+    ```
+    Test project /root/abacus/build
+    Test   #1: integrated_test
+    Test   #2: Container_UTs
+    Test   #3: base_blas_connector
+    Test   #4: base_blacs_connector
+    Test   #5: base_timer
+    ...
+    ```
+    Note that the first one is integrated test, which is not a unit test. It is the test
+    suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory.
+
+    To run a subset of tests, run the following command 
+    ```bash
+    ctest -R <test-match-pattern> -V
+    ```
+    For example, `ctest -R cell` will perform tests with name matched by `cell`.  
+    You can also run a single test with 
+    ```
+    ctest -R <test-name>
+    ```
+    For example, `ctest -R cell_unitcell_test_readpp` will   perform test `cell_unitcell_test_readpp`.  
+    To run all the unit tests, together with the integrated test, run
+    ```bash
+    cmake --build build --target test ARGS="-V --timeout 21600"
+    ```
+    in the `abacus-develop` directory.
 
 ## Debugging the codes
 

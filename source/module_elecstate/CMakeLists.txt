@@ -52,3 +52,5 @@ if(BUILD_TESTING)
     add_subdirectory(test_mpi)
   endif()
 endif()
+
+add_subdirectory(module_dm)

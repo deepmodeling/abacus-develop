@@ -488,3 +488,79 @@ void Paw_Cell::get_rhoijp(std::vector<std::vector<double>> & rhoijp,
         nrhoijsel[iat] = paw_atom_list[iat].get_nrhoijsel();
     }
 }
+
+void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi)
+{
+    ModuleBase::TITLE("Paw_Cell","paw_nl_psi");
+
+    if(mode == 1)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            vnlpsi[ipw] = psi[ipw];
+        }        
+    }
+    //for(int ipw = 0; ipw < npw; ipw ++)
+    //{
+    //    vnlpsi[ipw] = 0.0;
+    //}
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        // ca : <ptilde(G)|psi(G)>
+        // = \sum_G [\int f(r)r^2j_l(r)dr] * [(-i)^l] * [ylm(\hat{G})] * [exp(-GR_I)] *psi(G)
+        // = \sum_ipw ptilde * fact * ylm * sk * psi (in the code below)
+        // This is what is called 'becp' in nonlocal pp
+        std::vector<std::complex<double>> ca;
+
+        const int it = atom_type[iat];
+        const int nproj = paw_element_list[it].get_mstates();
+        const int proj_start = start_iprj_ia[iat];
+
+        ca.resize(nproj);
+
+        for(int iproj = 0; iproj < nproj; iproj ++)
+        {
+            ca[iproj] = 0.0;
+            
+            // consider use blas subroutine for this part later
+            for(int ipw = 0; ipw < npw; ipw ++)
+            {
+                ca[iproj] += psi[ipw] * std::conj(vkb[iproj+proj_start][ipw]);
+            }
+        }
+
+        // ca should be summed over MPI ranks since planewave basis is distributed
+        // but not for now (I'll make sure serial version works first)
+        // Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+
+        // sum_ij D_ij ca_j
+        std::vector<std::complex<double>> v_ca;
+        v_ca.resize(nproj);
+
+        for(int iproj = 0; iproj < nproj; iproj ++)
+        {
+            v_ca[iproj] = 0.0;
+            for(int jproj = 0; jproj < nproj; jproj ++)
+            {
+                if(mode == 0) // V_{NL}|psi>
+                {
+                    v_ca[iproj] += paw_atom_list[iat].get_dij()[iproj*nproj+jproj] * ca[jproj];
+                }
+                else if(mode == 1) // (S+I)|psi>
+                {
+                    v_ca[iproj] += paw_atom_list[iat].get_sij()[iproj*nproj+jproj] * ca[jproj];
+                }
+            }
+        }
+
+        // vnl(ipw) = \sum_i ptilde_{iproj}(G) v_ca[iproj]
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            for(int iproj = 0; iproj < nproj; iproj ++)
+            {
+                vnlpsi[ipw] += vkb[iproj+proj_start][ipw] * v_ca[iproj];
+            }
+        }
+    }
+}
