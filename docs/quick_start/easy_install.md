@@ -37,15 +37,18 @@ We recommend [Intel® oneAPI toolkit](https://software.intel.com/content/www/us/
 > Please note that building `elpa` with a different MPI library may cause conflict.
 > Don't forget to [set environment variables](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html) before you start! `cmake` will use Intel MKL if the environment variable `MKLROOT` is set.
 
-We offer a [toolchain]((https://github.com/deepmodeling/abacus-develop/toolchain)) 
-to compile and install all the requirements
+Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on installing requirements.
+
+## Install requirements by toolchain
+
+We offer a set of [toolchain]((https://github.com/deepmodeling/abacus-develop/toolchain)) 
+scripts to compile and install all the requirements
 automatically and suitable for machine charteristic in an online or offline way. 
 The toolchain can be downloaded with ABACUS repo, which is easily used and can 
-have a convenient installation under HPC environment in both `GNU` or `Intel` toolchain. 
+have a convenient installation under HPC environment in both `GNU` or `Intel-oneAPI` toolchain. 
 
 > Notice: the toolchain is under development, please let me know if you encounter any problem in using this toolchain.
 
-Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on installing requirements.
 
 ## Get ABACUS source code
 
