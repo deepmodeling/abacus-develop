@@ -19,7 +19,7 @@ and give setup files that you can use to compile ABACUS.
 - [x] `intel-mkl-mpi` toolchain support (for old oneapi using `icc` instead of `icx`).
 - [x] `intelmkl-openmpi/mpich` toolchain support (need more test).
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
-- [ ] A better mirror station for all packages, espeacially for CEREAL and LIBNPY.
+- [ ] A better mirror station for all packages, especially for CEREAL and LIBNPY.
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
