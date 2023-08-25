@@ -3,10 +3,10 @@
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
+#include "module_io/output_log.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
-#include "module_io/output_log.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -35,6 +35,7 @@
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
+#include "module_hamilt_lcao/module_deltaspin/lambda_loop.h"
 
 namespace ModuleESolver
 {
@@ -835,6 +836,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         if (GlobalV::out_mul)
         {
             ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
+            calculate_MW_from_lambda();
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
