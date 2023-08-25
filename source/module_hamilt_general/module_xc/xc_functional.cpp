@@ -128,16 +128,20 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         use_libxc = true;
 	}
 #endif
+    else if( xc_func == "HF")
+    {
+        func_type = 4;
+        use_libxc = false;
+    }
    	else if( xc_func == "PBE0")
 	{
         func_id.push_back(XC_HYB_GGA_XC_PBEH);
         func_type = 4;
         use_libxc = false;
 	}
-    else if( xc_func == "HF" || xc_func == "OPT_ORB" ||  xc_func == "NONE" || xc_func == "NOX+NOC")
+    else if( xc_func == "OPT_ORB" ||  xc_func == "NONE" || xc_func == "NOX+NOC")
     {
         // not doing anything
-        if(xc_func == "HF") func_type = 4;
     }
 #ifdef USE_LIBXC
     else if( xc_func == "HSE")
