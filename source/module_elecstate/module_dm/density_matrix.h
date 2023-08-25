@@ -27,7 +27,7 @@ class DensityMatrix
      * @brief Constructor of class DensityMatrix
      * @param _kv pointer of K_Vectors object
      * @param _paraV pointer of Parallel_Orbitals object
-     * @param nspin spin index (1 - none spin or 2 - spin)
+     * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
      */
     DensityMatrix(const K_Vectors* _kv, const Parallel_Orbitals* _paraV, const int nspin);
 
@@ -46,23 +46,23 @@ class DensityMatrix
 
     /**
      * @brief set _DMK element directly
-     * @param nspin spin index (1 - spin up or 2 - spin down)
+     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @param ik k-point index
      * @param i row index
      * @param j column index
      * @param value value to be set
      */
-    void set_DMK(const int nspin, const int ik, const int i, const int j, const TK value);
+    void set_DMK(const int ispin, const int ik, const int i, const int j, const TK value);
 
     /**
      * @brief get a matrix element of density matrix dm(k)
-     * @param nspin spin index (1 - spin up or 2 - spin down)
+     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @param ik k-point index
      * @param i row index
      * @param j column index
      * @return T a matrix element of density matrix dm(k)
      */
-    TK get_DMK(const int nspin, const int ik, const int i, const int j) const;
+    TK get_DMK(const int ispin, const int ik, const int i, const int j) const;
 
     /**
      * @brief get total number of k-points of density matrix dm(k)
@@ -81,10 +81,10 @@ class DensityMatrix
 
     /**
      * @brief get pointer of DMR
-     * @param nspin spin index (1 - spin up or 2 - spin down)
+     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @return HContainer<TR>* pointer of DMR
      */
-    hamilt::HContainer<TR>* get_DMR_pointer(const int nspin) const;
+    hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
@@ -94,24 +94,24 @@ class DensityMatrix
     /**
      * @brief write density matrix dm(ik) into *.dmk
      * @param directory directory of *.dmk files
-     * @param nspin spin index (1 - spin up or 2 - spin down)
+     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @param ik k-point index
      */
-    void write_DMK(const std::string directory, const int nspin, const int ik);
+    void write_DMK(const std::string directory, const int ispin, const int ik);
 
     /**
      * @brief read *.dmk into density matrix dm(ik)
      * @param directory directory of *.dmk files
-     * @param nspin spin index (1 - spin up or 2 - spin down)
+     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @param ik k-point index
      */
-    void read_DMK(const std::string directory, const int nspin, const int ik);
+    void read_DMK(const std::string directory, const int ispin, const int ik);
 
   private:
     /**
      * @brief HContainer for density matrix in real space
-     * vector[nspin=1] for non-polarization
-     * vector[nspin=2] for spin-polarization
+     * vector.size() = 1 for non-polarization and SOC
+     * vector.size() = 2 for spin-polarization
      */
     std::vector<hamilt::HContainer<TR>*> _DMR;
 
@@ -134,7 +134,7 @@ class DensityMatrix
     const Parallel_Orbitals* _paraV = nullptr;
 
     /**
-     * @brief spin-polarization index (1 - none spin or 2 - spin)
+     * @brief spin-polarization index (1 - none spin and SOC ; 2 - spin polarization)
      */
     int _nspin = 1;
 

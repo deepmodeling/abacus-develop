@@ -13,7 +13,11 @@ namespace elecstate
 template <typename TK, typename TR>
 DensityMatrix<TK, TR>::~DensityMatrix()
 {
-    // do nothing
+    for (auto& it: this->_DMR)
+    {
+        delete it;
+    }
+    this->_DMR.clear();
 }
 
 // constructor
@@ -22,9 +26,25 @@ DensityMatrix<TK, TR>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbi
 {
     this->_kv = kv_in;
     this->_paraV = paraV_in;
-    this->_nspin = nspin;
-    assert(kv_in->nks % 2 == 0);
-    this->_nks = kv_in->nks / nspin;
+    // set this->_nspin
+    if (nspin == 1 || nspin == 4)
+    {
+        this->_nspin = 1;
+    }
+    else if (nspin == 2)
+    {
+        this->_nspin = 2;
+#ifdef __DEBUG
+        assert(kv_in->nks % 2 == 0);
+#endif
+    }
+    else
+    {
+        throw std::string("nspin must be 1, 2 or 4");
+    }
+    // set this->_nks, which is real number of k-points
+    this->_nks = kv_in->nks / this->_nspin;
+    // reserve memory for _DMK
     this->_DMK.reserve(this->_kv->nks);
     std::vector<TK> tmp_DMK(this->_paraV->nrow * this->_paraV->ncol);
     for (int ik = 0; ik < this->_kv->nks; ik++)
@@ -38,10 +58,11 @@ template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell)
 {
     // ensure _DMR is empty
-    if (this->_DMR.size() != 0)
+    for (auto& it: this->_DMR)
     {
-        this->_DMR.clear();
+        delete it;
     }
+    this->_DMR.clear();
     // construct a new DMR
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
@@ -86,10 +107,11 @@ template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
 {
     // ensure _DMR is empty
-    if (this->_DMR.size() != 0)
+    for (auto& it: this->_DMR)
     {
-        this->_DMR.clear();
+        delete it;
     }
+    this->_DMR.clear();
     // set up a HContainer using another one
     for (int is = 0; is < this->_nspin; ++is) // loop over spin
     {
@@ -103,24 +125,32 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
 
 // get _DMR pointer
 template <typename TK, typename TR>
-hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int nspin) const
+hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) const
 {
-    assert(nspin > 0 && nspin <= this->_nspin);
-    return this->_DMR[nspin - 1];
+#ifdef __DEBUG
+    assert(ispin > 0 && ispin <= this->_nspin);
+#endif
+    return this->_DMR[ispin - 1];
 }
 
 // set _DMK element
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::set_DMK(const int nspin, const int ik, const int i, const int j, const TK value)
+void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, const int j, const TK value)
 {
-    this->_DMK[ik + this->_nks * (nspin - 1)][i * this->_paraV->ncol + j] = value;
+#ifdef __DEBUG
+    assert(ispin > 0 && ispin <= this->_nspin);
+#endif
+    this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j] = value;
 }
 
 // get a matrix element of density matrix dm(k)
 template <typename TK, typename TR>
-TK DensityMatrix<TK, TR>::get_DMK(const int nspin, const int ik, const int i, const int j) const
+TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
 {
-    return this->_DMK[ik + this->_nks * (nspin - 1)][i * this->_paraV->ncol + j];
+#ifdef __DEBUG
+    assert(ispin > 0 && ispin <= this->_nspin);
+#endif
+    return this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
 }
 
 // get _DMK nks, nrow, ncol
@@ -234,8 +264,10 @@ void DensityMatrix<double, double>::cal_DMR()
     {
         int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
+#ifdef __DEBUG
         assert(tmp_DMR->is_gamma_only() == true);
         assert(this->_nks == 1);
+#endif
         // #ifdef _OPENMP
         // #pragma omp parallel for
         // #endif
@@ -253,8 +285,10 @@ void DensityMatrix<double, double>::cal_DMR()
             }
             // R index
             const int* r_index = tmp_ap.get_R_index(0);
+#ifdef __DEBUG
             assert(tmp_ap.get_R_size() == 1);
             assert(r_index[0] == 0 && r_index[1] == 0 && r_index[2] == 0);
+#endif
             hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
 #ifdef __DEBUG
             if (tmp_matrix == nullptr)
@@ -281,11 +315,14 @@ void DensityMatrix<double, double>::cal_DMR()
 
 // read *.dmk into density matrix dm(k)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int nspin, const int ik)
+void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispin, const int ik)
 {
+#ifdef __DEBUG
+    assert(ispin > 0 && ispin <= this->_nspin);
+#endif
     // read
     std::string fn;
-    fn = directory + "SPIN" + std::to_string(nspin) + "_" + std::to_string(ik) + ".dmk";
+    fn = directory + "SPIN" + std::to_string(ispin) + "_" + std::to_string(ik) + ".dmk";
     //
     bool quit_abacus = false;
 
@@ -314,7 +351,7 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int nspi
     {
         for (int j = 0; j < this->_paraV->ncol; ++j)
         {
-            ifs >> this->_DMK[ik + this->_nks * (this->_nspin - 1)][i * this->_paraV->ncol + j];
+            ifs >> this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
         }
     }
     ifs.close();
@@ -322,12 +359,14 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int nspi
 
 // output density matrix dm(k) into *.dmk
 template <>
-void DensityMatrix<double, double>::write_DMK(const std::string directory, const int nspin, const int ik)
+void DensityMatrix<double, double>::write_DMK(const std::string directory, const int ispin, const int ik)
 {
-
+#ifdef __DEBUG
+    assert(ispin > 0 && ispin <= this->_nspin);
+#endif
     // write
     std::string fn;
-    fn = directory + "SPIN" + std::to_string(nspin) + "_" + std::to_string(ik) + ".dmk";
+    fn = directory + "SPIN" + std::to_string(ispin) + "_" + std::to_string(ik) + ".dmk";
     std::ofstream ofs;
     ofs.open(fn.c_str());
     if (!ofs)
@@ -346,7 +385,7 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
         {
             if (j % 8 == 0)
                 ofs << "\n";
-            ofs << " " << this->_DMK[ik + this->_nks * (this->_nspin - 1)][i * this->_paraV->ncol + j];
+            ofs << " " << this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
         }
     }
 
@@ -354,12 +393,14 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
 }
 
 template <>
-void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string directory, const int nspin, const int ik)
+void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string directory, const int ispin, const int ik)
 {
-
+#ifdef __DEBUG
+    assert(ispin > 0 && ispin <= this->_nspin);
+#endif
     // write
     std::string fn;
-    fn = directory + "SPIN" + std::to_string(nspin) + "_" + std::to_string(ik) + ".dmk";
+    fn = directory + "SPIN" + std::to_string(ispin) + "_" + std::to_string(ik) + ".dmk";
     std::ofstream ofs;
     ofs.open(fn.c_str());
     if (!ofs)
@@ -378,7 +419,7 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
         {
             if (j % 8 == 0)
                 ofs << "\n";
-            ofs << " " << this->_DMK[ik + this->_nks * (this->_nspin - 1)][i * this->_paraV->ncol + j].real();
+            ofs << " " << this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j].real();
         }
     }
 
