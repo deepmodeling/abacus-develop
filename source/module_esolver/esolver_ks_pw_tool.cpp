@@ -37,7 +37,8 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const double fwhmin,
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
     double dt = dt_in;                    // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
-    int nt = ceil(sqrt(46) / sigma / dt); // exp(-23) = 1e-10
+    const double expfactor = 23;      //exp(-23) = 1e-10
+    int nt = ceil(sqrt(2*expfactor)/sigma/dt); //set nt empirically
     std::cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << std::endl;
     std::cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << std::endl;
     assert(nw >= 1);
