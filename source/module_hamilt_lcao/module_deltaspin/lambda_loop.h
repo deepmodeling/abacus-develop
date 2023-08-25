@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-void calculate_MW_from_lambda(const std::vector<ModuleBase::ComplexMatrix>& dm, LCAO_Hamilt& uhm, const K_Vectors& kv);
+void calculate_MW_from_lambda();
 
 void lambda_loop(const std::vector<std::vector<double>>& M_CONSTR,
                  const std::vector<std::vector<int>>& CONSTRL,

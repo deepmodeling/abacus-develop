@@ -4,7 +4,7 @@
 
 #include "basic_funcs.h"
 
-void calculate_MW_from_lambda(const std::vector<ModuleBase::ComplexMatrix>& dm, LCAO_Hamilt& uhm, const K_Vectors& kv)
+void calculate_MW_from_lambda()
 {
     std::cout << "calculate_MW_from_lambda" << std::endl;
 }
