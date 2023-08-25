@@ -89,8 +89,8 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
 
     start = iclock::now();
 
-    S_intor.tabulate(orb, orb, 'S', nr, rmax, true);
-    T_intor.tabulate(orb, orb, 'T', nr, rmax, true);
+    S_intor.tabulate(orb, orb, 'S', nr, rmax);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax);
 
     dur = iclock::now() - start;
     std::cout << "time elapsed = " << dur.count() << " s" << std::endl;

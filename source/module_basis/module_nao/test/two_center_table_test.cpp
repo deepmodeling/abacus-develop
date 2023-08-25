@@ -89,8 +89,8 @@ TEST_F(TwoCenterTableTest, BuildOverlapAndKinetic)
     std::chrono::duration<double> dur;
 
     start = iclock::now();
-    S_tab.build(orb, orb, 'S', nr, rmax, true);
-    T_tab.build(orb, orb, 'T', nr, rmax, true);
+    S_tab.build(orb, orb, 'S', nr, rmax);
+    T_tab.build(orb, orb, 'T', nr, rmax);
     dur = iclock::now() - start;
     std::cout << "time elapsed = " << dur.count() << " s" << std::endl;
 
@@ -163,9 +163,6 @@ TEST_F(TwoCenterTableTest, BuildOverlapAndKinetic)
         }
     }
 
-    EXPECT_EQ(S_tab.with_deriv(), true);
-    EXPECT_EQ(T_tab.with_deriv(), true);
-
     EXPECT_EQ(S_tab.nr(), nr);
     EXPECT_EQ(T_tab.nr(), nr);
 
@@ -191,8 +188,8 @@ TEST_F(TwoCenterTableTest, LegacyConsistency)
     std::chrono::duration<double> dur;
 
     start = iclock::now();
-    S_tab.build(orb, orb, 'S', nr, rmax, true);
-    T_tab.build(orb, orb, 'T', nr, rmax, true);
+    S_tab.build(orb, orb, 'S', nr, rmax);
+    T_tab.build(orb, orb, 'T', nr, rmax);
     dur = iclock::now() - start;
     std::cout << "radfft time elapsed = " << dur.count() << " s" << std::endl;
 

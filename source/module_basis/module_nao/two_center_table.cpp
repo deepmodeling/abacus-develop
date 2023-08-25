@@ -14,16 +14,13 @@ void TwoCenterTable::build(const RadialCollection& bra,
                            const RadialCollection& ket,
                            const char op,
                            const int nr,
-                           const double cutoff,
-                           const bool with_deriv)
+                           const double cutoff)
 {
     assert(nr >= 4 && cutoff > 0.0); // nr >= 4 required for polynomial interpolation
 
     cleanup();
 
     op_ = op;
-    with_deriv_ = with_deriv;
-
     nr_ = nr;
     rmax_ = cutoff;
 
@@ -46,18 +43,8 @@ void TwoCenterTable::build(const RadialCollection& bra,
     two_center_loop(bra, ket, &TwoCenterTable::_indexing);
 
     table_.resize({ntab_, nr_});
+    dtable_.resize({ntab_, nr_});
     two_center_loop(bra, ket, &TwoCenterTable::_tabulate);
-
-    if (with_deriv_)
-    {
-        // NOTE: for better performance, the loop of _tabulate_d should not be combined with _tabulate.
-        // This is due to the caching mechanism of SphericalBesselTransformer.
-        dtable_.resize({ntab_, nr_});
-        two_center_loop(bra, ket, &TwoCenterTable::_tabulate_d);
-    }
-
-    // there's no need to store the uniform grid
-    delete[] rgrid_;
 }
 
 const double* TwoCenterTable::table(const int itype1,
@@ -74,41 +61,29 @@ const double* TwoCenterTable::table(const int itype1,
                     table_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l));
 }
 
-double TwoCenterTable::lookup(const int itype1,
-                              const int l1,
-                              const int izeta1,
-                              const int itype2,
-                              const int l2,
-                              const int izeta2,
-                              const int l,
-                              const double R,
-                              const bool deriv) const
+void TwoCenterTable::lookup(const int itype1,
+                            const int l1,
+                            const int izeta1,
+                            const int itype2,
+                            const int l2,
+                            const int izeta2,
+                            const int l,
+                            const double R,
+                            double* val,
+                            double* dval) const
 {
     assert(R >= 0);
 
     if (R > rmax())
     {
-        return 0.0;
+        if (val) *val = 0.0;
+        if (dval) *dval = 0.0;
+        return;
     }
 
-    const double* tab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, deriv);
-    double dr = rmax_ / (nr_ - 1);
-
-    // find the maximum ir satisfying ir * dr <= R
-    int ir = static_cast<int>(R / dr);
-
-    // adjust ir so that (ir-1, ir, ir+1, ir+2) all fall within the boundary
-    ir += (ir == 0);
-    ir -= (ir >= nr_ - 2) + (ir == nr_ -1);
-
-    // apply Lagrange interpolation to data points with indices ir-1, ir, ir+1, ir+2
-    double dx0 = R / dr - ir + 1.0;
-    double dx1 = dx0 - 1.0;
-    double dx2 = dx1 - 1.0;
-    double dx3 = dx2 - 1.0;
-
-    return dx1 * dx2 * (tab[ir+2] * dx0 - tab[ir-1] * dx3) / 6.0 +
-           dx0 * dx3 * (tab[ir  ] * dx2 - tab[ir+1] * dx1) / 2.0;
+    const double*  tab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, false);
+    const double* dtab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, true);
+    ModuleBase::CubicSpline::eval(nr_, rgrid_, tab, dtab, 1, &R, val, dval);
 }
 
 int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadial* it2, const int l)
@@ -119,7 +94,6 @@ int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadi
 void TwoCenterTable::cleanup()
 {
     op_ = '\0';
-    with_deriv_ = false;
     nr_ = 0;
     delete[] rgrid_;
     rgrid_ = nullptr;
@@ -176,7 +150,8 @@ void TwoCenterTable::_indexing(const NumericalRadial* it1, const NumericalRadial
 
 void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial* it2, const int l)
 {
-    double* tab = table_.inner_most_ptr<double>(table_index(it1, it2, l));
+    int itab = table_index(it1, it2, l);
+    double* tab = table_.inner_most_ptr<double>(itab);
     it1->radtab(op_, *it2, l, tab, nr_, rmax_, false);
 
     // NOTE: 
@@ -233,21 +208,8 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
         delete[] fk;
         delete[] h;
     }
-}
-
-void TwoCenterTable::_tabulate_d(const NumericalRadial* it1, const NumericalRadial* it2, const int l)
-{
-    // The R->0 issue does not occur in the derivative calculation
-    // because the term which involves dS/dR or dT/dR vanishes at R=0.
-    // Therefore, there's no need to find the limit of (dS/dR)/R^(l-1) at R=0,
-    // and we choose to store dS/dR or dT/dR directly.
-    //
-    // See the developer's document for more details.
-    //it1->radtab(op_, *it2, l, dtable_.inner_most_ptr<double>(table_index(it1, it2, l)), nr_, rmax_, true);
 
     using ModuleBase::CubicSpline;
-
-    int itab = table_index(it1, it2, l);
     CubicSpline::build(nr_, rgrid_, table_.inner_most_ptr<double>(itab), dtable_.inner_most_ptr<double>(itab),
             CubicSpline::BoundaryCondition::first_deriv, CubicSpline::BoundaryCondition::first_deriv,
             0.0, 0.0);

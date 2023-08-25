@@ -18,17 +18,13 @@ class TwoCenterTable
                const RadialCollection& ket,  //!< [in] radial collection involved in <bra|op|ket>
                const char op,                //!< [in] operator of the two-center integral
                const int nr,                 //!< [in] number of table grid points
-               const double cutoff,          //!< [in] cutoff radius of the table
-               const bool with_deriv = false //!< [in] if the derivative of radial table is also built
+               const double cutoff           //!< [in] cutoff radius of the table
     );
 
     /*!
      *  @name Getters
      *                                                                                      */
     //!@{
-    //! returns true if the table stores the derivative of the radial table
-    bool with_deriv() const { return with_deriv_; }
-
     //! returns the operator of the two-center integral
     char op() const { return op_; }
 
@@ -52,15 +48,16 @@ class TwoCenterTable
                         const bool deriv = false //!< [in] if true, return the derivative table
     ) const;
 
-    double lookup(const int itype1,        //!< [in] element index of chi1
-                  const int l1,            //!< [in] angular momentum of chi1
-                  const int izeta1,        //!< [in] zeta number of chi1
-                  const int itype2,        //!< [in] element index of chi2
-                  const int l2,            //!< [in] angular momentum of chi2
-                  const int izeta2,        //!< [in] zeta number of chi2
-                  const int l,             //!< [in] angular momentum of the entry
-                  const double R,          //!< [in] distance between the two centers
-                  const bool deriv = false //!< [in] if true, look up the derivative table
+    void lookup(const int itype1,      //!< [in] element index of chi1
+                const int l1,          //!< [in] angular momentum of chi1
+                const int izeta1,      //!< [in] zeta number of chi1
+                const int itype2,      //!< [in] element index of chi2
+                const int l2,          //!< [in] angular momentum of chi2
+                const int izeta2,      //!< [in] zeta number of chi2
+                const int l,           //!< [in] angular momentum of the entry
+                const double R,        //!< [in] distance between the two centers
+                double* val,           //!< [out] interpolated values from table_
+                double* dval = nullptr //!< [out] interpolated values from dtable_
     ) const;
     //!@}
 
@@ -80,9 +77,7 @@ class TwoCenterTable
     int lmax_ket() const { return nchi_ket_.shape().dim_size(1) - 1; }
 
   private:
-    char op_ = '\0';          //!< operator of the two-center integral
-    bool with_deriv_ = false; //!< if true, dtable_ is also built
-
+    char op_ = '\0';   //!< operator associated with the present table
     int ntab_ = 0;     //!< number of table entries
     int nr_ = 0;       //!< number of radial points of each table
     double rmax_= 0.0; //!< cutoff radius of the table
@@ -94,7 +89,7 @@ class TwoCenterTable
     /// two-center integral radial table, stored as a row-major matrix
     container::Tensor table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
-    /// derivative of table_, built if with_deriv_ is true
+    /// derivative table generated from cubic spline interpolation
     container::Tensor dtable_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
     /// map (itype1, l1, izeta1, itype2, l2, izeta2, l) to a row index in the table
@@ -118,9 +113,9 @@ class TwoCenterTable
     /// double factorial
     double dfact(int l) const;
 
-    typedef void(TwoCenterTable::*looped_func)(const NumericalRadial*, const NumericalRadial*, const int);
+    typedef void(TwoCenterTable::*looped_func)(const NumericalRadial*, const NumericalRadial*, const int l);
 
-    /// executes a looped function over all combinations of two radial functions & l with non-vanishing Gaunt coefficients
+    /// loop-execute a function over all pairwise radial functions & l with non-vanishing Gaunt coefficients
     void two_center_loop(const RadialCollection& bra, 
                          const RadialCollection& ket, 
                          looped_func f);
@@ -128,8 +123,6 @@ class TwoCenterTable
     /// various looped functions during the construction of table
     void _indexing(const NumericalRadial* it1, const NumericalRadial* it2, const int l);
     void _tabulate(const NumericalRadial* it1, const NumericalRadial* it2, const int l);
-    void _tabulate_d(const NumericalRadial* it1, const NumericalRadial* it2, const int l);
 };
-
 
 #endif

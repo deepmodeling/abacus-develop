@@ -55,8 +55,7 @@ class TwoCenterIntegrator
                   const RadialCollection& ket,
                   const char op,
                   const int nr,
-                  const double cutoff,
-                  const bool with_deriv
+                  const double cutoff
     );
 
     /*!
@@ -114,10 +113,7 @@ class TwoCenterIntegrator
 
   private:
     bool is_tabulated_;
-
     char op_;
-    bool with_deriv_;
-
     TwoCenterTable table_;
 
     /*!

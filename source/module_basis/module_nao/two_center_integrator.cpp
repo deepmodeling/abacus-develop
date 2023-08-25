@@ -5,8 +5,7 @@
 
 TwoCenterIntegrator::TwoCenterIntegrator():
     is_tabulated_(false),
-    op_('\0'),
-    with_deriv_(false)
+    op_('\0')
 {
 }
 
@@ -14,12 +13,10 @@ void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
                                  const RadialCollection& ket,
                                  const char op,
                                  const int nr,
-                                 const double cutoff,
-                                 const bool with_deriv)
+                                 const double cutoff)
 {
     op_ = op;
-    with_deriv_ = with_deriv;
-    table_.build(bra, ket, op, nr, cutoff, with_deriv);
+    table_.build(bra, ket, op, nr, cutoff);
     RealGauntTable::instance().build(std::max(bra.lmax(), ket.lmax()));
     is_tabulated_ = true;
 }
@@ -37,7 +34,6 @@ void TwoCenterIntegrator::calculate(const int itype1,
                                     double* out) const
 {
     assert( is_tabulated_ );
-    assert( (deriv && with_deriv_) || !deriv );
 
     std::fill(out, out + (deriv ? 3 : 1), 0.0);
 
@@ -50,11 +46,9 @@ void TwoCenterIntegrator::calculate(const int itype1,
     // unit vector along R
     ModuleBase::Vector3<double> uR = (R == 0.0 ? ModuleBase::Vector3<double>(0., 0., 1.) : vR / R);
 
-
     // generate all necessary real spherical harmonics (multiplied by R^l)
 	std::vector<double> Rl_Y;
 	std::vector<std::vector<double>> grad_Rl_Y;
-
 	if (deriv)
 	{
 		ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y, grad_Rl_Y);
@@ -68,10 +62,9 @@ void TwoCenterIntegrator::calculate(const int itype1,
     int sign = (l1 - l2 - std::abs(l1 - l2)) % 4 == 0 ? 1 : -1;
     for (int l = std::abs(l1 - l2); l <= l1 + l2; l += 2)
     {
-        double S_by_Rl = table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, false);
-
-        // (d/dR)(S/R^l)
-        double d_S_by_Rl = deriv ? table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, true) : 0.0;
+        // look up S/R^l and (d/dR)(S/R^l) (if necessary) from the radial table
+        double S_by_Rl = 0.0, d_S_by_Rl = 0.0;
+        table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, &S_by_Rl, deriv ? &d_S_by_Rl : nullptr);
 
 		for (int m = -l; m <= l; ++m)
         {
@@ -104,7 +97,6 @@ void TwoCenterIntegrator::snap(const int itype1,
                                std::vector<std::vector<double>>& out) const
 {
     assert( is_tabulated_ );
-    assert( (deriv && with_deriv_) || !deriv );
 
     out.resize(deriv ? 4 : 1);
 
@@ -140,6 +132,8 @@ void TwoCenterIntegrator::snap(const int itype1,
                 calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, false, &out[0][index]);
                 if (deriv)
                 {
+                    // FIXME: there's some redundancy if we calculate the derivatives (ylm & table lookup)
+                    // but it might not be a big deal
                     double tmp[3] = {0.0, 0.0, 0.0};
                     calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, true, tmp);
                     out[1][index] = tmp[0];

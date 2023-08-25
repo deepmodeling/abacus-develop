@@ -91,18 +91,18 @@ void TwoCenterBundle::build(int ntype,
 
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
-    kinetic_orb->tabulate(*orb_, *orb_, 'T', nr, cutoff, true);
+    kinetic_orb->tabulate(*orb_, *orb_, 'T', nr, cutoff);
 
     overlap_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
-    overlap_orb->tabulate(*orb_, *orb_, 'S', nr, cutoff, true);
+    overlap_orb->tabulate(*orb_, *orb_, 'S', nr, cutoff);
 
     overlap_orb_beta = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
-    overlap_orb_beta->tabulate(*orb_, *beta_, 'S', nr, cutoff, true);
+    overlap_orb_beta->tabulate(*orb_, *beta_, 'S', nr, cutoff);
 
     if (deepks_on)
     {
         overlap_orb_alpha = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
-        overlap_orb_alpha->tabulate(*orb_, *alpha_, 'S', nr, cutoff, true);
+        overlap_orb_alpha->tabulate(*orb_, *alpha_, 'S', nr, cutoff);
     }
 
     // init Ylm (this shall be done by Ylm automatically! to be done later...)
