@@ -104,13 +104,6 @@ class DMTest : public testing::Test
         // initalize a unitcell
         ucell = utp.SetUcellInfo(nw, nlocal);
         ucell->set_iat2iwt(1);
-        // initalize a DMK
-        DMK.reserve(nks);
-        ModuleBase::ComplexMatrix zero_dmk(nlocal, nlocal);
-        for (int ik = 0; ik < nks; ik++)
-        {
-            DMK.push_back(zero_dmk);
-        }
         // initalize a kvectors
         kv = new K_Vectors;
         kv->nks = nks;
@@ -154,19 +147,41 @@ class DMTest : public testing::Test
 TEST_F(DMTest, DMConstructor1)
 {
     //
+    int nspin = 1;
     // construct DM
     std::cout << paraV->nrow << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double> DM(kv, paraV);
+    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
     // read DMK
-    DM.set_DMK_files("./support/");
+    std::string directory = "./support/";
+    for (int is = 1; is <= nspin; ++is)
+    {
+        for (int ik = 0; ik < kv->nks / nspin; ++ik)
+        {
+            DM.read_DMK(directory, is, ik);
+        }
+    }
     // write DMK
-    DM.output_DMK("./support/output");
+    directory = "./support/output";
+    for (int is = 1; is <= nspin; ++is)
+    {
+        for (int ik = 0; ik < kv->nks / nspin; ++ik)
+        {
+            DM.write_DMK(directory, is, ik);
+        }
+    }
     // construct a new DM
-    elecstate::DensityMatrix<double> DM1(kv, paraV);
-    DM1.set_DMK_files("./support/output");
+    elecstate::DensityMatrix<double, double> DM1(kv, paraV, nspin);
+    directory = "./support/output";
+    for (int is = 1; is <= nspin; ++is)
+    {
+        for (int ik = 0; ik < kv->nks / nspin; ++ik)
+        {
+            DM1.read_DMK(directory, is, ik);
+        }
+    }
     // compare DMK1 with DMK
-    EXPECT_NEAR(DM.get_DMK(0, 0, 0), DM1.get_DMK(0, 0, 0), 1e-6);
-    EXPECT_NEAR(DM.get_DMK(1, 25, 25), DM1.get_DMK(1, 25, 25), 1e-6);
+    EXPECT_NEAR(DM.get_DMK(1, 0, 0, 0), DM1.get_DMK(1, 0, 0, 0), 1e-6);
+    EXPECT_NEAR(DM.get_DMK(1, 1, 25, 25), DM1.get_DMK(1, 1, 25, 25), 1e-6);
 }
 
 int main(int argc, char** argv)

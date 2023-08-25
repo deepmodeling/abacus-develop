@@ -25,8 +25,6 @@ class DMTest : public testing::Test
     int dsize;
     int my_rank = 0;
     UnitCell ucell;
-    K_Vectors* kv = nullptr;
-    int nks = 2;
     void SetUp() override
     {
 #ifdef __MPI
@@ -63,19 +61,12 @@ class DMTest : public testing::Test
         }
         ucell.set_iat2iwt(1);
         init_parav();
-
-        // initalize a kvectors
-        kv = new K_Vectors;
-        kv->nks = nks;
-        kv->kvec_d.resize(nks);
-        kv->kvec_d[1].x = 0.5;
         // set paraV
         init_parav();
     }
 
     void TearDown()
     {
-        delete kv;
         delete paraV;
         delete[] ucell.atoms[0].tau;
         delete[] ucell.atoms[0].iw2l;
@@ -110,39 +101,105 @@ class DMTest : public testing::Test
 #endif
 };
 
-TEST_F(DMTest, DMConstructor1)
+TEST_F(DMTest, DMConstructor_nspin1)
 {
+    // initalize a kvectors
+    K_Vectors* kv = nullptr;
+    int nks = 2;
+    kv = new K_Vectors;
+    kv->nks = nks;
+    kv->kvec_d.resize(nks);
+    kv->kvec_d[1].x = 0.5;
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double> DM(kv, paraV);
+    int nspin = 1;
+    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
     // compare
     EXPECT_EQ(DM.get_DMK_nks(), kv->nks);
     EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
     EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
 
     // set elements of DMK
-    for (int ik = 0; ik < kv->nks; ik++)
+    for (int is = 1; is <= nspin; is++)
     {
-        for (int i = 0; i < paraV->nrow; i++)
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
         {
-            for (int j = 0; j < paraV->ncol; j++)
+            for (int i = 0; i < paraV->nrow; i++)
             {
-                DM.set_DMK(ik, i, j, ik * i + j);
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    DM.set_DMK(is, ik, i, j, is + ik * i + j);
+                }
             }
         }
     }
     // compare
-    for (int ik = 0; ik < kv->nks; ik++)
+    for (int is = 1; is <= nspin; is++)
+    {
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
+        {
+            for (int i = 0; i < paraV->nrow; i++)
+            {
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    EXPECT_EQ(DM.get_DMK(is, ik, i, j), is + ik * i + j);
+                }
+            }
+        }
+    }
+    // delete kv
+    delete kv;
+}
+
+TEST_F(DMTest, DMConstructor_nspin2)
+{
+    // initalize a kvectors
+    K_Vectors* kv = nullptr;
+    int nspin = 2;
+    int nks = 4; // since nspin = 2
+    kv = new K_Vectors;
+    kv->nks = nks;
+    kv->kvec_d.resize(nks);
+    kv->kvec_d[1].x = 0.5;
+    kv->kvec_d[3].x = 0.5;
+    // construct DM
+    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    // compare
+    EXPECT_EQ(DM.get_DMK_nks(), kv->nks);
+    EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
+    EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
+
+    // set elements of DMK
+    for (int is = 1; is <= nspin; is++)
+    {
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
+        {
+            for (int i = 0; i < paraV->nrow; i++)
+            {
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    DM.set_DMK(is, ik, i, j, ik * i + j);
+                }
+            }
+        }
+    }
+    // compare
+    for (int ik = 0; ik < kv->nks / nspin; ik++)
     {
         for (int i = 0; i < paraV->nrow; i++)
         {
             for (int j = 0; j < paraV->ncol; j++)
             {
-                EXPECT_EQ(DM.get_DMK(ik, i, j), ik * i + j);
+                EXPECT_EQ(DM.get_DMK(1, ik, i, j), ik * i + j);
+                EXPECT_EQ(DM.get_DMK(1, ik, i, j), DM.get_DMK(2, ik, i, j));
             }
         }
     }
+    // delete kv
+    delete kv;
 }
 
 int main(int argc, char** argv)
