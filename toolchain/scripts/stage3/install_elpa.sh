@@ -127,8 +127,10 @@ case "$with_elpa" in
         make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
         cd ..
         # link elpa
-        ln -s ${pkg_install_dir}/${TARGET}/include/elpa_openmp-${elpa_ver}/elpa \
-        ${pkg_install_dir}/${TARGET}/include/elpa
+        link=${pkg_install_dir}/${TARGET}/include/elpa
+        if [ ! -f $link ]; then
+            ln -s ${pkg_install_dir}/${TARGET}/include/elpa_openmp-${elpa_ver}/elpa $link
+        fi
       done
       cd ..
       

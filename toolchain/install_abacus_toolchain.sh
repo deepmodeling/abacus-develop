@@ -499,7 +499,7 @@ while [ $# -ge 1 ]; do
       fi
       ;;
     --with-intel-classic*)
-      intel_classic=$(read_with "${1}" "yes")
+      intel_classic=$(read_with "${1}" "yes") # default yes
       ;;
     --with-intel*)
       with_intel=$(read_with "${1}" "__SYSTEM__")

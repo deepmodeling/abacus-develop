@@ -1,4 +1,7 @@
 #!/bin/bash
+#SBATCH -J install
+#SBATCH -N 1
+#SBATCH -n 64
 # JamesMisaka in 2023-08-22
 # install abacus by intel-toolchain
 # use mkl and intelmpi

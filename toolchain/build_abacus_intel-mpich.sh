@@ -1,4 +1,8 @@
 #!/bin/bash
+#SBATCH -J build
+#SBATCH -N 1
+#SBATCH -n 64
+
 # install ABACUS with libxc and deepks
 # JamesMisaka in 2023.08.22
 

@@ -43,7 +43,7 @@ case "$with_libxc" in
       # using cmake method to install libxc is neccessary for abacus
       mkdir build && cd build
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
-        -DBUILD_SHARED_LIBS=YES -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_FORTRAN=ON -DENABLE_PYTHON=ON -DBUILD_TESTING=NO .. \
+        -DBUILD_SHARED_LIBS=YES -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_FORTRAN=ON -DENABLE_PYTHON=OFF -DBUILD_TESTING=NO .. \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
       make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
