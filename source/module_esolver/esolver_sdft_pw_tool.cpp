@@ -104,7 +104,8 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
     double dw =  dw_in / ModuleBase::Ry_to_eV; //converge unit in eV to Ry 
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
     double dt = dt_in; //unit in a.u., 1 a.u. = 4.837771834548454e-17 s
-    int nt = ceil(sqrt(20)/sigma/dt);
+    const double expfactor = 18.42;      //exp(-18.42) = 1e-8
+    int nt = ceil(sqrt(2*expfactor)/sigma/dt); //set nt empirically
     std::cout<<"nw: "<<nw<<" ; dw: "<<dw*ModuleBase::Ry_to_eV<<" eV"<<std::endl;
     std::cout<<"nt: "<<nt<<" ; dt: "<<dt<<" a.u.(ry^-1)"<<std::endl;
     assert(nw >= 1);
@@ -214,7 +215,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         //               ks conductivity
         //-----------------------------------------------------------
         if(GlobalV::MY_STOGROUP == 0 && totbands_ks > 0)
-            jjcorr_ks(ik, nt, dt, this->pelec->wg, velop, ct11,ct12,ct22);
+            jjcorr_ks(ik, nt, dt, (wcut + 5*fwhmin) / ModuleBase::Ry_to_eV, this->pelec->wg, velop, ct11,ct12,ct22);
         
         //-----------------------------------------------------------
         //               sto conductivity
@@ -239,9 +240,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         ModuleBase::Memory::record("SDFT::j2psi", memory_cost);
         //(1-f)*j*sqrt(f)|psi>
         psi::Psi<std::complex<double>> j1sfpsi(1, ndim * totbands_per, npwx, kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
+        ModuleBase::Memory::record("SDFT::j1sfpsi", memory_cost);
         psi::Psi<std::complex<double>> j2sfpsi(1, ndim * totbands_per, npwx, kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::psi0", memory_cost);
+        ModuleBase::Memory::record("SDFT::j2sfpsi", memory_cost);
         double* en;
         if(ksbandper > 0)   en = new double [ksbandper];
         for(int ib = 0 ; ib < ksbandper ; ++ib)
@@ -474,6 +475,10 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             // const int dim_jmatrix = totbands_per*totbands;
             ModuleBase::ComplexMatrix j1l(ndim,dim_jmatrix), j2l(ndim,dim_jmatrix);
             ModuleBase::ComplexMatrix j1r(ndim,dim_jmatrix), j2r(ndim,dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j1l", sizeof(std::complex<double>) * ndim * dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j2l", sizeof(std::complex<double>) * ndim * dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j1r", sizeof(std::complex<double>) * ndim * dim_jmatrix);
+            ModuleBase::Memory::record("SDFT::j2r", sizeof(std::complex<double>) * ndim * dim_jmatrix);
             char transa = 'C';
             char transb = 'N';
             int totbands_per3 = ndim*totbands_per;
