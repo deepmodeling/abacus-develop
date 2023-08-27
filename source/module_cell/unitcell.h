@@ -67,15 +67,38 @@ public:
 	int *iwt2iat; // iwt ==> iat.
 	int *iwt2iw; // iwt ==> iw, Peize Lin add 2018-07-02
     ModuleBase::IntArray itia2iat;//(it, ia)==>iat, the index in nat, add 2009-3-2 by mohan
-    //atom index iat to the first global index for orbital of this atom
-    std::vector<int> iat2iwt;
+
+    // ========================================================
+    // iat2iwt is the atom index iat to the first global index for orbital of this atom
+    // the size of iat2iwt is nat, the value should be sum_{i=0}^{iat-1} atoms[it].nw * npol
+    // where the npol is the number of polarizations, 1 for non-magnetic(NSPIN=1 or 2), 2 for magnetic(only NSPIN=4)
+    // this part only used for Atomic Orbital based calculation
+    // ========================================================
+  public: 
     // indexing tool for find orbital global index from it,ia,iw
     template<typename Tiait>
     inline Tiait itiaiw2iwt(const Tiait &it, const Tiait &ia, const Tiait &iw) const
     {
         return Tiait(this->iat2iwt[this->itia2iat(it, ia)] + iw);
     }
+    // initialize iat2iwt
+    void set_iat2iwt(const int& npol_in);
+    // get iat2iwt
+    inline const int* get_iat2iwt() const
+    {
+        return iat2iwt.data();
+    }
+    // get npol
+    inline const int& get_npol() const
+    {
+        return npol;
+    }
+  private:
+    std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
+    int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
+    // ----------------- END of iat2iwt part -----------------
 
+  public:
     //========================================================
     // indexing tools for ia and it
     // return true if the last out is reset

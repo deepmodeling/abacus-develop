@@ -18,7 +18,28 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
                 const int ncol,
                 const int hk_type)
 {
-    for (int i = 0; i < hR.size_R_loop(); ++i)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < hR.size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<TR>& tmp = hR.get_atom_pair(i);
+        for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+        {
+            const int* r_index = tmp.get_R_index(ir);
+            // cal k_phase
+            // if TK==std::complex<double>, kphase is e^{ikR}
+            const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+            const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
+            double sinp, cosp;
+            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+            std::complex<double> kphase = std::complex<double>(cosp, sinp);
+
+            tmp.find_R(r_index[0], r_index[1], r_index[2]);
+            tmp.add_to_matrix(hk, ncol, kphase, hk_type);
+        }
+    }
+    /*for (int i = 0; i < hR.size_R_loop(); ++i)
     {
         // get R index
         int rx, ry, rz;
@@ -43,7 +64,7 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
             // Hk += HR * e^ikR
             hR.get_atom_pair(j).add_to_matrix(hk, ncol, kphase, hk_type);
         }
-    }
+    }*/
 }
 
 // template instantiation
@@ -64,27 +85,19 @@ void folding_HR(const hamilt::HContainer<double>& hR,
                 const int ncol,
                 const int hk_type)
 {
-    for (int i = 0; i < hR.size_R_loop(); ++i)
+// in ABACUS, this function works with gamma-only case.
+// hR should be R=(0,0,0) only. 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < hR.size_atom_pairs(); ++i)
     {
-        // get R index
-        int rx, ry, rz;
-        hR.loop_R(i, rx, ry, rz);
-        // only deal with current_R for hR
-        hR.fix_R(rx, ry, rz);
-
         // cal k_phase
         // if TK==double, kphase is 1.0
         double kphase = 1.0;
 
-        // loop_atom_pairs
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-        for (int j = 0; j < hR.size_atom_pairs(); ++j)
-        {
-            // Hk += HR * e^ikR
-            hR.get_atom_pair(j).add_to_matrix(hk, ncol, kphase, hk_type);
-        }
+        // Hk = HR 
+        hR.get_atom_pair(i).add_to_matrix(hk, ncol, kphase, hk_type);
     }
 }
 

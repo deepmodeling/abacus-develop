@@ -52,3 +52,7 @@ if(BUILD_TESTING)
     add_subdirectory(test_mpi)
   endif()
 endif()
+
+if(ENABLE_LCAO)
+  add_subdirectory(module_dm)
+endif()

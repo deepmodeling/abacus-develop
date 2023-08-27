@@ -1,0 +1,23 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix          autotest
+calculation     cell-relax
+esolver_type    ofdft
+pseudo_dir      ../../PP_ORB
+pseudo_rcut     16
+#out_stru        1
+
+#Parameters (2.Iteration)
+ecutwfc     20
+scf_nmax    100
+
+#OFDFT
+of_kinetic  wt
+of_method   tn
+of_full_pw	1
+of_full_pw_dim	1
+
+#Parameters (3.Basis)
+basis_type  pw
+
+relax_nmax  5

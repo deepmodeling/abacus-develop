@@ -420,6 +420,7 @@ TEST_F(HContainerTest, basematrix_funcs)
     EXPECT_EQ(BM.get_value(1, 1), 16);
     // 5. test get_value
     hamilt::BaseMatrix<double> BM2(2, 2);
+    BM2.allocate(true);
     BM2.add_element(0, 0, 1);
     BM2.add_element(0, 1, 2);
     EXPECT_EQ(BM2.get_value(0, 0), 1);
@@ -489,6 +490,7 @@ TEST_F(HContainerTest, atompair_funcs)
         for(int atom_j = 0; atom_j<2; ++atom_j)
         {
             hamilt::AtomPair<double> tmp(atom_i, atom_j, 0, 0, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, nullptr);
+            tmp.allocate(false);
             double* tmp_data = tmp.get_HR_values(0, 0, 0).get_pointer();
             for(int i=0;i<4;++i)
             {

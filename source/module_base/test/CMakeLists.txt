@@ -124,6 +124,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET base_lapack_connector
+  LIBS ${math_libs}
+  SOURCES lapack_connector_test.cpp ../lapack_connector.h
+)
+
+AddTest(
   TARGET base_opt_CG
   SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )

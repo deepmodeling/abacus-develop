@@ -32,7 +32,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         crosstaus[is] = new FPTYPE[nrxx * 6];
-        ModuleBase::GlobalFunc::ZEROS(crosstaus[is], GlobalV::NSPIN);
+        ModuleBase::GlobalFunc::ZEROS(crosstaus[is], 6*nrxx);
     }
 
     for (int ik = 0; ik < p_kv->nks; ik++)

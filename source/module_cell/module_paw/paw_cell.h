@@ -12,6 +12,7 @@
 
 #include "paw_element.h"
 #include "paw_atom.h"
+#include "module_base/matrix3.h"
 
 class Paw_Cell
 {
@@ -19,6 +20,8 @@ class Paw_Cell
 
     Paw_Cell(){};
     ~Paw_Cell(){};
+
+// PART I. Operations in ABACUS: Preparations & Calculating rhoij
 
     void init_paw_cell(
         const double ecutwfc_in, const double cell_factor_in,
@@ -151,6 +154,73 @@ class Paw_Cell
 
     void set_ylm(const int npw_in, const double ** kpg);
 
+// Part II. Operations in ABACUS: V_{NL}|psi> and S|psi>
+
+    public:
+
+    // This function calculates the nonlocal potential V_{NL}|psi> or (S+I)|psi>
+    // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
+    void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
+
+    void set_dij(const int iat, double* dij_in){paw_atom_list[iat].set_dij(dij_in);}
+
+    void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
+
+// Part III. Passing infor for the initialization of PAW
+    // The following gathers information needed by LibPAW, they will be inserted
+    // to proper places in the main program
+
+    // Cutoff energies, sets ecut and ecutpaw
+    void set_libpaw_ecut(const double ecut_in, const double ecutpaw_in);
+    // Sets rprimd, gprimd, gmet and ucvol
+    // Input is latvec and lat0, will calculate the required info
+    void set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double lat0);
+    // FFT grid information, sets ngfft and ngfftdg
+    void set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
+        const int nxdg_in, const int nydg_in, const int nzdg_in);
+    // Sets natom, ntypat, typat and xred
+    void set_libpaw_atom(const int natom_in, const int ntypat_in, const int * typat_in, const double * xred_in);
+    // Sets filename_list
+    void set_libpaw_files();
+    
+    // Extract the information
+    double get_libpaw_ecut() {return ecut;}
+    double get_libpaw_ecutpaw() {return ecutpaw;}
+    std::vector<double> get_libpaw_rprimd() {return rprimd;}
+    std::vector<double> get_libpaw_gprimd() {return gprimd;}
+    std::vector<double> get_libpaw_gmet() {return gmet;}
+    double get_libpaw_ucvol() {return ucvol;}
+    std::vector<int> get_libpaw_ngfft() {return ngfft;}
+    std::vector<int> get_libpaw_ngfftdg() {return ngfftdg;}
+    int get_libpaw_natom() {return natom;}
+    int get_libpaw_ntypat() {return ntypat;}
+    std::vector<int> get_libpaw_typat() {return typat;}
+    std::vector<double> get_libpaw_xred() {return xred;}
+    char* get_libpaw_filename_list() {return filename_list;}
+
+    private:
+// Info to be passed to libpaw_interface:
+// 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
+// there will be one coarse grid for density/potential, and a fine grid for PAW
+// the unit is in Hartree
+// 2. rprimd, gprimd : real and reciprocal space lattice vectors, respectively
+// unit for rprimd is in Bohr, and for gprimd is in Bohr^-1
+// 3. gmet : reciprocal space metric (bohr^-2)
+// 4. ucvol : volume of unit cell (Bohr^3)
+// 5. ngfft, ngfftdg : dimension of FFT grids of the corase and fine grids
+// 6. natom, ntypat, typat: #. atoms, #. element types
+// and typat records the type of each atom
+// 7. xred : coordinate of each atom, in terms of rprimd (namely, direct coordinate)
+// 8. filename_list : filename of the PAW xml files for each element
+
+    double ecut, ecutpaw;
+    std::vector<double> rprimd, gprimd, gmet;
+    double ucvol;
+    std::vector<int> ngfft, ngfftdg;
+    int natom, ntypat;
+    std::vector<int> typat;
+    std::vector<double> xred;
+    char* filename_list;
 };
 
 #endif
