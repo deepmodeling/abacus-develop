@@ -204,3 +204,32 @@ void Paw_Cell::set_libpaw_files()
         }
     }
 }
+
+void Paw_Cell::set_libpaw_xc(const int xclevel_in, const int ixc_in)
+{
+    xclevel = xclevel_in;
+    ixc = ixc_in;
+}
+
+void Paw_Cell::set_nspin(const int nspin_in)
+{
+    nspden = nspin_in;
+    nsppol = nspin_in;
+}
+
+#ifdef USE_PAW
+extern "C"
+{
+    void prepare_libpaw_(double&,double&,double*,double*,double*,double&,int*,int*,
+    //                   ecut    ecutpaw gmet    rprimd  gprimd  ucvol   ngfft ngfftdg
+        int&,int&,int*,double*,int&,int&,char*,int&,int&);
+    //  natom ntypat typat xred ixc xclevel filename_list nspden nsppol
+}
+
+void Paw_Cell::prepare_paw()
+{
+    prepare_libpaw_(ecut, ecutpaw, gmet.data(), rprimd.data(), gprimd.data(), ucvol,
+            ngfft.data(), ngfftdg.data(), natom, ntypat, typat.data(), xred.data(),
+            ixc, xclevel, filename_list, nspden, nsppol);
+}
+#endif

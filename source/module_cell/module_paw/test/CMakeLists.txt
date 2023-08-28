@@ -9,6 +9,11 @@ install(FILES sphbes_ref.dat func.dat qlist.dat fq_ref.dat
   STRU snlpsi_ref.dat
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+if(ENABLE_PAW)
+  install(FILES C.xml H.xml 
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
 AddTest(
   TARGET Test_Paw
   LIBS ${math_libs} base device
@@ -27,8 +32,17 @@ AddTest(
   SOURCES test_paw2.cpp ../paw_atom.cpp
 )
 
-AddTest(
-  TARGET Test_Paw3
-  LIBS ${math_libs} base device
-  SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
-)
+if(ENABLE_PAW)
+  AddTest(
+    TARGET Test_Paw3
+    LIBS ${math_libs} base device libpaw_interface -lifcore
+    SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
+  )
+  add_dependencies(Test_Paw3 libpaw_interface)
+else()
+  AddTest(
+    TARGET Test_Paw3
+    LIBS ${math_libs} base device
+    SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
+  )
+endif()

@@ -166,7 +166,7 @@ class Paw_Cell
 
     void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
 
-// Part III. Passing infor for the initialization of PAW
+// Part III. Passing info for the initialization of PAW
     // The following gathers information needed by LibPAW, they will be inserted
     // to proper places in the main program
 
@@ -182,6 +182,10 @@ class Paw_Cell
     void set_libpaw_atom(const int natom_in, const int ntypat_in, const int * typat_in, const double * xred_in);
     // Sets filename_list
     void set_libpaw_files();
+    // Sets XC functional
+    void set_libpaw_xc(const int xclevel_in, const int ixc_in);
+    // Sets number of spin channels
+    void set_nspin(const int nspin_in);
     
     // Extract the information
     double get_libpaw_ecut() {return ecut;}
@@ -197,6 +201,9 @@ class Paw_Cell
     std::vector<int> get_libpaw_typat() {return typat;}
     std::vector<double> get_libpaw_xred() {return xred;}
     char* get_libpaw_filename_list() {return filename_list;}
+    int get_libpaw_ixc() {return ixc;}
+    int get_libpaw_xclevel() {return xclevel;}
+    int get_nspin() {return nspden;}
 
     private:
 // Info to be passed to libpaw_interface:
@@ -221,6 +228,14 @@ class Paw_Cell
     std::vector<int> typat;
     std::vector<double> xred;
     char* filename_list;
+    int xclevel, ixc;
+    int nspden, nsppol;
+
+// Part IV. Calling Fortran subroutines from libpaw_interface
+    public:
+#ifdef USE_PAW
+    void prepare_paw();
+#endif
 };
 
 #endif
