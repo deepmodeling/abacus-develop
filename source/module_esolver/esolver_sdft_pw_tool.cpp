@@ -1,15 +1,17 @@
+#include <chrono>
+
 #include "./esolver_sdft_pw.h"
-#include "module_hsolver/diago_iter_assist.h"
-#include "module_hsolver/hsolver_pw_sdft.h"
-#include "module_base/timer.h"
-#include "module_base/constants.h"
-#include "module_base/vector3.h"
 #include "module_base/complexmatrix.h"
-#include "module_base/global_variable.h"
+#include "module_base/constants.h"
 #include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 #include "module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_base/vector3.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
+#include "module_hsolver/diago_iter_assist.h"
+#include "module_hsolver/hsolver_pw_sdft.h"
 
 #define TWOSQRT2LN2 2.354820045030949 //FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
@@ -350,10 +352,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
         psi::Psi<std::complex<double>> j1psi_tot,j2psi_tot;
         if (GlobalV::NSTOGROUP > 1)
         {
+            size_t memory = ndim*totbands*npwx*sizeof(std::complex<double>);
             j1psi_tot.resize(1,ndim*totbands,npwx);
-            ModuleBase::Memory::record("SDFT::j1psi_tot", ndim*totbands*npwx);
+            ModuleBase::Memory::record("SDFT::j1psi_tot", memory);
             j2psi_tot.resize(1,ndim*totbands,npwx);
-            ModuleBase::Memory::record("SDFT::j2psi_tot", ndim*totbands*npwx);
+            ModuleBase::Memory::record("SDFT::j2psi_tot", memory);
             for(int id = 0 ; id < ndim ; ++id)
             {
                 const int idnb_per = id * totbands_per;
@@ -394,8 +397,16 @@ void ESolver_SDFT_PW::sKG(const int nche_KG, const double fwhmin, const double w
             }
         }
         std::cout<<"ik="<<ik<<": ";
+        auto start = std::chrono::high_resolution_clock::now();
         for (int it = 1 ;it < nt ; ++it)
         {
+            if(it == 20)
+            {
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double> duration = end - start;
+                double timeTaken = duration.count();
+                std::cout<<"(Time left "<<timeTaken*((nt-1)/19.0*(nk-ik) - 1)<<" s) ";
+            }
             if(it%20==0) std::cout<<it<<" ";
             ModuleBase::timer::tick(this->classname,"evolution_ks");
             for(int ib = 0; ib < ksbandper; ++ib)

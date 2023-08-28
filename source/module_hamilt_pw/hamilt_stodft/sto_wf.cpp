@@ -81,10 +81,12 @@ void Init_Sto_Orbitals
     {
         ++tmpnchip;
     }
+    size_t memory = 0;
     for (int ik = 0; ik < nks; ++ik)
     {
         stowf.nchip[ik] = tmpnchip;
         stowf.chi0[ik].create(tmpnchip, ndim, false);
+        memory += ndim * tmpnchip;
         if (seed_in >= 0)
         {
             for (int i = 0; i < stowf.chi0[ik].size; ++i)
@@ -108,6 +110,7 @@ void Init_Sto_Orbitals
             }
         }
     }
+    ModuleBase::Memory::record("SDFT::chi0", memory * sizeof(std::complex<double>));
     stowf.nchip_max = tmpnchip;
 }
 

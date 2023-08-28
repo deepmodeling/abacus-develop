@@ -71,14 +71,20 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
         Init_Sto_Orbitals(this->stowf, inp.seed_sto, kv.nks);
     else
         Init_Com_Orbitals(this->stowf, wf.npwx);
+    size_t memory_shchi = 0;
+    size_t memory_ortho = 0;
     for (int ik = 0; ik < kv.nks; ++ik)
     {
         this->stowf.shchi[ik].create(this->stowf.nchip[ik], wf.npwx, false);
+        memory_shchi += this->stowf.nchip[ik] * wf.npwx;
         if(GlobalV::NBANDS > 0)
         {
             this->stowf.chiortho[ik].create(this->stowf.nchip[ik], wf.npwx, false);
+            memory_ortho += this->stowf.nchip[ik] * wf.npwx;
         }
     }
+    ModuleBase::Memory::record("SDFT::shchi", memory_shchi * sizeof(std::complex<double>));
+    ModuleBase::Memory::record("SDFT::chiortho", memory_ortho * sizeof(std::complex<double>));
 
     this->phsol = new hsolver::HSolverPW_SDFT(&kv, pw_wfc, &wf, this->stowf, inp.method_sto);
 }
