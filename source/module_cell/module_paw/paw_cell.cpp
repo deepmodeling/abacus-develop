@@ -489,10 +489,17 @@ void Paw_Cell::get_rhoijp(std::vector<std::vector<double>> & rhoijp,
     }
 }
 
-void Paw_Cell::paw_vnl_psi(const std::complex<double> * psi, std::complex<double> * vnlpsi)
+void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi)
 {
-    ModuleBase::TITLE("Paw_Cell","paw_vnl_psi");
+    ModuleBase::TITLE("Paw_Cell","paw_nl_psi");
 
+    if(mode == 1)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            vnlpsi[ipw] = psi[ipw];
+        }        
+    }
     //for(int ipw = 0; ipw < npw; ipw ++)
     //{
     //    vnlpsi[ipw] = 0.0;
@@ -536,7 +543,14 @@ void Paw_Cell::paw_vnl_psi(const std::complex<double> * psi, std::complex<double
             v_ca[iproj] = 0.0;
             for(int jproj = 0; jproj < nproj; jproj ++)
             {
-                v_ca[iproj] += paw_atom_list[iat].get_dij()[iproj*nproj+jproj] * ca[jproj];
+                if(mode == 0) // V_{NL}|psi>
+                {
+                    v_ca[iproj] += paw_atom_list[iat].get_dij()[iproj*nproj+jproj] * ca[jproj];
+                }
+                else if(mode == 1) // (S+I)|psi>
+                {
+                    v_ca[iproj] += paw_atom_list[iat].get_sij()[iproj*nproj+jproj] * ca[jproj];
+                }
             }
         }
 

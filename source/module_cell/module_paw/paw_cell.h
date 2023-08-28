@@ -158,11 +158,13 @@ class Paw_Cell
 
     public:
 
-    // This function calculates the nonlocal potential V_{NL}|psi>
-    void paw_vnl_psi(const std::complex<double> * psi, std::complex<double> * vnlpsi);
+    // This function calculates the nonlocal potential V_{NL}|psi> or (S+I)|psi>
+    // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
+    void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
 
     void set_dij(const int iat, double* dij_in){paw_atom_list[iat].set_dij(dij_in);}
 
+    void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
 
 // Part III. Passing infor for the initialization of PAW
     // The following gathers information needed by LibPAW, they will be inserted

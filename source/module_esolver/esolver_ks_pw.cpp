@@ -749,7 +749,7 @@ void ESolver_KS_PW<FPTYPE, Device>::postprocess()
 
     if (INPUT.cal_cond)
     {
-        this->KG(INPUT.cond_nche, INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, this->pelec->wg);
+        this->KG(INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, this->pelec->wg);
     }
 }
 
