@@ -1,0 +1,26 @@
+name: Code Quality
+description: For developers to report issues related to code quality, such as non-standard code, poor design, improper use of global classes or variables, or maintainability issues that require refactoring.
+labels: [Code Quality]
+assignees: [insert assignee here]
+
+body:
+- type: textarea
+  attributes:
+    label: Describe the Code Quality Issue
+    description: |
+      Please provide details about the code quality issue you are experiencing. Include any relevant information such as the specific code file or section, the issue you have identified, and any suggestions for improvement. If you have any suggestions for a possible solution, please include them as well.
+    placeholder: |
+      Example: The code in the file source/module_xx/yy.cpp is not following the Clang format. In addition, the code is not using the correct naming conventions for variables and functions.
+  validations:
+      required: true
+
+- type: textarea
+  attributes:
+    label: Additional Context
+    description: |
+      Add any other context or screenshots about the code quality issue here.
+
+- type: markdown
+  attributes:
+    value: >
+      Thank you for reporting this code quality issue. We will investigate and do our best to resolve it through refactoring. 🛠️
