@@ -2,6 +2,7 @@ if(ENABLE_LCAO)
   list(APPEND objects
       basic_funcs.cpp
       lambda_loop.cpp
+      atomic_magnetization.cpp
   )
 
   add_library(

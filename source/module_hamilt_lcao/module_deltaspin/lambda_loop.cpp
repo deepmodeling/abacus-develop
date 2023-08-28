@@ -4,11 +4,6 @@
 
 #include "basic_funcs.h"
 
-void calculate_MW_from_lambda()
-{
-    std::cout << "calculate_MW_from_lambda" << std::endl;
-}
-
 void lambda_loop(const std::vector<std::vector<double>>& M_CONSTR,
                  const std::vector<std::vector<int>>& CONSTRL,
                  const int NIONS,

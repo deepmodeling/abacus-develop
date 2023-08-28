@@ -4,8 +4,6 @@
 #include <iostream>
 #include <vector>
 
-void calculate_MW_from_lambda();
-
 void lambda_loop(const std::vector<std::vector<double>>& M_CONSTR,
                  const std::vector<std::vector<int>>& CONSTRL,
                  const int NIONS,
