@@ -35,7 +35,7 @@
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
-#include "module_hamilt_lcao/module_deltaspin/lambda_loop.h"
+#include "module_hamilt_lcao/module_deltaspin/atomic_magnetization.h"
 
 namespace ModuleESolver
 {
