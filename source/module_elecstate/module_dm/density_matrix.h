@@ -87,6 +87,13 @@ class DensityMatrix
     hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
 
     /**
+     * @brief get pointer of DMK
+     * @param ik k-point index, which is the index of _DMK
+     * @return TK* pointer of DMK
+     */
+    TK* get_DMK_pointer(const int ik);
+
+    /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
      */
     void cal_DMR();
