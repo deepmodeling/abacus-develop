@@ -57,13 +57,14 @@ TEST_F(BasicFuncsTest, ScalarMul2d)
 
 TEST_F(BasicFuncsTest, AddScalarMul2d)
 {
-    std::vector<std::vector<double>> result;
-    std::vector<std::vector<double>> array_2 = {
-        {1.0, 2.0, 3.0},
-        {4.0, 5.0, 6.0},
-        {7.0, 8.0, 9.0}
-    };
-    add_scalar_multiply_2d(array, array_2, 2.0, result);
+    std::vector<ModuleBase::Vector3<double>> array_1, array_2, result;
+    array_1.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+    array_1.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+    array_1.push_back(ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
+    array_2.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+    array_2.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+    array_2.push_back(ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
+    add_scalar_multiply_2d(array_1, array_2, 2.0, result);
     EXPECT_DOUBLE_EQ(result[0][0], 3.0);
     EXPECT_DOUBLE_EQ(result[0][1], 6.0);
     EXPECT_DOUBLE_EQ(result[0][2], 9.0);

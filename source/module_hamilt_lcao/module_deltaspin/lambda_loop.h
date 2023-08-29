@@ -13,7 +13,7 @@ class LambdaLoop
 
         void init_input_parameters();
 
-        void run_lambda_loop();
+        void run_lambda_loop(int outer_step);
 
         int cal_num_component();
 
@@ -28,7 +28,7 @@ class LambdaLoop
         int num_step; // which is NSC from INPUT
         int num_min; // which is NSCMIN from INPUT
         double restrict_current; // which is SCCUT from INPUT
-        int N;
+        int outer_step; // which is N in the original code
         std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
         std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
 };

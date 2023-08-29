@@ -31,10 +31,10 @@ void scalar_multiply_2d(const std::vector<std::vector<double>>& array,
 /**
  * @brief array_1 + scalar * array_2.
  */
-void add_scalar_multiply_2d(const std::vector<std::vector<double>>& array_1,
-                            const std::vector<std::vector<double>>& array_2,
+void add_scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
+                            const std::vector<ModuleBase::Vector3<double>>& array_2,
                             double scalar,
-                            std::vector<std::vector<double>>& result);
+                            std::vector<ModuleBase::Vector3<double>>& result);
 
 /**
  * @brief array_1 - array_2.

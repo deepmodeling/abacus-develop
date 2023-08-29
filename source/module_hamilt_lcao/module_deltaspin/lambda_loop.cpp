@@ -37,11 +37,13 @@ int LambdaLoop::cal_num_component()
     return num_component;
 }
 
-void LambdaLoop::run_lambda_loop()
+void LambdaLoop::run_lambda_loop(int outer_step)
 {
     // init controlling parameters
-    std::vector<ModuleBase::Vector3<double>> initial_lambda;
+    std::vector<ModuleBase::Vector3<double>> initial_lambda, delta_lambda;
     initial_lambda.resize(nat);
+    // question: is delta_lambda initially zero?
+    delta_lambda.resize(nat);
     // set nu, dnu and dnu_last_step
     std::vector<ModuleBase::Vector3<double>> nu, dnu, dnu_last_step;
     nu.resize(nat);
@@ -76,6 +78,10 @@ void LambdaLoop::run_lambda_loop()
             {
                 this->target_spin[i].print();
             }
+        }
+        else
+        {
+            //nu = nu + dnu;
         }
     }
 }

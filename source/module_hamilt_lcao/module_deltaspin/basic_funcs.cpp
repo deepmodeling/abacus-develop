@@ -64,21 +64,16 @@ void scalar_multiply_2d(const std::vector<std::vector<double>>& array,
     }
 }
 
-void add_scalar_multiply_2d(const std::vector<std::vector<double>>& array_1,
-                            const std::vector<std::vector<double>>& array_2,
+void add_scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
+                            const std::vector<ModuleBase::Vector3<double>>& array_2,
                             double scalar,
-                            std::vector<std::vector<double>>& result)
+                            std::vector<ModuleBase::Vector3<double>>& result)
 {
-    int size_1 = array_1.size();
-    int size_2 = array_1[0].size();
-    result.resize(size_1);
-    for (int i = 0; i < size_1; i++)
+    int size = array_1.size();
+    result.reserve(size);
+    for (int i = 0; i < size; i++)
     {
-        result[i].resize(size_2);
-        for (int j = 0; j < size_2; j++)
-        {
-            result[i][j] = array_1[i][j] + scalar * array_2[i][j];
-        }
+        result[i] = array_1[i] + scalar * array_2[i];
     }
 }
 
