@@ -137,17 +137,15 @@ TEST_F(BasicFuncsTest, WhereFillScalar2d)
 
 TEST_F(BasicFuncsTest, WhereFillScalarElse2d)
 {
-    std::vector<std::vector<int>> array_mask = {
-        {1, 0, 1},
-        {0, 1, 0},
-        {1, 0, 1}
-    };
-    std::vector<std::vector<double>> result;
-    std::vector<std::vector<double>> rest = {
-        {1.0, 2.0, 3.0},
-        {4.0, 5.0, 6.0},
-        {7.0, 8.0, 9.0}
-    };
+    std::vector<ModuleBase::Vector3<int>> array_mask;
+    array_mask.push_back(ModuleBase::Vector3<int>(1,0,1));
+    array_mask.push_back(ModuleBase::Vector3<int>(0,1,0));
+    array_mask.push_back(ModuleBase::Vector3<int>(1,0,1));
+    std::vector<ModuleBase::Vector3<double>> result;
+    std::vector<ModuleBase::Vector3<double>> rest;
+    rest.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+    rest.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+    rest.push_back(ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
     where_fill_scalar_else_2d(array_mask, 1, 2.0, rest, result);
     EXPECT_DOUBLE_EQ(result[0][0], 2.0);
     EXPECT_DOUBLE_EQ(result[0][1], 2.0);

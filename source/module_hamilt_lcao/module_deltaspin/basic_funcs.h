@@ -4,6 +4,8 @@
 #include <cmath>
 #include <vector>
 
+#include "module_base/vector3.h"
+
 /**
  * @brief Find the maximum absolute value in a 2D array.
  */
@@ -54,11 +56,11 @@ void where_fill_scalar_2d(const std::vector<std::vector<int>>& array_mask,
                           double scalar,
                           std::vector<std::vector<double>>& result);
 
-void where_fill_scalar_else_2d(const std::vector<std::vector<int>>& array_mask,
+void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& array_mask,
                                int mask,
                                double scalar,
-                               const std::vector<std::vector<double>>& rest,
-                               std::vector<std::vector<double>>& result);
+                               const std::vector<ModuleBase::Vector3<double>>& rest,
+                               std::vector<ModuleBase::Vector3<double>>& result);
 
 void print_2d(const std::vector<std::vector<double>>& array);
 

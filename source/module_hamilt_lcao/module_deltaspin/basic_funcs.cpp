@@ -128,19 +128,17 @@ void where_fill_scalar_2d(const std::vector<std::vector<int>>& array_mask,
     }
 }
 
-void where_fill_scalar_else_2d(const std::vector<std::vector<int>>& array_mask,
+void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& array_mask,
                                int mask,
                                double scalar,
-                               const std::vector<std::vector<double>>& rest,
-                               std::vector<std::vector<double>>& result)
+                               const std::vector<ModuleBase::Vector3<double>>& rest,
+                               std::vector<ModuleBase::Vector3<double>>& result)
 {
-    int size_1 = array_mask.size();
-    int size_2 = array_mask[0].size();
-    result.resize(size_1);
-    for (int i = 0; i < size_1; i++)
+    int size = array_mask.size();
+    result.reserve(size);
+    for (int i = 0; i < size; i++)
     {
-        result[i].resize(size_2);
-        for (int j = 0; j < size_2; j++)
+        for (int j = 0; j < 3; j++)
         {
             result[i][j] = (array_mask[i][j] == mask) ? scalar : rest[i][j];
         }
