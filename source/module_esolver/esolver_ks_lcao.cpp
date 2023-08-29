@@ -836,7 +836,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         if (GlobalV::out_mul)
         {
             ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
-            calculate_MW_from_lambda(istep, this->UHM, this->LOC, kv);
+            calculate_MW_from_lambda(istep, this->UHM, this->LOC, kv, GlobalC::ucell);
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
