@@ -1,26 +1,36 @@
-#ifndef LANMA_LOOP_H
-#define LANMA_LOOP_H
+#ifndef LAMBDA_LOOP_H
+#define LAMBDA_LOOP_H
 
 #include <iostream>
 #include <vector>
+#include "module_base/vector3.h"
 
-void lambda_loop(const std::vector<std::vector<double>>& M_CONSTR,
-                 const std::vector<std::vector<int>>& CONSTRL,
-                 const int NIONS,
-                 const int NTYP,
-                 const std::vector<int>& NITYP,
-                 const double INISC,
-                 const double SCDIFF,
-                 const std::vector<double>& SCCONV_GRAD,
-                 const int NSC,
-                 const int NSCMIN,
-                 const double SCCUT,
-                 const int N,
-                 std::vector<std::vector<double>>& MW,
-                 std::vector<std::vector<double>>& OUT_LAMBDA);
-//  TODO datatype
-//<> CHTOT,
-//<> CHTOTL,
-//<> W)
+class LambdaLoop
+{
+    public:
+         LambdaLoop();
+        ~LambdaLoop();
 
-#endif // LANMA_FIELD_H
+        void init_input_parameters();
+
+        void run_lambda_loop();
+
+        int cal_num_component();
+
+        std::vector<ModuleBase::Vector3<double>> target_spin; // which is M_CONSTR from INPUT
+        std::vector<ModuleBase::Vector3<int>> constrain; // which is CONSTRL from INPUT
+        int nat; // NIONS changed to nat
+        int ntype; // NTYP changed to ntype
+        std::vector<int> iat2it; // NITYP changed to iat2it
+        double alpha_trial; // which is INISC from INPUT
+        double epsilon; // which is SCDIFF from INPUT
+        std::vector<double> bound_gradient; // which is SCCONV_GRAD from INPUT
+        int num_step; // which is NSC from INPUT
+        int num_min; // which is NSCMIN from INPUT
+        double restrict_current; // which is SCCUT from INPUT
+        int N;
+        std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
+        std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
+};
+
+#endif // LAMBDA_LOOP_H

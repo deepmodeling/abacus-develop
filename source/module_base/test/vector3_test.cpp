@@ -747,3 +747,15 @@ TEST_F(Vector3Test,PrintV)
 	EXPECT_THAT(output,testing::HasSubstr("101"));
 }
 
+TEST_F(Vector3Test, Simple)
+{
+	std::vector<ModuleBase::Vector3<double>> u;
+	u.resize(100);
+	for (int i=0; i< u.size(); i++)
+	{
+		EXPECT_DOUBLE_EQ(u[i].x,0.0);
+		EXPECT_DOUBLE_EQ(u[i].y,0.0);
+		EXPECT_DOUBLE_EQ(u[i].z,0.0);
+	}
+}
+
