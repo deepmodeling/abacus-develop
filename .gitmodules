@@ -8,4 +8,4 @@
 	branch = master
 [submodule "deps/libpaw_interface"]
 	path = deps/libpaw_interface
-	url = git@github.com:wenfei-li/libpaw_interface.git
+	url = https://github.com/wenfei-li/libpaw_interface.git
