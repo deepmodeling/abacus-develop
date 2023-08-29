@@ -91,7 +91,7 @@ class DensityMatrix
      * @param ik k-point index, which is the index of _DMK
      * @return TK* pointer of DMK
      */
-    TK* get_DMK_pointer(const int ik);
+    TK* get_DMK_pointer(const int ik) const;
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy

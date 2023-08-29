@@ -135,12 +135,12 @@ hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) 
 
 // get _DMK[ik] pointer
 template <typename TK, typename TR>
-TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik)
+TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
 {
 #ifdef __DEBUG
     assert(ik < this->_nks * this->_nspin);
 #endif
-    return this->_DMK[ik].data();
+    return const_cast<TK*>(this->_DMK[ik].data());
 }
 
 // set _DMK element
