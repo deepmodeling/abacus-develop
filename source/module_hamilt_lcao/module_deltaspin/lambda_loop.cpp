@@ -12,8 +12,8 @@ LambdaLoop::~LambdaLoop()
 
 void LambdaLoop::init_input_parameters()
 {
-    // todo
-    // init input parameters from reading INPUT file
+    /// todo
+    /// init input parameters from reading INPUT file
     //this->spin = GlobalV::MW;
     //this->out_lambda = GlobalV::OUT_LAMBDA;
     //this->target_spin = GlobalV::M_CONSTR;
@@ -49,6 +49,10 @@ void LambdaLoop::run_lambda_loop(int outer_step)
     nu.resize(nat);
     dnu.resize(nat);
     dnu_last_step.resize(nat);
+    // two controlling temp variables
+    std::vector<ModuleBase::Vector3<double>> temp_1, temp_2;
+    temp_1.resize(nat);
+    temp_2.resize(nat);
 
     // calculate number of components to be constrained
     int num_component = this->cal_num_component();
@@ -81,7 +85,21 @@ void LambdaLoop::run_lambda_loop(int outer_step)
         }
         else
         {
-            //nu = nu + dnu;
+            std::cout << "optimal delta lambda: " << std::endl;
+            for (int i=0; i< this->nat; i++)
+            {
+                delta_lambda[i].print();
+            }
+            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
+            /**
+             * TODO, also in-place change density CHTOT and orbital W, const 3 regular 3
+             * basically, use CHTOTL_RESERVE and temp_1(LAMBDA) recalculate V, then calculate H, then
+             * diagonalize H (in the subspace spanned by W_RESERVE), then use obtained orbitals W 
+             * calculate density CHTOT and orbital mag MW.
+             * Note that using CHTOTL instead of CHTOT is to recreate the H that has W_RESERVE as 
+             * eigenvectors
+            */
+            /// calculate_MW_from_lambda(temp_1, CHTOTL_RESERVE, W_RESERVE, MW, CHTOT, W);
         }
     }
 }
