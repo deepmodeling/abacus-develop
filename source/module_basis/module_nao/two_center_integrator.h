@@ -78,9 +78,13 @@ class TwoCenterIntegrator
      * @param[in] izeta2       Zeta number of orbital 2.
      * @param[in] m2           Magnetic quantum number of orbital 2.
      * @param[in] vR           R2 - R1.
-     * @param[in] deriv        If true, the gradient of integrals is computed.
-     * @param[out] out         The computed integrals. If deriv is true, out[0], out[1]
-     *                         and out[2] are the x, y, z components of the gradient.
+     * @param[out] out         Two-center integral. The integral will not be computed
+     *                         if out is nullptr.
+     * @param[out] grad_out    Gradient of the integral. grad_out[0], grad_out[1] and
+     *                         grad_out[2] are the x, y, z components of the gradient.
+     *                         The gradient will not be computed if grad_out is nullptr.
+     *
+     * @note out and grad_out cannot be both nullptr.
      *                                                                                  */
     void calculate(const int itype1, 
                    const int l1, 
@@ -91,8 +95,8 @@ class TwoCenterIntegrator
                    const int izeta2,
                    const int m2,
 	               const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
-                   const bool deriv,
-                   double* out
+                   double* out = nullptr,
+                   double* grad_out = nullptr
     ) const;
 
     /*!

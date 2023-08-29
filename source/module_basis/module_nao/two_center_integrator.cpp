@@ -30,12 +30,14 @@ void TwoCenterIntegrator::calculate(const int itype1,
                                     const int izeta2,
                                     const int m2,
 	                                const ModuleBase::Vector3<double>& vR, // R = R2 - R1
-                                    const bool deriv,
-                                    double* out) const
+                                    double* out,
+                                    double* grad_out) const
 {
     assert( is_tabulated_ );
+    assert( out || grad_out );
 
-    std::fill(out, out + (deriv ? 3 : 1), 0.0);
+    if (out) *out = 0.0;
+    if (grad_out) std::fill(grad_out, grad_out + 3, 0.0);
 
     double R = vR.norm();
     if (R > table_.rmax())
@@ -46,41 +48,41 @@ void TwoCenterIntegrator::calculate(const int itype1,
     // unit vector along R
     ModuleBase::Vector3<double> uR = (R == 0.0 ? ModuleBase::Vector3<double>(0., 0., 1.) : vR / R);
 
-    // generate all necessary real spherical harmonics (multiplied by R^l)
+    // generate all necessary real (solid) spherical harmonics
 	std::vector<double> Rl_Y;
 	std::vector<std::vector<double>> grad_Rl_Y;
-	if (deriv)
-	{
-		ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y, grad_Rl_Y);
-	}
-	else
-	{
-		ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
-	}
+
+    // R^l * Y is necessary anyway
+    ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
+    if (grad_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y, grad_Rl_Y);
+
+    double tmp[2] = {0.0, 0.0};
+    double* S_by_Rl = tmp;
+    double* d_S_by_Rl = grad_out ? tmp + 1 : nullptr;
 
     // the sign is given by i^(l1-l2-l) = (-1)^((l1-l2-l)/2)
     int sign = (l1 - l2 - std::abs(l1 - l2)) % 4 == 0 ? 1 : -1;
     for (int l = std::abs(l1 - l2); l <= l1 + l2; l += 2)
     {
         // look up S/R^l and (d/dR)(S/R^l) (if necessary) from the radial table
-        double S_by_Rl = 0.0, d_S_by_Rl = 0.0;
-        table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, &S_by_Rl, deriv ? &d_S_by_Rl : nullptr);
+        table_.lookup(itype1, l1, izeta1, itype2, l2, izeta2, l, R, S_by_Rl, d_S_by_Rl);
 
 		for (int m = -l; m <= l; ++m)
         {
             double G = RealGauntTable::instance()(l1, l2, l, m1, m2, m);
 
-            if (deriv)
+            if (out)
+            {
+                *out += sign * G * (*S_by_Rl) * Rl_Y[ylm_index(l, m)];
+            }
+
+            if (grad_out)
             {
                 for (int i = 0; i < 3; ++i)
                 {
-                    out[i] += sign * G * ( d_S_by_Rl * uR[i] * Rl_Y[ylm_index(l, m)]
-                                            + S_by_Rl * grad_Rl_Y[ylm_index(l, m)][i] );
+                    grad_out[i] += sign * G * ( (*d_S_by_Rl) * uR[i] * Rl_Y[ylm_index(l, m)]
+                                                + (*S_by_Rl) * grad_Rl_Y[ylm_index(l, m)][i] );
                 }
-            }
-            else
-            {
-                out[0] += sign * G * S_by_Rl * Rl_Y[ylm_index(l, m)];
             }
         }
         sign = -sign;
@@ -119,6 +121,7 @@ void TwoCenterIntegrator::snap(const int itype1,
 	}
 
     int index = 0;
+    double tmp[3] = {0.0, 0.0, 0.0};
     for (int l2 = 0; l2 <= table_.lmax_ket(); ++l2)
     {
         for (int izeta2 = 0; izeta2 < table_.nchi_ket(itype2, l2); ++izeta2)
@@ -129,17 +132,15 @@ void TwoCenterIntegrator::snap(const int itype1,
             for (int mm2 = 0; mm2 <= 2*l2; ++mm2)
             {
                 int m2 = (mm2 % 2 == 0) ? -mm2 / 2 : (mm2 + 1) / 2;
-                calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, false, &out[0][index]);
+                calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, &out[0][index], deriv ? tmp : nullptr);
+
                 if (deriv)
                 {
-                    // FIXME: there's some redundancy if we calculate the derivatives (ylm & table lookup)
-                    // but it might not be a big deal
-                    double tmp[3] = {0.0, 0.0, 0.0};
-                    calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, true, tmp);
                     out[1][index] = tmp[0];
                     out[2][index] = tmp[1];
                     out[3][index] = tmp[2];
                 }
+
                 ++index;
             }
         }

@@ -100,12 +100,10 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
 
-                    std::vector<std::vector<double>> nlm2;
-                    GlobalC::UOT.two_center_bundle->overlap_orb_alpha->snap(
-                            T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm2);
 
 #ifdef USE_NEW_TWO_CENTER
-                    nlm = nlm2;
+                    GlobalC::UOT.two_center_bundle->overlap_orb_alpha->snap(
+                            T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm);
 #else
                     //inner loop : all projectors (N,L,M)
                     UOT.snap_psialpha_half(
@@ -115,19 +113,6 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                         atom1->iw2m[ iw1_0 ], // m1
                         atom1->iw2n[ iw1_0 ], // N1
                         ucell.atoms[T0].tau[I0], T0, I0); //R0,T0
-
-                    for (size_t j = 0; j < nlm.size(); ++j)
-                    {
-                        for (size_t i = 0; i < nlm[j].size(); ++i)
-                        {
-                            if (std::abs(nlm[j][i]-nlm2[j][i]) > 1e-4)
-                            {
-                                printf("t1 = %i   l1 = %i   izeta1 = %i   m1 = % i   "
-                                       "t2 = %i   i2 = %li   job = alpha%li   old = % 8.5e   new = % 8.5e\n",
-                                       T1, L1, N1, M1, T0, i, j, nlm[j][i], nlm2[j][i]);
-                            }
-                        }
-                    }
 #endif
                     //=================================================================
                     //          end of new two-center integral (temporary)

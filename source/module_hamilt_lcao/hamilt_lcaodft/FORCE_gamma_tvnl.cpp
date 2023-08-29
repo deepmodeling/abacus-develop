@@ -71,12 +71,10 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
                 ModuleBase::Vector3<double> dtau = GlobalC::ucell.atoms[T0].tau[I0] - tau1;
 
-                std::vector<std::vector<double>> nlm2;
-                GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
-                        T1, L1, N1, M1, T0, dtau * GlobalC::ucell.lat0, true, nlm2);
 
 #ifdef USE_NEW_TWO_CENTER
-                nlm = nlm2;
+                GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
+                        T1, L1, N1, M1, T0, dtau * GlobalC::ucell.lat0, true, nlm);
 #else
                 GlobalC::UOT.snap_psibeta_half(
                     GlobalC::ORB,
@@ -86,20 +84,6 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                     atom1->iw2m[ iw1 ], // m1
                     atom1->iw2n[ iw1 ], // N1
                     GlobalC::ucell.atoms[T0].tau[I0], T0, 1); //R0,T0
-
-                for (size_t j = 0; j < nlm.size(); ++j)
-                {
-                    for (size_t i = 0; i < nlm[j].size(); ++i)
-                    {
-                        //printf("old = %8.5e   new = %8.5e\n", nlm[0][i], nlm2[0][i]);
-                        if (std::abs(nlm[j][i]-nlm2[j][i]) > 1e-4)
-                        {
-                            printf("t1 = %i   l1 = %i   izeta1 = %i   m1 = % i   "
-                                   "t2 = %i   i2 = %li   job = (FORCE_gamma_tvnl)beta%li   old = % 8.5e   new = % 8.5e\n",
-                                   T1, L1, N1, M1, it, i, j, nlm[j][i], nlm2[j][i]);
-                        }
-                    }
-                }
 #endif
                 //=================================================================
                 //          end of new two-center integral (temporary)

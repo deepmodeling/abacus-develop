@@ -64,7 +64,9 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
+#ifndef USE_NEW_TWO_CENTER
     this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
+#endif
 }
 
 void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
@@ -408,6 +410,8 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 #ifdef __EXX
     Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
+
+#ifndef USE_NEW_TWO_CENTER
     this->orb_con.set_orb_tables(GlobalV::ofs_running,
                                  GlobalC::UOT,
                                  GlobalC::ORB,
@@ -417,13 +421,7 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.nprojmax,
                                  ucell.infoNL.nproj,
                                  ucell.infoNL.Beta);
-
-    if (this->orb_con.setup_2d)
-    {
-        this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
-        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
-    }
-
+#else
     //-------------------------------------
     //  new two-center integral module
     //-------------------------------------
@@ -440,6 +438,14 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
     // the final version will get rid of UOT
     // and transfer individual ownership of TwoCenterIntegrator to corresponding operator
     GlobalC::UOT.two_center_bundle = std::move(two_center_bundle);
+#endif
+
+    if (this->orb_con.setup_2d)
+    {
+        this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
+        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+    }
+
 }
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)

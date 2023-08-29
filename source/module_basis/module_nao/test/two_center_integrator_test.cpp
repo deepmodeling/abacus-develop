@@ -126,26 +126,26 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
                                     // S
                                     vR = vR0;
                                     vR[2] += dx;
-                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_p);
+                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_p);
 
                                     vR = vR0;
                                     vR[2] -= dx;
-                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_m);
+                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_m);
 
-                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, true, grad_elem);
+                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, nullptr, grad_elem);
 
                                     EXPECT_NEAR( (elem_p - elem_m) / (2. * dx), grad_elem[2], tol_d);
 
                                     // T
                                     vR = vR0;
                                     vR[2] += dx;
-                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_p);
+                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_p);
 
                                     vR = vR0;
                                     vR[2] -= dx;
-                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_m);
+                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_m);
 
-                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, true, grad_elem);
+                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, nullptr, grad_elem);
 
                                     EXPECT_NEAR( (elem_p - elem_m) / (2. * dx), grad_elem[2], tol_d);
                                 }

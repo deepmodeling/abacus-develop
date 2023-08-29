@@ -16,7 +16,7 @@ void TwoCenterTable::build(const RadialCollection& bra,
                            const int nr,
                            const double cutoff)
 {
-    assert(nr >= 4 && cutoff > 0.0); // nr >= 4 required for polynomial interpolation
+    assert(nr >= 3 && cutoff > 0.0);
 
     cleanup();
 
@@ -154,28 +154,28 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
     double* tab = table_.inner_most_ptr<double>(itab);
     it1->radtab(op_, *it2, l, tab, nr_, rmax_, false);
 
-    // NOTE: 
+    // NOTE:
     // A radial table stores S(R)/R^l or T(R)/R^l instead of bare S/T.
     //
     // When calculating two-center integrals, we need the product between
-    // S(or T) and Y. Note that spherical harmonics are given as R^l * Y_lm,
-    // thus the following limit (or the T(R) counterpart)
+    // S(or T) and Y. Since spherical harmonics are given as R^l * Y_lm,
+    // it is more convenient to store S(R)/R^l or T(R)/R^l and their
+    // derivatives instead of the bare ones.
+    //
+    // Note that the values at R=0 should be understood as, e.g.,
     //
     //                        S(R)
     //                  lim   ----
     //                  R->0    l
     //                         R
     //
-    // is explicited required and should be stored in the table. In order
-    // to maintain the consistency of the table, we choose to store S(R)/R^l
-    // not only for R->0 but also for R>0.
+    // which needs special treatment.
     //
     // See the developer's document for more details.
     double dr = rmax_ / (nr_ - 1);
     if ( l > 0 )
     {
-        //std::transform(&tab[1], tab + nr_, &rgrid[1], &tab[1],
-        //        [&](double val, double r) { return val / std::pow(r, l); });
+        // divide S(R) by R^l (except the R=0 point)
         std::for_each(&tab[1], tab + nr_, [&](double& val) { val /= std::pow(dr * (&val - tab), l); });
 
         // special treatment for R=0
@@ -209,6 +209,12 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
         delete[] h;
     }
 
+    // The derivative table stores the derivative of S(R)/R^l or T(R)/R^l 
+    // instead of bare dS(R)/dR or dT(R)/dR, which simplifies further calculation.
+    //
+    // The derivatives are computed from a cubic spline interpolation rather
+    // than two spherical Bessel transforms. By doing so, we achieve a good
+    // consistency between the table and its derivative during interpolation.
     using ModuleBase::CubicSpline;
     CubicSpline::build(nr_, rgrid_, table_.inner_most_ptr<double>(itab), dtable_.inner_most_ptr<double>(itab),
             CubicSpline::BoundaryCondition::first_deriv, CubicSpline::BoundaryCondition::first_deriv,
