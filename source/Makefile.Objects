@@ -126,6 +126,10 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
+    formatter_fmt.o\
+    formatter_physfmt.o\
+    formatter_table.o\
+    formatter_contextfmt.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
