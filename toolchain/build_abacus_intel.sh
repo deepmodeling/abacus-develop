@@ -7,14 +7,14 @@
 
 # Build ABACUS by intel-toolchain
 
-#rm -rf ../build
+#rm -rf ../build_abacus
 # module load mkl mpi icc compiler
 TOOL=$(pwd)
 ABACUS_DIR=..
 source ./install/setup
 cd $ABACUS_DIR
 
-PREFIX=./bin/abacus/
+PREFIX=.
 BUILD_DIR=build_abacus
 ELPA=$TOOL/install/elpa-2021.11.002/cpu
 CEREAL=$TOOL/install/cereal-1.3.2

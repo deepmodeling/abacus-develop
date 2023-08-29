@@ -4,9 +4,10 @@
 #SBATCH -n 64
 
 # install ABACUS with libxc and deepks
-# JamesMisaka in 2023.08.22
+# JamesMisaka in 2023.08.29
 
 # Build ABACUS by intel-toolchain with mpich
+# but this mpich seems to cannot be useable in compilation
 
 #rm -rf ../build
 # module load mkl icc compiler
@@ -16,7 +17,7 @@ ABACUS_DIR=..
 source ./install/setup # include mpich
 cd $ABACUS_DIR
 
-PREFIX=./bin/abacus/
+PREFIX=.
 BUILD_DIR=build_abacus
 ELPA=$TOOL/install/elpa-2021.11.002/cpu
 CEREAL=$TOOL/install/cereal-1.3.2
@@ -31,7 +32,7 @@ F90=ifort
 F77=ifort
 
 # cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-#         -DMPI_CXX_COMPILER=mpiicpc \
+#         -DMPI_CXX_COMPILER=mpiicpc \ # ???
 #         -DMKLROOT=$MKLROOT \
 #         -DELPA_DIR=$ELPA \
 #         -DCEREAL_INCLUDE_DIR=$CEREAL \
