@@ -31,7 +31,7 @@ int LambdaLoop::cal_num_component()
     // Vector3 is zero automatically
     ModuleBase::Vector3<int> sum_control;
     for (const auto& v : this->constrain) {
-        sum_control = sum_control + v;
+        sum_control += v;
     }
     int num_component = sum_control.x + sum_control.y + sum_control.z;
     return num_component;
