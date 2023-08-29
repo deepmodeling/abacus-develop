@@ -29,7 +29,8 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     ModuleBase::Matrix3 latvec;
 
     double ecut = 10.0;
-    paw_cell.set_libpaw_ecut(ecut,ecut);
+    double ecutpaw = 40.0;
+    paw_cell.set_libpaw_ecut(ecut,ecutpaw);
 
     latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
     latvec.e21 = 0.0; latvec.e22 = 1.0; latvec.e23 = 0.0;
@@ -66,7 +67,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     paw_cell.set_nspin(1);
 
     EXPECT_NEAR(paw_cell.get_libpaw_ecut(),10.0,1e-10);
-    EXPECT_NEAR(paw_cell.get_libpaw_ecutpaw(),10.0,1e-10);
+    EXPECT_NEAR(paw_cell.get_libpaw_ecutpaw(),40.0,1e-10);
     EXPECT_NEAR(paw_cell.get_libpaw_ucvol(),1000.0,1e-10);
     
     EXPECT_NEAR(paw_cell.get_libpaw_rprimd()[0],10.0,1e-10);
@@ -134,5 +135,105 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
 #ifdef USE_PAW
     paw_cell.prepare_paw();
+
+    double *vloc, *ncoret;
+    int nfft = nx_dg * ny_dg * nz_dg;
+    vloc = new double[nfft];
+    ncoret = new double[nfft];
+
+    paw_cell.get_vloc_ncoret(vloc, ncoret);
+    std::ifstream ifs("fort.26");
+
+    for(int i = 0; i < nfft; i++)
+    {
+        double tmp;
+        ifs >> tmp;
+        EXPECT_NEAR(tmp,vloc[i],1e-10);
+    }
+
+    for(int i = 0; i < nfft; i++)
+    {
+        double tmp;
+        ifs >> tmp;
+        EXPECT_NEAR(tmp,ncoret[i],1e-10);
+    }
+
+    delete[] vloc;
+    delete[] ncoret;
+
+    std::ifstream ifs_rhoij("rhoij");
+    int nrhoijsel, *rhoijselect;
+    double *rhoijp;
+    int size_rhoij[5] = {36,15,15,15,15};
+    for(int iat = 0; iat < natom; iat ++)
+    {
+        rhoijselect = new int[size_rhoij[iat]];
+        rhoijp = new double[size_rhoij[iat]];
+
+        ifs_rhoij >> nrhoijsel;
+        for(int i = 0; i < size_rhoij[iat]; i++)
+        {
+            ifs_rhoij >> rhoijselect[i];
+        }
+        for(int i = 0; i < size_rhoij[iat]; i++)
+        {
+            ifs_rhoij >> rhoijp[i];
+        }
+        paw_cell.set_rhoij(iat,nrhoijsel,size_rhoij[iat],rhoijselect,rhoijp);
+
+        delete[] rhoijselect;
+        delete[] rhoijp;
+    }
+
+    double *nhat, *nhatgr;
+    nhat = new double[nfft];
+    nhatgr = new double[nfft*3];
+    paw_cell.get_nhat(nhat,nhatgr);
+
+    std::ifstream ifs_nhat("fort.19");
+    for(int i=0; i<nfft; i++)
+    {
+        double tmp;
+        ifs_nhat >> tmp;
+        EXPECT_NEAR(tmp,nhat[i],1e-10);
+    }
+
+    delete[] nhat;
+    delete[] nhatgr;
+
+    std::ifstream ifs_veff("veff");
+    double *vks, *vxc;
+    vks = new double[nfft];
+    vxc = new double[nfft];
+    for(int i=0; i<nfft; i++)
+    {
+        ifs_veff >> vks[i];
+    }
+    for(int i=0; i<nfft; i++)
+    {
+        ifs_veff >> vxc[i];
+    }
+
+    paw_cell.calculate_dij(vks,vxc);
+    delete[] vks;
+    delete[] vxc;
+
+    std::ifstream ifs_dij("dij_ref");
+    double *dij;
+    for(int iat = 0; iat < natom; iat ++)
+    {
+        dij = new double[size_rhoij[iat]];
+
+        paw_cell.get_dij(iat,size_rhoij[iat],dij);
+
+        for(int i=0; i<size_rhoij[iat]; i++)
+        {
+            double tmp;
+            ifs_dij >> tmp;
+            EXPECT_NEAR(tmp,dij[i],1e-10);
+        }
+
+        delete[] dij;
+    }
 #endif
 }

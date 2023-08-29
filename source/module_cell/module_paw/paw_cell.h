@@ -214,7 +214,7 @@ class Paw_Cell
 // unit for rprimd is in Bohr, and for gprimd is in Bohr^-1
 // 3. gmet : reciprocal space metric (bohr^-2)
 // 4. ucvol : volume of unit cell (Bohr^3)
-// 5. ngfft, ngfftdg : dimension of FFT grids of the corase and fine grids
+// 5. ngfft, ngfftdg : dimension of FFT grids of the corase and fine grids; nfft = ngfftdg[0]*ngfftdg[1]*ngfftdg[2]
 // 6. natom, ntypat, typat: #. atoms, #. element types
 // and typat records the type of each atom
 // 7. xred : coordinate of each atom, in terms of rprimd (namely, direct coordinate)
@@ -224,6 +224,7 @@ class Paw_Cell
     std::vector<double> rprimd, gprimd, gmet;
     double ucvol;
     std::vector<int> ngfft, ngfftdg;
+    int nfft;
     int natom, ntypat;
     std::vector<int> typat;
     std::vector<double> xred;
@@ -235,6 +236,11 @@ class Paw_Cell
     public:
 #ifdef USE_PAW
     void prepare_paw();
+    void get_vloc_ncoret(double* vloc, double* ncoret);
+    void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
+    void get_nhat(double* nhat, double* nhatgr);
+    void calculate_dij(double* vks, double* vxc);
+    void get_dij(int iat, int size_dij, double* dij);
 #endif
 };
 
