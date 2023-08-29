@@ -53,4 +53,6 @@ if(BUILD_TESTING)
   endif()
 endif()
 
-add_subdirectory(module_dm)
+if(ENABLE_LCAO)
+  add_subdirectory(module_dm)
+endif()
