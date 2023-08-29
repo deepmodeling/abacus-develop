@@ -1,6 +1,6 @@
 name: Questions
 description: For users or developers who need help with software installation, usability, or other issues.
-labels: [Help wanted]
+labels: [Questions]
 assignees: dyzheng
 
 body:
