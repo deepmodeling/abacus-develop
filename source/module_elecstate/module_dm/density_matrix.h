@@ -80,16 +80,33 @@ class DensityMatrix
     int get_DMK_ncol() const;
 
     /**
-     * @brief get pointer of DMR
+     * @brief get pointer of DMR with certain spin index
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @return HContainer<TR>* pointer of DMR
      */
     hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
 
     /**
+     * @brief get pointer of DMK
+     * @param ik k-point index, which is the index of _DMK
+     * @return TK* pointer of DMK
+     */
+    TK* get_DMK_pointer(const int ik) const;
+
+    /**
+     * @brief get pointer of paraV
+     */
+    const Parallel_Orbitals* get_paraV_pointer() const;
+
+    /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
      */
     void cal_DMR();
+
+    /**
+     * @brief merge density matrix DMR with different spin
+     */
+    void sum_DMR_spin();
 
     /**
      * @brief write density matrix dm(ik) into *.dmk

@@ -133,6 +133,23 @@ hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) 
     return this->_DMR[ispin - 1];
 }
 
+// get _DMK[ik] pointer
+template <typename TK, typename TR>
+TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
+{
+#ifdef __DEBUG
+    assert(ik < this->_nks * this->_nspin);
+#endif
+    return const_cast<TK*>(this->_DMK[ik].data());
+}
+
+// get _paraV pointer
+template <typename TK, typename TR>
+const Parallel_Orbitals* DensityMatrix<TK, TR>::get_paraV_pointer() const
+{
+    return this->_paraV;
+}
+
 // set _DMK element
 template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, const int j, const TK value)
@@ -149,6 +166,7 @@ TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, co
 {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
+    assert(ik >= 0 && ik < this->_nks);
 #endif
     return this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
 }
@@ -312,6 +330,39 @@ void DensityMatrix<double, double>::cal_DMR()
         }
     }
 }
+
+// merge density matrix DMR with different spin
+template <typename TK, typename TR>
+void DensityMatrix<TK, TR>::sum_DMR_spin()
+{
+    if (this->_nspin == 1)
+    {
+        return;
+    }
+    else if (this->_nspin == 2)
+    {
+        hamilt::HContainer<double>* tmp_DMR_up = this->_DMR[0];
+        hamilt::HContainer<double>* tmp_DMR_down = this->_DMR[1];
+        for (int i = 0; i < tmp_DMR_up->size_atom_pairs(); ++i)
+        {
+            hamilt::AtomPair<TR>& tmp_ap_up = tmp_DMR_up->get_atom_pair(i);
+            hamilt::AtomPair<TR>& tmp_ap_down = tmp_DMR_down->get_atom_pair(i);
+            for (int ir = 0; ir < tmp_ap_up.get_R_size(); ++ir)
+            {
+                const int* r_index = tmp_ap_up.get_R_index(ir);
+                hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index[0], r_index[1], r_index[2]);
+                hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index[0], r_index[1], r_index[2]);
+                TR* ptr_up = tmp_matrix_up->get_pointer();
+                TR* ptr_down = tmp_matrix_down->get_pointer();
+                for (int i = 0; i < tmp_ap_up.get_size(); ++i)
+                {
+                    ptr_up[i] += ptr_down[i];
+                }
+            }
+        }
+    }
+}
+
 
 // read *.dmk into density matrix dm(k)
 template <typename TK, typename TR>
