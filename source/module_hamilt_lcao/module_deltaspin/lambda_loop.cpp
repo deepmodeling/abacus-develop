@@ -62,12 +62,9 @@ void LambdaLoop::run_lambda_loop(int outer_step)
         {
             nu = this->out_lambda;
             where_fill_scalar_else_2d(constrain, 0, 0.0, out_lambda, initial_lambda);
-            std::cout << "initial lambda:" << std::endl;
-            print_2d(initial_lambda);
-            std::cout << "initial spin: " << std::endl;
-            print_2d(spin);
-            std::cout << "target spin: " << std::endl;
-            print_2d(target_spin);
+            print_2d("initial lambda: ", initial_lambda);
+            print_2d("initial spin: ", spin);
+            print_2d("target spin: ", target_spin);
         }
         else
         {

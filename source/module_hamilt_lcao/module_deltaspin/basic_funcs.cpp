@@ -133,10 +133,11 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
     }
 }
 
-void print_2d(const std::vector<ModuleBase::Vector3<double>> &array)
+void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &array, std::ostream& ofs)
 {
+    ofs << info << std::endl;
     for (const auto &row : array)
     {
-        row.print();
+        ofs << row.x << " " << row.y << " " << row.z << std::endl;
     }
 }

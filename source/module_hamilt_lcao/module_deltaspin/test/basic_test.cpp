@@ -153,10 +153,12 @@ TEST_F(BasicFuncsTest, WhereFillScalarElse2d)
 
 TEST_F(BasicFuncsTest, Prin2d)
 {
+    std::string info = "initial spin";
     testing::internal::CaptureStdout();
-    print_2d(array);
+    print_2d(info, array);
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("(         1,         2,         3)"));
-    EXPECT_THAT(output,testing::HasSubstr("(         4,         5,         6)"));
-    EXPECT_THAT(output,testing::HasSubstr("(         7,         8,         9)"));
+    EXPECT_THAT(output,testing::HasSubstr("initial spin"));
+    EXPECT_THAT(output,testing::HasSubstr("1 2 3"));
+    EXPECT_THAT(output,testing::HasSubstr("4 5 6"));
+    EXPECT_THAT(output,testing::HasSubstr("7 8 9"));
 }

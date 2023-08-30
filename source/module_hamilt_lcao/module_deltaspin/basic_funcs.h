@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <ostream>
 
 #include "module_base/vector3.h"
 
@@ -63,6 +64,6 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
                                const std::vector<ModuleBase::Vector3<double>>& rest,
                                std::vector<ModuleBase::Vector3<double>>& result);
 
-void print_2d(const std::vector<ModuleBase::Vector3<double>> &array);
+void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &array, std::ostream& ofs = std::cout);
 
 #endif // BASIC_FUNCS_H
