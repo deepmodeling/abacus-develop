@@ -63,4 +63,6 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
                                const std::vector<ModuleBase::Vector3<double>>& rest,
                                std::vector<ModuleBase::Vector3<double>>& result);
 
+void print_2d(const std::vector<ModuleBase::Vector3<double>> &array);
+
 #endif // BASIC_FUNCS_H

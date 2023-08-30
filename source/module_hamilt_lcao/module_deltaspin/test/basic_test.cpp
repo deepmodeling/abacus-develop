@@ -150,3 +150,13 @@ TEST_F(BasicFuncsTest, WhereFillScalarElse2d)
     EXPECT_DOUBLE_EQ(result[2][1], 8.0);
     EXPECT_DOUBLE_EQ(result[2][2], 2.0);
 }
+
+TEST_F(BasicFuncsTest, Prin2d)
+{
+    testing::internal::CaptureStdout();
+    print_2d(array);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("(         1,         2,         3)"));
+    EXPECT_THAT(output,testing::HasSubstr("(         4,         5,         6)"));
+    EXPECT_THAT(output,testing::HasSubstr("(         7,         8,         9)"));
+}
