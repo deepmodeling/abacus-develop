@@ -146,6 +146,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							{
 								// PLEASE use UOT as an input parameter of this subroutine
 								// mohan add 2021-03-30
+#ifdef USE_NEW_TWO_CENTER
                                 //=================================================================
                                 //          new two-center integral (temporary)
                                 //=================================================================
@@ -153,8 +154,6 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
                                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
                                 int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
 
-
-#ifdef USE_NEW_TWO_CENTER
                                 switch (dtype)
                                 {
                                 case 'S':
@@ -230,15 +229,13 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							}
 							else // calculate the derivative
 							{
-
+#ifdef USE_NEW_TWO_CENTER
                                 //=================================================================
                                 //          new two-center integral (temporary)
                                 //=================================================================
                                 // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
                                 int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-
-#ifdef USE_NEW_TWO_CENTER
                                 switch (dtype)
                                 {
                                 case 'S':
@@ -471,18 +468,18 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				//and size of outer vector is then 4
 				//inner loop : all projectors (L0,M0)
 
+#ifdef USE_NEW_TWO_CENTER
                 //=================================================================
                 //          new two-center integral (temporary)
                 //=================================================================
-                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                 int L1 = atom1->iw2l[ iw1_0 ];
                 int N1 = atom1->iw2n[ iw1_0 ];
                 int m1 = atom1->iw2m[ iw1_0 ];
+
+                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+
                 ModuleBase::Vector3<double> dtau = tau - tau1;
-
-
-#ifdef USE_NEW_TWO_CENTER
                 GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
                         T1, L1, N1, M1, it, dtau * GlobalC::ucell.lat0, calc_deri, nlm);
 #else
@@ -942,17 +939,19 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                     //and the first dimension is then 3
                     //inner loop : all projectors (L0,M0)
 
+
+#ifdef USE_NEW_TWO_CENTER
                     //=================================================================
                     //          new two-center integral (temporary)
                     //=================================================================
-                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                     int L1 = atom1->iw2l[ iw1_0 ];
                     int N1 = atom1->iw2n[ iw1_0 ];
                     int m1 = atom1->iw2m[ iw1_0 ];
-                    int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-                    ModuleBase::Vector3<double> dtau = GlobalC::ucell.atoms[T0].tau[I0] - tau1;
 
-#ifdef USE_NEW_TWO_CENTER
+                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                    int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+
+                    ModuleBase::Vector3<double> dtau = GlobalC::ucell.atoms[T0].tau[I0] - tau1;
                     GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
                             T1, L1, N1, M1, T0, dtau * GlobalC::ucell.lat0, false, nlm);
 #else
