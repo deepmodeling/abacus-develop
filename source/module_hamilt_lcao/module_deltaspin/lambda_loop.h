@@ -29,6 +29,7 @@ class LambdaLoop
         int outer_step; // which is N in the original code
         std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
         std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
+        bool debug = false; // which is LDESC in the original code
 };
 
 #endif // LAMBDA_LOOP_H
