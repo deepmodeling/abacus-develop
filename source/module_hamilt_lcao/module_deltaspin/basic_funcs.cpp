@@ -34,15 +34,14 @@ void maxloc_abs_2d(const std::vector<std::vector<double>>& array, std::vector<in
     }
 }
 
-double sum_2d(const std::vector<std::vector<double>>& array)
+double sum_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
     double sum = 0;
-    for (const auto& row: array)
+    for (const auto& element: array)
     {
-        for (const auto& element: row)
-        {
-            sum += element;
-        }
+            sum += element.x;
+            sum += element.y;
+            sum += element.z;
     }
     return sum;
 }

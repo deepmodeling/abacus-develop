@@ -37,7 +37,11 @@ TEST_F(BasicFuncsTest, MaxlocAbs2d)
 
 TEST_F(BasicFuncsTest, Sum2d)
 {
-    EXPECT_DOUBLE_EQ(sum_2d(array), 45.0);
+    std::vector<ModuleBase::Vector3<double>> array_1;
+    array_1.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+    array_1.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+    array_1.push_back(ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
+    EXPECT_DOUBLE_EQ(sum_2d(array_1), 45.0);
 }
 
 TEST_F(BasicFuncsTest, ScalarMul2d)

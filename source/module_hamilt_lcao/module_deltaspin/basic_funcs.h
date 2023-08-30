@@ -19,7 +19,7 @@ void maxloc_abs_2d(const std::vector<std::vector<double>>& array, std::vector<in
 /**
  * @brief sum of all elements in a 2D array.
  */
-double sum_2d(const std::vector<std::vector<double>>& array);
+double sum_2d(const std::vector<ModuleBase::Vector3<double>>& array);
 
 /**
  * @brief scalar multiply a 2D array.
