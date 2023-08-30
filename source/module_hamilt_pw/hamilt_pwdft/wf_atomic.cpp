@@ -297,7 +297,7 @@ void WF_atomic::atomic_wfc(const int ik,
                                 std::complex<double> fup,fdown;
                                 int nc;
                                 //This routine creates two functions only in the case j=l+1/2 or exit in the other case
-                                if(fabs(j-l+0.5<1e-4)) continue;
+                                if(fabs(j-l+0.5)<1e-4) continue;
                                 delete[] chiaux;
                                 chiaux = new double [np];
                                 //Find the functions j= l- 1/2
