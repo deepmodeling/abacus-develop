@@ -29,23 +29,25 @@ void LambdaLoop::init_input_parameters()
 void LambdaLoop::run_lambda_loop(int outer_step)
 {
     // init controlling parameters
-    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat), delta_lambda(nat);
+    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0), delta_lambda(nat,0.0);
     // question: is delta_lambda initially zero?
     // set nu, dnu and dnu_last_step
-    std::vector<ModuleBase::Vector3<double>> nu(nat), dnu(nat), dnu_last_step(nat), nu_change(nat);
+    std::vector<ModuleBase::Vector3<double>> nu(nat,0.0), dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
     // two controlling temp variables
-    std::vector<ModuleBase::Vector3<double>> eff_lambda(nat), temp_2(nat);
+    std::vector<ModuleBase::Vector3<double>> eff_lambda(nat,0.0), temp_2(nat,0.0);
     // MW during loop
-    std::vector<ModuleBase::Vector3<double>> new_spin(nat), spin_change(nat);
+    std::vector<ModuleBase::Vector3<double>> new_spin(nat,0.0), spin_change(nat,0.0);
     // spin gradient
     std::vector<std::vector<std::vector<std::vector<double>>>> spin_nu_gradient(
         nat, std::vector<std::vector<std::vector<double>>>(
             3, std::vector<std::vector<double>>(
                 nat, std::vector<double>(
                     3,0.0))));
-    std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat);
-    std::pair<int, int> maxloc;
-    std::vector<std::pair<int,int>> max_gradient_index(ntype);
+    std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat,0.0);
+    std::pair<int, int> maxloc(std::make_pair(0,0));
+    std::vector<std::pair<int,int>> max_gradient_index(ntype, std::make_pair(0,0));
+    std::vector<double> max_gradient(ntype,0.0);
+    std::vector<double> bound_gradient(ntype,0.0);
 
     // calculate number of components to be constrained
     int num_component = sum_2d(this->constrain);
@@ -107,9 +109,10 @@ void LambdaLoop::run_lambda_loop(int outer_step)
                 spin_nu_gradient_diag[ia].x = spin_nu_gradient[ia][0][ia][0];
                 spin_nu_gradient_diag[ia].y = spin_nu_gradient[ia][1][ia][1];
                 spin_nu_gradient_diag[ia].z = spin_nu_gradient[ia][2][ia][2];
-                new_spin[ia] = spin_nu_gradient_diag[ia];
             }
-            maxloc = maxloc_abs_2d(new_spin);
+            //new_spin[ia] = spin_nu_gradient_diag[ia];
+            //int it = iat2it[ia];
+            //maxloc = maxloc_abs_2d(new_spin);
         }
     }
 }
