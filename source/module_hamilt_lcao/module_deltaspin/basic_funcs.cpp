@@ -14,9 +14,11 @@ double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
     return max;
 }
 
-void maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array, std::vector<int>& result)
+std::pair<int,int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
     double max = 0;
+    int i_max = 0;
+    int j_max = 0;
     for (int i = 0; i < array.size(); i++)
     {
         for (int j = 0; j < 3; j++)
@@ -24,11 +26,12 @@ void maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array, std::v
             if ((max < abs(array[i][j])))
             {
                 max = abs(array[i][j]);
-                result[0] = i;
-                result[1] = j;
+                i_max = i;
+                j_max = j;
             }
         }
     }
+    return std::make_pair(i_max, j_max);
 }
 
 template <typename T>

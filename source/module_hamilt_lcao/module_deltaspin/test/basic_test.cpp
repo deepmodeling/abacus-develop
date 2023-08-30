@@ -31,10 +31,10 @@ TEST_F(BasicFuncsTest, MaxvalAbs2d)
 
 TEST_F(BasicFuncsTest, MaxlocAbs2d)
 {
-    std::vector<int> result(2);
-    maxloc_abs_2d(array, result);
-    EXPECT_EQ(result[0], 2);
-    EXPECT_EQ(result[1], 2);
+    std::pair<int,int> maxloc;
+    maxloc = maxloc_abs_2d(array);
+    EXPECT_EQ(maxloc.first, 2);
+    EXPECT_EQ(maxloc.second, 2);
 }
 
 TEST_F(BasicFuncsTest, Sum2d)

@@ -14,7 +14,7 @@ double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array);
 /**
  * @brief Find the maximum absolute value in a 2D array and its index.
  */
-void maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array, std::vector<int>& result);
+std::pair<int,int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array);
 
 /**
  * @brief sum of all elements in a 2D array.
