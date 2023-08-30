@@ -7,7 +7,7 @@
 # one can use mpich or openmpi
 # libtorch and libnpy are for deepks support, which can be =no
 
-./install_abacus_toolchain.sh --with-mpich=install \
+./install_abacus_toolchain.sh --with-openmpi=install \
 --with-intel=no --with-gcc=system \
 --with-cmake=install \
 --with-scalapack=install \
@@ -15,5 +15,5 @@
 --with-fftw=install \
 --with-elpa=install \
 --with-cereal=install \
---with-libtorch=install \
---with-libnpy=install \
+--with-libtorch=no \
+--with-libnpy=no \
