@@ -79,7 +79,6 @@ class toWannier90
     #ifdef __LCAO
     void init_wannier_lcao(const Grid_Technique& gt,
                            const ModuleBase::matrix& ekb,
-                           const ModulePW::PW_Basis* rhopw,
                            const ModulePW::PW_Basis_K* wfcpw,
                            const ModulePW::PW_Basis_Big* bigpw,
                            const Structure_Factor& sf,
@@ -89,9 +88,7 @@ class toWannier90
     void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);
-    void cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw,
-                 const ModulePW::PW_Basis* rhopw,
-                 const ModulePW::PW_Basis_K* wfcpw);
+    void cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);
     void produce_trial_in_pw(const psi::Psi<std::complex<double>>& psi_pw,
                              const int& ik,
                              const ModulePW::PW_Basis_K* wfcpw,
@@ -115,8 +112,7 @@ class toWannier90
     // void ToRealSpace(const int &ik, const int &ib, const ModuleBase::ComplexMatrix *evc, std::complex<double> *psir,
     // const ModuleBase::Vector3<double> G); std::complex<double> unkdotb(const std::complex<double> *psir, const int
     // ikb, const int bandindex, const ModuleBase::ComplexMatrix *psi_pw);
-    std::complex<double> unkdotkb(const ModulePW::PW_Basis* rhopw,
-                                  const ModulePW::PW_Basis_K* wfcpw,
+    std::complex<double> unkdotkb(const ModulePW::PW_Basis_K* wfcpw,
                                   const int& ik,
                                   const int& ikb,
                                   const int& iband_L,

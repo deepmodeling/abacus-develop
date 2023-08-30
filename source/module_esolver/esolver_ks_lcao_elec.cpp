@@ -568,7 +568,6 @@ namespace ModuleESolver
             toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
             myWannier.init_wannier_lcao(this->GridT,
                                         this->pelec->ekb,
-                                        this->pw_rho,
                                         this->pw_wfc,
                                         this->pw_big,
                                         this->sf,
