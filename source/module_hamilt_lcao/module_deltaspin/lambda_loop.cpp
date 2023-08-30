@@ -34,9 +34,10 @@ void LambdaLoop::run_lambda_loop(int outer_step)
     // set nu, dnu and dnu_last_step
     std::vector<ModuleBase::Vector3<double>> nu(nat,0.0), dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
     // two controlling temp variables
-    std::vector<ModuleBase::Vector3<double>> eff_lambda(nat,0.0), temp_2(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> temp_1(nat,0.0), temp_2(nat,0.0);
     // MW during loop
     std::vector<ModuleBase::Vector3<double>> new_spin(nat,0.0), spin_change(nat,0.0);
+    // new_spin replace MW in the original code
     // spin gradient
     std::vector<std::vector<std::vector<std::vector<double>>>> spin_nu_gradient(
         nat, std::vector<std::vector<std::vector<double>>>(
@@ -46,8 +47,9 @@ void LambdaLoop::run_lambda_loop(int outer_step)
     std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat,0.0);
     std::pair<int, int> maxloc(std::make_pair(0,0));
     std::vector<std::pair<int,int>> max_gradient_index(ntype, std::make_pair(0,0));
-    std::vector<double> max_gradient(ntype,0.0);
+    std::vector<double> max_gradient(ntype,-1.0);
     std::vector<double> bound_gradient(ntype,0.0);
+    // temp variables
 
     // calculate number of components to be constrained
     int num_component = sum_2d(this->constrain);
@@ -73,7 +75,7 @@ void LambdaLoop::run_lambda_loop(int outer_step)
             {
                 delta_lambda[i].print();
             }
-            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, eff_lambda);
+            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
             /**
              * TODO, also in-place change density CHTOT and orbital W, const 3 regular 3
              * basically, use CHTOTL_RESERVE and temp_1(LAMBDA) recalculate V, then calculate H, then
@@ -82,7 +84,7 @@ void LambdaLoop::run_lambda_loop(int outer_step)
              * Note that using CHTOTL instead of CHTOT is to recreate the H that has W_RESERVE as 
              * eigenvectors
             */
-            /// calculate_MW_from_lambda(eff_lambda, CHTOTL_RESERVE, W_RESERVE, new_spin, CHTOT, W);
+            /// calculate_MW_from_lambda(temp_1, CHTOTL_RESERVE, W_RESERVE, new_spin, CHTOT, W);
             subtract_2d(new_spin, spin, spin_change);
             subtract_2d(delta_lambda, dnu_last_step, nu_change);
             where_fill_scalar_2d(constrain, 0, 0.0, spin_change);
@@ -103,10 +105,19 @@ void LambdaLoop::run_lambda_loop(int outer_step)
             }
             for (int ia = 0; ia < nat; ia++)
             {
-                spin_nu_gradient_diag[ia].x = spin_nu_gradient[ia][0][ia][0];
-                spin_nu_gradient_diag[ia].y = spin_nu_gradient[ia][1][ia][1];
-                spin_nu_gradient_diag[ia].z = spin_nu_gradient[ia][2][ia][2];
+                int it = iat2it[ia];
+                for (int ic = 0; ic < 3; ic++)
+                {
+                    spin_nu_gradient_diag[ia][ic] = spin_nu_gradient[ia][ic][ia][ic];
+                    if (spin_nu_gradient_diag[ia][ic] > max_gradient[it])
+                    {
+                        max_gradient[it] = spin_nu_gradient_diag[ia][ic];
+                        max_gradient_index[it].first = ia;
+                        max_gradient_index[it].second = ic;
+                    }
+                }
             }
+            print_2d("diagonal gradient: ", spin_nu_gradient_diag);
             //new_spin[ia] = spin_nu_gradient_diag[ia];
             //int it = iat2it[ia];
             //maxloc = maxloc_abs_2d(new_spin);
