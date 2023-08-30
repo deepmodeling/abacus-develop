@@ -15,8 +15,6 @@ class LambdaLoop
 
         void run_lambda_loop(int outer_step);
 
-        int cal_num_component();
-
         std::vector<ModuleBase::Vector3<double>> target_spin; // which is M_CONSTR from INPUT
         std::vector<ModuleBase::Vector3<int>> constrain; // which is CONSTRL from INPUT
         int nat; // NIONS changed to nat

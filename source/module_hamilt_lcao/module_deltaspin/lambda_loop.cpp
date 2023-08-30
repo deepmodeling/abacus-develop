@@ -26,17 +26,6 @@ void LambdaLoop::init_input_parameters()
     //this->restrict_current = GlobalV::SCCUT;
 }
 
-int LambdaLoop::cal_num_component()
-{
-    // Vector3 is zero automatically
-    ModuleBase::Vector3<int> sum_control;
-    for (const auto& v : this->constrain) {
-        sum_control += v;
-    }
-    int num_component = sum_control.x + sum_control.y + sum_control.z;
-    return num_component;
-}
-
 void LambdaLoop::run_lambda_loop(int outer_step)
 {
     // init controlling parameters
@@ -55,7 +44,7 @@ void LambdaLoop::run_lambda_loop(int outer_step)
     temp_2.resize(nat);
 
     // calculate number of components to be constrained
-    int num_component = this->cal_num_component();
+    int num_component = sum_2d(this->constrain);
 
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
