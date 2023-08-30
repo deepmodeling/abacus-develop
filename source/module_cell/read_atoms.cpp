@@ -5,6 +5,7 @@
 #include "../module_base/timer.h"
 #include "../module_base/constants.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/formatter.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
 
@@ -910,9 +911,13 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 	ofs << lat0 << std::endl;
 
 	ofs << "\nLATTICE_VECTORS" << std::endl;
-	ofs << latvec.e11 << " " << latvec.e12 << " " << latvec.e13 << " #latvec1" << std::endl; 
-	ofs << latvec.e21 << " " << latvec.e22 << " " << latvec.e23 << " #latvec2" << std::endl;
-	ofs << latvec.e31 << " " << latvec.e32 << " " << latvec.e33 << " #latvec3" << std::endl;
+	context.set_context("vector3d");
+	context<<latvec.e11<<latvec.e12<<latvec.e13;
+	ofs << context.str() << " #latvec1" << std::endl; 
+	context<<latvec.e21<<latvec.e22<<latvec.e23;
+	ofs << context.str() << " #latvec2" << std::endl;
+	context<<latvec.e31<<latvec.e32<<latvec.e33;
+	ofs << context.str() << " #latvec3" << std::endl;
 	
 	ofs << "\nATOMIC_POSITIONS" << std::endl;
 
@@ -927,13 +932,20 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 			ofs << atoms[it].na << " #number of atoms" << std::endl;
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
-				ofs << atoms[it].tau[ia].x << "  " << atoms[it].tau[ia].y << "  " << atoms[it].tau[ia].z
-					<< "  m  " << atoms[it].mbl[ia].x << "  " << atoms[it].mbl[ia].y << "  " << atoms[it].mbl[ia].z;
+				context.set_context("vector3d");
+				context<<atoms[it].tau[ia].x<<atoms[it].tau[ia].y<<atoms[it].tau[ia].z;
+				ofs<<context.str()<<" m ";
+				context.set_context("vector3d_i");
+				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
+				ofs<<context.str();
 
 				if(level == 1)
 				{
 					// output velocity
-					ofs << "  v  " << atoms[it].vel[ia].x << "  " << atoms[it].vel[ia].y << "  " << atoms[it].vel[ia].z << std::endl;
+					ofs <<" v ";
+					context.set_context("vector3d");
+					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
+					ofs<<context.str()<<std::endl;
 				}
 				else if(level == 2)
 				{
@@ -961,13 +973,19 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 			ofs << atoms[it].na << " #number of atoms" << std::endl;
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
-				ofs << atoms[it].taud[ia].x << "  " << atoms[it].taud[ia].y << "  " << atoms[it].taud[ia].z
-					<< "  m  " << atoms[it].mbl[ia].x << "  " << atoms[it].mbl[ia].y << "  " << atoms[it].mbl[ia].z;
+				context.set_context("vector3d");
+				context<<atoms[it].taud[ia].x<<atoms[it].taud[ia].y<<atoms[it].taud[ia].z;
+				ofs<<context.str()<<" m ";
+				context.set_context("vector3d_i");
+				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
+				ofs<<context.str();
 
 				if(level == 1)
 				{
 					// output velocity
-					ofs << "  v  " << atoms[it].vel[ia].x << "  " << atoms[it].vel[ia].y << "  " << atoms[it].vel[ia].z << std::endl;
+					context.set_context("vector3d");
+					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
+					ofs <<" v "<<context.str()<<std::endl;
 				}
 				else if(level == 2)
 				{

@@ -181,3 +181,8 @@ AddTest(
   LIBS ${math_libs}
 )
 
+AddTest(
+  TARGET formatter_test
+  SOURCES ../formatter_fmt.cpp ../formatter_physfmt.cpp ../formatter_table.cpp ../formatter_contextfmt.cpp 
+          formatter_fmt_test.cpp formatter_physfmt_test.cpp formatter_table_test.cpp formatter_contextfmt_test.cpp
+)
