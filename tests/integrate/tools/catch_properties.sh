@@ -170,11 +170,16 @@ fi
 if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
 	amnref=diamond.amn
 	amncal=OUT.autotest/diamond.amn
+	mmnref=diamond.mmn
+	mmncal=OUT.autotest/diamond.mmn
 	eigref=diamond.eig
 	eigcal=OUT.autotest/diamond.eig
 	sed -i '1d' $amncal
+	sed -i '1d' $mmncal
 	python3 ../tools/CompareFile.py $amnref $amncal 1
 	echo "CompareAMN_pass $?" >>$1
+	python3 ../tools/CompareFile.py $mmnref $mmncal 1
+	echo "CompareMMN_pass $?" >>$1
 	python3 ../tools/CompareFile.py $eigref $eigcal 8
 	echo "CompareEIG_pass $?" >>$1
 fi
