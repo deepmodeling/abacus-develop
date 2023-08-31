@@ -42,7 +42,7 @@ case "$with_elpa" in
   __INSTALL__)
     echo "==================== Installing ELPA ===================="
     pkg_install_dir="${INSTALLDIR}/elpa-${elpa_ver}"
-    #pkg_install_dir="${HOME}/elpa/${elpa_ver}-mpich-gcc8"
+    #pkg_install_dir="${HOME}/lib/elpa/${elpa_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
     enable_openmp="yes"
 

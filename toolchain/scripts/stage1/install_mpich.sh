@@ -31,7 +31,7 @@ case "${with_mpich}" in
   __INSTALL__)
     echo "==================== Installing MPICH ===================="
     pkg_install_dir="${INSTALLDIR}/mpich-${mpich_ver}"
-    #pkg_install_dir="${HOME}/apps/mpich/${mpich_ver}-gcc8"
+    #pkg_install_dir="${HOME}/apps/mpich/${mpich_ver}-intel"
     install_lock_file="$pkg_install_dir/install_successful"
     if verify_checksums "${install_lock_file}"; then
       echo "mpich-${mpich_ver} is already installed, skipping it."

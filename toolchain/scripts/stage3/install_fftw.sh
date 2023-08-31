@@ -29,7 +29,7 @@ case "$with_fftw" in
     require_env MPI_LIBS
     echo "==================== Installing FFTW ===================="
     pkg_install_dir="${INSTALLDIR}/fftw-${fftw_ver}"
-    #pkg_install_dir="${HOME}/lib/fftw/${fftw_ver}-mpich-gcc8"
+    #pkg_install_dir="${HOME}/lib/fftw/${fftw_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
 
     if verify_checksums "${install_lock_file}"; then

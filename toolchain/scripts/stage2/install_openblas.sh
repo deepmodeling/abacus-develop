@@ -29,6 +29,7 @@ case "${with_openblas}" in
   __INSTALL__)
     echo "==================== Installing OpenBLAS ===================="
     pkg_install_dir="${INSTALLDIR}/openblas-${openblas_ver}"
+    #pkg_install_dir="${HOME}/lib/openblas/${openblas_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
     if verify_checksums "${install_lock_file}"; then
       echo "openblas-${openblas_ver} is already installed, skipping it."

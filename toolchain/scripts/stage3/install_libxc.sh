@@ -26,7 +26,7 @@ case "$with_libxc" in
   __INSTALL__)
     echo "==================== Installing LIBXC ===================="
     pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
-    #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-mpich-gcc8"
+    #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
     if verify_checksums "${install_lock_file}"; then
       echo "libxc-${libxc_ver} is already installed, skipping it."
