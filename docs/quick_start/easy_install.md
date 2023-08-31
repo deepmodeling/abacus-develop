@@ -43,9 +43,10 @@ Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/
 
 We offer a set of [toolchain]((https://github.com/deepmodeling/abacus-develop/toolchain)) 
 scripts to compile and install all the requirements
-automatically and suitable for machine charteristic in an online or offline way. 
+automatically and suitable for machine characteristic in an online or offline way. 
 The toolchain can be downloaded with ABACUS repo, which is easily used and can 
-have a convenient installation under HPC environment in both `GNU` or `Intel-oneAPI` toolchain. 
+have a convenient installation under HPC environment in both `GNU` or `Intel-oneAPI` toolchain.
+Sometimes, ABACUS by toolchain installation may have highly efficient performance.
 
 > Notice: the toolchain is under development, please let me know if you encounter any problem in using this toolchain.
 
