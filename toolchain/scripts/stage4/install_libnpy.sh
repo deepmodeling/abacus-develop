@@ -46,7 +46,7 @@ case "$with_libnpy" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d libnpy-${libnpy_ver} ] && rm -rf libnpy-${libnpy_ver}
         tar -xzf $filename
-        cp -r libnpy-${libnpy_ver}/include/ "${pkg_install_dir}/"
+        cp -r libnpy-${libnpy_ver} "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
         ;;
@@ -68,13 +68,14 @@ esac
 if [ "$with_libnpy" != "__DONTUSE__" ]; then
     if [ "$with_libnpy" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libnpy"
-    prepend_path CPATH "$pkg_install_dir"
+prepend_path CPATH "$pkg_install_dir/include"
+export CPATH="${pkg_install_dir}/include":${CPATH}
 EOF
         cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libnpy"
-    export LIBNPY_CFLAGS="${LIBNPY_CFLAGS}"
-    export LIBNPY_ROOT="$pkg_install_dir"
+export LIBNPY_CFLAGS="${LIBNPY_CFLAGS}"
+export LIBNPY_ROOT="$pkg_install_dir"
 EOF
 fi
 

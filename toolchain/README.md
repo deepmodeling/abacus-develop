@@ -26,7 +26,7 @@ and give setup files that you can use to compile ABACUS.
 - [ ] A better `setup` and toolchain code structure.
 - [ ] Modulefile generation scripts.
 - [ ] Support for `acml` toolchain (scripts are partly in toolchain now)
-- [ ] Support for [LIBRI](https://github.com/abacusmodeling/LibRI).
+- [ ] Support for [LIBRI](https://github.com/abacusmodeling/LibRI). (cannot find cereal now)
 - [ ] Support for GPU compilation.
 
 

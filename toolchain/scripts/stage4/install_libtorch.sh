@@ -82,12 +82,17 @@ esac
 if [ "$with_libtorch" != "__DONTUSE__" ]; then
   if [ "$with_libtorch" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_libtorch"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
+export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
+export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
+export CPATH="${pkg_install_dir}/include":$CPATH
+export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":$PKG_CONFIG_PATH
+export CMAKE_PREFIX_PATH="${pkg_install_dir}":$CMAKE_PREFIX_PATH
 EOF
   fi
   if [ "$ENABLE_CUDA" = "__TRUE__" ]; then

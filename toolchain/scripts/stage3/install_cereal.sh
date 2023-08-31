@@ -46,7 +46,7 @@ case "$with_cereal" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d cereal-${cereal_ver} ] && rm -rf cereal-${cereal_ver}
         tar -xzf $filename
-        cp -r cereal-${cereal_ver}/include/cereal "${pkg_install_dir}/"
+        cp -r cereal-${cereal_ver}/ "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
     fi
         ;;
@@ -68,13 +68,14 @@ esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
     if [ "$with_cereal" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_cereal"
-        prepend_path CPATH "$pkg_install_dir"
+prepend_path CPATH "$pkg_install_dir/include"
+export CPATH="${pkg_install_dir}/include:"${CPATH}
 EOF
         cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_cereal"
-    export CEREAL_CFLAGS="${CEREAL_CFLAGS}"
-    export CEREAL_ROOT="$pkg_install_dir"
+export CEREAL_CFLAGS="${CEREAL_CFLAGS}"
+export CEREAL_ROOT="$pkg_install_dir"
 EOF
 fi
 
