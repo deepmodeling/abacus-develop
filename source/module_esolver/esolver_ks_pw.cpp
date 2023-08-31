@@ -832,7 +832,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     if (INPUT.towannier90)
     {
         toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G);
-        myWannier.init_wannier_pw(this->pelec->ekb, this->pw_rho, this->pw_wfc, this->pw_big, this->kv, this->psi);
+        myWannier.init_wannier_pw(this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
     }
 
     //=======================================================
