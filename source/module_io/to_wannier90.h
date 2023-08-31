@@ -71,12 +71,11 @@ class toWannier90
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
     void init_wannier_pw(const ModuleBase::matrix& ekb,
-        const ModulePW::PW_Basis* rhopw,
         const ModulePW::PW_Basis_K* wfcpw,
         const ModulePW::PW_Basis_Big* bigpw,
         const K_Vectors& kv,
         const psi::Psi<std::complex<double>>* psi = nullptr);
-    #ifdef __LCAO
+#ifdef __LCAO
     void init_wannier_lcao(const Grid_Technique& gt,
                            const ModuleBase::matrix& ekb,
                            const ModulePW::PW_Basis_K* wfcpw,

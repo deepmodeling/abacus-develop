@@ -42,7 +42,6 @@ toWannier90::~toWannier90()
 }
 
 void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
-    const ModulePW::PW_Basis* rhopw,
     const ModulePW::PW_Basis_K* wfcpw,
     const ModulePW::PW_Basis_Big* bigpw,
     const K_Vectors& kv,
