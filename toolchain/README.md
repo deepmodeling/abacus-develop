@@ -1,5 +1,5 @@
 # The ABACUS Toolchain
-Version 2023.2
+Version 2023.3
 
 ## Author
 [QuantumMisaka](https://github.com/QuantumMisaka) 
@@ -16,8 +16,8 @@ and give setup files that you can use to compile ABACUS.
 
 ## Todo
 - [x] `gnu-openblas` toolchain support for `openmpi` and `mpich`.
-- [x] `intel-mkl-mpi` toolchain support (for old oneapi using `icc` instead of `icx`).
-- [x] `intelmkl-openmpi/mpich` toolchain support (need more test).
+- [x] `intel-mkl-mpi` toolchain support using `icc` or `icx`. (`icx` version of ABACUS have some problem)
+- [x] `intel-mkl-mpich` toolchain support (need more test).
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
 - [ ] A better mirror station for all packages, especially for CEREAL and LIBNPY.
 - [ ] A better README and Detail markdown file.
@@ -62,6 +62,8 @@ There are also well-modified script to run `install_abacus_toolchain.sh` for `gn
 > ./toolchain_gnu.sh
 # for intel-mkl
 > ./toolchain_intel.sh
+# for intel-mkl-mpich
+> ./toolchain_intel-mpich.sh
 ```
 
 Users can easily compile and install dependencies of ABACUS
@@ -97,7 +99,7 @@ If users want to re-install all the package, just do:
 ```
 or you can also do it in a more completely way:
 ```shell
-> rm -rf install/* build/*/* build/OpenBALS*/
+> rm -rf install/* build/*/* build/OpenBLAS*/
 ```
 
 Users can get help messages by simply:

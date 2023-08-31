@@ -142,14 +142,13 @@ export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${MPICH_LDFLAGS}|)"
 export CP_LIBS="\${CP_LIBS} IF_MPI(${MPICH_LIBS}|)"
 EOF
   if [ "${with_mpich}" != "__SYSTEM__" ]; then
-    # Using append_path instead of prepend_path for compatibility with Shifter.
-    # See http://github.com/ABACUS/ABACUS/issues/2058
     cat << EOF >> "${BUILDDIR}/setup_mpich"
-append_path PATH "${pkg_install_dir}/bin"
-append_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
-append_path LD_RUN_PATH "${pkg_install_dir}/lib"
-append_path LIBRARY_PATH "${pkg_install_dir}/lib"
-append_path CPATH "${pkg_install_dir}/include"
+export PATH="${pkg_install_dir}/bin":$PATH
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
+export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
+export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
+export CPATH="${pkg_install_dir}/include":$CPATH
+
 EOF
   fi
   cat "${BUILDDIR}/setup_mpich" >> ${SETUPFILE}

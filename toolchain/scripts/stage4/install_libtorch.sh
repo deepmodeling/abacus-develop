@@ -29,6 +29,7 @@ case "${with_libtorch}" in
   __INSTALL__)
     echo "==================== Installing libtorch ===================="
     pkg_install_dir="${INSTALLDIR}/libtorch-${libtorch_ver}"
+    #pkg_install_dir="${HOME}/lib/libtorch/${libtorch_ver}"
     install_lock_file="${pkg_install_dir}/install_successful"
     archive_file="libtorch-cxx11-abi-shared-with-deps-${libtorch_ver}+cpu.zip"
 
@@ -81,6 +82,7 @@ esac
 if [ "$with_libtorch" != "__DONTUSE__" ]; then
   if [ "$with_libtorch" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_libtorch"
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"

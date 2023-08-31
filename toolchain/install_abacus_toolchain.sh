@@ -298,9 +298,12 @@ enable_cuda="__FALSE__"
 enable_hip="__FALSE__"
 export intel_classic="yes" 
 # no, then icc->icx, icpc->icpx, 
-# which cannot compile elpa-2021 and fftw.3.3.10
-# due to some cross-compile problem
-# zhaoqing by 2023.08.23
+# which cannot compile elpa-2021 and fftw.3.3.10 in some place
+# due to some so-called cross-compile problem
+# and will lead to problem in force calculation
+# but icx is recommended by intel compiler
+# option: --with-intel-classic can change it to yes/no
+# zhaoqing by 2023.08.31
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"

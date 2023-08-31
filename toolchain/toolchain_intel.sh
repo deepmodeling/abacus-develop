@@ -2,13 +2,13 @@
 #SBATCH -J install
 #SBATCH -N 1
 #SBATCH -n 64
-# JamesMisaka in 2023-08-22
+# JamesMisaka in 2023-08-31
 # install abacus by intel-toolchain
 # use mkl and intelmpi
 # but mpich and openmpi can also be tried
 # libtorch and libnpy are for deepks support, which can be =no
 
-# module load mkl mpi icc compiler
+# module load mkl mpi compiler
 
 ./install_abacus_toolchain.sh \
 --with-intel=system --math-mode=mkl \
@@ -21,3 +21,4 @@
 --with-cereal=install \
 --with-libtorch=install \
 --with-libnpy=install \
+--with-intel-classic=yes \

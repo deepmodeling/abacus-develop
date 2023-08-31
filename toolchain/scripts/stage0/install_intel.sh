@@ -54,6 +54,7 @@ case "${with_intel}" in
       check_command ${pkg_install_dir}/bin/icpc "intel" && CXX="${pkg_install_dir}/bin/icpc" || exit 1
       check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1
     else
+    # abacus do not need icx, the key is mkl
       check_command ${pkg_install_dir}/bin/icx "intel" && CC="${pkg_install_dir}/bin/icx" || exit 1
       check_command ${pkg_install_dir}/bin/icpx "intel" && CXX="${pkg_install_dir}/bin/icpx" || exit 1
       check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1
