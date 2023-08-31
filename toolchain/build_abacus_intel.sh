@@ -1,7 +1,9 @@
 #!/bin/bash
 #SBATCH -J build
 #SBATCH -N 1
-#SBATCH -n 64
+#SBATCH -n 16
+#SBATCH -o build_abacus.log
+#SBATCH -e build_abacus.err
 # install ABACUS with libxc and deepks
 # JamesMisaka in 2023.08.22
 
@@ -47,4 +49,4 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 # 	      -DTensorFlow_DIR=$DEEPMD \
 
 cmake --build $BUILD_DIR -j `nproc` | tee build.log
-cmake --install $BUILD_DIR | tee install.log
+cmake --install $BUILD_DIR | tee build.log

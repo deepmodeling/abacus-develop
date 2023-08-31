@@ -1,7 +1,9 @@
 #!/bin/bash
 #SBATCH -J build
 #SBATCH -N 1
-#SBATCH -n 64
+#SBATCH -n 16
+#SBATCH -o build_abacus.log
+#SBATCH -e build_abacus.err
 # install ABACUS with libxc and deepks
 # JamesMisaka in 2023.08.31
 
