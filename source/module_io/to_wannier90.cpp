@@ -1632,6 +1632,7 @@ std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis_K* wfcpw,
     std::complex<double>* psir = new std::complex<double>[wfcpw->nmaxgr];
     std::complex<double>* phase = new std::complex<double>[wfcpw->nmaxgr];
     ModuleBase::GlobalFunc::ZEROS(phase, wfcpw->nmaxgr);
+    ModuleBase::GlobalFunc::ZEROS(psir, wfcpw->nmaxgr);
 
     // get the phase value in realspace
     for (int ig = 0; ig < wfcpw->npwk[ik]; ig++)
@@ -1765,6 +1766,7 @@ void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw,
         delete this->unk_inLcao;
     }
     this->unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, GlobalV::NBANDS, npwx, kv.ngk.data());
+    this->unk_inLcao->zero_out();
     ModuleBase::ComplexMatrix *orbital_in_G = new ModuleBase::ComplexMatrix[num_kpts];
 
     for (int ik = 0; ik < num_kpts; ik++)
@@ -1835,6 +1837,7 @@ void toWannier90::getUnkFromLcao(const ModulePW::PW_Basis_K* wfcpw,
 void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::complex<double> **cc)
 {
     std::complex<double> *ctot_send = new std::complex<double>[GlobalV::NBANDS * GlobalV::NLOCAL];
+    ModuleBase::GlobalFunc::ZEROS(ctot_send, GlobalV::NBANDS * GlobalV::NLOCAL);
 
 #ifdef __MPI
     MPI_Status status;

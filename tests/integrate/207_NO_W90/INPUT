@@ -1,7 +1,8 @@
 INPUT_PARAMETERS
 
-pseudo_dir              ../../../tests/PP_ORB
-orbital_dir             ../../../tests/PP_ORB
+suffix			autotest
+pseudo_dir              ../../PP_ORB
+orbital_dir             ../../PP_ORB
 ntype                   1
 ecutwfc                 20
 nbands                  12
@@ -14,3 +15,4 @@ symmetry                0
 towannier90             1
 nnkpfile                diamond.nnkp
 basis_type		lcao
+read_file_dir		./
