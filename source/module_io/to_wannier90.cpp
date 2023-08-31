@@ -1881,6 +1881,7 @@ void toWannier90::get_lcao_wfc_global_ik(std::complex<double> **ctot, std::compl
                     // receive trace_lo2
                     tag = i * 3 + 1;
                     int *trace_lo2 = new int[GlobalV::NLOCAL];
+                    ModuleBase::GlobalFunc::ZEROS(trace_lo2, GlobalV::NLOCAL);
 #ifdef __MPI
                     MPI_Recv(trace_lo2, GlobalV::NLOCAL, MPI_INT, i, tag, DIAG_WORLD, &status);
 #endif
