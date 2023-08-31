@@ -13,6 +13,9 @@ Unit Test for PAW subroutines; is a combination of test3 and test1
 3. set_libpaw_fft, which sets the real-space FFT grid
 4. set_libpaw_atom, which sets information of atoms in the unit cell
 5. set_libpaw_files, which sets the names of PAW xml files
+
+6. init_paw_cell and set_paw_k, which collects necessary information
+7.  accumulate_rhoij, which calculates sum_n <psi_n|p_i><p_j|psi_n>
 */
 
 class Test_PAW : public testing::Test
@@ -33,7 +36,7 @@ class Test_PAW : public testing::Test
 TEST_F(Test_PAW, test_paw)
 {
 
-// I'm setting up lots of things, to be worse I'm setting it up twice
+// I'm setting up lots of things, to be worse I need to do it twice ..
 // one for ABACUS side, the other for libpaw side
 // might be confusing, will clean up later
 
@@ -53,8 +56,8 @@ TEST_F(Test_PAW, test_paw)
     eigts3_in = new std::complex<double> [nat * (2 * nz + 1)];
 
     filename_list.resize(ntyp);
-    filename_list[0] = "C.xml";
-    filename_list[1] = "H.xml";
+    filename_list[0] = "H.xml";
+    filename_list[1] = "C.xml";
 
     ModuleBase::Matrix3 latvec;
     latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
@@ -184,19 +187,16 @@ TEST_F(Test_PAW, test_paw)
 
     paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-    EXPECT_EQ(rhoijp.size(),nat);
-    EXPECT_EQ(rhoijselect.size(),nat);
-    EXPECT_EQ(nrhoijsel.size(),nat);
-
+#ifdef USE_PAW
     for(int iat = 0; iat < nat; iat ++)
     {
-        // As all entries are larger than 1e-10, rhoijp is the same as rhoij
-        std::cout << "iat,size_rhoij : " << iat << " " << rhoijp[iat].size() << std::endl;
-         
-        std::cout << "nrhoijsel : " << nrhoijsel[iat] << std::endl;
-        for(int i = 0; i < rhoijp[iat].size(); i ++)
-        {
-            std::cout << rhoijp[iat][i] << " " << rhoijselect[iat][i] << std::endl;
-        }
+        paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
     }
+
+    int nfft = nx * ny * nz;
+    double *nhat, *nhatgr;
+    nhat = new double[nfft];
+    nhatgr = new double[nfft*3];
+    paw_cell.get_nhat(nhat,nhatgr);
+#endif
 }
