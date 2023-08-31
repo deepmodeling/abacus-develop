@@ -194,6 +194,10 @@ void Paw_Cell::set_libpaw_files()
         }
 
         filename_list = new char[ntypat*264];
+        for(int i = 0; i < ntypat*264; i++)
+        {
+            filename_list[i] = ' ';
+        }
         for(int i = 0; i < ntypat; i++)
         {
             std::string filename;
