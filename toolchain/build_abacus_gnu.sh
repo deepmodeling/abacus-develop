@@ -44,6 +44,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_ASAN=OFF \
         -DUSE_ELPA=ON \
         | tee configure.log
+#         -DENABLE_LIBRI=ON \
 #         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \

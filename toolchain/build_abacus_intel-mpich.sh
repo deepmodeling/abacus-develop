@@ -36,6 +36,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLibxc_DIR=$LIBXC \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
+        -DENABLE_LIBRI=OFF \
         -DUSE_OPENMP=ON \
         -DENABLE_ASAN=OFF \
         -DUSE_ELPA=ON \
