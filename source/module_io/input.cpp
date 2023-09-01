@@ -224,6 +224,8 @@ void Input::Default(void)
     relax_bfgs_init = 0.5; // bohr
     relax_scale_force = 0.5;
     nbspline = -1;
+
+    use_paw = false;
     //----------------------------------------------------------
     // ecutwfc
     //----------------------------------------------------------
@@ -967,7 +969,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, relax_new);
         }
-
+        else if (strcmp("use_paw", word) == 0)
+        {
+            read_bool(ifs, use_paw);
+        }
         //----------------------------------------------------------
         // plane waves
         //----------------------------------------------------------
@@ -2869,6 +2874,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_scale_force);
     Parallel_Common::bcast_bool(relax_new);
 
+    Parallel_Common::bcast_bool(use_paw);
+
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
     Parallel_Common::bcast_double(ecutwfc);
@@ -3232,6 +3239,17 @@ void Input::Check(void)
 
     // std::cout << "diago_proc=" << diago_proc << std::endl;
     // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
+
+    if(use_paw)
+    {
+        if(basis_type != "pw")
+        {
+            ModuleBase::WARNING_QUIT("Input", "PAW is for pw basis only");
+        }
+#ifndef USE_PAW
+        ModuleBase::WARNING_QUIT("Input", "to use PAW, compile with USE_PAW");
+#endif
+    }
 
     if (diago_proc > 1 && basis_type == "lcao" && diago_proc != GlobalV::NPROC)
     {
