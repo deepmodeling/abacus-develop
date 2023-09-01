@@ -14,7 +14,7 @@ typename OperatorPW<FPTYPE, Device>::hpsi_info OperatorPW<FPTYPE, Device>::hPsi(
   ModuleBase::timer::tick("OperatorPW", "hPsi");
   auto psi_input = std::get<0>(input);
   std::tuple<const std::complex<FPTYPE>*, int> psi_info = psi_input->to_range(std::get<1>(input));
-  int n_npwx = std::get<1>(psi_info); 
+  int nbands = std::get<1>(psi_info);
 
   std::complex<FPTYPE> *tmhpsi = this->get_hpsi(input);
   const std::complex<FPTYPE> *tmpsi_in = std::get<0>(psi_info);
@@ -24,11 +24,11 @@ typename OperatorPW<FPTYPE, Device>::hpsi_info OperatorPW<FPTYPE, Device>::hPsi(
       ModuleBase::WARNING_QUIT("OperatorPW", "please choose correct range of psi for hPsi()!");
   }
 
-  this->act(psi_input, n_npwx, tmpsi_in, tmhpsi);
+  this->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, tmhpsi, psi_input->get_ngk(this->ik));
   OperatorPW* node((OperatorPW*)this->next_op);
   while(node != nullptr)
   {
-      node->act(psi_input, n_npwx, tmpsi_in, tmhpsi);
+      node->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, tmhpsi, psi_input->get_ngk(node->ik));
       node = (OperatorPW*)(node->next_op);
   }
 
@@ -41,18 +41,9 @@ typename OperatorPW<FPTYPE, Device>::hpsi_info OperatorPW<FPTYPE, Device>::hPsi(
       // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
       syncmem_complex_op()(this->ctx, this->ctx, hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
       delete this->hpsi;
-      this->hpsi = new psi::Psi<std::complex<FPTYPE>, Device>(hpsi_pointer, *psi_input, 1, n_npwx/psi_input->npol);
+      this->hpsi = new psi::Psi<std::complex<FPTYPE>, Device>(hpsi_pointer, *psi_input, 1, nbands / psi_input->npol);
   }      
-  return hpsi_info(this->hpsi, psi::Range(1, 0, 0, n_npwx/psi_input->npol), hpsi_pointer);
-}  
-
-template<typename FPTYPE, typename Device>
-void OperatorPW<FPTYPE, Device>::act(
-    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi) const
-{
+  return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->npol), hpsi_pointer);
 }
 
 namespace hamilt {
