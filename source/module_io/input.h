@@ -547,6 +547,16 @@ class Input
     //==========================================================
     bool test_skip_ewald = false;
 
+    //==========================================================
+    // variables for constrained spin DFT
+    //==========================================================
+    int constr_mag_switch;
+    std::vector<ModuleBase::Vector3<double>> constr_mag;
+    std::vector<ModuleBase::Vector3<double>> lambda;
+    std::vector<double> constr_spin_val;
+    std::vector<double> constr_spin_angle1;
+    std::vector<double> constr_spin_angle2;
+
   private:
     //==========================================================
     // MEMBER FUNCTIONS :
