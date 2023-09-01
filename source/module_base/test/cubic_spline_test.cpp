@@ -23,7 +23,7 @@ using ModuleBase::PI;
  *      Constructs the cubic spline interpolant from given
  *      data points and boundary condition.
  *
- *  - get
+ *  - eval
  *      Evaluates the interpolant at certain points.
  *                                                          */
 class CubicSplineTest : public ::testing::Test
@@ -128,7 +128,7 @@ TEST_F(CubicSplineTest, NotAKnot)
     y_ref_[4] = 0.1510153464180796;
     y_ref_[5] = 0.1411200080598672;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -161,7 +161,7 @@ TEST_F(CubicSplineTest, PeriodicAndUniform)
     y_ref_[3] = 1.4356324132349871e-04;
     y_ref_[4] = 1.0000000000000000e+00;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -202,7 +202,7 @@ TEST_F(CubicSplineTest, FirstDeriv)
     y_ref_[4] = 0.0798871927951471;
     y_ref_[5] = 0.0497870683678639;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -249,7 +249,7 @@ TEST_F(CubicSplineTest, FirstDeriv_sinx_uniform)
     y_ref_[4] = -0.988258957900347;
     y_ref_[5] = -0.669239857276262;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -293,7 +293,7 @@ TEST_F(CubicSplineTest, FirstDeriv_sinx_Notuniform)
     y_ref_[4] = -0.756802495307928;
     y_ref_[5] = -0.202090837026266;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -335,7 +335,7 @@ TEST_F(CubicSplineTest, SecondDeriv_sinx_uniform)
     y_ref_[4] = -0.988258957900347;
     y_ref_[5] = -0.669239857276262;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -379,7 +379,7 @@ TEST_F(CubicSplineTest, SecondDeriv_sinx_Notuniform)
     y_ref_[4] = -0.988258957900347;
     y_ref_[5] = -0.279415498198926;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -416,7 +416,7 @@ TEST_F(CubicSplineTest, Periodic_sinx_uniform)
     y_ref_[4] = -0.988258957900347;
     y_ref_[5] = -0.279415498198926;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -455,7 +455,7 @@ TEST_F(CubicSplineTest, Periodic_sinx_Notuniform)
     y_ref_[4] = -0.988258957900347;
     y_ref_[5] = -0.279415498198926;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -490,7 +490,7 @@ TEST_F(CubicSplineTest, Periodic_sinx_Notuniform)
 //     y_ref_[4] = 0.1510153464180796;
 //     y_ref_[5] = 0.1411200080598672;
 
-//     cubspl.get(ni, x_interp_, y_interp_);
+//     cubspl.eval(ni, x_interp_, y_interp_);
 //     for (int i = 0; i != ni; ++i)
 //     {
 //         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -527,7 +527,7 @@ TEST_F(CubicSplineTest, NotAKnot_sinx_uniform)
 
     // printf("err=%.8lf\n",err);
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -565,7 +565,7 @@ TEST_F(CubicSplineTest, NotAKnot_sinx_Notuniform)
     y_ref_[4] = -0.988258957900347;
     y_ref_[5] = -0.279415498198926;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -606,7 +606,7 @@ TEST_F(CubicSplineTest, FirstDeriv_2x_uniform)
     y_ref_[4] = 12.800000000000000;
     y_ref_[5] = 16.000000000000000;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -649,7 +649,7 @@ TEST_F(CubicSplineTest, FirstDeriv_2x_Notuniform)
     y_ref_[4] = 1.320000000000000;
     y_ref_[5] = 1.980000000000000;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -690,7 +690,7 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_uniform)
     y_ref_[4] = 12.800000000000000;
     y_ref_[5] = 16.000000000000000;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -733,7 +733,7 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_Notuniform)
     y_ref_[4] = 1.320000000000000;
     y_ref_[5] = 1.980000000000000;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -768,7 +768,7 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_Notuniform)
 //     y_ref_[4] = 12.800000000000000;
 //     y_ref_[5] = 16.000000000000000;
 
-//     cubspl.get(ni, x_interp_, y_interp_);
+//     cubspl.eval(ni, x_interp_, y_interp_);
 //     for (int i = 0; i != ni; ++i)
 //     {
 //         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -805,7 +805,7 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_Notuniform)
 //     y_ref_[4] = 1.320000000000000;
 //     y_ref_[5] = 1.980000000000000;
 
-//     cubspl.get(ni, x_interp_, y_interp_);
+//     cubspl.eval(ni, x_interp_, y_interp_);
 //     for (int i = 0; i != ni; ++i)
 //     {
 //         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -840,7 +840,7 @@ TEST_F(CubicSplineTest, NotAKnot_2x_uniform)
     y_ref_[4] = 12.800000000000000;
     y_ref_[5] = 16.000000000000000;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -877,7 +877,7 @@ TEST_F(CubicSplineTest, NotAKnot_2x_Notuniform)
     y_ref_[4] = 1.320000000000000;
     y_ref_[5] = 1.980000000000000;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -917,7 +917,7 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_uniform)
     y_ref_[4] = 0.670320046035639;
     y_ref_[5] = 0.449328964117222;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -960,7 +960,7 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_Notuniform)
     y_ref_[4] = 0.516851334491699;
     y_ref_[5] = 0.371576691022046;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1000,7 +1000,7 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_uniform)
     y_ref_[4] = 0.670320046035639;
     y_ref_[5] = 0.449328964117222;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1041,7 +1041,7 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
     y_ref_[4] = 0.670320046035639;
     y_ref_[5] = 0.449328964117222;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1077,7 +1077,7 @@ TEST_F(CubicSplineTest, NotAKnot_expx_uniform)
     y_ref_[4] = 0.670320046035639;
     y_ref_[5] = 0.449328964117222;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1114,7 +1114,7 @@ TEST_F(CubicSplineTest, NotAKnot_expx_Notuniform)
     y_ref_[4] = 0.670320046035639;
     y_ref_[5] = 0.449328964117222;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1154,7 +1154,7 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_uniform)
     y_ref_[4] = 0.693147180559945;
     y_ref_[5] = 1.386294361119891;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1194,7 +1194,7 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_Notuniform)
     y_ref_[4] = 0.693147180559945;
     y_ref_[5] = 1.386294361119891;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1234,7 +1234,7 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_uniform)
     y_ref_[4] = 0.693147180559945;
     y_ref_[5] = 1.386294361119891;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1272,7 +1272,7 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_Notuniform)
     y_ref_[3] = 0.000000000000000;
     y_ref_[4] = 0.693147180559945;
     y_ref_[5] = 1.386294361119891;
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1307,7 +1307,7 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_uniform)
     y_ref_[4] = 0.693147180559945;
     y_ref_[5] = 1.386294361119891;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1342,7 +1342,7 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_Notuniform)
     y_ref_[4] = 0.693147180559945;
     y_ref_[5] = 1.386294361119891;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
@@ -1383,7 +1383,7 @@ TEST_F(CubicSplineTest, SecondDeriv)
     y_ref_[4] = 0.0788753653329337;
     y_ref_[5] = 0.0497870683678639;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -1421,7 +1421,7 @@ TEST_F(CubicSplineTest, TwoPoints)
     y_ref_[3] = 4.159700000000001;
     y_ref_[4] = 4.33;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -1442,7 +1442,7 @@ TEST_F(CubicSplineTest, TwoPoints)
     y_ref_[3] = 4.074050000000001;
     y_ref_[4] = 4.33;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -1452,7 +1452,7 @@ TEST_F(CubicSplineTest, TwoPoints)
     y_[1] = y_[0];
     cubspl.build(2, x_, y_, CubicSpline::BoundaryCondition::periodic, CubicSpline::BoundaryCondition::periodic);
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], 2.33, tol);
@@ -1489,7 +1489,7 @@ TEST_F(CubicSplineTest, ThreePoints)
     y_ref_[3] = 4.3875;
     y_ref_[4] = 4.8;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -1505,7 +1505,7 @@ TEST_F(CubicSplineTest, ThreePoints)
     y_ref_[3] = 1.2361111111111112;
     y_ref_[4] = 1.2;
 
-    cubspl.get(ni, x_interp_, y_interp_);
+    cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
