@@ -2105,6 +2105,11 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, precision);
         }
         //----------------------------------------------------------------------------------
+        //    spin constrained DFT
+        //----------------------------------------------------------------------------------
+        else if (strcmp("constr_mag_switch", word) == 0){
+            read_value(ifs, constr_mag_switch);
+        }
         else
         {
             // xiaohui add 2015-09-15
