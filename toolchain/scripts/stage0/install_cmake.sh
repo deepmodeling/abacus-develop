@@ -65,6 +65,7 @@ if [ "${with_cmake}" != "__DONTUSE__" ]; then
   if [ "${with_cmake}" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_cmake"
 prepend_path PATH "${pkg_install_dir}/bin"
+export PATH="${pkg_install_dir}/bin:":${PATH}
 EOF
     cat "${BUILDDIR}/setup_cmake" >> $SETUPFILE
   fi
