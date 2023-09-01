@@ -31,8 +31,6 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
 
     step_ = 0;
     step_rst_ = 0;
-
-    MD_func::init_vel(ucell, mdp.md_tfirst, mdp.my_rank, allmass, frozen_freedom_, ionmbl, vel);
 }
 
 MD_base::~MD_base()
@@ -46,9 +44,24 @@ MD_base::~MD_base()
 
 void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
+    MD_func::init_vel(ucell, mdp.md_tfirst, mdp.my_rank, allmass, frozen_freedom_, ionmbl, vel);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+
     if (mdp.md_restart)
     {
         restart(global_readin_dir);
+    }
+    else if (ucell.init_vel)
+    {
+        if (std::fabs(t_current - mdp.md_tfirst) > 1e-8)
+        {
+            std::cout << "  Initial temperature you set is " << mdp.md_tfirst * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+            std::cout << "  Temperature determined from STRU is " << t_current * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+            std::cout << "  Please check the inconsistence" << std::endl;
+            exit(0);
+        }
     }
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
