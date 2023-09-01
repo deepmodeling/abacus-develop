@@ -68,7 +68,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
     MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     ucell.ionic_position_updated = true;
 }
 
