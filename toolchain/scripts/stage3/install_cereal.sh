@@ -67,6 +67,7 @@ case "$with_cereal" in
 esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
     if [ "$with_cereal" != "__SYSTEM__" ]; then
+    # LibRI deps should find cereal include in CPATH
         cat << EOF > "${BUILDDIR}/setup_cereal"
 prepend_path CPATH "$pkg_install_dir/include"
 export CPATH="${pkg_install_dir}/include:"${CPATH}
