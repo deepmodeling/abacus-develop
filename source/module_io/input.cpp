@@ -583,6 +583,10 @@ void Input::Default(void)
     //    precision control denghui added on 2023-01-01
     //==========================================================
     precision = "double";
+    //==========================================================
+    // variables for constrained spin DFT
+    //==========================================================
+    constr_mag_switch = 0;
     return;
 }
 
