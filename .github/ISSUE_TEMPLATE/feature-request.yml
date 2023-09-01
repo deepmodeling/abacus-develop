@@ -1,6 +1,6 @@
 name: Feature Request
-description: Suggest something more for ABACUS to do
-labels: [Feature]
+description: For users or developers who want to propose new features to be added or suggest improvements or enhancements to existing features.
+labels: [Feature Request]
 assignees: mohanchen
 
 body:
@@ -9,6 +9,9 @@ body:
     label: Background
     description: |
       A clear and concise description of why this new feature is important.
+    placeholder: |
+      Example: A new feature is requested based on emerging research in density functional theory ...    
+      Implementing this feature will significantly enhance ABACUS's capabilities and improve user experience by enabling them to ...
   validations:
     required: true
 
@@ -17,6 +20,8 @@ body:
     label: Describe the solution you'd like
     description: |
       A clear and concise description of what you want to happen.
+    placeholder: |
+      Example: It is suggested to implement a novel functionality with the LCAO basis, enabling users to efficiently ...
   validations:
     required: true
 
@@ -24,7 +29,9 @@ body:
   attributes:
     label: Additional Context
     description: |
-      Add any other context or screenshots about the feature request here.
+      Add any other context or references about the feature request here.
+    placeholder: |
+      Example: Here is a mockup of the proposed feature (insert screenshot or link to design), along with relevant research articles and resources that support the implementation of this feature...
 
 - type: markdown
   attributes:

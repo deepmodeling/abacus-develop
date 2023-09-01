@@ -483,7 +483,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         }
     }
 
-    this->nks = this->nkstot;
+    this->nkstot_full = this->nks = this->nkstot;
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot",nkstot);
     return 1;
@@ -546,7 +546,7 @@ void K_Vectors::update_use_ibz( void )
     ModuleBase::TITLE("K_Vectors","update_use_ibz");
     assert( nkstot_ibz > 0 );
 
-	// update nkstot
+    // update nkstot
     this->nkstot = this->nkstot_ibz;
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot now",nkstot);
@@ -1034,6 +1034,8 @@ void K_Vectors::mpi_k(void)
     Parallel_Common::bcast_int(nspin);
 
     Parallel_Common::bcast_int(nkstot);
+
+    Parallel_Common::bcast_int(nkstot_full);
 
     Parallel_Common::bcast_int(nmp, 3);
 

@@ -149,6 +149,7 @@ void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
     ngfftdg[0] = nxdg_in;
     ngfftdg[1] = nydg_in;
     ngfftdg[2] = nzdg_in;
+    nfft = ngfftdg[0]*ngfftdg[1]*ngfftdg[2];
 }
 
 // Sets natom, ntypat, typat and xred
@@ -193,6 +194,10 @@ void Paw_Cell::set_libpaw_files()
         }
 
         filename_list = new char[ntypat*264];
+        for(int i = 0; i < ntypat*264; i++)
+        {
+            filename_list[i] = ' ';
+        }
         for(int i = 0; i < ntypat; i++)
         {
             std::string filename;
@@ -204,3 +209,76 @@ void Paw_Cell::set_libpaw_files()
         }
     }
 }
+
+void Paw_Cell::set_libpaw_xc(const int xclevel_in, const int ixc_in)
+{
+    xclevel = xclevel_in;
+    ixc = ixc_in;
+}
+
+void Paw_Cell::set_nspin(const int nspin_in)
+{
+    nspden = nspin_in;
+    nsppol = nspin_in;
+}
+
+#ifdef USE_PAW
+extern "C"
+{
+    void prepare_libpaw_(double&,double&,double*,double*,double*,double&,int*,int*,
+    //                   ecut    ecutpaw gmet    rprimd  gprimd  ucvol   ngfft ngfftdg
+        int&,int&,int*,double*,int&,int&,char*,int&,int&);
+    //  natom ntypat typat xred ixc xclevel filename_list nspden nsppol
+
+    void get_vloc_ncoret_(int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*,double*);
+    //                    ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   vloc,   ncoret
+
+    void set_rhoij_(int&, int&,     int&,      int&,  int*,       double*);
+    //              iatom nrhoijsel size_rhoij nspden rhoijselect rhoijp
+
+    void get_nhat_(int&, int&, double*, int*, int&, int&, double*, double*, double&, double*, double*);
+    //             natom,ntypat,xred,   ngfft,nfft,nspden,gprimd,  rprimd,  ucvol,   nhat,    nhatgr
+
+    void calculate_dij_(int&, int&, int&, int&,   int&, int&,  double*, double&, double*, double*, double*);
+    //                  natom,ntypat,ixc, xclevel,nfft, nspden,xred,    ucvol,   gprimd,  vks,     vxc
+
+    void get_dij_(int&, int&, int&, double*);
+    //            iatom,size_dij,nspden,dij
+}
+
+void Paw_Cell::prepare_paw()
+{
+    prepare_libpaw_(ecut, ecutpaw, gmet.data(), rprimd.data(), gprimd.data(), ucvol,
+            ngfft.data(), ngfftdg.data(), natom, ntypat, typat.data(), xred.data(),
+            ixc, xclevel, filename_list, nspden, nsppol);
+}
+
+void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
+{
+    get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+            gmet.data(), ucvol, xred.data(), vloc, ncoret);
+}
+
+void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp)
+{
+    int iat_fortran = iat + 1; //Fortran index starts from 1 !!!
+    set_rhoij_(iat_fortran,nrhoijsel,size_rhoij,nspden,rhoijselect,rhoijp);
+}
+
+void Paw_Cell::get_nhat(double* nhat, double* nhatgr)
+{
+    get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
+            ucvol,nhat,nhatgr);
+}
+
+void Paw_Cell::calculate_dij(double* vks, double* vxc)
+{
+    calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks,vxc);
+}
+
+void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
+{
+    int iat_fortran = iat + 1;
+    get_dij_(iat_fortran,size_dij,nspden,dij);
+}
+#endif

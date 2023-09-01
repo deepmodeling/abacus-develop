@@ -1,6 +1,6 @@
 name: Bug Report
-description: Create a report for problems with ABACUS
-labels: [Bug]
+description: For users or developers to report any programming issues, such as crashes, errors, or unexpected behavior of ABACUS
+labels: [Bug Report]
 assignees: dyzheng
 body:
 - type: textarea
@@ -11,6 +11,9 @@ body:
       - abnormal interruption of the program,
       - systematic or randomized numerical error, or
       - relatively low efficiency.
+    placeholder: |
+      Example: When running ABACUS with certain input parameters, the program crashes  
+      unexpectedly during the SCF calculation ...
   validations:
     required: true
 
@@ -19,6 +22,9 @@ body:
     label: Expected behavior
     description: |
       A clear and concise description of what you expected to happen.
+    placeholder: |
+      Example: ABACUS should complete the SCF calculation with the specified input parameters   
+      without any errors or crashes ...
 
 - type: textarea
   attributes:
@@ -31,6 +37,12 @@ body:
       4. [e.g. run ABACUS with ...]
 
       It is recommended to attach your calculation case here for the developers to reproduce the bug.
+    placeholder: |
+      Example:  
+      1. Clone the source code from https://github.com/deepmodeling/abacus-develop.git     
+      2. Configure CMake with options -DBUILD_TESTING=ON ...    
+      3. Build ABACUS with cmake --build build -j8 ...    
+      4. Run ABACUS with mpirun -np 4 ./abacus ...    
 
 - type: textarea
   attributes:
@@ -39,12 +51,19 @@ body:
       - OS: [e.g. Ubuntu 20.04]
       - Compiler: [e.g. gcc 5.1.0]
       - Dependencies: [e.g. Intel MKL, OpenBLAS]
+    placeholder: |
+      Example:  
+      - OS: Ubuntu 20.04  
+      - Compiler: gcc 5.1.0  
+      - Dependencies: Intel MKL, OpenBLAS  
 
 - type: textarea
   attributes:
     label: Additional Context
     description: |
       Add any other context about the problem here.
+    placeholder: |
+      Example: The issue seems to occur only when using a specific input file, which I have attached below ...
 - type: markdown
   attributes:
     value: >

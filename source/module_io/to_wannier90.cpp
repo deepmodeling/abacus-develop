@@ -42,7 +42,6 @@ toWannier90::~toWannier90()
 }
 
 void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
-    const ModulePW::PW_Basis* rhopw,
     const ModulePW::PW_Basis_K* wfcpw,
     const ModulePW::PW_Basis_Big* bigpw,
     const K_Vectors& kv,
@@ -65,7 +64,7 @@ void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
 
     writeUNK(wfcpw, *psi, bigpw);
     outEIG(ekb);
-    cal_Mmn(*psi, rhopw, wfcpw);
+    cal_Mmn(*psi, wfcpw);
     cal_Amn(*psi, wfcpw);
 
     /*
@@ -93,7 +92,6 @@ void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
 #ifdef __LCAO
 void toWannier90::init_wannier_lcao(const Grid_Technique& gt,
                                     const ModuleBase::matrix& ekb,
-                                    const ModulePW::PW_Basis* rhopw,
                                     const ModulePW::PW_Basis_K* wfcpw,
                                     const ModulePW::PW_Basis_Big* bigpw,
                                     const Structure_Factor& sf,
@@ -118,7 +116,7 @@ void toWannier90::init_wannier_lcao(const Grid_Technique& gt,
 
     getUnkFromLcao(wfcpw, sf, kv, wfcpw->npwk_max);
     cal_Amn(this->unk_inLcao[0], wfcpw);
-    cal_Mmn(this->unk_inLcao[0], rhopw, wfcpw);
+    cal_Mmn(this->unk_inLcao[0], wfcpw);
     writeUNK(wfcpw, this->unk_inLcao[0], bigpw);
     outEIG(ekb);
 }
@@ -699,7 +697,6 @@ void toWannier90::cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const Mo
 }
 
 void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw,
-                          const ModulePW::PW_Basis* rhopw,
                           const ModulePW::PW_Basis_K* wfcpw)
 {
     // test by jingan
@@ -775,7 +772,7 @@ void toWannier90::cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw,
                         // std::complex<double> *unk_L_r = new std::complex<double>[wfcpw->nrxx];
                         // ToRealSpace(cal_ik,n,psi_pw,unk_L_r,phase_G);
                         // mmn = unkdotb(unk_L_r,cal_ikb,m,psi_pw);
-                        mmn = unkdotkb(rhopw, wfcpw, cal_ik, cal_ikb, n, m, phase_G, psi_pw);
+                        mmn = unkdotkb(wfcpw, cal_ik, cal_ikb, n, m, phase_G, psi_pw);
                         // delete[] unk_L_r;
                     }
                     else
@@ -1622,8 +1619,7 @@ std::complex<double> toWannier90::unkdotb(const std::complex<double> *psir,
     return result;
 }
 */
-std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis* rhopw,
-                                           const ModulePW::PW_Basis_K* wfcpw,
+std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis_K* wfcpw,
                                            const int& ik,
                                            const int& ikb,
                                            const int& iband_L,
@@ -1633,13 +1629,14 @@ std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis* rhopw,
 {
     // (1) set value
     std::complex<double> result(0.0, 0.0);
-    std::complex<double> *psir = new std::complex<double>[wfcpw->nmaxgr];
-    std::complex<double>* phase = new std::complex<double>[rhopw->nmaxgr];
+    std::complex<double>* psir = new std::complex<double>[wfcpw->nmaxgr];
+    std::complex<double>* phase = new std::complex<double>[wfcpw->nmaxgr];
+    ModuleBase::GlobalFunc::ZEROS(phase, wfcpw->nmaxgr);
 
     // get the phase value in realspace
-    for (int ig = 0; ig < rhopw->npw; ig++)
+    for (int ig = 0; ig < wfcpw->npwk[ik]; ig++)
     {
-        if (rhopw->gdirect[ig] == G) // It should be used carefully. We cannot judge if two double are equal.
+        if (wfcpw->getgdirect(ik,ig) == G) // It should be used carefully. We cannot judge if two double are equal.
         {
             phase[ig] = std::complex<double>(1.0, 0.0);
             break;
@@ -1647,7 +1644,7 @@ std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis* rhopw,
     }
 
     // (2) fft and get value
-    rhopw->recip2real(phase, phase);
+    wfcpw->recip2real(phase, phase, ik);
     wfcpw->recip2real(&psi_pw(ik, iband_L, 0), psir, ik);
 
     for (int ir = 0; ir < wfcpw->nrxx; ir++)
@@ -1655,11 +1652,11 @@ std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis* rhopw,
         psir[ir] *= phase[ir];
     }
 
-    wfcpw->real2recip(psir, psir, ik);
+    wfcpw->real2recip(psir, psir, ikb); //ikb, not ik
 
     std::complex<double> result_tem(0.0, 0.0);
 
-    for (int ig = 0; ig < psi_pw.get_ngk(ikb); ig++)
+    for (int ig = 0; ig <wfcpw->npwk[ikb]; ig++)
     {
         result_tem = result_tem + conj(psir[ig]) * psi_pw(ikb, iband_R, ig);
     }

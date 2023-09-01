@@ -253,7 +253,7 @@ if ! test -z "$has_wfc_r"  && [ $has_wfc_r == 1 ]; then
 		exit 1
 	fi
 	nband=$(grep NBANDS OUT.autotest/running_scf.log|awk '{print $3}')
-	allgrid=$(grep "fft grid for wave functions" OUT.autotest/running_scf.log|awk -F "[=,]" '{print $2*$3*$4}')
+allgrid=$(grep "fft grid for wave functions" OUT.autotest/running_scf.log | awk -F "[=,\\\[\\\]]" '{print $3*$4*$5}')
 	for((band=0;band<$nband;band++));do
 		if [[ -f "OUT.autotest/wfc_realspace/wfc_realspace_0_$band" ]];then
 			variance_wfc_r=`sed -n "13,$"p OUT.autotest/wfc_realspace/wfc_realspace_0_$band | \
