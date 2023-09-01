@@ -48,7 +48,7 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base container kernels orb
+  LIBS ${math_libs} device base container orb
 )
 
 AddTest(
@@ -57,7 +57,7 @@ AddTest(
     real_gaunt_table_test.cpp
     ../real_gaunt_table.cpp
     ../../module_ao/ORB_gaunt_table.cpp
-  LIBS ${math_libs} device base container kernels
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -72,5 +72,5 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base container kernels orb
+  LIBS ${math_libs} device base container orb
 )
