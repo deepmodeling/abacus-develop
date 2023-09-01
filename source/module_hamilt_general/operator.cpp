@@ -118,7 +118,6 @@ FPTYPE* Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
     return hpsi_pointer;
 }
 
-
 namespace hamilt {
 template class Operator<float, psi::DEVICE_CPU>;
 template class Operator<std::complex<float>, psi::DEVICE_CPU>;

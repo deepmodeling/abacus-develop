@@ -46,7 +46,16 @@ class Operator
 
     virtual void add(Operator* next);
 
-    virtual int get_ik() const {return this->ik;}
+    virtual int get_ik() const { return this->ik; }
+
+    //do operation : |hpsi_choosed> = V|psi_choosed>
+    //V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
+    virtual void act(const int nbands,
+        const int nbasis,
+        const int npol,
+        const FPTYPE* tmpsi_in,
+        FPTYPE* tmhpsi,
+        const int ngk_ik = 0)const {};
 
     Operator* next_op = nullptr;
 
