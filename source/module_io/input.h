@@ -550,11 +550,21 @@ class Input
     //==========================================================
     // variables for constrained spin DFT
     //==========================================================
+    /**
+     * 0: no constrained spin DFT;
+     * 1: constrain atomic spin via values at xyz;
+     * 2: constrain atomic spin via spin value and angles
+    */
     int constr_mag_switch;
+    /// @brief used in constr_mag_switch = 1, the spin values at xyz, size of natoms x 3
     std::vector<ModuleBase::Vector3<double>> constr_mag;
+    /// @brief constraining paramerter, size of natoms x 3
     std::vector<ModuleBase::Vector3<double>> lambda;
+    /// @brief used in constr_mag_switch = 2, the spin value, with size of natoms
     std::vector<double> constr_spin_val;
+    /// @brief used in constr_mag_switch = 2, the spin angle, with size of natoms
     std::vector<double> constr_spin_angle1;
+    /// @brief used in constr_mag_switch = 2, the spin angle, with size of natoms
     std::vector<double> constr_spin_angle2;
 
   private:
