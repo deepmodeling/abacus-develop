@@ -139,7 +139,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(
             int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
             int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
             uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell.lat0, olm);
+                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
 #else
             uot.snap_psipsi(orb,                  // orbitals
                             olm, 0, 'S',          // olm, job of derivation, dtype of Operator
