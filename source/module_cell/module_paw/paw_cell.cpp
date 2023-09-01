@@ -2,6 +2,11 @@
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
 
+namespace GlobalC
+{
+    Paw_Cell paw_cell;
+}
+
 void Paw_Cell::init_paw_cell(
     const double ecutwfc_in, const double cell_factor_in,
     const double omega_in,

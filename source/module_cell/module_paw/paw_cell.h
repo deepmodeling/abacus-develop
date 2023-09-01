@@ -244,4 +244,9 @@ class Paw_Cell
 #endif
 };
 
+namespace GlobalC
+{
+    extern Paw_Cell paw_cell;
+}
+
 #endif

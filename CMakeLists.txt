@@ -604,6 +604,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     device
     container
     kernels
+    paw
 )
 
 if(ENABLE_LCAO)

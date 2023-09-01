@@ -208,6 +208,9 @@ void Paw_Cell::set_libpaw_files()
             }
         }
     }
+#ifdef __MPI
+    Parallel_Common::bcast_char(filename_list,ntypat*264);
+#endif
 }
 
 void Paw_Cell::set_libpaw_xc(const int xclevel_in, const int ixc_in)

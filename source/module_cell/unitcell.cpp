@@ -637,6 +637,38 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     //===================================
     this->set_iat2itia();
 
+	if(GlobalV::use_paw)
+	{
+		GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
+
+		int * typat;
+		double * xred;
+
+		typat = new int[nat];
+		xred = new double[nat*3];
+
+		int iat = 0;
+		for(int it = 0; it < ntype; it ++)
+		{
+			for(int ia = 0; ia < atoms[it].na; ia ++)
+			{
+				typat[iat] = it;
+				xred[iat*3+0] = atoms[it].taud[ia].x;
+				xred[iat*3+1] = atoms[it].taud[ia].y;
+				xred[iat*3+2] = atoms[it].taud[ia].z;
+				iat ++;
+			}
+		}
+
+		GlobalC::paw_cell.set_libpaw_atom(nat,ntype,typat,xred);
+		delete[] typat;
+		delete[] xred;
+
+		GlobalC::paw_cell.set_libpaw_files();
+
+		GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
+	}
+
     return;
 }
 
