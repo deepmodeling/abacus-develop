@@ -106,7 +106,7 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("seed_sto                       0 #the random seed to generate stochastic orbitals"));
         EXPECT_THAT(output,testing::HasSubstr("initsto_freq                   0 #frequency to generate new stochastic orbitals when running md"));
         EXPECT_THAT(output,testing::HasSubstr("cal_cond                       0 #calculate electronic conductivities"));
-        EXPECT_THAT(output,testing::HasSubstr("cond_nche                      20 #orders of Chebyshev expansions for conductivities"));
+        EXPECT_THAT(output,testing::HasSubstr("cond_che_thr                   1e-08 #control the error of Chebyshev expansions for conductivities"));
         EXPECT_THAT(output,testing::HasSubstr("cond_dw                        0.1 #frequency interval for conductivities"));
         EXPECT_THAT(output,testing::HasSubstr("cond_wcut                      10 #cutoff frequency (omega) for conductivities"));
         EXPECT_THAT(output,testing::HasSubstr("cond_dt                        0.07 #t interval to integrate Onsager coefficiencies"));

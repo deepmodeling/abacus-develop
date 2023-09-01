@@ -325,7 +325,7 @@
     - [test\_skip\_ewald](#test_skip_ewald)
   - [Electronic conductivities](#electronic-conductivities)
     - [cal\_cond](#cal_cond)
-    - [cond\_nche](#cond_nche)
+    - [cond\_che\_thr](#cond_che_thr)
     - [cond\_dw](#cond_dw)
     - [cond\_wcut](#cond_wcut)
     - [cond\_dt](#cond_dt)
@@ -1043,8 +1043,8 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
 ### npart_sto
 
 - **Type**: Integer
-- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True`
-- **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS.
+- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True` or [cal_cond](#cal_cond) = `True`
+- **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
 - **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
@@ -2994,12 +2994,12 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Description**: Whether to calculate electronic conductivities.
 - **Default**: False
 
-### cond_nche
+### cond_che_thr
 
-- **Type**: Integer
+- **Type**: Real
 - **Availability**: [esolver_type](#esolver_type) = `sdft`
-- **Description**: Chebyshev expansion orders for stochastic Kubo Greenwood.
-- **Default**: 20
+- **Description**: Control the error of Chebyshev expansions for conductivities.
+- **Default**: 1e-8
 
 ### cond_dw
 

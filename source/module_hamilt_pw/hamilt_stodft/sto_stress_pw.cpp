@@ -121,6 +121,8 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 		const int nstobands = stowf.nchip[ik];
 		const int nbandstot = nstobands + nksbands;
 		const int npw = wfc_basis->npwk[ik];
+		psi_in->fix_k(ik);
+		stowf.shchi->fix_k(ik);
         for (int i = 0; i < npw; ++i)
         {
             gk[0][i] = wfc_basis->getgpluskcar(ik, i)[0] * factor;
@@ -140,7 +142,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 					{
 						for(int i=0;i<npw;++i)
 						{
-							std::complex<double> p = psi_in->operator()(ik, ibnd, i);
+							std::complex<double> p = psi_in[0](ibnd, i);
 							double np = p.real() * p.real() + p.imag() * p.imag();
 							s_kin(l,m) +=
 								wg(ik, ibnd)*gk[l][i]*gk[m][i] * np;
@@ -150,7 +152,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 					{
 						for(int i=0;i<npw;++i)
 						{
-							std::complex<double> p = stowf.shchi[ik](ibnd-nksbands, i);
+							std::complex<double> p = stowf.shchi[0](ibnd-nksbands, i);
 							double np = p.real() * p.real() + p.imag() * p.imag();
                             s_kin(l, m) += p_kv->wk[ik] * gk[l][i] * gk[m][i] * np;
                         }
@@ -261,7 +263,8 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 		becp.zero_out();
 		char transa = 'C';
         char transb = 'N';
-		psi_in[0].fix_k(ik);
+		psi_in->fix_k(ik);
+		stowf.shchi->fix_k(ik);
 		//KS orbitals
 		int npmks = GlobalV::NPOL * nksbands;
 		zgemm_(&transa,&transb,&nkb,&npmks,&npw,&ModuleBase::ONE,
@@ -272,7 +275,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 		int npmsto = GlobalV::NPOL * nstobands;
 		zgemm_(&transa,&transb,&nkb,&npmsto,&npw,&ModuleBase::ONE,
 				GlobalC::ppcell.vkb.c,&npwx,
-            	stowf.shchi[ik].c,&npwx,
+            	stowf.shchi->get_pointer(),&npwx,
             	&ModuleBase::ZERO,&becp(nksbands,0),&nkb);
 		
 		Parallel_Reduce::reduce_complex_double_pool( becp.c, becp.size);
@@ -351,7 +354,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 				//stochastic orbitals
 				zgemm_(&transa,&transb,&nkb,&npmsto,&npw,&ModuleBase::ONE,
 						dbecp_noevc.c,&npwx,
-        		    	stowf.shchi[ik].c,&npwx,
+        		    	stowf.shchi->get_pointer(),&npwx,
         		    	&ModuleBase::ZERO,&dbecp(nksbands, 0),&nkb);
 				
 				for (int ib=0; ib<nbandstot; ++ib)

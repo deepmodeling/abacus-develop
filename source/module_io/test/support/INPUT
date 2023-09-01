@@ -76,7 +76,7 @@ emax_sto                       0 #trial energy to guess the upper bound of eigen
 seed_sto                       0 #the random seed to generate stochastic orbitals
 initsto_freq                   0 #frequency to generate new stochastic orbitals when running md
 cal_cond                       0 #calculate electronic conductivities
-cond_nche                      20 #orders of Chebyshev expansions for conductivities
+cond_che_thr                   1e-08 #control the error of Chebyshev expansions for conductivities
 cond_dw                        0.1 #frequency interval for conductivities
 cond_wcut                      10 #cutoff frequency (omega) for conductivities
 cond_dt                        0.07 #control the t interval

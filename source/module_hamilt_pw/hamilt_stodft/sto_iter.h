@@ -25,7 +25,15 @@ class Stochastic_Iter
     Stochastic_Iter();
     ~Stochastic_Iter();
 
-    void init(int* nchip_in, const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf);
+    /**
+     * @brief init for iteration process of SDFT
+     * 
+     * @param method_in 1: slow   2: fast but cost much memories
+     * @param pkv_in K_Vectors
+     * @param wfc_basis wfc pw basis
+     * @param stowf stochastic wave function
+     */
+    void init(const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf);
 
     void sum_stoband(Stochastic_WF& stowf,
                      elecstate::ElecState* pes,
