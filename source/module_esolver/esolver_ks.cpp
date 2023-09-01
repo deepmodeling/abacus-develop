@@ -102,8 +102,8 @@ namespace ModuleESolver
         // mohan add 2021-01-30
         Print_Info::setup_parameters(ucell, this->kv);
 
-        if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
-        {
+        //if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
+        //{
             //Envelope function is calculated as lcao_in_pw
             //new plane wave basis
     #ifdef __MPI
@@ -124,7 +124,7 @@ namespace ModuleESolver
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
             this->pw_wfc->collect_local_pw(); 
             this->print_wfcfft(inp, GlobalV::ofs_running);
-        }
+        //}
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
         GlobalC::Pgrid.init(this->pw_rho->nx,

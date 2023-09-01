@@ -99,6 +99,7 @@ set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
+include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 if(ENABLE_COVERAGE)
@@ -603,7 +604,6 @@ target_link_libraries(${ABACUS_BIN_NAME}
     vdw
     device
     container
-    kernels
 )
 
 if(ENABLE_LCAO)
