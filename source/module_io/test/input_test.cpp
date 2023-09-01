@@ -357,6 +357,7 @@ TEST_F(InputTest, Default)
     EXPECT_TRUE(INPUT.mdp.dump_force);
     EXPECT_TRUE(INPUT.mdp.dump_vel);
     EXPECT_TRUE(INPUT.mdp.dump_virial);
+    EXPECT_EQ(INPUT.constr_mag_switch,0);
 }
 
 TEST_F(InputTest, Read)
