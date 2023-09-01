@@ -1,26 +1,28 @@
-list(APPEND container_srcs
-    tensor.cpp
-    tensor_map.cpp
-    cpu_allocator.cpp
-    tensor_buffer.cpp
-    tensor_shape.cpp
-    tensor_types.cpp
-)
+set(ATen_CPU_SRCS)
+set(ATen_CUDA_SRCS)
+set(ATen_ROCM_SRCS)
+set(ATen_CPU_DEPENDENCY_LIBS)
+set(ATen_CUDA_DEPENDENCY_LIBS)
+set(ATen_ROCM_DEPENDENCY_LIBS)
 
-if(USE_CUDA)
-    list(APPEND container_srcs gpu_allocator.cpp)
-endif()
+add_subdirectory(base/core)
+add_subdirectory(ATen/core)
+add_subdirectory(ATen/kernels)
 
-add_library(container OBJECT ${container_srcs})
+# Pass source, includes, and libs to parent
+set(ATen_CPU_SRCS ${ATen_CPU_SRCS} PARENT_SCOPE)
+set(ATen_CUDA_SRCS ${ATen_CUDA_SRCS} PARENT_SCOPE)
+set(ATen_ROCM_SRCS ${ATen_ROCM_SRCS} PARENT_SCOPE)
+set(ATen_CPU_DEPENDENCY_LIBS ${ATen_CPU_DEPENDENCY_LIBS} PARENT_SCOPE)
+set(ATen_CUDA_DEPENDENCY_LIBS ${ATen_CUDA_DEPENDENCY_LIBS} PARENT_SCOPE)
+set(ATen_ROCM_DEPENDENCY_LIBS ${ATen_ROCM_DEPENDENCY_LIBS} PARENT_SCOPE)
 
-add_subdirectory(kernels)
-
-target_link_libraries(container kernels)
+add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
 
 if(ENABLE_COVERAGE)
   add_coverage(container)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(tests)
+  add_subdirectory(test)
 endif()

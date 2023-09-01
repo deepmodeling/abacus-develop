@@ -1,7 +1,7 @@
 #ifndef TWO_CENTER_TABLE_H
 #define TWO_CENTER_TABLE_H
 
-#include "module_base/module_container/tensor.h"
+#include <ATen/tensor.h>
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/radial_collection.h"
 
