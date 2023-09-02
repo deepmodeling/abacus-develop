@@ -3446,6 +3446,11 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("Input", "Fermi Surface Plotting not implemented for plane wave now.");
         }
 
+        if (sc_mag_switch)
+        {
+            ModuleBase::WARNING_QUIT("Input", "Non-colliner Spin-constrained DFT not implemented for plane wave now.");
+        }
+
     }
     else if (basis_type == "lcao")
     {

@@ -1190,6 +1190,14 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("Fermi Surface Plotting not implemented for plane wave now."));
 	INPUT.out_dos = 0;
 	//
+	INPUT.basis_type = "pw";
+	INPUT.sc_mag_switch = 3;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Non-colliner Spin-constrained DFT not implemented for plane wave now."));
+	INPUT.sc_mag_switch = 0;
+	//
 	INPUT.basis_type = "lcao";
 	INPUT.ks_solver = "cg";
 	testing::internal::CaptureStdout();
