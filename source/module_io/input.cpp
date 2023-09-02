@@ -584,9 +584,10 @@ void Input::Default(void)
     //==========================================================
     precision = "double";
     //==========================================================
-    // variables for constrained spin DFT
+    // variables for NCSCD
     //==========================================================
-    constr_mag_switch = 0;
+    sc_mag_switch = 0;
+    sc_file = "none";
     return;
 }
 
@@ -2105,10 +2106,13 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, precision);
         }
         //----------------------------------------------------------------------------------
-        //    spin constrained DFT
+        //    NCSCD
         //----------------------------------------------------------------------------------
-        else if (strcmp("constr_mag_switch", word) == 0){
-            read_value(ifs, constr_mag_switch);
+        else if (strcmp("sc_mag_switch", word) == 0){
+            read_value(ifs, sc_mag_switch);
+        }
+        else if (strcmp("sc_file", word) == 0){
+            read_value(ifs, sc_file);
         }
         else
         {
@@ -3222,6 +3226,11 @@ void Input::Bcast()
     //    device control denghui added on 2022-11-05
     //----------------------------------------------------------------------------------
     Parallel_Common::bcast_string(device);
+    /**
+     *  NCSCD variables
+    */
+    Parallel_Common::bcast_int(sc_mag_switch);
+    Parallel_Common::bcast_string(sc_file);
 
     return;
 }

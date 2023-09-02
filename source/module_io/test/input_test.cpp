@@ -357,7 +357,8 @@ TEST_F(InputTest, Default)
     EXPECT_TRUE(INPUT.mdp.dump_force);
     EXPECT_TRUE(INPUT.mdp.dump_vel);
     EXPECT_TRUE(INPUT.mdp.dump_virial);
-    EXPECT_EQ(INPUT.constr_mag_switch,0);
+    EXPECT_EQ(INPUT.sc_mag_switch,0);
+	EXPECT_EQ(INPUT.sc_file,"none");
 }
 
 TEST_F(InputTest, Read)
@@ -700,6 +701,8 @@ TEST_F(InputTest, Read)
     EXPECT_FALSE(INPUT.mdp.dump_force);
     EXPECT_FALSE(INPUT.mdp.dump_vel);
     EXPECT_FALSE(INPUT.mdp.dump_virial);
+    EXPECT_EQ(INPUT.sc_mag_switch, 0);
+    EXPECT_EQ(INPUT.sc_file,"sc.json");
 }
 
 TEST_F(InputTest, Default_2)

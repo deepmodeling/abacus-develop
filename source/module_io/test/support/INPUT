@@ -353,10 +353,14 @@ of_full_pw_dim                 0 #If of_full_pw = true, dimention of FFT is test
 of_read_kernel                 0 #If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF
 of_kernel_file                 WTkernel.txt #The name of WT kernel file.
 
-#Parameters (19.dft+u)
+#Parameters (20.dft+u)
 dft_plus_u                     0 #true:DFT+U correction; false: standard DFT calcullation(default)
 yukawa_lambda                  -1 #default:0.0
 yukawa_potential               0 #default: false
 omc                            0 #the mode of occupation matrix control
 hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)
 orbital_corr        -1 #which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
+
+#Parameters (22.non-collinear spin-constrained DFT)
+sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization via values at xyz; 3: via spin value and angles
+sc_file                        sc.json #file name for parameters used in non-collinear spin-constrained DFT (json format)
