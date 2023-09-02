@@ -31,6 +31,46 @@ void parallelks(const int& allbands, int& perbands_ks, int& ib0_ks)
     }
 }
 
+psi::Psi<std::complex<double>>* gatherpsi(psi::Psi<std::complex<double>>& psi,
+                                          psi::Psi<std::complex<double>>& tmppsi_all,
+                                          const int& npwx,
+                                          int* nrecv_ks, int* displs_ks,
+                                          int* nrecv_sto, int* displs_sto,
+                                          const int bandinfo[6] )
+{
+    psi::Psi<std::complex<double>>* p_psi;
+    p_psi = &psi;
+#ifdef __MPI
+    if (GlobalV::NSTOGROUP > 1)
+    {
+        const int perbands_ks = bandinfo[0];
+        const int perbands_sto = bandinfo[1];
+        const int allbands_ks = bandinfo[3];
+        p_psi = &tmppsi_all;
+        ModuleBase::timer::tick("sKG", "bands_gather");
+        MPI_Allgatherv(&psi(0, 0),
+                       perbands_ks * npwx,
+                       MPI_DOUBLE_COMPLEX,
+                       &p_psi[0](0, 0),
+                       nrecv_ks,
+                       displs_ks,
+                       MPI_DOUBLE_COMPLEX,
+                       PARAPW_WORLD);
+        MPI_Allgatherv(&psi(perbands_ks, 0),
+                       perbands_sto * npwx,
+                       MPI_DOUBLE_COMPLEX,
+                       &p_psi[0](allbands_ks, 0),
+                       nrecv_sto,
+                       displs_sto,
+                       MPI_DOUBLE_COMPLEX,
+                       PARAPW_WORLD);
+         ModuleBase::timer::tick("sKG", "bands_gather");
+    }
+#endif
+    return p_psi;
+
+}
+
 void ESolver_SDFT_PW::check_che(const int nche_in)
 {
     //------------------------------
@@ -137,13 +177,13 @@ void ESolver_SDFT_PW::cal_j(const psi::Psi<std::complex<double>>& psi_in,
                             psi::Psi<std::complex<double>>& j1psi,
                             psi::Psi<std::complex<double>>& j2psi,
                             hamilt::Velocity& velop,
-                            const double& mu,
                             const int& start_band,
                             const int& nbands,
                             const int& npw)
 {
     const int npwx = wf.npwx;
     const int ndim = 3;
+    const double mu = this->pelec->eferm.ef;
     psi::Psi<std::complex<double>> hpsi(1, nbands, npwx, kv.ngk.data());
 
     // H|psi>
@@ -170,6 +210,136 @@ void ESolver_SDFT_PW::cal_j(const psi::Psi<std::complex<double>>& psi_in,
             j2psi(0, ib, ig) = j2psi(0, ib, ig) / 2.0 - mu * j1psi(0, ib, ig);
         }
     }
+
+    return;
+}
+
+void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<double>>& leftv,
+                                  const psi::Psi<std::complex<double>>& rightv,
+                                  psi::Psi<std::complex<double>>& batchj1psi,
+                                  psi::Psi<std::complex<double>>& batchj2psi,
+                                  ModuleBase::ComplexMatrix& j1, 
+                                  ModuleBase::ComplexMatrix& j2,
+                                  hamilt::Velocity& velop,
+                                  const int& ik,
+                                  const std::complex<double>& factor,
+                                  const int bandinfo[6],
+                                  const int& bsize_psi)
+{
+    ModuleBase::timer::tick(this->classname, "cal_jmatrix");
+    const char transa = 'C';
+    const char transb = 'N';
+    const double mu = this->pelec->eferm.ef;
+    const int npwx = wf.npwx;
+    const int npw = kv.ngk[ik];
+    const int ndim = 3;
+    const int perbands_ks = bandinfo[0];
+    const int perbands_sto = bandinfo[1];
+    const int perbands = bandinfo[2];
+    const int allbands_ks = bandinfo[3];
+    const int allbands_sto = bandinfo[4];
+    const int allbands = bandinfo[5];
+    const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
+    
+    //calculate <leftv|J|rightv>
+    int remain = perbands_ks;
+    int startnb = 0;
+    if (perbands_ks > 0)
+    {
+        while (remain > 0)
+        {
+            int tmpnb = std::min(remain, bsize_psi);
+            // calculate J|leftv>
+            cal_j(leftv, batchj1psi, batchj2psi, velop, startnb, tmpnb, npw);
+            // calculate i<leftv| J |rightv>
+            for (int id = 0; id < ndim; ++id)
+            {
+                const int idnb = id * tmpnb;
+                const int jbais = startnb;
+                zgemm_(&transa,
+                       &transb,
+                       &tmpnb,
+                       &allbands_sto,
+                       &npw,
+                       &factor,
+                       &batchj1psi(idnb, 0),
+                       &npwx,
+                       &(rightv(allbands_ks, 0)),
+                       &npwx,
+                       &ModuleBase::ZERO,
+                       &j1(id, jbais),
+                       &perbands_ks);
+                zgemm_(&transa,
+                       &transb,
+                       &tmpnb,
+                       &allbands_sto,
+                       &npw,
+                       &factor,
+                       &batchj2psi(idnb, 0),
+                       &npwx,
+                       &(rightv(allbands_ks, 0)),
+                       &npwx,
+                       &ModuleBase::ZERO,
+                       &j2(id, jbais),
+                       &perbands_ks);
+            }
+            remain -= tmpnb;
+            startnb += tmpnb;
+            if (remain == 0)
+                break;
+        }
+    }
+    remain = perbands_sto;
+    startnb = 0;
+    while (remain > 0)
+    {
+        int tmpnb = std::min(remain, bsize_psi);
+        // calculate J|leftv>
+        cal_j(leftv, batchj1psi, batchj2psi, velop, perbands_ks + startnb, tmpnb, npw);
+       // calculate i<leftv| J |rightv>
+        for (int id = 0; id < ndim; ++id)
+        {
+            const int idnb = id * tmpnb;
+            const int jbais = perbands_ks * allbands_sto + startnb;
+            zgemm_(&transa,
+                   &transb,
+                   &tmpnb,
+                   &allbands,
+                   &npw,
+                   &factor,
+                   &batchj1psi(idnb, 0),
+                   &npwx,
+                   rightv.get_pointer(),
+                   &npwx,
+                   &ModuleBase::ZERO,
+                   &j1(id, jbais),
+                   &perbands_sto);
+            zgemm_(&transa,
+                   &transb,
+                   &tmpnb,
+                   &allbands,
+                   &npw,
+                   &factor,
+                   &batchj2psi(idnb, 0),
+                   &npwx,
+                   rightv.get_pointer(),
+                   &npwx,
+                   &ModuleBase::ZERO,
+                   &j2(id, jbais),
+                   &perbands_sto);
+        }
+        remain -= tmpnb;
+        startnb += tmpnb;
+        if (remain == 0)
+            break;
+    }
+
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, j1.c, ndim * dim_jmatrix, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, j2.c, ndim * dim_jmatrix, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
+#endif
+
+    ModuleBase::timer::tick(this->classname, "cal_jmatrix");
 
     return;
 }
@@ -208,7 +378,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
     if (GlobalV::NBANDS > 0)
     {
         stopsi = stowf.chiortho;
-        stowf.shchi->resize(1, 1, 1); // clean memories
+        stowf.shchi->resize(1, 1, 1); // clean memories //Note shchi is different from \sqrt(fH_here)|chi>, since veffs are different
         stowf.chi0->resize(1, 1, 1);  // clean memories
     }
     else
@@ -298,7 +468,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             cutib0++;
             double Emin_KS = this->pelec->ekb(ik, cutib0);
             double dE = stoiter.stofunc.Emax - Emin_KS + wcut/ModuleBase::Ry_to_eV;
-            std::cout<<"Emin_KS: "<<Emin_KS*ModuleBase::Ry_to_eV
+            std::cout<<"Emin_KS("<<cutib0<<"): "<<Emin_KS*ModuleBase::Ry_to_eV
                     <<" eV; Emax: "<<stoiter.stofunc.Emax*ModuleBase::Ry_to_eV
                     <<" eV; Recommended dt: "<<0.25*M_PI/dE<<" a.u."<<std::endl;
         }
@@ -336,7 +506,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             displs_sto[i] *= npwx;
         }
 #endif
-
+        const int bandsinfo[6]{perbands_ks, perbands_sto, perbands, allbands_ks, allbands_sto, allbands};
         double* en = nullptr;
         if (perbands_ks > 0)
         {
@@ -378,10 +548,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
 
         const int nbatch_psi = npart_sto;
         const int bsize_psi = ceil(perbands / nbatch_psi);
-        psi::Psi<std::complex<double>> batchpsi(1, bsize_psi, npwx, kv.ngk.data());
         psi::Psi<std::complex<double>> batchj1psi(1, bsize_psi * ndim, npwx, kv.ngk.data());
         psi::Psi<std::complex<double>> batchj2psi(1, bsize_psi * ndim, npwx, kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::batchpsi", bsize_psi * (2 * ndim + 1) * npwx * sizeof(std::complex<double>));
+        ModuleBase::Memory::record("SDFT::batchjpsi", bsize_psi * (2*ndim+1) * npwx * sizeof(std::complex<double>));
 
         //-------------------     f|psi>    -------------------------
         psi::Psi<std::complex<double>>& fpsi0 = tmppsi;
@@ -396,159 +565,36 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nfd);
         che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_norm, stopsi->get_pointer(), stofpsi0, npw, npwx, perbands_sto);
         psi::Psi<std::complex<double>>* p_fpsi0 = &fpsi0;
+
 #ifdef __MPI
-        if (GlobalV::NSTOGROUP > 1)
-        {
-            p_fpsi0 = &tmppsi_all;
-            MPI_Allgatherv(&fpsi0(0, 0),
-                           perbands_ks * npwx,
-                           MPI_DOUBLE_COMPLEX,
-                           &p_fpsi0[0](0, 0),
-                           nrecv_ks,
-                           displs_ks,
-                           MPI_DOUBLE_COMPLEX,
-                           PARAPW_WORLD);
-            MPI_Allgatherv(&fpsi0(perbands_ks, 0),
-                           perbands_sto * npwx,
-                           MPI_DOUBLE_COMPLEX,
-                           &p_fpsi0[0](allbands_ks, 0),
-                           nrecv_sto,
-                           displs_sto,
-                           MPI_DOUBLE_COMPLEX,
-                           PARAPW_WORLD);
-        }
+        //gather fpsi0 from different STOGROUP
+        p_fpsi0 = gatherpsi(fpsi0, tmppsi_all, npwx, nrecv_ks, displs_ks, nrecv_sto, displs_sto, bandsinfo);
 #endif
 
         // Im{Tr[f*J*(1-f)*exp(iHt)*J*exp(-iHt)]} = Re{i<\psi|(1-f)*J*f|\psi> \odot
         // (<\psi|exp(iHt)*J*exp(-iHt)|\psi>)^*}
         //---------------  i<\psi| (1-f) * J * f |\psi> ---------------------
-        const char transa = 'C';
-        const char transb = 'N';
-
-        int remain = perbands_ks;
-        int startnb = 0;
-        ModuleBase::timer::tick(this->classname, "matrix_multip");
-        if (perbands_ks > 0)
+        // calculate 1-f|\psi>
+        psi::Psi<std::complex<double>> mfpsi0(1, perbands, npwx, kv.ngk.data());
+        ModuleBase::Memory::record("SDFT::mfpsi0", memory_cost);
+        for(int ib = 0; ib < perbands_ks; ++ib)
         {
-            while (remain > 0)
+            for(int ig = 0; ig < npw ; ++ig)
             {
-                int tmpnb = std::min(remain, bsize_psi);
-                // calculate 1-f|\psi>
-                for (int ib = 0; ib < tmpnb; ++ib)
-                {
-                    for (int ig = 0; ig < npw; ++ig)
-                    {
-                        batchpsi(ib, ig) = psi[0](ib0_ks + startnb + ib, ig) - fpsi0(startnb + ib, ig);
-                    }
-                }
-
-                // calculate J(1-f)|\psi>
-                cal_j(batchpsi, batchj1psi, batchj2psi, velop, mu, 0, tmpnb, npw);
-
-                // calculate i<\psi| (1-f) J f |\psi>
-                for (int id = 0; id < ndim; ++id)
-                {
-                    const int idnb = id * tmpnb;
-                    const int jbais = startnb;
-                    zgemm_(&transa,
-                           &transb,
-                           &tmpnb,
-                           &allbands_sto,
-                           &npw,
-                           &ModuleBase::IMAG_UNIT,
-                           &batchj1psi(idnb, 0),
-                           &npwx,
-                           &(p_fpsi0[0](allbands_ks, 0)),
-                           &npwx,
-                           &ModuleBase::ZERO,
-                           &j1l(id, jbais),
-                           &perbands_ks);
-                    zgemm_(&transa,
-                           &transb,
-                           &tmpnb,
-                           &allbands_sto,
-                           &npw,
-                           &ModuleBase::IMAG_UNIT,
-                           &batchj2psi(idnb, 0),
-                           &npwx,
-                           &(p_fpsi0[0](allbands_ks, 0)),
-                           &npwx,
-                           &ModuleBase::ZERO,
-                           &j2l(id, jbais),
-                           &perbands_ks);
-                }
-
-                remain -= tmpnb;
-                startnb += tmpnb;
-                if (remain == 0)
-                    break;
+                mfpsi0(ib, ig) = psi[0](ib0_ks + ib, ig) - fpsi0(ib, ig);
             }
         }
-        remain = perbands_sto;
-        startnb = 0;
-        while (remain > 0)
+        for(int ib = 0; ib < perbands_sto; ++ib)
         {
-            int tmpnb = std::min(remain, bsize_psi);
-            // calculate 1-f|\psi>
-            for (int ib = 0; ib < tmpnb; ++ib)
+            for(int ig = 0; ig < npw ; ++ig)
             {
-                for (int ig = 0; ig < npw; ++ig)
-                {
-                    batchpsi(ib, ig) = stopsi[0](startnb + ib, ig) - fpsi0(perbands_ks + startnb + ib, ig);
-                }
+                mfpsi0(perbands_ks + ib, ig) = stopsi[0](ib, ig) - fpsi0(perbands_ks + ib, ig);
             }
-
-            // calculate J(1-f)|\psi>
-            cal_j(batchpsi, batchj1psi, batchj2psi, velop, mu, 0, tmpnb, npw);
-
-            // calculate i<\psi| fJ(1-f) |\psi>
-            for (int id = 0; id < ndim; ++id)
-            {
-
-                const int idnb = id * tmpnb;
-                const int jbais = perbands_ks * allbands_sto + startnb;
-                zgemm_(&transa,
-                       &transb,
-                       &tmpnb,
-                       &allbands,
-                       &npw,
-                       &ModuleBase::IMAG_UNIT,
-                       &batchj1psi(idnb, 0),
-                       &npwx,
-                       p_fpsi0->get_pointer(),
-                       &npwx,
-                       &ModuleBase::ZERO,
-                       &j1l(id, jbais),
-                       &perbands_sto);
-                zgemm_(&transa,
-                       &transb,
-                       &tmpnb,
-                       &allbands,
-                       &npw,
-                       &ModuleBase::IMAG_UNIT,
-                       &batchj2psi(idnb, 0),
-                       &npwx,
-                       p_fpsi0->get_pointer(),
-                       &npwx,
-                       &ModuleBase::ZERO,
-                       &j2l(id, jbais),
-                       &perbands_sto);
-            }
-
-            remain -= tmpnb;
-            startnb += tmpnb;
-            if (remain == 0)
-                break;
         }
-        ModuleBase::timer::tick(this->classname, "matrix_multip");
-
-#ifdef __MPI
-        ModuleBase::timer::tick(this->classname, "matrix_reduce");
-        MPI_Allreduce(MPI_IN_PLACE, j1l.c, ndim * dim_jmatrix, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, j2l.c, ndim * dim_jmatrix, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
-        ModuleBase::timer::tick(this->classname, "matrix_reduce");
-#endif
-        batchpsi.resize(1,1,1); //clean batchpsi
+        
+        // calculate i<\psi| (1-f) * J * f |\psi>
+        cal_jmatrix(mfpsi0, *p_fpsi0, batchj1psi, batchj2psi, j1l, j2l, velop, ik, ModuleBase::IMAG_UNIT, bandsinfo, bsize_psi);
+        mfpsi0.resize(1,1,1); //clean mfpsi0
 
         //------------------------  allocate ------------------------
         ModuleBase::ComplexMatrix j1r(ndim, dim_jmatrix), j2r(ndim, dim_jmatrix);
@@ -590,7 +636,8 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
                 auto end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> duration = end - start;
                 double timeTaken = duration.count();
-                std::cout << "(Time left " << timeTaken * (double(nt - 1) / print_step * (nk - ik) - 1) << " s) ";
+                std::cout << "(Time left " << timeTaken * (double(nt - 1) / print_step * (nk - ik) - 1) << " s) "<<std::endl;
+                std::cout << "nt: ";
             }
             if ((it - 1) % print_step == 0 && it > 1)
                 std::cout << it - 1 << " ";
@@ -653,137 +700,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
 
             psi::Psi<std::complex<double>>* p_exptpsi = &exptpsi;
 #ifdef __MPI
-            if (GlobalV::NSTOGROUP > 1)
-            {
-                p_exptpsi = &tmppsi_all;
-                ModuleBase::timer::tick(this->classname, "bands_gather");
-                MPI_Allgatherv(&exptpsi(0, 0),
-                               perbands_ks * npwx,
-                               MPI_DOUBLE_COMPLEX,
-                               &p_exptpsi[0](0, 0),
-                               nrecv_ks,
-                               displs_ks,
-                               MPI_DOUBLE_COMPLEX,
-                               PARAPW_WORLD);
-                MPI_Allgatherv(&exptpsi(perbands_ks, 0),
-                               perbands_sto * npwx,
-                               MPI_DOUBLE_COMPLEX,
-                               &p_exptpsi[0](allbands_ks, 0),
-                               nrecv_sto,
-                               displs_sto,
-                               MPI_DOUBLE_COMPLEX,
-                               PARAPW_WORLD);
-                ModuleBase::timer::tick(this->classname, "bands_gather");
-            }
-#endif
-
-            ModuleBase::timer::tick(this->classname, "matrix_multip");
-            remain = perbands_ks;
-            startnb = 0;
-            if (perbands_ks > 0)
-            {
-                while (remain > 0)
-                {
-                    int tmpnb = std::min(remain, bsize_psi);
-
-                    // calculate J*exp(-iHt)|\psi>
-                    cal_j(exptpsi, batchj1psi, batchj2psi, velop, mu, startnb, tmpnb, npw);
-
-                    // calculate <\psi| exp(iHt)*J*exp(-iHt) |\psi>
-                    for (int id = 0; id < ndim; ++id)
-                    {
-                        const int idnb = id * tmpnb;
-                        const int jbais = startnb;
-                        zgemm_(&transa,
-                               &transb,
-                               &tmpnb,
-                               &allbands_sto,
-                               &npw,
-                               &ModuleBase::ONE,
-                               &batchj1psi(idnb, 0),
-                               &npwx,
-                               &(p_exptpsi[0](allbands_ks, 0)),
-                               &npwx,
-                               &ModuleBase::ZERO,
-                               &j1r(id, jbais),
-                               &perbands_ks);
-                        zgemm_(&transa,
-                               &transb,
-                               &tmpnb,
-                               &allbands_sto,
-                               &npw,
-                               &ModuleBase::ONE,
-                               &batchj2psi(idnb, 0),
-                               &npwx,
-                               &(p_exptpsi[0](allbands_ks, 0)),
-                               &npwx,
-                               &ModuleBase::ZERO,
-                               &j2r(id, jbais),
-                               &perbands_ks);
-                    }
-
-                    remain -= tmpnb;
-                    startnb += tmpnb;
-                    if (remain == 0)
-                        break;
-                }
-            }
-            remain = perbands_sto;
-            startnb = 0;
-            while (remain > 0)
-            {
-                int tmpnb = std::min(remain, bsize_psi);
-
-                 // calculate J*exp(-iHt)|\psi>
-                cal_j(exptpsi, batchj1psi, batchj2psi, velop, mu, perbands_ks + startnb, tmpnb, npw);
-
-                // calculate <\psi| exp(iHt)*J*exp(-iHt) |\psi>
-                for (int id = 0; id < ndim; ++id)
-                {
-
-                    const int idnb = id * tmpnb;
-                    const int jbais = perbands_ks * allbands_sto + startnb;
-                    zgemm_(&transa,
-                           &transb,
-                           &tmpnb,
-                           &allbands,
-                           &npw,
-                           &ModuleBase::ONE,
-                           &batchj1psi(idnb, 0),
-                           &npwx,
-                           p_exptpsi->get_pointer(),
-                           &npwx,
-                           &ModuleBase::ZERO,
-                           &j1r(id, jbais),
-                           &perbands_sto);
-                    zgemm_(&transa,
-                           &transb,
-                           &tmpnb,
-                           &allbands,
-                           &npw,
-                           &ModuleBase::ONE,
-                           &batchj2psi(idnb, 0),
-                           &npwx,
-                           p_exptpsi->get_pointer(),
-                           &npwx,
-                           &ModuleBase::ZERO,
-                           &j2r(id, jbais),
-                           &perbands_sto);
-                }
-
-                remain -= tmpnb;
-                startnb += tmpnb;
-                if (remain == 0)
-                    break;
-            }
-            ModuleBase::timer::tick(this->classname, "matrix_multip");
-
-#ifdef __MPI
-            ModuleBase::timer::tick(this->classname, "matrix_reduce");
-            MPI_Allreduce(MPI_IN_PLACE, j1r.c, ndim * dim_jmatrix, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, j2r.c, ndim * dim_jmatrix, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
-            ModuleBase::timer::tick(this->classname, "matrix_reduce");
-#endif
+            p_exptpsi = gatherpsi(exptpsi, tmppsi_all, npwx, nrecv_ks, displs_ks, nrecv_sto, displs_sto, bandsinfo);
+#endif 
+            //calculate <\psi| exp(iHt)*J*exp(-iHt) |\psi>
+            cal_jmatrix(exptpsi, *p_exptpsi, batchj1psi, batchj2psi, j1r, j2r, velop, ik, ModuleBase::ONE, bandsinfo, bsize_psi);
+            
             // prepare for parallel
             int totnum = ndim * dim_jmatrix;
             int num_per = totnum / GlobalV::NPROC_IN_POOL;

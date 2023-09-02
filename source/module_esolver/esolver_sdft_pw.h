@@ -43,7 +43,7 @@ public:
      * @param dw_in omega step
      * @param dt_in t step
      * @param nbatch t step batch
-     * @param npart_sto number stochastic wavefunctions parts to evalution at the same time  
+     * @param npart_sto number stochastic wavefunctions parts to evalution simultaneously
      */
     void sKG(const int nche_KG, const double fwhmin, const double wcut, 
              const double dw_in, const double dt_in, const int nbatch, const int npart_sto);
@@ -80,10 +80,25 @@ private:
                psi::Psi<std::complex<double>>& j1psi,
                psi::Psi<std::complex<double>>& j2psi,
                hamilt::Velocity& velop,
-               const double& mu,
                const int& start_band,
                const int& nbands,
                const int& npw);
+    
+    /**
+     * @brief calculate Jmatrix  <leftv|J|rightv>
+     * 
+     */
+    void cal_jmatrix(const psi::Psi<std::complex<double>>& leftv,
+                     const psi::Psi<std::complex<double>>& rightv,
+                     psi::Psi<std::complex<double>>& batchj1psi,
+                     psi::Psi<std::complex<double>>& batchj2psi,
+                     ModuleBase::ComplexMatrix& j1, 
+                     ModuleBase::ComplexMatrix& j2,
+                     hamilt::Velocity& velop,
+                     const int& ik,
+                     const std::complex<double>& factor,
+                     const int bandinfo[6],
+                     const int& bsize_psi);
 
 
 };
