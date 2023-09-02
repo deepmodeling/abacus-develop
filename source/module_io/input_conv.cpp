@@ -696,6 +696,12 @@ void Input_Conv::Convert(void)
     GlobalV::of_read_kernel = INPUT.of_read_kernel;
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
 
+    //-----------------------------------------------
+    // NCSCD related parameters
+    //-----------------------------------------------
+    GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
+    GlobalV::sc_file = INPUT.sc_file;
+
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

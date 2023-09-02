@@ -256,4 +256,15 @@ int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
+
+//==========================================================
+// NCSCD related
+//==========================================================
+int sc_mag_switch = 0;
+std::string sc_file = "none";
+std::vector<ModuleBase::Vector3<double>> lambda;
+std::vector<ModuleBase::Vector3<double>> sc_mag;
+std::vector<double> sc_spin_val;
+std::vector<double> sc_spin_angle1;
+std::vector<double> sc_spin_angle2;
 } // namespace GlobalV
