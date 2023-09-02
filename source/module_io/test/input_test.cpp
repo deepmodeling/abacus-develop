@@ -1456,6 +1456,46 @@ TEST_F(InputTest, Check)
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please set right files directory for reading in."));
+	INPUT.read_file_dir = "auto";
+	// Start to check NCSCD parameters
+	INPUT.sc_mag_switch = 1;
+	INPUT.sc_file = "none";
+	INPUT.basis_type = "lcao";
+	INPUT.ks_solver = "genelpa";
+	// warning 1 of NCSCD
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("sc_file (json format) must be set when sc_mag_switch > 0"));
+	// warning 2 of NCSCD
+	INPUT.sc_file = "sc.json";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("sc_file does not exist"));
+	INPUT.sc_file = "./support/sc.json";
+	// warning 3 of NCSCD
+	INPUT.nspin = 1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nspin must be 4 when sc_mag_switch > 0"));
+	INPUT.nspin = 4;
+	// warning 4 of NCSCD
+	INPUT.calculation = "nscf";
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("calculation must be scf when sc_mag_switch > 0"));
+	// restore to default values
+	INPUT.calculation = "scf";
+	INPUT.nspin = 1;
+	INPUT.sc_file = "none";
+	INPUT.sc_mag_switch = 0;
+	INPUT.ks_solver = "default";
+	INPUT.basis_type = "pw";
+	// End of checking NCSCD parameters
+
 	/*
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");

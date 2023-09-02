@@ -3681,6 +3681,31 @@ void Input::Check(void)
 		}
 	}
 
+    // NCSCD variables checking
+    if (sc_mag_switch)
+    {
+        if (sc_file == "none")
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_file (json format) must be set when sc_mag_switch > 0");
+        }
+        else
+        {
+            const std::string ss = "test -f " + sc_file;
+            if (system(ss.c_str()))
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "sc_file does not exist");
+            }
+        }
+        if (nspin != 4)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 4 when sc_mag_switch > 0");
+        }
+        if (calculation != "scf")
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "calculation must be scf when sc_mag_switch > 0");
+        }
+    }
+
     return;
 }
 
