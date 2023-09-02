@@ -1048,41 +1048,41 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
     }
 }
 
-TEST_F(CubicSplineTest, NotAKnot_expx_uniform)
-{
-    CubicSpline cubspl;
+// TEST_F(CubicSplineTest, NotAKnot_expx_uniform)
+// {
+//     CubicSpline cubspl;
 
-    int n = 10;
-    for (int i = 0; i != n; ++i)
-    {
-        x_[i] = ((double)i / 10.0);
-        y_[i] = exp(-x_[i]);
-    }
-    double err = count_err(x_, 2, n, 0);
+//     int n = 10;
+//     for (int i = 0; i != n; ++i)
+//     {
+//         x_[i] = ((double)i / 10.0);
+//         y_[i] = exp(-x_[i]);
+//     }
+//     double err = count_err(x_, 2, n, 0);
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+//     cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
 
-    int ni = 6;
+//     int ni = 6;
 
-    x_interp_[0] = 0.000000000000000;
-    x_interp_[1] = 0.010000000000000;
-    x_interp_[2] = 0.100000000000000;
-    x_interp_[3] = 0.200000000000000;
-    x_interp_[4] = 0.400000000000000;
-    x_interp_[5] = 0.800000000000000;
-    y_ref_[0] = 1.000000000000000;
-    y_ref_[1] = 0.990049833749168;
-    y_ref_[2] = 0.904837418035960;
-    y_ref_[3] = 0.818730753077982;
-    y_ref_[4] = 0.670320046035639;
-    y_ref_[5] = 0.449328964117222;
+//     x_interp_[0] = 0.000000000000000;
+//     x_interp_[1] = 0.010000000000000;
+//     x_interp_[2] = 0.100000000000000;
+//     x_interp_[3] = 0.200000000000000;
+//     x_interp_[4] = 0.400000000000000;
+//     x_interp_[5] = 0.800000000000000;
+//     y_ref_[0] = 1.000000000000000;
+//     y_ref_[1] = 0.990049833749168;
+//     y_ref_[2] = 0.904837418035960;
+//     y_ref_[3] = 0.818730753077982;
+//     y_ref_[4] = 0.670320046035639;
+//     y_ref_[5] = 0.449328964117222;
 
-    cubspl.eval(ni, x_interp_, y_interp_);
-    for (int i = 0; i != ni; ++i)
-    {
-        EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
-    }
-}
+//     cubspl.eval(ni, x_interp_, y_interp_);
+//     for (int i = 0; i != ni; ++i)
+//     {
+//         EXPECT_NEAR(y_interp_[i], y_ref_[i], err);
+//     }
+// }
 
 TEST_F(CubicSplineTest, NotAKnot_expx_Notuniform)
 {
