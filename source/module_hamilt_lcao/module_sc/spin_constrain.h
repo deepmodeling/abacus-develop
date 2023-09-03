@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include "module_base/vector3.h"
+#include "module_base/tool_title.h"
+#include "module_base/tool_quit.h"
 
 struct ScAtomData;
 
@@ -22,13 +24,21 @@ public:
     /// clear sc_data
     void clear_ScData();
     /// set element index to atom index map
-    void set_itia(const std::map<int, int>& itia);
+    void set_atomCounts(const std::map<int, int>& atomCounts);
     /// get element index to atom index map
-    std::map<int, int>& get_itia();
+    std::map<int, int>& get_atomCounts();
     /// get sc_lambda
     std::vector<ModuleBase::Vector3<double>> get_sc_lambda();
     /// get sc_mag
     std::vector<ModuleBase::Vector3<double>> get_sc_mag();
+    /// get nat
+    int get_nat();
+    /// get ntype
+    int get_ntype();
+    /// check atomCounts
+    void check_atomCounts();
+    /// get iat
+    int get_iat(int itype, int iat);
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -36,7 +46,7 @@ private:
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
-    std::map<int, int> itia;
+    std::map<int, int> atomCounts;
 };
 
 

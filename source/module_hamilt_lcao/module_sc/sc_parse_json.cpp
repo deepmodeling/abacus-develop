@@ -5,8 +5,6 @@
 #include <iostream>
 #include <string>
 #include <regex>
-#include "module_base/tool_title.h"
-#include "module_base/tool_quit.h"
 
 std::map<int, std::vector<ScAtomData>>& SpinConstrain::get_ScData()
 {
@@ -94,26 +92,3 @@ void SpinConstrain::Set_ScData_From_Json(const std::string& filename)
     }
     file.close();
 }
-
-/*
-// unfinished, still need to set iait2iat
-std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_lambda()
-{
-    if (!this->nat)
-    {
-        ModuleBase::WARNING_QUIT("SpinConstrain::get_sc_lambda","nat is not set");
-    }
-    std::vector<ModuleBase::Vector3<double>> sc_lambda(nat);
-    for (auto& itype_data : this->ScData) {
-        for (auto& element_data : itype_data.second) {
-            int index = itype_data.first * nat + element_data.index - 1;
-            ModuleBase::Vector3<double> lambda;
-            lambda.x = element_data.lambda[0];
-            lambda.y = element_data.lambda[1];
-            lambda.z = element_data.lambda[2];
-            sc_lambda.push_back(lambda);
-        }
-    }
-    return sc_lambda;
-}
-*/

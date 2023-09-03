@@ -19,17 +19,14 @@ class SpinConstrainTest : public testing::Test
 	SpinConstrain& sc = SpinConstrain::getInstance();
 };
 
-TEST_F(SpinConstrainTest, Itia)
+TEST_F(SpinConstrainTest, AtomCounts)
 {
-	std::map<int, int> itia = {{0,5},{1,10}};
-	sc.set_itia(itia);
-	std::map<int, int> itia2 = sc.get_itia();
-	int ntype = itia2.size();
+	std::map<int, int> atomCounts = {{0,5},{1,10}};
+	sc.set_atomCounts(atomCounts);
+	std::map<int, int> atomCounts2 = sc.get_atomCounts();
+	int ntype = atomCounts2.size();
 	EXPECT_EQ(ntype, 2);
-    int nat = 0;
-    for (std::map<int, int>::iterator it = itia.begin(); it != itia.end(); ++it) {
-        nat += it->second;
-    }
+    int nat = sc.get_nat();
 	EXPECT_EQ(nat, 15);
 
 }
