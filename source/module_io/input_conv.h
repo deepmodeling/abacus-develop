@@ -41,23 +41,6 @@ std::vector<double> convert_units(std::string params, double c);
 void read_td_efield();
 #endif
 
-/**
- * @brief struct for storing parameters of non-collinear spin-constrained DFT
- */
-struct ScElementData {
-    int index;
-    std::vector<double> lambda;
-    std::vector<double> sc_mag;
-    double sc_spin_val;
-    double sc_spin_angle1;
-    double sc_spin_angle2;
-};
-
-/**
- * @brief parse json input file for non-collinear spin-constrained DFT
- */
-void parseScJsonFile(const std::string& filename, std::map<std::string, std::vector<ScElementData>>& data);
-
 } // namespace Input_Conv
 
 #endif // Input_Convert

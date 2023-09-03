@@ -290,11 +290,5 @@ extern int out_interval;
 // NCSCD related
 extern int sc_mag_switch; // 0: no NCSCD; 1: set sc_mag; 2 set sc_spin_val and angles
 extern std::string sc_file;
-extern std::vector<ModuleBase::Vector3<double>> lambda;
-extern std::vector<ModuleBase::Vector3<double>> sc_mag;
-extern std::vector<double> sc_spin_val;
-extern std::vector<double> sc_spin_angle1;
-extern std::vector<double> sc_spin_angle2;
-
 } // namespace GlobalV
 #endif
