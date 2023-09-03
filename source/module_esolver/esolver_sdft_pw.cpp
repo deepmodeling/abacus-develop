@@ -211,10 +211,6 @@ void ESolver_SDFT_PW::postprocess()
     {
         cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8);
         nche_test = std::max(nche_test, cond_nche);
-        if (this->method_sto == 2)
-        {
-            nche_test = std::max(nche_test, this->nche_sto * 2);
-        }
     }
     if (nche_test > 0)
         check_che(nche_test);

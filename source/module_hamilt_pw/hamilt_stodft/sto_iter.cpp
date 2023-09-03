@@ -154,16 +154,13 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     }
     if (ik == nks - 1)
     {
-        stofunc.Emax = stohchi.Emax;
-        stofunc.Emin = stohchi.Emin;
-
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &stofunc.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, &stofunc.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, &stohchi.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, &stohchi.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
-        stohchi.Emin = stofunc.Emin;
-        stohchi.Emax = stofunc.Emax;
+        stofunc.Emax = stohchi.Emax;
+        stofunc.Emin = stohchi.Emin;
         if (change)
         {
             GlobalV::ofs_running << "New Emax " << stohchi.Emax << " ; new Emin " << stohchi.Emin << std::endl;
