@@ -10,31 +10,28 @@ struct ScAtomData;
 class SpinConstrain
 {
 public:
-    // Public method to access the Singleton instance
+    /// Public method to access the Singleton instance
     static SpinConstrain& getInstance();
-
-    // Delete copy and move constructors and assign operators
-    SpinConstrain(SpinConstrain const&) = delete;             // Copy construct
-    SpinConstrain(SpinConstrain&&) = delete;                  // Move construct
-
-    /**
-    * @brief parse json input file for non-collinear spin-constrained DFT
-    */
-    void parseScJsonFile(const std::string& filename, std::map<std::string, std::vector<ScAtomData>>& data);
-
+    /// Delete copy and move constructors and assign operators
+    SpinConstrain(SpinConstrain const&) = delete;
+    SpinConstrain(SpinConstrain&&) = delete;
+    /// set number of atoms
     void set_nat(int nat);
+    /// get number of atoms
     int get_nat();
+    /// parse json input file for non-collinear spin-constrained DFT
+    void Set_ScData_From_Json(const std::string& filename);
+    /// get sc_data
+    std::map<int, std::vector<ScAtomData>>& get_ScData();
+    /// clear sc_data
+    void clear_ScData();
 
 private:
     SpinConstrain(){};                               // Private constructor
     ~SpinConstrain(){};                              // Destructor
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
-    std::vector<ModuleBase::Vector3<double>> lambda;
-    std::vector<ModuleBase::Vector3<double>> sc_mag;
-    std::vector<double> sc_spin_val;
-    std::vector<double> sc_spin_angle1;
-    std::vector<double> sc_spin_angle2;
+    std::map<int, std::vector<ScAtomData>> ScData;
     int nat;
 };
 

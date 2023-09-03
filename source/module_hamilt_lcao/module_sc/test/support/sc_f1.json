@@ -1,0 +1,29 @@
+[
+    {
+        "element": "Si",
+        "itype": 1,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0.1, 0.1, 0.2],
+                "sc_mag": [1.0, 2.0, 3.0]
+            },
+            {
+                "index": 4,
+                "lambda": [0.2, 0.4, 0.5],
+                "sc_mag": [1.5, 2.5, 3.5]
+            }
+        ]
+    },
+    {
+        "element": "O",
+        "itype": 0,
+        "ScAtomData": [
+            {
+                "index": 1,
+                "lambda": [0.3, 0.5, 0.7],
+                "sc_mag": [0.5, 1.0, 1.5]
+            }
+        ]
+    }
+]

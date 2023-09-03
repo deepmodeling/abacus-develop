@@ -6,20 +6,33 @@
 #include <string>
 #include <regex>
 #include "module_base/tool_title.h"
+#include "module_base/tool_quit.h"
 
-void SpinConstrain::parseScJsonFile(const std::string& filename, std::map<std::string, std::vector<ScAtomData>>& data)
+std::map<int, std::vector<ScAtomData>>& SpinConstrain::get_ScData()
+{
+    return this->ScData;
+}
+
+void SpinConstrain::clear_ScData()
+{
+    this->ScData.clear();
+}
+
+void SpinConstrain::Set_ScData_From_Json(const std::string& filename)
 {
     ModuleBase::TITLE("SpinConstrain", "ScJsonFile");
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        ModuleBase::WARNING_QUIT("SpinConstrain::parseScJsonFile","Error opening sc_file");
         return;
     }
 
     std::string line;
+    int current_itype;
     std::string current_element;
 
-    std::regex element_regex("\"([A-Za-z]+)\": \\[");
+    std::regex itype_regex("\"itype\": (\\d+)");
+    std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex index_regex("\"index\": (\\d+)");
     std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
     std::regex sc_mag_regex("\"sc_mag\": \\[(.+?)\\]");
@@ -30,7 +43,9 @@ void SpinConstrain::parseScJsonFile(const std::string& filename, std::map<std::s
     while (getline(file, line)) {
         std::smatch match;
 
-        if (std::regex_search(line, match, element_regex)) {
+        if (std::regex_search(line, match, itype_regex)) {
+            current_itype = std::stoi(match[1]);
+        } else if (std::regex_search(line, match, element_regex)) {
             current_element = match[1];
         } else if (std::regex_search(line, match, index_regex)) {
             ScAtomData element_data;
@@ -74,7 +89,8 @@ void SpinConstrain::parseScJsonFile(const std::string& filename, std::map<std::s
                 }
             }
 
-            data[current_element].push_back(element_data);
+            this->ScData[current_itype].push_back(element_data);
         }
     }
+    file.close();
 }
