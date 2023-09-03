@@ -32,7 +32,39 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
     step_ = 0;
     step_rst_ = 0;
 
+    std::cout << " ----------------------------------- INIT VEL ---------------------------------------" << std::endl;
     MD_func::init_vel(ucell, mdp.md_tfirst, mdp.my_rank, allmass, frozen_freedom_, ionmbl, vel);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    if (unit_in.init_vel)
+    {
+        std::cout << " READ VEL FROM STRU" << std::endl;
+        if (mdp.md_tfirst < 0)
+        {
+            std::cout << " UNSET INITIAL TEMPERATURE, AUTOSET TO " << t_current * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+        }
+        else if (std::fabs(mdp.md_tfirst - t_current) > 1e-8)
+        {
+            std::cout << " INITIAL TEMPERATURE IN INPUT  = " << mdp.md_tfirst * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+            std::cout << " READING TEMPERATURE FROM STRU = " << t_current * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+            std::cout << " INCONSISTENCE, PLEASE CHECK" << std::endl;
+            std::cout << " ------------------------------------- DONE -----------------------------------------"
+                      << std::endl;
+            exit(0);
+        }
+    }
+    else
+    {
+        std::cout << " RANDOM VEL ACCORDING TO INITIAL TEMPERATURE: " << t_current * ModuleBase::Hartree_to_K << " K"
+                  << std::endl;
+    }
+    if (mdp.md_tlast < 0)
+    {
+        mdp.md_tlast = mdp.md_tfirst;
+    }
+    std::cout << " ------------------------------------- DONE -----------------------------------------" << std::endl;
 }
 
 MD_base::~MD_base()
@@ -55,7 +87,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
     MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     ucell.ionic_position_updated = true;
 }
 

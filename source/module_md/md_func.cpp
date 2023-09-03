@@ -185,7 +185,6 @@ void init_vel(const UnitCell& unit_in,
     {
         rand_vel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, my_rank, vel);
     }
-    std::cout << "--------------------------------- INITVEL DONE ------------------------------------" << std::endl;
 }
 
 void force_virial(ModuleESolver::ESolver* p_esolver,

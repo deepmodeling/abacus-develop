@@ -15,7 +15,7 @@ Nose_Hoover::Nose_Hoover(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_pa
 
     if (mdp.md_tfirst == 0)
     {
-        ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC !!! ");
+        ModuleBase::WARNING_QUIT("Nose_Hoover", " md_tfirst must be larger than 0 in NHC");
     }
 
     /// init NPT related variables
