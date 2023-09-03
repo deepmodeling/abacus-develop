@@ -25,6 +25,14 @@ public:
     std::map<int, std::vector<ScAtomData>>& get_ScData();
     /// clear sc_data
     void clear_ScData();
+    /// set itia2iat
+    void set_itia2iat(const std::vector<int>& itia2iat);
+    /// get itia2iat
+    std::vector<int> get_itia2iat();
+    /// get sc_lambda
+    std::vector<ModuleBase::Vector3<double>> get_sc_lambda();
+    /// get sc_mag
+    std::vector<ModuleBase::Vector3<double>> get_sc_mag();
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -32,7 +40,8 @@ private:
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
-    int nat;
+    int nat = 0;
+    std::vector<int> itia2iat;
 };
 
 
