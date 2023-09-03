@@ -15,20 +15,16 @@ public:
     /// Delete copy and move constructors and assign operators
     SpinConstrain(SpinConstrain const&) = delete;
     SpinConstrain(SpinConstrain&&) = delete;
-    /// set number of atoms
-    void set_nat(int nat);
-    /// get number of atoms
-    int get_nat();
     /// parse json input file for non-collinear spin-constrained DFT
     void Set_ScData_From_Json(const std::string& filename);
     /// get sc_data
     std::map<int, std::vector<ScAtomData>>& get_ScData();
     /// clear sc_data
     void clear_ScData();
-    /// set itia2iat
-    void set_itia2iat(const std::vector<int>& itia2iat);
-    /// get itia2iat
-    std::vector<int> get_itia2iat();
+    /// set element index to atom index map
+    void set_itia(const std::map<int, int>& itia);
+    /// get element index to atom index map
+    std::map<int, int>& get_itia();
     /// get sc_lambda
     std::vector<ModuleBase::Vector3<double>> get_sc_lambda();
     /// get sc_mag
@@ -40,8 +36,7 @@ private:
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
-    int nat = 0;
-    std::vector<int> itia2iat;
+    std::map<int, int> itia;
 };
 
 

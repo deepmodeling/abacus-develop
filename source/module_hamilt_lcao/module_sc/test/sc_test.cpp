@@ -1,6 +1,7 @@
 #include "../spin_constrain.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include <algorithm>
 
 /************************************************
  *  unit test of functions in class SpinConstrain
@@ -18,10 +19,19 @@ class SpinConstrainTest : public testing::Test
 	SpinConstrain& sc = SpinConstrain::getInstance();
 };
 
-TEST_F(SpinConstrainTest, Nat)
+TEST_F(SpinConstrainTest, Itia)
 {
-    sc.set_nat(10);
-    EXPECT_EQ(sc.get_nat(), 10);
+	std::map<int, int> itia = {{0,5},{1,10}};
+	sc.set_itia(itia);
+	std::map<int, int> itia2 = sc.get_itia();
+	int ntype = itia2.size();
+	EXPECT_EQ(ntype, 2);
+    int nat = 0;
+    for (std::map<int, int>::iterator it = itia.begin(); it != itia.end(); ++it) {
+        nat += it->second;
+    }
+	EXPECT_EQ(nat, 15);
+
 }
 
 TEST_F(SpinConstrainTest, ScDataFormat1)

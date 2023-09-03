@@ -5,10 +5,12 @@ SpinConstrain& SpinConstrain::getInstance() {
     return instance;
 }
 
-void SpinConstrain::set_nat(int nat) {
-    this->nat = nat;
+// set itia
+void SpinConstrain::set_itia(const std::map<int, int>& itia) {
+    this->itia = itia;
 }
 
-int SpinConstrain::get_nat() {
-    return this->nat;
+// get itia
+std::map<int, int>& SpinConstrain::get_itia() {
+    return this->itia;
 }
