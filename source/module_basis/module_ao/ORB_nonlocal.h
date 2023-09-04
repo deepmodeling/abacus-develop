@@ -45,6 +45,7 @@ public:
 	Numerical_Nonlocal_Lm* Proj; ///< length: nproj(only store radial function )
 
 	const double& get_rcut_max(void) const { return rcut_max; }
+    const int& get_nproj() const { return nproj; }
 
 	private:
 	

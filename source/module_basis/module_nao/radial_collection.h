@@ -24,7 +24,11 @@ class RadialCollection
 
     ~RadialCollection();
 
+    /// build the collection from (orbital) files
     void build(const int nfile, const std::string* const file, const char type = 'o');
+
+    /// build the collection from Numerical_Nonlocal objects
+    void build(const int ntype, Numerical_Nonlocal* const nls);
 
     /*! @name Getters
      *

@@ -17,7 +17,9 @@ namespace ModuleBase
 
 SphericalBesselTransformer::~SphericalBesselTransformer()
 {
-    fftw_destroy_plan(rfft_plan_);
+    // FIXME theoretically the fftw plan shall be destroyed here
+    // but when using MPI it causes segfault in some cases
+    //fftw_destroy_plan(rfft_plan_);
     fftw_free(f_);
     delete[] grid_in_;
     delete[] grid_out_;
