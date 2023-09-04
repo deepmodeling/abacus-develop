@@ -4,8 +4,8 @@ namespace hamilt
 {
 
 // contribute to HR is not needed.
-template<>
-void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHR()
+template<typename T>
+void OperatorScLambda<OperatorLCAO<T>>::contributeHR()
 {
     return;
 }
