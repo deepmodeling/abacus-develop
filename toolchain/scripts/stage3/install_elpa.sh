@@ -128,7 +128,7 @@ case "$with_elpa" in
         cd ..
         # link elpa
         link=${pkg_install_dir}/${TARGET}/include/elpa
-        if [ ! -f $link ]; then
+        if [[ ! -d $link ]]; then
             ln -s ${pkg_install_dir}/${TARGET}/include/elpa_openmp-${elpa_ver}/elpa $link
         fi
       done
