@@ -639,6 +639,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     //===================================
     this->set_iat2itia();
 
+#ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
 		GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
@@ -670,6 +671,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 
 		GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
 	}
+#endif
 
     return;
 }

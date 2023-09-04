@@ -3239,17 +3239,16 @@ void Input::Check(void)
 
     // std::cout << "diago_proc=" << diago_proc << std::endl;
     // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
-
+#ifndef USE_PAW
     if(use_paw)
     {
+        ModuleBase::WARNING_QUIT("Input", "to use PAW, compile with USE_PAW");
         if(basis_type != "pw")
         {
             ModuleBase::WARNING_QUIT("Input", "PAW is for pw basis only");
         }
-#ifndef USE_PAW
-        ModuleBase::WARNING_QUIT("Input", "to use PAW, compile with USE_PAW");
-#endif
     }
+#endif
 
     if (diago_proc > 1 && basis_type == "lcao" && diago_proc != GlobalV::NPROC)
     {

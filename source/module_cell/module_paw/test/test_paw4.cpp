@@ -157,9 +157,7 @@ TEST_F(Test_PAW, test_paw)
     
     paw_cell.set_nspin(1);
 
-#ifdef USE_PAW
     paw_cell.prepare_paw();
-#endif
 
     paw_cell.get_vkb();
 
@@ -187,7 +185,6 @@ TEST_F(Test_PAW, test_paw)
 
     paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-#ifdef USE_PAW
     for(int iat = 0; iat < nat; iat ++)
     {
         paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
@@ -198,5 +195,4 @@ TEST_F(Test_PAW, test_paw)
     nhat = new double[nfft];
     nhatgr = new double[nfft*3];
     paw_cell.get_nhat(nhat,nhatgr);
-#endif
 }

@@ -8,10 +8,8 @@ add_library(
     paw_atom.cpp
 )
 
-if(ENABLE_PAW)
-  target_link_libraries(paw libpaw_interface -lifcore)
-  add_dependencies(paw libpaw_interface)
-endif()
+target_link_libraries(paw libpaw_interface -lifcore)
+add_dependencies(paw libpaw_interface)
 
 if(ENABLE_COVERAGE)
   add_coverage(paw)

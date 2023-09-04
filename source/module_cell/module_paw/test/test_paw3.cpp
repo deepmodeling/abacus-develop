@@ -133,7 +133,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
     EXPECT_EQ(paw_cell.get_nspin(),1);
 
-#ifdef USE_PAW
     paw_cell.prepare_paw();
 
     double *vloc, *ncoret;
@@ -235,5 +234,4 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
         delete[] dij;
     }
-#endif
 }

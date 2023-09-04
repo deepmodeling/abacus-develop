@@ -1,3 +1,5 @@
+remove_definitions(-DUSE_PAW)
+
 AddTest(
   TARGET XCTest_PBE
   LIBS MPI::MPI_CXX Libxc::xc # required by global.h; for details, `remove_definitions(-D__MPI)`.

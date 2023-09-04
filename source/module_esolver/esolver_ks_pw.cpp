@@ -267,12 +267,15 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->wf.init_at_1(&this->sf);
     }
 
+#ifdef USE_PAW
     if(GlobalV::use_paw)
     {
         GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                          this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
     }
+#endif
+
     ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
 }
 
