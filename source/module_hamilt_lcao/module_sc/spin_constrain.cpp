@@ -96,3 +96,9 @@ std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_lambda()
     }
     return sc_lambda;
 }
+
+// clear atomCounts
+void SpinConstrain::clear_atomCounts()
+{
+    this->atomCounts.clear();
+}

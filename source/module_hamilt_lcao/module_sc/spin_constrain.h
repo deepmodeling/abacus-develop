@@ -39,6 +39,8 @@ public:
     void check_atomCounts();
     /// get iat
     int get_iat(int itype, int iat);
+    /// clear atomCounts
+    void clear_atomCounts();
 
 private:
     SpinConstrain(){};                               // Private constructor

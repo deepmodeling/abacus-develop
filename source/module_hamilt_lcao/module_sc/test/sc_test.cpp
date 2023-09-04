@@ -86,3 +86,27 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
         }
 	}
 }
+
+TEST_F(SpinConstrainTest, GetScLambda)
+{
+	sc.clear_ScData();
+	sc.Set_ScData_From_Json("./support/sc_f1.json");
+	std::map<int, int> atomCounts = {{0,5},{1,10}};
+	sc.clear_atomCounts();
+	sc.set_atomCounts(atomCounts);
+	std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
+	EXPECT_EQ(sc_lambda.size(), sc.get_nat());
+	for (const auto& sc_elem : sc.get_ScData())
+	{
+		int itype = sc_elem.first;
+        const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
+        for (const ScAtomData& sc_data : sc_atoms) {
+			int index = sc_data.index;
+			int iat = sc.get_iat(itype, index);
+			EXPECT_DOUBLE_EQ(sc_data.lambda[0],sc_lambda[iat].x);
+			EXPECT_DOUBLE_EQ(sc_data.lambda[1],sc_lambda[iat].y);
+			EXPECT_DOUBLE_EQ(sc_data.lambda[2],sc_lambda[iat].z);
+		}
+	}
+	
+}
