@@ -53,7 +53,7 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const double fwhmin,
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
 
     hamilt::Velocity velop(this->pw_wfc, this->kv.isk.data(), &GlobalC::ppcell, &GlobalC::ucell, INPUT.cond_nonlocal);
-    double decut = (wcut + 5*fwhmin)  / ModuleBase::Ry_to_eV;
+    double decut = (wcut + fwhmin)  / ModuleBase::Ry_to_eV;
     for (int ik = 0; ik < nk; ++ik)
     {
         velop.init(ik);

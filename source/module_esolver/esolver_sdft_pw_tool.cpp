@@ -410,7 +410,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         stopsi = stowf.chi0;
         stowf.shchi->resize(1, 1, 1); // clean memories
     }
-    const double dEcut = (wcut + 5 * fwhmin) / ModuleBase::Ry_to_eV;
+    const double dEcut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
 
     // response funtion
     double* ct11 = new double[nt];
