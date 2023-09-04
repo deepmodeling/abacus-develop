@@ -19,6 +19,9 @@ VPATH=./src_global:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
+./module_base/module_container/base/core/:\
+./module_base/module_container/ATen/core/:\
+./module_base/module_container/ATen/kernels/:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -88,6 +91,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_CONTAINER}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -299,7 +303,7 @@ OBJS_ORBITAL=ORB_atomic.o\
 	  two_center_table.o\
 
 OBJS_PSI=psi.o\
-    memory_op.o\
+    psi_memory_op.o\
     device.o\
 
 OBJS_PW=fft.o\
@@ -519,4 +523,19 @@ OBJS_DFTU=dftu.o\
       dftu_io.o\
       dftu_tools.o\
       dftu_occup.o\
-      dftu_hamilt.o
+      dftu_hamilt.o\
+
+OBJS_CONTAINER=tensor_types.o\
+			   tensor.o\
+			   cpu_allocator.o\
+			   tensor_buffer.o\
+			   tensor_map.o\
+			   gpu_allocator.o\
+			   tensor_shape.o\
+			   memory_op.o\
+			   einsum_op.o\
+			   blas_op.o\
+			   lapack_op.o\
+			   linalg_op.o\
+			   refcount.o\
+
