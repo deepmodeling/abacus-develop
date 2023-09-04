@@ -77,6 +77,13 @@ int SpinConstrain::get_iat(int itype, int index)
     return iat;
 }
 
+// clear atomCounts
+void SpinConstrain::clear_atomCounts()
+{
+    this->atomCounts.clear();
+}
+
+// get sc_lambda from ScData
 std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_lambda()
 {
     this->check_atomCounts();
@@ -97,8 +104,23 @@ std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_lambda()
     return sc_lambda;
 }
 
-// clear atomCounts
-void SpinConstrain::clear_atomCounts()
+// get sc_mag from ScData
+std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_mag()
 {
-    this->atomCounts.clear();
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    std::vector<ModuleBase::Vector3<double>> sc_mag(nat);
+    for (auto& itype_data : this->ScData) {
+        int itype = itype_data.first;
+        for (auto& element_data : itype_data.second) {
+            int index = element_data.index;
+            int iat = this->get_iat(itype, index);
+            ModuleBase::Vector3<double> mag;
+            mag.x = element_data.sc_mag[0];
+            mag.y = element_data.sc_mag[1];
+            mag.z = element_data.sc_mag[2];
+            sc_mag[iat] = mag;
+        }
+    }
+    return sc_mag;
 }

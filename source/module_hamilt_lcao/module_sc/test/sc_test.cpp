@@ -87,7 +87,7 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
 	}
 }
 
-TEST_F(SpinConstrainTest, GetScLambda)
+TEST_F(SpinConstrainTest, GetScLambdaAndMag)
 {
 	sc.clear_ScData();
 	sc.Set_ScData_From_Json("./support/sc_f1.json");
@@ -95,6 +95,7 @@ TEST_F(SpinConstrainTest, GetScLambda)
 	sc.clear_atomCounts();
 	sc.set_atomCounts(atomCounts);
 	std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
+	std::vector<ModuleBase::Vector3<double>> sc_mag = sc.get_sc_mag();
 	EXPECT_EQ(sc_lambda.size(), sc.get_nat());
 	for (const auto& sc_elem : sc.get_ScData())
 	{
@@ -106,7 +107,21 @@ TEST_F(SpinConstrainTest, GetScLambda)
 			EXPECT_DOUBLE_EQ(sc_data.lambda[0],sc_lambda[iat].x);
 			EXPECT_DOUBLE_EQ(sc_data.lambda[1],sc_lambda[iat].y);
 			EXPECT_DOUBLE_EQ(sc_data.lambda[2],sc_lambda[iat].z);
+			EXPECT_DOUBLE_EQ(sc_data.sc_mag[0],sc_mag[iat].x);
+			EXPECT_DOUBLE_EQ(sc_data.sc_mag[1],sc_mag[iat].y);
+			EXPECT_DOUBLE_EQ(sc_data.sc_mag[2],sc_mag[iat].z);
 		}
 	}
-	
+	for (int iat = 0; iat < sc.get_nat(); iat++)
+	{
+		if (! (iat == 1 || iat ==5 || iat ==9))
+		{
+			EXPECT_DOUBLE_EQ(sc_lambda[iat].x,0.0);
+			EXPECT_DOUBLE_EQ(sc_lambda[iat].y,0.0);
+			EXPECT_DOUBLE_EQ(sc_lambda[iat].z,0.0);
+			EXPECT_DOUBLE_EQ(sc_mag[iat].x,0.0);
+			EXPECT_DOUBLE_EQ(sc_mag[iat].y,0.0);
+			EXPECT_DOUBLE_EQ(sc_mag[iat].z,0.0);
+		}
+	}
 }
