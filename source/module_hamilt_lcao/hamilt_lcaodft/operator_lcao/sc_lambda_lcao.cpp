@@ -4,30 +4,37 @@ namespace hamilt
 {
 
 // contribute to HR is not needed.
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHR()
 {
+    return;
 }
 
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_nat(int nat_in)
 {
     this->nat_ = nat_in;
 }
 
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_nloc(int nloc_in)
 {
     this->nloc_ = nloc_in;
 }
 
+template<>
 int OperatorScLambda<OperatorLCAO<std::complex<double>>>::get_nat()
 {
     return this->nat_;
 }
 
+template<>
 int OperatorScLambda<OperatorLCAO<std::complex<double>>>::get_nloc()
 {
     return this->nloc_;
 }
 
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_iwt2iat(const int* iwt2iat_in)
 {
     this->iwt2iat_.resize(this->nloc_);
@@ -37,11 +44,13 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_iwt2iat(const int
     }
 }
 
+template<>
 const std::vector<int>& OperatorScLambda<OperatorLCAO<std::complex<double>>>::get_iwt2iat() const
 {
     return this->iwt2iat_;
 }
 
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in)
 {
     if (lambda_in.size() != this->nat_)
@@ -52,11 +61,13 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_lambda(const std:
 }
 
 // get lambda
+template<>
 const std::vector<ModuleBase::Vector3<double>>& OperatorScLambda<OperatorLCAO<std::complex<double>>>::get_lambda() const
 {
     return this->lambda_;
 }
 
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::cal_weight_func(const std::vector<std::complex<double>>& Sloc2)
 {
     if (Sloc2.size() != this->nloc_ * this->nloc_)
@@ -76,7 +87,8 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::cal_weight_func(const
     }
 }
 
-void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_Wi(const std::vector<std::complex<double>>& Wi_in)
+template<typename T>
+void OperatorScLambda<OperatorLCAO<T>>::set_Wi(const std::vector<T>& Wi_in)
 {
     if (Wi_in.size() != this->nloc_*this->nloc_)
     {
@@ -86,11 +98,13 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::set_Wi(const std::vec
 }
 
 // get_Wi
-const std::vector<std::complex<double>>& OperatorScLambda<OperatorLCAO<std::complex<double>>>::get_Wi() const
+template<typename T>
+const std::vector<T>& OperatorScLambda<OperatorLCAO<T>>::get_Wi() const
 {
     return this->Wi_;
 }
 
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::cal_h_lambda(int ik, std::complex<double>* h_lambda)
 {
     ModuleBase::TITLE("OperatorScLambda", "cal_h_lambda");
@@ -141,6 +155,7 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::cal_h_lambda(int ik, 
 }
 
 // contribute to Hk
+template<>
 void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorScLambda", "contributeHk");
@@ -154,5 +169,7 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     }
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
 }
+
+template class OperatorScLambda<OperatorLCAO<std::complex<double>>>;
 
 } // namespace hamilt

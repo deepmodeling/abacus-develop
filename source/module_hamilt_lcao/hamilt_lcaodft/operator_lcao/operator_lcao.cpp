@@ -157,8 +157,18 @@ void OperatorLCAO<T>::init(const int ik_in)
             //Overlap matrix for ik is used by it, do folding first and then return
             this->folding_fixed(ik_in, this->kvec_d);
             this->contributeHk(ik_in);
+            break;
+        }
+        case lcao_sc_lambda:
+        {
+            //update HK only
+            //in cal_type=lcao_sc_mag, HK only need to update from one node
+            // folding fixed should only be called once
+            // with folding_fixed here, the lcao_dftu should not be invoked
+            // only by comment out the folding_fixed here, the lcao_dftu could be invoked
+            //this->folding_fixed(ik_in, this->kvec_d);
+            this->contributeHk(ik_in);
             return;
-
             break;
         }
         case lcao_exx:

@@ -18,15 +18,15 @@ class OperatorScLambda : public T
 
 #endif
 
-template<>
-class OperatorScLambda<OperatorLCAO<std::complex<double>>> : public OperatorLCAO<std::complex<double>>
+template<typename T>
+class OperatorScLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 {
   public:
-    OperatorScLambda<OperatorLCAO<std::complex<double>>>(LCAO_Matrix* LM_in,
+    OperatorScLambda<OperatorLCAO<T>>(LCAO_Matrix* LM_in,
                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                    std::vector<std::complex<double>>* HR_pointer_in,
-                                    std::vector<std::complex<double>>* HK_pointer_in)
-        : HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), OperatorLCAO<std::complex<double>>(LM_in, kvec_d_in)
+                                    std::vector<double>* HR_pointer_in,
+                                    std::vector<T>* HK_pointer_in)
+        : HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), OperatorLCAO<T>(LM_in, kvec_d_in)
     {
         this->cal_type = lcao_sc_lambda;
     }
@@ -35,9 +35,9 @@ class OperatorScLambda<OperatorLCAO<std::complex<double>>> : public OperatorLCAO
 
     virtual void contributeHk(int ik) override;
 
-    void cal_h_lambda(int ik, std::complex<double>* h_lambda);
+    void cal_h_lambda(int ik, T* h_lambda);
 
-    void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
+    void cal_weight_func(const std::vector<T>& Sloc2);
 
     // setters
     void set_nat(int nat_in);
@@ -48,25 +48,25 @@ class OperatorScLambda<OperatorLCAO<std::complex<double>>> : public OperatorLCAO
 
     void set_iwt2iat(const int* iwt2iat_in);
 
-    void set_Wi(const std::vector<std::complex<double>>& Wi_in);
+    void set_Wi(const std::vector<T>& Wi_in);
 
     // getters
     int get_nat();
 
     int get_nloc();
 
-    const std::vector<std::complex<double>>& get_Wi() const;
+    const std::vector<T>& get_Wi() const;
 
     const std::vector<ModuleBase::Vector3<double>>& get_lambda() const;
 
     const std::vector<int>& get_iwt2iat() const;
 
   private:
-    std::vector<std::complex<double>>* HR_pointer = nullptr;
-    std::vector<std::complex<double>>* HK_pointer = nullptr;
+    std::vector<double>* HR_pointer = nullptr;
+    std::vector<T>* HK_pointer = nullptr;
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<int> iwt2iat_;
-    std::vector<std::complex<double>> Wi_;
+    std::vector<T> Wi_;
     int nloc_;
     int nat_;
 };

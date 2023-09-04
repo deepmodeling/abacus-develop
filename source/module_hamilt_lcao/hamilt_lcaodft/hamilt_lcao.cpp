@@ -18,6 +18,7 @@
 #include "operator_lcao/op_exx_lcao.h"
 #include "operator_lcao/overlap_lcao.h"
 #include "operator_lcao/veff_lcao.h"
+#include "operator_lcao/sc_lambda_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 
@@ -319,6 +320,17 @@ HamiltLCAO<T>::HamiltLCAO(
             kv_in.isk
         );
         this->ops->add(dftu);
+    }
+
+    if (GlobalV::sc_mag_switch)
+    {
+        Operator<std::complex<double>>* sc_lambda = new OperatorScLambda<OperatorLCAO<std::complex<double>>>(
+            LM_in,
+            kv.kvec_d,
+            nullptr,// no explicit call yet
+            &(LM_in->Hloc2)
+        );
+        this->ops->add(sc_lambda);
     }
 
 }
