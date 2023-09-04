@@ -203,7 +203,7 @@ void ESolver_SDFT_PW::postprocess()
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, kv, &(GlobalC::Pkpoints));
 
     ((hsolver::HSolverPW_SDFT*)phsol)->stoiter.cleanchiallorder(); // release lots of memories
-    int nche_test = 0;
+    int nche_test = this->nche_sto;
     if (INPUT.out_dos)
         nche_test = std::max(nche_test, INPUT.dos_nche);
     int cond_nche;
