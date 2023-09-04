@@ -1,4 +1,4 @@
-remove_definitions(-DENABLE_PAW)
+remove_definitions(-DUSE_PAW)
 
 add_executable(
     test_deepks

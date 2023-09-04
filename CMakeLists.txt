@@ -603,8 +603,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     esolver
     vdw
     device
-    container
-    kernels
+    container  
     paw
 )
 
