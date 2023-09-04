@@ -46,7 +46,8 @@ case "$with_libnpy" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d libnpy-${libnpy_ver} ] && rm -rf libnpy-${libnpy_ver}
         tar -xzf $filename
-        cp -r libnpy-${libnpy_ver} "${pkg_install_dir}/"
+        mkdir -p "${pkg_install_dir}"
+        cp -r libnpy-${libnpy_ver}/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
         ;;
