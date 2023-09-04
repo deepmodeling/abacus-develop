@@ -48,25 +48,27 @@ class OperatorScLambda<OperatorLCAO<std::complex<double>>> : public OperatorLCAO
 
     void set_iwt2iat(const int* iwt2iat_in);
 
+    void set_Wi(const std::vector<std::complex<double>>& Wi_in);
+
     // getters
     int get_nat();
 
     int get_nloc();
 
-    std::vector<ModuleBase::Vector3<double>>& get_lambda();
+    const std::vector<std::complex<double>>& get_Wi() const;
 
-    std::vector<int>& get_iwt2iat();
+    const std::vector<ModuleBase::Vector3<double>>& get_lambda() const;
 
-    std::vector<std::complex<double>> W_i_;
-    int nloc_;
-    int nat_;
-    int npol_;
+    const std::vector<int>& get_iwt2iat() const;
 
   private:
     std::vector<std::complex<double>>* HR_pointer = nullptr;
     std::vector<std::complex<double>>* HK_pointer = nullptr;
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<int> iwt2iat_;
+    std::vector<std::complex<double>> Wi_;
+    int nloc_;
+    int nat_;
 };
 
 } // namespace hamilt

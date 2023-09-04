@@ -20,13 +20,13 @@ public:
     /// parse json input file for non-collinear spin-constrained DFT
     void Set_ScData_From_Json(const std::string& filename);
     /// get sc_data
-    std::map<int, std::vector<ScAtomData>>& get_ScData();
+    const std::map<int, std::vector<ScAtomData>>& get_ScData() const;
     /// clear sc_data
     void clear_ScData();
     /// set element index to atom index map
     void set_atomCounts(const std::map<int, int>& atomCounts);
     /// get element index to atom index map
-    std::map<int, int>& get_atomCounts();
+    const std::map<int, int>& get_atomCounts() const;
     /// get sc_lambda
     std::vector<ModuleBase::Vector3<double>> get_sc_lambda();
     /// get sc_mag

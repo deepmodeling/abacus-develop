@@ -11,7 +11,7 @@ void SpinConstrain::set_atomCounts(const std::map<int, int>& atomCounts) {
 }
 
 // get atomCounts
-std::map<int, int>& SpinConstrain::get_atomCounts()
+const std::map<int, int>& SpinConstrain::get_atomCounts() const
 {
     return this->atomCounts;
 }

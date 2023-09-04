@@ -6,7 +6,7 @@
 #include <string>
 #include <regex>
 
-std::map<int, std::vector<ScAtomData>>& SpinConstrain::get_ScData()
+const std::map<int, std::vector<ScAtomData>>& SpinConstrain::get_ScData() const
 {
     return this->ScData;
 }
