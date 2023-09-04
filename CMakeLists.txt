@@ -603,9 +603,14 @@ target_link_libraries(${ABACUS_BIN_NAME}
     esolver
     vdw
     device
-    container  
-    paw
+    container
 )
+
+if(ENABLE_PAW)
+  target_link_libraries(${ABACUS_BIN_NAME}
+  paw
+  )
+endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
