@@ -286,6 +286,9 @@ public:
 
     /// @brief calculate the total number of electrons in system (GlobalV::nelec)
     void cal_nelec(double& nelec);
+
+    /// @brief get atomCounts, which is a map from atom type to atom number
+    std::map<int, int> get_atomCounts() const;
 };
 
 #endif //unitcell class

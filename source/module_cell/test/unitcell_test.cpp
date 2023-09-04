@@ -58,6 +58,8 @@ Magnetism::~Magnetism()
  *     - step_it(): periodically set it to 0 when it reaches ntype -1 
  *     - step_iait(): return true only the above two conditions are true
  *     - step_jajtiait(): return ture only two of the above function (for i and j) are true
+ *   - GetAtomCounts
+ *     - get_atomCounts(): get atomCounts, which is a map from atom type to atom number
  *   - CheckDTau
  *     - check_dtau(): move all atomic coordinates into the first unitcell, i.e. in between [0,1)
  *   - CheckTau
@@ -546,6 +548,18 @@ TEST_F(UcellTest,Index)
 			}
 		}
 	}
+}
+
+TEST_F(UcellTest,GetAtomCounts)
+{
+	UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+	GlobalV::relax_new = utp.relax_new;
+	ucell = utp.SetUcellInfo();
+	//test set_iat2itia
+	ucell->set_iat2itia();
+	std::map<int, int> atomCounts = ucell->get_atomCounts();
+	EXPECT_EQ(atomCounts[0],1);
+	EXPECT_EQ(atomCounts[1],2);
 }
 
 TEST_F(UcellTest,CheckDTau)

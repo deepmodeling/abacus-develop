@@ -288,6 +288,16 @@ void UnitCell::set_iat2itia(void)
     return;
 }
 
+std::map<int, int> UnitCell::get_atomCounts() const
+{
+	std::map<int, int> atomCounts;
+	for (int it = 0; it < this->ntype; it++)
+	{
+		atomCounts.insert(std::pair<int, int>(it, this->atoms[it].na));
+	}
+	return atomCounts;
+}
+
 void UnitCell::update_pos_tau(const double* pos)
 {
     int iat = 0;
