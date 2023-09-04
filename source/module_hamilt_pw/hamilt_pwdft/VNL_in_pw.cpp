@@ -13,7 +13,9 @@
 #include "module_base/memory.h"
 #include "module_psi/kernels/device.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
-
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -270,6 +272,36 @@ void pseudopot_cell_vnl::getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in
     std::complex<double> * sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw, "VNL::sk");
     this->psf->get_sk(ctx, ik, this->wfcpw, sk);
+
+#ifdef USE_PAW
+	double* kpt;
+	kpt = new double[3];
+	kpt[0] = this->wfcpw->kvec_c[ik].x;
+	kpt[1] = this->wfcpw->kvec_c[ik].y;
+	kpt[2] = this->wfcpw->kvec_c[ik].z;
+
+	double ** kpg;
+	kpg = new double*[npw];
+	for(int ipw=0;ipw<npw;ipw++)
+	{
+		kpg[ipw] = new double[3];
+		kpg[ipw][0] = gk[ipw].x;
+		kpg[ipw][1] = gk[ipw].y;
+		kpg[ipw][2] = gk[ipw].z;
+	}
+	GlobalC::paw_cell.set_paw_k(npw,kpt,
+		this->wfcpw->get_ig2ix(ik).data(),
+		this->wfcpw->get_ig2iy(ik).data(),
+		this->wfcpw->get_ig2iz(ik).data(),
+		(const double **) kpg,GlobalC::ucell.tpiba);
+
+	delete[] kpt;
+	for(int ipw = 0; ipw < npw; ipw++)
+	{
+		delete[] kpg[ipw];
+	}
+	delete[] kpg;
+#endif
 
     int jkb = 0, iat = 0;
 	for(int it = 0;it < GlobalC::ucell.ntype;it++)

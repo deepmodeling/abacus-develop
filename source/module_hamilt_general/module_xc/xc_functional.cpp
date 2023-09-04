@@ -1,7 +1,9 @@
 #include "xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
+#ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#endif
 
 XC_Functional::XC_Functional(){}
 

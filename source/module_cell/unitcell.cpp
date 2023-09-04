@@ -17,7 +17,9 @@
 #include "module_base/element_elec_config.h"
 #include "module_base/element_covalent_radius.h"
 
-#include "module_paw/paw_cell.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 UnitCell::UnitCell()
 {

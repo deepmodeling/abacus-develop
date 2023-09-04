@@ -37,7 +37,9 @@
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
 
+#ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#endif
 
 namespace ModuleESolver
 {

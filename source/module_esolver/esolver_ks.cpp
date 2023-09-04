@@ -17,6 +17,11 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 //---------------------------------------
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#include "module_base/parallel_common.h"
+#endif
+
 namespace ModuleESolver
 {
 
@@ -140,6 +145,81 @@ namespace ModuleESolver
 
         // Initialize charge extrapolation
         CE.Init_CE(GlobalC::ucell.nat);
+
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+        {
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
+            GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+
+            int * atom_type;
+            double ** atom_coord;
+            std::vector<std::string> filename_list;
+
+            atom_type = new int [GlobalC::ucell.nat];
+            atom_coord = new double * [GlobalC::ucell.nat];
+            filename_list.resize(GlobalC::ucell.ntype);
+
+            for(int ia = 0; ia < GlobalC::ucell.nat; ia ++)
+            {
+                atom_coord[ia] = new double [3];
+            }
+
+            int iat = 0;
+            for(int it = 0; it < GlobalC::ucell.ntype; it ++)
+            {
+                for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia ++)
+                {
+                    atom_type[iat] = it;
+                    atom_coord[iat][0] = GlobalC::ucell.atoms[it].taud[ia].x;
+                    atom_coord[iat][1] = GlobalC::ucell.atoms[it].taud[ia].y;
+                    atom_coord[iat][2] = GlobalC::ucell.atoms[it].taud[ia].z;
+                    iat ++;
+                }
+            }            
+
+            if(GlobalV::MY_RANK == 0)
+            {
+                std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
+                if (!ifa)
+                {
+                    ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
+                }
+
+                std::string line;
+                while(!ifa.eof())
+                {
+                    getline(ifa,line);
+                    if (line.find("PAW_FILES") != std::string::npos) break;
+                }
+
+                for(int it = 0; it < GlobalC::ucell.ntype; it++)
+                {
+                    ifa >> filename_list[it];
+                }
+            }
+#ifdef __MPI
+            for(int it = 0; it < GlobalC::ucell.ntype; it++)
+            {
+                Parallel_Common::bcast_string(filename_list[it]);
+            }
+#endif
+
+            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc/2.0, INPUT.cell_factor,
+                GlobalC::ucell.omega,GlobalC::ucell.nat,GlobalC::ucell.ntype,
+                atom_type,(const double **) atom_coord,
+                filename_list,this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                this->sf.eigts1.c,this->sf.eigts2.c,this->sf.eigts3.c);
+            
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                delete [] atom_coord[iat];
+            }
+            delete [] atom_coord;
+            delete [] atom_type;
+        }
+#endif
     }
 
     template<typename FPTYPE, typename Device>

@@ -156,6 +156,13 @@ private:
     //get igl2ig_k or igk(ik,ig) in older ABACUS
     int& getigl2ig(const int ik, const int igl) const;
 
+    //get ig_to_ix
+    std::vector<int> get_ig2ix(const int ik) const;
+    //get ig_to_iy
+    std::vector<int> get_ig2iy(const int ik) const;
+    //get ig_to_iz
+    std::vector<int> get_ig2iz(const int ik) const;
+
     template <typename FPTYPE> FPTYPE * get_gk2_data() const;
     template <typename FPTYPE> FPTYPE * get_gcar_data() const;
     template <typename FPTYPE> FPTYPE * get_kvec_c_data() const;

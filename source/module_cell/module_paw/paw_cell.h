@@ -234,14 +234,12 @@ class Paw_Cell
 
 // Part IV. Calling Fortran subroutines from libpaw_interface
     public:
-#ifdef USE_PAW
     void prepare_paw();
     void get_vloc_ncoret(double* vloc, double* ncoret);
     void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
     void get_nhat(double* nhat, double* nhatgr);
     void calculate_dij(double* vks, double* vxc);
     void get_dij(int iat, int size_dij, double* dij);
-#endif
 };
 
 namespace GlobalC
