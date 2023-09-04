@@ -40,11 +40,11 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLibxc_DIR=$LIBXC \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
+        -DENABLE_LIBRI=ON \
         -DUSE_OPENMP=ON \
         -DENABLE_ASAN=OFF \
         -DUSE_ELPA=ON \
         | tee configure.log
-#         -DENABLE_LIBRI=ON \
 #         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
@@ -52,6 +52,8 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 # 	      -DTensorFlow_DIR=$DEEPMD \
 
 # # add mkl env for libtorch to link
+# # gnu-toolchain will lack of -lmkl when load libtorch
+# # need to fix -- zhaoqing in 2023-09-02
 # module load mkl
 
 cmake --build $BUILD_DIR -j `nproc` | tee build.log

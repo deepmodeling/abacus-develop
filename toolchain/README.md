@@ -19,7 +19,7 @@ and give setup files that you can use to compile ABACUS.
 - [x] `intel-mkl-mpi` toolchain support using `icc` or `icx`. (`icx` version of ABACUS have some problem)
 - [x] `intel-mkl-mpich` toolchain support (need more test).
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
-- [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) in `intel-mkl` toolchain. (LibRI do not support `gnu`)
+- [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) as submodule
 - [ ] A better mirror station for all packages, especially for CEREAL and LIBNPY.
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
