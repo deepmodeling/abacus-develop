@@ -17,6 +17,8 @@
 #include "module_base/element_elec_config.h"
 #include "module_base/element_covalent_radius.h"
 
+#include "module_paw/paw_cell.h"
+
 UnitCell::UnitCell()
 {
     if (GlobalV::test_unitcell)

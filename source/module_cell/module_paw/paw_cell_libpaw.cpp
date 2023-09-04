@@ -2,6 +2,7 @@
 #include "module_base/tool_title.h"
 #include "paw_cell.h"
 #include "module_base/global_variable.h"
+#include "module_base/parallel_common.h"
 
 // The subroutines here are used to gather information from the main ABACUS program
 // 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
