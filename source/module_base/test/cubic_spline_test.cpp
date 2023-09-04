@@ -35,22 +35,23 @@ class CubicSplineTest : public ::testing::Test
     /// Deallocates buffers
     void TearDown();
 
-    int n_max = 20; ///< size of each buffer
-    double* x_;     ///< buffer for the x coordinates of data points
-    double* y_;     ///< buffer for the y coordinates of data points
-
+    int n_max = 20;    ///< size of each buffer
+    double* x_;        ///< buffer for the x coordinates of data points
+    double* y_;        ///< buffer for the y coordinates of data points
+    double* s_;        ///< buffer for the first-derivatives of the interpolant
     double* x_interp_; ///< places where the interpolant is evaluated
     double* y_interp_; ///< values of the interpolant at x_interp_
     double* y_ref_;    ///< reference values for y_interp_ drawn from
                        ///< scipy.interpolate.CubicSpline
 
-    double tol = 1e-8; ///< tolerance for element-wise numerical error
+    double tol = 1e-15; ///< tolerance for element-wise numerical error
 };
 
 void CubicSplineTest::SetUp()
 {
     x_ = new double[n_max];
     y_ = new double[n_max];
+    s_ = new double[n_max];
     x_interp_ = new double[n_max];
     y_interp_ = new double[n_max];
     y_ref_ = new double[n_max];
@@ -60,6 +61,7 @@ void CubicSplineTest::TearDown()
 {
     delete[] x_;
     delete[] y_;
+    delete[] s_;
     delete[] x_interp_;
     delete[] y_interp_;
     delete[] y_ref_;
@@ -129,6 +131,19 @@ TEST_F(CubicSplineTest, NotAKnot)
     y_ref_[5] = 0.1411200080598672;
 
     cubspl.eval(ni, x_interp_, y_interp_);
+    for (int i = 0; i != ni; ++i)
+    {
+        EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
+    }
+
+    // static member function
+    ModuleBase::CubicSpline::build(n,
+                                   x_,
+                                   y_,
+                                   s_,
+                                   ModuleBase::CubicSpline::BoundaryCondition::not_a_knot,
+                                   ModuleBase::CubicSpline::BoundaryCondition::not_a_knot);
+    ModuleBase::CubicSpline::eval(n, x_, y_, s_, ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
@@ -1034,6 +1049,7 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
     x_interp_[3] = 0.200000000000000;
     x_interp_[4] = 0.400000000000000;
     x_interp_[5] = 0.800000000000000;
+
     y_ref_[0] = 1.000000000000000;
     y_ref_[1] = 0.990049833749168;
     y_ref_[2] = 0.904837418035960;
