@@ -32,7 +32,6 @@ force_thr_ev    1.0e-3
 md_type		nve
 md_dt			0.05
 md_restart		1
-md_tfirst	30
 init_vel                1
 ocp			1
 ocp_set			1*1 1*1 3*0	
