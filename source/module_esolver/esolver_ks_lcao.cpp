@@ -177,6 +177,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         sc.set_atomCounts(atomCounts);
         sc.set_orbitalCounts(orbitalCounts);
         sc.set_npol(GlobalV::NPOL);
+        // get pointer to Parallel_Oribitals
+        sc.ParaV = &(this->orb_con.ParaV);
         std::cout << "nw = " << sc.get_nw() << std::endl;
         if(GlobalV::MY_RANK == 0)
         {

@@ -6,6 +6,7 @@
 #include "module_base/vector3.h"
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 
 struct ScAtomData;
 
@@ -55,6 +56,11 @@ public:
     void set_npol(int npol);
     /// get npol
     int get_npol();
+    /// calculate weight function for spin-constrained DFT
+    void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
+
+public:
+    Parallel_Orbitals *ParaV;
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -65,6 +71,7 @@ private:
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
     int npol_ = 1;
+    std::vector<std::complex<double>> Wi_;
 };
 
 
