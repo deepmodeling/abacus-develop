@@ -32,10 +32,14 @@ public:
     void set_orbitalCounts(const std::map<int, int>& orbitalCounts_in);
     /// get element index to orbital index map
     const std::map<int, int>& get_orbitalCounts() const;
+    /// set sc_lambda
+    void set_sc_lambda();
+    /// set sc_mag
+    void set_sc_mag();
     /// get sc_lambda
-    std::vector<ModuleBase::Vector3<double>> get_sc_lambda();
+    const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
     /// get sc_mag
-    std::vector<ModuleBase::Vector3<double>> get_sc_mag();
+    const std::vector<ModuleBase::Vector3<double>>& get_sc_mag() const;
     /// get nat
     int get_nat();
     /// get ntype
@@ -58,6 +62,8 @@ public:
     int get_npol();
     /// calculate weight function for spin-constrained DFT
     void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
+    /// calculate h_lambda operator for spin-constrained DFT
+    void cal_h_lambda(std::vector<std::complex<double>>& h_lambda);
 
 public:
     Parallel_Orbitals *ParaV;
@@ -72,6 +78,8 @@ private:
     std::map<int, int> orbitalCounts;
     int npol_ = 1;
     std::vector<std::complex<double>> Wi_;
+    std::vector<ModuleBase::Vector3<double>> lambda_;
+    std::vector<ModuleBase::Vector3<double>> sc_mag_;
 };
 
 

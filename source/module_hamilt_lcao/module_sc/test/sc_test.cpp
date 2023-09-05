@@ -109,13 +109,15 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
 	}
 }
 
-TEST_F(SpinConstrainTest, GetScLambdaAndMag)
+TEST_F(SpinConstrainTest, SetScLambdaAndMag)
 {
 	sc.clear_ScData();
 	sc.Set_ScData_From_Json("./support/sc_f1.json");
 	std::map<int, int> atomCounts = {{0,5},{1,10}};
 	sc.clear_atomCounts();
 	sc.set_atomCounts(atomCounts);
+	sc.set_sc_lambda();
+	sc.set_sc_mag();
 	std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
 	std::vector<ModuleBase::Vector3<double>> sc_mag = sc.get_sc_mag();
 	EXPECT_EQ(sc_lambda.size(), sc.get_nat());

@@ -183,6 +183,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         if(GlobalV::MY_RANK == 0)
         {
             sc.Set_ScData_From_Json(GlobalV::sc_file);
+            sc.set_sc_lambda();
+            sc.set_sc_mag();
             std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
 	        std::vector<ModuleBase::Vector3<double>> sc_mag = sc.get_sc_mag();
             

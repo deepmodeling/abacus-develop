@@ -152,12 +152,12 @@ int SpinConstrain::get_iwt(int itype, int iat, int orbital_index)
     return iwt;
 }
 
-// get sc_lambda from ScData
-std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_lambda()
+// set sc_lambda from ScData
+void SpinConstrain::set_sc_lambda()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
-    std::vector<ModuleBase::Vector3<double>> sc_lambda(nat);
+    this->lambda_.resize(nat);
     for (auto& itype_data : this->ScData) {
         int itype = itype_data.first;
         for (auto& element_data : itype_data.second) {
@@ -167,18 +167,17 @@ std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_lambda()
             lambda.x = element_data.lambda[0];
             lambda.y = element_data.lambda[1];
             lambda.z = element_data.lambda[2];
-            sc_lambda[iat] = lambda;
+            this->lambda_[iat] = lambda;
         }
     }
-    return sc_lambda;
 }
 
-// get sc_mag from ScData
-std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_mag()
+// set sc_mag from ScData
+void SpinConstrain::set_sc_mag()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
-    std::vector<ModuleBase::Vector3<double>> sc_mag(nat);
+    this->sc_mag_.resize(nat);
     for (auto& itype_data : this->ScData) {
         int itype = itype_data.first;
         for (auto& element_data : itype_data.second) {
@@ -188,8 +187,17 @@ std::vector<ModuleBase::Vector3<double>> SpinConstrain::get_sc_mag()
             mag.x = element_data.sc_mag[0];
             mag.y = element_data.sc_mag[1];
             mag.z = element_data.sc_mag[2];
-            sc_mag[iat] = mag;
+            this->sc_mag_[iat] = mag;
         }
     }
-    return sc_mag;
+}
+
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain::get_sc_lambda() const
+{
+    return this->lambda_;
+}
+
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain::get_sc_mag() const
+{
+    return this->sc_mag_;
 }
