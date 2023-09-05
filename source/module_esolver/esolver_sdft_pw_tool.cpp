@@ -570,7 +570,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         ModuleBase::Memory::record("SDFT::j2r", sizeof(std::complex<double>) * ndim * dim_jmatrix);
 
         const int nbatch_psi = npart_sto;
-        const int bsize_psi = ceil(perbands / nbatch_psi);
+        const int bsize_psi = std::min((int)ceil(perbands / nbatch_psi), std::max(perbands_sto, perbands_ks));
         psi::Psi<std::complex<double>> batchj1psi(1, bsize_psi * ndim, npwx, kv.ngk.data());
         psi::Psi<std::complex<double>> batchj2psi(1, bsize_psi * ndim, npwx, kv.ngk.data());
         ModuleBase::Memory::record("SDFT::batchjpsi", bsize_psi * (2*ndim+1) * npwx * sizeof(std::complex<double>));

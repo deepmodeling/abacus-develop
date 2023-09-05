@@ -282,9 +282,9 @@ ModuleBase::Vector3<double>& PW_Basis_K::getgcar(const int ik, const int igl) co
 ModuleBase::Vector3<double> PW_Basis_K::getgdirect(const int ik, const int igl) const
 {
     ModuleBase::Vector3<double> f = this->latvec * this->gcar[ik * this->npwk_max + igl];
-    f.x = floor(f.x+0.1);
-    f.y = floor(f.y+0.1);
-    f.z = floor(f.z+0.1);
+    f.x = std::round(f.x);
+    f.y = std::round(f.y);
+    f.z = std::round(f.z);
     return f;
 }
 
