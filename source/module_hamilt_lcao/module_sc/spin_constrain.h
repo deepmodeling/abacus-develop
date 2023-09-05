@@ -44,13 +44,17 @@ public:
     /// get iat
     int get_iat(int itype, int atom_index);
     /// get nw
-    int get_nw(int npol=1);
+    int get_nw();
     /// get iwt
-    int get_iwt(int itype, int iat, int orbital_index, int npol=1);
+    int get_iwt(int itype, int iat, int orbital_index);
     /// clear atomCounts
     void clear_atomCounts();
     /// clear orbitalCounts
     void clear_orbitalCounts();
+    /// set npol
+    void set_npol(int npol);
+    /// get npol
+    int get_npol();
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -60,6 +64,7 @@ private:
     std::map<int, std::vector<ScAtomData>> ScData;
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
+    int npol_ = 1;
 };
 
 

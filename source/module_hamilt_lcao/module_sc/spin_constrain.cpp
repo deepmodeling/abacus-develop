@@ -16,6 +16,18 @@ const std::map<int, int>& SpinConstrain::get_atomCounts() const
     return this->atomCounts;
 }
 
+/// set npol
+void SpinConstrain::set_npol(int npol)
+{
+    this->npol_ = npol;
+}
+
+/// get npol
+int SpinConstrain::get_npol()
+{
+    return this->npol_;
+}
+
 int SpinConstrain::get_nat()
 {
     int nat = 0;
@@ -100,17 +112,17 @@ const std::map<int, int>& SpinConstrain::get_orbitalCounts() const
     return this->orbitalCounts;
 }
 
-int SpinConstrain::get_nw(int npol)
+int SpinConstrain::get_nw()
 {
     this->check_atomCounts();
     int nw = 0;
     for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it) {
-        nw += (it->second)*this->atomCounts[it->first]*npol;
+        nw += (it->second)*this->atomCounts[it->first]*this->npol_;
     }
     return nw;
 }
 
-int SpinConstrain::get_iwt(int itype, int iat, int orbital_index, int npol)
+int SpinConstrain::get_iwt(int itype, int iat, int orbital_index)
 {
     this->check_atomCounts();
     if (itype < 0 || itype >= this->get_ntype())
@@ -131,12 +143,12 @@ int SpinConstrain::get_iwt(int itype, int iat, int orbital_index, int npol)
         {
             break;
         }
-        iwt += (it->second)*this->atomCounts[it->first]*npol;
+        iwt += (it->second)*this->atomCounts[it->first]*this->npol_;
     }
     for (int i = 0; i < iat; ++i) {
-        iwt += this->orbitalCounts[itype]*npol;
+        iwt += this->orbitalCounts[itype]*this->npol_;
     }
-    iwt += orbital_index*npol;
+    iwt += orbital_index*this->npol_;
     return iwt;
 }
 

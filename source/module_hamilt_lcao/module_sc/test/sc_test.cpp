@@ -43,9 +43,14 @@ TEST_F(SpinConstrainTest, OrbitalCounts)
 	int ntype = orbitalCounts2.size();
 	EXPECT_EQ(ntype, 2);
 	EXPECT_EQ(sc.get_nw(), 25);
-	EXPECT_EQ(sc.get_nw(2), 50); // npol = 2
+	sc.set_npol(2);
+	EXPECT_EQ(sc.get_npol(),2);
+	EXPECT_EQ(sc.get_nw(), 50); // npol = 2
+	sc.set_npol(1);
+	EXPECT_EQ(sc.get_npol(),1);
 	EXPECT_EQ(sc.get_iwt(1,1,2), 17);
-	EXPECT_EQ(sc.get_iwt(1,1,2,2), 34); // npol = 2
+	sc.set_npol(2);
+	EXPECT_EQ(sc.get_iwt(1,1,2), 34); // npol = 2
 }
 
 TEST_F(SpinConstrainTest, ScDataFormat1)
