@@ -1,6 +1,9 @@
 #include "paw_cell.h"
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
+#ifdef __MPI
+#include "module_base/parallel_reduce.h"
+#endif
 
 namespace GlobalC
 {
@@ -427,9 +430,24 @@ void Paw_Cell::get_vkb()
     }
 }
 
+void Paw_Cell::reset_rhoij()
+{
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        paw_atom_list[iat].reset_rhoij();
+    }
+}
+
 void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double weight)
 {
     ModuleBase::TITLE("Paw_Cell","accumulate_rhoij");
+
+    std::cout << "weight : " << weight << std::endl;
+    std::cout << "psi" << std::endl;
+    for(int ipw = 0; ipw < npw; ipw ++)
+    {
+        std::cout << psi[ipw] << std::endl;
+    }
 
     for(int iat = 0; iat < nat; iat ++)
     {
@@ -456,9 +474,9 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
             }
         }
 
-        // ca should be summed over MPI ranks since planewave basis is distributed
-        // but not for now (I'll make sure serial version works first)
-        // Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+#ifdef __MPI
+         Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+#endif
 
         paw_atom_list[iat].set_ca(ca, weight);
         paw_atom_list[iat].accumulate_rhoij();
@@ -535,9 +553,9 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             }
         }
 
-        // ca should be summed over MPI ranks since planewave basis is distributed
-        // but not for now (I'll make sure serial version works first)
-        // Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+#ifdef __MPI
+        Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+#endif
 
         // sum_ij D_ij ca_j
         std::vector<std::complex<double>> v_ca;

@@ -168,6 +168,7 @@ TEST_F(Test_PAW, test_paw)
 
     std::ifstream ifs_psi("test4_psi.dat");
 
+    paw_cell.reset_rhoij();
     for(int iband = 0; iband < nband; iband ++)
     {
         for(int ipw = 0; ipw < npw; ipw ++)

@@ -45,6 +45,7 @@ class Paw_Cell
     // then accumulates the contribution of this wavefunction to rhoij
     // Note k-point information is not passed here, but prepared in set_paw_k
     void accumulate_rhoij(const std::complex<double> * psi, const double weight);
+    void reset_rhoij();
 
     // returns rhoij for each atom
     std::vector<std::vector<double>> get_rhoij();

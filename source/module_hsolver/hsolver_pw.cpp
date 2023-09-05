@@ -9,7 +9,9 @@
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include <algorithm>
-
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 namespace hsolver {
 
 template <typename FPTYPE, typename Device>
@@ -122,6 +124,24 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         return;
     }
     reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(pes)->psiToRho(psi);
+
+#ifdef USE_PAW
+    if(typeid(FPTYPE) != typeid(double))
+    {
+        ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
+    }
+
+    GlobalC::paw_cell.reset_rhoij();
+    for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+    {
+        psi.fix_k(ik);
+        int nbands = psi.get_nbands();
+        for(int ib = 0; ib < nbands; ib ++)
+        {
+            GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*> (psi.get_pointer(ib)), pes->wg(ik,ib));
+        }
+    }
+#endif
 
     ModuleBase::timer::tick("HSolverPW", "solve");
     return;
