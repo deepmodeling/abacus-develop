@@ -11,6 +11,7 @@
 #include <algorithm>
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #endif
 namespace hsolver {
 
@@ -140,6 +141,17 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         {
             GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*> (psi.get_pointer(ib)), pes->wg(ik,ib));
         }
+    }
+
+    std::vector<std::vector<double>> rhoijp;
+    std::vector<std::vector<int>> rhoijselect;
+    std::vector<int> nrhoijsel;
+
+    GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+    for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+    {
+        GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
     }
 #endif
 

@@ -442,13 +442,6 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
 {
     ModuleBase::TITLE("Paw_Cell","accumulate_rhoij");
 
-    std::cout << "weight : " << weight << std::endl;
-    std::cout << "psi" << std::endl;
-    for(int ipw = 0; ipw < npw; ipw ++)
-    {
-        std::cout << psi[ipw] << std::endl;
-    }
-
     for(int iat = 0; iat < nat; iat ++)
     {
         // ca : <ptilde(G)|psi(G)>
