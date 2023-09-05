@@ -341,6 +341,7 @@ std::vector<int> PW_Basis_K::get_ig2ix(const int ik) const
         int is = isz / this->nz;
         int ixy = this->is2fftixy[is];
         int ix = ixy / this->ny;
+        if (ix < (nx / 2) + 1) ix += nx;
         ig_to_ix[ig] = ix;
     }
     return ig_to_ix;
@@ -357,6 +358,7 @@ std::vector<int> PW_Basis_K::get_ig2iy(const int ik) const
         int is = isz / this->nz;
         int ixy = this->is2fftixy[is];
         int iy = ixy % this->ny;
+        if (iy < (ny / 2) + 1) iy += ny;
         ig_to_iy[ig] = iy;
     }
     return ig_to_iy;
@@ -371,6 +373,7 @@ std::vector<int> PW_Basis_K::get_ig2iz(const int ik) const
     {
         int isz = this->igl2isz_k[ig + ik * npwk_max];
         int iz = isz % this->nz;
+        if (iz < (nz / 2) + 1) iz += nz;
         ig_to_iz[ig] = iz;
     }
     return ig_to_iz;

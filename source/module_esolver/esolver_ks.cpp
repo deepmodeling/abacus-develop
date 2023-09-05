@@ -206,7 +206,7 @@ namespace ModuleESolver
             }
 #endif
 
-            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc/2.0, INPUT.cell_factor,
+            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
                 GlobalC::ucell.omega,GlobalC::ucell.nat,GlobalC::ucell.ntype,
                 atom_type,(const double **) atom_coord,
                 filename_list,this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
