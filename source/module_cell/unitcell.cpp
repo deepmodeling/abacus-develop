@@ -298,6 +298,16 @@ std::map<int, int> UnitCell::get_atomCounts() const
 	return atomCounts;
 }
 
+std::map<int, int> UnitCell::get_orbitalCounts() const
+{
+	std::map<int, int> orbitalCounts;
+	for (int it = 0; it < this->ntype; it++)
+	{
+		orbitalCounts.insert(std::pair<int, int>(it, this->atoms[it].nw));
+	}
+	return orbitalCounts;
+}
+
 void UnitCell::update_pos_tau(const double* pos)
 {
     int iat = 0;
