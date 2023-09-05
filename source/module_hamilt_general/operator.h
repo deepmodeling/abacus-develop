@@ -38,7 +38,10 @@ class Operator
     //this is the core function for Operator
     // do H|psi> from input |psi> , 
 
-    // output of hpsi would be first member of the returned tuple 
+    /// as default, different operators donate hPsi independently
+    /// run this->act function for the first operator and run all act() for other nodes in chain table 
+    /// if this procedure is not suitable for your operator, just override this function.
+    /// output of hpsi would be first member of the returned tuple 
     typedef std::tuple<const psi::Psi<FPTYPE, Device>*, const psi::Range, FPTYPE*> hpsi_info;
     virtual hpsi_info hPsi(hpsi_info& input)const;
 

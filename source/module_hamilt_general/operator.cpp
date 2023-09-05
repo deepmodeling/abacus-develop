@@ -1,4 +1,5 @@
 #include "module_hamilt_general/operator.h"
+#include "module_base/timer.h"
 
 using namespace hamilt;
 
@@ -34,10 +35,42 @@ Operator<FPTYPE, Device>::~Operator()
 }
 
 template<typename FPTYPE, typename Device>
-typename Operator<FPTYPE, Device>::hpsi_info Operator<FPTYPE, Device>::hPsi(hpsi_info&) const 
+typename Operator<FPTYPE, Device>::hpsi_info Operator<FPTYPE, Device>::hPsi(hpsi_info& input) const
 {
-    ModuleBase::WARNING_QUIT("Operator::hPsi", "hPsi error!");
-    return hpsi_info(nullptr, 0, nullptr);
+    ModuleBase::timer::tick("Operator", "hPsi");
+    using syncmem_op = psi::memory::synchronize_memory_op<FPTYPE, Device, Device>;
+    auto psi_input = std::get<0>(input);
+    std::tuple<const FPTYPE*, int> psi_info = psi_input->to_range(std::get<1>(input));
+    int nbands = std::get<1>(psi_info);
+
+    FPTYPE* tmhpsi = this->get_hpsi(input);
+    const FPTYPE* tmpsi_in = std::get<0>(psi_info);
+    //if range in hpsi_info is illegal, the first return of to_range() would be nullptr
+    if (tmpsi_in == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("Operator", "please choose correct range of psi for hPsi()!");
+    }
+
+    this->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, tmhpsi, psi_input->get_ngk(this->ik));
+    Operator* node((Operator*)this->next_op);
+    while (node != nullptr)
+    {
+        node->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, tmhpsi, psi_input->get_ngk(node->ik));
+        node = (Operator*)(node->next_op);
+    }
+
+    ModuleBase::timer::tick("Operator", "hPsi");
+
+    //if in_place, copy temporary hpsi to target hpsi_pointer, then delete hpsi and new a wrapper for return
+    FPTYPE* hpsi_pointer = std::get<2>(input);
+    if (this->in_place)
+    {
+        // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
+        syncmem_op()(this->ctx, this->ctx, hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
+        delete this->hpsi;
+        this->hpsi = new psi::Psi<FPTYPE, Device>(hpsi_pointer, *psi_input, 1, nbands / psi_input->npol);
+    }
+    return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->npol), hpsi_pointer);
 }
 
 template<typename FPTYPE, typename Device>
