@@ -161,15 +161,17 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorScLambda", "contributeHk");
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
-    //std::vector<std::complex<double>> h_lambda(this->nloc_ * this->nloc_);
-    //this->cal_h_lambda(ik, &h_lambda[0]);
-
-    //for (int irc = 0; irc < this->nloc_; irc++)
-    //{
-    //    this->LM->Hloc2[irc] += h_lambda[irc];
-    //}
     SpinConstrain& sc = SpinConstrain::getInstance();
     std::cout << "nw in operator = " << sc.get_nw() << std::endl;
+    std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
+    /*
+    sc.cal_Wi(this->LM->Sloc2);
+    sc.cal_h_lambda(&h_lambda[0]);
+    for (int irc = 0; irc < irc < this->LM->ParaV->nloc; irc++)
+    {
+        this->LM->Hloc2[irc] += h_lambda[irc];
+    }
+    */
     std::cout << "OperatorScLambda contributeHk" << std::endl;
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
 }
