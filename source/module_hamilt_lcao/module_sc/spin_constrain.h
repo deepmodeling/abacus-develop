@@ -24,9 +24,13 @@ public:
     /// clear sc_data
     void clear_ScData();
     /// set element index to atom index map
-    void set_atomCounts(const std::map<int, int>& atomCounts);
+    void set_atomCounts(const std::map<int, int>& atomCounts_in);
     /// get element index to atom index map
     const std::map<int, int>& get_atomCounts() const;
+    /// set element index to orbital index map
+    void set_orbitalCounts(const std::map<int, int>& orbitalCounts_in);
+    /// get element index to orbital index map
+    const std::map<int, int>& get_orbitalCounts() const;
     /// get sc_lambda
     std::vector<ModuleBase::Vector3<double>> get_sc_lambda();
     /// get sc_mag
@@ -39,8 +43,12 @@ public:
     void check_atomCounts();
     /// get iat
     int get_iat(int itype, int iat);
+    /// get nw
+    int get_nw();
     /// clear atomCounts
     void clear_atomCounts();
+    /// clear orbitalCounts
+    void clear_orbitalCounts();
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -49,6 +57,7 @@ private:
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
     std::map<int, int> atomCounts;
+    std::map<int, int> orbitalCounts;
 };
 
 

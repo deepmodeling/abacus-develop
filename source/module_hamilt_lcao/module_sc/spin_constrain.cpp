@@ -6,8 +6,8 @@ SpinConstrain& SpinConstrain::getInstance() {
 }
 
 // set atomCounts
-void SpinConstrain::set_atomCounts(const std::map<int, int>& atomCounts) {
-    this->atomCounts = atomCounts;
+void SpinConstrain::set_atomCounts(const std::map<int, int>& atomCounts_in) {
+    this->atomCounts = atomCounts_in;
 }
 
 // get atomCounts
@@ -81,6 +81,33 @@ int SpinConstrain::get_iat(int itype, int index)
 void SpinConstrain::clear_atomCounts()
 {
     this->atomCounts.clear();
+}
+
+// clear orbitalCounts
+void SpinConstrain::clear_orbitalCounts()
+{
+    this->orbitalCounts.clear();
+}
+
+// set orbitalCounts
+void SpinConstrain::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in) {
+    this->orbitalCounts = orbitalCounts_in;
+}
+
+// get orbitalCounts
+const std::map<int, int>& SpinConstrain::get_orbitalCounts() const
+{
+    return this->orbitalCounts;
+}
+
+int SpinConstrain::get_nw()
+{
+    this->check_atomCounts();
+    int nw = 0;
+    for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it) {
+        nw += (it->second)*this->atomCounts[it->first];
+    }
+    return nw;
 }
 
 // get sc_lambda from ScData

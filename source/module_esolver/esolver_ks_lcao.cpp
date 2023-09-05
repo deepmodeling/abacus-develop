@@ -171,6 +171,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         sc.clear_ScData();
         sc.clear_atomCounts();
         std::map<int, int> atomCounts = GlobalC::ucell.get_atomCounts();
+        std::map<int, int> orbitalCounts = GlobalC::ucell.get_orbitalCounts();
+        std::cout << "atomCounts[0] " << atomCounts[0] << std::endl;
+        std::cout << "orbitalCounts[0] " << orbitalCounts[0] << std::endl;
         sc.set_atomCounts(atomCounts);
         if(GlobalV::MY_RANK == 0)
         {

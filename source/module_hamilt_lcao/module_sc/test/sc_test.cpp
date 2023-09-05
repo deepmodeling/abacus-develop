@@ -22,13 +22,28 @@ class SpinConstrainTest : public testing::Test
 TEST_F(SpinConstrainTest, AtomCounts)
 {
 	std::map<int, int> atomCounts = {{0,5},{1,10}};
+	sc.clear_atomCounts();
 	sc.set_atomCounts(atomCounts);
 	std::map<int, int> atomCounts2 = sc.get_atomCounts();
 	int ntype = atomCounts2.size();
 	EXPECT_EQ(ntype, 2);
     int nat = sc.get_nat();
 	EXPECT_EQ(nat, 15);
+}
 
+TEST_F(SpinConstrainTest, OrbitalCounts)
+{
+	std::map<int, int> orbitalCounts = {{0,5},{1,10}};
+	std::map<int, int> atomCounts = {{0,1},{1,2}};
+	sc.clear_atomCounts();
+	sc.clear_orbitalCounts();
+	sc.set_atomCounts(atomCounts);
+	sc.set_orbitalCounts(orbitalCounts);
+	std::map<int, int> orbitalCounts2 = sc.get_orbitalCounts();
+	int ntype = orbitalCounts2.size();
+	EXPECT_EQ(ntype, 2);
+	int norb = sc.get_nw();
+	EXPECT_EQ(norb, 25);
 }
 
 TEST_F(SpinConstrainTest, ScDataFormat1)
