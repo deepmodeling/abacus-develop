@@ -1,4 +1,5 @@
 #include "sc_lambda_lcao.h"
+#include "module_hamilt_lcao/module_sc/spin_constrain.h"
 
 namespace hamilt
 {
@@ -167,6 +168,8 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     //{
     //    this->LM->Hloc2[irc] += h_lambda[irc];
     //}
+    SpinConstrain& sc = SpinConstrain::getInstance();
+    std::cout << "nw in operator = " << sc.get_nw() << std::endl;
     std::cout << "OperatorScLambda contributeHk" << std::endl;
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
 }

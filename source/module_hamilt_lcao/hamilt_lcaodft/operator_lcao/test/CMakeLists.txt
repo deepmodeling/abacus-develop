@@ -58,6 +58,7 @@ AddTest(
   SOURCES test_sc_lambda_lcao.cpp
   ../sc_lambda_lcao.cpp
   ../../../../module_hamilt_general/operator.cpp
+  ../../../module_sc/spin_constrain.cpp
 )
 
 endif() 
