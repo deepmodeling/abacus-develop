@@ -166,7 +166,7 @@ void OperatorLCAO<T>::init(const int ik_in)
             // folding fixed should only be called once
             // with folding_fixed here, the lcao_dftu should not be invoked
             // only by comment out the folding_fixed here, the lcao_dftu could be invoked
-            //this->folding_fixed(ik_in, this->kvec_d);
+            this->folding_fixed(ik_in, this->kvec_d);
             this->contributeHk(ik_in);
             return;
             break;

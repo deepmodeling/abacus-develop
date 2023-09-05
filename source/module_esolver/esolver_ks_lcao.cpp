@@ -36,6 +36,8 @@
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
 
+#include "module_hamilt_lcao/module_sc/spin_constrain.h"
+
 namespace ModuleESolver
 {
 
@@ -161,6 +163,28 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     if (GlobalV::dft_plus_u)
     {
         GlobalC::dftu.init(ucell, this->LM, kv.nks);
+    }
+
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain& sc = SpinConstrain::getInstance();
+        sc.clear_ScData();
+        sc.clear_atomCounts();
+        std::map<int, int> atomCounts = GlobalC::ucell.get_atomCounts();
+        sc.set_atomCounts(atomCounts);
+        if(GlobalV::MY_RANK == 0)
+        {
+            sc.Set_ScData_From_Json(GlobalV::sc_file);
+            std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
+	        std::vector<ModuleBase::Vector3<double>> sc_mag = sc.get_sc_mag();
+            
+            std::cout << "size checking: " << sc_lambda.size() << " " << sc_mag.size() << std::endl;
+            for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+            {
+                std::cout << "iat: " << iat << " lambda: " << sc_lambda[iat].x << " " << sc_lambda[iat].y << " " << sc_lambda[iat].z << std::endl;
+                std::cout << "iat: " << iat << " mag: " << sc_mag[iat].x << " " << sc_mag[iat].y << " " << sc_mag[iat].z << std::endl;
+            }
+        }
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
