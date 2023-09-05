@@ -175,6 +175,8 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
         std::cout << "atomCounts[0] " << atomCounts[0] << std::endl;
         std::cout << "orbitalCounts[0] " << orbitalCounts[0] << std::endl;
         sc.set_atomCounts(atomCounts);
+        sc.set_orbitalCounts(orbitalCounts);
+        std::cout << "nw = " << sc.get_nw(GlobalV::NPOL) << std::endl;
         if(GlobalV::MY_RANK == 0)
         {
             sc.Set_ScData_From_Json(GlobalV::sc_file);
