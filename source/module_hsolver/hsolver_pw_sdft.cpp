@@ -28,7 +28,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
 
     // select the method of diagonalization
     this->method = method_in;
-    this->initDiagh();
+    this->initDiagh(psi);
 
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)

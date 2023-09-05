@@ -1,7 +1,8 @@
-#include <ATen/core/cpu_allocator.h>
+#include <base/core/cpu_allocator.h>
 
 namespace container {
-
+namespace base {
+    
 // Allocate a block of CPU memory with the given size and default alignment.
 void* CPUAllocator::allocate(size_t size) {
     this->allocated_size_ = size;
@@ -29,4 +30,5 @@ DeviceType CPUAllocator::GetDeviceType() {
     return DeviceType::CpuDevice;
 }
 
+} // namespace base
 } // namespace container

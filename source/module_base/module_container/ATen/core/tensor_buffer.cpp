@@ -1,14 +1,14 @@
+#include <base/core/cpu_allocator.h>
 #include <ATen/core/tensor_buffer.h>
-#include <ATen/core/cpu_allocator.h>
 
 #if defined(__CUDA) || defined(__ROCM)
-#include <ATen/core/gpu_allocator.h>
+#include <base/core/gpu_allocator.h>
 #endif
 
 namespace container {
 
 // Construct a new TensorBuffer object.
-TensorBuffer::TensorBuffer(Allocator* alloc, void* data_ptr) : alloc_(alloc), data_(data_ptr), owns_memory(true) {}
+TensorBuffer::TensorBuffer(base::Allocator* alloc, void* data_ptr) : alloc_(alloc), data_(data_ptr), owns_memory(true) {}
 
 // Construct a new TensorBuffer object.
 // Note, this is a reference TensorBuffer, does not owns memory itself.
@@ -16,7 +16,7 @@ TensorBuffer::TensorBuffer(void* data_ptr) : alloc_(), data_(data_ptr), owns_mem
 
 // Class members are initialized in the order of their declaration, 
 // rather than the order they appear in the initialization list!
-TensorBuffer::TensorBuffer(Allocator* alloc, size_t size) {
+TensorBuffer::TensorBuffer(base::Allocator* alloc, size_t size) {
     alloc_ = alloc; 
     if (size > 0) {
         data_ = alloc_->allocate(size);
@@ -63,7 +63,7 @@ size_t TensorBuffer::GetAllocatedBytes() const {
 TensorBuffer* TensorBuffer::root_buffer() { return this; } // Implementation goes here.
 
 // Get the Allocator object used in this class.
-Allocator* TensorBuffer::allocator() const {
+base::Allocator* TensorBuffer::allocator() const {
     return alloc_;
 }
 
@@ -99,11 +99,11 @@ TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other) {
 
     delete this->alloc_;
     if (other.GetDeviceType() == DeviceType::CpuDevice) {
-        this->alloc_ = new CPUAllocator();
+        this->alloc_ = new base::CPUAllocator();
     }
     #if defined(__CUDA) || defined(__ROCM)
     else if (other.GetDeviceType() == DeviceType::GpuDevice) {
-        this->alloc_ = new GPUAllocator();
+        this->alloc_ = new base::GPUAllocator();
     }
     #endif // __CUDA || __ROCM
 
