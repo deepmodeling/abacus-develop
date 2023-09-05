@@ -42,8 +42,10 @@ TEST_F(SpinConstrainTest, OrbitalCounts)
 	std::map<int, int> orbitalCounts2 = sc.get_orbitalCounts();
 	int ntype = orbitalCounts2.size();
 	EXPECT_EQ(ntype, 2);
-	int norb = sc.get_nw();
-	EXPECT_EQ(norb, 25);
+	EXPECT_EQ(sc.get_nw(), 25);
+	EXPECT_EQ(sc.get_nw(2), 50); // npol = 2
+	EXPECT_EQ(sc.get_iwt(1,1,2), 17);
+	EXPECT_EQ(sc.get_iwt(1,1,2,2), 34); // npol = 2
 }
 
 TEST_F(SpinConstrainTest, ScDataFormat1)

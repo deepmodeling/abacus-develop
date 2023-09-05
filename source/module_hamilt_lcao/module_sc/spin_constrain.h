@@ -42,9 +42,11 @@ public:
     /// check atomCounts
     void check_atomCounts();
     /// get iat
-    int get_iat(int itype, int iat);
+    int get_iat(int itype, int atom_index);
     /// get nw
-    int get_nw();
+    int get_nw(int npol=1);
+    /// get iwt
+    int get_iwt(int itype, int iat, int orbital_index, int npol=1);
     /// clear atomCounts
     void clear_atomCounts();
     /// clear orbitalCounts

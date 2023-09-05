@@ -55,15 +55,15 @@ void SpinConstrain::check_atomCounts()
 }
 
 // get iat
-int SpinConstrain::get_iat(int itype, int index)
+int SpinConstrain::get_iat(int itype, int atom_index)
 {
     if (itype < 0 || itype >= this->get_ntype())
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::get_iat","itype out of range [0, ntype)");
     }
-    if (index < 0 || index >= this->atomCounts[itype])
+    if (atom_index < 0 || atom_index >= this->atomCounts[itype])
     {
-        ModuleBase::WARNING_QUIT("SpinConstrain::get_iat","index out of range [0, nat)");
+        ModuleBase::WARNING_QUIT("SpinConstrain::get_iat","atom index out of range [0, nat)");
     }
     int iat = 0;
     for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it) {
@@ -73,7 +73,7 @@ int SpinConstrain::get_iat(int itype, int index)
         }
         iat += it->second;
     }
-    iat += index;
+    iat += atom_index;
     return iat;
 }
 
@@ -100,14 +100,44 @@ const std::map<int, int>& SpinConstrain::get_orbitalCounts() const
     return this->orbitalCounts;
 }
 
-int SpinConstrain::get_nw()
+int SpinConstrain::get_nw(int npol)
 {
     this->check_atomCounts();
     int nw = 0;
     for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it) {
-        nw += (it->second)*this->atomCounts[it->first];
+        nw += (it->second)*this->atomCounts[it->first]*npol;
     }
     return nw;
+}
+
+int SpinConstrain::get_iwt(int itype, int iat, int orbital_index, int npol)
+{
+    this->check_atomCounts();
+    if (itype < 0 || itype >= this->get_ntype())
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt","itype out of range [0, ntype)");
+    }
+    if (iat < 0 || iat >= this->get_nat())
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt","iat out of range [0, nat)");
+    }
+    if (orbital_index < 0 || orbital_index >= this->orbitalCounts[itype])
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt","orbital index out of range [0, atom_nw)");
+    }
+    int iwt = 0;
+    for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it) {
+        if (it->first == itype)
+        {
+            break;
+        }
+        iwt += (it->second)*this->atomCounts[it->first]*npol;
+    }
+    for (int i = 0; i < iat; ++i) {
+        iwt += this->orbitalCounts[itype]*npol;
+    }
+    iwt += orbital_index*npol;
+    return iwt;
 }
 
 // get sc_lambda from ScData
