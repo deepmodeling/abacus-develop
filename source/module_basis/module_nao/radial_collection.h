@@ -138,6 +138,8 @@ class RadialCollection
                           const bool enable_fft = false);
     //!@}
 
+    ModuleBase::SphericalBesselTransformer* sbt() { return sbt_; }
+
   private:
     int ntype_ = 0;     //!< number of RadialSet in the collection
     int lmax_ = -1;     //!< maximum angular momentum of all NumericalRadial objects in the collection

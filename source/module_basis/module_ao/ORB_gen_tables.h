@@ -4,12 +4,7 @@
 // temporary switch
 // if USE_NEW_TWO_CENTER is defined, the new two-center method is used
 // to replace the old UOT.snap_xxx
-// otherwise the new method is calculated but merely used to compare with the old method
-
-// if __EXX is defined, the new two-center method is off anyway.
-#ifndef __EXX
 #define USE_NEW_TWO_CENTER
-#endif
 
 #include <memory>
 #include "ORB_gaunt_table.h"

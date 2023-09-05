@@ -107,4 +107,11 @@ void TwoCenterBundle::build(int ntype,
 
     // init Ylm (this shall be done by Ylm automatically! to be done later...)
     ModuleBase::Ylm::set_coefficients();
+
+    orb_->sbt()->fft_clear();
+    beta_->sbt()->fft_clear();
+    if (deepks_on)
+    {
+        alpha_->sbt()->fft_clear();
+    }
 }
