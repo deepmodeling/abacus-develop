@@ -657,7 +657,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 		{
 			for(int ia = 0; ia < atoms[it].na; ia ++)
 			{
-				typat[iat] = it;
+				typat[iat] = it + 1; //Fortran index starts from 1 !!!!
 				xred[iat*3+0] = atoms[it].taud[ia].x;
 				xred[iat*3+1] = atoms[it].taud[ia].y;
 				xred[iat*3+2] = atoms[it].taud[ia].z;

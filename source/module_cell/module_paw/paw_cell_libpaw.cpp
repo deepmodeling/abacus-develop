@@ -141,6 +141,7 @@ void Paw_Cell::set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double la
 void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
         const int nxdg_in, const int nydg_in, const int nzdg_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_libpaw_fft");
     ngfft.resize(3);
     ngfftdg.resize(3);
 
@@ -157,6 +158,7 @@ void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
 // !!!!!!!Note : the index stored in typat here will start from 1, not 0 !!!!!!
 void Paw_Cell::set_libpaw_atom(const int natom_in, const int ntypat_in, const int* typat_in, const double* xred_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_libpaw_atom");
     natom = natom_in;
     ntypat = ntypat_in;
 
@@ -216,17 +218,18 @@ void Paw_Cell::set_libpaw_files()
 
 void Paw_Cell::set_libpaw_xc(const int xclevel_in, const int ixc_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_libpaw_xc");
     xclevel = xclevel_in;
     ixc = ixc_in;
 }
 
 void Paw_Cell::set_nspin(const int nspin_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_nspin");
     nspden = nspin_in;
     nsppol = nspin_in;
 }
 
-#ifdef USE_PAW
 extern "C"
 {
     void prepare_libpaw_(double&,double&,double*,double*,double*,double&,int*,int*,
@@ -285,4 +288,3 @@ void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
     int iat_fortran = iat + 1;
     get_dij_(iat_fortran,size_dij,nspden,dij);
 }
-#endif

@@ -1,5 +1,7 @@
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
+remove_definitions(-DUSE_PAW)
+
 AddTest(
   TARGET HSolver_cg
   LIBS ${math_libs} base psi device
