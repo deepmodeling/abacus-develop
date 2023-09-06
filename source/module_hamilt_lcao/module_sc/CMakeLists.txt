@@ -3,6 +3,7 @@ if(ENABLE_LCAO)
       spin_constrain.cpp
       sc_parse_json.cpp
       cal_h_lambda.cpp
+      init_sc.cpp
   )
 
   add_library(

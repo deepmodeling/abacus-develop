@@ -192,6 +192,38 @@ void SpinConstrain::set_sc_mag()
     }
 }
 
+// set sc_lambda from variable
+void SpinConstrain::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    if (nat_in != nat)
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_sc_lambda","lambda_in size mismatch with nat");
+    }
+    this->lambda_.resize(nat);
+    for (int iat=0; iat < nat; ++iat)
+    {
+        this->lambda_[iat] = lambda_in[iat];
+    }
+}
+
+// set sc_mag from variable
+void SpinConstrain::set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in)
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    if (nat_in != nat)
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_sc_mag","sc_mag_in size mismatch with nat");
+    }
+    this->sc_mag_.resize(nat);
+    for (int iat=0; iat < nat; ++iat)
+    {
+        this->sc_mag_[iat] = sc_mag_in[iat];
+    }
+}
+
 const std::vector<ModuleBase::Vector3<double>>& SpinConstrain::get_sc_lambda() const
 {
     return this->lambda_;

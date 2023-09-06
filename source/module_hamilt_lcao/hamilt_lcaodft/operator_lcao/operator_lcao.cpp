@@ -162,7 +162,7 @@ void OperatorLCAO<T>::init(const int ik_in)
         case lcao_sc_lambda:
         {
             //update HK only
-            //in cal_type=lcao_sc_mag, HK only need to update from one node
+            //in cal_type=lcao_sc_mag, HK only need to be updated
             // folding fixed should only be called once
             // with folding_fixed here, the lcao_dftu should not be invoked
             // only by comment out the folding_fixed here, the lcao_dftu could be invoked

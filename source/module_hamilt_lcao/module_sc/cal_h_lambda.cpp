@@ -4,14 +4,10 @@
 #include "module_base/global_function.h"
 #include <algorithm>
 
-void SpinConstrain::cal_h_lambda(std::vector<std::complex<double>>& h_lambda)
+void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
-    if (h_lambda.size() == 0)
-    {
-        ModuleBase::WARNING_QUIT("SpinConstrain::cal_h_lambda", "h_lambda.size() = 0");
-    }
     const Parallel_Orbitals* pv = this->ParaV;
     for (const auto& sc_elem1 : this->get_atomCounts())
     {

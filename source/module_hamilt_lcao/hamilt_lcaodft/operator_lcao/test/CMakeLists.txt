@@ -59,6 +59,7 @@ AddTest(
   ../sc_lambda_lcao.cpp
   ../../../../module_hamilt_general/operator.cpp
   ../../../module_sc/spin_constrain.cpp
+  ../../../module_sc/cal_h_lambda.cpp
 )
 
 endif() 

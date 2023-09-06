@@ -7,6 +7,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_cell/unitcell.h"
 
 struct ScAtomData;
 
@@ -18,6 +19,8 @@ public:
     /// Delete copy and move constructors and assign operators
     SpinConstrain(SpinConstrain const&) = delete;
     SpinConstrain(SpinConstrain&&) = delete;
+    /// init
+    void init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in);
     /// parse json input file for non-collinear spin-constrained DFT
     void Set_ScData_From_Json(const std::string& filename);
     /// get sc_data
@@ -34,8 +37,12 @@ public:
     const std::map<int, int>& get_orbitalCounts() const;
     /// set sc_lambda
     void set_sc_lambda();
+    /// set sc_lambda from variable
+    void set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in);
     /// set sc_mag
     void set_sc_mag();
+    /// set sc_mag from variable
+    void set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
     /// get sc_mag
@@ -63,7 +70,7 @@ public:
     /// calculate weight function for spin-constrained DFT
     void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
     /// calculate h_lambda operator for spin-constrained DFT
-    void cal_h_lambda(std::vector<std::complex<double>>& h_lambda);
+    void cal_h_lambda(std::complex<double>* h_lambda);
 
 public:
     Parallel_Orbitals *ParaV;

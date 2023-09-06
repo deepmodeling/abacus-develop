@@ -168,33 +168,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain& sc = SpinConstrain::getInstance();
-        sc.clear_ScData();
-        sc.clear_atomCounts();
-        std::map<int, int> atomCounts = GlobalC::ucell.get_atomCounts();
-        std::map<int, int> orbitalCounts = GlobalC::ucell.get_orbitalCounts();
-        std::cout << "atomCounts[0] " << atomCounts[0] << std::endl;
-        std::cout << "orbitalCounts[0] " << orbitalCounts[0] << std::endl;
-        sc.set_atomCounts(atomCounts);
-        sc.set_orbitalCounts(orbitalCounts);
-        sc.set_npol(GlobalV::NPOL);
-        // get pointer to Parallel_Oribitals
-        sc.ParaV = &(this->orb_con.ParaV);
-        std::cout << "nw = " << sc.get_nw() << std::endl;
-        if(GlobalV::MY_RANK == 0)
-        {
-            sc.Set_ScData_From_Json(GlobalV::sc_file);
-            sc.set_sc_lambda();
-            sc.set_sc_mag();
-            std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
-	        std::vector<ModuleBase::Vector3<double>> sc_mag = sc.get_sc_mag();
-            
-            std::cout << "size checking: " << sc_lambda.size() << " " << sc_mag.size() << std::endl;
-            for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
-            {
-                std::cout << "iat: " << iat << " lambda: " << sc_lambda[iat].x << " " << sc_lambda[iat].y << " " << sc_lambda[iat].z << std::endl;
-                std::cout << "iat: " << iat << " mag: " << sc_mag[iat].x << " " << sc_mag[iat].y << " " << sc_mag[iat].z << std::endl;
-            }
-        }
+        sc.init_sc(GlobalC::ucell, GlobalV::NPOL, GlobalV::sc_file, &(this->orb_con.ParaV));
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
