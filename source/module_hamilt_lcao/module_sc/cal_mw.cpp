@@ -137,7 +137,7 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::Complex
 		uhm.LM->folding_fixedH(ik, kv.kvec_d);
 
         ModuleBase::ComplexMatrix mud;
-        mud.create(uhm.LM->ParaV->ncol, uhm.LM->ParaV->nrow);
+        mud.create(this->ParaV->ncol, this->ParaV->nrow);
 
 #ifdef __MPI
         const char T_char = 'T';
@@ -153,16 +153,16 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::Complex
                 dm[ik].c,
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc,
+                this->ParaV->desc,
                 uhm.LM->Sloc2.data(),
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc,
+                this->ParaV->desc,
                 &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc);
+                this->ParaV->desc);
 
         for(size_t i=0; i < nw; ++i)
         {
@@ -172,31 +172,31 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::Complex
                 const int j = i/2;
                 const int k1 = 2*j;
                 const int k2 = 2*j+1;
-                if(uhm.LM->ParaV->in_this_processor(k1, k1))
+                if(this->ParaV->in_this_processor(k1, k1))
                 {
-                    const int ir = uhm.LM->ParaV->global2local_row(k1);
-                    const int ic = uhm.LM->ParaV->global2local_col(k1);
+                    const int ir = this->ParaV->global2local_row(k1);
+                    const int ic = this->ParaV->global2local_col(k1);
                     MecMulP(0, j) += mud(ic, ir).real();
                     MecMulP(3, j) += mud(ic, ir).real();
                 }
-                if(uhm.LM->ParaV->in_this_processor(k1, k2))
+                if(this->ParaV->in_this_processor(k1, k2))
                 {
-                    const int ir = uhm.LM->ParaV->global2local_row(k1);
-                    const int ic = uhm.LM->ParaV->global2local_col(k2);
+                    const int ir = this->ParaV->global2local_row(k1);
+                    const int ic = this->ParaV->global2local_col(k2);
                     MecMulP(1, j) += mud(ic, ir).real();
                     MecMulP(2, j) += mud(ic, ir).imag();
                 }
-                if(uhm.LM->ParaV->in_this_processor(k2, k1))
+                if(this->ParaV->in_this_processor(k2, k1))
                 {
-                    const int ir = uhm.LM->ParaV->global2local_row(k2);
-                    const int ic = uhm.LM->ParaV->global2local_col(k1);
+                    const int ir = this->ParaV->global2local_row(k2);
+                    const int ic = this->ParaV->global2local_col(k1);
                     MecMulP(1, j) += mud(ic, ir).real();
                     MecMulP(2, j) -= mud(ic, ir).imag();
                 }
-                if(uhm.LM->ParaV->in_this_processor(k2, k2))
+                if(this->ParaV->in_this_processor(k2, k2))
                 {
-                    const int ir = uhm.LM->ParaV->global2local_row(k2);
-                    const int ic = uhm.LM->ParaV->global2local_col(k2);
+                    const int ir = this->ParaV->global2local_row(k2);
+                    const int ic = this->ParaV->global2local_col(k2);
                     MecMulP(0, j) += mud(ic, ir).real();
                     MecMulP(3, j) -= mud(ic, ir).real();
                 }
