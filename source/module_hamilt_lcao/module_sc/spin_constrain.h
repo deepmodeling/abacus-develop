@@ -75,11 +75,29 @@ public:
 
 public:
     Parallel_Orbitals *ParaV;
-    void cal_MW(const int& step,
-            LCAO_Hamilt& uhm,
-            Local_Orbital_Charge& loc,
-            const K_Vectors& kv,
-            const UnitCell& ucell);
+    void cal_MW(
+        const int& step,
+        LCAO_Hamilt& uhm,
+        Local_Orbital_Charge& loc,
+        const K_Vectors& kv,
+        const UnitCell& ucell);
+
+    ModuleBase::matrix cal_MW_k(
+        const std::vector<ModuleBase::ComplexMatrix> &dm,
+        LCAO_Hamilt &uhm,
+        const K_Vectors& kv
+    );
+
+    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP, const UnitCell& ucell);
+
+    inline double output_cut(const double& result)
+    {
+        if(std::abs(result) < 1e-6)
+        {
+            return 0.0;
+        }
+        return result;
+    }
 
 private:
     SpinConstrain(){};                               // Private constructor
