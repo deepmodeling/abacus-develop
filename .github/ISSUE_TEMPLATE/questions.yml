@@ -1,0 +1,26 @@
+name: Questions
+description: For users or developers who need help with software installation, usability, or other issues.
+labels: [Questions]
+assignees: dyzheng
+
+body:
+- type: textarea
+  attributes:
+    label: Details
+    description: |
+      Please provide details about your question or issue. If applicable, include the system you are using ABACUS with. If you are unsure about what information to provide, please refer to the online manual (check the box below if you have not read it yet).
+    placeholder: |
+      Example: I am trying to install ABACUS on my laptop running Ubuntu 20.04. I have followed the instructions in the online manual, but I am getting the following error message when I run cmake --build build -j8 ...
+  validations:
+    required: true
+- type: checkboxes
+  attributes:
+    label: Have you read FAQ on the online manual http://abacus.deepmodeling.com/en/latest/community/faq.html
+    description: Please check the box below if you have read the online manual before submitting your question.
+    options:
+      - label: Yes, I have read the FAQ part on online manual.
+        required: true
+- type: markdown
+  attributes:
+    value: >
+      Thanks for contributing 🎉!

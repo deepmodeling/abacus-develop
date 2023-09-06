@@ -170,7 +170,7 @@ for dir in $testdir; do
 				echo -e "\`\`\`\n" >> ${report}
 			done
 		else
-			if [ "$case" = "282_NO_RPA" ]; then
+			if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
 				mpirun -np 1 $abacus > log.txt
 			else
 				mpirun -np $np $abacus > log.txt

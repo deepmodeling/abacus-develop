@@ -18,6 +18,9 @@ VPATH=./src_global:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
+./module_base/module_container/base/core:\
+./module_base/module_container/ATen/core:\
+./module_base/module_container/ATen/kernels:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -87,6 +90,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_TENSOR}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -126,6 +130,10 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
+    formatter_fmt.o\
+    formatter_physfmt.o\
+    formatter_table.o\
+    formatter_contextfmt.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -238,6 +246,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
+    diago_bpcg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
@@ -504,3 +513,17 @@ OBJS_DFTU=dftu.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o
+
+OBJS_TENSOR=tensor.o\
+    tensor_buffer.o\
+    tensor_map.o\
+    tensor_shape.o\
+    tensor_types.o\
+    einsum_op.o\
+    blas_op.o\
+    lapack_op.o\
+    linalg_op.o\
+    memory_op_impl.o\
+    cpu_allocator.o\
+    gpu_allocator.o\
+    refcount.o

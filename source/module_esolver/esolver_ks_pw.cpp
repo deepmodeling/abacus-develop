@@ -37,6 +37,9 @@
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
 
+#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/lapack_op.h>
+
 namespace ModuleESolver
 {
 
@@ -51,6 +54,8 @@ ESolver_KS_PW<FPTYPE, Device>::ESolver_KS_PW()
     {
         hsolver::createBLAShandle();
         hsolver::createCUSOLVERhandle();
+        container::op::createBlasHandle();
+        container::op::createCusolverHandle();
     }
 #endif
 }
@@ -80,6 +85,8 @@ ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
         hsolver::destoryCUSOLVERhandle();
+        container::op::destroyBlasHandle();
+        container::op::destroyCusolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
     }
@@ -410,6 +417,7 @@ void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int it
             hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = true;
         }
 
+        hsolver::DiagoIterAssist<FPTYPE, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
         this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
@@ -832,7 +840,7 @@ void ESolver_KS_PW<FPTYPE, Device>::nscf()
     if (INPUT.towannier90)
     {
         toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G);
-        myWannier.init_wannier_pw(this->pelec->ekb, this->pw_rho, this->pw_wfc, this->pw_big, this->kv, this->psi);
+        myWannier.init_wannier_pw(this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
     }
 
     //=======================================================

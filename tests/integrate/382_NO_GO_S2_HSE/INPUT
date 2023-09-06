@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix				autotest
 calculation     	scf
 ntype				2
-symmetry			-1
+symmetry			0
 nspin				2
 pseudo_dir			../../PP_ORB
 orbital_dir			../../PP_ORB

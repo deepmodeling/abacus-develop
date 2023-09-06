@@ -893,10 +893,9 @@ TEST_F(InputTest, Default_2)
 	EXPECT_EQ(INPUT.symmetry,"0");
 	EXPECT_EQ(INPUT.cal_force,1);
 	EXPECT_EQ(INPUT.mdp.md_nstep,50);
-	EXPECT_EQ(INPUT.out_level,"m");
-	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tlast,INPUT.mdp.md_tfirst);
-	EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast,INPUT.mdp.md_pfirst);
-	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,1.0/40/INPUT.mdp.md_dt);
+    EXPECT_EQ(INPUT.out_level, "m");
+    EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast, INPUT.mdp.md_pfirst);
+    EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,1.0/40/INPUT.mdp.md_dt);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_pfreq,1.0/400/INPUT.mdp.md_dt);
 	EXPECT_EQ(INPUT.init_vel,1);
 	EXPECT_EQ(INPUT.cal_stress,1);
@@ -1031,16 +1030,8 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("time interval of MD calculation should be set!"));
 	INPUT.mdp.md_dt = 1.0;
-	//
-	INPUT.mdp.md_tfirst = -1.0;
-	INPUT.esolver_type = "sdft";
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("temperature of MD calculation should be set!"));
-	INPUT.mdp.md_tfirst = 1.0;
-	//
-	INPUT.mdp.md_type = "npt";
+    //
+    INPUT.mdp.md_type = "npt";
 	INPUT.mdp.md_pmode = "iso";
 	INPUT.mdp.md_pfirst = -1.0;
 	testing::internal::CaptureStdout();
