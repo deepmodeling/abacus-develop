@@ -8,7 +8,7 @@
 #include "module_base/scalapack_connector.h"
 
 void SpinConstrain::cal_MW(const int& step,
-                        LCAO_Hamilt& uhm,
+                        LCAO_Matrix& LM,
                         const std::vector<ModuleBase::ComplexMatrix> &dm,
                         const K_Vectors& kv,
                         const UnitCell& ucell)
@@ -16,7 +16,7 @@ void SpinConstrain::cal_MW(const int& step,
     ModuleBase::TITLE("module_sc", "cal_MW");
 
     ModuleBase::matrix orbMulP;
-    orbMulP = this->cal_MW_k(dm, uhm, kv);
+    orbMulP = this->cal_MW_k(LM, dm, kv);
     
     std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
 
@@ -120,8 +120,10 @@ void SpinConstrain::cal_MW(const int& step,
     }
 }
 
-ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
-    LCAO_Hamilt &uhm, const K_Vectors& kv
+ModuleBase::matrix SpinConstrain::cal_MW_k(
+    LCAO_Matrix& LM,
+    const std::vector<ModuleBase::ComplexMatrix> &dm,
+    const K_Vectors& kv
 )
 {
     ModuleBase::TITLE("module_sc", "cal_MW_k");
@@ -133,8 +135,8 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::Complex
 
     for(size_t ik = 0; ik != kv.nks; ++ik)
     {
-        uhm.LM->zeros_HSk('S');
-		uhm.LM->folding_fixedH(ik, kv.kvec_d);
+        LM.zeros_HSk('S');
+		LM.folding_fixedH(ik, kv.kvec_d);
 
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow);
@@ -154,7 +156,7 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::Complex
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
-                uhm.LM->Sloc2.data(),
+                LM.Sloc2.data(),
                 &one_int,
                 &one_int,
                 this->ParaV->desc,

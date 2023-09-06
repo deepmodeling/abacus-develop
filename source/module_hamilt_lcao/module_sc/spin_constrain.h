@@ -9,8 +9,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 struct ScAtomData;
 
@@ -26,14 +25,14 @@ public:
     Parallel_Orbitals *ParaV;
     void cal_MW(
         const int& step,
-        LCAO_Hamilt& uhm,
+        LCAO_Matrix& LM,
         const std::vector<ModuleBase::ComplexMatrix> &dm,
         const K_Vectors& kv,
         const UnitCell& ucell);
 
     ModuleBase::matrix cal_MW_k(
+        LCAO_Matrix& LM,
         const std::vector<ModuleBase::ComplexMatrix> &dm,
-        LCAO_Hamilt &uhm,
         const K_Vectors& kv
     );
 
