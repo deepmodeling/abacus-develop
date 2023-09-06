@@ -101,7 +101,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
-                    GlobalC::UOT.two_center_bundle->overlap_orb_alpha->snap(
+                    UOT.two_center_bundle->overlap_orb_alpha->snap(
                             T1, L1, N1, M1, 0, dtau * ucell.lat0, calc_deri, nlm);
 #else
 					//inner loop : all projectors (N,L,M)
