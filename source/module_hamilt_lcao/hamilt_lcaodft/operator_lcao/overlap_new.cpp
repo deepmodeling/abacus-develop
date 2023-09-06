@@ -145,16 +145,16 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(const int& iat
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
-#ifdef USE_NEW_TWO_CENTER
-            //=================================================================
-            //          new two-center integral (temporary)
-            //=================================================================
-            // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-            int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-            uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
-#else
+//#ifdef USE_NEW_TWO_CENTER
+//            //=================================================================
+//            //          new two-center integral (temporary)
+//            //=================================================================
+//            // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+//            int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+//            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
+//            uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
+//                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
+//#else
             uot.snap_psipsi(orb, // orbitals
                             olm,
                             0,
@@ -170,7 +170,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(const int& iat
                             m2,
                             N2 // info of atom2
             );
-#endif
+//#endif
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];
