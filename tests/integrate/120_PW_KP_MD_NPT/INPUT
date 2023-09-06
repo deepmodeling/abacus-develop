@@ -7,6 +7,9 @@ nbands          8
 
 #Parameters (Accuracy)
 ecutwfc         20
+erf_ecut        20
+erf_height      50
+erf_sigma       2
 scf_nmax        20
 basis_type      pw
 ks_solver       cg

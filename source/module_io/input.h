@@ -158,6 +158,10 @@ class Input
     double ecutwfc; // energy cutoff for wavefunctions
     double ecutrho; // energy cutoff for charge/potential
 
+    double erf_ecut;   // the value of the constant energy cutoff
+    double erf_height; // the height of the energy step for reciprocal vectors
+    double erf_sigma;  // the width of the energy step for reciprocal vectors
+
     int ncx, ncy, ncz; // three dimension of FFT charge/grid
     int nx, ny, nz; // three dimension of FFT wavefunc
     int bx, by, bz; // big mesh ball. mohan add 2011-04-21

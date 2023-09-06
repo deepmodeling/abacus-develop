@@ -110,6 +110,9 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.gamma_only);
         EXPECT_FALSE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,50.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -446,6 +449,9 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.gamma_only);
         EXPECT_TRUE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
         EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
@@ -728,14 +734,17 @@ TEST_F(InputTest, Default_2)
 	INPUT.lcao_ecut = 0;
 	INPUT.scf_thr = -1.0;
 	INPUT.scf_thr_type = -1;
-        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
-	INPUT.nbndsto_str = "all";
-	// the 1st calling
-	INPUT.Default_2();
-	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.vdw_s6,"0.75");
-        EXPECT_EQ(INPUT.vdw_cutoff_radius,"56.6918");
-	EXPECT_EQ(INPUT.bndpar,1);
+    EXPECT_DOUBLE_EQ(INPUT.ecutwfc, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
+    INPUT.nbndsto_str = "all";
+    // the 1st calling
+    INPUT.Default_2();
+    // ^^^^^^^^^^^^^^
+    EXPECT_EQ(INPUT.vdw_s6, "0.75");
+    EXPECT_EQ(INPUT.vdw_cutoff_radius, "56.6918");
+    EXPECT_EQ(INPUT.bndpar,1);
 	EXPECT_EQ(INPUT.method_sto,2);
 	EXPECT_TRUE(INPUT.of_hold_rho0);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);

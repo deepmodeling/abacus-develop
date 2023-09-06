@@ -1,9 +1,10 @@
 #include "pw_basis_k.h"
 
 #include <utility>
+
 #include "module_base/constants.h"
-#include "module_base/timer.h"
 #include "module_base/memory.h"
+#include "module_base/timer.h"
 
 namespace ModulePW
 {
@@ -185,8 +186,11 @@ void PW_Basis_K::setuptransform()
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 
-void PW_Basis_K::collect_local_pw()
+void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)
 {
+    this->erf_ecut = erf_ecut_in;
+    this->erf_height = erf_height_in;
+    this->erf_sigma = erf_sigma_in;
     if(this->npwk_max <= 0) return;
     delete[] gk2;
     delete[] gcar;
@@ -214,8 +218,17 @@ void PW_Basis_K::collect_local_pw()
             f.y = iy;
             f.z = iz;
 
-            this->gk2[ik * npwk_max + igl] = (f+kv) * (this->GGT * (f+kv));
             this->gcar[ik * npwk_max + igl] = f * this->G;
+            double temp_gk2 = (f + kv) * (this->GGT * (f + kv));
+            if (erf_height > 0)
+            {
+                this->gk2[ik * npwk_max + igl]
+                    = temp_gk2 + erf_height / tpiba2 * (1.0 + std::erf((temp_gk2 * tpiba2 - erf_ecut) / erf_sigma));
+            }
+            else
+            {
+                this->gk2[ik * npwk_max + igl] = temp_gk2;
+            }
         }
     }
 #if defined(__CUDA) || defined(__ROCM)
