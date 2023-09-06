@@ -331,7 +331,6 @@ HamiltLCAO<T>::HamiltLCAO(
             &(LM_in->Hloc2)
         );
         this->ops->add(sc_lambda);
-        std::cout << "created sc_lambda" << std::endl;
     }
 
 }

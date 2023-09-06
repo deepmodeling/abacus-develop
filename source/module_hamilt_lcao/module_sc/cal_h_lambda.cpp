@@ -9,7 +9,6 @@ void SpinConstrain::cal_h_lambda(const std::vector<std::complex<double>>& Sloc2,
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
     const Parallel_Orbitals* pv = this->ParaV;
-    std::cout << "cal_h_lambda " << __LINE__ << std::endl;
     for (const auto& sc_elem1 : this->get_atomCounts())
     {
         int it1 = sc_elem1.first;
