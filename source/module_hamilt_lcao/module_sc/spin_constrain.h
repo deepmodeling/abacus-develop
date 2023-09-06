@@ -8,6 +8,9 @@
 #include "module_base/tool_quit.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/unitcell.h"
+#include "module_cell/klist.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 
 struct ScAtomData;
 
@@ -72,6 +75,11 @@ public:
 
 public:
     Parallel_Orbitals *ParaV;
+    void cal_MW(const int& step,
+            LCAO_Hamilt& uhm,
+            Local_Orbital_Charge& loc,
+            const K_Vectors& kv,
+            const UnitCell& ucell);
 
 private:
     SpinConstrain(){};                               // Private constructor

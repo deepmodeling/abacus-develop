@@ -4,6 +4,7 @@ if(ENABLE_LCAO)
       sc_parse_json.cpp
       cal_h_lambda.cpp
       init_sc.cpp
+      cal_mw.cpp
   )
 
   add_library(

@@ -846,6 +846,12 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain& sc = SpinConstrain::getInstance();
+        sc.cal_MW(istep, this->UHM, this->LOC, kv, GlobalC::ucell);
+    }
+
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
