@@ -28,6 +28,22 @@ int SpinConstrain::get_npol()
     return this->npol_;
 }
 
+/// set nspin
+void SpinConstrain::set_nspin(int nspin_in)
+{
+    if (nspin_in != 4)
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_nspin","nspin must be 1, 2 or 4");
+    }
+    this->nspin_ = nspin_in;
+}
+
+/// get nspin
+int SpinConstrain::get_nspin()
+{
+    return this->nspin_;
+}
+
 int SpinConstrain::get_nat()
 {
     int nat = 0;

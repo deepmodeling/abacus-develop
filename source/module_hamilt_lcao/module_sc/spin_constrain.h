@@ -17,13 +17,46 @@ struct ScAtomData;
 class SpinConstrain
 {
 public:
+    /**
+     * pubic interface for spin-constrained DFT
+    */
+    /// initialize spin-constrained DFT
+    void init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in, int nspin_in);
+
+    Parallel_Orbitals *ParaV;
+    void cal_MW(
+        const int& step,
+        LCAO_Hamilt& uhm,
+        Local_Orbital_Charge& loc,
+        const K_Vectors& kv,
+        const UnitCell& ucell);
+
+    ModuleBase::matrix cal_MW_k(
+        const std::vector<ModuleBase::ComplexMatrix> &dm,
+        LCAO_Hamilt &uhm,
+        const K_Vectors& kv
+    );
+
+    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
+
+    inline double output_cut(const double& result)
+    {
+        if(std::abs(result) < 1e-6)
+        {
+            return 0.0;
+        }
+        return result;
+    }
+
+public:
+    /**
+     * pubic methods for setting and getting spin-constrained DFT parameters
+    */
     /// Public method to access the Singleton instance
     static SpinConstrain& getInstance();
     /// Delete copy and move constructors and assign operators
     SpinConstrain(SpinConstrain const&) = delete;
     SpinConstrain(SpinConstrain&&) = delete;
-    /// init
-    void init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in);
     /// parse json input file for non-collinear spin-constrained DFT
     void Set_ScData_From_Json(const std::string& filename);
     /// get sc_data
@@ -72,32 +105,10 @@ public:
     int get_npol();
     /// calculate h_lambda operator for spin-constrained DFT
     void cal_h_lambda(const std::vector<std::complex<double>>& Sloc2, std::complex<double>* h_lambda);
-
-public:
-    Parallel_Orbitals *ParaV;
-    void cal_MW(
-        const int& step,
-        LCAO_Hamilt& uhm,
-        Local_Orbital_Charge& loc,
-        const K_Vectors& kv,
-        const UnitCell& ucell);
-
-    ModuleBase::matrix cal_MW_k(
-        const std::vector<ModuleBase::ComplexMatrix> &dm,
-        LCAO_Hamilt &uhm,
-        const K_Vectors& kv
-    );
-
-    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP, const UnitCell& ucell);
-
-    inline double output_cut(const double& result)
-    {
-        if(std::abs(result) < 1e-6)
-        {
-            return 0.0;
-        }
-        return result;
-    }
+    /// set nspin
+    void set_nspin(int nspin);
+    /// get nspin
+    int get_nspin();
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -111,6 +122,7 @@ private:
     std::vector<std::complex<double>> Wi_;
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<ModuleBase::Vector3<double>> sc_mag_;
+    int nspin_ = 0;
 };
 
 

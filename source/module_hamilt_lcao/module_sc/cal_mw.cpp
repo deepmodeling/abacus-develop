@@ -18,7 +18,7 @@ void SpinConstrain::cal_MW(const int& step,
     ModuleBase::matrix orbMulP;
     orbMulP = this->cal_MW_k(loc.dm_k, uhm, kv);
     
-    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP, ucell);
+    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
     
     if (GlobalV::MY_RANK == 0)
     {
@@ -225,24 +225,29 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(const std::vector<ModuleBase::Complex
     return orbMulP;
 }
 
-std::vector<std::vector<std::vector<double>>> SpinConstrain::convert(const ModuleBase::matrix &orbMulP, const UnitCell& ucell)
+std::vector<std::vector<std::vector<double>>> SpinConstrain::convert(const ModuleBase::matrix &orbMulP)
 {
     std::vector<std::vector<std::vector<double>>> AorbMulP;
-    AorbMulP.resize(GlobalV::NSPIN);
-    
-    for (size_t is=0; is!=GlobalV::NSPIN; ++is)
+    AorbMulP.resize(this->nspin_);
+    int nat = this->get_nat();
+    for (int is=0; is < this->nspin_; ++is)
     {
         int num=0;
-        AorbMulP[is].resize(ucell.nat);
-        for (size_t i=0; i!=ucell.nat; ++i)
-        {   
-            const int a = ucell.iat2ia[i];
-            const int t = ucell.iat2it[i];
-            AorbMulP[is][i].resize(ucell.atoms[t].nw);
-            for (size_t j=0; j!=ucell.atoms[t].nw; ++j)
+        AorbMulP[is].resize(nat);
+        for (const auto& sc_elem : this->get_atomCounts())
+        {
+            int it = sc_elem.first;
+            int nat_it = sc_elem.second;
+            int nw_it = this->get_orbitalCounts().at(it);
+            for (int ia = 0; ia < nat_it; ia++)
             {
-                AorbMulP[is][i][j] = orbMulP(is, num);
-                num++;
+                int iat = this->get_iat(it, ia);
+                AorbMulP[is][iat].resize(nw_it);
+                for (int iw = 0; iw < nw_it; iw++)
+                {
+                    AorbMulP[is][iat][iw] = orbMulP(is, num);
+                    num++;
+                }
             }
         }
     }

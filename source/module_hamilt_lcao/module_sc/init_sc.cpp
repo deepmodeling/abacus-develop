@@ -2,7 +2,7 @@
 #include "module_base/parallel_common.h"
 
 // init sc
-void SpinConstrain::init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in)
+void SpinConstrain::init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in, int nspin_in)
 {
     // get pointer to Parallel_Oribitals
     this->ParaV = ParaV_in;
@@ -13,6 +13,9 @@ void SpinConstrain::init_sc(const UnitCell& ucell, int NPOL, std::string sc_file
     }
     // initialize Wi_, which is the weight function with size nloc
     this->Wi_.resize(nloc);
+    /// set nspin
+    this->set_nspin(nspin_in);
+    /// set ScData
     this->clear_ScData();
     this->clear_atomCounts();
     std::map<int, int> atomCounts = ucell.get_atomCounts();
