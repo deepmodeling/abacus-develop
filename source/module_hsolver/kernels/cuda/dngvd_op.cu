@@ -43,7 +43,7 @@ static const char* _cusolverGetErrorEnum(cusolverStatus_t error)
 
 inline void cusolverAssert(cusolverStatus_t code, const char* file, int line, bool abort = true)
 {
-    if (code != CUBLAS_STATUS_SUCCESS)
+    if (code != CUSOLVER_STATUS_SUCCESS)
     {
         fprintf(stderr, "cuSOLVER Assert: %s %s %d\n", _cusolverGetErrorEnum(code), file, line);
         if (abort)

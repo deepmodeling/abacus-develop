@@ -18,8 +18,10 @@ struct resize_memory_op<T, DEVICE_CPU> {
 
 template <typename T>
 struct set_memory_op<T, DEVICE_CPU> {
-  void operator()(T* arr, const int var, const size_t size) {
-    memset(arr, var, sizeof(T) * size);
+  void operator()(T* arr, const T& var, const size_t& size) {
+    for (size_t ii = 0; ii < size; ii++) {
+      arr[ii] = var;
+    }
   }
 };
 

@@ -1,8 +1,8 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_utils.h>
-#include <ATen/core/cpu_allocator.h>
+#include <base/core/cpu_allocator.h>
 #if defined(__CUDA) || defined(__ROCM)
-#include <ATen/core/gpu_allocator.h>
+#include <base/core/gpu_allocator.h>
 #endif // __CUDA || __ROCM
 namespace container {
 
@@ -18,7 +18,7 @@ Tensor::Tensor(DataType data_type, const TensorShape& shape)
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
         : Tensor(GetAllocator(device), data_type, device, shape) {}
 
-Tensor::Tensor(Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
+Tensor::Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
           device_(device),
           shape_(shape),
@@ -74,14 +74,14 @@ void* Tensor::data() const { return buffer_->data(); }
 const TensorBuffer& Tensor::buffer() const { return *buffer_; }
 
 // Get the Allocator object according to the given device type.
-Allocator* Tensor::GetAllocator(DeviceType device) {
-    Allocator * allocator;
+base::Allocator* Tensor::GetAllocator(DeviceType device) {
+    base::Allocator * allocator;
     if (device == DeviceType::CpuDevice) {
-        allocator = new CPUAllocator();
+        allocator = new base::CPUAllocator();
     }
 #if defined(__CUDA) || defined(__ROCM)
     else if (device == DeviceType::GpuDevice) {
-        allocator = new GPUAllocator();
+        allocator = new base::GPUAllocator();
     }
 #endif // __CUDA || __ROCM
     else {

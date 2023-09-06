@@ -1,9 +1,9 @@
 #ifndef ATEN_CORE_TENSOR_BUFFER_H_
 #define ATEN_CORE_TENSOR_BUFFER_H_
 
-#include <ATen/core/allocator.h>
-#include <ATen/core/tensor_types.h>
 #include <base/core/refcount.h>
+#include <base/core/allocator.h>
+#include <ATen/core/tensor_types.h>
 
 namespace container {
 
@@ -18,9 +18,9 @@ namespace container {
      * @param alloc Pointer to the allocator to use for memory allocation.
      * @param data_ptr Pointer to the underlying data buffer.
      */
-    TensorBuffer(Allocator* alloc, void* data_ptr);
+    TensorBuffer(base::Allocator* alloc, void* data_ptr);
 
-    TensorBuffer(Allocator* alloc, size_t size);
+    TensorBuffer(base::Allocator* alloc, size_t size);
 
     /**
       * @brief Construct a new TensorBuffer object.
@@ -82,7 +82,7 @@ namespace container {
      *
      * @return Allocator* Pointer to the Allocator object.
      */
-    Allocator* allocator() const;
+    base::Allocator* allocator() const;
 
     /**
      * @brief Reinterpret the buffer as an array of type T.
@@ -136,7 +136,7 @@ namespace container {
 
 
   private:
-    Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
+    base::Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
     void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
     bool owns_memory = false;    ///< Bool to indicate whether this tensor owns it's memory.
 };
