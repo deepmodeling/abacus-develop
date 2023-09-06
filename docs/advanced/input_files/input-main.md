@@ -2176,9 +2176,6 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Type**: Integer
 - **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
-
-    Currently, the option is useful only in plane-wave-based isotropic NPT simulations.
   - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
 
 - **Default**: 0
@@ -2186,7 +2183,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### ref_cell_factor
 
 - **Type**: Real
-- **Description**: Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Description**: Construct a reference cell bigger than the initial cell. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
 - **Default**: 1.0
 
 ### md_pcouple

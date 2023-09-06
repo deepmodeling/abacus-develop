@@ -20,7 +20,6 @@ md_nstep         3
 md_type          npt
 md_pmode         iso
 md_dt            1
-md_prec_level    1
 ref_cell_factor  1.05
 md_tchain        4
 md_tfreq         0.1

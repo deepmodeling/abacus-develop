@@ -180,7 +180,7 @@ md_tlast                       -1 #temperature last
 md_dumpfreq                    1 #The period to dump MD information
 md_restartfreq                 5 #The period to output MD restart information
 md_seed                        -1 #random seed for MD
-md_prec_level                  1 #precision level for vc-md
+md_prec_level                  2 #precision level for vc-md
 ref_cell_factor                1.2 #construct a reference cell bigger than the initial cell
 md_restart                     0 #whether restart
 lj_rcut                        8.5 #cutoff radius of LJ potential

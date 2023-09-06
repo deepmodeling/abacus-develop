@@ -741,30 +741,22 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
     }
 
     /// Diagonal components
-    if (mdp.md_prec_level == 1)
+    if (pflag[0])
     {
         factor = exp(v_omega[0] * mdp.md_dt / 2);
-        ucell.lat0 *= factor;
+        ucell.latvec.e11 *= factor;
     }
-    else
+
+    if (pflag[1])
     {
-        if (pflag[0])
-        {
-            factor = exp(v_omega[0] * mdp.md_dt / 2);
-            ucell.latvec.e11 *= factor;
-        }
+        factor = exp(v_omega[1] * mdp.md_dt / 2);
+        ucell.latvec.e22 *= factor;
+    }
 
-        if (pflag[1])
-        {
-            factor = exp(v_omega[1] * mdp.md_dt / 2);
-            ucell.latvec.e22 *= factor;
-        }
-
-        if (pflag[2])
-        {
-            factor = exp(v_omega[2] * mdp.md_dt / 2);
-            ucell.latvec.e33 *= factor;
-        }
+    if (pflag[2])
+    {
+        factor = exp(v_omega[2] * mdp.md_dt / 2);
+        ucell.latvec.e33 *= factor;
     }
 
     /// tri mode, off-diagonal components, second half

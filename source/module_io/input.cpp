@@ -2746,10 +2746,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         mdp.md_prec_level = 0;
     }
-    if (mdp.md_prec_level != 1)
-    {
-        ref_cell_factor = 1.0;
-    }
 
     if (scf_thr == -1.0)
     {
@@ -3317,10 +3313,6 @@ void Input::Check(void)
             {
                 ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
             }
-        }
-        if (mdp.md_prec_level == 1 && !(mdp.md_type == "npt" && mdp.md_pmode == "iso"))
-        {
-            ModuleBase::WARNING_QUIT("Input::Check", "md_prec_level = 1 only used in isotropic vc-md currently!");
         }
     }
     else if (calculation == "gen_bessel")

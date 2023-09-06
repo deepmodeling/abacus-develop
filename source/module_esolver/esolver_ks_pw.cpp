@@ -248,15 +248,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         // temporary
         this->Init_GlobalC(inp, ucell);
     }
-    else if (GlobalV::md_prec_level == 1)
-    {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
-
-        this->wf.init_after_vc(this->kv.nks);
-        this->wf.init_at_1(&this->sf);
-    }
-    else if (GlobalV::md_prec_level == 0)
+    else
     {
         GlobalC::ppcell.init_vnl(GlobalC::ucell);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
