@@ -67,6 +67,11 @@ void Charge::destroy()
                 delete[] kin_r[i];
                 delete[] kin_r_save[i];
             }
+            if(GlobalV::use_paw)
+            {
+                delete[] nhat[i];
+                delete[] nhat_save[i];
+            }
         }
         delete[] rho;
         delete[] rhog;
@@ -78,6 +83,11 @@ void Charge::destroy()
         {
             delete[] kin_r;
             delete[] kin_r_save;
+        }
+        if(GlobalV::use_paw)
+        {
+            delete[] nhat;
+            delete[] nhat_save;
         }
     }
 }
@@ -115,6 +125,11 @@ void Charge::allocate(const int& nspin_in)
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
     }
+    if(GlobalV::use_paw)
+    {
+        nhat = new double*[nspin];
+        nhat_save = new double*[nspin];
+    }
 
     for (int is = 0; is < nspin; is++)
     {
@@ -133,6 +148,13 @@ void Charge::allocate(const int& nspin_in)
             kin_r_save[is] = new double[nrxx];
             ModuleBase::GlobalFunc::ZEROS(kin_r_save[is], nrxx);
         }
+        if(GlobalV::use_paw)
+        {
+            nhat[is] = new double[nrxx];
+            ModuleBase::GlobalFunc::ZEROS(nhat[is], nrxx);
+            nhat_save[is] = new double[nrxx];
+            ModuleBase::GlobalFunc::ZEROS(nhat_save[is], nrxx);
+        }
     }
 
     ModuleBase::Memory::record("Chg::rho", sizeof(double) * nspin * nrxx);
@@ -143,6 +165,11 @@ void Charge::allocate(const int& nspin_in)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
+    }
+    if(GlobalV::use_paw)
+    {
+        ModuleBase::Memory::record("Chg::nhat", sizeof(double) * nspin * ngmc);
+        ModuleBase::Memory::record("Chg::nhat_save", sizeof(double) * nspin * ngmc);
     }
 
     this->rho_core = new double[nrxx]; // core charge in real space
