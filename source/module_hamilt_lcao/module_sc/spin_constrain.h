@@ -28,7 +28,8 @@ public:
         LCAO_Matrix& LM,
         const std::vector<ModuleBase::ComplexMatrix> &dm,
         const K_Vectors& kv,
-        const UnitCell& ucell);
+        const UnitCell& ucell,
+        bool print=false);
 
     ModuleBase::matrix cal_MW_k(
         LCAO_Matrix& LM,
@@ -122,6 +123,7 @@ private:
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<ModuleBase::Vector3<double>> sc_mag_;
     int nspin_ = 0;
+    std::vector<ModuleBase::Vector3<double>> Mi_;
 };
 
 
