@@ -27,7 +27,7 @@ public:
     void cal_MW(
         const int& step,
         LCAO_Hamilt& uhm,
-        Local_Orbital_Charge& loc,
+        const std::vector<ModuleBase::ComplexMatrix> &dm,
         const K_Vectors& kv,
         const UnitCell& ucell);
 

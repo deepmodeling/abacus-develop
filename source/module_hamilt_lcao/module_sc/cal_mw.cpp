@@ -9,14 +9,14 @@
 
 void SpinConstrain::cal_MW(const int& step,
                         LCAO_Hamilt& uhm,
-                        Local_Orbital_Charge& loc,
+                        const std::vector<ModuleBase::ComplexMatrix> &dm,
                         const K_Vectors& kv,
                         const UnitCell& ucell)
 {
     ModuleBase::TITLE("module_sc", "cal_MW");
 
     ModuleBase::matrix orbMulP;
-    orbMulP = this->cal_MW_k(loc.dm_k, uhm, kv);
+    orbMulP = this->cal_MW_k(dm, uhm, kv);
     
     std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
 
