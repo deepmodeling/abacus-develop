@@ -67,10 +67,8 @@ public:
     void set_npol(int npol);
     /// get npol
     int get_npol();
-    /// calculate weight function for spin-constrained DFT
-    void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
     /// calculate h_lambda operator for spin-constrained DFT
-    void cal_h_lambda(std::complex<double>* h_lambda);
+    void cal_h_lambda(const std::vector<std::complex<double>>& Sloc2, std::complex<double>* h_lambda);
 
 public:
     Parallel_Orbitals *ParaV;

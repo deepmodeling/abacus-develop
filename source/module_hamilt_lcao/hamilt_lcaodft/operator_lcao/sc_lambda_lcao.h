@@ -35,40 +35,9 @@ class OperatorScLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
 
     virtual void contributeHk(int ik) override;
 
-    void cal_h_lambda(int ik, T* h_lambda);
-
-    void cal_weight_func(const std::vector<T>& Sloc2);
-
-    // setters
-    void set_nat(int nat_in);
-
-    void set_nloc(int nloc_in);
-
-    void set_lambda(const std::vector<ModuleBase::Vector3<double>>& lambda_in);
-
-    void set_iwt2iat(const int* iwt2iat_in);
-
-    void set_Wi(const std::vector<T>& Wi_in);
-
-    // getters
-    int get_nat();
-
-    int get_nloc();
-
-    const std::vector<T>& get_Wi() const;
-
-    const std::vector<ModuleBase::Vector3<double>>& get_lambda() const;
-
-    const std::vector<int>& get_iwt2iat() const;
-
   private:
     std::vector<double>* HR_pointer = nullptr;
     std::vector<T>* HK_pointer = nullptr;
-    std::vector<ModuleBase::Vector3<double>> lambda_;
-    std::vector<int> iwt2iat_;
-    std::vector<T> Wi_;
-    int nloc_;
-    int nat_;
 };
 
 } // namespace hamilt
