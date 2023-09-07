@@ -22,6 +22,11 @@ public:
     /// initialize spin-constrained DFT
     void init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in, int nspin_in);
 
+    /// calculate h_lambda operator for spin-constrained DFT
+    void cal_h_lambda(std::complex<double>* h_lambda);
+
+    void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
+
     Parallel_Orbitals *ParaV;
     void cal_MW(
         const int& step,
@@ -103,8 +108,6 @@ public:
     void set_npol(int npol);
     /// get npol
     int get_npol();
-    /// calculate h_lambda operator for spin-constrained DFT
-    void cal_h_lambda(const std::vector<std::complex<double>>& Sloc2, std::complex<double>* h_lambda);
     /// set nspin
     void set_nspin(int nspin);
     /// get nspin
