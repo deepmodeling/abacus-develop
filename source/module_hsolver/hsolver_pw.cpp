@@ -155,6 +155,11 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         {
             GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
         }
+
+        double* nhatgr;
+        nhatgr = new double[3*GlobalC::paw_cell.get_nrxx()];
+        GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
+        delete[] nhatgr;
     }
 #endif
 

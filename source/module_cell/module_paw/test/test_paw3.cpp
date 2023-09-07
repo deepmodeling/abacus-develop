@@ -140,7 +140,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     double *vloc, *ncoret;
     double *vks, *vxc;
     double ** rho;
-    double *nhat, *nhatgr;
+    double ** nhat, *nhatgr;
 
     vks = new double[nfft];
     vxc = new double[nfft];
@@ -148,7 +148,8 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     ncoret = new double[nfft];
     rho = new double*[1];
     rho[0] = new double[nfft];
-    nhat = new double[nfft];
+    nhat = new double*[1];
+    nhat[0] = new double[nfft];
     nhatgr = new double[nfft*3];
 
     paw_cell.get_vloc_ncoret(vloc, ncoret);
@@ -208,7 +209,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     {
         double tmp;
         ifs_nhat >> tmp;
-        EXPECT_NEAR(tmp,nhat[i],1e-10);
+        EXPECT_NEAR(tmp,nhat[0][i],1e-10);
     }
 
     std::ifstream ifs_veff("veff");
@@ -241,11 +242,13 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         delete[] dij;
     }
 
+    delete[] rho[0];
     delete[] rho;
     delete[] vloc;
     delete[] ncoret;
     delete[] vks;
     delete[] vxc;
+    delete[] nhat[0];
     delete[] nhat;
     delete[] nhatgr;
 }

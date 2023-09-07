@@ -275,10 +275,26 @@ void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselec
     set_rhoij_(iat_fortran,nrhoijsel,size_rhoij,nspden,rhoijselect,rhoijp);
 }
 
-void Paw_Cell::get_nhat(double* nhat, double* nhatgr)
+void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 {
+    double* nhat_tmp;
+    nhat_tmp = new double[nfft*nspden];
+
     get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
-            ucvol,nhat,nhatgr);
+            ucvol,nhat_tmp,nhatgr);
+
+    for(int ir = 0; ir < nfft; ir ++)
+    {
+        for(int is = 0; is < nspden; is ++)
+        {
+            // I'm not sure about this yet !!!
+            // need to check for nspin = 2 later
+            // Fortran is column major, and rhor is of dimension (nfft, nspden)
+            // so presumably should be this way m
+            nhat[is][ir] = nhat_tmp[ir*nspden+is];
+        }
+    }
+    delete[] nhat_tmp;
 }
 
 void Paw_Cell::calculate_dij(double* vks, double* vxc)

@@ -192,8 +192,12 @@ TEST_F(Test_PAW, test_paw)
     }
 
     int nfft = nx * ny * nz;
-    double *nhat, *nhatgr;
-    nhat = new double[nfft];
+    double **nhat, *nhatgr;
+    nhat = new double*[1];
+    nhat[0] = new double[nfft];
     nhatgr = new double[nfft*3];
     paw_cell.get_nhat(nhat,nhatgr);
+    delete[] nhat[0];
+    delete[] nhat;
+    delete[] nhatgr;
 }

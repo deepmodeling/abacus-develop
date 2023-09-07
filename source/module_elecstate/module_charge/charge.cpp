@@ -200,7 +200,14 @@ double Charge::sum_rho(void) const
     {
         for (int ir = 0; ir < nrxx; ir++)
         {
-            sum_rho += this->rho[is][ir];
+            if(GlobalV::use_paw)
+            {
+                sum_rho += this->rho[is][ir] + this->nhat[is][ir];
+            }
+            else
+            {
+                sum_rho += this->rho[is][ir];
+            }
         }
     }
 
