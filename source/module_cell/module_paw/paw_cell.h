@@ -205,6 +205,8 @@ class Paw_Cell
     int get_libpaw_ixc() {return ixc;}
     int get_libpaw_xclevel() {return xclevel;}
     int get_nspin() {return nspden;}
+    
+    int get_nrxx() {return nx*ny*nz;}
 
     private:
 // Info to be passed to libpaw_interface:
@@ -237,6 +239,7 @@ class Paw_Cell
     public:
     void prepare_paw();
     void get_vloc_ncoret(double* vloc, double* ncoret);
+    void init_rho(double* rho);
     void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
     void get_nhat(double* nhat, double* nhatgr);
     void calculate_dij(double* vks, double* vxc);

@@ -89,7 +89,14 @@ namespace ModuleESolver
         /* it has been established that that
          xc_func is same for all elements, therefore
          only the first one if used*/
-        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        if(GlobalV::use_paw)
+        {
+            XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
+        }
+        else
+        {
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        }
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
         // symmetry analysis should be performed every time the cell is changed
@@ -467,7 +474,8 @@ namespace ModuleESolver
                                     this->pw_rho,
                                     is,
                                     GlobalV::NSPIN,
-                                    pelec->charge->rho_save[is],
+                                    pelec->charge->rho_core,
+                                    //pelec->charge->rho_save[is],
                                     iter,
                                     this->pelec->eferm.get_efval(is),
                                     &(GlobalC::ucell),

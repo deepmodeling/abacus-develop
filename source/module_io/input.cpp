@@ -2483,6 +2483,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (of_kinetic != "wt")
         of_read_kernel = false; // sunliang add 2022-09-12
 
+    if(dft_functional == "default" && use_paw)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dft_functional must be set when use_paw is true");
+    }
+
     if (exx_hybrid_alpha == "default")
     {
         if (dft_functional == "hf" || INPUT.rpa)

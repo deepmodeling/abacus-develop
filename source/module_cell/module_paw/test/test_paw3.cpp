@@ -160,6 +160,19 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     delete[] vloc;
     delete[] ncoret;
 
+    double* rho;
+    rho = new double[nfft];
+    paw_cell.init_rho(rho);
+    std::ifstream ifs1("fort.101");
+    for(int i = 0; i < nfft; i++)
+    {
+        double tmp;
+        ifs1 >> tmp;
+        EXPECT_NEAR(tmp,rho[i],1e-10);
+    }
+
+    delete[] rho;
+
     std::ifstream ifs_rhoij("rhoij");
     int nrhoijsel, *rhoijselect;
     double *rhoijp;

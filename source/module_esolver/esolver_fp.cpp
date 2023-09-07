@@ -32,7 +32,10 @@ namespace ModuleESolver
     }
     void ESolver_FP::Init(Input& inp, UnitCell& cell)
     {
-        cell.read_pseudo(GlobalV::ofs_running);
+        if(!GlobalV::use_paw)
+        {
+            cell.read_pseudo(GlobalV::ofs_running);
+        }
 
 #ifdef __MPI
             this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);

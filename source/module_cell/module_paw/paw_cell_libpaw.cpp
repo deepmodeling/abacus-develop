@@ -251,6 +251,9 @@ extern "C"
 
     void get_dij_(int&, int&, int&, double*);
     //            iatom,size_dij,nspden,dij
+
+    void init_rho_(int&,  int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*);
+    //             nspden,ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   rho
 }
 
 void Paw_Cell::prepare_paw()
@@ -287,4 +290,10 @@ void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
 {
     int iat_fortran = iat + 1;
     get_dij_(iat_fortran,size_dij,nspden,dij);
+}
+
+void Paw_Cell::init_rho(double * rho)
+{
+    init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+            gmet.data(), ucvol, xred.data(), rho);    
 }

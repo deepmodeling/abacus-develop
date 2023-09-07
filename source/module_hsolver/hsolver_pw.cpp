@@ -127,31 +127,34 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
     reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(pes)->psiToRho(psi);
 
 #ifdef USE_PAW
-    if(typeid(FPTYPE) != typeid(double))
+    if(GlobalV::use_paw)
     {
-        ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
-    }
-
-    GlobalC::paw_cell.reset_rhoij();
-    for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
-    {
-        psi.fix_k(ik);
-        int nbands = psi.get_nbands();
-        for(int ib = 0; ib < nbands; ib ++)
+        if(typeid(FPTYPE) != typeid(double))
         {
-            GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*> (psi.get_pointer(ib)), pes->wg(ik,ib));
+            ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
         }
-    }
 
-    std::vector<std::vector<double>> rhoijp;
-    std::vector<std::vector<int>> rhoijselect;
-    std::vector<int> nrhoijsel;
+        GlobalC::paw_cell.reset_rhoij();
+        for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+        {
+            psi.fix_k(ik);
+            int nbands = psi.get_nbands();
+            for(int ib = 0; ib < nbands; ib ++)
+            {
+                GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*> (psi.get_pointer(ib)), pes->wg(ik,ib));
+            }
+        }
 
-    GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+        std::vector<std::vector<double>> rhoijp;
+        std::vector<std::vector<int>> rhoijselect;
+        std::vector<int> nrhoijsel;
 
-    for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
-    {
-        GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        {
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+        }
     }
 #endif
 
