@@ -51,14 +51,17 @@ class Operator
 
     virtual int get_ik() const { return this->ik; }
 
-    //do operation : |hpsi_choosed> = V|psi_choosed>
-    //V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
+    ///do operation : |hpsi_choosed> = V|psi_choosed>
+    ///V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
     virtual void act(const int nbands,
         const int nbasis,
         const int npol,
         const FPTYPE* tmpsi_in,
         FPTYPE* tmhpsi,
         const int ngk_ik = 0)const {};
+
+    /// an developer-friendly interface for act() function
+    virtual psi::Psi<FPTYPE> act(const psi::Psi<FPTYPE>& psi_in) const { return psi_in; };
 
     Operator* next_op = nullptr;
 
