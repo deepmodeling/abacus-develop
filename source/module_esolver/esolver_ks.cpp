@@ -224,10 +224,10 @@ namespace ModuleESolver
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
-            // In theory there should be two different energy cutoff : one for wavefunction
-            // the other for electron density. But in ABACUS somehow there is no distinction
-            // which is rather non-standard treatment. But nevertheless I'll just follow it for now.
-            GlobalC::paw_cell.set_libpaw_ecut(this->pw_wfc->ggecut/2.0,this->pw_wfc->ggecut/2.0); //in Hartree
+
+
+            // ecutrho / 2 = ecutwfc * 2
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc*2.0,INPUT.ecutwfc*2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
             GlobalC::paw_cell.prepare_paw();
