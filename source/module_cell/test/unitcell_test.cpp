@@ -278,6 +278,19 @@ TEST_F(UcellDeathTest,SetupWarningQuit2)
 	EXPECT_THAT(output,testing::HasSubstr("set relax_new to be 1 for fixed_shape relaxation"));
 }
 
+TEST_F(UcellDeathTest, CompareAatomLabel)
+{
+    std::string atom_labels_in_stru = "Fe1";
+    std::string atom_labels_in_pseudo = "Fe";
+	ucell->compare_atom_labels(atom_labels_in_stru, atom_labels_in_pseudo);
+	atom_labels_in_stru = "Fe";
+	atom_labels_in_pseudo = "O";
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ucell->compare_atom_labels(atom_labels_in_stru, atom_labels_in_pseudo),::testing::ExitedWithCode(0),"");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("atom label in STRU is " + atom_labels_in_stru + " mismatch with pseudo file of " +atom_labels_in_pseudo));
+}
+
 TEST_F(UcellTest,RemakeCell)
 {
 	std::vector<std::string> latname_in = {"sc","fcc","bcc","hexagonal","trigonal","st","bct","so","baco","fco","bco","sm","bacm","triclinic"};
