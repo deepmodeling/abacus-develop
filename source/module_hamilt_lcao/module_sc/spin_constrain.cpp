@@ -5,6 +5,22 @@ SpinConstrain& SpinConstrain::getInstance() {
     return instance;
 }
 
+double SpinConstrain::cal_escon()
+{
+    this->escon_ = 0.0;
+    int nat = this->get_nat();
+    for (int iat = 0; iat < nat; iat++)
+    {
+        double tmp_x = this->Mi_[iat].x - this->sc_mag_[iat].x;
+        double tmp_y = this->Mi_[iat].y - this->sc_mag_[iat].y;
+        double tmp_z = this->Mi_[iat].z - this->sc_mag_[iat].z;
+        this->escon_ += this->lambda_[iat].x * tmp_x * tmp_x;
+        this->escon_ += this->lambda_[iat].y * tmp_y * tmp_y;
+        this->escon_ += this->lambda_[iat].z * tmp_z * tmp_z;
+    }
+    return this->escon_;
+}
+
 // set atomCounts
 void SpinConstrain::set_atomCounts(const std::map<int, int>& atomCounts_in) {
     this->atomCounts = atomCounts_in;

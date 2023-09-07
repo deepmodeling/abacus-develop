@@ -122,6 +122,7 @@ class ElecState
 
     double get_solvent_model_Ael();
     double get_solvent_model_Acav();
+    double get_spin_constrain_energy();
 
 #ifdef __LCAO
     double get_dftu_energy();

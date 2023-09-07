@@ -42,6 +42,8 @@ public:
         const K_Vectors& kv
     );
 
+    double cal_escon();
+
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 
     inline double output_cut(const double& result)
@@ -127,6 +129,7 @@ private:
     std::vector<ModuleBase::Vector3<double>> sc_mag_;
     int nspin_ = 0;
     std::vector<ModuleBase::Vector3<double>> Mi_;
+    double escon_ = 0.0;
 };
 
 

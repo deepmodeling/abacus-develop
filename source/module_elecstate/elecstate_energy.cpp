@@ -243,6 +243,10 @@ void ElecState::cal_energies(const int type)
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
+    if (GlobalV::sc_mag_switch)
+    {
+        this->f_en.escon = get_spin_constrain_energy();
+    }
 #ifdef __LCAO
     if (GlobalV::dft_plus_u)
     {

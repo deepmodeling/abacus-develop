@@ -4,6 +4,7 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_sc/spin_constrain.h"
 
 namespace elecstate
 {
@@ -31,6 +32,12 @@ double ElecState::get_solvent_model_Ael()
 double ElecState::get_solvent_model_Acav()
 {
     return GlobalC::solvent_model.cal_Acav(GlobalC::ucell, this->charge->nxyz);
+}
+
+double ElecState::get_spin_constrain_energy()
+{
+    SpinConstrain& sc = SpinConstrain::getInstance();
+    return sc.cal_escon();
 }
 
 #ifdef __LCAO
