@@ -70,7 +70,7 @@ void SpinConstrain::cal_MW(const int& step,
             this->Mi_[i].x = total_charge_soc[1];
             this->Mi_[i].y = total_charge_soc[2];
             this->Mi_[i].z = total_charge_soc[3];
-            std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setw(20) << "(" << Mi_[i].x << ", " << Mi_[i].y
+            std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << " (" << Mi_[i].x << ", " << Mi_[i].y
                << ", " << Mi_[i].z << ")" << std::endl;
         }
     }

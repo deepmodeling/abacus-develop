@@ -594,6 +594,12 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         }
     }
 #endif
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain& sc = SpinConstrain::getInstance();
+        sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+    }
+
     // (4) mohan add 2010-06-24
     // using new charge density.
     this->pelec->cal_energies(1);
