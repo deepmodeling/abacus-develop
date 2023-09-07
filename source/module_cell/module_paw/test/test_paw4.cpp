@@ -82,8 +82,8 @@ TEST_F(Test_PAW, test_paw)
     }
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp,
-        atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
-        eigts1_in, eigts2_in, eigts3_in);
+        atom_type, (const double **) atom_coord, filename_list);
+    paw_cell.set_eigts(nx, ny, nz,eigts1_in, eigts2_in, eigts3_in);
 
     delete[] eigts1_in;
     delete[] eigts2_in;

@@ -139,14 +139,15 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
     double *vloc, *ncoret;
     double *vks, *vxc;
-    double* rho;
+    double ** rho;
     double *nhat, *nhatgr;
 
     vks = new double[nfft];
     vxc = new double[nfft];
     vloc = new double[nfft];
     ncoret = new double[nfft];
-    rho = new double[nfft];
+    rho = new double*[1];
+    rho[0] = new double[nfft];
     nhat = new double[nfft];
     nhatgr = new double[nfft*3];
 
@@ -173,7 +174,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     {
         double tmp;
         ifs1 >> tmp;
-        EXPECT_NEAR(tmp,rho[i],1e-10);
+        EXPECT_NEAR(tmp,rho[0][i],1e-10);
     }
 
     std::ifstream ifs_rhoij("rhoij");

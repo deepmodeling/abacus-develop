@@ -15,17 +15,12 @@ void Paw_Cell::init_paw_cell(
     const double omega_in,
     const int nat_in, const int ntyp_in,
     const int * atom_type_in, const double ** atom_coord_in,
-    const std::vector<std::string> & filename_list_in,
-    const int nx_in, const int ny_in, const int nz_in,
-    const std::complex<double> * eigts1_in, const std::complex<double> * eigts2_in, const std::complex<double> * eigts3_in)
+    const std::vector<std::string> & filename_list_in)
 {
     ModuleBase::TITLE("Paw_Element","init_paw_cell");
 
     this -> nat = nat_in;
     this -> ntyp = ntyp_in;
-    this -> nx = nx_in;
-    this -> ny = ny_in;
-    this -> nz = nz_in;
     this -> omega = omega_in;
 
     atom_coord.resize(nat);
@@ -79,6 +74,16 @@ void Paw_Cell::init_paw_cell(
         int nproj = paw_element_list[it].get_mstates();
         paw_atom_list[iat].init_paw_atom(nproj);
     }
+}
+
+void Paw_Cell::set_eigts(const int nx_in, const int ny_in, const int nz_in,
+        const std::complex<double> * eigts1_in,
+        const std::complex<double> * eigts2_in,
+        const std::complex<double> * eigts3_in)
+{
+    this -> nx = nx_in;
+    this -> ny = ny_in;
+    this -> nz = nz_in;
 
     eigts1.resize(nat);
     eigts2.resize(nat);

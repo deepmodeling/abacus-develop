@@ -292,8 +292,24 @@ void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
     get_dij_(iat_fortran,size_dij,nspden,dij);
 }
 
-void Paw_Cell::init_rho(double * rho)
+void Paw_Cell::init_rho(double ** rho)
 {
+    double* rho_tmp;
+    rho_tmp = new double[nfft*nspden];
+
     init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
-            gmet.data(), ucvol, xred.data(), rho);    
+            gmet.data(), ucvol, xred.data(), rho_tmp);
+
+    for(int ir = 0; ir < nfft; ir ++)
+    {
+        for(int is = 0; is < nspden; is ++)
+        {
+            // I'm not sure about this yet !!!
+            // need to check for nspin = 2 later
+            // Fortran is column major, and rhor is of dimension (nfft, nspden)
+            // so presumably should be this way m
+            rho[is][ir] = rho_tmp[ir*nspden+is];
+        }
+    }
+    delete[] rho_tmp;
 }

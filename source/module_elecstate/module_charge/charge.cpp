@@ -32,6 +32,10 @@
 #include "module_elecstate/elecstate_getters.h"
 #include "module_elecstate/magnetism.h"
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
+
 Charge::Charge()
 {
     allocate_rho = false;
@@ -259,8 +263,33 @@ void Charge::atomic_rho(const int spin_number_need,
     {
     // In ABINIT, the initial charge density is calculated using some Gaussian functions
     // centered at the nuclei
-        //GlobalC::paw_cell.init_rho(rho_in);
+#ifdef USE_PAW
+        GlobalC::paw_cell.init_rho(rho_in);
+#endif
+        double ne_tot = 0.0;
+        std::vector<double> ne(spin_number_need);
+        int spin0 = 1;
+        if (spin_number_need == 2) spin0 = spin_number_need;
 
+        for (int is = 0; is < spin0; ++is)
+        {
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+            {
+                ne[is] += rho_in[is][ir];
+            }
+            ne[is] *= omega / (double)this->rhopw->nxyz;
+#ifdef __MPI
+            Parallel_Reduce::reduce_double_pool(ne[is]);
+#endif
+            GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "Electron number from rho", ne[is]);
+            ne_tot += ne[is];
+        }
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", GlobalV::nelec);
+        for (int is = 0; is < spin_number_need; ++is)
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+                rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
     }
     else
     {
