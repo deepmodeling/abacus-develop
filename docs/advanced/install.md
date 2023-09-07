@@ -75,10 +75,10 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
 
 - [CUDA-Toolkit](https://developer.nvidia.com/cuda-toolkit)
 
-To build NVIDIA GPU support for ABACUS, define `USE_CUDA` flag. You can also specify path to local installation of CUDA Toolkit by setting `CUDA_TOOLKIT_ROOT_DIR` flags.
+To build NVIDIA GPU support for ABACUS, define `USE_CUDA` flag. You can also specify path to local installation of CUDA Toolkit by setting `CMAKE_CUDA_COMPILER` flags.
 
 ```bash
-cmake -B build -DUSE_CUDA=1
+cmake -B build -DUSE_CUDA=1 -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc
 ```
 
 ## Build math library from source

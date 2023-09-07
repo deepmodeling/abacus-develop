@@ -41,7 +41,7 @@ struct set_memory_op {
      * @param var Constant value to set.
      * @param size Size of the memory to set.
      */
-    void operator()(T* arr, const int var, const size_t size);
+    void operator()(T* arr, const T& var, const size_t& size);
 };
 
 /**
@@ -132,7 +132,7 @@ void operator()(T*& arr, const size_t size, const char* record_in = nullptr);
 
 template <typename T>
 struct set_memory_op<T, container::DEVICE_GPU> {
-void operator()(T* arr, const int var, const size_t size);
+void operator()(T* arr, const T& var, const size_t& size);
 };
 
 template <typename T>

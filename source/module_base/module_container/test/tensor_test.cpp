@@ -328,7 +328,7 @@ TEST(Tensor, Resize) {
 TEST(Tensor, GetAllocatorDeathTest) {
     container::Tensor t1(container::DataType::DT_FLOAT, container::TensorShape({2, 2}));
     ASSERT_EXIT(
-      container::Allocator* alloc = container::Tensor::GetAllocator(container::DeviceType::UnKnown),
+      container::base::Allocator* alloc = container::Tensor::GetAllocator(container::DeviceType::UnKnown),
       ::testing::ExitedWithCode(EXIT_FAILURE),
       "Tensor device type unknown does not match requested type."
     );

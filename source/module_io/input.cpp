@@ -2627,8 +2627,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (!out_md_control)
             out_level = "m"; // zhengdy add 2019-04-07
-        if (mdp.md_tlast < 0.0)
-            mdp.md_tlast = mdp.md_tfirst;
         if (mdp.md_plast < 0.0)
             mdp.md_plast = mdp.md_pfirst;
 
@@ -2640,7 +2638,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             mdp.md_pfreq = 1.0 / 400 / mdp.md_dt;
         }
-        if (mdp.md_restart)
+        if (mdp.md_tfirst < 0 || mdp.md_restart)
         {
             init_vel = 1;
         }
@@ -3326,8 +3324,6 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_tfirst < 0 && esolver_type != "tddft")
-            ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_type == "msst")
@@ -3430,7 +3426,7 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }

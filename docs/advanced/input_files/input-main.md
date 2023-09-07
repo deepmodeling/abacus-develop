@@ -477,7 +477,7 @@ These variables are used to control general system parameters.
 - **Type**: Boolean
 - **Description**: 
 
-  - True: read the atom velocity from the atom file (STRU) if set to true. (atomic unit : 1 a.u. = 21.877 Angstrom/fs)
+  - True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (`STRU`) and determine the initial temperature [md_tfirst](#md_tfirst-md_tlast).  If [md_tfirst](#md_tfirst-md_tlast) is unset or less than zero, `init_vel` is autoset to be `true`.
   - False: assign value to atom velocity using Gaussian distributed random numbers.
 - **Default**: False
 
@@ -2091,7 +2091,12 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Type**: Real
 - **Description**: The temperature used in molecular dynamics calculations. 
 
-  Note that `md_tlast` is only used in NVT simulations. The default value of `md_tlast` is `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
+  If `md_tfirst` is unset or less than zero, [init_vel](#init_vel) is autoset to be `true`. If [init_vel](#init_vel) is `true`, the initial temperature will be determined by the velocities read from `STRU`. In this case, if velocities are unspecified in `STRU`, the initial temperature is set to zero. 
+
+  If `md_tfirst` is set to a positive value and [init_vel](#init_vel) is `true` simultaneously, please make sure they are consistent, otherwise abacus will exit immediately.
+
+
+  Note that `md_tlast` is only used in NVT/NPT simulations. If `md_tlast` is unset or less than zero, `md_tlast` is set to `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
 - **Default**: No default
 - **Unit**: K
 

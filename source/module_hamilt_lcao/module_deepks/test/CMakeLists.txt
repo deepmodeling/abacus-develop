@@ -16,7 +16,7 @@ target_link_libraries(
     neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
     pthread vdw dftu
-    deepks device
+    deepks device container
     ${ABACUS_LINK_LIBRARIES}
 )
 if(USE_ELPA)
