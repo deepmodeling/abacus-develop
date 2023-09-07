@@ -28,6 +28,7 @@ public:
     void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
 
     Parallel_Orbitals *ParaV;
+
     void cal_MW(
         const int& step,
         LCAO_Matrix& LM,

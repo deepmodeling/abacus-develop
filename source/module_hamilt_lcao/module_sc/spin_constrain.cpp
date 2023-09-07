@@ -165,9 +165,9 @@ int SpinConstrain::get_iwt(int itype, int iat, int orbital_index)
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt","iat out of range [0, nat)");
     }
-    if (orbital_index < 0 || orbital_index >= this->orbitalCounts[itype])
+    if (orbital_index < 0 || orbital_index >= this->orbitalCounts[itype]*this->npol_)
     {
-        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt","orbital index out of range [0, atom_nw)");
+        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt","orbital index out of range [0, atom_nw*npol)");
     }
     int iwt = 0;
     for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it) {
@@ -180,7 +180,7 @@ int SpinConstrain::get_iwt(int itype, int iat, int orbital_index)
     for (int i = 0; i < iat; ++i) {
         iwt += this->orbitalCounts[itype]*this->npol_;
     }
-    iwt += orbital_index*this->npol_;
+    iwt += orbital_index;
     return iwt;
 }
 

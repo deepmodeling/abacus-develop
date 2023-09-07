@@ -17,7 +17,7 @@ void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
         for (int ia1 = 0; ia1 < nat_it1; ia1++)
         {
             int iat1 = this->get_iat(it1, ia1);
-            for (int iw1 = 0; iw1 < nw_it1; iw1++)
+            for (int iw1 = 0; iw1 < nw_it1*this->npol_; iw1++)
             {
                 int iwt1 = this->get_iwt(it1, ia1, iw1);
                 const int mu = pv->global2local_row(iwt1);
@@ -30,7 +30,7 @@ void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
                     for (int ia2 = 0; ia2 < nat_it2; ia2++)
                     {
                         int iat2 = this->get_iat(it2, ia2);
-                        for (int iw2 = 0; iw2 < nw_it2; iw2++)
+                        for (int iw2 = 0; iw2 < nw_it2*this->npol_; iw2++)
                         {
                             int iwt2 = this->get_iwt(it2, ia2, iw2);
                             const int nu = pv->global2local_col(iwt2);
@@ -80,7 +80,7 @@ void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Slo
         for (int ia1 = 0; ia1 < nat_it1; ia1++)
         {
             int iat1 = this->get_iat(it1, ia1);
-            for (int iw1 = 0; iw1 < nw_it1; iw1++)
+            for (int iw1 = 0; iw1 < nw_it1*this->npol_; iw1++)
             {
                 int iwt1 = this->get_iwt(it1, ia1, iw1);
                 const int mu = pv->global2local_row(iwt1);
@@ -93,7 +93,7 @@ void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Slo
                     for (int ia2 = 0; ia2 < nat_it2; ia2++)
                     {
                         int iat2 = this->get_iat(it2, ia2);
-                        for (int iw2 = 0; iw2 < nw_it2; iw2++)
+                        for (int iw2 = 0; iw2 < nw_it2*this->npol_; iw2++)
                         {
                             int iwt2 = this->get_iwt(it2, ia2, iw2);
                             const int nu = pv->global2local_col(iwt2);
@@ -107,7 +107,8 @@ void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Slo
                             {
                                 icc = mu * pv->ncol + nu;
                             }
-                            this->Wi_[icc] = (iat1 == iat2) ? Sloc2[icc] : Sloc2[icc]*0.5;
+                            //this->Wi_[icc] = (iat1 == iat2) ? Sloc2[icc] : Sloc2[icc]*0.5;
+                            this->Wi_[icc] = Sloc2[icc];
                         }
                     }
 
