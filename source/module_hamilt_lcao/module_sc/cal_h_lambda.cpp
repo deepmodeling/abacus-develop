@@ -47,14 +47,14 @@ void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
                             if (iwt1 % 2 == 0)
                             {
                                 h_lambda[icc] = (iwt2 % 2 == 0) ?
-                                    Wi_[icc] * lambda_[iat1][2] :
-                                    Wi_[icc] * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, -1));
+                                    Wi_[icc] * 2.0 * lambda_[iat1][2] :
+                                    Wi_[icc] * 2.0 * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, -1));
                             }
                             else
                             {
                                 h_lambda[icc] = (iwt2 % 2 == 0) ?
-                                    Wi_[icc] * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, 1)) :
-                                    Wi_[icc] * (-lambda_[iat1][2]);
+                                    Wi_[icc] * 2.0 * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, 1)) :
+                                    Wi_[icc] * 2.0 * (-lambda_[iat1][2]);
                             }
                         }
                     }
