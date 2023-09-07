@@ -135,10 +135,20 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
     paw_cell.prepare_paw();
 
-    double *vloc, *ncoret;
     int nfft = nx_dg * ny_dg * nz_dg;
+
+    double *vloc, *ncoret;
+    double *vks, *vxc;
+    double* rho;
+    double *nhat, *nhatgr;
+
+    vks = new double[nfft];
+    vxc = new double[nfft];
     vloc = new double[nfft];
     ncoret = new double[nfft];
+    rho = new double[nfft];
+    nhat = new double[nfft];
+    nhatgr = new double[nfft*3];
 
     paw_cell.get_vloc_ncoret(vloc, ncoret);
     std::ifstream ifs("fort.26");
@@ -157,11 +167,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         EXPECT_NEAR(tmp,ncoret[i],1e-10);
     }
 
-    delete[] vloc;
-    delete[] ncoret;
-
-    double* rho;
-    rho = new double[nfft];
     paw_cell.init_rho(rho);
     std::ifstream ifs1("fort.101");
     for(int i = 0; i < nfft; i++)
@@ -170,8 +175,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         ifs1 >> tmp;
         EXPECT_NEAR(tmp,rho[i],1e-10);
     }
-
-    delete[] rho;
 
     std::ifstream ifs_rhoij("rhoij");
     int nrhoijsel, *rhoijselect;
@@ -197,9 +200,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         delete[] rhoijp;
     }
 
-    double *nhat, *nhatgr;
-    nhat = new double[nfft];
-    nhatgr = new double[nfft*3];
     paw_cell.get_nhat(nhat,nhatgr);
 
     std::ifstream ifs_nhat("fort.19");
@@ -210,13 +210,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         EXPECT_NEAR(tmp,nhat[i],1e-10);
     }
 
-    delete[] nhat;
-    delete[] nhatgr;
-
     std::ifstream ifs_veff("veff");
-    double *vks, *vxc;
-    vks = new double[nfft];
-    vxc = new double[nfft];
     for(int i=0; i<nfft; i++)
     {
         ifs_veff >> vks[i];
@@ -227,8 +221,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     }
 
     paw_cell.calculate_dij(vks,vxc);
-    delete[] vks;
-    delete[] vxc;
 
     std::ifstream ifs_dij("dij_ref");
     double *dij;
@@ -247,4 +239,12 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
         delete[] dij;
     }
+
+    delete[] rho;
+    delete[] vloc;
+    delete[] ncoret;
+    delete[] vks;
+    delete[] vxc;
+    delete[] nhat;
+    delete[] nhatgr;
 }
