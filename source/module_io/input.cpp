@@ -2757,9 +2757,17 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             scf_thr = 1.0e-7;
         }
-        else if (basis_type == "pw")
+        else if (basis_type == "pw" and calculation != "nscf")
         {
             scf_thr = 1.0e-9;
+        }
+        else if (basis_type == "pw" and calculation == "nscf")
+        {
+            scf_thr = 1.0e-6; 
+            // In NSCF calculation, the diagonalization threshold is set to 0.1*scf/nelec.
+            // In other words, the scf_thr is used to control diagonalization convergence
+            // threthod in NSCF. In this case, the default 1.0e-9 is too strict. 
+            //renxi 20230908
         }
     }
 
