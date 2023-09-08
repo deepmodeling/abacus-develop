@@ -1,7 +1,7 @@
 #ifndef SURCHEM_H
 #define SURCHEM_H
 
-#include "../../module_base/atom_in.h"
+#include "module_base/atom_in.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
