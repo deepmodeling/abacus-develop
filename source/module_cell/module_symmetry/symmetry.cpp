@@ -1597,7 +1597,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
         {
             rhogtot[ipw_record[isym]] = sum/gphase_record[isym];
         }
-    g_index++;
+    //g_index++;
     //Clean the records variables for each fft grid point
     delete[] ipw_record;
     delete[] ixyz_record;
