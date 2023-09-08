@@ -19,6 +19,7 @@
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#endif
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_ri/serialization_cereal.h"
