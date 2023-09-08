@@ -110,7 +110,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Peize Lin add 2016-09-23
 #ifdef __MPI 
 #ifdef __EXX
-	if( GlobalC::exx_info.info_global.cal_exx )
+	if( GlobalC::exx_info.info_global.cal_exx || INPUT.rpa )
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
 		{
