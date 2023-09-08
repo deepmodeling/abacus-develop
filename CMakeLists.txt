@@ -614,6 +614,7 @@ if(ENABLE_LCAO)
       gint
       dftu
       hcontainer
+      numerical_atomic_orbitals
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}

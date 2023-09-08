@@ -60,7 +60,9 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
+#ifndef USE_NEW_TWO_CENTER
     this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
+#endif
 }
 
 void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
@@ -404,6 +406,8 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 #ifdef __EXX
     Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
+
+#ifndef USE_NEW_TWO_CENTER
     this->orb_con.set_orb_tables(GlobalV::ofs_running,
                                  GlobalC::UOT,
                                  GlobalC::ORB,
@@ -413,6 +417,24 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.nprojmax,
                                  ucell.infoNL.nproj,
                                  ucell.infoNL.Beta);
+#else
+    //-------------------------------------
+    //  new two-center integral module
+    //-------------------------------------
+    two_center_bundle.reset(new TwoCenterBundle);
+
+    // NOTE: ucell.orbital_fn does not include the path,
+    // GlobalV::global_orbital_dir & GlobalV::global_pseudo_dir is prepended inside build()
+    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.infoNL.Beta,
+            GlobalV::deepks_setorb, &ucell.descriptor_file);
+    // currently deepks only use one descriptor file, so use bool as int
+
+    // transfer the ownership to UOT
+    // this is a temporary solution during refactoring
+    // the final version will get rid of UOT
+    // and transfer individual ownership of TwoCenterIntegrator to corresponding operator
+    GlobalC::UOT.two_center_bundle = std::move(two_center_bundle);
+#endif
 
     if (this->orb_con.setup_2d)
     {

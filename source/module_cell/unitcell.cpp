@@ -17,6 +17,11 @@
 #include "module_base/element_elec_config.h"
 #include "module_base/element_covalent_radius.h"
 
+#ifdef __EXX
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_ri/serialization_cereal.h"
+#endif
+
 UnitCell::UnitCell()
 {
     if (GlobalV::test_unitcell)
@@ -145,6 +150,10 @@ void UnitCell::bcast_unitcell(void)
     {
         atoms[i].bcast_atom(); // init tau and mbl array
     }
+
+#ifdef __EXX
+    ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_ri.files_abfs, MPI_COMM_WORLD, 0);
+#endif
     return;
 }
 
