@@ -228,7 +228,7 @@ namespace ModuleESolver
 
 
             // ecutrho / 2 = ecutwfc * 2
-            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc*2.0,INPUT.ecutwfc*2.0); //in Hartree
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
             GlobalC::paw_cell.prepare_paw();
@@ -481,7 +481,8 @@ namespace ModuleESolver
                                     this->pw_rho,
                                     is,
                                     GlobalV::NSPIN,
-                                    pelec->charge->rho_save[is],
+                                    pelec->charge->nhat[is],
+                                    //pelec->charge->rho_save[is],
                                     iter,
                                     this->pelec->eferm.get_efval(is),
                                     &(GlobalC::ucell),

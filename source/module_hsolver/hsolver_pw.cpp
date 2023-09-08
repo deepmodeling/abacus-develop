@@ -116,6 +116,49 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
+#ifdef USE_PAW
+	    if(GlobalV::use_paw)
+        {
+            const int npw = this->wfc_basis->npwk[ik];
+            ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+            for (int ig = 0;ig < npw; ig++)
+            {
+                _gk[ig] = this->wfc_basis->getgpluskcar(ik,ig);
+            }
+
+            double* kpt;
+            kpt = new double[3];
+            kpt[0] = this->wfc_basis->kvec_c[ik].x;
+            kpt[1] = this->wfc_basis->kvec_c[ik].y;
+            kpt[2] = this->wfc_basis->kvec_c[ik].z;
+
+            double ** kpg;
+            kpg = new double*[npw];
+            for(int ipw=0;ipw<npw;ipw++)
+            {
+                kpg[ipw] = new double[3];
+                kpg[ipw][0] = _gk[ipw].x;
+                kpg[ipw][1] = _gk[ipw].y;
+                kpg[ipw][2] = _gk[ipw].z;
+            }
+
+            GlobalC::paw_cell.set_paw_k(npw,kpt,
+                this->wfc_basis->get_ig2ix(ik).data(),
+                this->wfc_basis->get_ig2iy(ik).data(),
+                this->wfc_basis->get_ig2iz(ik).data(),
+                (const double **) kpg,GlobalC::ucell.tpiba);
+
+            delete[] kpt;
+            for(int ipw = 0; ipw < npw; ipw++)
+            {
+                delete[] kpg[ipw];
+            }
+            delete[] kpg;
+
+            GlobalC::paw_cell.get_vkb();
+        }
+#endif
+
         this->updatePsiK(pHamilt, psi, ik);
 
         // template add precondition calculating here

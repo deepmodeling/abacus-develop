@@ -277,6 +277,8 @@ void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselec
 
 void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 {
+    ModuleBase::TITLE("Paw_Cell", "get_nhat");
+
     double* nhat_tmp;
     nhat_tmp = new double[nfft*nspden];
 

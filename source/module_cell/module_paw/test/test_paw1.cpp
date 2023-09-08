@@ -366,7 +366,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         EXPECT_EQ(nrhoijsel[iat],36);
         for(int i = 0; i < 36; i ++)
         {
-            EXPECT_EQ(rhoijselect[iat][i],i);
+            EXPECT_EQ(rhoijselect[iat][i],i+1);
             EXPECT_NEAR(rhoijp[iat][i],rhoij[iat][i],1e-8);
         }
     }
