@@ -1,11 +1,3 @@
-nelec1 1.00032
-nelec2 1.00033
-nelec3 1.00252
-nelec4 1.00248
-nelec5 1.00155
-nelec6 1.00153
-nelec7 1.00545
-nelec8 1.00546
 BAND1_k_1_s_1_ENV.cube 1.06417
 BAND1_k_2_s_1_ENV.cube 1.06414
 BAND2_k_1_s_1_ENV.cube 1.07188
@@ -14,4 +6,4 @@ BAND3_k_1_s_1_ENV.cube 1.0689
 BAND3_k_2_s_1_ENV.cube 1.06886
 BAND4_k_1_s_1_ENV.cube 1.06869
 BAND4_k_2_s_1_ENV.cube 1.06864
-totaltimeref 0.56668
+totaltimeref 0.19544

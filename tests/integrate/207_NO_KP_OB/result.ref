@@ -1,4 +1,3 @@
-CompareProjBand_pass 0
 CompareOrb_pass 0
-CompareBand_pass 0
-totaltimeref 0.76637
+CompareBand_pass 1
+totaltimeref 0.27705
