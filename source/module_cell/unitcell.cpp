@@ -19,6 +19,9 @@
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#ifdef __EXX
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_ri/serialization_cereal.h"
 #endif
 
 UnitCell::UnitCell()
@@ -149,6 +152,10 @@ void UnitCell::bcast_unitcell(void)
     {
         atoms[i].bcast_atom(); // init tau and mbl array
     }
+
+#ifdef __EXX
+    ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_ri.files_abfs, MPI_COMM_WORLD, 0);
+#endif
     return;
 }
 
