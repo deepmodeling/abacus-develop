@@ -139,17 +139,18 @@ namespace ModuleESolver
                 Parallel_Common::bcast_string(filename_list[it]);
             }
 #endif
+            
+            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
+                GlobalC::ucell.omega,GlobalC::ucell.nat,GlobalC::ucell.ntype,
+                atom_type,(const double **) atom_coord,
+                filename_list);
+
             for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
             {
                 delete [] atom_coord[iat];
             }
             delete [] atom_coord;
             delete [] atom_type;
-            
-            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
-                GlobalC::ucell.omega,GlobalC::ucell.nat,GlobalC::ucell.ntype,
-                atom_type,(const double **) atom_coord,
-                filename_list);
         }
 #endif
         ucell.cal_nelec(GlobalV::nelec);
