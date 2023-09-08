@@ -5,7 +5,7 @@ AddTest(
   SOURCES blas_connector_test.cpp
 )
 AddTest(
-  TARGET surchem_atom_in
+  TARGET base_atom_in
   SOURCES atom_in_test.cpp
 )
 AddTest(
