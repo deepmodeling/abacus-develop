@@ -25,6 +25,12 @@ void SpinConstrain::cal_MW(const int& step,
     int nat = this->get_nat();
 
     this->Mi_.resize(nat);
+    for (int iat=0; iat < nat; ++iat)
+    {
+        this->Mi_[iat].x = 0.0;
+        this->Mi_[iat].y = 0.0;
+        this->Mi_[iat].z = 0.0;
+    }
     
     if (!print)
     {
@@ -196,6 +202,8 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(
 
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow);
+
+        this->cal_weight_func(LM.Sloc2);
 
 #ifdef __MPI
         const char T_char = 'T';

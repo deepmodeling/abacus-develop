@@ -746,6 +746,12 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         }
     }
 
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain& sc = SpinConstrain::getInstance();
+        sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+    }
+
     // (11) calculate the total energy.
     this->pelec->cal_energies(2);
 }
@@ -855,7 +861,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain& sc = SpinConstrain::getInstance();
-        sc.cal_MW(istep, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+        sc.cal_MW(istep, this->LM, this->LOC.dm_k, kv, GlobalC::ucell, true);
     }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)

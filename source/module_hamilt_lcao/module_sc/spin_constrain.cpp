@@ -14,10 +14,18 @@ double SpinConstrain::cal_escon()
         double tmp_x = this->Mi_[iat].x - this->sc_mag_[iat].x;
         double tmp_y = this->Mi_[iat].y - this->sc_mag_[iat].y;
         double tmp_z = this->Mi_[iat].z - this->sc_mag_[iat].z;
+        //std::cout << "this->Mi_[iat].x = " << this->Mi_[iat].x << std::endl;
+        //std::cout << "this->Mi_[iat].y = " << this->Mi_[iat].y << std::endl;
+        //std::cout << "this->Mi_[iat].z = " << this->Mi_[iat].z << std::endl;
+        //std::cout << "this->sc_mag_[iat].x = " << this->sc_mag_[iat].x << std::endl;
+        //std::cout << "this->sc_mag_[iat].y = " << this->sc_mag_[iat].y << std::endl;
+        //std::cout << "this->sc_mag_[iat].z = " << this->sc_mag_[iat].z << std::endl;
+        //std::cout << "this->lambda_[iat].x = " << this->lambda_[iat].x << std::endl;
         this->escon_ += this->lambda_[iat].x * tmp_x * tmp_x;
         this->escon_ += this->lambda_[iat].y * tmp_y * tmp_y;
         this->escon_ += this->lambda_[iat].z * tmp_z * tmp_z;
     }
+    //std::cout << "this->escon_ " << this->escon_ << std::endl;
     return this->escon_;
 }
 

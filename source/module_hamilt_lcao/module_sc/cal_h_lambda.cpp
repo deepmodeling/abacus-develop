@@ -47,14 +47,14 @@ void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
                             if (iwt1 % 2 == 0)
                             {
                                 h_lambda[icc] = (iwt2 % 2 == 0) ?
-                                    Wi_[icc] * 2.0 * lambda_[iat1][2] :
-                                    Wi_[icc] * 2.0 * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, -1));
+                                    - Wi_[icc] * 2.0 * lambda_[iat1][2] :
+                                    - Wi_[icc] * 2.0 * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, -1));
                             }
                             else
                             {
                                 h_lambda[icc] = (iwt2 % 2 == 0) ?
-                                    Wi_[icc] * 2.0 * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, 1)) :
-                                    Wi_[icc] * 2.0 * (-lambda_[iat1][2]);
+                                    - Wi_[icc] * 2.0 * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, 1)) :
+                                    - Wi_[icc] * 2.0 * (-lambda_[iat1][2]);
                             }
                         }
                     }
@@ -72,6 +72,11 @@ void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Slo
     ModuleBase::TITLE("SpinConstrain","cal_weight_func");
     ModuleBase::timer::tick("SpinConstrain", "cal_weight_func");
     const Parallel_Orbitals* pv = this->ParaV;
+    int nloc = pv->nloc;
+    for (int i= 0; i < nloc; i++)
+    {
+        this->Wi_[i] = std::complex<double>(0, 0);
+    }
     for (const auto& sc_elem1 : this->get_atomCounts())
     {
         int it1 = sc_elem1.first;
@@ -107,8 +112,8 @@ void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Slo
                             {
                                 icc = mu * pv->ncol + nu;
                             }
-                            //this->Wi_[icc] = (iat1 == iat2) ? Sloc2[icc] : Sloc2[icc]*0.5;
-                            this->Wi_[icc] = Sloc2[icc];
+                            this->Wi_[icc] = (iat1 == iat2) ? Sloc2[icc] : Sloc2[icc]*0.5;
+                            //this->Wi_[icc] = Sloc2[icc];
                         }
                     }
 
