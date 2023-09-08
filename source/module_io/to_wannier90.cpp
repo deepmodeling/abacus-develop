@@ -1626,6 +1626,9 @@ std::complex<double> toWannier90::unkdotkb(const ModulePW::PW_Basis_K* wfcpw,
                                            const int& iband_R,
                                            const ModuleBase::Vector3<double> G,
                                            const psi::Psi<std::complex<double>>& psi_pw)
+/*
+Calculate and print <u_{n,k}|u_{u,k+b}> required by Wannier90.
+*/
 {
     // (1) set value
     std::complex<double> result(0.0, 0.0);
