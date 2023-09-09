@@ -24,7 +24,11 @@ class RadialCollection
 
     ~RadialCollection();
 
+    /// build the collection from (orbital) files
     void build(const int nfile, const std::string* const file, const char type = 'o');
+
+    /// build the collection from Numerical_Nonlocal objects
+    void build(const int ntype, Numerical_Nonlocal* const nls);
 
     /*! @name Getters
      *
@@ -133,6 +137,8 @@ class RadialCollection
                           const char mode = 'i',
                           const bool enable_fft = false);
     //!@}
+
+    ModuleBase::SphericalBesselTransformer* sbt() { return sbt_; }
 
   private:
     int ntype_ = 0;     //!< number of RadialSet in the collection

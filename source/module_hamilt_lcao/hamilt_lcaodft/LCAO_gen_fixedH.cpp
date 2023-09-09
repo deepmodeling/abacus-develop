@@ -145,12 +145,38 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							{
 								// PLEASE use UOT as an input parameter of this subroutine
 								// mohan add 2021-03-30
-			
+#ifdef USE_NEW_TWO_CENTER
+                                //=================================================================
+                                //          new two-center integral (temporary)
+                                //=================================================================
+                                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+                                int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
+
+                                switch (dtype)
+                                {
+                                case 'S':
+                                    GlobalC::UOT.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
+                                            T2, L2, N2, M2, dtau * ucell.lat0, olm);
+                                    break;
+                                case 'T':
+                                    GlobalC::UOT.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
+                                            T2, L2, N2, M2, dtau * ucell.lat0, olm);
+                                    break;
+                                default:  // not supposed to happen
+			                        ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
+                                }
+#else
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, 
 										tau1, T1, L1, m1, N1,                  // info of atom1
 										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2 
 										cal_syns,
 										dmax);
+#endif
+                                //=================================================================
+                                //          end of new two-center integral (temporary)
+                                //=================================================================
+
 								// When NSPIN == 4 , only diagonal term is calculated for T or S Operators
 								// use olm1 to store the diagonal term with complex data type.
 								std::complex<double> olm1[4];
@@ -202,10 +228,36 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 							}
 							else // calculate the derivative
 							{
+#ifdef USE_NEW_TWO_CENTER
+                                //=================================================================
+                                //          new two-center integral (temporary)
+                                //=================================================================
+                                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+                                int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
+                                switch (dtype)
+                                {
+                                case 'S':
+                                    GlobalC::UOT.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
+                                            T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
+                                    break;
+                                case 'T':
+                                    GlobalC::UOT.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
+                                            T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
+                                    break;
+                                default:  // not supposed to happen
+			                        ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
+                                }
+#else
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 1, dtype, 
 									tau1, T1, L1, m1, N1,
 									adjs.adjacent_tau[ad], T2, L2, m2, N2
 									);
+
+#endif
+                                //=================================================================
+                                //          end of new two-center integral (temporary)
+                                //=================================================================
 
 								if(GlobalV::GAMMA_ONLY_LOCAL)
 								{
@@ -414,6 +466,22 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				//If we are calculating force, we need also to store the gradient
 				//and size of outer vector is then 4
 				//inner loop : all projectors (L0,M0)
+
+#ifdef USE_NEW_TWO_CENTER
+                //=================================================================
+                //          new two-center integral (temporary)
+                //=================================================================
+                int L1 = atom1->iw2l[ iw1_0 ];
+                int N1 = atom1->iw2n[ iw1_0 ];
+                int m1 = atom1->iw2m[ iw1_0 ];
+
+                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+
+                ModuleBase::Vector3<double> dtau = tau - tau1;
+                GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
+                        T1, L1, N1, M1, it, dtau * GlobalC::ucell.lat0, calc_deri, nlm);
+#else
 				GlobalC::UOT.snap_psibeta_half(
 					GlobalC::ORB,
 					GlobalC::ucell.infoNL,
@@ -422,6 +490,11 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 					atom1->iw2m[ iw1_0 ], // m1
 					atom1->iw2n[ iw1_0 ], // N1
 					tau, it, calc_deri); //R0,T0
+#endif
+                //=================================================================
+                //          end of new two-center integral (temporary)
+                //=================================================================
+
 				if(!calc_deri)
 				{
 					nlm_cur.insert({iw1_all,nlm[0]});
@@ -864,6 +937,23 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                     //for force, the right hand side is the gradient
                     //and the first dimension is then 3
                     //inner loop : all projectors (L0,M0)
+
+
+#ifdef USE_NEW_TWO_CENTER
+                    //=================================================================
+                    //          new two-center integral (temporary)
+                    //=================================================================
+                    int L1 = atom1->iw2l[ iw1_0 ];
+                    int N1 = atom1->iw2n[ iw1_0 ];
+                    int m1 = atom1->iw2m[ iw1_0 ];
+
+                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                    int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+
+                    ModuleBase::Vector3<double> dtau = GlobalC::ucell.atoms[T0].tau[I0] - tau1;
+                    GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
+                            T1, L1, N1, M1, T0, dtau * GlobalC::ucell.lat0, false, nlm);
+#else
                     GlobalC::UOT.snap_psibeta_half(
                         GlobalC::ORB,
                         GlobalC::ucell.infoNL,
@@ -872,6 +962,10 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                         atom1->iw2m[ iw1_0 ], // m1
                         atom1->iw2n[ iw1_0 ], // N1
                         GlobalC::ucell.atoms[T0].tau[I0], T0, 0); //R0,T0
+#endif
+                    //=================================================================
+                    //          end of new two-center integral (temporary)
+                    //=================================================================
 
                     #ifdef _OPENMP
                         nlm_tot_thread[ad_count].insert({iw1_all,nlm[0]});
