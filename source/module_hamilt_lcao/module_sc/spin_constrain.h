@@ -20,7 +20,14 @@ public:
      * pubic interface for spin-constrained DFT
     */
     /// initialize spin-constrained DFT
-    void init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in, int nspin_in);
+    void init_sc(const UnitCell& ucell,
+                int NPOL,
+                std::string sc_file,
+                Parallel_Orbitals* ParaV_in,
+                int nspin_in,
+                double sc_thr_in,
+                int nsc_in,
+                int nsc_min_in);
 
     /// calculate h_lambda operator for spin-constrained DFT
     void cal_h_lambda(std::complex<double>* h_lambda);
@@ -126,22 +133,22 @@ private:
     std::map<int, std::vector<ScAtomData>> ScData;
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
+    int nspin_ = 0;
     int npol_ = 1;
     std::vector<std::complex<double>> Wi_;
     std::vector<ModuleBase::Vector3<double>> lambda_;
     std::vector<ModuleBase::Vector3<double>> sc_mag_;
-    int nspin_ = 0;
     std::vector<ModuleBase::Vector3<double>> Mi_;
     double escon_ = 0.0;
     /**
      * parameters for lambda-loop
     */
-    int num_step; // which is NSC from INPUT
-    int num_min; // which is NSCMIN from INPUT
+    int nsc_; // which is NSC from INPUT
+    int nsc_min_; // which is NSCMIN from INPUT
+    double sc_thr_; // which is SCDIFF from INPUT
     std::vector<ModuleBase::Vector3<int>> constrain; // which is CONSTRL from INPUT
     std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
     std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
-    double epsilon; // which is SCDIFF from INPUT
     bool debug = false; // which is LDESC in the original code
 };
 

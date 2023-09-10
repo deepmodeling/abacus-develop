@@ -2,7 +2,14 @@
 #include "module_base/parallel_common.h"
 
 // init sc
-void SpinConstrain::init_sc(const UnitCell& ucell, int NPOL, std::string sc_file, Parallel_Orbitals* ParaV_in, int nspin_in)
+void SpinConstrain::init_sc(const UnitCell& ucell,
+                            int NPOL,
+                            std::string sc_file,
+                            Parallel_Orbitals* ParaV_in,
+                            int nspin_in,
+                            double sc_thr_in,
+                            int nsc_in,
+                            int nsc_min_in)
 {
     // get pointer to Parallel_Oribitals
     this->ParaV = ParaV_in;
@@ -58,4 +65,8 @@ void SpinConstrain::init_sc(const UnitCell& ucell, int NPOL, std::string sc_file
         delete [] sc_lambda;
         delete [] sc_mag;
     }
+    // parameters for lambda loop
+    this->sc_thr_ = sc_thr_in;
+    this->nsc_ = nsc_in;
+    this->nsc_min_ = nsc_min_in;
 }

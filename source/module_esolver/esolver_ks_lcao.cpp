@@ -168,7 +168,14 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain& sc = SpinConstrain::getInstance();
-        sc.init_sc(GlobalC::ucell, GlobalV::NPOL, GlobalV::sc_file, &(this->orb_con.ParaV), GlobalV::NSPIN);
+        sc.init_sc(GlobalC::ucell,
+            GlobalV::NPOL,
+            GlobalV::sc_file,
+            &(this->orb_con.ParaV),
+            GlobalV::NSPIN,
+            GlobalV::sc_thr,
+            GlobalV::nsc,
+            GlobalV::nsc_min);
     }
 
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials

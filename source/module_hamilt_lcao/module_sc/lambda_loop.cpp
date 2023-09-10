@@ -15,16 +15,19 @@
     //this->target_spin = GlobalV::M_CONSTR;
     //this->constrain = GlobalV::CONSTRL;
     //this->alpha_trial = GlobalV::INISC;
-    //this->epsilon = GlobalV::SCDIFF;
+    //this->sc_thr = GlobalV::SCDIFF;
     //this->bound_gradient = GlobalV::SCCONV_GRAD;
-    //this->num_step = GlobalV::NSC;
-    //this->num_min = GlobalV::NSCMIN;
+    //this->nsc_ = GlobalV::NSC;
+    //this->nsc_min_ = GlobalV::NSCMIN;
     //this->restrict_current = GlobalV::SCCUT;
 //}
 
 void SpinConstrain::run_lambda_loop(int outer_step)
 {
     std::cout << "outer_step = " << outer_step << std::endl;
+    std::cout << "sc_thr " << this->sc_thr_ << std::endl;
+    std::cout << "nsc " << this->nsc_ << std::endl;
+    std::cout << "nsc_min " << this->nsc_min_ << std::endl;
 //    // init controlling parameters
 //    int nat = this->get_nat();
 //    int ntype = this->get_ntype();
@@ -71,9 +74,9 @@ void SpinConstrain::run_lambda_loop(int outer_step)
 //
 //    std::cout << "===============================================================================" << std::endl;
 //    std::cout << "Inner optimization for lambda begins ..." << std::endl;
-//    std::cout << "Covergence criterion for the iteration: " << this->epsilon << std::endl;
+//    std::cout << "Covergence criterion for the iteration: " << this->sc_thr << std::endl;
 //    // lambda loop
-//    for (int i_step = 0; i_step < this->num_step; i_step++)
+//    for (int i_step = 0; i_step < this->nsc_; i_step++)
 //    {
 //        if (i_step == 0)
 //        {
@@ -149,7 +152,7 @@ void SpinConstrain::run_lambda_loop(int outer_step)
 //            }
 //            for (int it = 0; it < ntype; it++)
 //            {
-//                if (i_step >= num_min && bound_gradient[it] > 0 && max_gradient[it] < bound_gradient[it])
+//                if (i_step >= this->nsc_min_ && bound_gradient[it] > 0 && max_gradient[it] < bound_gradient[it])
 //                {
 //                    std::cout << "Reach limitation of current step ( maximum gradient < " 
 //                        << bound_gradient[it] << " in atom type " << it << " ), exit." << std::endl;
@@ -179,15 +182,15 @@ void SpinConstrain::run_lambda_loop(int outer_step)
 //        rms_error = std::sqrt(mean_error);
 //        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << "       RMS =" << rms_error << std::endl;
 //
-//        if (rms_error < this->epsilon || i_step == num_step - 1)
+//        if (rms_error < this->sc_thr || i_step == this->nsc_ - 1)
 //        {
-//            if (rms_error < this->epsilon)
+//            if (rms_error < this->sc_thr)
 //            {
-//                std::cout << "Meet convergence criterion ( < " << epsilon << " ), exit." << std::endl;
+//                std::cout << "Meet convergence criterion ( < " << sc_thr << " ), exit." << std::endl;
 //            }
-//            else if (i_step == num_step - 1)
+//            else if (i_step == this->nsc_ - 1)
 //            {
-//                std::cout << "Reach maximum number of steps ( " << num_step << " ), exit." << std::endl;
+//                std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
 //            }
 //            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, out_lambda);
 //            goto CG_STOP;
