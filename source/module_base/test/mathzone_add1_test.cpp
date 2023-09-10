@@ -114,29 +114,15 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary1)
     // std::cout<<dpsi[0] << " " << dpsi[nr_out-1] << std::endl; // for checking
 }
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
-double count_err(double* x, int func, int n, int derivative)
+
+double count_err(double* x, std::function<double(double)> func, int n, int derivative)
 {
     double maxf4x = -10000000000;
     double maxh = 0;
 
     for (int i = 0; i != n; ++i)
     {
-        if (func == 0)
-        {
-            maxf4x = MAX(abs(sin(x[i])), maxf4x);
-        }
-        else if (func == 1)
-        {
-            maxf4x = 1;
-        }
-        else if (func == 2)
-        {
-            maxf4x = MAX(abs(exp(x[i])), maxf4x);
-        }
-        else if (func == 3)
-        {
-            maxf4x = MAX(abs(-6 * pow(x[i], -4)), maxf4x);
-        }
+        maxf4x = MAX(abs(func(x[i])), maxf4x);
     }
     // printf("maxf4x = %.8lf\n", maxf4x);
     for (int i = 1; i != n; ++i)
@@ -146,7 +132,8 @@ double count_err(double* x, int func, int n, int derivative)
 
     // if(func==2) printf("maxh = %.8lf,maxf4x = %.8lf\n", maxh,maxf4x);
     double err = (5.0 / 384.0) * maxf4x * pow(maxh, 4 - derivative);
-    return err;
+    return MAX(err, 1e-15);
+    ;
 }
 
 /// first kind boundary condition: f'(0) = f'(n) = 0.0
@@ -157,7 +144,8 @@ TEST_F(MathzoneAdd1Test, sinx_Boundary1)
         r_in[i] = i * 0.1 * PI + 0.5 * PI;
         psi_in[i] = sin(r_in[i]);
     }
-    double err = count_err(r_in, 0, 11, 0);
+    auto f = [](double x) -> double { return sin(x); };
+    double err = count_err(r_in, f, 11, 0);
     for (int i = 0; i < 100; i++)
     {
         r_out[i] = i * 0.01 * PI + 0.5 * PI;
@@ -179,7 +167,8 @@ TEST_F(MathzoneAdd1Test, sinx_Boundary2)
         r_in[i] = i * 0.1 * PI;
         psi_in[i] = sin(r_in[i]);
     }
-    double err = count_err(r_in, 0, 11, 0);
+    auto f = [](double x) -> double { return sin(x); };
+    double err = count_err(r_in, f, 11, 0);
     for (int i = 0; i < 100; i++)
     {
         r_out[i] = i * 0.01 * PI;
@@ -200,7 +189,8 @@ TEST_F(MathzoneAdd1Test, expx)
         r_in[i] = i;
         psi_in[i] = exp(r_in[i]);
     }
-    double err = count_err(r_in, 2, 11, 0);
+    auto f = [](double x) -> double { return exp(x); };
+    double err = count_err(r_in, f, 11, 0);
     for (int i = 0; i < 100; i++)
     {
         r_out[i] = i * 0.1;
