@@ -5,10 +5,6 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 list(APPEND depend_files 
 
 )
-AddTest(
-  TARGET surchem_atom_in
-  SOURCES atom_in_test.cpp
-)
 
 AddTest(
   TARGET surchem_cal_epsilon

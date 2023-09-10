@@ -2,12 +2,12 @@
 #include <gtest/gtest.h>
 
 #include <ATen/core/tensor.h>
-#include <ATen/core/allocator.h>
-#include <ATen/core/cpu_allocator.h>
+#include <base/core/allocator.h>
+#include <base/core/cpu_allocator.h>
 
 
 TEST(CPUAllocator, AllocateAndFree) {
-  container::CPUAllocator alloc;
+  container::base::CPUAllocator alloc;
   // Allocate memory of size 100.
   void* ptr = alloc.allocate(100);
   EXPECT_NE(nullptr, ptr);
@@ -24,7 +24,7 @@ TEST(CPUAllocator, AllocateAndFree) {
 }
 
 TEST(CPUAllocator, AllocatedSize) {
-  container::CPUAllocator alloc;
+  container::base::CPUAllocator alloc;
   // Allocate memory of size 100 and check its size.
   void* ptr = alloc.allocate(100);
   EXPECT_NE(nullptr, ptr);
@@ -32,7 +32,7 @@ TEST(CPUAllocator, AllocatedSize) {
 }
 
 TEST(CPUAllocator, GetDeviceType) {
-  container::CPUAllocator alloc;
+  container::base::CPUAllocator alloc;
   EXPECT_EQ(container::DeviceType::CpuDevice,
             alloc.GetDeviceType());
 }

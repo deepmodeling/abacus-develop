@@ -47,7 +47,8 @@ case "${with_libtorch}" in
       [ -d libtorch ] && rm -rf libtorch
       [ -d ${pkg_install_dir} ] && rm -rf ${pkg_install_dir}
       unzip -q ${archive_file}
-      mv libtorch ${pkg_install_dir}
+      mkdir -p "${pkg_install_dir}"
+      mv libtorch/* "${pkg_install_dir}"
 
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename "${SCRIPT_NAME}")"
     fi

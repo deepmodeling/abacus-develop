@@ -168,7 +168,11 @@ void test_deepks::set_orbs(const double &lat0_in)
 			ucell.atoms,
 			GlobalV::ofs_running,
 			ORB);
-
+#ifdef USE_NEW_TWO_CENTER
+        OGT.two_center_bundle.reset(new TwoCenterBundle);
+        OGT.two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.infoNL.Beta,
+            GlobalV::deepks_setorb, &ucell.descriptor_file);
+#else
 		ooo.set_orb_tables(
 			GlobalV::ofs_running,
 			OGT,
@@ -181,6 +185,7 @@ void test_deepks::set_orbs(const double &lat0_in)
 			ucell.infoNL.Beta);
         GlobalV::ofs_running << "read and set from orbital_file : " << ORB.orbital_file[it] << std::endl;
         GlobalV::ofs_running << "ucell.ntype, ucell.lmax : " << ucell.ntype << " " << ucell.lmax << std::endl;
+#endif
 	}
 	return;
 }

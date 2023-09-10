@@ -15,3 +15,4 @@ Interfaces to Other Softwares
    ase
    pyatb
    ShengBTE
+   candela

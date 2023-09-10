@@ -162,6 +162,9 @@ class SphericalBesselTransformer
      *                                                                                      */
     void set_fftw_plan_flag(const unsigned new_flag /*!< [in] FFTW planner flag */);
 
+    /// clear cached FFTW plan
+    void fft_clear();
+
   private:
     //! core function for performing the transform with FFT
     void _radrfft_base(const int l,

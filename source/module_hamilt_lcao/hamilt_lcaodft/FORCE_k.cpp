@@ -802,6 +802,22 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                     continue;
                 const int iw1_0 = iw1 / GlobalV::NPOL;
                 std::vector<std::vector<double>> nlm;
+
+#ifdef USE_NEW_TWO_CENTER
+                //=================================================================
+                //          new two-center integral (temporary)
+                //=================================================================
+                int L1 = atom1->iw2l[ iw1_0 ];
+                int N1 = atom1->iw2n[ iw1_0 ];
+                int m1 = atom1->iw2m[ iw1_0 ];
+
+                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+
+                ModuleBase::Vector3<double> dtau = tau - tau1;
+                GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
+                        T1, L1, N1, M1, it, dtau * GlobalC::ucell.lat0, true, nlm);
+#else
                 GlobalC::UOT.snap_psibeta_half(GlobalC::ORB,
                                                GlobalC::ucell.infoNL,
                                                nlm,
@@ -813,6 +829,10 @@ void Force_LCAO_k::cal_fvnl_dbeta_k_new(double** dm2d,
                                                tau,
                                                it,
                                                1); // R0,T0
+#endif
+                //=================================================================
+                //          end of new two-center integral (temporary)
+                //=================================================================
 
                 nlm_cur.insert({iw1_all, nlm});
             } // end iw

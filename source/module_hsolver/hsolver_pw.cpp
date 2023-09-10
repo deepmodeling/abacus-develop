@@ -1,6 +1,7 @@
 #include "hsolver_pw.h"
 
 #include "diago_cg.h"
+#include "diago_bpcg.h"
 #include "diago_david.h"
 #include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
@@ -32,7 +33,7 @@ void HSolverPW::update()
     return;
 }*/
 template<typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::initDiagh()
+void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, Device>& psi_in)
 {
     if (this->method == "cg")
     {
@@ -69,6 +70,21 @@ void HSolverPW<FPTYPE, Device>::initDiagh()
             this->pdiagh->method = this->method;
         }
     }
+    else if (this->method == "bpcg") {
+        if(this->pdiagh!=nullptr) {
+            if(this->pdiagh->method != this->method) {
+                delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+                this->pdiagh->method = this->method;
+                reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+            }
+        }
+        else {
+            this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh->method = this->method;
+            reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+        }
+    }
     else
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
@@ -89,7 +105,7 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
 
     // select the method of diagonalization
     this->method = method_in;
-    this->initDiagh();
+    this->initDiagh(psi);
     std::vector<FPTYPE> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -140,6 +156,11 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     if(this->method == "dav")
     {
         delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
+    }
+    if(this->method == "all-band cg")
+    {
+        delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
 

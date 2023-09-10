@@ -1,10 +1,10 @@
-#ifdef __CUDA || __ROCM
+#if defined(__CUDA) || defined(__ROCM)
 
 #include <cuda_runtime.h> // for CUDA APIs
-#include <ATen/core/gpu_allocator.h>
+#include <base/core/gpu_allocator.h>
 
 namespace container {
-
+namespace base {
 // Allocate a block of memory with the given size and default alignment on GPU.
 void* GPUAllocator::allocate(size_t size) {
     void* ptr;
@@ -38,6 +38,7 @@ DeviceType GPUAllocator::GetDeviceType() {
     return DeviceType::GpuDevice;
 }
 
+} // namespace base
 } // namespace container
 
 #endif // __CUDA || __ROCM

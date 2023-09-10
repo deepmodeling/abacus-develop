@@ -1,10 +1,11 @@
-#ifndef ATEN_CORE_ALLOCATOR_H_
-#define ATEN_CORE_ALLOCATOR_H_
+#ifndef BASE_CORE_ALLOCATOR_H_
+#define BASE_CORE_ALLOCATOR_H_
 
 #include <ATen/core/tensor_types.h>
 
 namespace container {
 
+namespace base {
 /**
  * @brief An abstract base class for memory allocators.
  *
@@ -66,6 +67,7 @@ class Allocator {
     size_t allocated_size_ = 0;
 };
 
-} // namespace ABACUS
+} // namespace base
+} // namespace container
 
-#endif // ATEN_CORE_ALLOCATOR_H_
+#endif // BASE_CORE_ALLOCATOR_H_

@@ -46,7 +46,8 @@ case "$with_cereal" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d cereal-${cereal_ver} ] && rm -rf cereal-${cereal_ver}
         tar -xzf $filename
-        cp -r cereal-${cereal_ver}/ "${pkg_install_dir}/"
+        mkdir -p "${pkg_install_dir}"
+        cp -r cereal-${cereal_ver}/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
     fi
         ;;
