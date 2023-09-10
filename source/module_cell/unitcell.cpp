@@ -1583,17 +1583,44 @@ void UnitCell::cal_nelec(double& nelec)
 
 void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
-    std::string atom_labels_in_stru = "";
-    std::string atom_labels_temp = label1;
-    for (int ip = 0; ip < atom_labels_temp.length(); ip++)
-    {
-        if (!isdigit(atom_labels_temp[ip]))
+    atom_in ai;
+	if (!(label1 == label2 || label1 == ai.atom_Z[label2] || label1 == ai.atom_symbol[label2]||
+	    ai.atom_Z[label1] == label2 || ai.atom_Z[label1] ==  ai.atom_Z[label2] || ai.atom_Z[label1] ==ai.atom_symbol[label2]||
+	    ai.atom_symbol[label1] == label2 || ai.atom_symbol[label1] == ai.atom_Z[label2] || ai.atom_symbol[label1] ====ai.atom_symbol[label2])
+	{		
+		std::string stru_label = "";
+        std::string psuedo_label = "";
+        for (int ip = 0; ip < label1.length(); ip++)
         {
-            atom_labels_in_stru += atom_labels_temp[ip];
+            if (!(isdigit(label1[ip]) || label1[ip]=='_'))
+            {
+                stru_label += label1[ip];
+            }
+			else
+			{
+				break;
+			}
         }
-    }
-    if (atom_labels_in_stru != label2)
-    {
-        ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", "atom label in STRU is " + label1 + " mismatch with pseudo file of " +label2);
-    }
+		stru_label[0] = toupper(stru_label[0]);
+
+		for (int ip = 0; ip < label2.length(); ip++)
+        {
+            if (!isdigit(label2[ip]) | !label2[ip]=='_')
+            {
+                psuedo_label += label2[ip];
+			}
+			else
+			{
+				break;
+			}
+        }
+		psuedo_label[0] = toupper(psuedo_label[0]);
+
+        if (!(stru_label == psuedo_label || stru_label == ai.atom_Z[psuedo_label] || stru_label == ai.atom_symbol[psuedo_label]||
+	    ai.atom_Z[stru_label] == psuedo_label || ai.atom_Z[stru_label] ==  ai.atom_Z[psuedo_label] || ai.atom_Z[stru_label] ==ai.atom_symbol[psuedo_label]||
+	    ai.atom_symbol[stru_label] == psuedo_label || ai.atom_symbol[stru_label] == ai.atom_Z[psuedo_label] || ai.atom_symbol[stru_label] ====ai.atom_symbol[psuedo_label]))
+        {
+            ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", "atom label in STRU is " + label1 + " mismatch with pseudo file of " +label2);
+        }
+	}
 }

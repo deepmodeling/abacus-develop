@@ -280,15 +280,18 @@ TEST_F(UcellDeathTest,SetupWarningQuit2)
 
 TEST_F(UcellDeathTest, CompareAatomLabel)
 {
-    std::string atom_labels_in_stru = "Fe1";
-    std::string atom_labels_in_pseudo = "Fe";
-	ucell->compare_atom_labels(atom_labels_in_stru, atom_labels_in_pseudo);
-	atom_labels_in_stru = "Fe";
-	atom_labels_in_pseudo = "O";
+    std::string stru_label[] =   {"Fe" "Fe"  "Ag"     "Al" "Al"        "Si"   "14" "N_empty"};
+    std::string pseudo_label[] = {"Fe" "Fe1" "Silver" "al" "al_locpsp" "14"   "Si" "N"      };
+	for (it = 0; it < 7; it++)
+	{
+	ucell->compare_atom_labels(stru_label[it], pseudo_label[it]);
+	}
+	stru_label[0] = "Fe";
+	pseudo_label[0] = "O";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->compare_atom_labels(atom_labels_in_stru, atom_labels_in_pseudo),::testing::ExitedWithCode(0),"");
+    EXPECT_EXIT(ucell->compare_atom_labels(stru_label[0], pseudo_label[0]),::testing::ExitedWithCode(0),"");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("atom label in STRU is " + atom_labels_in_stru + " mismatch with pseudo file of " +atom_labels_in_pseudo));
+    EXPECT_THAT(output, testing::HasSubstr("atom label in STRU is " + stru_label + " mismatch with pseudo file of " +pseudo_label));
 }
 
 TEST_F(UcellTest,RemakeCell)
