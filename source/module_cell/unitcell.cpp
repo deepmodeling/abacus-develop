@@ -16,6 +16,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/element_covalent_radius.h"
+#include "module_base/atom_in.h"
 
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -678,6 +679,7 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
     	    Atom* atom = &atoms[it];
     	    compare_atom_labels(atom->label, atom->ncpp.psd);
     	}
+
 		if(GlobalV::out_element_info)
 		{ 
 	        for(int i=0;i<this->ntype;i++)
@@ -1592,44 +1594,52 @@ void UnitCell::cal_nelec(double& nelec)
 
 void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
-    atom_in ai;
-	if (!(label1 == label2 || label1 == ai.atom_Z[label2] || label1 == ai.atom_symbol[label2]||
-	    ai.atom_Z[label1] == label2 || ai.atom_Z[label1] ==  ai.atom_Z[label2] || ai.atom_Z[label1] ==ai.atom_symbol[label2]||
-	    ai.atom_symbol[label1] == label2 || ai.atom_symbol[label1] == ai.atom_Z[label2] || ai.atom_symbol[label1] ====ai.atom_symbol[label2])
-	{		
-		std::string stru_label = "";
-        std::string psuedo_label = "";
-        for (int ip = 0; ip < label1.length(); ip++)
-        {
-            if (!(isdigit(label1[ip]) || label1[ip]=='_'))
+    if (label1 != label2)
+    {	atom_in ai;
+        if (!(label1 == std::to_string(ai.atom_Z[label2]) ||
+		      label1 == std::to_string(ai.symbol_Z[label2]) ||
+			  label1 == ai.symbol_atom[label2] ||
+			  label1 == ai.Z_atom[std::stoi(label2)] ||
+			  label1 == ai.atom_symbol[label2] ||
+			  label1 == ai.Z_symbol[std::stoi(label2)]))
+	    {		
+	    	std::string stru_label = "";
+            std::string psuedo_label = "";
+            for (int ip = 0; ip < label1.length(); ip++)
             {
-                stru_label += label1[ip];
+                if (!(isdigit(label1[ip]) || label1[ip]=='_'))
+                {
+                    stru_label += label1[ip];
+                }
+	    		else
+	    		{
+	    			break;
+	    		}
             }
-			else
-			{
-				break;
-			}
-        }
-		stru_label[0] = toupper(stru_label[0]);
-
-		for (int ip = 0; ip < label2.length(); ip++)
-        {
-            if (!isdigit(label2[ip]) | !label2[ip]=='_')
+	    	stru_label[0] = toupper(stru_label[0]);
+    
+	    	for (int ip = 0; ip < label2.length(); ip++)
             {
-                psuedo_label += label2[ip];
-			}
-			else
-			{
-				break;
-			}
-        }
-		psuedo_label[0] = toupper(psuedo_label[0]);
-
-        if (!(stru_label == psuedo_label || stru_label == ai.atom_Z[psuedo_label] || stru_label == ai.atom_symbol[psuedo_label]||
-	    ai.atom_Z[stru_label] == psuedo_label || ai.atom_Z[stru_label] ==  ai.atom_Z[psuedo_label] || ai.atom_Z[stru_label] ==ai.atom_symbol[psuedo_label]||
-	    ai.atom_symbol[stru_label] == psuedo_label || ai.atom_symbol[stru_label] == ai.atom_Z[psuedo_label] || ai.atom_symbol[stru_label] ====ai.atom_symbol[psuedo_label]))
-        {
-            ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", "atom label in STRU is " + label1 + " mismatch with pseudo file of " +label2);
-        }
+                if (!isdigit(label2[ip]) || !label2[ip]=='_')
+                {
+                    psuedo_label += label2[ip];
+	    		}
+	    		else
+	    		{
+	    			break;
+	    		}
+            }
+	    	psuedo_label[0] = toupper(psuedo_label[0]);
+    
+            if (!(stru_label == std::to_string(ai.atom_Z[psuedo_label]) ||
+		          stru_label == std::to_string(ai.symbol_Z[psuedo_label]) ||
+			      stru_label == ai.symbol_atom[psuedo_label] ||
+			      stru_label == ai.Z_atom[std::stoi(psuedo_label)] ||
+			      stru_label == ai.atom_symbol[psuedo_label] ||
+			      stru_label == ai.Z_symbol[std::stoi(psuedo_label)]))
+            {
+                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", "atom label in STRU is " + label1 + " mismatch with pseudo file of " +label2);
+            }
+	    }
 	}
 }

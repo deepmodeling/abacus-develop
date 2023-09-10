@@ -280,9 +280,9 @@ TEST_F(UcellDeathTest,SetupWarningQuit2)
 
 TEST_F(UcellDeathTest, CompareAatomLabel)
 {
-    std::string stru_label[] =   {"Fe" "Fe"  "Ag"     "Al" "Al"        "Si"   "14" "N_empty"};
-    std::string pseudo_label[] = {"Fe" "Fe1" "Silver" "al" "al_locpsp" "14"   "Si" "N"      };
-	for (it = 0; it < 7; it++)
+    std::string stru_label[] =   {"Ag"  "Ag"  "Ag"     "47" "47" "47"     "Silver" "Silver" "Silver" "Ag"  "Ag" "Ag"         "Ag_empty"};
+    std::string pseudo_label[] = {"Ag"  "47"  "Silver" "Ag" "47" "Silver" "Ag"     "47"     "Silver" "Ag1" "ag" "ag_locpsp"  "Ag"      };
+	for (it = 0; it < 12; it++)
 	{
 	ucell->compare_atom_labels(stru_label[it], pseudo_label[it]);
 	}
