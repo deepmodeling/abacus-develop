@@ -700,6 +700,9 @@ void Input_Conv::Convert(void)
     // NCSCD related parameters
     //-----------------------------------------------
     GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
+    GlobalV::sc_thr = INPUT.sc_thr;
+    GlobalV::nsc = INPUT.nsc;
+    GlobalV::nsc_min = INPUT.nsc_min;
     GlobalV::sc_file = INPUT.sc_file;
 
     ModuleBase::timer::tick("Input_Conv", "Convert");

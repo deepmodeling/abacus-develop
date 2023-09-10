@@ -358,6 +358,9 @@ TEST_F(InputTest, Default)
     EXPECT_TRUE(INPUT.mdp.dump_vel);
     EXPECT_TRUE(INPUT.mdp.dump_virial);
     EXPECT_EQ(INPUT.sc_mag_switch,0);
+    EXPECT_DOUBLE_EQ(INPUT.sc_thr,1e-6);
+    EXPECT_EQ(INPUT.nsc, 100);
+    EXPECT_EQ(INPUT.nsc_min, 2);
 	EXPECT_EQ(INPUT.sc_file,"none");
 }
 
@@ -702,6 +705,9 @@ TEST_F(InputTest, Read)
     EXPECT_FALSE(INPUT.mdp.dump_vel);
     EXPECT_FALSE(INPUT.mdp.dump_virial);
     EXPECT_EQ(INPUT.sc_mag_switch, 0);
+	EXPECT_DOUBLE_EQ(INPUT.sc_thr,1e-4);
+	EXPECT_EQ(INPUT.nsc, 50);
+	EXPECT_EQ(INPUT.nsc_min, 4);
     EXPECT_EQ(INPUT.sc_file,"sc.json");
 }
 
@@ -1487,8 +1493,29 @@ TEST_F(InputTest, Check)
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("calculation must be scf when sc_mag_switch > 0"));
-	// restore to default values
 	INPUT.calculation = "scf";
+	// warning 5 of NCSCD
+	INPUT.sc_thr = -1;
+		testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("sc_thr must > 0"));
+	INPUT.sc_thr = 1e-6;
+	// warning 6 of NCSCD
+	INPUT.nsc = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nsc must > 0"));
+	INPUT.nsc = 100;
+	// warning 7 of NCSCD
+	INPUT.nsc_min = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nsc_min must > 0"));
+	INPUT.nsc_min = 2;
+	// restore to default values
 	INPUT.nspin = 1;
 	INPUT.sc_file = "none";
 	INPUT.sc_mag_switch = 0;

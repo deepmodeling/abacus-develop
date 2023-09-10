@@ -587,6 +587,9 @@ void Input::Default(void)
     // variables for NCSCD
     //==========================================================
     sc_mag_switch = 0;
+    sc_thr = 1e-6;
+    nsc = 100;
+    nsc_min = 2;
     sc_file = "none";
     return;
 }
@@ -2111,6 +2114,15 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("sc_mag_switch", word) == 0){
             read_value(ifs, sc_mag_switch);
         }
+        else if (strcmp("sc_thr", word) == 0){
+            read_value(ifs, sc_thr);
+        }
+        else if (strcmp("nsc", word) == 0){
+            read_value(ifs, nsc);
+        }
+        else if (strcmp("nsc_min", word) == 0){
+            read_value(ifs, nsc_min);
+        }
         else if (strcmp("sc_file", word) == 0){
             read_value(ifs, sc_file);
         }
@@ -3230,6 +3242,9 @@ void Input::Bcast()
      *  NCSCD variables
     */
     Parallel_Common::bcast_int(sc_mag_switch);
+    Parallel_Common::bcast_double(sc_thr);
+    Parallel_Common::bcast_int(nsc);
+    Parallel_Common::bcast_int(nsc_min);
     Parallel_Common::bcast_string(sc_file);
 
     return;
@@ -3703,6 +3718,18 @@ void Input::Check(void)
         if (calculation != "scf")
         {
             ModuleBase::WARNING_QUIT("INPUT", "calculation must be scf when sc_mag_switch > 0");
+        }
+        if (sc_thr <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_thr must > 0");
+        }
+        if (nsc <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nsc must > 0");
+        }
+        if (nsc_min <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nsc_min must > 0");
         }
     }
 

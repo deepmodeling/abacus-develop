@@ -261,5 +261,8 @@ int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 // NCSCD related
 //==========================================================
 int sc_mag_switch = 0;
+double sc_thr = 1.0e-6;
+int nsc = 100;
+int nsc_min = 2;
 std::string sc_file = "none";
 } // namespace GlobalV

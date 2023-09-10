@@ -289,6 +289,9 @@ extern int out_interval;
 
 // NCSCD related
 extern int sc_mag_switch; // 0: no NCSCD; 1: set sc_mag; 2 set sc_spin_val and angles
+extern double sc_thr;
+extern int nsc;
+extern int nsc_min;
 extern std::string sc_file;
 } // namespace GlobalV
 #endif

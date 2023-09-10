@@ -556,6 +556,9 @@ class Input
      * 2: constrain atomic spin via spin value and angles
     */
     int sc_mag_switch;
+    double sc_thr; // threshold for spin-constrained DFT
+    int nsc; // maximum number of inner lambda loop
+    int nsc_min; // minimum number of inner lambda loop
     std::string sc_file; // file name for NCSCD (json format)
 
   private:
