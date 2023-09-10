@@ -133,6 +133,16 @@ private:
     int nspin_ = 0;
     std::vector<ModuleBase::Vector3<double>> Mi_;
     double escon_ = 0.0;
+    /**
+     * parameters for lambda-loop
+    */
+    int num_step; // which is NSC from INPUT
+    int num_min; // which is NSCMIN from INPUT
+    std::vector<ModuleBase::Vector3<int>> constrain; // which is CONSTRL from INPUT
+    std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
+    std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
+    double epsilon; // which is SCDIFF from INPUT
+    bool debug = false; // which is LDESC in the original code
 };
 
 
