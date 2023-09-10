@@ -750,6 +750,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         SpinConstrain& sc = SpinConstrain::getInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+        sc.run_lambda_loop(iter);
     }
 
     // (11) calculate the total energy.
