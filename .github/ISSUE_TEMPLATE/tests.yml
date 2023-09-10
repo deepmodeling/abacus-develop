@@ -20,6 +20,20 @@ body:
     description: |
       Add any other context or screenshots about the testing issue here.
 
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers
+    options:
+      - label: Understand the testing issue described by the developer.
+      - label: Review the specific test case, expected and actual results, and any error messages.
+      - label: Identify the root cause of the test failure or issue.
+      - label: If a possible solution is suggested, evaluate its feasibility and effectiveness.
+      - label: Implement a fix for the test failure or issue, or create a new test case if needed.
+      - label: Verify that the fix resolves the testing issue and the test case passes.
+      - label: Review and update any relevant documentation, such as test plans or user guides.
+      - label: Ensure the testing issue is resolved and close the ticket.
+      - label: Share any lessons learned or best practices with the team to prevent similar issues in the future.
+
 - type: markdown
   attributes:
     value: >

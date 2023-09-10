@@ -53,7 +53,7 @@ AddTest(
     ../elecstate.cpp
     ../occupy.cpp
     ../../module_psi/psi.cpp
-    ../../module_psi/kernels/memory_op.cpp
+    ../../module_psi/kernels/psi_memory_op.cpp
 )
 
 AddTest(
