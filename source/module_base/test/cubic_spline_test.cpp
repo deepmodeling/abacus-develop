@@ -801,7 +801,7 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_uniform)
         x_[i] = ((double)i / 10.0);
         y_[i] = exp(-x_[i]);
     }
-    auto f = [](double x) -> double { return exp(-x[i]); };
+    auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -844,7 +844,7 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_Notuniform)
         x_[9 - i] = exp(-i);
         y_[9 - i] = exp(-(x_[9 - i]));
     }
-    auto f = [](double x) -> double { return exp(-x[i]); };
+    auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -886,7 +886,7 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_uniform)
         x_[i] = ((double)i / 10.0);
         y_[i] = exp(-x_[i]);
     }
-    auto f = [](double x) -> double { return exp(-x[i]); };
+    auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -928,7 +928,7 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
         x_[9 - i] = exp(-i);
         y_[9 - i] = exp(-(x_[9 - i]));
     }
-    auto f = [](double x) -> double { return exp(-x[i]); };
+    auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -1008,7 +1008,7 @@ TEST_F(CubicSplineTest, NotAKnot_expx_Notuniform)
         x_[9 - i] = exp(-i);
         y_[9 - i] = exp(-(x_[9 - i]));
     }
-    auto f = [](double x) -> double { return exp(-x[i]); };
+    auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n, 0);
 
     cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
@@ -1044,7 +1044,7 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_uniform)
         x_[i] = ((double)i / 2.0);
         y_[i] = log(x_[i]);
     }
-    auto f = [](double x) -> double { return -6 * pow(x[i], -4); };
+    auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -1085,7 +1085,7 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_Notuniform)
         x_[9 - i] = exp(-i) * 5;
         y_[9 - i] = log(x_[9 - i]);
     }
-    auto f = [](double x) -> double { return -6 * pow(x[i], -4); };
+    auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -1126,7 +1126,7 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_uniform)
         x_[i] = ((double)i / 2.0);
         y_[i] = log(x_[i]);
     }
-    auto f = [](double x) -> double { return -6 * pow(x[i], -4); };
+    auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -1166,7 +1166,7 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_Notuniform)
         x_[9 - i] = exp(-i) * 5;
         y_[9 - i] = log(x_[9 - i]);
     }
-    auto f = [](double x) -> double { return -6 * pow(x[i], -4); };
+    auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n, 0);
     cubspl.build(n,
                  x_,
@@ -1206,7 +1206,7 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_uniform)
         x_[i] = ((double)i / 2.0);
         y_[i] = log(x_[i]);
     }
-    auto f = [](double x) -> double { return -6 * pow(x[i], -4); };
+    auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n, 0);
 
     cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
@@ -1242,7 +1242,7 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_Notuniform)
         x_[9 - i] = exp(-i) * 5;
         y_[9 - i] = log(x_[9 - i]);
     }
-    auto f = [](double x) -> double { return -6 * pow(x[i], -4); };
+    auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n, 0);
 
     cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
