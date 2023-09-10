@@ -56,6 +56,8 @@ public:
         return result;
     }
 
+    void run_lambda_loop(int outer_step);
+
 public:
     /**
      * pubic methods for setting and getting spin-constrained DFT parameters
