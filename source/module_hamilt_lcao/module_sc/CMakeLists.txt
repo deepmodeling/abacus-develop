@@ -6,6 +6,7 @@ if(ENABLE_LCAO)
       init_sc.cpp
       cal_mw.cpp
       basic_funcs.cpp
+      lambda_loop.cpp
   )
 
   add_library(
