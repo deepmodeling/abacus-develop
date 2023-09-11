@@ -75,8 +75,8 @@ TEST_F(Test_Paw_Cell, test_paw)
     eigts3_in = new std::complex<double> [nz];
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp, 
-        atom_type, (const double **) atom_coord, filename_list,
-        nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
+        atom_type, (const double **) atom_coord, filename_list);
+    paw_cell.set_eigts(nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
 
     int nproj_tot = paw_cell.get_nproj_tot();
     EXPECT_EQ(nproj_tot,44);// 18 + 2 * 8 + 2 * 5 = 44
@@ -249,8 +249,8 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     }
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp,
-        atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
-        eigts1_in, eigts2_in, eigts3_in);
+        atom_type, (const double **) atom_coord, filename_list);
+    paw_cell.set_eigts(nx,ny,nz,eigts1_in, eigts2_in, eigts3_in);
 
     for(int ia = 0; ia < nat; ia ++)
     {
@@ -320,6 +320,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
 
     std::ifstream ifs_psi("psi.dat");
 
+    paw_cell.reset_rhoij();
     for(int iband = 0; iband < nband; iband ++)
     {
         for(int ipw = 0; ipw < npw; ipw ++)
@@ -365,7 +366,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         EXPECT_EQ(nrhoijsel[iat],36);
         for(int i = 0; i < 36; i ++)
         {
-            EXPECT_EQ(rhoijselect[iat][i],i);
+            EXPECT_EQ(rhoijselect[iat][i],i+1);
             EXPECT_NEAR(rhoijp[iat][i],rhoij[iat][i],1e-8);
         }
     }

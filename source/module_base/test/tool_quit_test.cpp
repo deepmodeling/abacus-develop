@@ -59,7 +59,7 @@ TEST_F(ToolQuitTest,quit)
 	EXPECT_EXIT(ModuleBase::QUIT(), ::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screen
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 }
 
 TEST_F(ToolQuitTest,quit_with_ret)
@@ -68,7 +68,7 @@ TEST_F(ToolQuitTest,quit_with_ret)
 	EXPECT_EXIT(ModuleBase::QUIT(1), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screen
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 }
 
 // use EXPECT_EXIT to test exit codes
@@ -79,7 +79,7 @@ TEST_F(ToolQuitTest,warningquit)
 			::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 	GlobalV::ofs_warning.close();
 	GlobalV::ofs_running.close();
 	ifs.open("warning.log");
@@ -102,7 +102,7 @@ TEST_F(ToolQuitTest,warningquit_with_ret)
 			::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	// test output on screening
-	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)-----"));
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 	GlobalV::ofs_warning.close();
 	GlobalV::ofs_running.close();
 	ifs.open("warning.log");

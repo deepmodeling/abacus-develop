@@ -78,13 +78,16 @@ void formatter::Table::centerize_title() {
 }
 
 void formatter::Table::reset() {
-    this->overall_title = "";
-    this->ncol_ = 0;
+    this->mode_ = 0;
 
+    this->overall_title = "";
+    
+    this->ncol_ = 0;
     this->col_delimiter_ = ' ';
     this->frame_switches_ = {1, 1, 0, 0};
     this->frame_delimiters_ = {'-', '-', '|', '|'};
-
+    this->frame_mid_switch_ = 1;
+    this->frame_mid_delimiter_ = '-';
     this->flexible_width_ = true;
     this->col_max_width_ = 0;
     this->total_width_ = 0;

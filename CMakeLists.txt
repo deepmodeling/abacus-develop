@@ -612,6 +612,12 @@ target_link_libraries(${ABACUS_BIN_NAME}
     container
 )
 
+if(ENABLE_PAW)
+  target_link_libraries(${ABACUS_BIN_NAME}
+  paw
+  )
+endif()
+
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
       hamilt_lcao
