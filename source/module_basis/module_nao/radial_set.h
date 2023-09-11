@@ -7,6 +7,7 @@
 
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/numerical_radial.h"
+#include "module_basis/module_ao/ORB_nonlocal.h"
 
 //! An abstract class representing a related set of numerical radial functions.
 /*!
@@ -28,13 +29,25 @@ class RadialSet
 
     virtual ~RadialSet();
 
-    //! build the set of numerical radial functions from a file
-    virtual void build(const std::string& file,                //!< orbital or pseudopotential file
-                       const int itype = 0,                    //!< the element index in calculation
-                       std::ofstream* const ptr_log = nullptr, //!< output file stream for logging
-                       const int rank = 0                      //!< MPI rank
-                       )
-        = 0;
+    /*! @brief Build the object from a file.
+     *
+     * Currently only AtomicRadials objects are supposed to used this
+     * interface.
+     *                                                                      */
+    virtual void build(const std::string&,             ///< file name
+                       const int = 0,                  ///< the element index in calculation
+                       std::ofstream* const = nullptr, ///< output file stream for logging
+                       const int = 0                   ///< MPI rank
+                       ) {}
+
+    /*! @brief Build from a Numerical_Nonlocal object.
+     *
+     * This function is supposed to be used by BetaRadials ONLY.
+     *                                                                      */
+    virtual void build(const Numerical_Nonlocal&,     ///< Numerical_Nonlocal object
+                       const int = 0,                 ///< the element index in calculation
+                       std::ofstream* const = nullptr ///< output file stream for logging
+                       ) {}
 
     /*! @name Getters
      *

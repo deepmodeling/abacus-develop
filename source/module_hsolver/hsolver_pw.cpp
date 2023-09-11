@@ -1,6 +1,7 @@
 #include "hsolver_pw.h"
 
 #include "diago_cg.h"
+#include "diago_bpcg.h"
 #include "diago_david.h"
 #include "diago_iter_assist.h"
 #include "module_base/tool_quit.h"
@@ -9,7 +10,10 @@
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include <algorithm>
-
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#endif
 namespace hsolver {
 
 template <typename FPTYPE, typename Device>
@@ -32,7 +36,7 @@ void HSolverPW::update()
     return;
 }*/
 template<typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::initDiagh()
+void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, Device>& psi_in)
 {
     if (this->method == "cg")
     {
@@ -69,6 +73,21 @@ void HSolverPW<FPTYPE, Device>::initDiagh()
             this->pdiagh->method = this->method;
         }
     }
+    else if (this->method == "bpcg") {
+        if(this->pdiagh!=nullptr) {
+            if(this->pdiagh->method != this->method) {
+                delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+                this->pdiagh->method = this->method;
+                reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+            }
+        }
+        else {
+            this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh->method = this->method;
+            reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+        }
+    }
     else
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
@@ -89,13 +108,56 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
 
     // select the method of diagonalization
     this->method = method_in;
-    this->initDiagh();
+    this->initDiagh(psi);
     std::vector<FPTYPE> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
+
+#ifdef USE_PAW
+	    if(GlobalV::use_paw)
+        {
+            const int npw = this->wfc_basis->npwk[ik];
+            ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+            for (int ig = 0;ig < npw; ig++)
+            {
+                _gk[ig] = this->wfc_basis->getgpluskcar(ik,ig);
+            }
+
+            double* kpt;
+            kpt = new double[3];
+            kpt[0] = this->wfc_basis->kvec_c[ik].x;
+            kpt[1] = this->wfc_basis->kvec_c[ik].y;
+            kpt[2] = this->wfc_basis->kvec_c[ik].z;
+
+            double ** kpg;
+            kpg = new double*[npw];
+            for(int ipw=0;ipw<npw;ipw++)
+            {
+                kpg[ipw] = new double[3];
+                kpg[ipw][0] = _gk[ipw].x;
+                kpg[ipw][1] = _gk[ipw].y;
+                kpg[ipw][2] = _gk[ipw].z;
+            }
+
+            GlobalC::paw_cell.set_paw_k(npw,kpt,
+                this->wfc_basis->get_ig2ix(ik).data(),
+                this->wfc_basis->get_ig2iy(ik).data(),
+                this->wfc_basis->get_ig2iz(ik).data(),
+                (const double **) kpg,GlobalC::ucell.tpiba);
+
+            delete[] kpt;
+            for(int ipw = 0; ipw < npw; ipw++)
+            {
+                delete[] kpg[ipw];
+            }
+            delete[] kpg;
+
+            GlobalC::paw_cell.get_vkb();
+        }
+#endif
 
         this->updatePsiK(pHamilt, psi, ik);
 
@@ -123,6 +185,43 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
     }
     reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(pes)->psiToRho(psi);
 
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        if(typeid(FPTYPE) != typeid(double))
+        {
+            ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
+        }
+
+        GlobalC::paw_cell.reset_rhoij();
+        for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+        {
+            psi.fix_k(ik);
+            int nbands = psi.get_nbands();
+            for(int ib = 0; ib < nbands; ib ++)
+            {
+                GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*> (psi.get_pointer(ib)), pes->wg(ik,ib));
+            }
+        }
+
+        std::vector<std::vector<double>> rhoijp;
+        std::vector<std::vector<int>> rhoijselect;
+        std::vector<int> nrhoijsel;
+
+        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        {
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+        }
+
+        double* nhatgr;
+        nhatgr = new double[3*GlobalC::paw_cell.get_nrxx()];
+        GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
+        delete[] nhatgr;
+    }
+#endif
+
     ModuleBase::timer::tick("HSolverPW", "solve");
     return;
 }
@@ -140,6 +239,11 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     if(this->method == "dav")
     {
         delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
+    }
+    if(this->method == "all-band cg")
+    {
+        delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
 

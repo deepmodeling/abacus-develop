@@ -13,11 +13,15 @@ HEADERS = *.h
 
 VPATH=./src_global:\
 ./module_basis/module_ao:\
+./module_basis/module_nao:\
 ./module_cell/module_neighbor:\
 ./module_cell/module_symmetry:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
+./module_base/module_container/base/core:\
+./module_base/module_container/ATen/core:\
+./module_base/module_container/ATen/kernels:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -87,6 +91,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_TENSOR}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -126,6 +131,12 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
+    formatter_fmt.o\
+    formatter_physfmt.o\
+    formatter_table.o\
+    formatter_contextfmt.o\
+	cubic_spline.o\
+	spherical_bessel_transformer.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -165,6 +176,7 @@ OBJS_ELECSTAT=elecstate.o\
     potential_new.o\
     potential_types.o\
     pot_local.o\
+    pot_local_paw.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
@@ -238,6 +250,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
+    diago_bpcg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
@@ -281,9 +294,18 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
+	  atomic_radials.o\
+	  beta_radials.o\
+	  numerical_radial.o\
+	  radial_collection.o\
+	  radial_set.o\
+	  real_gaunt_table.o\
+	  two_center_bundle.o\
+	  two_center_integrator.o\
+	  two_center_table.o\
 
 OBJS_PSI=psi.o\
-    memory_op.o\
+    psi_memory_op.o\
     device.o\
 
 OBJS_PW=fft.o\
@@ -504,3 +526,17 @@ OBJS_DFTU=dftu.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o
+
+OBJS_TENSOR=tensor.o\
+    tensor_buffer.o\
+    tensor_map.o\
+    tensor_shape.o\
+    tensor_types.o\
+    einsum_op.o\
+    blas_op.o\
+    lapack_op.o\
+    linalg_op.o\
+    memory_op_impl.o\
+    cpu_allocator.o\
+    gpu_allocator.o\
+    refcount.o
