@@ -38,22 +38,22 @@ Veff<OperatorPW<FPTYPE, Device>>::~Veff()
 
 template<typename FPTYPE, typename Device>
 void Veff<OperatorPW<FPTYPE, Device>>::act(
-    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi
-)const
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const std::complex<FPTYPE>* tmpsi_in,
+    std::complex<FPTYPE>* tmhpsi,
+    const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
 
-    this->max_npw = psi_in->get_nbasis() / psi_in->npol;
+    int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
-    this->npol = psi_in->npol;
     
     // std::complex<FPTYPE> *porter = new std::complex<FPTYPE>[wfcpw->nmaxgr];
-    for (int ib = 0; ib < n_npwx; ib += this->npol)
+    for (int ib = 0; ib < nbands; ib += npol)
     {
-        if (this->npol == 1)
+        if (npol == 1)
         {
             // wfcpw->recip2real(tmpsi_in, porter, this->ik);
             wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
@@ -77,7 +77,7 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
             // std::complex<FPTYPE> *porter1 = new std::complex<FPTYPE>[wfcpw->nmaxgr];
             // fft to real space and doing things.
             wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in + this->max_npw, this->porter1, this->ik);
+            wfcpw->recip_to_real(this->ctx, tmpsi_in + max_npw, this->porter1, this->ik);
             if(this->veff_col != 0)
             {
                 /// denghui added at 20221109
@@ -102,10 +102,10 @@ void Veff<OperatorPW<FPTYPE, Device>>::act(
             }
             // (3) fft back to G space.
             wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi + this->max_npw, this->ik, true);
+            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi + max_npw, this->ik, true);
         }
-        tmhpsi += this->max_npw * this->npol;
-        tmpsi_in += this->max_npw * this->npol;
+        tmhpsi += max_npw * npol;
+        tmpsi_in += max_npw * npol;
     }
     ModuleBase::timer::tick("Operator", "VeffPW");
 }
@@ -120,7 +120,6 @@ hamilt::Veff<OperatorPW<FPTYPE, Device>>::Veff(const Veff<OperatorPW<T_in, Devic
     this->veff_col = veff->get_veff_col();
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
-    this->npol = veff->get_npol();
     resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
     resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
     this->veff = veff->get_veff();

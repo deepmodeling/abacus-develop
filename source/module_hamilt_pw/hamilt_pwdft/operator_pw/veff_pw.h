@@ -33,18 +33,17 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     virtual ~Veff();
 
-    virtual void act (
-        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-        const int n_npwx, 
-        const std::complex<FPTYPE>* tmpsi_in, 
-        std::complex<FPTYPE>* tmhpsi
-    )const override;
+    virtual void act(const int nbands,
+        const int nbasis,
+        const int npol,
+        const std::complex<FPTYPE>* tmpsi_in,
+        std::complex<FPTYPE>* tmhpsi,
+        const int ngk_ik = 0)const override;
 
     // denghui added for copy constructor at 20221105
     const FPTYPE *get_veff() const {return this->veff;}
     int get_veff_col() const {return this->veff_col;}
-    int get_veff_row() const {return this->veff_row;}
-    int get_npol() const {return this->npol;}
+    int get_veff_row() const { return this->veff_row; }
     const int *get_isk() const {return isk;}
     const ModulePW::PW_Basis_K* get_wfcpw() const
     {
@@ -52,10 +51,6 @@ class Veff<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     }
 
   private:
-
-    mutable int max_npw = 0;
-
-    mutable int npol = 0;
 
     const int* isk = nullptr;
 

@@ -42,3 +42,12 @@ std::string formatter::Fmt::format(const T* value, int size) {
     return ss.str();
 }
 */
+
+void formatter::Fmt::reset() {
+    width_ = 4;
+    precision_ = 2;
+    fillChar_ = ' ';
+    fixed_ = true;
+    right_ = true;
+    error_ = false;
+}

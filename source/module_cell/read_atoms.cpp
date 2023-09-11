@@ -44,45 +44,48 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             pseudo_fn[i] = "auto";
             pseudo_type[i] = "auto";
 
-            bool end = false;
-            if (ss >> one_string)
-            {
-                if (one_string[0] != '#')
-                {
-                    pseudo_fn[i] = one_string;
-                }
-                else
-                {
-                    end = true;
-                }
-            }
-
-            if (!end && ss >> one_string && one_string[0] != '#')
-            {
-                if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
-                {
-                    pseudo_type[i] = one_string;
-                }
-                else
-                {
-                    GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
-                    ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
-                }
-            }
-
-			if(GlobalV::test_pseudo_cell==2) 
+			if(!GlobalV::use_paw)
 			{
-				ofs_running << "\n" << std::setw(6) << atom_label[i] 
-						<< std::setw(12) << atom_mass[i] 
-						<< std::setw(18) << pseudo_fn[i]
-						<< std::setw(18) << pseudo_type[i];
-			}
+				bool end = false;
+				if (ss >> one_string)
+				{
+					if (one_string[0] != '#')
+					{
+						pseudo_fn[i] = one_string;
+					}
+					else
+					{
+						end = true;
+					}
+				}
 
-			// Peize Lin test for bsse 2021.04.07
-			const std::string bsse_label = "empty";
-			this->atoms[i].flag_empty_element = 
-				(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
-				? true : false;
+				if (!end && ss >> one_string && one_string[0] != '#')
+				{
+					if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
+					{
+						pseudo_type[i] = one_string;
+					}
+					else
+					{
+						GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
+						ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
+					}
+				}
+
+				if(GlobalV::test_pseudo_cell==2) 
+				{
+					ofs_running << "\n" << std::setw(6) << atom_label[i] 
+							<< std::setw(12) << atom_mass[i] 
+							<< std::setw(18) << pseudo_fn[i]
+							<< std::setw(18) << pseudo_type[i];
+				}
+
+				// Peize Lin test for bsse 2021.04.07
+				const std::string bsse_label = "empty";
+				this->atoms[i].flag_empty_element = 
+					(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
+					? true : false;
+			}
 		}
 	}
 #ifdef __LCAO
@@ -1014,6 +1017,7 @@ void UnitCell::print_tau(void)const
     ModuleBase::TITLE("UnitCell","print_tau");
     if(Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom")
     {
+
         GlobalV::ofs_running << "\n CARTESIAN COORDINATES ( UNIT = " << lat0 << " Bohr )." << std::endl;
         GlobalV::ofs_running << std::setw(13) << " atom"
         //<< std::setw(20) << "x" 
@@ -1059,21 +1063,9 @@ void UnitCell::print_tau(void)const
 
     if(Coordinate == "Direct")
     {
-        GlobalV::ofs_running << "\n DIRECT COORDINATES" << std::endl;
-        GlobalV::ofs_running << std::setw(13) << " atom"
-        //<< std::setw(20) << "x"
-        //<< std::setw(20) << "y"
-        //<< std::setw(20) << "z"
-        //<< " mag"
-        << std::setw(20) << "x"
-        << std::setw(20) << "y"
-        << std::setw(20) << "z"
-        << std::setw(20) << "mag"
-		<< std::setw(20) << "vx"
-        << std::setw(20) << "vy"
-        << std::setw(20) << "vz"
-        << std::endl;
-
+		context.set_context({"short_title", "coordinate", "coordinate", "coordinate", "charge", "coordinate", "coordinate", "coordinate"});
+		std::vector<std::string> titles;
+		std::vector<double> xs, ys, zs, mags, vxs, vys, vzs;
         int iat=0;
         for(int it=0; it<ntype; it++)
         {
@@ -1081,24 +1073,23 @@ void UnitCell::print_tau(void)const
             {
                 std::stringstream ss;
                 ss << "taud_" << atoms[it].label << ia+1;
-
-                GlobalV::ofs_running << " " << std::setw(12) << ss.str()
-                //<< std::setw(20) << atoms[it].taud[ia].x
-                //<< std::setw(20) << atoms[it].taud[ia].y
-                //<< std::setw(20) << atoms[it].taud[ia].z
-                //<< " " << atoms[it].mag[ia]
-                << std::setw(20) << atoms[it].taud[ia].x
-                << std::setw(20) << atoms[it].taud[ia].y
-                << std::setw(20) << atoms[it].taud[ia].z
-				<< std::setw(20) << atoms[it].mag[ia]
-				<< std::setw(20) << atoms[it].vel[ia].x
-                << std::setw(20) << atoms[it].vel[ia].y
-                << std::setw(20) << atoms[it].vel[ia].z
-                << std::endl;
-
+				titles.push_back(ss.str());
+				xs.push_back(atoms[it].taud[ia].x);
+				ys.push_back(atoms[it].taud[ia].y);
+				zs.push_back(atoms[it].taud[ia].z);
+				mags.push_back(atoms[it].mag[ia]);
+				vxs.push_back(atoms[it].vel[ia].x);
+				vys.push_back(atoms[it].vel[ia].y);
+				vzs.push_back(atoms[it].vel[ia].z);
                 ++iat;
             }
         }
+		context.enable_title();
+		context<<"atom"<<titles<<"x"<<xs<<"y"<<ys<<"z"<<zs<<"mag"<<mags<<"vx"<<vxs<<"vy"<<vys<<"vz"<<vzs;
+		context.center_title();
+		context.set_overall_title("DIRECT COORDINATES");
+		context.disable_up_frame(); context.disable_mid_frame(); context.disable_down_frame();
+		GlobalV::ofs_running<<context.str()<<std::endl;
     }
 
 	GlobalV::ofs_running << std::endl;

@@ -11,6 +11,7 @@
 #include "pot_surchem.hpp"
 #include "pot_xc.h"
 #include "potential_new.h"
+#include "pot_local_paw.h"
 #ifdef __LCAO
 #include "H_TDDFT_pw.h"
 #endif
@@ -23,7 +24,14 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
     {
-        return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_);
+        if(!GlobalV::use_paw)
+        {
+            return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_);
+        }
+        else
+        {
+            return new PotLocal_PAW();
+        }
     }
     else if (pot_type == "hartree")
     {

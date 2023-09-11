@@ -1062,11 +1062,11 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc) //update by liuyu 2
                             {
                                 index=ir*pv->ncol+ic;
                             }
-                            #ifdef _OPENMP
-                                Nonlocal_thread[index] += nlm_thread;
-                            #else 
-                                this->LM->set_HSgamma(iw1_all,iw2_all,nlm,'N', HSloc);
-                            #endif
+#ifdef _OPENMP
+                            Nonlocal_thread[index] += nlm_thread;
+#else
+                            this->LM->set_HSgamma(iw1_all, iw2_all, nlm, HSloc);
+#endif
                         }//iw2
                     }//iw1
                 }//ad2
