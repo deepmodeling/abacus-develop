@@ -14,7 +14,6 @@
 #include "module_psi/kernels/device.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 
-
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
 }
