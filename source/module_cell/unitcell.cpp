@@ -1594,14 +1594,14 @@ void UnitCell::cal_nelec(double& nelec)
 
 void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
-    if (label1 != label2)
+    if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {	atom_in ai;
-        if (!(label1 == std::to_string(ai.atom_Z[label2]) ||
-		      label1 == std::to_string(ai.symbol_Z[label2]) ||
-			  label1 == ai.symbol_atom[label2] ||
-			  label1 == ai.Z_atom[std::stoi(label2)] ||
-			  label1 == ai.atom_symbol[label2] ||
-			  label1 == ai.Z_symbol[std::stoi(label2)]))
+        if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
+			  ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
+			  label1 == std::to_string(ai.atom_Z[label2]) ||   // '!( "47" == "Ag" )'
+		      label1 == std::to_string(ai.symbol_Z[label2]) || // '!( "47" == "Silver" )'
+			  label1 == ai.atom_symbol[label2] ||              // '!( "Silver" == "Ag" )'
+			  std::to_string(ai.symbol_Z[label1]) == label2 )) // '!( "Silver" == "47" )'
 	    {		
 	    	std::string stru_label = "";
             std::string psuedo_label = "";
@@ -1631,12 +1631,13 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
             }
 	    	psuedo_label[0] = toupper(psuedo_label[0]);
     
-            if (!(stru_label == std::to_string(ai.atom_Z[psuedo_label]) ||
-		          stru_label == std::to_string(ai.symbol_Z[psuedo_label]) ||
-			      stru_label == ai.symbol_atom[psuedo_label] ||
-			      stru_label == ai.Z_atom[std::stoi(psuedo_label)] ||
-			      stru_label == ai.atom_symbol[psuedo_label] ||
-			      stru_label == ai.Z_symbol[std::stoi(psuedo_label)]))
+            if (!(stru_label == psuedo_label || //' !("Ag1" == "ag_locpsp" || "47" == "47" || "Silver" == Silver" )'
+			      std::to_string(ai.atom_Z[stru_label]) == psuedo_label ||   // ' !("Ag1" == "47" )'
+			      ai.atom_symbol[stru_label] == psuedo_label ||              // ' !("Ag1" == "Silver")'
+			      stru_label == std::to_string(ai.atom_Z[psuedo_label]) ||  // ' !("47" == "Ag1" )'
+		          stru_label == std::to_string(ai.symbol_Z[psuedo_label]) || // ' !("47" == "Silver1" )'
+			      stru_label == ai.atom_symbol[psuedo_label] ||              // ' !("Silver1" == "Ag" )'
+			      std::to_string(ai.symbol_Z[stru_label]) == psuedo_label )) // ' !("Silver1" == "47" )'
             {
                 ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", "atom label in STRU is " + label1 + " mismatch with pseudo file of " +label2);
             }
