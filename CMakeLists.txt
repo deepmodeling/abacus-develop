@@ -140,6 +140,12 @@ if(NOT CMAKE_BUILD_TYPE)
   add_compile_options(-O3 -g)
 endif()
 
+# stick to strict floating point model on Intel Compiler
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
+    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
+    add_compile_options(-fp-model=strict)
+endif()
+
 # Force turn off USE_ABACUS_LIBM on Intel Compiler
 if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
     ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
