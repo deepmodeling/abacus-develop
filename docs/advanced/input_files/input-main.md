@@ -8,6 +8,7 @@
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
     - [symmetry\_prec](#symmetry_prec)
+    - [symmetry\_autoclose](#symmetry_autoclose)
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
@@ -40,9 +41,9 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
-    - [erf_ecut](#erf_ecut)
-    - [erf_height](#erf_height)
-    - [erf_sigma](#erf_sigma)
+    - [erf\_ecut](#erf_ecut)
+    - [erf\_height](#erf_height)
+    - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
     - [nb2d](#nb2d)
     - [lmaxmax](#lmaxmax)
@@ -114,6 +115,7 @@
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
     - [out\_dm](#out_dm)
+    - [out\_dm1](#out_dm1)
     - [out\_wfc\_pw](#out_wfc_pw)
     - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
@@ -860,7 +862,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: Energy range for smearing, `smearing_sigma` = 1/2 * kB * `smearing_sigma_temp`.
-- **Default**: 2 * `smearing_sigma_temp` / kB.
+- **Default**: 2 * `smearing_sigma` / kB.
 - **Unit**: K
 
 ### mixing_type
