@@ -1620,7 +1620,7 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
     
 	    	for (int ip = 0; ip < label2.length(); ip++)
             {
-                if (!isdigit(label2[ip]) || !label2[ip]=='_')
+                if (!(isdigit(label2[ip]) || label2[ip]=='_'))
                 {
                     psuedo_label += label2[ip];
 	    		}

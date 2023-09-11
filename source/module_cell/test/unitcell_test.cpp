@@ -293,7 +293,7 @@ TEST_F(UcellDeathTest, CompareAatomLabel)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->compare_atom_labels(stru_label[0], pseudo_label[0]),::testing::ExitedWithCode(0),"");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr(atom_label_in_STRU + stru_label + mismatch_with_pseudo +pseudo_label));
+    EXPECT_THAT(output, testing::HasSubstr(atom_label_in_STRU + stru_label[0] + mismatch_with_pseudo +pseudo_label[0]));
 }
 
 TEST_F(UcellTest,RemakeCell)
