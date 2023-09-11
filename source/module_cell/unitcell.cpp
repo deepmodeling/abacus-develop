@@ -1638,8 +1638,12 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 		          stru_label == std::to_string(ai.symbol_Z[psuedo_label]) || // ' !("47" == "Silver1" )'
 			      stru_label == ai.atom_symbol[psuedo_label] ||              // ' !("Silver1" == "Ag" )'
 			      std::to_string(ai.symbol_Z[stru_label]) == psuedo_label )) // ' !("Silver1" == "47" )'
-            {
-                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", "atom label in STRU is " + label1 + " mismatch with pseudo file of " +label2);
+            
+				
+			{	
+				std::string atom_label_in_STRU = "atom label in STRU is ";
+				std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
+                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", atom_label_in_STRU + label1 + mismatch_with_pseudo +label2);
             }
 	    }
 	}
