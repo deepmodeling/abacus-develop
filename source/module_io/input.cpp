@@ -224,6 +224,8 @@ void Input::Default(void)
     relax_bfgs_init = 0.5; // bohr
     relax_scale_force = 0.5;
     nbspline = -1;
+
+    use_paw = false;
     //----------------------------------------------------------
     // ecutwfc
     //----------------------------------------------------------
@@ -967,7 +969,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, relax_new);
         }
-
+        else if (strcmp("use_paw", word) == 0)
+        {
+            read_bool(ifs, use_paw);
+        }
         //----------------------------------------------------------
         // plane waves
         //----------------------------------------------------------
@@ -2478,6 +2483,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (of_kinetic != "wt")
         of_read_kernel = false; // sunliang add 2022-09-12
 
+    if(dft_functional == "default" && use_paw)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dft_functional must be set when use_paw is true");
+    }
+
     if (exx_hybrid_alpha == "default")
     {
         if (dft_functional == "hf" || INPUT.rpa)
@@ -2617,8 +2627,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (!out_md_control)
             out_level = "m"; // zhengdy add 2019-04-07
-        if (mdp.md_tlast < 0.0)
-            mdp.md_tlast = mdp.md_tfirst;
         if (mdp.md_plast < 0.0)
             mdp.md_plast = mdp.md_pfirst;
 
@@ -2630,7 +2638,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             mdp.md_pfreq = 1.0 / 400 / mdp.md_dt;
         }
-        if (mdp.md_restart)
+        if (mdp.md_tfirst < 0 || mdp.md_restart)
         {
             init_vel = 1;
         }
@@ -2868,6 +2876,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_bfgs_init);
     Parallel_Common::bcast_double(relax_scale_force);
     Parallel_Common::bcast_bool(relax_new);
+
+    Parallel_Common::bcast_bool(use_paw);
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
@@ -3232,6 +3242,16 @@ void Input::Check(void)
 
     // std::cout << "diago_proc=" << diago_proc << std::endl;
     // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
+#ifndef USE_PAW
+    if(use_paw)
+    {
+        ModuleBase::WARNING_QUIT("Input", "to use PAW, compile with USE_PAW");
+        if(basis_type != "pw")
+        {
+            ModuleBase::WARNING_QUIT("Input", "PAW is for pw basis only");
+        }
+    }
+#endif
 
     if (diago_proc > 1 && basis_type == "lcao" && diago_proc != GlobalV::NPROC)
     {
@@ -3304,8 +3324,6 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_tfirst < 0 && esolver_type != "tddft")
-            ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_type == "msst")
@@ -3408,7 +3426,7 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }

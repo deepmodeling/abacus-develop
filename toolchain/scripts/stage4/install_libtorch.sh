@@ -8,10 +8,11 @@
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://pytorch.org/get-started/locally/
-libtorch_ver="1.12.1" # stable
-libtorch_sha256="82c7be80860f2aa7963f8700004a40af8205e1d721298f2e09b700e766a9d283"
-#libtorch_ver="2.0.1" # newest, but will lead to lots of warning during build process
-#libtorch_sha256="137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd"
+#libtorch_ver="1.12.1" # stable
+#libtorch_sha256="82c7be80860f2aa7963f8700004a40af8205e1d721298f2e09b700e766a9d283"
+libtorch_ver="2.0.1" # newest, 
+# 2.0.1 libtorch will lead to lots of warning during build process in intel toolchain
+libtorch_sha256="137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd"
 
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -46,7 +47,8 @@ case "${with_libtorch}" in
       [ -d libtorch ] && rm -rf libtorch
       [ -d ${pkg_install_dir} ] && rm -rf ${pkg_install_dir}
       unzip -q ${archive_file}
-      mv libtorch ${pkg_install_dir}
+      mkdir -p "${pkg_install_dir}"
+      mv libtorch/* "${pkg_install_dir}"
 
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename "${SCRIPT_NAME}")"
     fi

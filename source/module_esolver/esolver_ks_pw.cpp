@@ -37,6 +37,12 @@
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
+#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/lapack_op.h>
+
 namespace ModuleESolver
 {
 
@@ -51,6 +57,8 @@ ESolver_KS_PW<FPTYPE, Device>::ESolver_KS_PW()
     {
         hsolver::createBLAShandle();
         hsolver::createCUSOLVERhandle();
+        container::op::createBlasHandle();
+        container::op::createCusolverHandle();
     }
 #endif
 }
@@ -80,6 +88,8 @@ ESolver_KS_PW<FPTYPE, Device>::~ESolver_KS_PW()
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
         hsolver::destoryCUSOLVERhandle();
+        container::op::destroyBlasHandle();
+        container::op::destroyCusolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(this->kspw_psi);
     }
@@ -264,6 +274,19 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->wf.init_after_vc(this->kv.nks);
         this->wf.init_at_1(&this->sf);
     }
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        // ecutrho / 2 = ecutwfc * 2
+        GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
+        GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                         this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+
+        GlobalC::paw_cell.prepare_paw();
+    }
+#endif
+
     ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
 }
 
@@ -410,6 +433,7 @@ void ESolver_KS_PW<FPTYPE, Device>::hamilt2density(const int istep, const int it
             hsolver::DiagoIterAssist<FPTYPE, Device>::need_subspace = true;
         }
 
+        hsolver::DiagoIterAssist<FPTYPE, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<FPTYPE, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
         this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);

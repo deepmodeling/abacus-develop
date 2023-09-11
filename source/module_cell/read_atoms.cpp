@@ -44,45 +44,48 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             pseudo_fn[i] = "auto";
             pseudo_type[i] = "auto";
 
-            bool end = false;
-            if (ss >> one_string)
-            {
-                if (one_string[0] != '#')
-                {
-                    pseudo_fn[i] = one_string;
-                }
-                else
-                {
-                    end = true;
-                }
-            }
-
-            if (!end && ss >> one_string && one_string[0] != '#')
-            {
-                if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
-                {
-                    pseudo_type[i] = one_string;
-                }
-                else
-                {
-                    GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
-                    ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
-                }
-            }
-
-			if(GlobalV::test_pseudo_cell==2) 
+			if(!GlobalV::use_paw)
 			{
-				ofs_running << "\n" << std::setw(6) << atom_label[i] 
-						<< std::setw(12) << atom_mass[i] 
-						<< std::setw(18) << pseudo_fn[i]
-						<< std::setw(18) << pseudo_type[i];
-			}
+				bool end = false;
+				if (ss >> one_string)
+				{
+					if (one_string[0] != '#')
+					{
+						pseudo_fn[i] = one_string;
+					}
+					else
+					{
+						end = true;
+					}
+				}
 
-			// Peize Lin test for bsse 2021.04.07
-			const std::string bsse_label = "empty";
-			this->atoms[i].flag_empty_element = 
-				(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
-				? true : false;
+				if (!end && ss >> one_string && one_string[0] != '#')
+				{
+					if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
+					{
+						pseudo_type[i] = one_string;
+					}
+					else
+					{
+						GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
+						ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
+					}
+				}
+
+				if(GlobalV::test_pseudo_cell==2) 
+				{
+					ofs_running << "\n" << std::setw(6) << atom_label[i] 
+							<< std::setw(12) << atom_mass[i] 
+							<< std::setw(18) << pseudo_fn[i]
+							<< std::setw(18) << pseudo_type[i];
+				}
+
+				// Peize Lin test for bsse 2021.04.07
+				const std::string bsse_label = "empty";
+				this->atoms[i].flag_empty_element = 
+					(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
+					? true : false;
+			}
 		}
 	}
 #ifdef __LCAO
@@ -110,7 +113,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Peize Lin add 2016-09-23
 #ifdef __MPI 
 #ifdef __EXX
-	if( GlobalC::exx_info.info_global.cal_exx )
+	if( GlobalC::exx_info.info_global.cal_exx || INPUT.rpa )
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
 		{

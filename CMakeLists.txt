@@ -99,6 +99,7 @@ set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
+include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 if(ENABLE_COVERAGE)
@@ -137,6 +138,12 @@ endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   add_compile_options(-O3 -g)
+endif()
+
+# stick to strict floating point model on Intel Compiler
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
+    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
+    add_compile_options(-fp-model=strict)
 endif()
 
 # Force turn off USE_ABACUS_LIBM on Intel Compiler
@@ -603,8 +610,13 @@ target_link_libraries(${ABACUS_BIN_NAME}
     vdw
     device
     container
-    kernels
 )
+
+if(ENABLE_PAW)
+  target_link_libraries(${ABACUS_BIN_NAME}
+  paw
+  )
+endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
@@ -614,6 +626,7 @@ if(ENABLE_LCAO)
       gint
       dftu
       hcontainer
+      numerical_atomic_orbitals
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}

@@ -4,7 +4,7 @@
 #include <array>
 #include <map>
 
-#include "module_base/module_container/tensor.h"
+#include <ATen/tensor.h>
 
 /*!
  * @brief Table of Gaunt coefficients of real spherical harmonics.

@@ -39,11 +39,12 @@ Meta<OperatorPW<FPTYPE, Device>>::~Meta()
 
 template<typename FPTYPE, typename Device>
 void Meta<OperatorPW<FPTYPE, Device>>::act(
-    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi
-)const
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const std::complex<FPTYPE>* tmpsi_in,
+    std::complex<FPTYPE>* tmhpsi,
+    const int ngk_ik)const
 {
     if (XC_Functional::get_func_type() != 3)
     {
@@ -52,17 +53,15 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
 
     ModuleBase::timer::tick("Operator", "MetaPW");
 
-    const int npw = psi_in->get_ngk(this->ik);
     const int current_spin = this->isk[this->ik];
-    this->max_npw = psi_in->get_nbasis() / psi_in->npol;
+    int max_npw = nbasis / npol;
     //npol == 2 case has not been considered
-    this->npol = psi_in->npol;
 
-    for (int ib = 0; ib < n_npwx; ++ib)
+    for (int ib = 0; ib < nbands; ++ib)
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), tmpsi_in, this->porter);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), tmpsi_in, this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -70,11 +69,11 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), this->porter, tmhpsi, true);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), this->porter, tmhpsi, true);
 
         } // x,y,z directions
-        tmhpsi += this->max_npw;
-        tmpsi_in += this->max_npw;
+        tmhpsi += max_npw;
+        tmpsi_in += max_npw;
     }
     ModuleBase::timer::tick("Operator", "MetaPW");
 }

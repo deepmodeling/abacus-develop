@@ -123,6 +123,10 @@ class Paw_Element
     // ecutwfc_in : unit in Rydberg
     void init_paw_element(const double ecutwfc_in, const double cell_factor_in);
 
+    //atomic number
+    int get_zat(){return Zat;}
+    //#. valence electrons
+    int get_zval(){return val;}
     //#. m states (for each (n,l) channel, there will be 2l+1 m states)
     int get_mstates(){return mstates;}
     //number of channels (quantum numbers n,l)

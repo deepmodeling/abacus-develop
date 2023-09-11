@@ -1,26 +1,25 @@
-list(APPEND container_srcs
-    tensor.cpp
-    tensor_map.cpp
-    cpu_allocator.cpp
-    tensor_buffer.cpp
-    tensor_shape.cpp
-    tensor_types.cpp
-)
+# FetchContent_MakeAvailable was not added until CMake 3.14
+cmake_minimum_required(VERSION 3.14)
 
-if(USE_CUDA)
-    list(APPEND container_srcs gpu_allocator.cpp)
-endif()
+set(ATen_CPU_SRCS)
+set(ATen_CUDA_SRCS)
+set(ATen_ROCM_SRCS)
+set(ATen_CPU_DEPENDENCY_LIBS)
+set(ATen_CUDA_DEPENDENCY_LIBS)
+set(ATen_ROCM_DEPENDENCY_LIBS)
 
-add_library(container OBJECT ${container_srcs})
+add_subdirectory(base/core)
+add_subdirectory(ATen/core)
+add_subdirectory(ATen/kernels)
 
-add_subdirectory(kernels)
+add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
 
-target_link_libraries(container kernels)
+target_link_libraries(container PUBLIC ${ATen_CPU_DEPENDENCY_LIBS} ${ATen_CUDA_DEPENDENCY_LIBS})
 
 if(ENABLE_COVERAGE)
   add_coverage(container)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(tests)
+  add_subdirectory(test)
 endif()

@@ -17,6 +17,11 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 //---------------------------------------
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#include "module_base/parallel_common.h"
+#endif
+
 namespace ModuleESolver
 {
 
@@ -79,12 +84,88 @@ namespace ModuleESolver
     void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+        {
+            int * atom_type;
+            double ** atom_coord;
+            std::vector<std::string> filename_list;
+
+            atom_type = new int [GlobalC::ucell.nat];
+            atom_coord = new double * [GlobalC::ucell.nat];
+            filename_list.resize(GlobalC::ucell.ntype);
+
+            for(int ia = 0; ia < GlobalC::ucell.nat; ia ++)
+            {
+                atom_coord[ia] = new double [3];
+            }
+
+            int iat = 0;
+            for(int it = 0; it < GlobalC::ucell.ntype; it ++)
+            {
+                for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia ++)
+                {
+                    atom_type[iat] = it;
+                    atom_coord[iat][0] = GlobalC::ucell.atoms[it].taud[ia].x;
+                    atom_coord[iat][1] = GlobalC::ucell.atoms[it].taud[ia].y;
+                    atom_coord[iat][2] = GlobalC::ucell.atoms[it].taud[ia].z;
+                    iat ++;
+                }
+            }            
+
+            if(GlobalV::MY_RANK == 0)
+            {
+                std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
+                if (!ifa)
+                {
+                    ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
+                }
+
+                std::string line;
+                while(!ifa.eof())
+                {
+                    getline(ifa,line);
+                    if (line.find("PAW_FILES") != std::string::npos) break;
+                }
+
+                for(int it = 0; it < GlobalC::ucell.ntype; it++)
+                {
+                    ifa >> filename_list[it];
+                }
+            }
+#ifdef __MPI
+            for(int it = 0; it < GlobalC::ucell.ntype; it++)
+            {
+                Parallel_Common::bcast_string(filename_list[it]);
+            }
+#endif
+            
+            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
+                GlobalC::ucell.omega,GlobalC::ucell.nat,GlobalC::ucell.ntype,
+                atom_type,(const double **) atom_coord,
+                filename_list);
+
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                delete [] atom_coord[iat];
+            }
+            delete [] atom_coord;
+            delete [] atom_type;
+        }
+#endif
         ucell.cal_nelec(GlobalV::nelec);
 
         /* it has been established that that
          xc_func is same for all elements, therefore
          only the first one if used*/
-        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        if(GlobalV::use_paw)
+        {
+            XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
+        }
+        else
+        {
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        }
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
         // symmetry analysis should be performed every time the cell is changed
@@ -102,8 +183,8 @@ namespace ModuleESolver
         // mohan add 2021-01-30
         Print_Info::setup_parameters(ucell, this->kv);
 
-        if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
-        {
+        //if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
+        //{
             //Envelope function is calculated as lcao_in_pw
             //new plane wave basis
     #ifdef __MPI
@@ -124,7 +205,7 @@ namespace ModuleESolver
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
             this->pw_wfc->collect_local_pw(); 
             this->print_wfcfft(inp, GlobalV::ofs_running);
-        }
+        //}
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
         GlobalC::Pgrid.init(this->pw_rho->nx,
@@ -140,6 +221,23 @@ namespace ModuleESolver
 
         // Initialize charge extrapolation
         CE.Init_CE(GlobalC::ucell.nat);
+
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+        {
+
+
+            // ecutrho / 2 = ecutwfc * 2
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
+            GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+            GlobalC::paw_cell.prepare_paw();
+
+            GlobalC::paw_cell.set_eigts(
+                this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                this->sf.eigts1.c,this->sf.eigts2.c,this->sf.eigts3.c);
+        }
+#endif
     }
 
     template<typename FPTYPE, typename Device>
