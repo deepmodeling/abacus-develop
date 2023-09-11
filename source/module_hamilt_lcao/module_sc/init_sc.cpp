@@ -10,10 +10,21 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
                             int nspin_in,
                             double sc_thr_in,
                             int nsc_in,
-                            int nsc_min_in)
+                            int nsc_min_in,
+                            std::string KS_SOLVER_in,
+                            hsolver::HSolver<FPTYPE, Device>* phsol_in,
+                            hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+                            psi::Psi<std::complex<double>>* psi_in,
+                            elecstate::ElecState* pelec_in)
 {
-    // get pointer to Parallel_Oribitals
+    // get pointer to outter pointers
     this->ParaV = ParaV_in;
+    this->phsol = phsol_in;
+    this->p_hamilt = p_hamilt_in;
+    this->psi = psi_in;
+    this->pelec = pelec_in;
+    this->KS_SOLVER = KS_SOLVER_in;
+    // get nloc
     int nloc = this->ParaV->nloc;
     if (nloc <= 0)
     {

@@ -29,6 +29,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     std::cout << "sc_thr " << this->sc_thr_ << std::endl;
     std::cout << "nsc " << this->nsc_ << std::endl;
     std::cout << "nsc_min " << this->nsc_min_ << std::endl;
+    this->cal_mw_from_lambda();
 //    // init controlling parameters
 //    int nat = this->get_nat();
 //    int ntype = this->get_ntype();

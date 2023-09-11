@@ -29,7 +29,12 @@ public:
                 int nspin_in,
                 double sc_thr_in,
                 int nsc_in,
-                int nsc_min_in);
+                int nsc_min_in,
+                std::string KS_SOLVER_in,
+                hsolver::HSolver<FPTYPE, Device>* phsol_in,
+                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+                psi::Psi<std::complex<double>>* psi_in,
+                elecstate::ElecState* pelec_in);
 
     /// calculate h_lambda operator for spin-constrained DFT
     void cal_h_lambda(std::complex<double>* h_lambda);
@@ -49,6 +54,8 @@ public:
         const std::vector<ModuleBase::ComplexMatrix> &dm,
         const K_Vectors& kv
     );
+
+    void cal_mw_from_lambda();
 
     double cal_escon();
 
@@ -72,8 +79,9 @@ public:
     Parallel_Orbitals *ParaV;
     hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
-    elecstate::ElecState* pelec = nullptr;
     psi::Psi<std::complex<double>>* psi = nullptr;
+    elecstate::ElecState* pelec = nullptr;
+    std::string KS_SOLVER;
 
 public:
     /**

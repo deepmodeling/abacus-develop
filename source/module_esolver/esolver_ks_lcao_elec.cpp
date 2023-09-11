@@ -276,7 +276,12 @@ namespace ModuleESolver
                 GlobalV::NSPIN,
                 GlobalV::sc_thr,
                 GlobalV::nsc,
-                GlobalV::nsc_min);
+                GlobalV::nsc_min,
+                GlobalV::KS_SOLVER,
+                this->phsol,
+                this->p_hamilt,
+                this->psi,
+                this->pelec);
         }
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 
