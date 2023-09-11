@@ -13,6 +13,7 @@
 101_PW_upf201_upf100_pseudopots
 101_PW_VW_pseudopots
 102_PW_DA_davidson
+102_PW_BPCG
 103_PW_15_CF_CS_S1_smallg
 103_PW_15_CF_CS_S2_smallg
 103_PW_15_CS_CF
@@ -310,3 +311,4 @@
 906_OF_LibxcPBE
 920_OF_MD_LDA
 920_OF_MD_LibxcPBE
+921_OF_CR_LDA

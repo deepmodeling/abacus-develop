@@ -35,7 +35,7 @@ mixing_beta		0.4
 
 cal_cond      1
 cond_nche  18
-cond_fwhm   8
+cond_fwhm   16
 cond_wcut        20
 cond_dw          0.02
 cond_dt          0.237464

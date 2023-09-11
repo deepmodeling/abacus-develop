@@ -140,9 +140,34 @@ void RadialCollection::iter_build()
     }
 }
 
+void RadialCollection::build(const int ntype, Numerical_Nonlocal* const nls)
+{
+    cleanup();
+    ntype_ = ntype;
+    radset_ = new RadialSet*[ntype_];
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new BetaRadials;
+        radset_[itype]->build(nls[itype], itype);
+
+        lmax_ = std::max(lmax_, radset_[itype]->lmax());
+        nchi_ += radset_[itype]->nchi();
+        nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
+    }
+
+    iter_build();
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype]->set_transformer(sbt_, 0);
+    }
+}
+
 void RadialCollection::build(const int nfile, const std::string* const file, const char file_type)
 {
-    assert(file_type == 'o' || file_type == 'p');
+    //assert(file_type == 'o' || file_type == 'p');
+    assert(file_type == 'o'); // pseudopotential files are not read in this module
 
     cleanup();
 
@@ -157,13 +182,13 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
             radset_[itype]->build(file[itype], itype);
         }
         break;
-    case 'p':
-        for (int itype = 0; itype < ntype_; ++itype)
-        {
-            radset_[itype] = new BetaRadials;
-            radset_[itype]->build(file[itype], itype);
-        }
-        break;
+    //case 'p':
+    //    for (int itype = 0; itype < ntype_; ++itype)
+    //    {
+    //        radset_[itype] = new BetaRadials;
+    //        radset_[itype]->build(file[itype], itype);
+    //    }
+    //    break;
     default:; /* not supposed to happen */
     }
 

@@ -6,7 +6,7 @@
 #include "module_basis/module_nao/radial_collection.h"
 #include "module_base/vector3.h"
 
-/**
+/*!
  * @brief A class to compute two-center integrals
  *
  * This class computes two-center integrals
@@ -38,10 +38,10 @@ class TwoCenterIntegrator
     TwoCenterIntegrator(const TwoCenterIntegrator&) = delete;
     TwoCenterIntegrator& operator=(const TwoCenterIntegrator&) = delete;
 
-    ~TwoCenterIntegrator();
+    ~TwoCenterIntegrator() {}
 
-    /**
-     * @brief Tabulate the radial part of the two-center integrals
+    /*!
+     * @brief Tabulates the radial part of a two-center integral.
      *
      * @param[in] bra          The radial functions of the first collection.
      * @param[in] ket          The radial functions of the second collection.
@@ -50,19 +50,16 @@ class TwoCenterIntegrator
      * @param[in] cutoff       r-space cutoff radius.
      * @param[in] with_deriv   If true, the derivative of radial table is also tabulated.
      *                         This is necessary to compute the gradient of integrals.
-     * @param[in] rgt          Pointer to a real Gaunt table.
      *                                                                                  */
     void tabulate(const RadialCollection& bra,
                   const RadialCollection& ket,
                   const char op,
                   const int nr,
-                  const double cutoff,
-                  const bool with_deriv,
-                  RealGauntTable* const rgt = nullptr
+                  const double cutoff
     );
 
-    /**
-     * @brief Compute the two-center integrals
+    /*!
+     * @brief Compute the two-center integrals.
      *
      * This function calculates the two-center integral
      *
@@ -81,9 +78,13 @@ class TwoCenterIntegrator
      * @param[in] izeta2       Zeta number of orbital 2.
      * @param[in] m2           Magnetic quantum number of orbital 2.
      * @param[in] vR           R2 - R1.
-     * @param[in] deriv        If true, the gradient of integrals is computed.
-     * @param[out] out         The computed integrals. If deriv is true, out[0], out[1]
-     *                         and out[2] are the x, y, z components of the gradient.
+     * @param[out] out         Two-center integral. The integral will not be computed
+     *                         if out is nullptr.
+     * @param[out] grad_out    Gradient of the integral. grad_out[0], grad_out[1] and
+     *                         grad_out[2] are the x, y, z components of the gradient.
+     *                         The gradient will not be computed if grad_out is nullptr.
+     *
+     * @note out and grad_out cannot be both nullptr.
      *                                                                                  */
     void calculate(const int itype1, 
                    const int l1, 
@@ -94,22 +95,33 @@ class TwoCenterIntegrator
                    const int izeta2,
                    const int m2,
 	               const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
-                   const bool deriv,
-                   double* out
+                   double* out = nullptr,
+                   double* grad_out = nullptr
+    ) const;
+
+    /*!
+     * @brief Compute a batch of two-center integrals.
+     *
+     * This function calculates the two-center integrals (and optionally their gradients)
+     * between one orbital and all orbitals of a certain type from the other collection.
+     *                                                                                  */
+    void snap(const int itype1, 
+              const int l1, 
+              const int izeta1, 
+              const int m1, 
+              const int itype2,
+	          const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+              const bool deriv,
+              std::vector<std::vector<double>>& out
     ) const;
 
   private:
     bool is_tabulated_;
-
     char op_;
-    bool with_deriv_;
-    bool use_internal_gaunt_;
-
     TwoCenterTable table_;
-    RealGauntTable* rgt_;
 
-    /**
-     * @brief Compute the index of (l,m) in the array of spherical harmonics
+    /*!
+     * @brief Returns the index of (l,m) in the array of spherical harmonics.
      *
      * Spherical harmonics in ABACUS are stored in the following order:
      *

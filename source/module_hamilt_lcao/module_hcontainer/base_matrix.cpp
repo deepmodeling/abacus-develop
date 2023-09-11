@@ -15,9 +15,9 @@ BaseMatrix<T>::BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed)
     // the default memory_type is 1 (dense matrix), it doesn't matter for initialization
     if (data_existed == nullptr)
     {
-        value_begin = new T[nrow_local * ncol_local];
-        ModuleBase::GlobalFunc::ZEROS(value_begin, nrow_local * ncol_local);
-        this->allocated = true;
+        this->allocated = false;
+        this->ldc = ncol_local;
+        this->memory_type = 1;
     }
     else
     {
@@ -74,6 +74,49 @@ BaseMatrix<T>::~BaseMatrix()
     if (this->allocated)
     {
         delete[] value_begin;
+    }
+}
+
+// allocate
+template <typename T>
+void BaseMatrix<T>::allocate(bool if_zero)
+{
+#ifdef __DEBUG
+assert(nrow_local*ncol_local>0);
+#endif
+    if(this->value_begin == nullptr)
+    {
+        this->value_begin = new T[nrow_local * ncol_local];
+        if(if_zero) 
+        {
+            this->set_zero();
+        }
+        this->allocated = true;
+    }
+}
+
+// zeros
+template <typename T>
+void BaseMatrix<T>::set_zero()
+{
+#ifdef __DEBUG
+assert(this->value_begin != nullptr);
+#endif
+    if(this->memory_type == 1)
+    {
+        ModuleBase::GlobalFunc::ZEROS(this->value_begin, nrow_local * ncol_local);
+    }
+    else if(this->memory_type == 2)
+    {
+        for(int i = 0; i < nrow_local; i++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(this->value_begin + i * this->ldc, ncol_local);
+        }
+    }
+    else
+    {
+        std::cout << "Error: memory_type is not defined!" << std::endl;
+        exit(1);
     }
 }
 

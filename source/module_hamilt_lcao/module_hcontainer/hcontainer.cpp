@@ -21,6 +21,7 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in)
     this->sparse_ap = HR_in.sparse_ap;
     this->sparse_ap_index = HR_in.sparse_ap_index;
     this->gamma_only = HR_in.gamma_only;
+    this->paraV = HR_in.paraV;
     this->current_R = -1;
     // tmp terms not copied
 }
@@ -33,6 +34,7 @@ HContainer<T>::HContainer(HContainer<T>&& HR_in)
     this->sparse_ap = std::move(HR_in.sparse_ap);
     this->sparse_ap_index = std::move(HR_in.sparse_ap_index);
     this->gamma_only = HR_in.gamma_only;
+    this->paraV = HR_in.paraV;
     this->current_R = -1;
     // tmp terms not moved
 }
@@ -64,22 +66,25 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
         atom_begin_col[i+1] = begin;
     }
     // initialize atom_pairs and sparse_ap
-    this->atom_pairs.reserve(ucell_.nat * ucell_.nat);
+    this->atom_pairs.resize(ucell_.nat * ucell_.nat, AtomPair<T>(0,0));
     this->sparse_ap.resize(ucell_.nat);
     this->sparse_ap_index.resize(ucell_.nat);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int i = 0; i < ucell_.nat; i++)
     {
         this->sparse_ap[i].resize(ucell_.nat);
         this->sparse_ap_index[i].resize(ucell_.nat);
         for (int j = 0; j < ucell_.nat; j++)
         {
-            AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            ModuleBase::GlobalFunc::ZEROS(atom_ij.get_HR_values(0, 0, 0).get_pointer(), atom_ij.get_size());
-            this->atom_pairs.push_back(atom_ij);
+            //AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
+            this->atom_pairs[i * ucell_.nat + j] = AtomPair<T>(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
             this->sparse_ap[i][j] = j;
-            this->sparse_ap_index[i][j] = this->atom_pairs.size() - 1;
+            this->sparse_ap_index[i][j] = i * ucell_.nat + j;
         }
     }
+    this->allocate(true);
 }
 
 //HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr);
@@ -105,6 +110,29 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer)
     this->sparse_ap_index.resize(natom);
 }
 
+// allocate
+template <typename T>
+void HContainer<T>::allocate(bool is_zero)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int it=0;it<this->atom_pairs.size();it++)
+    {
+        this->atom_pairs[it].allocate(is_zero);
+    }
+}
+
+// set_zero
+template <typename T>
+void HContainer<T>::set_zero()
+{
+    for(auto& it : this->atom_pairs)
+    {
+        it.set_zero();
+    }
+}
+
 template <typename T>
 AtomPair<T>* HContainer<T>::find_pair(int atom_i, int atom_j) const
 {
@@ -122,6 +150,35 @@ AtomPair<T>* HContainer<T>::find_pair(int atom_i, int atom_j) const
     else
     {
         return nullptr;
+    }
+}
+
+// find_matrix
+template <typename T>
+const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry, int rz) const
+{
+    AtomPair<T>* tmp = this->find_pair(atom_i, atom_j);
+    if(tmp == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return tmp->find_matrix(rx, ry, rz);
+    }
+}
+
+template <typename T>
+BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry, int rz)
+{
+    AtomPair<T>* tmp = this->find_pair(atom_i, atom_j);
+    if(tmp == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return tmp->find_matrix(rx, ry, rz);
     }
 }
 
@@ -143,6 +200,7 @@ AtomPair<T>& HContainer<T>::get_atom_pair(int atom_i, int atom_j) const
     else
     {
         ModuleBase::WARNING_QUIT("HContainer", "atom pair not found in get_atom_pair");
+        return const_cast<AtomPair<T>&>(this->atom_pairs[0]);
     }
 }
 
@@ -178,14 +236,26 @@ AtomPair<T>& HContainer<T>::get_atom_pair(int index) const
     }
 }
 
+// add function
+template <typename T>
+void HContainer<T>::add(const HContainer<T>& other)
+{
+    for(int iap=0;iap<other.size_atom_pairs();iap++)
+    {
+        auto tmp = other.get_atom_pair(iap);
+        this->insert_pair(tmp);
+    }
+}
+
 template <typename T>
 bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
 {
     // clear and reallocate the memory of this->tmp_atom_pairs
-    this->tmp_atom_pairs.clear();
-    this->tmp_atom_pairs.shrink_to_fit();
-    this->tmp_atom_pairs.reserve(this->atom_pairs.size());
-
+    //this->tmp_atom_pairs.clear();
+    //this->tmp_atom_pairs.shrink_to_fit();
+    //this->tmp_atom_pairs.reserve(this->atom_pairs.size());
+    this->tmp_atom_pairs.resize(this->atom_pairs.size());
+    int iter = 0;
     // find (rx, ry, rz) in this->atom_pairs[i].R_values
     for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
@@ -193,10 +263,11 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
         {
             // push bach the pointer of AtomPair to this->tmp_atom_pairs
             const AtomPair<T>* tmp_pointer = &(*it);
-            this->tmp_atom_pairs.push_back(tmp_pointer);
+            this->tmp_atom_pairs[iter++] = tmp_pointer;
+            //this->tmp_atom_pairs.push_back(tmp_pointer);
         }
     }
-    if (this->tmp_atom_pairs.size() == 0)
+    if (iter == 0)
     {
         std::cout << "Error: no atom pair found in fix_R" << std::endl;
         this->current_R = -1;
@@ -206,6 +277,7 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
     {
         //set current_R
         this->current_R = this->find_R(rx_in, ry_in, rz_in);
+        this->tmp_atom_pairs.resize(iter);
         return true;
     }
 }
@@ -226,9 +298,12 @@ void HContainer<T>::fix_gamma()
     // every AtomPair in this->atom_pairs has the (0, 0, 0) cell index
     // fix every AtomPair in this->atom_pairs to only center cell
     this->gamma_only = true;
-    for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int it =0; it< this->atom_pairs.size(); ++it)
     {
-        it->merge_to_gamma();
+        this->atom_pairs[it].merge_to_gamma();
     }
     // in gamma_only case, R_index is not needed, tmp_R_index should be empty
     if (this->current_R != -1)
@@ -449,6 +524,46 @@ size_t HContainer<T>::get_memory_size() const
     memory += this->tmp_atom_pairs.capacity() * sizeof(AtomPair<T>*);
     memory += this->tmp_R_index.capacity() * sizeof(int);
     return memory;
+}
+
+// synchronize
+template <typename T>
+void HContainer<T>::shape_synchron( const HContainer<T>& other)
+{
+    // check paraV pointer
+    if (this->paraV != other.paraV)
+    {
+        ModuleBase::WARNING_QUIT("HContainer::synchronize", "paraV pointer not match");
+    }
+    // synchronize atom_pairs
+    for (int i = 0; i < other.atom_pairs.size(); ++i)
+    {
+        const int iat1 = other.atom_pairs[i].get_atom_i();
+        const int iat2 = other.atom_pairs[i].get_atom_j();
+        AtomPair<T>* tmp_pointer = this->find_pair(iat1, iat2);
+        if (tmp_pointer == nullptr)
+        {
+            this->insert_pair(other.atom_pairs[i]);
+            // the new AtomPair should be zero
+            this->atom_pairs.back().set_zero();
+        }
+        else
+        {
+            for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
+            {
+                int* R_pointer = other.atom_pairs[i].get_R_index(ir);
+                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]))
+                {
+                    // do nothing
+                }
+                else
+                {
+                    // insert the new BaseMatrix
+                    tmp_pointer->get_HR_values(R_pointer[0], R_pointer[1], R_pointer[2]);
+                }
+            }
+        }
+    }
 }
 
 // T of HContainer can be double or complex<double>

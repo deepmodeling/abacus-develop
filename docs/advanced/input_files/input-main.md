@@ -40,6 +40,9 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [erf_ecut](#erf_ecut)
+    - [erf_height](#erf_height)
+    - [erf_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
     - [nb2d](#nb2d)
     - [lmaxmax](#lmaxmax)
@@ -478,7 +481,7 @@ These variables are used to control general system parameters.
 - **Type**: Boolean
 - **Description**: 
 
-  - True: read the atom velocity from the atom file (STRU) if set to true. (atomic unit : 1 a.u. = 21.877 Angstrom/fs)
+  - True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (`STRU`) and determine the initial temperature [md_tfirst](#md_tfirst-md_tlast).  If [md_tfirst](#md_tfirst-md_tlast) is unset or less than zero, `init_vel` is autoset to be `true`.
   - False: assign value to atom velocity using Gaussian distributed random numbers.
 - **Default**: False
 
@@ -682,6 +685,31 @@ These variables are used to control the plane wave related parameters.
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav`. It indicates the maximal dimension for the Davidson method.
 - **Default**: 4
+
+### erf_ecut
+
+- **Type**: Real
+- **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
+- **Default**: 0.0
+- **Unit**: Ry
+
+### erf_height
+
+- **Type**: Real
+- **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
+- **Default**: 0.0
+- **Unit**: Ry
+
+### erf_sigma
+
+- **Type**: Real
+- **Description**: In order to recover the accuracy of a constant energy cutoff calculation, the kinetic functional is modified, which is used in variable-cell molecular dynamics (or in stress calculation). 
+
+  [erf_ecut](#erf_ecut) is the value of the constant energy cutoff; [erf_height](#erf_height) and [erf_sigma](#erf_sigma) are the height and the width of the energy step for reciprocal vectors whose square modulus is greater than [erf_ecut](#erf_ecut). In the kinetic energy, G^2 is replaced by G^2 + erf_height * (1 + erf ( (G^2 - erf_ecut)/erf_sigma) )
+
+  See: M. Bernasconi et al., J. Phys. Chem. Solids **56**, 501 (1995), [doi:10.1016/0022-3697(94)00228-2](#https://doi.org/10.1016/0022-3697(94)00228-2)
+- **Default**: 0.1
+- **Unit**: Ry
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2100,7 +2128,12 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Type**: Real
 - **Description**: The temperature used in molecular dynamics calculations. 
 
-  Note that `md_tlast` is only used in NVT simulations. The default value of `md_tlast` is `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
+  If `md_tfirst` is unset or less than zero, [init_vel](#init_vel) is autoset to be `true`. If [init_vel](#init_vel) is `true`, the initial temperature will be determined by the velocities read from `STRU`. In this case, if velocities are unspecified in `STRU`, the initial temperature is set to zero. 
+
+  If `md_tfirst` is set to a positive value and [init_vel](#init_vel) is `true` simultaneously, please make sure they are consistent, otherwise abacus will exit immediately.
+
+
+  Note that `md_tlast` is only used in NVT/NPT simulations. If `md_tlast` is unset or less than zero, `md_tlast` is set to `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
 - **Default**: No default
 - **Unit**: K
 
@@ -2180,9 +2213,6 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Type**: Integer
 - **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
-
-    Currently, the option is useful only in plane-wave-based isotropic NPT simulations.
   - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
 
 - **Default**: 0
@@ -2190,7 +2220,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### ref_cell_factor
 
 - **Type**: Real
-- **Description**: Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Description**: Construct a reference cell bigger than the initial cell. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with [erf_ecut](#erf_ecut), [erf_height](#erf_height), and [erf_sigma](#erf_sigma). 
 - **Default**: 1.0
 
 ### md_pcouple

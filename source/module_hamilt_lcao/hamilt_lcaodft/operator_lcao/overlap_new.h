@@ -13,7 +13,7 @@ namespace hamilt
 #define __OVERLAPNEWTEMPLATE
 
 /// The OverlapNew class template inherits from class T
-/// it is used to calculate the overlap of wavefunction basis 
+/// it is used to calculate the overlap of wavefunction basis
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
@@ -36,12 +36,12 @@ class OverlapNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
 {
   public:
     OverlapNew<OperatorLCAO<TK>, TR>(LCAO_Matrix* LM_in,
-                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                hamilt::HContainer<TR>* SR_in,
-                                TK* SK_pointer_in,
-                                const UnitCell* ucell_in,
-                                Grid_Driver* GridD_in,
-                                const Parallel_Orbitals* paraV);
+                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                     hamilt::HContainer<TR>* SR_in,
+                                     TK* SK_pointer_in,
+                                     const UnitCell* ucell_in,
+                                     Grid_Driver* GridD_in,
+                                     const Parallel_Orbitals* paraV);
 
     virtual void contributeHR() override;
 
@@ -72,13 +72,12 @@ class OverlapNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
 
     /**
      * @brief calculate the SR local matrix of <I,J,R> atom pair
-    */
-    void cal_SR_IJR(
-        const int& iat1, 
-        const int& iat2, 
-        const Parallel_Orbitals* paraV,
-        const ModuleBase::Vector3<double>& dtau,
-        TR* data_pointer);
+     */
+    void cal_SR_IJR(const int& iat1,
+                    const int& iat2,
+                    const Parallel_Orbitals* paraV,
+                    const ModuleBase::Vector3<double>& dtau,
+                    TR* data_pointer);
 };
 
 } // namespace hamilt

@@ -6,6 +6,7 @@ remove_definitions(-D__UT_USE_ROCM)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D_OPENMP)
+remove_definitions(-DUSE_PAW)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -53,7 +54,7 @@ AddTest(
     ../elecstate.cpp
     ../occupy.cpp
     ../../module_psi/psi.cpp
-    ../../module_psi/kernels/memory_op.cpp
+    ../../module_psi/kernels/psi_memory_op.cpp
 )
 
 AddTest(

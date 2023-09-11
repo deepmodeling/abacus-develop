@@ -26,13 +26,46 @@ namespace ModuleESolver
         virtual void hamilt2estates(const double ethr) override;
         virtual void nscf() override;
         void postprocess() override;
-        //calculate conductivities with Kubo-Greenwood formula
-        void KG(const int nche_KG, const double fwhmin, const double wcut,
-             const double dw_in, const double dt_in, ModuleBase::matrix& wg);
-        void jjcorr_ks(const int ik, const int nt, const double dt, ModuleBase::matrix& wg, hamilt::Velocity& velop, 
-                       double* ct11, double* ct12, double* ct22);
 
-    protected:
+        /**
+         * @brief calculate Onsager coefficients Lmn(\omega) and conductivities with Kubo-Greenwood formula
+         * 
+         * @param fwhmin FWHM for delta function
+         * @param wcut cutoff \omega for Lmn(\omega)
+         * @param dw_in \omega step
+         * @param dt_in time step
+         * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
+         */
+        void KG(const double fwhmin,
+                const double wcut,
+                const double dw_in,
+                const double dt_in,
+                ModuleBase::matrix& wg);
+        
+        /**
+         * @brief calculate the response function Cmn(t) for currents
+         * 
+         * @param ik k point
+         * @param nt number of steps of time
+         * @param dt time step
+         * @param decut ignore dE which is larger than decut
+         * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
+         * @param velop velocity operator
+         * @param ct11 C11(t)
+         * @param ct12 C12(t)
+         * @param ct22 C22(t)
+         */
+        void jjcorr_ks(const int ik,
+                       const int nt,
+                       const double dt,
+                       const double decut,
+                       ModuleBase::matrix& wg,
+                       hamilt::Velocity& velop,
+                       double* ct11,
+                       double* ct12,
+                       double* ct22);
+
+      protected:
         virtual void beforescf(const int istep) override;
         virtual void eachiterinit(const int istep, const int iter) override;
         virtual void updatepot(const int istep, const int iter) override;

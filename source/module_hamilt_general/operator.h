@@ -16,6 +16,7 @@ enum calculation_type
     pw_nonlocal,
     pw_veff,
     pw_meta,
+    lcao_overlap,
     lcao_fixed,
     lcao_gint,
     lcao_deepks,
@@ -37,7 +38,10 @@ class Operator
     //this is the core function for Operator
     // do H|psi> from input |psi> , 
 
-    // output of hpsi would be first member of the returned tuple 
+    /// as default, different operators donate hPsi independently
+    /// run this->act function for the first operator and run all act() for other nodes in chain table 
+    /// if this procedure is not suitable for your operator, just override this function.
+    /// output of hpsi would be first member of the returned tuple 
     typedef std::tuple<const psi::Psi<FPTYPE, Device>*, const psi::Range, FPTYPE*> hpsi_info;
     virtual hpsi_info hPsi(hpsi_info& input)const;
 
@@ -45,7 +49,19 @@ class Operator
 
     virtual void add(Operator* next);
 
-    virtual int get_ik() const {return this->ik;}
+    virtual int get_ik() const { return this->ik; }
+
+    ///do operation : |hpsi_choosed> = V|psi_choosed>
+    ///V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
+    virtual void act(const int nbands,
+        const int nbasis,
+        const int npol,
+        const FPTYPE* tmpsi_in,
+        FPTYPE* tmhpsi,
+        const int ngk_ik = 0)const {};
+
+    /// an developer-friendly interface for act() function
+    virtual psi::Psi<FPTYPE> act(const psi::Psi<FPTYPE>& psi_in) const { return psi_in; };
 
     Operator* next_op = nullptr;
 

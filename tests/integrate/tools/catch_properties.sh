@@ -171,11 +171,16 @@ fi
 if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
 	amnref=diamond.amn
 	amncal=OUT.autotest/diamond.amn
+	mmnref=diamond.mmn
+	mmncal=OUT.autotest/diamond.mmn
 	eigref=diamond.eig
 	eigcal=OUT.autotest/diamond.eig
 	sed -i '1d' $amncal
-	python3 ../tools/CompareFile.py $amnref $amncal 1
+	sed -i '1d' $mmncal
+	python3 ../tools/CompareFile.py $amnref $amncal 1 -abs 8
 	echo "CompareAMN_pass $?" >>$1
+	python3 ../tools/CompareFile.py $mmnref $mmncal 1 -abs 8
+	echo "CompareMMN_pass $?" >>$1
 	python3 ../tools/CompareFile.py $eigref $eigcal 8
 	echo "CompareEIG_pass $?" >>$1
 fi
@@ -254,7 +259,7 @@ if ! test -z "$has_wfc_r"  && [ $has_wfc_r == 1 ]; then
 		exit 1
 	fi
 	nband=$(grep NBANDS OUT.autotest/running_scf.log|awk '{print $3}')
-	allgrid=$(grep "fft grid for wave functions" OUT.autotest/running_scf.log|awk -F "[=,]" '{print $2*$3*$4}')
+allgrid=$(grep "fft grid for wave functions" OUT.autotest/running_scf.log | awk -F "[=,\\\[\\\]]" '{print $3*$4*$5}')
 	for((band=0;band<$nband;band++));do
 		if [[ -f "OUT.autotest/wfc_realspace/wfc_realspace_0_$band" ]];then
 			variance_wfc_r=`sed -n "13,$"p OUT.autotest/wfc_realspace/wfc_realspace_0_$band | \

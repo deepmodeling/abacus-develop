@@ -313,6 +313,8 @@ void Input_Conv::Convert(void)
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
     GlobalV::relax_new = INPUT.relax_new;
 
+    GlobalV::use_paw = INPUT.use_paw;
+
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 
@@ -570,9 +572,9 @@ void Input_Conv::Convert(void)
         Exx_Abfs::Jle::Ecut_exx = INPUT.exx_opt_orb_ecut;
         Exx_Abfs::Jle::tolerence = INPUT.exx_opt_orb_tolerence;
 
-        // EXX does not support any symmetry analyse, force symmetry setting to -1
-        if (INPUT.calculation != "nscf")
-            ModuleSymmetry::Symmetry::symm_flag = -1;
+        // EXX does not support symmetry=1
+        if (INPUT.calculation != "nscf" && INPUT.symmetry == "1")
+            ModuleSymmetry::Symmetry::symm_flag = 0;
     }
 #endif // __LCAO
 #endif // __EXX

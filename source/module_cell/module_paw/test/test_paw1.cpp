@@ -3,6 +3,19 @@
 
 #include "../paw_cell.h"
 
+/*
+Unit Test for subroutines related to the calculation of rhoij,
+where reciprocal space wavefunctions are passed from outside, and rhoij is calculated:
+
+1. init_paw_cell and set_paw_k, which collects necessary information
+2. accumulate_rhoij, which calculates sum_n <psi_n|p_i><p_j|psi_n>
+
+plus two mathematical subroutines:
+3. calc_ylm, which gives values of spherical harmonics
+4. ass_leg_pol, which gives values of legendre polynomials
+
+*/
+
 class Test_Paw_Cell : public testing::Test
 {
     protected:
@@ -62,8 +75,8 @@ TEST_F(Test_Paw_Cell, test_paw)
     eigts3_in = new std::complex<double> [nz];
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp, 
-        atom_type, (const double **) atom_coord, filename_list,
-        nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
+        atom_type, (const double **) atom_coord, filename_list);
+    paw_cell.set_eigts(nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
 
     int nproj_tot = paw_cell.get_nproj_tot();
     EXPECT_EQ(nproj_tot,44);// 18 + 2 * 8 + 2 * 5 = 44
@@ -236,8 +249,8 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     }
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp,
-        atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
-        eigts1_in, eigts2_in, eigts3_in);
+        atom_type, (const double **) atom_coord, filename_list);
+    paw_cell.set_eigts(nx,ny,nz,eigts1_in, eigts2_in, eigts3_in);
 
     for(int ia = 0; ia < nat; ia ++)
     {
@@ -307,6 +320,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
 
     std::ifstream ifs_psi("psi.dat");
 
+    paw_cell.reset_rhoij();
     for(int iband = 0; iband < nband; iband ++)
     {
         for(int ipw = 0; ipw < npw; ipw ++)
@@ -352,8 +366,95 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         EXPECT_EQ(nrhoijsel[iat],36);
         for(int i = 0; i < 36; i ++)
         {
-            EXPECT_EQ(rhoijselect[iat][i],i);
+            EXPECT_EQ(rhoijselect[iat][i],i+1);
             EXPECT_NEAR(rhoijp[iat][i],rhoij[iat][i],1e-8);
         }
     }
+
+    const int nproj = 8;
+    std::vector<double> dij;
+    dij.resize(nproj * nproj);
+    for(int i = 0; i < dij.size(); i ++)
+    {
+        dij[i] = 0.0;
+    }
+    dij[0] = 13.407893;
+    dij[9] = 0.8201733412;
+    dij[18] = 5.491609854;
+    dij[27] = 5.491609854;
+    dij[36] = 5.491609854;
+    dij[45] = 0.59649632;
+    dij[54] = 0.59649632;
+    dij[63] = 0.59649632;
+
+    std::vector<double> sij;
+    sij.resize(nproj * nproj);
+    for(int i = 0; i < sij.size(); i ++)
+    {
+        sij[i] = 0.0;
+    }
+    sij[0] = -4.902127221589223E-002;
+    sij[9] = -9.18672607663861;
+    sij[18] = -6.319002149104143E-003;
+    sij[27] = -6.319002149104143E-003;
+    sij[36] = -6.319002149104143E-003;
+    sij[45] = -2.38515151080165;
+    sij[54] = -2.38515151080165;
+    sij[63] = -2.38515151080165;
+    
+    sij[1] = 0.726604973599628;
+    sij[8] = 0.726604973599628;
+    sij[21] = 0.156822922280989;
+    sij[30] = 0.156822922280989;
+    sij[39] = 0.156822922280989;
+    sij[42] = 0.156822922280989;
+    sij[51] = 0.156822922280989;
+    sij[60] = 0.156822922280989;
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        paw_cell.set_dij(iat,dij.data());
+        paw_cell.set_sij(iat,sij.data());
+    }
+
+    psi = new std::complex<double>[npw];
+    std::complex<double> *vnlpsi, *snlpsi;
+    vnlpsi = new std::complex<double>[npw];
+    snlpsi = new std::complex<double>[npw];
+
+    ifs_psi.clear();
+    ifs_psi.seekg (0, std::ios::beg);
+
+    std::ifstream ifs_vnlpsi("vnlpsi_ref.dat");
+    std::ifstream ifs_snlpsi("snlpsi_ref.dat");
+
+    std::cout << std::setprecision(10);
+    for(int iband = 0; iband < nband; iband ++)
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            ifs_psi >> psi[ipw];
+            vnlpsi[ipw] = 0.0;
+        }
+
+        paw_cell.paw_nl_psi(0, psi, vnlpsi);
+        paw_cell.paw_nl_psi(1, psi, snlpsi);
+
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            std::complex<double> tmp;
+            ifs_vnlpsi >> tmp;
+            EXPECT_NEAR(tmp.real(),vnlpsi[ipw].real(),1e-8);
+            EXPECT_NEAR(tmp.imag(),vnlpsi[ipw].imag(),1e-8);
+
+            ifs_snlpsi >> tmp;
+            EXPECT_NEAR(tmp.real(),snlpsi[ipw].real(),1e-8);
+            EXPECT_NEAR(tmp.imag(),snlpsi[ipw].imag(),1e-8);
+        }
+    }
+
+    delete[] psi;
+    delete[] vnlpsi;
+    delete[] snlpsi;
+
 }

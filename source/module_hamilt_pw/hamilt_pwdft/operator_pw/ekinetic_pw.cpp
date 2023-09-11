@@ -31,26 +31,27 @@ Ekinetic<OperatorPW<FPTYPE, Device>>::~Ekinetic() {}
 
 template<typename FPTYPE, typename Device>
 void Ekinetic<OperatorPW<FPTYPE, Device>>::act(
-    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi)const
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const std::complex<FPTYPE>* tmpsi_in,
+    std::complex<FPTYPE>* tmhpsi,
+    const int ngk_ik)const
 {
-  ModuleBase::timer::tick("Operator", "EkineticPW");
-  const int npw = psi_in->get_ngk(this->ik);
-  this->max_npw = psi_in->get_nbasis() / psi_in->npol;
+    ModuleBase::timer::tick("Operator", "EkineticPW");
+    int max_npw = nbasis / npol;
 
   const FPTYPE *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
   // denghui added 20221019
-  ekinetic_op()(this->ctx, n_npwx, npw, this->max_npw, tpiba2, gk2_ik, tmhpsi, tmpsi_in);
-  // for (int ib = 0; ib < n_npwx; ++ib)
+  ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, tmhpsi, tmpsi_in);
+  // for (int ib = 0; ib < nbands; ++ib)
   // {
-  //     for (int ig = 0; ig < npw; ++ig)
+  //     for (int ig = 0; ig < ngk_ik; ++ig)
   //     {
   //         tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
   //     }
-  //     tmhpsi += this->max_npw;
-  //     tmpsi_in += this->max_npw;
+  //     tmhpsi += max_npw;
+  //     tmpsi_in += max_npw;
   // }
   ModuleBase::timer::tick("Operator", "EkineticPW");
 }

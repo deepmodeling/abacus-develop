@@ -59,6 +59,7 @@ TEST_F(HContainerTest, insert_pair)
     // set up a hamilt::AtomPair
     hamilt::AtomPair<std::complex<double>> atom_ij(0, 3);
     atom_ij.set_size(2, 2);
+    atom_ij.allocate(true);
     // insert atom_ij into HR
     HR->insert_pair(atom_ij);
     // check if atom_ij is inserted into HR
@@ -82,6 +83,7 @@ TEST_F(HContainerTest, insert_pair)
     // set up another hamilt::AtomPair
     hamilt::AtomPair<std::complex<double>> atom_kl(1, 0);
     atom_kl.set_size(2, 2);
+    atom_kl.allocate(true);
     std::complex<double> tmp_array[4] = {1, 2, 3, 4};
     atom_kl.get_HR_values(1, 0, 0).add_array(&tmp_array[0]);
     // insert atom_kl into HR
@@ -283,6 +285,7 @@ TEST_F(HContainerTest, size_atom_pairs)
     // fix to another R
     hamilt::AtomPair<std::complex<double>> atom_ij(0, 1);
     atom_ij.set_size(2, 2);
+    atom_ij.allocate(true);
     hamilt::BaseMatrix<std::complex<double>>& tmp = atom_ij.get_HR_values(1, 0, 0);
     std::complex<double> tmp_array[4] = {1, 2, 3, 4};
     tmp.add_array(tmp_array);
@@ -340,6 +343,7 @@ TEST_F(HContainerTest, data)
     // set up a hamilt::AtomPair
     hamilt::AtomPair<std::complex<double>> atom_ij(0, 1);
     atom_ij.set_size(2, 2);
+    atom_ij.allocate(true);
     hamilt::BaseMatrix<std::complex<double>>& tmp = atom_ij.get_HR_values(0, 0, 0);
     std::complex<double> tmp_array[4] = {1, 2, 3, 4};
     tmp.add_array(tmp_array);
@@ -420,6 +424,7 @@ TEST_F(HContainerTest, basematrix_funcs)
     EXPECT_EQ(BM.get_value(1, 1), std::complex<double>(16));
     // 5. test get_value
     hamilt::BaseMatrix<std::complex<double>> BM2(2, 2);
+    BM2.allocate(true);
     BM2.add_element(0, 0, 1);
     BM2.add_element(0, 1, 2);
     EXPECT_EQ(BM2.get_value(0, 0), std::complex<double>(1));
@@ -481,6 +486,7 @@ TEST_F(HContainerTest, atompair_funcs)
         for(int atom_j = 0; atom_j<2; ++atom_j)
         {
             hamilt::AtomPair<std::complex<double>> tmp(atom_i, atom_j, 0, 0, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, nullptr);
+            tmp.allocate(false);
             std::complex<double>* tmp_data = tmp.get_HR_values(0, 0, 0).get_pointer();
             for(int i=0;i<4;++i)
             {

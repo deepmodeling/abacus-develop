@@ -24,6 +24,7 @@ option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(ENABLE_LIBCOMM "Enable communicate with LibComm." OFF)
+option(ENABLE_PAW "Enable PAW calculation" OFF)
 option(ENABLE_MPI "Enable compilation with or without MPI." ON)
 option(USE_ELPA "Enable ELPA" ON)
 option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
@@ -98,6 +99,7 @@ set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
+include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 if(ENABLE_COVERAGE)
@@ -136,6 +138,12 @@ endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   add_compile_options(-O3 -g)
+endif()
+
+# stick to strict floating point model on Intel Compiler
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
+    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
+    add_compile_options(-fp-model=strict)
 endif()
 
 # Force turn off USE_ABACUS_LIBM on Intel Compiler
@@ -447,6 +455,28 @@ if(ENABLE_LIBCOMM)
   endif()
 endif()
 
+if(ENABLE_PAW)
+  if(LIBPAW_DIR)
+    add_subdirectory(${LIBPAW_DIR})
+  elseif(GIT_SUBMODULE)
+    find_package(Git QUIET)
+    if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+    # Update submodules as needed
+      message(STATUS "Submodule update")
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --remote deps/libpaw_interface
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              RESULT_VARIABLE GIT_SUBMOD_RESULT)
+      if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+      endif()
+    endif()
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libpaw_interface)
+  else()
+    message(FATAL_ERROR "Must provide LIBPAW_DIR for communicate related features.")
+  endif()
+  add_compile_definitions(USE_PAW)
+endif()
+
 list(APPEND math_libs m)
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
@@ -580,8 +610,13 @@ target_link_libraries(${ABACUS_BIN_NAME}
     vdw
     device
     container
-    kernels
 )
+
+if(ENABLE_PAW)
+  target_link_libraries(${ABACUS_BIN_NAME}
+  paw
+  )
+endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
@@ -591,6 +626,7 @@ if(ENABLE_LCAO)
       gint
       dftu
       hcontainer
+      numerical_atomic_orbitals
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}

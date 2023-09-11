@@ -34,6 +34,9 @@ public:
     int nbx, nby, nbz;
     virtual void distribute_r()
     {
+        bx = (bx == 0) ? 2 : bx;
+        by = (by == 0) ? 2 : by;
+        bz = (bz == 0) ? 2 : bz;
         this->nbx = this->nx / bx;
         this->nby = this->ny / by;
         this->nbz = this->nz / bz;

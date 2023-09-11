@@ -60,7 +60,9 @@ ESolver_KS_LCAO::ESolver_KS_LCAO()
 }
 ESolver_KS_LCAO::~ESolver_KS_LCAO()
 {
+#ifndef USE_NEW_TWO_CENTER
     this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
+#endif
 }
 
 void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
@@ -139,7 +141,7 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
             /* In the special "two-level" calculation case,
             first scf iteration only calculate the functional without exact exchange.
             but in "nscf" calculation, there is no need of "two-level" method. */
-            if (ucell.atoms[0].ncpp.xc_func == "HSE" || ucell.atoms[0].ncpp.xc_func == "PBE0")
+            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
             {
                 XC_Functional::set_xc_type("pbe");
             }
@@ -404,6 +406,8 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 #ifdef __EXX
     Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
+
+#ifndef USE_NEW_TWO_CENTER
     this->orb_con.set_orb_tables(GlobalV::ofs_running,
                                  GlobalC::UOT,
                                  GlobalC::ORB,
@@ -413,11 +417,29 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
                                  ucell.infoNL.nprojmax,
                                  ucell.infoNL.nproj,
                                  ucell.infoNL.Beta);
+#else
+    //-------------------------------------
+    //  new two-center integral module
+    //-------------------------------------
+    two_center_bundle.reset(new TwoCenterBundle);
+
+    // NOTE: ucell.orbital_fn does not include the path,
+    // GlobalV::global_orbital_dir & GlobalV::global_pseudo_dir is prepended inside build()
+    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.infoNL.Beta,
+            GlobalV::deepks_setorb, &ucell.descriptor_file);
+    // currently deepks only use one descriptor file, so use bool as int
+
+    // transfer the ownership to UOT
+    // this is a temporary solution during refactoring
+    // the final version will get rid of UOT
+    // and transfer individual ownership of TwoCenterIntegrator to corresponding operator
+    GlobalC::UOT.two_center_bundle = std::move(two_center_bundle);
+#endif
 
     if (this->orb_con.setup_2d)
     {
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
-        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.iat2iwt.data(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+        this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     }
 }
 
@@ -884,8 +906,8 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
 ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
 {
     return ModuleIO::Output_Mat_Sparse(hsolver::HSolverLCAO::out_mat_hsR,
-                                       hsolver::HSolverLCAO::out_mat_t,
                                        hsolver::HSolverLCAO::out_mat_dh,
+                                       hsolver::HSolverLCAO::out_mat_t,
                                        INPUT.out_mat_r,
                                        istep,
                                        this->pelec->pot->get_effective_v(),

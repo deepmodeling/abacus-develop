@@ -1,0 +1,39 @@
+name: Questions
+description: For users or developers who need help with software installation, usability, or other issues.
+labels: [Questions]
+assignees: dyzheng
+
+body:
+- type: textarea
+  attributes:
+    label: Details
+    description: |
+      Please provide details about your question or issue. If applicable, include the system you are using ABACUS with. If you are unsure about what information to provide, please refer to the online manual (check the box below if you have not read it yet).
+    placeholder: |
+      Example: I am trying to install ABACUS on my laptop running Ubuntu 20.04. I have followed the instructions in the online manual, but I am getting the following error message when I run cmake --build build -j8 ...
+  validations:
+    required: true
+- type: checkboxes
+  attributes:
+    label: Have you read FAQ on the online manual http://abacus.deepmodeling.com/en/latest/community/faq.html
+    description: Please check the box below if you have read the online manual before submitting your question.
+    options:
+      - label: Yes, I have read the FAQ part on online manual.
+        required: true
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers
+    options:
+      - label: Understand the problem or question described by the user.
+      - label: Check if the issue is a known problem or has been addressed in the documentation.
+      - label: Test the issue or problem on a similar system or environment, if possible.
+      - label: Identify the root cause or provide clarification on the user's question.
+      - label: Provide a step-by-step guide, including any necessary resources, to resolve the issue or answer the question.
+      - label: If the issue is related to documentation, update the documentation to prevent future confusion (optional).
+      - label: If the issue is related to code, consider implementing a fix or improvement (optional).
+      - label: Review and incorporate any relevant feedback from users or developers.
+      - label: Ensure the user's issue is resolved or their question is answered and close the ticket.
+- type: markdown
+  attributes:
+    value: >
+      Thanks for contributing 🎉!

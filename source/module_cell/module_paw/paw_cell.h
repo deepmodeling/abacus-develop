@@ -12,6 +12,7 @@
 
 #include "paw_element.h"
 #include "paw_atom.h"
+#include "module_base/matrix3.h"
 
 class Paw_Cell
 {
@@ -20,14 +21,19 @@ class Paw_Cell
     Paw_Cell(){};
     ~Paw_Cell(){};
 
+// PART I. Operations in ABACUS: Preparations & Calculating rhoij
+
     void init_paw_cell(
         const double ecutwfc_in, const double cell_factor_in,
         const double omega_in,
         const int nat_in, const int ntyp_in,
         const int * atom_type_in, const double ** atom_coord_in,
-        const std::vector<std::string> & filename_list_in,
-        const int nx_in, const int ny_in, const int nz_in,
-        const std::complex<double> * eigts1_in, const std::complex<double> * eigts2_in, const std::complex<double> * eigts3_in);
+        const std::vector<std::string> & filename_list_in);
+
+    void set_eigts(const int nx_in, const int ny_in, const int nz_in,
+        const std::complex<double> * eigts1_in,
+        const std::complex<double> * eigts2_in,
+        const std::complex<double> * eigts3_in);
 
     // Given a list of k points, calculate the structure factors
     // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
@@ -42,6 +48,7 @@ class Paw_Cell
     // then accumulates the contribution of this wavefunction to rhoij
     // Note k-point information is not passed here, but prepared in set_paw_k
     void accumulate_rhoij(const std::complex<double> * psi, const double weight);
+    void reset_rhoij();
 
     // returns rhoij for each atom
     std::vector<std::vector<double>> get_rhoij();
@@ -151,6 +158,102 @@ class Paw_Cell
 
     void set_ylm(const int npw_in, const double ** kpg);
 
+// Part II. Operations in ABACUS: V_{NL}|psi> and S|psi>
+
+    public:
+
+    // This function calculates the nonlocal potential V_{NL}|psi> or (S+I)|psi>
+    // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
+    void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
+
+    void set_dij(const int iat, double* dij_in){paw_atom_list[iat].set_dij(dij_in);}
+
+    void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
+
+// Part III. Passing info for the initialization of PAW
+    // The following gathers information needed by LibPAW, they will be inserted
+    // to proper places in the main program
+
+    // Cutoff energies, sets ecut and ecutpaw
+    void set_libpaw_ecut(const double ecut_in, const double ecutpaw_in);
+    // Sets rprimd, gprimd, gmet and ucvol
+    // Input is latvec and lat0, will calculate the required info
+    void set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double lat0);
+    // FFT grid information, sets ngfft and ngfftdg
+    void set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
+        const int nxdg_in, const int nydg_in, const int nzdg_in);
+    // Sets natom, ntypat, typat and xred
+    void set_libpaw_atom(const int natom_in, const int ntypat_in, const int * typat_in, const double * xred_in);
+    // Sets filename_list
+    void set_libpaw_files();
+    // Sets XC functional
+    void set_libpaw_xc(const int xclevel_in, const int ixc_in);
+    // Sets number of spin channels
+    void set_nspin(const int nspin_in);
+    
+    // Extract the information
+    double get_libpaw_ecut() {return ecut;}
+    double get_libpaw_ecutpaw() {return ecutpaw;}
+    std::vector<double> get_libpaw_rprimd() {return rprimd;}
+    std::vector<double> get_libpaw_gprimd() {return gprimd;}
+    std::vector<double> get_libpaw_gmet() {return gmet;}
+    double get_libpaw_ucvol() {return ucvol;}
+    std::vector<int> get_libpaw_ngfft() {return ngfft;}
+    std::vector<int> get_libpaw_ngfftdg() {return ngfftdg;}
+    int get_libpaw_natom() {return natom;}
+    int get_libpaw_ntypat() {return ntypat;}
+    std::vector<int> get_libpaw_typat() {return typat;}
+    std::vector<double> get_libpaw_xred() {return xred;}
+    char* get_libpaw_filename_list() {return filename_list;}
+    int get_libpaw_ixc() {return ixc;}
+    int get_libpaw_xclevel() {return xclevel;}
+    int get_nspin() {return nspden;}
+    
+    int get_nrxx() {return nx*ny*nz;}
+    int get_val(const int it) {return paw_element_list[it].get_zval();}
+    int get_zat(const int it) {return paw_element_list[it].get_zat();}
+
+    private:
+// Info to be passed to libpaw_interface:
+// 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
+// there will be one coarse grid for density/potential, and a fine grid for PAW
+// the unit is in Hartree
+// 2. rprimd, gprimd : real and reciprocal space lattice vectors, respectively
+// unit for rprimd is in Bohr, and for gprimd is in Bohr^-1
+// 3. gmet : reciprocal space metric (bohr^-2)
+// 4. ucvol : volume of unit cell (Bohr^3)
+// 5. ngfft, ngfftdg : dimension of FFT grids of the corase and fine grids; nfft = ngfftdg[0]*ngfftdg[1]*ngfftdg[2]
+// 6. natom, ntypat, typat: #. atoms, #. element types
+// and typat records the type of each atom
+// 7. xred : coordinate of each atom, in terms of rprimd (namely, direct coordinate)
+// 8. filename_list : filename of the PAW xml files for each element
+
+    double ecut, ecutpaw;
+    std::vector<double> rprimd, gprimd, gmet;
+    double ucvol;
+    std::vector<int> ngfft, ngfftdg;
+    int nfft;
+    int natom, ntypat;
+    std::vector<int> typat;
+    std::vector<double> xred;
+    char* filename_list;
+    int xclevel, ixc;
+    int nspden, nsppol;
+
+// Part IV. Calling Fortran subroutines from libpaw_interface
+    public:
+    void prepare_paw();
+    void get_vloc_ncoret(double* vloc, double* ncoret);
+    void init_rho(double** rho);
+    void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
+    void get_nhat(double** nhat, double* nhatgr);
+    void calculate_dij(double* vks, double* vxc);
+    void get_dij(int iat, int size_dij, double* dij);
 };
+
+namespace GlobalC
+{
+    extern Paw_Cell paw_cell;
+}
 
 #endif

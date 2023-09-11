@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix				autotest
 calculation     	scf
 ntype				2
-symmetry			-1
+symmetry			0
 nspin				4
 lspinorb			1
 noncolin			1
