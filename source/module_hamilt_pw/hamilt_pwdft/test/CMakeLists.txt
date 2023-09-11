@@ -5,7 +5,7 @@ remove_definitions(-D__EXX)
 
 AddTest(
   TARGET pwdft_soc
-  LIBS ${math_libs}
+  LIBS ${math_libs} formatter
   SOURCES soc_test.cpp ../soc.cpp
   	../../../module_base/global_variable.cpp
   	../../../module_base/global_function.cpp

@@ -35,10 +35,12 @@ class Meta<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
       virtual ~Meta();
 
-      virtual void act(const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-                       const int n_npwx,
-                       const std::complex<FPTYPE>* tmpsi_in,
-                       std::complex<FPTYPE>* tmhpsi) const override;
+      virtual void act(const int nbands,
+          const int nbasis,
+          const int npol,
+          const std::complex<FPTYPE>* tmpsi_in,
+          std::complex<FPTYPE>* tmhpsi,
+          const int ngk = 0)const override;
 
       // denghui added for copy constructor at 20221105
       FPTYPE get_tpiba() const

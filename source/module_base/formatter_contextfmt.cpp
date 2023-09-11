@@ -13,13 +13,12 @@ formatter::ContextFmt::~ContextFmt() {
 }
 
 void formatter::ContextFmt::set_context(std::string context) {
-    if (strcmp(context.c_str(), this->context_.c_str()) != 0) {
-        this->disable_iterative();
+    int iterative = this->iterative_;
+    if (strcmp(context.c_str(), this->context_.c_str()) == 0) {
+        this->iterative_ = iterative;
     }
-    this->ncol_ = 0;
+    this->reset();
     this->context_ = context;
-    this->phys_fmt_.clear();
-    this->title_switch_ = 0;
     auto it = this->predefined_phys_fmt.find(context);
     if (it != this->predefined_phys_fmt.end()) {
         this->known_context_ = true;
@@ -29,9 +28,12 @@ void formatter::ContextFmt::set_context(std::string context) {
         }
         if (it->second.first == 1) {
             if (this->iterative_ >= 1) {
+                // iterative_ >= 1 means it is iterative mode
                 this->enable_title();
             }
             else {
+                // else for known context, the title is forbidden to input by crisscrossly calling << operator, say context << title << data
+                // instead, use set_titles(std::vector<std::string> titles)
                 this->disable_title();
             }
         }
@@ -40,79 +42,43 @@ void formatter::ContextFmt::set_context(std::string context) {
             this->enable_title();
         }
         else if (it->second.first == -1) {
+            // I have not implemented this yet
             this->only_title();
         }
     }
     else {
-        // do nothing
+        // unknown context, undefined behavior
+        // warning: you would be better to set the context you like in formatter_contextfmt.h predefined_phys_fmt before using it
+        this->known_context_ = false;
     }
 }
 
 void formatter::ContextFmt::set_context(int ncol, std::string* phys_fmt, int* nrows) {
-    this->disable_iterative();
-    std::string context = "none";
-    this->context_ = context;
+    // this must be an unknown context
+    this->reset();
+    this->context_ = "";
     this->ncol_ = ncol;
-    this->nrows_.clear();
-    this->phys_fmt_.clear();
-    this->title_switch_ = 0;
-    for (int icol = 0; icol < ncol; ++icol) {
+    for (int icol = 0; icol < this->ncol_; ++icol) {
         this->nrows_.push_back(nrows[icol]);
         this->phys_fmt_.push_back(phys_fmt[icol]);
-    }
-    auto it = this->predefined_phys_fmt.find(context);
-    if (it != this->predefined_phys_fmt.end()) {
-        this->known_context_ = true;
-        if (it->second.first == 1) {
-            this->disable_title();
-        }
-        else if (it->second.first == 0) {
-            // there is a title defined in this context, so it is needed to distinguish the title and the data
-            this->enable_title();
-        }
-        else if (it->second.first == -1) {
-            this->only_title();
-        }
-    }
-    else {
-        // do nothing
     }
 }
 
 void formatter::ContextFmt::set_context(std::string context, int ncol, int* &nrows) {
     this->set_context(context);
+    this->ncol_ = ncol;
     for (int i = 0; i < ncol; ++i) {
         this->nrows_.push_back(nrows[i]);
     }
 }
 
 void formatter::ContextFmt::set_context(std::vector<std::string> phys_fmt) {
-    this->disable_iterative();
-    std::string context = "none";
-    this->context_ = context;
+    // this must be an unknown context
+    this->reset();
+    this->context_ = "";
     this->ncol_ = phys_fmt.size();
-    this->nrows_.clear();
-    this->phys_fmt_.clear();
-    this->title_switch_ = 0;
     for (int icol = 0; icol < this->ncol_; ++icol) {
         this->phys_fmt_.push_back(phys_fmt[icol]);
-    }
-    auto it = this->predefined_phys_fmt.find(context);
-    if (it != this->predefined_phys_fmt.end()) {
-        this->known_context_ = true;
-        if (it->second.first == 1) {
-            this->disable_title();
-        }
-        else if (it->second.first == 0) {
-            // there is a title defined in this context, so it is needed to distinguish the title and the data
-            this->enable_title();
-        }
-        else if (it->second.first == -1) {
-            this->only_title();
-        }
-    }
-    else {
-        // do nothing
     }
 }
 
@@ -139,6 +105,7 @@ formatter::ContextFmt& formatter::ContextFmt::operator<<(const std::string& valu
         }
         Table::add_col(this->cache_title_, (std::vector<std::string>){this->fmt_.format(value)});
         this->icol_++;
+        this->fmt_.reset();
     }
     if (Table::get_mode() == 1) {
         this->title_switch_ += 2;
@@ -166,12 +133,27 @@ template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <char>(char*
 
 void formatter::ContextFmt::reset() {
     Table::reset();
+    //this->context_ = "";
     this->phys_fmt_.clear();
+    this->default_phys_fmt_ = "energy";
     this->cache_title_ = "";
-    this->icol_ = 0;
+    this->with_title_ = true;
+
     this->ncol_ = 0;
+    this->icol_ = 0;
     this->nrows_.clear();
+    this->iterative_ = 0;
+
+    this->fmt_.reset();
     this->title_switch_ = 0;
+
+    this->known_context_ = false;
+
+    this->disable_title(); // do what constructor does
+}
+
+void formatter::ContextFmt::context_refresh() {
+    this->reset();
     this->set_context(this->context_);
 }
 
@@ -191,7 +173,7 @@ std::string formatter::ContextFmt::str(bool next_line) {
     if (!next_line) {
         str.pop_back();
     }
-    this->reset();
+    this->context_refresh();
     return str;
 }
 

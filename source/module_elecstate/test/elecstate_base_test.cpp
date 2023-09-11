@@ -59,6 +59,9 @@ void ModulePW::PW_Basis::distribute_r()
 void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
 {
 }
+void Charge::set_rho_core_paw()
+{
+}
 void Charge::init_rho(elecstate::efermi&, ModuleBase::ComplexMatrix const&, const int&, const int&)
 {
 }
