@@ -319,7 +319,7 @@ void Input::Default(void)
     out_app_flag = true;
     out_mat_r = 0; // jingan add 2019-8-14
     out_mat_dh = 0;
-    out_wfc_lcao = false;
+    out_wfc_lcao = 0;
     out_alllog = false;
     dos_emin_ev = -15; //(ev)
     dos_emax_ev = 15; //(ev)
@@ -1277,7 +1277,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
-            read_bool(ifs, out_wfc_lcao);
+            read_value(ifs, out_wfc_lcao);
         }
         else if (strcmp("out_alllog", word) == 0)
         {
@@ -2946,7 +2946,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
-    Parallel_Common::bcast_bool(out_wfc_lcao);
+    Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
     Parallel_Common::bcast_bool(out_app_flag);
@@ -3473,6 +3473,11 @@ void Input::Check(void)
         if (kpar > 1)
         {
             ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
+        }
+
+        if (out_wfc_lcao != 0 && out_wfc_lcao != 1 && out_wfc_lcao != 2)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_wfc_lcao must be 0, 1, or 2");
         }
     }
     else if (basis_type == "lcao_in_pw")
