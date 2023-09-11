@@ -21,6 +21,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_io/dm_io.h"
 
+#include "module_hamilt_lcao/module_sc/spin_constrain.h"
+
 namespace ModuleESolver
 {
 
@@ -264,6 +266,18 @@ namespace ModuleESolver
             }
         }
 #endif
+        if (GlobalV::sc_mag_switch)
+        {
+            SpinConstrain& sc = SpinConstrain::getInstance();
+            sc.init_sc(GlobalC::ucell,
+                GlobalV::NPOL,
+                GlobalV::sc_file,
+                &(this->orb_con.ParaV),
+                GlobalV::NSPIN,
+                GlobalV::sc_thr,
+                GlobalV::nsc,
+                GlobalV::nsc_min);
+        }
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 
     }
