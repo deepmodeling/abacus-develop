@@ -7,7 +7,8 @@
 #include "module_base/tool_title.h"
 #include "module_base/scalapack_connector.h"
 
-void SpinConstrain::cal_MW(const int& step,
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
                         LCAO_Matrix& LM,
                         const std::vector<ModuleBase::ComplexMatrix> &dm,
                         const K_Vectors& kv,
@@ -182,7 +183,8 @@ void SpinConstrain::cal_MW(const int& step,
     
 }
 
-ModuleBase::matrix SpinConstrain::cal_MW_k(
+template<typename FPTYPE, typename Device>
+ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
     LCAO_Matrix& LM,
     const std::vector<ModuleBase::ComplexMatrix> &dm,
     const K_Vectors& kv
@@ -278,7 +280,8 @@ ModuleBase::matrix SpinConstrain::cal_MW_k(
     return orbMulP;
 }
 
-std::vector<std::vector<std::vector<double>>> SpinConstrain::convert(const ModuleBase::matrix &orbMulP)
+template<typename FPTYPE, typename Device>
+std::vector<std::vector<std::vector<double>>> SpinConstrain<FPTYPE, Device>::convert(const ModuleBase::matrix &orbMulP)
 {
     std::vector<std::vector<std::vector<double>>> AorbMulP;
     AorbMulP.resize(this->nspin_);
@@ -307,3 +310,5 @@ std::vector<std::vector<std::vector<double>>> SpinConstrain::convert(const Modul
     
     return AorbMulP;
 }
+
+template class SpinConstrain<double, psi::DEVICE_CPU>;

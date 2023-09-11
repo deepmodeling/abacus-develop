@@ -22,7 +22,8 @@
     //this->restrict_current = GlobalV::SCCUT;
 //}
 
-void SpinConstrain::run_lambda_loop(int outer_step)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 {
     std::cout << "outer_step = " << outer_step << std::endl;
     std::cout << "sc_thr " << this->sc_thr_ << std::endl;
@@ -306,3 +307,5 @@ void SpinConstrain::run_lambda_loop(int outer_step)
 //    std::cout << "===============================================================================" << std::endl;
 //
 }
+
+template class SpinConstrain<double, psi::DEVICE_CPU>;

@@ -1,11 +1,13 @@
 #include "spin_constrain.h"
 
-SpinConstrain& SpinConstrain::getInstance() {
-    static SpinConstrain instance; // Guaranteed to be created and destroyed only once
+template<typename FPTYPE, typename Device>
+SpinConstrain<FPTYPE, Device>& SpinConstrain<FPTYPE, Device>::getInstance() {
+    static SpinConstrain<FPTYPE, Device> instance; // Guaranteed to be created and destroyed only once
     return instance;
 }
 
-double SpinConstrain::cal_escon()
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::cal_escon()
 {
     this->escon_ = 0.0;
     int nat = this->get_nat();
@@ -30,30 +32,35 @@ double SpinConstrain::cal_escon()
 }
 
 // set atomCounts
-void SpinConstrain::set_atomCounts(const std::map<int, int>& atomCounts_in) {
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_atomCounts(const std::map<int, int>& atomCounts_in) {
     this->atomCounts = atomCounts_in;
 }
 
 // get atomCounts
-const std::map<int, int>& SpinConstrain::get_atomCounts() const
+template<typename FPTYPE, typename Device>
+const std::map<int, int>& SpinConstrain<FPTYPE, Device>::get_atomCounts() const
 {
     return this->atomCounts;
 }
 
 /// set npol
-void SpinConstrain::set_npol(int npol)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_npol(int npol)
 {
     this->npol_ = npol;
 }
 
 /// get npol
-int SpinConstrain::get_npol()
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_npol()
 {
     return this->npol_;
 }
 
 /// set nspin
-void SpinConstrain::set_nspin(int nspin_in)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_nspin(int nspin_in)
 {
     if (nspin_in != 4)
     {
@@ -63,12 +70,14 @@ void SpinConstrain::set_nspin(int nspin_in)
 }
 
 /// get nspin
-int SpinConstrain::get_nspin()
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_nspin()
 {
     return this->nspin_;
 }
 
-int SpinConstrain::get_nat()
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_nat()
 {
     int nat = 0;
     for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it) {
@@ -77,12 +86,14 @@ int SpinConstrain::get_nat()
     return nat;
 }
 
-int SpinConstrain::get_ntype()
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_ntype()
 {
     return this->atomCounts.size();
 }
 
-void SpinConstrain::check_atomCounts()
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::check_atomCounts()
 {
     if (!this->atomCounts.size())
     {
@@ -107,7 +118,8 @@ void SpinConstrain::check_atomCounts()
 }
 
 // get iat
-int SpinConstrain::get_iat(int itype, int atom_index)
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_iat(int itype, int atom_index)
 {
     if (itype < 0 || itype >= this->get_ntype())
     {
@@ -130,29 +142,34 @@ int SpinConstrain::get_iat(int itype, int atom_index)
 }
 
 // clear atomCounts
-void SpinConstrain::clear_atomCounts()
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::clear_atomCounts()
 {
     this->atomCounts.clear();
 }
 
 // clear orbitalCounts
-void SpinConstrain::clear_orbitalCounts()
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::clear_orbitalCounts()
 {
     this->orbitalCounts.clear();
 }
 
 // set orbitalCounts
-void SpinConstrain::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in) {
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in) {
     this->orbitalCounts = orbitalCounts_in;
 }
 
 // get orbitalCounts
-const std::map<int, int>& SpinConstrain::get_orbitalCounts() const
+template<typename FPTYPE, typename Device>
+const std::map<int, int>& SpinConstrain<FPTYPE, Device>::get_orbitalCounts() const
 {
     return this->orbitalCounts;
 }
 
-int SpinConstrain::get_nw()
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_nw()
 {
     this->check_atomCounts();
     int nw = 0;
@@ -162,7 +179,8 @@ int SpinConstrain::get_nw()
     return nw;
 }
 
-int SpinConstrain::get_iwt(int itype, int iat, int orbital_index)
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_iwt(int itype, int iat, int orbital_index)
 {
     this->check_atomCounts();
     if (itype < 0 || itype >= this->get_ntype())
@@ -193,7 +211,8 @@ int SpinConstrain::get_iwt(int itype, int iat, int orbital_index)
 }
 
 // set sc_lambda from ScData
-void SpinConstrain::set_sc_lambda()
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_sc_lambda()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -213,7 +232,8 @@ void SpinConstrain::set_sc_lambda()
 }
 
 // set sc_mag from ScData
-void SpinConstrain::set_sc_mag()
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_sc_mag()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -233,7 +253,8 @@ void SpinConstrain::set_sc_mag()
 }
 
 // set sc_lambda from variable
-void SpinConstrain::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -249,7 +270,8 @@ void SpinConstrain::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, 
 }
 
 // set sc_mag from variable
-void SpinConstrain::set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
@@ -264,12 +286,16 @@ void SpinConstrain::set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int
     }
 }
 
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain::get_sc_lambda() const
+template<typename FPTYPE, typename Device>
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_sc_lambda() const
 {
     return this->lambda_;
 }
 
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain::get_sc_mag() const
+template<typename FPTYPE, typename Device>
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_sc_mag() const
 {
     return this->sc_mag_;
 }
+
+template class SpinConstrain<double, psi::DEVICE_CPU>;

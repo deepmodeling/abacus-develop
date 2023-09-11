@@ -6,17 +6,20 @@
 #include <string>
 #include <regex>
 
-const std::map<int, std::vector<ScAtomData>>& SpinConstrain::get_ScData() const
+template<typename FPTYPE, typename Device>
+const std::map<int, std::vector<ScAtomData>>& SpinConstrain<FPTYPE, Device>::get_ScData() const
 {
     return this->ScData;
 }
 
-void SpinConstrain::clear_ScData()
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::clear_ScData()
 {
     this->ScData.clear();
 }
 
-void SpinConstrain::Set_ScData_From_Json(const std::string& filename)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& filename)
 {
     ModuleBase::TITLE("SpinConstrain", "ScJsonFile");
     std::ifstream file(filename);
@@ -92,3 +95,5 @@ void SpinConstrain::Set_ScData_From_Json(const std::string& filename)
     }
     file.close();
 }
+
+template class SpinConstrain<double, psi::DEVICE_CPU>;

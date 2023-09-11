@@ -2,7 +2,8 @@
 #include "module_base/parallel_common.h"
 
 // init sc
-void SpinConstrain::init_sc(const UnitCell& ucell,
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
                             int NPOL,
                             std::string sc_file,
                             Parallel_Orbitals* ParaV_in,
@@ -70,3 +71,5 @@ void SpinConstrain::init_sc(const UnitCell& ucell,
     this->nsc_ = nsc_in;
     this->nsc_min_ = nsc_min_in;
 }
+
+template class SpinConstrain<double, psi::DEVICE_CPU>;

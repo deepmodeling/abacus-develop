@@ -4,7 +4,8 @@
 #include "module_base/global_function.h"
 #include <algorithm>
 
-void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
@@ -67,7 +68,8 @@ void SpinConstrain::cal_h_lambda(std::complex<double>* h_lambda)
     return;
 }
 
-void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Sloc2)
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::cal_weight_func(const std::vector<std::complex<double>>& Sloc2)
 {
     ModuleBase::TITLE("SpinConstrain","cal_weight_func");
     ModuleBase::timer::tick("SpinConstrain", "cal_weight_func");
@@ -124,3 +126,5 @@ void SpinConstrain::cal_weight_func(const std::vector<std::complex<double>>& Slo
     ModuleBase::timer::tick("SpinConstrain", "cal_weight_func");
     return;
 }
+
+template class SpinConstrain<double, psi::DEVICE_CPU>;

@@ -10,9 +10,11 @@
 #include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hsolver/hsolver.h"
 
 struct ScAtomData;
 
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class SpinConstrain
 {
 public:
@@ -33,8 +35,6 @@ public:
     void cal_h_lambda(std::complex<double>* h_lambda);
 
     void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
-
-    Parallel_Orbitals *ParaV;
 
     void cal_MW(
         const int& step,
@@ -64,6 +64,16 @@ public:
     }
 
     void run_lambda_loop(int outer_step);
+
+public:
+    /**
+     * important outter class pointers used in spin-constrained DFT
+    */
+    Parallel_Orbitals *ParaV;
+    hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
+    hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
+    elecstate::ElecState* pelec = nullptr;
+    psi::Psi<std::complex<double>>* psi = nullptr;
 
 public:
     /**

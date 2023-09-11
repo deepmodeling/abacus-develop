@@ -268,7 +268,7 @@ namespace ModuleESolver
 #endif
         if (GlobalV::sc_mag_switch)
         {
-            SpinConstrain& sc = SpinConstrain::getInstance();
+            SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
             sc.init_sc(GlobalC::ucell,
                 GlobalV::NPOL,
                 GlobalV::sc_file,

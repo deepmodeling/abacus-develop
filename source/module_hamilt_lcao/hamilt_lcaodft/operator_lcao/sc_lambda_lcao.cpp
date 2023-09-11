@@ -18,7 +18,7 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorScLambda", "contributeHk");
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
-    SpinConstrain& sc = SpinConstrain::getInstance();
+    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
     std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
     std::fill(h_lambda.begin(), h_lambda.end(), std::complex<double>(0, 0));
     sc.cal_weight_func(this->LM->Sloc2);

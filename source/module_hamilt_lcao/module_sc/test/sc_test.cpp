@@ -16,7 +16,7 @@
 class SpinConstrainTest : public testing::Test
 {
   protected:
-	SpinConstrain& sc = SpinConstrain::getInstance();
+	SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
 };
 
 TEST_F(SpinConstrainTest, AtomCounts)
