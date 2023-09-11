@@ -28,9 +28,12 @@ class Paw_Cell
         const double omega_in,
         const int nat_in, const int ntyp_in,
         const int * atom_type_in, const double ** atom_coord_in,
-        const std::vector<std::string> & filename_list_in,
-        const int nx_in, const int ny_in, const int nz_in,
-        const std::complex<double> * eigts1_in, const std::complex<double> * eigts2_in, const std::complex<double> * eigts3_in);
+        const std::vector<std::string> & filename_list_in);
+
+    void set_eigts(const int nx_in, const int ny_in, const int nz_in,
+        const std::complex<double> * eigts1_in,
+        const std::complex<double> * eigts2_in,
+        const std::complex<double> * eigts3_in);
 
     // Given a list of k points, calculate the structure factors
     // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
@@ -45,6 +48,7 @@ class Paw_Cell
     // then accumulates the contribution of this wavefunction to rhoij
     // Note k-point information is not passed here, but prepared in set_paw_k
     void accumulate_rhoij(const std::complex<double> * psi, const double weight);
+    void reset_rhoij();
 
     // returns rhoij for each atom
     std::vector<std::vector<double>> get_rhoij();
@@ -204,6 +208,10 @@ class Paw_Cell
     int get_libpaw_ixc() {return ixc;}
     int get_libpaw_xclevel() {return xclevel;}
     int get_nspin() {return nspden;}
+    
+    int get_nrxx() {return nx*ny*nz;}
+    int get_val(const int it) {return paw_element_list[it].get_zval();}
+    int get_zat(const int it) {return paw_element_list[it].get_zat();}
 
     private:
 // Info to be passed to libpaw_interface:
@@ -234,14 +242,18 @@ class Paw_Cell
 
 // Part IV. Calling Fortran subroutines from libpaw_interface
     public:
-#ifdef USE_PAW
     void prepare_paw();
     void get_vloc_ncoret(double* vloc, double* ncoret);
+    void init_rho(double** rho);
     void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
-    void get_nhat(double* nhat, double* nhatgr);
+    void get_nhat(double** nhat, double* nhatgr);
     void calculate_dij(double* vks, double* vxc);
     void get_dij(int iat, int size_dij, double* dij);
-#endif
 };
+
+namespace GlobalC
+{
+    extern Paw_Cell paw_cell;
+}
 
 #endif

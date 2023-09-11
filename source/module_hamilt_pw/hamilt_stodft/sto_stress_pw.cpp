@@ -112,57 +112,67 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 	gk[0]= new double[npwx]; 
 	gk[1]= new double[npwx];
 	gk[2]= new double[npwx];
-	double factor=ModuleBase::TWO_PI/GlobalC::ucell.lat0;
-	int nksbands = psi_in->get_nbands();
-	if(GlobalV::MY_STOGROUP != 0) nksbands = 0;
+    double tpiba = ModuleBase::TWO_PI / GlobalC::ucell.lat0;
+    double twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
+    double* kfac = new double[npwx];
+    int nksbands = psi_in->get_nbands();
+    if (GlobalV::MY_STOGROUP != 0)
+        nksbands = 0;
 
-	for(int ik=0;ik<nks;++ik)
-	{
-		const int nstobands = stowf.nchip[ik];
-		const int nbandstot = nstobands + nksbands;
-		const int npw = wfc_basis->npwk[ik];
+    for (int ik = 0; ik < nks; ++ik)
+    {
+        const int nstobands = stowf.nchip[ik];
+        const int nbandstot = nstobands + nksbands;
+        const int npw = wfc_basis->npwk[ik];
         for (int i = 0; i < npw; ++i)
         {
-            gk[0][i] = wfc_basis->getgpluskcar(ik, i)[0] * factor;
-            gk[1][i] = wfc_basis->getgpluskcar(ik, i)[1] * factor;
-            gk[2][i] = wfc_basis->getgpluskcar(ik, i)[2] * factor;
+            gk[0][i] = wfc_basis->getgpluskcar(ik, i)[0] * tpiba;
+            gk[1][i] = wfc_basis->getgpluskcar(ik, i)[1] * tpiba;
+            gk[2][i] = wfc_basis->getgpluskcar(ik, i)[2] * tpiba;
+            if (wfc_basis->erf_height > 0)
+            {
+                double gk2 = gk[0][i] * gk[0][i] + gk[1][i] * gk[1][i] + gk[2][i] * gk[2][i];
+                double arg = (gk2 - wfc_basis->erf_ecut) / wfc_basis->erf_sigma;
+                kfac[i] = 1.0 + wfc_basis->erf_height / wfc_basis->erf_sigma * twobysqrtpi * std::exp(-arg * arg);
+            }
+            else
+            {
+                kfac[i] = 1.0;
+            }
         }
 
-        //kinetic contribution
+        // kinetic contribution
 
-		for(int l=0;l<3;++l)
-		{
-			for(int m=0;m<l+1;++m)
-			{
-				for(int ibnd=0;ibnd<nbandstot;++ibnd)
-				{
-					if(ibnd < nksbands)
-					{
-						for(int i=0;i<npw;++i)
-						{
-							std::complex<double> p = psi_in->operator()(ik, ibnd, i);
-							double np = p.real() * p.real() + p.imag() * p.imag();
-							s_kin(l,m) +=
-								wg(ik, ibnd)*gk[l][i]*gk[m][i] * np;
-						}
-					}
-					else
-					{
-						for(int i=0;i<npw;++i)
-						{
-							std::complex<double> p = stowf.shchi[ik](ibnd-nksbands, i);
-							double np = p.real() * p.real() + p.imag() * p.imag();
-                            s_kin(l, m) += p_kv->wk[ik] * gk[l][i] * gk[m][i] * np;
+        for (int l = 0; l < 3; ++l)
+        {
+            for (int m = 0; m < l + 1; ++m)
+            {
+                for (int ibnd = 0; ibnd < nbandstot; ++ibnd)
+                {
+                    if (ibnd < nksbands)
+                    {
+                        for (int i = 0; i < npw; ++i)
+                        {
+                            std::complex<double> p = psi_in->operator()(ik, ibnd, i);
+                            double np = p.real() * p.real() + p.imag() * p.imag();
+                            s_kin(l, m) += wg(ik, ibnd) * gk[l][i] * gk[m][i] * kfac[i] * np;
                         }
-					}
-				}
-			}
-		}
-		   
-	}
-		
+                    }
+                    else
+                    {
+                        for (int i = 0; i < npw; ++i)
+                        {
+                            std::complex<double> p = stowf.shchi[ik](ibnd - nksbands, i);
+                            double np = p.real() * p.real() + p.imag() * p.imag();
+                            s_kin(l, m) += p_kv->wk[ik] * gk[l][i] * gk[m][i] * kfac[i] * np;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	for(int l=0;l<3;++l)
+    for(int l=0;l<3;++l)
 	{
 		for(int m=0;m<l;++m)
 		{

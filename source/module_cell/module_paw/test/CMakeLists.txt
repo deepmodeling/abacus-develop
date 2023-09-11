@@ -6,14 +6,12 @@ install(FILES sphbes_ref.dat func.dat qlist.dat fq_ref.dat
   eigts.dat ca.dat rhoij.dat vkb_ref.dat
   Si_test.xml gnorm.dat ptilde_ref.dat psi.dat rhoij1.dat vnlpsi_ref.dat
   H.LDA_PW-JTH.xml Fe.GGA_PBE-JTH.xml O.GGA_PBE-JTH.xml Si.GGA_PBE-JTH.xml
-  STRU snlpsi_ref.dat fort.26 rhoij fort.19 dij_ref C.xml H.xml
-  test4_eigts.dat test4_igxyz.dat test4_kpg.dat test4_psi.dat
+  STRU snlpsi_ref.dat fort.26 rhoij fort.19 dij_ref C.xml H.xml fort.101
+  test4_eigts.dat test4_igxyz.dat test4_kpg.dat test4_psi.dat veff
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-if(ENABLE_PAW)
-  install(FILES C.xml H.xml 
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-endif()
+install(FILES C.xml H.xml 
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET Test_Paw
@@ -33,28 +31,15 @@ AddTest(
   SOURCES test_paw2.cpp ../paw_atom.cpp
 )
 
-if(ENABLE_PAW)
-  AddTest(
-    TARGET Test_Paw3
-    LIBS ${math_libs} base device libpaw_interface -lifcore
-    SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
-  )
-  AddTest(
-    TARGET Test_Paw4
-    LIBS ${math_libs} base device libpaw_interface -lifcore
-    SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp
-  )
-  add_dependencies(Test_Paw3 libpaw_interface)
-  add_dependencies(Test_Paw4 libpaw_interface)
-else()
-  AddTest(
-    TARGET Test_Paw3
-    LIBS ${math_libs} base device
-    SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
-  )
-  AddTest(
-    TARGET Test_Paw4
-    LIBS ${math_libs} base device
-    SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp
-  )
-endif()
+AddTest(
+  TARGET Test_Paw3
+  LIBS ${math_libs} base device libpaw_interface -lifcore
+  SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
+)
+AddTest(
+  TARGET Test_Paw4
+  LIBS ${math_libs} base device libpaw_interface -lifcore
+  SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp
+)
+add_dependencies(Test_Paw3 libpaw_interface)
+add_dependencies(Test_Paw4 libpaw_interface)

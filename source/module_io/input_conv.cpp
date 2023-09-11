@@ -313,6 +313,8 @@ void Input_Conv::Convert(void)
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
     GlobalV::relax_new = INPUT.relax_new;
 
+    GlobalV::use_paw = INPUT.use_paw;
+
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
 
