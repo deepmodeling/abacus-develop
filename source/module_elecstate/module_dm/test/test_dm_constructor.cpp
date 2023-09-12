@@ -148,6 +148,23 @@ TEST_F(DMTest, DMConstructor_nspin1)
             }
         }
     }
+    // test for get_DMK_pointer
+    for (int is = 1; is <= nspin; is++)
+    {
+        int ik_begin = (is - 1) * kv->nks / nspin;
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
+        {
+            double* ptr = DM.get_DMK_pointer(ik + ik_begin);
+            for (int i = 0; i < paraV->nrow; i++)
+            {
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    // std::cout << ptr[i*paraV->ncol+j] << " ";
+                    EXPECT_EQ(ptr[i * paraV->ncol + j], is + ik * i + j);
+                }
+            }
+        }
+    }
     // delete kv
     delete kv;
 }
@@ -195,6 +212,23 @@ TEST_F(DMTest, DMConstructor_nspin2)
             {
                 EXPECT_EQ(DM.get_DMK(1, ik, i, j), ik * i + j);
                 EXPECT_EQ(DM.get_DMK(1, ik, i, j), DM.get_DMK(2, ik, i, j));
+            }
+        }
+    }
+    // test for get_DMK_pointer
+    for (int is = 1; is <= nspin; is++)
+    {
+        int ik_begin = (is - 1) * kv->nks / nspin;
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
+        {
+            double* ptr = DM.get_DMK_pointer(ik + ik_begin);
+            for (int i = 0; i < paraV->nrow; i++)
+            {
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    // std::cout << ptr[i*paraV->ncol+j] << " ";
+                    EXPECT_EQ(ptr[i * paraV->ncol + j], ik * i + j);
+                }
             }
         }
     }

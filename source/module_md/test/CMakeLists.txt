@@ -1,5 +1,6 @@
 remove_definitions(-D__MPI -D__LCAO )
 add_definitions(-D__NORMAL)
+remove_definitions(-DUSE_PAW)
 
 list(APPEND depend_files 
   ../md_func.cpp
@@ -46,21 +47,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES lj_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES md_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
@@ -69,7 +70,7 @@ AddTest(
 
 AddTest(
   TARGET md_verlet
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
@@ -78,7 +79,7 @@ AddTest(
 
 AddTest(
   TARGET md_nhc
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
@@ -87,7 +88,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
@@ -96,7 +97,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp

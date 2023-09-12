@@ -19,6 +19,8 @@ class DiagoIterAssist
     static FPTYPE avg_iter;
     static bool need_subspace;
 
+    static int SCF_ITER;
+
     // for CG diagonalization only
     static void diagH_subspace(
         hamilt::Hamilt<FPTYPE, Device>* pHamilt,
@@ -80,6 +82,9 @@ FPTYPE DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR = 1.0e-2;
 
 template<typename FPTYPE, typename Device>
 bool DiagoIterAssist<FPTYPE, Device>::need_subspace = false;
+
+template<typename FPTYPE, typename Device>
+int DiagoIterAssist<FPTYPE, Device>::SCF_ITER = 0;
 
 template<typename FPTYPE, typename Device>
 std::complex<FPTYPE> DiagoIterAssist<FPTYPE, Device>::one = std::complex<FPTYPE>(1, 0);

@@ -17,8 +17,7 @@ namespace ModuleBase
 
 SphericalBesselTransformer::~SphericalBesselTransformer()
 {
-    fftw_destroy_plan(rfft_plan_);
-    fftw_free(f_);
+    fft_clear();
     delete[] grid_in_;
     delete[] grid_out_;
     delete[] jl_;
@@ -342,6 +341,18 @@ void SphericalBesselTransformer::cache(const int l,
             f(ngrid_in, grid_in, grid_out[i_out], l, &jl_[i_out * ngrid_in]);
         }
     }
+}
+
+void SphericalBesselTransformer::fft_clear()
+{
+    if (rfft_plan_) fftw_destroy_plan(rfft_plan_);
+    rfft_plan_ = nullptr;
+
+    if (f_) fftw_free(f_);
+    f_ = nullptr;
+
+    sz_planned_ = -1;
+    fftw_plan_flag_ = FFTW_ESTIMATE;
 }
 
 } // namespace ModuleBase

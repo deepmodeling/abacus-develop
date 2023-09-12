@@ -34,6 +34,7 @@ class Numerical_Nonlocal_Lm
 	const int& getType() const { return this->index_atom_type; }
 	const double& getRcut() const { return this->rcut; }
 
+    const int& getNr() const { return this->nr; }
 	const double* getRadial() const { return this->r_radial; }
 	const double& getRadial(const int &ir) const { return this->r_radial[ir]; }
 	const double* getBeta_r() const { return this->beta_r; }

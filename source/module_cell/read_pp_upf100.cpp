@@ -123,7 +123,10 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 		read_pseudo_so (ifs);
 		ModuleBase::GlobalFunc::SCAN_END (ifs,"</PP_ADDINFO>");
 	}
-
+    if (mesh%2 == 0)
+	{
+		mesh -= 1;
+	}
 	ifs.clear();
 	ifs.seekg(0);
 

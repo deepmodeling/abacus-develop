@@ -107,7 +107,30 @@ PotHartree::PotHartree(const ModulePW::PW_Basis* rho_basis_in)
 
 void PotHartree::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
 {
-    v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, chg->rho);
+    if(GlobalV::use_paw)
+    {
+        double ** rho_tmp;
+        rho_tmp = new double*[chg->nspin];
+        for(int is = 0; is < chg->nspin; is++)
+        {
+            rho_tmp[is] = new double[rho_basis_->nrxx];
+            for(int ir = 0; ir < rho_basis_->nrxx; ir++)
+            {
+                rho_tmp[is][ir] = chg->rho[is][ir] + chg->nhat[is][ir] + chg->rho_core[ir];
+            }
+        }
+        v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, rho_tmp);
+
+        for(int is = 0; is < chg->nspin; is++)
+        {
+            delete[] rho_tmp[is];
+        }
+        delete[] rho_tmp;
+    }
+    else
+    {
+        v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, chg->rho);
+    }
     return;
 }
 

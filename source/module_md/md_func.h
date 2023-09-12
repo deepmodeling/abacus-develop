@@ -22,16 +22,16 @@ double gaussrand();
  * @brief initialize the atomic velocities
  *
  * @param unit_in unitcell information
- * @param temperature ion temperature
  * @param my_rank MPI rank of the processor
+ * @param temperature ion temperature
  * @param allmass atomic mass
  * @param frozen_freedom the fixed freedom
  * @param ionmbl determine whether the atomic freedom is fixed
  * @param vel the genarated atomic velocities
  */
 void init_vel(const UnitCell& unit_in,
-              const double& temperature,
               const int& my_rank,
+              double& temperature,
               double* allmass,
               int& frozen_freedom,
               ModuleBase::Vector3<int>* ionmbl,
