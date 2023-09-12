@@ -677,7 +677,7 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
 		for (int it = 0; it < this->ntype; it++)
     	{
     	    Atom* atom = &atoms[it];
-    	    compare_atom_labels(atom->label, atom->ncpp.psd);
+    	    compare_atom_labels(atom->label_orb, atom->ncpp.psd);
     	}
 
 		if(GlobalV::out_element_info)
