@@ -677,7 +677,10 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
 		for (int it = 0; it < this->ntype; it++)
     	{
     	    Atom* atom = &atoms[it];
-    	    compare_atom_labels(atom->label_orb, atom->ncpp.psd);
+            if (!(atom->label_orb.empty()))
+			{
+    	        compare_atom_labels(atom->label_orb, atom->ncpp.psd);
+			}
     	}
 
 		if(GlobalV::out_element_info)
@@ -1595,7 +1598,8 @@ void UnitCell::cal_nelec(double& nelec)
 void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
     if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
-    {	atom_in ai;
+    {	
+		atom_in ai;
         if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
 			  ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
 			  label1 == std::to_string(ai.atom_Z[label2]) ||   // '!( "47" == "Ag" )'
@@ -1641,9 +1645,9 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
             
 				
 			{	
-				std::string atom_label_in_STRU = "atom label in STRU is ";
+				std::string atom_label_in_orbtial = "atom label in orbital file ";
 				std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
-                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", atom_label_in_STRU + label1 + mismatch_with_pseudo +label2);
+                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", atom_label_in_orbtial + label1 + mismatch_with_pseudo +label2);
             }
 	    }
 	}

@@ -48,7 +48,6 @@ TEST_F(AtomSpecTest, PrintAtom)
 #endif
 	ofs.open("tmp_atom_info");
 	atom.label = "C";
-	atom.label_orb = "C";
 	atom.type = 1;
 	atom.na = 2;
 	atom.nwl = 2;
@@ -69,7 +68,6 @@ TEST_F(AtomSpecTest, PrintAtom)
 	ifs.open("tmp_atom_info");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 	   	EXPECT_THAT(str, testing::HasSubstr("label = C"));
-		EXPECT_THAT(str, testing::HasSubstr("label_orb = C"));
     	EXPECT_THAT(str, testing::HasSubstr("type = 1"));
     	EXPECT_THAT(str, testing::HasSubstr("na = 2"));
     	EXPECT_THAT(str, testing::HasSubstr("nwl = 2"));
@@ -134,7 +132,6 @@ TEST_F(AtomSpecTest, BcastAtom)
 	if(GlobalV::MY_RANK==0)
 	{
 		atom.label = "C";
-		atom.label_orb = "C";
 		atom.type = 1;
 		atom.na = 2;
 		atom.nw = 0;
@@ -175,7 +172,6 @@ TEST_F(AtomSpecTest, BcastAtom)
 	if(GlobalV::MY_RANK!=0)
 	{
 		EXPECT_EQ(atom.label,"C");
-		EXPECT_EQ(atom.label_orb,"C");
 		EXPECT_EQ(atom.type,1);
 		EXPECT_EQ(atom.na,2);
 		EXPECT_EQ(atom.nwl,1);

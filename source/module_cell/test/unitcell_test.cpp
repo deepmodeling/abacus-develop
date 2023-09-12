@@ -288,12 +288,12 @@ TEST_F(UcellDeathTest, CompareAatomLabel)
 	}
 	stru_label[0] = "Fe";
 	pseudo_label[0] = "O";
-	std::string atom_label_in_STRU = "atom label in STRU is ";
+	std::string atom_label_in_orbtial = "atom label in orbital file ";
 	std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->compare_atom_labels(stru_label[0], pseudo_label[0]),::testing::ExitedWithCode(0),"");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr(atom_label_in_STRU + stru_label[0] + mismatch_with_pseudo +pseudo_label[0]));
+    EXPECT_THAT(output, testing::HasSubstr(atom_label_in_orbtial + stru_label[0] + mismatch_with_pseudo +pseudo_label[0]));
 }
 
 TEST_F(UcellTest,RemakeCell)
