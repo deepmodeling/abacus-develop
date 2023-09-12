@@ -39,7 +39,8 @@ namespace formatter
             /// @brief setter the error
             /// @param error
             void set_error(bool error) { error_ = error; }
-
+            /// @brief reset the format to default values
+            void reset();
             /// @brief format the input value to string
             /// @tparam T double, int or std::string
             /// @param value input value

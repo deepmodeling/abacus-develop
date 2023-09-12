@@ -34,11 +34,12 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     virtual ~Ekinetic();
 
-    virtual void act(
-        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-        const int n_npwx, 
-        const std::complex<FPTYPE>* tmpsi_in, 
-        std::complex<FPTYPE>* tmhpsi)const override;
+    virtual void act(const int nbands,
+        const int nbasis,
+        const int npol,
+        const std::complex<FPTYPE>* tmpsi_in,
+        std::complex<FPTYPE>* tmhpsi,
+        const int ngk_ik = 0)const override;
 
     // denghuilu added for copy construct at 20221105
     int get_gk2_row() const {return this->gk2_row;}
@@ -48,10 +49,6 @@ class Ekinetic<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
     Device* get_ctx() const {return this->ctx;}
 
   private:
-
-    mutable int max_npw = 0;
-
-    mutable int npol = 0;
 
     FPTYPE tpiba2 = 0.0;
     const FPTYPE* gk2 = nullptr;
