@@ -15,12 +15,12 @@ struct Range
 {
     /// k_first = 0: Psi(nbands, nks, nbasis) ; 1: Psi(nks, nbands, nbasis)
     bool k_first;
-    /// index_1> 0: target first index; index_1<0: no use
+    /// index_1>= 0: target first index; index_1<0: no use
     size_t index_1;
-    /// if index_1>0,  range_1 is the begin of second index with index_1 fixed
+    /// if index_1>=0,  range_1 is the begin of second index with index_1 fixed
     /// if index_1<0,  range_1 is the begin of first index
     size_t range_1;
-    /// if index_1>0,  range_2 is the end of second index with index_1 fixed
+    /// if index_1>=0,  range_2 is the end of second index with index_1 fixed
     /// if index_1<0,  range_2 is the end of first index
     size_t range_2;
     // this is simple constructor for hPsi return
