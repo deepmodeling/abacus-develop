@@ -592,6 +592,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+        sc.run_lambda_loop(iter);
     }
 
     // (4) mohan add 2010-06-24
@@ -744,7 +745,6 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
-        sc.run_lambda_loop(iter);
     }
 
     // (11) calculate the total energy.
