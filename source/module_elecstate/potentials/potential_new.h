@@ -154,6 +154,8 @@ class Potential : public PotBase
     std::vector<double> v_effective_fixed;
     ModuleBase::matrix v_effective;
 
+    ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
+
     float * s_v_effective = nullptr, * s_vofk_effective = nullptr;
     double * d_v_effective = nullptr, * d_vofk_effective = nullptr;
 

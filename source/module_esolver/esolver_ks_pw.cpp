@@ -278,12 +278,12 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 #ifdef USE_PAW
     if(GlobalV::use_paw)
     {
-        // ecutrho / 2 = ecutwfc * 2
-        GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
+        GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                          this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
 
         GlobalC::paw_cell.prepare_paw();
+        GlobalC::paw_cell.set_sij();
     }
 #endif
 

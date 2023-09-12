@@ -6,7 +6,10 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
-
+#ifdef USE_PAW
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 #include "module_elecstate/elecstate_getters.h"
 
 #include <map>
@@ -100,6 +103,12 @@ void Potential::allocate()
     this->v_effective.create(GlobalV::NSPIN, nrxx);
     ModuleBase::Memory::record("Pot::veff", sizeof(double) * GlobalV::NSPIN * nrxx);
 
+    if(GlobalV::use_paw)
+    {
+        this->v_xc.create(GlobalV::NSPIN, nrxx);
+        ModuleBase::Memory::record("Pot::vxc", sizeof(double) * GlobalV::NSPIN * nrxx);
+    }
+
     if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
     {
         this->vofk_effective.create(GlobalV::NSPIN, nrxx);
@@ -140,6 +149,16 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
 
     this->cal_v_eff(chg, ucell, this->v_effective);
 
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        this->v_xc.zero_out();
+        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional::v_xc(chg->nrxx, chg, ucell);
+        v_xc = std::get<2>(etxc_vtxc_v);
+    }
+#endif
+
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, s_v_effective, this->v_effective.c, this->v_effective.nr * this->v_effective.nc);
@@ -157,6 +176,11 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
+
+#ifdef USE_PAW
+    GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
+    GlobalC::paw_cell.set_dij();
+#endif
 
     ModuleBase::timer::tick("Potential", "update_from_charge");
 }

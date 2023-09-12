@@ -252,6 +252,8 @@ extern "C"
     void get_dij_(int&, int&, int&, double*);
     //            iatom,size_dij,nspden,dij
 
+    void get_sij_(int&, int&, double*);
+
     void init_rho_(int&,  int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*);
     //             nspden,ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   rho
 }
@@ -310,6 +312,12 @@ void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
     get_dij_(iat_fortran,size_dij,nspden,dij);
 }
 
+void Paw_Cell::get_sij(int it, int size_sij, double* sij)
+{
+    int it_fortran = it + 1;
+    get_sij_(it_fortran,size_sij,sij);
+}
+
 void Paw_Cell::init_rho(double ** rho)
 {
     double* rho_tmp;
@@ -330,4 +338,59 @@ void Paw_Cell::init_rho(double ** rho)
         }
     }
     delete[] rho_tmp;
+}
+
+void Paw_Cell::set_dij()
+{
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        const int it = atom_type[iat];
+        const int nproj = paw_element_list[it].get_mstates();
+        const int size_dij = nproj * (nproj+1) / 2 * nspden;
+        double* dij_libpaw = new double[size_dij];
+        double* dij = new double[nproj * nproj];
+
+        get_dij(iat,size_dij,dij_libpaw);
+
+        for(int jproj = 0; jproj < nproj; jproj ++)
+        {
+            for(int iproj = jproj; iproj < nproj; iproj ++)
+            {
+                const int ind = iproj * (iproj+1) / 2 + jproj;
+                dij[iproj*nproj+jproj] = dij_libpaw[ind];
+                dij[jproj*nproj+iproj] = dij_libpaw[ind];
+            }
+        }
+        paw_atom_list[iat].set_dij(dij);
+
+        delete[] dij_libpaw;
+        delete[] dij;
+    }
+}
+
+void Paw_Cell::set_sij()
+{
+    for(int it = 0; it < ntypat; it ++)
+    {
+        const int nproj = paw_element_list[it].get_mstates();
+        const int size_sij = nproj * (nproj+1) / 2 * nspden;
+        double* sij_libpaw = new double[size_sij];
+        double* sij = new double[nproj * nproj];
+
+        get_sij(it,size_sij,sij_libpaw);
+
+        for(int jproj = 0; jproj < nproj; jproj ++)
+        {
+            for(int iproj = jproj; iproj < nproj; iproj ++)
+            {
+                const int ind = iproj * (iproj+1) / 2 + jproj;
+                sij[iproj*nproj+jproj] = sij_libpaw[ind];
+                sij[jproj*nproj+iproj] = sij_libpaw[ind];
+            }
+        }
+        paw_atom_list[it].set_sij(sij);
+
+        delete[] sij_libpaw;
+        delete[] sij;
+    }
 }
