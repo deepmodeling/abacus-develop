@@ -25,7 +25,8 @@ RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cmake -B build && \
     cmake --build build -j`nproc` && \
     cmake --install build && \
-    cd .. && rm -rf abacus-develop
+    cd .. 
+    #&& rm -rf abacus-develop
 # If you have trouble cloning repo, replace "github.com" with "gitee.com".
 CMD mpirun --use-hwthread-cpus abacus
 
