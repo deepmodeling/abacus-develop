@@ -25,16 +25,10 @@
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 {
-    std::cout << "outer_step = " << outer_step << std::endl;
-    std::cout << "sc_thr " << this->sc_thr_ << std::endl;
-    std::cout << "nsc " << this->nsc_ << std::endl;
-    std::cout << "nsc_min " << this->nsc_min_ << std::endl;
-    this->cal_mw_from_lambda();
+    // this->cal_mw_from_lambda();
     // init controlling parameters
     int nat = this->get_nat();
     int ntype = this->get_ntype();
-    std::cout << "nat = " << nat << std::endl;
-    std::cout << "ntype = " << ntype << std::endl;
     std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0), delta_lambda(nat,0.0);
     // question: how to set initial_lambda?
     // question: is delta_lambda initially zero?
@@ -57,28 +51,29 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // question: bound_gradient should be read from INPUT?
     std::vector<double> bound_gradient(ntype,0.0);
     // temp variables
-//
-//    // calculate number of components to be constrained
-//    int num_component = sum_2d(this->constrain);
-//    // delta spin
-//    std::vector<ModuleBase::Vector3<double>> delta_spin(nat,0.0), delta_spin_old(nat,0.0);
-//    std::vector<ModuleBase::Vector3<double>> search(nat,0.0), search_old(nat,0.0);
-//
-//    std::vector<ModuleBase::Vector3<double>> spin_mask(nat,0.0), target_spin_mask(nat,0.0);
-//    std::vector<ModuleBase::Vector3<double>> new_spin(nat,0.0), spin_change(nat,0.0), spin_plus(nat,0.0);
-//    std::vector<ModuleBase::Vector3<double>> spin_plus_mask(nat,0.0);
-//
-//    double alpha_trial, alpha_opt, alpha_plus;
-//    double beta;
-//    double mean_error, mean_error_old, rms_error;
-//    double restrict_current;
-//    double boundary;
-//    double sum_k, sum_k2;
-//    double g;
-//
-//    std::cout << "===============================================================================" << std::endl;
-//    std::cout << "Inner optimization for lambda begins ..." << std::endl;
-//    std::cout << "Covergence criterion for the iteration: " << this->sc_thr << std::endl;
+
+    // calculate number of components to be constrained
+    int num_component = sum_2d(this->constrain_);
+    std::cout << "num_component = " << num_component << std::endl;
+    // delta spin
+    std::vector<ModuleBase::Vector3<double>> delta_spin(nat,0.0), delta_spin_old(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> search(nat,0.0), search_old(nat,0.0);
+
+    std::vector<ModuleBase::Vector3<double>> spin_mask(nat,0.0), target_spin_mask(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> new_spin(nat,0.0), spin_change(nat,0.0), spin_plus(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> spin_plus_mask(nat,0.0);
+
+    double alpha_trial, alpha_opt, alpha_plus;
+    double beta;
+    double mean_error, mean_error_old, rms_error;
+    double restrict_current;
+    double boundary;
+    double sum_k, sum_k2;
+    double g;
+
+    std::cout << "===============================================================================" << std::endl;
+    std::cout << "Inner optimization for lambda begins ..." << std::endl;
+    std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
 //    // lambda loop
 //    for (int i_step = 0; i_step < this->nsc_; i_step++)
 //    {
@@ -306,9 +301,9 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 //        print_2d("(Debug) after-optimization spin: (print in the inner loop): ", new_spin);
 //        print_2d("target spin: ", this->sc_mag_);
 //    }
-//    std::cout << "Inner optimization for lambda ends." << std::endl;
-//    std::cout << "===============================================================================" << std::endl;
-//
+    std::cout << "Inner optimization for lambda ends." << std::endl;
+    std::cout << "===============================================================================" << std::endl;
+
 }
 
 template class SpinConstrain<double, psi::DEVICE_CPU>;
