@@ -242,6 +242,27 @@ void SpinConstrain<FPTYPE, Device>::set_sc_mag()
     }
 }
 
+// set sc_mag from ScData
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_constrain()
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    this->constrain_.resize(nat);
+    for (auto& itype_data : this->ScData) {
+        int itype = itype_data.first;
+        for (auto& element_data : itype_data.second) {
+            int index = element_data.index;
+            int iat = this->get_iat(itype, index);
+            ModuleBase::Vector3<int> constr;
+            constr.x = element_data.constrain[0];
+            constr.y = element_data.constrain[1];
+            constr.z = element_data.constrain[2];
+            this->constrain_[iat] = constr;
+        }
+    }
+}
+
 // set sc_lambda from variable
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
@@ -276,6 +297,23 @@ void SpinConstrain<FPTYPE, Device>::set_sc_mag(const ModuleBase::Vector3<double>
     }
 }
 
+/// set constrain from variable
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in)
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    if (nat_in != nat)
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_constrain","constrain_in size mismatch with nat");
+    }
+    this->constrain_.resize(nat);
+    for (int iat=0; iat < nat; ++iat)
+    {
+        this->constrain_[iat] = constrain_in[iat];
+    }
+}
+
 template<typename FPTYPE, typename Device>
 const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_sc_lambda() const
 {
@@ -286,6 +324,13 @@ template<typename FPTYPE, typename Device>
 const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_sc_mag() const
 {
     return this->sc_mag_;
+}
+
+/// get_constrain
+template<typename FPTYPE, typename Device>
+const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<FPTYPE, Device>::get_constrain() const
+{
+    return this->constrain_;
 }
 
 template class SpinConstrain<double, psi::DEVICE_CPU>;

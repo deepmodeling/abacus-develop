@@ -45,21 +45,26 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     // std::cout << "nw = " << this->get_nw() << std::endl;
     ModuleBase::Vector3<double>* sc_lambda;
     ModuleBase::Vector3<double>* sc_mag;
+    ModuleBase::Vector3<int>* constrain;
     int nat = this->get_nat();
     if(GlobalV::MY_RANK == 0)
     {
         this->Set_ScData_From_Json(GlobalV::sc_file);
         this->set_sc_lambda();
         this->set_sc_mag();
+        this->set_constrain();
         sc_lambda = const_cast<ModuleBase::Vector3<double>*>(this->get_sc_lambda().data());
         sc_mag = const_cast<ModuleBase::Vector3<double>*>(this->get_sc_mag().data());
+        constrain = const_cast<ModuleBase::Vector3<int>*>(this->get_constrain().data());
     }
     else
     {
         sc_lambda = new ModuleBase::Vector3<double>[nat];
         sc_mag = new ModuleBase::Vector3<double>[nat];
+        constrain = new ModuleBase::Vector3<int>[nat];
         ModuleBase::GlobalFunc::ZEROS(sc_lambda, nat);
         ModuleBase::GlobalFunc::ZEROS(sc_mag, nat);
+        ModuleBase::GlobalFunc::ZEROS(constrain, nat);
     }
     for (int iat = 0; iat < nat; iat++)
     {
@@ -69,13 +74,18 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
         Parallel_Common::bcast_double(sc_mag[iat].x);
         Parallel_Common::bcast_double(sc_mag[iat].y);
         Parallel_Common::bcast_double(sc_mag[iat].z);
+        Parallel_Common::bcast_int(constrain[iat].x);
+        Parallel_Common::bcast_int(constrain[iat].y);
+        Parallel_Common::bcast_int(constrain[iat].z);
     }
     if(GlobalV::MY_RANK != 0)
     {
         this->set_sc_lambda(sc_lambda, nat);
         this->set_sc_mag(sc_mag, nat);
+        this->set_constrain(constrain, nat);
         delete [] sc_lambda;
         delete [] sc_mag;
+        delete [] constrain;
     }
     // parameters for lambda loop
     this->sc_thr_ = sc_thr_in;

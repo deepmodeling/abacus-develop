@@ -114,10 +114,16 @@ public:
     void set_sc_mag();
     /// set sc_mag from variable
     void set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in);
+    /// set constrain
+    void set_constrain();
+    /// set constrain from variable
+    void set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
     /// get sc_mag
     const std::vector<ModuleBase::Vector3<double>>& get_sc_mag() const;
+    /// get constrain
+    const std::vector<ModuleBase::Vector3<int>>& get_constrain() const;
     /// get nat
     int get_nat();
     /// get ntype
@@ -164,7 +170,7 @@ private:
     int nsc_; // which is NSC from INPUT
     int nsc_min_; // which is NSCMIN from INPUT
     double sc_thr_; // which is SCDIFF from INPUT
-    std::vector<ModuleBase::Vector3<int>> constrain; // which is CONSTRL from INPUT
+    std::vector<ModuleBase::Vector3<int>> constrain_; // which is CONSTRL from INPUT
     std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
     std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
     bool debug = false; // which is LDESC in the original code
@@ -178,6 +184,7 @@ struct ScAtomData {
     int index;
     std::vector<double> lambda;
     std::vector<double> sc_mag;
+    std::vector<int> constrain;
     double sc_spin_val;
     double sc_spin_angle1;
     double sc_spin_angle2;
