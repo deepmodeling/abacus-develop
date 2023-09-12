@@ -140,6 +140,12 @@ long double timer::print_until_now(void)
 void timer::write_to_json(std::string file_name)
 {
 	// check if a double is inf, if so, return "null", else return a string of the input double
+#ifdef __MPI	
+	int my_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	if (my_rank != 0)
+		return;
+#endif
 	auto double_to_string = [](double d) -> std::string
 	{
 		formatter::Fmt fmt(0, 15, ' ', false, false, false);
