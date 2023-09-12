@@ -30,31 +30,33 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     std::cout << "nsc " << this->nsc_ << std::endl;
     std::cout << "nsc_min " << this->nsc_min_ << std::endl;
     this->cal_mw_from_lambda();
-//    // init controlling parameters
-//    int nat = this->get_nat();
-//    int ntype = this->get_ntype();
-//    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0), delta_lambda(nat,0.0);
-//    // question: how to set initial_lambda?
-//    // question: is delta_lambda initially zero?
-//    // set nu, dnu and dnu_last_step
-//    std::vector<ModuleBase::Vector3<double>> nu(nat,0.0), dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
-//    // two controlling temp variables
-//    std::vector<ModuleBase::Vector3<double>> temp_1(nat,0.0), temp_2(nat,0.0);
-//    // MW during loop
-//    // new_spin replace MW in the original code
-//    // spin gradient
-//    std::vector<std::vector<std::vector<std::vector<double>>>> spin_nu_gradient(
-//        nat, std::vector<std::vector<std::vector<double>>>(
-//            3, std::vector<std::vector<double>>(
-//                nat, std::vector<double>(
-//                    3,0.0))));
-//    std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat,0.0);
-//    std::pair<int, int> maxloc(std::make_pair(0,0));
-//    std::vector<std::pair<int,int>> max_gradient_index(ntype, std::make_pair(0,0));
-//    std::vector<double> max_gradient(ntype,-1.0);
-//    // question: bound_gradient should be read from INPUT?
-//    std::vector<double> bound_gradient(ntype,0.0);
-//    // temp variables
+    // init controlling parameters
+    int nat = this->get_nat();
+    int ntype = this->get_ntype();
+    std::cout << "nat = " << nat << std::endl;
+    std::cout << "ntype = " << ntype << std::endl;
+    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0), delta_lambda(nat,0.0);
+    // question: how to set initial_lambda?
+    // question: is delta_lambda initially zero?
+    // set nu, dnu and dnu_last_step
+    std::vector<ModuleBase::Vector3<double>> nu(nat,0.0), dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
+    // two controlling temp variables
+    std::vector<ModuleBase::Vector3<double>> temp_1(nat,0.0), temp_2(nat,0.0);
+    // MW during loop
+    // new_spin replace MW in the original code
+    // spin gradient
+    std::vector<std::vector<std::vector<std::vector<double>>>> spin_nu_gradient(
+        nat, std::vector<std::vector<std::vector<double>>>(
+            3, std::vector<std::vector<double>>(
+                nat, std::vector<double>(
+                    3,0.0))));
+    std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat,0.0);
+    std::pair<int, int> maxloc(std::make_pair(0,0));
+    std::vector<std::pair<int,int>> max_gradient_index(ntype, std::make_pair(0,0));
+    std::vector<double> max_gradient(ntype,-1.0);
+    // question: bound_gradient should be read from INPUT?
+    std::vector<double> bound_gradient(ntype,0.0);
+    // temp variables
 //
 //    // calculate number of components to be constrained
 //    int num_component = sum_2d(this->constrain);

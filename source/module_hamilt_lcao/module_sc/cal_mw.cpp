@@ -38,7 +38,7 @@ void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
         const int nlocal = nw / 2;
         for (size_t i = 0; i != ucell.nat; ++i)
         {
-            std::vector<double> total_charge_soc(this->nspin_);
+            std::vector<double> total_charge_soc(this->nspin_,0.0);
             const int t = ucell.iat2it[i];
             int num = 0;
             for (size_t L = 0; L != ucell.atoms[t].nwl + 1; ++L)
