@@ -139,7 +139,13 @@ long double timer::print_until_now(void)
 
 void timer::write_to_json(std::string file_name)
 {
-#ifdef __MPI	
+#ifdef __MPI
+    // in some unit test, the mpi is not initialized, so we need to check it
+	// if mpi is not initialized, we do not run this function
+	int is_initialized;
+    MPI_Initialized(&is_initialized);
+	if (!is_initialized)
+		return;	
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	if (my_rank != 0)
