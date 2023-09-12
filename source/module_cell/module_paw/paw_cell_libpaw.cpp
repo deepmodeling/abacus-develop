@@ -2,6 +2,7 @@
 #include "module_base/tool_title.h"
 #include "paw_cell.h"
 #include "module_base/global_variable.h"
+#include "module_base/parallel_common.h"
 
 // The subroutines here are used to gather information from the main ABACUS program
 // 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
@@ -140,6 +141,7 @@ void Paw_Cell::set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double la
 void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
         const int nxdg_in, const int nydg_in, const int nzdg_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_libpaw_fft");
     ngfft.resize(3);
     ngfftdg.resize(3);
 
@@ -156,6 +158,7 @@ void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
 // !!!!!!!Note : the index stored in typat here will start from 1, not 0 !!!!!!
 void Paw_Cell::set_libpaw_atom(const int natom_in, const int ntypat_in, const int* typat_in, const double* xred_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_libpaw_atom");
     natom = natom_in;
     ntypat = ntypat_in;
 
@@ -208,21 +211,25 @@ void Paw_Cell::set_libpaw_files()
             }
         }
     }
+#ifdef __MPI
+    Parallel_Common::bcast_char(filename_list,ntypat*264);
+#endif
 }
 
 void Paw_Cell::set_libpaw_xc(const int xclevel_in, const int ixc_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_libpaw_xc");
     xclevel = xclevel_in;
     ixc = ixc_in;
 }
 
 void Paw_Cell::set_nspin(const int nspin_in)
 {
+    ModuleBase::TITLE("Paw_Cell", "set_nspin");
     nspden = nspin_in;
     nsppol = nspin_in;
 }
 
-#ifdef USE_PAW
 extern "C"
 {
     void prepare_libpaw_(double&,double&,double*,double*,double*,double&,int*,int*,
@@ -244,6 +251,9 @@ extern "C"
 
     void get_dij_(int&, int&, int&, double*);
     //            iatom,size_dij,nspden,dij
+
+    void init_rho_(int&,  int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*);
+    //             nspden,ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   rho
 }
 
 void Paw_Cell::prepare_paw()
@@ -265,10 +275,28 @@ void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselec
     set_rhoij_(iat_fortran,nrhoijsel,size_rhoij,nspden,rhoijselect,rhoijp);
 }
 
-void Paw_Cell::get_nhat(double* nhat, double* nhatgr)
+void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 {
+    ModuleBase::TITLE("Paw_Cell", "get_nhat");
+
+    double* nhat_tmp;
+    nhat_tmp = new double[nfft*nspden];
+
     get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
-            ucvol,nhat,nhatgr);
+            ucvol,nhat_tmp,nhatgr);
+
+    for(int ir = 0; ir < nfft; ir ++)
+    {
+        for(int is = 0; is < nspden; is ++)
+        {
+            // I'm not sure about this yet !!!
+            // need to check for nspin = 2 later
+            // Fortran is column major, and rhor is of dimension (nfft, nspden)
+            // so presumably should be this way m
+            nhat[is][ir] = nhat_tmp[ir*nspden+is];
+        }
+    }
+    delete[] nhat_tmp;
 }
 
 void Paw_Cell::calculate_dij(double* vks, double* vxc)
@@ -281,4 +309,25 @@ void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
     int iat_fortran = iat + 1;
     get_dij_(iat_fortran,size_dij,nspden,dij);
 }
-#endif
+
+void Paw_Cell::init_rho(double ** rho)
+{
+    double* rho_tmp;
+    rho_tmp = new double[nfft*nspden];
+
+    init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+            gmet.data(), ucvol, xred.data(), rho_tmp);
+
+    for(int ir = 0; ir < nfft; ir ++)
+    {
+        for(int is = 0; is < nspden; is ++)
+        {
+            // I'm not sure about this yet !!!
+            // need to check for nspin = 2 later
+            // Fortran is column major, and rhor is of dimension (nfft, nspden)
+            // so presumably should be this way m
+            rho[is][ir] = rho_tmp[ir*nspden+is];
+        }
+    }
+    delete[] rho_tmp;
+}

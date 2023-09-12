@@ -728,7 +728,7 @@ TEST_F(UcellTest,PrintTauDirect)
 	ifs.open("print_tau_direct");
     	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     	EXPECT_THAT(str, testing::HasSubstr("DIRECT COORDINATES"));
-    	EXPECT_THAT(str, testing::HasSubstr("taud_C1                 0.1                 0.1                 0.1"));
+    	EXPECT_THAT(str, testing::HasSubstr("taud_C1        0.1000000000     0.1000000000     0.1000000000"));
 	ifs.close();
 	remove("print_tau_direct");
 }

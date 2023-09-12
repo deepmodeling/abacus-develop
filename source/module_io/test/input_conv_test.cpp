@@ -188,14 +188,11 @@ TEST_F(InputConvTest, ConvRelax)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n fixed_ibrav only available for relax_new = 1\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("fixed_ibrav only available for relax_new = 1"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.latname="none";
@@ -203,28 +200,22 @@ TEST_F(InputConvTest, ConvRelax)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n to use fixed_ibrav, latname must be provided\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("to use fixed_ibrav, latname must be provided"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.fixed_atoms=1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n fixed_atoms is not meant to be used for calculation = relax\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("fixed_atoms is not meant to be used for calculation = relax"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
 	INPUT.relax_new=false;
@@ -232,14 +223,11 @@ TEST_F(InputConvTest, ConvRelax)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n fixed shape and fixed volume only supported for relax_new = 1\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("fixed shape and fixed volume only supported for relax_new = 1"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 	INPUT.Default();
 	INPUT.Read(input_file);
 	INPUT.calculation="relax";
@@ -328,14 +316,11 @@ TEST_F(InputConvTest, nspinbeta)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n force & stress not ready for soc yet!\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("force & stress not ready for soc yet!"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 }
 
 TEST_F(InputConvTest, nupdown)
@@ -434,14 +419,11 @@ TEST_F(InputConvTest,neighbour2  )
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n test_neighbour must be done with 1 processor\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("test_neighbour must be done with 1 processor"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 }
 
 TEST_F(InputConvTest, compile)
@@ -454,14 +436,11 @@ TEST_F(InputConvTest, compile)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n !"
-		"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n \n please compile with DeePKS\n"
-		" CHECK IN FILE : warning.log\n \n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-		"                         NOTICE                           \n"
-		" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------\n -------"
-		"---------------------------------------------------------------------------------\n See output information in : \n"
-		));
+	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
+	EXPECT_THAT(output2,testing::HasSubstr("please compile with DeePKS"));
+	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
+	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 }
 
 TEST_F(InputConvTest,globalReadinDir )

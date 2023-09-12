@@ -206,30 +206,31 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
 }
 
 template<typename FPTYPE, typename Device>
-void Nonlocal<OperatorPW<FPTYPE, Device>>::act
-(
-    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi)const
+void Nonlocal<OperatorPW<FPTYPE, Device>>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const std::complex<FPTYPE>* tmpsi_in,
+    std::complex<FPTYPE>* tmhpsi,
+    const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
-    this->npw = psi_in->get_ngk(this->ik);
-    this->max_npw = psi_in->get_nbasis() / psi_in->npol;
-    this->npol = psi_in->npol;
+    this->npw = ngk_ik;
+    this->max_npw = nbasis / npol;
+    this->npol = npol;
 
     if (this->ppcell->nkb > 0)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // qianrui optimize 2021-3-31
         int nkb = this->ppcell->nkb;
-        if (this->nkb_m < n_npwx * nkb) {
-            resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb, "Nonlocal<PW>::becp");
+        if (this->nkb_m < nbands * nkb) {
+            resmem_complex_op()(this->ctx, this->becp, nbands * nkb, "Nonlocal<PW>::becp");
         }
-        // ModuleBase::ComplexMatrix becp(n_npwx, nkb, false);
+        // ModuleBase::ComplexMatrix becp(nbands, nkb, false);
         char transa = 'C';
         char transb = 'N';
-        if (n_npwx == 1)
+        if (nbands == 1)
         {
             int inc = 1;
             // denghui replace 2022-10-20
@@ -250,7 +251,7 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
         }
         else
         {
-            int npm = n_npwx;
+            int npm = nbands;
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // denghui replace 2022-10-20
             gemm_op()(
@@ -264,16 +265,16 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::act
                 this->vkb,
                 this->ppcell->vkb.nc,
                 tmpsi_in,
-                this->max_npw,
+                max_npw,
                 &this->zero,
                 this->becp,
                 nkb
             );
         }
 
-        Parallel_Reduce::reduce_complex_double_pool(becp, nkb * n_npwx);
+        Parallel_Reduce::reduce_complex_double_pool(becp, nkb * nbands);
 
-        this->add_nonlocal_pp(tmhpsi, becp, n_npwx);
+        this->add_nonlocal_pp(tmhpsi, becp, nbands);
     }
     ModuleBase::timer::tick("Operator", "NonlocalPW");
 }

@@ -59,7 +59,7 @@ void Paw_Atom::convert_rhoij()
     {
         if(std::abs(rhoij[i]) > 1e-10)
         {
-            rhoijselect[nrhoijsel] = i;
+            rhoijselect[nrhoijsel] = i+1; //index in fortran
             rhoijp[nrhoijsel] = rhoij[i];
             nrhoijsel ++;
         }
