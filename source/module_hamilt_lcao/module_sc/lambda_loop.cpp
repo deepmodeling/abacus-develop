@@ -74,9 +74,10 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
     std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
-//    // lambda loop
-//    for (int i_step = 0; i_step < this->nsc_; i_step++)
-//    {
+    // lambda loop
+    for (int i_step = 0; i_step < this->nsc_; i_step++)
+    {
+        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << std::endl;
 //        if (i_step == 0)
 //        {
 //            nu = this->out_lambda;
@@ -290,7 +291,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 //            std::cout << "Warning: g is not in the range of [0.5, 2.0], g = " << g << std::endl;
 //        }
 //        alpha_trial = alpha_trial * pow(g, 0.7);
-//    }
+    }
 //    
 //CG_STOP:
 //
