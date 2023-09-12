@@ -11,16 +11,17 @@ namespace psi
 
 // structure for getting range of Psi
 // two display method: k index first or bands index first
-// only one k point with multi bands and one band with multi k-points are available for hPsi()
 struct Range
 {
-    // k_first = 0: Psi(nbands, nks, nbasis) ; 1: Psi(nks, nbands, nbasis)
+    /// k_first = 0: Psi(nbands, nks, nbasis) ; 1: Psi(nks, nbands, nbasis)
     bool k_first;
-    // index_1 is target first index
+    /// index_1> 0: target first index; index_1<0: no use
     size_t index_1;
-    // range_1 is the begin of second index
+    /// if index_1>0,  range_1 is the begin of second index with index_1 fixed
+    /// if index_1<0,  range_1 is the begin of first index
     size_t range_1;
-    // range_2 is the end of second index
+    /// if index_1>0,  range_2 is the end of second index with index_1 fixed
+    /// if index_1<0,  range_2 is the end of first index
     size_t range_2;
     // this is simple constructor for hPsi return
     Range(const size_t range_in);
@@ -38,7 +39,7 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     // Constructor 2: specify ngk only, should call resize() later
     Psi(const int* ngk_in);
     // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
-    Psi(int nk_in, int nbd_in, int nbs_in, const int* ngk_in = nullptr);
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
     // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
     Psi(const Psi& psi_in, const int nk_in, int nband_in = 0);
     // Constructor 5: a wrapper of a data pointer, used for Operator::hPsi()
@@ -55,10 +56,10 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     // allocate psi for three dimensions
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 
-    // get the pointer for current k point
+    // get the pointer for the 1st index
     T* get_pointer() const;
-    // get the pointer for current band
-    T* get_pointer(const int& ibands) const;
+    // get the pointer for the 2nd index (iband for k_first = true, ik for k_first = false)
+    T* get_pointer(const int& ikb) const;
 
     // interface to get three dimension size
     const int& get_nk() const;
@@ -67,13 +68,25 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     // size_t size() const {return this->psi.size();}
     size_t size() const;
 
-    // choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
+    /// if k_first=true: choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
+    /// if k_first=false: choose k-point index, then Psi(ibasis) can reach Psi(iband, ik, ibasis)
     void fix_k(const int ik) const;
+    /// if k_first=true: choose band index, then Psi(ibasis) can reach Psi(ik, iband, ibasis)
+    /// if k_first=false: choose band index, then Psi(ik, ibasis) can reach Psi(iband, ik, ibasis)
+    void fix_b(const int ib) const;
+    /// choose k-point index and band index, then Psi(ibasis) can reach 
+    /// Psi(ik, iband, ibasis) for k_first=true or Psi(iband, ik, ibasis) for k_first=false
+    void fix_kb(const int ik, const int ib) const;
 
-    // use operator "(ik, iband, ibasis)" to reach target element
-    T& operator()(const int ik, const int ibands, const int ibasis) const;
-    // use operator "(iband, ibasis)" to reach target element for current k
-    T& operator()(const int ibands, const int ibasis) const;
+
+    /// use operator "(ikb1, ikb2, ibasis)" to reach target element
+    /// if k_first=true, ikb=ik, ikb2=iband
+    /// if k_first=false, ikb=iband, ikb2=ik
+    T& operator()(const int ikb1, const int ikb2, const int ibasis) const;
+    /// use operator "(ikb2, ibasis)" to reach target element for current k
+    /// if k_first=true, ikb2=iband
+    /// if k_first=false, ikb2=ik
+    T& operator()(const int ikb2, const int ibasis) const;
     // use operator "(ibasis)" to reach target element for current k and current band
     T& operator()(const int ibasis) const;
 
