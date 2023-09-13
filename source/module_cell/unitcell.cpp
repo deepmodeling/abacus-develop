@@ -674,21 +674,21 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
 
     if(GlobalV::MY_RANK == 0)
     {
-		for (int it = 0; it < this->ntype; it++)
-    	{
-    	    Atom* atom = &atoms[it];
+        for (int it = 0; it < this->ntype; it++)
+        {
+            Atom* atom = &atoms[it];
             if (!(atom->label_orb.empty()))
-			{
-    	        compare_atom_labels(atom->label_orb, atom->ncpp.psd);
-			}
-    	}
+            {
+                compare_atom_labels(atom->label_orb, atom->ncpp.psd);
+            }
+        }
 
-		if(GlobalV::out_element_info)
-		{ 
-	        for(int i=0;i<this->ntype;i++)
-	        {
-	        	ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-	        }
+        if(GlobalV::out_element_info)
+        { 
+            for(int i=0;i<this->ntype;i++)
+            {
+            	ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
+            }
             for(int it=0; it<ntype; it++)
             {
                 Atom* atom = &atoms[it];
@@ -750,7 +750,7 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
                 ofs.close();
             }
         }
-	}
+    }
 
 #ifdef __MPI
     bcast_unitcell2();
