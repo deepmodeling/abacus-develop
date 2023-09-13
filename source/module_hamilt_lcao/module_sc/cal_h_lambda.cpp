@@ -50,16 +50,16 @@ void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda)
                                 h_lambda[icc] = (iwt2 % 2 == 0) ?
                                     - Wi_[icc] * lambda_[iat1][2] :
                                     - Wi_[icc] * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, -1));
-                                if (abs(h_lambda[icc]) > 1e-6)
-                                std::cout << "h_lambda[" << icc << "] = " << h_lambda[icc] << std::endl;
+                                //if (abs(h_lambda[icc]) > 1e-6)
+                                //std::cout << "h_lambda[" << icc << "] = " << h_lambda[icc] << std::endl;
                             }
                             else
                             {
                                 h_lambda[icc] = (iwt2 % 2 == 0) ?
                                     - Wi_[icc] * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, 1)) :
                                     - Wi_[icc] * (-lambda_[iat1][2]);
-                                if (abs(h_lambda[icc]) > 1e-6)
-                                std::cout << "h_lambda[" << icc << "] = " << h_lambda[icc] << std::endl;
+                                //if (abs(h_lambda[icc]) > 1e-6)
+                                //std::cout << "h_lambda[" << icc << "] = " << h_lambda[icc] << std::endl;
                             }
                         }
                     }

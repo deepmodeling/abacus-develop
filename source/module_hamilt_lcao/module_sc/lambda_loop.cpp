@@ -9,7 +9,7 @@
 //{
     /// todo
     /// init input parameters from reading INPUT file
-    //this->spin = GlobalV::MW;
+    //this->init_mag_ = GlobalV::MW;
     //this->lambda_ = GlobalV::OUT_LAMBDA;
     // question: how to lambda_?
     //this->target_spin = GlobalV::M_CONSTR;
@@ -25,7 +25,6 @@
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 {
-    // this->cal_mw_from_lambda();
     // init controlling parameters
     int nat = this->get_nat();
     int ntype = this->get_ntype();
@@ -56,7 +55,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     int num_component = sum_2d(this->constrain_);
     std::cout << "num_component = " << num_component << std::endl;
     // delta spin
-    std::vector<ModuleBase::Vector3<double>> delta_spin(nat,0.0), delta_spin_old(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> spin(nat,0.0), delta_spin(nat,0.0), delta_spin_old(nat,0.0);
     std::vector<ModuleBase::Vector3<double>> search(nat,0.0), search_old(nat,0.0);
 
     std::vector<ModuleBase::Vector3<double>> spin_mask(nat,0.0), target_spin_mask(nat,0.0);
@@ -77,14 +76,14 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // lambda loop
     for (int i_step = 0; i_step < this->nsc_; i_step++)
     {
-        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << std::endl;
-//        if (i_step == 0)
-//        {
-//            where_fill_scalar_else_2d(this->constrain, 0, 0.0, this->lambda_, initial_lambda);
-//            print_2d("initial lambda: ", initial_lambda);
-//            print_2d("initial spin: ", this->spin);
-//            print_2d("target spin: ", this->sc_mag_);
-//        }
+        if (i_step == 0)
+        {
+            spin = this->init_mag_;
+            where_fill_scalar_else_2d(this->constrain_, 0, 0.0, this->lambda_, initial_lambda);
+            print_2d("initial lambda: ", initial_lambda);
+            print_2d("initial spin: ", spin);
+            print_2d("target spin: ", this->sc_mag_);
+        }
 //        else
 //        {
 //            std::cout << "optimal delta lambda: " << std::endl;
@@ -166,65 +165,68 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 //            print_2d("new spin: ", spin);
 //            print_2d("target spin: ", this->sc_mag_);
 //        }
-//        // continue the lambda loop
-//        subtract_2d(spin, this->sc_mag_, delta_spin);
-//        where_fill_scalar_2d(constrain, 0, 0.0, delta_spin);
-//        search = delta_spin;
-//        for (int ia = 0; ia < nat; ia++)
-//        {
-//            for (int ic = 0; ic < 3; ic++)
-//            {
-//                temp_1[ia][ic] = std::pow(delta_spin[ia][ic],2);
-//            }
-//        }
-//        mean_error = sum_2d(temp_1) / num_component;
-//        rms_error = std::sqrt(mean_error);
-//        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << "       RMS =" << rms_error << std::endl;
-//
-//        if (rms_error < this->sc_thr || i_step == this->nsc_ - 1)
-//        {
-//            if (rms_error < this->sc_thr)
-//            {
-//                std::cout << "Meet convergence criterion ( < " << sc_thr << " ), exit." << std::endl;
-//            }
-//            else if (i_step == this->nsc_ - 1)
-//            {
-//                std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
-//            }
-//            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, lambda_);
+        // continue the lambda loop
+        subtract_2d(spin, this->sc_mag_, delta_spin);
+        where_fill_scalar_2d(this->constrain_, 0, 0.0, delta_spin);
+        search = delta_spin;
+        for (int ia = 0; ia < nat; ia++)
+        {
+            for (int ic = 0; ic < 3; ic++)
+            {
+                temp_1[ia][ic] = std::pow(delta_spin[ia][ic],2);
+            }
+        }
+        mean_error = sum_2d(temp_1) / num_component;
+        rms_error = std::sqrt(mean_error);
+        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << "       RMS =" << rms_error << std::endl;
+
+        if (rms_error < this->sc_thr_ || i_step == this->nsc_ - 1)
+        {
+            if (rms_error < this->sc_thr_)
+            {
+                std::cout << "Meet convergence criterion ( < " << this->sc_thr_ << " ), exit." << std::endl;
+            }
+            else if (i_step == this->nsc_ - 1)
+            {
+                std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
+            }
+            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, lambda_);
 //            goto CG_STOP;
-//        }
-//
-//        if(i_step>=1)
-//        {
-//            beta = mean_error / mean_error_old;
-//            temp_1 = search;
-//            add_scalar_multiply_2d(temp_1, search_old, beta, search);
-//        }
-//
-//        boundary = abs(alpha_trial * maxval_abs_2d(search));
-//        std::cout << "restriction of this step = " << restrict_current << std::endl;
-//        std::cout << "alpha_trial before restrict = " << alpha_trial << std::endl;
-//        std::cout << "boundary before = " << boundary << std::endl;
-//        std::cout << "trial need restriction: false" << std::endl;
-//        scalar_multiply_2d(search, alpha_trial, temp_1);
-//        print_2d("delta delta lambda: ", temp_1);
-//
-//        // CHTOT_last_step = CHTOT;
-//        dnu_last_step = dnu;
-//        temp_1 = dnu;
-//        add_scalar_multiply_2d(temp_1, search, alpha_trial, dnu);
-//        delta_lambda = dnu;
-//
-//        print_2d("trial delta lambda:", delta_lambda);
-//
-//        if (debug)
-//        {
-//            print_2d("(Debug) before-trial-step spin:", spin);
-//            print_2d("(Debug) target spin:", this->sc_mag_);
-//        }
-//
-//        add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
+        }
+
+        if(i_step>=1)
+        {
+            beta = mean_error / mean_error_old;
+            temp_1 = search;
+            add_scalar_multiply_2d(temp_1, search_old, beta, search);
+        }
+
+        boundary = abs(this->alpha_trial_ * maxval_abs_2d(search));
+        std::cout << "restriction of this step = " << this->restrict_current_ << std::endl;
+        std::cout << "alpha_trial before restrict = " << this->alpha_trial_ << std::endl;
+        std::cout << "boundary before = " << boundary << std::endl;
+        std::cout << "trial need restriction: false" << std::endl;
+        scalar_multiply_2d(search, this->alpha_trial_, temp_1);
+        //print_2d("search", search);
+        //print_2d("delta delta lambda: ", temp_1);
+
+        // CHTOT_last_step = CHTOT;
+        dnu_last_step = dnu;
+        temp_1 = dnu;
+        add_scalar_multiply_2d(temp_1, search, alpha_trial, dnu);
+        delta_lambda = dnu;
+
+        //print_2d("trial delta lambda:", delta_lambda);
+
+        if (debug)
+        {
+            print_2d("(Debug) before-trial-step spin:", spin);
+            print_2d("(Debug) target spin:", this->sc_mag_);
+        }
+
+        add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
+        print_2d("temp_1 ", temp_1);
+        this->cal_mw_from_lambda(delta_lambda, new_spin);
 //        // TODO
 //        // calculate_MW_from_lambda(temp_1, CHTOTL_RESERVE, W_RESERVE, new_spin, CHTOT, W);
 //
@@ -272,9 +274,9 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 //        add_scalar_multiply_2d(temp_2, temp_1, 1.0, dnu);
 //        delta_lambda = dnu;
 //
-//        search_old = search;
-//        delta_spin_old = delta_spin;
-//        mean_error_old = mean_error;
+        search_old = search;
+        delta_spin_old = delta_spin;
+        mean_error_old = mean_error;
 //
 //        g = 1.5 * abs(alpha_opt) / alpha_trial;
 //        if (g > 2.0)

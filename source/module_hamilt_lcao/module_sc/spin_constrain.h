@@ -55,7 +55,9 @@ public:
         const K_Vectors& kv
     );
 
-    void cal_mw_from_lambda();
+    void cal_mw_from_lambda(
+        const std::vector<ModuleBase::Vector3<double>> delta_lambda,
+        std::vector<ModuleBase::Vector3<double>> new_spin);
 
     double cal_escon();
 
@@ -179,6 +181,8 @@ private:
     std::vector<ModuleBase::Vector3<int>> constrain_; // which is CONSTRL from INPUT
     std::vector<ModuleBase::Vector3<double>> init_mag_; // which is MW from INPUT, the initial spin
     bool debug = false; // which is LDESC in the original code
+    double alpha_trial_ = 0.01; // which is INISC in the original code
+    double restrict_current_ = 3; // which is SCCUT in the original code
 };
 
 
