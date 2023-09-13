@@ -5,23 +5,6 @@
 
 #include "basic_funcs.h"
 
-//void LambdaLoop::init_input_parameters()
-//{
-    /// todo
-    /// init input parameters from reading INPUT file
-    //this->init_mag_ = GlobalV::MW;
-    //this->lambda_ = GlobalV::OUT_LAMBDA;
-    // question: how to lambda_?
-    //this->target_spin = GlobalV::M_CONSTR;
-    //this->constrain = GlobalV::CONSTRL;
-    //this->alpha_trial = GlobalV::INISC;
-    //this->sc_thr = GlobalV::SCDIFF;
-    //this->bound_gradient = GlobalV::SCCONV_GRAD;
-    //this->nsc_ = GlobalV::NSC;
-    //this->nsc_min_ = GlobalV::NSCMIN;
-    //this->restrict_current = GlobalV::SCCUT;
-//}
-
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 {
