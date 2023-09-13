@@ -13,6 +13,9 @@
  * 
  */
 
+K_Vectors::K_Vectors(){}
+K_Vectors::~K_Vectors(){}
+
 class SpinConstrainTest : public testing::Test
 {
   protected:

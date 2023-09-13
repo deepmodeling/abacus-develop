@@ -60,6 +60,9 @@ AddTest(
   ../../../../module_hamilt_general/operator.cpp
   ../../../module_sc/spin_constrain.cpp
   ../../../module_sc/cal_h_lambda.cpp
+#  ../../../../module_cell/klist.cpp
+#  ../../../../module_cell/parallel_kpoints.cpp
+#  ../../../../module_io/output.cpp
 )
 
 endif() 

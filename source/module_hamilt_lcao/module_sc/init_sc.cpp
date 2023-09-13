@@ -11,6 +11,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
                             double sc_thr_in,
                             int nsc_in,
                             int nsc_min_in,
+                            K_Vectors kv_in,
                             std::string KS_SOLVER_in,
                             hsolver::HSolver<FPTYPE, Device>* phsol_in,
                             hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
@@ -24,6 +25,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     this->psi = psi_in;
     this->pelec = pelec_in;
     this->KS_SOLVER = KS_SOLVER_in;
+    this->kv_ = kv_in;
     // get nloc
     int nloc = this->ParaV->nloc;
     if (nloc <= 0)

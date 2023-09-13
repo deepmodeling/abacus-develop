@@ -226,15 +226,14 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 
         add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
         print_2d("temp_1 ", temp_1);
-        this->cal_mw_from_lambda(delta_lambda, new_spin);
-//        // TODO
-//        // calculate_MW_from_lambda(temp_1, CHTOTL_RESERVE, W_RESERVE, new_spin, CHTOT, W);
+        this->lambda_ = temp_1;
+        this->cal_mw_from_lambda();
 //
 //        spin_plus = new_spin;
 //        print_2d("current spin(trial):", spin_plus);
 //        //
 //        where_fill_scalar_else_2d(constrain, 0, 0.0, this->sc_mag_, target_spin_mask);
-//        where_fill_scalar_else_2d(constrain, 0, 0.0, spin, spin_mask);
+//        where_fill_s calar_else_2d(constrain, 0, 0.0, spin, spin_mask);
 //        where_fill_scalar_else_2d(constrain, 0, 0.0, spin_plus, spin_plus_mask);
 //
 //        for (int ia = 0; ia < nat; ia++)

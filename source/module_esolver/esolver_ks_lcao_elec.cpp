@@ -277,6 +277,7 @@ namespace ModuleESolver
                 GlobalV::sc_thr,
                 GlobalV::nsc,
                 GlobalV::nsc_min,
+                this->kv,
                 GlobalV::KS_SOLVER,
                 this->phsol,
                 this->p_hamilt,

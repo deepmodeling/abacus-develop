@@ -5,6 +5,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "module_cell/klist.h"
+
 /************************************************
  *  unit test of class timer
  ***********************************************/
@@ -13,6 +15,9 @@
  * - Tested Functions:
  *   -
  */
+K_Vectors::K_Vectors(){}
+K_Vectors::~K_Vectors(){}
+
 
 template<>
 void hamilt::OperatorLCAO<std::complex<double>>::init(const int ik_in)

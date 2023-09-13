@@ -591,7 +591,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
-        sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+        sc.cal_MW(iter, this->LM, this->LOC.dm_k, GlobalC::ucell);
         sc.run_lambda_loop(iter);
     }
 
@@ -744,7 +744,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
-        sc.cal_MW(iter, this->LM, this->LOC.dm_k, kv, GlobalC::ucell);
+        sc.cal_MW(iter, this->LM, this->LOC.dm_k, GlobalC::ucell);
     }
 
     // (11) calculate the total energy.
@@ -856,7 +856,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
-        sc.cal_MW(istep, this->LM, this->LOC.dm_k, kv, GlobalC::ucell, true);
+        sc.cal_MW(istep, this->LM, this->LOC.dm_k, GlobalC::ucell, true);
     }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)

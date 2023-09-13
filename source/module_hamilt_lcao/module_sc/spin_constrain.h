@@ -11,6 +11,7 @@
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hsolver/hsolver.h"
+#include "module_cell/klist.h"
 
 struct ScAtomData;
 
@@ -30,6 +31,7 @@ public:
                 double sc_thr_in,
                 int nsc_in,
                 int nsc_min_in,
+                K_Vectors kv_in,
                 std::string KS_SOLVER_in,
                 hsolver::HSolver<FPTYPE, Device>* phsol_in,
                 hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
@@ -45,19 +47,15 @@ public:
         const int& step,
         LCAO_Matrix& LM,
         const std::vector<ModuleBase::ComplexMatrix> &dm,
-        const K_Vectors& kv,
         const UnitCell& ucell,
         bool print=false);
 
     ModuleBase::matrix cal_MW_k(
         LCAO_Matrix& LM,
-        const std::vector<ModuleBase::ComplexMatrix> &dm,
-        const K_Vectors& kv
+        const std::vector<ModuleBase::ComplexMatrix> &dm
     );
 
-    void cal_mw_from_lambda(
-        const std::vector<ModuleBase::Vector3<double>> delta_lambda,
-        std::vector<ModuleBase::Vector3<double>> new_spin);
+    void cal_mw_from_lambda();
 
     double cal_escon();
 
@@ -183,6 +181,7 @@ private:
     bool debug = false; // which is LDESC in the original code
     double alpha_trial_ = 0.01; // which is INISC in the original code
     double restrict_current_ = 3; // which is SCCUT in the original code
+    K_Vectors kv_;
 };
 
 

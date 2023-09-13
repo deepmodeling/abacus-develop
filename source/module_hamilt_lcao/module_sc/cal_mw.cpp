@@ -11,14 +11,13 @@ template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
                         LCAO_Matrix& LM,
                         const std::vector<ModuleBase::ComplexMatrix> &dm,
-                        const K_Vectors& kv,
                         const UnitCell& ucell,
                         bool print)
 {
     ModuleBase::TITLE("module_sc", "cal_MW");
 
     ModuleBase::matrix orbMulP;
-    orbMulP = this->cal_MW_k(LM, dm, kv);
+    orbMulP = this->cal_MW_k(LM, dm);
     
     std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
 
@@ -186,8 +185,7 @@ void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
 template<typename FPTYPE, typename Device>
 ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
     LCAO_Matrix& LM,
-    const std::vector<ModuleBase::ComplexMatrix> &dm,
-    const K_Vectors& kv
+    const std::vector<ModuleBase::ComplexMatrix> &dm
 )
 {
     ModuleBase::TITLE("module_sc", "cal_MW_k");
@@ -197,10 +195,10 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
     MecMulP.create(this->nspin_, nlocal);
     orbMulP.create(this->nspin_, nlocal);
 
-    for(size_t ik = 0; ik != kv.nks; ++ik)
+    for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
         LM.zeros_HSk('S');
-		LM.folding_fixedH(ik, kv.kvec_d);
+		LM.folding_fixedH(ik, this->kv_.kvec_d);
 
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow);
