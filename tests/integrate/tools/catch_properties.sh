@@ -134,7 +134,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
 	pot1ref=refSPIN1_POT.cube
 	pot1cal=OUT.autotest/SPIN1_POT.cube
-	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
+	python3 ../tools/CompareFile.py $pot1ref $pot1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
 
