@@ -84,87 +84,77 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             print_2d("initial spin: ", spin);
             print_2d("target spin: ", this->sc_mag_);
         }
-//        else
-//        {
-//            std::cout << "optimal delta lambda: " << std::endl;
-//            for (int i=0; i< nat; i++)
-//            {
-//                delta_lambda[i].print();
-//            }
-//            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
-//            /**
-//             * TODO, also in-place change density CHTOT and orbital W, const 3 regular 3
-//             * basically, use CHTOTL_RESERVE and temp_1(LAMBDA) recalculate V, then calculate H, then
-//             * diagonalize H (in the subspace spanned by W_RESERVE), then use obtained orbitals W 
-//             * calculate density CHTOT and orbital mag MW.
-//             * Note that using CHTOTL instead of CHTOT is to recreate the H that has W_RESERVE as 
-//             * eigenvectors
-//            */
-//            /// calculate_MW_from_lambda(temp_1, CHTOTL_RESERVE, W_RESERVE, new_spin, CHTOT, W);
-//            subtract_2d(new_spin, spin, spin_change);
-//            subtract_2d(delta_lambda, dnu_last_step, nu_change);
-//            where_fill_scalar_2d(constrain, 0, 0.0, spin_change);
-//            where_fill_scalar_2d(constrain, 0, 0.0, nu_change);
-//            // calculate spin_nu_gradient
-//            for (int ia = 0; ia < nat; ia++)
-//            {
-//                for (int ic = 0; ic < 3; ic++)
-//                {
-//                    for (int ja = 0; ja < nat; ja++)
-//                    {
-//                        for(int jc = 0; jc < 3; jc++)
-//                        {
-//                            spin_nu_gradient[ia][ic][ja][jc] = spin_change[ia][ic] / nu_change[ja][jc];
-//                        }
-//                    }
-//                }
-//            }
-//            for (const auto& sc_elem : this->get_atomCounts())
-//            {
-//                int it = sc_elem.first;
-//                int nat_it = sc_elem.second;
-//                for (int ia = 0; ia < nat_it; ia++)
-//                {
-//                    for (int ic = 0; ic < 3; ic++)
-//                    {
-//                        spin_nu_gradient_diag[ia][ic] = spin_nu_gradient[ia][ic][ia][ic];
-//                        if (spin_nu_gradient_diag[ia][ic] > max_gradient[it])
-//                        {
-//                            max_gradient[it] = spin_nu_gradient_diag[ia][ic];
-//                            max_gradient_index[it].first = ia;
-//                            max_gradient_index[it].second = ic;
-//                        }
-//                    }
-//                }
-//            }
-//            print_2d("diagonal gradient: ", spin_nu_gradient_diag);
-//            std::cout << "maximum gradient appears at: " << std::endl;
-//            for (int it = 0; it < ntype; it++)
-//            {
-//                std::cout << "( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )" << std::endl;
-//            }
-//            std::cout << "maximum gradient: " << std::endl;
-//            for (int it = 0; it < ntype; it++)
-//            {
-//                std::cout << max_gradient[it] << std::endl;
-//            }
-//            for (int it = 0; it < ntype; it++)
-//            {
-//                if (i_step >= this->nsc_min_ && bound_gradient[it] > 0 && max_gradient[it] < bound_gradient[it])
-//                {
-//                    std::cout << "Reach limitation of current step ( maximum gradient < " 
-//                        << bound_gradient[it] << " in atom type " << it << " ), exit." << std::endl;
-//                    // roll back to the last step
-//                    // TODO
-//                    // CHTOT = CHTOT_last_step;
-//                    add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, lambda_);
-//                    goto CG_STOP;
-//                }
-//            }
-//            spin = new_spin;
-//            print_2d("new spin: ", spin);
-//            print_2d("target spin: ", this->sc_mag_);
-//        }
+        else
+        {
+            std::cout << "optimize delta lambda: " << std::endl;
+            print_2d("delta_lambda before optimize ", delta_lambda);
+            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
+            this->lambda_ = temp_1;
+            this->cal_mw_from_lambda(i_step);
+            new_spin = this->Mi_;
+            subtract_2d(new_spin, spin, spin_change);
+            subtract_2d(delta_lambda, dnu_last_step, nu_change);
+            print_2d("nu_change ", nu_change);
+            where_fill_scalar_2d(this->constrain_, 0, 0.0, spin_change);
+            where_fill_scalar_2d(this->constrain_, 0, 0.0, nu_change);
+            // calculate spin_nu_gradient
+            for (int ia = 0; ia < nat; ia++)
+            {
+                for (int ic = 0; ic < 3; ic++)
+                {
+                    for (int ja = 0; ja < nat; ja++)
+                    {
+                        for(int jc = 0; jc < 3; jc++)
+                        {
+                            spin_nu_gradient[ia][ic][ja][jc] = spin_change[ia][ic] / nu_change[ja][jc];
+                        }
+                    }
+                }
+            }
+            for (const auto& sc_elem : this->get_atomCounts())
+            {
+                int it = sc_elem.first;
+                int nat_it = sc_elem.second;
+                for (int ia = 0; ia < nat_it; ia++)
+                {
+                    for (int ic = 0; ic < 3; ic++)
+                    {
+                        spin_nu_gradient_diag[ia][ic] = spin_nu_gradient[ia][ic][ia][ic];
+                        if (spin_nu_gradient_diag[ia][ic] > max_gradient[it])
+                        {
+                            max_gradient[it] = spin_nu_gradient_diag[ia][ic];
+                            max_gradient_index[it].first = ia;
+                            max_gradient_index[it].second = ic;
+                        }
+                    }
+                }
+            }
+            print_2d("diagonal gradient: ", spin_nu_gradient_diag);
+            std::cout << "maximum gradient appears at: " << std::endl;
+            for (int it = 0; it < ntype; it++)
+            {
+                std::cout << "( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )" << std::endl;
+            }
+            std::cout << "maximum gradient: " << std::endl;
+            for (int it = 0; it < ntype; it++)
+            {
+                std::cout << max_gradient[it] << std::endl;
+            }
+            for (int it = 0; it < ntype; it++)
+            {
+                if (i_step >= this->nsc_min_ && bound_gradient[it] > 0 && max_gradient[it] < bound_gradient[it])
+                {
+                    std::cout << "Reach limitation of current step ( maximum gradient < " 
+                        << bound_gradient[it] << " in atom type " << it << " ), exit." << std::endl;
+                    // roll back to the last step
+                    add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, lambda_);
+                    goto CG_STOP;
+                }
+            }
+            spin = new_spin;
+            print_2d("new spin: ", spin);
+            print_2d("target spin: ", this->sc_mag_);
+        }
         // continue the lambda loop
         subtract_2d(spin, this->sc_mag_, delta_spin);
         where_fill_scalar_2d(this->constrain_, 0, 0.0, delta_spin);
