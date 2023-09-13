@@ -57,7 +57,7 @@ public:
         const std::vector<ModuleBase::ComplexMatrix> &dm
     );
 
-    void cal_mw_from_lambda();
+    void cal_mw_from_lambda(int i_step);
 
     double cal_escon();
 
