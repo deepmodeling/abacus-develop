@@ -12,6 +12,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hsolver/hsolver.h"
 #include "module_cell/klist.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 struct ScAtomData;
 
@@ -33,6 +34,7 @@ public:
                 int nsc_min_in,
                 K_Vectors kv_in,
                 std::string KS_SOLVER_in,
+                LCAO_Matrix* LM_in,
                 hsolver::HSolver<FPTYPE, Device>* phsol_in,
                 hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                 psi::Psi<std::complex<double>>* psi_in,
@@ -76,11 +78,12 @@ public:
     /**
      * important outter class pointers used in spin-constrained DFT
     */
-    Parallel_Orbitals *ParaV;
+    Parallel_Orbitals *ParaV = nullptr;
     hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
     psi::Psi<std::complex<double>>* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
+    LCAO_Matrix* LM = nullptr;
     std::string KS_SOLVER;
 
 public:
