@@ -228,80 +228,78 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         print_2d("temp_1 ", temp_1);
         this->lambda_ = temp_1;
         this->cal_mw_from_lambda(i_step);
-//
-//        spin_plus = new_spin;
-//        print_2d("current spin(trial):", spin_plus);
-//        //
-//        where_fill_scalar_else_2d(constrain, 0, 0.0, this->sc_mag_, target_spin_mask);
-//        where_fill_s calar_else_2d(constrain, 0, 0.0, spin, spin_mask);
-//        where_fill_scalar_else_2d(constrain, 0, 0.0, spin_plus, spin_plus_mask);
-//
-//        for (int ia = 0; ia < nat; ia++)
-//        {
-//            for (int ic = 0; ic < 3; ic++)
-//            {
-//                temp_1[ia][ic] = (target_spin_mask[ia][ic] - spin_mask[ia][ic]) * (spin_plus_mask[ia][ic] - spin_mask[ia][ic]);
-//                temp_2[ia][ic] = pow(spin_mask[ia][ic] - spin_plus_mask[ia][ic], 2);
-//            }
-//        }
-//        sum_k = sum_2d(temp_1);
-//        sum_k2 = sum_2d(temp_2);
-//        alpha_opt = sum_k * alpha_trial / sum_k2;
-//
-//        boundary = abs(alpha_trial * maxval_abs_2d(search));
-//        std::cout << "alpha_opt before restrict = " << alpha_opt << std::endl;
-//        std::cout << "boundary before = " << boundary << std::endl;
-//
-//        if (restrict_current > 0 && boundary > restrict_current)
-//        {
-//            alpha_opt = copysign(1.0, alpha_opt) * restrict_current / maxval_abs_2d(search);
-//            boundary = abs(alpha_opt * maxval_abs_2d(search));
-//            std::cout << "restriction needed: true" << std::endl;
-//            std::cout << "alpha_opt after restrict = " << alpha_opt << std::endl;
-//            std::cout << "boundary after = " << boundary << std::endl;
-//        }
-//        else
-//        {
-//            std::cout << "restriction needed: false" << std::endl;
-//        }
-//
-//        alpha_plus = alpha_opt - alpha_trial;
-//        scalar_multiply_2d(search, alpha_plus, temp_1);
-//        print_2d("delta delta lambda:", temp_1);
-//
-//        temp_2 = dnu;
-//        add_scalar_multiply_2d(temp_2, temp_1, 1.0, dnu);
-//        delta_lambda = dnu;
-//
+
+        spin_plus = this->Mi_;
+        print_2d("current spin(trial):", spin_plus);
+        //
+        where_fill_scalar_else_2d(this->constrain_, 0, 0.0, this->sc_mag_, target_spin_mask);
+        where_fill_scalar_else_2d(this->constrain_, 0, 0.0, spin, spin_mask);
+        where_fill_scalar_else_2d(this->constrain_, 0, 0.0, spin_plus, spin_plus_mask);
+
+        for (int ia = 0; ia < nat; ia++)
+        {
+            for (int ic = 0; ic < 3; ic++)
+            {
+                temp_1[ia][ic] = (target_spin_mask[ia][ic] - spin_mask[ia][ic]) * (spin_plus_mask[ia][ic] - spin_mask[ia][ic]);
+                temp_2[ia][ic] = pow(spin_mask[ia][ic] - spin_plus_mask[ia][ic], 2);
+            }
+        }
+        sum_k = sum_2d(temp_1);
+        sum_k2 = sum_2d(temp_2);
+        alpha_opt = sum_k * alpha_trial / sum_k2;
+
+        boundary = abs(alpha_trial * maxval_abs_2d(search));
+        std::cout << "alpha_opt before restrict = " << alpha_opt << std::endl;
+        std::cout << "boundary before = " << boundary << std::endl;
+
+        if (restrict_current > 0 && boundary > restrict_current)
+        {
+            alpha_opt = copysign(1.0, alpha_opt) * restrict_current / maxval_abs_2d(search);
+            boundary = abs(alpha_opt * maxval_abs_2d(search));
+            std::cout << "restriction needed: true" << std::endl;
+            std::cout << "alpha_opt after restrict = " << alpha_opt << std::endl;
+            std::cout << "boundary after = " << boundary << std::endl;
+        }
+        else
+        {
+            std::cout << "restriction needed: false" << std::endl;
+        }
+
+        alpha_plus = alpha_opt - alpha_trial;
+        scalar_multiply_2d(search, alpha_plus, temp_1);
+        print_2d("delta delta lambda:", temp_1);
+
+        temp_2 = dnu;
+        add_scalar_multiply_2d(temp_2, temp_1, 1.0, dnu);
+        delta_lambda = dnu;
+
         search_old = search;
         delta_spin_old = delta_spin;
         mean_error_old = mean_error;
-//
-//        g = 1.5 * abs(alpha_opt) / alpha_trial;
-//        if (g > 2.0)
-//        {
-//            g = 2;
-//        }
-//        else if (g < 0.5)
-//        {
-//            g = 0.5;
-//        }
-//        else
-//        {
-//            std::cout << "Warning: g is not in the range of [0.5, 2.0], g = " << g << std::endl;
-//        }
-//        alpha_trial = alpha_trial * pow(g, 0.7);
+
+        g = 1.5 * abs(alpha_opt) / alpha_trial;
+        if (g > 2.0)
+        {
+            g = 2;
+        }
+        else if (g < 0.5)
+        {
+            g = 0.5;
+        }
+        else
+        {
+            std::cout << "Warning: g is not in the range of [0.5, 2.0], g = " << g << std::endl;
+        }
+        alpha_trial = alpha_trial * pow(g, 0.7);
     }
-//    
-//CG_STOP:
-//
-//    // TODO
-//    // CHTOTL = CHTOTL_RESERVE;
-//    if (debug)
-//    {
-//        print_2d("(Debug) after-optimization spin: (print in the inner loop): ", new_spin);
-//        print_2d("target spin: ", this->sc_mag_);
-//    }
+    
+CG_STOP:
+
+    if (debug)
+    {
+        print_2d("(Debug) after-optimization spin: (print in the inner loop): ", this->Mi_);
+        print_2d("target spin: ", this->sc_mag_);
+    }
     std::cout << "Inner optimization for lambda ends." << std::endl;
     std::cout << "===============================================================================" << std::endl;
 
