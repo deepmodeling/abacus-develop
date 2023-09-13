@@ -123,8 +123,10 @@ TEST_F(SpinConstrainTest, SetScLambdaAndMag)
 	sc.clear_atomCounts();
 	sc.set_atomCounts(atomCounts);
 	sc.set_sc_lambda();
+	sc.set_init_mag();
 	sc.set_sc_mag();
 	std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
+	std::vector<ModuleBase::Vector3<double>> init_mag = sc.get_init_mag();
 	std::vector<ModuleBase::Vector3<double>> sc_mag = sc.get_sc_mag();
 	EXPECT_EQ(sc_lambda.size(), sc.get_nat());
 	for (const auto& sc_elem : sc.get_ScData())
@@ -137,6 +139,9 @@ TEST_F(SpinConstrainTest, SetScLambdaAndMag)
 			EXPECT_DOUBLE_EQ(sc_data.lambda[0],sc_lambda[iat].x);
 			EXPECT_DOUBLE_EQ(sc_data.lambda[1],sc_lambda[iat].y);
 			EXPECT_DOUBLE_EQ(sc_data.lambda[2],sc_lambda[iat].z);
+			EXPECT_DOUBLE_EQ(sc_data.init_mag[0],init_mag[iat].x);
+			EXPECT_DOUBLE_EQ(sc_data.init_mag[1],init_mag[iat].y);
+			EXPECT_DOUBLE_EQ(sc_data.init_mag[2],init_mag[iat].z);
 			EXPECT_DOUBLE_EQ(sc_data.sc_mag[0],sc_mag[iat].x);
 			EXPECT_DOUBLE_EQ(sc_data.sc_mag[1],sc_mag[iat].y);
 			EXPECT_DOUBLE_EQ(sc_data.sc_mag[2],sc_mag[iat].z);
@@ -149,6 +154,9 @@ TEST_F(SpinConstrainTest, SetScLambdaAndMag)
 			EXPECT_DOUBLE_EQ(sc_lambda[iat].x,0.0);
 			EXPECT_DOUBLE_EQ(sc_lambda[iat].y,0.0);
 			EXPECT_DOUBLE_EQ(sc_lambda[iat].z,0.0);
+			EXPECT_DOUBLE_EQ(init_mag[iat].x,0.0);
+			EXPECT_DOUBLE_EQ(init_mag[iat].y,0.0);
+			EXPECT_DOUBLE_EQ(init_mag[iat].z,0.0);
 			EXPECT_DOUBLE_EQ(sc_mag[iat].x,0.0);
 			EXPECT_DOUBLE_EQ(sc_mag[iat].y,0.0);
 			EXPECT_DOUBLE_EQ(sc_mag[iat].z,0.0);

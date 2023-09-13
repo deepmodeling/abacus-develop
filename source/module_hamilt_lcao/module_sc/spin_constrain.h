@@ -110,6 +110,10 @@ public:
     void set_sc_lambda();
     /// set sc_lambda from variable
     void set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in);
+    /// set init_mag
+    void set_init_mag();
+    /// set init_mag from variable
+    void set_init_mag(const ModuleBase::Vector3<double>* init_mag_in, int nat_in);
     /// set sc_mag
     void set_sc_mag();
     /// set sc_mag from variable
@@ -120,6 +124,8 @@ public:
     void set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
+    /// get init_mag
+    const std::vector<ModuleBase::Vector3<double>>& get_init_mag() const;
     /// get sc_mag
     const std::vector<ModuleBase::Vector3<double>>& get_sc_mag() const;
     /// get constrain
