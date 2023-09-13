@@ -10,8 +10,8 @@
     /// todo
     /// init input parameters from reading INPUT file
     //this->spin = GlobalV::MW;
-    //this->out_lambda = GlobalV::OUT_LAMBDA;
-    // question: how to out_lambda?
+    //this->lambda_ = GlobalV::OUT_LAMBDA;
+    // question: how to lambda_?
     //this->target_spin = GlobalV::M_CONSTR;
     //this->constrain = GlobalV::CONSTRL;
     //this->alpha_trial = GlobalV::INISC;
@@ -33,7 +33,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // question: how to set initial_lambda?
     // question: is delta_lambda initially zero?
     // set nu, dnu and dnu_last_step
-    std::vector<ModuleBase::Vector3<double>> nu(nat,0.0), dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
     // two controlling temp variables
     std::vector<ModuleBase::Vector3<double>> temp_1(nat,0.0), temp_2(nat,0.0);
     // MW during loop
@@ -80,8 +80,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << std::endl;
 //        if (i_step == 0)
 //        {
-//            nu = this->out_lambda;
-//            where_fill_scalar_else_2d(this->constrain, 0, 0.0, this->out_lambda, initial_lambda);
+//            where_fill_scalar_else_2d(this->constrain, 0, 0.0, this->lambda_, initial_lambda);
 //            print_2d("initial lambda: ", initial_lambda);
 //            print_2d("initial spin: ", this->spin);
 //            print_2d("target spin: ", this->sc_mag_);
@@ -159,7 +158,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 //                    // roll back to the last step
 //                    // TODO
 //                    // CHTOT = CHTOT_last_step;
-//                    add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, out_lambda);
+//                    add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, lambda_);
 //                    goto CG_STOP;
 //                }
 //            }
@@ -192,7 +191,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 //            {
 //                std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
 //            }
-//            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, out_lambda);
+//            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, lambda_);
 //            goto CG_STOP;
 //        }
 //

@@ -171,8 +171,7 @@ private:
     int nsc_min_; // which is NSCMIN from INPUT
     double sc_thr_; // which is SCDIFF from INPUT
     std::vector<ModuleBase::Vector3<int>> constrain_; // which is CONSTRL from INPUT
-    std::vector<ModuleBase::Vector3<double>> out_lambda; // which is OUT_LAMBDA from INPUT
-    std::vector<ModuleBase::Vector3<double>> spin; // which is MW from INPUT, the initial spin
+    std::vector<ModuleBase::Vector3<double>> init_mag_; // which is MW from INPUT, the initial spin
     bool debug = false; // which is LDESC in the original code
 };
 
