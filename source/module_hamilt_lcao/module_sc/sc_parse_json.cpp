@@ -36,6 +36,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex index_regex("\"index\": (\\d+)");
     std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
+    std::regex init_mag_regex("\"init_mag\": \\[(.+?)\\]");
     std::regex sc_mag_regex("\"sc_mag\": \\[(.+?)\\]");
     std::regex sc_spin_val_regex("\"sc_spin_val\": ([0-9.]+)");
     std::regex sc_spin_angle1_regex("\"sc_spin_angle1\": ([0-9.]+)");
@@ -60,6 +61,19 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
                 double value;
                 while (ss >> value) {
                     element_data.lambda.push_back(value);
+                    if (ss.peek() == ',') {
+                        ss.ignore();
+                    }
+                }
+            }
+
+            getline(file, line); // Read the following line
+
+            if (std::regex_search(line, match, init_mag_regex)) {
+                std::stringstream ss(match[1]);
+                double value;
+                while (ss >> value) {
+                    element_data.init_mag.push_back(value);
                     if (ss.peek() == ',') {
                         ss.ignore();
                     }

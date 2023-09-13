@@ -76,6 +76,9 @@ TEST_F(SpinConstrainTest, ScDataFormat1)
 				EXPECT_DOUBLE_EQ(sc_data.lambda[0],0.1);
 				EXPECT_DOUBLE_EQ(sc_data.lambda[1],0.1);
 				EXPECT_DOUBLE_EQ(sc_data.lambda[2],0.2);
+				EXPECT_DOUBLE_EQ(sc_data.init_mag[0],1.1);
+				EXPECT_DOUBLE_EQ(sc_data.init_mag[1],2.2);
+				EXPECT_DOUBLE_EQ(sc_data.init_mag[2],3.3);
 				EXPECT_DOUBLE_EQ(sc_data.sc_mag[0],1.0);
 				EXPECT_DOUBLE_EQ(sc_data.sc_mag[1],2.0);
 				EXPECT_DOUBLE_EQ(sc_data.sc_mag[2],3.0);
@@ -101,6 +104,9 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
 				EXPECT_DOUBLE_EQ(sc_data.lambda[0],0.2);
 				EXPECT_DOUBLE_EQ(sc_data.lambda[1],0.4);
 				EXPECT_DOUBLE_EQ(sc_data.lambda[2],0.5);
+				EXPECT_DOUBLE_EQ(sc_data.init_mag[0],1.1);
+				EXPECT_DOUBLE_EQ(sc_data.init_mag[1],2.2);
+				EXPECT_DOUBLE_EQ(sc_data.init_mag[2],3.3);
 				EXPECT_DOUBLE_EQ(sc_data.sc_spin_val,1.5);
 				EXPECT_DOUBLE_EQ(sc_data.sc_spin_angle1,60.0);
 				EXPECT_DOUBLE_EQ(sc_data.sc_spin_angle2,90.0);

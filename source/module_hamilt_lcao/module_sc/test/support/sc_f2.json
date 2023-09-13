@@ -6,6 +6,7 @@
             {
                 "index": 0,
                 "lambda": [0.1, 0.1, 0.2],
+                "init_mag": [1.1, 2.2, 3.3],
                 "sc_spin_val": 1.0,
                 "sc_spin_angle1": 30.0,
                 "sc_spin_angle2": 45.0
@@ -13,6 +14,7 @@
             {
                 "index": 4,
                 "lambda": [0.2, 0.4, 0.5],
+                "init_mag": [1.1, 2.2, 3.3],
                 "sc_spin_val": 1.5,
                 "sc_spin_angle1": 60.0,
                 "sc_spin_angle2": 90.0

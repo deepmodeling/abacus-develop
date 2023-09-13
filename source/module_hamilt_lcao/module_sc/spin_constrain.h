@@ -182,6 +182,7 @@ private:
 struct ScAtomData {
     int index;
     std::vector<double> lambda;
+    std::vector<double> init_mag;
     std::vector<double> sc_mag;
     std::vector<int> constrain;
     double sc_spin_val;
