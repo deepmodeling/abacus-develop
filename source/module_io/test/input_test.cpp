@@ -110,6 +110,9 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.gamma_only);
         EXPECT_FALSE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,50.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -168,7 +171,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
-        EXPECT_FALSE(INPUT.out_wfc_lcao);
+        EXPECT_EQ(INPUT.out_wfc_lcao,0);
         EXPECT_FALSE(INPUT.out_alllog);
         EXPECT_DOUBLE_EQ(INPUT.dos_emin_ev,-15);
         EXPECT_DOUBLE_EQ(INPUT.dos_emax_ev,15);
@@ -446,6 +449,9 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.gamma_only);
         EXPECT_TRUE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
         EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
@@ -681,7 +687,7 @@ TEST_F(InputTest, Read)
 	EXPECT_EQ(INPUT.mdp.md_restart,0);
 	EXPECT_EQ(INPUT.mdp.md_restartfreq,5);
 	EXPECT_EQ(INPUT.mdp.md_seed,-1);
-    EXPECT_EQ(INPUT.mdp.md_prec_level,1);
+    EXPECT_EQ(INPUT.mdp.md_prec_level, 2);
     EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.2);
 	EXPECT_EQ(INPUT.mdp.md_tchain,1);
 	EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfirst,-1);
@@ -728,14 +734,17 @@ TEST_F(InputTest, Default_2)
 	INPUT.lcao_ecut = 0;
 	INPUT.scf_thr = -1.0;
 	INPUT.scf_thr_type = -1;
-        EXPECT_DOUBLE_EQ(INPUT.ecutwfc,20.0);
-	INPUT.nbndsto_str = "all";
-	// the 1st calling
-	INPUT.Default_2();
-	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.vdw_s6,"0.75");
-        EXPECT_EQ(INPUT.vdw_cutoff_radius,"56.6918");
-	EXPECT_EQ(INPUT.bndpar,1);
+    EXPECT_DOUBLE_EQ(INPUT.ecutwfc, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
+    INPUT.nbndsto_str = "all";
+    // the 1st calling
+    INPUT.Default_2();
+    // ^^^^^^^^^^^^^^
+    EXPECT_EQ(INPUT.vdw_s6, "0.75");
+    EXPECT_EQ(INPUT.vdw_cutoff_radius, "56.6918");
+    EXPECT_EQ(INPUT.bndpar,1);
 	EXPECT_EQ(INPUT.method_sto,2);
 	EXPECT_TRUE(INPUT.of_hold_rho0);
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
@@ -1241,6 +1250,14 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("kpar > 1 has not been supported for lcao calculation."));
 	INPUT.kpar = 1;
+	//
+	INPUT.basis_type = "lcao";
+	INPUT.out_wfc_lcao = 3;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("out_wfc_lcao must be 0, 1, or 2"));
+	INPUT.out_wfc_lcao = 0;
 	//
 	INPUT.basis_type = "lcao_in_pw";
 	INPUT.ks_solver = "arbitrary";

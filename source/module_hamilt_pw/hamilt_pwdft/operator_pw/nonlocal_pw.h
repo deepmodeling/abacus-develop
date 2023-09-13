@@ -37,12 +37,12 @@ class Nonlocal<OperatorPW<FPTYPE, Device>> : public OperatorPW<FPTYPE, Device>
 
     virtual void init(const int ik_in)override;
 
-    virtual void act(
-        const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-        const int n_npwx, 
-        const std::complex<FPTYPE>* tmpsi_in, 
-        std::complex<FPTYPE>* tmhpsi
-    )const override;
+    virtual void act(const int nbands,
+        const int nbasis,
+        const int npol,
+        const std::complex<FPTYPE>* tmpsi_in,
+        std::complex<FPTYPE>* tmhpsi,
+        const int ngk = 0)const override;
 
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}

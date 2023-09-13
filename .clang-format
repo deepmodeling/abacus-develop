@@ -14,7 +14,6 @@ BreakBeforeBinaryOperators: All
 BreakBeforeTernaryOperators: 'true'
 
 Cpp11BracedListStyle: 'true'
-DerivePointerAlignment: 'true'
 FixNamespaceComments: 'true'
 
 # About include

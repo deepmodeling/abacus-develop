@@ -62,10 +62,10 @@ TEST_F(Test_Paw_Atom, test_paw)
 
     std::vector<int> rhoijselect = paw_atom.get_rhoijselect();
     std::vector<int> rhoijselect_ref = {1,2,3,7,8,10,11,12,14,15,22,23,25,26,
-        28,29,30,32,33,35,36,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        28,29,30,32,33,35,36,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
     for(int i = 0; i < rhoijselect.size(); i ++)
     {
-        EXPECT_EQ(rhoijselect[i],rhoijselect_ref[i]-1); // -1 because Fortran index starts from 1
+        EXPECT_EQ(rhoijselect[i],rhoijselect_ref[i]);
     }
 
     std::vector<double> rhoijp = paw_atom.get_rhoijp();
