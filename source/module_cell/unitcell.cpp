@@ -1599,7 +1599,7 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
     if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {	
-		atom_in ai;
+        atom_in ai;
         if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
 			  ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
 			  label1 == std::to_string(ai.atom_Z[label2]) ||   // '!( "47" == "Ag" )'
