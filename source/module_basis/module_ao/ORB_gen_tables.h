@@ -4,6 +4,7 @@
 // temporary switch
 // if USE_NEW_TWO_CENTER is defined, the new two-center method is used
 // to replace the old UOT.snap_xxx
+
 #define USE_NEW_TWO_CENTER
 
 #include <memory>

@@ -1,5 +1,7 @@
 #include "esolver_ks_lcao.h"
 
+#include "module_base/global_variable.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
@@ -35,6 +37,8 @@
 // function used by deepks
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
+
+#include "module_base/parallel_common.h"
 
 namespace ModuleESolver
 {
@@ -441,6 +445,7 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
         this->orb_con.setup_2d_division(GlobalV::ofs_running, GlobalV::ofs_warning);
         this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     }
+
 }
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)

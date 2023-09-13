@@ -1,4 +1,5 @@
 #include "LCAO_gen_fixedH.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -169,7 +170,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 #else
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, 
 										tau1, T1, L1, m1, N1,                  // info of atom1
-										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2 
+										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2
 										cal_syns,
 										dmax);
 #endif
