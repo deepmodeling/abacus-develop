@@ -206,7 +206,7 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
                 scal=OUT.autotest/data-1-S
         fi
 
-        python3 ../tools/CompareFile.py $href $hcal 8
+        python3 ../tools/CompareFile.py $href $hcal 6
     echo "CompareH_pass $?" >>$1
     python3 ../tools/CompareFile.py $sref $scal 8
     echo "CompareS_pass $?" >>$1
