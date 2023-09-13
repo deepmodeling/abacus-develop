@@ -202,7 +202,14 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
 {
     //---------Charge part-----------------
     // core correction potential.
-    this->charge->set_rho_core(strucfac);
+    if(!GlobalV::use_paw)
+    {
+        this->charge->set_rho_core(strucfac);
+    }
+    else
+    {
+        this->charge->set_rho_core_paw();
+    }
 
     //--------------------------------------------------------------------
     // (2) other effective potentials need charge density,

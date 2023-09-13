@@ -271,7 +271,7 @@ directly.
 > `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
 
 ### Add LibRI and LibComm Support
-To use new EXX, you need two libraries: LibRI and LibComm and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use 
+To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use 
 ```makefile
 make LIBRI_DIR=/public/software/LibRI LIBCOMM_DIR=/public/software/LibComm
 ```

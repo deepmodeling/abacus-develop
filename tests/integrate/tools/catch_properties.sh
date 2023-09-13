@@ -296,8 +296,8 @@ fi
 # echo "$has_lowf" ## test out_wfc_lcao > 0
 if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.dat
-		wfc_ref=LOWF_GAMMA_S1.dat.ref	
+		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.txt
+		wfc_ref=LOWF_GAMMA_S1.txt.ref	
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=10_LOWF_K_1
@@ -315,9 +315,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/"$wfc_name".dat > OUT.autotest/"$wfc_name"_mod.dat
-		wfc_cal=OUT.autotest/"$wfc_name"_mod.dat
-		wfc_ref="$wfc_name"_mod.dat.ref
+    	}' OUT.autotest/"$wfc_name".txt > OUT.autotest/"$wfc_name"_mod.txt
+		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
+		wfc_ref="$wfc_name"_mod.txt.ref
 	fi
 
 	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1

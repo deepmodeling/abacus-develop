@@ -3,6 +3,7 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 remove_definitions(-D__LCAO)
+remove_definitions(-DUSE_PAW)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES unitcell_test_pw_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

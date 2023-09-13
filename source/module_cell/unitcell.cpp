@@ -18,6 +18,9 @@
 #include "module_base/element_covalent_radius.h"
 #include "module_base/atom_in.h"
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_ri/serialization_cereal.h"
@@ -646,6 +649,40 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     // set index for iat2it, iat2ia
     //===================================
     this->set_iat2itia();
+
+#ifdef USE_PAW
+	if(GlobalV::use_paw)
+	{
+		GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
+
+		int * typat;
+		double * xred;
+
+		typat = new int[nat];
+		xred = new double[nat*3];
+
+		int iat = 0;
+		for(int it = 0; it < ntype; it ++)
+		{
+			for(int ia = 0; ia < atoms[it].na; ia ++)
+			{
+				typat[iat] = it + 1; //Fortran index starts from 1 !!!!
+				xred[iat*3+0] = atoms[it].taud[ia].x;
+				xred[iat*3+1] = atoms[it].taud[ia].y;
+				xred[iat*3+2] = atoms[it].taud[ia].z;
+				iat ++;
+			}
+		}
+
+		GlobalC::paw_cell.set_libpaw_atom(nat,ntype,typat,xred);
+		delete[] typat;
+		delete[] xred;
+
+		GlobalC::paw_cell.set_libpaw_files();
+
+		GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
+	}
+#endif
 
     return;
 }
@@ -1579,18 +1616,37 @@ void UnitCell::cal_nelec(double& nelec)
 
     if (nelec == 0)
     {
-        for (int it = 0; it < this->ntype; it++)
-        {
-            std::stringstream ss1, ss2;
-            ss1 << "electron number of element " << this->atoms[it].label;
-            const int nelec_it = this->atoms[it].ncpp.zv * this->atoms[it].na;
-            nelec += nelec_it;
-            ss2 << "total electron number of element " << this->atoms[it].label;
+		if(GlobalV::use_paw)
+		{
+#ifdef USE_PAW
+			for(int it = 0; it < this->ntype; it ++)
+			{
+				std::stringstream ss1, ss2;
+				ss1 << " electron number of element " << GlobalC::paw_cell.get_zat(it) << std::endl;
+				const int nelec_it = GlobalC::paw_cell.get_val(it) * this->atoms[it].na;
+				nelec += nelec_it;
+				ss2 << "total electron number of element " << GlobalC::paw_cell.get_zat(it);
 
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), this->atoms[it].ncpp.zv);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
-        }
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
+				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), GlobalC::paw_cell.get_val(it));
+				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);				
+			}
+#endif
+		}
+		else
+		{
+			for (int it = 0; it < this->ntype; it++)
+			{
+				std::stringstream ss1, ss2;
+				ss1 << "electron number of element " << this->atoms[it].label;
+				const int nelec_it = this->atoms[it].ncpp.zv * this->atoms[it].na;
+				nelec += nelec_it;
+				ss2 << "total electron number of element " << this->atoms[it].label;
+
+				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), this->atoms[it].ncpp.zv);
+				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
+			}
+			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
+		}
     }
     return;
 }
@@ -1599,7 +1655,7 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
     if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {	
-		atom_in ai;
+        atom_in ai;
         if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
 			  ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
 			  label1 == std::to_string(ai.atom_Z[label2]) ||   // '!( "47" == "Ag" )'
