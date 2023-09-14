@@ -20,6 +20,7 @@ void Paw_Element::transform_ptilde()
 
     const double pi = 3.141592653589793238462643383279502884197;
     const double twopi = 2.0 * pi;
+    const double sq2pi = std::sqrt(twopi);
 
     std::vector<double> integrand;
     integrand.resize(nr);
@@ -40,7 +41,7 @@ void Paw_Element::transform_ptilde()
 
         for (int iq = 0; iq < nq; iq++)
         {
-            ptilde_q[istate][iq] = this->spherical_bessel_transform(l, ptilde_r[istate], qgrid[iq]);
+            ptilde_q[istate][iq] = this->spherical_bessel_transform(l, ptilde_r[istate], qgrid[iq]) / sq2pi;
         }
 
         // end point condition for spline
@@ -51,7 +52,7 @@ void Paw_Element::transform_ptilde()
             {
                 integrand[ir] = twopi * ptilde_r[istate][ir] * std::pow(rr[ir],3);
             }
-            yp1 = this -> simpson_integration(integrand) / 3.0;
+            yp1 = this -> simpson_integration(integrand) / 3.0 / sq2pi;
         }
 
         double bes, besp;
@@ -63,7 +64,7 @@ void Paw_Element::transform_ptilde()
             integrand[ir] = twopi * besp * ptilde_r[istate][ir] * std::pow(rr[ir],3);
         }
 
-        ypn = this -> simpson_integration(integrand);
+        ypn = this -> simpson_integration(integrand) / sq2pi;
 
         this -> spline(qgrid, ptilde_q[istate], d2ptilde_q[istate],yp1,ypn);
     }

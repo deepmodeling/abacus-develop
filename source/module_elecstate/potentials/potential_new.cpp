@@ -178,8 +178,11 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
     }
 
 #ifdef USE_PAW
-    GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
-    GlobalC::paw_cell.set_dij();
+    if(GlobalV::USE_PAW)
+    {
+        GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
+        GlobalC::paw_cell.set_dij();
+    }
 #endif
 
     ModuleBase::timer::tick("Potential", "update_from_charge");
