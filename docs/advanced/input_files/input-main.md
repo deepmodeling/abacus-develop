@@ -1329,11 +1329,16 @@ These variables are used to control the output of properties.
 
 ### out_wfc_lcao
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as:
-  - gamma-only: `LOWF_GAMMA_S1.dat`;
-  - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
+  - 0: no output
+  - 1: (txt format)
+    - gamma-only: `LOWF_GAMMA_S1.txt`;
+    - non-gamma-only: `LOWF_K_${k}.txt`, where `${k}` is the index of k points.
+  - 2: (binary format)
+    - gamma-only: `LOWF_GAMMA_S1.dat`;
+    - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
   

@@ -40,6 +40,7 @@ public:
 	ModuleBase::Vector3<double> *taud;// Direct coordinates of each atom in this type.
     ModuleBase::Vector3<double> *vel;// velocities of each atom in this type.
     ModuleBase::Vector3<double> *force; // force acting on each atom in this type.
+    std::string label_orb; // atomic Element symbol in the orbital file of lcao
 
 	double* mag;
 	double* angle1;//spin angle, added by zhengdy-soc
