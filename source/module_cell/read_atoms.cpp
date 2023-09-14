@@ -1017,6 +1017,7 @@ void UnitCell::print_tau(void)const
     ModuleBase::TITLE("UnitCell","print_tau");
     if(Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom")
     {
+
         GlobalV::ofs_running << "\n CARTESIAN COORDINATES ( UNIT = " << lat0 << " Bohr )." << std::endl;
         GlobalV::ofs_running << std::setw(13) << " atom"
         //<< std::setw(20) << "x" 
@@ -1062,21 +1063,9 @@ void UnitCell::print_tau(void)const
 
     if(Coordinate == "Direct")
     {
-        GlobalV::ofs_running << "\n DIRECT COORDINATES" << std::endl;
-        GlobalV::ofs_running << std::setw(13) << " atom"
-        //<< std::setw(20) << "x"
-        //<< std::setw(20) << "y"
-        //<< std::setw(20) << "z"
-        //<< " mag"
-        << std::setw(20) << "x"
-        << std::setw(20) << "y"
-        << std::setw(20) << "z"
-        << std::setw(20) << "mag"
-		<< std::setw(20) << "vx"
-        << std::setw(20) << "vy"
-        << std::setw(20) << "vz"
-        << std::endl;
-
+		context.set_context({"short_title", "coordinate", "coordinate", "coordinate", "charge", "coordinate", "coordinate", "coordinate"});
+		std::vector<std::string> titles;
+		std::vector<double> xs, ys, zs, mags, vxs, vys, vzs;
         int iat=0;
         for(int it=0; it<ntype; it++)
         {
@@ -1084,24 +1073,23 @@ void UnitCell::print_tau(void)const
             {
                 std::stringstream ss;
                 ss << "taud_" << atoms[it].label << ia+1;
-
-                GlobalV::ofs_running << " " << std::setw(12) << ss.str()
-                //<< std::setw(20) << atoms[it].taud[ia].x
-                //<< std::setw(20) << atoms[it].taud[ia].y
-                //<< std::setw(20) << atoms[it].taud[ia].z
-                //<< " " << atoms[it].mag[ia]
-                << std::setw(20) << atoms[it].taud[ia].x
-                << std::setw(20) << atoms[it].taud[ia].y
-                << std::setw(20) << atoms[it].taud[ia].z
-				<< std::setw(20) << atoms[it].mag[ia]
-				<< std::setw(20) << atoms[it].vel[ia].x
-                << std::setw(20) << atoms[it].vel[ia].y
-                << std::setw(20) << atoms[it].vel[ia].z
-                << std::endl;
-
+				titles.push_back(ss.str());
+				xs.push_back(atoms[it].taud[ia].x);
+				ys.push_back(atoms[it].taud[ia].y);
+				zs.push_back(atoms[it].taud[ia].z);
+				mags.push_back(atoms[it].mag[ia]);
+				vxs.push_back(atoms[it].vel[ia].x);
+				vys.push_back(atoms[it].vel[ia].y);
+				vzs.push_back(atoms[it].vel[ia].z);
                 ++iat;
             }
         }
+		context.enable_title();
+		context<<"atom"<<titles<<"x"<<xs<<"y"<<ys<<"z"<<zs<<"mag"<<mags<<"vx"<<vxs<<"vy"<<vys<<"vz"<<vzs;
+		context.center_title();
+		context.set_overall_title("DIRECT COORDINATES");
+		context.disable_up_frame(); context.disable_mid_frame(); context.disable_down_frame();
+		GlobalV::ofs_running<<context.str()<<std::endl;
     }
 
 	GlobalV::ofs_running << std::endl;
@@ -1214,6 +1202,10 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 	while (ifs.good())
 	{
 		ifs >> word;
+		if (strcmp("Element", word) == 0)         // pengfei Li 16-2-29
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->label_orb);
+		}
 		if (strcmp("Lmax", word) == 0)
 		{
 			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);

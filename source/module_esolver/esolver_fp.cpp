@@ -59,23 +59,7 @@ namespace ModuleESolver
     {
         ModuleBase::TITLE("ESolver_FP", "init_after_vc");
 
-        if (GlobalV::md_prec_level == 0)
-        {
-            //only G-vector and K-vector are changed due to the change of lattice vector
-            //FFT grids do not change!!
-            pw_rho->initgrids(cell.lat0, cell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
-            pw_rho->collect_local_pw(); 
-            pw_rho->collect_uniqgg();
-
-            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
-        }
-        else if (GlobalV::md_prec_level == 1)
-        {
-            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"LOCAL POTENTIAL");
-        }
-        else if (GlobalV::md_prec_level == 2)
+        if (GlobalV::md_prec_level == 2)
         {
             if (inp.nx * inp.ny * inp.nz == 0)
                 this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
@@ -86,6 +70,17 @@ namespace ModuleESolver
             this->pw_rho->setuptransform();
             this->pw_rho->collect_local_pw(); 
             this->pw_rho->collect_uniqgg();
+        }
+        else
+        {
+            // only G-vector and K-vector are changed due to the change of lattice vector
+            // FFT grids do not change!!
+            pw_rho->initgrids(cell.lat0, cell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
+            pw_rho->collect_local_pw();
+            pw_rho->collect_uniqgg();
+
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
         }
         this->pelec->omega = GlobalC::ucell.omega;
 

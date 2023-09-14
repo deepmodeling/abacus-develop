@@ -6,7 +6,6 @@
 namespace ModulePW
 {
 
-
 /**
  * @brief Special pw_basis class. It includes different k-points.
  * @author qianrui, Sunliang on 2021-10-15
@@ -15,16 +14,17 @@ namespace ModulePW
  * plane waves: <r|g,k> = 1/sqrt(V) * exp(i(k+g)r)
  * f(r) = 1/sqrt(V) * \sum_g{c(g)*exp(i(k+g)r)}
  * c(g,k) = \int f(r)*exp(-i(g+k)r) dr
- * 
- * USAGE: 
+ *
+ * USAGE:
  * ModulePW::PW_Basis_K pwtest;
  * 0. init mpi for PW_Basis
  * pwtest.inimpi(nproc_in_pool,rank_in_pool,POOL_WORLD);
  * 1. setup FFT grids for PW_Basis
  * pwtest.initgrids(lat0,latvec,gridecut);
- * pwtest.initgrids(lat0,latvec,N1,N2,N3); 
+ * pwtest.initgrids(lat0,latvec,N1,N2,N3);
  * //double lat0: unit length, (unit: bohr)
- * //ModuleBase::Matrix3 latvec: lattice vector, (unit: lat0), e.g. ModuleBase::Matrix3 latvec(1, 1, 0, 0, 2, 0, 0, 0, 2);
+ * //ModuleBase::Matrix3 latvec: lattice vector, (unit: lat0), e.g. ModuleBase::Matrix3 latvec(1, 1, 0, 0, 2, 0, 0, 0,
+ * 2);
  * //double gridecut: cutoff energy to generate FFT grids, (unit: Ry)
  * //int N1,N2,N3: FFT grids
  * 2. init parameters
@@ -35,11 +35,14 @@ namespace ModulePW
  * //ModuleBase::Vector<double>* kvec_d: different k points
  * //int dividemthd: method to divide planewaves to different cores
  * 3. Setup transforms from real space to reciprocal space or from reciprocal space to real space.
- * pwtest.setuptransform(); 
+ * pwtest.setuptransform();
  * pwtest.recip2real(wfg,wfr,ik); //wfg to wfr
  * pwtest.real2recip(wfr,wfg,ik); //wfr to wfg
  * 4. Generate the wave vector for planewaves
- * pwtest.collect_local_pw(); 
+ * pwtest.collect_local_pw();
+ * // double erf_ecut_in: the value of the constant energy cutoff
+ * // double erf_height_in: the height of the energy step for reciprocal vectors
+ * // double erf_sigma_in: the width of the energy step for reciprocal vectors
  * //then we can use pwtest.gk2, pwtest.gcar, (unit in lat0^-1 or lat0^-2)
  * //getgk2(ik,ig) : get pwtest.gk2: (G+K)^2
  * //getgcar(ik,ig): get pwtest.gcar: G
@@ -47,7 +50,7 @@ namespace ModulePW
  * //getgpluskcar(ik.ig):   get G+K
  * //getigl2isz(ik,ig): get pwtest.igl2isz_k
  * //getigl2ig(ik,ig):  get pwtest.igl2ig_k
- * 
+ *
  */
 class PW_Basis_K : public PW_Basis
 {
@@ -89,10 +92,17 @@ public:
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
-    //collect gdirect, gcar, gg
-    void collect_local_pw();
+    // liuyu add 2023-09-06
+    double erf_ecut;   // the value of the constant energy cutoff
+    double erf_height; // the height of the energy step for reciprocal vectors
+    double erf_sigma;  // the width of the energy step for reciprocal vectors
 
-private:
+    //collect gdirect, gcar, gg
+    void collect_local_pw(const double& erf_ecut_in = 0.0,
+                          const double& erf_height_in = 0.0,
+                          const double& erf_sigma_in = 0.1);
+
+  private:
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft

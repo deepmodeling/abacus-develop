@@ -203,7 +203,7 @@ namespace ModuleESolver
             this->pw_wfc->setuptransform();
             for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-            this->pw_wfc->collect_local_pw(); 
+            this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
             this->print_wfcfft(inp, GlobalV::ofs_running);
         //}
         // initialize the real-space uniform grid for FFT and parallel

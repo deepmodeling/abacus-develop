@@ -55,6 +55,15 @@ add_library(
     ${LIBM_SRC}
 )
 
+add_library(
+  formatter
+  OBJECT
+  formatter_fmt.cpp
+  formatter_physfmt.cpp
+  formatter_table.cpp
+  formatter_contextfmt.cpp
+)
+
 add_subdirectory(module_container)
 
 if(ENABLE_COVERAGE)

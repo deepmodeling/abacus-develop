@@ -88,6 +88,12 @@ void Input::Print(const std::string &fn) const
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "erf_ecut", erf_ecut, "#the value of the constant energy cutoff");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "erf_height",
+                                 erf_height,
+                                 "#the height of the energy step for reciprocal vectors");
+    ModuleBase::GlobalFunc::OUTP(ofs, "erf_sigma", erf_sigma, "#the width of the energy step for reciprocal vectors");
     if (ks_solver == "cg")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_nmax", pw_diag_nmax, "max iteration number for cg");
@@ -217,7 +223,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions, 0, no output 1: text, 2: binary");
     ModuleBase::GlobalFunc::OUTP(ofs, "bx", bx, "division of an element grid in FFT grid along x");
     ModuleBase::GlobalFunc::OUTP(ofs, "by", by, "division of an element grid in FFT grid along y");
     ModuleBase::GlobalFunc::OUTP(ofs, "bz", bz, "division of an element grid in FFT grid along z");
