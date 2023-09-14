@@ -74,7 +74,11 @@ class toWannier90
         const ModulePW::PW_Basis_K* wfcpw,
         const ModulePW::PW_Basis_Big* bigpw,
         const K_Vectors& kv,
-        const psi::Psi<std::complex<double>>* psi = nullptr);
+        const psi::Psi<std::complex<double>>* psi = nullptr,
+        const bool out_mmn,
+        const bool out_amn,
+        const bool out_unk,
+        const bool out_eig);
 #ifdef __LCAO
     void init_wannier_lcao(const Grid_Technique& gt,
                            const ModuleBase::matrix& ekb,
@@ -82,7 +86,11 @@ class toWannier90
                            const ModulePW::PW_Basis_Big* bigpw,
                            const Structure_Factor& sf,
                            const K_Vectors& kv,
-                           const psi::Psi<std::complex<double>>* psi = nullptr);
+                           const psi::Psi<std::complex<double>>* psi = nullptr,
+                           const bool out_mmn,
+                           const bool out_amn,
+                           const bool out_unk,
+                           const bool out_eig);
 #endif
     void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
@@ -116,6 +124,8 @@ class toWannier90
                                   const int& ikb,
                                   const int& iband_L,
                                   const int& iband_R,
+                                  std::complex<double>* psir,
+                                  std::complex<double>* phase,
                                   const ModuleBase::Vector3<double> G,
                                   const psi::Psi<std::complex<double>>& psi_pw);
     // std::complex<double> gamma_only_cal(const int &ib_L, const int &ib_R, const ModuleBase::ComplexMatrix *psi_pw,
