@@ -210,6 +210,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
         //print_2d("temp_1 ", temp_1);
         this->lambda_ = temp_1;
+        //print_2d("lambda_ ", this->lambda_);
         this->cal_mw_from_lambda(i_step);
 
         spin_plus = this->Mi_;

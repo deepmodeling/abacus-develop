@@ -216,7 +216,7 @@ void SpinConstrain<FPTYPE, Device>::set_sc_lambda()
             lambda.x = element_data.lambda[0];
             lambda.y = element_data.lambda[1];
             lambda.z = element_data.lambda[2];
-            this->lambda_[iat] = lambda;
+            this->lambda_[iat] = lambda*this->meV_to_Ry;
         }
     }
 }

@@ -86,6 +86,8 @@ public:
     LCAO_Matrix* LM = nullptr;
     std::string KS_SOLVER;
 
+    const double meV_to_Ry = 7.349864435130999e-05;
+
 public:
     /**
      * pubic methods for setting and getting spin-constrained DFT parameters

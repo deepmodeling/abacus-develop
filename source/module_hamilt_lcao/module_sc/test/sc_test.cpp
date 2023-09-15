@@ -139,9 +139,9 @@ TEST_F(SpinConstrainTest, SetScLambdaAndMag)
         for (const ScAtomData& sc_data : sc_atoms) {
 			int index = sc_data.index;
 			int iat = sc.get_iat(itype, index);
-			EXPECT_DOUBLE_EQ(sc_data.lambda[0],sc_lambda[iat].x);
-			EXPECT_DOUBLE_EQ(sc_data.lambda[1],sc_lambda[iat].y);
-			EXPECT_DOUBLE_EQ(sc_data.lambda[2],sc_lambda[iat].z);
+			EXPECT_DOUBLE_EQ(sc_data.lambda[0]*sc.meV_to_Ry,sc_lambda[iat].x);
+			EXPECT_DOUBLE_EQ(sc_data.lambda[1]*sc.meV_to_Ry,sc_lambda[iat].y);
+			EXPECT_DOUBLE_EQ(sc_data.lambda[2]*sc.meV_to_Ry,sc_lambda[iat].z);
 			EXPECT_DOUBLE_EQ(sc_data.init_mag[0],init_mag[iat].x);
 			EXPECT_DOUBLE_EQ(sc_data.init_mag[1],init_mag[iat].y);
 			EXPECT_DOUBLE_EQ(sc_data.init_mag[2],init_mag[iat].z);
