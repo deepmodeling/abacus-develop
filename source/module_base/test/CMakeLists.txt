@@ -1,4 +1,5 @@
 remove_definitions(-D__MPI)
+install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET base_blas_connector
   LIBS ${math_libs}

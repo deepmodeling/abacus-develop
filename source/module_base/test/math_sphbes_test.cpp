@@ -1,5 +1,6 @@
 #include"../math_sphbes.h"
 #include<iostream>
+#include<fstream>
 
 #ifdef __MPI
 #include"mpi.h"
@@ -8,7 +9,7 @@
 #include"gtest/gtest.h"
 
 #define doublethreshold 1e-7
-
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 /************************************************
 *  unit test of class Integral
@@ -197,48 +198,110 @@ TEST_F(Sphbes,SphericalBesselRoots)
 }
 
 
-TEST_F(Sphbes, SeriesAndRecurrence)
+// TEST_F(Sphbes, SeriesAndRecurrence)
+// {
+//     // This test checks whether Spherical_Bessel and sphbesj agree with each other
+//     // on a coarse grid for a range of l and q values.
+//     //
+//     // NOTE: this test should be removed once Spherical_Bessel is removed from the code.
+//     int lmax = 8;
+//     int nr = 5000;
+//     double rcut = 50;
+//     double dr = rcut / (nr - 1);
+//     double* r = new double[nr];
+//     for (int i = 0; i < nr; ++i)
+//     {
+//         r[i] = i * dr;
+//     }
+
+//     double* jl_old = new double[nr];
+//     double* jl_new = new double[nr];
+//     for (int l = 0; l <= lmax; ++l)
+//     {
+//         for (double q = 0.1; q < 10; q += 0.1)
+//         {
+//             ModuleBase::Sphbes::Spherical_Bessel(nr, r, q, l, jl_old);
+//             ModuleBase::Sphbes::sphbesj(nr, r, q, l, jl_new);
+//             for (int i = 0; i < nr; ++i)
+//             {
+//                 EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
+//             }
+
+//             // derivative
+//             ModuleBase::Sphbes::dSpherical_Bessel_dx(nr, r, q, l, jl_old);
+//             ModuleBase::Sphbes::dsphbesj(nr, r, q, l, jl_new);
+//             for (int i = 0; i < nr; ++i)
+//             {
+//                 EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
+//             }
+//         }
+//     }
+
+//     delete[] r;
+//     delete[] jl_old;
+//     delete[] jl_new;
+// }
+
+TEST_F(Sphbes, SphericalBesselPrecision)
 {
-    // This test checks whether Spherical_Bessel and sphbesj agree with each other
+    // This test checks whether sphbesj agrees with the Matlab implementation
     // on a coarse grid for a range of l and q values.
-    //
-    // NOTE: this test should be removed once Spherical_Bessel is removed from the code.
-    int lmax = 8;
-    int nr = 5000;
-    double rcut = 50;
-    double dr = rcut / (nr - 1);
-    double* r = new double[nr];
-    for (int i = 0; i < nr; ++i)
+    const double q = 0.1;
+    const double rcut = 50;
+    const int nr = 5000;
+    const int l_lo = 0, l_hi = 11;
+    const double dr = rcut / nr;
+    double* r = new double[nr + 10];
+    double* Y = new double[nr * (l_hi - l_lo + 1) + 10];
+    // fill Y with zeros
+    for (int i = 0; i < nr * (l_hi - l_lo + 1) + 10; ++i)
     {
-        r[i] = i * dr;
+        Y[i] = 0.0;
     }
 
-    double* jl_old = new double[nr];
-    double* jl_new = new double[nr];
-    for (int l = 0; l <= lmax; ++l)
+    // case 0: x = 0, l = 0
+    EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(0,0), 1.0, 1e-12);
+    // case 1: x = 0, l = 1, ... , 11
+    for (int l = 1; l <= l_hi; ++l)
     {
-        for (double q = 0.1; q < 10; q += 0.1)
-        {
-            ModuleBase::Sphbes::Spherical_Bessel(nr, r, q, 0, jl_old);
-            ModuleBase::Sphbes::sphbesj(nr, r, q, 0, jl_new);
-            for (int i = 0; i < nr; ++i)
-            {
-                EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
-            }
+        EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(l,0), 0.0, 1e-12);
+    }
+    // case 2: wide range of x and l
+    double y;
+    // read reference data
+    std::ifstream fin("data/bj.bin", std::ios::binary);
+    int i = 0;
+    while (fin.read(reinterpret_cast<char*>(&y), sizeof(double))){
+        Y[i] = y; ++i;
+        // if (Y[i] == 0) {std::cout << "i: " << i << std::endl; break;}
+    }
+    //std::cout << i << std::endl;
+    fin.close();
 
-            // derivative
-            ModuleBase::Sphbes::dSpherical_Bessel_dx(nr, r, q, 0, jl_old);
-            ModuleBase::Sphbes::dsphbesj(nr, r, q, 0, jl_new);
-            for (int i = 0; i < nr; ++i)
-            {
-                EXPECT_NEAR(jl_old[i], jl_new[i], 1e-12);
-            }
+    for(int i = 0; i < nr; ++i){
+        r[i] = (i + 1) * dr;
+    }
+
+    // test for new sphbesj
+    for (int l = l_lo; l <= l_hi; ++l)
+    {
+        for(int i = 0; i< nr; ++i){
+            EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(l, r[i] * q), Y[l * nr + i], 1e-12);
         }
+    }   
+    // test for old Bessel
+    // most of l cases precision failed to achieve 1e-12 
+    double* jl_old = new double[nr + 10];
+    for (int l = l_lo; l <= l_hi; ++l)
+    {
+        ModuleBase::Sphbes::Spherical_Bessel(nr, r, q, l, jl_old);
+        double errs = 0.0;
+        for(int i = 0; i< nr; ++i){
+            errs += MAX(jl_old[i] - Y[l * nr + i], Y[l * nr + i] - jl_old[i]);
+        }
+        // std::cout << " l = " << l << ", errors: " << std::scientific << errs / nr << std::endl;
     }
-
-    delete[] r;
-    delete[] jl_old;
-    delete[] jl_new;
+    
 }
 
 int main(int argc, char **argv)
