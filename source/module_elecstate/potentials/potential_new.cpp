@@ -178,7 +178,7 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
     }
 
 #ifdef USE_PAW
-    if(GlobalV::USE_PAW)
+    if(GlobalV::use_paw)
     {
         GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
         GlobalC::paw_cell.set_dij();
