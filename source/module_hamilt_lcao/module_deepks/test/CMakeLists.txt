@@ -1,3 +1,5 @@
+remove_definitions(-DUSE_PAW)
+
 add_executable(
     test_deepks
     main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp nnr.cpp
@@ -14,7 +16,7 @@ target_link_libraries(
     neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
     pthread vdw dftu
-    deepks device container
+    deepks device numerical_atomic_orbitals container
     ${ABACUS_LINK_LIBRARIES}
 )
 if(USE_ELPA)

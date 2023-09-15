@@ -19,6 +19,18 @@ body:
     options:
       - label: Yes, I have read the online manual.
         required: true
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers
+    options:
+      - label: Identify the specific section of the documentation with the issue.
+      - label: Investigate the issue and determine the root cause.
+      - label: Research best practices and potential solutions for the identified issue.
+      - label: Update the documentation to address the issue, following the suggested improvement.
+      - label: Ensure the updated documentation adheres to the project's documentation standards.
+      - label: Test the updated documentation to ensure it is clear and accurate.
+      - label: Review and incorporate any relevant feedback from users or developers.
+      - label: Publish the updated documentation and notify the issue reporter.
 - type: markdown
   attributes:
     value: >

@@ -52,7 +52,6 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
     }
     else if (
         (strcmp(context, "double_w6_f1") == 0)
-      ||(strcmp(context, "time") == 0)
         ) {
         this->p_formatter_->set_width(6); this->p_formatter_->set_precision(1);
         this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
@@ -61,6 +60,9 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
     else if (
         (strcmp(context, "double_w6_f2") == 0)
       ||(strcmp(context, "mass") == 0)
+      ||(strcmp(context, "percentage") == 0)
+      ||(strcmp(context, "time") == 0)
+      ||(strcmp(context, "memory") == 0)
     ) {
         this->p_formatter_->set_width(6); this->p_formatter_->set_precision(2);
         this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
@@ -119,6 +121,22 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
         this->p_formatter_->set_width(4); this->p_formatter_->set_precision(0);
         this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
         this->p_formatter_->set_right(!left);
+    }
+    else if (
+        (strcmp(context, "str_w10") == 0)
+      ||(strcmp(context, "short_title") == 0)
+    ) {
+        this->p_formatter_->set_width(10); this->p_formatter_->set_precision(0);
+        this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
+        this->p_formatter_->set_right(left);
+    }
+    else if (
+        (strcmp(context, "str_w20") == 0)
+      ||(strcmp(context, "mid_title") == 0)
+    ) {
+        this->p_formatter_->set_width(20); this->p_formatter_->set_precision(0);
+        this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
+        this->p_formatter_->set_right(left);
     }
     else if (
         (strcmp(context, "str_w30") == 0)

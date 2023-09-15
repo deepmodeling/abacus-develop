@@ -281,6 +281,7 @@ template <typename T, typename Device> int Psi<T, Device>::get_current_nbas() co
 
 template <typename T, typename Device> const int& Psi<T, Device>::get_ngk(const int ik_in) const
 {
+    if (!this->ngk) return this->nbasis;
     return this->ngk[ik_in];
 }
 
