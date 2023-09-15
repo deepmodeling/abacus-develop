@@ -1287,13 +1287,14 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Description**: 
-  - 1: Output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
+  - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
     - npsin = 1: SPIN1_POT.cube;
     - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
     - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
-  - 2: Output the electrostatic potential on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
-- **Default**: 0
+  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 
+    Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+- **Default**: 0
 ### out_dm
 
 - **Type**: Boolean
