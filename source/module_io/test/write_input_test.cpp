@@ -310,6 +310,10 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("towannier90                    0 #use wannier90 code interface or not"));
         EXPECT_THAT(output,testing::HasSubstr("nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name"));
         EXPECT_THAT(output,testing::HasSubstr("wannier_spin                   up #calculate spin in wannier90 code interface"));
+        EXPECT_THAT(output,testing::HasSubstr("out_wannier_mmn                1 #output .mmn file or not"));
+        EXPECT_THAT(output,testing::HasSubstr("out_wannier_amn                1 #output .amn file or not"));
+        EXPECT_THAT(output,testing::HasSubstr("out_wannier_unk                1 #output .unk file or not"));
+        EXPECT_THAT(output,testing::HasSubstr("out_wannier_eig                1 #output .eig file or not"));
         EXPECT_THAT(output,testing::HasSubstr(""));
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (18.implicit_solvation)"));    
         EXPECT_THAT(output,testing::HasSubstr("imp_sol                        0 #calculate implicit solvation correction or not"));

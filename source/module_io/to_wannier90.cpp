@@ -41,15 +41,15 @@ toWannier90::~toWannier90()
     delete[] tag_cal_band;
 }
 
-void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
+void toWannier90::init_wannier_pw(const bool out_wannier_mmn, 
+    const bool out_wannier_amn, 
+    const bool out_wannier_unk, 
+    const bool out_wannier_eig,
+    const ModuleBase::matrix& ekb,
     const ModulePW::PW_Basis_K* wfcpw,
     const ModulePW::PW_Basis_Big* bigpw,
     const K_Vectors& kv,
-    const psi::Psi<std::complex<double>>* psi,
-    const bool out_mmn,
-    const bool out_amn,
-    const bool out_unk,
-    const bool out_eig)
+    const psi::Psi<std::complex<double>>* psi)
 {
     this->read_nnkp(kv);
 
@@ -66,19 +66,19 @@ void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
         }
     }
 
-    if (out_unk)
+    if (out_wannier_unk)
     {
         writeUNK(wfcpw, *psi, bigpw);
     }
-    if (out_eig)
+    if (out_wannier_eig)
     {
         outEIG(ekb);
     }
-    if (out_mmn)
+    if (out_wannier_mmn)
     {
         cal_Mmn(*psi, wfcpw);
     }
-    if (out_amn)
+    if (out_wannier_amn)
     {
         cal_Amn(*psi, wfcpw);
     }
@@ -105,17 +105,17 @@ void toWannier90::init_wannier_pw(const ModuleBase::matrix& ekb,
 }
 
 #ifdef __LCAO
-void toWannier90::init_wannier_lcao(const Grid_Technique& gt,
+void toWannier90::init_wannier_lcao(const bool out_wannier_mmn, 
+                                    const bool out_wannier_amn, 
+                                    const bool out_wannier_unk, 
+                                    const bool out_wannier_eig,
+                                    const Grid_Technique& gt,
                                     const ModuleBase::matrix& ekb,
                                     const ModulePW::PW_Basis_K* wfcpw,
                                     const ModulePW::PW_Basis_Big* bigpw,
                                     const Structure_Factor& sf,
                                     const K_Vectors& kv,
-                                    const psi::Psi<std::complex<double>>* psi,
-                                    const bool out_mmn,
-                                    const bool out_amn,
-                                    const bool out_unk,
-                                    const bool out_eig)
+                                    const psi::Psi<std::complex<double>>* psi)
 {
     this->gridt = &gt;
     this->read_nnkp(kv);
@@ -132,24 +132,23 @@ void toWannier90::init_wannier_lcao(const Grid_Technique& gt,
             ModuleBase::WARNING_QUIT("toWannier90::init_wannier", "Error wannier_spin set,is not \"up\" or \"down\" ");
         }
     }
-
-    if (out_unk)
+    if (out_wannier_unk)
     {
         getUnkFromLcao(wfcpw, sf, kv, wfcpw->npwk_max);
     }
-    if (out_amn)
+    if (out_wannier_amn)
     {
         cal_Amn(this->unk_inLcao[0], wfcpw);
     }
-    if (out_mmn)
+    if (out_wannier_mmn)
     {
         cal_Mmn(this->unk_inLcao[0], wfcpw);
     }
-    if (out_unk)
+    if (out_wannier_unk)
     {
         writeUNK(wfcpw, this->unk_inLcao[0], bigpw);
     }
-    if (out_eig)
+    if (out_wannier_eig)
     {
         outEIG(ekb);
     }

@@ -70,27 +70,27 @@ class toWannier90
     // void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell,
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
-    void init_wannier_pw(const ModuleBase::matrix& ekb,
+    void init_wannier_pw(const bool out_wannier_mmn, 
+        const bool out_wannier_amn, 
+        const bool out_wannier_unk, 
+        const bool out_wannier_eig,
+        const ModuleBase::matrix& ekb,
         const ModulePW::PW_Basis_K* wfcpw,
         const ModulePW::PW_Basis_Big* bigpw,
         const K_Vectors& kv,
-        const psi::Psi<std::complex<double>>* psi = nullptr,
-        const bool out_mmn,
-        const bool out_amn,
-        const bool out_unk,
-        const bool out_eig);
+        const psi::Psi<std::complex<double>>* psi = nullptr);
 #ifdef __LCAO
-    void init_wannier_lcao(const Grid_Technique& gt,
+    void init_wannier_lcao(const bool out_wannier_mmn, 
+                           const bool out_wannier_amn, 
+                           const bool out_wannier_unk, 
+                           const bool out_wannier_eig,
+                           const Grid_Technique& gt,
                            const ModuleBase::matrix& ekb,
                            const ModulePW::PW_Basis_K* wfcpw,
                            const ModulePW::PW_Basis_Big* bigpw,
                            const Structure_Factor& sf,
                            const K_Vectors& kv,
-                           const psi::Psi<std::complex<double>>* psi = nullptr,
-                           const bool out_mmn,
-                           const bool out_amn,
-                           const bool out_unk,
-                           const bool out_eig);
+                           const psi::Psi<std::complex<double>>* psi = nullptr);
 #endif
     void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
