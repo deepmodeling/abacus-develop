@@ -1,7 +1,7 @@
 name: Feature Request
 description: For users or developers who want to propose new features to be added or suggest improvements or enhancements to existing features.
 labels: [Feature Request]
-assignees: [insert assignee here]
+assignees: mohanchen
 
 body:
 - type: textarea
@@ -41,7 +41,7 @@ body:
       - label: Research on the existing solutions and relevant research articles/resources.
       - label: Discuss with the team to evaluate the feasibility of implementing the feature.
       - label: Create a design document outlining the proposed solution and implementation details.
-      - label: Get feedback from the team on the design document.
+      - label: Get feedback from the team and stakeholders on the design document.
       - label: Develop the feature following the agreed design.
       - label: Write unit tests and integration tests for the feature.
       - label: Update the documentation to include the new feature.

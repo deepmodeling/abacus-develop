@@ -1,7 +1,7 @@
 name: Questions
 description: For users or developers who need help with software installation, usability, or other issues.
 labels: [Questions]
-assignees: [insert assignee here]
+assignees: dyzheng
 
 body:
 - type: textarea

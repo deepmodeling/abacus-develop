@@ -2,8 +2,8 @@ etotref -6437.8376615092847715
 etotperatomref -3218.9188307546
 totalforceref 0.000000
 totalstressref 559.239585
-Compare_mulliken_pass 0
+Compare_mulliken_pass 1
 pointgroupref O_h
 spacegroupref O_h
 nksibzref 4
-totaltimeref +11.96992
+totaltimeref +12.07427

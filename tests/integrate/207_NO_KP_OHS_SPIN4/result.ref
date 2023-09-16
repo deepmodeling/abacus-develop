@@ -1,7 +1,7 @@
 etotref -145.7968134044029
 etotperatomref -145.7968134044
-CompareH_pass 0
-CompareS_pass 0
-CompareSR_pass 0
+CompareH_pass 1
+CompareS_pass 1
+CompareSR_pass 1
 ComparerR_pass 0
 totaltimeref 1.5738

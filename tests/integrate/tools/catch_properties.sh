@@ -134,7 +134,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
 	pot1ref=refSPIN1_POT.cube
 	pot1cal=OUT.autotest/SPIN1_POT.cube
-	python3 ../tools/CompareFile.py $pot1ref $pot1cal 3
+	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
 	echo "ComparePot1_pass $?" >>$1
 fi
 
@@ -206,7 +206,7 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
                 scal=OUT.autotest/data-1-S
         fi
 
-        python3 ../tools/CompareFile.py $href $hcal 6
+        python3 ../tools/CompareFile.py $href $hcal 8
     echo "CompareH_pass $?" >>$1
     python3 ../tools/CompareFile.py $sref $scal 8
     echo "CompareS_pass $?" >>$1
@@ -296,8 +296,8 @@ fi
 # echo "$has_lowf" ## test out_wfc_lcao > 0
 if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.txt
-		wfc_ref=LOWF_GAMMA_S1.txt.ref	
+		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.dat
+		wfc_ref=LOWF_GAMMA_S1.dat.ref	
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=10_LOWF_K_1
@@ -315,9 +315,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/"$wfc_name".txt > OUT.autotest/"$wfc_name"_mod.txt
-		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
-		wfc_ref="$wfc_name"_mod.txt.ref
+    	}' OUT.autotest/"$wfc_name".dat > OUT.autotest/"$wfc_name"_mod.dat
+		wfc_cal=OUT.autotest/"$wfc_name"_mod.dat
+		wfc_ref="$wfc_name"_mod.dat.ref
 	fi
 
 	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1
