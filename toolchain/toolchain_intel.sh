@@ -2,6 +2,8 @@
 #SBATCH -J install
 #SBATCH -N 1
 #SBATCH -n 16
+#SBATCH -o compile.log
+#SBATCH -e compile.err
 
 # JamesMisaka in 2023-08-31
 # install abacus by intel-toolchain
@@ -22,5 +24,7 @@
 --with-cereal=install \
 --with-libtorch=install \
 --with-libnpy=install \
+--with-libri=install \
+--with-libcomm=install \
 --with-intel-classic=yes \
 | tee compile.log

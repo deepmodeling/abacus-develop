@@ -182,14 +182,18 @@ The --with-PKG options follow the rules:
   --with-scalapack        Parallel linear algebra library, needed for parallel
                           calculations.
                           Default = install
-  --with-cereal         Enable cereal for ABACUS LCAO
+  --with-cereal           Enable cereal for ABACUS LCAO
                           Default = install
   --with-elpa             Eigenvalue SoLvers for Petaflop-Applications library.
                           Fast library for large parallel jobs.
                           Default = install
   --with-libtorch         Enable libtorch the machine learning framework needed for DeePKS
                           Default = no
-  --with-libnpy         Enable libnpy the machine learning framework needed for DeePKS
+  --with-libnpy           Enable libnpy the machine learning framework needed for DeePKS
+                          Default = no
+  --with-libri            Enable LibRI for higher-level methods like hybrid functionals, RPA or GW
+                          Default = no
+  --with-libcomm          Enable LibComm for higher-level methods like hybrid functionals, RPA or GW
                           Default = no
 
 FURTHER INSTRUCTIONS
@@ -262,6 +266,8 @@ with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
 with_libtorch="__DONTUSE__"
 with_libnpy="__DONTUSE__"
+with_libri="__DONTUSE__"
+with_libcomm="__DONTUSE__"
 # for MPI, we try to detect system MPI variant
 if (command -v mpiexec > /dev/null 2>&1); then
   # check if we are dealing with openmpi, mpich or intelmpi
@@ -545,6 +551,12 @@ while [ $# -ge 1 ]; do
       ;;
     --with-libnpy*)
       with_libnpy=$(read_with "${1}")
+      ;;
+    --with-libri*)
+      with_libri=$(read_with "${1}")
+      ;;
+    --with-libcomm*)
+      with_libcomm=$(read_with "${1}")
       ;;
     --help*)
       show_help
