@@ -388,10 +388,6 @@ void ESolver_KS_PW<FPTYPE, Device>::othercalculation(const int istep)
 template <typename FPTYPE, typename Device>
 void ESolver_KS_PW<FPTYPE, Device>::eachiterinit(const int istep, const int iter)
 {
-    // mohan add 2010-07-16
-    if (iter == 1)
-        this->p_chgmix->reset();
-
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
