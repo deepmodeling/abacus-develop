@@ -459,7 +459,8 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
       RI_2D_Comm.o\
-      Mix_DMk_2D.o
+      Mix_DMk_2D.o\
+      Mix_Matrix.o\
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\

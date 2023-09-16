@@ -40,11 +40,11 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 
     if (this->mixing_mode == "broyden")
     {
-        this->mixing = new Base_Mixing::Broyden_Mixing(this->mixing_ndim);
+        this->mixing = new Base_Mixing::Broyden_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else if (this->mixing_mode == "plain")
     {
-        this->mixing = new Base_Mixing::Plain_Mixing();
+        this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
     // else if(this->mixing_mode == "pulay")
     // {

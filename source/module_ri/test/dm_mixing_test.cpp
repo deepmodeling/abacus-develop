@@ -1,33 +1,25 @@
 #include"gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "module_ri/Mix_Data.h"
+#include "module_ri/Mix_Matrix.h"
 #include "module_ri/Mix_DMk_2D.h"
 
 class Mock_Charge_Mixing
 {
 public:
     MOCK_METHOD0(get_mixing_ndim, int());
-    MOCK_METHOD0(get_idstep, int());
-    MOCK_METHOD0(get_dstep, int());
-    MOCK_METHOD0(get_alpha, double* ());
 };
+
+enum class Mixing_Mode{No, Plain, Pulay};
 
 class Charge_Mixing_Helper
 {
 public:
-    Charge_Mixing_Helper(double mixing_beta, int mixing_ndim, int idstep, int dstep, double* alpha) :
-        mixing_beta(mixing_beta), mixing_ndim(mixing_ndim), idstep(idstep), dstep(dstep), alpha(alpha) {}
+    Charge_Mixing_Helper(double mixing_beta, int mixing_ndim) :
+        mixing_beta(mixing_beta), mixing_ndim(mixing_ndim){}
     ~Charge_Mixing_Helper() {}
     double mixing_beta;
     int mixing_ndim;
-    int idstep;
-    int dstep;
-    double* alpha = nullptr;
     int get_mixing_ndim() const { return this->mixing_ndim; }
-    int get_idstep() const { return this->idstep; }
-    int get_dstep() const { return this->dstep; }
-    void set_idstep(int idstep) { this->idstep = idstep; }
-    double* get_alpha() const { return this->alpha; }
 };
 
 class DM_Mixing_Test : public testing::Test
@@ -57,9 +49,9 @@ protected:
     ModuleBase::matrix mat1_double = ModuleBase::matrix(nbasis, nbasis);
     ModuleBase::ComplexMatrix mat1_complex = ModuleBase::ComplexMatrix(nbasis, nbasis);
 
-    // for class Mix_Data
-    Mix_Data<ModuleBase::matrix> mix_data_double;
-    Mix_Data<ModuleBase::ComplexMatrix> mix_data_complex;
+    // for class Mix_Matrix
+    Mix_Matrix<ModuleBase::matrix> mix_data_double;
+    Mix_Matrix<ModuleBase::ComplexMatrix> mix_data_complex;
 
     // for pulay mixing
     std::vector<ModuleBase::matrix> simplemix_double;
@@ -129,25 +121,16 @@ TEST_F(DM_Mixing_Test, MixDataTest)
     this->init_test();
 
     // init mock
-    Charge_Mixing_Helper chr_mix(mixing_beta, mixing_ndim, 0, dstep, alpha);
+    Charge_Mixing_Helper chr_mix(mixing_beta, mixing_ndim);
     Mock_Charge_Mixing mock_chr_mix;
 
     EXPECT_CALL(mock_chr_mix, get_mixing_ndim()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_mixing_ndim));
-    EXPECT_CALL(mock_chr_mix, get_idstep()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_idstep));
-    EXPECT_CALL(mock_chr_mix, get_dstep()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_dstep));
-    EXPECT_CALL(mock_chr_mix, get_alpha()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_alpha));
 
     //1. double
     for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
     {
-        this->mix_data_double.mixing_mode = mode;
         for (int iter = 1;iter < this->maxiter;++iter)
         {
-            if (mode == Mixing_Mode::Pulay)
-            {
-                chr_mix.set_idstep(iter % dstep);
-                mix_data_double.set_coef_pulay(iter, chr_mix);
-            }
             bool flag_restart = (iter == 1);
             this->mix_data_double.mix(data_ref_double[Mixing_Mode::No][iter - 1], flag_restart);
             ModuleBase::matrix data_out_double = mix_data_double.get_data_out();
@@ -159,14 +142,8 @@ TEST_F(DM_Mixing_Test, MixDataTest)
     // 2. complex
     for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
     {
-        this->mix_data_complex.mixing_mode = mode;
         for (int iter = 1;iter < this->maxiter;++iter)
         {
-            if (mode == Mixing_Mode::Pulay)
-            {
-                chr_mix.set_idstep(iter % dstep);
-                mix_data_complex.set_coef_pulay(iter, chr_mix);
-            }
             bool flag_restart = (iter == 1);
             this->mix_data_complex.mix(data_ref_complex[Mixing_Mode::No][iter - 1], flag_restart);
             ModuleBase::ComplexMatrix data_out_complex = mix_data_complex.get_data_out();
@@ -187,13 +164,10 @@ TEST_F(DM_Mixing_Test, MixDMk2D)
     this->init_test();
     
     // init mock
-    Charge_Mixing_Helper chr_mix(mixing_beta, mixing_ndim, 0, dstep, alpha);
+    Charge_Mixing_Helper chr_mix(mixing_beta, mixing_ndim);
     Mock_Charge_Mixing mock_chr_mix;
 
     EXPECT_CALL(mock_chr_mix, get_mixing_ndim()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_mixing_ndim));
-    EXPECT_CALL(mock_chr_mix, get_idstep()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_idstep));
-    EXPECT_CALL(mock_chr_mix, get_dstep()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_dstep));
-    EXPECT_CALL(mock_chr_mix, get_alpha()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_alpha));
     
     //1. double
     Mix_DMk_2D mix_dm_gamma_2d;
@@ -202,15 +176,9 @@ TEST_F(DM_Mixing_Test, MixDMk2D)
 
     for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
     {
-        mix_dm_gamma_2d.set_mixing_mode(mode);
         mix_dm_gamma_2d.set_mixing_beta(this->mixing_beta);
         for (int iter = 1;iter < this->maxiter;++iter)
         {
-            if (mode == Mixing_Mode::Pulay)
-            {
-                chr_mix.set_idstep(iter % dstep);
-                mix_dm_gamma_2d.set_coef_pulay(iter, chr_mix);
-            }
 
             std::vector<ModuleBase::matrix> dm_gamma_in(nks);
             for (int ik = 0;ik < nks;++ik) dm_gamma_in[ik] = this->data_ref_double[Mixing_Mode::No][iter-1];
@@ -233,15 +201,9 @@ TEST_F(DM_Mixing_Test, MixDMk2D)
 
     for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
     {
-        mix_dm_k_2d.set_mixing_mode(mode);
         mix_dm_k_2d.set_mixing_beta(this->mixing_beta);
         for (int iter = 1;iter < this->maxiter;++iter)
         {
-            if (mode == Mixing_Mode::Pulay)
-            {
-                chr_mix.set_idstep(iter % dstep);
-                mix_dm_k_2d.set_coef_pulay(iter, chr_mix);
-            }
 
             std::vector<ModuleBase::ComplexMatrix> dm_k_in(nks);
             for (int ik = 0;ik < nks;++ik) dm_k_in[ik] = this->data_ref_complex[Mixing_Mode::No][iter - 1];

@@ -21,17 +21,18 @@ namespace Base_Mixing
  *        alpha{ij} = <dF{i}, dF{j}>
  *        beta{ij} = inv(alpha){ij}
  *        c{mk} = <dF{k}, F{m}>
- *        gamma{mn} = \sum_k c{mk} * beta{kn} 
+ *        gamma{mn} = \sum_k c{mk} * beta{kn}
  *        n{m+1} = n_in{m} + mixing_beta*F{m} - \sum_n gamma{mn} * (dn_in{n} + mixing_beta*dF{n})
  *        mixing_data{i} = n_in{i} + mixing_beta*F{i}
- *        n{m+1} = \sum_i coef{i} * mixing_data{i} 
+ *        n{m+1} = \sum_i coef{i} * mixing_data{i}
  */
 class Broyden_Mixing : public Mixing
 {
   public:
-    Broyden_Mixing(const int& mixing_ndim)
+    Broyden_Mixing(const int& mixing_ndim, const double& mixing_beta)
     {
         this->mixing_ndim = mixing_ndim;
+        this->mixing_beta = mixing_beta;
         this->coef = std::vector<double>(mixing_ndim);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
     }
@@ -165,14 +166,15 @@ class Broyden_Mixing : public Mixing
         if (mdata.ndim_previous > 0)
         {
             const int ndim_previous = mdata.ndim_previous;
+            const int previous = mdata.index_move(-1);
             ModuleBase::matrix beta_tmp(ndim_previous, ndim_previous);
-            //beta(i, j) = <dF_i, dF_j>
+            // beta(i, j) = <dF_i, dF_j>
             for (int i = 0; i < ndim_previous; ++i)
             {
                 FPTYPE* dFi = FP_dF + i * length;
                 for (int j = i; j < ndim_previous; ++j)
                 {
-                    if (i < ndim_previous - 1 && j < ndim_previous - 1)
+                    if (i != previous && j != previous)
                     {
                         beta_tmp(i, j) = beta(i, j);
                     }
@@ -206,7 +208,7 @@ class Broyden_Mixing : public Mixing
                 FPTYPE* dFi = FP_dF + i * length;
                 work[i] = inner_dot(dFi, FP_F);
             }
-            //gamma[i] = \sum_j beta_tmp(i,j) * work[j]
+            // gamma[i] = \sum_j beta_tmp(i,j) * work[j]
             std::vector<double> gamma(ndim_previous);
             container::BlasConnector::gemv('N',
                                            ndim_previous,
@@ -225,7 +227,7 @@ class Broyden_Mixing : public Mixing
             {
                 coef[mdata.index_move(-i)] = gamma[mdata.index_move(-i - 1)] - gamma[mdata.index_move(-i)];
             }
-            coef[mdata.index_move(-ndim_previous)] =  -gamma[mdata.index_move(-ndim_previous)];
+            coef[mdata.index_move(-ndim_previous)] = -gamma[mdata.index_move(-ndim_previous)];
 
             delete[] work;
             delete[] iwork;
