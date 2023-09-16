@@ -29,6 +29,4 @@ TEST_F(atom_in_test, atomin)
 {   
     EXPECT_EQ(atom_in_test::a, 1);
     EXPECT_EQ(Atomin.atom_RCS["H"],0.603774);
-    EXPECT_EQ(Atomin.atom_symbol["H"],"Hydrogen");
-    EXPECT_EQ(Atomin.symbol_Z["Hydrogen"],1);
 }

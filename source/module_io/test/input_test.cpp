@@ -171,7 +171,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
-        EXPECT_EQ(INPUT.out_wfc_lcao,0);
+        EXPECT_FALSE(INPUT.out_wfc_lcao);
         EXPECT_FALSE(INPUT.out_alllog);
         EXPECT_DOUBLE_EQ(INPUT.dos_emin_ev,-15);
         EXPECT_DOUBLE_EQ(INPUT.dos_emax_ev,15);
@@ -1250,14 +1250,6 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("kpar > 1 has not been supported for lcao calculation."));
 	INPUT.kpar = 1;
-	//
-	INPUT.basis_type = "lcao";
-	INPUT.out_wfc_lcao = 3;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("out_wfc_lcao must be 0, 1, or 2"));
-	INPUT.out_wfc_lcao = 0;
 	//
 	INPUT.basis_type = "lcao_in_pw";
 	INPUT.ks_solver = "arbitrary";

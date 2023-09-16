@@ -16,7 +16,6 @@
 #include "module_base/parallel_common.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/element_covalent_radius.h"
-#include "module_base/atom_in.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -709,83 +708,71 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
 
     read_cell_pseudopots(GlobalV::global_pseudo_dir, ofs);
 
-    if(GlobalV::MY_RANK == 0)
+    if(GlobalV::MY_RANK == 0 && GlobalV::out_element_info)
     {
-        for (int it = 0; it < this->ntype; it++)
+	for(int i=0;i<this->ntype;i++)
+	{
+		ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
+	}
+        for(int it=0; it<ntype; it++)
         {
             Atom* atom = &atoms[it];
-            if (!(atom->label_orb.empty()))
-            {
-                compare_atom_labels(atom->label_orb, atom->ncpp.psd);
-            }
-        }
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << atom->label 
+                << "/" << atom->label
+                << ".NONLOCAL";
+            std::ofstream ofs(ss.str().c_str());
 
-        if(GlobalV::out_element_info)
-        { 
-            for(int i=0;i<this->ntype;i++)
+            ofs << "<HEADER>" << std::endl;
+            ofs << std::setw(10) << atom->label << "\t" << "label" << std::endl;
+            ofs << std::setw(10) << atom->ncpp.pp_type << "\t" << "pseudopotential type" << std::endl;
+            ofs << std::setw(10) << atom->ncpp.lmax << "\t" << "lmax" << std::endl;
+            ofs << "</HEADER>" << std::endl;
+
+            ofs << "\n<DIJ>" << std::endl;
+            ofs << std::setw(10) << atom->ncpp.nbeta << "\t" << "nummber of projectors." << std::endl;
+            for(int ib=0; ib<atom->ncpp.nbeta; ib++)
             {
-            	ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
-            }
-            for(int it=0; it<ntype; it++)
-            {
-                Atom* atom = &atoms[it];
-                std::stringstream ss;
-                ss << GlobalV::global_out_dir << atom->label 
-                    << "/" << atom->label
-                    << ".NONLOCAL";
-                std::ofstream ofs(ss.str().c_str());
-    
-                ofs << "<HEADER>" << std::endl;
-                ofs << std::setw(10) << atom->label << "\t" << "label" << std::endl;
-                ofs << std::setw(10) << atom->ncpp.pp_type << "\t" << "pseudopotential type" << std::endl;
-                ofs << std::setw(10) << atom->ncpp.lmax << "\t" << "lmax" << std::endl;
-                ofs << "</HEADER>" << std::endl;
-    
-                ofs << "\n<DIJ>" << std::endl;
-                ofs << std::setw(10) << atom->ncpp.nbeta << "\t" << "nummber of projectors." << std::endl;
-                for(int ib=0; ib<atom->ncpp.nbeta; ib++)
+                for(int ib2=0; ib2<atom->ncpp.nbeta; ib2++)
                 {
-                    for(int ib2=0; ib2<atom->ncpp.nbeta; ib2++)
+                    ofs << std::setw(10) << atom->ncpp.lll[ib] 
+                        << " " << atom->ncpp.lll[ib2]
+                        << " " << atom->ncpp.dion(ib,ib2)<<std::endl;
+                }
+            }
+            ofs << "</DIJ>" << std::endl;
+
+            for(int i=0; i<atom->ncpp.nbeta; i++)
+            {
+                ofs << "<PP_BETA>" << std::endl;
+                ofs << std::setw(10) << i << "\t" << "the index of projectors." <<std::endl;
+                ofs << std::setw(10) << atom->ncpp.lll[i] << "\t" << "the angular momentum." <<std::endl;
+
+                // mohan add
+                // only keep the nonzero part.
+                int cut_mesh = atom->ncpp.mesh; 
+                for(int j=atom->ncpp.mesh-1; j>=0; --j)
+                {
+                    if( std::abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
                     {
-                        ofs << std::setw(10) << atom->ncpp.lll[ib] 
-                            << " " << atom->ncpp.lll[ib2]
-                            << " " << atom->ncpp.dion(ib,ib2)<<std::endl;
+                        cut_mesh = j; 
+                        break;
                     }
                 }
-                ofs << "</DIJ>" << std::endl;
-    
-                for(int i=0; i<atom->ncpp.nbeta; i++)
+                if(cut_mesh %2 == 0) ++cut_mesh;
+
+                ofs << std::setw(10) << cut_mesh << "\t" << "the number of mesh points." << std::endl;
+
+                for(int j=0; j<cut_mesh; ++j)
                 {
-                    ofs << "<PP_BETA>" << std::endl;
-                    ofs << std::setw(10) << i << "\t" << "the index of projectors." <<std::endl;
-                    ofs << std::setw(10) << atom->ncpp.lll[i] << "\t" << "the angular momentum." <<std::endl;
-    
-                    // mohan add
-                    // only keep the nonzero part.
-                    int cut_mesh = atom->ncpp.mesh; 
-                    for(int j=atom->ncpp.mesh-1; j>=0; --j)
-                    {
-                        if( std::abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
-                        {
-                            cut_mesh = j; 
-                            break;
-                        }
-                    }
-                    if(cut_mesh %2 == 0) ++cut_mesh;
-    
-                    ofs << std::setw(10) << cut_mesh << "\t" << "the number of mesh points." << std::endl;
-    
-                    for(int j=0; j<cut_mesh; ++j)
-                    {
-                        ofs << std::setw(15) << atom->ncpp.r[j]
-                            << std::setw(15) << atom->ncpp.betar(i, j)
-                            << std::setw(15) << atom->ncpp.rab[j] << std::endl;
-                    }
-                    ofs << "</PP_BETA>" << std::endl;
+                    ofs << std::setw(15) << atom->ncpp.r[j]
+                        << std::setw(15) << atom->ncpp.betar(i, j)
+                        << std::setw(15) << atom->ncpp.rab[j] << std::endl;
                 }
-    
-                ofs.close();
+                ofs << "</PP_BETA>" << std::endl;
             }
+
+            ofs.close();
         }
     }
 
@@ -1649,62 +1636,4 @@ void UnitCell::cal_nelec(double& nelec)
 		}
     }
     return;
-}
-
-void UnitCell::compare_atom_labels(std::string label1, std::string label2)
-{
-    if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
-    {	
-        atom_in ai;
-        if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
-			  ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
-			  label1 == std::to_string(ai.atom_Z[label2]) ||   // '!( "47" == "Ag" )'
-		      label1 == std::to_string(ai.symbol_Z[label2]) || // '!( "47" == "Silver" )'
-			  label1 == ai.atom_symbol[label2] ||              // '!( "Silver" == "Ag" )'
-			  std::to_string(ai.symbol_Z[label1]) == label2 )) // '!( "Silver" == "47" )'
-	    {		
-	    	std::string stru_label = "";
-            std::string psuedo_label = "";
-            for (int ip = 0; ip < label1.length(); ip++)
-            {
-                if (!(isdigit(label1[ip]) || label1[ip]=='_'))
-                {
-                    stru_label += label1[ip];
-                }
-	    		else
-	    		{
-	    			break;
-	    		}
-            }
-	    	stru_label[0] = toupper(stru_label[0]);
-    
-	    	for (int ip = 0; ip < label2.length(); ip++)
-            {
-                if (!(isdigit(label2[ip]) || label2[ip]=='_'))
-                {
-                    psuedo_label += label2[ip];
-	    		}
-	    		else
-	    		{
-	    			break;
-	    		}
-            }
-	    	psuedo_label[0] = toupper(psuedo_label[0]);
-    
-            if (!(stru_label == psuedo_label || //' !("Ag1" == "ag_locpsp" || "47" == "47" || "Silver" == Silver" )'
-			      std::to_string(ai.atom_Z[stru_label]) == psuedo_label ||   // ' !("Ag1" == "47" )'
-			      ai.atom_symbol[stru_label] == psuedo_label ||              // ' !("Ag1" == "Silver")'
-			      stru_label == std::to_string(ai.atom_Z[psuedo_label]) ||  // ' !("47" == "Ag1" )'
-		          stru_label == std::to_string(ai.symbol_Z[psuedo_label]) || // ' !("47" == "Silver1" )'
-			      stru_label == ai.atom_symbol[psuedo_label] ||              // ' !("Silver1" == "Ag" )'
-			      std::to_string(ai.symbol_Z[stru_label]) == psuedo_label )) // ' !("Silver1" == "47" )'
-            
-				
-			{	
-				std::string atom_label_in_orbtial = "atom label in orbital file ";
-				std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
-                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", atom_label_in_orbtial + label1 + mismatch_with_pseudo +label2);
-            }
-	    }
-	}
 }

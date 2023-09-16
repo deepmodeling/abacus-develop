@@ -1086,12 +1086,11 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The methods to do geometry optimization. 
-  - cg: using the conjugate gradient (CG) algorithm. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new).
+- **Description**: The methods to do geometry optimization. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new). Also note that the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [md_type](#md_type) to `fire`. See [fire](../md.md#fire) for more details.
+  - cg: using the conjugate gradient (CG) algorithm (see relax_new for the new CG method).
   - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
   - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
   - sd: using the steepest descent (SD) algorithm.
-  - fire: the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Also ionic velocities should be set in this case. See [fire](../md.md#fire) for more details.
 - **Default**: cg
 
 ### relax_new
@@ -1287,14 +1286,13 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Description**: 
-  - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
+  - 1: Output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
     - npsin = 1: SPIN1_POT.cube;
     - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
     - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
-  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
-
-    Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+  - 2: Output the electrostatic potential on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 - **Default**: 0
+
 ### out_dm
 
 - **Type**: Boolean
@@ -1331,16 +1329,11 @@ These variables are used to control the output of properties.
 
 ### out_wfc_lcao
 
-- **Type**: Integer
+- **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as:
-  - 0: no output
-  - 1: (txt format)
-    - gamma-only: `LOWF_GAMMA_S1.txt`;
-    - non-gamma-only: `LOWF_K_${k}.txt`, where `${k}` is the index of k points.
-  - 2: (binary format)
-    - gamma-only: `LOWF_GAMMA_S1.dat`;
-    - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
+  - gamma-only: `LOWF_GAMMA_S1.dat`;
+  - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
   

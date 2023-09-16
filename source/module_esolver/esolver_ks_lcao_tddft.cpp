@@ -287,7 +287,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
     {
         if (elecstate::ElecStateLCAO::out_wfc_lcao)
         {
-            elecstate::ElecStateLCAO::out_wfc_flag = elecstate::ElecStateLCAO::out_wfc_lcao;
+            elecstate::ElecStateLCAO::out_wfc_flag = 1;
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {

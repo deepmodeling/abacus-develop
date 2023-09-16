@@ -286,8 +286,6 @@ public:
 
     /// @brief calculate the total number of electrons in system (GlobalV::nelec)
     void cal_nelec(double& nelec);
-    /// @brief check consistency between two atom labels from STRU and pseudo or orb file
-    void compare_atom_labels(std::string label1, std::string label2);
 };
 
 #endif //unitcell class

@@ -219,36 +219,14 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
         std::stringstream ss;
         if (GlobalV::out_app_flag)
         {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".dat";
-            }
+            ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".dat";
         }
         else
         {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                    << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                    << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".dat";
-            }
+            ss << GlobalV::global_out_dir << istep << "_"
+               << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".dat";
         }
-        if (out_wfc_lcao == 1)
-        {
-            ModuleIO::write_wfc_nao(ss.str(), ctot, ekb, wg);
-        }
-        else if (out_wfc_lcao == 2)
-        {
-            ModuleIO::write_wfc_nao(ss.str(), ctot, ekb, wg, true);
-        }
+        ModuleIO::write_wfc_nao(ss.str(), ctot, ekb, wg);
         for (int i = 0; i < GlobalV::NBANDS; i++)
         {
             delete[] ctot[i];
@@ -329,37 +307,14 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
         std::stringstream ss;
         if (GlobalV::out_app_flag)
         {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".dat";
-            }
+            ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".dat";
         }
         else
         {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                   << "LOWF_K_" << ik + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                   << "LOWF_K_" << ik + 1 << ".dat";
-                   std::cout << __LINE__ << " " << ss.str() << std::endl;
-            }
+            ss << GlobalV::global_out_dir << istep << "_"
+               << "LOWF_K_" << ik + 1 << ".dat";
         }
-        if (out_wfc_lcao == 1)
-        {
-            ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, kvec_c[ik], ekb, wg);
-        }
-        else if (out_wfc_lcao == 2)
-        {
-            ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, kvec_c[ik], ekb, wg, true);
-        }
+        ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, kvec_c[ik], ekb, wg);
         for (int i = 0; i < GlobalV::NBANDS; i++)
         {
             delete[] ctot[i];
