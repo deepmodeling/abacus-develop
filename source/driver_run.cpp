@@ -52,8 +52,16 @@ void Driver::driver_run()
     }
     else // scf; cell relaxation; nscf; etc
     {
-        Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver);
+        if (GlobalV::precision_flag == "single")
+        {
+            Relax_Driver<float, psi::DEVICE_CPU> rl_driver;
+            rl_driver.relax_driver(p_esolver);
+        }
+        else
+        {
+            Relax_Driver<double, psi::DEVICE_CPU> rl_driver;
+            rl_driver.relax_driver(p_esolver);
+        }
     }
     //---------------------------MD/Relax------------------
 
