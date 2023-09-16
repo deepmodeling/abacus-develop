@@ -3,6 +3,7 @@
 #include "module_base/element_elec_config.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/module_mixing/broyden_mixing.h"
+#include "module_base/module_mixing/pulay_mixing.h"
 #include "module_base/module_mixing/plain_mixing.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -46,10 +47,10 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     {
         this->mixing = new Base_Mixing::Plain_Mixing();
     }
-    // else if(this->mixing_mode == "pulay")
-    // {
-    // 	this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim);
-    // }
+    else if(this->mixing_mode == "pulay")
+    {
+    	this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim);
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
