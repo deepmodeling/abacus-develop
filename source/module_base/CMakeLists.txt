@@ -52,6 +52,7 @@ add_library(
     formatter_physfmt.cpp
     formatter_table.cpp
     formatter_contextfmt.cpp
+    module_mixing/mixing_data.cpp
     ${LIBM_SRC}
 )
 
