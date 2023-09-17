@@ -13,11 +13,12 @@
 
 TOOL=$(pwd)
 ABACUS_DIR=..
-BUILD_DIR=$ABACUS_DIR/build_abacus
 INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
-rm -rf $BUILD_DIR
 cd $ABACUS_DIR
+
+BUILD_DIR=build_abacus
+rm -rf $BUILD_DIR
 
 PREFIX=.
 LAPACK=$INSTALL_DIR/openblas-0.3.23/lib
