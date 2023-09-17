@@ -20,7 +20,7 @@ source $INSTALL_DIR/setup
 rm -rf $BUILD_DIR
 cd $ABACUS_DIR
 
-PREFIX=$ABACUS_DIR
+PREFIX=.
 ELPA=$INSTALL_DIR/elpa-2021.11.002/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2

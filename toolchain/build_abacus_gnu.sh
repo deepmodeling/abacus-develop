@@ -19,7 +19,7 @@ source $INSTALL_DIR/setup
 rm -rf $BUILD_DIR
 cd $ABACUS_DIR
 
-PREFIX=$ABACUS_DIR
+PREFIX=.
 LAPACK=$INSTALL_DIR/openblas-0.3.23/lib
 SCALAPACK=$INSTALL_DIR/scalapalack-2.2.1/lib
 ELPA=$INSTALL_DIR/elpa-2021.11.002/cpu
