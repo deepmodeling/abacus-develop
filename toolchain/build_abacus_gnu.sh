@@ -48,7 +48,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DUSE_OPENMP=ON \
         -DENABLE_ASAN=OFF \
         -DUSE_ELPA=ON \
-        -DENABLE_LIBRI=OFF \
 #         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
