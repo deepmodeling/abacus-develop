@@ -18,6 +18,7 @@ list(APPEND objects
     grid_meshcell.cpp
     grid_meshk.cpp
     grid_technique.cpp
+    gint_vl.cu
 )
 
 add_library(

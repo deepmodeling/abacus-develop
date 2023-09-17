@@ -130,6 +130,35 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 			}
 
+            if (inout->job == Gint_Tools::job_type::vlocal && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+            {
+                double* ylmcoef = new double[100];
+                ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
+                for (int i = 0; i < 100; i++)
+                {
+                    ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
+                }
+                gint_gamma_vl_gpu(pvpR_grid,
+                                lgd,
+                                100, // TODO temp set to 64 (Lmax+1)^2
+                                max_size,
+                                GlobalC::ucell.omega / this->ncxyz,
+                                inout->vl,
+                                ylmcoef,
+                                this->bx,
+                                this->by,
+                                this->bz,
+                                this->bxyz,
+                                this->gridt->ncx,
+                                this->gridt->ncy,
+                                this->nplane,
+                                GlobalV::NLOCAL,
+                                *this->gridt);
+                ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
+                return;
+            }
+            else
+            {
     		#pragma omp for
 #endif
             // entering the main loop of grid points
@@ -257,7 +286,7 @@ void Gint::cal_gint(Gint_inout *inout)
 					delete[] vkdr3;
 				}
 			} // int grid_index
-
+            }
 #ifdef _OPENMP
 			if(inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta)
 			{
