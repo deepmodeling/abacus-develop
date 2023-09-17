@@ -150,11 +150,12 @@ If you encounter problem like:
 ```shell
 /bin/bash^M: bad interpreter: No such file or directory
 ```
-You can simply use `dos2unix` to fix it:
+or   `permission denied` problem, you can simply run:
 ```shell
-./dos2unix_all.sh
+./pre_set.sh
 ```
 And also, you can fix `permission denied` problem via `chmod +x`
+if `pre_set.sh` have no execution permission.
 
 
 ## Advanced Installation Usage

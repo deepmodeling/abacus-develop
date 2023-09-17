@@ -230,7 +230,7 @@ EOF
 tool_list="gcc intel cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl acml openblas"
-lib_list="fftw libxc scalapack elpa cereal libtorch libnpy"
+lib_list="fftw libxc scalapack elpa cereal libtorch libnpy libri libcomm"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
 
@@ -264,10 +264,10 @@ with_acml="__SYSTEM__"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
-with_libtorch="__DONTUSE__"
-with_libnpy="__DONTUSE__"
-with_libri="__DONTUSE__"
-with_libcomm="__DONTUSE__"
+# with_libtorch="__DONTUSE__"
+# with_libnpy="__DONTUSE__"
+# with_libri="__DONTUSE__"
+# with_libcomm="__DONTUSE__"
 # for MPI, we try to detect system MPI variant
 if (command -v mpiexec > /dev/null 2>&1); then
   # check if we are dealing with openmpi, mpich or intelmpi
@@ -370,8 +370,8 @@ while [ $# -ge 1 ]; do
           eval with_${ii}="__INSTALL__"
         fi
       done
-      # Use MPICH as default
-      export MPI_MODE="mpich"
+      # I'd like to use OpenMPI as default -- zhaoqing liu in 2023.09.17
+      export MPI_MODE="openmpi"
       ;;
     --mpi-mode=*)
       user_input="${1#*=}"
@@ -632,6 +632,22 @@ else
       with_openmpi="__DONTUSE__"
       ;;
   esac
+fi
+# If MATH_MODE is mkl ,then openblas, scalapack and fftw is not needed
+# zhaoqing in 2023-09-17
+if [ "${MATH_MODE}" = "mkl" ]; then
+  if [ "${with_openblas}" != "__DONTUSE__" ]; then
+    echo "Using MKL, so openblas is disabled."
+    with_openblas="__DONTUSE__"
+  fi
+  if [ "${with_scalapack}" != "__DONTUSE__" ]; then
+    echo "Using MKL, so scalapack is disabled."
+    with_scalapack="__DONTUSE__"
+  fi
+  if [ "${with_fftw}" != "__DONTUSE__" ]; then
+    echo "Using MKL, so fftw is disabled."
+    with_fftw="__DONTUSE__"
+  fi
 fi
 
 # If CUDA or HIP are enabled, make sure the GPU version has been defined.

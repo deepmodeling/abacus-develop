@@ -57,7 +57,6 @@ And re-run toolchain installation script.
 Instead of github.com. you can manually install requirements packages via:
 1. Download from www.cp2k.org/static/downloads
 2. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v1 -O abacus-deps-v1.zip
-"""
 EOF
 }
 
