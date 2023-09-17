@@ -63,7 +63,7 @@ wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v1 -O abacus-deps-v1.zip
 `unzip` it ,and you can do offline installation of these packages above
 
 If one want to install ABACUS by toolchain OFFLINE, 
-one can manually download all the packages from  or official website
+one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in `build` directory by formatted name
 like `fftw-3.3.10.tar.gz`, or `openmpi-4.1.5.tar.gz`, 
 then run this toolchain. 
