@@ -99,11 +99,11 @@ void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
     // 0.2 for metal and 0.7 for others
     if (bandgap_in * ModuleBase::Ry_to_eV < 1.0)
     {
-        this->mixing_beta = 0.2;
+        this->mixing->mixing_beta = this->mixing_beta = 0.2;
     }
     else
     {
-        this->mixing_beta = 0.7;
+        this->mixing->mixing_beta = this->mixing_beta = 0.7;
     }
     GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
 
@@ -273,6 +273,24 @@ void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
     ModuleBase::timer::tick("Charge", "mix_rho");
 
+    // the charge before mixing.
+    const int nrxx = this->rhopw->nrxx;
+    std::vector<double> rho123(GlobalV::NSPIN*nrxx);
+    for(int is=0; is<GlobalV::NSPIN; ++is)
+	{
+        if(is== 0 || is==3 || !GlobalV::DOMAG_Z)
+        {
+            ModuleBase::GlobalFunc::DCOPY(chr->rho[is], rho123.data() + is*nrxx, nrxx);
+        }
+    }
+    std::vector<double> kin_r123;
+	if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        kin_r123.resize(GlobalV::NSPIN*nrxx);
+        ModuleBase::GlobalFunc::DCOPY(chr->kin_r[0], kin_r123.data(), GlobalV::NSPIN * nrxx);
+    }
+
+    // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
         mix_rho_recip(iter, chr);
@@ -280,6 +298,22 @@ void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
     else
     {
         mix_rho_real(iter, chr);
+    }
+    // ---------------------------------------------------
+
+    // mohan add 2012-06-05
+	// rho_save is the charge before mixing
+    for(int is=0; is<GlobalV::NSPIN; ++is)
+	{
+        if(is== 0 || is==3 || !GlobalV::DOMAG_Z)
+        {
+            ModuleBase::GlobalFunc::DCOPY(rho123.data() + is*nrxx, chr->rho_save[is], nrxx);
+        }
+    }
+
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        ModuleBase::GlobalFunc::DCOPY(kin_r123.data(), chr->kin_r_save[0], nrxx*GlobalV::NSPIN);
     }
 
     if (new_e_iteration)

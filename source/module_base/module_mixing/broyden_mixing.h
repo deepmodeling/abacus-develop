@@ -6,6 +6,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_base/global_function.h"
 
 namespace Base_Mixing
 {
@@ -127,23 +128,17 @@ class Broyden_Mixing : public Mixing
             dF = malloc(sizeof(FPTYPE) * length * mixing_ndim);
             FP_dF = static_cast<FPTYPE*>(dF);
 
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                FP_F[i] = F_tmp[i];
-            }
+            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F, length);
         }
         else
         {
             const int previous = mdata.index_move(-1);
+            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F, length);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 128)
 #endif
             for (int i = 0; i < length; ++i)
             {
-                FP_F[i] = F_tmp[i];
                 // dF{n} = F{n-1} - F{n} = -(F{n} - F{n-1})
                 FP_dF[previous * length + i] -= FP_F[i];
             }
@@ -238,13 +233,7 @@ class Broyden_Mixing : public Mixing
         }
 
         FPTYPE* dFstart = FP_dF + start * length;
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
-#endif
-        for (int i = 0; i < length; ++i)
-        {
-            dFstart[i] = FP_F[i];
-        }
+        ModuleBase::GlobalFunc::DCOPY(FP_F, dFstart, length);
         ModuleBase::timer::tick("Charge", "Broyden_mixing");
     };
 

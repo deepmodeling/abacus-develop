@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "module_base/module_container/ATen/tensor.h"
+#include "module_base/global_function.h"
 namespace Base_Mixing
 {
 
@@ -50,12 +51,8 @@ class Mixing_Data
         this->start = (this->start + 1) % this->ndim_tot;
         this->ndim_use = std::min(this->ndim_use + 1, this->ndim_tot);
         this->ndim_previous = std::min(this->ndim_previous + 1, this->ndim_tot);
-         FPTYPE* FP_data = static_cast<FPTYPE*>(this->data);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
-#endif 
-        for (int i = 0; i < this->length; ++i)
-            FP_data[this->start * this->length + i] = data_in[i];
+        FPTYPE* FP_data = static_cast<FPTYPE*>(this->data);
+        ModuleBase::GlobalFunc::DCOPY(data_in, FP_data + this->start * this->length, this->length); // copy data_in to data
     }
 
     /**
