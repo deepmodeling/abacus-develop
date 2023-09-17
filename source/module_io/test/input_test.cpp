@@ -892,7 +892,8 @@ TEST_F(InputTest, Default_2)
 	//==================================================
 	// prepare default parameters for the 6th calling
 	INPUT.calculation = "md";
-	INPUT.mdp.md_nstep = 0;
+    INPUT.chg_extrap = "default";
+    INPUT.mdp.md_nstep = 0;
 	INPUT.out_md_control = 0;
 	INPUT.mdp.md_tlast = -1.0;
 	INPUT.mdp.md_plast = -1.0;
