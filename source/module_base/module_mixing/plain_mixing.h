@@ -17,7 +17,7 @@ class Plain_Mixing : public Mixing
     Plain_Mixing(const double& mixing_beta)
     {
         this->mixing_beta = mixing_beta;
-        this->mixing_ndim = 1;
+        this->data_ndim = 1;
         this->coef = std::vector<double>(1, 1.0);
 
     }

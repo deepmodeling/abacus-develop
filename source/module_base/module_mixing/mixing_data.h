@@ -50,7 +50,7 @@ class Mixing_Data
     {
         this->start = (this->start + 1) % this->ndim_tot;
         this->ndim_use = std::min(this->ndim_use + 1, this->ndim_tot);
-        this->ndim_previous = std::min(this->ndim_previous + 1, this->ndim_tot);
+        ++this->ndim_history;
         FPTYPE* FP_data = static_cast<FPTYPE*>(this->data);
         ModuleBase::GlobalFunc::DCOPY(data_in, FP_data + this->start * this->length, this->length); // copy data_in to data
     }
@@ -85,8 +85,8 @@ class Mixing_Data
     int start = -1;
     // the number of used vectors for mixing
     int ndim_use = 0;
-    // the number of previous vectors for mixing
-    int ndim_previous = -1;
+    // the number of history vectors
+    int ndim_history = 0;
 };
 
 } // namespace Base_Mixing

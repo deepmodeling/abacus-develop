@@ -31,7 +31,7 @@ class Mixing
      */
     virtual void init_mixing_data(Mixing_Data& mdata, const int& length, const size_t& type_size) const
     {
-        mdata.resize(mixing_ndim, length, type_size);
+        mdata.resize(data_ndim, length, type_size);
     }
 
     /**
@@ -132,7 +132,7 @@ class Mixing
     // coeficients for mixing
     std::vector<double> coef;
     // ndim for mixing
-    int mixing_ndim = 1;
+    int data_ndim = 1;
 };
 
 } // namespace Base_Mixing
