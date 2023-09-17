@@ -24,7 +24,7 @@
 --with-cereal=install \
 --with-libtorch=install \
 --with-libnpy=install \
---with-libri=install \
---with-libcomm=install \
+--with-libri=no \
+--with-libcomm=no \
 --with-intel-classic=yes \
 | tee compile.log

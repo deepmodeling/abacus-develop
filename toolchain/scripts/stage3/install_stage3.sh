@@ -5,7 +5,7 @@
 
 ./scripts/stage3/install_libxc.sh
 ./scripts/stage3/install_fftw.sh
-./scripts/stage3/install_elpa.sh
 ./scripts/stage3/install_scalapack.sh
+./scripts/stage3/install_elpa.sh
 
 # EOF

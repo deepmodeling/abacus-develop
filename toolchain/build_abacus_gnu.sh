@@ -16,11 +16,12 @@ ABACUS_DIR=..
 INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
+ABACUS_DIR=$(pwd)
 
 BUILD_DIR=build_abacus
 rm -rf $BUILD_DIR
 
-PREFIX=.
+PREFIX=$ABACUS_DIR
 LAPACK=$INSTALL_DIR/openblas-0.3.23/lib
 SCALAPACK=$INSTALL_DIR/scalapalack-2.2.1/lib
 ELPA=$INSTALL_DIR/elpa-2021.11.002/cpu
@@ -68,5 +69,5 @@ cmake --install $BUILD_DIR
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
 source $INSTALL_DIR/setup
-export PATH="${PREFIX}":${PATH}
+export PATH="${PREFIX}/bin":${PATH}
 EOF

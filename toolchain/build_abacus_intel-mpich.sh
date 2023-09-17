@@ -17,11 +17,12 @@ ABACUS_DIR=..
 INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
+ABACUS_DIR=$(pwd)
 
 BUILD_DIR=build_abacus
 rm -rf $BUILD_DIR
 
-PREFIX=.
+PREFIX=$ABACUS_DIR
 ELPA=$INSTALL_DIR/elpa-2021.11.002/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
@@ -58,5 +59,5 @@ cmake --install $BUILD_DIR
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
 source $INSTALL_DIR/setup
-export PATH="${PREFIX}":${PATH}
+export PATH="${PREFIX}/bin":${PATH}
 EOF
