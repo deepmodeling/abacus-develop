@@ -16,7 +16,9 @@ void gint_gamma_vl_gpu(double* GridVlocal_now,
                        int pwncx,
                        int pwncy,
                        int pwnczp,
-                       int NLOCAL_now,
+                       int NLOCAL_now,                       
+                       int nbxx,
+                       int* start_ind,
                        const Grid_Technique & GridT);
 
 #endif

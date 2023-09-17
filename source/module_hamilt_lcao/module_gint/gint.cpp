@@ -139,6 +139,7 @@ void Gint::cal_gint(Gint_inout *inout)
                     ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
                 }
                 gint_gamma_vl_gpu(pvpR_grid,
+<<<<<<< HEAD
                                 lgd,
                                 100, // TODO temp set to 64 (Lmax+1)^2
                                 max_size,
@@ -156,6 +157,25 @@ void Gint::cal_gint(Gint_inout *inout)
                                 *this->gridt);
                 ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
                 return;
+=======
+                                  lgd,
+                                  100, // TODO temp set to 64 (Lmax+1)^2
+                                  max_size,
+                                  GlobalC::ucell.omega / this->ncxyz,
+                                  inout->vl,
+                                  ylmcoef,
+                                  this->bx,
+                                  this->by,
+                                  this->bz,
+                                  this->bxyz,
+                                  this->gridt->ncx,
+                                  this->gridt->ncy,
+                                  this->nplane,
+                                  GlobalV::NLOCAL,
+                                  this->nbxx,
+                                  this->gridt->start_ind,
+                                  *this->gridt);
+>>>>>>> 9422fbf30 (debugging cu vlocal)
             }
             else
             {

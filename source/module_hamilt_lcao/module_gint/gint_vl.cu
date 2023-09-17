@@ -252,8 +252,7 @@ __global__ void cu_gamma_vlocal_step1(int ij_index,
         //}//id
     } // if size
 }
-__global__ void cu_gamma_vlocal_step3(int i,
-                                      int j,
+__global__ void cu_gamma_vlocal_step3(int ij_index,
                                       int nbx,
                                       int nby,
                                       int nbz,
@@ -261,13 +260,14 @@ __global__ void cu_gamma_vlocal_step3(int i,
                                       int ncy,
                                       int nczp,
                                       double *vlocal,
+                                      int *start_ind_g,
                                       double *vldr3)
 {
     int k = blockIdx.x;
     int ii = threadIdx.x;
     int jj = threadIdx.y;
     int kk = threadIdx.z;
-    int vindex = (i * bx_g[0] + ii) * ncy * nczp + (j * by_g[0] + jj) * nczp + (k + nbz_start) * bz_g[0] + kk;
+    int vindex = ii * ncy * nczp + jj * nczp + kk + start_ind_g[ij_index + k];
     vldr3[k * bx_g[0] * by_g[0] * bz_g[0] + ii * by_g[0] * bz_g[0] + jj * bz_g[0] + kk] = vlocal[vindex] * vfactor_g[0];
 }
 
@@ -335,7 +335,6 @@ __global__ void cu_gamma_vlocal_step4(int i,
 }
 
 __global__ void cu_gamma_vlocal_step4w(int grid_index,
-                                       int k,
                                        int *how_many_atoms,
                                        int *bcell_start,
                                        int *which_atom,
@@ -350,43 +349,44 @@ __global__ void cu_gamma_vlocal_step4w(int grid_index,
                                        double *GridVlocal,
                                        int lgd)
 {
-
-    int atomnow1 = blockIdx.x;
-    int atomnow2 = blockIdx.y;
-    int iw1 = threadIdx.x;
-    int iw2 = threadIdx.y;
-    if (atomnow1 >= how_many_atoms[grid_index] || atomnow2 >= how_many_atoms[grid_index])
+    int k = blockIdx.x;
+    int atom1 = threadIdx.x;
+    int atom2 = threadIdx.y;
+    if (atom1 >= how_many_atoms[grid_index] || atom2 >= how_many_atoms[grid_index])
     {
         return;
     }
-    int iat1 = which_atom[bcell_start[grid_index] + atomnow1];
-    int iat2 = which_atom[bcell_start[grid_index] + atomnow2];
-    if (iat2it[iat1] > iat2it[iat2])
+    int iat1 = which_atom[bcell_start[grid_index] + atom1];
+    int iat2 = which_atom[bcell_start[grid_index] + atom2];
+    int it1 = iat2it[iat1];
+    int it2 = iat2it[iat2];
+    int lo1 = trace_lo[itiaiw2iwt[it1 * namax_g[0] + iat2ia[iat1]]];
+    int lo2 = trace_lo[itiaiw2iwt[it2 * namax_g[0] + iat2ia[iat2]]];
+    //if (lo1 <= lo2)
     {
-        return;
-    }
-    if (iw1 >= atom_nw[iat2it[iat1]] || iw2 >= atom_nw[iat2it[iat2]])
-    {
-        return;
-    }
-    int lo1, lo2, ib;
-    double v2;
-    lo1 = trace_lo[itiaiw2iwt[iat2it[iat1] * namax_g[0] + iat2ia[iat1]]] + iw1;
-    lo2 = trace_lo[itiaiw2iwt[iat2it[iat2] * namax_g[0] + iat2ia[iat2]]] + iw2;
-
-    if (lo1 <= lo2)
-    {
-        v2 = GridVlocal[lo1 * lgd + lo2];
-        for (ib = 0; ib < bxyz_g[0]; ++ib)
+        double v2 = 0.0;
+        for (int ib = 0; ib < bxyz_g[0]; ++ib)
         {
-            if (cal_flag[k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + atomnow1] && cal_flag[k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + atomnow2])
+            for (int iw1 = 0; iw1 < atom_nw[it1]; iw1++)
             {
-                // v1=psir_ylm[k*bxyz_g[0]*max_size_g[0]*nwmax_g[0]+ib*max_size_g[0]*nwmax_g[0]+atomnow1*nwmax_g[0]+iw1]
-                // * vldr3[k*bxyz_g[0]+ib];
-                v2 += psir_ylm[k * bxyz_g[0] * max_size_g[0] * nwmax_g[0] + ib * max_size_g[0] * nwmax_g[0] + atomnow1 * nwmax_g[0] + iw1] * vldr3[k * bxyz_g[0] + ib] * psir_ylm[k * bxyz_g[0] * max_size_g[0] * nwmax_g[0] + ib * max_size_g[0] * nwmax_g[0] + atomnow2 * nwmax_g[0] + iw2];
+                for (int iw2 = 0; iw2 < atom_nw[it2]; iw2++)
+                {
+                    int lo1_w = lo1 + iw1;
+                    int lo2_w = lo2 + iw2;
+
+                    int cal_flag_index = k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0];
+                    int cal_flag_index1 = cal_flag_index + atom1;
+                    int cal_flag_index2 = cal_flag_index + atom2;
+                    if (cal_flag[cal_flag_index1] && cal_flag[cal_flag_index2])
+                    {
+                        // v1=psir_ylm[k*bxyz_g[0]*max_size_g[0]*nwmax_g[0]+ib*max_size_g[0]*nwmax_g[0]+atomnow1*nwmax_g[0]+iw1]
+                        // * vldr3[k*bxyz_g[0]+ib];
+                        v2 += psir_ylm[(cal_flag_index1)*nwmax_g[0] + iw1] * vldr3[k * bxyz_g[0] + ib] * psir_ylm[(cal_flag_index2)*nwmax_g[0] + iw2];
+                    }
+                    GridVlocal[lo2_w * lgd + lo1_w] += v2;
+                }
             }
         }
-        GridVlocal[lo1 * lgd + lo2] = v2;
     }
 }
 
@@ -479,6 +479,8 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
                        int pwncy,
                        int pwnczp,
                        int NLOCAL_now,
+                       int nbxx,
+                       int *start_ind,
                        const Grid_Technique &GridT)
 {
     // printf("\n**************START GPU SEG***************\n");
@@ -636,8 +638,19 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
 
     // read only
     int *how_many_atoms;
-    cudaMalloc((void **)&how_many_atoms, nbx * nby * nbz * sizeof(int));
-    cudaMemcpy(how_many_atoms, GridT.how_many_atoms, nbx * nby * nbz * sizeof(int), cudaMemcpyHostToDevice);
+    cudaError_t status = cudaMalloc((void **)&how_many_atoms, nbx * nby * nbz * sizeof(int));
+    if (status != cudaSuccess)
+    {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(status));
+        return;
+    }
+
+    cudaError_t status2 = cudaMemcpy(how_many_atoms, GridT.how_many_atoms, nbx * nby * nbz * sizeof(int), cudaMemcpyHostToDevice);
+    if (status2 != cudaSuccess)
+    {
+        fprintf(stderr, "cudaMalloc failed: %s\n", cudaGetErrorString(status2));
+        return;
+    }
 
     int *bcell_start;
     cudaMalloc((void **)&bcell_start, nbx * nby * nbz * sizeof(int));
@@ -715,6 +728,10 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaMalloc((void **)&itiaiw2iwt, size_itiaiw2iwt * sizeof(int));
     cudaMemcpy(itiaiw2iwt, itiaiw2iwt_now, size_itiaiw2iwt * sizeof(int), cudaMemcpyHostToDevice);
 
+    int *start_ind_g;
+    cudaMalloc((void **)&start_ind_g, nbxx * sizeof(int));
+    cudaMemcpy(start_ind_g, start_ind, nbxx * sizeof(int), cudaMemcpyHostToDevice);
+
     // para
     double *dr;
     cudaMalloc((void **)&dr, nbz * bxyz_now * max_size_now * 3 * sizeof(double));
@@ -778,7 +795,6 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     {
         for (int j = 0; j < nby; j++)
         {
-
             dim3 grid1(nbz);
             dim3 block1(max_size_now, bxyz_now); // how_many_atoms,bxyz
             cu_gamma_vlocal_step1<<<grid1, block1>>>(i * nby * nbz + j * nbz,
@@ -815,8 +831,7 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
 
             dim3 grid3(nbz);
             dim3 block3(bx, by, bz);
-            cu_gamma_vlocal_step3<<<grid3, block3>>>(i,
-                                                     j,
+            cu_gamma_vlocal_step3<<<grid3, block3>>>(i * nby * nbz + j * nbz,
                                                      nbx,
                                                      nby,
                                                      nbz,
@@ -824,35 +839,32 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
                                                      ncy,
                                                      nczp,
                                                      vlocal_cu,
+                                                     start_ind_g,
                                                      vldr3);
 
-            dim3 grid4(max_size_now, max_size_now);
-            dim3 block4(nwmax_now, nwmax_now);
-            for (int k = 0; k < nbz; k++)
-            {
-                cu_gamma_vlocal_step4w<<<grid4, block4>>>(i * nby * nbz + j * nbz + k,
-                                                          k,
-                                                          how_many_atoms,
-                                                          bcell_start,
-                                                          which_atom,
-                                                          iat2it,
-                                                          iat2ia,
-                                                          itiaiw2iwt,
-                                                          cal_flag,
-                                                          psir_ylm,
-                                                          trace_lo,
-                                                          atom_nw,
-                                                          vldr3,
-                                                          GridVlocal,
-                                                          lgd_now);
-            }
+            dim3 grid4(nbz);
+            dim3 block4(max_size_now, max_size_now);
+            cu_gamma_vlocal_step4w<<<grid4, block4>>>(i * nby * nbz + j * nbz,
+                                                      how_many_atoms,
+                                                      bcell_start,
+                                                      which_atom,
+                                                      iat2it,
+                                                      iat2ia,
+                                                      itiaiw2iwt,
+                                                      cal_flag,
+                                                      psir_ylm,
+                                                      trace_lo,
+                                                      atom_nw,
+                                                      vldr3,
+                                                      GridVlocal,
+                                                      lgd_now);
         } // j
     }     // i
-
+    cudaDeviceSynchronize();
     cudaMemcpy(GridVlocal_now, GridVlocal, lgd_now * lgd_now * sizeof(double), cudaMemcpyDeviceToHost);
-
+    printf("GridVlocal_now[0]: %lf\n", GridVlocal_now[0]);
     cudaEventRecord(t3);
-
+    cudaDeviceSynchronize();
     // free
     cudaFree(dr);
     cudaFree(distance);
@@ -889,6 +901,7 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaFree(atom_nw);
     cudaFree(trace_lo);
     cudaFree(itiaiw2iwt);
+    cudaFree(start_ind_g);
     cudaFree(GridVlocal);
 
     delete[] atom_nw_now;
