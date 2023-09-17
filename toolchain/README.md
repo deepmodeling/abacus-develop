@@ -22,7 +22,7 @@ and give setup files that you can use to compile ABACUS.
 - [x] `intel-mkl-mpi` toolchain support using `icc` or `icx`. (`icx` version of ABACUS have some problem now, please be cautious)
 - [x] `intel-mkl-mpich` toolchain support.
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
-- [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by automatic installation from github.com
+- [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
 - [x] Support for GPU compilation, users can add `-DUSE_CUDA=1` in builder scripts.
 - [ ] A better mirror station for all packages.
