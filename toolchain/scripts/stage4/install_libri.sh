@@ -47,7 +47,7 @@ case "$with_libri" in
         checksum "$filename" "$libri_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
-        [ -d $dirname] && rm -rf $dirname
+        [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
         cp -r $dirname "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
