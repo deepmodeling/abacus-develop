@@ -28,6 +28,13 @@ for directory in `ls | grep $module`; do
 	test -e "$OUT_directory" && rm -rf $OUT_directory
 
 	#--------------------------------------------
+	# delete time.json (if it exists) 
+	#--------------------------------------------
+	time_json="$directory/time.json"
+	#test -e "$time_json" && echo $time_json
+	test -e "$time_json" && rm $time_json
+
+	#--------------------------------------------
 	# delete descriptor.dat (if it exists) 
 	#--------------------------------------------
 	descriptor="$directory/descriptor.dat"
