@@ -747,7 +747,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, GlobalC::ucell);
-        //sc.run_lambda_loop(iter);
+        sc.run_lambda_loop(iter);
     }
 }
 

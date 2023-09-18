@@ -272,7 +272,7 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
 #endif
     }
 #ifdef __MPI
-    MPI_Reduce(MecMulP.c, orbMulP.c, this->nspin_*nlocal, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Allreduce(MecMulP.c, orbMulP.c, this->nspin_*nlocal, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif 
 
     return orbMulP;
