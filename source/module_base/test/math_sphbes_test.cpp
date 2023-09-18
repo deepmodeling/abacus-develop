@@ -244,7 +244,7 @@ TEST_F(Sphbes,SphericalBesselRoots)
 
 TEST_F(Sphbes, SphericalBesselPrecisionGrid)
 {
-    // This test checks whether sphbesj agrees with the Matlab implementation
+    // This test checks whether sphbesj agrees with the Octave implementation
     // on a coarse grid for a range of l and q values.
     const double q = 0.1;
     const double rcut = 50;
@@ -264,7 +264,7 @@ TEST_F(Sphbes, SphericalBesselPrecisionGrid)
     // case 2: wide range of x and l
     double y;
     // read reference data
-    std::ifstream fin("data/bj.bin", std::ios::binary);
+    std::ifstream fin("data/bjo.bin", std::ios::binary);
     int i = 0;
     while (fin.read(reinterpret_cast<char*>(&y), sizeof(double))){
         Y[i] = y; ++i;
@@ -301,7 +301,7 @@ TEST_F(Sphbes, SphericalBesselPrecisionGrid)
 
 TEST_F(Sphbes, SphericalBesselPrecisionNearZero)
 {
-    // This test checks whether sphbesj agrees with the Matlab implementation
+    // This test checks whether sphbesj agrees with the Octave implementation
     // when x is near zero point for a range of l.
     const int n = 16;
     const int l_lo = 0, l_hi = 11;
@@ -310,7 +310,7 @@ TEST_F(Sphbes, SphericalBesselPrecisionNearZero)
 
     // read reference data
     double y;
-    std::ifstream fin("data/bjx.bin", std::ios::binary);
+    std::ifstream fin("data/bjxo.bin", std::ios::binary);
     int i = 0;
     while (fin.read(reinterpret_cast<char*>(&y), sizeof(double))){
         Y[i] = y; ++i;
