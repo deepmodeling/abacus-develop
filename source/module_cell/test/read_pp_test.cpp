@@ -107,18 +107,18 @@ TEST_F(ReadPPTest, ReadUPF100)
 	EXPECT_DOUBLE_EQ(upf->vloc[0],-5.00890143222E+00); // vloc
 	EXPECT_DOUBLE_EQ(upf->vloc[upf->mesh-1],-2.37200471955E-01); // vloc
 	EXPECT_EQ(upf->lll[0],0); // BETA
-	EXPECT_EQ(upf->kkbeta[0],957);
-	EXPECT_DOUBLE_EQ(upf->beta(0,0),-1.82560984478E-03);
-	EXPECT_DOUBLE_EQ(upf->beta(0,upf->kkbeta[0]-1),-1.61398366674E-03);
-	EXPECT_EQ(upf->lll[1],0); // BETA
-	EXPECT_EQ(upf->kkbeta[1],957);
-	EXPECT_DOUBLE_EQ(upf->beta(1,0),1.51692136792E-03);
-	EXPECT_DOUBLE_EQ(upf->beta(1,upf->kkbeta[1]-1),1.51458412218E-03);
-	EXPECT_EQ(upf->lll[2],2); // BETA
-	EXPECT_EQ(upf->kkbeta[2],957);
-	EXPECT_DOUBLE_EQ(upf->beta(2,0),-3.10582746893E-13);
-	EXPECT_DOUBLE_EQ(upf->beta(2,upf->kkbeta[2]-1),-4.17131335030E-04);
-	EXPECT_EQ(upf->nd,4); // DIJ
+    EXPECT_EQ(upf->kbeta[0], 957);
+    EXPECT_DOUBLE_EQ(upf->beta(0, 0), -1.82560984478E-03);
+    EXPECT_DOUBLE_EQ(upf->beta(0, upf->kbeta[0] - 1), -1.61398366674E-03);
+    EXPECT_EQ(upf->lll[1], 0); // BETA
+    EXPECT_EQ(upf->kbeta[1], 957);
+    EXPECT_DOUBLE_EQ(upf->beta(1, 0), 1.51692136792E-03);
+    EXPECT_DOUBLE_EQ(upf->beta(1, upf->kbeta[1] - 1), 1.51458412218E-03);
+    EXPECT_EQ(upf->lll[2], 2); // BETA
+    EXPECT_EQ(upf->kbeta[2], 957);
+    EXPECT_DOUBLE_EQ(upf->beta(2, 0), -3.10582746893E-13);
+    EXPECT_DOUBLE_EQ(upf->beta(2, upf->kbeta[2] - 1), -4.17131335030E-04);
+    EXPECT_EQ(upf->nd,4); // DIJ
 	EXPECT_DOUBLE_EQ(upf->dion(0,0),-1.70394647943E-01);
 	EXPECT_DOUBLE_EQ(upf->dion(0,1),-1.76521654672E-01);
 	EXPECT_DOUBLE_EQ(upf->dion(1,1),-1.80323263809E-01);
@@ -190,28 +190,28 @@ TEST_F(ReadPPTest, ReadUPF201)
 	EXPECT_DOUBLE_EQ(upf->vloc[0],-5.3426582174E+01);
 	EXPECT_DOUBLE_EQ(upf->vloc[601],-6.3227960060E+00);
 	EXPECT_EQ(upf->lll[0],0);
-	EXPECT_EQ(upf->kkbeta[0],196);
-	EXPECT_DOUBLE_EQ(upf->beta(0,0),0.0);
+    EXPECT_EQ(upf->kbeta[0], 196);
+    EXPECT_DOUBLE_EQ(upf->beta(0,0),0.0);
 	EXPECT_DOUBLE_EQ(upf->beta(0,601),0.0);
 	EXPECT_EQ(upf->lll[1],0);
-	EXPECT_EQ(upf->kkbeta[1],196);
-	EXPECT_DOUBLE_EQ(upf->beta(1,0),0.0);
+    EXPECT_EQ(upf->kbeta[1], 196);
+    EXPECT_DOUBLE_EQ(upf->beta(1,0),0.0);
 	EXPECT_DOUBLE_EQ(upf->beta(1,601),0.0);
 	EXPECT_EQ(upf->lll[2],1);
-	EXPECT_EQ(upf->kkbeta[2],196);
-	EXPECT_DOUBLE_EQ(upf->beta(2,0),0.0);
+    EXPECT_EQ(upf->kbeta[2], 196);
+    EXPECT_DOUBLE_EQ(upf->beta(2,0),0.0);
 	EXPECT_DOUBLE_EQ(upf->beta(2,601),0.0);
 	EXPECT_EQ(upf->lll[3],1);
-	EXPECT_EQ(upf->kkbeta[3],196);
-	EXPECT_DOUBLE_EQ(upf->beta(3,0),0.0);
+    EXPECT_EQ(upf->kbeta[3], 196);
+    EXPECT_DOUBLE_EQ(upf->beta(3,0),0.0);
 	EXPECT_DOUBLE_EQ(upf->beta(3,601),0.0);
 	EXPECT_EQ(upf->lll[4],2);
-	EXPECT_EQ(upf->kkbeta[4],196);
-	EXPECT_DOUBLE_EQ(upf->beta(4,0),0.0);
+    EXPECT_EQ(upf->kbeta[4], 196);
+    EXPECT_DOUBLE_EQ(upf->beta(4,0),0.0);
 	EXPECT_DOUBLE_EQ(upf->beta(4,601),0.0);
 	EXPECT_EQ(upf->lll[5],2);
-	EXPECT_EQ(upf->kkbeta[5],196);
-	EXPECT_DOUBLE_EQ(upf->beta(5,0),0.0);
+    EXPECT_EQ(upf->kbeta[5], 196);
+    EXPECT_DOUBLE_EQ(upf->beta(5,0),0.0);
 	EXPECT_DOUBLE_EQ(upf->beta(5,601),0.0);
 	EXPECT_DOUBLE_EQ(upf->dion(0,0),-6.6178420255E+00);
 	EXPECT_DOUBLE_EQ(upf->dion(5,5),-7.0938557228E+00);
