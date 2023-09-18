@@ -15,7 +15,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // question: how to set initial_lambda?
     // question: is delta_lambda initially zero?
     // set nu, dnu and dnu_last_step
-    std::vector<ModuleBase::Vector3<double>> dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> dnu(nat,0.0), dnu_last_step(nat,0.0), nu_change(nat,1.0);
     // two controlling temp variables
     std::vector<ModuleBase::Vector3<double>> temp_1(nat,0.0), temp_2(nat,0.0);
     // MW during loop
@@ -68,17 +68,17 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         }
         else
         {
-            /*
             std::cout << "optimize delta lambda: " << std::endl;
             print_2d("delta_lambda before optimize ", delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
             this->lambda_ = temp_1;
             this->cal_mw_from_lambda(i_step);
             new_spin = this->Mi_;
+            /*
             subtract_2d(new_spin, spin, spin_change);
             subtract_2d(delta_lambda, dnu_last_step, nu_change);
             where_fill_scalar_2d(this->constrain_, 0, 0.0, spin_change);
-            where_fill_scalar_2d(this->constrain_, 0, 0.0, nu_change);
+            where_fill_scalar_2d(this->constrain_, 0, 1.0, nu_change);
             print_2d("spin_change ", spin_change);
             print_2d("nu_change ", nu_change);
             // calculate spin_nu_gradient
@@ -136,10 +136,10 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
                     goto CG_STOP;
                 }
             }
+            */
             spin = new_spin;
             print_2d("new spin: ", spin);
             print_2d("target spin: ", this->sc_mag_);
-            */
         }
         // continue the lambda loop
         subtract_2d(spin, this->sc_mag_, delta_spin);
