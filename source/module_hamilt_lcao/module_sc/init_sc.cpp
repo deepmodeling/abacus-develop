@@ -36,6 +36,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     }
     // initialize Wi_, which is the weight function with size nloc
     this->Wi_.resize(nloc);
+    ModuleBase::GlobalFunc::ZEROS(this->Wi_.data(),nloc);
     /// set nspin
     this->set_nspin(nspin_in);
     /// set ScData

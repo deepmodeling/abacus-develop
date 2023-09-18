@@ -118,8 +118,8 @@ void SpinConstrain<FPTYPE, Device>::cal_weight_func(const std::vector<std::compl
                             {
                                 icc = mu * pv->ncol + nu;
                             }
-                            this->Wi_[icc] = (iat1 == iat2) ? Sloc2[icc] : Sloc2[icc]*0.5;
-                            //this->Wi_[icc] = Sloc2[icc];
+                            //this->Wi_[icc] = (iat1 == iat2) ? Sloc2[icc] : Sloc2[icc]*0.5;
+                            this->Wi_[icc] = Sloc2[icc];
                         }
                     }
 
