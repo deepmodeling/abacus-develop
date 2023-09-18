@@ -242,7 +242,7 @@ TEST_F(Sphbes,SphericalBesselRoots)
 //     delete[] jl_new;
 // }
 
-TEST_F(Sphbes, SphericalBesselPrecision)
+TEST_F(Sphbes, SphericalBesselPrecisionGrid)
 {
     // This test checks whether sphbesj agrees with the Matlab implementation
     // on a coarse grid for a range of l and q values.
@@ -253,11 +253,6 @@ TEST_F(Sphbes, SphericalBesselPrecision)
     const double dr = rcut / nr;
     double* r = new double[nr + 10];
     double* Y = new double[nr * (l_hi - l_lo + 1) + 10];
-    // fill Y with zeros
-    for (int i = 0; i < nr * (l_hi - l_lo + 1) + 10; ++i)
-    {
-        Y[i] = 0.0;
-    }
 
     // case 0: x = 0, l = 0
     EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(0,0), 1.0, 1e-12);
@@ -273,9 +268,7 @@ TEST_F(Sphbes, SphericalBesselPrecision)
     int i = 0;
     while (fin.read(reinterpret_cast<char*>(&y), sizeof(double))){
         Y[i] = y; ++i;
-        // if (Y[i] == 0) {std::cout << "i: " << i << std::endl; break;}
     }
-    //std::cout << i << std::endl;
     fin.close();
 
     for(int i = 0; i < nr; ++i){
@@ -301,7 +294,43 @@ TEST_F(Sphbes, SphericalBesselPrecision)
         }
         // std::cout << " l = " << l << ", errors: " << std::scientific << errs / nr << std::endl;
     }
-    
+    delete[] r;
+    delete[] Y;
+    delete[] jl_old;
+}
+
+TEST_F(Sphbes, SphericalBesselPrecisionNearZero)
+{
+    // This test checks whether sphbesj agrees with the Matlab implementation
+    // when x is near zero point for a range of l.
+    const int n = 16;
+    const int l_lo = 0, l_hi = 11;
+    double* x = new double[n + 10];
+    double* Y = new double[n * (l_hi - l_lo + 1) + 10];
+
+    // read reference data
+    double y;
+    std::ifstream fin("data/bjx.bin", std::ios::binary);
+    int i = 0;
+    while (fin.read(reinterpret_cast<char*>(&y), sizeof(double))){
+        Y[i] = y; ++i;
+    }
+    fin.close();
+    // generate x
+    x[0] = 1.0 / (1 << 5);
+    for(int i = 1; i < n; i++){
+        x[i] = x[i-1] / 2;
+    }
+
+    // test for sphbesj near zero
+    for (int l = l_lo; l <= l_hi; ++l)
+    {
+        for(int i = 0; i< n; ++i){
+            EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(l, x[i]), Y[l * n + i], 1e-12);
+        }
+    }
+    delete[] x;
+    delete[] Y;
 }
 
 int main(int argc, char **argv)
