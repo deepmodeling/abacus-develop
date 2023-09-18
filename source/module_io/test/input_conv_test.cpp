@@ -258,21 +258,6 @@ TEST_F(InputConvTest, ConvRelax)
 			"\n"));
   }
 
-TEST_F(InputConvTest, ConvRelax2)
-{
-	INPUT.Default();
-	std::string input_file = "./support/INPUT";
-	INPUT.Read(input_file);
-	INPUT.calculation="relax";
-	INPUT.chg_extrap="first-order";
-	std::string output2;
-	testing::internal::CaptureStdout();
-	Input_Conv::Convert();
-	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" For relaxation, charge extrapolation is set to atomic.\n"));
-	EXPECT_EQ(INPUT.chg_extrap,"atomic");
-}
-
 TEST_F(InputConvTest, dftplus)
 {
 	INPUT.Default();

@@ -299,7 +299,7 @@ void Input::Default(void)
     mem_saver = 0;
     printe = 100; // must > 0
     init_chg = "atomic";
-    chg_extrap = "atomic"; // xiaohui modify 2015-02-01
+    chg_extrap = "default"; // xiaohui modify 2015-02-01
     out_freq_elec = 0;
     out_freq_ion = 0;
     out_chg = 0;
@@ -2786,6 +2786,19 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 	{
 		bessel_descriptor_ecut = std::to_string(ecutwfc);
 	}
+    // charge extrapolation liuyu 2023/09/16
+    if (chg_extrap == "default" && calculation == "md")
+    {
+        chg_extrap = "second-order";
+    }
+    else if (chg_extrap == "default" && (calculation == "relax" || calculation == "cell-relax"))
+    {
+        chg_extrap = "first-order";
+    }
+    else if (chg_extrap == "default")
+    {
+        chg_extrap = "atomic";
+    }
 
     if (calculation != "md")
     {
@@ -3410,11 +3423,6 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "wrong 'init_chg',not 'atomic', 'file',please check");
     }
-    // xiaohui modify 2014-05-10, chg_extrap value changes to 0~7
-    // if (chg_extrap <0 ||chg_extrap > 7)
-    //{
-    //	ModuleBase::WARNING_QUIT("Input","wrong 'chg_extrap',neither 0~7.");
-    // }xiaohui modify 2015-02-01
     if (gamma_only_local == 0)
     {
         if (out_dm == 1)
@@ -3430,7 +3438,6 @@ void Input::Check(void)
         }
     }
 
-    // if(chg_extrap==4 && local_basis==0) xiaohui modify 2013-09-01
     if (chg_extrap == "dm" && basis_type == "pw") // xiaohui add 2013-09-01, xiaohui modify 2015-02-01
     {
         ModuleBase::WARNING_QUIT(

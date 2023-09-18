@@ -154,7 +154,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.mem_saver,0);
         EXPECT_EQ(INPUT.printe,100);
         EXPECT_EQ(INPUT.init_chg,"atomic");
-        EXPECT_EQ(INPUT.chg_extrap,"atomic");
+        EXPECT_EQ(INPUT.chg_extrap, "default");
         EXPECT_EQ(INPUT.out_freq_elec,0);
         EXPECT_EQ(INPUT.out_freq_ion,0);
         EXPECT_EQ(INPUT.out_chg,0);
@@ -786,10 +786,11 @@ TEST_F(InputTest, Default_2)
         INPUT.exx_ccp_rmesh_times = "default";
 	INPUT.diago_proc = 0;
 	INPUT.calculation = "relax";
-	INPUT.relax_nmax = 0;
-	INPUT.basis_type = "pw";
-	INPUT.ks_solver = "default";
-	INPUT.gamma_only_local = 1;
+    INPUT.chg_extrap = "default";
+    INPUT.relax_nmax = 0;
+    INPUT.basis_type = "pw";
+    INPUT.ks_solver = "default";
+    INPUT.gamma_only_local = 1;
 	INPUT.scf_thr = -1.0;
 	INPUT.scf_thr_type = -1;
     INPUT.nbndsto_str = "0";
@@ -797,10 +798,11 @@ TEST_F(InputTest, Default_2)
     // the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.vdw_s6,"1.0");
-	EXPECT_EQ(INPUT.vdw_s8,"0.722");
-	EXPECT_EQ(INPUT.vdw_a1,"1.217");
-	EXPECT_EQ(INPUT.vdw_a2,"1.0");
+    EXPECT_EQ(INPUT.chg_extrap, "first-order");
+    EXPECT_EQ(INPUT.vdw_s6, "1.0");
+    EXPECT_EQ(INPUT.vdw_s8, "0.722");
+    EXPECT_EQ(INPUT.vdw_a1, "1.217");
+    EXPECT_EQ(INPUT.vdw_a2,"1.0");
 	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
 	EXPECT_EQ(INPUT.exx_hybrid_alpha,"1");
 	EXPECT_EQ(INPUT.exx_real_number,"0");
@@ -826,9 +828,10 @@ TEST_F(InputTest, Default_2)
 	INPUT.vdw_a2 = "default";
 	INPUT.vdw_cutoff_radius = "default";
 	INPUT.calculation = "get_S";
-	INPUT.basis_type = "pw";
-	INPUT.pw_diag_thr = 1.0e-2;
-	INPUT.cal_force = 1;
+    INPUT.chg_extrap = "default";
+    INPUT.basis_type = "pw";
+    INPUT.pw_diag_thr = 1.0e-2;
+    INPUT.cal_force = 1;
 	INPUT.init_chg = "atomic";
 	INPUT.basis_type = "pw";
 	INPUT.ks_solver = "cg";
@@ -837,9 +840,10 @@ TEST_F(InputTest, Default_2)
 	// the 3rd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.vdw_s6,"1.0");
-	EXPECT_EQ(INPUT.vdw_s8,"0.7875");
-	EXPECT_EQ(INPUT.vdw_a1,"0.4289");
+    EXPECT_EQ(INPUT.chg_extrap, "atomic");
+    EXPECT_EQ(INPUT.vdw_s6, "1.0");
+    EXPECT_EQ(INPUT.vdw_s8, "0.7875");
+    EXPECT_EQ(INPUT.vdw_a1,"0.4289");
 	EXPECT_EQ(INPUT.vdw_a2,"4.4407");
 	EXPECT_EQ(INPUT.vdw_cutoff_radius,"95");
 	EXPECT_EQ(GlobalV::CALCULATION,"nscf");
@@ -852,6 +856,7 @@ TEST_F(InputTest, Default_2)
 	//==================================================
 	// prepare default parameters for the 4th calling
 	INPUT.calculation = "get_pchg";
+    INPUT.chg_extrap = "default";
     INPUT.symmetry = "default";
 	// the 4th calling
 	INPUT.Default_2();
@@ -874,9 +879,10 @@ TEST_F(InputTest, Default_2)
 	// prepare default parameters for the 5th calling
 	INPUT.calculation = "get_wf";
     INPUT.symmetry = "default";
-	// the 5th calling
-	INPUT.Default_2();
-	// ^^^^^^^^^^^^^^
+    INPUT.chg_extrap = "default";
+    // the 5th calling
+    INPUT.Default_2();
+    // ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"get_wf");
     EXPECT_EQ(INPUT.relax_nmax, 1);
     EXPECT_EQ(INPUT.symmetry, "0");
@@ -894,7 +900,8 @@ TEST_F(InputTest, Default_2)
 	//==================================================
 	// prepare default parameters for the 6th calling
 	INPUT.calculation = "md";
-	INPUT.mdp.md_nstep = 0;
+    INPUT.chg_extrap = "default";
+    INPUT.mdp.md_nstep = 0;
 	INPUT.out_md_control = 0;
 	INPUT.mdp.md_tlast = -1.0;
 	INPUT.mdp.md_plast = -1.0;
@@ -907,9 +914,10 @@ TEST_F(InputTest, Default_2)
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
 	EXPECT_EQ(GlobalV::CALCULATION,"md");
-	EXPECT_EQ(INPUT.symmetry,"0");
-	EXPECT_EQ(INPUT.cal_force,1);
-	EXPECT_EQ(INPUT.mdp.md_nstep,50);
+    EXPECT_EQ(INPUT.chg_extrap, "second-order");
+    EXPECT_EQ(INPUT.symmetry, "0");
+    EXPECT_EQ(INPUT.cal_force, 1);
+    EXPECT_EQ(INPUT.mdp.md_nstep,50);
     EXPECT_EQ(INPUT.out_level, "m");
     EXPECT_DOUBLE_EQ(INPUT.mdp.md_plast, INPUT.mdp.md_pfirst);
     EXPECT_DOUBLE_EQ(INPUT.mdp.md_tfreq,1.0/40/INPUT.mdp.md_dt);
@@ -919,34 +927,42 @@ TEST_F(InputTest, Default_2)
 	//==================================================
 	// prepare default parameters for the 7th calling
 	INPUT.calculation = "cell-relax";
-	INPUT.relax_nmax = 0;
-	// the 7th calling
+    INPUT.chg_extrap = "default";
+    INPUT.relax_nmax = 0;
+    // the 7th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.cal_force,1);
-	EXPECT_EQ(INPUT.cal_stress,1);
+    EXPECT_EQ(INPUT.chg_extrap, "first-order");
+    EXPECT_EQ(INPUT.cal_force, 1);
+    EXPECT_EQ(INPUT.cal_stress,1);
 	EXPECT_EQ(INPUT.relax_nmax,50);
 	//==================================================
 	// prepare default parameters for the 8th calling
 	INPUT.calculation = "test_memory";
-	// the 8th calling
+    INPUT.chg_extrap = "default";
+    // the 8th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.relax_nmax,1);
+    EXPECT_EQ(INPUT.chg_extrap, "atomic");
+    EXPECT_EQ(INPUT.relax_nmax,1);
 	//==================================================
 	// prepare default parameters for the 9th calling
 	INPUT.calculation = "test_neighbour";
-	// the 9th calling
+    INPUT.chg_extrap = "default";
+    // the 9th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.relax_nmax,1);
+    EXPECT_EQ(INPUT.chg_extrap, "atomic");
+    EXPECT_EQ(INPUT.relax_nmax,1);
 	//==================================================
 	// prepare default parameters for the 10th calling
 	INPUT.calculation = "gen_bessel";
-	// the 10th calling
+    INPUT.chg_extrap = "default";
+    // the 10th calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(INPUT.relax_nmax,1);
+    EXPECT_EQ(INPUT.chg_extrap, "atomic");
+    EXPECT_EQ(INPUT.relax_nmax,1);
 	//==================================================
 	remove("INPUT");
 	remove("STRU");
