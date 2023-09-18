@@ -268,7 +268,7 @@ void Paw_Cell::prepare_paw()
 void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
 {
     get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
-            gmet.data(), ucvol, xred.data(), vloc, ncoret);
+            gmet.data(), ucvol, xred.data(), ncoret, vloc);
 }
 
 void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp)
@@ -303,7 +303,17 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 
 void Paw_Cell::calculate_dij(double* vks, double* vxc)
 {
-    calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks,vxc);
+    double * vks_hartree, * vxc_hartree;
+    vks_hartree = new double[nspden * nfft];
+    vxc_hartree = new double[nspden * nfft];
+    for(int i = 0; i < nspden * nfft; i ++)
+    {
+        vks_hartree[i] = vks[i] / 2.0;
+        vxc_hartree[i] = vxc[i] / 2.0;
+    }
+    calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);
+    delete[] vks_hartree;
+    delete[] vxc_hartree;
 }
 
 void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
@@ -357,8 +367,8 @@ void Paw_Cell::set_dij()
             for(int iproj = jproj; iproj < nproj; iproj ++)
             {
                 const int ind = iproj * (iproj+1) / 2 + jproj;
-                dij[iproj*nproj+jproj] = dij_libpaw[ind];
-                dij[jproj*nproj+iproj] = dij_libpaw[ind];
+                dij[iproj*nproj+jproj] = dij_libpaw[ind] * 2.0; //hartree to rydberg
+                dij[jproj*nproj+iproj] = dij_libpaw[ind] * 2.0;
             }
         }
         paw_atom_list[iat].set_dij(dij);
