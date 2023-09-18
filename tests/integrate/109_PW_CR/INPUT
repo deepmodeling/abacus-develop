@@ -19,6 +19,6 @@ cal_force                   1
 force_thr_ev            1.0e-3
 
 #ks_solver               scalapack_gvx
-mixing_type         pulay
+mixing_type         broyden
 mixing_beta         0.7
 mixing_gg0          1.5

@@ -28,24 +28,14 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->mixing_ndim = mixing_ndim_in;
     this->mixing_gg0 = mixing_gg0_in; // mohan add 2014-09-27
     this->mixing_tau = mixing_tau_in;
-    if (GlobalV::SCF_THR_TYPE == 1)
-    {
-        this->rho_mdata.resize(GlobalV::NSPIN, this->rhopw->npw, sizeof(std::complex<double>));
-        this->tau_mdata.resize(GlobalV::NSPIN, this->rhopw->npw, sizeof(std::complex<double>));
-    }
-    else
-    {
-        this->rho_mdata.resize(GlobalV::NSPIN, this->rhopw->nrxx, sizeof(double));
-        this->tau_mdata.resize(GlobalV::NSPIN, this->rhopw->nrxx, sizeof(double));
-    }
 
     if (this->mixing_mode == "broyden")
     {
-        this->mixing = new Base_Mixing::Broyden_Mixing(this->mixing_ndim);
+        this->mixing = new Base_Mixing::Broyden_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else if (this->mixing_mode == "plain")
     {
-        this->mixing = new Base_Mixing::Plain_Mixing();
+        this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
     else if(this->mixing_mode == "pulay")
     {
@@ -54,6 +44,11 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     else
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
+    }
+
+    if (this->mixing_mode != "broyden")
+    {
+        ModuleBase::WARNING("Charge_Mixing", "We recommend you to use broyden mixing_type. Other mixing methods are slow.");
     }
 
     if (GlobalV::SCF_THR_TYPE == 1)
@@ -100,11 +95,11 @@ void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
     // 0.2 for metal and 0.7 for others
     if (bandgap_in * ModuleBase::Ry_to_eV < 1.0)
     {
-        this->mixing_beta = 0.2;
+        this->mixing->mixing_beta = this->mixing_beta = 0.2;
     }
     else
     {
-        this->mixing_beta = 0.7;
+        this->mixing->mixing_beta = this->mixing_beta = 0.7;
     }
     GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
 
@@ -274,6 +269,24 @@ void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
     ModuleBase::timer::tick("Charge", "mix_rho");
 
+    // the charge before mixing.
+    const int nrxx = this->rhopw->nrxx;
+    std::vector<double> rho123(GlobalV::NSPIN * nrxx);
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        {
+            ModuleBase::GlobalFunc::DCOPY(chr->rho[is], rho123.data() + is * nrxx, nrxx);
+        }
+    }
+    std::vector<double> kin_r123;
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        kin_r123.resize(GlobalV::NSPIN * nrxx);
+        ModuleBase::GlobalFunc::DCOPY(chr->kin_r[0], kin_r123.data(), GlobalV::NSPIN * nrxx);
+    }
+
+    // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
         mix_rho_recip(iter, chr);
@@ -281,6 +294,22 @@ void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
     else
     {
         mix_rho_real(iter, chr);
+    }
+    // ---------------------------------------------------
+
+    // mohan add 2012-06-05
+    // rho_save is the charge before mixing
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        {
+            ModuleBase::GlobalFunc::DCOPY(rho123.data() + is * nrxx, chr->rho_save[is], nrxx);
+        }
+    }
+
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        ModuleBase::GlobalFunc::DCOPY(kin_r123.data(), chr->kin_r_save[0], nrxx * GlobalV::NSPIN);
     }
 
     if (new_e_iteration)

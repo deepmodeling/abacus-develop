@@ -23,15 +23,15 @@ class Mixing
 
     /**
      * @brief init mixing data
-     * 
+     *
      * @param mdata mixing data
      * @param length the length of each vector
      * @param type_size size of type
-     * 
+     *
      */
-    virtual void init_mixing_data(Mixing_Data& mdata, const int& length, const size_t& type_size)
+    virtual void init_mixing_data(Mixing_Data& mdata, const int& length, const size_t& type_size) const
     {
-        mdata.resize(mixing_ndim, length, type_size);
+        mdata.resize(data_ndim, length, type_size);
     }
 
     /**
@@ -76,7 +76,7 @@ class Mixing
     void mix_data(const Mixing_Data& mdata, double* data_mix)
     {
         double* FP_data = static_cast<double*>(mdata.data);
-        if(mdata.ndim_use == 1)
+        if (mdata.ndim_use == 1)
         {
             for (int i = 0; i < mdata.length; ++i)
                 data_mix[i] = FP_data[i];
@@ -97,7 +97,7 @@ class Mixing
     void mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
     {
         std::complex<double>* FP_data = static_cast<std::complex<double>*>(mdata.data);
-        if(mdata.ndim_use == 1)
+        if (mdata.ndim_use == 1)
         {
             for (int i = 0; i < mdata.length; ++i)
                 data_mix[i] = FP_data[i];
@@ -132,7 +132,7 @@ class Mixing
     // coeficients for mixing
     std::vector<double> coef;
     // ndim for mixing
-    int mixing_ndim = 1;
+    int data_ndim = 1;
 };
 
 } // namespace Base_Mixing

@@ -47,20 +47,6 @@ namespace ModuleESolver
         ///----------------------------------------------------------
         p_chgmix = new Charge_Mixing();
         p_chgmix->set_rhopw(this->pw_rho);
-        p_chgmix->set_mixing(INPUT.mixing_mode,
-                             INPUT.mixing_beta,
-                             INPUT.mixing_ndim,
-                             INPUT.mixing_gg0,
-                             INPUT.mixing_tau);
-        // using bandgap to auto set mixing_beta
-        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
-        {
-            p_chgmix->need_auto_set();
-        }
-        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-        }
 
         ///----------------------------------------------------------
         /// wavefunc
@@ -84,6 +70,23 @@ namespace ModuleESolver
     void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
+
+        //------------------Charge Mixing------------------
+        p_chgmix->set_mixing(INPUT.mixing_mode,
+                             INPUT.mixing_beta,
+                             INPUT.mixing_ndim,
+                             INPUT.mixing_gg0,
+                             INPUT.mixing_tau);
+        // using bandgap to auto set mixing_beta
+        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
+        {
+            p_chgmix->need_auto_set();
+        }
+        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
+        {
+            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+        }
+        
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {

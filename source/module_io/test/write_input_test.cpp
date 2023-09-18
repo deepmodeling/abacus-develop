@@ -176,9 +176,9 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("smearing_sigma                 0.002 #energy range for smearing"));
         EXPECT_THAT(output,testing::HasSubstr(""));
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (7.Charge Mixing)"));
-        EXPECT_THAT(output,testing::HasSubstr("mixing_type                    pulay #plain; pulay; broyden"));
+        EXPECT_THAT(output,testing::HasSubstr("mixing_type                    broyden #plain; pulay; broyden"));
         EXPECT_THAT(output,testing::HasSubstr("mixing_beta                    0.7 #mixing parameter: 0 means no new charge"));
-        EXPECT_THAT(output,testing::HasSubstr("mixing_ndim                    8 #mixing dimension in pulay"));
+        EXPECT_THAT(output,testing::HasSubstr("mixing_ndim                    8 #mixing dimension in pulay or broyden"));
         EXPECT_THAT(output,testing::HasSubstr("mixing_gg0                     0 #mixing parameter in kerker"));
         EXPECT_THAT(output,testing::HasSubstr("mixing_tau                     0 #whether to mix tau in mGGA calculation"));
         EXPECT_THAT(output,testing::HasSubstr("mixing_dftu                    0 #whether to mix locale in DFT+U calculation"));
