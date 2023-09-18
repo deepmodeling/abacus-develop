@@ -271,70 +271,8 @@ __global__ void cu_gamma_vlocal_step3(int ij_index,
     vldr3[k * bx_g[0] * by_g[0] * bz_g[0] + ii * by_g[0] * bz_g[0] + jj * bz_g[0] + kk] = vlocal[vindex] * vfactor_g[0];
 }
 
-__global__ void cu_gamma_vlocal_step4(int i,
-                                      int j,
-                                      int k,
-                                      int nby,
-                                      int nbz,
-                                      int *how_many_atoms,
-                                      int *bcell_start,
-                                      int *which_atom,
-                                      int *iat2it,
-                                      int *iat2ia,
-                                      int *itiaiw2iwt,
-                                      bool *cal_flag,
-                                      double *psir_ylm,
-                                      int *trace_lo,
-                                      int *atom_nw,
-                                      double *vldr3,
-                                      double *GridVlocal,
-                                      int lgd)
-{
-    int atomnow1 = blockIdx.x * blockDim.x + threadIdx.x;
-    int atomnow2 = blockIdx.y * blockDim.y + threadIdx.y;
-    int grid_index = i * nby * nbz + j * nbz + k;
-    if (atomnow1 >= how_many_atoms[grid_index] || atomnow2 >= how_many_atoms[grid_index])
-    {
-        return;
-    }
-    int iat1 = which_atom[bcell_start[grid_index] + atomnow1];
-    int iat2 = which_atom[bcell_start[grid_index] + atomnow2];
-
-    if (iat2it[iat1] > iat2it[iat2])
-    {
-        return;
-    }
-
-    int iw1, iw2, lo1, lo2, ib, v4;
-    double v2;
-
-    lo1 = trace_lo[itiaiw2iwt[iat2it[iat1] * namax_g[0] + iat2ia[iat1]]];
-    lo2 = trace_lo[itiaiw2iwt[iat2it[iat2] * namax_g[0] + iat2ia[iat2]]];
-
-    for (iw1 = 0; iw1 < atom_nw[iat2it[iat1]]; iw1++)
-    {
-        for (iw2 = 0; iw2 < atom_nw[iat2it[iat2]]; iw2++)
-        {
-            if ((lo1 + iw1) <= (lo2 + iw2))
-            {
-                // v4=(lo1+iw1)*lgd+lo2+iw2;
-                v2 = GridVlocal[v4];
-                for (ib = 0; ib < bxyz_g[0]; ib++)
-                {
-                    if (cal_flag[k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + atomnow1] && cal_flag[k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + atomnow2])
-                    {
-                        // v1=psir_ylm[k*bxyz_g[0]*max_size_g[0]*nwmax_g[0]+ib*max_size_g[0]*nwmax_g[0]+atomnow1*nwmax_g[0]+iw1]
-                        // * vldr3[k*bxyz_g[0]+ib];
-                        v2 += psir_ylm[k * bxyz_g[0] * max_size_g[0] * nwmax_g[0] + ib * max_size_g[0] * nwmax_g[0] + atomnow1 * nwmax_g[0] + iw1] * vldr3[k * bxyz_g[0] + ib] * psir_ylm[k * bxyz_g[0] * max_size_g[0] * nwmax_g[0] + ib * max_size_g[0] * nwmax_g[0] + atomnow2 * nwmax_g[0] + iw2];
-                    }
-                }
-                GridVlocal[v4] = v2;
-            }
-        }
-    }
-}
-
 __global__ void cu_gamma_vlocal_step4w(int grid_index,
+                                       int k,
                                        int *how_many_atoms,
                                        int *bcell_start,
                                        int *which_atom,
@@ -349,118 +287,45 @@ __global__ void cu_gamma_vlocal_step4w(int grid_index,
                                        double *GridVlocal,
                                        int lgd)
 {
-    int k = blockIdx.x;
-    int atom1 = threadIdx.x;
-    int atom2 = threadIdx.y;
-    if (atom1 >= how_many_atoms[grid_index] || atom2 >= how_many_atoms[grid_index])
+    int atomnow1 = blockIdx.x;
+    int atomnow2 = blockIdx.y;
+    int iw1 = threadIdx.x;
+    int iw2 = threadIdx.y;
+    if (atomnow1 >= how_many_atoms[grid_index] || atomnow2 >= how_many_atoms[grid_index])
     {
         return;
     }
-    int iat1 = which_atom[bcell_start[grid_index] + atom1];
-    int iat2 = which_atom[bcell_start[grid_index] + atom2];
-    int it1 = iat2it[iat1];
-    int it2 = iat2it[iat2];
-    int lo1 = trace_lo[itiaiw2iwt[it1 * namax_g[0] + iat2ia[iat1]]];
-    int lo2 = trace_lo[itiaiw2iwt[it2 * namax_g[0] + iat2ia[iat2]]];
-    //if (lo1 <= lo2)
+    int iat1 = which_atom[bcell_start[grid_index] + atomnow1];
+    int iat2 = which_atom[bcell_start[grid_index] + atomnow2];
+    if (iat2it[iat1] > iat2it[iat2])
     {
+        return;
+    }
+    if (iw1 >= atom_nw[iat2it[iat1]] || iw2 >= atom_nw[iat2it[iat2]])
+    {
+        return;
+    }
+
+    int lo1 = trace_lo[itiaiw2iwt[iat2it[iat1] * namax_g[0] + iat2ia[iat1]]];
+    int lo2 = trace_lo[itiaiw2iwt[iat2it[iat2] * namax_g[0] + iat2ia[iat2]]];
+
+    if (lo1 <= lo2)
+    {
+        int lo1_iw1 = lo1 + iw1;
+        int lo2_iw2 = lo2 + iw2;
         double v2 = 0.0;
         for (int ib = 0; ib < bxyz_g[0]; ++ib)
         {
-            for (int iw1 = 0; iw1 < atom_nw[it1]; iw1++)
+            int vldr3_index = k * bxyz_g[0] + ib;
+            int calc_index1 = vldr3_index * max_size_g[0] + atomnow1;
+            int calc_index2 = vldr3_index * max_size_g[0] + atomnow2;
+            if (cal_flag[calc_index1] &&
+                cal_flag[calc_index2])
             {
-                for (int iw2 = 0; iw2 < atom_nw[it2]; iw2++)
-                {
-                    int lo1_w = lo1 + iw1;
-                    int lo2_w = lo2 + iw2;
-
-                    int cal_flag_index = k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0];
-                    int cal_flag_index1 = cal_flag_index + atom1;
-                    int cal_flag_index2 = cal_flag_index + atom2;
-                    if (cal_flag[cal_flag_index1] && cal_flag[cal_flag_index2])
-                    {
-                        // v1=psir_ylm[k*bxyz_g[0]*max_size_g[0]*nwmax_g[0]+ib*max_size_g[0]*nwmax_g[0]+atomnow1*nwmax_g[0]+iw1]
-                        // * vldr3[k*bxyz_g[0]+ib];
-                        v2 += psir_ylm[(cal_flag_index1)*nwmax_g[0] + iw1] * vldr3[k * bxyz_g[0] + ib] * psir_ylm[(cal_flag_index2)*nwmax_g[0] + iw2];
-                    }
-                    GridVlocal[lo2_w * lgd + lo1_w] += v2;
-                }
+                v2 += psir_ylm[(calc_index1)*nwmax_g[0] + iw1] * vldr3[vldr3_index] * psir_ylm[(calc_index2)*nwmax_g[0] + iw2];
             }
         }
-    }
-}
-
-__global__ void cu_gamma_vlocal_step4ww(int gridxy,
-                                        int nbz,
-                                        int *how_many_atoms,
-                                        int *bcell_start,
-                                        int *which_atom,
-                                        int *iat2it,
-                                        int *iat2ia,
-                                        int *itiaiw2iwt,
-                                        bool *cal_flag,
-                                        double *psir_ylm,
-                                        int *trace_lo,
-                                        int *atom_nw,
-                                        double *vldr3,
-                                        double *GridVlocal,
-                                        int lgd)
-{
-
-    int lo1 = blockIdx.x * blockDim.x + threadIdx.x;
-    int lo2 = blockIdx.y * blockDim.y + threadIdx.y;
-    if (lo1 > lo2)
-    {
-        return;
-    }
-    if (lo1 >= lgd || lo2 >= lgd)
-    {
-        return;
-    }
-    int k, grid_index;
-    int size, atom1, atom2, iat1, iat2, it1, it2, iw1, iw2, ib, v2;
-    for (k = 0; k < nbz; k++)
-    {
-        grid_index = gridxy + k;
-        size = how_many_atoms[grid_index];
-        for (atom1 = 0; atom1 < size; atom1++)
-        {
-            iat1 = which_atom[bcell_start[grid_index] + atom1];
-            it1 = iat2it[iat1];
-
-            for (atom2 = 0; atom2 < size; atom2++)
-            {
-                iat2 = which_atom[bcell_start[grid_index] + atom2];
-                it2 = iat2it[iat2];
-                if (it1 <= it2)
-                {
-                    for (iw1 = 0; iw1 < atom_nw[it1]; iw1++)
-                    {
-                        if (lo1 == trace_lo[itiaiw2iwt[it1 * namax_g[0] + iat2ia[iat1]]] + iw1)
-                        {
-                            for (iw2 = 0; iw2 < atom_nw[it2]; iw2++)
-                            {
-                                if (lo2 == trace_lo[itiaiw2iwt[it2 * namax_g[0] + iat2ia[iat2]]] + iw2)
-                                {
-                                    v2 = GridVlocal[lo1 * lgd + lo2];
-                                    for (ib = 0; ib < bxyz_g[0]; ib++)
-                                    {
-
-                                        if (cal_flag[k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + atom1] && cal_flag[k * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + atom2])
-                                        {
-                                            v2 += psir_ylm[k * bxyz_g[0] * max_size_g[0] * nwmax_g[0] + ib * max_size_g[0] * nwmax_g[0] + atom1 * nwmax_g[0] + iw1] * vldr3[k * bxyz_g[0] + ib] * psir_ylm[k * bxyz_g[0] * max_size_g[0] * nwmax_g[0] + ib * max_size_g[0] * nwmax_g[0] + atom2 * nwmax_g[0] + iw2];
-                                        }
-                                    }
-                                    GridVlocal[lo1 * lgd + lo2] = v2;
-                                    goto ENDK;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    ENDK:
+        atomicAdd(&(GridVlocal[lo1_iw1 * lgd + lo2_iw2]), v2);
     }
 }
 
@@ -603,7 +468,6 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
 
                 atom_iw2_new_now[i * nwmax_now + j] = false;
                 atom_iw2_ylm_now[i * nwmax_now + j] = 0;
-
                 for (int k = 0; k < nr_max; k++)
                 {
                     psi_u_now[i * nwmax_now * nr_max + j * nr_max + k] = 0;
@@ -789,7 +653,7 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
 
     cudaEventRecord(t2);
 
-    printf("maxsize=%d\n", max_size_now);
+    // printf("maxsize=%d\n", max_size_now);
 
     for (int i = 0; i < nbx; i++)
     {
@@ -842,27 +706,32 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
                                                      start_ind_g,
                                                      vldr3);
 
-            dim3 grid4(nbz);
-            dim3 block4(max_size_now, max_size_now);
-            cu_gamma_vlocal_step4w<<<grid4, block4>>>(i * nby * nbz + j * nbz,
-                                                      how_many_atoms,
-                                                      bcell_start,
-                                                      which_atom,
-                                                      iat2it,
-                                                      iat2ia,
-                                                      itiaiw2iwt,
-                                                      cal_flag,
-                                                      psir_ylm,
-                                                      trace_lo,
-                                                      atom_nw,
-                                                      vldr3,
-                                                      GridVlocal,
-                                                      lgd_now);
+            dim3 grid4(max_size_now, max_size_now);
+            dim3 block4(nwmax_now, nwmax_now);
+            for (int k = 0; k < nbz; k++)
+            {
+                cu_gamma_vlocal_step4w<<<grid4, block4>>>(i * nby * nbz + j * nbz + k,
+                                                          k,
+                                                          how_many_atoms,
+                                                          bcell_start,
+                                                          which_atom,
+                                                          iat2it,
+                                                          iat2ia,
+                                                          itiaiw2iwt,
+                                                          cal_flag,
+                                                          psir_ylm,
+                                                          trace_lo,
+                                                          atom_nw,
+                                                          vldr3,
+                                                          GridVlocal,
+                                                          lgd_now);
+            }
         } // j
     }     // i
+
     cudaDeviceSynchronize();
     cudaMemcpy(GridVlocal_now, GridVlocal, lgd_now * lgd_now * sizeof(double), cudaMemcpyDeviceToHost);
-    printf("GridVlocal_now[0]: %lf\n", GridVlocal_now[0]);
+    // printf("GridVlocal_now[0]: %lf\n", GridVlocal_now[0]);
     cudaEventRecord(t3);
     cudaDeviceSynchronize();
     // free
