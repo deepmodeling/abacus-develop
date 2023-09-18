@@ -15,6 +15,6 @@ basis_type		lcao
 relax_nmax           1
 
 ks_solver       scalapack_gvx
-mixing_type     pulay
+mixing_type     broyden
 mixing_beta     0.7
 mixing_gg0      1.5

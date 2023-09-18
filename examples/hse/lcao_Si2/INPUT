@@ -12,7 +12,7 @@ scf_nmax                100
 gamma_only              0
 symmetry                -1
 smearing_method         gauss
-mixing_type             pulay
+mixing_type             broyden
 mixing_beta             0.4
 
 dft_functional          hse

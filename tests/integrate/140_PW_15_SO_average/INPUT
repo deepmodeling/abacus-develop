@@ -36,6 +36,6 @@ chg_extrap       second-order
 out_dm              0
 pw_diag_thr                0.00001
 
-mixing_type         pulay
+mixing_type         broyden
 mixing_beta         0.4
 mixing_gg0 1.5
