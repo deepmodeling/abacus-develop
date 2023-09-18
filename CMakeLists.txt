@@ -73,10 +73,12 @@ if (NOT ENABLE_MPI)
   set (BUILD_TESTING OFF)
 endif()
 
-if(ENABLE_LCAO)
+if(ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus)
-else()
+elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw)
+elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
+  set(ABACUS_BIN_NAME abacus_pw_serial)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -336,13 +338,14 @@ if(MKLROOT)
 else()
   find_package(FFTW3 REQUIRED)
   find_package(LAPACK REQUIRED)
-  find_package(ScaLAPACK REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
-  list(APPEND math_libs
-    FFTW3::FFTW3
-    LAPACK::LAPACK
-    ScaLAPACK::ScaLAPACK
-  )
+  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+
+  if(ENABLE_LCAO)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
+
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
