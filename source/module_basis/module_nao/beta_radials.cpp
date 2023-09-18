@@ -27,10 +27,11 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
         int l = beta.getL();
         chi_[ichi].build(l, true, beta.getNr(), beta.getRadial(), beta.getBeta_r(), 1, nzeta_[l], symbol_, itype_);
         nzeta_[l] += 1;
-        chi_[ichi].set_transformer(sbt_, 0);
     }
+    nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
 
     indexing();
+    set_rcut_max();
 }
 
 //void BetaRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)

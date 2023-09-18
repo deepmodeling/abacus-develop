@@ -2,25 +2,15 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 
 #include "module_base/spherical_bessel_transformer.h"
-
-RadialSet::RadialSet() :
-    sbt_(new ModuleBase::SphericalBesselTransformer),
-    use_internal_transformer_(true)
-{
-}
 
 RadialSet::~RadialSet()
 {
     delete[] nzeta_;
     delete[] chi_;
     delete[] index_map_;
-
-    if (use_internal_transformer_)
-    {
-        delete sbt_;
-    }
 }
 
 RadialSet::RadialSet(const RadialSet& other) :
@@ -31,9 +21,7 @@ RadialSet::RadialSet(const RadialSet& other) :
     nzeta_max_(other.nzeta_max_),
     nchi_(other.nchi_),
     chi_(nullptr),
-    index_map_(nullptr),
-    sbt_(other.use_internal_transformer_ ? new ModuleBase::SphericalBesselTransformer : other.sbt_),
-    use_internal_transformer_(other.use_internal_transformer_)
+    index_map_(nullptr)
 {
     if (nchi_ == 0)
     {
@@ -50,7 +38,6 @@ RadialSet::RadialSet(const RadialSet& other) :
     for (int i = 0; i < nchi_; i++)
     {
         chi_[i] = other.chi_[i]; // deep copy
-        chi_[i].set_transformer(sbt_, 0);
     }
 }
 
@@ -89,19 +76,16 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
         }
     }
 
-    set_transformer(rhs.use_internal_transformer_ ? nullptr : rhs.sbt_, 0);
-
     return *this;
 }
 
-double RadialSet::rcut_max() const
+void RadialSet::set_rcut_max()
 {
-    double rmax = 0.0;
+    rcut_max_ = 0.0;
     for (int i = 0; i < nchi_; ++i)
     {
-        rmax = std::max(rmax, chi_[i].rcut());
+        rcut_max_ = std::max(rcut_max_, chi_[i].rcut());
     }
-    return rmax;
 }
 
 int RadialSet::index(const int l, const int izeta) const
@@ -119,7 +103,6 @@ void RadialSet::indexing()
     }
 
     assert(lmax_ >= 0);
-    nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
 
     delete[] index_map_;
     index_map_ = new int[(lmax_ + 1) * nzeta_max_];
@@ -140,34 +123,21 @@ const NumericalRadial& RadialSet::chi(const int l, const int izeta)
     return chi_[i];
 }
 
-void RadialSet::set_transformer(ModuleBase::SphericalBesselTransformer* const sbt, const int update)
+void RadialSet::set_transformer(std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt, const int update)
 {
-    if (use_internal_transformer_ && sbt)
-    { // internal -> external
-        delete sbt_;
-        use_internal_transformer_ = false;
-        sbt_ = sbt;
-    }
-    else if (!use_internal_transformer_ && !sbt)
-    { // external -> internal
-        sbt_ = new ModuleBase::SphericalBesselTransformer;
-        use_internal_transformer_ = true;
-    }
-    else if (!use_internal_transformer_ && sbt)
-    { // external -> another external
-        sbt_ = sbt;
-    }
-
     for (int i = 0; i < nchi_; i++)
     {
-        chi_[i].set_transformer(sbt_, update);
+        chi_[i].set_transformer(sbt, update);
     }
 }
 
 void RadialSet::set_grid(const bool for_r_space, const int ngrid, const double* grid, const char mode)
 {
     for (int i = 0; i < nchi_; i++)
+    {
         chi_[i].set_grid(for_r_space, ngrid, grid, mode);
+    }
+    rcut_max_ = grid[ngrid - 1];
 }
 
 void RadialSet::set_uniform_grid(const bool for_r_space,
@@ -177,7 +147,10 @@ void RadialSet::set_uniform_grid(const bool for_r_space,
                                  const bool enable_fft)
 {
     for (int i = 0; i < nchi_; i++)
+    {
         chi_[i].set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
+    }
+    rcut_max_ = cutoff;
 }
 
 void RadialSet::cleanup()

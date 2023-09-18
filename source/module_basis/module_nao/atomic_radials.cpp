@@ -53,15 +53,11 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
 
     itype_ = itype;
     read_abacus_orb(ifs, ptr_log, rank);
+    set_rcut_max();
 
     if (rank == 0)
     {
         ifs.close();
-    }
-
-    for (int i = 0; i < nchi_; i++)
-    {
-        chi_[i].set_transformer(sbt_, 0);
     }
 }
 
@@ -134,7 +130,8 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         {
             nchi_ += nzeta_[l];
         }
-        indexing(); // calculate nzeta_max_ and build index_map_
+        nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
+        indexing(); // build index_map_
     }
 
 #ifdef __MPI

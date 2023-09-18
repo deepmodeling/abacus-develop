@@ -1,6 +1,7 @@
 #include "module_base/spherical_bessel_transformer.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "gtest/gtest.h"
 #include "module_base/constants.h"
@@ -107,7 +108,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
     double dk = PI / rcut;
     double pref = std::sqrt(2. / PI) * 2.;
 
-    SphericalBesselTransformer sbt;
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
 
     for (int i = 0; i != sz; ++i)
     {
@@ -121,7 +122,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
         double k = dk * i;
         g_ref[i] = pref * (3.0 - k * k) / std::pow(k * k + 1, 3);
     }
-    sbt.radrfft(0, sz, rcut, f, g, 0);
+    sbt->radrfft(0, sz, rcut, f, g, 0);
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
 
     // first-order transform
@@ -130,7 +131,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
         double k = dk * i;
         g_ref[i] = pref * 4.0 * k / std::pow(k * k + 1, 3);
     }
-    sbt.radrfft(1, sz, rcut, f, g, 0);
+    sbt->radrfft(1, sz, rcut, f, g, 0);
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
 
     // second-order transform
@@ -139,7 +140,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
         double k = dk * i;
         g_ref[i] = pref * 4.0 * k * k / std::pow(k * k + 1, 3);
     }
-    sbt.radrfft(2, sz, rcut, f, g, 0);
+    sbt->radrfft(2, sz, rcut, f, g, 0);
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
 }
 
@@ -161,8 +162,8 @@ TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
     double dk = PI / rcut;
     double pref = std::sqrt(2. / PI) * 48.;
 
-    SphericalBesselTransformer sbt;
-    sbt.set_fftw_plan_flag(FFTW_MEASURE);
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
+    sbt->set_fftw_plan_flag(FFTW_MEASURE);
 
     for (int i = 0; i != sz; ++i)
     {
@@ -177,7 +178,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
             double r = i * dr;
             f[i] = std::pow(r, 2 + p) * std::exp(-r);
         }
-        sbt.radrfft(2, sz, rcut, f, g, p);
+        sbt->radrfft(2, sz, rcut, f, g, p);
         EXPECT_LT(max_diff(sz, g_ref, g), tol);
     }
 }
@@ -194,8 +195,8 @@ TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
     double dr = 0.02;
     double pref = std::sqrt(2. / PI) * 48.;
 
-    SphericalBesselTransformer sbt;
-    sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
+    sbt->set_fftw_plan_flag(FFTW_ESTIMATE);
 
     for (int sz = 5000; sz <= sz_max; sz += 1000)
     {
@@ -213,7 +214,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
             double k = dk * i;
             g_ref[i] = pref * k * k / std::pow(k * k + 1, 4);
         }
-        sbt.radrfft(2, sz, rcut, f, g, 0);
+        sbt->radrfft(2, sz, rcut, f, g, 0);
         EXPECT_LT(max_diff(sz, g_ref, g), tol);
     }
 }
@@ -230,8 +231,8 @@ TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
     double dr = 0.02;
     double pref = std::sqrt(2.) / 16.;
 
-    SphericalBesselTransformer sbt;
-    sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
+    sbt->set_fftw_plan_flag(FFTW_ESTIMATE);
 
     double sz = 10000;
     double rcut = dr * (sz - 1);
@@ -247,7 +248,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
         double k = dk * i;
         g_ref[i] = pref * k * k * std::exp(-k * k / 4);
     }
-    sbt.radrfft(2, sz, rcut, f, f, 0);
+    sbt->radrfft(2, sz, rcut, f, f, 0);
     EXPECT_LT(max_diff(sz, g_ref, f), tol);
 }
 
@@ -284,9 +285,9 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * (3.0 - k * k) / std::pow(k * k + 1, 3);
     });
 
-    ModuleBase::SphericalBesselTransformer sbt;
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
 
-    sbt.direct(0, sz_in, grid_in, f, sz_out, grid_out, g);
+    sbt->direct(0, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 
     // first-order transform
@@ -295,7 +296,7 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * 4.0 * k / std::pow(k * k + 1, 3);
     });
 
-    sbt.direct(1, sz_in, grid_in, f, sz_out, grid_out, g);
+    sbt->direct(1, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 
     // second-order transform
@@ -304,7 +305,7 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * 4.0 * k * k / std::pow(k * k + 1, 3);
     });
 
-    sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, g);
+    sbt->direct(2, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 }
 
@@ -333,7 +334,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
         y = pref * k * k / std::pow(k * k + 1, 4);
     });
 
-    ModuleBase::SphericalBesselTransformer sbt;
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
 
     for (int p = -2; p <= 2; ++p)
     {
@@ -342,7 +343,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
             x = std::pow(r, 2 + p) * std::exp(-r);
         });
 
-        sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, g, p);
+        sbt->direct(2, sz_in, grid_in, f, sz_out, grid_out, g, p);
         EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
     }
 }
@@ -376,9 +377,9 @@ TEST_F(SphericalBesselTransformTest, DirectInPlace)
         y = pref * k * k * std::exp(-k * k / 4);
     });
 
-    ModuleBase::SphericalBesselTransformer sbt;
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
 
-    sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, f);
+    sbt->direct(2, sz_in, grid_in, f, sz_out, grid_out, f);
     EXPECT_LT(max_diff(sz_out, g_ref, f), tol);
 }
 
@@ -406,10 +407,10 @@ TEST_F(SphericalBesselTransformTest, HighOrder)
         f[i] = std::pow(r, l) * std::exp(-r * r);
     }
 
-    SphericalBesselTransformer sbt;
-    sbt.radrfft(l, sz, rcut, f, g);
+    std::shared_ptr<SphericalBesselTransformer> sbt = SphericalBesselTransformer::create();
+    sbt->radrfft(l, sz, rcut, f, g);
 
-    sbt.direct(l, sz, grid_in, f, sz, grid_out, g_ref);
+    sbt->direct(l, sz, grid_in, f, sz, grid_out, g_ref);
 
     // NOTE: Simpson's integration gets increasingly inaccurate as k gets large
     // since the factor of (k*dr)^4 in its error becomes significant when k*dr
@@ -421,9 +422,10 @@ int main(int argc, char** argv)
 {
 
 #ifdef __MPI
+    int nprocs, id;
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

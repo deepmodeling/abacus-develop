@@ -75,7 +75,7 @@ long long int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(const
            - (n >= 2 ? spherical_bessel_sincos_polycoef(get_sine, l - 2, n - 2) : 0);
 }
 
-void SphericalBesselTransformer::_radrfft_base(const int l,
+void SphericalBesselTransformer::radrfft_base(const int l,
                                                const int ngrid,
                                                const double cutoff,
                                                const double* const in,
@@ -181,13 +181,13 @@ void SphericalBesselTransformer::radrfft(const int l,
     {
         if (l == 0)
         {
-            _radrfft_base(1, ngrid, cutoff, in, out_tmp, p - 1);
+            radrfft_base(1, ngrid, cutoff, in, out_tmp, p - 1);
             std::for_each(out_tmp, out_tmp + ngrid, [](double& x) { x = -x; });
         }
         else
         {
-            _radrfft_base(l - 1, ngrid, cutoff, in, out_tmp, p - 1);
-            _radrfft_base(l + 1, ngrid, cutoff, in, &out_tmp[ngrid], p - 1);
+            radrfft_base(l - 1, ngrid, cutoff, in, out_tmp, p - 1);
+            radrfft_base(l + 1, ngrid, cutoff, in, &out_tmp[ngrid], p - 1);
             std::transform(out_tmp, out_tmp + ngrid, &out_tmp[ngrid], out_tmp,
                     [l](double x, double y) { return (l * x - (l + 1) * y) / (2 * l + 1); });
         }
@@ -196,7 +196,7 @@ void SphericalBesselTransformer::radrfft(const int l,
     }
     else
     {
-        _radrfft_base(l, ngrid, cutoff, in, out_tmp, p);
+        radrfft_base(l, ngrid, cutoff, in, out_tmp, p);
         n_direct = (l == 0) ? 0 : static_cast<int>(ngrid * std::pow(1e-8, 1. / l));
     }
 
@@ -309,8 +309,6 @@ void SphericalBesselTransformer::cache(const int l,
                                        const double* const grid_out,
                                        const bool deriv)
 {
-    // TODO: if the given input grid matchs the cached output grid and vice versa,
-    // we can just swap the cached grids and transpose jl_.
     bool is_cached = deriv == is_deriv_ && l == l_ && ngrid_in <= ngrid_in_ && ngrid_out <= ngrid_out_
                      && std::equal(grid_in, grid_in + ngrid_in, grid_in_)
                      && std::equal(grid_out, grid_out + ngrid_out, grid_out_);

@@ -180,7 +180,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
 
         // special treatment for R=0
         int nk = it1->nk();
-        const double* kgrid = it1->ptr_kgrid();
+        const double* kgrid = it1->kgrid();
 
         double* fk = new double[nk];
         double* h = new double[nk];
@@ -198,7 +198,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
 
         for (int ik = 0; ik != nk; ++ik)
         {
-            fk[ik] = it1->ptr_kvalue()[ik] * it2->ptr_kvalue()[ik] 
+            fk[ik] = it1->kvalue(ik) * it2->kvalue(ik) 
                     * std::pow(kgrid[ik], op_exp);
         }
 
