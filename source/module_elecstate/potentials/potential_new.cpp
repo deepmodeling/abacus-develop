@@ -9,6 +9,7 @@
 #ifdef USE_PAW
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_cell/module_paw/paw_cell.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #endif
 #include "module_elecstate/elecstate_getters.h"
 
