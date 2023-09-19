@@ -303,6 +303,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 
 void Paw_Cell::calculate_dij(double* vks, double* vxc)
 {
+    ModuleBase::TITLE("Paw_Cell", "calculate_dij");
     double * vks_hartree, * vxc_hartree;
     vks_hartree = new double[nspden * nfft];
     vxc_hartree = new double[nspden * nfft];
