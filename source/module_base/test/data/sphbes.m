@@ -1,15 +1,13 @@
+% SPHBES: Computes the Spherical Bessel functions of the first kind
+% nu: euqation order, specified as a scalar, vector, matrix, or multidimensional array.
+% x: function domain, specified as a scalar, vector, matrix, or multidimensional array.
 function js = sphbes(nu, x)
-% returns the spherical Bessel functions jnu(x)
-% x is a vector or it may be a matrix if nu is a scalar
-% if nu is a row and x a column vector, the output js is a matrix
-
-[~, lnu] = size(nu);
-xm = repmat(x, 1, lnu);
-% special case handle: x = 0
-js(~xm) = 0;
-% general case
-nzind = find(xm);
-js(nzind) = sqrt(pi ./(2* xm(nzind))) .* besselj(nu + 0.5, x(nzind));
+    % special case handle: x = 0
+    js(~x) = 0;
+    % general case
+    nzind = find(x);
+    js(nzind) = sqrt(pi ./(2* xm(nzind))) .* besselj(nu + 0.5, x(nzind));
+end
 
 
 
