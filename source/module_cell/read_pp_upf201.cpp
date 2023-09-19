@@ -182,7 +182,7 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         }
         if (!findmark)
             ModuleBase::WARNING_QUIT(
-                "read_upf201",
+                "Pseudopot_upf::getnameval",
                 "The values are not in \' or \". Please improve the program in read_pp_upf201.cpp");
         pos = pos2;
         pos2 = txt.find(mark, pos);
@@ -206,7 +206,7 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
 void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
 {
     if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_HEADER"))
-        ModuleBase::WARNING_QUIT("read_pseudo_upf201", "Found no PP_HEADER");
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header", "Found no PP_HEADER");
     std::string name[50];
     std::string val[50];
     int nparameter;
@@ -234,6 +234,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         else if (name[ip] == "pseudo_type")
         {
             pp_type = val[ip];
+            if (pp_type == "SL")
+            {
+                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                                         "SEMI-LOCAL PSEUDOPOTENTIAL IS NOT SUPPORTED");
+            }
         }
         else if (name[ip] == "relativistic")
         {
@@ -254,15 +259,15 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         {
             if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
             {
-                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_header", "PAW POTENTIAL IS NOT SUPPORTED !!!");
+                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header", "PAW POTENTIAL IS NOT SUPPORTED");
             }
         }
         else if (name[ip] == "is_coulomb")
         {
             if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
             {
-                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_header",
-                                         "Coulomb 1/r POTENTIAL IS NOT SUPPORTED !!!");
+                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
+                                         "COULOMB POTENTIAL IS NOT SUPPORTED");
             }
         }
         else if (name[ip] == "has_so")
@@ -274,14 +279,14 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         }
         else if (name[ip] == "has_wfc")
         {
-            if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
-            {
-                has_wfc = true;
-            }
-            else
-            {
-                has_wfc = false;
-            }
+            // if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
+            // {
+            //     has_wfc = true;
+            // }
+            // else
+            // {
+            //     has_wfc = false;
+            // }
         }
         else if (name[ip] == "has_gipaw")
         {
@@ -629,7 +634,7 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs)
             for (int mb = nb; mb < nbeta; mb++)
             {
                 int lm = lll[mb];
-                int nmb = mb * (mb + 1) / 2 + nb + 1;
+                int nmb = mb * (mb + 1) / 2 + nb;
                 if (q_with_l)
                 {
                     for (int l = std::abs(ln - lm); l <= ln + lm; l += 2)
@@ -771,6 +776,8 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs)
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_PSWFC>");
 }
 
+/*
+// only used in paw?
 void Pseudopot_upf::read_pseudo_upf201_fullwfc(std::ifstream& ifs)
 {
     std::string word;
@@ -807,7 +814,7 @@ void Pseudopot_upf::read_pseudo_upf201_fullwfc(std::ifstream& ifs)
         ModuleBase::GlobalFunc::SCAN_END(ifs, word);
     }
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_FULL_WFC>");
-}
+}*/
 
 void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs)
 {

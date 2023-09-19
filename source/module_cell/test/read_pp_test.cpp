@@ -20,6 +20,7 @@
  *     - read_pseudo_so
  *     - print_pseudo_upf
  *   - ReadUPF201
+ *   - ReadUSPPUPF201
  *     - read_pseudo_upf201
  *       - read 2.0.1 version of upf pseudopotential file
  *     - getnameval
@@ -27,14 +28,16 @@
  *     - read_pseudo_upf201_mesh
  *     - read_pseudo_upf201_nonlocal
  *     - read_pseudo_upf201_pswfc
- *     - read_pseudo_upf201_fullwfc
  *     - void read_pseudo_upf201_so
  *   - ReadUSppErr100
  *     - read_pseudo_nl
  *     - read_pseudo_nlcc
  *     - ultrasoft is not supported
  *   - HeaderErr201
- *     - ultrasoft and paw pp are not supported
+ *     - coulomb and paw pp are not supported
+ *     - no pp_header
+ *     - arbitrary is not read in
+ *     - semi-local pp is not supported
  *   - ReadUPF201MESH2
  *     - a different "<PP_MESH" header in UPF file
  *   - ReadUPF201FR
@@ -222,6 +225,85 @@ TEST_F(ReadPPTest, ReadUPF201)
 	ifs.close();
 }
 
+TEST_F(ReadPPTest, ReadUSPPUPF201)
+{
+    std::ifstream ifs;
+    ifs.open("./support/Al.rel-pbe-n-rrkjus_psl.1.0.0.UPF");
+    upf->read_pseudo_upf201(ifs);
+    EXPECT_EQ(upf->psd, "Al");
+    EXPECT_EQ(upf->pp_type, "USPP");
+    EXPECT_EQ(upf->relativistic, "full");
+    EXPECT_TRUE(upf->tvanp);
+    EXPECT_TRUE(upf->has_so);
+    EXPECT_TRUE(upf->nlcc);
+    EXPECT_EQ(upf->xc_func, "PBE");
+    EXPECT_EQ(upf->zp, 3);
+    EXPECT_EQ(upf->nv, 201);
+    EXPECT_DOUBLE_EQ(upf->etotps, -4.765458899624e0);
+    EXPECT_DOUBLE_EQ(upf->ecutwfc, 2.949383268967e1);
+    EXPECT_DOUBLE_EQ(upf->ecutrho, 1.437437216640e2);
+    EXPECT_EQ(upf->lmax, 2);
+    EXPECT_EQ(upf->lmax_rho, 4);
+    EXPECT_EQ(upf->lloc, -1);
+    EXPECT_EQ(upf->mesh, 1135);
+    EXPECT_EQ(upf->nwfc, 3);
+    EXPECT_EQ(upf->nbeta, 10);
+    EXPECT_EQ(upf->kkbeta, 831);
+    EXPECT_DOUBLE_EQ(upf->xmin, -7.0);
+    EXPECT_DOUBLE_EQ(upf->dx, 1.25e-2);
+    EXPECT_DOUBLE_EQ(upf->rmax, 100.0);
+    EXPECT_DOUBLE_EQ(upf->zmesh, 13.0);
+    EXPECT_TRUE(upf->q_with_l);
+    EXPECT_EQ(upf->nqf, 0);
+    EXPECT_EQ(upf->nqlc, 5);
+    EXPECT_DOUBLE_EQ(upf->r[0], 7.014476658111662e-5);
+    EXPECT_DOUBLE_EQ(upf->r[1134], 1.004892385376587e2);
+    EXPECT_DOUBLE_EQ(upf->rab[0], 8.768095822639578e-7);
+    EXPECT_DOUBLE_EQ(upf->rab[1134], 1.256115481720734e0);
+    EXPECT_DOUBLE_EQ(upf->vloc[0], -6.297770630382692e0);
+    EXPECT_DOUBLE_EQ(upf->vloc[1134], -5.970788707237872e-2);
+    EXPECT_DOUBLE_EQ(upf->rho_atc[0], 2.656382333276032e-1);
+    EXPECT_DOUBLE_EQ(upf->rho_atc[1134], 0.0);
+    EXPECT_EQ(upf->lll[0], 0);
+    EXPECT_EQ(upf->kbeta[0], 827);
+    EXPECT_EQ(upf->els_beta[0], "3S");
+    EXPECT_DOUBLE_EQ(upf->rcut[0], 1.7);
+    EXPECT_DOUBLE_EQ(upf->rcutus[0], 1.9);
+    EXPECT_DOUBLE_EQ(upf->beta(0, 0), -1.705325474253926e-3);
+    EXPECT_DOUBLE_EQ(upf->beta(0, 1134), 0.0);
+    EXPECT_EQ(upf->lll[1], 0);
+    EXPECT_EQ(upf->kbeta[1], 827);
+    EXPECT_EQ(upf->els_beta[1], "3S");
+    EXPECT_DOUBLE_EQ(upf->rcut[1], 1.7);
+    EXPECT_DOUBLE_EQ(upf->rcutus[1], 1.9);
+    EXPECT_DOUBLE_EQ(upf->beta(1, 0), 1.652408363968902e-3);
+    EXPECT_DOUBLE_EQ(upf->beta(1, 1134), 0.0);
+    EXPECT_DOUBLE_EQ(upf->dion(0, 0), 3.322439863765596e-1);
+    EXPECT_DOUBLE_EQ(upf->dion(10, 10), -5.475822599361111e-2);
+    EXPECT_DOUBLE_EQ(upf->qqq(0, 0), -3.065376694096810e-2);
+    EXPECT_DOUBLE_EQ(upf->qqq(10, 10), 5.956284484724982e-3);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 0, 0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->rinner[0], 0.0);
+    EXPECT_DOUBLE_EQ(upf->rinner[4], 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 0), 1.179591764931331e-9);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 1134), 0.0);
+    EXPECT_EQ(upf->els[0], "3S");
+    EXPECT_EQ(upf->lchi[0], 0);
+    EXPECT_EQ(upf->nchi[0], 1);
+    EXPECT_DOUBLE_EQ(upf->oc[0], 2.0);
+    EXPECT_DOUBLE_EQ(upf->epseu[0], -5.693655477160e-1);
+    EXPECT_DOUBLE_EQ(upf->rcut_chi[0], 1.7);
+    EXPECT_DOUBLE_EQ(upf->rcutus_chi[0], 1.9);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 0), -1.995973361300253e-5);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 1134), -3.253440125469257e-32);
+    EXPECT_DOUBLE_EQ(upf->rho_at[0], 4.117725120211525e-9);
+    EXPECT_DOUBLE_EQ(upf->rho_at[1134], 6.731354783991774e-38);
+    EXPECT_EQ(upf->nn[0], 1);
+    EXPECT_DOUBLE_EQ(upf->jchi[0], 0.5);
+    EXPECT_DOUBLE_EQ(upf->jjj[0], 0.5);
+    ifs.close();
+}
+
 TEST_F(ReadPPTest, HeaderErr2011)
 {
 	std::ifstream ifs;
@@ -232,8 +314,8 @@ TEST_F(ReadPPTest, HeaderErr2011)
 	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("unknown pseudo type"));
-	ifs.close();
+    EXPECT_THAT(output, testing::HasSubstr("Found no PP_HEADER"));
+    ifs.close();
 }
 
 TEST_F(ReadPPTest, HeaderErr2012)
@@ -246,8 +328,8 @@ TEST_F(ReadPPTest, HeaderErr2012)
 	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("ULTRASOFT PSEUDOPOTENTIAL IS NOT SUPPORTED"));
-	ifs.close();
+    EXPECT_THAT(output, testing::HasSubstr("SEMI-LOCAL PSEUDOPOTENTIAL IS NOT SUPPORTED"));
+    ifs.close();
 }
 
 TEST_F(ReadPPTest, HeaderErr2013)
@@ -275,9 +357,27 @@ TEST_F(ReadPPTest, HeaderErr2014)
 	ifs.close();
 	ifs.open("warning.log");
 	getline(ifs,output);
-	EXPECT_THAT(output,testing::HasSubstr("arbitrary is not read in. Please add this parameter in read_pp_upf201.cpp if needed."));
-	ifs.close();
-	remove("warning.log");
+    EXPECT_THAT(output, testing::HasSubstr("COULOMB POTENTIAL IS NOT SUPPORTED"));
+    ifs.close();
+    remove("warning.log");
+}
+
+TEST_F(ReadPPTest, HeaderErr2015)
+{
+    std::ifstream ifs;
+    // 4th
+    GlobalV::ofs_warning.open("warning.log");
+    ifs.open("./support/HeaderError5");
+    upf->read_pseudo_upf201(ifs);
+    GlobalV::ofs_warning.close();
+    ifs.close();
+    ifs.open("warning.log");
+    getline(ifs, output);
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("arbitrary is not read in. Please add this parameter in read_pp_upf201.cpp if needed."));
+    ifs.close();
+    remove("warning.log");
 }
 
 TEST_F(ReadPPTest, ReadUPF201FR)
