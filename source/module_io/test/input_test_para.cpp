@@ -156,7 +156,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.mem_saver,0);
         EXPECT_EQ(INPUT.printe,100);
         EXPECT_EQ(INPUT.init_chg,"atomic");
-        EXPECT_EQ(INPUT.chg_extrap,"atomic");
+        EXPECT_EQ(INPUT.chg_extrap, "default");
         EXPECT_EQ(INPUT.out_freq_elec,0);
         EXPECT_EQ(INPUT.out_freq_ion,0);
         EXPECT_EQ(INPUT.out_chg,0);
