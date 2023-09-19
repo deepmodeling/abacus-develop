@@ -170,7 +170,7 @@ int ESolver_SDFT_PW::set_cond_nche(const double dt, const int nbatch, const doub
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     const double mu = this->pelec->eferm.ef;
     stoiter.stofunc.mu = mu;
-    stoiter.stofunc.t = dt * nbatch;
+    stoiter.stofunc.t = 0.5 * dt * nbatch;
     chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
 
     int nche;
@@ -423,6 +423,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
     // Init Chebyshev
     ModuleBase::Chebyshev<double> che(this->nche_sto);
     ModuleBase::Chebyshev<double> chet(nche_KG);
+    ModuleBase::Chebyshev<double> chemt(nche_KG);
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;
 
@@ -433,28 +434,35 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
     // Prepare Chebyshev coefficients for exp(-i H/\hbar t)
     const double mu = this->pelec->eferm.ef;
     stoiter.stofunc.mu = mu;
-    stoiter.stofunc.t = dt * nbatch;
-    chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
-    std::complex<double>* batchcoef = nullptr;
+    stoiter.stofunc.t = 0.5 * dt * nbatch;
+    chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
+    chemt.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+    std::complex<double>* batchcoef = nullptr, * batchmcoef = nullptr;
     if (nbatch > 1)
     {
         batchcoef = new std::complex<double>[nche_KG * nbatch];
         std::complex<double>* tmpcoef = batchcoef + (nbatch - 1) * nche_KG;
+        batchmcoef = new std::complex<double>[nche_KG * nbatch];
+        std::complex<double>* tmpmcoef = batchmcoef + (nbatch - 1) * nche_KG;
         for (int i = 0; i < nche_KG; ++i)
         {
             tmpcoef[i] = chet.coef_complex[i];
+            tmpmcoef[i] = chemt.coef_complex[i];
         }
         for (int ib = 0; ib < nbatch - 1; ++ib)
         {
             tmpcoef = batchcoef + ib * nche_KG;
-            stoiter.stofunc.t = dt * (ib + 1);
-            chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+            tmpmcoef = batchmcoef + ib * nche_KG;
+            stoiter.stofunc.t = 0.5 * dt * (ib + 1);
+            chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
+            chemt.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
             for (int i = 0; i < nche_KG; ++i)
             {
                 tmpcoef[i] = chet.coef_complex[i];
+                tmpmcoef[i] = chemt.coef_complex[i];
             }
         }
-        stoiter.stofunc.t = dt * nbatch;
+        stoiter.stofunc.t = 0.5 * dt * nbatch;
     }
 
     // ik loop
@@ -552,12 +560,12 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         psi::Psi<std::complex<double>> smfpsi(1, perbands, npwx, kv.ngk.data());
         ModuleBase::Memory::record("SDFT::smfpsi", memory_cost);
 #ifdef __MPI
-        psi::Psi<std::complex<double>> sfpsi_all;
+        psi::Psi<std::complex<double>> tmppsi_all;
         if (GlobalV::NSTOGROUP > 1)
         {
             size_t memory_all = allbands * npwx * sizeof(std::complex<double>);
-            sfpsi_all.resize(1, allbands, npwx);
-            ModuleBase::Memory::record("SDFT::sfpsi_all", memory_all);
+            tmppsi_all.resize(1, allbands, npwx);
+            ModuleBase::Memory::record("SDFT::tmppsi_all", memory_all);
         }
 #endif
 
@@ -593,28 +601,30 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_norm, stopsi->get_pointer(), stosfpsi, npw, npwx, perbands_sto);
         che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_mfd);
         che.calfinalvec_real(&stohchi, &Stochastic_hchi::hchi_norm, stopsi->get_pointer(), stosmfpsi, npw, npwx, perbands_sto);
-        //---------------  i<\psi| sqrt(1-f) * J * sqrt(f) |\psi> ---------------------
-        
-        psi::Psi<std::complex<double>>* p_sfpsi_all = &sfpsi;
-#ifdef __MPI
-        //gather sfpsi from different STOGROUP
-        p_sfpsi_all = gatherpsi(sfpsi, sfpsi_all, npwx, nrecv_ks, displs_ks, nrecv_sto, displs_sto, bandsinfo);
-#endif
-        
-        // calculate i<\psi| sqrt(1-f) * J * sqrt(f) |\psi>
-        cal_jmatrix(smfpsi, *p_sfpsi_all, batchj1psi, batchj2psi, j1l, j2l, velop, ik, ModuleBase::IMAG_UNIT, bandsinfo, bsize_psi);
+    
 
         //------------------------  allocate ------------------------
-        psi::Psi<std::complex<double>>& exptsfpsi = sfpsi;
-        psi::Psi<std::complex<double>>& exptsmfpsi = smfpsi;
-        psi::Psi<std::complex<double>> poly_sfpsi, poly_smfpsi;
+        psi::Psi<std::complex<double>>& expmtsfpsi = sfpsi;
+        psi::Psi<std::complex<double>>& expmtsmfpsi = smfpsi;
+        psi::Psi<std::complex<double>> exptsfpsi = expmtsfpsi;
+        ModuleBase::Memory::record("SDFT::exptsfpsi", memory_cost);
+        psi::Psi<std::complex<double>> exptsmfpsi = expmtsmfpsi;
+        ModuleBase::Memory::record("SDFT::exptsmfpsi", memory_cost);
+        psi::Psi<std::complex<double>> poly_expmtsfpsi, poly_expmtsmfpsi;
+        psi::Psi<std::complex<double>> poly_exptsfpsi, poly_exptsmfpsi;
         if (nbatch > 1)
         {
-            poly_sfpsi.resize(nche_KG, perbands_sto, npwx);
-            ModuleBase::Memory::record("SDFT::poly_sfpsi", sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
+             poly_exptsfpsi.resize(nche_KG, perbands_sto, npwx);
+            ModuleBase::Memory::record("SDFT::poly_exptsfpsi", sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
 
-            poly_smfpsi.resize(nche_KG, perbands_sto, npwx);
-            ModuleBase::Memory::record("SDFT::poly_smfpsi", sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
+            poly_exptsmfpsi.resize(nche_KG, perbands_sto, npwx);
+            ModuleBase::Memory::record("SDFT::poly_exptsmfpsi", sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
+
+            poly_expmtsfpsi.resize(nche_KG, perbands_sto, npwx);
+            ModuleBase::Memory::record("SDFT::poly_expmtsfpsi", sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
+
+            poly_expmtsmfpsi.resize(nche_KG, perbands_sto, npwx);
+            ModuleBase::Memory::record("SDFT::poly_expmtsmfpsi", sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
         }
 
         //------------------------  t loop  --------------------------
@@ -641,9 +651,12 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             for (int ib = 0; ib < perbands_ks; ++ib)
             {
                 double eigen = en[ib];
-                const std::complex<double> expfactor = exp(ModuleBase::NEG_IMAG_UNIT * eigen * dt);
+                const std::complex<double> expfactor = exp(0.5*ModuleBase::IMAG_UNIT * eigen * dt);
+                const std::complex<double> expmfactor = 1.0 / expfactor;
                 for (int ig = 0; ig < npw; ++ig)
                 {
+                    expmtsfpsi(ib, ig) *= expmfactor;
+                    expmtsmfpsi(ib, ig) *= expmfactor;
                     exptsfpsi(ib, ig) *= expfactor;
                     exptsmfpsi(ib, ig) *= expfactor;
                 }
@@ -651,6 +664,20 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             // Sto
             if (nbatch == 1)
             {
+                chemt.calfinalvec_complex(&stohchi,
+                                         &Stochastic_hchi::hchi_norm,
+                                         &expmtsfpsi(perbands_ks, 0),
+                                         &expmtsfpsi(perbands_ks, 0),
+                                         npw,
+                                         npwx,
+                                         perbands_sto);
+                chemt.calfinalvec_complex(&stohchi,
+                                         &Stochastic_hchi::hchi_norm,
+                                         &expmtsmfpsi(perbands_ks, 0),
+                                         &expmtsmfpsi(perbands_ks, 0),
+                                         npw,
+                                         npwx,
+                                         perbands_sto);
                 chet.calfinalvec_complex(&stohchi,
                                          &Stochastic_hchi::hchi_norm,
                                          &exptsfpsi(perbands_ks, 0),
@@ -668,8 +695,12 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             }
             else
             {
-                std::complex<double>* tmppolysfpsi = poly_sfpsi.get_pointer();
-                std::complex<double>* tmppolysmfpsi = poly_smfpsi.get_pointer();
+                std::complex<double>* tmppolyexpmtsfpsi = poly_expmtsfpsi.get_pointer();
+                std::complex<double>* tmppolyexpmtsmfpsi = poly_expmtsmfpsi.get_pointer();
+                std::complex<double>* tmppolyexptsfpsi = poly_exptsfpsi.get_pointer();
+                std::complex<double>* tmppolyexptsmfpsi = poly_exptsmfpsi.get_pointer();
+                std::complex<double>* stoexpmtsfpsi = &expmtsfpsi(perbands_ks, 0);
+                std::complex<double>* stoexpmtsmfpsi = &expmtsmfpsi(perbands_ks, 0);
                 std::complex<double>* stoexptsfpsi = &exptsfpsi(perbands_ks, 0);
                 std::complex<double>* stoexptsmfpsi = &exptsmfpsi(perbands_ks, 0);
                 if ((it - 1) % nbatch == 0)
@@ -677,37 +708,60 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
                     chet.calpolyvec_complex(&stohchi,
                                             &Stochastic_hchi::hchi_norm,
                                             stoexptsfpsi,
-                                            tmppolysfpsi,
+                                            tmppolyexptsfpsi,
                                             npw,
                                             npwx,
                                             perbands_sto);
                     chet.calpolyvec_complex(&stohchi,
                                             &Stochastic_hchi::hchi_norm,
                                             stoexptsmfpsi,
-                                            tmppolysmfpsi,
+                                            tmppolyexptsmfpsi,
+                                            npw,
+                                            npwx,
+                                            perbands_sto);
+                    chemt.calpolyvec_complex(&stohchi,
+                                            &Stochastic_hchi::hchi_norm,
+                                            stoexpmtsfpsi,
+                                            tmppolyexpmtsfpsi,
+                                            npw,
+                                            npwx,
+                                            perbands_sto);
+                    chemt.calpolyvec_complex(&stohchi,
+                                            &Stochastic_hchi::hchi_norm,
+                                            stoexpmtsmfpsi,
+                                            tmppolyexpmtsmfpsi,
                                             npw,
                                             npwx,
                                             perbands_sto);
                 }
 
                 std::complex<double>* tmpcoef = batchcoef + (it - 1) % nbatch * nche_KG;
+                std::complex<double>* tmpmcoef = batchmcoef + (it - 1) % nbatch * nche_KG;
                 const char transa = 'N';
                 const int LDA = perbands_sto * npwx;
                 const int M = perbands_sto * npwx;
                 const int N = nche_KG;
                 const int inc = 1;
-                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolysfpsi, &LDA, tmpcoef, &inc, &ModuleBase::ZERO, stoexptsfpsi, &inc);
-                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolysmfpsi, &LDA, tmpcoef, &inc, &ModuleBase::ZERO, stoexptsmfpsi, &inc);
+                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexptsfpsi, &LDA, tmpcoef, &inc, &ModuleBase::ZERO, stoexptsfpsi, &inc);
+                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexptsmfpsi, &LDA, tmpcoef, &inc, &ModuleBase::ZERO, stoexptsmfpsi, &inc);
+                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexpmtsfpsi, &LDA, tmpmcoef, &inc, &ModuleBase::ZERO, stoexpmtsfpsi, &inc);
+                zgemv_(&transa, &M, &N, &ModuleBase::ONE, tmppolyexpmtsmfpsi, &LDA, tmpmcoef, &inc, &ModuleBase::ZERO, stoexpmtsmfpsi, &inc);
             }
             ModuleBase::timer::tick(this->classname, "evolution");
 
-            psi::Psi<std::complex<double>>* p_exptsfpsi = &exptsfpsi;
+            psi::Psi<std::complex<double>>* allexp = &exptsfpsi;
 #ifdef __MPI
-            p_exptsfpsi = gatherpsi(exptsfpsi, sfpsi_all, npwx, nrecv_ks, displs_ks, nrecv_sto, displs_sto, bandsinfo);
+            allexp = gatherpsi(exptsfpsi, tmppsi_all, npwx, nrecv_ks, displs_ks, nrecv_sto, displs_sto, bandsinfo);
 #endif 
             //calculate <\psi| exp(iHt)*J*exp(-iHt) |\psi>
-            cal_jmatrix(exptsmfpsi, *p_exptsfpsi, batchj1psi, batchj2psi, j1r, j2r, velop, ik, ModuleBase::ONE, bandsinfo, bsize_psi);
+            cal_jmatrix(exptsmfpsi, *allexp, batchj1psi, batchj2psi, j1l, j2l, velop, ik, ModuleBase::IMAG_UNIT, bandsinfo, bsize_psi);
             
+            allexp = &expmtsfpsi;
+#ifdef __MPI
+            allexp = gatherpsi(expmtsfpsi, tmppsi_all, npwx, nrecv_ks, displs_ks, nrecv_sto, displs_sto, bandsinfo);
+#endif 
+            cal_jmatrix(expmtsmfpsi, *allexp, batchj1psi, batchj2psi, j1r, j2r, velop, ik, ModuleBase::ONE, bandsinfo, bsize_psi);
+
             // prepare for parallel
             int totnum = ndim * dim_jmatrix;
             int num_per = totnum / GlobalV::NPROC_IN_POOL;
@@ -738,6 +792,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
     } // ik loop
     ModuleBase::timer::tick(this->classname, "kloop");
     delete[] batchcoef;
+    delete[] batchmcoef;
 
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ct11, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
