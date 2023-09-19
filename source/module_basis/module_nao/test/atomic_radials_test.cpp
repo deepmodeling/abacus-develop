@@ -64,20 +64,20 @@ TEST_F(AtomicRadialsTest, ReadAndGet)
     EXPECT_DOUBLE_EQ(Ti_radials.rcut_max(), 10.0);
     EXPECT_DOUBLE_EQ(Ti_radials.orb_ecut(), 100.0);
 
-    EXPECT_NEAR(Ti_radials.chi(0, 0).ptr_rvalue()[0], -1.581711853170e-01, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 0).ptr_rvalue()[4], -1.583907030513e-01, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 0).ptr_rvalue()[996], -4.183526380009e-05, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 0).rvalue(0), -1.581711853170e-01, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 0).rvalue(4), -1.583907030513e-01, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 0).rvalue(996), -4.183526380009e-05, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 0).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(Ti_radials.chi(0, 3).ptr_rvalue()[0], -1.166292682541e+00, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 3).ptr_rvalue()[4], -1.164223359672e+00, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 3).ptr_rvalue()[996], -3.183325576529e-04, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 3).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 3).rvalue(0), -1.166292682541e+00, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 3).rvalue(4), -1.164223359672e+00, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 3).rvalue(996), -3.183325576529e-04, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 3).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(Ti_radials.chi(3, 0).ptr_rvalue()[0], 0, tol);
-    EXPECT_NEAR(Ti_radials.chi(3, 0).ptr_rvalue()[4], 3.744878535962e-05, tol);
-    EXPECT_NEAR(Ti_radials.chi(3, 0).ptr_rvalue()[996], 7.495357740660e-05, tol);
-    EXPECT_NEAR(Ti_radials.chi(3, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(3, 0).rvalue(0), 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(3, 0).rvalue(4), 3.744878535962e-05, tol);
+    EXPECT_NEAR(Ti_radials.chi(3, 0).rvalue(996), 7.495357740660e-05, tol);
+    EXPECT_NEAR(Ti_radials.chi(3, 0).rvalue(1000), 0, tol);
 }
 
 TEST_F(AtomicRadialsTest, BatchSet)
@@ -90,28 +90,28 @@ TEST_F(AtomicRadialsTest, BatchSet)
     EXPECT_EQ(Ti_radials.chi(0, 3).itype(), 5);
     EXPECT_EQ(Ti_radials.chi(3, 0).itype(), 5);
 
-    ModuleBase::SphericalBesselTransformer sbt;
-    Ti_radials.set_transformer(&sbt);
-    EXPECT_EQ(Ti_radials.chi(0, 0).ptr_sbt(), &sbt);
-    EXPECT_EQ(Ti_radials.chi(0, 3).ptr_sbt(), &sbt);
-    EXPECT_EQ(Ti_radials.chi(3, 0).ptr_sbt(), &sbt);
+    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = ModuleBase::SphericalBesselTransformer::create();
+    Ti_radials.set_transformer(sbt);
+    EXPECT_EQ(Ti_radials.chi(0, 0).sbt().get(), sbt.get());
+    EXPECT_EQ(Ti_radials.chi(0, 3).sbt().get(), sbt.get());
+    EXPECT_EQ(Ti_radials.chi(3, 0).sbt().get(), sbt.get());
 
     Ti_radials.set_uniform_grid(true, 2001, 20.0);
     EXPECT_EQ(Ti_radials.chi(0, 0).nr(), 2001);
     EXPECT_EQ(Ti_radials.chi(0, 3).nr(), 2001);
     EXPECT_EQ(Ti_radials.chi(3, 0).nr(), 2001);
-    EXPECT_NEAR(Ti_radials.chi(0, 0).ptr_rgrid()[2000], 20, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 3).ptr_rgrid()[1500], 15, tol);
-    EXPECT_NEAR(Ti_radials.chi(3, 0).ptr_rgrid()[1200], 12, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 0).ptr_rvalue()[2000], 0, tol);
-    EXPECT_NEAR(Ti_radials.chi(0, 3).ptr_rvalue()[1500], 0, tol);
-    EXPECT_NEAR(Ti_radials.chi(3, 0).ptr_rvalue()[1200], 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 0).rgrid(2000), 20, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 3).rgrid(1500), 15, tol);
+    EXPECT_NEAR(Ti_radials.chi(3, 0).rgrid(1200), 12, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 0).rvalue(2000), 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(0, 3).rvalue(1500), 0, tol);
+    EXPECT_NEAR(Ti_radials.chi(3, 0).rvalue(1200), 0, tol);
 
     double grid[5] = {0.0, 1.1, 2.2, 3.3, 4.4};
     Ti_radials.set_grid(true, 5, grid);
-    EXPECT_EQ(Ti_radials.chi(0, 0).ptr_rgrid()[1], 1.1);
-    EXPECT_EQ(Ti_radials.chi(0, 3).ptr_rgrid()[2], 2.2);
-    EXPECT_EQ(Ti_radials.chi(3, 0).ptr_rgrid()[3], 3.3);
+    EXPECT_EQ(Ti_radials.chi(0, 0).rgrid(1), 1.1);
+    EXPECT_EQ(Ti_radials.chi(0, 3).rgrid(2), 2.2);
+    EXPECT_EQ(Ti_radials.chi(3, 0).rgrid(3), 3.3);
 }
 
 TEST_F(AtomicRadialsTest, Copy)
@@ -142,20 +142,20 @@ TEST_F(AtomicRadialsTest, Copy)
     EXPECT_DOUBLE_EQ(Ti_copy.rcut_max(), 10.0);
     EXPECT_DOUBLE_EQ(Ti_copy.orb_ecut(), 100.0);
 
-    EXPECT_NEAR(Ti_copy.chi(0, 0).ptr_rvalue()[0], -1.581711853170e-01, tol);
-    EXPECT_NEAR(Ti_copy.chi(0, 0).ptr_rvalue()[4], -1.583907030513e-01, tol);
-    EXPECT_NEAR(Ti_copy.chi(0, 0).ptr_rvalue()[996], -4.183526380009e-05, tol);
-    EXPECT_NEAR(Ti_copy.chi(0, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 0).rvalue(0), -1.581711853170e-01, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 0).rvalue(4), -1.583907030513e-01, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 0).rvalue(996), -4.183526380009e-05, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 0).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(Ti_copy.chi(0, 3).ptr_rvalue()[0], -1.166292682541e+00, tol);
-    EXPECT_NEAR(Ti_copy.chi(0, 3).ptr_rvalue()[4], -1.164223359672e+00, tol);
-    EXPECT_NEAR(Ti_copy.chi(0, 3).ptr_rvalue()[996], -3.183325576529e-04, tol);
-    EXPECT_NEAR(Ti_copy.chi(0, 3).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 3).rvalue(0), -1.166292682541e+00, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 3).rvalue(4), -1.164223359672e+00, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 3).rvalue(996), -3.183325576529e-04, tol);
+    EXPECT_NEAR(Ti_copy.chi(0, 3).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(Ti_copy.chi(3, 0).ptr_rvalue()[0], 0, tol);
-    EXPECT_NEAR(Ti_copy.chi(3, 0).ptr_rvalue()[4], 3.744878535962e-05, tol);
-    EXPECT_NEAR(Ti_copy.chi(3, 0).ptr_rvalue()[996], 7.495357740660e-05, tol);
-    EXPECT_NEAR(Ti_copy.chi(3, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_copy.chi(3, 0).rvalue(0), 0, tol);
+    EXPECT_NEAR(Ti_copy.chi(3, 0).rvalue(4), 3.744878535962e-05, tol);
+    EXPECT_NEAR(Ti_copy.chi(3, 0).rvalue(996), 7.495357740660e-05, tol);
+    EXPECT_NEAR(Ti_copy.chi(3, 0).rvalue(1000), 0, tol);
 
     // assignment operator
     AtomicRadials Ti_assign;
@@ -172,20 +172,20 @@ TEST_F(AtomicRadialsTest, Copy)
     EXPECT_DOUBLE_EQ(Ti_assign.rcut_max(), 10.0);
     EXPECT_DOUBLE_EQ(Ti_assign.orb_ecut(), 100.0);
 
-    EXPECT_NEAR(Ti_assign.chi(0, 0).ptr_rvalue()[0], -1.581711853170e-01, tol);
-    EXPECT_NEAR(Ti_assign.chi(0, 0).ptr_rvalue()[4], -1.583907030513e-01, tol);
-    EXPECT_NEAR(Ti_assign.chi(0, 0).ptr_rvalue()[996], -4.183526380009e-05, tol);
-    EXPECT_NEAR(Ti_assign.chi(0, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 0).rvalue(0), -1.581711853170e-01, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 0).rvalue(4), -1.583907030513e-01, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 0).rvalue(996), -4.183526380009e-05, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 0).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(Ti_assign.chi(0, 3).ptr_rvalue()[0], -1.166292682541e+00, tol);
-    EXPECT_NEAR(Ti_assign.chi(0, 3).ptr_rvalue()[4], -1.164223359672e+00, tol);
-    EXPECT_NEAR(Ti_assign.chi(0, 3).ptr_rvalue()[996], -3.183325576529e-04, tol);
-    EXPECT_NEAR(Ti_assign.chi(0, 3).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 3).rvalue(0), -1.166292682541e+00, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 3).rvalue(4), -1.164223359672e+00, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 3).rvalue(996), -3.183325576529e-04, tol);
+    EXPECT_NEAR(Ti_assign.chi(0, 3).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(Ti_assign.chi(3, 0).ptr_rvalue()[0], 0, tol);
-    EXPECT_NEAR(Ti_assign.chi(3, 0).ptr_rvalue()[4], 3.744878535962e-05, tol);
-    EXPECT_NEAR(Ti_assign.chi(3, 0).ptr_rvalue()[996], 7.495357740660e-05, tol);
-    EXPECT_NEAR(Ti_assign.chi(3, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(Ti_assign.chi(3, 0).rvalue(0), 0, tol);
+    EXPECT_NEAR(Ti_assign.chi(3, 0).rvalue(4), 3.744878535962e-05, tol);
+    EXPECT_NEAR(Ti_assign.chi(3, 0).rvalue(996), 7.495357740660e-05, tol);
+    EXPECT_NEAR(Ti_assign.chi(3, 0).rvalue(1000), 0, tol);
 
     // polymorphic clone
     RadialSet* ptr_Ti_polyclone = Ti_radials.clone();
@@ -200,20 +200,20 @@ TEST_F(AtomicRadialsTest, Copy)
     EXPECT_EQ(ptr_Ti_polyclone->nchi(), 9);
     EXPECT_DOUBLE_EQ(ptr_Ti_polyclone->rcut_max(), 10.0);
 
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).ptr_rvalue()[0], -1.581711853170e-01, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).ptr_rvalue()[4], -1.583907030513e-01, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).ptr_rvalue()[996], -4.183526380009e-05, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).rvalue(0), -1.581711853170e-01, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).rvalue(4), -1.583907030513e-01, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).rvalue(996), -4.183526380009e-05, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 0).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).ptr_rvalue()[0], -1.166292682541e+00, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).ptr_rvalue()[4], -1.164223359672e+00, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).ptr_rvalue()[996], -3.183325576529e-04, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).rvalue(0), -1.166292682541e+00, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).rvalue(4), -1.164223359672e+00, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).rvalue(996), -3.183325576529e-04, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(0, 3).rvalue(1000), 0, tol);
 
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).ptr_rvalue()[0], 0, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).ptr_rvalue()[4], 3.744878535962e-05, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).ptr_rvalue()[996], 7.495357740660e-05, tol);
-    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).ptr_rvalue()[1000], 0, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).rvalue(0), 0, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).rvalue(4), 3.744878535962e-05, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).rvalue(996), 7.495357740660e-05, tol);
+    EXPECT_NEAR(ptr_Ti_polyclone->chi(3, 0).rvalue(1000), 0, tol);
 
     delete ptr_Ti_polyclone;
 

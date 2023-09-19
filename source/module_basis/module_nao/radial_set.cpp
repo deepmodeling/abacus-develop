@@ -17,6 +17,7 @@ RadialSet::RadialSet(const RadialSet& other) :
     symbol_(other.symbol_),
     itype_(other.itype_),
     lmax_(other.lmax_),
+    rcut_max_(other.rcut_max_),
     nzeta_(nullptr),
     nzeta_max_(other.nzeta_max_),
     nchi_(other.nchi_),
@@ -51,6 +52,7 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
     symbol_ = rhs.symbol_;
     itype_ = rhs.itype_;
     lmax_ = rhs.lmax_;
+    rcut_max_ = rhs.rcut_max_;
     nzeta_max_ = rhs.nzeta_max_;
     nchi_ = rhs.nchi_;
 

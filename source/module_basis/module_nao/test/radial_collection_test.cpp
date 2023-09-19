@@ -109,15 +109,15 @@ TEST_F(RadialCollectionTest, BuildAndGet) {
 TEST_F(RadialCollectionTest, BatchSet) {
     orb.build(nfile, file, 'o');
 
-    ModuleBase::SphericalBesselTransformer sbt;
-    orb.set_transformer(&sbt);
+    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = ModuleBase::SphericalBesselTransformer::create();
+    orb.set_transformer(sbt);
     orb.set_uniform_grid(true, 2001, 20.0);
 
     EXPECT_EQ(orb.rcut_max(), 20.0);
     for (int itype = 0; itype != orb.ntype(); ++itype) {
         for (int l = 0; l <= orb(itype).lmax(); ++l) {
             for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
-                EXPECT_EQ(&sbt, orb(itype, l, izeta).ptr_sbt());
+                EXPECT_EQ(sbt.get(), orb(itype, l, izeta).sbt().get());
                 EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), 20.0);
             }
         }
