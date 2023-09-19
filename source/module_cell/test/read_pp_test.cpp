@@ -23,10 +23,12 @@
  *     - read_pseudo_upf201
  *       - read 2.0.1 version of upf pseudopotential file
  *     - getnameval
- *     - read_pseudo_upf201_r
- *     - read_pseudo_upf201_rab
- *     - read_pseudo_upf201_dij
- *     - read_pseudo_upf201_rhoatom
+ *     - read_pseudo_upf201_header
+ *     - read_pseudo_upf201_mesh
+ *     - read_pseudo_upf201_nonlocal
+ *     - read_pseudo_upf201_pswfc
+ *     - read_pseudo_upf201_fullwfc
+ *     - void read_pseudo_upf201_so
  *   - ReadUSppErr100
  *     - read_pseudo_nl
  *     - read_pseudo_nlcc
