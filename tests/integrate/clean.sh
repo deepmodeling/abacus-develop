@@ -19,6 +19,12 @@ for directory in `ls | grep $module`; do
 	result_file="$directory/result.out"
 	#test -e "$result_file" && echo $result_file
 	test -e "$result_file" && rm $result_file
+	
+	#--------------------------------------------
+	# delete time.json (if it exists)
+	#--------------------------------------------
+	time_json_file="$directory/time.json"
+	test -e "$time_json_file" && rm $time_json_file
 
 	#--------------------------------------------
 	# delete OUT.autotest (if it exists) 
@@ -26,6 +32,13 @@ for directory in `ls | grep $module`; do
 	OUT_directory="$directory/OUT.autotest"
 	#test -e "$OUT_directory" && echo $OUT_directory
 	test -e "$OUT_directory" && rm -rf $OUT_directory
+
+	#--------------------------------------------
+	# delete time.json (if it exists) 
+	#--------------------------------------------
+	time_json="$directory/time.json"
+	#test -e "$time_json" && echo $time_json
+	test -e "$time_json" && rm $time_json
 
 	#--------------------------------------------
 	# delete descriptor.dat (if it exists) 
