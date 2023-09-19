@@ -740,15 +740,16 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
         }
     }
 
-    // (11) calculate the total energy.
-    this->pelec->cal_energies(2);
-
+    // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, GlobalC::ucell);
         sc.run_lambda_loop(iter);
     }
+
+    // (11) calculate the total energy.
+    this->pelec->cal_energies(2);
 }
 
 void ESolver_KS_LCAO::afterscf(const int istep)
