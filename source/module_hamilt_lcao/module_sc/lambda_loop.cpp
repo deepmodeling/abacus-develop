@@ -46,8 +46,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     std::vector<ModuleBase::Vector3<double>> new_spin(nat,0.0), spin_change(nat,0.0), spin_plus(nat,0.0);
     std::vector<ModuleBase::Vector3<double>> spin_plus_mask(nat,0.0);
 
-    std::vector<ModuleBase::Vector3<double>> delta_lambda_inside_loop(nat,0.0);
-
     double alpha_opt, alpha_plus;
     double beta;
     double mean_error, mean_error_old, rms_error;
@@ -78,10 +76,9 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         {
             //std::cout << "optimize delta lambda: " << std::endl;
             //print_2d("delta_lambda before optimize ", delta_lambda);
-            //add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
+            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, this->lambda_);
             //this->lambda_ = temp_1;
-            this->lambda_ = delta_lambda;
-            add_scalar_multiply_2d(delta_lambda_inside_loop, delta_lambda, 1.0, delta_lambda_inside_loop);
+            //this->lambda_ = delta_lambda;
             this->cal_mw_from_lambda(i_step);
             spin = this->Mi_;
             //new_spin = this->Mi_;
@@ -178,7 +175,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             {
                 std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
             }
-            //add_scalar_multiply_2d(initial_lambda, delta_lambda_inside_loop, 1.0, this->lambda_);
+            add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
             goto CG_STOP;
         }
 
@@ -221,8 +218,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         //add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, temp_1);
         //print_2d("temp_1 ", temp_1);
         //this->lambda_ = temp_1;
-        this->lambda_ = delta_lambda;
-        add_scalar_multiply_2d(delta_lambda_inside_loop, delta_lambda, 1.0, delta_lambda_inside_loop);
+        add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, this->lambda_);
         //print_2d("lambda_ ", this->lambda_);
         //add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, initial_lambda);
         this->cal_mw_from_lambda(i_step);
@@ -303,8 +299,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     }
     
 CG_STOP:
-
-    this->lambda_ = delta_lambda_inside_loop;
 
     if (debug)
     {
