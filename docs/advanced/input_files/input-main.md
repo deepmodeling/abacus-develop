@@ -970,7 +970,7 @@ calculations.
   - **atomic**: atomic extrapolation.
   - **first-order**: first-order extrapolation.
   - **second-order**: second-order extrapolation.
-- **Default**: atomic
+- **Default**: first-order (geometry relaxations), second-order (molecular dynamics), else atomic
 
 ### lspinorb
 
