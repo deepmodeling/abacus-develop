@@ -260,7 +260,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 
         if (this->restrict_current_ > 0 && boundary > this->restrict_current_)
         {
-            alpha_opt = copysign(1.0, alpha_opt) * this->restrict_current_ / maxval_abs_2d(search) * this->meV_to_Ry;
+            alpha_opt = copysign(1.0, alpha_opt) * this->restrict_current_ / maxval_abs_2d(search);
             boundary = abs(alpha_opt * maxval_abs_2d(search));
             //std::cout << "restriction needed: true" << std::endl;
             //std::cout << "alpha_opt after restrict = " << alpha_opt << std::endl;
