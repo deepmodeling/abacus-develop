@@ -566,7 +566,11 @@ namespace ModuleESolver
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
             toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier_lcao(this->GridT,
+            myWannier.init_wannier_lcao(INPUT.out_wannier_mmn, 
+                                        INPUT.out_wannier_amn, 
+                                        INPUT.out_wannier_unk, 
+                                        INPUT.out_wannier_eig,
+                                        this->GridT,
                                         this->pelec->ekb,
                                         this->pw_wfc,
                                         this->pw_big,

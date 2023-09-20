@@ -9,7 +9,7 @@
 namespace ModuleESolver
 {
 
-class ESolver_SDFT_PW: public ESolver_KS_PW<double>
+class ESolver_SDFT_PW: public ESolver_KS_PW<std::complex<double>>
 {
 public:
     ESolver_SDFT_PW();

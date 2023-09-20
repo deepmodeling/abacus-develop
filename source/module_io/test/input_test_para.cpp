@@ -73,6 +73,10 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_TRUE(INPUT.out_wannier_mmn);
+        EXPECT_TRUE(INPUT.out_wannier_amn);
+        EXPECT_TRUE(INPUT.out_wannier_unk);
+        EXPECT_TRUE(INPUT.out_wannier_eig);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);

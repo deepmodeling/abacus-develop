@@ -61,7 +61,7 @@ TYPED_TEST(MemoryOpTest, SetMemory) {
 }
 
 TYPED_TEST(MemoryOpTest, CastAndDeleteMemory) {
-    using Type = std::complex<typename PossibleComplexToReal<typename std::tuple_element<0, decltype(TypeParam())>::type>::type>;
+    using Type = std::complex<typename GetTypeReal<typename std::tuple_element<0, decltype(TypeParam())>::type>::type>;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::delete_memory_op<std::complex<float>, DEVICE_CPU> deleteMemory;
