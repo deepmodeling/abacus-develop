@@ -164,7 +164,16 @@ void SCAN_END(std::ifstream &ifs, const std::string &TargetName, const bool ifwa
 // ifwarn: whether to call GlobalV::ofs_warning when the TargetName is not found, used to avoid invalid warning.
 
 template<class T>
-static inline void DCOPY( const T * a, T *b, const int &dim)
+static inline void DCOPY( const T *a, T *b, const int &dim)
+{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 128)
+#endif
+    for (int i=0; i<dim; ++i) b[i] = a[i];
+}
+
+template<class T>
+static inline void DCOPY( const T &a, T &b, const int &dim)
 {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 128)

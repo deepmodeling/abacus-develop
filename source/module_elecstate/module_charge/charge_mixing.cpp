@@ -31,10 +31,12 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 
     if (this->mixing_mode == "broyden")
     {
+        delete this->mixing;
         this->mixing = new Base_Mixing::Broyden_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else if (this->mixing_mode == "plain")
     {
+        delete this->mixing;
         this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
     else if(this->mixing_mode == "pulay")
@@ -48,7 +50,8 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 
     if (this->mixing_mode != "broyden")
     {
-        ModuleBase::WARNING("Charge_Mixing", "We recommend you to use broyden mixing_type. Other mixing methods are slow.");
+        ModuleBase::WARNING("Charge_Mixing",
+                            "We recommend you to use broyden mixing_type. Other mixing methods are slow.");
     }
 
     if (GlobalV::SCF_THR_TYPE == 1)
@@ -180,7 +183,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
                 drho += std::abs(chr->rho[is][ir] - chr->rho_save[is][ir]);
             }
         }
+#ifdef __MPI
         Parallel_Reduce::reduce_double_pool(drho);
+#endif
         assert(nelec != 0);
         assert(GlobalC::ucell.omega > 0);
         assert(this->rhopw->nxyz > 0);
@@ -201,6 +206,7 @@ void Charge_Mixing::mix_rho_recip(const int& iter, Charge* chr)
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
+    assert(iter == this->rho_mdata.ndim_history);
 
     auto inner_dot = std::bind(&Charge_Mixing::inner_dot_recip, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_dot);
@@ -245,6 +251,7 @@ void Charge_Mixing::mix_rho_real(const int& iter, Charge* chr)
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
+    assert(iter == this->rho_mdata.ndim_history);
 
     auto inner_dot = std::bind(&Charge_Mixing::inner_dot_real, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_dot);
@@ -341,15 +348,44 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
+    if (this->mixing_gg0 <= 0.0)
+        return;
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN);
+    std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
+        // Note after this process some G which is higher than Gmax will be filtered.
+        // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
         this->rhopw->real2recip(drhor + is * this->rhopw->nrxx, drhog.data() + is * this->rhopw->npw);
     }
-    Kerker_screen_recip(drhog.data());
+    // Kerker_screen_recip(drhog.data()); Note that we can not use it.
+    // However, we should rewrite it:
+    const double fac = this->mixing_gg0;
+    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static, 512)
+#endif
+    for (int is=0; is<GlobalV::NSPIN; is++)
+	{
+        for (int ig = 0; ig < this->rhopw->npw; ig++)
+        {
+            double gg = this->rhopw->gg[ig];
+            double filter_g = std::max(gg / (gg + gg0), 0.1);
+            drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
+        }
+    }
+
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor + is * this->rhopw->nrxx);
+        this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+    for (int ir = 0; ir < this->rhopw->nrxx*GlobalV::NSPIN; ir++)
+    {
+        drhor[ir] -= drhor_filter[ir];
     }
 }
 
@@ -378,7 +414,9 @@ double Charge_Mixing::inner_dot_real(double* rho1, double* rho2)
     {
         rnorm += rho1[ir] * rho2[ir];
     }
+#ifdef __MPI
     Parallel_Reduce::reduce_double_pool(rnorm);
+#endif
     return rnorm;
 }
 
@@ -502,9 +540,9 @@ double Charge_Mixing::rhog_dot_product(const std::complex<double>* const* const 
         }
         break;
     }
-
+#ifdef __MPI
     Parallel_Reduce::reduce_double_pool(sum);
-
+#endif
     ModuleBase::timer::tick("Charge_Mixing", "rhog_dot_product");
 
     sum *= GlobalC::ucell.omega * 0.5;

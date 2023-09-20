@@ -28,7 +28,7 @@ void Mix_Matrix<Tdata>::mix(const Tdata &data_in, const bool flag_restart)
 	else
 	{
 		this->mixing->push_data(this->matrix_data, data_out.c, data_in.c, nullptr, false);
-		this->mixing->mix_data(this->matrix_data, data_in.c);
+		this->mixing->mix_data(this->matrix_data, data_out.c);
 	}
 	
 	if(separate_loop)

@@ -521,10 +521,13 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             vnlpsi[ipw] = psi[ipw];
         }        
     }
-    //for(int ipw = 0; ipw < npw; ipw ++)
-    //{
-    //    vnlpsi[ipw] = 0.0;
-    //}
+    else
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            vnlpsi[ipw] = 0.0;
+        }
+    }
 
     for(int iat = 0; iat < nat; iat ++)
     {
