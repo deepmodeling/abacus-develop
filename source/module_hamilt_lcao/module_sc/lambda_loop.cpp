@@ -11,7 +11,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // init controlling parameters
     int nat = this->get_nat();
     int ntype = this->get_ntype();
-    static std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0);
     std::vector<ModuleBase::Vector3<double>> delta_lambda(nat,0.0);
     // question: how to set initial_lambda?
     // question: is delta_lambda initially zero?
@@ -56,7 +56,8 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     double g;
 
     //this->lambda_ = initial_lambda;
-    delta_lambda_inside_loop = this->lambda_;
+    initial_lambda = this->lambda_;
+    print_2d("initial lambda: ", initial_lambda);
 
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
@@ -177,7 +178,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             {
                 std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
             }
-            add_scalar_multiply_2d(initial_lambda, delta_lambda, 1.0, lambda_);
+            add_scalar_multiply_2d(initial_lambda, delta_lambda_inside_loop, 1.0, this->lambda_);
             goto CG_STOP;
         }
 
