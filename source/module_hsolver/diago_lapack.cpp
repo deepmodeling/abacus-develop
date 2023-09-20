@@ -15,7 +15,7 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
 
-void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+void DiagoLapack::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
     assert(GlobalV::NPROC == 1);
@@ -76,7 +76,7 @@ void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<dou
     }
 }
 
-void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
+void DiagoLapack::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
 }
