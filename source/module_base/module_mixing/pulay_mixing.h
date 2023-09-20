@@ -134,13 +134,9 @@ class Pulay_Mixing : public Mixing
                 "One Mixing object can only bind one Mixing_Data object to calculate coefficients");
         const int length = mdata.length;
         FPTYPE* FP_F = static_cast<FPTYPE*>(F);
-        // std::cout << 1 << std::endl;
-        std::cout << "ndim_use    " << mdata.ndim_use << std::endl;
-        std::cout << "ndim_tot    " << mdata.ndim_tot << std::endl;
 
         if (mdata.ndim_use > 1)
         {
-		    std::cout << "beta" << std::endl;
             const int ndim_use = mdata.ndim_use;
             ModuleBase::matrix beta_tmp(ndim_use, ndim_use);
             //beta(i, j) = <F_i, F_j>
@@ -155,17 +151,12 @@ class Pulay_Mixing : public Mixing
                     }
                     FPTYPE* Fj = FP_F + j * length;
                     beta(i, j) = beta_tmp(i, j) = inner_dot(Fi, Fj);
-				    std::cout << beta(i,j) << "\t";
                     if (j != i)
                     {
                         beta(j, i) = beta_tmp(j, i) = beta_tmp(i, j);
                     }
                 }
-			    std::cout << "\n";
             }
-			std::cout << "\n";
-
-        // std::cout << 2 << std::endl;
 
             double* work = new double[ndim_use];
             int* iwork = new int[ndim_use];
@@ -185,17 +176,6 @@ class Pulay_Mixing : public Mixing
                 }
             }
 
-		    std::cout << "beta^-1" << std::endl;
-            for (int i = 0; i < ndim_use; ++i)
-            {
-                for (int j = i; j < ndim_use; ++j)
-                {
-				    std::cout << beta_tmp(i,j) << "\t";
-                }
-			    std::cout << "\n";
-            }
-			std::cout << "\n";
-
             // coef{i} = \sum_j beta{ij} / \sum_k \sum_j beta{kj} 
             double sum_beta = 0.;
             for (int i = 0; i < ndim_use; ++i)
@@ -205,9 +185,6 @@ class Pulay_Mixing : public Mixing
                     sum_beta += beta_tmp(j, i);
                 }
             }
-            std::cout << "sum_beta    " << sum_beta << std::endl;
-
-    		std::cout << "alpha" << std::endl;
             for (int i = 0; i < ndim_use; ++i)
             {
                 coef[i] = 0.;
@@ -216,13 +193,9 @@ class Pulay_Mixing : public Mixing
                     coef[i] += beta_tmp(i,j);
                 }
                 coef[i] /= sum_beta;
-                std::cout << coef[i] << "\t";
             }
-			std::cout << "\n";
             delete[] work;
             delete[] iwork;
-        // std::cout << 3 << std::endl;
-
         }
         else
         {
