@@ -1,6 +1,7 @@
 #ifndef SPHERICAL_BESSEL_TRANSFORMER_H_
 #define SPHERICAL_BESSEL_TRANSFORMER_H_
 
+#include <cstddef>
 #include <memory>
 #include <fftw3.h>
 
@@ -9,6 +10,10 @@ namespace ModuleBase
 
 /**
  * @brief A class to perform spherical Bessel transforms.
+ *
+ * @note This class is implemented as an opaque shared pointer.
+ *       Copy-constructed or assigned objects share the same
+ *       underlying implementation class object.
  *
  * The spherical Bessel transform of a function F(x) is defined as
  *
@@ -32,11 +37,12 @@ namespace ModuleBase
  *
  *          out[j] = G(y[j])   or  out[j] = dG(y[j])/dy
  *
- * Usage1:
  *
- *      // FFT-based method
+ * Usage:
  *
  *      SphericalBesselTransformer sbt;
+ *
+ *      // Usage 1: FFT-based method
  *
  *      // Default FFTW planner flag is FFTW_ESTIMATE
  *      // which is suitable for handling tasks of different sizes.
@@ -55,9 +61,7 @@ namespace ModuleBase
  *      sbt.radrfft(2, 5000, ...);
  *
  *
- * Usage2:
- *
- *      // Numerical integration (Simpson's rule)
+ *      // Usage 2: Numerical integration (Simpson's rule)
  *
  *      ModuleBase::SphericalBesselTransformer::direct(
  *          l,         // order of transform
@@ -68,24 +72,16 @@ namespace ModuleBase
  *          grid_out,  // output grid
  *          value_out  // transformed values on the output grid
  *      );
+ *
  */
 class SphericalBesselTransformer
 {
-  public:
-
-    ~SphericalBesselTransformer();
-    SphericalBesselTransformer(SphericalBesselTransformer const&) = delete;
-    SphericalBesselTransformer& operator=(SphericalBesselTransformer const&) = delete;
-
-    /**
-     * @brief Creates a SphericalBesselTransformer object handled by a shared pointer
-     *
-     * This is the only way to create SphericalBesselTransformer objects.
-     */
-    static std::shared_ptr<SphericalBesselTransformer> create()
-    {
-        return std::shared_ptr<SphericalBesselTransformer>(new SphericalBesselTransformer);
-    }
+public:
+    SphericalBesselTransformer();
+    SphericalBesselTransformer(std::nullptr_t);
+    SphericalBesselTransformer(SphericalBesselTransformer const&) = default;
+    SphericalBesselTransformer& operator=(const SphericalBesselTransformer&) = default;
+    ~SphericalBesselTransformer() = default;
 
     /**
      * @brief Performs an l-th order spherical Bessel transform via real-input fast Fourier transforms.
@@ -130,7 +126,7 @@ class SphericalBesselTransformer
                  double* const out,
                  const int p = 0,
                  const bool deriv = false
-    );
+    ) const;
 
     /**
      * @brief Performs an l-th order spherical Bessel transform via numerical integration with Simpson's rule.
@@ -171,113 +167,39 @@ class SphericalBesselTransformer
                 double* const out,
                 const int p = 0,
                 const bool deriv = false
-    );
+    ) const;
 
     /**
      * @brief Sets the FFTW planner flag.
      *
-     * Recommended flags include FFTW_MEASURE and FFTW_ESTIMATE.
+     * Accepted flags include FFTW_MEASURE and FFTW_ESTIMATE:
      *
-     * FFTW_MEASURE yields optimized FFT algorithm at the cost of large overhead,
-     * which is suitable for performing many consecutive transforms of the same size.
+     * - FFTW_MEASURE  yields optimized FFT algorithm at the cost of large overhead;
+     * - FFTW_ESTIMATE yields less optimized FFT algorithm with much less overhead.
      *
-     * FFTW_ESTIMATE yields less optimized FFT algorithm with much less overhead.
-     *
-     * @param[in]   new_flag    FFTW planner flag, usually FFTW_MEASURE or FFTW_ESTIMATE
+     * @param[in]   new_flag    FFTW planner flag, FFTW_MEASURE or FFTW_ESTIMATE
      *
      * @note    Saved fftw_plan will be immediately destroyed if it was created with
-     *          a flag other than new_flag.
+     *          a different flag from new_flag.
      */
-    void set_fftw_plan_flag(const unsigned new_flag);
+    void set_fftw_plan_flag(const unsigned new_flag) const;
 
-    /// clear cached FFTW plan
-    void fft_clear();
+    /// Clears cached FFTW plan.
+    void fft_clear() const;
 
-  private:
-    SphericalBesselTransformer() = default;
+    /// Initializes impl_ if it is nullptr; does nothing otherwise.
+    void init();
 
-    /// core function for FFT-based transform
-    void radrfft_base(const int l,
-                       const int ngrid,
-                       const double cutoff,
-                       const double* const in,
-                       double* const out,
-                       const int p = 0
-    );
+    /// Returns whether impl_ is ready to use.
+    bool is_ready() const { return impl_.get(); }
 
-    /// Internal buffer used for in-place real-input FFT (interpreted as double* on input)
-    fftw_complex* f_ = nullptr;
+    /// Returns whether two objects share the same underlying Impl object.
+    inline bool operator==(SphericalBesselTransformer const& rhs) const { return this->impl_ == rhs.impl_; }
 
-    /// FFTW plan saved for reuse
-    fftw_plan rfft_plan_ = nullptr;
-
-    /// Size of the planned FFT
-    int sz_planned_ = -1;
-
-    /// Planner flag used to create rfft_plan_
-    unsigned fftw_plan_flag_ = FFTW_ESTIMATE;
-
-    /// Applies an in-place 1-d real-input discrete Fourier transform to the internal buffer
-    void rfft_in_place();
-
-    /// Buffer allocation and plan creation for a real-input FFT of size N.
-    void rfft_prepare(const int N);
-
-    /**
-     * @brief Polynomial coefficients in the sin & cos expression of the spherical Bessel function.
-     *
-     * The l-th order spherical Bessel function of the first kind can be expressed as
-     *
-     *                          sin(x)*P(x) + cos(x)*Q(x)
-     *                  j (x) = -------------------------
-     *                   l               l+1
-     *                                  x
-     *
-     * where P(x) and Q(x) are polynomials of degree no more than l. This function
-     * returns the coefficients within those polynomials.
-     *
-     * @param[in]   get_sine    if true, compute the coefficients of polynomials attached to sin
-     * @param[in]   l           order of the spherical Bessel function
-     * @param[in]   n           degree of the polynomial term whose coefficient is computed
-     *
-     * @return  The polynomial coefficient of the n-th power term in the sin & cos expression
-     *          of the l-th order spherical Bessel functions of the first kind.
-     *
-     * @note    Coefficients grow very quickly as l increases. Currently l is capped at 17
-     *          since some coefficients exceed 2^63-1 for l >= 18.
-     *
-     */
-    long long int spherical_bessel_sincos_polycoef(
-        const bool get_sine,
-        const int l,
-        const int n
-    );
-
-    /// Computes & stores the values of spherical Bessel function on the given transform grid
-    void cache(const int l,
-               const int ngrid_in,
-               const double* const grid_in,
-               const int ngrid_out,
-               const double* const grid_out,
-               const bool deriv);
-
-    /**
-     * @name Cached function values for direct integration
-     *                                                                                  */
-    ///@{
-    bool is_deriv_ = false; ///< if true, the cached values are derivatives of the spherical Bessel function
-    int l_ = -1;            ///< order of the cached spherical Bessel function
-
-    int ngrid_in_ = 0;
-    int ngrid_out_ = 0;
-    double* grid_in_ = nullptr;
-    double* grid_out_ = nullptr;
-
-    /// jl_[i*ngrid_in_ + j] = f(l, grid_out_[i] * grid_in_[j]) where f is sphbesj or dsphbesj
-    double* jl_ = nullptr;
-    ///@}
-
-}; // class SphericalBesselTransformer
+private:
+    class Impl; // forward declaration for detailed implementation class
+    std::shared_ptr<Impl> impl_;
+};
 
 } // namespace ModuleBase
 

@@ -86,7 +86,7 @@ class RadialSet
      */
     ///@{
     /// Sets a spherical Bessel transformers for all NumericalRadial objects.
-    void set_transformer(std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = nullptr, const int update = 0);
+    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update = 0);
 
     /// Sets a common grid for all NumericalRadial objects.
     void set_grid(const bool for_r_space, const int ngrid, const double* grid, const char mode = 'i');

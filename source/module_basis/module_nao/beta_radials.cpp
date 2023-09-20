@@ -25,7 +25,8 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
     {
         Numerical_Nonlocal_Lm& beta = nl.Proj[ichi];
         int l = beta.getL();
-        chi_[ichi].build(l, true, beta.getNr(), beta.getRadial(), beta.getBeta_r(), 1, nzeta_[l], symbol_, itype_);
+        // skip the initialization of sbt_ in this stage
+        chi_[ichi].build(l, true, beta.getNr(), beta.getRadial(), beta.getBeta_r(), 1, nzeta_[l], symbol_, itype_, false);
         nzeta_[l] += 1;
     }
     nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);

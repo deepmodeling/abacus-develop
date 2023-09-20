@@ -13,11 +13,6 @@
 
 using ModuleBase::PI;
 
-NumericalRadial::NumericalRadial() :
-    sbt_(ModuleBase::SphericalBesselTransformer::create())
-{
-}
-
 NumericalRadial::NumericalRadial(const NumericalRadial& other) :
     symbol_(other.symbol_),
     itype_(other.itype_),
@@ -28,7 +23,7 @@ NumericalRadial::NumericalRadial(const NumericalRadial& other) :
     is_fft_compliant_(other.is_fft_compliant_),
     pr_(other.pr_),
     pk_(other.pk_),
-    sbt_(other.sbt_.use_count() > 1 ? other.sbt_ : ModuleBase::SphericalBesselTransformer::create())
+    sbt_(other.sbt_)
 {
     // deep copy
     if (other.rgrid())
@@ -71,7 +66,7 @@ NumericalRadial& NumericalRadial::operator=(const NumericalRadial& rhs)
     pr_ = rhs.pr_;
     pk_ = rhs.pk_;
 
-    sbt_ = rhs.sbt_.use_count() > 1 ? rhs.sbt_ : ModuleBase::SphericalBesselTransformer::create();
+    sbt_ = rhs.sbt_;
 
     // deep copy
     if (rhs.rgrid())
@@ -109,7 +104,8 @@ void NumericalRadial::build(const int l,
                             const int p,
                             const int izeta,
                             const std::string symbol,
-                            const int itype)
+                            const int itype,
+                            const bool init_sbt)
 {
     assert(l >= 0);
     assert(ngrid > 1);
@@ -126,6 +122,8 @@ void NumericalRadial::build(const int l,
     itype_ = itype;
     izeta_ = izeta;
     l_ = l;
+
+    if (init_sbt) sbt_.init();
 
     if (for_r_space)
     {
@@ -145,11 +143,12 @@ void NumericalRadial::build(const int l,
         std::memcpy(kgrid_, grid, nk_ * sizeof(double));
         std::memcpy(kvalue_, value, nk_ * sizeof(double));
     }
+
 }
 
-void NumericalRadial::set_transformer(std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt, int update)
+void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update)
 {
-    sbt_ = sbt ? sbt : ModuleBase::SphericalBesselTransformer::create();
+    sbt_ = sbt;
 
     assert(update == 0 || update == 1 || update == -1);
     switch (update)
@@ -341,11 +340,11 @@ void NumericalRadial::radtab(const char op,
 
     if (use_radrfft)
     {
-        sbt_->radrfft(l, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.radrfft(l, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
     }
     else
     {
-        sbt_->direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk, deriv);
     }
 
     delete[] fk;
@@ -397,11 +396,11 @@ void NumericalRadial::transform(const bool forward)
     { // r -> k
         if (is_fft_compliant_)
         {
-            sbt_->radrfft(l_, nr_, rgrid_[nr_ - 1], rvalue_, kvalue_, pr_);
+            sbt_.radrfft(l_, nr_, rgrid_[nr_ - 1], rvalue_, kvalue_, pr_);
         }
         else
         {
-            sbt_->direct(l_, nr_, rgrid_, rvalue_, nk_, kgrid_, kvalue_, pr_);
+            sbt_.direct(l_, nr_, rgrid_, rvalue_, nk_, kgrid_, kvalue_, pr_);
         }
         pk_ = 0;
     }
@@ -409,11 +408,11 @@ void NumericalRadial::transform(const bool forward)
     { // k -> r
         if (is_fft_compliant_)
         {
-            sbt_->radrfft(l_, nk_, kgrid_[nk_ - 1], kvalue_, rvalue_, pk_);
+            sbt_.radrfft(l_, nk_, kgrid_[nk_ - 1], kvalue_, rvalue_, pk_);
         }
         else
         {
-            sbt_->direct(l_, nk_, kgrid_, kvalue_, nr_, rgrid_, rvalue_, pk_);
+            sbt_.direct(l_, nk_, kgrid_, kvalue_, nr_, rgrid_, rvalue_, pk_);
         }
         pr_ = 0;
     }

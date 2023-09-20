@@ -62,9 +62,8 @@
  */
 class NumericalRadial
 {
-
-  public:
-    NumericalRadial();
+public:
+    NumericalRadial() = default;
     NumericalRadial(NumericalRadial const&); ///< Deep-copy grid & values
 
     /// Deep-copy grid & values
@@ -84,6 +83,10 @@ class NumericalRadial
      * @param[in] izeta         Multiplicity index of radial functions of the same itype and l.
      * @param[in] symbol        Chemical symbol.
      * @param[in] itype         Index for the element in calculation.
+     * @param[in] init_sbt      If true, internal SphericalBesselTransformer will be initialized.
+     *
+     * @note init_sbt is only useful when the internal SphericalBesselTransformer (sbt_) is
+     *       null-initialized; The function will NOT reset sbt_ if it is already usable.
      */
     void build(const int l,
                const bool for_r_space,
@@ -93,7 +96,8 @@ class NumericalRadial
                const int p = 0,
                const int izeta = 0,
                const std::string symbol = "",
-               const int itype = 0
+               const int itype = 0,
+               const bool init_sbt = true
     );
 
     /** 
@@ -103,17 +107,14 @@ class NumericalRadial
      * use a shared one. This could be beneficial when there are a lot of NumericalRadial objects
      * whose grids have the same size.
      *
-     * @param[in] sbt       Pointer to the external transformer.
-     *                      nullptr instructs the object to use an an internal transformer.
+     * @param[in] sbt       An external transformer.
      * @param[in] update    Specifies whether and how values are recomputed with the new transformer.
      *                      Accepted values are:
      *                      *  0: does not recompute values;
      *                      *  1: calls a forward transform;
      *                      * -1: calls a backward transform.
      */
-    void set_transformer(std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = nullptr,
-                         int update = 0
-    );
+    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update = 0);
 
     /**
      * @brief Sets up a grid.
@@ -133,11 +134,7 @@ class NumericalRadial
      *                                 With this option, it is an error if the other space does not
      *                                 have a grid.
      */
-    void set_grid(const bool for_r_space,
-                  const int ngrid,
-                  const double* const grid,
-                  const char mode = 'i'
-    );
+    void set_grid(const bool for_r_space, const int ngrid, const double* const grid, const char mode = 'i');
 
     /**
      * @brief Sets up a uniform grid.
@@ -267,7 +264,7 @@ class NumericalRadial
     double pr() const { return pr_; }
     double pk() const { return pk_; }
     bool is_fft_compliant() const { return is_fft_compliant_; }
-    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt() const { return sbt_; }
+    ModuleBase::SphericalBesselTransformer sbt() const { return sbt_; }
 
     double rgrid(int ir) const { return rgrid_[ir]; }
     double kgrid(int ik) const { return kgrid_[ik]; }
@@ -275,7 +272,7 @@ class NumericalRadial
     double kvalue(int ik) const { return kvalue_[ik]; }
     ///@}
 
-  private:
+private:
     std::string symbol_ = "";   ///< chemical symbol
     int itype_ = 0;             ///< element index in calculation
     int l_ = -1;                ///< angular momentum
@@ -335,8 +332,8 @@ class NumericalRadial
     int pk_ = 0; ///< implicit exponent in kvalues_
     ///@}
 
-    /// Smart pointer to the object that handles spherical Bessel transforms
-    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt_;
+    /// An object that provides spherical Bessel transforms
+    ModuleBase::SphericalBesselTransformer sbt_{nullptr};
 
     /**
      * @brief Transforms the r-space values to get k-space values, or vice versa.

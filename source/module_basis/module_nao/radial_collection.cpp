@@ -186,7 +186,7 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     set_rcut_max();
 }
 
-void RadialCollection::set_transformer(std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt, const int update)
+void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update)
 {
     for (int itype = 0; itype < ntype_; ++itype)
     {

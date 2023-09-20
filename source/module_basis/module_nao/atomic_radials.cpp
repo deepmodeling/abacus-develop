@@ -209,7 +209,8 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         assert(!is_read[index(l, izeta)]);
         is_read[index(l, izeta)] = true;
 
-        chi_[index(l, izeta)].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype_);
+        // skip the initialization of sbt_ in this stage
+        chi_[index(l, izeta)].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype_, false);
         chi_[index(l, izeta)].normalize();
     }
 

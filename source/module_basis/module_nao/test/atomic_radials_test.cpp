@@ -1,6 +1,7 @@
 #include "module_basis/module_nao/atomic_radials.h"
 
 #include "gtest/gtest.h"
+#include "module_base/spherical_bessel_transformer.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -8,6 +9,8 @@
 
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
+
+using ModuleBase::SphericalBesselTransformer;
 
 /***********************************************************
  *      Unit test of class "AtomicRadials"
@@ -90,11 +93,11 @@ TEST_F(AtomicRadialsTest, BatchSet)
     EXPECT_EQ(Ti_radials.chi(0, 3).itype(), 5);
     EXPECT_EQ(Ti_radials.chi(3, 0).itype(), 5);
 
-    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = ModuleBase::SphericalBesselTransformer::create();
+    SphericalBesselTransformer sbt;
     Ti_radials.set_transformer(sbt);
-    EXPECT_EQ(Ti_radials.chi(0, 0).sbt().get(), sbt.get());
-    EXPECT_EQ(Ti_radials.chi(0, 3).sbt().get(), sbt.get());
-    EXPECT_EQ(Ti_radials.chi(3, 0).sbt().get(), sbt.get());
+    EXPECT_EQ(sbt, Ti_radials.chi(0, 0).sbt());
+    EXPECT_EQ(sbt, Ti_radials.chi(0, 3).sbt());
+    EXPECT_EQ(sbt, Ti_radials.chi(3, 0).sbt());
 
     Ti_radials.set_uniform_grid(true, 2001, 20.0);
     EXPECT_EQ(Ti_radials.chi(0, 0).nr(), 2001);

@@ -1,5 +1,6 @@
 #include "module_basis/module_nao/radial_collection.h"
 #include "gtest/gtest.h"
+#include "module_base/spherical_bessel_transformer.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -109,7 +110,7 @@ TEST_F(RadialCollectionTest, BuildAndGet) {
 TEST_F(RadialCollectionTest, BatchSet) {
     orb.build(nfile, file, 'o');
 
-    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = ModuleBase::SphericalBesselTransformer::create();
+    ModuleBase::SphericalBesselTransformer sbt;
     orb.set_transformer(sbt);
     orb.set_uniform_grid(true, 2001, 20.0);
 
@@ -117,7 +118,7 @@ TEST_F(RadialCollectionTest, BatchSet) {
     for (int itype = 0; itype != orb.ntype(); ++itype) {
         for (int l = 0; l <= orb(itype).lmax(); ++l) {
             for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
-                EXPECT_EQ(sbt.get(), orb(itype, l, izeta).sbt().get());
+                EXPECT_EQ(sbt, orb(itype, l, izeta).sbt());
                 EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), 20.0);
             }
         }

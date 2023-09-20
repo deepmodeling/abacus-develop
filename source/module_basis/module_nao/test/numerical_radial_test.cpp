@@ -124,7 +124,7 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_EQ(chi.pr(), chi2.pr());
     EXPECT_EQ(chi.pk(), chi2.pk());
     EXPECT_EQ(chi.is_fft_compliant(), chi2.is_fft_compliant());
-    EXPECT_NE(chi.sbt().get(), chi2.sbt().get());
+    EXPECT_EQ(chi2.sbt(), chi.sbt());
 
     NumericalRadial chi3;
     chi3 = chi;
@@ -158,16 +158,10 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_EQ(chi.pk(), chi3.pk());
     EXPECT_EQ(chi.is_fft_compliant(), chi3.is_fft_compliant());
 
-    std::shared_ptr<SphericalBesselTransformer> sbt = ModuleBase::SphericalBesselTransformer::create();
+    SphericalBesselTransformer sbt;
     chi.set_transformer(sbt, 1);
     chi3 = chi;
-    EXPECT_EQ(chi3.sbt().get(), chi.sbt().get());
-
-    // nullptr means use an internal transformer
-    chi.set_transformer(nullptr, 0);
-    chi.set_transformer(nullptr, -1);
-    chi3 = chi;
-    EXPECT_NE(chi3.sbt().get(), chi.sbt().get());
+    EXPECT_EQ(chi3.sbt(), chi.sbt());
 
     // self assignment is not common, but it should not throw
     EXPECT_NO_THROW(chi3 = chi3);
@@ -218,7 +212,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     EXPECT_EQ(chi.pk(), 0);
     EXPECT_EQ(chi.is_fft_compliant(), false);
 
-    EXPECT_NE(chi.sbt().get(), nullptr);
+    EXPECT_TRUE(chi.sbt().is_ready());
 }
 
 TEST_F(NumericalRadialTest, GridSetAndWipe)

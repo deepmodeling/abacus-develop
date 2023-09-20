@@ -13,7 +13,7 @@ void TwoCenterBundle::build(int ntype,
                             const std::string* file_desc0)
 {
 
-    std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt = ModuleBase::SphericalBesselTransformer::create();
+    ModuleBase::SphericalBesselTransformer sbt;
 
     //================================================================
     //                      read in the files
@@ -111,5 +111,5 @@ void TwoCenterBundle::build(int ntype,
     // init Ylm (this shall be done by Ylm automatically! to be done later...)
     ModuleBase::Ylm::set_coefficients();
 
-    sbt->fft_clear();
+    sbt.fft_clear();
 }

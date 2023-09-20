@@ -125,7 +125,7 @@ const NumericalRadial& RadialSet::chi(const int l, const int izeta)
     return chi_[i];
 }
 
-void RadialSet::set_transformer(std::shared_ptr<ModuleBase::SphericalBesselTransformer> sbt, const int update)
+void RadialSet::set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update)
 {
     for (int i = 0; i < nchi_; i++)
     {

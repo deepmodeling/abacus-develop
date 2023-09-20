@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <numeric>
 
 #include "module_base/constants.h"
@@ -15,7 +17,130 @@
 namespace ModuleBase
 {
 
-SphericalBesselTransformer::~SphericalBesselTransformer()
+//======================================================================
+//
+//                      Implementation Class
+//
+//======================================================================
+class SphericalBesselTransformer::Impl
+{
+    // The interface class is made friend in order to get access to the
+    // private constructor. The purpose of this design is to hide the
+    // implementation class from outside.
+    friend SphericalBesselTransformer;
+
+public:
+    ~Impl();
+    Impl(Impl const&) = delete;
+    Impl& operator=(Impl const&) = delete;
+
+    void radrfft(const int l,
+                 const int ngrid,
+                 const double cutoff,
+                 const double* const in,
+                 double* const out,
+                 const int p = 0,
+                 const bool deriv = false
+    );
+
+    void direct(const int l,
+                const int ngrid_in,
+                const double* const grid_in,
+                const double* const in,
+                const int ngrid_out,
+                const double* const grid_out,
+                double* const out,
+                const int p = 0,
+                const bool deriv = false
+    );
+
+    void set_fftw_plan_flag(const unsigned new_flag);
+    void fft_clear();
+
+private:
+    Impl() = default;
+
+    /// core function for FFT-based transform
+    void radrfft_base(const int l,
+                       const int ngrid,
+                       const double cutoff,
+                       const double* const in,
+                       double* const out,
+                       const int p = 0
+    );
+
+    /// Internal buffer used for in-place real-input FFT (interpreted as double* on input)
+    fftw_complex* f_ = nullptr;
+
+    /// FFTW plan saved for reuse
+    fftw_plan rfft_plan_ = nullptr;
+
+    /// Size of the planned FFT
+    int sz_planned_ = -1;
+
+    /// Planner flag used to create rfft_plan_
+    unsigned fftw_plan_flag_ = FFTW_ESTIMATE;
+
+    /// Applies an in-place 1-d real-input discrete Fourier transform to the internal buffer
+    void rfft_in_place();
+
+    /// Buffer allocation and plan creation for a real-input FFT of size N.
+    void rfft_prepare(const int N);
+
+    /**
+     * @brief Polynomial coefficients in the sin & cos expression of the spherical Bessel function.
+     *
+     * The l-th order spherical Bessel function of the first kind can be expressed as
+     *
+     *                          sin(x)*P(x) + cos(x)*Q(x)
+     *                  j (x) = -------------------------
+     *                   l               l+1
+     *                                  x
+     *
+     * where P(x) and Q(x) are polynomials of degree no more than l. This function
+     * returns the coefficients within those polynomials.
+     *
+     * @param[in]   of_sine     if true, compute the coefficients of polynomials attached to sin
+     * @param[in]   l           order of the spherical Bessel function
+     * @param[in]   n           degree of the polynomial term whose coefficient is computed
+     *
+     * @return  The polynomial coefficient of the n-th power term in the sin & cos expression
+     *          of the l-th order spherical Bessel functions of the first kind.
+     *
+     * @note    Coefficients grow very quickly as l increases. Currently l is capped at 17
+     *          since some coefficients exceed 2^63-1 for l >= 18.
+     *
+     */
+    long long int polycoef(const bool of_sine, const int l, const int n);
+
+    /// Computes & stores the values of spherical Bessel function on the given transform grid
+    void cache(const int l,
+               const int ngrid_in,
+               const double* const grid_in,
+               const int ngrid_out,
+               const double* const grid_out,
+               const bool deriv);
+
+    /**
+     * @name Cached function values for direct integration
+     *                                                                                  */
+    ///@{
+    bool is_deriv_ = false; ///< if true, the cached values are derivatives of the spherical Bessel function
+    int l_ = -1;            ///< order of the cached spherical Bessel function
+
+    int ngrid_in_ = 0;
+    int ngrid_out_ = 0;
+    double* grid_in_ = nullptr;
+    double* grid_out_ = nullptr;
+
+    /// jl_[i*ngrid_in_ + j] = f(l, grid_out_[i] * grid_in_[j]) where f is sphbesj or dsphbesj
+    double* jl_ = nullptr;
+    ///@}
+
+}; // class SphericalBesselTransformer::Impl
+
+
+SphericalBesselTransformer::Impl::~Impl()
 {
     fft_clear();
     delete[] grid_in_;
@@ -23,9 +148,7 @@ SphericalBesselTransformer::~SphericalBesselTransformer()
     delete[] jl_;
 }
 
-long long int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(const bool get_sine,
-                                                                           const int l,
-                                                                           const int n)
+long long int SphericalBesselTransformer::Impl::polycoef(const bool of_sine, const int l, const int n)
 {
     /*
      * The sin & cos coefficients follow the same recurrence relation
@@ -41,10 +164,9 @@ long long int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(const
      *      c(1,1) = -1     c(1,1) = 0
      *                                                              */
     assert(l >= 0 && n >= 0);
-    assert(l <= 17 && "SphericalBesselTransformer::spherical_bessel_sincos_polycoef: \
-                some coefficients exceed LLONG_MAX (2^63-1) for l >= 18");
+    assert(l <= 17 && "Impl::polycoef: some coefficients exceed LLONG_MAX (2^63-1) for l >= 18");
 
-    if (get_sine)
+    if (of_sine)
     {
         if (n % 2 == 1 || n > l)
         {
@@ -71,16 +193,15 @@ long long int SphericalBesselTransformer::spherical_bessel_sincos_polycoef(const
         }
     }
 
-    return (2 * l - 1) * spherical_bessel_sincos_polycoef(get_sine, l - 1, n)
-           - (n >= 2 ? spherical_bessel_sincos_polycoef(get_sine, l - 2, n - 2) : 0);
+    return (2 * l - 1) * polycoef(of_sine, l - 1, n) - (n >= 2 ? polycoef(of_sine, l - 2, n - 2) : 0);
 }
 
-void SphericalBesselTransformer::radrfft_base(const int l,
-                                               const int ngrid,
-                                               const double cutoff,
-                                               const double* const in,
-                                               double* const out,
-                                               const int p)
+void SphericalBesselTransformer::Impl::radrfft_base(const int l,
+                                                    const int ngrid,
+                                                    const double cutoff,
+                                                    const double* const in,
+                                                    double* const out,
+                                                    const int p)
 {
     // this function does not support in-place transform (but radrfft does)
     assert(in != out);
@@ -104,7 +225,7 @@ void SphericalBesselTransformer::radrfft_base(const int l,
         // m odd  --> cos; f[2*n-i] = +f[i]; out += +real(rfft(f)) / y^(l+1-m)
         bool flag = (m % 2 == 0);
 
-        long long int sincos_coef = spherical_bessel_sincos_polycoef(flag, l, m);
+        long long int sincos_coef = polycoef(flag, l, m);
 
         f[0] = f[n] = 0.0;
         for (int i = 1; i != n; ++i)
@@ -134,13 +255,13 @@ void SphericalBesselTransformer::radrfft_base(const int l,
     }
 }
 
-void SphericalBesselTransformer::radrfft(const int l,
-                                         const int ngrid,
-                                         const double cutoff,
-                                         const double* const in,
-                                         double* const out,
-                                         const int p,
-                                         const bool deriv)
+void SphericalBesselTransformer::Impl::radrfft(const int l,
+                                               const int ngrid,
+                                               const double cutoff,
+                                               const double* const in,
+                                               double* const out,
+                                               const int p,
+                                               const bool deriv)
 {
     /*
      * An l-th order spherical Bessel transform F(x) -> G(y) can be expressed in terms of Fourier transforms:
@@ -159,7 +280,7 @@ void SphericalBesselTransformer::radrfft(const int l,
      *          sqrt(2*pi)                         l-n-1   ,
      *                                            x
      *
-     * c(l,n) / s(l,n) are sin / cos coefficients from spherical_bessel_sincos_polycoef, and
+     * c(l,n) / s(l,n) are sin / cos coefficients from polycoef, and
      * the domain of F(x) is extended to negative values by defining F(-x) = pow(-1,l)*F(x).
      *
      * With an appropriate grid, the Fourier transform can be approximated by a discrete Fourier transform.
@@ -221,15 +342,15 @@ void SphericalBesselTransformer::radrfft(const int l,
     delete[] out_tmp;
 }
 
-void SphericalBesselTransformer::direct(const int l,
-                                        const int ngrid_in,
-                                        const double* const grid_in,
-                                        const double* const in,
-                                        const int ngrid_out,
-                                        const double* const grid_out,
-                                        double* const out,
-                                        const int p,
-                                        const bool deriv)
+void SphericalBesselTransformer::Impl::direct(const int l,
+                                              const int ngrid_in,
+                                              const double* const grid_in,
+                                              const double* const in,
+                                              const int ngrid_out,
+                                              const double* const grid_out,
+                                              double* const out,
+                                              const int p,
+                                              const bool deriv)
 {
     assert(p <= 2);
     assert(grid_in[0] >= 0.0 && std::is_sorted(grid_in, grid_in + ngrid_in, std::less_equal<double>()));
@@ -267,12 +388,12 @@ void SphericalBesselTransformer::direct(const int l,
     delete[] buffer;
 }
 
-void SphericalBesselTransformer::rfft_in_place()
+void SphericalBesselTransformer::Impl::rfft_in_place()
 {
     fftw_execute(rfft_plan_);
 }
 
-void SphericalBesselTransformer::rfft_prepare(const int sz)
+void SphericalBesselTransformer::Impl::rfft_prepare(const int sz)
 {
     if (sz != sz_planned_)
     {
@@ -291,7 +412,7 @@ void SphericalBesselTransformer::rfft_prepare(const int sz)
     }
 }
 
-void SphericalBesselTransformer::set_fftw_plan_flag(const unsigned new_flag)
+void SphericalBesselTransformer::Impl::set_fftw_plan_flag(const unsigned new_flag)
 {
     assert(new_flag == FFTW_ESTIMATE || new_flag == FFTW_MEASURE);
     if (new_flag != fftw_plan_flag_)
@@ -302,12 +423,12 @@ void SphericalBesselTransformer::set_fftw_plan_flag(const unsigned new_flag)
     }
 }
 
-void SphericalBesselTransformer::cache(const int l,
-                                       const int ngrid_in,
-                                       const double* const grid_in,
-                                       const int ngrid_out,
-                                       const double* const grid_out,
-                                       const bool deriv)
+void SphericalBesselTransformer::Impl::cache(const int l,
+                                             const int ngrid_in,
+                                             const double* const grid_in,
+                                             const int ngrid_out,
+                                             const double* const grid_out,
+                                             const bool deriv)
 {
     bool is_cached = deriv == is_deriv_ && l == l_ && ngrid_in <= ngrid_in_ && ngrid_out <= ngrid_out_
                      && std::equal(grid_in, grid_in + ngrid_in, grid_in_)
@@ -341,7 +462,7 @@ void SphericalBesselTransformer::cache(const int l,
     }
 }
 
-void SphericalBesselTransformer::fft_clear()
+void SphericalBesselTransformer::Impl::fft_clear()
 {
     if (rfft_plan_) fftw_destroy_plan(rfft_plan_);
     rfft_plan_ = nullptr;
@@ -351,6 +472,57 @@ void SphericalBesselTransformer::fft_clear()
 
     sz_planned_ = -1;
     fftw_plan_flag_ = FFTW_ESTIMATE;
+}
+
+//======================================================================
+//
+//                      Interface Class
+//
+//======================================================================
+SphericalBesselTransformer::SphericalBesselTransformer(): impl_(new Impl) {}
+SphericalBesselTransformer::SphericalBesselTransformer(std::nullptr_t): impl_(nullptr) {}
+
+void SphericalBesselTransformer::radrfft(const int l,
+                                         const int ngrid,
+                                         const double cutoff,
+                                         const double* const in,
+                                         double* const out,
+                                         const int p,
+                                         const bool deriv) const
+{
+    assert(impl_ && "SphericalBesselTransformer not initialized!");
+    impl_->radrfft(l, ngrid, cutoff, in, out, p, deriv);
+}
+
+void SphericalBesselTransformer::direct(const int l,
+                                        const int ngrid_in,
+                                        const double* const grid_in,
+                                        const double* const in,
+                                        const int ngrid_out,
+                                        const double* const grid_out,
+                                        double* const out,
+                                        const int p,
+                                        const bool deriv) const
+{
+    assert(impl_ && "SphericalBesselTransformer not initialized!");
+    impl_->direct(l, ngrid_in, grid_in, in, ngrid_out, grid_out, out, p, deriv);
+}
+
+void SphericalBesselTransformer::set_fftw_plan_flag(const unsigned new_flag) const
+{
+    assert(impl_ && "SphericalBesselTransformer not initialized!");
+    impl_->set_fftw_plan_flag(new_flag);
+}
+
+void SphericalBesselTransformer::fft_clear() const
+{
+    assert(impl_ && "SphericalBesselTransformer not initialized!");
+    impl_->fft_clear();
+}
+
+void SphericalBesselTransformer::init()
+{
+    if (!impl_) impl_.reset(new Impl);
 }
 
 } // namespace ModuleBase
