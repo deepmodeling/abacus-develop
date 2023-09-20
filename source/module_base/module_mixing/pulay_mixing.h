@@ -35,6 +35,12 @@ class Pulay_Mixing : public Mixing
     {
         if (F != nullptr) free(F);
     }
+    virtual void reset() override
+    {
+        this->start_F = -1;
+        this->address = nullptr;
+    }
+
     virtual void push_data(Mixing_Data& mdata,
                            const double* data_in,
                            const double* data_out,
@@ -130,8 +136,8 @@ class Pulay_Mixing : public Mixing
         ModuleBase::timer::tick("Charge", "Pulay_mixing");
         if (address != &mdata && address != nullptr)
             ModuleBase::WARNING_QUIT(
-                "Mixing",
-                "One Mixing object can only bind one Mixing_Data object to calculate coefficients");
+                "Pulay_mixing",
+                "One Pulay_mixing object can only bind one Mixing_Data object to calculate coefficients");
         const int length = mdata.length;
         FPTYPE* FP_F = static_cast<FPTYPE*>(F);
 
