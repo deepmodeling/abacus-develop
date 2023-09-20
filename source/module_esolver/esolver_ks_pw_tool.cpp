@@ -22,8 +22,8 @@ namespace ModuleESolver
 //------------------------------------------------------------------
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
-template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::KG(const double fwhmin,
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::KG(const double fwhmin,
                                        const double wcut,
                                        const double dw_in,
                                        const double dt_in,
@@ -76,8 +76,8 @@ void ESolver_KS_PW<FPTYPE, Device>::KG(const double fwhmin,
     delete[] ct22;
 }
 
-template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::jjcorr_ks(const int ik,
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::jjcorr_ks(const int ik,
                                               const int nt,
                                               const double dt,
                                               const double decut,
@@ -188,8 +188,8 @@ void ESolver_KS_PW<FPTYPE, Device>::jjcorr_ks(const int ik,
     return;
 }
 
-template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::calcondw(const int nt,
                                              const double dt,
                                              const double fwhmin,
                                              const double wcut,
@@ -260,10 +260,10 @@ void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
     delete[] kappa;
 }
 
-template class ESolver_KS_PW<float, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<double, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<float, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<double, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 } // namespace ModuleESolver

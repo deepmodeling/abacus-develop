@@ -26,7 +26,7 @@
  * self-realized functions in module_hsolver/test/diago_elpa_utils.h
  */
 
-template <typename T> class HamiltTEST : public hamilt::Hamilt<double>
+template <typename T> class HamiltTEST : public hamilt::Hamilt<std::complex<double>>
 {
     public:
     int desc[9];
@@ -82,7 +82,7 @@ template<class T> class DiagoPrepare
     std::vector<T> s;
     std::vector<T> h_local;
     std::vector<T> s_local;
-    hsolver::DiagH<double>* dh=0;
+    hsolver::DiagH<std::complex<double>>* dh=0;
     psi::Psi<T> psi;
     std::vector<double> e_solver; 
     std::vector<double> e_lapack;

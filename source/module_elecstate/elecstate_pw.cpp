@@ -8,15 +8,15 @@
 
 namespace elecstate {
 
-template<typename FPTYPE, typename Device>
-ElecStatePW<FPTYPE, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in) : basis(wfc_basis_in)  
+template<typename T, typename Device>
+ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K *wfc_basis_in, Charge* chg_in, K_Vectors *pkv_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in) : basis(wfc_basis_in)  
 {
     this->classname = "ElecStatePW";
     this->init_ks(chg_in, pkv_in, pkv_in->nks, rhopw_in, bigpw_in);
 }
 
-template<typename FPTYPE, typename Device>
-ElecStatePW<FPTYPE, Device>::~ElecStatePW() 
+template<typename T, typename Device>
+ElecStatePW<T, Device>::~ElecStatePW() 
 {
     if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
         delmem_var_op()(this->ctx, this->rho_data);
@@ -29,18 +29,18 @@ ElecStatePW<FPTYPE, Device>::~ElecStatePW()
     delmem_complex_op()(this->ctx, this->wfcr_another_spin);
 }
 
-template<typename FPTYPE, typename Device>
-void ElecStatePW<FPTYPE, Device>::init_rho_data() 
+template<typename T, typename Device>
+void ElecStatePW<T, Device>::init_rho_data() 
 {
     if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
-        this->rho = new FPTYPE*[this->charge->nspin];
+        this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
         if (get_xc_func_type() == 3)
         {
-            this->kin_r = new FPTYPE*[this->charge->nspin];
+            this->kin_r = new Real*[this->charge->nspin];
             resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
             for (int ii = 0; ii < this->charge->nspin; ii++) {
                 this->kin_r[ii] = this->kin_r_data + ii * this->charge->nrxx;
@@ -48,10 +48,10 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
         }
     }
     else {
-        this->rho = reinterpret_cast<FPTYPE **>(this->charge->rho);
+        this->rho = reinterpret_cast<Real **>(this->charge->rho);
         if (get_xc_func_type() == 3)
         {
-            this->kin_r = reinterpret_cast<FPTYPE **>(this->charge->kin_r);
+            this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
         }
     }
     resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr, "ElecSPW::wfcr");
@@ -59,8 +59,8 @@ void ElecStatePW<FPTYPE, Device>::init_rho_data()
     this->init_rho = true;
 }
 
-template <typename FPTYPE, typename Device>
-void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, Device>& psi)
+template<typename T, typename Device>
+void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
@@ -102,14 +102,14 @@ void ElecStatePW<FPTYPE, Device>::psiToRho(const psi::Psi<std::complex<FPTYPE>, 
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
 }
 
-template<typename FPTYPE, typename Device>
-void ElecStatePW<FPTYPE, Device>::updateRhoK(const psi::Psi<std::complex<FPTYPE>, Device>& psi)
+template<typename T, typename Device>
+void ElecStatePW<T, Device>::updateRhoK(const psi::Psi<T, Device>& psi)
 {
     this->rhoBandK(psi);
 }
 
-template<typename FPTYPE, typename Device>
-void ElecStatePW<FPTYPE, Device>::parallelK()
+template<typename T, typename Device>
+void ElecStatePW<T, Device>::parallelK()
 {
 #ifdef __MPI
     this->charge->rho_mpi();
@@ -121,14 +121,14 @@ void ElecStatePW<FPTYPE, Device>::parallelK()
 #endif
 }
 
-template<typename FPTYPE, typename Device>
-void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, Device>& psi)
+template<typename T, typename Device>
+void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "rhoBandK");
 
     // moved by denghui to constructor at 20221110
     // used for plane wavefunction FFT3D to real space
-    // static std::vector<std::complex<FPTYPE>> wfcr;
+    // static std::vector<T> wfcr;
     // wfcr.resize(this->basis->nmaxgr);
     // used for plane wavefunction FFT3D to real space, non-collinear spin case
     // static std::vector<std::complex<double>> wfcr_another_spin;
@@ -165,7 +165,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
 
             // replaced by denghui at 20221110
             elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
@@ -183,8 +183,7 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
             }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
-            
-            const auto w1 = static_cast<FPTYPE>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
 
             if (w1 != 0.0)
             {
@@ -204,9 +203,9 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
                               j,
                               npw,
                               this->basis->npwk_max,
-                              static_cast<FPTYPE>(get_ucell_tpiba()),
-                              this->basis->template get_gcar_data<FPTYPE>(),
-                              this->basis->template get_kvec_c_data<FPTYPE>(),
+                              static_cast<Real>(get_ucell_tpiba()),
+                              this->basis->template get_gcar_data<Real>(),
+                              this->basis->template get_kvec_c_data<Real>(),
                               &psi(ibnd, 0),
                               this->wfcr);
 
@@ -219,11 +218,11 @@ void ElecStatePW<FPTYPE, Device>::rhoBandK(const psi::Psi<std::complex<FPTYPE>, 
     }
 }
 
-template class ElecStatePW<float, psi::DEVICE_CPU>;
-template class ElecStatePW<double, psi::DEVICE_CPU>;
+template class ElecStatePW<std::complex<float>, psi::DEVICE_CPU>;
+template class ElecStatePW<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ElecStatePW<float, psi::DEVICE_GPU>;
-template class ElecStatePW<double, psi::DEVICE_GPU>;
+template class ElecStatePW<std::complex<float>, psi::DEVICE_GPU>;
+template class ElecStatePW<std::complex<double>, psi::DEVICE_GPU>;
 #endif 
 
 } // namespace elecstate

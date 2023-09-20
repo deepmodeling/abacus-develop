@@ -3,6 +3,8 @@
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 #include "module_psi/psi_initializer.h"
+#include <module_base/macros.h>
+
 // #include "Basis_PW.h"
 // #include "Estate_PW.h"
 // #include "Hamilton_PW.h"
@@ -12,9 +14,11 @@
 namespace ModuleESolver
 {
 
-    template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-    class ESolver_KS_PW : public ESolver_KS<FPTYPE, Device>
+    template<typename T, typename Device = psi::DEVICE_CPU>
+    class ESolver_KS_PW : public ESolver_KS<T, Device>
     {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         ESolver_KS_PW();
         ~ESolver_KS_PW();
@@ -85,10 +89,9 @@ namespace ModuleESolver
         psi_initializer* psi_init = nullptr;
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
-        /// @brief float type and device dependent psi
-        psi::Psi<std::complex<FPTYPE>, Device>* kspw_psi = nullptr; // comparatively the psi itself is, declared as psi::Psi<std::complex<double>>* psi = nullptr;
+        psi::Psi<T, Device>* kspw_psi = nullptr;
         psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
-        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, T, psi::DEVICE_CPU, Device>;
     };
 }  // namespace ModuleESolver
 #endif

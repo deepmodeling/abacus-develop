@@ -179,6 +179,10 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
+    out_wannier_amn = true;
+    out_wannier_eig = true;
+    out_wannier_mmn = true;
+    out_wannier_unk = true;
     for(int i=0;i<3;i++){kspacing[i] = 0;}
     min_dist_coef = 0.2;
     //----------------------------------------------------------
@@ -818,6 +822,22 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("wannier_spin", word) == 0) // add by jingan for wannier90
         {
             read_value(ifs, wannier_spin);
+        }
+        else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_mmn);
+        }
+        else if (strcmp("out_wannier_amn", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_amn);
+        }
+        else if (strcmp("out_wannier_unk", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_unk);
+        }
+        else if (strcmp("out_wannier_eig", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_eig);
         }
         //----------------------------------------------------------
         // electrons / spin
@@ -2879,6 +2899,10 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(towannier90);
     Parallel_Common::bcast_string(nnkpfile);
     Parallel_Common::bcast_string(wannier_spin);
+    Parallel_Common::bcast_bool(out_wannier_mmn);
+    Parallel_Common::bcast_bool(out_wannier_amn);
+    Parallel_Common::bcast_bool(out_wannier_unk);
+    Parallel_Common::bcast_bool(out_wannier_eig);
 
     Parallel_Common::bcast_string(dft_functional);
     Parallel_Common::bcast_double(xc_temperature);

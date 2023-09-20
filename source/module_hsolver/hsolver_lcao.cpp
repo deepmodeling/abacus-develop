@@ -12,7 +12,7 @@ namespace hsolver
 {
 
 template <typename T>
-void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
+void HSolverLCAO::solveTemplate(hamilt::Hamilt<std::complex<double>>* pHamilt,
                                 psi::Psi<T>& psi,
                                 elecstate::ElecState* pes,
                                 const std::string method_in,
@@ -128,7 +128,7 @@ int HSolverLCAO::out_mat_hsR = 0;
 int HSolverLCAO::out_mat_t = 0;
 int HSolverLCAO::out_mat_dh = 0;
 
-void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
+void HSolverLCAO::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                         psi::Psi<std::complex<double>>& psi,
                         elecstate::ElecState* pes,
                         const std::string method_in,
@@ -136,7 +136,7 @@ void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
 {
     this->solveTemplate(pHamilt, psi, pes, method, skip_charge);
 }
-void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
+void HSolverLCAO::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                         psi::Psi<double>& psi,
                         elecstate::ElecState* pes,
                         const std::string method_in,
@@ -145,7 +145,7 @@ void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
     this->solveTemplate(pHamilt, psi, pes, method, skip_charge);
 }
 
-void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
+void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<std::complex<double>>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
@@ -153,7 +153,7 @@ void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::comp
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 }
 
-void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<double>& psi, double* eigenvalue)
+void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<std::complex<double>>* hm, psi::Psi<double>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");

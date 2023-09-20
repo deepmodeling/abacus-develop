@@ -71,6 +71,10 @@ class Input
     bool towannier90; // add by jingan for wannier90
     std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
+    bool out_wannier_mmn;  // add by renxi for wannier90
+    bool out_wannier_amn;
+    bool out_wannier_unk;
+    bool out_wannier_eig;
 
     //==========================================================
     // Stochastic DFT
