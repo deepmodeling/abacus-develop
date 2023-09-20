@@ -5,7 +5,7 @@
 class TestPsi : public ::testing::Test
 {
   public:
-    const int ink = 1;
+      const int ink = 2;
     const int inbands = 4;
     const int inbasis = 10;
     int ngk[4] = {10, 10, 10, 10};
@@ -117,7 +117,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
     delete psi_object6;
 
     // cover all lines in fix_k func
-    psi_object31->fix_k(1);
+    psi_object31->fix_k(2);
     EXPECT_EQ(psi_object31->get_psi_bias(), 0);
     psi::Psi<std::complex<double>>* psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis);
     psi_temp->fix_k(0);
@@ -260,7 +260,82 @@ TEST_F(TestPsi, range)
     EXPECT_EQ(num2, 0);
 }
 
+TEST_F(TestPsi, band_first)
+{
+    const psi::Psi<std::complex<double>>* psi_band_c64 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, &ngk[0], false);
+    const psi::Psi<double>* psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, &ngk[0], false);
+    const psi::Psi<std::complex<float>>* psi_band_c32 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, &ngk[0], false);
+    const psi::Psi<float>* psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, &ngk[0], false);
 
+    // set values: cover 4 different cases
+    for (int ib = 0;ib < inbands;++ib)
+    {
+        psi_band_c64->fix_b(ib); // 1. fix_b, fix_k, (ibasis)
+        psi_band_64->fix_b(ib);// 2. fix_kb, (ibasis)
+        psi_band_c32->fix_b(ib);// 3. fix_b, (ik, ibasis)
+        EXPECT_EQ(psi_band_c64->get_current_b(), ib);
+        EXPECT_EQ(psi_band_64->get_current_b(), ib);
+        EXPECT_EQ(psi_band_c32->get_current_b(), ib);
+        EXPECT_EQ(psi_band_c64->get_psi_bias(), ib * ink * inbasis);
+        EXPECT_EQ(psi_band_64->get_psi_bias(), ib * ink * inbasis);
+        EXPECT_EQ(psi_band_c32->get_psi_bias(), ib * ink * inbasis);
+        for (int ik = 0;ik < ink;++ik)
+        {
+            psi_band_c64->fix_k(ik);
+            psi_band_64->fix_kb(ik, ib);
+            EXPECT_EQ(psi_band_c64->get_current_k(), ik);
+            EXPECT_EQ(psi_band_64->get_current_k(), ik);
+            EXPECT_EQ(psi_band_c64->get_psi_bias(), (ib * ink + ik) * inbasis);
+            EXPECT_EQ(psi_band_64->get_psi_bias(), (ib * ink + ik) * inbasis);
+            for (int ibas = 0;ibas < inbasis;++ibas)
+            {
+                int index = ((ib * ink) + ik) * inbasis + ibas;
+                (*psi_band_c64)(ibas).real(index);
+                (*psi_band_64)(ibas) = index;
+                (*psi_band_c32)(ik, ibas).real(index);
+                (*psi_band_32)(ib, ik, ibas) = index; //4. no fix, (ib, ik, ibasis)
+            }
+        }
+    }
+
+    // get_pointer and operator() (using different fix from setter)
+    psi_band_c64->fix_k(1);
+    EXPECT_EQ(psi_band_c64->get_pointer()[1].real(), 71);
+    EXPECT_EQ((*psi_band_c64)(2).real(), 72);
+    psi_band_64->fix_b(1);
+    EXPECT_EQ(psi_band_64->get_pointer()[1], 21);
+    EXPECT_EQ(psi_band_64->get_pointer(1)[1], 31);
+    EXPECT_EQ((*psi_band_64)(0, 2), 22);
+    EXPECT_EQ((*psi_band_64)(1, 2), 32);
+    psi_band_c32->fix_b(0);
+    EXPECT_EQ(psi_band_c32->get_pointer()[1].real(), 1);
+    EXPECT_EQ((*psi_band_c32)(1, 1, 2).real(), 32);
+    psi_band_32->fix_kb(0, 2);
+    EXPECT_EQ(psi_band_32->get_pointer()[1], 41);
+    EXPECT_EQ(psi_band_32->get_pointer(1)[1], 51);
+    EXPECT_EQ((*psi_band_32)(2), 42);
+
+    // range
+    psi::Range b2_k11(0, 2, 1, 1);
+    psi::Range b13(0, -1, 1, 3);
+    psi::Range illegal_kfirst(1, 2, 1, 1);
+    psi::Range illegal_index1(0, 4, 2, 1);
+    psi::Range illegal_range1(0, -1, 3, 1);
+    psi::Range illegal_range2(0, 2, 1, 3);
+    EXPECT_EQ(std::get<0>(psi_band_c64->to_range(b2_k11))[1].real(), 51);
+    EXPECT_EQ(std::get<1>(psi_band_c64->to_range(b2_k11)), 1);
+    EXPECT_EQ(std::get<0>(psi_band_64->to_range(b13))[50], 70);
+    EXPECT_EQ(std::get<1>(psi_band_64->to_range(b13)), 3);
+    EXPECT_EQ(std::get<0>(psi_band_c32->to_range(illegal_kfirst)), nullptr);
+    EXPECT_EQ(std::get<1>(psi_band_c32->to_range(illegal_index1)), 0);
+    EXPECT_EQ(std::get<0>(psi_band_32->to_range(illegal_range1)), nullptr);
+    EXPECT_EQ(std::get<1>(psi_band_32->to_range(illegal_range2)), 0);
+
+    delete psi_band_c64;
+    delete psi_band_64;
+    delete psi_band_c32;
+    delete psi_band_32;
+}
 
 #if __UT_USE_CUDA || __UT_USE_ROCM
 TEST_F(TestPsi, Range)
