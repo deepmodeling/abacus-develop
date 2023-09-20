@@ -238,7 +238,7 @@ TEST_F(ReadPPTest, ReadUSPPUPF201)
     EXPECT_TRUE(upf->nlcc);
     EXPECT_EQ(upf->xc_func, "PBE");
     EXPECT_EQ(upf->zp, 3);
-    EXPECT_EQ(upf->nv, 201);
+    EXPECT_EQ(upf->nv, 0);
     EXPECT_DOUBLE_EQ(upf->etotps, -4.765458899624e0);
     EXPECT_DOUBLE_EQ(upf->ecutwfc, 2.949383268967e1);
     EXPECT_DOUBLE_EQ(upf->ecutrho, 1.437437216640e2);
@@ -279,9 +279,9 @@ TEST_F(ReadPPTest, ReadUSPPUPF201)
     EXPECT_DOUBLE_EQ(upf->beta(1, 0), 1.652408363968902e-3);
     EXPECT_DOUBLE_EQ(upf->beta(1, 1134), 0.0);
     EXPECT_DOUBLE_EQ(upf->dion(0, 0), 3.322439863765596e-1);
-    EXPECT_DOUBLE_EQ(upf->dion(10, 10), -5.475822599361111e-2);
+    EXPECT_DOUBLE_EQ(upf->dion(9, 9), -5.475822599361111e-2);
     EXPECT_DOUBLE_EQ(upf->qqq(0, 0), -3.065376694096810e-2);
-    EXPECT_DOUBLE_EQ(upf->qqq(10, 10), 5.956284484724982e-3);
+    EXPECT_DOUBLE_EQ(upf->qqq(9, 9), 5.956284484724982e-3);
     EXPECT_DOUBLE_EQ(upf->qfcoef(0, 0, 0, 0), 0.0);
     EXPECT_DOUBLE_EQ(upf->rinner[0], 0.0);
     EXPECT_DOUBLE_EQ(upf->rinner[4], 0.0);
@@ -342,24 +342,21 @@ TEST_F(ReadPPTest, HeaderErr2013)
 	EXPECT_EXIT(upf->read_pseudo_upf201(ifs),
 			::testing::ExitedWithCode(0),"");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("PAW PSEUDOPOTENTIAL IS NOT SUPPORTED"));
-	ifs.close();
+    EXPECT_THAT(output, testing::HasSubstr("PAW POTENTIAL IS NOT SUPPORTED"));
+    ifs.close();
 }
 
 TEST_F(ReadPPTest, HeaderErr2014)
 {
 	std::ifstream ifs;
-	// 4th
-	GlobalV::ofs_warning.open("warning.log");
-	ifs.open("./support/HeaderError4");
-	upf->read_pseudo_upf201(ifs);
-	GlobalV::ofs_warning.close();
-	ifs.close();
-	ifs.open("warning.log");
-	getline(ifs,output);
+    // 3rd
+    ifs.open("./support/HeaderError4");
+    // upf->read_pseudo_upf201(ifs);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(upf->read_pseudo_upf201(ifs), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("COULOMB POTENTIAL IS NOT SUPPORTED"));
     ifs.close();
-    remove("warning.log");
 }
 
 TEST_F(ReadPPTest, HeaderErr2015)
