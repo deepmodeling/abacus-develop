@@ -145,12 +145,15 @@ class Pulay_Mixing : public Mixing
                 FPTYPE* Fi = FP_F + i * length;
                 for (int j = i; j < ndim_use; ++j)
                 {
-                    if (i < ndim_use - 1 && j < ndim_use - 1)
+                    if (i != start_F && j != start_F)
                     {
                         beta_tmp(i, j) = beta(i, j);
                     }
-                    FPTYPE* Fj = FP_F + j * length;
-                    beta(i, j) = beta_tmp(i, j) = inner_dot(Fi, Fj);
+                    else
+                    {
+                        FPTYPE* Fj = FP_F + j * length;
+                        beta(i, j) = beta_tmp(i, j) = inner_dot(Fi, Fj);
+                    }
                     if (j != i)
                     {
                         beta(j, i) = beta_tmp(j, i) = beta_tmp(i, j);
@@ -199,6 +202,7 @@ class Pulay_Mixing : public Mixing
         }
         else
         {
+            beta(0,0) = inner_dot(FP_F, FP_F);
             coef[0] = 1.0;
         }
 

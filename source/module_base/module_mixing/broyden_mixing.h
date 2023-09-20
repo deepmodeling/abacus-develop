@@ -172,8 +172,11 @@ class Broyden_Mixing : public Mixing
                     {
                         beta_tmp(i, j) = beta(i, j);
                     }
-                    FPTYPE* dFj = FP_dF + j * length;
-                    beta(i, j) = beta_tmp(i, j) = inner_dot(dFi, dFj);
+                    else
+                    {
+                        FPTYPE* dFj = FP_dF + j * length;
+                        beta(i, j) = beta_tmp(i, j) = inner_dot(dFi, dFj);
+                    }
                     if (j != i)
                     {
                         beta_tmp(j, i) = beta_tmp(i, j);
@@ -227,6 +230,7 @@ class Broyden_Mixing : public Mixing
         }
         else
         {
+            beta(0,0) = inner_dot(FP_dF, FP_dF);
             coef[0] = 1.0;
         }
 
