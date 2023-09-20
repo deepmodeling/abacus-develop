@@ -59,9 +59,10 @@ class Mixing_Data
      * @brief reset mixing
      *
      */
-    void reset_mixing()
+    void reset()
     {
         this->ndim_use = 0;
+        this->ndim_history = 0;
         this->start = -1;
     }
 

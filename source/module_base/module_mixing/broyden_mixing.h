@@ -45,6 +45,12 @@ class Broyden_Mixing : public Mixing
         if (dF != nullptr)
             free(dF);
     };
+    virtual void reset() override
+    {
+        this->ndim_cal_dF = 0;
+        this->start_dF = -1;
+        this->address = nullptr;
+    }
     virtual void push_data(Mixing_Data& mdata,
                            const double* data_in,
                            const double* data_out,
