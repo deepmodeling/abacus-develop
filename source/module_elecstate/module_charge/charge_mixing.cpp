@@ -39,7 +39,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
     else if(this->mixing_mode == "pulay")
     {
-    	this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim);
+    	this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else
     {

@@ -23,9 +23,11 @@ namespace Base_Mixing
 class Pulay_Mixing : public Mixing
 {
   public:
-    Pulay_Mixing(const int& mixing_ndim)
+    Pulay_Mixing(const int& mixing_ndim, const double& mixing_beta)
     {
         this->mixing_ndim = mixing_ndim;
+        this->data_ndim = mixing_ndim;
+        this->mixing_beta = mixing_beta;
         this->coef = std::vector<double>(mixing_ndim);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
     }
@@ -109,27 +111,15 @@ class Pulay_Mixing : public Mixing
             // allocate
             if (F != nullptr)
                 free(F);
-            F = malloc(sizeof(FPTYPE) * length);
+            F = malloc(sizeof(FPTYPE) * length * mixing_ndim);
             FP_F = static_cast<FPTYPE*>(F);
 
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                FP_F[i] = F_tmp[i];
-            }
+            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F, length);
         }
         else
         {
-            const int previous = mdata.index_move(-1);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                FP_F[i] = F_tmp[i];
-            }
+            start_F = (this->start_F + 1) % this->mixing_ndim;
+            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F + start_F * length, length);
         }
     };
 
@@ -143,67 +133,96 @@ class Pulay_Mixing : public Mixing
                 "Mixing",
                 "One Mixing object can only bind one Mixing_Data object to calculate coefficients");
         const int length = mdata.length;
-        const int start = mdata.start;
         FPTYPE* FP_F = static_cast<FPTYPE*>(F);
-        if (mdata.ndim_previous > 0)
+        // std::cout << 1 << std::endl;
+        std::cout << "ndim_use    " << mdata.ndim_use << std::endl;
+        std::cout << "ndim_tot    " << mdata.ndim_tot << std::endl;
+
+        if (mdata.ndim_use > 1)
         {
-            const int ndim_previous = mdata.ndim_previous;
-            ModuleBase::matrix beta_tmp(ndim_previous, ndim_previous);
+		    std::cout << "beta" << std::endl;
+            const int ndim_use = mdata.ndim_use;
+            ModuleBase::matrix beta_tmp(ndim_use, ndim_use);
             //beta(i, j) = <F_i, F_j>
-            for (int i = 0; i < ndim_previous; ++i)
+            for (int i = 0; i < ndim_use; ++i)
             {
                 FPTYPE* Fi = FP_F + i * length;
-                for (int j = i; j < ndim_previous; ++j)
+                for (int j = i; j < ndim_use; ++j)
                 {
-                    if (i < ndim_previous - 1 && j < ndim_previous - 1)
+                    if (i < ndim_use - 1 && j < ndim_use - 1)
                     {
                         beta_tmp(i, j) = beta(i, j);
                     }
                     FPTYPE* Fj = FP_F + j * length;
                     beta(i, j) = beta_tmp(i, j) = inner_dot(Fi, Fj);
+				    std::cout << beta(i,j) << "\t";
                     if (j != i)
                     {
                         beta(j, i) = beta_tmp(j, i) = beta_tmp(i, j);
                     }
                 }
+			    std::cout << "\n";
             }
-            double* work = new double[ndim_previous];
-            int* iwork = new int[ndim_previous];
+			std::cout << "\n";
+
+        // std::cout << 2 << std::endl;
+
+            double* work = new double[ndim_use];
+            int* iwork = new int[ndim_use];
             char uu = 'U';
             int info;
-            dsytrf_(&uu, &ndim_previous, beta_tmp.c, &ndim_previous, iwork, work, &ndim_previous, &info);
+            dsytrf_(&uu, &ndim_use, beta_tmp.c, &ndim_use, iwork, work, &ndim_use, &info);
             if (info != 0)
                 ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
-            dsytri_(&uu, &ndim_previous, beta_tmp.c, &ndim_previous, iwork, work, &info);
+            dsytri_(&uu, &ndim_use, beta_tmp.c, &ndim_use, iwork, work, &info);
             if (info != 0)
                 ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYTRI beta.");
-            for (int i = 0; i < ndim_previous; ++i)
+            for (int i = 0; i < ndim_use; ++i)
             {
-                for (int j = i + 1; j < ndim_previous; ++j)
+                for (int j = i + 1; j < ndim_use; ++j)
                 {
                     beta_tmp(i, j) = beta_tmp(j, i);
                 }
             }
+
+		    std::cout << "beta^-1" << std::endl;
+            for (int i = 0; i < ndim_use; ++i)
+            {
+                for (int j = i; j < ndim_use; ++j)
+                {
+				    std::cout << beta_tmp(i,j) << "\t";
+                }
+			    std::cout << "\n";
+            }
+			std::cout << "\n";
+
             // coef{i} = \sum_j beta{ij} / \sum_k \sum_j beta{kj} 
             double sum_beta = 0.;
-            for (int i = 0; i < ndim_previous; ++i)
+            for (int i = 0; i < ndim_use; ++i)
             {
-                for (int j = 0; j < ndim_previous; ++j)
+                for (int j = 0; j < ndim_use; ++j)
                 {
                     sum_beta += beta_tmp(j, i);
                 }
             }
-            for (int i = 0; i < ndim_previous; ++i)
+            std::cout << "sum_beta    " << sum_beta << std::endl;
+
+    		std::cout << "alpha" << std::endl;
+            for (int i = 0; i < ndim_use; ++i)
             {
                 coef[i] = 0.;
-                for (int j = 0; j < ndim_previous; ++j)
+                for (int j = 0; j < ndim_use; ++j)
                 {
                     coef[i] += beta_tmp(i,j);
                 }
                 coef[i] /= sum_beta;
+                std::cout << coef[i] << "\t";
             }
+			std::cout << "\n";
             delete[] work;
             delete[] iwork;
+        // std::cout << 3 << std::endl;
+
         }
         else
         {
@@ -219,6 +238,10 @@ class Pulay_Mixing : public Mixing
     Mixing_Data* address = nullptr;
     // beta_ij = <F_i, F_j>
     ModuleBase::matrix beta;
+    // mixing_ndim = data_ndim - 1
+    int mixing_ndim = -1;
+    // start index for F
+    int start_F = 0;
 };
 }
 #endif
