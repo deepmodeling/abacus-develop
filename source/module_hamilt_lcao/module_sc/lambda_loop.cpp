@@ -178,7 +178,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             {
                 std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
             }
-            add_scalar_multiply_2d(initial_lambda, delta_lambda_inside_loop, 1.0, this->lambda_);
+            //add_scalar_multiply_2d(initial_lambda, delta_lambda_inside_loop, 1.0, this->lambda_);
             goto CG_STOP;
         }
 

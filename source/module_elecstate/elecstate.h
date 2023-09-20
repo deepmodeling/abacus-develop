@@ -160,7 +160,7 @@ class ElecState
 
     void print_eigenvalue(std::ofstream& ofs);
 
-  protected:
+  public:
     // calculate ebands for all k points and all occupied bands
     void calEBand();
 
