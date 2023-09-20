@@ -70,10 +70,10 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
     //--------------------------------------
     //-            PP_FULL_WFC             -
     //--------------------------------------
-    if (has_wfc)
-    {
-        this->read_pseudo_upf201_fullwfc(ifs);
-    }
+    // if (has_wfc)
+    // {
+    //     this->read_pseudo_upf201_fullwfc(ifs);
+    // }
 
     //--------------------------------------
     //-          PP_RHOATOM                -
