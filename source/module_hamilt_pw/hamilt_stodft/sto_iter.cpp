@@ -425,7 +425,7 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
     }
 }
 
-void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<double>* pHamilt, ModulePW::PW_Basis_K* wfc_basis)
+void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<std::complex<double>>* pHamilt, ModulePW::PW_Basis_K* wfc_basis)
 {  
     ModuleBase::TITLE("Stochastic_Iter","sum_stoband");
     ModuleBase::timer::tick("Stochastic_Iter","sum_stoband");

@@ -8,9 +8,9 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     this->has_so = false;
 
     this->nbeta = 0;
-    delete[] kkbeta;
+    delete[] kbeta;
     delete[] lll;
-    this->kkbeta = nullptr;
+    this->kbeta = nullptr;
     this->lll = nullptr;
     this->beta.create(1, 1);
     this->dion.create(1, 1);
@@ -122,10 +122,10 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
 //chi            -
 //rho_at         -
 
-//lll            -
-//kkbeta         -
-//beta           -
-//dion           -
+// lll            -
+// kbeta         -
+// beta           -
+// dion           -
 
 //nn             -
 //jchi           -

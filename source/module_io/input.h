@@ -71,6 +71,10 @@ class Input
     bool towannier90; // add by jingan for wannier90
     std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
+    bool out_wannier_mmn;  // add by renxi for wannier90
+    bool out_wannier_amn;
+    bool out_wannier_unk;
+    bool out_wannier_eig;
 
     //==========================================================
     // Stochastic DFT
@@ -257,7 +261,7 @@ class Input
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
-    bool out_wfc_lcao; // output the wave functions in local basis.
+    int out_wfc_lcao; // output the wave functions in local basis.
     bool out_alllog; // output all logs.
     bool out_element_info; // output infomation of all element
 

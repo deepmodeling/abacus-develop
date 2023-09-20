@@ -125,14 +125,14 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 	ModuleBase::GlobalFunc::ZEROS(rho_at, mesh);
 	ModuleBase::GlobalFunc::ZEROS(rho_atc, mesh);
 	// local variables in this function
-	this->vs = new double[mesh];
-	this->vp = new double[mesh];
-	this->vd = new double[mesh];
-	this->ws = new double[mesh];
-	this->wp = new double[mesh];
-	this->wd = new double[mesh];
-	ModuleBase::GlobalFunc::ZEROS(vs,mesh);
-	ModuleBase::GlobalFunc::ZEROS(vp,mesh);
+    double* vs = new double[mesh]; // local pseudopotential for s, unit is Hartree
+    double* vp = new double[mesh]; // local pseudopotential for p
+    double* vd = new double[mesh]; // local pseudopotential for d
+    double* ws = new double[mesh]; // wave function for s
+    double* wp = new double[mesh]; // wave function for p
+    double* wd = new double[mesh]; // wave function for d
+    ModuleBase::GlobalFunc::ZEROS(vs, mesh);
+    ModuleBase::GlobalFunc::ZEROS(vp,mesh);
 	ModuleBase::GlobalFunc::ZEROS(vd,mesh);
 	ModuleBase::GlobalFunc::ZEROS(ws,mesh);
 	ModuleBase::GlobalFunc::ZEROS(wp,mesh);
@@ -292,15 +292,15 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 	{
 		GlobalV::ofs_running << " lll[" << i << "]=" << lll[i] << std::endl;
 	}
-	// kkbeta(nbeta): number of mesh points for projector i (must be .le.mesh )
-	delete[] kkbeta;
-	kkbeta = new int[nbeta];
-	for(int ib=0; ib<nbeta; ++ib)
-	{
-		kkbeta[ib] = mesh;
-	}
-	// nonlocal projector
-	beta.create(nbeta,mesh);
+    // kbeta(nbeta): number of mesh points for projector i (must be .le.mesh )
+    delete[] kbeta;
+    kbeta = new int[nbeta];
+    for (int ib = 0; ib < nbeta; ++ib)
+    {
+        kbeta[ib] = mesh;
+    }
+    // nonlocal projector
+    beta.create(nbeta,mesh);
 	// coefficients
 	dion.create(nbeta,nbeta);
 

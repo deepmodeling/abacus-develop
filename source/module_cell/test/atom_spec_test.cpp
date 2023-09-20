@@ -67,7 +67,7 @@ TEST_F(AtomSpecTest, PrintAtom)
 	ofs.close();
 	ifs.open("tmp_atom_info");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-    	EXPECT_THAT(str, testing::HasSubstr("label = C"));
+	   	EXPECT_THAT(str, testing::HasSubstr("label = C"));
     	EXPECT_THAT(str, testing::HasSubstr("type = 1"));
     	EXPECT_THAT(str, testing::HasSubstr("na = 2"));
     	EXPECT_THAT(str, testing::HasSubstr("nwl = 2"));

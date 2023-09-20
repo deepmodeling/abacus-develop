@@ -126,12 +126,12 @@ struct lapack_dnevd {
      * 
      * @note For more information about the underlying implementations, refer to the provided API documentation.
      * @note The type of eigen_val is always real, even when the type of Mat is complex. So we use a struct
-     *      PossibleComplexToReal to convert the type of T to real: 
-     *      PossibleComplexToReal<std::complex<float>>::type = float
-     *      PossibleComplexToReal<std::complex<double>>::type = double
-     *      Otherwise, PossibleComplexToReal<T>::type = T
+     *      GetTypeReal to convert the type of T to real: 
+     *      GetTypeReal<std::complex<float>>::type = float
+     *      GetTypeReal<std::complex<double>>::type = double
+     *      Otherwise, GetTypeReal<T>::type = T
      */
-    using Real = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
         const char& uplo,
@@ -174,12 +174,12 @@ struct lapack_dngvd {
      * @note The leading dimension ldh should be at least max(1, nstart) for row-major storage and column-major storage.
      * @note The length of the A and B arrays should be at least nstart * ldh.
      * @note The type of eigen_val is always real, even when the type of Mat is complex. So we use a struct
-     *      PossibleComplexToReal to convert the type of T to real: 
-     *      PossibleComplexToReal<std::complex<float>>::type = float
-     *      PossibleComplexToReal<std::complex<double>>::type = double
-     *      Otherwise, PossibleComplexToReal<T>::type = T
+     *      GetTypeReal to convert the type of T to real: 
+     *      GetTypeReal<std::complex<float>>::type = float
+     *      GetTypeReal<std::complex<double>>::type = double
+     *      Otherwise, GetTypeReal<T>::type = T
      */
-    using Real = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& itype,
         const char& jobz,
