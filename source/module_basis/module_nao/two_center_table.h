@@ -9,7 +9,7 @@ class TwoCenterTable
 {
   public:
     TwoCenterTable() = default;
-    ~TwoCenterTable() = default;
+    ~TwoCenterTable() { delete[] rgrid_; }
 
     TwoCenterTable(const TwoCenterTable&) = delete;
     TwoCenterTable& operator=(const TwoCenterTable&) = delete;

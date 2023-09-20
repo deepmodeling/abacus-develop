@@ -203,7 +203,7 @@ namespace ModuleESolver
             this->pw_wfc->setuptransform();
             for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-            this->pw_wfc->collect_local_pw(); 
+            this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
             this->print_wfcfft(inp, GlobalV::ofs_running);
         //}
         // initialize the real-space uniform grid for FFT and parallel
@@ -225,13 +225,11 @@ namespace ModuleESolver
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
-
-
-            // ecutrho / 2 = ecutwfc * 2
-            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
             GlobalC::paw_cell.prepare_paw();
+            GlobalC::paw_cell.set_sij();
 
             GlobalC::paw_cell.set_eigts(
                 this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,

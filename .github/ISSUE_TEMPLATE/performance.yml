@@ -1,7 +1,7 @@
 name: Performance
 description: For users or developers to report software performance issues from a user perspective, such as slow response times, high resource usage, or scalability issues.
 labels: [Performance]
-assignees: dyzheng
+assignees: [insert assignee here]
 
 body:
 - type: textarea

@@ -225,7 +225,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pw_wfc->setuptransform();
         for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-        this->pw_wfc->collect_local_pw();
+        this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 
         delete this->phsol;
         this->phsol = new hsolver::HSolverPW<FPTYPE, Device>(this->pw_wfc, &this->wf);
@@ -251,15 +251,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         // temporary
         this->Init_GlobalC(inp, ucell);
     }
-    else if (GlobalV::md_prec_level == 1)
-    {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
-
-        this->wf.init_after_vc(this->kv.nks);
-        this->wf.init_at_1(&this->sf);
-    }
-    else if (GlobalV::md_prec_level == 0)
+    else
     {
         GlobalC::ppcell.init_vnl(GlobalC::ucell);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
@@ -270,7 +262,7 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                 this->pw_wfc->ny,
                                 this->pw_wfc->nz);
         this->pw_wfc->initparameters(false, INPUT.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
-        this->pw_wfc->collect_local_pw();
+        this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
         this->wf.init_after_vc(this->kv.nks);
         this->wf.init_at_1(&this->sf);
     }
@@ -278,12 +270,12 @@ void ESolver_KS_PW<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 #ifdef USE_PAW
     if(GlobalV::use_paw)
     {
-        // ecutrho / 2 = ecutwfc * 2
-        GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
+        GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                          this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
 
         GlobalC::paw_cell.prepare_paw();
+        GlobalC::paw_cell.set_sij();
     }
 #endif
 

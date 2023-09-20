@@ -5,6 +5,7 @@ Atom::Atom()
 {
     na = 0;
     label = "\0";
+    label_orb = "\0";
     nw = 0;
     nwl = 0;
     Rcut = 0.0; // pengfei Li 16-2-29

@@ -32,10 +32,6 @@ list(APPEND depend_files
   ../../module_base/global_variable.cpp
   ../../module_base/libm/branred.cpp
   ../../module_base/libm/sincos.cpp
-  ../../module_base/formatter_fmt.cpp
-  ../../module_base/formatter_physfmt.cpp
-  ../../module_base/formatter_table.cpp
-  ../../module_base/formatter_contextfmt.cpp
   ../../module_cell/module_neighbor/sltk_adjacent_set.cpp
   ../../module_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../module_cell/module_neighbor/sltk_atom.cpp
@@ -51,21 +47,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES lj_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES md_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
@@ -74,7 +70,7 @@ AddTest(
 
 AddTest(
   TARGET md_verlet
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
@@ -83,7 +79,7 @@ AddTest(
 
 AddTest(
   TARGET md_nhc
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
@@ -92,7 +88,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
@@ -101,7 +97,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs} psi device
+  LIBS ${math_libs} psi device formatter
   SOURCES langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp

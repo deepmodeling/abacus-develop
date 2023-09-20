@@ -74,7 +74,7 @@ TEST_F(ContextFmtTest, SetContext2) {
     nrow[1] = 2;
     nrow[2] = 4;
     context_fmt.set_context(3, physfmt, nrow);
-    EXPECT_EQ(context_fmt.get_context(), "none");
+    EXPECT_EQ(context_fmt.get_context(), "");
     EXPECT_EQ(context_fmt.get_ncol(), 3);
     EXPECT_EQ(context_fmt.get_phys_fmt().size(), 3);
     for (int i = 0; i < 3; ++i) {
@@ -94,7 +94,7 @@ TEST_F(ContextFmtTest, SetContext3) {
     physfmt.push_back("coordinate");
     physfmt.push_back("coordinate");
     context_fmt.set_context(physfmt);
-    EXPECT_EQ(context_fmt.get_context(), "none");
+    EXPECT_EQ(context_fmt.get_context(), "");
     EXPECT_EQ(context_fmt.get_ncol(), 3);
     EXPECT_EQ(context_fmt.get_phys_fmt().size(), 3);
     for (int i = 0; i < 3; ++i) {
@@ -165,13 +165,13 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2VecInt) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::vector<int> v2 = {4, 5, 6};
     std::vector<int> v3 = {7, 8, 9};
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::cout<<context_fmt.str()<<std::endl;
 }
 
@@ -182,13 +182,13 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2VecDouble) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::vector<double> v2 = {4.0, 5.0, 6.0};
     std::vector<double> v3 = {7.0, 8.0, 9.0};
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::cout<<context_fmt.str()<<std::endl;
 }
 
@@ -199,13 +199,13 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2VecString) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::vector<std::string> v2 = {"4", "5", "6"};
     std::vector<std::string> v3 = {"7", "8", "9"};
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::cout<<context_fmt.str()<<std::endl;
 }
 
@@ -223,7 +223,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrInt) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     int* v2 = new int[3];
     v2[0] = 4;
     v2[1] = 5;
@@ -235,7 +235,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrInt) {
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     delete[] v_nrows;
     delete[] v1;
     delete[] v2;
@@ -257,7 +257,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrDouble) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     double* v2 = new double[3];
     v2[0] = 4.;
     v2[1] = 5.;
@@ -269,7 +269,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrDouble) {
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     delete[] v_nrows;
     delete[] v1;
     delete[] v2;
@@ -291,7 +291,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrString) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     std::string* v2 = new std::string[3];
     v2[0] = "4";
     v2[1] = "5";
@@ -303,7 +303,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrString) {
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     delete[] v_nrows;
     delete[] v1;
     delete[] v2;
@@ -325,7 +325,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrChar) {
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     char* v2 = new char[3];
     v2[0] = '4';
     v2[1] = '5';
@@ -337,7 +337,7 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2PtrChar) {
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
-    EXPECT_EQ(context_fmt.get_title_switch()%2, 1);
+    EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
     delete[] v_nrows;
     delete[] v1;
     delete[] v2;
