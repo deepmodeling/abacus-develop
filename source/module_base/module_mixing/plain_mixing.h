@@ -22,6 +22,10 @@ class Plain_Mixing : public Mixing
 
     }
     virtual ~Plain_Mixing() override{};
+    virtual void reset() override
+    {
+        return;
+    }
     virtual void push_data(Mixing_Data& mdata,
                            const double* data_in,
                            const double* data_out,

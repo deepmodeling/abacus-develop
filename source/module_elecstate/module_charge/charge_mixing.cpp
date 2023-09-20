@@ -275,6 +275,14 @@ void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
     ModuleBase::timer::tick("Charge", "mix_rho");
+    
+    // reset mixing for a new step
+    if (iter == 1)
+    {
+        this->mixing->reset();
+        this->rho_mdata.reset();
+        this->tau_mdata.reset();
+    }
 
     // the charge before mixing.
     const int nrxx = this->rhopw->nrxx;

@@ -25,6 +25,7 @@ void Mixing_Data::resize(const int& ndim, const int& length, const size_t &type_
     this->data = malloc(ndim * length * type_size);
     this->start = -1;
     this->ndim_use = 0;
+    this->ndim_history = 0;
 }
 
 

@@ -124,7 +124,7 @@ class Mixing
      * @brief reset mixing
      *
      */
-    void reset();
+    virtual void reset() = 0;
 
   public:
     // mixing_beta from INPUT

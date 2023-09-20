@@ -45,6 +45,12 @@ class Broyden_Mixing : public Mixing
         if (dF != nullptr)
             free(dF);
     };
+    virtual void reset() override
+    {
+        this->ndim_cal_dF = 0;
+        this->start_dF = -1;
+        this->address = nullptr;
+    }
     virtual void push_data(Mixing_Data& mdata,
                            const double* data_in,
                            const double* data_out,
@@ -154,8 +160,8 @@ class Broyden_Mixing : public Mixing
         ModuleBase::timer::tick("Charge", "Broyden_mixing");
         if (address != &mdata && address != nullptr)
             ModuleBase::WARNING_QUIT(
-                "Mixing",
-                "One Mixing object can only bind one Mixing_Data object to calculate coefficients");
+                "Broyden_mixing",
+                "One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
         const int length = mdata.length;
         FPTYPE* FP_dF = static_cast<FPTYPE*>(dF);
         FPTYPE* FP_F = static_cast<FPTYPE*>(F);
