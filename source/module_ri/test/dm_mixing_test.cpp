@@ -1,231 +1,160 @@
-#include"gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "module_ri/Mix_Matrix.h"
+#include "gtest/gtest.h"
+#include "module_base/module_mixing/broyden_mixing.h"
 #include "module_ri/Mix_DMk_2D.h"
+#include "module_ri/Mix_Matrix.h"
 
-class Mock_Charge_Mixing
+/************************************************
+ *  unit test of charge_mixing.cpp & Mix_DMk_2D.cpp
+ ***********************************************/
+
+/**
+ * - Tested Functions:
+ *   - Mix_Matrix::mix:
+ *      mix the matrix data according to the set mixing mode.
+ *   - Mix_DMk_2D::mix:
+ *      mix the density matrix data according to the set mixing mode.
+ *
+ */
+
+class DM_Mixing_Test : public ::testing::Test
 {
-public:
-    MOCK_METHOD0(get_mixing_ndim, int());
-};
-
-enum class Mixing_Mode{No, Plain, Pulay};
-
-class Charge_Mixing_Helper
-{
-public:
-    Charge_Mixing_Helper(double mixing_beta, int mixing_ndim) :
-        mixing_beta(mixing_beta), mixing_ndim(mixing_ndim){}
-    ~Charge_Mixing_Helper() {}
-    double mixing_beta;
-    int mixing_ndim;
-    int get_mixing_ndim() const { return this->mixing_ndim; }
-};
-
-class DM_Mixing_Test : public testing::Test
-{
-protected:
-    int nbasis = 2;
-    int maxiter = 6;
-    // params for pulay mixing
-    double mixing_beta = 0.4;
-    int mixing_ndim = 4;
-    int dstep = 3;
-    double alpha[3] = {0.25, -0.5, 1 };
-
-    void init_test();
-
-    std::map<Mixing_Mode, std::vector<ModuleBase::matrix>> data_ref_double
-        = {std::make_pair(Mixing_Mode::No, std::vector<ModuleBase::matrix>{ ModuleBase::matrix(nbasis, nbasis)}),
-        std::make_pair(Mixing_Mode::Plain, std::vector<ModuleBase::matrix>{ ModuleBase::matrix(nbasis, nbasis)}),
-        std::make_pair(Mixing_Mode::Pulay, std::vector<ModuleBase::matrix>{ ModuleBase::matrix(nbasis, nbasis)})};
-     
-    std::map<Mixing_Mode, std::vector<ModuleBase::ComplexMatrix>> data_ref_complex
-        = { std::make_pair(Mixing_Mode::No, std::vector<ModuleBase::ComplexMatrix>{ ModuleBase::ComplexMatrix(nbasis, nbasis)}),
-        std::make_pair(Mixing_Mode::Plain, std::vector<ModuleBase::ComplexMatrix>{ ModuleBase::ComplexMatrix(nbasis, nbasis)}),
-        std::make_pair(Mixing_Mode::Pulay, std::vector<ModuleBase::ComplexMatrix>{ ModuleBase::ComplexMatrix(nbasis, nbasis)}) };
-
-    // for distinguishing different iters
-    ModuleBase::matrix mat1_double = ModuleBase::matrix(nbasis, nbasis);
-    ModuleBase::ComplexMatrix mat1_complex = ModuleBase::ComplexMatrix(nbasis, nbasis);
-
-    // for class Mix_Matrix
-    Mix_Matrix<ModuleBase::matrix> mix_data_double;
-    Mix_Matrix<ModuleBase::ComplexMatrix> mix_data_complex;
-
-    // for pulay mixing
-    std::vector<ModuleBase::matrix> simplemix_double;
-    std::vector<ModuleBase::ComplexMatrix> simplemix_complex;
-};
-
-void DM_Mixing_Test::init_test()
-{
-    // set mixing_beta
-    this->mix_data_double.mixing_beta = this->mixing_beta;
-    this->mix_data_complex.mixing_beta = this->mixing_beta;
-    // allocate memory for each iter
-    for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
+  public:
+    DM_Mixing_Test()
     {
-        this->data_ref_double[mode].resize(this->maxiter);
-        this->data_ref_double[mode][0] = ModuleBase::matrix(nbasis, nbasis);
-        this->data_ref_complex[mode].resize(this->maxiter);
-        this->data_ref_complex[mode][0] = ModuleBase::ComplexMatrix(nbasis, nbasis);
-        for (int i = 0;i < nbasis;++i)
+        mixing = new Base_Mixing::Broyden_Mixing(ndim, mixing_beta);
+        mix_data = std::vector<ModuleBase::matrix>(2);
+        mix_complexdata = std::vector<ModuleBase::ComplexMatrix>(3);
+        mix_data[0].create(nr, nc);
+        mix_data[1].create(nr, nc);
+        for (int i = 0; i < nr; ++i)
         {
-            for(int j=0;j<nbasis;++j)
+            for (int j = 0; j < nc; ++j)
             {
-                this->data_ref_double[mode][0](i, j) = 0.1 * (i * nbasis + j + 1);
-                this->data_ref_complex[mode][0](i, j) = std::complex<double>(0.1 * (i * nbasis + j + 1), -0.1 * (i * nbasis + j + 1));
-                this->mat1_double(i, j) = 0.01;
-                this->mat1_complex(i, j) = std::complex<double>(0.01, -0.01);
+                mix_data[0](i, j) = i * nc + j;
+                mix_data[1](i, j) = i * nc + j + 0.2;
             }
         }
-    }
-    
-    // init data_ref
-    for (int iter = 1;iter < this->maxiter;++iter)
-    {
-        ModuleBase::matrix& dm_in_double = this->data_ref_double[Mixing_Mode::No][iter];
-        ModuleBase::ComplexMatrix& dm_in_complex = this->data_ref_complex[Mixing_Mode::No][iter];
-
-        // No: dm_in for each iter
-        dm_in_double = this->data_ref_double[Mixing_Mode::No][iter - 1] + mat1_double;
-        dm_in_complex = this->data_ref_complex[Mixing_Mode::No][iter - 1] + mat1_complex;
-        // Plain: beta*dm_in + (1-beta)*dm_out for each iter
-        this->data_ref_double[Mixing_Mode::Plain][iter] = dm_in_double * this->mixing_beta
-            + (1 - this->mixing_beta) * this->data_ref_double[Mixing_Mode::Plain][iter-1];
-        this->data_ref_complex[Mixing_Mode::Plain][iter] = dm_in_complex * this->mixing_beta
-            + (1 - this->mixing_beta) * this->data_ref_complex[Mixing_Mode::Plain][iter-1];
-        //Pulay: directly using alpha
-        this->simplemix_double.push_back(dm_in_double * this->mixing_beta
-            + (1 - this->mixing_beta) * this->data_ref_double[Mixing_Mode::Pulay][iter - 1]);
-        this->simplemix_complex.push_back(dm_in_complex * this->mixing_beta
-            + (1 - this->mixing_beta) * this->data_ref_complex[Mixing_Mode::Pulay][iter - 1]);
-        this->data_ref_double[Mixing_Mode::Pulay][iter] = this->simplemix_double[iter - 1];
-        this->data_ref_complex[Mixing_Mode::Pulay][iter] = this->simplemix_complex[iter - 1];
-        int mix_size = std::min(iter - 1, this->mixing_ndim);
-        int tmp_idstep = (iter + 1) % dstep;
-        for (int m = iter - 2;m > iter - 2 - mix_size;--m)
+        mix_complexdata[0].create(nr, nc);
+        mix_complexdata[1].create(nr, nc);
+        mix_complexdata[2].create(nr, nc);
+        for (int i = 0; i < nr; ++i)
         {
-            int alpha_index = (tmp_idstep + (dstep - mix_size)+ m ) % dstep;  // dstep = mixing_ndim -1
-            this->data_ref_double[Mixing_Mode::Pulay][iter] += this->alpha[alpha_index] * (this->simplemix_double[m + 1] - this->simplemix_double[m]);
-            this->data_ref_complex[Mixing_Mode::Pulay][iter] += this->alpha[alpha_index] * (this->simplemix_complex[m + 1] - this->simplemix_complex[m]);
+            for (int j = 0; j < nc; ++j)
+            {
+                mix_complexdata[0](i, j) = std::complex<double>{double(i), double(j)};
+                mix_complexdata[1](i, j) = std::complex<double>{double(i), double(j) + 0.2};
+                mix_complexdata[2](i, j) = std::complex<double>{double(i) + 0.8, double(j)};
+            }
+        }
+    };
+    ~DM_Mixing_Test()
+    {
+        delete mixing;
+    };
+    Base_Mixing::Mixing* mixing = nullptr;
+    const int nr = 2;
+    const int nc = 2;
+    const int ndim = 1;
+    const double mixing_beta = 0.3;
+
+  protected:
+    std::vector<ModuleBase::matrix> mix_data;
+    std::vector<ModuleBase::ComplexMatrix> mix_complexdata;
+};
+
+TEST_F(DM_Mixing_Test, Mix_Matrix)
+{
+    // Separete loop
+    Mix_Matrix<ModuleBase::matrix> mix_matrix;
+    mix_matrix.init(nullptr);
+    mix_matrix.mixing_beta = mixing_beta;
+    for (int istep = 0; istep < 2; ++istep)
+    {
+        mix_matrix.mix(mix_data[istep], (istep == 0));
+    }
+
+    ModuleBase::matrix data_out = mix_matrix.get_data_out();
+    for (int i = 0; i < nr; ++i)
+    {
+        for (int j = 0; j < nc; ++j)
+        {
+            EXPECT_DOUBLE_EQ(data_out(i, j), (1 - mixing_beta) * mix_data[0](i, j) + mixing_beta * mix_data[1](i, j));
+        }
+    }
+
+    // Broyden mix
+    Mix_Matrix<ModuleBase::ComplexMatrix> mix_complexmatrix;
+    mix_complexmatrix.init(mixing);
+    mixing->coef = {1.1, -0.1};
+    for (int istep = 0; istep < 3; ++istep)
+    {
+        mix_complexmatrix.mix(mix_complexdata[istep], (istep == 0));
+    }
+    ModuleBase::ComplexMatrix com_data_out = mix_complexmatrix.get_data_out();
+    for (int i = 0; i < nr; ++i)
+    {
+        for (int j = 0; j < nc; ++j)
+        {
+            std::complex<double> first_step_result
+                = (1 - mixing_beta) * mix_complexdata[0](i, j) + mixing_beta * mix_complexdata[1](i, j);
+            std::complex<double> second_step_result
+                = (1 - mixing_beta) * first_step_result + mixing_beta * mix_complexdata[2](i, j);
+            std::complex<double> ref = second_step_result * mixing->coef[1] + first_step_result * mixing->coef[0];
+            EXPECT_DOUBLE_EQ(com_data_out(i, j).real(), ref.real());
+            EXPECT_DOUBLE_EQ(com_data_out(i, j).imag(), ref.imag());
         }
     }
 }
 
-
-// for class Mixing_data
-TEST_F(DM_Mixing_Test, MixDataTest)
+TEST_F(DM_Mixing_Test, Mix_DMk_2D)
 {
-    this->init_test();
-
-    // init mock
-    Charge_Mixing_Helper chr_mix(mixing_beta, mixing_ndim);
-    Mock_Charge_Mixing mock_chr_mix;
-
-    EXPECT_CALL(mock_chr_mix, get_mixing_ndim()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_mixing_ndim));
-
-    //1. double
-    for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
+    //Gamma only
+    Mix_DMk_2D mix_dmk_gamma;
+    mix_dmk_gamma.set_nks(1, true);
+    mix_dmk_gamma.set_mixing(nullptr);
+    mix_dmk_gamma.set_mixing_beta(mixing_beta);
+    std::vector<std::vector<ModuleBase::matrix>> dm_gamma(2);
+    dm_gamma[0] = std::vector<ModuleBase::matrix>(1);
+    dm_gamma[0][0] = mix_data[0];
+    dm_gamma[1] = std::vector<ModuleBase::matrix>(1);
+    dm_gamma[1][0] = mix_data[1];
+    for (int istep = 0; istep < 2; ++istep)
     {
-        for (int iter = 1;iter < this->maxiter;++iter)
-        {
-            bool flag_restart = (iter == 1);
-            this->mix_data_double.mix(data_ref_double[Mixing_Mode::No][iter - 1], flag_restart);
-            ModuleBase::matrix data_out_double = mix_data_double.get_data_out();
-            for (int i = 0;i < nbasis;++i)
-                for (int j = 0;j < nbasis;++j)
-                    EXPECT_NEAR(data_out_double(i, j), data_ref_double[mode][iter - 1](i, j), 1e-8);
-        }
+        mix_dmk_gamma.mix(dm_gamma[istep], (istep == 0));
     }
-    // 2. complex
-    for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
+    std::vector<const ModuleBase::matrix*> dm_gamma_out = mix_dmk_gamma.get_DMk_gamma_out();
+    for (int i = 0; i < nr; ++i)
     {
-        for (int iter = 1;iter < this->maxiter;++iter)
+        for (int j = 0; j < nc; ++j)
         {
-            bool flag_restart = (iter == 1);
-            this->mix_data_complex.mix(data_ref_complex[Mixing_Mode::No][iter - 1], flag_restart);
-            ModuleBase::ComplexMatrix data_out_complex = mix_data_complex.get_data_out();
-            for (int i = 0;i < nbasis;++i)
-                for (int j = 0;j < nbasis;++j)
-                {
-                    EXPECT_NEAR(data_out_complex(i, j).real(), data_ref_complex[mode][iter - 1](i, j).real(), 1e-8);
-                    EXPECT_NEAR(data_out_complex(i, j).imag(), data_ref_complex[mode][iter - 1](i, j).imag(), 1e-8);
-                }
-                    
-        }
-    }
-    
-}
-
-TEST_F(DM_Mixing_Test, MixDMk2D)
-{
-    this->init_test();
-    
-    // init mock
-    Charge_Mixing_Helper chr_mix(mixing_beta, mixing_ndim);
-    Mock_Charge_Mixing mock_chr_mix;
-
-    EXPECT_CALL(mock_chr_mix, get_mixing_ndim()).WillRepeatedly(testing::Invoke(&chr_mix, &Charge_Mixing_Helper::get_mixing_ndim));
-    
-    //1. double
-    Mix_DMk_2D mix_dm_gamma_2d;
-    int nks = 1;
-    mix_dm_gamma_2d.set_nks(nks, true);
-
-    for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
-    {
-        mix_dm_gamma_2d.set_mixing_beta(this->mixing_beta);
-        for (int iter = 1;iter < this->maxiter;++iter)
-        {
-
-            std::vector<ModuleBase::matrix> dm_gamma_in(nks);
-            for (int ik = 0;ik < nks;++ik) dm_gamma_in[ik] = this->data_ref_double[Mixing_Mode::No][iter-1];
-
-            bool flag_restart = (iter == 1);
-            mix_dm_gamma_2d.mix(dm_gamma_in, flag_restart);
-            
-            std::vector<const ModuleBase::matrix*> dm_gamma_out = mix_dm_gamma_2d.get_DMk_gamma_out();
-            for (int ik = 0;ik < nks;++ik)
-                for (int i = 0;i < nbasis;++i)
-                    for (int j = 0;j < nbasis;++j)
-                        EXPECT_NEAR((*dm_gamma_out[ik])(i, j), data_ref_double[mode][iter - 1](i, j), 1e-8);
+            EXPECT_DOUBLE_EQ(dm_gamma_out[0][0](i, j), (1 - mixing_beta) * mix_data[0](i, j) + mixing_beta * mix_data[1](i, j));
         }
     }
 
-    //2. complex
-    Mix_DMk_2D mix_dm_k_2d;
-    nks = 2;
-    mix_dm_k_2d.set_nks(nks, false);
-
-    for (auto mode : { Mixing_Mode::No, Mixing_Mode::Plain, Mixing_Mode::Pulay })
+    // not Gamma only
+    Mix_DMk_2D mix_dmk;
+    mix_dmk.set_nks(1, false);
+    mix_dmk.set_mixing(nullptr);
+    mix_dmk.set_mixing_beta(mixing_beta);
+    std::vector<std::vector<ModuleBase::ComplexMatrix>> dm(2);
+    dm[0] = std::vector<ModuleBase::ComplexMatrix>(1);
+    dm[0][0] = mix_complexdata[0];
+    dm[1] = std::vector<ModuleBase::ComplexMatrix>(1);
+    dm[1][0] = mix_complexdata[1];
+    for (int istep = 0; istep < 2; ++istep)
     {
-        mix_dm_k_2d.set_mixing_beta(this->mixing_beta);
-        for (int iter = 1;iter < this->maxiter;++iter)
+        mix_dmk.mix(dm[istep], (istep == 0));
+    }
+    std::vector<const ModuleBase::ComplexMatrix*> dm_out = mix_dmk.get_DMk_k_out();
+    for (int i = 0; i < nr; ++i)
+    {
+        for (int j = 0; j < nc; ++j)
         {
-
-            std::vector<ModuleBase::ComplexMatrix> dm_k_in(nks);
-            for (int ik = 0;ik < nks;++ik) dm_k_in[ik] = this->data_ref_complex[Mixing_Mode::No][iter - 1];
-
-            bool flag_restart = (iter == 1);
-            mix_dm_k_2d.mix(dm_k_in, flag_restart);
-
-            std::vector<const ModuleBase::ComplexMatrix*> dm_k_out = mix_dm_k_2d.get_DMk_k_out();
-            for (int ik = 0;ik < nks;++ik)
-                for (int i = 0;i < nbasis;++i)
-                    for (int j = 0;j < nbasis;++j)
-                    {
-                        EXPECT_NEAR((*dm_k_out[ik])(i, j).real(), data_ref_complex[mode][iter - 1](i, j).real(), 1e-8);
-                        EXPECT_NEAR((*dm_k_out[ik])(i, j).imag(), data_ref_complex[mode][iter - 1](i, j).imag(), 1e-8);
-                    }
+            std::complex<double> first_step_result
+                = (1 - mixing_beta) * mix_complexdata[0](i, j) + mixing_beta * mix_complexdata[1](i, j);
+            EXPECT_DOUBLE_EQ(dm_out[0][0](i, j).real(), first_step_result.real());
+            EXPECT_DOUBLE_EQ(dm_out[0][0](i, j).imag(), first_step_result.imag());
         }
     }
-
-}
-
-int main(int argc, char** argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

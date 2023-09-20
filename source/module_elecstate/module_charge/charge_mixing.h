@@ -55,13 +55,13 @@ class Charge_Mixing
     //======================================
     // General parameters
     //======================================
-    std::string mixing_mode;
-    double mixing_beta;
-    int mixing_ndim;
-    double mixing_gg0; // mohan add 2014-09-27
-    bool mixing_tau;
+    std::string mixing_mode = "broyden";
+    double mixing_beta = 0.7;
+    int mixing_ndim = 8;
+    double mixing_gg0 = 0.0; // mohan add 2014-09-27
+    bool mixing_tau = false;
 
-    bool new_e_iteration;
+    bool new_e_iteration = true;
 
     ModulePW::PW_Basis* rhopw = nullptr;
     bool autoset = false;
