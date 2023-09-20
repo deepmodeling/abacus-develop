@@ -2628,7 +2628,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Bool
 - **Description**: write the "*.mmn" file or not.
   - 0: don't write the "*.mmn" file.
-  - 1: write the "*.amn" file.
+  - 1: write the "*.mmn" file.
 - **Default**: 1
 
 ### out_wannier_amn
