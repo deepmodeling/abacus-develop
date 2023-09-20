@@ -284,6 +284,10 @@
     - [towannier90](#towannier90)
     - [nnkpfile](#nnkpfile)
     - [wannier\_spin](#wannier_spin)
+    - [out\_wannier\_mmn](#out_wannier_mmn)
+    - [out\_wannier\_amn](#out_wannier_amn)
+    - [out\_wannier\_eig](#out_wannier_eig)
+    - [out\_wannier\_unk](#out_wannier_unk)
   - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
@@ -2618,6 +2622,38 @@ These variables are used to control berry phase and wannier90 interface paramete
   - "up": Calculate spin up for the Wannier function.
   - "down": Calculate spin down for the Wannier function.
 - **Default**: "up"
+
+### out_wannier_mmn
+
+- **Type**: Bool
+- **Description**: write the "*.mmn" file or not.
+  - 0: don't write the "*.mmn" file.
+  - 1: write the "*.amn" file.
+- **Default**: 1
+
+### out_wannier_amn
+
+- **Type**: Bool
+- **Description**: write the "*.amn" file or not.
+  - 0: don't write the "*.amn" file.
+  - 1: write the "*.amn" file.
+- **Default**: 1
+
+### out_wannier_eig
+
+- **Type**: Bool
+- **Description**: write the "*.eig" file or not.
+  - 0: don't write the "*.eig" file.
+  - 1: write the "*.eig" file.
+- **Default**: 1
+
+### out_wannier_unk
+
+- **Type**: Bool
+- **Description**: write the "*.UNK" file or not.
+  - 0: don't write the "*.UNK" file.
+  - 1: write the "*.UNK" file.
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 
