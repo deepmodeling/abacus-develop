@@ -167,8 +167,10 @@ class Paw_Cell
     void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
 
     void set_dij(const int iat, double* dij_in){paw_atom_list[iat].set_dij(dij_in);}
+    void set_dij();
 
     void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
+    void set_sij();
 
 // Part III. Passing info for the initialization of PAW
     // The following gathers information needed by LibPAW, they will be inserted
@@ -249,6 +251,7 @@ class Paw_Cell
     void get_nhat(double** nhat, double* nhatgr);
     void calculate_dij(double* vks, double* vxc);
     void get_dij(int iat, int size_dij, double* dij);
+    void get_sij(int iat, int size_sij, double* sij);
 };
 
 namespace GlobalC
