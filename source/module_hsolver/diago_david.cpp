@@ -11,6 +11,10 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/memory.h"
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
+
 using namespace hsolver;
 
 template <typename FPTYPE, typename Device> DiagoDavid<FPTYPE, Device>::DiagoDavid(const FPTYPE* precondition_in)
@@ -125,7 +129,17 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
 
     for (int m = 0; m < this->n_band; m++)
     {
-        phm_in->sPsi(&psi(m, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+        if(GlobalV::use_paw)
+        {
+#ifdef USE_PAW
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&psi(m, 0)),
+                reinterpret_cast<std::complex<double>*>(&this->sphi[m * this->dim]));
+#endif
+        }
+        else
+        {
+            phm_in->sPsi(&psi(m, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+        }
     }
     // begin SchmitOrth
     for (int m = 0; m < this->n_band; m++)
@@ -141,8 +155,17 @@ void DiagoDavid<FPTYPE, Device>::diag_mock(hamilt::Hamilt<FPTYPE, Device>* phm_i
                          &this->lagrange_matrix[m * this->n_band],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-
-        phm_in->sPsi(&basis(m, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+        if(GlobalV::use_paw)
+        {
+#ifdef USE_PAW
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&basis(m, 0)),
+                reinterpret_cast<std::complex<double>*>(&this->sphi[m * this->dim]));
+#endif
+        }
+        else
+        {
+            phm_in->sPsi(&basis(m, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+        }
     }
 
     // end of SchmitOrth and calculate H|psi>
@@ -435,7 +458,17 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
     this->planSchmitOrth(notconv, pre_matrix_mm_m.data(), pre_matrix_mv_m.data());
     for (int m = 0; m < notconv; m++)
     {
-        phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
+        if(GlobalV::use_paw)
+        {
+#ifdef USE_PAW
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&basis(nbase + m, 0)),
+                reinterpret_cast<std::complex<double>*>(&sphi[(nbase + m) * this->dim]));
+#endif
+        }
+        else
+        {
+            phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
+        }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
 
@@ -468,7 +501,17 @@ void DiagoDavid<FPTYPE, Device>::cal_grad(hamilt::Hamilt<FPTYPE, Device>* phm_in
                          &lagrange[m * (nbase + notconv)],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-        phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
+        if(GlobalV::use_paw)
+        {
+#ifdef USE_PAW
+            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&basis(nbase + m, 0)),
+                reinterpret_cast<std::complex<double>*>(&sphi[(nbase + m) * this->dim]));
+#endif
+        }
+        else
+        {
+            phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
+        }
     }
     // calculate H|psi> for not convergence bands
     hpsi_info dav_hpsi_in(&basis,
