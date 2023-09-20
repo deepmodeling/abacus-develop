@@ -2,9 +2,11 @@
 #define RELAX_DRIVER_H
 
 #include "module_esolver/esolver.h"
+#include "module_esolver/esolver_ks.h"
 #include "relax_new/relax.h"
 #include "relax_old/relax_old.h"
 
+template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Relax_Driver
 {
 
