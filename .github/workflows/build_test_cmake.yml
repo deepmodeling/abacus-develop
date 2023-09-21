@@ -17,7 +17,7 @@ jobs:
           build_args: ""
           name: "Build with GNU compilers"
         - tag: gnu
-          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
+          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1 -DENABLE_PAW=1"
           name: "Build with GNU compilers and extra components"
         - tag: intel
           build_args: "-DENABLE_PAW=1"
@@ -32,7 +32,7 @@ jobs:
           build_args: "-DENABLE_MPI=0"
           name: "Build with Intel compilers without LCAO and MPI"
         - tag: gnu
-          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1 -DUSE_ELPA=0"
+          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1 -DUSE_ELPA=0 -DENABLE_PAW=1"
           name: "Build with GNU compilers and extra components without ELPA"
         - tag: gnu
           build_args: "-DENABLE_MPI=0"
