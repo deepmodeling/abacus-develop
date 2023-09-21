@@ -338,6 +338,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     CMtest_recip.set_rhopw(&pw_basis);
     GlobalV::SCF_THR_TYPE = 1;
     CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_recip.mix_reset();
     for(int i = 0 ; i < nspin * npw; ++i)
     {
         charge._space_rhog[i] = recip_ref[i];
@@ -364,9 +365,10 @@ TEST_F(ChargeMixingTest, MixRhoTest)
 
     // REAL
     Charge_Mixing CMtest_real;
-    CMtest_real.set_rhopw(&pw_basis);
+    CMtest_recip.mix_reset();
     GlobalV::SCF_THR_TYPE = 2;
     CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_real.set_rhopw(&pw_basis);
     for(int i = 0 ; i < nspin * nrxx; ++i)
     {
         charge._space_rho[i] = real_ref[i];
