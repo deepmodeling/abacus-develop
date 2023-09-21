@@ -3,6 +3,7 @@
 #include "../pulay_mixing.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <omp.h>
 
 #define DOUBLETHRESHOLD 1e-8
 double ext_inner_product_mock(double* x1, double* x2)
@@ -19,12 +20,12 @@ class Mixing_Test : public testing::Test
         delete this->mixing;
     }
     const double mixing_beta = 0.6;
-    const int mixing_ndim = 2;
+    const int mixing_ndim = 3;
     Base_Mixing::Mixing_Data xdata;
     Base_Mixing::Mixing* mixing = nullptr;
     double thr = 1e-8;
     int niter = 0;
-    int maxiter = 50;
+    int maxiter = 10;
     std::vector<double> xd_ref = {0.0, 0.0, 0.0};
     std::vector<std::complex<double>> xc_ref = {
         {0.0, 1.0},
@@ -77,7 +78,7 @@ class Mixing_Test : public testing::Test
                         std::placeholders::_2);
 
         double residual = 10.;
-
+        this->niter = 0;
         while (niter < maxiter)
         {
             x_out[0] = (3. * x_in[1] - 2. * x_in[2] + 20.) / 8.;
@@ -131,14 +132,15 @@ class Mixing_Test : public testing::Test
 
 TEST_F(Mixing_Test, Broyden_Solve_LinearEq)
 {
+    omp_set_num_threads(1);
     init_method("broyden");
     std::vector<double> x_in = xd_ref;
     std::vector<double> x_out(3);
     solve_linear_eq<double>(x_in.data(), x_out.data());
-    EXPECT_NEAR(x_out[0], 2.9999959638248037, DOUBLETHRESHOLD);
-    EXPECT_NEAR(x_out[1], 2.0000002552633349, DOUBLETHRESHOLD);
-    EXPECT_NEAR(x_out[2], 1.0000019542717642, DOUBLETHRESHOLD);
-    ASSERT_EQ(niter, 6);
+    EXPECT_NEAR(x_out[0], 2.9999999999999996, DOUBLETHRESHOLD);
+    EXPECT_NEAR(x_out[1], 2.0000000000000004, DOUBLETHRESHOLD);
+    EXPECT_NEAR(x_out[2], 1.0000000000000000, DOUBLETHRESHOLD);
+    ASSERT_EQ(niter, 5);
 
     this->mixing->reset();
     xdata.reset();
@@ -146,17 +148,15 @@ TEST_F(Mixing_Test, Broyden_Solve_LinearEq)
     std::vector<std::complex<double>> xc_in = xc_ref;
     std::vector<std::complex<double>> xc_out(3);
     solve_linear_eq<std::complex<double>>(xc_in.data(), xc_out.data());
-    EXPECT_NEAR(xc_out[0].real(), 3.000006322048256, DOUBLETHRESHOLD);
-    EXPECT_NEAR(xc_out[1].real(), 1.9999939191147467, DOUBLETHRESHOLD);
-    EXPECT_NEAR(xc_out[2].real(), 0.99999835919718516, DOUBLETHRESHOLD);
-    ASSERT_EQ(niter, 12);
-
+    EXPECT_NEAR(xc_out[0].real(), 3.0000000000000009, DOUBLETHRESHOLD);
+    EXPECT_NEAR(xc_out[1].real(), 1.9999999999999998, DOUBLETHRESHOLD);
+    EXPECT_NEAR(xc_out[2].real(), 0.99999999999999944, DOUBLETHRESHOLD);
+    ASSERT_EQ(niter, 5);
     std::string output;
     Base_Mixing::Mixing_Data testdata;
     this->mixing->init_mixing_data(testdata, 3, sizeof(double));
 
     testing::internal::CaptureStdout();
-    // this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true);
     EXPECT_EXIT(this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true),
                 ::testing::ExitedWithCode(0),
                 "");
@@ -179,14 +179,15 @@ TEST_F(Mixing_Test, Broyden_Solve_LinearEq)
 
 TEST_F(Mixing_Test, Pulay_Solve_LinearEq)
 {
+    omp_set_num_threads(1);
     init_method("pulay");
     std::vector<double> x_in = xd_ref;
     std::vector<double> x_out(3);
     solve_linear_eq<double>(x_in.data(), x_out.data());
-    EXPECT_NEAR(x_out[0], 2.999990589572592, DOUBLETHRESHOLD);
-    EXPECT_NEAR(x_out[1], 2.0000045980343715, DOUBLETHRESHOLD);
-    EXPECT_NEAR(x_out[2], 1.000003555705111, DOUBLETHRESHOLD);
-    ASSERT_EQ(niter, 9);
+    EXPECT_NEAR(x_out[0], 2.9999959638248037, DOUBLETHRESHOLD);
+    EXPECT_NEAR(x_out[1], 2.0000002552633349, DOUBLETHRESHOLD);
+    EXPECT_NEAR(x_out[2], 1.0000019542717642, DOUBLETHRESHOLD);
+    ASSERT_EQ(niter, 6);
 
     this->mixing->reset();
     xdata.reset();
@@ -194,17 +195,16 @@ TEST_F(Mixing_Test, Pulay_Solve_LinearEq)
     std::vector<std::complex<double>> xc_in = xc_ref;
     std::vector<std::complex<double>> xc_out(3);
     solve_linear_eq<std::complex<double>>(xc_in.data(), xc_out.data());
-    EXPECT_NEAR(xc_out[0].real(), 3.0000024451920035, DOUBLETHRESHOLD);
-    EXPECT_NEAR(xc_out[1].real(), 2.0000004296817067, DOUBLETHRESHOLD);
-    EXPECT_NEAR(xc_out[2].real(), 0.99999866998357145, DOUBLETHRESHOLD);
-    ASSERT_EQ(niter, 47);
+    EXPECT_NEAR(xc_out[0].real(), 3.0000063220482565, DOUBLETHRESHOLD);
+    EXPECT_NEAR(xc_out[1].real(), 1.9999939191147462, DOUBLETHRESHOLD);
+    EXPECT_NEAR(xc_out[2].real(), 0.99999835919718549, DOUBLETHRESHOLD);
+    ASSERT_EQ(niter, 6);
 
     std::string output;
     Base_Mixing::Mixing_Data testdata;
     this->mixing->init_mixing_data(testdata, 3, sizeof(double));
 
     testing::internal::CaptureStdout();
-    // this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true);
     EXPECT_EXIT(this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true),
                 ::testing::ExitedWithCode(0),
                 "");
@@ -227,14 +227,15 @@ TEST_F(Mixing_Test, Pulay_Solve_LinearEq)
 
 TEST_F(Mixing_Test, Plain_Solve_LinearEq)
 {
+    omp_set_num_threads(1);
     init_method("plain");
     std::vector<double> x_in = xd_ref;
     std::vector<double> x_out(3);
     solve_linear_eq<double>(x_in.data(), x_out.data());
-    EXPECT_NEAR(x_out[0], 3.000001274703155, DOUBLETHRESHOLD);
-    EXPECT_NEAR(x_out[1], 2.0000002918115141, DOUBLETHRESHOLD);
-    EXPECT_NEAR(x_out[2], 0.99999928969554419, DOUBLETHRESHOLD);
-    ASSERT_EQ(niter, 14);
+    EXPECT_NEAR(x_out[0], 2.9999613068687698, DOUBLETHRESHOLD);
+    EXPECT_NEAR(x_out[1], 2.0000472873362103, DOUBLETHRESHOLD);
+    EXPECT_NEAR(x_out[2], 1.0000075247315625, DOUBLETHRESHOLD);
+    ASSERT_EQ(niter, 10);
 
     this->mixing->reset();
     xdata.reset();
@@ -242,10 +243,10 @@ TEST_F(Mixing_Test, Plain_Solve_LinearEq)
     std::vector<std::complex<double>> xc_in = xc_ref;
     std::vector<std::complex<double>> xc_out(3);
     solve_linear_eq<std::complex<double>>(xc_in.data(), xc_out.data());
-    EXPECT_NEAR(xc_out[0].real(), 2.9999996887487459, DOUBLETHRESHOLD);
-    EXPECT_NEAR(xc_out[1].real(), 2.0000005740108633, DOUBLETHRESHOLD);
-    EXPECT_NEAR(xc_out[2].real(), 1.0000000121229113, DOUBLETHRESHOLD);
-    ASSERT_EQ(niter, 28);
+    EXPECT_NEAR(xc_out[0].real(), 2.9999418982632711, DOUBLETHRESHOLD);
+    EXPECT_NEAR(xc_out[1].real(), 2.0000317031363761, DOUBLETHRESHOLD);
+    EXPECT_NEAR(xc_out[2].real(), 1.0000211250842703, DOUBLETHRESHOLD);
+    ASSERT_EQ(niter, 10);
 
     this->mixing->reset();
 

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include<memory>
-
+#include <omp.h>
 /************************************************
  *  unit test of read_pp
  ***********************************************/
@@ -159,6 +159,7 @@ TEST_F(ReadPPTest, ReadUPF100)
 
 TEST_F(ReadPPTest, ReadUSppErr100)
 {
+	omp_set_num_threads(1);
 	std::ifstream ifs;
 	ifs.open("./support/Zn.pw91-n-van.UPF");
 	//upf->read_pseudo_upf(ifs);
