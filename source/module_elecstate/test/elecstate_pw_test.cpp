@@ -101,8 +101,8 @@ void Set_GlobalV_Default()
 class ElecStatePWTest : public ::testing::Test
 {
   protected:
-    elecstate::ElecStatePW<double, psi::DEVICE_CPU>* elecstate_pw_d = nullptr;
-    elecstate::ElecStatePW<float, psi::DEVICE_CPU>* elecstate_pw_s = nullptr;
+    elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>* elecstate_pw_d = nullptr;
+    elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>* elecstate_pw_s = nullptr;
     ModulePW::PW_Basis_K* wfcpw = nullptr;
     Charge* chg = nullptr;
     K_Vectors* klist = nullptr;
@@ -138,7 +138,7 @@ class ElecStatePWTest : public ::testing::Test
 
 TEST_F(ElecStatePWTest, ConstructorDouble)
 {
-    elecstate_pw_d = new elecstate::ElecStatePW<double, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
     EXPECT_EQ(elecstate_pw_d->classname, "ElecStatePW");
     EXPECT_EQ(elecstate_pw_d->charge, chg);
     EXPECT_EQ(elecstate_pw_d->klist, klist);
@@ -147,7 +147,7 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
 
 TEST_F(ElecStatePWTest, ConstructorSingle)
 {
-    elecstate_pw_s = new elecstate::ElecStatePW<float, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
     EXPECT_EQ(elecstate_pw_s->classname, "ElecStatePW");
     EXPECT_EQ(elecstate_pw_s->charge, chg);
     EXPECT_EQ(elecstate_pw_s->klist, klist);
@@ -158,7 +158,7 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 {
     elecstate::tmp_xc_func_type = 3;
     chg->nrxx = 1000;
-    elecstate_pw_d = new elecstate::ElecStatePW<double, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
     elecstate_pw_d->init_rho_data();
     EXPECT_EQ(elecstate_pw_d->init_rho, true);
     EXPECT_EQ(elecstate_pw_d->rho, chg->rho);
@@ -171,7 +171,7 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
     elecstate::tmp_xc_func_type = 3;
     chg->nspin = GlobalV::NSPIN;
     chg->nrxx = 1000;
-    elecstate_pw_s = new elecstate::ElecStatePW<float, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
     elecstate_pw_s->init_rho_data();
     EXPECT_EQ(elecstate_pw_s->init_rho, true);
     EXPECT_NE(elecstate_pw_s->rho, nullptr);
@@ -181,14 +181,14 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
 TEST_F(ElecStatePWTest, ParallelKDouble)
 {
     //this is a trivial call due to removing of __MPI
-    elecstate_pw_d = new elecstate::ElecStatePW<double, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
     EXPECT_NO_THROW(elecstate_pw_d->parallelK());
 }
 
 TEST_F(ElecStatePWTest, ParallelKSingle)
 {
     //this is a trivial call due to removing of __MPI
-    elecstate_pw_s = new elecstate::ElecStatePW<float, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>(wfcpw, chg, klist, rhopw, bigpw);
     EXPECT_NO_THROW(elecstate_pw_s->parallelK());
 }
 

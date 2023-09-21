@@ -3,7 +3,7 @@
 #include "elecstate_pw.h"
 namespace elecstate
 {
-    class ElecStatePW_SDFT : public ElecStatePW<double>
+    class ElecStatePW_SDFT : public ElecStatePW<std::complex<double>>
     {
     public:
         ElecStatePW_SDFT(

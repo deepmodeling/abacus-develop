@@ -4,14 +4,14 @@
 
 using namespace hamilt;
 
-template<typename FPTYPE, typename Device>
-OperatorPW<FPTYPE, Device>::~OperatorPW(){};
+template<typename T, typename Device>
+OperatorPW<T, Device>::~OperatorPW(){};
 
 namespace hamilt {
-template class OperatorPW<float, psi::DEVICE_CPU>;
-template class OperatorPW<double, psi::DEVICE_CPU>;
+template class OperatorPW<std::complex<float>, psi::DEVICE_CPU>;
+template class OperatorPW<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class OperatorPW<float, psi::DEVICE_GPU>;
-template class OperatorPW<double, psi::DEVICE_GPU>;
+template class OperatorPW<std::complex<float>, psi::DEVICE_GPU>;
+template class OperatorPW<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 }

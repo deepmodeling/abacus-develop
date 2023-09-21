@@ -158,7 +158,7 @@ void diago_PAO_in_pw_k2(const int &ik,
                         psi::Psi<std::complex<float>> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<float> *phm_in)
+                        hamilt::Hamilt<std::complex<float>> *phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
     // (6) Prepare for atmoic orbitals or random orbitals
@@ -196,7 +196,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				hsolver::DiagoIterAssist<float>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
+				hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
 				return;
 			}
 			else
@@ -230,11 +230,11 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				// hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+				// hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(phm_in,
 				//                          wfcatom,
 				//                          wvf,
 				//                          etatom.data());
-				hsolver::DiagoIterAssist<float>::diagH_subspace_init(phm_in,
+				hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace_init(phm_in,
 																	s_wfcatom.data(),
 																	wfcatom.nr,
 																	wfcatom.nc,
@@ -265,7 +265,7 @@ void diago_PAO_in_pw_k2(const int &ik,
                         psi::Psi<std::complex<double>> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<double> *phm_in)
+                        hamilt::Hamilt<std::complex<double>> *phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals
@@ -303,7 +303,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				hsolver::DiagoIterAssist<double>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
+				hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
 				return;
 			}
 			else
@@ -343,7 +343,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 		{
 			if(phm_in!= nullptr)
 			{
-				hsolver::DiagoIterAssist<double>::diagH_subspace_init(phm_in,
+				hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(phm_in,
 							wfcatom.c,
 							wfcatom.nr,
 							wfcatom.nc,
@@ -374,7 +374,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_CPU *ctx,
                         psi::Psi<std::complex<float>, psi::DEVICE_CPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<float, psi::DEVICE_CPU> *phm_in)
+                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_CPU> *phm_in)
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
 }
@@ -384,7 +384,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_CPU *ctx,
                         psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<double, psi::DEVICE_CPU> *phm_in)
+                        hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU> *phm_in)
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
 }
@@ -396,7 +396,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         psi::Psi<std::complex<float>, psi::DEVICE_GPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<float, psi::DEVICE_GPU> *phm_in)
+                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_GPU> *phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
     // (6) Prepare for atmoic orbitals or random orbitals
@@ -449,7 +449,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
         if(phm_in!= nullptr)
         {
             std::vector<float> etatom(starting_nw, 0.0);
-            hsolver::DiagoIterAssist<float, psi::DEVICE_GPU>::diagH_subspace_init(
+            hsolver::DiagoIterAssist<std::complex<float>, psi::DEVICE_GPU>::diagH_subspace_init(
                     phm_in,
                     c_wfcatom,
                     wfcatom.nr,
@@ -489,7 +489,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf,
                         ModulePW::PW_Basis_K *wfc_basis,
                         wavefunc *p_wf,
-                        hamilt::Hamilt<double, psi::DEVICE_GPU> *phm_in)
+                        hamilt::Hamilt<std::complex<double>, psi::DEVICE_GPU> *phm_in)
 {
     ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
 	// (6) Prepare for atmoic orbitals or random orbitals
@@ -542,7 +542,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 		if(phm_in!= nullptr)
 		{
 			std::vector<double> etatom(starting_nw, 0.0);
-			hsolver::DiagoIterAssist<double, psi::DEVICE_GPU>::diagH_subspace_init(
+			hsolver::DiagoIterAssist<std::complex<double>, psi::DEVICE_GPU>::diagH_subspace_init(
 					     phm_in,
                          z_wfcatom,
 						 wfcatom.nr,
