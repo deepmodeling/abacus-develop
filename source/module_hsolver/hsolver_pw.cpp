@@ -270,14 +270,11 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
     psi.fix_k(ik);
     if(GlobalV::psi_initializer) // new psi initialization method branch
     {
-        std::cout << __FILE__ << __LINE__ << std::endl;
         // do nothing here, because we have already initialize, allocate and make initial guess
         // basis_type lcao_in_pw function may be inserted here
     }
     else if(!this->initialed_psi) // old psi initialization method branch
     {
-        std::cout << __FILE__ << __LINE__ << std::endl;
-        printf("Old psi initialization here\n");
         if(GlobalV::BASIS_TYPE=="pw")
         {
             hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);

@@ -607,7 +607,23 @@ void Input_Conv::Convert(void)
     GlobalV::OUT_FREQ_ION = INPUT.out_freq_ion;
     GlobalV::init_chg = INPUT.init_chg;
     GlobalV::init_wfc = INPUT.init_wfc;
-    GlobalV::psi_initializer = INPUT.psi_initializer;
+    if(
+        (INPUT.psi_initializer)
+      &&(INPUT.basis_type == "pw")
+      &&(INPUT.esolver_type=="ksdft")
+      &&(INPUT.calculation!="nscf")
+    )
+    {
+        GlobalV::psi_initializer = true;
+    }
+    else
+    {
+        GlobalV::psi_initializer = false;
+        if(INPUT.init_wfc.substr(0,3)=="nao")
+        {
+            GlobalV::init_wfc = "random";
+        }
+    }
     GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::out_chg = INPUT.out_chg;
     GlobalV::nelec = INPUT.nelec;

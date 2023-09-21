@@ -328,7 +328,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         )
         ) // pengfei 2014-10-13
     {
-        std::cout << __FILE__ << __LINE__ << std::endl;
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01

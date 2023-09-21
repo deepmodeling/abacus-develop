@@ -29,6 +29,7 @@ psi::Psi<std::complex<double>>* psi_initializer::allocate()
         The way of calculating GlobalC::ucell.natomwfc is, for each atom, read pswfc and for s, it is 1, for p, it is 3
         , then multiplied by the number of atoms, and then add them together.
     */
+    if(this->psig != nullptr) delete this->psig;
 	int prefactor = 1;
     int nbands_actual = 0;
     if(GlobalV::init_wfc == "random") 

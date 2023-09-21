@@ -2508,6 +2508,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (nbndsto_str == "0" && esolver_type == "sdft")
     {
         esolver_type = "ksdft";
+        psi_initializer = false;
     }
     if (esolver_type != "sdft")
         bndpar = 1;

@@ -1011,6 +1011,7 @@ void UnitCell::cal_nwfc(std::ofstream &log)
             (GlobalV::BASIS_TYPE=="pw")
 		  &&(GlobalV::psi_initializer)
 		  &&(GlobalV::init_wfc.substr(0, 3)=="nao")
+		  &&(GlobalV::ESOLVER_TYPE == "ksdft")
 	    )
 	 ) //xiaohui add 2013-09-02
 	{
