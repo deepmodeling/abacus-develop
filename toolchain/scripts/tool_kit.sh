@@ -42,6 +42,24 @@ report_error() {
   echo "ERROR: (${SCRIPT_NAME}${__lineno}) $__message" >&2
 }
 
+# recommend users to use offline installation when download failed
+# zhaoqing in 2023.09.15
+recommend_offline_installation(){
+  __filename=$1
+  __url=$2
+  cat << EOF
+========================== NOTICE =========================
+You can use OFFLINE installation method manually
+By download $__filename from $__url, 
+Rename it as $__filename and put it into ${BUILDDIR},
+And re-run toolchain installation script.
+
+Instead of github.com. you can manually install requirements packages via:
+1. Download from www.cp2k.org/static/downloads
+2. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v1 -O abacus-deps-v1.zip
+EOF
+}
+
 # error handler for line trap from set -e
 error_handler() {
   local __lineno="$1"
@@ -630,6 +648,7 @@ download_pkg_from_ABACUS_org() {
   echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
   if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
     report_error "failed to download $__url"
+    recommend_offline_installation $__filename $__url
     return 1
   fi
   # checksum

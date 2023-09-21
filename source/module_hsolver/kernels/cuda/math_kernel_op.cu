@@ -47,21 +47,21 @@ __forceinline__ __device__ void warp_reduce(FPTYPE& val) {
 }
 
 // All clear!
-template <typename FPTYPE>
+template <typename Real>
 __global__ void line_minimize_with_block(
-        thrust::complex<FPTYPE>* grad,
-        thrust::complex<FPTYPE>* hgrad,
-        thrust::complex<FPTYPE>* psi,
-        thrust::complex<FPTYPE>* hpsi,
+        thrust::complex<Real>* grad,
+        thrust::complex<Real>* hgrad,
+        thrust::complex<Real>* psi,
+        thrust::complex<Real>* hpsi,
         const int n_basis,
         const int n_basis_max)
 {
     int band_idx = blockIdx.x; // band_idx
     int tid = threadIdx.x; // basis_idx
     int item = 0;
-    FPTYPE epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-    FPTYPE theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
-    __shared__ FPTYPE data[THREAD_PER_BLOCK * 3];
+    Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
+    Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
+    __shared__ Real data[THREAD_PER_BLOCK * 3];
 
     data[tid] = 0;
 
@@ -78,7 +78,7 @@ __global__ void line_minimize_with_block(
         __syncthreads();
     }
 
-    FPTYPE norm = 1.0 / sqrt(data[0]);
+    Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
     data[tid] = 0;
@@ -117,27 +117,27 @@ __global__ void line_minimize_with_block(
     }
 }
 
-template <typename FPTYPE>
+template <typename Real>
 __global__ void calc_grad_with_block(
-        const FPTYPE* prec,
-        FPTYPE* err,
-        FPTYPE* beta,
-        thrust::complex<FPTYPE>* psi,
-        thrust::complex<FPTYPE>* hpsi,
-        thrust::complex<FPTYPE>* grad,
-        thrust::complex<FPTYPE>* grad_old,
+        const Real* prec,
+        Real* err,
+        Real* beta,
+        thrust::complex<Real>* psi,
+        thrust::complex<Real>* hpsi,
+        thrust::complex<Real>* grad,
+        thrust::complex<Real>* grad_old,
         const int n_basis,
         const int n_basis_max)
 {
     int band_idx = blockIdx.x; // band_idx
     int tid = threadIdx.x; // basis_idx
     int item = 0;
-    FPTYPE err_st = 0.0;
-    FPTYPE beta_st = 0.0;
-    FPTYPE epsilo = 0.0;
-    FPTYPE grad_2 = 0.0;
-    thrust::complex<FPTYPE> grad_1 = {0, 0};
-    __shared__ FPTYPE data[THREAD_PER_BLOCK * 2];
+    Real err_st = 0.0;
+    Real beta_st = 0.0;
+    Real epsilo = 0.0;
+    Real grad_2 = 0.0;
+    thrust::complex<Real> grad_1 = {0, 0};
+    __shared__ Real data[THREAD_PER_BLOCK * 2];
 
     // Init shared memory
     data[tid] = 0;
@@ -155,7 +155,7 @@ __global__ void calc_grad_with_block(
         __syncthreads();
     }
 
-    FPTYPE norm = 1.0 / sqrt(data[0]);
+    Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
     data[tid] = 0;
@@ -306,45 +306,45 @@ __global__ void matrix_setTo_another_kernel(
     }
 }
 
-template <typename FPTYPE>
-void line_minimize_with_block_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* hgrad_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
+template <typename T>
+void line_minimize_with_block_op<T, psi::DEVICE_GPU>::operator()(
+        T* grad_out,
+        T* hgrad_out,
+        T* psi_out,
+        T* hpsi_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<FPTYPE>*>(grad_out);
-    auto B = reinterpret_cast<thrust::complex<FPTYPE>*>(hgrad_out);
-    auto C = reinterpret_cast<thrust::complex<FPTYPE>*>(psi_out);
-    auto D = reinterpret_cast<thrust::complex<FPTYPE>*>(hpsi_out);
+    auto A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    auto B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
+    auto C = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    auto D = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
 
-    line_minimize_with_block<FPTYPE><<<n_band, THREAD_PER_BLOCK>>>(
+    line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
             A, B, C, D,
             n_basis, n_basis_max);
 }
 
-template <typename FPTYPE>
-void calc_grad_with_block_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-        const FPTYPE* prec_in,
-        FPTYPE* err_out,
-        FPTYPE* beta_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* grad_old_out,
+template <typename T>
+void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
+        T* psi_out,
+        T* hpsi_out,
+        T* grad_out,
+        T* grad_old_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<FPTYPE>*>(psi_out);
-    auto B = reinterpret_cast<thrust::complex<FPTYPE>*>(hpsi_out);
-    auto C = reinterpret_cast<thrust::complex<FPTYPE>*>(grad_out);
-    auto D = reinterpret_cast<thrust::complex<FPTYPE>*>(grad_old_out);
+    auto A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    auto B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    auto C = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    auto D = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
 
-    calc_grad_with_block<FPTYPE><<<n_band, THREAD_PER_BLOCK>>>(
+    calc_grad_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
             prec_in, err_out, beta_out,
             A, B, C, D,
             n_basis, n_basis_max);
@@ -716,8 +716,8 @@ void matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>::operator()(
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<float, psi::DEVICE_GPU>;
-template struct calc_grad_with_block_op<float, psi::DEVICE_GPU>;
-template struct line_minimize_with_block_op<float, psi::DEVICE_GPU>;
+template struct calc_grad_with_block_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct line_minimize_with_block_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<float, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<float, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<float, psi::DEVICE_GPU>;
@@ -725,8 +725,8 @@ template struct constantvector_addORsub_constantVector_op<float, psi::DEVICE_GPU
 template struct matrixSetToAnother<float, psi::DEVICE_GPU>;
 
 template struct zdot_real_op<double, psi::DEVICE_GPU>;
-template struct calc_grad_with_block_op<double, psi::DEVICE_GPU>;
-template struct line_minimize_with_block_op<double, psi::DEVICE_GPU>;
+template struct calc_grad_with_block_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct line_minimize_with_block_op<std::complex<double>, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;

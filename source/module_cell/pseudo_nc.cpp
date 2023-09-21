@@ -74,8 +74,8 @@ void pseudo_nc::set_pseudo_nc(const Pseudopot_upf &upf)
 
 	for (int nb = 0;nb < nbeta;nb++)
 	{
-		kkbeta = (upf.kkbeta[nb] > kkbeta) ? upf.kkbeta[nb] : kkbeta;
-	}
+        kkbeta = (upf.kbeta[nb] > kkbeta) ? upf.kbeta[nb] : kkbeta;
+    }
 
 	betar.create(upf.beta.nr, upf.beta.nc);
 	

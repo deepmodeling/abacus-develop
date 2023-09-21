@@ -3,8 +3,8 @@
 #include"module_hamilt_general/operator.h"
 
 namespace hamilt {
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-class OperatorPW : public Operator<std::complex<FPTYPE>, Device>
+template<typename T, typename Device = psi::DEVICE_CPU>
+class OperatorPW : public Operator<T, Device>
 {
     public:
         virtual ~OperatorPW();

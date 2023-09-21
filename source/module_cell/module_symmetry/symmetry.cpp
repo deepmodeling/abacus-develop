@@ -1406,15 +1406,11 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 
 	// allocate flag for each FFT grid.
     int* symflag = new int[fftnx*fftny*fftnz];// which group the grid belongs to
-    int* isymflag = new int[fftnx*fftny*fftnz];//which rotration operation the grid corresponds to
-    //int table_xyz[fftnx*fftny*fftnz][48];
+    int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
     int(*table_xyz)[48] = new int[fftnx*fftny*fftnz][48];// group information
-    int* table_column = new int[fftnx*fftny*fftnz];// how many grids in each group
     for (int i=0; i<fftnx*fftny*fftnz; i++)
     {
         symflag[i] = -1;
-        isymflag[i] = -1;
-        table_column[i] = 0;
     }
     int group_index = 0;
 
@@ -1510,14 +1506,13 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                             continue;   //else, just skip it
                         }
                         symflag[ixyz] = group_index;
-                        isymflag[ixyz] = isym;
+                        isymflag[group_index][rot_count] = invmap[isym];
                         table_xyz[group_index][rot_count] = ixyz;
-                        ++rot_count;
+                         ++rot_count;
                         assert(rot_count<=nrotk);
                     }
-                table_column[group_index] = rot_count;
-                }
                 group_index++;
+                }
             }
         }
     }
@@ -1544,7 +1539,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
     std::complex<double> sum(0, 0);
     int rot_count=0;
 
-    for (int c_index = 0; c_index < table_column[g_index]; ++c_index)
+    for (int c_index = 0; c_index < nrotk; ++c_index)
     {
                 int ixyz0=table_xyz[g_index][c_index];
                 int ipw0=ixyz2ipw[ixyz0];
@@ -1563,7 +1558,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
                     //calculate phase factor
                     tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
                     double cos_arg = 0.0, sin_arg = 0.0;
-                    double arg_gtrans = tmp_gdirect_double * gtrans[invmap[isymflag[ixyz0]]];
+                    double arg_gtrans = tmp_gdirect_double * gtrans[isymflag[g_index][c_index]];
                     std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
                     // for each pricell in supercell:
                     for (int ipt = 0;ipt < this->ncell;++ipt)
@@ -1606,7 +1601,6 @@ for (int g_index = 0; g_index < group_index; g_index++)
     delete[] symflag;
     delete[] isymflag;
     delete[] table_xyz;
-    delete[] table_column;
     delete[] invmap;
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }

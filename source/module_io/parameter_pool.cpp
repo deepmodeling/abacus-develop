@@ -443,6 +443,22 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.wannier_spin = static_cast<SimpleString*>(input_parameters["wannier_spin"].get())->c_str();
     }
+    else if (input_parameters.count("out_wannier_mmn") != 0)
+    {
+        INPUT.out_wannier_mmn = *static_cast<bool*>(input_parameters["out_wannier_mmn"].get());
+    }
+    else if (input_parameters.count("out_wannier_amn") != 0)
+    {
+        INPUT.out_wannier_amn = *static_cast<bool*>(input_parameters["out_wannier_amn"].get());
+    }
+    else if (input_parameters.count("out_wannier_unk") != 0)
+    {
+        INPUT.out_wannier_unk = *static_cast<bool*>(input_parameters["out_wannier_unk"].get());
+    }
+    else if (input_parameters.count("out_wannier_eig") != 0)
+    {
+        INPUT.out_wannier_eig = *static_cast<bool*>(input_parameters["out_wannier_eig"].get());
+    }
     else if (input_parameters.count("nche_sto") != 0)
     {
         INPUT.nche_sto = *static_cast<int*>(input_parameters["nche_sto"].get());
