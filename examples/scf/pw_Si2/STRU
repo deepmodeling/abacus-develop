@@ -2,7 +2,7 @@
 #about the lattice structure.
 
 ATOMIC_SPECIES
-Si 1.000 Si.pz-vbc.UPF  #Element, Mass, Pseudopotential
+Si 1.000 Si.pz-vbc.UPF 	#Element, Mass, Pseudopotential
 
 LATTICE_CONSTANT
 10.2  			#Lattice constant
