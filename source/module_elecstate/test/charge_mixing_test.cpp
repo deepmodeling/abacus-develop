@@ -62,9 +62,9 @@ UnitCell ucell;
  *                   Charge_Mixing::rhog_dot_product(rhog1, rhog2)
  *                   Charge_Mixing::inner_product_real(rho1, rho2)
  *      - calculate the inner product of two vectors
- *   - MixRhoTest: Charge_Mixing::mix_rho(iter, chr)
- *                 Charge_Mixing::mix_rho_recip(iter, chr)
- *                 Charge_Mixing::mix_rho_real(iter, chr)
+ *   - MixRhoTest: Charge_Mixing::mix_rho(chr)
+ *                 Charge_Mixing::mix_rho_recip(chr)
+ *                 Charge_Mixing::mix_rho_real(chr)
  *      - mix rho with different methods
  *
  */
@@ -349,7 +349,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
         charge._space_rho[i] = real_ref[i];
         charge._space_rho_save[i] = real_save_ref[i];
     }
-    CMtest_recip.mix_rho(1, &charge);
+    CMtest_recip.mix_rho(&charge);
     for(int is = 0 ; is < nspin; ++is)
     {
         for(int ir = 0 ; ir < nrxx ; ++ir)
@@ -374,7 +374,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
         charge._space_rho[i] = real_ref[i];
         charge._space_rho_save[i] = real_save_ref[i];
     }
-    CMtest_recip.mix_rho(1, &charge);
+    CMtest_recip.mix_rho(&charge);
     for(int is = 0 ; is < nspin; ++is)
     {
         for(int ir = 0 ; ir < nrxx ; ++ir)

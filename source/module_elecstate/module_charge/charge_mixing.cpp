@@ -3,8 +3,8 @@
 #include "module_base/element_elec_config.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/module_mixing/broyden_mixing.h"
-#include "module_base/module_mixing/pulay_mixing.h"
 #include "module_base/module_mixing/plain_mixing.h"
+#include "module_base/module_mixing/pulay_mixing.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -39,9 +39,9 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         delete this->mixing;
         this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
-    else if(this->mixing_mode == "pulay")
+    else if (this->mixing_mode == "pulay")
     {
-    	this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim, this->mixing_beta);
+        this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else
     {
@@ -187,7 +187,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     return drho;
 }
 
-void Charge_Mixing::mix_rho_recip(const int& iter, Charge* chr)
+void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     // electronic density
     // rhog and rhog_save are calculated in get_drho() function
@@ -197,7 +197,8 @@ void Charge_Mixing::mix_rho_recip(const int& iter, Charge* chr)
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
 
-    auto inner_product = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
+    auto inner_product
+        = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
 
     this->mixing->mix_data(this->rho_mdata, rhog_out);
@@ -232,7 +233,7 @@ void Charge_Mixing::mix_rho_recip(const int& iter, Charge* chr)
     return;
 }
 
-void Charge_Mixing::mix_rho_real(const int& iter, Charge* chr)
+void Charge_Mixing::mix_rho_real(Charge* chr)
 {
     // electronic density
     double* rhor_in = chr->rho_save[0];
@@ -241,7 +242,8 @@ void Charge_Mixing::mix_rho_real(const int& iter, Charge* chr)
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
 
-    auto inner_product = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
+    auto inner_product
+        = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
 
     this->mixing->mix_data(this->rho_mdata, rhor_out);
@@ -278,7 +280,7 @@ void Charge_Mixing::mix_reset()
     }
 }
 
-void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
+void Charge_Mixing::mix_rho(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
     ModuleBase::timer::tick("Charge", "mix_rho");
@@ -303,11 +305,11 @@ void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
     // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
-        mix_rho_recip(iter, chr);
+        mix_rho_recip(chr);
     }
     else
     {
-        mix_rho_real(iter, chr);
+        mix_rho_real(chr);
     }
     // ---------------------------------------------------
 
@@ -372,8 +374,8 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-    for (int is=0; is<GlobalV::NSPIN; is++)
-	{
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];
@@ -390,7 +392,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx*GlobalV::NSPIN; ir++)
+    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN; ir++)
     {
         drhor[ir] -= drhor_filter[ir];
     }

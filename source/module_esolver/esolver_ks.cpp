@@ -400,8 +400,8 @@ namespace ModuleESolver
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
-                        //conv_elec = this->estate.mix_rho();
-                        p_chgmix->mix_rho(iter, pelec->charge);
+                        
+                        p_chgmix->mix_rho(pelec->charge);
                         //----------charge mixing done-----------
                     }
                 }

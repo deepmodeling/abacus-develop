@@ -25,19 +25,19 @@ class Charge_Mixing
      * @brief charge mixing
      *
      */
-    void mix_rho(const int& iter, Charge* chr);
+    void mix_rho(Charge* chr);
 
     /**
      * @brief charge mixing for reciprocal space
      *
      */
-    void mix_rho_recip(const int& iter, Charge* chr);
+    void mix_rho_recip(Charge* chr);
 
     /**
      * @brief charge mixing for real space
      *
      */
-    void mix_rho_real(const int& iter, Charge* chr);
+    void mix_rho_real(Charge* chr);
 
     /**
      * @brief Kerker screen method for reciprocal space
