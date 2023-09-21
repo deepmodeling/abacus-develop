@@ -48,28 +48,18 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
     }
 
-    if (this->mixing_mode != "broyden")
-    {
-        ModuleBase::WARNING("Charge_Mixing",
-                            "We recommend you to use broyden mixing_type. Other mixing methods are slow.");
-    }
-
     if (GlobalV::SCF_THR_TYPE == 1)
     {
         this->mixing->init_mixing_data(this->rho_mdata,
                                        this->rhopw->npw * GlobalV::NSPIN,
                                        sizeof(std::complex<double>));
-        if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
-            this->mixing->init_mixing_data(this->tau_mdata,
-                                           this->rhopw->npw * GlobalV::NSPIN,
-                                           sizeof(std::complex<double>));
     }
     else
     {
         this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
-        if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
-            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
     }
+    // Note: we can not init tau_mdata here temporarily, since set_xc_type() is after it.
+    // this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
     return;
 }
 
@@ -163,12 +153,12 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
-        drho = this->inner_dot_recip(drhog.data(), drhog.data());
+        drho = this->inner_product_recip(drhog.data(), drhog.data());
     }
     else
     {
         // Note: Maybe it is wrong.
-        //       The inner_dot_real function (L1-norm) is different from that (L2-norm) in mixing.
+        //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
@@ -206,10 +196,9 @@ void Charge_Mixing::mix_rho_recip(const int& iter, Charge* chr)
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
-    assert(iter == this->rho_mdata.ndim_history);
 
-    auto inner_dot = std::bind(&Charge_Mixing::inner_dot_recip, this, std::placeholders::_1, std::placeholders::_2);
-    this->mixing->cal_coef(this->rho_mdata, inner_dot);
+    auto inner_product = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
+    this->mixing->cal_coef(this->rho_mdata, inner_product);
 
     this->mixing->mix_data(this->rho_mdata, rhog_out);
 
@@ -251,10 +240,9 @@ void Charge_Mixing::mix_rho_real(const int& iter, Charge* chr)
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
-    assert(iter == this->rho_mdata.ndim_history);
 
-    auto inner_dot = std::bind(&Charge_Mixing::inner_dot_real, this, std::placeholders::_1, std::placeholders::_2);
-    this->mixing->cal_coef(this->rho_mdata, inner_dot);
+    auto inner_product = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
+    this->mixing->cal_coef(this->rho_mdata, inner_product);
 
     this->mixing->mix_data(this->rho_mdata, rhor_out);
 
@@ -271,18 +259,29 @@ void Charge_Mixing::mix_rho_real(const int& iter, Charge* chr)
     }
 }
 
+void Charge_Mixing::mix_reset()
+{
+    this->mixing->reset();
+    this->rho_mdata.reset();
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        if (GlobalV::SCF_THR_TYPE == 1)
+        {
+            this->mixing->init_mixing_data(this->tau_mdata,
+                                           this->rhopw->npw * GlobalV::NSPIN,
+                                           sizeof(std::complex<double>));
+        }
+        else
+        {
+            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+        }
+    }
+}
+
 void Charge_Mixing::mix_rho(const int& iter, Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
     ModuleBase::timer::tick("Charge", "mix_rho");
-    
-    // reset mixing for a new step
-    if (iter == 1)
-    {
-        this->mixing->reset();
-        this->rho_mdata.reset();
-        this->tau_mdata.reset();
-    }
 
     // the charge before mixing.
     const int nrxx = this->rhopw->nrxx;
@@ -397,7 +396,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     }
 }
 
-double Charge_Mixing::inner_dot_recip(std::complex<double>* rho1, std::complex<double>* rho2)
+double Charge_Mixing::inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2)
 {
     std::complex<double>** rho1_2d = new std::complex<double>*[GlobalV::NSPIN];
     std::complex<double>** rho2_2d = new std::complex<double>*[GlobalV::NSPIN];
@@ -412,7 +411,7 @@ double Charge_Mixing::inner_dot_recip(std::complex<double>* rho1, std::complex<d
     return result;
 }
 
-double Charge_Mixing::inner_dot_real(double* rho1, double* rho2)
+double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
 {
     double rnorm = 0.0;
 #ifdef _OPENMP

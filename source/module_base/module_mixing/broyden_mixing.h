@@ -67,14 +67,14 @@ class Broyden_Mixing : public Mixing
     {
         this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
     };
-    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_dot) override
+    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override
     {
-        tem_cal_coef(mdata, inner_dot);
+        tem_cal_coef(mdata, inner_product);
     }
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_dot) override
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override
     {
-        tem_cal_coef(mdata, inner_dot);
+        tem_cal_coef(mdata, inner_product);
     }
 
   private:
@@ -154,7 +154,7 @@ class Broyden_Mixing : public Mixing
     };
 
     template <class FPTYPE>
-    void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_dot)
+    void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
     {
         ModuleBase::TITLE("Charge_Mixing", "Simplified_Broyden_mixing");
         ModuleBase::timer::tick("Charge", "Broyden_mixing");
@@ -181,7 +181,7 @@ class Broyden_Mixing : public Mixing
                     else
                     {
                         FPTYPE* dFj = FP_dF + j * length;
-                        beta(i, j) = beta_tmp(i, j) = inner_dot(dFi, dFj);
+                        beta(i, j) = beta_tmp(i, j) = inner_product(dFi, dFj);
                     }
                     if (j != i)
                     {
@@ -209,7 +209,7 @@ class Broyden_Mixing : public Mixing
             for (int i = 0; i < ndim_cal_dF; ++i)
             {
                 FPTYPE* dFi = FP_dF + i * length;
-                work[i] = inner_dot(dFi, FP_F);
+                work[i] = inner_product(dFi, FP_F);
             }
             // gamma[i] = \sum_j beta_tmp(i,j) * work[j]
             std::vector<double> gamma(ndim_cal_dF);
@@ -236,7 +236,7 @@ class Broyden_Mixing : public Mixing
         }
         else
         {
-            beta(0,0) = inner_dot(FP_dF, FP_dF);
+            beta(0,0) = inner_product(FP_dF, FP_dF);
             coef[0] = 1.0;
         }
 

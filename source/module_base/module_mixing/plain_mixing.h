@@ -42,12 +42,12 @@ class Plain_Mixing : public Mixing
     {
         this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
     };
-    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_dot) override
+    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override
     {
         return;
     }
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_dot) override
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override
     {
         return;
     }

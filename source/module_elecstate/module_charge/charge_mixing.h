@@ -15,41 +15,110 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data rho_mdata;
     Base_Mixing::Mixing_Data tau_mdata;
 
+    /**
+     * @brief reset mixing
+     *
+     */
+    void mix_reset();
+
+    /**
+     * @brief charge mixing
+     *
+     */
     void mix_rho(const int& iter, Charge* chr);
+
+    /**
+     * @brief charge mixing for reciprocal space
+     *
+     */
     void mix_rho_recip(const int& iter, Charge* chr);
+
+    /**
+     * @brief charge mixing for real space
+     *
+     */
     void mix_rho_real(const int& iter, Charge* chr);
 
+    /**
+     * @brief Kerker screen method for reciprocal space
+     *
+     */
     void Kerker_screen_recip(std::complex<double>* rhog);
+
+    /**
+     * @brief Kerker screen method for real space
+     *
+     */
     void Kerker_screen_real(double* rho);
 
-    double inner_dot_recip(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_dot_real(double* rho1, double* rho2);
+    /**
+     * @brief Inner product of two complex vectors
+     *
+     */
+    double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
 
-    //======================================
-    // General interfaces, in charge_mixing.cpp
-    //======================================
+    /**
+     * @brief Inner product of two double vectors
+     *
+     */
+    double inner_product_real(double* rho1, double* rho2);
+
+    /**
+     * @brief Set the mixing object
+     *
+     * @param mixing_mode_in mixing mode: "plain", "broyden", "pulay"
+     * @param mixing_beta_in mixing beta
+     * @param mixing_ndim_in mixing ndim
+     * @param mixing_gg0_in mixing gg0 for Kerker screen
+     * @param mixing_tau_in whether to use tau mixing
+     */
     void set_mixing(const std::string& mixing_mode_in,
                     const double& mixing_beta_in,
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in); // mohan add mixing_gg0_in 2014-09-27
 
+    /**
+     * @brief use auto set
+     *
+     */
     void need_auto_set();
+
+    /**
+     * @brief auto set mixing gg0 and mixing_beta
+     *
+     */
     void auto_set(const double& bandgap_in, const UnitCell& ucell_);
 
+    /**
+     * @brief Get the drho
+     *
+     */
     double get_drho(Charge* chr, const double nelec);
 
     // init pwrho, sunliang add 2023-05-08
     void set_rhopw(ModulePW::PW_Basis* rhopw_in);
 
     // extracting parameters
-	// normally these parameters will not be used
-	// outside charge mixing, but Exx is using them
+    // normally these parameters will not be used
+    // outside charge mixing, but Exx is using them
     // as well as some other places
-    const std::string &get_mixing_mode() const {return mixing_mode;}
-    double get_mixing_beta() const {return mixing_beta;}
-    int get_mixing_ndim() const {return mixing_ndim;}
-    double get_mixing_gg0() const {return mixing_gg0;}
+    const std::string& get_mixing_mode() const
+    {
+        return mixing_mode;
+    }
+    double get_mixing_beta() const
+    {
+        return mixing_beta;
+    }
+    int get_mixing_ndim() const
+    {
+        return mixing_ndim;
+    }
+    double get_mixing_gg0() const
+    {
+        return mixing_gg0;
+    }
 
   private:
     //======================================

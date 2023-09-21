@@ -57,14 +57,14 @@ class Pulay_Mixing : public Mixing
     {
         this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
     };
-    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_dot) override
+    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override
     {
-        tem_cal_coef(mdata, inner_dot);
+        tem_cal_coef(mdata, inner_product);
     }
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_dot) override
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override
     {
-        tem_cal_coef(mdata, inner_dot);
+        tem_cal_coef(mdata, inner_product);
     }
 
   private:
@@ -130,14 +130,14 @@ class Pulay_Mixing : public Mixing
     };
 
     template <class FPTYPE>
-    void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_dot)
+    void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
     {
         ModuleBase::TITLE("Charge_Mixing", "Pulay_mixing");
         ModuleBase::timer::tick("Charge", "Pulay_mixing");
         if (address != &mdata && address != nullptr)
             ModuleBase::WARNING_QUIT(
                 "Pulay_mixing",
-                "One Pulay_mixing object can only bind one Mixing_Data object to calculate coefficients");
+                "One Pulay_Mixing object can only bind one Mixing_Data object to calculate coefficients");
         const int length = mdata.length;
         FPTYPE* FP_F = static_cast<FPTYPE*>(F);
 
@@ -158,7 +158,7 @@ class Pulay_Mixing : public Mixing
                     else
                     {
                         FPTYPE* Fj = FP_F + j * length;
-                        beta(i, j) = beta_tmp(i, j) = inner_dot(Fi, Fj);
+                        beta(i, j) = beta_tmp(i, j) = inner_product(Fi, Fj);
                     }
                     if (j != i)
                     {
@@ -208,7 +208,7 @@ class Pulay_Mixing : public Mixing
         }
         else
         {
-            beta(0,0) = inner_dot(FP_F, FP_F);
+            beta(0,0) = inner_product(FP_F, FP_F);
             coef[0] = 1.0;
         }
 

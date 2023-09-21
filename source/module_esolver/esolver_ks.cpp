@@ -329,6 +329,7 @@ namespace ModuleESolver
             ModuleBase::timer::tick(this->classname, "Run");
 
             this->beforescf(istep); //Something else to do before the iter loop
+            p_chgmix->mix_reset();
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
             if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
 
@@ -399,6 +400,7 @@ namespace ModuleESolver
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
+                        std::cout<<iter<<"dd"<<std::endl;
                         //conv_elec = this->estate.mix_rho();
                         p_chgmix->mix_rho(iter, pelec->charge);
                         //----------charge mixing done-----------

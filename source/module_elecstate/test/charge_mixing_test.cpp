@@ -58,9 +58,9 @@ UnitCell ucell;
  *   - KerkerScreenTest: Charge_Mixing::Kerker_screen_recip(drhog)
  *                       Charge_Mixing::Kerker_screen_real(drhog)
  *      - screen drho with Kerker method
- *   - InnerDotTest: Charge_Mixing::inner_dot_recip(rhog1, rhog2)
+ *   - InnerDotTest: Charge_Mixing::inner_product_recip(rhog1, rhog2)
  *                   Charge_Mixing::rhog_dot_product(rhog1, rhog2)
- *                   Charge_Mixing::inner_dot_real(rho1, rho2)
+ *                   Charge_Mixing::inner_product_real(rho1, rho2)
  *      - calculate the inner product of two vectors
  *   - MixRhoTest: Charge_Mixing::mix_rho(iter, chr)
  *                 Charge_Mixing::mix_rho_recip(iter, chr)
@@ -229,7 +229,7 @@ TEST_F(ChargeMixingTest, InnerDotTest)
         drhor1[i] = 1.0;
         drhor2[i] = double(i);
     }
-    double inner = CMtest.inner_dot_real(drhor1.data(), drhor2.data());
+    double inner = CMtest.inner_product_real(drhor1.data(), drhor2.data());
     EXPECT_NEAR(inner, 0.5 * pw_basis.nrxx * (pw_basis.nrxx - 1), 1e-8);
 
     // RECIPROCAL
@@ -247,7 +247,7 @@ TEST_F(ChargeMixingTest, InnerDotTest)
     pw_basis.real2recip(drhor1.data(), drhog1.data());
     pw_basis.real2recip(drhor2.data(), drhog2.data());
 
-    inner = CMtest.inner_dot_recip(drhog1.data(), drhog2.data());
+    inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, -0.3 * ModuleBase::e2 * ModuleBase::FOUR_PI, 1e-8);
 
     GlobalV::NSPIN = 2;
@@ -259,10 +259,10 @@ TEST_F(ChargeMixingTest, InnerDotTest)
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
     GlobalV::GAMMA_ONLY_PW = false;
-    inner = CMtest.inner_dot_recip(drhog1.data(), drhog2.data());
+    inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
     GlobalV::GAMMA_ONLY_PW = true;
-    inner = CMtest.inner_dot_recip(drhog1.data(), drhog2.data());
+    inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 
     GlobalV::NSPIN = 4;
@@ -276,12 +276,12 @@ TEST_F(ChargeMixingTest, InnerDotTest)
 
     GlobalV::DOMAG = false;
     GlobalV::DOMAG_Z = false;
-    inner = CMtest.inner_dot_recip(drhog1.data(), drhog2.data());
+    inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
     GlobalV::GAMMA_ONLY_PW = true;
     GlobalV::DOMAG = true;
     GlobalV::DOMAG_Z = true;
-    inner = CMtest.inner_dot_recip(drhog1.data(), drhog2.data());
+    inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
 }
 
