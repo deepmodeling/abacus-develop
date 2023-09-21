@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <algorithm>
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -2525,9 +2526,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if (exx_hybrid_alpha == "default")
     {
-        if (dft_functional == "hf" || INPUT.rpa)
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || rpa)
             exx_hybrid_alpha = "1";
-        else if (dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+        else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
     }
     if (exx_real_number == "default")
@@ -2539,9 +2542,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if (exx_ccp_rmesh_times == "default")
     {
-        if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
             exx_ccp_rmesh_times = "5";
-        else if (dft_functional == "hse")
+        else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
     if (symmetry == "default")
@@ -3625,7 +3630,9 @@ void Input::Check(void)
         }
     }
 
-    if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+    std::string dft_functional_lower = dft_functional;
+    std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
     {
         const double exx_hybrid_alpha_value = std::stod(exx_hybrid_alpha);
         if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
@@ -3647,7 +3654,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "exx_distribute_type must be htime or kmeans2 or kmeans1");
         }
     }
-    if (dft_functional == "opt_orb")
+    if (dft_functional_lower == "opt_orb")
     {
         if (exx_opt_orb_lmax < 0)
         {
