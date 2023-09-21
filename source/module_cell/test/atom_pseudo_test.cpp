@@ -23,7 +23,7 @@
 
 #define private public
 #include "module_cell/read_pp.h"
-#include "module_cell/pseudo_nc.h"
+#include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
 
 class AtomPseudoTest : public testing::Test

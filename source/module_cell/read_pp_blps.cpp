@@ -8,6 +8,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     this->has_so = false;
 
     this->nbeta = 0;
+    this->kkbeta = 0;
     delete[] kbeta;
     delete[] lll;
     this->kbeta = nullptr;
@@ -39,20 +40,18 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> this->lmax >> lloc >> this->mesh >> r2well;
 
-	if(GlobalV::DFT_FUNCTIONAL=="default")
-	{
-        if(pspxc == 2)
-        {
-            this->xc_func = "PZ";
-        }
-        else if (pspxc == 11)
-        {
-            this->xc_func = "PBE";
-        }
+    if (pspxc == 2)
+    {
+        this->xc_func = "PZ";
+    }
+    else if (pspxc == 11)
+    {
+        this->xc_func = "PBE";
     }
     else
     {
-        this->xc_func = GlobalV::DFT_FUNCTIONAL;
+        std::string msg = "Unknown pspxc: " + std::to_string(pspxc);
+        WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
 
     ifs.ignore(300, '\n');

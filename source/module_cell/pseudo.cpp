@@ -1,6 +1,6 @@
-#include "pseudo_nc.h"
+#include "pseudo.h"
 
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 // pseudo_h
 	els = new std::string[1];
@@ -21,11 +21,11 @@ pseudo_nc::pseudo_nc()
 	rho_at = nullptr;
 	rho_atc = nullptr;
 
-// pseudo_nc
+// pseudo
 	lll = nullptr;
 }
 
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 // pseudo_h
 	delete[] els;
@@ -44,16 +44,16 @@ pseudo_nc::~pseudo_nc()
 	delete[] rho_at;
 	delete[] rho_atc;
 
-// pseudo_nc
+// pseudo
 	delete[] lll;
 }
 
 
 
 //---------------------------------------------------------------------
-void pseudo_nc::set_pseudo_nc(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_nc(const Pseudopot_upf &upf)
 {
-	ModuleBase::TITLE("pseudo_nc","set_pseudo_nc");
+	ModuleBase::TITLE("pseudo","set_pseudo_nc");
 
 	// call subroutines
 	this->set_pseudo_h(upf);
@@ -70,14 +70,9 @@ void pseudo_nc::set_pseudo_nc(const Pseudopot_upf &upf)
 		lll[i] = upf.lll[i];
 	}
 
-	kkbeta = 0;
+    kkbeta = upf.kkbeta;
 
-	for (int nb = 0;nb < nbeta;nb++)
-	{
-        kkbeta = (upf.kbeta[nb] > kkbeta) ? upf.kbeta[nb] : kkbeta;
-    }
-
-	betar.create(upf.beta.nr, upf.beta.nc);
+    betar.create(upf.beta.nr, upf.beta.nc);
 	
 //	OUT("betar.nr",upf.beta.nr); // nbeta
 //	OUT("betar.nc",upf.beta.nc); // mesh
@@ -99,10 +94,10 @@ void pseudo_nc::set_pseudo_nc(const Pseudopot_upf &upf)
 } // end subroutine set_pseudo_upf
 
 
-void pseudo_nc::print_pseudo_nc(std::ofstream &ofs)
+void pseudo::print_pseudo_nc(std::ofstream &ofs)
 {
 	print_pseudo_vl(ofs);
-	ofs << "\n pseudo_nc : ";
+	ofs << "\n pseudo : ";
 	ofs << "\n kkbeta	" << kkbeta;
 	ofs << "\n nh  " << nh;
 	output::printr1_d(ofs, " lll : ", lll, nbeta);
@@ -112,9 +107,9 @@ void pseudo_nc::print_pseudo_nc(std::ofstream &ofs)
 }
 
 
-void pseudo_nc::set_pseudo_h(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 {
-	ModuleBase::TITLE("pseudo_nc","set_pseudo_h");
+	ModuleBase::TITLE("pseudo","set_pseudo_h");
 	// set pseudopotential for each atom type
 	// by using the Unified Pseudopotential Format
 
@@ -221,9 +216,9 @@ void pseudo_nc::set_pseudo_h(const Pseudopot_upf &upf)
 } // end subroutine set_pseudo_upf
 
 
-void pseudo_nc::set_pseudo_atom(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
 {
-	ModuleBase::TITLE("pseudo_nc","set_pseudo_atom");
+	ModuleBase::TITLE("pseudo","set_pseudo_atom");
 
 	// mohan 2009-12-15
 	// mohan update again 2011-05-23, 
@@ -323,9 +318,9 @@ void pseudo_nc::set_pseudo_atom(const Pseudopot_upf &upf)
 
 
 
-void pseudo_nc::set_pseudo_vl(const Pseudopot_upf &upf)
+void pseudo::set_pseudo_vl(const Pseudopot_upf &upf)
 {
-	ModuleBase::TITLE("pseudo_nc","set_pseudo_vl");
+	ModuleBase::TITLE("pseudo","set_pseudo_vl");
 
 	assert(mesh>0);//mohan add 2021-05-01
 
@@ -342,7 +337,7 @@ void pseudo_nc::set_pseudo_vl(const Pseudopot_upf &upf)
 } 
 
 
-void pseudo_nc::print_pseudo_atom(std::ofstream &ofs)
+void pseudo::print_pseudo_atom(std::ofstream &ofs)
 {
 	print_pseudo_h(ofs);
 	ofs << "\n pseudo_atom : ";
@@ -358,7 +353,7 @@ void pseudo_nc::print_pseudo_atom(std::ofstream &ofs)
 }
 
 
-void pseudo_nc::print_pseudo_vl(std::ofstream &ofs)
+void pseudo::print_pseudo_vl(std::ofstream &ofs)
 {
 	ofs << "\n pseudo_vl:";
 	print_pseudo_atom(ofs);
@@ -366,7 +361,7 @@ void pseudo_nc::print_pseudo_vl(std::ofstream &ofs)
 	ofs << "\n ----------------------------------- ";
 }
 
-void pseudo_nc::print_pseudo_h(std::ofstream &ofs)
+void pseudo::print_pseudo_h(std::ofstream &ofs)
 {
     ofs << "\n pseudo_info :";
     ofs << "\n nv       " << nv;

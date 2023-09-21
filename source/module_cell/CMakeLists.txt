@@ -9,7 +9,7 @@ add_library(
     OBJECT
     atom_pseudo.cpp
     atom_spec.cpp
-    pseudo_nc.cpp
+    pseudo.cpp
     read_pp.cpp
     read_pp_upf100.cpp
     read_pp_upf201.cpp

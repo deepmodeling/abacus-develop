@@ -7,10 +7,10 @@
 #include "../module_io/output.h"
 #include "../module_base/complexarray.h"
 #include "../module_base/complexmatrix.h"
-#include "pseudo_nc.h"
+#include "pseudo.h"
 
 
-class Atom_pseudo : public pseudo_nc
+class Atom_pseudo : public pseudo
 {
 public:
 

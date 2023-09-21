@@ -30,10 +30,10 @@ InfoNonlocal::~InfoNonlocal()
 {
 }
 
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 }
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 }
 

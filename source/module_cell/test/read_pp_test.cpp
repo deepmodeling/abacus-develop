@@ -42,9 +42,6 @@
  *     - a different "<PP_MESH" header in UPF file
  *   - ReadUPF201FR
  *     - read a full-relativistic pp
- *   - XCWarning
- *     - DFT functianal warning when mismatching between pp_file
- *     - and GlobalV::dft_functional happens
  *   - VWR
  *     - read vwr type of pp
  *   - VWR
@@ -437,22 +434,6 @@ TEST_F(ReadPPTest, ReadUPF201MESH2)
 	ifs.open("./support/Fe.pbe-sp-mt_gipaw.UPF");
 	upf->read_pseudo_upf201(ifs);
 	EXPECT_EQ(upf->psd,"Fe");
-	ifs.close();
-}
-
-TEST_F(ReadPPTest, XCWarning)
-{
-	std::ifstream ifs;
-	// this pp file has gipaw, thus a different header
-	// dft_functional warning
-	GlobalV::DFT_FUNCTIONAL="LDA";
-	ifs.open("./support/Fe.pbe-sp-mt_gipaw.UPF");
-	//upf->read_pseudo_upf201(ifs);
-	testing::internal::CaptureStdout();
-	EXPECT_NO_THROW(upf->read_pseudo_upf201(ifs));
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("dft_functional readin is: LDA"));
-	EXPECT_THAT(output,testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
 	ifs.close();
 }
 

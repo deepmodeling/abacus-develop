@@ -84,8 +84,8 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 			ModuleBase::GlobalFunc::OUT(log,"pseudopotential type",atoms[i].ncpp.pp_type);
 			ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
 			ModuleBase::GlobalFunc::OUT(log,"nonlocal core correction", atoms[i].ncpp.nlcc);
-//			ModuleBase::GlobalFunc::OUT(log,"spin orbital",atoms[i].has_so);
-			ModuleBase::GlobalFunc::OUT(log,"valence electrons", atoms[i].ncpp.zv);
+            ModuleBase::GlobalFunc::OUT(log, "spin orbital", atoms[i].has_so);
+            ModuleBase::GlobalFunc::OUT(log,"valence electrons", atoms[i].ncpp.zv);
 			ModuleBase::GlobalFunc::OUT(log,"lmax", atoms[i].ncpp.lmax);
 			ModuleBase::GlobalFunc::OUT(log,"number of zeta", atoms[i].ncpp.nchi);
 			ModuleBase::GlobalFunc::OUT(log,"number of projectors", atoms[i].ncpp.nbeta);
@@ -95,29 +95,26 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 			}
 //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
 		}
-		if(upf.functional_error == 1)
-		{
-			std::cout << "In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file" << std::endl;
-			std::cout << "Please make sure this is what you need" << std::endl;
-			atoms[i].ncpp.xc_func = GlobalV::DFT_FUNCTIONAL;
-			transform(atoms[i].ncpp.xc_func.begin(), atoms[i].ncpp.xc_func.end(), atoms[i].ncpp.xc_func.begin(), (::toupper));
-			if(GlobalV::MY_RANK==0)
-			{
-				log << "\n In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file" << std::endl;
-				log << " Please make sure this is what you need" << std::endl;
-				log << " XC functional updated to : " << GlobalV::DFT_FUNCTIONAL << std::endl;
-				ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
-			}
-		}
-			
-		//atoms[i].print_pseudo_us(ofs);
-	}
+        if (GlobalV::DFT_FUNCTIONAL != "default")
+        {
+            std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
+            transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
+            if (xc_func1 != xc_func)
+            {
+                std::cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                std::cout << " dft_functional in pseudopot file is: " << xc_func << std::endl;
+                std::cout << " Please make sure this is what you need" << std::endl;
+                GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << xc_func << std::endl;
+                GlobalV::ofs_warning << " Please make sure this is what you need" << std::endl;
 
-//	if(GlobalV::MY_RANK==0)
-//	{
-//		ofs.close();
-//	}
-	return;
+                atoms[i].ncpp.xc_func = xc_func1;
+                log << " XC functional updated to : " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
+            }
+        }
+    }
+    return;
 }
 
 

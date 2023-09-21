@@ -157,7 +157,9 @@ TEST_F(UcellDeathTest,ReadCellPPWarning4)
 	testing::internal::CaptureStdout();
 	EXPECT_NO_THROW(ucell->read_cell_pseudopots(pp_dir,ofs));
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("dft_functional from INPUT does not match that in pseudopot file"));
+    EXPECT_THAT(output, testing::HasSubstr("dft_functional readin is: LDA"));
+    EXPECT_THAT(output, testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
+    EXPECT_THAT(output, testing::HasSubstr("Please make sure this is what you need"));
 }
 
 TEST_F(UcellTest,ReadCellPP)

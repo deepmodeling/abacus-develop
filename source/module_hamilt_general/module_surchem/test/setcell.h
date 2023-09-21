@@ -27,8 +27,8 @@ Atom::Atom(){};
 Atom::~Atom(){};
 Atom_pseudo::Atom_pseudo(){};
 Atom_pseudo::~Atom_pseudo(){};
-pseudo_nc::pseudo_nc(){};
-pseudo_nc::~pseudo_nc(){};
+pseudo::pseudo(){};
+pseudo::~pseudo(){};
 /*
 Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};

@@ -3,13 +3,13 @@
 #include<streambuf>
 
 /************************************************
- *  unit test of pseudo_nc
+ *  unit test of pseudo
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - pseudo_nc
- *   - ~pseudo_nc
+ *   - pseudo
+ *   - ~pseudo
  *   - set_pseudo_h
  *   - set_pseudo_atom
  *   - set_pseudo_vl
@@ -22,13 +22,13 @@
 
 #define private public
 #include "module_cell/read_pp.h"
-#include "module_cell/pseudo_nc.h"
+#include "module_cell/pseudo.h"
 
 class NCPPTest : public testing::Test
 {
 protected:
 	std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
-	std::unique_ptr<pseudo_nc> ncpp{new pseudo_nc};
+	std::unique_ptr<pseudo> ncpp{new pseudo};
 };
 
 TEST_F(NCPPTest, SetPseudoH)

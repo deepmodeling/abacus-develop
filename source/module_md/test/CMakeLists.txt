@@ -10,7 +10,7 @@ list(APPEND depend_files
   ../../module_cell/atom_pseudo.cpp
   ../../module_cell/read_atoms.cpp
   ../../module_cell/read_cell_pseudopots.cpp
-  ../../module_cell/pseudo_nc.cpp
+  ../../module_cell/pseudo.cpp
   ../../module_cell/read_pp.cpp
   ../../module_cell/read_pp_upf100.cpp
   ../../module_cell/read_pp_upf201.cpp
