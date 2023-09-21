@@ -222,9 +222,3 @@ int RealGauntTable::index_map(int l, int m) const
     assert( std::abs(m) <= l );
     return l * l + l + m;
 }
-
-size_t RealGauntTable::memory() const
-{
-    return gaunt_table_.size() * (6 * sizeof(int) + sizeof(double))
-            + real_gaunt_table_.NumElements() * sizeof(double);
-}
