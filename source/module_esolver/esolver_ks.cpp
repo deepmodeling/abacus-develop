@@ -400,7 +400,6 @@ namespace ModuleESolver
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
-                        std::cout<<iter<<"dd"<<std::endl;
                         //conv_elec = this->estate.mix_rho();
                         p_chgmix->mix_rho(iter, pelec->charge);
                         //----------charge mixing done-----------
