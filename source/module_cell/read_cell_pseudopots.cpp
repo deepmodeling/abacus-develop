@@ -1,12 +1,8 @@
-#include "unitcell.h"
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
+
 #include "module_base/parallel_common.h"
 #include "module_io/input.h"
-#ifdef __LCAO
-//#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
-
-
-#include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
+#include "unitcell.h"
 
 //==========================================================
 // Read pseudopotential according to the dir
@@ -41,8 +37,9 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 				}
 				//average pseudopotential if needed
 				error_ap = upf.average_p(GlobalV::soc_lambda); //added by zhengdy 2020-10-20
-			}
-		}
+                upf.set_upf_q();                               // liuyu add 2023-09-21
+            }
+        }
 
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
@@ -51,23 +48,32 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 
 		if(error_ap) 
 		{
-			ModuleBase::WARNING_QUIT("UnitCell::read_pseudopot","error when average the pseudopotential.");
-		}
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "error when average the pseudopotential.");
+        }
 
-		if(error==1)
-		{
-			std::cout << " Pseudopotential directory now is : " << pp_address << std::endl;
-			GlobalV::ofs_warning << " Pseudopotential directory now is : " << pp_address << std::endl;
-			ModuleBase::WARNING_QUIT("read_pseudopot","Couldn't find pseudopotential file.");
-		}
-		else if(error==2)
-		{
-			ModuleBase::WARNING_QUIT("read_pseudopot","Pseudopotential data do not match.");
-		}
-		else if(error==3)
-		{
-			ModuleBase::WARNING_QUIT("read_pseudopot","Check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave functions  \n and the corresponding non-local projectors together\n in .vwr pseudopotential file.");
-		}
+        if (error == 1)
+        {
+            std::cout << " Pseudopotential directory now is : " << pp_address << std::endl;
+            GlobalV::ofs_warning << " Pseudopotential directory now is : " << pp_address << std::endl;
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Couldn't find pseudopotential file.");
+        }
+        else if (error == 2)
+        {
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Pseudopotential data do not match.");
+        }
+        else if (error == 3)
+        {
+            ModuleBase::WARNING_QUIT(
+                "UnitCell::read_cell_pseudopots",
+                "Check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave "
+                "functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n "
+                "unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave "
+                "functions  \n and the corresponding non-local projectors together\n in .vwr pseudopotential file.");
+        }
+        else if (error == 4)
+        {
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Unknown pseudopotential type.");
+        }
 
 //xiaohui add 2015-03-24
 #ifdef __MPI
@@ -84,7 +90,7 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 			ModuleBase::GlobalFunc::OUT(log,"pseudopotential type",atoms[i].ncpp.pp_type);
 			ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
 			ModuleBase::GlobalFunc::OUT(log,"nonlocal core correction", atoms[i].ncpp.nlcc);
-            ModuleBase::GlobalFunc::OUT(log, "spin orbital", atoms[i].has_so);
+            // ModuleBase::GlobalFunc::OUT(log, "spin orbital", atoms[i].has_so);
             ModuleBase::GlobalFunc::OUT(log,"valence electrons", atoms[i].ncpp.zv);
 			ModuleBase::GlobalFunc::OUT(log,"lmax", atoms[i].ncpp.lmax);
 			ModuleBase::GlobalFunc::OUT(log,"number of zeta", atoms[i].ncpp.nchi);
@@ -99,13 +105,13 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
         {
             std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
             transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
-            if (xc_func1 != xc_func)
+            if (xc_func1 != atoms[i].ncpp.xc_func)
             {
                 std::cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
-                std::cout << " dft_functional in pseudopot file is: " << xc_func << std::endl;
+                std::cout << " dft_functional in pseudopot file is: " << atoms[i].ncpp.xc_func << std::endl;
                 std::cout << " Please make sure this is what you need" << std::endl;
                 GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
-                GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << xc_func << std::endl;
+                GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << atoms[i].ncpp.xc_func << std::endl;
                 GlobalV::ofs_warning << " Please make sure this is what you need" << std::endl;
 
                 atoms[i].ncpp.xc_func = xc_func1;

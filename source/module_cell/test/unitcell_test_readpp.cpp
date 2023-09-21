@@ -162,6 +162,15 @@ TEST_F(UcellDeathTest,ReadCellPPWarning4)
     EXPECT_THAT(output, testing::HasSubstr("Please make sure this is what you need"));
 }
 
+TEST_F(UcellDeathTest, ReadCellPPWarning5)
+{
+    ucell->pseudo_type[0] = "upf0000";
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("Unknown pseudopotential type."));
+}
+
 TEST_F(UcellTest,ReadCellPP)
 {
 	ucell->atoms[1].flag_empty_element = true;

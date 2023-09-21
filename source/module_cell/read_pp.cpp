@@ -82,8 +82,10 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 		int info = read_pseudo_blps(ifs);
 		return info;
 	}
-
-	return 0;
+    else
+    {
+        return 4;
+    }
 }
 
 
@@ -407,4 +409,81 @@ void Pseudopot_upf::set_empty_element(void)
 		this->rho_at[ir] = 0;
 	}
 	return;
+}
+
+/**
+ * For USPP we set the augmentation charge as an l-dependent array in all
+ * cases. This is already the case when upf%q_with_l is .true.
+ * For vanderbilt US pseudos, where nqf and rinner are non zero, we do here
+ * what otherwise would be done multiple times in many parts of the code
+ * (such as in init_us_1, addusforce_r, bp_calc_btq, compute_qdipol)
+ * whenever the q_l(r) were to be constructed.
+ * For simple rrkj3 pseudos we duplicate the information contained in q(r)
+ * for all q_l(r).
+ *
+ * This requires a little extra memory but unifies the treatment of q_l(r)
+ * and allows further weaking with the augmentation charge.
+ */
+void Pseudopot_upf::set_upf_q()
+{
+    if (tvanp && !q_with_l)
+    {
+        qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
+        for (int nb = 0; nb < nbeta; nb++)
+        {
+            int ln = lll[nb];
+            for (int mb = nb; mb < nbeta; mb++)
+            {
+                int lm = lll[mb];
+                int nmb = mb * (mb + 1) / 2 + nb;
+
+                for (int l = std::abs(ln - lm); l <= ln + lm; l += 2)
+                {
+                    // copy q(r) to the l-dependent grid
+                    for (int ir = 0; ir < mesh; ir++)
+                    {
+                        qfuncl(l, nmb, ir) = qfunc(nmb, ir);
+                    }
+
+                    // adjust the inner values on the l-dependent grid if nqf and rinner are defined
+                    if (nqf > 0 && rinner[l] > 0.0)
+                    {
+                        int ilast = 0;
+                        for (int ir = 0; ir < kkbeta; ++ir)
+                        {
+                            if (r[ir] < rinner[l])
+                            {
+                                ilast = ir + 1;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        this->setqfnew(nqf, ilast, l, 2, &qfcoef(nb, mb, l, 0), r, &qfuncl(l, nmb, 0));
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Pseudopot_upf::setqfnew(const int& nqf,
+                             const int& mesh,
+                             const int& l,
+                             const int& n,
+                             const double* qfcoef,
+                             const double* r,
+                             double* rho)
+{
+    for (int ir = 0; ir < mesh; ++ir)
+    {
+        double rr = r[ir] * r[ir];
+        rho[ir] = qfcoef[0];
+        for (int iq = 1; iq < nqf; ++iq)
+        {
+            rho[ir] += qfcoef[iq] * pow(rr, iq);
+        }
+        rho[ir] *= pow(r[ir], l + n);
+    }
 }

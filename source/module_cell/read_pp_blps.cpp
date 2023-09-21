@@ -51,7 +51,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     else
     {
         std::string msg = "Unknown pspxc: " + std::to_string(pspxc);
-        WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
 
     ifs.ignore(300, '\n');
