@@ -37,7 +37,7 @@ class Pulay_Mixing : public Mixing
     }
     virtual void reset() override
     {
-        this->start_F = -1;
+        this->start_F = 0;
         this->address = nullptr;
     }
 
