@@ -24,8 +24,15 @@ void PotLocal_PAW::cal_fixed_v(double *vl_pseudo // store the local pseudopotent
 #ifdef USE_PAW
     int nrxx = GlobalC::paw_cell.get_nrxx();
     double* tmp = new double[nrxx];
-    GlobalC::paw_cell.get_vloc_ncoret(vl_pseudo,tmp);
+    double* vl_hartree = new double[nrxx];
+    GlobalC::paw_cell.get_vloc_ncoret(vl_hartree,tmp);
+
+    for(int ir = 0; ir < nrxx; ir ++)
+    {
+        vl_pseudo[ir] = vl_hartree[ir] * 2;
+    }
     delete[] tmp;
+    delete[] vl_hartree;
 #endif
 
     // GlobalV::ofs_running <<" set local pseudopotential done." << std::endl;

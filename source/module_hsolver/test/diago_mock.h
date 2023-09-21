@@ -448,7 +448,7 @@ class HPsi_f
 };
 
 //totally same as the original function
-template<> void hamilt::HamiltPW<double>::sPsi
+template<> void hamilt::HamiltPW<std::complex<double>>::sPsi
 (
     const std::complex<double> *psi, 
     std::complex<double> *spsi, 
@@ -463,7 +463,7 @@ template<> void hamilt::HamiltPW<double>::sPsi
 }
 
 //totally same as the original function
-template<> void hamilt::HamiltPW<float>::sPsi
+template<> void hamilt::HamiltPW<std::complex<float>>::sPsi
 (
     const std::complex<float> *psi, 
     std::complex<float> *spsi, 
@@ -479,7 +479,7 @@ template<> void hamilt::HamiltPW<float>::sPsi
 
 //Mock function h_psi
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.h"
-class OperatorMock_d : public hamilt::OperatorPW<double>
+class OperatorMock_d : public hamilt::OperatorPW<std::complex<double>>
 {
     ~OperatorMock_d()
     {
@@ -524,7 +524,7 @@ class OperatorMock_d : public hamilt::OperatorPW<double>
     }
 };
 
-class OperatorMock_f : public hamilt::OperatorPW<float>
+class OperatorMock_f : public hamilt::OperatorPW<std::complex<float>>
 {
     ~OperatorMock_f()
     {
@@ -571,32 +571,32 @@ class OperatorMock_f : public hamilt::OperatorPW<float>
     }
 };
 
-template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
+template<> void hamilt::HamiltPW<std::complex<double>>::updateHk(const int ik)
 {
     return;
 }
 
-template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->ops = new OperatorMock_d;
 }
 
-template<> hamilt::HamiltPW<double>::~HamiltPW()
+template<> hamilt::HamiltPW<std::complex<double>>::~HamiltPW()
 {
     delete this->ops;
 }
 
-template<> void hamilt::HamiltPW<float>::updateHk(const int ik)
+template<> void hamilt::HamiltPW<std::complex<float>>::updateHk(const int ik)
 {
     return;
 }
 
-template<> hamilt::HamiltPW<float>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->ops = new OperatorMock_f;
 }
 
-template<> hamilt::HamiltPW<float>::~HamiltPW()
+template<> hamilt::HamiltPW<std::complex<float>>::~HamiltPW()
 {
     delete this->ops;
 }

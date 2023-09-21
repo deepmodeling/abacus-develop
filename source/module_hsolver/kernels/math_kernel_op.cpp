@@ -6,22 +6,23 @@
 namespace hsolver
 {
 
-template <typename FPTYPE>
-struct line_minimize_with_block_op<FPTYPE, psi::DEVICE_CPU> {
+template <typename T>
+struct line_minimize_with_block_op<T, psi::DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* hgrad_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
+        T* grad_out,
+        T* hgrad_out,
+        T* psi_out,
+        T* hpsi_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band)
     {
         for (int band_idx = 0; band_idx < n_band; band_idx++) {
-            FPTYPE epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-            FPTYPE theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
-            auto A = reinterpret_cast<const FPTYPE *>(grad_out + band_idx * n_basis_max);
-            FPTYPE norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
+            Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
+            auto A = reinterpret_cast<const Real *>(grad_out + band_idx * n_basis_max);
+            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++) {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -43,28 +44,29 @@ struct line_minimize_with_block_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-template <typename FPTYPE>
-struct calc_grad_with_block_op<FPTYPE, psi::DEVICE_CPU> {
+template <typename T>
+struct calc_grad_with_block_op<T, psi::DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        const FPTYPE* prec_in,
-        FPTYPE* err_out,
-        FPTYPE* beta_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* grad_old_out,
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
+        T* psi_out,
+        T* hpsi_out,
+        T* grad_out,
+        T* grad_old_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band)
     {
         for (int band_idx = 0; band_idx < n_band; band_idx++) {
-            FPTYPE err = 0.0;
-            FPTYPE beta = 0.0;
-            FPTYPE epsilo = 0.0;
-            FPTYPE grad_2 = {0.0};
-            std::complex<FPTYPE> grad_1 = {0.0, 0.0};
-            auto A = reinterpret_cast<const FPTYPE *>(psi_out + band_idx * n_basis_max);
-            FPTYPE norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Real err = 0.0;
+            Real beta = 0.0;
+            Real epsilo = 0.0;
+            Real grad_2 = {0.0};
+            T grad_1 = {0.0, 0.0};
+            auto A = reinterpret_cast<const Real *>(psi_out + band_idx * n_basis_max);
+            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++) {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -324,8 +326,8 @@ template struct vector_div_vector_op<float, psi::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<float, psi::DEVICE_CPU>;
 template struct matrixTranspose_op<float, psi::DEVICE_CPU>;
 template struct matrixSetToAnother<float, psi::DEVICE_CPU>;
-template struct calc_grad_with_block_op<float, psi::DEVICE_CPU>;
-template struct line_minimize_with_block_op<float, psi::DEVICE_CPU>;
+template struct calc_grad_with_block_op<std::complex<float>, psi::DEVICE_CPU>;
+template struct line_minimize_with_block_op<std::complex<float>, psi::DEVICE_CPU>;
 
 template struct scal_op<double, psi::DEVICE_CPU>;
 template struct axpy_op<double, psi::DEVICE_CPU>;
@@ -338,6 +340,6 @@ template struct vector_div_vector_op<double, psi::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
 template struct matrixTranspose_op<double, psi::DEVICE_CPU>;
 template struct matrixSetToAnother<double, psi::DEVICE_CPU>;
-template struct calc_grad_with_block_op<double, psi::DEVICE_CPU>;
-template struct line_minimize_with_block_op<double, psi::DEVICE_CPU>;
+template struct calc_grad_with_block_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct line_minimize_with_block_op<std::complex<double>, psi::DEVICE_CPU>;
 } // namespace hsolver

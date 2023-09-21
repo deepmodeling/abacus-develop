@@ -205,7 +205,7 @@ To add a unit test:
 
     In order to run unit tests, ABACUS needs to be configured with `-D BUILD_TESTING=ON` flag. For example:
     ```bash
-    camke -B build -DBUILD_TESTING=ON
+    cmake -B build -DBUILD_TESTING=ON
     ``` 
     then build ABACUS and unit testing with 
     ```bash
@@ -213,7 +213,7 @@ To add a unit test:
     ```
     It is import to run the folloing command before running unit tests:
     ```bash
-    camke --install build
+    cmake --install build
     ```
     to install mandatory supporting input files for unit tests.  
     If you modified the unit tests to add new tests or learn how to write unit tests, it is convenient to run

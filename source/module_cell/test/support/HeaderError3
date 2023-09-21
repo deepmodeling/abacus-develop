@@ -1,6 +1,6 @@
 <UPF version="2.0.1">
   <PP_HEADER generated='Generated using "atomic" code by A. Dal Corso  v.5.0.2 svn rev. 9415'
-             is_paw="T"
              is_ultrasoft="F"
+             is_paw="T"
              />
 </UPF>

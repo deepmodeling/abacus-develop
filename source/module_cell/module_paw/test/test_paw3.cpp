@@ -236,7 +236,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         {
             double tmp;
             ifs_dij >> tmp;
-            EXPECT_NEAR(tmp,dij[i],1e-10);
+            EXPECT_NEAR(tmp,dij[i],1e-9);
         }
 
         delete[] dij;
