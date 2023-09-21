@@ -72,13 +72,12 @@ class pseudo
       void set_pseudo_h(const Pseudopot_upf& upf);
       void set_pseudo_atom(const Pseudopot_upf& upf);
       void set_pseudo_vl(const Pseudopot_upf& upf);
-      void set_pseudo_nc(const Pseudopot_upf& upf);
+      void set_pseudo(const Pseudopot_upf& upf);
 
       void print_pseudo_h(std::ofstream& ofs);
       void print_pseudo_atom(std::ofstream& ofs);
       void print_pseudo_vl(std::ofstream& ofs);
-      void print_pseudo_nc(std::ofstream& ofs);
-
+      void print_pseudo(std::ofstream& ofs);
 };
 
 #endif // PSEUDO_NC_H

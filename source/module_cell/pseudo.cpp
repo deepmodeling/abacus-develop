@@ -51,12 +51,12 @@ pseudo::~pseudo()
 
 
 //---------------------------------------------------------------------
-void pseudo::set_pseudo_nc(const Pseudopot_upf &upf)
+void pseudo::set_pseudo(const Pseudopot_upf& upf)
 {
-	ModuleBase::TITLE("pseudo","set_pseudo_nc");
+    ModuleBase::TITLE("pseudo", "set_pseudo");
 
-	// call subroutines
-	this->set_pseudo_h(upf);
+    // call subroutines
+    this->set_pseudo_h(upf);
 	this->set_pseudo_atom(upf);
 	this->set_pseudo_vl(upf);
 
@@ -93,8 +93,7 @@ void pseudo::set_pseudo_nc(const Pseudopot_upf &upf)
 	return;
 } // end subroutine set_pseudo_upf
 
-
-void pseudo::print_pseudo_nc(std::ofstream &ofs)
+void pseudo::print_pseudo(std::ofstream& ofs)
 {
 	print_pseudo_vl(ofs);
 	ofs << "\n pseudo : ";

@@ -83,22 +83,21 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 
 		if(GlobalV::MY_RANK==0)
 		{
-//			upf.print_pseudo_upf( ofs );
-			atoms[i].ncpp.set_pseudo_nc( upf );
+            atoms[i].ncpp.set_pseudo(upf);
 
-			log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
-			ModuleBase::GlobalFunc::OUT(log,"pseudopotential type",atoms[i].ncpp.pp_type);
-			ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
-			ModuleBase::GlobalFunc::OUT(log,"nonlocal core correction", atoms[i].ncpp.nlcc);
+            log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
+            ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", atoms[i].ncpp.pp_type);
+            ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
+            ModuleBase::GlobalFunc::OUT(log, "nonlocal core correction", atoms[i].ncpp.nlcc);
             // ModuleBase::GlobalFunc::OUT(log, "spin orbital", atoms[i].has_so);
-            ModuleBase::GlobalFunc::OUT(log,"valence electrons", atoms[i].ncpp.zv);
-			ModuleBase::GlobalFunc::OUT(log,"lmax", atoms[i].ncpp.lmax);
-			ModuleBase::GlobalFunc::OUT(log,"number of zeta", atoms[i].ncpp.nchi);
-			ModuleBase::GlobalFunc::OUT(log,"number of projectors", atoms[i].ncpp.nbeta);
-			for(int ib=0; ib<atoms[i].ncpp.nbeta; ib++)
-			{
-				ModuleBase::GlobalFunc::OUT(log,"L of projector", atoms[i].ncpp.lll[ib]);
-			}
+            ModuleBase::GlobalFunc::OUT(log, "valence electrons", atoms[i].ncpp.zv);
+            ModuleBase::GlobalFunc::OUT(log, "lmax", atoms[i].ncpp.lmax);
+            ModuleBase::GlobalFunc::OUT(log, "number of zeta", atoms[i].ncpp.nchi);
+            ModuleBase::GlobalFunc::OUT(log, "number of projectors", atoms[i].ncpp.nbeta);
+            for (int ib = 0; ib < atoms[i].ncpp.nbeta; ib++)
+            {
+                ModuleBase::GlobalFunc::OUT(log, "L of projector", atoms[i].ncpp.lll[ib]);
+            }
 //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
 		}
         if (GlobalV::DFT_FUNCTIONAL != "default")
