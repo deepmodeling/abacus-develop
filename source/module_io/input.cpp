@@ -2999,6 +2999,8 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
+    Parallel_Common::bcast_bool(psi_initializer);
+    
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
