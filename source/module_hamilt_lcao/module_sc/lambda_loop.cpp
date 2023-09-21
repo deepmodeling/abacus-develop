@@ -34,7 +34,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // question: bound_gradient should be read from INPUT?
     std::vector<double> bound_gradient(ntype,0.0);
     // temp variables
-    //bound_gradient[0] = 0.9; // temporary for ion
 
     // calculate number of components to be constrained
     int num_component = sum_2d(this->constrain_);
@@ -53,6 +52,8 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     double boundary;
     double sum_k, sum_k2;
     double g;
+
+    bound_gradient[0] = 0.9*13.6058; // temporary for ion
 
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
@@ -79,7 +80,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             this->cal_mw_from_lambda(i_step);
             //spin = this->Mi_;
             new_spin = this->Mi_;
-            /*
             subtract_2d(new_spin, spin, spin_change);
             subtract_2d(delta_lambda, dnu_last_step, nu_change);
             where_fill_scalar_2d(this->constrain_, 0, 0.0, spin_change);
@@ -131,7 +131,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             }
             for (int it = 0; it < ntype; it++)
             {
-                if (i_step >= this->nsc_min_ && bound_gradient[it] > 0 && max_gradient[it] < bound_gradient[it])
+                if (i_step >= this->nsc_min_ && bound_gradient[it] > 0 && abs(max_gradient[it]) < bound_gradient[it])
                 {
                     std::cout << "Reach limitation of current step ( maximum gradient < " 
                         << bound_gradient[it] << " in atom type " << it << " ), exit." << std::endl;
@@ -140,7 +140,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
                     goto CG_STOP;
                 }
             }
-            */
             spin = new_spin;
             //print_2d("new spin: ", spin);
             //print_2d("target spin: ", this->sc_mag_);
