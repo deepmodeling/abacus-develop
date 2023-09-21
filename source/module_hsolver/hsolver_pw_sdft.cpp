@@ -7,7 +7,7 @@
 #include <algorithm>
 namespace hsolver
 {
-void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
+void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            psi::Psi<std::complex<double>>& psi,
                            elecstate::ElecState* pes,
                            ModulePW::PW_Basis_K* wfc_basis,

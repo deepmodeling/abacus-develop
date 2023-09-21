@@ -16,8 +16,8 @@
 #endif
 namespace hsolver {
 
-template <typename FPTYPE, typename Device>
-HSolverPW<FPTYPE, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
+template <typename T, typename Device>
+HSolverPW<T, Device>::HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in)
 {
     this->classname = "HSolverPW";
     this->wfc_basis = wfc_basis_in;
@@ -35,8 +35,8 @@ void HSolverPW::update()
 {
     return;
 }*/
-template<typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, Device>& psi_in)
+template<typename T, typename Device>
+void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
 {
     if (this->method == "cg")
     {
@@ -44,48 +44,48 @@ void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, D
         {
             if(this->pdiagh->method != this->method)
             {
-                delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+                delete (DiagoCG<T, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoCG<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-            this->pdiagh = new DiagoCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh = new DiagoCG<T, Device>(precondition.data());
             this->pdiagh->method = this->method;
         }
     }
     else if (this->method == "dav")
     {
-        DiagoDavid<double>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        DiagoDavid<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
             {
-                delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoDavid<FPTYPE, Device>(precondition.data());
+                delete (DiagoDavid<T, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoDavid<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-            this->pdiagh = new DiagoDavid<FPTYPE, Device>( precondition.data());
+            this->pdiagh = new DiagoDavid<T, Device>( precondition.data());
             this->pdiagh->method = this->method;
         }
     }
     else if (this->method == "bpcg") {
         if(this->pdiagh!=nullptr) {
             if(this->pdiagh->method != this->method) {
-                delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+                delete (DiagoBPCG<T, Device>*)this->pdiagh;
+                this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
-                reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+                reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
             }
         }
         else {
-            this->pdiagh = new DiagoBPCG<FPTYPE, Device>(precondition.data());
+            this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
             this->pdiagh->method = this->method;
-            reinterpret_cast<DiagoBPCG<FPTYPE, Device>*>(this->pdiagh)->init_iter(psi_in);
+            reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
         }
     }
     else
@@ -94,9 +94,9 @@ void HSolverPW<FPTYPE, Device>::initDiagh(const psi::Psi<std::complex<FPTYPE>, D
     }
 }
 
-template <typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
-                                      psi::Psi<std::complex<FPTYPE>, Device>& psi,
+template <typename T, typename Device>
+void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
+                                      psi::Psi<T, Device>& psi,
                                       elecstate::ElecState* pes,
                                       const std::string method_in,
                                       const bool skip_charge)
@@ -109,7 +109,7 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
     // select the method of diagonalization
     this->method = method_in;
     this->initDiagh(psi);
-    std::vector<FPTYPE> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
+    std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
@@ -168,9 +168,9 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         this->hamiltSolvePsiK(pHamilt, psi, eigenvalues.data() + ik * pes->ekb.nc);
         if(skip_charge)
         {
-            GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<FPTYPE, Device>::avg_iter
-                <<" ; where current threshold is: "<<DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR<<" . "<<std::endl;
-            DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
+            GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<T, Device>::avg_iter
+                <<" ; where current threshold is: "<<DiagoIterAssist<T, Device>::PW_DIAG_THR<<" . "<<std::endl;
+            DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
         /// calculate the contribution of Psi for charge density rho
     }
@@ -183,12 +183,12 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
         ModuleBase::timer::tick("HSolverPW", "solve");
         return;
     }
-    reinterpret_cast<elecstate::ElecStatePW<FPTYPE, Device>*>(pes)->psiToRho(psi);
+    reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
 
 #ifdef USE_PAW
     if(GlobalV::use_paw)
     {
-        if(typeid(FPTYPE) != typeid(double))
+        if(typeid(Real) != typeid(double))
         {
             ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
         }
@@ -226,34 +226,34 @@ void HSolverPW<FPTYPE, Device>::solve(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
     return;
 }
 
-template<typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::endDiagh()
+template<typename T, typename Device>
+void HSolverPW<T, Device>::endDiagh()
 {
     // DiagoCG would keep 9*nbasis memory in cache during loop-k
     // it should be deleted before calculating charge
     if(this->method == "cg")
     {
-        delete (DiagoCG<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
     if(this->method == "dav")
     {
-        delete (DiagoDavid<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoDavid<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
     if(this->method == "all-band cg")
     {
-        delete (DiagoBPCG<FPTYPE, Device>*)this->pdiagh;
+        delete (DiagoBPCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
 
     //in PW base, average iteration steps for each band and k-point should be printing
-    if(DiagoIterAssist<FPTYPE, Device>::avg_iter > 0.0)
+    if(DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<FPTYPE, Device>::avg_iter / this->wfc_basis->nks
-            <<" ; where current threshold is: "<<DiagoIterAssist<FPTYPE, Device>::PW_DIAG_THR<<" . "<<std::endl;
+        GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
+            <<" ; where current threshold is: "<<DiagoIterAssist<T, Device>::PW_DIAG_THR<<" . "<<std::endl;
         //reset avg_iter
-        DiagoIterAssist<FPTYPE, Device>::avg_iter = 0.0;
+        DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
     //psi only should be initialed once for PW
     if(!this->initialed_psi)
@@ -262,9 +262,9 @@ void HSolverPW<FPTYPE, Device>::endDiagh()
     }
 }
 
-template <typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHamilt,
-                                           psi::Psi<std::complex<FPTYPE>, Device>& psi,
+template <typename T, typename Device>
+void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
+                                           psi::Psi<T, Device>& psi,
                                            const int ik)
 {
     psi.fix_k(ik);
@@ -283,18 +283,18 @@ void HSolverPW<FPTYPE, Device>::updatePsiK(hamilt::Hamilt<FPTYPE, Device>* pHami
     }
 }
 
-template<typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::hamiltSolvePsiK(hamilt::Hamilt<FPTYPE, Device>* hm, psi::Psi<std::complex<FPTYPE>, Device>& psi, FPTYPE* eigenvalue)
+template<typename T, typename Device>
+void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
     this->pdiagh->diag(hm, psi, eigenvalue);
 }
 
-template<typename FPTYPE, typename Device>
-void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag, const int ik, const int npw)
+template<typename T, typename Device>
+void HSolverPW<T, Device>::update_precondition(std::vector<Real> &h_diag, const int ik, const int npw)
 {
     h_diag.assign(h_diag.size(), 1.0);
     int precondition_type = 2;
-    const auto tpiba2 = static_cast<FPTYPE>(this->wfc_basis->tpiba2);
+    const auto tpiba2 = static_cast<Real>(this->wfc_basis->tpiba2);
 
     //===========================================
     // Conjugate-Gradient diagonalization
@@ -305,15 +305,15 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = static_cast<FPTYPE>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
-            h_diag[ig] = std::max(static_cast<FPTYPE>(1.0), g2kin);
+            Real g2kin = static_cast<Real>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
+            h_diag[ig] = std::max(static_cast<Real>(1.0), g2kin);
         }
     }
     else if (precondition_type == 2)
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            FPTYPE g2kin = static_cast<FPTYPE>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
+            Real g2kin = static_cast<Real>(this->wfc_basis->getgk2(ik,ig)) * tpiba2;
             h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
         }
     }
@@ -327,14 +327,14 @@ void HSolverPW<FPTYPE, Device>::update_precondition(std::vector<FPTYPE> &h_diag,
     }
 }
 
-template<typename FPTYPE, typename Device>
-FPTYPE HSolverPW<FPTYPE, Device>::cal_hsolerror()
+template<typename T, typename Device>
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::cal_hsolerror()
 {
-    return this->diag_ethr * static_cast<FPTYPE>(std::max(1.0, GlobalV::nelec));
+    return this->diag_ethr * static_cast<Real>(std::max(1.0, GlobalV::nelec));
 }
 
-template<typename FPTYPE, typename Device>
-FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, const FPTYPE drho)
+template<typename T, typename Device>
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::set_diagethr(const int istep, const int iter, const Real drho)
 {
     //It is too complex now and should be modified.
     if (iter == 1)
@@ -362,7 +362,7 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
         // if (GlobalV::FINAL_SCF) this->diag_ethr = 1.0e-2;
         if (GlobalV::CALCULATION == "md" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
-            this->diag_ethr = std::max(this->diag_ethr, static_cast<FPTYPE>(GlobalV::PW_DIAG_THR));
+            this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(GlobalV::PW_DIAG_THR));
         }
     }
     else
@@ -371,19 +371,19 @@ FPTYPE HSolverPW<FPTYPE, Device>::set_diagethr(const int istep, const int iter, 
         {
             this->diag_ethr = 1.e-2;
         }
-        this->diag_ethr = std::min(this->diag_ethr, static_cast<FPTYPE>(0.1) * drho / std::max(static_cast<FPTYPE>(1.0), static_cast<FPTYPE>(GlobalV::nelec)));
+        this->diag_ethr = std::min(this->diag_ethr, static_cast<Real>(0.1) * drho / std::max(static_cast<Real>(1.0), static_cast<Real>(GlobalV::nelec)));
     }
     // It is essential for single precision implementation to keep the diag_ethr value
     // less or equal to the single-precision limit of convergence(0.5e-4).
     // modified by denghuilu at 2023-05-15
     if (GlobalV::precision_flag == "single") {
-        this->diag_ethr = std::max(this->diag_ethr, static_cast<FPTYPE>(0.5e-4));
+        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
     }
     return this->diag_ethr;
 }
 
-template<typename FPTYPE, typename Device>
-FPTYPE HSolverPW<FPTYPE, Device>::reset_diagethr(std::ofstream& ofs_running, const FPTYPE hsover_error, const FPTYPE drho)
+template<typename T, typename Device>
+typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho)
 {
     ofs_running << " Notice: Threshold on eigenvalues was too large.\n";
     ModuleBase::WARNING("scf", "Threshold on eigenvalues was too large.");
@@ -394,11 +394,11 @@ FPTYPE HSolverPW<FPTYPE, Device>::reset_diagethr(std::ofstream& ofs_running, con
     return this->diag_ethr;
 }
 
-template class HSolverPW<float, psi::DEVICE_CPU>;
-template class HSolverPW<double, psi::DEVICE_CPU>;
+template class HSolverPW<std::complex<float>, psi::DEVICE_CPU>;
+template class HSolverPW<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class HSolverPW<float, psi::DEVICE_GPU>;
-template class HSolverPW<double, psi::DEVICE_GPU>;
+template class HSolverPW<std::complex<float>, psi::DEVICE_GPU>;
+template class HSolverPW<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

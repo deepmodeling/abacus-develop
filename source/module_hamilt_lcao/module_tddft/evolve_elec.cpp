@@ -25,7 +25,7 @@ int Evolve_elec::td_edm;          // 0: new edm method   1: old edm method
 void Evolve_elec::solve_psi(const int& istep,
                             const int nband,
                             const int nlocal,
-                            hamilt::Hamilt<double>* phm,
+                            hamilt::Hamilt<std::complex<double>>* phm,
                             Local_Orbital_wfc& lowf,
                             psi::Psi<std::complex<double>>* psi,
                             psi::Psi<std::complex<double>>* psi_laststep,
