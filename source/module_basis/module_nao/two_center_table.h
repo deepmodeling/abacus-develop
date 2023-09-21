@@ -76,6 +76,9 @@ class TwoCenterTable
     /// maximum angular momentum of the ket
     int lmax_ket() const { return nchi_ket_.shape().dim_size(1) - 1; }
 
+    /// Returns the amount of heap memory used by this class (in bytes).
+    size_t memory() const { return sizeof(double) * (2 * ntab_ + 1) * nr_; }
+
   private:
     char op_ = '\0';   //!< operator associated with the present table
     int ntab_ = 0;     //!< number of table entries
