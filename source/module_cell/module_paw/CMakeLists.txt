@@ -8,7 +8,11 @@ add_library(
     paw_atom.cpp
 )
 
-target_link_libraries(paw libpaw_interface)
+if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
+ target_link_libraries(paw libpaw_interface -lifcore)
+else()
+ target_link_libraries(paw libpaw_interface)
+endif()
 add_dependencies(paw libpaw_interface)
 
 if(ENABLE_COVERAGE)
