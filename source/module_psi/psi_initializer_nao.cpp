@@ -1,7 +1,16 @@
 #include "psi_initializer_nao.h"
-#include <sstream>
 #include <fstream>
-
+// numerical algorithm support
+#include "module_base/math_integral.h" // for numerical integration
+// numerical algorithm support
+#include "module_base/math_polyint.h" // for polynomial interpolation
+#include "module_base/math_ylmreal.h" // for real spherical harmonics
+// basic functions support
+#include "module_base/tool_quit.h"
+#include "module_base/timer.h"
+// three global variables definition
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in) : psi_initializer(sf_in, pw_wfc_in)
 {
@@ -28,13 +37,7 @@ psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_B
     this->ovlp_flzjlq.zero_out();
 }
 
-psi_initializer_nao::~psi_initializer_nao()
-{
-    if (this->sf != nullptr)
-    {
-        delete this->sf;
-    }
-}
+psi_initializer_nao::~psi_initializer_nao() {}
 
 
 void psi_initializer_nao::set_orbital_files(std::string* orbital_files)
@@ -300,5 +303,9 @@ psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
 		this->random_t(this->psig->get_pointer(), ibasis, this->psig->get_nbands(), ik, this->pw_wfc);
 	}
 	ModuleBase::timer::tick("psi_initializer_nao", "initialize");
+	
+#ifdef PSI_INITIALIZER_TEST
+	this->write_psig();
+#endif
 	return this->psig;
 }

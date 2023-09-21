@@ -4,8 +4,6 @@ psi_initializer_nao_random::psi_initializer_nao_random(Structure_Factor* sf_in, 
 {
     this->set_random_mix(0.05);
     this->set_method("nao+random");
-    this->sf = sf_in;
-    this->pw_wfc = pw_wfc_in;
 }
 
 psi_initializer_nao_random::~psi_initializer_nao_random() {}
@@ -25,5 +23,8 @@ psi::Psi<std::complex<double>>* psi_initializer_nao_random::cal_psig(int ik)
             (*(this->psig))(iband, ibasis) = (1-rm)*(*(this->psig))(iband, ibasis) + rm*psi_random(iband, ibasis);
         }
     }
+#ifdef PSI_INITIALIZER_TEST
+	this->write_psig();
+#endif
     return this->psig;
 }

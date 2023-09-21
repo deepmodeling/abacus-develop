@@ -1302,7 +1302,7 @@ void UnitCell::read_nao_flz(int it, std::string &orb_file, std::ofstream &ofs_ru
 	{
 		std::stringstream ss;
 		ss << "Orbital of species " << this->atom_label[it];
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,ss.str(), orb_file);
+		ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(), orb_file);
 	}
 	ifs.close();
 
@@ -1318,6 +1318,22 @@ void UnitCell::read_nao_flz(int it, std::string &orb_file, std::ofstream &ofs_ru
 	{
 		delete[] atom->n_rgrid;
 	}
+	if(atom->flz != nullptr)
+	{
+		for(int i = 0; i < total_n_chi; i++)
+		{
+			delete[] atom->flz[i];
+		}
+		delete[] atom->flz;
+	}
+	if(atom->rgrid != nullptr)
+	{
+		for(int i = 0; i < total_n_chi; i++)
+		{
+			delete[] atom->rgrid[i];
+		}
+		delete[] atom->rgrid;
+	}
 	atom->n_rgrid = new int[total_n_chi]; ModuleBase::GlobalFunc::ZEROS(atom->n_rgrid, total_n_chi);
 	atom->flz = new double*[total_n_chi];
 	atom->rgrid = new double*[total_n_chi];
@@ -1326,7 +1342,7 @@ void UnitCell::read_nao_flz(int it, std::string &orb_file, std::ofstream &ofs_ru
 	{
 		for(int izeta = 0; izeta < this->atoms[it].l_nchi[l]; izeta++)
 		{
-			GlobalV::ofs_running<<" l = "<<l<<" N = "<< izeta;
+			ofs_running<<" l = "<<l<<" N = "<< izeta;
 			std::ifstream in(orb_file.c_str());
 			if (!in)
 			{
@@ -1352,11 +1368,11 @@ void UnitCell::read_nao_flz(int it, std::string &orb_file, std::ofstream &ofs_ru
 			{
 				++n_rgrid;
 			}
-			GlobalV::ofs_running<<" n_rgrid = "<<n_rgrid; atom->n_rgrid[flatten_ichi] = n_rgrid;
+			ofs_running<<" n_rgrid = "<<n_rgrid; atom->n_rgrid[flatten_ichi] = n_rgrid;
 
 			ModuleBase::CHECK_NAME(in, "dr");
 			in >> dr;
-			GlobalV::ofs_running<<" dr = "<<dr;
+			ofs_running<<" dr = "<<dr;
 			double* rgrid = new double[n_rgrid]; atom->rgrid[flatten_ichi] = rgrid; ModuleBase::GlobalFunc::ZEROS(rgrid, n_rgrid);
 			double* flz = new double[n_rgrid]; atom->flz[flatten_ichi] = flz; ModuleBase::GlobalFunc::ZEROS(flz, n_rgrid);
 
@@ -1364,7 +1380,7 @@ void UnitCell::read_nao_flz(int it, std::string &orb_file, std::ofstream &ofs_ru
 			{
 				rgrid[ir] = ir*dr;
 			}
-			GlobalV::ofs_running<<"Rmax (Angstrom) = "<<atom->rgrid[n_rgrid-1]<<std::endl;
+			ofs_running<<" Rmax (Angstrom) = "<< atom->rgrid[0][n_rgrid-1] <<std::endl;
 
 			std::string title_1;
 			std::string title_2;

@@ -315,13 +315,20 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw"
-            ||(
-                GlobalV::BASIS_TYPE == "pw" && GlobalV::psi_initializer
-            ))
-             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+    else if (
+        (
+            GlobalV::BASIS_TYPE == "lcao" 
+          ||GlobalV::BASIS_TYPE == "lcao_in_pw"
+          ||(GlobalV::BASIS_TYPE == "pw" && GlobalV::psi_initializer)
+        )
+      &&(
+            GlobalV::CALCULATION == "scf"
+          ||GlobalV::CALCULATION == "md"
+          ||GlobalV::CALCULATION == "relax"
+        )
+        ) // pengfei 2014-10-13
     {
+        std::cout << __FILE__ << __LINE__ << std::endl;
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01

@@ -109,33 +109,32 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         this->psi_init = nullptr;
     }
 }
-
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 {
+    if (this->psi != nullptr)
+        delete this->psi;
+    this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+
     // cout<<this->pw_rho->nrxx<<endl;
     // cout<<"before ufft allocate"<<endl;
 
     // cout<<"after ufft allocate"<<endl;
-
     //=======================
     // init pseudopotential
     //=======================
     GlobalC::ppcell.init(GlobalC::ucell.ntype, &this->sf, this->pw_wfc);
-
     //=====================
     // init hamiltonian
     // only allocate in the beginning of ELEC LOOP!
     //=====================
     // not used anymore
     // GlobalC::hm.hpw.allocate(this->wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, this->pw_rho->nrxx);
-
     //=================================
     // initalize local pseudopotential
     //=================================
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-
     //======================================
     // Initalize non local pseudopotential
     //======================================
@@ -144,56 +143,115 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
     GlobalC::ppcell.cal_effective_D();
 
-    if (this->psi != nullptr)
-        delete this->psi;
-    if (GlobalV::psi_initializer) // new wavefunction initialization manner
-    {
-        /* 
-           in ESolver_KS_PW::Init(), pseudopotential, numerical orbital files are already read-in, therefore it is possible
-           to initialize psi here, in the end of Init_GlobalC(), there is a cast to copy data from psi to kspw_psi.
-           because psig in some cases is planewave expansion of pswfc or nao, the dimension is not NBANDS, HSolver is needed
-           to adjust the dimension to psi. Therefore the dataflow becomes: psig -> psi -> kspw_psi
-           —— on the refactor of wavefunc class, Kirk0830
-        */
-        delete this->psi_init->psig;
-        this->psi = this->psi_init->allocate(); // allocate psi::Psi<std::complex<double>>* memory for this->psi
-    }
-    else // old wavefunction initialization manner
-    {
-        /*
-            wavefunc is an old class that has been here since at least v2.2.2, but then hsolver, esolver are refactored,
-            it is therefore of needed to refactor wavefunc class. the old one is remained here for unittest.
-            allocate() allocates memory for psi, in the new code this is kept
-            init_at_1() calculates spherical Bessel transform of pswfc and save values in GlobalC::tab_at, which is, not
-                used in present release
-            wfcinit() does not initialize wavefunction now, instead, it calculate the mapping from ixy to istick
-            The real initialization was moved to HSolverPW::solve() => updatePskK(ik) => diago_PAO_in_pw_k2() function.
-            —— on the refactor of wavefunc class, Kirk0830
-        */
-        this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
-        //==================================================
-        // create GlobalC::ppcell.tab_at , for trial wave functions.
-        //==================================================
-        this->wf.init_at_1(&this->sf);
+    //==================================================
+    // create GlobalC::ppcell.tab_at , for trial wave functions.
+    //==================================================
+    this->wf.init_at_1(&this->sf);
 
-        //================================
-        // Initial start wave functions
-        //================================
-        this->wf.wfcinit(this->psi, this->pw_wfc);
-    }
+    //================================
+    // Initial start wave functions
+    //================================
+    this->wf.wfcinit(this->psi, this->pw_wfc);
 
-    // psi initialization should be ealier than this, because in kspw_psi it is, full of heterogeneous calculation supported features.
     // denghui added 20221116
     this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single"
-                         ? new psi::Psi<T, Device>(this->psi[0]) // <-copy via constructor, static_cast<FPTYPE> used to copy data
-                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi); // <-simply a alias
+                         ? new psi::Psi<T, Device>(this->psi[0])
+                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
     if (GlobalV::precision_flag == "single")
     {
         ModuleBase::Memory::record("Psi_single", sizeof(T) * this->psi[0].size());
     }
-
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 }
+// template <typename T, typename Device>
+// void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
+// {
+//     // cout<<this->pw_rho->nrxx<<endl;
+//     // cout<<"before ufft allocate"<<endl;
+
+//     // cout<<"after ufft allocate"<<endl;
+
+//     //=======================
+//     // init pseudopotential
+//     //=======================
+//     GlobalC::ppcell.init(GlobalC::ucell.ntype, &this->sf, this->pw_wfc);
+
+//     //=====================
+//     // init hamiltonian
+//     // only allocate in the beginning of ELEC LOOP!
+//     //=====================
+//     // not used anymore
+//     // GlobalC::hm.hpw.allocate(this->wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, this->pw_rho->nrxx);
+
+//     //=================================
+//     // initalize local pseudopotential
+//     //=================================
+//     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
+//     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
+
+//     //======================================
+//     // Initalize non local pseudopotential
+//     //======================================
+//     GlobalC::ppcell.init_vnl(GlobalC::ucell);
+//     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
+
+    
+
+//     if (this->psi != nullptr)
+//         delete this->psi;
+//     if (GlobalV::psi_initializer) // new wavefunction initialization manner
+//     {
+//         std::cout << __FILE__ << __LINE__ << std::endl;
+//         /* 
+//            in ESolver_KS_PW::Init(), pseudopotential, numerical orbital files are already read-in, therefore it is possible
+//            to initialize psi here, in the end of Init_GlobalC(), there is a cast to copy data from psi to kspw_psi.
+//            because psig in some cases is planewave expansion of pswfc or nao, the dimension is not NBANDS, HSolver is needed
+//            to adjust the dimension to psi. Therefore the dataflow becomes: psig -> psi -> kspw_psi
+//            —— on the refactor of wavefunc class, Kirk0830
+//         */
+//         delete this->psi_init->psig;
+//         this->psi = this->psi_init->allocate(); // allocate psi::Psi<std::complex<double>>* memory for this->psi
+//         GlobalC::ppcell.cal_effective_D();
+//     }
+//     else // old wavefunction initialization manner
+//     {
+//         std::cout << __FILE__ << __LINE__ << std::endl;
+//         /*
+//             wavefunc is an old class that has been here since at least v2.2.2, but then hsolver, esolver are refactored,
+//             it is therefore of needed to refactor wavefunc class. the old one is remained here for unittest.
+//             allocate() allocates memory for psi, in the new code this is kept
+//             init_at_1() calculates spherical Bessel transform of pswfc and save values in GlobalC::tab_at, which is, not
+//                 used in present release
+//             wfcinit() does not initialize wavefunction now, instead, it calculate the mapping from ixy to istick
+//             The real initialization was moved to HSolverPW::solve() => updatePskK(ik) => diago_PAO_in_pw_k2() function.
+//             —— on the refactor of wavefunc class, Kirk0830
+//         */
+//         this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+
+//         GlobalC::ppcell.cal_effective_D();
+//         //==================================================
+//         // create GlobalC::ppcell.tab_at , for trial wave functions.
+//         //==================================================
+//         this->wf.init_at_1(&this->sf);
+
+//         //================================
+//         // Initial start wave functions
+//         //================================
+//         this->wf.wfcinit(this->psi, this->pw_wfc);
+//     }
+
+//     // psi initialization should be ealier than this, because in kspw_psi it is, full of heterogeneous calculation supported features.
+//     // denghui added 20221116
+//     this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single"
+//                          ? new psi::Psi<T, Device>(this->psi[0]) // <-copy via constructor, static_cast<FPTYPE> used to copy data
+//                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi); // <-simply a alias
+//     if (GlobalV::precision_flag == "single")
+//     {
+//         ModuleBase::Memory::record("Psi_single", sizeof(T) * this->psi[0].size());
+//     }
+
+//     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
+// }
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
@@ -232,6 +290,7 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
     }
     if (GlobalV::psi_initializer)
     {
+        std::cout << __FILE__ << __LINE__ << std::endl;
         if(GlobalV::init_wfc == "atomic")
         {
             this->psi_init = new psi_initializer_atomic(&(this->sf), this->pw_wfc);
@@ -419,12 +478,8 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     */
     if(GlobalV::psi_initializer)
     {
+        std::cout << __FILE__ << __LINE__ << std::endl;
         this->initialize_psi();
-        /*
-        The following line can be useful if one wants to dump the initial wavefunctions.
-        Presently it is just for unittest
-        */
-        if(GlobalV::wfc_dump) this->psi_init->write_psig();
     }
 }
 
@@ -497,6 +552,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
 {
     if (GlobalV::psi_initializer)
     {
+        std::cout << __FILE__ << __LINE__ << std::endl;
         hamilt::HamiltPW<std::complex<double>>* phamilt_cg = new hamilt::HamiltPW<std::complex<double>>(
             this->pelec->pot, this->pw_wfc, &this->kv);
         for (int ik = 0; ik < this->pw_wfc->nks; ik++)
@@ -505,17 +561,16 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
             phamilt_cg->updateHk(ik);
             psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(ik);
             std::vector<double> etatom(psig->get_nbands(), 0.0);
-            //this->psi_init->write_psig(ik);
-            // for nao-employed initialization, need to first diagonalize the band-by-band matrix, get new psig and then copy to psi
-            if (
-                (this->psi_init->get_method().substr(0, 3) == "nao")
-                )
+            /*
+            if ((this->psi_init->get_method().substr(0, 3) == "nao"))
             {
+                // there is undefined behavior! the old code is not tested and not reliable: wavefunc.cpp
                 hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(
                     phamilt_cg,
                     *(psig), *(psig), etatom.data()
                 );
             }
+            */
             // then adjust dimension from psig to psi
             if (this->psi_init->get_method() != "random")
             {

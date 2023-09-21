@@ -9,4 +9,3 @@ scf_nmax 1
 init_wfc nao
 psi_initializer 1
 ks_solver dav
-wfc_dump 1

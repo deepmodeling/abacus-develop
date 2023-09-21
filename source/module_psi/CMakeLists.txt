@@ -17,9 +17,12 @@ add_library(
 
 if(ENABLE_COVERAGE)
   add_coverage(psi)
+  add_coverage(psi_initializer)
 endif()
 
 if (BUILD_TESTING)
   add_subdirectory(kernels/test)
   add_subdirectory(test)
+
+  add_compile_definitions(PSI_INITIALIZER_TEST)
 endif()

@@ -270,23 +270,19 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
     psi.fix_k(ik);
     if(GlobalV::psi_initializer) // new psi initialization method branch
     {
+        std::cout << __FILE__ << __LINE__ << std::endl;
         // do nothing here, because we have already initialize, allocate and make initial guess
         // basis_type lcao_in_pw function may be inserted here
     }
     else if(!this->initialed_psi) // old psi initialization method branch
     {
+        std::cout << __FILE__ << __LINE__ << std::endl;
+        printf("Old psi initialization here\n");
         if(GlobalV::BASIS_TYPE=="pw")
         {
             hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
-            /*
-                because the wavefunction is initialized at kpt one by one, it is not possible to write to file
-                concurrently at all kpoints, so multiple files will be written if there are multiple kpoints.
-                Here the write functionality is implemented via adding one function to psi::Psi class, and creates
-                a series of file psig_0_kpt_old.out, psig_1_kpt_old.out, psig_2_kpt_old.out, etc.
-                ——on the refactor of wavefunc class, ykhuang 2023-09-20
-            */
-            if(GlobalV::wfc_dump) psi.write_psig(ik);
         }
+        /* lcao_in_pw now is based on newly implemented psi initializer, so it does not appear here*/
     }
 }
 

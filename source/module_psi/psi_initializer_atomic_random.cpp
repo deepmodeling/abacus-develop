@@ -4,8 +4,6 @@ psi_initializer_atomic_random::psi_initializer_atomic_random(Structure_Factor* s
 {
     this->set_method("atomic+random");
     this->set_random_mix(0.05);
-    this->sf = sf_in;
-    this->pw_wfc = pw_wfc_in;
 }
 
 psi_initializer_atomic_random::~psi_initializer_atomic_random() {}
@@ -25,5 +23,8 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic_random::cal_psig(int ik)
             (*(this->psig))(iband, ibasis) = (1-rm)*(*(this->psig))(iband, ibasis) + rm*psi_random(iband, ibasis);
         }
     }
+#ifdef PSI_INITIALIZER_TEST
+	this->write_psig();
+#endif
     return this->psig;
 }

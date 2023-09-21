@@ -27,7 +27,7 @@ Atom::Atom()
 	iw2_ylm = new int[1];
 	iw2_new = new bool[1];
     mbl = new ModuleBase::Vector3<int>[1];
-    n_rgrid = 0;
+    n_rgrid = nullptr;
     rgrid = nullptr;
     flz = nullptr;
 }

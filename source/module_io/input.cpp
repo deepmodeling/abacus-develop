@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <algorithm>
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -297,11 +298,9 @@ void Input::Default(void)
     //----------------------------------------------------------
     init_wfc = "atomic";
     psi_initializer = false;
-    wfc_dump = false;
     mem_saver = 0;
     printe = 100; // must > 0
     init_chg = "atomic";
-    init_wfc = "atomic";
     chg_extrap = "default"; // xiaohui modify 2015-02-01
     out_freq_elec = 0;
     out_freq_ion = 0;
@@ -1206,10 +1205,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("psi_initializer", word) == 0)
         {
             read_value(ifs, psi_initializer);
-        }
-        else if (strcmp("wfc_dump", word) == 0)
-        {
-            read_value(ifs, wfc_dump);
         }
         else if (strcmp("mem_saver", word) == 0)
         {
@@ -2536,9 +2531,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if (exx_hybrid_alpha == "default")
     {
-        if (dft_functional == "hf" || INPUT.rpa)
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || rpa)
             exx_hybrid_alpha = "1";
-        else if (dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+        else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
     }
     if (exx_real_number == "default")
@@ -2550,9 +2547,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if (exx_ccp_rmesh_times == "default")
     {
-        if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
             exx_ccp_rmesh_times = "5";
-        else if (dft_functional == "hse")
+        else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
     if (symmetry == "default")
@@ -3000,6 +2999,8 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
+    Parallel_Common::bcast_bool(psi_initializer);
+    
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
@@ -3650,7 +3651,9 @@ void Input::Check(void)
         }
     }
 
-    if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+    std::string dft_functional_lower = dft_functional;
+    std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
     {
         const double exx_hybrid_alpha_value = std::stod(exx_hybrid_alpha);
         if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
@@ -3672,7 +3675,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "exx_distribute_type must be htime or kmeans2 or kmeans1");
         }
     }
-    if (dft_functional == "opt_orb")
+    if (dft_functional_lower == "opt_orb")
     {
         if (exx_opt_orb_lmax < 0)
         {

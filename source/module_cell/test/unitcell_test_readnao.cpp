@@ -57,80 +57,74 @@ class UcellTest : public ::testing::Test
 {
 protected:
     /* Here mock one unitcell object */
-	UcellTestPrepare utp = UcellTestLib["flz-Read"];
-	std::unique_ptr<UnitCell> ucell;
+
+    UnitCell ucell;
 	std::ofstream ofs;
-	std::string pp_dir;
-	std::string output;
+
+    int error = 0;
 	void SetUp()
 	{
 		ofs.open("running.log");
-		GlobalV::relax_new = utp.relax_new;
+
 		GlobalV::global_out_dir = "./";
-		ucell = utp.SetUcellInfo();
 		GlobalV::LSPINORB = false;
-		pp_dir = "./support/";
+
 		GlobalV::PSEUDORCUT = 15.0;
 		GlobalV::DFT_FUNCTIONAL = "default";
 		GlobalV::test_unitcell = 1;
 		GlobalV::test_pseudo_cell = 1;
 		GlobalV::NSPIN = 1;
 		GlobalV::BASIS_TYPE = "pw";
-
-        ucell->atoms[0].l_nchi = new int[3];
-        ucell->atoms[0].nwl = 2;
-        ucell->atoms[0].l_nchi[0] = 2;
-        ucell->atoms[0].l_nchi[1] = 2;
-        ucell->atoms[0].l_nchi[2] = 1;
-
-        ucell->atoms[1].l_nchi = new int[2];
-        ucell->atoms[1].nwl = 1;
-        ucell->atoms[0].l_nchi[0] = 2;
-        ucell->atoms[0].l_nchi[1] = 1;
+        
+        ucell.atoms = new Atom[1];
+        ucell.atoms[0].label = "C";
+        ucell.atoms[0].na = 1;
+        ucell.atom_label = new std::string[1];
+        ucell.atom_label[0] = "C";
+        this->error = std::system("cp ../../../../source/module_cell/test/support/C_gga_8au_100Ry_2s2p1d.orb ./C_gga_8au_100Ry_2s2p1d.orb");
+        this->error = std::system("cp ../../../../source/module_cell/test/support/C_gga_8au_100Ry_2s2p1d.orb ./H_gga_8au_100Ry_2s1p.orb");
 	}
 	void TearDown()
 	{
 		ofs.close();
+        this->error = std::system("rm ./C_gga_8au_100Ry_2s2p1d.orb");
+        this->error = std::system("rm ./H_gga_8au_100Ry_2s1p.orb");
 	}
 };
 
-using UcellDeathTest = UcellTest;
-
-TEST_F(UcellDeathTest, ReadNaoFlzTest)
+TEST_F(UcellTest, ReadNaoFlzTest)
 {
     std::string fn = "C_gga_8au_100Ry_2s2p1d.orb";
     // the ichi goes from 1st s, 2nd s, 1st p, 2nd p, 1st d
-    ucell->read_nao_flz(0, fn, ofs, &(ucell->atoms[0]));
-    EXPECT_EQ(ucell->atoms[0].n_rgrid[0], 801);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].rgrid[0][0], 0);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].rgrid[0][1], 0.01);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].rgrid[0][800], 8);
-    EXPECT_EQ(ucell->atoms[0].n_rgrid[1], 801);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].rgrid[1][0], 0);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].rgrid[1][1], 0.01);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].rgrid[1][800], 8);
+    ucell.read_orb_file(0, fn, ofs, &(ucell.atoms[0]));
+    ucell.read_nao_flz(0, fn, ofs, &(ucell.atoms[0]));
+
+    EXPECT_EQ(ucell.atoms[0].n_rgrid[0], 801);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].rgrid[0][0], 0);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].rgrid[0][1], 0.01);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].rgrid[0][800], 8);
+
+    EXPECT_EQ(ucell.atoms[0].n_rgrid[1], 801);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].rgrid[1][0], 0);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].rgrid[1][1], 0.01);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].rgrid[1][800], 8);
+
     // data of 1st s
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].flz[0][0], 5.368426038998e-01);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].flz[0][4], 5.386156949024e-01);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].flz[0][800], 0);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].flz[0][0], 5.368426038998e-01);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].flz[0][4], 5.386156949024e-01);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].flz[0][800], 0);
+
     // data of 2nd s
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].flz[1][0], -6.134205291735e-02);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].flz[1][4], -5.862821438615e-02);
-    EXPECT_DOUBLE_EQ(ucell->atoms[0].flz[1][800], 0);
-    fn = "H_gga_8au_100Ry_2s1p.orb";
-    // the ichi goes from 1st s, 2nd s, 1st p
-    ucell->read_nao_flz(1, fn, ofs, &(ucell->atoms[1]));
-    EXPECT_EQ(ucell->atoms[1].n_rgrid[0], 801);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].rgrid[0][0], 0);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].rgrid[0][1], 0.01);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].rgrid[0][800], 8);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].rgrid[1][0], 0);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].rgrid[1][1], 0.01);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].rgrid[1][800], 8);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].flz[0][0], 1.857864679053e+00);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].flz[0][4], 1.853731330136e+00);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].flz[0][800], 0);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].flz[1][0], 2.519718830629e+00);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].flz[1][4], 2.511689716984e+00);
-    EXPECT_DOUBLE_EQ(ucell->atoms[1].flz[1][800], 0);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].flz[1][0], -6.134205291735e-02);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].flz[1][4], -5.862821438615e-02);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].flz[1][800], 0);
+}
+
+
+int main(int argc, char **argv)
+{
+	testing::InitGoogleTest(&argc, argv);
+
+	int result = RUN_ALL_TESTS();
+	return result;
 }

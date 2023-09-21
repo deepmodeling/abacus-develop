@@ -1,5 +1,16 @@
 #include "psi_initializer_atomic.h"
 #include "module_hamilt_pw/hamilt_pwdft/soc.h"
+// numerical algorithm support
+#include "module_base/math_integral.h" // for numerical integration
+// numerical algorithm support
+#include "module_base/math_polyint.h" // for polynomial interpolation
+#include "module_base/math_ylmreal.h" // for real spherical harmonics
+// basic functions support
+#include "module_base/tool_quit.h"
+#include "module_base/timer.h"
+// three global variables definition
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 psi_initializer_atomic::psi_initializer_atomic(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in) : psi_initializer(sf_in, pw_wfc_in)
 {
@@ -13,7 +24,7 @@ psi_initializer_atomic::psi_initializer_atomic(Structure_Factor* sf_in, ModulePW
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic::psi_initializer_atomic", "there is not ANY pseudo atomic orbital read in present system, quit.");
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic::psi_initializer_atomic", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
     int dim3 = GlobalV::NQX;
     // allocate memory for ovlp_flzjlq
@@ -22,10 +33,7 @@ psi_initializer_atomic::psi_initializer_atomic(Structure_Factor* sf_in, ModulePW
 }
 
 
-psi_initializer_atomic::~psi_initializer_atomic()
-{
-}
-
+psi_initializer_atomic::~psi_initializer_atomic() {}
 
 void psi_initializer_atomic::set_pseudopot_files(std::string* pseudopot_files)
 {
@@ -357,5 +365,8 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
 		this->random_t(this->psig->get_pointer(), index, this->psig->get_nbands(), ik, this->pw_wfc);
 	}
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
+#ifdef PSI_INITIALIZER_TEST
+	this->write_psig();
+#endif
     return this->psig;
 }

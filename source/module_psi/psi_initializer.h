@@ -1,25 +1,11 @@
 #ifndef PSI_INITIALIZER_H
 #define PSI_INITIALIZER_H
-// three global variables definition
-#include "module_base/global_variable.h"
-#include "module_base/global_function.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-// basic functions support
-#include "module_base/tool_quit.h"
-#include "module_base/timer.h"
 // data structure support
 #include "module_psi/psi.h" // for psi data structure
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
-// basic math support
-#include "module_base/complexmatrix.h"
-#include "module_base/realarray.h"
-#include "module_base/vector3.h"
 // numerical algorithm support
-#include "module_base/math_polyint.h" // for polynomial interpolation
-#include "module_base/math_ylmreal.h" // for real spherical harmonics
 #include "module_base/spherical_bessel_transformer.h" // for spherical bessel transform
-#include "module_base/math_integral.h" // for numerical integration
 #ifdef __MPI
 // MPI support
 #include <mpi.h>
@@ -39,11 +25,9 @@ Following methods are available:
     2. atomic: use pseudo-wavefunction in pseudopotential file to initialize psi
                implemented in psi_initializer_atomic.h
     3. atomic+random: mix 'atomic' with some random numbers to initialize psi
-                      not implemented yet
     4. nao: use numerical orbitals to initialize psi
             implemented in psi_initializer_nao.h
     5. nao+random: mix 'nao' with some random numbers to initialize psi
-                   not implemented yet
 */
 class psi_initializer
 {
@@ -55,11 +39,7 @@ class psi_initializer
         /// @param pw_wfc_in pw_basis_k pointer
         psi_initializer(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in);
         /// @brief destructor
-        ~psi_initializer();
-
-        /// @brief calculate number of wavefunctions to be initialized
-        /// @return if GlobalV::init_wfc has valid value, return the number of wavefunctions to be initialized, otherwise throw an error
-        int get_starting_nw() const;
+        virtual ~psi_initializer();
 
         /// @brief allocate memory for psi
         /// @return pointer to psi, memory allocated
@@ -70,10 +50,6 @@ class psi_initializer
         /// @param ik index of kpoint
         virtual psi::Psi<std::complex<double>>* cal_psig(int ik) = 0;
 
-        /// @brief initialize planewave represented psi after change of cell volume
-        /// @note due to wanf2, the Wannier function in pw representation, is not used anymore, this function is not needed anymore
-        void init_after_vc(); // in the past this function will refresh the wanf2, the Wannier function in pw representation. However for now it is not needed, because lcao_in_pw now is designed for initial guess
-        
         /// @brief get method of initializing psi
         /// @return the method
         std::string get_method() const { return this->method; }
@@ -102,96 +78,8 @@ class psi_initializer
         /// @param iw_end index of wavefunction (end)
         /// @param ik index of kpoint
         /// @param wfc_basis because do not want to change contents in it, this parameter is reserved. should give this->pw_wfc
-        void random_t(std::complex<double>* psi, const int iw_start, const int iw_end, const int ik, const ModulePW::PW_Basis_K* wfc_basis)
-        {
-            ModuleBase::timer::tick("psi_initializer", "random_t");
-            assert(iw_start >= 0);
-            const int ng = wfc_basis->npwk[ik];
-        #ifdef __MPI
-            if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
-            {
-                srand(unsigned(INPUT.pw_seed + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + ik));
-                const int nxy = wfc_basis->fftnxy;
-                const int nz = wfc_basis->nz;
-                const int nstnz = wfc_basis->nst*nz;
-
-                double *stickrr = new double[nz];
-                double *stickarg = new double[nz];
-                double *tmprr = new double[nstnz];
-                double *tmparg = new double[nstnz];
-                for (int iw = iw_start; iw < iw_end; iw++)
-                {   
-                    // get the starting memory address of iw band
-                    std::complex<double>* psi_slice = &(psi[iw * this->pw_wfc->npwk_max * GlobalV::NPOL]);
-                    int startig = 0;
-                    for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
-                    {
-                    
-                        for(int ir=0; ir < nxy; ir++)
-                        {
-                            if(wfc_basis->fftixy2ip[ir] < 0) continue;
-                            if(GlobalV::RANK_IN_POOL==0)
-                            {
-                                for(int iz=0; iz<nz; iz++)
-                                {
-                                    stickrr[ iz ] = std::rand()/double(RAND_MAX);
-                                    stickarg[ iz ] = std::rand()/double(RAND_MAX);
-                                }
-                            }
-                            stick_to_pool(stickrr, ir, tmprr, wfc_basis);
-                            stick_to_pool(stickarg, ir, tmparg, wfc_basis);
-                        }
-
-                        for (int ig = 0;ig < ng;ig++)
-                        {
-                            const double rr = tmprr[wfc_basis->getigl2isz(ik,ig)];
-                            const double arg= ModuleBase::TWO_PI * tmparg[wfc_basis->getigl2isz(ik,ig)];
-                            const double gk2 = wfc_basis->getgk2(ik,ig);
-                            psi_slice[ig+startig] = std::complex<double>(rr * cos(arg), rr * sin(arg)) / double(gk2 + 1.0);
-                        }
-                        startig += this->pw_wfc->npwk_max;
-                    }
-                }
-                delete[] stickrr;
-                delete[] stickarg;
-                delete[] tmprr;
-                delete[] tmparg;
-            }
-            else
-            {
-        #else  // !__MPI
-            if (INPUT.pw_seed > 0) // qianrui add 2021-8-13
-            {
-                srand(unsigned(INPUT.pw_seed + ik));
-            }
-        #endif
-                for (int iw = iw_start ;iw < iw_end; iw++)
-                {
-                    std::complex<double>* psi_slice = &(psi[iw * this->pw_wfc->npwk_max * GlobalV::NPOL]);
-                    for (int ig = 0; ig < ng; ig++)
-                    {
-                        const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
-                        const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                        const double gk2 = wfc_basis->getgk2(ik,ig);
-                        psi_slice[ig] = std::complex<double>(rr * cos(arg), rr * sin(arg)) / double(gk2 + 1.0);
-                    }
-                    if(GlobalV::NPOL==2)
-                    {
-                        for (int ig = this->pw_wfc->npwk_max; ig < this->pw_wfc->npwk_max + ng; ig++)
-                        {
-                            const double rr = std::rand()/double(RAND_MAX);
-                            const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                            const double gk2 = wfc_basis->getgk2(ik,ig-this->pw_wfc->npwk_max);
-                            psi_slice[ig] = std::complex<double>(rr * cos(arg), rr * sin(arg)) / double(gk2 + 1.0);
-                        }
-                    }
-
-                }
-        #ifdef __MPI
-            }
-        #endif
-            ModuleBase::timer::tick("psi_initializer_random", "random_t");
-        }
+        void random_t(std::complex<double>* psi, const int iw_start, const int iw_end, const int ik, const ModulePW::PW_Basis_K* wfc_basis);
+        
         // random
         /// @brief wrapper of random_t
         /// @param psi for psi::Psi<FPTYPE, Device>, first use psi.fix(ik), then psi.get_pointer() to pass to parameter list

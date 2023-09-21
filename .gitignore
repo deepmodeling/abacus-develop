@@ -19,7 +19,3 @@ dist
 .idea
 toolchain.tar.gz
 time.json
-sum_BAND_CHG_H2
-sum_BAND_CHG_H2_cube
-sum_ENV_H2
-sum_ENV_H2_cube

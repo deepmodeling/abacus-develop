@@ -114,8 +114,6 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     std::tuple<const T*, int> to_range(const Range& range) const;
     int npol = 1;
 
-    void write_psig(int ik) const;
-
   private:
     T* psi = nullptr; // avoid using C++ STL
 
