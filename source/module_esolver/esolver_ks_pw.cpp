@@ -492,12 +492,13 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
   Although ESolver_KS_PW supports template, but in this function it has no relationship with
   heterogeneous calculation, so all templates function are specialized to double
 */
-template <typename FPTYPE, typename Device>
-void ESolver_KS_PW<FPTYPE, Device>::initialize_psi()
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::initialize_psi()
 {
     if (GlobalV::psi_initializer)
     {
-        hamilt::HamiltPW<double>* phamilt_cg = new hamilt::HamiltPW<double>(this->pelec->pot, this->pw_wfc, &this->kv);
+        hamilt::HamiltPW<std::complex<double>>* phamilt_cg = new hamilt::HamiltPW<std::complex<double>>(
+            this->pelec->pot, this->pw_wfc, &this->kv);
         for (int ik = 0; ik < this->pw_wfc->nks; ik++)
         {
             this->psi->fix_k(ik);
@@ -510,7 +511,7 @@ void ESolver_KS_PW<FPTYPE, Device>::initialize_psi()
                 (this->psi_init->get_method().substr(0, 3) == "nao")
                 )
             {
-                hsolver::DiagoIterAssist<double>::diagH_subspace(
+                hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(
                     phamilt_cg,
                     *(psig), *(psig), etatom.data()
                 );
@@ -521,7 +522,7 @@ void ESolver_KS_PW<FPTYPE, Device>::initialize_psi()
                 if (GlobalV::KS_SOLVER == "cg")
                 {   
                     // diagH_subspace_init will be the function change dimension from natomwfc/nlocal to nbands
-                    hsolver::DiagoIterAssist<double>::diagH_subspace_init(
+                    hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(
                         phamilt_cg,
                         psig->get_pointer(), psig->get_nbands(), psig->get_nbasis(),
                         *(this->psi), etatom.data()
@@ -534,7 +535,7 @@ void ESolver_KS_PW<FPTYPE, Device>::initialize_psi()
             {
                 if (GlobalV::KS_SOLVER == "cg")
                 {
-                    hsolver::DiagoIterAssist<double>::diagH_subspace(
+                    hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(
                         phamilt_cg,
                         *(psig), *(this->psi), etatom.data()
                     );
