@@ -34,6 +34,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // question: bound_gradient should be read from INPUT?
     std::vector<double> bound_gradient(ntype,0.0);
     // temp variables
+    //bound_gradient[0] = 0.9; // temporary for ion
 
     // calculate number of components to be constrained
     int num_component = sum_2d(this->constrain_);
@@ -53,10 +54,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     double sum_k, sum_k2;
     double g;
 
-    //this->lambda_ = initial_lambda;
-    initial_lambda = this->lambda_;
-    print_2d("initial lambda: ", initial_lambda);
-
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
     std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
@@ -67,10 +64,10 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         {
             //spin = this->init_mag_;
             spin = this->Mi_;
-            //where_fill_scalar_else_2d(this->constrain_, 0, 0.0, this->lambda_, initial_lambda);
-            //print_2d("initial lambda: ", initial_lambda);
-            //print_2d("initial spin: ", spin);
-            //print_2d("target spin: ", this->sc_mag_);
+            where_fill_scalar_else_2d(this->constrain_, 0, 0.0, this->lambda_, initial_lambda);
+            print_2d("initial lambda: ", initial_lambda);
+            print_2d("initial spin: ", spin);
+            print_2d("target spin: ", this->sc_mag_);
         }
         else
         {
@@ -80,15 +77,15 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             //this->lambda_ = temp_1;
             //this->lambda_ = delta_lambda;
             this->cal_mw_from_lambda(i_step);
-            spin = this->Mi_;
-            //new_spin = this->Mi_;
+            //spin = this->Mi_;
+            new_spin = this->Mi_;
             /*
             subtract_2d(new_spin, spin, spin_change);
             subtract_2d(delta_lambda, dnu_last_step, nu_change);
             where_fill_scalar_2d(this->constrain_, 0, 0.0, spin_change);
             where_fill_scalar_2d(this->constrain_, 0, 1.0, nu_change);
-            print_2d("spin_change ", spin_change);
-            print_2d("nu_change ", nu_change);
+            //print_2d("spin_change ", spin_change);
+            //print_2d("nu_change ", nu_change);
             // calculate spin_nu_gradient
             for (int ia = 0; ia < nat; ia++)
             {
@@ -98,7 +95,6 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
                     {
                         for(int jc = 0; jc < 3; jc++)
                         {
-                            if (this->constrain_[ja][jc] == 1)
                             spin_nu_gradient[ia][ic][ja][jc] = spin_change[ia][ic] / nu_change[ja][jc];
                         }
                     }
@@ -140,12 +136,12 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
                     std::cout << "Reach limitation of current step ( maximum gradient < " 
                         << bound_gradient[it] << " in atom type " << it << " ), exit." << std::endl;
                     // roll back to the last step
-                    add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, lambda_);
+                    add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
                     goto CG_STOP;
                 }
             }
             */
-            //spin = new_spin;
+            spin = new_spin;
             //print_2d("new spin: ", spin);
             //print_2d("target spin: ", this->sc_mag_);
         }
@@ -246,7 +242,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         //alpha_opt = sum_k * this->alpha_trial_ / sum_k2 * this->meV_to_Ry;
         alpha_opt = sum_k * this->alpha_trial_ / sum_k2;
         //std::cout << "sum_k " << sum_k << std::endl;
-        //std::cout << "sum_k2 " << sum_k2 << std::endl;
+        std::cout << "sum_k2 " << sum_k2 << std::endl;
         //std::cout << "alpha_opt " << alpha_opt << std::endl;
         //std::cout << "this->alpha_trial_ " << this->alpha_trial_ << std::endl;
 
