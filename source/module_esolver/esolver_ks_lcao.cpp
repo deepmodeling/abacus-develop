@@ -445,6 +445,9 @@ void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell
 
 void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 {
+    if (iter == 1)
+        this->p_chgmix->mix_reset();
+
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
 
