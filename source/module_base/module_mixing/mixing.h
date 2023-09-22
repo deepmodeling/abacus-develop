@@ -78,6 +78,9 @@ class Mixing
         double* FP_data = static_cast<double*>(mdata.data);
         if (mdata.ndim_use == 1)
         {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
             for (int i = 0; i < mdata.length; ++i)
                 data_mix[i] = FP_data[i];
             return;
@@ -99,6 +102,9 @@ class Mixing
         std::complex<double>* FP_data = static_cast<std::complex<double>*>(mdata.data);
         if (mdata.ndim_use == 1)
         {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
             for (int i = 0; i < mdata.length; ++i)
                 data_mix[i] = FP_data[i];
             return;
