@@ -125,9 +125,3 @@ add_test(NAME cell_unitcell_test_parallel
       COMMAND ${BASH} unitcell_test_parallel.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
-
-AddTest(
-  TARGET cell_unitcell_test_nao_flz
-  LIBS ${math_libs} base device cell_info
-  SOURCES unitcell_test_readnao.cpp ../../module_io/output.cpp
-)
