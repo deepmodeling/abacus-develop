@@ -36,7 +36,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     // temp variables
 
     // calculate number of components to be constrained
-    int num_component = sum_2d(this->constrain_);
+    double num_component = sum_2d(this->constrain_);
     //std::cout << "num_component = " << num_component << std::endl;
     // delta spin
     std::vector<ModuleBase::Vector3<double>> spin(nat,0.0), delta_spin(nat,0.0), delta_spin_old(nat,0.0);
