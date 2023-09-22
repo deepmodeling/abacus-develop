@@ -463,6 +463,8 @@ if(ENABLE_PAW)
     if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     # Update submodules as needed
       message(STATUS "Submodule update")
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule sync
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
       execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --remote deps/libpaw_interface
               WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
               RESULT_VARIABLE GIT_SUBMOD_RESULT)
