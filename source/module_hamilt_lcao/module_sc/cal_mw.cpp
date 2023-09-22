@@ -32,152 +32,50 @@ void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
         this->Mi_[iat].z = 0.0;
     }
     
-    if (!print)
+    const int nlocal = nw / 2;
+    for (size_t i = 0; i != ucell.nat; ++i)
     {
-        const int nlocal = nw / 2;
-        for (size_t i = 0; i != ucell.nat; ++i)
+        std::vector<double> total_charge_soc(this->nspin_,0.0);
+        const int t = ucell.iat2it[i];
+        int num = 0;
+        for (size_t L = 0; L != ucell.atoms[t].nwl + 1; ++L)
         {
-            std::vector<double> total_charge_soc(this->nspin_,0.0);
-            const int t = ucell.iat2it[i];
-            int num = 0;
-            for (size_t L = 0; L != ucell.atoms[t].nwl + 1; ++L)
+            std::vector<double> sum_l(this->nspin_, 0.0);
+            for (size_t Z = 0; Z != ucell.atoms[t].l_nchi[L]; ++Z)
             {
-                std::vector<double> sum_l(this->nspin_, 0.0);
-                for (size_t Z = 0; Z != ucell.atoms[t].l_nchi[L]; ++Z)
-                {
-                    std::vector<double> sum_m(this->nspin_, 0.0);
-                    for (size_t M = 0; M != (2 * L + 1); ++M)
-                    {
-                        double spin[4];
-                        for (int j = 0; j < 4; j++)
-                        {
-                            sum_m[j] += AorbMulP[j][i][num];
-                        }
-                        num++;
-                    }
-
-                    double spin[4];
-                    for (int j = 0; j < 4; j++)
-                    {
-                        sum_l[j] += sum_m[j];
-                    }
-                }
-
-                if (ucell.atoms[t].l_nchi[L])
+                std::vector<double> sum_m(this->nspin_, 0.0);
+                for (size_t M = 0; M != (2 * L + 1); ++M)
                 {
                     double spin[4];
                     for (int j = 0; j < 4; j++)
                     {
-                        total_charge_soc[j] += sum_l[j];
+                        sum_m[j] += AorbMulP[j][i][num];
                     }
+                    num++;
                 }
-            }
 
-            this->Mi_[i].x = total_charge_soc[1];
-            this->Mi_[i].y = total_charge_soc[2];
-            this->Mi_[i].z = total_charge_soc[3];
-            std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << " (" << Mi_[i].x << ", " << Mi_[i].y
-               << ", " << Mi_[i].z << ")" << std::endl;
-        }
-    }
-    else
-    {
-        if (GlobalV::MY_RANK == 0)
-        {
-            const int nlocal = nw / 2;
-            std::stringstream as;
-            as << GlobalV::global_out_dir << "atomic_magnetization.txt";
-            std::ofstream os;
-            if (step == 0)
-            {
-                os.open(as.str().c_str());
-            }
-            else
-            {
-                os.open(as.str().c_str(), std::ios::app);
-            }
-            os << "STEP: " << step << std::endl;
-            os << "CALCULATE THE MULLIkEN ANALYSIS OF MAGNETIZATION FOR EACH ATOM" << std::endl;
-
-            double sch = 0.0;
-            os << std::setprecision(4);
-            for (int is = 0; is < this->nspin_; ++is)
-            {
-                if (this->nspin_ == 4 && is > 0)
-                    continue;
-                double sss = 0.0;
-                for (size_t iw = 0; iw != nlocal; ++iw)
+                double spin[4];
+                for (int j = 0; j < 4; j++)
                 {
-                    sch += orbMulP(is, iw);
-                    sss += orbMulP(is, iw);
+                    sum_l[j] += sum_m[j];
                 }
             }
-            os << " Total charge:\t" << sch << std::endl;
-            os << "Decomposed Mulliken populations" << std::endl;
 
-            for (size_t i = 0; i != ucell.nat; ++i)
+            if (ucell.atoms[t].l_nchi[L])
             {
-                double total_charge = 0.0, atom_mag = 0.0;
-                std::vector<double> total_charge_soc(this->nspin_);
-                const int t = ucell.iat2it[i];
-                int num = 0;
-                os << i << std::setw(25) << "Zeta of " << ucell.atoms[t].label << std::setw(30) << "Spin 1" << std::setw(30)
-                   << "Spin 2" << std::setw(30) << "Spin 3" << std::setw(30) << "Spin 4" << std::endl;
-
-                for (size_t L = 0; L != ucell.atoms[t].nwl + 1; ++L)
+                double spin[4];
+                for (int j = 0; j < 4; j++)
                 {
-                    std::vector<double> sum_l(this->nspin_, 0.0);
-                    for (size_t Z = 0; Z != ucell.atoms[t].l_nchi[L]; ++Z)
-                    {
-                        std::vector<double> sum_m(this->nspin_, 0.0);
-                        for (size_t M = 0; M != (2 * L + 1); ++M)
-                        {
-                            double spin[4];
-                            for (int j = 0; j < 4; j++)
-                            {
-                                spin[j] = this->output_cut(AorbMulP[j][i][num]);
-                                sum_m[j] += AorbMulP[j][i][num];
-                            }
-                            os << ModuleBase::Name_Angular[L][M] << std::setw(25) << Z << std::setw(32) << spin[0]
-                               << std::setw(30) << spin[1] << std::setw(30) << spin[2] << std::setw(30) << spin[3]
-                               << std::endl;
-                            num++;
-                        }
-
-                        double spin[4];
-                        for (int j = 0; j < 4; j++)
-                        {
-                            spin[j] = this->output_cut(sum_m[j]);
-                            sum_l[j] += sum_m[j];
-                        }
-                        os << "  sum over m " << std::setw(45) << spin[0] << std::setw(30) << spin[1] << std::setw(30)
-                           << spin[2] << std::setw(30) << spin[3] << std::endl;
-                    }
-
-                    if (ucell.atoms[t].l_nchi[L])
-                    {
-                        double spin[4];
-                        for (int j = 0; j < 4; j++)
-                        {
-                            spin[j] = this->output_cut(sum_l[j]);
-                            total_charge_soc[j] += sum_l[j];
-                        }
-                        os << "  sum over m+zeta " << std::setw(40) << spin[0] << std::setw(30) << spin[1] << std::setw(30)
-                           << spin[2] << std::setw(30) << spin[3] << std::endl;
-                    }
+                    total_charge_soc[j] += sum_l[j];
                 }
-
-                double spin1 = this->output_cut(total_charge_soc[0]);
-                double spin2 = this->output_cut(total_charge_soc[1]);
-                double spin3 = this->output_cut(total_charge_soc[2]);
-                double spin4 = this->output_cut(total_charge_soc[3]);
-                os << "Total Charge on atom:  " << ucell.atoms[t].label << std::setw(20) << spin1 << std::endl;
-                os << "Total Magnetism on atom:  " << ucell.atoms[t].label << std::setw(20) << "(" << spin2 << ", " << spin3
-                   << ", " << spin4 << ")" << std::endl;
-                os << std::endl << std::endl;
             }
-            os.close();
         }
+
+        this->Mi_[i].x = total_charge_soc[1];
+        this->Mi_[i].y = total_charge_soc[2];
+        this->Mi_[i].z = total_charge_soc[3];
+        std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setprecision(16) << " (" << Mi_[i].x << ", " << Mi_[i].y
+           << ", " << Mi_[i].z << ")" << std::endl;
     }
     
 }

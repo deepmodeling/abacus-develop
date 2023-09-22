@@ -857,7 +857,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
-        sc.cal_MW(istep, this->LM, this->LOC.dm_k, GlobalC::ucell, true);
+        sc.cal_MW(istep, this->LM, this->LOC.dm_k, GlobalC::ucell);
     }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
