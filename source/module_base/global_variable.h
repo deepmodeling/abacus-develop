@@ -59,6 +59,7 @@ extern double relax_scale_force;
 extern bool relax_new;
 
 extern bool use_paw;
+extern bool use_uspp;
 
 extern bool fixed_atoms;
 

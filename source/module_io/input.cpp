@@ -251,6 +251,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
+    nsx = 0;
+    nsy = 0;
+    nsz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -1007,7 +1010,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
-            ecutrho = 4.0 * ecutwfc;
+            if (ecutrho <= 0.0)
+            {
+                ecutrho = 4.0 * ecutwfc;
+            }
+        }
+        else if (strcmp("ecutrho", word) == 0)
+        {
+            read_value(ifs, ecutrho);
         }
         else if (strcmp("nx", word) == 0)
         {
@@ -1035,6 +1045,18 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("bz", word) == 0)
         {
             read_value(ifs, bz);
+        }
+        else if (strcmp("nsx", word) == 0)
+        {
+            read_value(ifs, nsx);
+        }
+        else if (strcmp("nsy", word) == 0)
+        {
+            read_value(ifs, nsy);
+        }
+        else if (strcmp("nsz", word) == 0)
+        {
+            read_value(ifs, nsz);
         }
         else if (strcmp("erf_ecut", word) == 0)
         {
@@ -2953,6 +2975,9 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
+    Parallel_Common::bcast_int(nsx);
+    Parallel_Common::bcast_int(nsy);
+    Parallel_Common::bcast_int(nsz);
     Parallel_Common::bcast_double(erf_ecut);
     Parallel_Common::bcast_double(erf_height);
     Parallel_Common::bcast_double(erf_sigma);

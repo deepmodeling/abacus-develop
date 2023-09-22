@@ -118,6 +118,10 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
                 ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
             }
         }
+        if (upf.tvanp)
+        {
+            GlobalV::use_uspp = true;
+        }
     }
     return;
 }

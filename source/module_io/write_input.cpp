@@ -88,6 +88,7 @@ void Input::Print(const std::string &fn) const
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "ecutrho", ecutrho, "#energy cutoff for charge density and potential");
     ModuleBase::GlobalFunc::OUTP(ofs, "erf_ecut", erf_ecut, "#the value of the constant energy cutoff");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "erf_height",
@@ -128,6 +129,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "nx", nx, "number of points along x axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "ny", ny, "number of points along y axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "nz", nz, "number of points along z axis for FFT grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsx", nsx, "number of points along x axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsy", nsy, "number of points along y axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsz", nsz, "number of points along z axis for FFT smooth grid");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "cell_factor",
                                  cell_factor,

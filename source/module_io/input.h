@@ -169,6 +169,7 @@ class Input
     int ncx, ncy, ncz; // three dimension of FFT charge/grid
     int nx, ny, nz; // three dimension of FFT wavefunc
     int bx, by, bz; // big mesh ball. mohan add 2011-04-21
+    int nsx, nsy, nsz; // three dimension of FFT smooth charge density
 
     //==========================================================
     // technique
