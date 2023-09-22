@@ -92,8 +92,10 @@ void RadialSet::set_rcut_max()
 
 int RadialSet::index(const int l, const int izeta) const
 {
+#ifdef __DEBUG
     assert(l >= 0 && l <= lmax_);
     assert(izeta >= 0 && izeta < nzeta_[l]);
+#endif
     return index_map_[l * nzeta_max_ + izeta];
 }
 
@@ -104,7 +106,9 @@ void RadialSet::indexing()
         return;
     }
 
+#ifdef __DEBUG
     assert(lmax_ >= 0);
+#endif
 
     delete[] index_map_;
     index_map_ = new int[(lmax_ + 1) * nzeta_max_];
@@ -121,7 +125,9 @@ void RadialSet::indexing()
 const NumericalRadial& RadialSet::chi(const int l, const int izeta)
 {
     int i = index_map_[l * nzeta_max_ + izeta];
+#ifdef __DEBUG
     assert(i >= 0 && i < nchi_);
+#endif
     return chi_[i];
 }
 

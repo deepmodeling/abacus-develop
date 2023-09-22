@@ -16,7 +16,9 @@ void TwoCenterTable::build(const RadialCollection& bra,
                            const int nr,
                            const double cutoff)
 {
+#ifdef __DEBUG
     assert(nr >= 3 && cutoff > 0.0);
+#endif
 
     cleanup();
 
@@ -56,7 +58,9 @@ const double* TwoCenterTable::table(const int itype1,
                                     const int l,
                                     const bool deriv) const
 {
+#ifdef __DEBUG
     assert(is_present(itype1, l1, izeta1, itype2, l2, izeta2, l));
+#endif
     return deriv ? dtable_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l)):
                     table_.inner_most_ptr<double>(index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l));
 }
@@ -72,7 +76,9 @@ void TwoCenterTable::lookup(const int itype1,
                             double* val,
                             double* dval) const
 {
+#ifdef __DEBUG
     assert(R >= 0);
+#endif
 
     if (R > rmax())
     {

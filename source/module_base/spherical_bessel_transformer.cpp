@@ -163,8 +163,10 @@ long long int SphericalBesselTransformer::Impl::polycoef(const bool of_sine, con
      *      c(1,0) =  0     c(1,0) = 1
      *      c(1,1) = -1     c(1,1) = 0
      *                                                              */
+#ifdef __DEBUG
     assert(l >= 0 && n >= 0);
     assert(l <= 17 && "Impl::polycoef: some coefficients exceed LLONG_MAX (2^63-1) for l >= 18");
+#endif
 
     if (of_sine)
     {
@@ -204,7 +206,9 @@ void SphericalBesselTransformer::Impl::radrfft_base(const int l,
                                                     const int p)
 {
     // this function does not support in-place transform (but radrfft does)
+#ifdef __DEBUG
     assert(in != out);
+#endif
 
     int n = ngrid - 1;
     double dx = cutoff / n;
@@ -291,9 +295,11 @@ void SphericalBesselTransformer::Impl::radrfft(const int l,
      * relation of j_l(x) to convert the original transform to two Spherical Bessel transforms of order
      * l-1 and l+1 respectively.
      *                                                                                                  */
+#ifdef __DEBUG
     assert(l >= 0);
     assert(ngrid > 1);
     assert(p <= 2);
+#endif
 
     double* out_tmp = new double[deriv && l > 0 ? 2 * ngrid : ngrid];
     int n_direct = 0;
@@ -352,9 +358,11 @@ void SphericalBesselTransformer::Impl::direct(const int l,
                                               const int p,
                                               const bool deriv)
 {
+#ifdef __DEBUG
     assert(p <= 2);
     assert(grid_in[0] >= 0.0 && std::is_sorted(grid_in, grid_in + ngrid_in, std::less_equal<double>()));
     assert(grid_out[0] >= 0.0 && std::is_sorted(grid_out, grid_out + ngrid_out, std::less_equal<double>()));
+#endif
 
     double* buffer = new double[3 * ngrid_in];
 
@@ -414,7 +422,9 @@ void SphericalBesselTransformer::Impl::rfft_prepare(const int sz)
 
 void SphericalBesselTransformer::Impl::set_fftw_plan_flag(const unsigned new_flag)
 {
+#ifdef __DEBUG
     assert(new_flag == FFTW_ESTIMATE || new_flag == FFTW_MEASURE);
+#endif
     if (new_flag != fftw_plan_flag_)
     {
         fftw_destroy_plan(rfft_plan_);
@@ -490,7 +500,9 @@ void SphericalBesselTransformer::radrfft(const int l,
                                          const int p,
                                          const bool deriv) const
 {
+#ifdef __DEBUG
     assert(impl_ && "SphericalBesselTransformer not initialized!");
+#endif
     impl_->radrfft(l, ngrid, cutoff, in, out, p, deriv);
 }
 
@@ -504,19 +516,25 @@ void SphericalBesselTransformer::direct(const int l,
                                         const int p,
                                         const bool deriv) const
 {
+#ifdef __DEBUG
     assert(impl_ && "SphericalBesselTransformer not initialized!");
+#endif
     impl_->direct(l, ngrid_in, grid_in, in, ngrid_out, grid_out, out, p, deriv);
 }
 
 void SphericalBesselTransformer::set_fftw_plan_flag(const unsigned new_flag) const
 {
+#ifdef __DEBUG
     assert(impl_ && "SphericalBesselTransformer not initialized!");
+#endif
     impl_->set_fftw_plan_flag(new_flag);
 }
 
 void SphericalBesselTransformer::fft_clear() const
 {
+#ifdef __DEBUG
     assert(impl_ && "SphericalBesselTransformer not initialized!");
+#endif
     impl_->fft_clear();
 }
 

@@ -107,6 +107,7 @@ void NumericalRadial::build(const int l,
                             const int itype,
                             const bool init_sbt)
 {
+#ifdef __DEBUG
     assert(l >= 0);
     assert(ngrid > 1);
     assert(grid && value);
@@ -114,6 +115,7 @@ void NumericalRadial::build(const int l,
     // grid must be strictly increasing and every element must be non-negative
     assert(std::is_sorted(grid, grid + ngrid, std::less_equal<double>())); // using less_equal forbids equal values
     assert(grid[0] >= 0.0);
+#endif
 
     // wipe off any existing r & k space data
     wipe(true, true);
@@ -150,7 +152,9 @@ void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt
 {
     sbt_ = sbt;
 
+#ifdef __DEBUG
     assert(update == 0 || update == 1 || update == -1);
+#endif
     switch (update)
     {
     case 1:
@@ -165,12 +169,14 @@ void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt
 
 void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const double* const grid, const char mode)
 {
+#ifdef __DEBUG
     assert(mode == 'i' || mode == 't');
     assert(ngrid > 1);
 
     // grid must be strictly increasing and every element must be non-negative
     assert(std::is_sorted(grid, grid + ngrid, std::less_equal<double>())); // using less_equal forbids equal values
     assert(grid[0] >= 0.0);
+#endif
 
     // tbu stands for "to be updated"
     double*& grid_tbu = (for_r_space ? rgrid_ : kgrid_);
@@ -180,7 +186,9 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
     if (mode == 't')
     { // obtain new values by a transform from the other space
         // make sure a transform from the other space is available
+#ifdef __DEBUG
         assert(for_r_space ? (kgrid_ && kvalue_) : (rgrid_ && rvalue_));
+#endif
 
         delete[] grid_tbu;
         delete[] value_tbu;
@@ -195,7 +203,9 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
     else
     { // obtain new values by interpolation in the current space
         // make sure an interpolation in the current space is available
+#ifdef __DEBUG
         assert(grid_tbu && value_tbu);
+#endif
 
         // cubic spline interpolation
         ModuleBase::CubicSpline cubspl;
@@ -254,16 +264,17 @@ void NumericalRadial::set_uniform_grid(const bool for_r_space,
 
 void NumericalRadial::set_value(const bool for_r_space, const double* const value, const int p)
 {
+#ifdef __DEBUG
+    assert(for_r_space ? rvalue_ : kvalue_);
+#endif
     if (for_r_space)
     {
-        assert(rvalue_);
         std::memcpy(rvalue_, value, nr_ * sizeof(double));
         pr_ = p;
         transform(true);
     }
     else
     {
-        assert(kvalue_);
         std::memcpy(kvalue_, value, nk_ * sizeof(double));
         pk_ = p;
         transform(false);
@@ -272,7 +283,9 @@ void NumericalRadial::set_value(const bool for_r_space, const double* const valu
 
 void NumericalRadial::wipe(const bool r_space, const bool k_space)
 {
+#ifdef __DEBUG
     assert(r_space || k_space);
+#endif
 
     // wipe the grid and value in r/k space
     if (r_space)
@@ -305,6 +318,7 @@ void NumericalRadial::radtab(const char op,
                              const double rmax_tab,
                              const bool deriv) const
 {
+#ifdef __DEBUG
     assert(op == 'S' || op == 'I' || op == 'T' || op == 'U');
     assert(l >= 0);
     assert(rmax_tab > 0 && nr_tab > 0);
@@ -312,6 +326,7 @@ void NumericalRadial::radtab(const char op,
     // radtab requires that two NumericalRadial objects have exactly the same (non-null) kgrid_
     assert(nk_ > 0 && nk_ == ket.nk_);
     assert(std::equal(kgrid_, kgrid_ + nk_, ket.kgrid_));
+#endif
 
     double* rgrid_tab = new double[nr_tab];
     double dr = rmax_tab / (nr_tab - 1);
@@ -383,8 +398,10 @@ void NumericalRadial::normalize(bool for_r_space)
 
 void NumericalRadial::transform(const bool forward)
 {
+#ifdef __DEBUG
     // grid & value must exist in the initial space
     assert(forward ? (rgrid_ && rvalue_) : (kgrid_ && kvalue_));
+#endif
 
     // do nothing if there is no grid in the destination space
     if ((forward && !kgrid_) || (!forward && !rgrid_))

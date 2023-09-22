@@ -11,7 +11,9 @@ void BetaRadials::build(const Numerical_Nonlocal& nl, const int itype, std::ofst
     cleanup();
 
     itype_ = itype;
+#ifdef __DEBUG
     assert(itype_ == nl.getType());
+#endif
 
     symbol_ = nl.getLabel();
     lmax_ = nl.getLmax();

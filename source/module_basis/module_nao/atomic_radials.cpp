@@ -99,7 +99,9 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
             else if (tmp == "Lmax")
             {
                 ifs >> lmax_;
+#ifdef __DEBUG
                 assert(lmax_ >= 0);
+#endif
                 nzeta_ = new int[lmax_ + 1];
                 for (int l = 0; l <= lmax_; ++l)
                 {
@@ -188,11 +190,15 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
              *                                                                              */
             // ifs >> tmp >> tmp >> tmp; // skip "Type" "L" "N"
             ifs >> tmp >> tmp >> tmp;
+#ifdef __DEBUG
             assert(tmp == "N");
+#endif
 
             ifs >> tmp >> l >> izeta;
+#ifdef __DEBUG
             assert(l >= 0 && l <= lmax_);
             assert(izeta >= 0 && izeta < nzeta_[l]);
+#endif
 
             for (int ir = 0; ir != ngrid; ++ir)
             {
@@ -205,8 +211,10 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         Parallel_Common::bcast_int(izeta);
         Parallel_Common::bcast_double(rvalue, ngrid);
 #endif
+#ifdef __DEBUG
         assert(index(l, izeta) >= 0 && index(l, izeta) < nchi_);
         assert(!is_read[index(l, izeta)]);
+#endif
         is_read[index(l, izeta)] = true;
 
         // skip the initialization of sbt_ in this stage

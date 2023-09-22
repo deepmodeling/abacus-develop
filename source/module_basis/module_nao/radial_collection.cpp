@@ -149,8 +149,10 @@ void RadialCollection::build(const int ntype, Numerical_Nonlocal* const nls)
 
 void RadialCollection::build(const int nfile, const std::string* const file, const char file_type)
 {
+#ifdef __DEBUG
     //assert(file_type == 'o' || file_type == 'p');
     assert(file_type == 'o'); // pseudopotential files are not read in this module
+#endif
 
     cleanup();
 
