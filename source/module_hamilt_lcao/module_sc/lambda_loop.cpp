@@ -53,6 +53,8 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     double sum_k, sum_k2;
     double g;
 
+    double alpha_trial = this->alpha_trial_;
+
     const double zero = 0.0;
     const double one = 1.0;
 
@@ -190,19 +192,19 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 
         //print_2d("search 1", search);
 
-        boundary = abs(this->alpha_trial_ * maxval_abs_2d(search));
+        boundary = abs(alpha_trial * maxval_abs_2d(search));
         //std::cout << "restriction of this step = " << this->restrict_current_ << std::endl;
-        //std::cout << "alpha_trial before restrict = " << this->alpha_trial_ << std::endl;
+        //std::cout << "alpha_trial before restrict = " << alpha_trial << std::endl;
         //std::cout << "boundary before = " << boundary << std::endl;
         //std::cout << "trial need restriction: false" << std::endl;
-        //scalar_multiply_2d(search, this->alpha_trial_, temp_1);
+        //scalar_multiply_2d(search, alpha_trial, temp_1);
         //print_2d("search", search);
         //print_2d("delta delta lambda: ", temp_1);
 
         // CHTOT_last_step = CHTOT;
         dnu_last_step = dnu;
         temp_1 = dnu;
-        add_scalar_multiply_2d(temp_1, search, this->alpha_trial_, dnu);
+        add_scalar_multiply_2d(temp_1, search, alpha_trial, dnu);
         delta_lambda = dnu;
 
         //print_2d("trial delta lambda:", delta_lambda);
@@ -241,17 +243,17 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         }
         sum_k = sum_2d(temp_1);
         sum_k2 = sum_2d(temp_2);
-        //alpha_opt = sum_k * this->alpha_trial_ / sum_k2 * this->meV_to_Ry;
-        alpha_opt = sum_k * this->alpha_trial_ / sum_k2;
+        //alpha_opt = sum_k * alpha_trial / sum_k2 * this->meV_to_Ry;
+        alpha_opt = sum_k * alpha_trial / sum_k2;
         //std::cout << "sum_k " << sum_k << std::endl;
         std::cout << "sum_k2 " << sum_k2 << std::endl;
         //std::cout << "alpha_opt " << alpha_opt << std::endl;
-        //std::cout << "this->alpha_trial_ " << this->alpha_trial_ << std::endl;
+        //std::cout << "alpha_trial " << alpha_trial << std::endl;
 
         //print_2d("search 3 ", search);
         //std::cout << "maxval abs " << maxval_abs_2d(search) << std::endl;
-        //std::cout << "alpha_trial " << this->alpha_trial_ << std::endl;
-        boundary = abs(this->alpha_trial_ * maxval_abs_2d(search));
+        //std::cout << "alpha_trial " << alpha_trial << std::endl;
+        boundary = abs(alpha_trial * maxval_abs_2d(search));
         //std::cout << "boundary again " << boundary << std::endl;
         //std::cout << "alpha_opt before restrict = " << alpha_opt << std::endl;
         //std::cout << "boundary before = " << boundary << std::endl;
@@ -269,7 +271,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             //std::cout << "restriction needed: false" << std::endl;
         }
 
-        alpha_plus = alpha_opt - this->alpha_trial_;
+        alpha_plus = alpha_opt - alpha_trial;
         scalar_multiply_2d(search, alpha_plus, temp_1);
         //print_2d("delta delta lambda:", temp_1);
 
@@ -284,7 +286,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         mean_error_old = mean_error;
         //std::cout << "mean_error_old " << mean_error_old << std::endl;
 
-        g = 1.5 * abs(alpha_opt) / this->alpha_trial_;
+        g = 1.5 * abs(alpha_opt) / alpha_trial;
         if (g > 2.0)
         {
             g = 2;
@@ -293,7 +295,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         {
             g = 0.5;
         }
-        this->alpha_trial_ = this->alpha_trial_ * pow(g, 0.7);
+        alpha_trial = alpha_trial * pow(g, 0.7);
     }
     
 CG_STOP:
