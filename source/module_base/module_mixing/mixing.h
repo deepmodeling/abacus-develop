@@ -75,6 +75,7 @@ class Mixing
      */
     void mix_data(const Mixing_Data& mdata, double* data_mix)
     {
+        if(mdata.length <= 0) return;
         double* FP_data = static_cast<double*>(mdata.data);
         if (mdata.ndim_use == 1)
         {
@@ -99,6 +100,7 @@ class Mixing
     }
     void mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
     {
+        if(mdata.length <= 0) return;
         std::complex<double>* FP_data = static_cast<std::complex<double>*>(mdata.data);
         if (mdata.ndim_use == 1)
         {
