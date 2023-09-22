@@ -3,19 +3,21 @@
 // DATE : 2009-11-08
 //==========================================================
 #include "parallel_global.h"
+
 #include "version.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "parallel_common.h"
-#include "parallel_reduce.h"
-#include "../module_base/global_function.h"
-#include <iostream>
-#include <thread>
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include <iostream>
+#include <thread>
+
+#include "module_base/global_function.h"
+#include "parallel_common.h"
+#include "parallel_reduce.h"
 
 #if defined __MPI
 MPI_Comm POOL_WORLD;
