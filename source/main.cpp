@@ -4,7 +4,6 @@
 //==========================================================
 
 #include <ctime>
-
 #include "driver.h"
 #include "module_base/parallel_global.h"
 #include "module_io/parse_args.h"
