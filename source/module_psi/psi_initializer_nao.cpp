@@ -11,6 +11,10 @@
 // three global variables definition
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+// parallel communication
+#ifdef __MPI
+#include "module_base/parallel_common.h"
+#endif
 
 psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in) : psi_initializer(sf_in, pw_wfc_in)
 {
@@ -39,20 +43,210 @@ psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_B
 
 psi_initializer_nao::~psi_initializer_nao() {}
 
-
 void psi_initializer_nao::set_orbital_files(std::string* orbital_files)
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
-	for (int itype = 0; itype < GlobalC::ucell.ntype; itype++)
-    {
-		this->orbital_files.push_back(orbital_files[itype]);
+	#ifdef __MPI
+	if(GlobalV::MY_RANK == 0)
+	{
+	#endif
+		for (int itype = 0; itype < GlobalC::ucell.ntype; itype++)
+		{
+			this->orbital_files.push_back(orbital_files[itype]);
+		}
+	#ifdef __MPI
 	}
+	else
+	{
+		this->orbital_files.resize(GlobalC::ucell.ntype);
+	}
+	Parallel_Common::bcast_string(this->orbital_files.data(), GlobalC::ucell.ntype);
+	#endif
 	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
 }
 
+void psi_initializer_nao::read_orbital_files()
+{
+	ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
+	#ifdef __MPI
+	if(GlobalV::MY_RANK==0)
+	{
+	#endif
+		for(int it = 0; it < GlobalC::ucell.ntype; it++)
+		{
+			// number of chi per atomtype
+			int nchi = 0;
+			for(int l = 0; l <= GlobalC::ucell.atoms[it].nwl; l++)
+			{
+				nchi += GlobalC::ucell.atoms[it].l_nchi[l];
+			}
+			
+			std::vector<int> n_rgrid_it;
+			std::vector<std::vector<double>> rgrid_it;
+			std::vector<std::vector<double>> flz_it;
+
+			std::ifstream ifs_it;
+			ifs_it.open(GlobalV::global_orbital_dir+this->orbital_files[it]);
+
+			if(!ifs_it)
+			{
+				GlobalV::ofs_warning<<"psi_initializer_nao::read_orbital_files: cannot open orbital file: "<<this->orbital_files[it]<<std::endl;
+				ModuleBase::WARNING_QUIT("psi_initializer_nao::read_orbital_files", "cannot open orbital file.");
+			}
+			else
+			{
+				GlobalV::ofs_running<<"psi_initializer_nao::read_orbital_files: reading orbital file: "<<this->orbital_files[it]<<std::endl;
+			}
+			ifs_it.close();
+
+			int ichi_overall = 0;
+			// check nwl and nchi for each rank
+			
+			for(int l = 0; l <= GlobalC::ucell.atoms[it].nwl; l++)
+			{
+				for(int ichi = 0; ichi < GlobalC::ucell.atoms[it].l_nchi[l]; ichi++)
+				{
+					int n_rgrid_ichi;
+					std::vector<double> rgrid_ichi;
+					std::vector<double> flz_ichi;
+
+					GlobalV::ofs_running<<"-------------------------------------- "<<std::endl;
+					GlobalV::ofs_running<<" reading orbital of element "<<GlobalC::ucell.atoms[it].label<<std::endl
+										<<" angular momentum l = "<<l<<std::endl
+										<<" index of chi = "<<ichi<<std::endl;
+
+					ifs_it.open(GlobalV::global_orbital_dir+this->orbital_files[it]);
+					double dr = 0.0;
+					char word[80];
+					
+					while(ifs_it.good())
+					{
+						ifs_it>>word;
+						if(std::strcmp(word, "END")==0) break;
+					}
+					ModuleBase::CHECK_NAME(ifs_it, "Mesh");
+					ifs_it>>n_rgrid_ichi;
+					
+					if(n_rgrid_ichi%2 == 0) ++n_rgrid_ichi;
+					GlobalV::ofs_running<<" number of radial grid = "<<n_rgrid_ichi<<std::endl;
+
+					ModuleBase::CHECK_NAME(ifs_it, "dr");
+					ifs_it>>dr;
+					GlobalV::ofs_running<<" dr = "<<dr<<std::endl;
+
+					for(int ir = 0; ir < n_rgrid_ichi; ir++)
+					{
+						rgrid_ichi.push_back(ir*dr);
+					}
+					GlobalV::ofs_running<<" maximal radial grid point = "<<rgrid_ichi[n_rgrid_ichi-1]<<" Angstrom"<<std::endl;
+					
+					std::string title1, title2, title3;
+					int it_read, l_read, nchi_read;
+					bool find = false;
+					while(!find)
+					{
+						if(ifs_it.eof())
+						{
+							GlobalV::ofs_warning<<" psi_initializer_nao::read_orbital_files: cannot find orbital of element "<<GlobalC::ucell.atoms[it].label<<std::endl
+												<<" angular momentum l = "<<l<<std::endl
+												<<" index of chi = "<<ichi<<std::endl;
+						}
+						ifs_it>>title1>>title2>>title3;
+						assert(title1=="Type");
+						ifs_it>>it_read>>l_read>>nchi_read;
+						if(l_read==l && nchi_read==ichi)
+						{
+							for(int ir = 0; ir<n_rgrid_ichi; ir++)
+							{
+								double flz_ichi_ir;
+								ifs_it>>flz_ichi_ir;
+								flz_ichi.push_back(flz_ichi_ir);
+							}
+							find = true;
+						}
+						else
+						{
+							double discard;
+							for(int ir = 0; ir<n_rgrid_ichi; ir++)
+							{
+								ifs_it>>discard;
+							}
+						}
+					}
+					ifs_it.close();
+					n_rgrid_it.push_back(n_rgrid_ichi);
+					rgrid_it.push_back(rgrid_ichi);
+					flz_it.push_back(flz_ichi);
+					++ichi_overall;
+				}
+			}
+			this->n_rgrid.push_back(n_rgrid_it);
+			this->rgrid.push_back(rgrid_it);
+			this->flz.push_back(flz_it);
+			GlobalV::ofs_running<<"-------------------------------------- "<<std::endl;
+		}
+	#ifdef __MPI
+	}
+	#endif
+	// Broadcast n_rgrid, rgrid, flz
+	#ifdef __MPI
+	if(GlobalV::MY_RANK!=0)
+	{
+		this->n_rgrid.resize(GlobalC::ucell.ntype);
+	}
+	int nchi[GlobalC::ucell.ntype];
+	if(GlobalV::MY_RANK==0)
+	{
+		for(int it = 0; it < GlobalC::ucell.ntype; it++)
+		{
+			nchi[it] = this->n_rgrid[it].size();
+		}
+	}
+	Parallel_Common::bcast_int(nchi, GlobalC::ucell.ntype);
+	if(GlobalV::MY_RANK!=0)
+	{
+		this->n_rgrid.resize(GlobalC::ucell.ntype);
+		this->rgrid.resize(GlobalC::ucell.ntype);
+		this->flz.resize(GlobalC::ucell.ntype);
+		for(int it = 0; it < GlobalC::ucell.ntype; it++)
+		{
+			this->n_rgrid[it].resize(nchi[it]);
+			this->rgrid[it].resize(nchi[it]);
+			this->flz[it].resize(nchi[it]);
+		}
+	}
+	for(int it = 0; it < GlobalC::ucell.ntype; it++)
+	{
+		Parallel_Common::bcast_int(this->n_rgrid[it].data(), nchi[it]);
+	}
+	if(GlobalV::MY_RANK!=0)
+	{
+		for(int it = 0; it < GlobalC::ucell.ntype; it++)
+		{
+			for(int ichi = 0; ichi < nchi[it]; ichi++)
+			{
+				this->rgrid[it][ichi].resize(this->n_rgrid[it][ichi]);
+				this->flz[it][ichi].resize(this->n_rgrid[it][ichi]);
+			}
+		}
+	}
+	for(int it = 0; it < GlobalC::ucell.ntype; it++)
+	{
+		for(int ichi = 0; ichi < nchi[it]; ichi++)
+		{
+			Parallel_Common::bcast_double(this->rgrid[it][ichi].data(), this->n_rgrid[it][ichi]);
+			Parallel_Common::bcast_double(this->flz[it][ichi].data(), this->n_rgrid[it][ichi]);
+		}
+	}
+	#endif
+	ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
+}
 
 void psi_initializer_nao::cal_ovlp_flzjlq()
 {
+	
+	this->read_orbital_files();
+	
 	ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
     this->ovlp_flzjlq.zero_out();
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
@@ -68,10 +262,17 @@ void psi_initializer_nao::cal_ovlp_flzjlq()
                 {
                     qgrid[iq] = iq*GlobalV::DQ;
                 }
+				/*
                 this->sbt.direct(l, 
 								 GlobalC::ucell.atoms[it].n_rgrid[ic], 
 								 GlobalC::ucell.atoms[it].rgrid[ic], 
 								 GlobalC::ucell.atoms[it].flz[ic], 
+								 GlobalV::NQX, qgrid, ovlp_flzjlq_q);
+				*/
+                this->sbt.direct(l, 
+								 this->n_rgrid[it][ic],
+								 this->rgrid[it][ic].data(),
+								 this->flz[it][ic].data(),
 								 GlobalV::NQX, qgrid, ovlp_flzjlq_q);
 				for(int iq = 0; iq < GlobalV::NQX; iq++)
 				{
@@ -82,6 +283,7 @@ void psi_initializer_nao::cal_ovlp_flzjlq()
 			}
 		}
 	}
+	
 	if(GlobalV::MY_RANK==0)
 	{
 		for(int it = 0; it < GlobalC::ucell.ntype; it++)

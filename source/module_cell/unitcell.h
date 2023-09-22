@@ -253,12 +253,6 @@ public:
     /// @param ofs_running ofstream
     /// @param atom Atom instance stored in UnitCell
     void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
-    /// @brief read values of numerical orbital of each angular momentum for present atomtype
-    /// @param it index of atom type
-    /// @param orb_file orbital filename
-    /// @param ofs_running ofstream
-    /// @param atom Atom instance stored in UnitCell
-    void read_nao_flz(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
 	int read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running); // read in the atom information for each type of atom
 	bool read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
 

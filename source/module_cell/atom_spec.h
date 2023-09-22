@@ -31,9 +31,6 @@ public:
     int nwl; // max L(Angular momentum) (for local basis)
     double Rcut; //pengfei Li 16-2-29
     int *l_nchi; // number of chi for each L
-    int* n_rgrid; // number of radial grids for each chi
-    double** rgrid; // radial grids for each chi, first index is flattened as (l_nchi[l]*l + ichi), second index is r
-    double** flz; // radial functions, numerical orbital the radial part for each chi,  first index is flattened as (l_nchi[l]*l + ichi), second index is r
     int stapos_wf; // start position of wave functions
 
     std::string label; // atomic symbol

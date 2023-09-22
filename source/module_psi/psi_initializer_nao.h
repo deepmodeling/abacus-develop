@@ -29,7 +29,10 @@ class psi_initializer_nao : public psi_initializer
         /// @param orbital_files array storing numerical orbital files
         void set_orbital_files(std::string* orbital_files);
         // I wont write a function to set ovlp_flzjlq, it is totally useless
-        
+
+        /// @brief before refactor and reorganization of UnitCell class, it is temporary to write this function here.
+        /// In future version, it will be moved into UnitCell class.
+        void read_orbital_files();
         /// @brief calculate overlap integral between f_{l\\zeta} the radial numerical orbital and spherical Bessel function
         void cal_ovlp_flzjlq();
         
@@ -44,5 +47,11 @@ class psi_initializer_nao : public psi_initializer
     private:
         std::vector<std::string> orbital_files;
         ModuleBase::realArray ovlp_flzjlq;
+        /// @brief number of realspace grids per type per chi, [itype][ichi]
+        std::vector<std::vector<int>> n_rgrid;
+        /// @brief data of numerical atomic orbital per type per chi per position, [itype][ichi][ir]
+        std::vector<std::vector<std::vector<double>>> flz;
+        /// @brief r of numerical atomic orbital per type per chi per position, [itype][ichi][ir]
+        std::vector<std::vector<std::vector<double>>> rgrid;
 };
 #endif

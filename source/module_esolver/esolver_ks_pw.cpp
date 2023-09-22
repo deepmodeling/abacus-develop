@@ -215,12 +215,13 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
         {
             this->psi_init = new psi_initializer_atomic(&(this->sf), this->pw_wfc);
             // there are things only need to calculate once
-            this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
+            //this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
+            // not parallelized function, but we have GlobalC now, 
+            // in the future once GlobalC is removed, we will parallelize this function
             this->psi_init->cal_ovlp_pswfcjlq();
         }
         else if(GlobalV::init_wfc == "random")
         {
-            //there is no problem with random, but not so for nao, why?
             this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc);
         }
         else if(GlobalV::init_wfc == "nao")
@@ -234,7 +235,9 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
         {
             this->psi_init = new psi_initializer_atomic_random(&(this->sf), this->pw_wfc);
             // there are things only need to calculate once
-            this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
+            //this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
+            // not parallelized function, but we have GlobalC now, 
+            // in the future once GlobalC is removed, we will parallelize this function
             this->psi_init->cal_ovlp_pswfcjlq();
         }
         else if(GlobalV::init_wfc == "nao+random")
