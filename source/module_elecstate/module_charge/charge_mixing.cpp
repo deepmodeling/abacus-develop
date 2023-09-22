@@ -292,14 +292,27 @@ void Charge_Mixing::mix_rho(Charge* chr)
     {
         if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
         {
-            ModuleBase::GlobalFunc::DCOPY(chr->rho[is], rho123.data() + is * nrxx, nrxx);
+            double* rho123_is = rho123.data() + is * nrxx;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+            for(int ir = 0 ; ir < nrxx ; ++ir)
+            {
+                rho123_is[ir] = chr->rho[is][ir];
+            }
         }
     }
     std::vector<double> kin_r123;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
         kin_r123.resize(GlobalV::NSPIN * nrxx);
-        ModuleBase::GlobalFunc::DCOPY(chr->kin_r[0], kin_r123.data(), GlobalV::NSPIN * nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for(int ir = 0 ; ir < GlobalV::NSPIN * nrxx ; ++ir)
+        {
+            kin_r123[ir] = chr->kin_r[0][ir];
+        }
     }
 
     // --------------------Mixing Body--------------------
@@ -319,13 +332,26 @@ void Charge_Mixing::mix_rho(Charge* chr)
     {
         if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
         {
-            ModuleBase::GlobalFunc::DCOPY(rho123.data() + is * nrxx, chr->rho_save[is], nrxx);
+            double* rho123_is = rho123.data() + is * nrxx;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+            for(int ir = 0 ; ir < nrxx ; ++ir)
+            {
+                chr->rho_save[is][ir] = rho123_is[ir];
+            }
         }
     }
 
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        ModuleBase::GlobalFunc::DCOPY(kin_r123.data(), chr->kin_r_save[0], nrxx * GlobalV::NSPIN);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for(int ir = 0 ; ir < GlobalV::NSPIN * nrxx ; ++ir)
+        {
+            chr->kin_r_save[0][ir] = kin_r123[ir];
+        }
     }
 
     if (new_e_iteration)

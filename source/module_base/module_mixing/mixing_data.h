@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "module_base/module_container/ATen/tensor.h"
-#include "module_base/global_function.h"
 namespace Base_Mixing
 {
 
@@ -21,7 +20,7 @@ class Mixing_Data
      * @param ndim store ndim vectors for mixing
      * @param length the length of each vector
      * @param type_size size of type
-     * 
+     *
      */
     Mixing_Data(const int& ndim, const int& length, const size_t& type_size);
 
@@ -37,7 +36,7 @@ class Mixing_Data
      * @param ndim store ndim vectors for mixing
      * @param length the length of each vector
      * @param type_size size of type
-     * 
+     *
      */
     void resize(const int& ndim, const int& length, const size_t& type_size);
 
@@ -51,8 +50,14 @@ class Mixing_Data
         this->start = (this->start + 1) % this->ndim_tot;
         this->ndim_use = std::min(this->ndim_use + 1, this->ndim_tot);
         ++this->ndim_history;
-        FPTYPE* FP_data = static_cast<FPTYPE*>(this->data);
-        ModuleBase::GlobalFunc::DCOPY(data_in, FP_data + this->start * this->length, this->length); // copy data_in to data
+        FPTYPE* FP_startdata = static_cast<FPTYPE*>(this->data) + this->start * this->length;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
+        for (int i = 0; i < length; ++i)
+        {
+            FP_startdata[i] = data_in[i];
+        }
     }
 
     /**

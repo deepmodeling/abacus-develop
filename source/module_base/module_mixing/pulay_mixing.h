@@ -79,7 +79,7 @@ class Pulay_Mixing : public Mixing
         std::vector<FPTYPE> F_tmp(length);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -93,7 +93,7 @@ class Pulay_Mixing : public Mixing
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -119,13 +119,25 @@ class Pulay_Mixing : public Mixing
                 free(F);
             F = malloc(sizeof(FPTYPE) * length * mixing_ndim);
             FP_F = static_cast<FPTYPE*>(F);
-
-            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F, length);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
+            for(int i = 0 ; i < length; ++i)
+            {
+                FP_F[i] = F_tmp[i];
+            }
         }
         else
         {
             start_F = (this->start_F + 1) % this->mixing_ndim;
-            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F + start_F * length, length);
+            FPTYPE* FP_startF = FP_F + start_F * length;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
+            for(int i = 0 ; i < length; ++i)
+            {
+                FP_startF[i] = F_tmp[i];
+            }
         }
     };
 

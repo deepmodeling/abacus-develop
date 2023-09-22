@@ -5,6 +5,7 @@
 #include "../module_charge/charge_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include <omp.h>
 
 int FUNC_TYPE = 1;
 
@@ -86,6 +87,7 @@ class ChargeMixingTest : public ::testing::Test
 
 TEST_F(ChargeMixingTest, SetMixingTest)
 {
+    omp_set_num_threads(1);
     GlobalV::NSPIN = 1;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis);
@@ -114,10 +116,12 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     mode = "plain";
     GlobalV::SCF_THR_TYPE = 1;
     CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.npw);
 
     GlobalV::SCF_THR_TYPE = 2;
     CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
     mode = "nothing";
@@ -365,10 +369,10 @@ TEST_F(ChargeMixingTest, MixRhoTest)
 
     // REAL
     Charge_Mixing CMtest_real;
-    CMtest_recip.mix_reset();
     GlobalV::SCF_THR_TYPE = 2;
-    CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau);
     CMtest_real.set_rhopw(&pw_basis);
+    CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_real.mix_reset();
     for(int i = 0 ; i < nspin * nrxx; ++i)
     {
         charge._space_rho[i] = real_ref[i];

@@ -1,7 +1,6 @@
 #ifndef BROYDEN_MIXING_H_
 #define BROYDEN_MIXING_H_
 #include "mixing.h"
-#include "module_base/global_function.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/matrix.h"
 #include "module_base/memory.h"
@@ -87,9 +86,8 @@ class Broyden_Mixing : public Mixing
     {
         const size_t length = mdata.length;
         std::vector<FPTYPE> F_tmp(length);
-
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -103,7 +101,7 @@ class Broyden_Mixing : public Mixing
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -134,19 +132,24 @@ class Broyden_Mixing : public Mixing
                 free(dF);
             dF = malloc(sizeof(FPTYPE) * length * mixing_ndim);
             FP_dF = static_cast<FPTYPE*>(dF);
-
-            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F, length);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
+            for(int i = 0 ; i < length; ++i)
+            {
+                FP_F[i] = F_tmp[i];
+            }
         }
         else
         {
-            ModuleBase::GlobalFunc::DCOPY(F_tmp.data(), FP_F, length);
             this->ndim_cal_dF = std::min(this->ndim_cal_dF + 1, this->mixing_ndim);
             start_dF = (this->start_dF + 1) % this->mixing_ndim;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
             for (int i = 0; i < length; ++i)
             {
+                FP_F[i] = F_tmp[i];
                 // dF{n} = F{n-1} - F{n} = -(F{n} - F{n-1})
                 FP_dF[start_dF * length + i] -= FP_F[i];
             }
@@ -241,7 +244,13 @@ class Broyden_Mixing : public Mixing
         }
 
         FPTYPE* dFnext = FP_dF + dFindex_move(1) * length;
-        ModuleBase::GlobalFunc::DCOPY(FP_F, dFnext, length);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#endif
+        for(int i = 0 ; i < length; ++i)
+        {
+            dFnext[i] = FP_F[i];
+        }
         ModuleBase::timer::tick("Charge", "Broyden_mixing");
     };
 

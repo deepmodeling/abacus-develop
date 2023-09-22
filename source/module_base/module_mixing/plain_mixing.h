@@ -62,9 +62,8 @@ class Plain_Mixing : public Mixing
     {
         const size_t length = mdata.length;
         std::vector<FPTYPE> F_tmp(length);
-
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -78,7 +77,7 @@ class Plain_Mixing : public Mixing
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
+#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for (int i = 0; i < length; ++i)
         {
