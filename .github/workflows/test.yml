@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: "refs/pull/${{ github.event.number }}/merge"
+          submodules: recursive
       - name: Build
         run: |
           cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON
