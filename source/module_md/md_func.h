@@ -23,6 +23,7 @@ double gaussrand();
  *
  * @param unit_in unitcell information
  * @param my_rank MPI rank of the processor
+ * @param restart whether restart the md
  * @param temperature ion temperature
  * @param allmass atomic mass
  * @param frozen_freedom the fixed freedom
@@ -31,6 +32,7 @@ double gaussrand();
  */
 void init_vel(const UnitCell& unit_in,
               const int& my_rank,
+              const bool& restart,
               double& temperature,
               double* allmass,
               int& frozen_freedom,

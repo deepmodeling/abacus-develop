@@ -161,6 +161,7 @@ void rand_vel(const int& natom,
 
 void init_vel(const UnitCell& unit_in,
               const int& my_rank,
+              const bool& restart,
               double& temperature,
               double* allmass,
               int& frozen_freedom,
@@ -184,7 +185,12 @@ void init_vel(const UnitCell& unit_in,
         read_vel(unit_in, vel);
         double kinetic = 0.0;
         double t_current = MD_func::current_temp(kinetic, unit_in.nat, frozen_freedom, allmass, vel);
-        if (temperature < 0)
+        if (restart)
+        {
+            std::cout << " RESTART MD, CURRENT TEMPERATURE IS " << t_current * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+        }
+        else if (temperature < 0)
         {
             std::cout << " UNSET INITIAL TEMPERATURE, AUTOSET TO " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;

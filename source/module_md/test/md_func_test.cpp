@@ -95,7 +95,7 @@ TEST_F(MD_func_test, randomvel)
 {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     EXPECT_NEAR(vel[0].x, 9.9105892783200826e-06, doublethreshold);
     EXPECT_NEAR(vel[0].y, -3.343699576563167e-05, doublethreshold);
@@ -115,7 +115,7 @@ TEST_F(MD_func_test, getmassmbl)
 {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     for (int i = 0; i < natom; ++i)
     {
@@ -150,7 +150,7 @@ TEST_F(MD_func_test, InitVelCase1)
 {
     ucell.init_vel = 1;
     temperature = -1.0;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     EXPECT_NEAR(temperature, 300.0 / ModuleBase::Hartree_to_K, doublethreshold);
 }
@@ -159,7 +159,7 @@ TEST_F(MD_func_test, InitVelCase2)
 {
     ucell.init_vel = 1;
     temperature = 300.0 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
 }
@@ -169,7 +169,7 @@ TEST_F(MD_func_test, InitVelCase3)
     ucell.init_vel = 1;
     temperature = 310.0 / ModuleBase::Hartree_to_K;
 
-    EXPECT_EXIT(MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel),
+    EXPECT_EXIT(MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel),
                 ::testing::ExitedWithCode(0),
                 "");
 }
@@ -178,14 +178,24 @@ TEST_F(MD_func_test, InitVelCase4)
 {
     ucell.init_vel = 0;
     temperature = 300.0 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
 }
 
+TEST_F(MD_func_test, InitVelCase5)
+{
+    ucell.init_vel = 1;
+    temperature = 330.0 / ModuleBase::Hartree_to_K;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, true, temperature, allmass, frozen_freedom, ionmbl, vel);
+
+    EXPECT_DOUBLE_EQ(temperature, 330.0 / ModuleBase::Hartree_to_K);
+}
+
 TEST_F(MD_func_test, compute_stress)
 {
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, temperature, allmass, frozen_freedom, ionmbl, vel);
+    temperature = 300.0 / ModuleBase::Hartree_to_K;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
     MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
     EXPECT_DOUBLE_EQ(stress(0, 0), 5.2064533063673623e-06);
     EXPECT_DOUBLE_EQ(stress(0, 1), -1.6467487572445481e-06);
