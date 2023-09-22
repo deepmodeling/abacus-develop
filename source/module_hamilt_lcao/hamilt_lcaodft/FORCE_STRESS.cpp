@@ -544,6 +544,10 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 #endif
             }
         }
+        if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        {
+            symm->stress_symmetry(scs, GlobalC::ucell);
+        } // end symmetry
 
 #ifdef __DEEPKS
         if (GlobalV::deepks_out_labels) // not parallelized yet
@@ -554,6 +558,10 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         }
         if (GlobalV::deepks_scf)
         {
+            if (ModuleSymmetry::Symmetry::symm_flag == 1)
+            {
+                symm->stress_symmetry(svnl_dalpha, GlobalC::ucell);
+            } // end symmetry
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -582,11 +590,6 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
             }
         }
 #endif
-
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
-        {
-            symm->stress_symmetry(scs, GlobalC::ucell);
-        } // end symmetry
 
         // print Rydberg stress or not
         bool ry = false;

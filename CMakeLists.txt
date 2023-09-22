@@ -33,6 +33,7 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
+option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 
 # get commit info
 if(COMMIT_INFO)
@@ -73,10 +74,12 @@ if (NOT ENABLE_MPI)
   set (BUILD_TESTING OFF)
 endif()
 
-if(ENABLE_LCAO)
+if(ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus)
-else()
+elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw)
+elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
+  set(ABACUS_BIN_NAME abacus_pw_serial)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -170,6 +173,10 @@ if(ENABLE_LCAO)
     include_directories(${ELPA_INCLUDE_DIR})
     target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
     add_compile_definitions(__ELPA)
+  endif()
+
+  if (ENABLE_FFT_TWO_CENTER)
+      add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
 else()
   set(ENABLE_DEEPKS OFF)
@@ -336,13 +343,14 @@ if(MKLROOT)
 else()
   find_package(FFTW3 REQUIRED)
   find_package(LAPACK REQUIRED)
-  find_package(ScaLAPACK REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
-  list(APPEND math_libs
-    FFTW3::FFTW3
-    LAPACK::LAPACK
-    ScaLAPACK::ScaLAPACK
-  )
+  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+
+  if(ENABLE_LCAO)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
+
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()

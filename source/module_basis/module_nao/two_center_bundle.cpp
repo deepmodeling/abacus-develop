@@ -1,5 +1,5 @@
 #include "module_basis/module_nao/two_center_bundle.h"
-#include "module_base/spherical_bessel_transformer.h"
+#include "module_base/memory.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_nao/real_gaunt_table.h"
 #include <memory>
@@ -95,18 +95,24 @@ void TwoCenterBundle::build(int ntype,
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     kinetic_orb->tabulate(*orb_, *orb_, 'T', nr, cutoff);
+    ModuleBase::Memory::record("TwoCenterTable: Kinetic", kinetic_orb->table_memory());
 
     overlap_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     overlap_orb->tabulate(*orb_, *orb_, 'S', nr, cutoff);
+    ModuleBase::Memory::record("TwoCenterTable: Overlap", overlap_orb->table_memory());
 
     overlap_orb_beta = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     overlap_orb_beta->tabulate(*orb_, *beta_, 'S', nr, cutoff);
+    ModuleBase::Memory::record("TwoCenterTable: Nonlocal", overlap_orb_beta->table_memory());
 
     if (deepks_on)
     {
         overlap_orb_alpha = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
         overlap_orb_alpha->tabulate(*orb_, *alpha_, 'S', nr, cutoff);
+        ModuleBase::Memory::record("TwoCenterTable: Descriptor", overlap_orb_beta->table_memory());
     }
+
+    ModuleBase::Memory::record("RealGauntTable", RealGauntTable::instance().memory());
 
     // init Ylm (this shall be done by Ylm automatically! to be done later...)
     ModuleBase::Ylm::set_coefficients();
