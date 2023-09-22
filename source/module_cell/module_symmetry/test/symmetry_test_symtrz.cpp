@@ -104,7 +104,7 @@ TEST_F(SymmetryTest, StressSymmetry)
             for (int j = 0;j < 3;++j)
                 stress(i, j) = double(rand()) / double(RAND_MAX) * 2e5 - 1e5;
 
-        symm.stress_symmetry(stress, ucell);
+        symm.symmetrize_mat3(stress, ucell);
         check_stress(supercell_lib[stru], stress);
 
     }

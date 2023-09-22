@@ -68,7 +68,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigmatot, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigmatot, GlobalC::ucell);
     }
 
 	bool ry = false;
@@ -202,7 +202,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     }
     delete[] gk[0];
     delete[] gk[1];

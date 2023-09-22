@@ -546,7 +546,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         }
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            symm->stress_symmetry(scs, GlobalC::ucell);
+            symm->symmetrize_mat3(scs, GlobalC::ucell);
         } // end symmetry
 
 #ifdef __DEEPKS
@@ -560,7 +560,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         {
             if (ModuleSymmetry::Symmetry::symm_flag == 1)
             {
-                symm->stress_symmetry(svnl_dalpha, GlobalC::ucell);
+                symm->symmetrize_mat3(svnl_dalpha, GlobalC::ucell);
             } // end symmetry
             for (int i = 0; i < 3; i++)
             {

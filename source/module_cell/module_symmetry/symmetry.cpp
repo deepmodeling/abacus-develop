@@ -1686,133 +1686,17 @@ void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const Uni
 	return;
 }
 
-void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)   //zhengdy added 2017
+void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)   //zhengdy added 2017
 {
-	double *tot_sigma, *temp;
-	tot_sigma = new double[9];
-	temp = new double[9];
-	ModuleBase::GlobalFunc::ZEROS(temp, 9);
-	ModuleBase::GlobalFunc::ZEROS(tot_sigma, 9);
-
-	temp[0]=ucell.a1.x;
-	temp[1]=ucell.a1.y;
-	temp[2]=ucell.a1.z;
-	temp[3]=ucell.a2.x;
-	temp[4]=ucell.a2.y;
-	temp[5]=ucell.a2.z;
-	temp[6]=ucell.a3.x;
-	temp[7]=ucell.a3.y;
-	temp[8]=ucell.a3.z;
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j= 0;j<3;j++)
-		{
-			for(int k=0;k<3;k++)
-			{
-				for(int l=0;l<3;l++)
-				{
-					tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
-				}
-			}
-		}
-	}
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j = 0;j<3;j++)
-		{
-			sigma(i,j) = tot_sigma[i*3+j];
-		}
-	}
-
-	ModuleBase::GlobalFunc::ZEROS(temp, 9);
-	ModuleBase::GlobalFunc::ZEROS(tot_sigma, 9);
-
-	for ( int k = 0 ; k < nrotk; ++k)
-	{
-		temp[0] = gmatrix[k].e11;
-		temp[1] = gmatrix[k].e12;
-		temp[2] = gmatrix[k].e13;
-		temp[3] = gmatrix[k].e21;
-		temp[4] = gmatrix[k].e22;
-		temp[5] = gmatrix[k].e23;
-		temp[6] = gmatrix[k].e31;
-		temp[7] = gmatrix[k].e32;
-		temp[8] = gmatrix[k].e33;
-
-		for( int i=0; i<3; i++)
-		{
-			for( int j=0; j<3; j++)
-			{
-				for( int l=0; l<3; l++)
-				{
-					for( int m=0; m<3; m++)
-					{
-						tot_sigma[i * 3 +j] += sigma(l,m) * temp[i * 3 + l] * temp[j * 3 + m];
-					}
-				}
-			}
-		}
-	}
-
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			sigma(i,j) = tot_sigma[i *3 + j] / nrotk;
-		}
-	}
-
-	ModuleBase::GlobalFunc::ZEROS(temp, 9);
-	ModuleBase::GlobalFunc::ZEROS(tot_sigma, 9);
-
-	double det = ucell.a1.x*ucell.a2.y*ucell.a3.z -
-		ucell.a1.x*ucell.a3.y*ucell.a2.z +
-		ucell.a2.x*ucell.a3.y*ucell.a1.z -
-		ucell.a2.x*ucell.a1.y*ucell.a3.z +
-		ucell.a3.x*ucell.a1.y*ucell.a2.z -
-		ucell.a3.x*ucell.a2.y*ucell.a1.z;
-
-	if(det == 0)
-	{
-		det = 1;
-	}
-
-	temp[0] = (ucell.a2.y*ucell.a3.z - ucell.a2.z*ucell.a3.y) / det;
-	temp[1] = -(ucell.a1.y*ucell.a3.z - ucell.a1.z*ucell.a3.y) / det;
-	temp[2] = (ucell.a1.y*ucell.a2.z - ucell.a1.z*ucell.a2.y) / det;
-	temp[3] = -(ucell.a2.x*ucell.a3.z - ucell.a2.z*ucell.a3.x) / det;
-	temp[4] = (ucell.a1.x*ucell.a3.z - ucell.a1.z*ucell.a3.x) / det;
-	temp[5] = -(ucell.a1.x*ucell.a2.z - ucell.a1.z*ucell.a2.x) / det;
-	temp[6] = (ucell.a2.x*ucell.a3.y - ucell.a2.y*ucell.a3.x) / det;
-	temp[7] = -(ucell.a1.x*ucell.a3.y - ucell.a1.y*ucell.a3.x) / det;
-	temp[8] = (ucell.a1.x*ucell.a2.y - ucell.a1.y*ucell.a2.x) / det;
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j= 0;j<3;j++)
-		{
-			for(int k=0;k<3;k++)
-			{
-				for(int l=0;l<3;l++)
-				{
-					tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
-				}
-			}
-		}
-	}
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j = 0;j<3;j++)
-		{
-			sigma(i,j) = tot_sigma[i*3+j];
-		}
-	}
-
-	delete [] tot_sigma;
-	delete [] temp;
+    ModuleBase::matrix A = ucell.latvec.to_matrix();
+    ModuleBase::matrix AT = ucell.latvec.Transpose().to_matrix();
+    ModuleBase::matrix invA = ucell.GT.to_matrix();
+    ModuleBase::matrix invAT = ucell.G.to_matrix();
+    ModuleBase::matrix tot_sigma(3, 3, true);
+    sigma = A * sigma * AT;
+    for (int k = 0; k < nrotk; ++k)
+        tot_sigma += invA * gmatrix[k].to_matrix() * sigma * gmatrix[k].Transpose().to_matrix() * invAT;
+    sigma = tot_sigma * static_cast<double>(1.0 / nrotk);
 	return;
 }
 

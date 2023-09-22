@@ -103,7 +103,7 @@ public:
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
 	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);
-	void stress_symmetry(ModuleBase::matrix &sigma, const UnitCell &ucell);
+    void symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell);
 	void write();
 
 	void print_pos(const double* pos, const int &nat);
