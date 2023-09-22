@@ -198,15 +198,16 @@ void temp_vector(const int& natom,
                  ModuleBase::matrix& t_vector);
 
 /**
- * @brief determine thr current md step
+ * @brief determine thr current md step and temperature
  *
- * determine thr current md step according to Restart_md.dat if md_restart is true
+ * determine thr current md step and temperature according to Restart_md.dat if md_restart is true
  *
  * @param my_rank MPI rank of the processor
  * @param file_dir the directory of read-in files
- * @return thr current md step
+ * @param md_step current md step
+ * @param temperature current temperature
  */
-double current_step(const int& my_rank, const std::string& file_dir);
+void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature);
 
 } // namespace MD_func
 

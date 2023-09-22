@@ -435,10 +435,9 @@ void temp_vector(const int& natom,
     }
 }
 
-double current_step(const int& my_rank, const std::string& file_dir)
+void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
 {
     bool ok = true;
-    int step = 0;
 
     if (my_rank == 0)
     {
@@ -453,7 +452,7 @@ double current_step(const int& my_rank, const std::string& file_dir)
 
         if (ok)
         {
-            file >> step;
+            file >> md_step >> temperature;
             file.close();
         }
     }
@@ -464,13 +463,13 @@ double current_step(const int& my_rank, const std::string& file_dir)
 
     if (!ok)
     {
-        ModuleBase::WARNING_QUIT("current_step", "no Restart_md.dat!");
+        ModuleBase::WARNING_QUIT("current_md_info", "no Restart_md.dat!");
     }
 
 #ifdef __MPI
-    MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&md_step, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-    return step;
 }
 
 } // namespace MD_func

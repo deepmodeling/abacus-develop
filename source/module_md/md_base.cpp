@@ -31,6 +31,13 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
 
     step_ = 0;
     step_rst_ = 0;
+
+    MD_func::init_vel(ucell, mdp.my_rank, mdp.md_restart, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    if (mdp.md_tlast < 0)
+    {
+        mdp.md_tlast = mdp.md_tfirst;
+    }
 }
 
 MD_base::~MD_base()
@@ -47,12 +54,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     if (mdp.md_restart)
     {
         restart(global_readin_dir);
-    }
-    MD_func::init_vel(ucell, mdp.my_rank, mdp.md_restart, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
-    if (mdp.md_tlast < 0)
-    {
-        mdp.md_tlast = mdp.md_tfirst;
     }
 
     Print_Info::print_screen(0, 0, step_ + step_rst_);
@@ -205,37 +206,5 @@ void MD_base::write_restart(const std::string& global_out_dir)
 
 void MD_base::restart(const std::string& global_readin_dir)
 {
-    bool ok = true;
-
-    if (!mdp.my_rank)
-    {
-        std::stringstream ssc;
-        ssc << global_readin_dir << "Restart_md.dat";
-        std::ifstream file(ssc.str().c_str());
-
-        if (!file)
-        {
-            ok = false;
-        }
-
-        if (ok)
-        {
-            file >> step_rst_ >> mdp.md_tfirst;
-            file.close();
-        }
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-
-    if (!ok)
-    {
-        ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.dat !");
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&mdp.md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
+    MD_func::current_md_info(mdp.my_rank, global_readin_dir, step_rst_, mdp.md_tfirst);
 }

@@ -355,7 +355,10 @@ void Structure_Factor::set(const int&)
 
 namespace MD_func
 {
-double current_step(const int& my_rank, const std::string& file_dir)
+double current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
+{
+    return 0;
+}
 {
     return 0;
 }
