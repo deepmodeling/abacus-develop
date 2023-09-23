@@ -1,29 +1,31 @@
 #include "write_dos_lcao.h"
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+#include <sys/time.h>
+#include <vector>
+
 #include "cal_dos.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "write_orb_info.h"
+
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #endif
-#include <vector>
 
 #include "module_base/blas_connector.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/scalapack_connector.h"
-#ifdef __MPI
-#include <mpi.h>
-#endif
-#include <sys/time.h>
 
 void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                               const psi::Psi<std::complex<double>>* psi,
