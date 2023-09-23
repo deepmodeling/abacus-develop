@@ -252,3 +252,17 @@ TEST_F(Mixing_Test, Plain_Solve_LinearEq)
 
     clear();
 }
+
+TEST_F(Mixing_Test, other_cover)
+{
+     this->mixing = new Base_Mixing::Broyden_Mixing(2, 0.7);
+     Base_Mixing::Mixing_Data nodata;
+     this->mixing->init_mixing_data(nodata, 0, sizeof(double));
+     this->mixing->push_data(nodata, (double*)nullptr, (double*)nullptr, nullptr, false);
+     this->mixing->push_data(nodata, (double*)nullptr, (double*)nullptr, nullptr, false);
+     this->mixing->mix_data(nodata, (double*)nullptr);
+     this->mixing->mix_data(nodata, (std::complex<double>*)nullptr);
+     EXPECT_EQ(nodata.length, 0);
+     
+     clear();
+}
