@@ -3,24 +3,29 @@
 
 class Driver
 {
-	public:
-	
-	Driver();
-	~Driver();
+  public:
+    Driver();
+    ~Driver();
 
-	void init();
+    /**
+     * @brief An interface function
+     * This function calls "this->reading()", "this->atomic_world()" in order.
+     */
+    void init();
 
-	private:
+  private:
+    // reading the parameters
+    void reading();
 
-	// reading the parameters
-	void reading();
+    /**
+     * @brief An interface function
+     * This function calls "this->driver_run()" to do calculation,
+	 * and log the time and  memory consumed during calculation.
+     */
+    void atomic_world();
 
-	// do stuff, have fun!
-	void atomic_world();
-
-	// interface to the actual calculations
-	void driver_run();
-
+    // the actual calculations
+    void driver_run();
 };
 
 #endif

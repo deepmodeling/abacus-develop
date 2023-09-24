@@ -16,8 +16,8 @@
 #include <thread>
 
 #include "module_base/global_function.h"
-#include "parallel_common.h"
-#include "parallel_reduce.h"
+#include "module_base/parallel_common.h"
+#include "module_base/parallel_reduce.h"
 
 #if defined __MPI
 MPI_Comm POOL_WORLD;
