@@ -1,11 +1,12 @@
 #ifndef K_VECTORS_H
 #define K_VECTORS_H
 
+#include <vector>
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix3.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include <vector>
 
 class K_Vectors
 {
