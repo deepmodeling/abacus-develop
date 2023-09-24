@@ -1,0 +1,30 @@
+out_mul: mulliken population analysis
+population is dimensionless; charge is unit of elementary charge
+
+out_chg: charge density
+in unit of e/bohr^3 TBC
+
+out_pot: total local potential in real-space
+in unit of Ry TBC
+
+out_dm: density matrix (gamma-only)
+dimensionless
+
+
+
+
+
+out_band
+out_proj_band
+out_bandgap
+out_mat_hs
+out_mat_r
+out_mat_hs2
+out_mat_t
+out_mat_dh
+out_element_info
+
+resart_save
+
+dft_plus_dmft(not working any more)
+rpa(no descriptions for content of output files)
