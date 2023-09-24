@@ -128,7 +128,7 @@ int GRANK = MY_RANK;
 int GSIZE = DSIZE;
 
 //----------------------------------------------------------
-// EXPLAIN :
+// EXPLAIN : The input file name and directory
 //----------------------------------------------------------
 std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
