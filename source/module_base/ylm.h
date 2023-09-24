@@ -1,8 +1,9 @@
 #ifndef YLM_H
 #define YLM_H
 
-#include "vector3.h"
 #include <vector>
+
+#include "vector3.h"
 
 namespace ModuleBase
 {

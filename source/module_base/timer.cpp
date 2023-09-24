@@ -4,18 +4,20 @@
 // UPDATE : Peize Lin at 2019-11-21
 //==========================================================
 #include "timer.h"
-#include "chrono"
-#include <vector>
+
 #include <math.h>
-#include "module_base/formatter.h"
 
 #ifdef __MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include <vector>
+
+#include "chrono"
+#include "module_base/formatter.h"
 
 namespace ModuleBase
 {

@@ -1,4 +1,4 @@
-#include "./opt_CG.h"
+#include "opt_CG.h"
 
 namespace ModuleBase
 {
