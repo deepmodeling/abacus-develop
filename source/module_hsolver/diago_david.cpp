@@ -4,12 +4,12 @@
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
 #include "module_base/lapack_connector.h"
+#include "module_base/memory.h"
+#include "module_base/parallel_common.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/memory.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
