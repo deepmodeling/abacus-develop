@@ -30,18 +30,18 @@ namespace Parallel_Global
 	void myProd(std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr);
 	#endif
 
-	//-------------------------------------------
-	// call to split the "diago world"
-	// the unit of first proc of each grid group
-	// us the diag world.
-	// for example, if we have 64 processors,
-	// and diago_proc = 4,
-	// then we have 4 'grid world', which
-	// have 16, 16, 16, 16 processors each,
-	// and the head of each 'grid world'
-	// leads to the 'diag world', diag
-	// is only carried out using those 4 proc.
-	//-------------------------------------------
+	/**-------------------------------------------
+	* call to split the "diago world"
+	* the unit of first proc of each grid group
+	* us the diag world.
+	* for example, if we have 64 processors,
+	* and diago_proc = 4,
+	* then we have 4 'grid world', which
+	* have 16, 16, 16, 16 processors each,
+	* and the head of each 'grid world'
+	* leads to the 'diag world', diag
+	* is only carried out using those 4 proc.
+	*/
 	void split_diag_world(const int& diag_np);
 	void split_grid_world(const int& diag_np);
 	
