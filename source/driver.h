@@ -14,7 +14,11 @@ class Driver
     void init();
 
   private:
-    // reading the parameters
+    /**
+     * @brief reading the parameters and split the MPI world
+     * This function read the parameter in "INPUT", "STRU" etc,
+     * and split the MPI world into different groups.
+     */
     void reading();
 
     /**
