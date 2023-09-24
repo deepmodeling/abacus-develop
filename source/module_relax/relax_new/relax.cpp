@@ -1,10 +1,12 @@
 #include "relax.h"
+
 #include <cmath>
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
+#include "module_relax/relax_old/ions_move_basic.h"
 #include "module_base/matrix3.h"
-#include "../relax_old/ions_move_basic.h"
-#include "module_base/tool_title.h"
 #include "module_base/parallel_common.h"
+#include "module_base/tool_title.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Relax::init_relax(const int nat_in)
 {
