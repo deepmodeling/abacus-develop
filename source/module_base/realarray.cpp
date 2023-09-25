@@ -118,8 +118,9 @@ void realArray::create(const int d1,const int d2,const int d3)
 	bound4 = 1;
 
 	delete [] ptr;
-	ptr = new double[size]();
-	assert(ptr != 0);
+    ptr = new double[size];
+    zero_out();
+    assert(ptr != 0);
 }
 
 const realArray &realArray::operator=(const realArray &right)

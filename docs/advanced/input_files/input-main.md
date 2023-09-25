@@ -8,6 +8,7 @@
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
     - [symmetry\_prec](#symmetry_prec)
+    - [symmetry\_autoclose](#symmetry_autoclose)
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
@@ -40,6 +41,9 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [erf\_ecut](#erf_ecut)
+    - [erf\_height](#erf_height)
+    - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
     - [nb2d](#nb2d)
     - [lmaxmax](#lmaxmax)
@@ -111,6 +115,7 @@
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
     - [out\_dm](#out_dm)
+    - [out\_dm1](#out_dm1)
     - [out\_wfc\_pw](#out_wfc_pw)
     - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
@@ -279,6 +284,10 @@
     - [towannier90](#towannier90)
     - [nnkpfile](#nnkpfile)
     - [wannier\_spin](#wannier_spin)
+    - [out\_wannier\_mmn](#out_wannier_mmn)
+    - [out\_wannier\_amn](#out_wannier_amn)
+    - [out\_wannier\_eig](#out_wannier_eig)
+    - [out\_wannier\_unk](#out_wannier_unk)
   - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
@@ -682,6 +691,31 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Only useful when you use `ks_solver = dav`. It indicates the maximal dimension for the Davidson method.
 - **Default**: 4
 
+### erf_ecut
+
+- **Type**: Real
+- **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
+- **Default**: 0.0
+- **Unit**: Ry
+
+### erf_height
+
+- **Type**: Real
+- **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
+- **Default**: 0.0
+- **Unit**: Ry
+
+### erf_sigma
+
+- **Type**: Real
+- **Description**: In order to recover the accuracy of a constant energy cutoff calculation, the kinetic functional is modified, which is used in variable-cell molecular dynamics (or in stress calculation). 
+
+  [erf_ecut](#erf_ecut) is the value of the constant energy cutoff; [erf_height](#erf_height) and [erf_sigma](#erf_sigma) are the height and the width of the energy step for reciprocal vectors whose square modulus is greater than [erf_ecut](#erf_ecut). In the kinetic energy, G^2 is replaced by G^2 + erf_height * (1 + erf ( (G^2 - erf_ecut)/erf_sigma) )
+
+  See: M. Bernasconi et al., J. Phys. Chem. Solids **56**, 501 (1995), [doi:10.1016/0022-3697(94)00228-2](#https://doi.org/10.1016/0022-3697(94)00228-2)
+- **Default**: 0.1
+- **Unit**: Ry
+
 [back to top](#full-list-of-input-keywords)
 
 ## Numerical atomic orbitals related variables
@@ -832,7 +866,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: Energy range for smearing, `smearing_sigma` = 1/2 * kB * `smearing_sigma_temp`.
-- **Default**: 2 * `smearing_sigma_temp` / kB.
+- **Default**: 2 * `smearing_sigma` / kB.
 - **Unit**: K
 
 ### mixing_type
@@ -940,7 +974,7 @@ calculations.
   - **atomic**: atomic extrapolation.
   - **first-order**: first-order extrapolation.
   - **second-order**: second-order extrapolation.
-- **Default**: atomic
+- **Default**: first-order (geometry relaxations), second-order (molecular dynamics), else atomic
 
 ### lspinorb
 
@@ -1056,11 +1090,12 @@ These variables are used to control the geometry relaxation.
 ### relax_method
 
 - **Type**: String
-- **Description**: The methods to do geometry optimization. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new). Also note that the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [md_type](#md_type) to `fire`. See [fire](../md.md#fire) for more details.
-  - cg: using the conjugate gradient (CG) algorithm (see relax_new for the new CG method).
+- **Description**: The methods to do geometry optimization. 
+  - cg: using the conjugate gradient (CG) algorithm. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new).
   - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
   - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
   - sd: using the steepest descent (SD) algorithm.
+  - fire: the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Also ionic velocities should be set in this case. See [fire](../md.md#fire) for more details.
 - **Default**: cg
 
 ### relax_new
@@ -1256,13 +1291,14 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Description**: 
-  - 1: Output the local potential (i.e., local pseudopotential + Hartree potential + XC potential) (in Ry) on real space grids into files in the folder `OUT.${suffix}`. The files are named as:
+  - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder `OUT.${suffix}`. The files are named as:
     - npsin = 1: SPIN1_POT.cube;
     - npsin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
     - npsin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
-  - 2: Output the electrostatic potential on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
-- **Default**: 0
+  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 
+    Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+- **Default**: 0
 ### out_dm
 
 - **Type**: Boolean
@@ -1299,11 +1335,16 @@ These variables are used to control the output of properties.
 
 ### out_wfc_lcao
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as:
-  - gamma-only: `LOWF_GAMMA_S1.dat`;
-  - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
+  - 0: no output
+  - 1: (txt format)
+    - gamma-only: `LOWF_GAMMA_S1.txt`;
+    - non-gamma-only: `LOWF_K_${k}.txt`, where `${k}` is the index of k points.
+  - 2: (binary format)
+    - gamma-only: `LOWF_GAMMA_S1.dat`;
+    - non-gamma-only: `LOWF_K_${k}.dat`, where `${k}` is the index of k points.
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
   
@@ -2176,9 +2217,6 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Type**: Integer
 - **Description**: Determine the precision level of variable-cell molecular dynamics calculations.
   - 0: FFT grids do not change, only G vectors and K vectors are changed due to the change of lattice vector. This level is suitable for cases where the variation of the volume and shape is not large, and the efficiency is relatively higher.
-  - 1: A reference cell is constructed at the beginning, controlled by [ref_cell_factor](#ref_cell_factor). Then the reference cell is used to initialize FFT real-space grids and reciprocal space mesh instead of the initial cell. The cost will increase with the size of the reference cell. 
-
-    Currently, the option is useful only in plane-wave-based isotropic NPT simulations.
   - 2: FFT grids change per step. This level is suitable for cases where the variation of the volume and shape is large, such as the MSST method. However, accuracy comes at the cost of efficiency.
 
 - **Default**: 0
@@ -2186,7 +2224,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### ref_cell_factor
 
 - **Type**: Real
-- **Description**: Construct a reference cell bigger than the initial cell. Only used in isotropic NPT ensemble currently, if [md_prec_level](#md_prec_level) is set to 1. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with q2sigma, qcutz, and ecfixed. 
+- **Description**: Construct a reference cell bigger than the initial cell. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with [erf_ecut](#erf_ecut), [erf_height](#erf_height), and [erf_sigma](#erf_sigma). 
 - **Default**: 1.0
 
 ### md_pcouple
@@ -2584,6 +2622,38 @@ These variables are used to control berry phase and wannier90 interface paramete
   - "up": Calculate spin up for the Wannier function.
   - "down": Calculate spin down for the Wannier function.
 - **Default**: "up"
+
+### out_wannier_mmn
+
+- **Type**: Bool
+- **Description**: write the "*.mmn" file or not.
+  - 0: don't write the "*.mmn" file.
+  - 1: write the "*.mmn" file.
+- **Default**: 1
+
+### out_wannier_amn
+
+- **Type**: Bool
+- **Description**: write the "*.amn" file or not.
+  - 0: don't write the "*.amn" file.
+  - 1: write the "*.amn" file.
+- **Default**: 1
+
+### out_wannier_eig
+
+- **Type**: Bool
+- **Description**: write the "*.eig" file or not.
+  - 0: don't write the "*.eig" file.
+  - 1: write the "*.eig" file.
+- **Default**: 1
+
+### out_wannier_unk
+
+- **Type**: Bool
+- **Description**: write the "*.UNK" file or not.
+  - 0: don't write the "*.UNK" file.
+  - 1: write the "*.UNK" file.
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 

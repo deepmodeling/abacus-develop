@@ -33,6 +33,7 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
+option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 
 # get commit info
 if(COMMIT_INFO)
@@ -73,10 +74,12 @@ if (NOT ENABLE_MPI)
   set (BUILD_TESTING OFF)
 endif()
 
-if(ENABLE_LCAO)
+if(ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus)
-else()
+elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw)
+elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
+  set(ABACUS_BIN_NAME abacus_pw_serial)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -140,6 +143,12 @@ if(NOT CMAKE_BUILD_TYPE)
   add_compile_options(-O3 -g)
 endif()
 
+# stick to strict floating point model on Intel Compiler
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
+    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
+    add_compile_options(-fp-model=strict)
+endif()
+
 # Force turn off USE_ABACUS_LIBM on Intel Compiler
 if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
     ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
@@ -164,6 +173,10 @@ if(ENABLE_LCAO)
     include_directories(${ELPA_INCLUDE_DIR})
     target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
     add_compile_definitions(__ELPA)
+  endif()
+
+  if (ENABLE_FFT_TWO_CENTER)
+      add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
 else()
   set(ENABLE_DEEPKS OFF)
@@ -275,6 +288,7 @@ if(USE_ROCM)
   find_package(HIP REQUIRED)
   find_package(hipfft REQUIRED)
   find_package(hipblas REQUIRED)
+  find_package(hipsolver REQUIRED)
 
   if(HIP_FOUND)
     message(STATUS "Found HIP: " ${HIP_VERSION})
@@ -284,15 +298,13 @@ if(USE_ROCM)
 
   include_directories(
     ${ROCM_PATH}/include
-    ${ROCM_PATH}/hip/include
-    ${ROCM_PATH}/hipfft/include
-    ${ROCM_PATH}/hipblas/include
   )
   target_link_libraries(${ABACUS_BIN_NAME}
-    hip::device
     hip::host
+    hip::device
     hip::hipfft
     roc::hipblas
+    roc::hipsolver
   )
   add_compile_definitions(__ROCM)
   add_compile_definitions(__UT_USE_ROCM)
@@ -330,13 +342,14 @@ if(MKLROOT)
 else()
   find_package(FFTW3 REQUIRED)
   find_package(LAPACK REQUIRED)
-  find_package(ScaLAPACK REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
-  list(APPEND math_libs
-    FFTW3::FFTW3
-    LAPACK::LAPACK
-    ScaLAPACK::ScaLAPACK
-  )
+  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+
+  if(ENABLE_LCAO)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
+
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -392,9 +405,6 @@ if(DEFINED LIBRI_DIR)
 endif()
 if(ENABLE_LIBRI)
   set(CMAKE_CXX_STANDARD 14)
-  if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Intel"))
-    message(WARNING "RI related features are only stable if compiled with Intel compiler.")
-  endif()
   if(LIBRI_DIR)
     include_directories(${LIBRI_DIR}/include)
   elseif(GIT_SUBMODULE)
@@ -605,6 +615,12 @@ target_link_libraries(${ABACUS_BIN_NAME}
     device
     container
 )
+
+if(ENABLE_PAW)
+  target_link_libraries(${ABACUS_BIN_NAME}
+  paw
+  )
+endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}

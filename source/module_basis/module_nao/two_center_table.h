@@ -9,7 +9,7 @@ class TwoCenterTable
 {
   public:
     TwoCenterTable() = default;
-    ~TwoCenterTable() = default;
+    ~TwoCenterTable() { delete[] rgrid_; }
 
     TwoCenterTable(const TwoCenterTable&) = delete;
     TwoCenterTable& operator=(const TwoCenterTable&) = delete;
@@ -75,6 +75,12 @@ class TwoCenterTable
 
     /// maximum angular momentum of the ket
     int lmax_ket() const { return nchi_ket_.shape().dim_size(1) - 1; }
+
+    /// Returns the amount of heap memory used by this class (in bytes).
+    size_t memory() const {
+        return (table_.NumElements() + dtable_.NumElements()
+                + nchi_ket_.NumElements() + index_map_.NumElements() + nr_) * sizeof(double);
+    }
 
   private:
     char op_ = '\0';   //!< operator associated with the present table

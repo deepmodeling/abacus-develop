@@ -29,25 +29,25 @@ using Types = ::testing::Types<
 
 static inline void init_blas_handle() {
     #if __CUDA || __ROCM
-        op::createBlasHandle();
+        op::createGpuBlasHandle();
     #endif
 }
 
 static inline void delete_blas_handle() {
     #if __CUDA || __ROCM
-        op::destroyBlasHandle();
+        op::destroyGpuBlasHandle();
     #endif
 }
 
 static inline void init_cusolver_handle() {
     #if __CUDA || __ROCM
-        op::createCusolverHandle();
+        op::createGpuSolverHandle();
     #endif
 }
 
 static inline void delete_cusolver_handle() {
     #if __CUDA || __ROCM
-        op::destroyCusolverHandle();
+        op::destroyGpuSolverHandle();
     #endif
 }
 

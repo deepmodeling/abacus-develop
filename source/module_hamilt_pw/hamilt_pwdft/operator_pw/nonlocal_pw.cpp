@@ -5,12 +5,14 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_quit.h"
 #include "module_psi/kernels/device.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
-using hamilt::Nonlocal;
-using hamilt::OperatorPW;
+namespace hamilt {
 
-template <typename FPTYPE, typename Device>
-Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const int* isk_in,
+template<typename T, typename Device>
+Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
                                                const pseudopot_cell_vnl* ppcell_in,
                                                const UnitCell* ucell_in,
                                                const ModulePW::PW_Basis_K* wfc_basis)
@@ -21,23 +23,23 @@ Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const int* isk_in,
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->deeq = this->ppcell->template get_deeq_data<FPTYPE>();
-    this->deeq_nc = this->ppcell->template get_deeq_nc_data<FPTYPE>();
-    this->vkb = this->ppcell->template get_vkb_data<FPTYPE>();
+    this->deeq = this->ppcell->template get_deeq_data<Real>();
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
+    this->vkb = this->ppcell->template get_vkb_data<Real>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
     }
 }
 
-template<typename FPTYPE, typename Device>
-Nonlocal<OperatorPW<FPTYPE, Device>>::~Nonlocal() {
+template<typename T, typename Device>
+Nonlocal<OperatorPW<T, Device>>::~Nonlocal() {
     delmem_complex_op()(this->ctx, this->ps);
     delmem_complex_op()(this->ctx, this->becp);
 }
 
-template<typename FPTYPE, typename Device>
-void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
+template<typename T, typename Device>
+void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
 {
     ModuleBase::timer::tick("Nonlocal", "getvnl");
     this->ik = ik_in;
@@ -58,15 +60,15 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::init(const int ik_in)
 //--------------------------------------------------------------------------
 // this function sum up each non-local pseudopotential located on each atom,
 //--------------------------------------------------------------------------
-template<typename FPTYPE, typename Device>
-void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> *hpsi_in, const std::complex<FPTYPE> *becp, const int m) const
+template<typename T, typename Device>
+void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const
 {
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
 
     // number of projectors
     int nkb = this->ppcell->nkb;
 
-    // std::complex<FPTYPE> *ps = new std::complex<FPTYPE>[nkb * m];
+    // T *ps = new T[nkb * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * nkb);
     if (this->nkb_m < m * nkb) {
         resmem_complex_op()(this->ctx, this->ps, nkb * m, "Nonlocal<PW>::ps");
@@ -205,82 +207,104 @@ void Nonlocal<OperatorPW<FPTYPE, Device>>::add_nonlocal_pp(std::complex<FPTYPE> 
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
 }
 
-template<typename FPTYPE, typename Device>
-void Nonlocal<OperatorPW<FPTYPE, Device>>::act
-(
-    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi)const
+template<typename T, typename Device>
+void Nonlocal<OperatorPW<T, Device>>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const T* tmpsi_in,
+    T* tmhpsi,
+    const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
-    this->npw = psi_in->get_ngk(this->ik);
-    this->max_npw = psi_in->get_nbasis() / psi_in->npol;
-    this->npol = psi_in->npol;
-
-    if (this->ppcell->nkb > 0)
+    if(!GlobalV::use_paw)
     {
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // qianrui optimize 2021-3-31
-        int nkb = this->ppcell->nkb;
-        if (this->nkb_m < n_npwx * nkb) {
-            resmem_complex_op()(this->ctx, this->becp, n_npwx * nkb, "Nonlocal<PW>::becp");
-        }
-        // ModuleBase::ComplexMatrix becp(n_npwx, nkb, false);
-        char transa = 'C';
-        char transb = 'N';
-        if (n_npwx == 1)
+        this->npw = ngk_ik;
+        this->max_npw = nbasis / npol;
+        this->npol = npol;
+
+        if (this->ppcell->nkb > 0)
         {
-            int inc = 1;
-            // denghui replace 2022-10-20
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            gemv_op()(
-                this->ctx,
-                transa,
-                this->npw,
-                nkb,
-                &this->one,
-                this->vkb,
-                this->ppcell->vkb.nc,
-                tmpsi_in,
-                inc,
-                &this->zero,
-                this->becp,
-                inc);
-        }
-        else
-        {
-            int npm = n_npwx;
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            // denghui replace 2022-10-20
-            gemm_op()(
-                this->ctx,
-                transa,
-                transb,
-                nkb,
-                npm,
-                this->npw,
-                &this->one,
-                this->vkb,
-                this->ppcell->vkb.nc,
-                tmpsi_in,
-                this->max_npw,
-                &this->zero,
-                this->becp,
-                nkb
-            );
+            // qianrui optimize 2021-3-31
+            int nkb = this->ppcell->nkb;
+            if (this->nkb_m < nbands * nkb) {
+                resmem_complex_op()(this->ctx, this->becp, nbands * nkb, "Nonlocal<PW>::becp");
+            }
+            // ModuleBase::ComplexMatrix becp(nbands, nkb, false);
+            char transa = 'C';
+            char transb = 'N';
+            if (nbands == 1)
+            {
+                int inc = 1;
+                // denghui replace 2022-10-20
+                // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                gemv_op()(
+                    this->ctx,
+                    transa,
+                    this->npw,
+                    nkb,
+                    &this->one,
+                    this->vkb,
+                    this->ppcell->vkb.nc,
+                    tmpsi_in,
+                    inc,
+                    &this->zero,
+                    this->becp,
+                    inc);
+            }
+            else
+            {
+                int npm = nbands;
+                //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                // denghui replace 2022-10-20
+                gemm_op()(
+                    this->ctx,
+                    transa,
+                    transb,
+                    nkb,
+                    npm,
+                    this->npw,
+                    &this->one,
+                    this->vkb,
+                    this->ppcell->vkb.nc,
+                    tmpsi_in,
+                    max_npw,
+                    &this->zero,
+                    this->becp,
+                    nkb
+                );
+            }
+
+            Parallel_Reduce::reduce_complex_double_pool(becp, nkb * nbands);
+
+            this->add_nonlocal_pp(tmhpsi, becp, nbands);
         }
-
-        Parallel_Reduce::reduce_complex_double_pool(becp, nkb * n_npwx);
-
-        this->add_nonlocal_pp(tmhpsi, becp, n_npwx);
+    }
+    else
+    {
+#ifdef USE_PAW
+        this->npw = ngk_ik;
+        this->max_npw = nbasis / npol;
+        this->npol = npol;
+        std::complex<double> *vnlpsi;
+        vnlpsi = new std::complex<double> [npw];
+        for(int ibands = 0; ibands < nbands; ibands++)
+        {
+            GlobalC::paw_cell.paw_nl_psi(0,reinterpret_cast<const std::complex<double>*> (&tmpsi_in[ibands*max_npw]),vnlpsi);
+            for(int i = 0; i < npw; i++)
+            {
+                tmhpsi[ibands*max_npw+i] += vnlpsi[i];
+            }
+        }
+#endif
     }
     ModuleBase::timer::tick("Operator", "NonlocalPW");
 }
 
-template<typename FPTYPE, typename Device>
+template<typename T, typename Device>
 template<typename T_in, typename Device_in>
-hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>> *nonlocal)
+hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>> *nonlocal)
 {
     this->classname = "Nonlocal";
     this->cal_type = pw_nonlocal;
@@ -289,23 +313,22 @@ hamilt::Nonlocal<OperatorPW<FPTYPE, Device>>::Nonlocal(const Nonlocal<OperatorPW
     this->ppcell = nonlocal->get_ppcell();
     this->ucell = nonlocal->get_ucell();
     this->deeq = this->ppcell->d_deeq;
-    this->deeq_nc = this->ppcell->template get_deeq_nc_data<FPTYPE>();
-    this->vkb = this->ppcell->template get_vkb_data<FPTYPE>();
+    this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
+    this->vkb = this->ppcell->template get_vkb_data<Real>();
     if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
     {
         ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
     }
 }
 
-namespace hamilt {
-template class Nonlocal<OperatorPW<float, psi::DEVICE_CPU>>;
-template class Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>;
-// template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
+template class Nonlocal<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
+template class Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
+// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *nonlocal);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Nonlocal<OperatorPW<float, psi::DEVICE_GPU>>;
-template class Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>;
-// template Nonlocal<OperatorPW<double, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
-// template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_CPU>> *nonlocal);
-// template Nonlocal<OperatorPW<double, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<double, psi::DEVICE_GPU>> *nonlocal);
+template class Nonlocal<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
+template class Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
+// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *nonlocal);
+// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *nonlocal);
+// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *nonlocal);
 #endif
 } // namespace hamilt

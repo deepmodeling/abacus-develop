@@ -66,7 +66,7 @@ int ModuleIO::read_wfc_nao_complex(
 
     std::stringstream ss;
 	// read wave functions
-    ss << GlobalV::global_readin_dir << "LOWF_K_" << ik+1 <<".dat";
+    ss << GlobalV::global_readin_dir << "LOWF_K_" << ik+1 <<".txt";
 //	std::cout << " name is = " << ss.str() << std::endl;
 
     std::ifstream ifs;
@@ -217,12 +217,12 @@ int ModuleIO::read_wfc_nao(
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		// read wave functions
-    	ss << GlobalV::global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".dat";
+    	ss << GlobalV::global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".txt";
 		std::cout << " name is = " << ss.str() << std::endl;
 	}
 	else
 	{
-		ss << GlobalV::global_readin_dir << "LOWF_K.dat";
+		ss << GlobalV::global_readin_dir << "LOWF_K.txt";
 	}
 
     std::ifstream ifs;

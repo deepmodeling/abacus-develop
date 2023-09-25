@@ -1,7 +1,7 @@
 etotref -204.1062806122546
 etotperatomref -102.0531403061
-CompareH_pass 1
-CompareS_pass 1
+CompareH_pass 0
+CompareS_pass 0
 pointgroupref T_d
 spacegroupref O_h
 nksibzref 1

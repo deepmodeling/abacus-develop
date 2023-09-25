@@ -44,8 +44,9 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
     this->device = device::get_device_type<Device>(this->ctx);
 }
 
-template <typename T, typename Device> Psi<T, Device>::Psi(int nk_in, int nbd_in, int nbs_in, const int* ngk_in)
+template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
+    this->k_first = k_first_in;
     this->ngk = ngk_in;
     this->current_b = 0;
     this->current_k = 0;
@@ -67,6 +68,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in, co
     {
         nband_in = psi_in.get_nbands();
     }
+    this->k_first = psi_in.get_k_first();
     this->device = psi_in.device;
     this->resize(nk_in, nband_in, psi_in.get_nbasis());
     this->ngk = psi_in.ngk;
@@ -87,6 +89,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in, co
 template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
 {
+    this->k_first = psi_in.get_k_first();
     this->device = device::get_device_type<Device>(this->ctx);
     assert(this->device == psi_in.device);
     assert(nk_in <= psi_in.get_nk());
@@ -169,10 +172,11 @@ template <typename T, typename Device> T* Psi<T, Device>::get_pointer() const
     return this->psi_current;
 }
 
-template <typename T, typename Device> T* Psi<T, Device>::get_pointer(const int& ibands) const
+template <typename T, typename Device> T* Psi<T, Device>::get_pointer(const int& ikb) const
 {
-    assert(ibands >= 0 && ibands < this->nbands);
-    return &this->psi_current[ibands * this->nbasis];
+    assert(ikb >= 0);
+    assert(this->k_first ? ikb < this->nbands : ikb < this->nk);
+    return &this->psi_current[ikb * this->nbasis];
 }
 
 template <typename T, typename Device> const int* Psi<T, Device>::get_ngk_pointer() const
@@ -227,41 +231,78 @@ template <typename T, typename Device> void Psi<T, Device>::fix_k(const int ik) 
         this->current_nbasis = this->ngk[ik];
     else
         this->current_nbasis = this->nbasis;
-    this->current_b = 0;
+
+    if (this->k_first)this->current_b = 0;
+    int base = this->current_b * this->nk * this->nbasis;
     if (ik >= this->nk)
     {
-        // mem_saver case
-        this->psi_current = const_cast<T*>(&(this->psi[0]));
-        this->psi_bias = 0;
+        // mem_saver: fix to base
+        this->psi_bias = base;
+        this->psi_current = const_cast<T*>(&(this->psi[base]));
     }
     else
     {
-        this->psi_current = const_cast<T*>(&(this->psi[ik * this->nbands * this->nbasis]));
-        this->psi_bias = ik * this->nbands * this->nbasis;
+        this->psi_bias = k_first ? ik * this->nbands * this->nbasis : base + ik * this->nbasis;
+        this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
+    }
+}
+template <typename T, typename Device> void Psi<T, Device>::fix_b(const int ib) const
+{
+    assert(ib >= 0);
+    this->current_b = ib;
+
+    if (!this->k_first)this->current_k = 0;
+    int base = this->current_k * this->nbands * this->nbasis;
+    if (ib >= this->nbands)
+    {
+        // mem_saver: fix to base
+        this->psi_bias = base;
+        this->psi_current = const_cast<T*>(&(this->psi[base]));
+    }
+    else
+    {
+        this->psi_bias = k_first ? base + ib * this->nbasis : ib * this->nk * this->nbasis;
+        this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
+    }
+}
+
+template <typename T, typename Device> void Psi<T, Device>::fix_kb(const int ik, const int ib)const
+{
+    assert(ik >= 0 && ib >= 0);
+    this->current_k = ik;
+    this->current_b = ib;
+    if (ik >= this->nk || ib >= this->nbands)
+    {   // fix to 0
+        this->psi_bias = 0;
+        this->psi_current = const_cast<T*>(&(this->psi[0]));
+    }
+    else
+    {
+        this->psi_bias = k_first ? (ik * this->nbands + ib) * this->nbasis : (ib * this->nk + ik) * this->nbasis;
+        this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
 
 template <typename T, typename Device>
-T& Psi<T, Device>::operator()(const int ik, const int ibands, const int ibasis) const
+T& Psi<T, Device>::operator()(const int ikb1, const int ikb2, const int ibasis) const
 {
-    assert(ik >= 0 && ik < this->nk);
-    assert(ibands >= 0 && ibands < this->nbands);
-    assert(ibasis >= 0 && ibasis < this->nbasis);
-    return this->psi[(ik * this->nbands + ibands) * this->nbasis + ibasis];
+    assert(ikb1 >= 0 && ikb2 >= 0 && ibasis >= 0);
+    assert(this->k_first ? ikb1 < this->nk && ikb2 < this->nbands : ikb1 < this->nbands && ikb2 < this->nk);
+    return this->k_first ? this->psi[(ikb1 * this->nbands + ikb2) * this->nbasis + ibasis] : this->psi[(ikb1 * this->nk + ikb2) * this->nbasis + ibasis];
 }
 
-template <typename T, typename Device> T& Psi<T, Device>::operator()(const int ibands, const int ibasis) const
+template <typename T, typename Device> T& Psi<T, Device>::operator()(const int ikb2, const int ibasis) const
 {
-    assert(this->current_b == 0);
-    assert(ibands >= 0 && ibands < this->nbands);
+    assert(this->k_first ? this->current_b == 0 : this->current_k == 0);
+    assert(this->k_first ? ikb2 >= 0 && ikb2 < this->nbands : ikb2 >= 0 && ikb2 < this->nk);
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    return this->psi_current[ibands * this->nbasis + ibasis];
+    return this->psi_current[ikb2 * this->nbasis + ibasis];
 }
 
 template <typename T, typename Device> T& Psi<T, Device>::operator()(const int ibasis) const
 {
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    return this->psi_current[this->current_b * this->nbasis + ibasis];
+    return this->psi_current[ibasis];
 }
 
 template <typename T, typename Device> int Psi<T, Device>::get_current_k() const
@@ -281,6 +322,7 @@ template <typename T, typename Device> int Psi<T, Device>::get_current_nbas() co
 
 template <typename T, typename Device> const int& Psi<T, Device>::get_ngk(const int ik_in) const
 {
+    if (!this->ngk) return this->nbasis;
     return this->ngk[ik_in];
 }
 
@@ -292,22 +334,29 @@ template <typename T, typename Device> void Psi<T, Device>::zero_out()
 
 template <typename T, typename Device> std::tuple<const T*, int> Psi<T, Device>::to_range(const Range& range) const
 {
-    int index_1_in = range.index_1;
-    // mem_saver=1 case, only k==0 memory space is avaliable
-    if (index_1_in > 0 & this->nk == 1)
-    {
-        index_1_in = 0;
-    }
-    if (range.k_first != this->k_first || index_1_in < 0 || range.range_1 < 0 || range.range_2 < range.range_1
-        || (range.k_first && range.range_2 >= this->nbands)
-        || (!range.k_first && (range.range_2 >= this->nk || range.index_1 >= this->nbands)))
+    const int& i1 = range.index_1;
+    const int& r1 = range.range_1;
+    const int& r2 = range.range_2;
+
+    if (range.k_first != this->k_first || r1 < 0 || r2 < r1
+        // || (range.k_first && (r2 >= this->nbands || i1 >= this->nk))
+        // || (!range.k_first && (r2 >= this->nk || i1 >= this->nbands)))
+        || (range.k_first ? (i1 >= this->nk) : (i1 >= this->nbands))    // illegal index 1
+        || (range.k_first ? (i1 > 0 && r2 >= this->nbands) : (i1 > 0 && r2 >= this->nk)) // illegal range of index 2
+        || (range.k_first ? (i1 < 0 && r2 >= this->nk) : (i1 < 0 && r2 >= this->nbands))) // illegal range of index 1
     {
         return std::tuple<const T*, int>(nullptr, 0);
     }
-    else
+    else if (i1 < 0)    // [r1, r2] is the range of index1 with length m
     {
-        const T* p = &this->psi[(index_1_in * this->nbands + range.range_1) * this->nbasis];
-        int m = (range.range_2 - range.range_1 + 1) * this->npol;
+        const T* p = &this->psi[r1 * (k_first ? this->nbands : this->nk) * this->nbasis];
+        int m = (r2 - r1 + 1) * this->npol;
+        return std::tuple<const T*, int>(p, m);
+    }
+    else   // [r1, r2] is the range of index2 with length m
+    {
+        const T* p = &this->psi[(i1 * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
+        int m = (r2 - r1 + 1) * this->npol;
         return std::tuple<const T*, int>(p, m);
     }
 }

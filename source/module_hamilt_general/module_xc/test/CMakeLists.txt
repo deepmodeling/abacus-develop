@@ -1,3 +1,5 @@
+remove_definitions(-DUSE_PAW)
+
 AddTest(
   TARGET XCTest_PBE
   LIBS MPI::MPI_CXX Libxc::xc # required by global.h; for details, `remove_definitions(-D__MPI)`.
@@ -283,7 +285,7 @@ AddTest(
 
 AddTest(
   TARGET XCTest_VXC
-  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs} formatter
   SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
     ../xc_functional_wrapper_tauxc.cpp
@@ -295,7 +297,7 @@ AddTest(
 
 AddTest(
   TARGET XCTest_VXC_Libxc
-  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs} formatter
   SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
     ../xc_functional_wrapper_tauxc.cpp
@@ -307,7 +309,7 @@ AddTest(
 
 AddTest(
   TARGET XCTest_VXC_meta
-  LIBS MPI::MPI_CXX Libxc::xc ${math_libs}
+  LIBS MPI::MPI_CXX Libxc::xc ${math_libs} formatter
   SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
     ../xc_functional_wrapper_tauxc.cpp

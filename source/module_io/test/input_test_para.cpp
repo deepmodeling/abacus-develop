@@ -73,6 +73,10 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_TRUE(INPUT.out_wannier_mmn);
+        EXPECT_TRUE(INPUT.out_wannier_amn);
+        EXPECT_TRUE(INPUT.out_wannier_unk);
+        EXPECT_TRUE(INPUT.out_wannier_eig);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
@@ -116,6 +120,9 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_FALSE(INPUT.gamma_only);
         EXPECT_FALSE(INPUT.gamma_only_local);
         EXPECT_DOUBLE_EQ(INPUT.ecutwfc,50.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
+        EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -153,7 +160,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.mem_saver,0);
         EXPECT_EQ(INPUT.printe,100);
         EXPECT_EQ(INPUT.init_chg,"atomic");
-        EXPECT_EQ(INPUT.chg_extrap,"atomic");
+        EXPECT_EQ(INPUT.chg_extrap, "default");
         EXPECT_EQ(INPUT.out_freq_elec,0);
         EXPECT_EQ(INPUT.out_freq_ion,0);
         EXPECT_EQ(INPUT.out_chg,0);

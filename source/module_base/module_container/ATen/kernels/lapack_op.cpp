@@ -63,7 +63,7 @@ struct lapack_potrf<T, DEVICE_CPU> {
 
 template <typename T>
 struct lapack_dnevd<T, DEVICE_CPU> {
-    using Real = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
         const char& uplo,
@@ -93,7 +93,7 @@ struct lapack_dnevd<T, DEVICE_CPU> {
 
 template <typename T>
 struct lapack_dngvd<T, DEVICE_CPU> {
-    using Real = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& itype,
         const char& jobz,

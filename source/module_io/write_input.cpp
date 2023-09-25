@@ -88,6 +88,12 @@ void Input::Print(const std::string &fn) const
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "erf_ecut", erf_ecut, "#the value of the constant energy cutoff");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "erf_height",
+                                 erf_height,
+                                 "#the height of the energy step for reciprocal vectors");
+    ModuleBase::GlobalFunc::OUTP(ofs, "erf_sigma", erf_sigma, "#the width of the energy step for reciprocal vectors");
     if (ks_solver == "cg")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_nmax", pw_diag_nmax, "max iteration number for cg");
@@ -184,6 +190,8 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dm", out_dm, ">0 output density matrix");
 ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print out bandgap");
 
+    ModuleBase::GlobalFunc::OUTP(ofs, "use_paw", use_paw, "whether to use PAW in pw calculation");
+
     // for deepks
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_out_labels", deepks_out_labels, ">0 compute descriptor for deepks");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_scf", deepks_scf, ">0 add V_delta to Hamiltonian");
@@ -215,7 +223,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions, 0, no output 1: text, 2: binary");
     ModuleBase::GlobalFunc::OUTP(ofs, "bx", bx, "division of an element grid in FFT grid along x");
     ModuleBase::GlobalFunc::OUTP(ofs, "by", by, "division of an element grid in FFT grid along y");
     ModuleBase::GlobalFunc::OUTP(ofs, "bz", bz, "division of an element grid in FFT grid along z");
@@ -393,6 +401,10 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "towannier90", towannier90, "use wannier90 code interface or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "nnkpfile", nnkpfile, "the wannier90 code nnkp file name");
     ModuleBase::GlobalFunc::OUTP(ofs, "wannier_spin", wannier_spin, "calculate spin in wannier90 code interface");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_mmn", out_wannier_mmn, "output .mmn file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_amn", out_wannier_amn, "output .amn file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_unk", out_wannier_unk, "output .UNK file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_eig", out_wannier_eig, "output .eig file or not");
 
     ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "imp_sol", imp_sol, "calculate implicit solvation correction or not");

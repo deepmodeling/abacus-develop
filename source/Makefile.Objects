@@ -176,6 +176,7 @@ OBJS_ELECSTAT=elecstate.o\
     potential_new.o\
     potential_types.o\
     pot_local.o\
+    pot_local_paw.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
@@ -537,5 +538,4 @@ OBJS_TENSOR=tensor.o\
     linalg_op.o\
     memory_op_impl.o\
     cpu_allocator.o\
-    gpu_allocator.o\
     refcount.o

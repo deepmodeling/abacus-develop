@@ -7,6 +7,7 @@
 #include "module_psi/psi.h"
 #include "module_base/parallel_reduce.h"
 #include "module_psi/kernels/memory_op.h"
+#include <module_base/macros.h>
 
 
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
@@ -55,7 +56,7 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
 namespace hsolver
 {
 
-template <typename FPTYPE, typename Device>
+template <typename T, typename Device>
 struct line_minimize_with_block_op {
     /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
@@ -68,19 +69,19 @@ struct line_minimize_with_block_op {
     /// \param batch : batch size, the size of the result array res
     ///
     /// \return res : the result vector
-    /// FPTYPE : dot product result
+    /// T : dot product result
     void operator() (
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* hgrad_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
+        T* grad_out,
+        T* hgrad_out,
+        T* psi_out,
+        T* hpsi_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band);
 };
 
 
-template <typename FPTYPE, typename Device>
+template <typename T, typename Device>
 struct calc_grad_with_block_op {
     /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
@@ -93,15 +94,16 @@ struct calc_grad_with_block_op {
     /// \param batch : batch size, the size of the result array res
     ///
     /// \return res : the result vector
-    /// FPTYPE : dot product result
+    /// T : dot product result
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        const FPTYPE* prec_in,
-        FPTYPE* err_out,
-        FPTYPE* beta_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* grad_old_out,
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
+        T* psi_out,
+        T* hpsi_out,
+        T* grad_out,
+        T* grad_old_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band);
@@ -376,28 +378,30 @@ template <typename FPTYPE, typename Device> struct matrixSetToAnother
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
-template <typename FPTYPE>
-struct line_minimize_with_block_op<FPTYPE, psi::DEVICE_GPU> {
+template <typename T>
+struct line_minimize_with_block_op<T, psi::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
   void operator()(
-    std::complex<FPTYPE>* grad_out,
-    std::complex<FPTYPE>* hgrad_out,
-    std::complex<FPTYPE>* psi_out,
-    std::complex<FPTYPE>* hpsi_out,
+    T* grad_out,
+    T* hgrad_out,
+    T* psi_out,
+    T* hpsi_out,
     const int &n_basis,
     const int &n_basis_max,
     const int &n_band);
 };
 
-template <typename FPTYPE>
-struct calc_grad_with_block_op<FPTYPE, psi::DEVICE_GPU> {
+template <typename T>
+struct calc_grad_with_block_op<T, psi::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
   void operator()(
-    const FPTYPE* prec_in,
-    FPTYPE* err_out,
-    FPTYPE* beta_out,
-    std::complex<FPTYPE>* psi_out,
-    std::complex<FPTYPE>* hpsi_out,
-    std::complex<FPTYPE>* grad_out,
-    std::complex<FPTYPE>* grad_old_out,
+    const Real* prec_in,
+    Real* err_out,
+    Real* beta_out,
+    T* psi_out,
+    T* hpsi_out,
+    T* grad_out,
+    T* grad_old_out,
     const int &n_basis,
     const int &n_basis_max,
     const int &n_band);
@@ -467,7 +471,7 @@ template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>
 };
 
 
-void createBLAShandle();
+void createGpuBlasHandle();
 void destoryBLAShandle();
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

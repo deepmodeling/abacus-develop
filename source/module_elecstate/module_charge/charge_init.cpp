@@ -14,6 +14,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/rho_io.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz)
 {
@@ -269,6 +272,18 @@ void Charge::set_rho_core(
     ModuleBase::timer::tick("Charge","set_rho_core");
     return;
 } // end subroutine set_rhoc
+
+void Charge::set_rho_core_paw()
+{
+    ModuleBase::TITLE("Charge","set_rho_core_paw");
+#ifdef USE_PAW
+    double* tmp = new double[nrxx];
+    GlobalC::paw_cell.get_vloc_ncoret(tmp,this->rho_core);
+    delete[] tmp;
+
+    this->rhopw->real2recip(this->rho_core,this->rhog_core);
+#endif
+}
 
 void Charge::non_linear_core_correction
 (

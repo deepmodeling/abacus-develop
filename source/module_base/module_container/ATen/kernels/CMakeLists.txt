@@ -6,7 +6,7 @@ if(USE_CUDA)
 endif()
 
 if(USE_ROCM)
-    file(GLOB ATen_KERNELS_ROCM_SRCS "cuda/*.hip.cu")
+    file(GLOB ATen_KERNELS_ROCM_SRCS "rocm/*.hip.cu")
     set(ATen_ROCM_SRCS ${ATen_ROCM_SRCS} ${ATen_KERNELS_ROCM_SRCS} PARENT_SCOPE)
 endif()
 
