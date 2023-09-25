@@ -1,6 +1,7 @@
 #include "module_base/spherical_bessel_transformer.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "gtest/gtest.h"
 #include "module_base/constants.h"
@@ -44,33 +45,32 @@ class SphericalBesselTransformTest : public ::testing::Test
     /// Gets the maximum absolute element-wise difference between two arrays
     double max_diff(const int sz, const double* const arr1, const double* const arr2);
 
-    int sz_max = 10000;      ///< size of each buffer
-    double* f = nullptr;     ///< buffer for input array
-    double* g = nullptr;     ///< buffer for output array
-    double* g_ref = nullptr; ///< buffer for reference array
+    int sz_max = 10000;         ///< size of each buffer
+    double* buffer = nullptr;   ///< buffer for all arrays below
 
-    double* grid_in = nullptr;  ///< buffer for input grid
-    double* grid_out = nullptr; ///< buffer for output grid
+    double* f = nullptr;        ///< input array
+    double* g = nullptr;        ///< output array
+    double* g_ref = nullptr;    ///< reference array
+    double* grid_in = nullptr;  ///< input grid
+    double* grid_out = nullptr; ///< output grid
 
     double tol = 1e-9; ///< tolerance for element-wise numerical error
 };
 
 void SphericalBesselTransformTest::SetUp()
 {
-    f = new double[sz_max];
-    g = new double[sz_max];
-    g_ref = new double[sz_max];
-    grid_in = new double[sz_max];
-    grid_out = new double[sz_max];
+    buffer = new double[sz_max * 5];
+
+    f = buffer;
+    g = f + sz_max;
+    g_ref = g + sz_max;
+    grid_in = g_ref + sz_max;
+    grid_out = grid_in + sz_max;
 }
 
 void SphericalBesselTransformTest::TearDown()
 {
-    delete[] f;
-    delete[] g;
-    delete[] g_ref;
-    delete[] grid_in;
-    delete[] grid_out;
+    delete[] buffer;
 }
 
 double SphericalBesselTransformTest::max_diff(const int sz, const double* const arr1, const double* const arr2)
@@ -284,7 +284,7 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
         y = pref * (3.0 - k * k) / std::pow(k * k + 1, 3);
     });
 
-    ModuleBase::SphericalBesselTransformer sbt;
+    SphericalBesselTransformer sbt;
 
     sbt.direct(0, sz_in, grid_in, f, sz_out, grid_out, g);
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
@@ -333,7 +333,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
         y = pref * k * k / std::pow(k * k + 1, 4);
     });
 
-    ModuleBase::SphericalBesselTransformer sbt;
+    SphericalBesselTransformer sbt;
 
     for (int p = -2; p <= 2; ++p)
     {
@@ -376,7 +376,7 @@ TEST_F(SphericalBesselTransformTest, DirectInPlace)
         y = pref * k * k * std::exp(-k * k / 4);
     });
 
-    ModuleBase::SphericalBesselTransformer sbt;
+    SphericalBesselTransformer sbt;
 
     sbt.direct(2, sz_in, grid_in, f, sz_out, grid_out, f);
     EXPECT_LT(max_diff(sz_out, g_ref, f), tol);
@@ -421,9 +421,10 @@ int main(int argc, char** argv)
 {
 
 #ifdef __MPI
+    int nprocs, id;
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
 #endif
 
     testing::InitGoogleTest(&argc, argv);
