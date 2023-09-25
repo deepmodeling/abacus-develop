@@ -471,7 +471,7 @@ template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>
 };
 
 
-void createBLAShandle();
+void createGpuBlasHandle();
 void destoryBLAShandle();
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

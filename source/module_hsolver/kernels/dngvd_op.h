@@ -72,8 +72,8 @@ template <typename FPTYPE, typename Device> struct dnevx_op
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
-void createCUSOLVERhandle();
-void destoryCUSOLVERhandle();
+void createGpuSolverHandle();
+void destroyGpuSolverHandle();
 
 #endif
 

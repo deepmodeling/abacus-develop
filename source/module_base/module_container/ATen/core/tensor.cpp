@@ -346,6 +346,9 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
             _internal_output(os, data, shape, num_elements);
             break;
         }
+        default:
+            os << "unknown";
+            break;
     }
     os << "))\n";
 
