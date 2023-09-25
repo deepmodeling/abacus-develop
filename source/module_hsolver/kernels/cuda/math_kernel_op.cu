@@ -27,7 +27,7 @@ void xdot_wrapper(const int &n, const double * x, const int &incx, const double 
     cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
 }
 
-void createBLAShandle(){
+void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
         cublasErrcheck(cublasCreate(&cublas_handle));
     }
@@ -46,7 +46,6 @@ __forceinline__ __device__ void warp_reduce(FPTYPE& val) {
         val += __shfl_down_sync(FULL_MASK, val, offset);
 }
 
-// All clear!
 template <typename Real>
 __global__ void line_minimize_with_block(
         thrust::complex<Real>* grad,
