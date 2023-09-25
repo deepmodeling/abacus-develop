@@ -3,7 +3,8 @@
 
 /************************************************
  *  unit test of class Symmetry
- * 4. function: `force_symmetry`
+ * 4. function: `symmetrize_vec3_nat`
+ * 5. function `symmetrize_mat3`
  *
 ***********************************************/
 // mock the useless functions
@@ -74,7 +75,7 @@ TEST_F(SymmetryTest, ForceSymmetry)
                 force(i, j) = double(rand()) / double(RAND_MAX) * 200 - 100;
 
         std::vector<double> pos = allocate_pos(symm, ucell);
-        symm.force_symmetry(force, pos.data(), ucell);
+        symm.symmetrize_vec3_nat(force);
         check_force(supercell_lib[stru], force);
     }
 }

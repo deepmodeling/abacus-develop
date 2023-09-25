@@ -430,7 +430,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     }
 	
 	//  this->print(ofs_running, "nonlocal stress", stresnl);

@@ -223,6 +223,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
+    this->set_atom_map(ucell);
+
 	delete[] newpos;
     delete[] na;
     delete[] rotpos;
@@ -1605,88 +1607,103 @@ for (int g_index = 0; g_index < group_index; g_index++)
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
 
-
-void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell &ucell)   // pengfei 2016-12-20
+void Symmetry::set_atom_map(const UnitCell& ucell)
 {
-	ModuleBase::TITLE("Symmetry","force_symmetry");
-	double *protpos;
-	double *tot_force;
-	int *n;
-	int *start;
-	double diff1,diff2,diff3;
-	protpos = new double[nat*3]; ModuleBase::GlobalFunc::ZEROS(protpos, nat*3);
-	tot_force = new double[nat*3]; ModuleBase::GlobalFunc::ZEROS(tot_force, nat*3);
-	n = new int[nat]; ModuleBase::GlobalFunc::ZEROS(n, nat);
-	start = new int[ntype]; start[0] = 0;
-	for(int it = 0; it < ntype; ++it)
-	{
-		//Atom* atom = &ucell.atoms[it];
-		//na[it] = atom->na;
-		if(it > 0)
-		{
-			start[it] = start[it-1] + ucell.atoms[it-1].na;
-		}
-		//std::cout << "na =" <<ucell.atoms[0].na<<" "<<ucell.atoms[1].na<<" "<<ucell.atoms[2].na<<std::endl;
-		
-	}
-	for(int it = 0; it < ntype; it++)
-	{
-		for(int j = start[it]; j < start[it] + ucell.atoms[it].na; ++j)
-		{
-			const int xx=j*3; const int yy=j*3+1; const int zz=j*3+2;
-			// std::cout << "xx = "<<xx<<" yy ="<<yy<<" zz = "<<zz<<std::endl;
-			// std::cout << "nrotk ="<<nrotk<<std::endl;
-			for(int k = 0 ; k < nrotk; ++k)
-			{
-                protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
-				protpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
-				protpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;    	
+    ModuleBase::TITLE("Symmetry", "set_atom_map");
+    if (this->isym_rotiat_.size() > 0) return;
+    this->isym_rotiat_.resize(this->nrotk);
+    for (int i = 0; i < this->nrotk; ++i)this->isym_rotiat_[i].resize(this->nat, -1);
 
-				check_translation( protpos[xx], -floor(protpos[xx]));
-				check_boundary( protpos[xx] );
-				check_translation( protpos[yy], -floor(protpos[yy]));
-				check_boundary( protpos[yy] );
-				check_translation( protpos[zz], -floor(protpos[zz]));
-				check_boundary( protpos[zz] );
-				
-				for(int l = start[it]; l < start[it] + ucell.atoms[it].na; ++l)
-				{
-					diff1 = check_diff( pos[l*3], protpos[xx]);
-					diff2 = check_diff( pos[l*3+1], protpos[yy]);
-					diff3 = check_diff( pos[l*3+2], protpos[zz]);
-					if (equal(diff1,0.0) && equal(diff2,0.0) && equal(diff3,0.0))
-					{
-						//std::cout <<"nl = " << n[l]<<std::endl;
-						tot_force[l*3] = tot_force[l*3] + force(j,0) * gmatrix[k].e11 + force(j,1) * gmatrix[k].e21 + force(j,2) * gmatrix[k].e31;
-						tot_force[l*3+1] =  tot_force[l*3+1] + force(j,0) * gmatrix[k].e12 + force(j,1) * gmatrix[k].e22 + force(j,2) * gmatrix[k].e32;
-						tot_force[l*3+2] =  tot_force[l*3+2] + force(j,0) * gmatrix[k].e13 + force(j,1) * gmatrix[k].e23 + force(j,2) * gmatrix[k].e33;
-						n[l]++;
-					}
-				}
-				
-			}
-			
-		}
+    double* pos = this->newpos;
+    double* rotpos = this->rotpos;
+    ModuleBase::GlobalFunc::ZEROS(pos, ucell.nat * 3);
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            pos[3 * iat] = ucell.atoms[it].taud[ia].x;
+            pos[3 * iat + 1] = ucell.atoms[it].taud[ia].y;
+            pos[3 * iat + 2] = ucell.atoms[it].taud[ia].z;
+            for (int k = 0; k < 3; ++k)
+            {
+                this->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                this->check_boundary(pos[iat * 3 + k]);
+            }
+            iat++;
+        }
+    }
+    for (int it = 0; it < ntype; it++)
+    {
+        for (int ia = istart[it]; ia < istart[it] + na[it]; ++ia)
+        {
+            const int xx = ia * 3; const int yy = ia * 3 + 1; const int zz = ia * 3 + 2;
+            for (int k = 0;k < this->nrotk;++k)
+            {
+                rotpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
+                rotpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
+                rotpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
+
+                check_translation(rotpos[xx], -floor(rotpos[xx]));
+                check_boundary(rotpos[xx]);
+                check_translation(rotpos[yy], -floor(rotpos[yy]));
+                check_boundary(rotpos[yy]);
+                check_translation(rotpos[zz], -floor(rotpos[zz]));
+                check_boundary(rotpos[zz]);
+
+                for (int ja = istart[it]; ja < istart[it] + na[it]; ++ja)
+                {
+                    double diff1 = check_diff(pos[ja * 3], rotpos[xx]);
+                    double diff2 = check_diff(pos[ja * 3 + 1], rotpos[yy]);
+                    double diff3 = check_diff(pos[ja * 3 + 2], rotpos[zz]);
+                    if (equal(diff1, 0.0) && equal(diff2, 0.0) && equal(diff3, 0.0))
+                    {
+                        this->isym_rotiat_[k][ia] = ja;
+
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Symmetry::symmetrize_vec3_nat(ModuleBase::matrix& v)   // pengfei 2016-12-20
+{
+    ModuleBase::TITLE("Symmetry", "symmetrize_vec3_nat");
+#ifdef __DEBUG
+    assert(v.nrow() == nat);
+#endif 
+    double* vtot;
+    int* n;
+    vtot = new double[nat * 3]; ModuleBase::GlobalFunc::ZEROS(vtot, nat * 3);
+    n = new int[nat]; ModuleBase::GlobalFunc::ZEROS(n, nat);
+
+    for (int j = 0;j < nat; ++j)
+    {
+        const int xx = j * 3; const int yy = j * 3 + 1; const int zz = j * 3 + 2;
+        for (int k = 0; k < nrotk; ++k)
+        {
+            int l = this->isym_rotiat_[k][j];
+            if (l < 0)continue;
+            vtot[l * 3] = vtot[l * 3] + v(j, 0) * gmatrix[k].e11 + v(j, 1) * gmatrix[k].e21 + v(j, 2) * gmatrix[k].e31;
+            vtot[l * 3 + 1] = vtot[l * 3 + 1] + v(j, 0) * gmatrix[k].e12 + v(j, 1) * gmatrix[k].e22 + v(j, 2) * gmatrix[k].e32;
+            vtot[l * 3 + 2] = vtot[l * 3 + 2] + v(j, 0) * gmatrix[k].e13 + v(j, 1) * gmatrix[k].e23 + v(j, 2) * gmatrix[k].e33;
+            n[l]++;
+        }
 	}
-	for(int it = 0; it < ntype; it++)
-	{
-		for(int j = start[it]; j < start[it] + ucell.atoms[it].na; j++)
-		{
-			force(j,0) = tot_force[j*3]/n[j];
-			force(j,1) = tot_force[j*3+1]/n[j];
-			force(j,2) = tot_force[j*3+2]/n[j];
-		}
-	}
-	
-	delete[] protpos;
-	delete[] tot_force;
-	delete[] n;
-	delete[] start;
-	
+    for (int j = 0;j < nat; ++j)
+    {
+        v(j, 0) = vtot[j * 3] / n[j];
+        v(j, 1) = vtot[j * 3 + 1] / n[j];
+        v(j, 2) = vtot[j * 3 + 2] / n[j];
+    }
+    delete[] vtot;
+    delete[] n;
 	return;
 }
 
-void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)   //zhengdy added 2017
+void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const   //zhengdy added 2017
 {
     ModuleBase::matrix A = ucell.latvec.to_matrix();
     ModuleBase::matrix AT = ucell.latvec.Transpose().to_matrix();

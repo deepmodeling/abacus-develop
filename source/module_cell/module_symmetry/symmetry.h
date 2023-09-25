@@ -102,8 +102,8 @@ public:
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
-	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);
-    void symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell);
+    void symmetrize_vec3_nat(ModuleBase::matrix& v)const;
+    void symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const;
 	void write();
 
 	void print_pos(const double* pos, const int &nat);
@@ -124,7 +124,13 @@ public:
 	// has (min)inal number.
 	ModuleBase::Vector3<double> sptmin;
 
-	// to be called in lattice_type
+    /// atom-map for each symmetry operation: isym_rotiat[isym][iat]=rotiat
+    std::vector<std::vector<int>> isym_rotiat_;
+
+
+    /// @brief  set atom map for each symmetry operation
+    void set_atom_map(const UnitCell& ucell);
+    // to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
