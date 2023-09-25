@@ -983,6 +983,20 @@ namespace Gint_Tools
 		const hamilt::HContainer<double>* DM,
 		const int job) // 1: density, 2: force
 	{
+		bool *all_out_of_range = new bool[na_grid];
+		for(int ia=0; ia<na_grid; ++ia) //number of atoms
+		{
+			all_out_of_range[ia] = true;
+			for(int ib=0; ib<gt.bxyz; ++ib) //number of small box in big box
+			{
+				if(cal_flag[ib][ia])
+				{
+					all_out_of_range[ia] = false;
+					//break; //mohan add 2012-07-10
+				}
+			}
+		}
+
 		constexpr char side='L', uplo='U';
 		constexpr char transa='N', transb='N';
 		constexpr double alpha_symm=1, beta=1;
@@ -1003,6 +1017,8 @@ namespace Gint_Tools
 
 		for (int ia1=0; ia1<na_grid; ia1++)
 		{
+			if(all_out_of_range[ia1]) continue;
+
 			const int mcell_index1 = gt.bcell_start[grid_index] + ia1;
             const int iat1 = gt.which_atom[mcell_index1];
 			const double* tmp_matrix = DM->find_pair(iat1, iat1)->get_pointer(0);
@@ -1076,6 +1092,23 @@ namespace Gint_Tools
 
 			for (int ia2=start; ia2<na_grid; ia2++)
 			{
+				if(all_out_of_range[ia2]) continue;
+
+				//---------------------------------------------
+				// check if we need to calculate the big cell.
+				//---------------------------------------------
+				bool same_flag = false;
+				for(int ib=0; ib<gt.bxyz; ++ib)
+				{
+					if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+					{
+						same_flag = true;
+						break;
+					}
+				}
+
+				if(!same_flag) continue;
+
 				const int bcell2 = gt.bcell_start[grid_index] + ia2;
                 const int iat2 = gt.which_atom[bcell2];
 				const double* tmp_matrix = DM->find_pair(iat1, iat2)->get_pointer(0);
