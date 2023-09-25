@@ -109,6 +109,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             {
                 int it = sc_elem.first;
                 int nat_it = sc_elem.second;
+                max_gradient[it] = 0.0;
                 for (int ia = 0; ia < nat_it; ia++)
                 {
                     for (int ic = 0; ic < 3; ic++)
