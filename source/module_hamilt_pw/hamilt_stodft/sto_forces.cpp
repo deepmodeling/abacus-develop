@@ -118,7 +118,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 			
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-        p_symm->symmetrize_vec3_nat(force);
+        p_symm->symmetrize_vec3_nat(force.c);
         for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
         {
 			ModuleBase::Mathzone::Direct_to_Cartesian(force(iat,0),force(iat,1),force(iat,2),

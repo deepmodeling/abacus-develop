@@ -75,7 +75,7 @@ TEST_F(SymmetryTest, ForceSymmetry)
                 force(i, j) = double(rand()) / double(RAND_MAX) * 200 - 100;
 
         std::vector<double> pos = allocate_pos(symm, ucell);
-        symm.symmetrize_vec3_nat(force);
+        symm.symmetrize_vec3_nat(force.c);
         check_force(supercell_lib[stru], force);
     }
 }

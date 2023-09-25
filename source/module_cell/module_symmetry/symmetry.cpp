@@ -1668,12 +1668,9 @@ void Symmetry::set_atom_map(const UnitCell& ucell)
     }
 }
 
-void Symmetry::symmetrize_vec3_nat(ModuleBase::matrix& v)   // pengfei 2016-12-20
+void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
 {
     ModuleBase::TITLE("Symmetry", "symmetrize_vec3_nat");
-#ifdef __DEBUG
-    assert(v.nrow() == nat);
-#endif 
     double* vtot;
     int* n;
     vtot = new double[nat * 3]; ModuleBase::GlobalFunc::ZEROS(vtot, nat * 3);
@@ -1681,22 +1678,22 @@ void Symmetry::symmetrize_vec3_nat(ModuleBase::matrix& v)   // pengfei 2016-12-2
 
     for (int j = 0;j < nat; ++j)
     {
-        const int xx = j * 3; const int yy = j * 3 + 1; const int zz = j * 3 + 2;
+        const int jx = j * 3; const int jy = j * 3 + 1; const int jz = j * 3 + 2;
         for (int k = 0; k < nrotk; ++k)
         {
             int l = this->isym_rotiat_[k][j];
             if (l < 0)continue;
-            vtot[l * 3] = vtot[l * 3] + v(j, 0) * gmatrix[k].e11 + v(j, 1) * gmatrix[k].e21 + v(j, 2) * gmatrix[k].e31;
-            vtot[l * 3 + 1] = vtot[l * 3 + 1] + v(j, 0) * gmatrix[k].e12 + v(j, 1) * gmatrix[k].e22 + v(j, 2) * gmatrix[k].e32;
-            vtot[l * 3 + 2] = vtot[l * 3 + 2] + v(j, 0) * gmatrix[k].e13 + v(j, 1) * gmatrix[k].e23 + v(j, 2) * gmatrix[k].e33;
+            vtot[l * 3] = vtot[l * 3] + v[jx] * gmatrix[k].e11 + v[jy] * gmatrix[k].e21 + v[jz] * gmatrix[k].e31;
+            vtot[l * 3 + 1] = vtot[l * 3 + 1] + v[jx] * gmatrix[k].e12 + v[jy] * gmatrix[k].e22 + v[jz] * gmatrix[k].e32;
+            vtot[l * 3 + 2] = vtot[l * 3 + 2] + v[jx] * gmatrix[k].e13 + v[jy] * gmatrix[k].e23 + v[jz] * gmatrix[k].e33;
             n[l]++;
         }
 	}
     for (int j = 0;j < nat; ++j)
     {
-        v(j, 0) = vtot[j * 3] / n[j];
-        v(j, 1) = vtot[j * 3 + 1] / n[j];
-        v(j, 2) = vtot[j * 3 + 2] / n[j];
+        v[j * 3] = vtot[j * 3] / n[j];
+        v[j * 3 + 1] = vtot[j * 3 + 1] / n[j];
+        v[j * 3 + 2] = vtot[j * 3 + 2] / n[j];
     }
     delete[] vtot;
     delete[] n;

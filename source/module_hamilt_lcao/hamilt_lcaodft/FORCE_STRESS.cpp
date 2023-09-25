@@ -839,7 +839,7 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::S
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    symm->symmetrize_vec3_nat(fcs);
+    symm->symmetrize_vec3_nat(fcs.c);
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         ModuleBase::Mathzone::Direct_to_Cartesian(fcs(iat, 0),

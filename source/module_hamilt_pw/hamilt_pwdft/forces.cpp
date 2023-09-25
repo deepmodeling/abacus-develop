@@ -184,7 +184,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             force(iat, 1) = d2;
             force(iat, 2) = d3;
         }
-        p_symm->symmetrize_vec3_nat(force);
+        p_symm->symmetrize_vec3_nat(force.c);
         for (int iat = 0; iat < this->nat; iat++)
         {
             ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0),
