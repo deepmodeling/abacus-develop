@@ -1,10 +1,10 @@
 #ifndef REAL_GAUNT_TABLE_H_
 #define REAL_GAUNT_TABLE_H_
 
+#include <ATen/tensor.h>
+
 #include <array>
 #include <map>
-
-#include <ATen/tensor.h>
 
 /*!
  * @brief Table of Gaunt coefficients of real spherical harmonics.
@@ -27,13 +27,35 @@ class RealGauntTable
     RealGauntTable(RealGauntTable const&) = delete;
     RealGauntTable& operator=(RealGauntTable const&) = delete;
 
-    ~RealGauntTable() {}
+    ~RealGauntTable()
+    {
+    }
 
     static RealGauntTable& instance()
     {
         static RealGauntTable instance_;
         return instance_;
     }
+
+    /*!
+     * @brief Computes the standard Gaunt coefficients.
+     *
+     * This function computes the standard Gaunt coefficients
+     *
+     *                             /
+     *      G(l1,l2,l3,m1,m2,m3) = | Y(l1,m1) Y(l2,m2) Y(l3,m3) d Omega
+     *                             /
+     *
+     * where Y is the (standard) spherical harmonics and Omega is the solid angle element.
+     *
+     *
+     * @note This function computes the standard Gaunt coefficients, which is different
+     *       from Gaunt coefficients of real spherical harmonics.
+     * @note Currently the algorithm computes the Gaunt coefficients with the Wigner-3j
+     *       symbols, which in turn is evaluated with the Racah formula. This might have
+     *       some numerical issue for large l and is yet to be studied later.
+     *                                                                                  */
+    double gaunt(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /*!
      * @brief Builds the Gaunt table of real spherical harmonics for two-center integrals.
@@ -70,17 +92,15 @@ class RealGauntTable
     const double& operator()(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// returns the maximum l (for the first two dimensions; the third dimension is 2*lmax)
-    int lmax() const { return lmax_; }
-
-    /// Returns the amount of heap memory used by this class (in bytes).
-    size_t memory() const
+    int lmax() const
     {
-        return gaunt_table_.size() * (6 * sizeof(int) + sizeof(double)) 
-                + real_gaunt_table_.NumElements() * sizeof(double);
+        return lmax_;
     }
 
   private:
-    RealGauntTable() {}
+    RealGauntTable()
+    {
+    }
 
     /// maximum angular momentum of the table (for the first two dimensions)
     int lmax_ = -1;
@@ -97,31 +117,14 @@ class RealGauntTable
     /// table of real Gaunt coefficients
     container::Tensor real_gaunt_table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
-    /*!
-     * @brief Computes the standard Gaunt coefficients.
-     *
-     * This function computes the standard Gaunt coefficients
-     *
-     *                             /
-     *      G(l1,l2,l3,m1,m2,m3) = | Y(l1,m1) Y(l2,m2) Y(l3,m3) d Omega
-     *                             /
-     *
-     * where Y is the (standard) spherical harmonics and Omega is the solid angle element.
-     *
-     *
-     * @note This function computes the standard Gaunt coefficients, which is different
-     *       from Gaunt coefficients of real spherical harmonics.
-     * @note Currently the algorithm computes the Gaunt coefficients with the Wigner-3j
-     *       symbols, which in turn is evaluated with the Racah formula. This might have
-     *       some numerical issue for large l and is yet to be studied later.
-     *                                                                                  */
-    double gaunt(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
-
     /// selection rule of standard & real Gaunt coefficients regarding l1, l2, l3
     bool gaunt_select_l(const int l1, const int l2, const int l3) const;
 
     /// selection rule of standard Gaunt coefficients regarding m1, m2, m3
-    bool gaunt_select_m(const int m1, const int m2, const int m3) const { return m1 + m2 + m3 == 0; }
+    bool gaunt_select_m(const int m1, const int m2, const int m3) const
+    {
+        return m1 + m2 + m3 == 0;
+    }
 
     /// selection rule of real Gaunt coefficients regarding m1, m2, m3
     bool real_gaunt_select_m(const int m1, const int m2, const int m3) const;
@@ -155,7 +158,8 @@ class RealGauntTable
      * if necessary so that the returned key {l1,l2,l3,m1,m2,m3} satisfies
      * l1 >= l2 >= l3 and m3 >= 0.
      *                                                                                  */
-    std::array<int, 6> gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    std::array<int, 6> gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3)
+        const;
 
     /// swap (l1,m1) <--> (l2,m2) if l1 < l2; do nothing otherwise
     void arrange(int& l1, int& l2, int& m1, int& m2) const;
@@ -173,7 +177,10 @@ class RealGauntTable
     int index_map(int l, int m) const;
 
     /// returns pow(-1, m)
-    int minus_1_pow(int m) const { return m % 2 ? -1 : 1; }
+    int minus_1_pow(int m) const
+    {
+        return m % 2 ? -1 : 1;
+    }
 };
 
 #endif
