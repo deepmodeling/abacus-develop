@@ -10,10 +10,10 @@ class TestDiagoIterAssist : public ::testing::Test
 {
 	public:
 	using dia_f = hsolver::DiagoIterAssistSolver<float, psi::DEVICE_CPU>;
-	using dia_d = hsolver::DiagoIterAssist<double, psi::DEVICE_CPU>;
+	using dia_d = hsolver::DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
 
-	hamilt::Hamilt<double> hamilt_test_d;
-	hamilt::Hamilt<float> hamilt_test_f;
+	hamilt::Hamilt<std::complex<double>> hamilt_test_d;
+	hamilt::Hamilt<std::complex<float>> hamilt_test_f;
 
     DIAGOTEST::hamilt.create(4, 4);
 

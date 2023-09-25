@@ -60,6 +60,8 @@ class Allocator {
      */
     virtual DeviceType GetDeviceType() = 0;
 
+    virtual ~Allocator() = default;
+
   protected:
     /**
      * @brief The total number of bytes allocated by this allocator.

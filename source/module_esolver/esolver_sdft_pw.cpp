@@ -148,14 +148,14 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     // be careful that istep start from 0 and iter start from 1
     if(istep==0&&iter==1) 
     {
-        hsolver::DiagoIterAssist<double>::need_subspace = false;
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = false;
     }
     else 
     {
-        hsolver::DiagoIterAssist<double>::need_subspace = true;
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = true;
 	}
-    hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
-    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = ethr; 
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
     this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, pw_wfc, this->stowf, istep, iter, GlobalV::KS_SOLVER);
     if(GlobalV::MY_STOGROUP==0)
     {

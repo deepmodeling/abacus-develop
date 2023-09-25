@@ -7,13 +7,13 @@
 namespace hsolver
 {
 
-class DiagoLapack : public DiagH<double>
+class DiagoLapack : public DiagH<std::complex<double>>
 {
 
   public:
-    void diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) override;
 
-    void diag(hamilt::Hamilt<double>* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) override;
     
   private:
 };

@@ -1,13 +1,10 @@
 #include "module_basis/module_nao/two_center_bundle.h"
+#include "module_base/memory.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_nao/real_gaunt_table.h"
 #include <memory>
 #include "module_base/parallel_common.h"
 #include "module_base/global_variable.h"
-
-TwoCenterBundle::~TwoCenterBundle()
-{
-}
 
 void TwoCenterBundle::build(int ntype,
                             const std::string* file_orb0,
@@ -15,6 +12,9 @@ void TwoCenterBundle::build(int ntype,
                             const int nfile_desc,
                             const std::string* file_desc0)
 {
+
+    ModuleBase::SphericalBesselTransformer sbt;
+
     //================================================================
     //                      read in the files
     //================================================================
@@ -39,9 +39,11 @@ void TwoCenterBundle::build(int ntype,
     // build RadialCollection objects
     orb_ = std::unique_ptr<RadialCollection>(new RadialCollection);
     orb_->build(ntype, file_orb, 'o');
+    orb_->set_transformer(sbt);
 
     beta_ = std::unique_ptr<RadialCollection>(new RadialCollection);
     beta_->build(ntype, nl);
+    beta_->set_transformer(sbt);
 
     double rmax = std::max(orb_->rcut_max(), beta_->rcut_max());
 
@@ -73,6 +75,7 @@ void TwoCenterBundle::build(int ntype,
 
         alpha_ = std::unique_ptr<RadialCollection>(new RadialCollection);
         alpha_->build(nfile_desc, file_desc, 'o');
+        alpha_->set_transformer(sbt);
         rmax = std::max(rmax, alpha_->rcut_max());
 
         delete[] file_desc;
@@ -92,26 +95,27 @@ void TwoCenterBundle::build(int ntype,
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     kinetic_orb->tabulate(*orb_, *orb_, 'T', nr, cutoff);
+    ModuleBase::Memory::record("TwoCenterTable: Kinetic", kinetic_orb->table_memory());
 
     overlap_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     overlap_orb->tabulate(*orb_, *orb_, 'S', nr, cutoff);
+    ModuleBase::Memory::record("TwoCenterTable: Overlap", overlap_orb->table_memory());
 
     overlap_orb_beta = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     overlap_orb_beta->tabulate(*orb_, *beta_, 'S', nr, cutoff);
+    ModuleBase::Memory::record("TwoCenterTable: Nonlocal", overlap_orb_beta->table_memory());
 
     if (deepks_on)
     {
         overlap_orb_alpha = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
         overlap_orb_alpha->tabulate(*orb_, *alpha_, 'S', nr, cutoff);
+        ModuleBase::Memory::record("TwoCenterTable: Descriptor", overlap_orb_beta->table_memory());
     }
+
+    ModuleBase::Memory::record("RealGauntTable", RealGauntTable::instance().memory());
 
     // init Ylm (this shall be done by Ylm automatically! to be done later...)
     ModuleBase::Ylm::set_coefficients();
 
-    orb_->sbt()->fft_clear();
-    beta_->sbt()->fft_clear();
-    if (deepks_on)
-    {
-        alpha_->sbt()->fft_clear();
-    }
+    sbt.fft_clear();
 }

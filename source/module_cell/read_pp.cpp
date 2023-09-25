@@ -10,46 +10,32 @@
 
 Pseudopot_upf::Pseudopot_upf()
 {
-	this->els = new std::string[1];
-	this->lchi = nullptr;
-	this->oc = nullptr;
-
-	this->r = nullptr;
-	this->rab = nullptr;
-	this->vloc = nullptr;
-
-	this->kkbeta = nullptr;
-	this->lll = nullptr;
-
-	this->rho_at = nullptr;
-	this->rho_atc = nullptr;
-
-	this->nn = nullptr;//zhengdy-soc
-	this->jchi = nullptr;
-	this->jjj = nullptr;
-
-	functional_error = 0;//xiaohui add 2015-03-24
+    functional_error = 0; // xiaohui add 2015-03-24
 }
 
 Pseudopot_upf::~Pseudopot_upf()
 {
-	delete [] els; 
-	delete [] lchi;
-	delete [] oc;
-
-	delete [] r;    //mesh_1
-	delete [] rab;  //mesh_2
-	delete [] vloc;  //local_1
-
-	delete [] kkbeta; // nl_1
-	delete [] lll; // nl_2
-
-	delete [] rho_at;// psrhoatom_1
-	delete [] rho_atc;
-
-	delete [] nn;
-	delete [] jjj;
-	delete [] jchi;
+    delete[] r;
+    delete[] rab;
+    delete[] rho_atc;
+    delete[] vloc;
+    delete[] rho_at;
+    delete[] lll;
+    delete[] kbeta;
+    delete[] els;
+    delete[] els_beta;
+    delete[] nchi;
+    delete[] lchi;
+    delete[] oc;
+    delete[] epseu;
+    delete[] rcut_chi;
+    delete[] rcutus_chi;
+    delete[] rinner;
+    delete[] rcut;
+    delete[] rcutus;
+    delete[] nn;
+    delete[] jchi;
+    delete[] jjj;
 }
 
 int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)

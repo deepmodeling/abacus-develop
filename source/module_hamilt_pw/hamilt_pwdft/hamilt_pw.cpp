@@ -13,20 +13,20 @@
 namespace hamilt
 {
 
-template <typename FPTYPE, typename Device>
-HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template<typename T, typename Device>
+HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->classname = "HamiltPW";
-    const auto tpiba2 = static_cast<FPTYPE>(GlobalC::ucell.tpiba2);
-    const auto tpiba = static_cast<FPTYPE>(GlobalC::ucell.tpiba);
+    const auto tpiba2 = static_cast<Real>(GlobalC::ucell.tpiba2);
+    const auto tpiba = static_cast<Real>(GlobalC::ucell.tpiba);
     const int* isk = pkv->isk.data();
-    const FPTYPE* gk2 = wfc_basis->get_gk2_data<FPTYPE>();
+    const Real* gk2 = wfc_basis->get_gk2_data<Real>();
 
     if (GlobalV::T_IN_H)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
-        Operator<std::complex<FPTYPE>, Device>* ekinetic
-            = new Ekinetic<OperatorPW<FPTYPE, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
+        Operator<T, Device>* ekinetic
+            = new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
         if(this->ops == nullptr)
         {
             this->ops = ekinetic;
@@ -66,9 +66,9 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
         {
             //register Potential by gathered operator
             pot_in->pot_register(pot_register_in);
-            Operator<std::complex<FPTYPE>, Device>* veff
-                = new Veff<OperatorPW<FPTYPE, Device>>(isk,
-                                                       pot_in->get_v_effective_data<FPTYPE>(),
+            Operator<T, Device>* veff
+                = new Veff<OperatorPW<T, Device>>(isk,
+                                                       pot_in->get_v_effective_data<Real>(),
                                                        pot_in->get_effective_v().nr,
                                                        pot_in->get_effective_v().nc,
                                                        wfc_basis);
@@ -80,10 +80,10 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
             {
                 this->ops->add(veff);
             }
-            Operator<std::complex<FPTYPE>, Device>* meta
-                = new Meta<OperatorPW<FPTYPE, Device>>(tpiba,
+            Operator<T, Device>* meta
+                = new Meta<OperatorPW<T, Device>>(tpiba,
                                                        isk,
-                                                       pot_in->get_vofk_effective_data<FPTYPE>(),
+                                                       pot_in->get_vofk_effective_data<Real>(),
                                                        pot_in->get_effective_vofk().nr,
                                                        pot_in->get_effective_vofk().nc,
                                                        wfc_basis);
@@ -92,8 +92,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
     }
     if (GlobalV::VNL_IN_H)
     {
-        Operator<std::complex<FPTYPE>, Device>* nonlocal
-            = new Nonlocal<OperatorPW<FPTYPE, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
+        Operator<T, Device>* nonlocal
+            = new Nonlocal<OperatorPW<T, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
         if(this->ops == nullptr)
         {
             this->ops = nonlocal;
@@ -106,8 +106,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Ba
     return;
 }
 
-template<typename FPTYPE, typename Device>
-HamiltPW<FPTYPE, Device>::~HamiltPW()
+template<typename T, typename Device>
+HamiltPW<T, Device>::~HamiltPW()
 {
     if(this->ops!= nullptr)
     {
@@ -115,19 +115,19 @@ HamiltPW<FPTYPE, Device>::~HamiltPW()
     }
 }
 
-template<typename FPTYPE, typename Device>
-void HamiltPW<FPTYPE, Device>::updateHk(const int ik)
+template<typename T, typename Device>
+void HamiltPW<T, Device>::updateHk(const int ik)
 {
     ModuleBase::TITLE("HamiltPW","updateHk");
     this->ops->init(ik);
     ModuleBase::TITLE("HamiltPW","updateHk");
 }
 
-template<typename FPTYPE, typename Device>
-void HamiltPW<FPTYPE, Device>::sPsi
+template<typename T, typename Device>
+void HamiltPW<T, Device>::sPsi
 (
-    const std::complex<FPTYPE> *psi,
-    std::complex<FPTYPE> *spsi,
+    const T *psi,
+    T *spsi,
     size_t size
 ) const
 {
@@ -136,9 +136,9 @@ void HamiltPW<FPTYPE, Device>::sPsi
     syncmem_complex_op()(this->ctx, this->ctx, spsi, psi, size);
 }
 
-template<typename FPTYPE, typename Device>
+template<typename T, typename Device>
 template<typename T_in, typename Device_in>
-HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
+HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
 {
     this->classname = hamilt->classname;
     OperatorPW<std::complex<T_in>, Device_in> * node =
@@ -146,8 +146,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
 
     while(node != nullptr) {
         if (node->classname == "Ekinetic") {
-            Operator<std::complex<FPTYPE>, Device>* ekinetic =
-                    new Ekinetic<OperatorPW<FPTYPE, Device>>(
+            Operator<T, Device>* ekinetic =
+                    new Ekinetic<OperatorPW<T, Device>>(
                             reinterpret_cast<const Ekinetic<OperatorPW<T_in, Device_in>>*>(node));
             if(this->ops == nullptr) {
                 this->ops = ekinetic;
@@ -155,11 +155,11 @@ HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
             else {
                 this->ops->add(ekinetic);
             }
-            // this->ops = reinterpret_cast<Operator<std::complex<FPTYPE>, Device>*>(node);
+            // this->ops = reinterpret_cast<Operator<T, Device>*>(node);
         }
         else if (node->classname == "Nonlocal") {
-            Operator<std::complex<FPTYPE>, Device>* nonlocal =
-                    new Nonlocal<OperatorPW<FPTYPE, Device>>(
+            Operator<T, Device>* nonlocal =
+                    new Nonlocal<OperatorPW<T, Device>>(
                             reinterpret_cast<const Nonlocal<OperatorPW<T_in, Device_in>>*>(node));
             if(this->ops == nullptr) {
                 this->ops = nonlocal;
@@ -169,8 +169,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
             }
         }
         else if (node->classname == "Veff") {
-            Operator<std::complex<FPTYPE>, Device>* veff =
-                    new Veff<OperatorPW<FPTYPE, Device>>(
+            Operator<T, Device>* veff =
+                    new Veff<OperatorPW<T, Device>>(
                             reinterpret_cast<const Veff<OperatorPW<T_in, Device_in>>*>(node));
             if(this->ops == nullptr) {
                 this->ops = veff;
@@ -180,8 +180,8 @@ HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
             }
         }
         else if (node->classname == "Meta") {
-            Operator<std::complex<FPTYPE>, Device>* meta =
-                    new Meta<OperatorPW<FPTYPE, Device>>(
+            Operator<T, Device>* meta =
+                    new Meta<OperatorPW<T, Device>>(
                             reinterpret_cast<const Meta<OperatorPW<T_in, Device_in>>*>(node));
             if(this->ops == nullptr) {
                 this->ops = meta;
@@ -197,13 +197,13 @@ HamiltPW<FPTYPE, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
     }
 }
 
-template class HamiltPW<float, psi::DEVICE_CPU>;
-template class HamiltPW<double, psi::DEVICE_CPU>;
-// template HamiltPW<double, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_CPU> *hamilt);
+template class HamiltPW<std::complex<float>, psi::DEVICE_CPU>;
+template class HamiltPW<std::complex<double>, psi::DEVICE_CPU>;
+// template HamiltPW<std::complex<double>, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<std::complex<double>, psi::DEVICE_CPU> *hamilt);
 #if ((defined __CUDA) || (defined __ROCM))
-template class HamiltPW<float, psi::DEVICE_GPU>;
-template class HamiltPW<double, psi::DEVICE_GPU>;
-// template HamiltPW<double, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<double, psi::DEVICE_GPU> *hamilt);
+template class HamiltPW<std::complex<float>, psi::DEVICE_GPU>;
+template class HamiltPW<std::complex<double>, psi::DEVICE_GPU>;
+// template HamiltPW<std::complex<double>, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<std::complex<double>, psi::DEVICE_GPU> *hamilt);
 #endif
 
 } // namespace hamilt

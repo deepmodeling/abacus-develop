@@ -282,20 +282,20 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 
 	if (nbeta == 0)
 	{
-		delete[] kkbeta;
-		delete[] lll;
-		this->kkbeta = nullptr;
-		this->lll = nullptr;
+        delete[] kbeta;
+        delete[] lll;
+        this->kbeta = nullptr;
+        this->lll = nullptr;
 		this->beta.create(1, 1);
 		this->dion.create(1, 1);
 		return;
 	}
 	else
 	{
-		delete[] kkbeta;
-		delete[] lll;
-		this->kkbeta = new int[nbeta]; 
-		this->lll = new int[nbeta]; 
+        delete[] kbeta;
+        delete[] lll;
+        this->kbeta = new int[nbeta];
+        this->lll = new int[nbeta]; 
 		this->beta.create(nbeta , mesh);
 		this->dion.create(nbeta , nbeta);
 
@@ -304,11 +304,11 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 			ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false);
 			ifs >> idum;
 			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->lll[i]);// nl_1
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kkbeta[i]);// nl_2
-			// number of mesh points for projectors
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kbeta[i]); // nl_2
+            // number of mesh points for projectors
 
-			for (ir=0;ir<kkbeta[i];ir++)
-			{
+            for (ir = 0; ir < kbeta[i]; ir++)
+            {
 				ifs >> this->beta(i, ir);// nl_3
 			}
 			ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_BETA>");
