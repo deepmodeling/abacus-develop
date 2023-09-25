@@ -487,8 +487,8 @@ struct blas_gemm_batched_strided {
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-void createBlasHandle();  // create blas handle
-void destroyBlasHandle(); // destory blas handle
+void createGpuBlasHandle();  // create blas handle
+void destroyGpuBlasHandle(); // destory blas handle
 #endif // __CUDA || __UT_USE_CUDA
 
 } // namespace op

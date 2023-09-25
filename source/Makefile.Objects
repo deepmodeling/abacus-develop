@@ -540,5 +540,4 @@ OBJS_TENSOR=tensor.o\
     linalg_op.o\
     memory_op_impl.o\
     cpu_allocator.o\
-    gpu_allocator.o\
     refcount.o
