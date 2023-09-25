@@ -1160,6 +1160,7 @@ namespace Gint_Tools
                 }
 			}// ia2
 		} // ia1
+		delete[] all_out_of_range;
 	}		
 
 //calculating (psi_DMR)_mu = sum_nu DMR_mu,nu psi_nu
