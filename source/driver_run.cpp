@@ -19,9 +19,9 @@ void Driver::driver_run()
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
 
-    // 1. Initialzie type of Esolver
+    // 1. Determine type of Esolver
     ModuleESolver::ESolver *p_esolver = nullptr;
-    ModuleESolver::init_esolver(p_esolver);
+    ModuleESolver::determine_esolver(p_esolver);
 
     // 2. Setup cell and atom information
 #ifndef __LCAO

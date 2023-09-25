@@ -53,7 +53,7 @@ class ESolver
 };
 
 std::string determine_type();
-void init_esolver(ESolver*& p_esolver);
+void determine_esolver(ESolver*& p_esolver);
 void clean_esolver(ESolver*& pesolver);
 
 } // namespace ModuleESolver
