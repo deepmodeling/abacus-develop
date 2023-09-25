@@ -61,10 +61,10 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #if ((defined __CUDA) || (defined __ROCM))
     if (this->device == psi::GpuDevice)
     {
-        hsolver::createBLAShandle();
-        hsolver::createCUSOLVERhandle();
-        container::op::createBlasHandle();
-        container::op::createCusolverHandle();
+        hsolver::createGpuBlasHandle();
+        hsolver::createGpuSolverHandle();
+        container::op::createGpuBlasHandle();
+        container::op::createGpuSolverHandle();
     }
 #endif
 }
@@ -93,9 +93,9 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     {
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
-        hsolver::destoryCUSOLVERhandle();
-        container::op::destroyBlasHandle();
-        container::op::destroyCusolverHandle();
+        hsolver::destroyGpuSolverHandle();
+        container::op::destroyGpuBlasHandle();
+        container::op::destroyGpuSolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }

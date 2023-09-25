@@ -1,27 +1,27 @@
+#include <vector>
 #include <ATen/kernels/lapack_op.h>
 #include <base/third_party/lapack.h>
 
-#include <cublas_v2.h>
-#include <cusolverDn.h>
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 #include <thrust/complex.h>
+#include <hipsolver/hipsolver.h>
 
 namespace container {
 namespace op {
 
 
-static cusolverDnHandle_t cusolver_handle = nullptr;
+static hipsolverHandle_t hipsolver_handle = nullptr;
 
 void createGpuSolverHandle() {
-    if (cusolver_handle == nullptr) {
-        cusolverErrcheck(cusolverDnCreate(&cusolver_handle));
+    if (hipsolver_handle == nullptr) {
+        hipsolverErrcheck(hipsolverCreate(&hipsolver_handle));
     }
 }
 
 void destroyGpuSolverHandle() {
-    if (cusolver_handle != nullptr) {
-        cusolverErrcheck(cusolverDnDestroy(cusolver_handle));
-        cusolver_handle = nullptr;
+    if (hipsolver_handle != nullptr) {
+        hipsolverErrcheck(hipsolverDestroy(hipsolver_handle));
+        hipsolver_handle = nullptr;
     }
 }
 
@@ -68,8 +68,12 @@ struct lapack_trtri<T, DEVICE_GPU> {
     {
         // TODO: trtri is not implemented in this method yet
         // Cause the trtri in cuSolver is not stable for ABACUS!
-        //cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
-        cuSolverConnector::potri(cusolver_handle, uplo, diag, dim, Mat, lda);
+        // hipSolverConnector::trtri(hipsolver_handle, uplo, diag, dim, Mat, lda);
+        // hipSolverConnector::potri(hipsolver_handle, uplo, diag, dim, Mat, lda);
+        std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
+        hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
+        lapack_trtri<T, DEVICE_CPU>()(uplo, diag, dim, H_Mat.data(), lda);
+        hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
     }
 };
 
@@ -81,7 +85,11 @@ struct lapack_potrf<T, DEVICE_GPU> {
         T* Mat, 
         const int& lda) 
     {
-        cuSolverConnector::potrf(cusolver_handle, uplo, dim, Mat, dim);
+        // hipSolverConnector::potrf(hipsolver_handle, uplo, dim, Mat, dim);
+        std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
+        hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
+        lapack_potrf<T, DEVICE_CPU>()(uplo, dim, H_Mat.data(), lda);
+        hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
     }
 };
 
@@ -95,7 +103,14 @@ struct lapack_dnevd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        cuSolverConnector::dnevd(cusolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        // hipSolverConnector::dnevd(hipsolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
+        std::vector<Real> H_eigen_val(dim, static_cast<Real>(0.0));
+        hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
+        hipMemcpy(H_eigen_val.data(), eigen_val, sizeof(Real) * H_eigen_val.size(), hipMemcpyDeviceToHost);
+        lapack_dnevd<T, DEVICE_CPU>()(jobz, uplo, H_Mat.data(), dim, H_eigen_val.data());
+        hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
+        hipMemcpy(eigen_val, H_eigen_val.data(), sizeof(Real) * H_eigen_val.size(), hipMemcpyHostToDevice);
     }
 };
 
@@ -111,7 +126,7 @@ struct lapack_dngvd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        cuSolverConnector::dngvd(cusolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
+        hipSolverConnector::dngvd(hipsolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
     }
 };
 
