@@ -440,11 +440,6 @@ OBJS_LCAO=DM_gamma.o\
       propagator.o\
       upsi.o\
       FORCE_STRESS.o\
-      FORCE_gamma.o\
-      FORCE_gamma_edm.o\
-      FORCE_gamma_tvnl.o\
-      FORCE_gamma_vl.o\
-      FORCE_k.o\
       FORCE_gamma_new.o\
       FORCE_gamma_edm_new.o\
       FORCE_gamma_tvnl_new.o\
