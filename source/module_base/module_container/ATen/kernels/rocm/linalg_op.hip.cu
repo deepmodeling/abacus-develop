@@ -1,9 +1,9 @@
 #include <ATen/kernels/linalg_op.h>
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
-#include <base/macros/cuda.h>
+#include <base/macros/rocm.h>
 
-#include <cuda_runtime.h>
+#include <hip/hip_runtime.h>
 #include <thrust/complex.h>
 
 namespace container {

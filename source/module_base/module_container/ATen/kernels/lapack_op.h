@@ -191,8 +191,8 @@ struct lapack_dngvd {
 };
 
 #if defined(__CUDA) || defined(__ROCM)
-void createCusolverHandle();  // create cusolver handle
-void destroyCusolverHandle(); // destroy cusolver handle
+void createGpuSolverHandle();  // create cusolver handle
+void destroyGpuSolverHandle(); // destroy cusolver handle
 #endif
 
 } // namespace container

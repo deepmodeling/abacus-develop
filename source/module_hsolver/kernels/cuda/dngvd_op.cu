@@ -56,7 +56,7 @@ namespace hsolver
 
 static cusolverDnHandle_t cusolver_H = nullptr;
 
-void createCUSOLVERhandle()
+void createGpuSolverHandle()
 {
     if (cusolver_H == nullptr)
     {
@@ -64,7 +64,7 @@ void createCUSOLVERhandle()
     }
 }
 
-void destoryCUSOLVERhandle()
+void destroyGpuSolverHandle()
 {
     if (cusolver_H != nullptr)
     {
