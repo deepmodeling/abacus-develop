@@ -288,9 +288,6 @@ extern std::string init_wfc;
 /// @brief whether use the new psi initializer to initialize psi
 /// @author ykhuang, 20230920
 extern bool psi_initializer;
-/// @brief whether dump wavefunction after initialization, for debug
-/// @author ykhuang, 20230920
-extern bool wfc_dump;
 extern int out_chg;
 
 extern double nelec;

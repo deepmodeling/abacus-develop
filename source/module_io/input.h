@@ -235,9 +235,7 @@ class Input
 
     std::string init_wfc; // "file","atomic","random"
     std::string init_chg; // "file","atomic"
-
     bool psi_initializer; // whether use psi_initializer to initialize wavefunctions
-    bool wfc_dump; // whether to dump initialized wavefunctions
     
     std::string chg_extrap; // xiaohui modify 2015-02-01
 

@@ -2501,6 +2501,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (esolver_type == "sdft"&&psi_initializer)
+    {
+        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
+        psi_initializer = false;
+    }
+
     if (nbndsto_str == "all")
     {
         nbands_sto = 0;
@@ -2508,7 +2514,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     else if (nbndsto_str == "0" && esolver_type == "sdft")
     {
         esolver_type = "ksdft";
-        psi_initializer = false;
     }
     if (esolver_type != "sdft")
         bndpar = 1;
@@ -3457,6 +3462,7 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
+
     if (
         (init_wfc != "atomic") 
      && (init_wfc != "random") 
@@ -3466,14 +3472,14 @@ void Input::Check(void)
      && (init_wfc != "file")
      )
     {
-        if (this->psi_initializer)
+        if(psi_initializer)
         {
-            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random'/'atomic'/'nao'/'atomic+random'/'nao+random'");
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
         }
         else
         {
             ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
-        }
+        }   
     }
 
     if (nbands > 100000)

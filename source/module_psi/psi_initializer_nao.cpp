@@ -43,6 +43,10 @@ psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_B
 
 psi_initializer_nao::~psi_initializer_nao() {}
 
+/*
+I don't know why some variables are distributed while others not... for example the orbital_files...
+We need not only read and import, but also distribute here
+*/
 void psi_initializer_nao::set_orbital_files(std::string* orbital_files)
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");

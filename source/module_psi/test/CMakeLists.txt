@@ -10,6 +10,6 @@ if(ENABLE_LCAO)
 AddTest(
     TARGET psi_initializer_integrate_test
     SOURCES
-        integrated_initializer_test.cpp
+        psi_initializer_integrated_test.cpp
 )
 endif()
