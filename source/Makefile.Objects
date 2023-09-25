@@ -50,7 +50,6 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_deepks:\
 ./module_hamilt_lcao/module_dftu:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
-./module_hamilt_lcao/hamilt_lcaodft/force_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
 ./module_relax/relax_old:\
@@ -440,11 +439,11 @@ OBJS_LCAO=DM_gamma.o\
       propagator.o\
       upsi.o\
       FORCE_STRESS.o\
-      FORCE_gamma_new.o\
-      FORCE_gamma_edm_new.o\
-      FORCE_gamma_tvnl_new.o\
-      FORCE_gamma_vl_new.o\
-      FORCE_k_new.o\
+      FORCE_gamma.o\
+      FORCE_gamma_edm.o\
+      FORCE_gamma_tvnl.o\
+      FORCE_gamma_vl.o\
+      FORCE_k.o\
       LCAO_gen_fixedH.o\
       LCAO_hamilt.o\
       LCAO_matrix.o\

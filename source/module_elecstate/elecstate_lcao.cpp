@@ -105,10 +105,10 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
     {
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
-        //
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
 
+// interface for RI-related calculation, which needs loc.dm_k
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -130,7 +130,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             this->print_psi(psi);
         }
     }
-
+    // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     //this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -172,21 +172,12 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
-
-        // psi::Psi<double> dm_gamma_2d;
-        //  caution:wfc and dm
-        //
-        elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
+        // get DMK in 2d-block format
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
-        //double* tmp = this->DM->get_DMK_pointer(0);
+        elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-        // get loc.dm_gamma from DM temporarily, and will delete this after Gint Refactor
-        //this->loc->dm_gamma.resize(GlobalV::NSPIN);
-        //for (int is = 0; is < GlobalV::NSPIN; ++is)
-        //{
-        //    this->loc->set_dm_gamma(is,this->DM->get_DMK_pointer(is));
-        //}
-        
+
+// interface for RI-related calculation, which needs loc.dm_gamma    
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -208,6 +199,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
                 psi.fix_k(ik);
                 this->print_psi(psi);
             }
+            // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
             //this->loc->cal_dk_gamma_from_2D_pub();
         }
     }

@@ -28,6 +28,8 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     {
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
+
+// interface for RI-related calculation, which needs loc.dm_k 
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -62,7 +64,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->uhm->GK.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho); // rho calculation
     this->uhm->GK.cal_gint(&inout);
 
     this->charge->renormalize_rho();
