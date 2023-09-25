@@ -1,16 +1,17 @@
 #include "esolver_ks.h"
 
+#include <time.h>
+#ifdef __MPI
+#include <mpi.h>
+#else
+#include <chrono>
+#endif
+
 #include <iostream>
 
-#include "../module_io/print_info.h"
+#include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
-#include "time.h"
-#ifdef __MPI
-#include "mpi.h"
-#else
-#include "chrono"
-#endif
 
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
