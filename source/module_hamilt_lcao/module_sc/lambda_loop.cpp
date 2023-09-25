@@ -115,7 +115,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
                     for (int ic = 0; ic < 3; ic++)
                     {
                         spin_nu_gradient_diag[ia][ic] = spin_nu_gradient[ia][ic][ia][ic];
-                        if (abs(spin_nu_gradient_diag[ia][ic]) > abs(max_gradient[it]))
+                        if (fabs(spin_nu_gradient_diag[ia][ic]) > fabs(max_gradient[it]))
                         {
                             max_gradient[it] = spin_nu_gradient_diag[ia][ic];
                             max_gradient_index[it].first = ia;
