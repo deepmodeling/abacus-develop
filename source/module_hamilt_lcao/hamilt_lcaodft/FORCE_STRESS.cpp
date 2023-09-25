@@ -230,8 +230,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
     }
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        //this->flk.finish_k();
-        this->flk_new.finish_k_new();
+        this->flk.finish_k();
     }
 #ifdef __EXX
     // Force and Stress contribution from exx
@@ -722,7 +721,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
 {
     if (isGammaOnly)
     {       
-        flk_new.ftable_gamma_new(isforce,
+        flk.ftable_gamma(isforce,
                          isstress,
                          psid,
                          loc,
@@ -744,7 +743,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
     }
     else
     {
-        flk_new.ftable_k_new(isforce,
+        flk.ftable_k(isforce,
                      isstress,
                      *this->RA,
                      psi,

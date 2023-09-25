@@ -1,5 +1,4 @@
 #include "FORCE_gamma.h"
-
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -10,6 +9,7 @@
 #endif
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_io/write_HS.h"
+#include "module_elecstate/elecstate_lcao.h"
 
 Force_LCAO_gamma::Force_LCAO_gamma()
 {
@@ -36,48 +36,46 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
                                     ModuleBase::matrix& svl_dphi,
                                     ModuleBase::matrix& svnl_dalpha,
 #else
-                                      ModuleBase::matrix& svl_dphi,
+                                    ModuleBase::matrix& svl_dphi,
 #endif
                                     LCAO_Hamilt& uhm)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "ftable");
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
 
-    const Parallel_Orbitals* pv = loc.ParaV;
+    // get DM
+    const elecstate::DensityMatrix<double,double>* DM
+        = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
+
+    this->ParaV = DM->get_paraV_pointer();
+    //const Parallel_Orbitals* pv = loc.ParaV;
     this->UHM = &uhm;
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate_gamma(*loc.ParaV);
+    this->allocate_gamma(*this->ParaV);
 
     // calculate the 'energy density matrix' here.
-    this->cal_foverlap(isforce, isstress, psid, loc, pelec, foverlap, soverlap);
+    this->cal_foverlap(isforce, isstress, psid, pelec, foverlap, soverlap);
 
-    this->cal_ftvnl_dphi(loc.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
-    this->cal_fvnl_dbeta_new(loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    // sum up the density matrix with different spin
+    // DM->sum_DMR_spin();
+    //
+    this->cal_ftvnl_dphi(DM, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+    this->cal_fvnl_dbeta(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
     this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
-/*
+
     // caoyu add for DeePKS
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        // get DM
-        const elecstate::DensityMatrix<double,double>* DM
-            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
         const std::vector<std::vector<double>>& dm_gamma = DM->get_DMK_vector();
-        GlobalC::ld.cal_projected_DM(dm_gamma,
-            GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::GridD);
+        GlobalC::ld.cal_projected_DM(dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-        GlobalC::ld.cal_f_delta_gamma(loc.dm_gamma,
-            GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::GridD,
-            isstress,
-            svnl_dalpha);
+        GlobalC::ld
+            .cal_f_delta_gamma(dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, isstress, svnl_dalpha);
 #ifdef __MPI
         Parallel_Reduce::reduce_double_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
         if (isstress)
@@ -91,9 +89,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
-            GlobalC::ld.add_v_delta(GlobalC::ucell,
-                GlobalC::ORB,
-                GlobalC::GridD);
+            GlobalC::ld.add_v_delta(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
             GlobalC::ld.check_v_delta();
 
             GlobalC::ld.cal_e_delta_band(dm_gamma);
@@ -105,7 +101,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
         }
     }
 #endif
-*/
+
     if (isforce)
     {
         Parallel_Reduce::reduce_double_pool(foverlap.c, foverlap.nr * foverlap.nc);
@@ -113,7 +109,6 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
         Parallel_Reduce::reduce_double_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
         Parallel_Reduce::reduce_double_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
     }
-
     if (isstress)
     {
         Parallel_Reduce::reduce_double_pool(soverlap.c, soverlap.nr * soverlap.nc);
@@ -212,7 +207,8 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
     {
         cal_deri = false;
         this->UHM->genH.LM->zeros_HSgamma('S');
-        this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
+        this->UHM->genH
+            .build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
         bool bit = false; // LiuXh, 2017-03-21
         ModuleIO::saving_HS(0,
                             this->UHM->genH.LM->Hloc.data(),

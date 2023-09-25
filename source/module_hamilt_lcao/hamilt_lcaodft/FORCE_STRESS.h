@@ -2,7 +2,6 @@
 #define FORCE_STRESS_LCAO_H
 
 #include "FORCE_k.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/force_lcao/FORCE_k_new.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
@@ -49,8 +48,7 @@ class Force_Stress_LCAO
   private:
     int nat;
     Record_adj* RA;
-    //Force_LCAO_k flk;
-    Force_LCAO_k_new flk_new;
+    Force_LCAO_k flk;
     //	Force_LCAO_gamma flg;
     Stress_Func<double> sc_pw;
     Forces<double> f_pw;

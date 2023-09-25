@@ -14,8 +14,6 @@
 class LCAO_gen_fixedH
 {
     friend class Force_LCAO_gamma;
-    friend class Force_LCAO_gamma_new;
-    friend class Force_LCAO_k_new;
     friend class Force_LCAO_k;
     friend class LCAO_Hamilt;
 
