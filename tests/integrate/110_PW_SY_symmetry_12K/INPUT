@@ -1,0 +1,9 @@
+INPUT_PARAMETERS
+
+pseudo_dir              ../../PP_ORB
+orbital_dir             ../../PP_ORB
+ntype                   1
+ecutwfc                 50
+calculation             scf
+scf_thr                 1e-13
+out_chg                 1
