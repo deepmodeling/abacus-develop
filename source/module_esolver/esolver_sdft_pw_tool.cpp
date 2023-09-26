@@ -205,6 +205,7 @@ void ESolver_SDFT_PW::cal_j(const psi::Psi<std::complex<double>>& psi_in,
                             const int& nbands,
                             const int& npw)
 {
+    ModuleBase::timer::tick(this->classname, "cal_j");
     const int npwx = wf.npwx;
     const int ndim = 3;
     const double mu = this->pelec->eferm.ef;
@@ -234,7 +235,8 @@ void ESolver_SDFT_PW::cal_j(const psi::Psi<std::complex<double>>& psi_in,
             j2psi(0, ib, ig) = j2psi(0, ib, ig) / 2.0 - mu * j1psi(0, ib, ig);
         }
     }
-
+    
+    ModuleBase::timer::tick(this->classname, "cal_j");
     return;
 }
 
