@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+pseudo_dir .
+orbital_dir .
+basis_type pw
+ecutwfc 60
+scf_thr 1e-8
+scf_nmax 1
+
+init_wfc random
+psi_initializer 1
+ks_solver dav

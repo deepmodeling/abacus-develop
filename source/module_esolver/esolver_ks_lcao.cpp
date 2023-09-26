@@ -96,7 +96,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<double>(&(chr),
                                                    &(kv),
                                                    kv.nks,
                                                    &(this->LOC),
@@ -104,6 +106,18 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
                                                    &(this->LOWF),
                                                    this->pw_rho,
                                                    pw_big);
+        }
+        else if(!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(chr),
+                                                   &(kv),
+                                                   kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF),
+                                                   this->pw_rho,
+                                                   pw_big);
+        }
     }
 
     //------------------init Basis_lcao----------------------
@@ -117,6 +131,16 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     this->UHM.genH.LM = this->UHM.LM = &this->LM;
     // pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
+
+    // init DensityMatrix
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+    }
+    else if (!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+    }
 
     if (GlobalV::CALCULATION == "get_S")
     {
@@ -216,7 +240,9 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;
-        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<double>(&(chr),
                                                    &(kv),
                                                    kv.nks,
                                                    &(this->LOC),
@@ -224,6 +250,20 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
                                                    &(this->LOWF),
                                                    this->pw_rho,
                                                    pw_big);
+            dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<complex<double>>(&(chr),
+                                                   &(kv),
+                                                   kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF),
+                                                   this->pw_rho,
+                                                   pw_big);
+            dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+        }
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
@@ -344,8 +384,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->pelec,
                                        kv,
                                        GlobalC::ucell,
-                                       GlobalC::ORB,
-                                       GlobalC::GridD);
+                                       this->p_hamilt);
     }
 
     if (INPUT.out_dos)
@@ -362,12 +401,29 @@ void ESolver_KS_LCAO::postprocess()
                                GlobalC::Pkpoints,
                                GlobalC::ucell,
                                this->pelec->eferm,
-                               GlobalV::NBANDS);
+                               GlobalV::NBANDS,
+                               this->p_hamilt);
     }
 }
 
 void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)
 {
+    // autoset NB2D first
+    if (GlobalV::NB2D == 0)
+    {
+        if (GlobalV::NLOCAL > 0)
+        {
+            GlobalV::NB2D = (GlobalV::NSPIN==4)?2:1;
+        }
+        if (GlobalV::NLOCAL > 500)
+        {
+            GlobalV::NB2D = 32;
+        }
+        if (GlobalV::NLOCAL > 1000)
+        {
+            GlobalV::NB2D = 64;
+        }
+    }
     // Set the variables first
     this->orb_con.gamma_only = GlobalV::GAMMA_ONLY_LOCAL;
     this->orb_con.nlocal = GlobalV::NLOCAL;
@@ -518,11 +574,22 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 #ifdef __DEEPKS
     // the density matrixes of DeePKS have been updated in each iter
     GlobalC::ld.set_hr_cal(true);
+    // HR in HamiltLCAO should be recalculate
+    if(GlobalV::deepks_scf)
+    {
+        this->p_hamilt->refresh();
+    }
 #endif
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    if(GlobalV::VL_IN_H)
     {
-        this->UHM.GK.renew();
+        // update Gint_K
+        if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->UHM.GK.renew();
+        }
+        // update real space Hamiltonian
+        this->p_hamilt->refresh();
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
@@ -582,9 +649,15 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::dftu.omc != 2)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, this->p_chgmix->get_mixing_beta());
+            {
+                const std::vector<std::vector<double>>& tmp_dm_gamma = dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::dftu.cal_occup_m_gamma(iter, tmp_dm_gamma, this->p_chgmix->get_mixing_beta());
+            }
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, kv, this->p_chgmix->get_mixing_beta());
+            {
+                const std::vector<std::vector<std::complex<double>>>& tmp_dm_k = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::dftu.cal_occup_m_k(iter, tmp_dm_k, kv, this->p_chgmix->get_mixing_beta(), this->p_hamilt);
+            }
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
@@ -596,12 +669,16 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         const Parallel_Orbitals* pv = this->LOWF.ParaV;
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            GlobalC::ld.cal_e_delta_band(this->LOC.dm_gamma);
+            const std::vector<std::vector<double>>& dm_gamma
+                = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->get_DMK_vector();
+            GlobalC::ld.cal_e_delta_band(dm_gamma);
         }
         else
         {
+            const std::vector<std::vector<std::complex<double>>>& dm_k
+                = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM()->get_DMK_vector();
             GlobalC::ld
-                .cal_e_delta_band_k(this->LOC.dm_k, kv.nks);
+                .cal_e_delta_band_k(dm_k, kv.nks);
         }
     }
 #endif
@@ -671,9 +748,13 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 
     if (this->conv_elec)
     {
-        if (elecstate::ElecStateLCAO::out_wfc_lcao)
+        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
         {
-            elecstate::ElecStateLCAO::out_wfc_flag = elecstate::ElecStateLCAO::out_wfc_lcao;
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = elecstate::ElecStateLCAO<double>::out_wfc_lcao;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao;
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
@@ -691,7 +772,14 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                 }
             }
         }
-        elecstate::ElecStateLCAO::out_wfc_flag = 0;
+        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = 0;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
+        }
     }
 
     // (9) Calculate new potential according to new Charge Density.
@@ -818,7 +906,27 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 #ifdef __DEEPKS
     std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld,[](LCAO_Deepks*){});
     LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(ld_shared_ptr);
-    LDI.out_deepks_labels(this->pelec->f_en.etot,
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        const std::vector<std::vector<double>>& dm_gamma
+            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->get_DMK_vector();
+        LDI.out_deepks_labels(this->pelec->f_en.etot,
+                          this->pelec->klist->nks,
+                          GlobalC::ucell.nat,
+                          this->pelec->ekb,
+                          this->pelec->klist->kvec_d,
+                          GlobalC::ucell,
+                          GlobalC::ORB,
+                          GlobalC::GridD,
+                          this->LOWF.ParaV,
+                          *(this->psid),
+                          dm_gamma);
+    }
+    else
+    {
+        const std::vector<std::vector<std::complex<double>>>& dm_k
+            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM()->get_DMK_vector();
+        LDI.out_deepks_labels(this->pelec->f_en.etot,
                           this->pelec->klist->nks,
                           GlobalC::ucell.nat,
                           this->pelec->ekb,
@@ -828,9 +936,8 @@ void ESolver_KS_LCAO::afterscf(const int istep)
                           GlobalC::GridD,
                           this->LOWF.ParaV,
                           *(this->psi),
-                          *(this->psid),
-                          this->LOC.dm_gamma,
-                          this->LOC.dm_k);
+                          dm_k);
+    }
 
 #endif
     // 3. some outputs
@@ -853,7 +960,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // GlobalV::mulliken charge analysis
         if (GlobalV::out_mul)
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
+            ModuleIO::out_mulliken(istep, &this->LM, this->pelec, kv, this->p_hamilt);
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
@@ -877,6 +984,16 @@ bool ESolver_KS_LCAO::do_after_converge(int& iter)
 ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
 {
     int precision = 3;
+    
+    const elecstate::DensityMatrix<double,double>* DM
+            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM();
+    this->LOC.dm_gamma.resize(GlobalV::NSPIN);
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        this->LOC.set_dm_gamma(is, DM->get_DMK_pointer(is));    
+    }
+    this->LOC.cal_dk_gamma_from_2D_pub();
+    
     return ModuleIO::Output_DM(this->GridT,
                                is,
                                iter,
@@ -891,7 +1008,9 @@ ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
 
 ModuleIO::Output_DM1 ESolver_KS_LCAO::create_Output_DM1(int istep)
 {
-    return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv);
+    const elecstate::DensityMatrix<complex<double>,double>* DM
+            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+    return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv, DM);
 }
 
 ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
@@ -905,7 +1024,8 @@ ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
                                        *this->LOWF.ParaV,
                                        this->UHM,
                                        this->LM,
-                                       this->kv);
+                                       this->kv,
+                                       this->p_hamilt);
 }
 
 bool ESolver_KS_LCAO::md_skip_out(std::string calculation, int istep, int interval)

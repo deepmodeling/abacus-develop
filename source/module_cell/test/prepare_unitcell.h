@@ -468,6 +468,29 @@ std::map<std::string,UcellTestPrepare> UcellTestLib
 				"Direct",	//coordination type
 				{0.1,0.1,0.1,	//atomic coordinates
 				 0.12,0.12,0.12,
-				 0.08,0.08,0.08})}
+				 0.08,0.08,0.08})},
+	{"flz-Read", UcellTestPrepare(
+				"bcc",		//latname
+				2,		//lmaxmax
+				false,		//init_vel
+				false,		//selective_dyanmics
+				false,		//relax_new
+				"volume",	//fixed_axes
+				1.8897261254578281, //lat0
+				{10.0,0.0,0.0,	//latvec
+				 0.0,10.0,0.0,
+				 0.0,0.0,10.0},
+				{"C","H"},	//elements
+				{"C.upf","H.upf"},	//upf file
+				{"upf201","upf201"},	//upf types
+				{"C_gga_8au_100Ry_2s2p1d.orb","H_gga_8au_100Ry_2s1p.orb"},	//orb file
+				{1,2},		//number of each elements
+				{12.0,1.0},	//atomic mass
+				"Direct",	//coordination type
+				{0.1,0.1,0.1,	//atomic coordinates
+				 0.12,0.12,0.12,
+				 0.08,0.08,0.08}
+		)
+	}
 };
 #endif

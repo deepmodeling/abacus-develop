@@ -65,6 +65,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 
 // mock of OperatorLCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 /* template<typename FPTYPE, typename Device>
 hamilt::Operator<FPTYPE, Device>::Operator(){}
@@ -100,29 +101,43 @@ template class hamilt::Operator<double, psi::DEVICE_CPU>;
 template class hamilt::Operator<std::complex<double>, psi::DEVICE_CPU>;*/
 
 // mock of OperatorLCAO
-template<typename TK>
-void hamilt::OperatorLCAO<TK>::init(const int ik_in)
+template<typename TK, typename TR>
+void hamilt::OperatorLCAO<TK, TR>::init(const int ik_in)
 {
     if(!this->hr_done)
     {
-        OperatorLCAO<TK>* last = this;
+        OperatorLCAO<TK, TR>* last = this;
         while(last != nullptr)
         {
             last->contributeHR();
-            last = dynamic_cast<OperatorLCAO<TK>*>(last->next_sub_op);
+            last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
         }
         this->hr_done = true;
     }
     this->contributeHk(ik_in);
     return;
 }
-template<typename TK>
-void hamilt::OperatorLCAO<TK>::get_hs_pointers()
+template <typename TK, typename TR>
+void hamilt::OperatorLCAO<TK, TR>::contributeHk(int ik)
+{
+    if (!this->is_first_node)
+    {
+        return;
+    }
+    else
+    {
+        const int ncol = this->hR->get_atom_pair(0).get_paraV()->get_col_size();
+        hamilt::folding_HR(*this->hR, this->hK->data(), this->kvec_d[ik], ncol, 0);
+    }
+}
+template<typename TK, typename TR>
+void hamilt::OperatorLCAO<TK, TR>::get_hs_pointers()
 {
     return;
 }
-template class hamilt::OperatorLCAO<double>;
-template class hamilt::OperatorLCAO<std::complex<double>>;
+template class hamilt::OperatorLCAO<double, double>;
+template class hamilt::OperatorLCAO<std::complex<double>, double>;
+template class hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>;
 
 // mock of ORB_gen_tables and LCAO_Orbitals
 #include "module_basis/module_ao/ORB_gen_tables.h"

@@ -36,7 +36,13 @@
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
-
+//---------------------------------------------------
+#include "module_psi/psi_initializer_atomic.h"
+#include "module_psi/psi_initializer_nao.h"
+#include "module_psi/psi_initializer_random.h"
+#include "module_psi/psi_initializer_atomic_random.h"
+#include "module_psi/psi_initializer_nao_random.h"
+//---------------------------------------------------
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -97,31 +103,40 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
+    if (this->psi_init != nullptr)
+    {
+        delete this->psi_init;
+        this->psi_init = nullptr;
+    }
 }
-
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 {
     if (this->psi != nullptr)
         delete this->psi;
-    this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
-
-    // cout<<this->pw_rho->nrxx<<endl;
-    // cout<<"before ufft allocate"<<endl;
-
-    // cout<<"after ufft allocate"<<endl;
-
+    //======================================================
+    // allocate memory for std::complex<double> datatype psi
+    //======================================================
+    /*
+        New psi initializer in ABACUS, Developer's note:
+        Because the calling relationship between ESolver_KS_PW and derived class is
+        complicated, up to upcoming of ABACUS 3.4, we only implement this new psi
+        initialization method for ksdft_pw, which means the routinely used dft theory.
+        For other theories like stochastic DFT, we still use the old method, in future
+        release we will implement the new method for all theories.
+    */
+    if (GlobalV::psi_initializer) // new method
+    {
+        this->psi = this->psi_init->allocate();
+    }
+    else // old method
+    {
+        this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+    }
     //=======================
     // init pseudopotential
     //=======================
     GlobalC::ppcell.init(GlobalC::ucell.ntype, &this->sf, this->pw_wfc);
-
-    //=====================
-    // init hamiltonian
-    // only allocate in the beginning of ELEC LOOP!
-    //=====================
-    // not used anymore
-    // GlobalC::hm.hpw.allocate(this->wf.npwx, GlobalV::NPOL, GlobalC::ppcell.nkb, this->pw_rho->nrxx);
 
     //=================================
     // initalize local pseudopotential
@@ -137,17 +152,18 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
     GlobalC::ppcell.cal_effective_D();
 
-    //==================================================
-    // create GlobalC::ppcell.tab_at , for trial wave functions.
-    //==================================================
-    this->wf.init_at_1(&this->sf);
+    if (!GlobalV::psi_initializer)
+    {
+        //==================================================
+        // create GlobalC::ppcell.tab_at , for trial wave functions.
+        //==================================================
+        this->wf.init_at_1(&this->sf);
+        //================================
+        // Initial start wave functions
+        //================================
+        this->wf.wfcinit(this->psi, this->pw_wfc);
+    }
 
-    //================================
-    // Initial start wave functions
-    //================================
-    this->wf.wfcinit(this->psi, this->pw_wfc);
-
-    // denghui added 20221116
     this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
@@ -155,7 +171,6 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     {
         ModuleBase::Memory::record("Psi_single", sizeof(T) * this->psi[0].size());
     }
-
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 }
 
@@ -194,10 +209,48 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
-
+    if (GlobalV::psi_initializer)
+    {
+        if(GlobalV::init_wfc == "atomic")
+        {
+            this->psi_init = new psi_initializer_atomic(&(this->sf), this->pw_wfc);
+            // there are things only need to calculate once
+            //this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
+            // not parallelized function, but we have GlobalC now, 
+            // in the future once GlobalC is removed, we will parallelize this function
+            this->psi_init->cal_ovlp_pswfcjlq();
+        }
+        else if(GlobalV::init_wfc == "random")
+        {
+            this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc);
+        }
+        else if(GlobalV::init_wfc == "nao")
+        {
+            this->psi_init = new psi_initializer_nao(&(this->sf), this->pw_wfc);
+            // there are things only need to calculate once
+            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
+            this->psi_init->cal_ovlp_flzjlq();
+        }
+        else if(GlobalV::init_wfc == "atomic+random")
+        {
+            this->psi_init = new psi_initializer_atomic_random(&(this->sf), this->pw_wfc);
+            // there are things only need to calculate once
+            //this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
+            // not parallelized function, but we have GlobalC now, 
+            // in the future once GlobalC is removed, we will parallelize this function
+            this->psi_init->cal_ovlp_pswfcjlq();
+        }
+        else if(GlobalV::init_wfc == "nao+random")
+        {
+            this->psi_init = new psi_initializer_nao_random(&(this->sf), this->pw_wfc);
+            // there are things only need to calculate once
+            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
+            this->psi_init->cal_ovlp_flzjlq();
+        }
+        else ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::init", "for new psi initializer, init_wfc type not supported");
+    }
     // temporary
     this->Init_GlobalC(inp, ucell);
-
     // Fix pelec->wg by ocp_kb
     if (GlobalV::ocp)
     {
@@ -342,6 +395,14 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
     }
+    /*
+        after init_rho (in pelec->init_scf), we have rho now.
+        before hamilt2density, we update Hk and initialize psi
+    */
+    if(GlobalV::psi_initializer)
+    {
+        this->initialize_psi();
+    }
 }
 
 template <typename T, typename Device>
@@ -403,6 +464,74 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
     }
 }
 
+/*
+  Although ESolver_KS_PW supports template, but in this function it has no relationship with
+  heterogeneous calculation, so all templates function are specialized to double
+*/
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::initialize_psi()
+{
+    if (GlobalV::psi_initializer)
+    {
+        hamilt::HamiltPW<std::complex<double>>* phamilt_cg = new hamilt::HamiltPW<std::complex<double>>(
+            this->pelec->pot, this->pw_wfc, &this->kv);
+        for (int ik = 0; ik < this->pw_wfc->nks; ik++)
+        {
+            this->psi->fix_k(ik);
+            phamilt_cg->updateHk(ik);
+            psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(ik);
+            std::vector<double> etatom(psig->get_nbands(), 0.0);
+            /*
+            if ((this->psi_init->get_method().substr(0, 3) == "nao"))
+            {
+                // there is undefined behavior! the old code is not tested and not reliable: wavefunc.cpp
+                hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(
+                    phamilt_cg,
+                    *(psig), *(psig), etatom.data()
+                );
+            }
+            */
+            // then adjust dimension from psig to psi
+            if (this->psi_init->get_method() != "random")
+            {
+                if (GlobalV::KS_SOLVER == "cg")
+                {   
+                    // diagH_subspace_init will be the function change dimension from natomwfc/nlocal to nbands
+                    hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(
+                        phamilt_cg,
+                        psig->get_pointer(), psig->get_nbands(), psig->get_nbasis(),
+                        *(this->psi), etatom.data()
+                    );
+                    continue;
+                }
+                // else the case is davidson
+            }
+            else
+            {
+                if (GlobalV::KS_SOLVER == "cg")
+                {
+                    hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(
+                        phamilt_cg,
+                        *(psig), *(this->psi), etatom.data()
+                    );
+                    continue;
+                }
+                // else the case is davidson
+            }
+            // for davidson, we just copy the wavefunction (partially)
+            for (int iband = 0; iband < this->psi->get_nbands(); iband++)
+            {
+                for (int ibasis = 0; ibasis < this->psi->get_nbasis(); ibasis++)
+                {
+                    (*(this->psi))(iband, ibasis) = (*psig)(iband, ibasis);
+                }
+            }
+        }
+        delete phamilt_cg;
+        phamilt_cg = nullptr;
+    }
+}
+
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
@@ -445,7 +574,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
     }
-
     // add exx
 #ifdef __LCAO
 #ifdef __EXX
@@ -470,7 +598,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     // deband is calculated from "output" charge density calculated
     // in sum_band
     // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
-
+    
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
     // if (LOCAL_BASIS) xiaohui modify 2013-09-02
 }

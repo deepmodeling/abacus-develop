@@ -7,19 +7,21 @@
 namespace hamilt
 {
 
-template class OperatorDFTU<OperatorLCAO<double>>;
+template class OperatorDFTU<OperatorLCAO<double, double>>;
 
-template class OperatorDFTU<OperatorLCAO<std::complex<double>>>;
+template class OperatorDFTU<OperatorLCAO<std::complex<double>, double>>;
 
-template<typename T>
-void OperatorDFTU<OperatorLCAO<T>>::contributeHR()
+template class OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>;
+
+template<typename TK, typename TR>
+void OperatorDFTU<OperatorLCAO<TK, TR>>::contributeHR()
 {
     //no calculation of HR yet for DFTU operator
     return;
 }
 
 template<>
-void OperatorDFTU<OperatorLCAO<double>>::contributeHk(int ik)
+void OperatorDFTU<OperatorLCAO<double, double>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorDFTU", "contributeHk");
     ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
@@ -36,7 +38,24 @@ void OperatorDFTU<OperatorLCAO<double>>::contributeHk(int ik)
 }
 
 template<>
-void OperatorDFTU<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
+void OperatorDFTU<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
+{
+    ModuleBase::TITLE("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
+    std::vector<std::complex<double>> eff_pot(this->LM->ParaV->nloc);
+    GlobalC::dftu.cal_eff_pot_mat_complex(ik, &eff_pot[0], isk);
+
+    for (int irc = 0; irc < this->LM->ParaV->nloc; irc++)
+    {
+        this->LM->Hloc2[irc] += eff_pot[irc];
+    }
+
+    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+}
+
+template<>
+void OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorDFTU", "contributeHk");
     ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
