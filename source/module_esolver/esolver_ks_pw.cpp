@@ -314,6 +314,8 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                 this->pw_wfc->nx,
                                 this->pw_wfc->ny,
                                 this->pw_wfc->nz);
+        this->pw_wfc->initparameters(false, INPUT.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+        this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
         if(GlobalV::psi_initializer)
         {
             if(GlobalV::init_wfc.substr(0, 3) == "nao")
@@ -331,7 +333,6 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
             this->wf.init_after_vc(this->kv.nks); // reallocate wanf2, the planewave expansion of lcao
             this->wf.init_at_1(&this->sf); // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
         }
-
     }
 
 #ifdef USE_PAW
