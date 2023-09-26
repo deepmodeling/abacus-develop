@@ -7,3 +7,4 @@ ecutwfc                 50
 calculation             scf
 scf_thr                 1e-13
 out_chg                 1
+suffix			autotest
