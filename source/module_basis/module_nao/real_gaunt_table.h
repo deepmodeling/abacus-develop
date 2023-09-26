@@ -72,6 +72,13 @@ class RealGauntTable
     /// returns the maximum l (for the first two dimensions; the third dimension is 2*lmax)
     int lmax() const { return lmax_; }
 
+    /// Returns the amount of heap memory used by this class (in bytes).
+    size_t memory() const
+    {
+        return gaunt_table_.size() * (6 * sizeof(int) + sizeof(double)) 
+                + real_gaunt_table_.NumElements() * sizeof(double);
+    }
+
   private:
     RealGauntTable() {}
 

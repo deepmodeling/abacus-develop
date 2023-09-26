@@ -85,6 +85,8 @@ private:
 	int lmaxd = 0; //max l of descirptors
 	int nmaxd = 0; //#. descriptors per l
 	int inlmax = 0; //tot. number {i,n,l} - atom, n, l
+    int nat_gdm = 0;
+    int nks_V_delta = 0;
 
     bool init_pdm = false; //for DeePKS NSCF calculation
     
@@ -198,7 +200,8 @@ public:
 
     // array for storing gdmx, used for calculating gvx
 	void init_gdmx(const int nat);
-	void del_gdmx(const int nat);
+	//void del_gdmx(const int nat);
+	void del_gdmx();
 
     // array for storing gdm_epsl, used for calculating gvx
 	void init_gdmepsl();

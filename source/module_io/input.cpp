@@ -300,6 +300,7 @@ void Input::Default(void)
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
     init_wfc = "atomic";
+    psi_initializer = false;
     mem_saver = 0;
     printe = 100; // must > 0
     init_chg = "atomic";
@@ -1222,6 +1223,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("init_wfc", word) == 0)
         {
             read_value(ifs, init_wfc);
+        }
+        else if (strcmp("psi_initializer", word) == 0)
+        {
+            read_value(ifs, psi_initializer);
         }
         else if (strcmp("mem_saver", word) == 0)
         {
@@ -2518,6 +2523,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (esolver_type == "sdft"&&psi_initializer)
+    {
+        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
+        psi_initializer = false;
+    }
+
     if (nbndsto_str == "all")
     {
         nbands_sto = 0;
@@ -3019,6 +3030,8 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
+    Parallel_Common::bcast_bool(psi_initializer);
+    
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
@@ -3474,9 +3487,24 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-    if (init_wfc != "atomic" && init_wfc != "atomic+random" && init_wfc != "random" && init_wfc != "file")
+
+    if (
+        (init_wfc != "atomic") 
+     && (init_wfc != "random") 
+     && (init_wfc != "atomic+random")
+     && (init_wfc != "nao")
+     && (init_wfc != "nao+random")
+     && (init_wfc != "file")
+     )
     {
-        ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        if(psi_initializer)
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        }   
     }
 
     if (nbands > 100000)

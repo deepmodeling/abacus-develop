@@ -374,7 +374,7 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
     resize_memory_op()(gpu_ctx, psi_R_dev, psi_R.size());
     synchronize_memory_op()(gpu_ctx, cpu_ctx, psi_L_dev, psi_L.data(), psi_L.size());
     synchronize_memory_op()(gpu_ctx, cpu_ctx, psi_R_dev, psi_R.data(), psi_R.size());
-    hsolver::createBLAShandle();
+    hsolver::createGpuBlasHandle();
     double result = zdot_real_gpu_op()(gpu_ctx, dim, psi_L_dev, psi_R_dev, false);
     hsolver::destoryBLAShandle();
     EXPECT_LT(fabs(result - expected_result), 1e-12);
@@ -536,7 +536,7 @@ TEST_F(TestModuleHsolverMathKernel, axpy_op_gpu)
     synchronize_memory_op()(gpu_ctx, cpu_ctx, Y_axpy_dev, Y_axpy.data(), Y_axpy.size());
 
     // run
-    hsolver::createBLAShandle();
+    hsolver::createGpuBlasHandle();
     axpy_op_gpu()(gpu_ctx, dim, &alpha_axpy, X_axpy_dev, 1, Y_axpy_dev, 1);
     hsolver::destoryBLAShandle();
 
@@ -565,7 +565,7 @@ TEST_F(TestModuleHsolverMathKernel, scal_op_gpu)
     synchronize_memory_op()(gpu_ctx, cpu_ctx, X_scal_dev, X_scal.data(), X_scal.size());
 
     // run
-    hsolver::createBLAShandle();
+    hsolver::createGpuBlasHandle();
     scal_op_gpu()(gpu_ctx, dim, &alpha_scal, X_scal_dev, 1);
     hsolver::destoryBLAShandle();
 
@@ -598,7 +598,7 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     synchronize_memory_op()(gpu_ctx, cpu_ctx, Y_gemv_dev, Y_gemv.data(), Y_gemv.size());
 
     // run
-    hsolver::createBLAShandle();
+    hsolver::createGpuBlasHandle();
     gemv_op_gpu()(gpu_ctx, 'C', 2, 3, &ModuleBase::ONE, A_gemv_dev, 2, X_gemv_dev, 1, &ModuleBase::ONE, Y_gemv_dev, 1);
     hsolver::destoryBLAShandle();
     // syn the output data in GPU to CPU

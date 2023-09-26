@@ -236,7 +236,8 @@ class Input
 
     std::string init_wfc; // "file","atomic","random"
     std::string init_chg; // "file","atomic"
-
+    bool psi_initializer; // whether use psi_initializer to initialize wavefunctions
+    
     std::string chg_extrap; // xiaohui modify 2015-02-01
 
     int mem_saver; // 1: save psi when nscf calculation.

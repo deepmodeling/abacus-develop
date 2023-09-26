@@ -88,8 +88,15 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			}
 		}
 	}
-#ifdef __LCAO
-	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+
+	if(
+		(GlobalV::BASIS_TYPE == "lcao")
+	  ||(
+		  (GlobalV::BASIS_TYPE == "pw")
+		&&(GlobalV::psi_initializer)
+		&&(GlobalV::init_wfc.substr(0, 3) == "nao")
+		)
+	)
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_ORBITAL") )
 		{
@@ -109,7 +116,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			descriptor_file = GlobalV::global_orbital_dir + orbital_fn[0];
 		}
 	}
-
+#ifdef __LCAO
 	// Peize Lin add 2016-09-23
 #ifdef __MPI 
 #ifdef __EXX
@@ -437,35 +444,39 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			// int atoms[it].nwl
 			// int* atoms[it].l_nchi;
 			//===========================================
-#ifdef __LCAO
-			if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+
+			if ((GlobalV::BASIS_TYPE == "lcao")||(GlobalV::BASIS_TYPE == "lcao_in_pw"))
 			{
                 std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
 				this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
 			}
-			else
-#else
-			if(GlobalV::BASIS_TYPE == "pw")
-#endif
+			else if(GlobalV::BASIS_TYPE == "pw")
 			{
-				this->atoms[it].nw = 0;
-
-				this->atoms[it].nwl = 2;
-				//std::cout << lmaxmax << std::endl;
-				if ( lmaxmax != 2 )
+				if ((GlobalV::psi_initializer)&&(GlobalV::init_wfc.substr(0, 3) == "nao"))
 				{
-					this->atoms[it].nwl = lmaxmax;
+					std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
+					this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
 				}
-				delete[] this->atoms[it].l_nchi;
-				this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-				for(int L=0; L<atoms[it].nwl+1; L++)
+				else
 				{
-					this->atoms[it].l_nchi[L] = 1;
-					// calculate the number of local basis(3D)
-					this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-					std::stringstream ss;
-					ss << "L=" << L << ", number of zeta";
-					ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+					this->atoms[it].nw = 0;
+					this->atoms[it].nwl = 2;
+					//std::cout << lmaxmax << std::endl;
+					if ( lmaxmax != 2 )
+					{
+						this->atoms[it].nwl = lmaxmax;
+					}
+					delete[] this->atoms[it].l_nchi;
+					this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
+					for(int L=0; L<atoms[it].nwl+1; L++)
+					{
+						this->atoms[it].l_nchi[L] = 1;
+						// calculate the number of local basis(3D)
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						std::stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+					}
 				}
 			} // end basis type
 #endif
@@ -893,7 +904,15 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 		ofs << atom_label[it] << " " << atom_mass[it] << " " << pseudo_fn[it] << " " << pseudo_type[it] << std::endl;
 	}
 
-	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") //xiaohui add 2013-09-02. Attention...
+	if(
+		(GlobalV::BASIS_TYPE=="lcao") 
+	  ||(GlobalV::BASIS_TYPE=="lcao_in_pw") // lcao_in_pw is forever deprecated
+	  ||(//we also plan to output numerical orbital information if use init_wfc = nao
+			(GlobalV::BASIS_TYPE=="pw")
+		  &&(GlobalV::psi_initializer)
+		  &&(GlobalV::init_wfc.substr(0, 3)=="nao")
+	    )
+	  ) //xiaohui add 2013-09-02. Attention...
 	{	
 		ofs << "\nNUMERICAL_ORBITAL" << std::endl;
 		for(int it=0; it<ntype; it++)
@@ -1185,7 +1204,6 @@ void UnitCell::check_dtau(void)
 	return;
 }
 
-#ifdef __LCAO
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
 	std::ifstream ifs(orb_file.c_str(), std::ios::in);  // pengfei 2014-10-13
@@ -1264,5 +1282,8 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 		}
 	}
 	ifs.close();
+	if(!atom->nw)
+	{
+		std::cout << "ERROR: " << atom->label << " nw = " << atom->nw << std::endl;
+	}
 }
-#endif

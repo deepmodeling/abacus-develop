@@ -145,7 +145,9 @@ template <class T> class Vector3
      */
     T operator[](int index) const
     {
-        return (&x)[index];
+        //return (&x)[index]; // this is undefind behavior and breaks with icpx
+        T const* ptr[3] = {&x, &y, &z};
+        return *ptr[index];
     }
 
     /**
@@ -156,7 +158,9 @@ template <class T> class Vector3
      */
     T &operator[](int index)
     {
-        return (&x)[index];
+        //return (&x)[index]; // this is undefind behavior and breaks with icpx
+        T* ptr[3] = {&x, &y, &z};
+        return *ptr[index];
     }
 
     /**

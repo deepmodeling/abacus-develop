@@ -12,13 +12,13 @@ namespace op {
 
 static cusolverDnHandle_t cusolver_handle = nullptr;
 
-void createCusolverHandle() {
+void createGpuSolverHandle() {
     if (cusolver_handle == nullptr) {
         cusolverErrcheck(cusolverDnCreate(&cusolver_handle));
     }
 }
 
-void destroyCusolverHandle() {
+void destroyGpuSolverHandle() {
     if (cusolver_handle != nullptr) {
         cusolverErrcheck(cusolverDnDestroy(cusolver_handle));
         cusolver_handle = nullptr;
@@ -46,7 +46,7 @@ __global__ void set_matrix_kernel(
 
 template <typename T>
 struct set_matrix<T, DEVICE_GPU> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator() (
         const char& uplo,
         T* A,

@@ -24,6 +24,7 @@ list(APPEND depend_files
   ../../module_base/global_function.cpp
   ../../module_base/global_file.cpp
   ../../module_base/tool_title.cpp
+  ../../module_base/tool_check.cpp
   ../../module_base/tool_quit.cpp
   ../../module_base/intarray.cpp
   ../../module_base/realarray.cpp

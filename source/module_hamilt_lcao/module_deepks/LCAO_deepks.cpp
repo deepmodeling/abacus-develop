@@ -36,6 +36,8 @@ LCAO_Deepks::LCAO_Deepks()
     inl_l = nullptr;
     H_V_delta = nullptr;
     H_V_deltaR = nullptr;
+    gedm = nullptr;
+    H_V_delta_k = nullptr;
 }
 
 //Desctructor of the class
@@ -45,6 +47,7 @@ LCAO_Deepks::~LCAO_Deepks()
     delete[] inl_index;
     delete[] inl_l;
     delete[] H_V_delta;
+    delete[] H_V_deltaR;
 
     //=======1. to use deepks, pdm is required==========
     //delete pdm**
@@ -54,7 +57,8 @@ LCAO_Deepks::~LCAO_Deepks()
     }
     delete[] pdm;
     //=======2. "deepks_scf" part==========
-    if (GlobalV::deepks_scf)
+    //if (GlobalV::deepks_scf)
+    if (gedm)
     {
         //delete gedm**
         for (int inl = 0;inl < this->inlmax;inl++)
@@ -63,6 +67,16 @@ LCAO_Deepks::~LCAO_Deepks()
         }
         delete[] gedm;
     }
+
+    if (H_V_delta_k)
+    {
+        for (int ik = 0; ik < this->nks_V_delta; ++ik)
+        {
+            delete[] H_V_delta_k[ik];
+        }
+        delete[] H_V_delta_k;
+    }
+    del_gdmx();
 }
 
 void LCAO_Deepks::init(
@@ -205,12 +219,14 @@ void LCAO_Deepks::init_gdmx(const int nat)
             ModuleBase::GlobalFunc::ZEROS(gdmz[iat][inl], (2 * lmaxd + 1) * (2 * lmaxd + 1));
         }
     }
+    this->nat_gdm = nat;
     return;
 }
 
-void LCAO_Deepks::del_gdmx(const int nat)
+//void LCAO_Deepks::del_gdmx(const int nat)
+void LCAO_Deepks::del_gdmx()
 {
-    for (int iat = 0;iat < nat;iat++)
+    for (int iat = 0;iat < nat_gdm;iat++)
     {
         for (int inl = 0;inl < inlmax;inl++)
         {
@@ -262,6 +278,7 @@ void LCAO_Deepks::del_gdmepsl()
 void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
+    nks_V_delta = nks;
 
     //initialize the H matrix H_V_delta
     if(GlobalV::GAMMA_ONLY_LOCAL)
