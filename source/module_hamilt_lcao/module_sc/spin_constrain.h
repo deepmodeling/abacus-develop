@@ -184,7 +184,7 @@ private:
     std::vector<ModuleBase::Vector3<int>> constrain_; // which is CONSTRL from INPUT
     std::vector<ModuleBase::Vector3<double>> init_mag_; // which is MW from INPUT, the initial spin
     bool debug = false; // which is LDESC in the original code
-    double alpha_trial_ = 5000; // which is INISC in the original code
+    double alpha_trial_ = 500; // which is INISC in the original code
     double restrict_current_ = 3; // which is SCCUT in the original code
     K_Vectors kv_;
 };
