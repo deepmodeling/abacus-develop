@@ -61,7 +61,7 @@ int md_prec_level = 0;
 int SCF_NMAX = 100;
 
 bool use_paw = false;
-bool use_uspp = flase;
+bool use_uspp = false;
 
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
 std::string KS_SOLVER = "cg"; // xiaohui add 2013-09-01

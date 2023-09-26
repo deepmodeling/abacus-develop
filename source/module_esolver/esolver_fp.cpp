@@ -126,7 +126,7 @@ namespace ModuleESolver
         std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
                   << std::endl;
         if (GlobalV::use_uspp)
-            std::cout << " UNIFORM GRID DIM(SMOOTH): " << pw_rho->nsx << " * " << pw_rho->nsy << " * " << pw_rho->nsz
+            std::cout << " UNIFORM GRID DIM(SMOOTH): " << pw_rhos->nx << " * " << pw_rhos->ny << " * " << pw_rhos->nz
                       << std::endl;
 
         ofs << "\n\n\n\n";

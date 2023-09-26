@@ -41,7 +41,8 @@ Magnetism::~Magnetism()
  *     - error==3 is currently difficult to reach in read_pseudo_vwr
  *   - ReadCellPPWarning4
  *     - read_cell_pseudopots(): dft_functional from INPUT does not match that in pseudopot file
- *     - upf.functional_error == 1
+ *   - ReadCellPPWarning5
+ *     - read_cell_pseudopots(): Unknown pseudopotential type
  *   - ReadCellPP
  *     - read_cell_pseudopots(): read pp files with flag_empty_element set
  *   - CalMeshx

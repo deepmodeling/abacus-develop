@@ -35,9 +35,10 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 				{
 					upf.set_empty_element();			
 				}
-				//average pseudopotential if needed
-				error_ap = upf.average_p(GlobalV::soc_lambda); //added by zhengdy 2020-10-20
-                upf.set_upf_q();                               // liuyu add 2023-09-21
+                upf.set_upf_q(); // liuyu add 2023-09-21
+                upf.check_atwfc_norm(); // liuyu add 2023-09-26
+                // average pseudopotential if needed
+                error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
             }
         }
 
@@ -75,14 +76,8 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
             ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Unknown pseudopotential type.");
         }
 
-//xiaohui add 2015-03-24
-#ifdef __MPI
-		Parallel_Common::bcast_bool(upf.functional_error);
-#endif
-		//xiaohui add 2015-03-24
-
-		if(GlobalV::MY_RANK==0)
-		{
+        if (GlobalV::MY_RANK == 0)
+        {
             atoms[i].ncpp.set_pseudo(upf);
 
             log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
@@ -99,7 +94,7 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
                 ModuleBase::GlobalFunc::OUT(log, "L of projector", atoms[i].ncpp.lll[ib]);
             }
 //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
-		}
+        }
         if (GlobalV::DFT_FUNCTIONAL != "default")
         {
             std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;

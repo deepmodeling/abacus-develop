@@ -1,11 +1,11 @@
-#ifndef PSEUDO_NC_H
-#define PSEUDO_NC_H
+#ifndef PSEUDO_H
+#define PSEUDO_H
 
 #include "read_pp.h"
 #include "../module_io/output.h"
 
 //-----------------------------------------
-// read in norm conserving pseudopotentials
+// read in pseudopotentials
 // mohan update 2021-05-01
 //-----------------------------------------
 class pseudo
@@ -80,4 +80,4 @@ class pseudo
       void print_pseudo(std::ofstream& ofs);
 };
 
-#endif // PSEUDO_NC_H
+#endif // PSEUDO_H

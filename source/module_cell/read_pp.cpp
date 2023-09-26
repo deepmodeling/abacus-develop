@@ -1,16 +1,17 @@
 #include "read_pp.h"
-#include <iostream>
-#include <fstream>
+
 #include <math.h>
-#include <string>
-#include <sstream>
+
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
-
+#include "module_base/math_integral.h" // for numerical integration
 
 Pseudopot_upf::Pseudopot_upf()
 {
-    functional_error = 0; // xiaohui add 2015-03-24
 }
 
 Pseudopot_upf::~Pseudopot_upf()
@@ -486,4 +487,94 @@ void Pseudopot_upf::setqfnew(const int& nqf,
         }
         rho[ir] *= pow(r[ir], l + n);
     }
+}
+
+/**
+ * @brief check and renormalize the norm of the atomic wavefunctions
+ *
+ * check for the presence of zero wavefunctions first
+ * check the normalization of the atomic wfc (only those with non-negative occupations)
+ * and renormalize them if the calculated norm is incorrect by more than 1e-6
+ */
+void Pseudopot_upf::check_atwfc_norm()
+{
+    double* norm_pswfc = new double[mesh];
+    double* norm_beta = new double[kkbeta];
+    double* work = new double[nbeta];
+    for (int iw = 0; iw < nwfc; iw++)
+    {
+        for (int ir = 0; ir < mesh; ir++)
+        {
+            norm_pswfc[ir] = chi(iw, ir) * chi(iw, ir);
+        }
+        double norm = ModuleBase::Integral::simpson(mesh, norm_pswfc, rab);
+        if (norm < 1e-8)
+        {
+            // set occupancy to a small negative number so that this wfc
+            // is not going to be used for starting wavefunctions
+            oc[iw] = -1e-8;
+            GlobalV::ofs_running << "WARNING: norm of atomic wavefunction # " << iw + 1 << " of atomic type " << psd
+                                 << " is zero" << std::endl;
+        }
+        // only occupied states are normalized
+        if (oc[iw] < 0)
+        {
+            continue;
+        }
+        // the US part if needed
+        if (tvanp)
+        {
+            for (int ib = 0; ib < nbeta; ib++)
+            {
+                bool match = false;
+                if (lchi[iw] == lll[ib])
+                {
+                    if (has_so)
+                    {
+                        if (std::abs(jchi[iw] - jjj[ib]) < 1e-6)
+                        {
+                            match = true;
+                        }
+                    }
+                    else
+                    {
+                        match = true;
+                    }
+                }
+                if (match)
+                {
+                    for (int ik = 0; ik < kkbeta; ik++)
+                    {
+                        norm_beta[ik] = beta(ib, ik) * chi(iw, ik);
+                    }
+                    work[ib] = ModuleBase::Integral::simpson(kkbeta, norm_beta, rab);
+                }
+                else
+                {
+                    work[ib] = 0.0;
+                }
+            }
+            for (int ib1 = 0; ib1 < nbeta; ib1++)
+            {
+                for (int ib2 = 0; ib2 < nbeta; ib2++)
+                {
+                    norm += qqq(ib1, ib2) * work[ib1] * work[ib2];
+                }
+            }
+        } // endif tvanp
+
+        norm = std::sqrt(norm);
+        if (std::abs(norm - 1.0) > 1e-6)
+        {
+            GlobalV::ofs_running << "WARNING: norm of atomic wavefunction # " << iw + 1 << " of atomic type " << psd
+                                 << " is " << norm << ", renormalized" << std::endl;
+            for (int ir = 0; ir < mesh; ir++)
+            {
+                chi(iw, ir) /= norm;
+            }
+        }
+    }
+    delete[] norm_pswfc;
+    delete[] norm_beta;
+    delete[] work;
 }
