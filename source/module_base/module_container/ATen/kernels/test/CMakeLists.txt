@@ -5,4 +5,4 @@ AddTest(
   linalg_op_test.cpp memory_op_test.cpp
 )
 
-target_link_libraries(Container_Kernels_UTs container  base device)
+target_link_libraries(Container_Kernels_UTs container base device)

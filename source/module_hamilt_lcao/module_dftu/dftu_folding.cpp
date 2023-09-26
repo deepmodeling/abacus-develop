@@ -233,7 +233,7 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
 }
 
 void DFTU::folding_matrix_k_new(const int ik,
-    hamilt::Hamilt<double>* p_ham)
+    hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");

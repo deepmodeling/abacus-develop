@@ -275,6 +275,7 @@ void Charge::set_rho_core(
 
 void Charge::set_rho_core_paw()
 {
+    ModuleBase::TITLE("Charge","set_rho_core_paw");
 #ifdef USE_PAW
     double* tmp = new double[nrxx];
     GlobalC::paw_cell.get_vloc_ncoret(tmp,this->rho_core);

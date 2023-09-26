@@ -17,7 +17,7 @@ namespace ModuleIO
 		const elecstate::ElecState* pelec,
 		const K_Vectors& kv,
 		const UnitCell &ucell, 
-		hamilt::Hamilt<double>* p_ham);
+		hamilt::Hamilt<std::complex<double>>* p_ham);
 }
 
 #endif

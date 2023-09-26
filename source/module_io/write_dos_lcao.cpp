@@ -35,7 +35,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                               const double& dos_scale,
                               const double& bcoeff,
                               const K_Vectors& kv,
-                              hamilt::Hamilt<double>* p_ham)
+                              hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 

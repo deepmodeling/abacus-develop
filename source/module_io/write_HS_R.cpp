@@ -10,7 +10,7 @@ void ModuleIO::output_HS_R(const int& istep,
                            const ModuleBase::matrix& v_eff,
                            LCAO_Hamilt& UHM,
                            const K_Vectors& kv,
-                           hamilt::Hamilt<double>* p_ham,
+                           hamilt::Hamilt<std::complex<double>>* p_ham,
                            const std::string& SR_filename,
                            const std::string& HR_filename_up,
                            const std::string HR_filename_down,
@@ -111,7 +111,7 @@ void ModuleIO::output_dH_R(const int& istep,
 
 void ModuleIO::output_S_R(
     LCAO_Hamilt &UHM,
-    hamilt::Hamilt<double>* p_ham,
+    hamilt::Hamilt<std::complex<double>>* p_ham,
     const std::string &SR_filename,
     const bool &binary,
     const double &sparse_threshold)

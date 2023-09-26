@@ -23,7 +23,7 @@ class Output_Mat_Sparse : public Output_Interface
                       LCAO_Hamilt& UHM,
                       LCAO_Matrix& LM,
                       const K_Vectors& kv,
-                      hamilt::Hamilt<double>* p_ham);
+                      hamilt::Hamilt<std::complex<double>>* p_ham);
     void write() override;
 
   private:
@@ -37,7 +37,7 @@ class Output_Mat_Sparse : public Output_Interface
     LCAO_Hamilt& _UHM;
     LCAO_Matrix& _LM;
     const K_Vectors& _kv;
-    hamilt::Hamilt<double>* _p_ham;
+    hamilt::Hamilt<std::complex<double>>* _p_ham;
 };
 } // namespace ModuleIO
 

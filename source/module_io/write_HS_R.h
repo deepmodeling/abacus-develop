@@ -13,7 +13,7 @@ namespace ModuleIO
             const ModuleBase::matrix& v_eff,
             LCAO_Hamilt &UHM,
             const K_Vectors& kv,
-            hamilt::Hamilt<double>* p_ham,
+            hamilt::Hamilt<std::complex<double>>* p_ham,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const std::string& HR_filename_up = "data-HR-sparse_SPIN0.csr",
             const std::string HR_filename_down = "data-HR-sparse_SPIN1.csr",
@@ -37,7 +37,7 @@ namespace ModuleIO
 
         void output_S_R(
             LCAO_Hamilt &UHM,
-            hamilt::Hamilt<double>* p_ham,
+            hamilt::Hamilt<std::complex<double>>* p_ham,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);

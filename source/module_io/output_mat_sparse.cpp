@@ -16,7 +16,7 @@ Output_Mat_Sparse::Output_Mat_Sparse(int out_mat_hsR,
                                      LCAO_Hamilt& UHM,
                                      LCAO_Matrix& LM,
                                      const K_Vectors& kv,
-                                     hamilt::Hamilt<double>* p_ham)
+                                     hamilt::Hamilt<std::complex<double>>* p_ham)
     : _out_mat_hsR(out_mat_hsR),
       _out_mat_dh(out_mat_dh),
       _out_mat_t(out_mat_t),

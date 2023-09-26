@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <algorithm>
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -179,6 +180,10 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
+    out_wannier_amn = true;
+    out_wannier_eig = true;
+    out_wannier_mmn = true;
+    out_wannier_unk = true;
     for(int i=0;i<3;i++){kspacing[i] = 0;}
     min_dist_coef = 0.2;
     //----------------------------------------------------------
@@ -292,6 +297,7 @@ void Input::Default(void)
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
     init_wfc = "atomic";
+    psi_initializer = false;
     mem_saver = 0;
     printe = 100; // must > 0
     init_chg = "atomic";
@@ -816,6 +822,22 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, wannier_spin);
         }
+        else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_mmn);
+        }
+        else if (strcmp("out_wannier_amn", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_amn);
+        }
+        else if (strcmp("out_wannier_unk", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_unk);
+        }
+        else if (strcmp("out_wannier_eig", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_eig);
+        }
         //----------------------------------------------------------
         // electrons / spin
         //----------------------------------------------------------
@@ -1179,6 +1201,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("init_wfc", word) == 0)
         {
             read_value(ifs, init_wfc);
+        }
+        else if (strcmp("psi_initializer", word) == 0)
+        {
+            read_value(ifs, psi_initializer);
         }
         else if (strcmp("mem_saver", word) == 0)
         {
@@ -2475,6 +2501,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (esolver_type == "sdft"&&psi_initializer)
+    {
+        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
+        psi_initializer = false;
+    }
+
     if (nbndsto_str == "all")
     {
         nbands_sto = 0;
@@ -2505,9 +2537,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if (exx_hybrid_alpha == "default")
     {
-        if (dft_functional == "hf" || INPUT.rpa)
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || rpa)
             exx_hybrid_alpha = "1";
-        else if (dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+        else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
     }
     if (exx_real_number == "default")
@@ -2519,9 +2553,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if (exx_ccp_rmesh_times == "default")
     {
-        if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
             exx_ccp_rmesh_times = "5";
-        else if (dft_functional == "hse")
+        else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
     if (symmetry == "default")
@@ -2868,6 +2904,10 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(towannier90);
     Parallel_Common::bcast_string(nnkpfile);
     Parallel_Common::bcast_string(wannier_spin);
+    Parallel_Common::bcast_bool(out_wannier_mmn);
+    Parallel_Common::bcast_bool(out_wannier_amn);
+    Parallel_Common::bcast_bool(out_wannier_unk);
+    Parallel_Common::bcast_bool(out_wannier_eig);
 
     Parallel_Common::bcast_string(dft_functional);
     Parallel_Common::bcast_double(xc_temperature);
@@ -2965,6 +3005,8 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
+    Parallel_Common::bcast_bool(psi_initializer);
+    
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
@@ -3420,9 +3462,24 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-    if (init_wfc != "atomic" && init_wfc != "atomic+random" && init_wfc != "random" && init_wfc != "file")
+
+    if (
+        (init_wfc != "atomic") 
+     && (init_wfc != "random") 
+     && (init_wfc != "atomic+random")
+     && (init_wfc != "nao")
+     && (init_wfc != "nao+random")
+     && (init_wfc != "file")
+     )
     {
-        ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        if(psi_initializer)
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        }   
     }
 
     if (nbands > 100000)
@@ -3601,7 +3658,9 @@ void Input::Check(void)
         }
     }
 
-    if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+    std::string dft_functional_lower = dft_functional;
+    std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
     {
         const double exx_hybrid_alpha_value = std::stod(exx_hybrid_alpha);
         if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
@@ -3623,7 +3682,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "exx_distribute_type must be htime or kmeans2 or kmeans1");
         }
     }
-    if (dft_functional == "opt_orb")
+    if (dft_functional_lower == "opt_orb")
     {
         if (exx_opt_orb_lmax < 0)
         {

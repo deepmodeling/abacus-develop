@@ -74,7 +74,7 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<double>* p_ham);
+    void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
     void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
 
   private:
@@ -128,7 +128,7 @@ class DFTU
      * only for Hamiltonian now, for force and stress will be developed later
      * use HContainer as input and output in mat_k
     */
-   void folding_matrix_k_new(const int ik, hamilt::Hamilt<double>* p_ham);
+   void folding_matrix_k_new(const int ik, hamilt::Hamilt<std::complex<double>>* p_ham);
 
     //=============================================================
     // In dftu_force.cpp

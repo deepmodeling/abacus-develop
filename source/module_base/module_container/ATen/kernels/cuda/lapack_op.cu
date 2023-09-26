@@ -12,13 +12,13 @@ namespace op {
 
 static cusolverDnHandle_t cusolver_handle = nullptr;
 
-void createCusolverHandle() {
+void createGpuSolverHandle() {
     if (cusolver_handle == nullptr) {
         cusolverErrcheck(cusolverDnCreate(&cusolver_handle));
     }
 }
 
-void destroyCusolverHandle() {
+void destroyGpuSolverHandle() {
     if (cusolver_handle != nullptr) {
         cusolverErrcheck(cusolverDnDestroy(cusolver_handle));
         cusolver_handle = nullptr;
@@ -46,7 +46,7 @@ __global__ void set_matrix_kernel(
 
 template <typename T>
 struct set_matrix<T, DEVICE_GPU> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator() (
         const char& uplo,
         T* A,
@@ -87,7 +87,7 @@ struct lapack_potrf<T, DEVICE_GPU> {
 
 template <typename T>
 struct lapack_dnevd<T, DEVICE_GPU> {
-    using Real = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
         const char& uplo,
@@ -101,7 +101,7 @@ struct lapack_dnevd<T, DEVICE_GPU> {
 
 template <typename T>
 struct lapack_dngvd<T, DEVICE_GPU> {
-    using Real = typename PossibleComplexToReal<T>::type;
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& itype,
         const char& jobz,

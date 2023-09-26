@@ -32,7 +32,7 @@ void out_dos_nao(const psi::Psi<double>* psid,
                   const UnitCell& ucell,
                   const elecstate::efermi& eferm,
                   int nbands,
-                  hamilt::Hamilt<double>* p_ham)
+                  hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Driver", "init");
     write_dos_lcao(psid, psi, uhm, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);

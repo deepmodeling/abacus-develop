@@ -258,11 +258,11 @@ bool Tensor::operator==(const Tensor& other) const {
         Tensor tmpA = this->to_device<DEVICE_CPU>();
         Tensor tmpB = other.to_device<DEVICE_CPU>();
         TEMPLATE_ALL_2(tmpA.data_type(), tmpA.device_type(),
-                       result = std::equal(tmpA.data<T_>(), tmpA.data<T_>() + tmpA.NumElements(), tmpB.data<T_>(), element_compare<T_, sizeof(PossibleComplexToReal<T_>::type)>))
+                       result = std::equal(tmpA.data<T_>(), tmpA.data<T_>() + tmpA.NumElements(), tmpB.data<T_>(), element_compare<T_, sizeof(GetTypeReal<T_>::type)>))
         return result;
     }
     TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   result = std::equal(this->data<T_>(), this->data<T_>() + this->NumElements(), other.data<T_>(), element_compare<T_, sizeof(PossibleComplexToReal<T_>::type)>))
+                   result = std::equal(this->data<T_>(), this->data<T_>() + this->NumElements(), other.data<T_>(), element_compare<T_, sizeof(GetTypeReal<T_>::type)>))
     return result;
 }
 
@@ -346,6 +346,9 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
             _internal_output(os, data, shape, num_elements);
             break;
         }
+        default:
+            os << "unknown";
+            break;
     }
     os << "))\n";
 

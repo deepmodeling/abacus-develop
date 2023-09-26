@@ -11,7 +11,7 @@
 namespace hamilt
 {
 
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template<typename T, typename Device = psi::DEVICE_CPU>
 class Hamilt
 {
   public:
@@ -24,8 +24,8 @@ class Hamilt
     virtual void refresh(){return;}
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void hPsi(const std::complex<FPTYPE> *psi_in, std::complex<FPTYPE> *hpsi, const size_t size) const{return;}
-    virtual void sPsi(const std::complex<FPTYPE> *psi_in, std::complex<FPTYPE> *spsi, const size_t size) const{return;}
+    virtual void hPsi(const T* psi_in, T* hpsi, const size_t size) const{return;}
+    virtual void sPsi(const T* psi_in, T* spsi, const size_t size) const{return;}
 
     /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     virtual void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in){return;}
@@ -36,7 +36,7 @@ class Hamilt
     int non_first_scf=0;
 
     /// first node operator, add operations from each operators
-    Operator<std::complex<FPTYPE>, Device>* ops = nullptr;
+    Operator<T, Device>* ops = nullptr;
     Operator<double, Device>* opsd = nullptr;
 
 };

@@ -140,7 +140,7 @@ void DFTU::cal_occup_m_k(const int iter,
                         const std::vector<std::vector<std::complex<double>>>& dm_k,
                         const K_Vectors& kv,
                         const double& mixing_beta,
-                        hamilt::Hamilt<double>* p_ham)
+                        hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_k");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");

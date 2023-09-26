@@ -13,7 +13,7 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
-    hamilt::Hamilt<double>* p_ham)
+    hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO","write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");

@@ -20,7 +20,7 @@ void out_dos_nao(const psi::Psi<double>* psid,
                   const UnitCell& ucell,
                   const elecstate::efermi& eferm,
                   int nbands,
-                  hamilt::Hamilt<double>* p_ham);
+                  hamilt::Hamilt<std::complex<double>>* p_ham);
 }
 
 #endif

@@ -11,7 +11,7 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout Pull Request
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - name: Setup clang-tidy

@@ -121,7 +121,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<double>>
 }
 
 ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<std::vector<std::complex<double>>> &dm,
-    LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in
+    LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in
 )
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken_k");
@@ -260,7 +260,7 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in)
+void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 

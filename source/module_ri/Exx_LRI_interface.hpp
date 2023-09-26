@@ -129,7 +129,7 @@ void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, co
 
 template<typename Tdata>
 bool Exx_LRI_Interface<Tdata>::exx_after_converge(
-    hamilt::Hamilt<double>& hamilt,
+    hamilt::Hamilt<std::complex<double>>& hamilt,
     LCAO_Matrix& lm,
     const Local_Orbital_Charge& loc,
     const K_Vectors& kv,
