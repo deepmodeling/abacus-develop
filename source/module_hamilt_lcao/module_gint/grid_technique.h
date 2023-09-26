@@ -45,6 +45,7 @@ class Grid_Technique : public Grid_MeshBall
 	// 3: which atom on local grid.
 	//------------------------------------
 	bool* in_this_processor;
+	std::vector<int> trace_iat;
 	int lnat; // local nat.
 	int lgd; // local grid dimension.  lgd * lgd symmetry matrix. 
 	int* trace_lo; // trace local orbital.

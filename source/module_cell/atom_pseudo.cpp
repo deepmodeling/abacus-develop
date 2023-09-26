@@ -2,16 +2,17 @@
 
 Atom_pseudo::Atom_pseudo()
 {
-
 	for(int is=0;is<4;is++) this->index1_soc[is] = nullptr;
 	for(int is=0;is<4;is++) this->index2_soc[is] = nullptr;
-
 }
 
 Atom_pseudo::~Atom_pseudo()
 {
-	for(int is=0;is<4;is++) delete[] this->index1_soc[is];
-	for(int is=0;is<4;is++) delete[] this->index2_soc[is];
+	for(int is=0;is<4;is++) 
+	{
+		if(this->index1_soc[is] != nullptr) delete[] this->index1_soc[is];
+		if(this->index2_soc[is] != nullptr) delete[] this->index2_soc[is];
+	}
 }
 
 // mohan add 2021-05-07
@@ -27,37 +28,54 @@ void Atom_pseudo::set_d_so(
 	}
 
 	this->nproj = nproj_in;
-	this->nproj_soc=0;
+	this->nproj_soc = nproj_in_so;
+	int spin_dimension = 4;
 
-	if(has_so)
+	// optimize
+	for(int is=0;is<spin_dimension;is++)
 	{
-		nproj_soc = nproj_in_so;
+		this->non_zero_count_soc[is] = 0;
+		delete[] this->index1_soc[is];
+		this->index1_soc[is] = new int[nproj_soc * nproj_soc];
+		delete[] this->index2_soc[is];
+		this->index2_soc[is] = new int[nproj_soc * nproj_soc];
 	}
 
-	assert(nproj <= nproj_in+1); //LiuXh 2016-01-13, 2016-05-16
-	assert(nproj >= 0);
-
-//	std::cout << " has_so=" << has_so << std::endl;
-
-	//2016-07-19 begin, LiuXh
 	if(!has_so)
 	{
-		ModuleBase::GlobalFunc::ZEROS(this->non_zero_count_soc, 4);
+		this->d_real.create(nproj_soc+1,  nproj_soc+1);
+		this->d_so.create(spin_dimension,  nproj_soc+1,  nproj_soc+1);//for noncollinear-spin only case
+
+		// calculate the number of non-zero elements in dion
+		for(int L1 =0;L1<nproj_soc;L1++)
+		{
+			for(int L2 =0;L2<nproj_soc;L2++)
+			{
+				this->d_real(L1, L2) =
+					d_so_in(L1, L2).real(); 
+				if(std::fabs(d_real(L1,L2))>1.0e-8)
+				{
+					this->index1_soc[0][non_zero_count_soc[0]] = L1;
+					this->index2_soc[0][non_zero_count_soc[0]] = L2;
+					this->non_zero_count_soc[0]++;
+				}
+				//for noncollinear-spin only case
+				this->d_so(0, L1, L2) =
+					d_so_in(L1, L2);
+				this->d_so(3, L1, L2) =
+					d_so_in(L1, L2);
+				if(std::fabs(d_real(L1,L2))>1.0e-8)
+				{
+					this->index1_soc[3][non_zero_count_soc[3]] = L1;
+					this->index2_soc[3][non_zero_count_soc[3]] = L2;
+					this->non_zero_count_soc[3]++;
+				}
+			}
+		}
 	}
 	else //zhengdy-soc
 	{
-		this->d_so.create(GlobalV::NSPIN,  nproj_soc+1,  nproj_soc+1);
-
-		// optimize
-		for(int is=0;is<4;is++)
-		{
-			this->non_zero_count_soc[is] = 0;
-			delete[] this->index1_soc[is];
-			this->index1_soc[is] = new int[nproj_soc * nproj_soc];
-			delete[] this->index2_soc[is];
-			this->index2_soc[is] = new int[nproj_soc * nproj_soc];
-		}
-
+		this->d_so.create(spin_dimension,  nproj_soc+1,  nproj_soc+1);
 //		std::cout << "lmax=" << lmax << std::endl;
 
 		if(this->lmax > -1)

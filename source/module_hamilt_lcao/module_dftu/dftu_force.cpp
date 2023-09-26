@@ -21,6 +21,7 @@
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -50,8 +51,7 @@ extern "C"
 namespace ModuleDFTU
 {
 
-void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
-                        std::vector<ModuleBase::ComplexMatrix>& dm_k,
+void DFTU::force_stress(const elecstate::ElecState* pelec,
                         LCAO_Matrix& lm,
                         ModuleBase::matrix& force_dftu,
                         ModuleBase::matrix& stress_dftu,
@@ -86,13 +86,15 @@ void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
             double* VU = new double[this->LM->ParaV->nloc];
             this->cal_VU_pot_mat_real(spin, false, VU);
+            const std::vector<std::vector<double>>& dmk = 
+                dynamic_cast<const elecstate::ElecStateLCAO<double>*> (pelec)->get_DM()->get_DMK_vector();
             ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 
 #ifdef __MPI
             pdgemm_(&transT, &transN,
                     &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
                     &alpha, 
-                    dm_gamma[spin].c, &one_int, &one_int, this->LM->ParaV->desc, 
+                    dmk[spin].data(), &one_int, &one_int, this->LM->ParaV->desc, 
                     VU, &one_int, &one_int, this->LM->ParaV->desc,
                     &beta,
                     &rho_VU[0], &one_int, &one_int, this->LM->ParaV->desc);
@@ -118,13 +120,15 @@ void DFTU::force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
 
             std::complex<double>* VU = new std::complex<double>[this->LM->ParaV->nloc];
             this->cal_VU_pot_mat_complex(spin, false, VU);
+            const std::vector<std::vector<std::complex<double>>>& dmk = 
+                dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*> (pelec)->get_DM()->get_DMK_vector();
             ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 
 #ifdef __MPI
             pzgemm_(&transT, &transN,
                     &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
                     &alpha, 
-                    dm_k[ik].c, &one_int, &one_int, this->LM->ParaV->desc, 
+                    dmk[ik].data(), &one_int, &one_int, this->LM->ParaV->desc, 
                     VU, &one_int, &one_int, this->LM->ParaV->desc,
                     &beta,
                     &rho_VU[0], &one_int, &one_int, this->LM->ParaV->desc);

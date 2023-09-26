@@ -6,6 +6,8 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "operator_lcao.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
 
 namespace hamilt
 {
@@ -20,40 +22,52 @@ class Veff : public T
 
 #endif
 
-template <typename T>
-class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
+template <typename TK, typename TR>
+class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    Veff<OperatorLCAO<T>>(Gint_k* GK_in,
+    Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
-                          std::vector<double>* HR_pointer_in,
-                          std::vector<T>* HK_pointer_in)
+                          hamilt::HContainer<TR>* hR_in,
+                          std::vector<TK>* hK_in,
+                          const UnitCell* ucell_in,
+                          Grid_Driver* GridD_in,
+                          const Parallel_Orbitals* paraV)
         : GK(GK_in),
           loc(loc_in),
           pot(pot_in),
-          HR_pointer(HR_pointer_in),
-          HK_pointer(HK_pointer_in),
-          OperatorLCAO<T>(LM_in, kvec_d_in)
+          OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
+
+        this->initialize_HR(ucell_in, GridD_in, paraV);
+        GK_in->initialize_pvpR(*ucell_in, GridD_in);
     }
-    Veff<OperatorLCAO<T>>(Gint_Gamma* GG_in,
+    Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
-                          std::vector<double>* HR_pointer_in,
-                          std::vector<T>* HK_pointer_in,
-                          std::vector<ModuleBase::Vector3<double>> kvec_d_in)
-        : GG(GG_in), loc(loc_in), pot(pot_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), 
-        OperatorLCAO<T>(LM_in, std::vector<ModuleBase::Vector3<double>>{ModuleBase::Vector3<double>(0,0,0)})
+                          hamilt::HContainer<TR>* hR_in,
+                          std::vector<TK>* hK_in,
+                          const UnitCell* ucell_in,
+                          Grid_Driver* GridD_in,
+                          const Parallel_Orbitals* paraV
+                          )
+        : GG(GG_in), loc(loc_in), pot(pot_in),
+        OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
+
+        this->initialize_HR(ucell_in, GridD_in, paraV);
+
+        GG_in->initialize_pvpR(*ucell_in, GridD_in);
     }
 
-    ~Veff<OperatorLCAO<T>>();
+    ~Veff<OperatorLCAO<TK, TR>>(){};
 
     virtual void contributeHR() override;
 
@@ -69,13 +83,15 @@ class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
     // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
     Local_Orbital_Charge* loc = nullptr;
 
-    std::vector<double>* HR_pointer = nullptr;
-
-    std::vector<T>* HK_pointer = nullptr;
-
     elecstate::Potential* pot = nullptr;
 
-    bool allocated_pvpR = false;
+    /**
+     * @brief initialize HR, search the nearest neighbor atoms
+     * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
+     * the size of HR will be fixed after initialization
+     */
+    void initialize_HR(const UnitCell* ucell_in, Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+
 };
 
 } // namespace hamilt
