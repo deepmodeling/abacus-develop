@@ -976,9 +976,21 @@ TEST_F(InputTest, Default_2)
 
 TEST_F(InputTest, Check)
 {
-	INPUT.nbands = -1;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+    INPUT.ecutwfc = 20.0;
+    INPUT.ecutrho = 10;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("ecutrho must > ecutwfc"));
+    INPUT.ecutrho = 30;
+    testing::internal::CaptureStdout();
+    INPUT.Check();
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("ecutrho < 4*ecutwfc, not recommended"));
+    //
+    INPUT.nbands = -1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("NBANDS must >= 0"));
 	INPUT.nbands = 2;

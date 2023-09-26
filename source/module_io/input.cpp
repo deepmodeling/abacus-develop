@@ -3334,6 +3334,15 @@ void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
 
+    if (ecutrho <= ecutwfc)
+    {
+        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+    }
+    else if (ecutrho / ecutwfc < 4 - 1e-8)
+    {
+        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+    }
+
     if (nbands < 0)
         ModuleBase::WARNING_QUIT("Input", "NBANDS must >= 0");
     //	if(nbands_istate < 0) ModuleBase::WARNING_QUIT("Input","NBANDS_ISTATE must > 0");
