@@ -107,7 +107,6 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     this->sc_thr_ = sc_thr_in;
     this->nsc_ = nsc_in;
     this->nsc_min_ = nsc_min_in;
-    this->alpha_trial_ *= meV_to_Ry;
 }
 
 template class SpinConstrain<double, psi::DEVICE_CPU>;
