@@ -68,6 +68,7 @@ ${OBJS_HSOLVER}\
 ${OBJS_MD}\
 ${OBJS_NEIGHBOR}\
 ${OBJS_PSI}\
+${OBJS_PSI_INITIALIZER}\
 ${OBJS_PW}\
 ${OBJS_RELAXATION}\
 ${OBJS_SURCHEM}\
@@ -307,6 +308,13 @@ OBJS_ORBITAL=ORB_atomic.o\
 OBJS_PSI=psi.o\
     psi_memory_op.o\
     device.o\
+
+OBJS_PSI_INITIALIZER=psi_initializer.o\
+                     psi_initializer_random.o\
+                     psi_initializer_atomic.o\
+                     psi_initializer_atomic_random.o\
+                     psi_initializer_nao.o\
+                     psi_initializer_nao_random.o\
 
 OBJS_PW=fft.o\
     pw_basis.o\

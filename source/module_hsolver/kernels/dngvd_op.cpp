@@ -36,6 +36,9 @@ struct dngvd_op<FPTYPE, psi::DEVICE_CPU> {
         //===========================
         LapackConnector::xhegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
 
+        if (info != 0) {
+            std::cout << "Error: xhegvd failed!" << std::endl;
+        }
         assert(0 == info);
 
         delete[] work;

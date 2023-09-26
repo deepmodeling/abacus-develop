@@ -203,7 +203,9 @@ void Input_Conv::Convert(void)
     //  suffix
     if (INPUT.calculation == "md" && INPUT.mdp.md_restart) // md restart  liuyu add 2023-04-12
     {
-        int istep = MD_func::current_step(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        int istep = 0;
+        MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, INPUT.mdp.md_tfirst);
+        INPUT.mdp.md_tfirst *= ModuleBase::Hartree_to_K;
         if (INPUT.read_file_dir == "auto")
         {
             GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
@@ -606,6 +608,8 @@ void Input_Conv::Convert(void)
     GlobalV::OUT_FREQ_ELEC = INPUT.out_freq_elec;
     GlobalV::OUT_FREQ_ION = INPUT.out_freq_ion;
     GlobalV::init_chg = INPUT.init_chg;
+    GlobalV::init_wfc = INPUT.init_wfc;
+    GlobalV::psi_initializer = INPUT.psi_initializer;
     GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::out_chg = INPUT.out_chg;
     GlobalV::nelec = INPUT.nelec;

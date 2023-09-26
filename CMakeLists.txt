@@ -610,6 +610,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt_ofdft
     hamilt_stodft
     psi
+    psi_initializer
     esolver
     vdw
     device

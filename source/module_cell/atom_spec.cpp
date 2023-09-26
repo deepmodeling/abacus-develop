@@ -46,6 +46,7 @@ Atom::~Atom()
 	delete[] iw2_ylm;
 	delete[] iw2_new;
     delete[] mbl;
+
 }
 
 void Atom::set_index(void)
