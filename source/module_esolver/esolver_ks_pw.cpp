@@ -324,7 +324,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
             {
                 this->psi_init->cal_ovlp_pswfcjlq(); // for atomic, we recalculate the overlap matrix between pswfc and jlq
             }
-
+            // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and reallocate
         }
         else
         {
