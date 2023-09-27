@@ -110,11 +110,13 @@ TEST_F(OverlapNewTest, constructHRcd2cd)
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
     std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
     Grid_Driver gd(0,0,0);
-    hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>> op(
+    hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> op(
         nullptr, 
         kvec_d_in, 
+        nullptr,
+        nullptr,
         SR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV

@@ -166,7 +166,7 @@ class AtomPair
     // interface for get (rx, ry, rz) of current_R, the return should be int[3]
     int* get_R_index() const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
-    bool find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     // and return BaseMatrix<T>* of this->values[index]
     const BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const;
@@ -258,6 +258,7 @@ class AtomPair
     // if current_R > 0, it means R index has been fixed
     // if current_R == 0, it means R index refers to the first cell
     // if current_R == 0 with gamma_only, it means R index refers to the center cell
+    // !!!!!!!!!!! BE CAREFUL, current_R IS NOT THREADING-SAFE !!!!!!!!!!!!!!!!!!!!!
     mutable int current_R = 0;
 
     // index for identifying atom I and J for this atom-pair

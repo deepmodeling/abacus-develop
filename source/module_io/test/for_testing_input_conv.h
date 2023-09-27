@@ -25,8 +25,19 @@
 #include "module_relax/relax_old/lattice_change_basic.h"
 
 bool berryphase::berry_phase_flag = false;
-int elecstate::ElecStateLCAO::out_wfc_lcao = 0;
-bool elecstate::ElecStateLCAO::need_psi_grid = 1;
+
+template<>
+int elecstate::ElecStateLCAO<double>::out_wfc_lcao = 0;
+
+template<>
+int elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao = 0;
+
+template<> 
+bool elecstate::ElecStateLCAO<double>::need_psi_grid = 1;
+
+template<>
+bool elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = 1;
+//
 int hsolver::HSolverLCAO::out_mat_hs = 0;
 int hsolver::HSolverLCAO::out_mat_hsR = 0;
 int hsolver::HSolverLCAO::out_mat_t = 0;

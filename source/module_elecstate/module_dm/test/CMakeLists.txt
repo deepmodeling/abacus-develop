@@ -4,6 +4,10 @@ remove_definitions(-D__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+if(TARGET dm_io_test_serial)
+  remove_definitions(-D__MPI)
+endif()
+
 AddTest(
   TARGET dm_io_test_serial
   LIBS ${math_libs} base device cell_info
