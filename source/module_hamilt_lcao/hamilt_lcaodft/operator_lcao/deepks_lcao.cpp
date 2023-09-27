@@ -13,12 +13,6 @@
 namespace hamilt
 {
 
-template class DeePKS<OperatorLCAO<double, double>>;
-
-template class DeePKS<OperatorLCAO<std::complex<double>, double>>;
-
-template class DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>;
-
 template <typename TK, typename TR>
 DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
     LCAO_Matrix* LM_in,
@@ -503,5 +497,11 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 }
 
 #endif
+
+template class DeePKS<OperatorLCAO<double, double>>;
+
+template class DeePKS<OperatorLCAO<std::complex<double>, double>>;
+
+template class DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
 }
