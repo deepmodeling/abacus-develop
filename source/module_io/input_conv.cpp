@@ -622,6 +622,10 @@ void Input_Conv::Convert(void)
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
     Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
+    hsolver::HSolverLCAO<double>::out_mat_hs = INPUT.out_mat_hs;
+    hsolver::HSolverLCAO<double>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
+    hsolver::HSolverLCAO<double>::out_mat_t = INPUT.out_mat_t;
+    hsolver::HSolverLCAO<double>::out_mat_dh = INPUT.out_mat_dh;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = INPUT.out_mat_hs;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;

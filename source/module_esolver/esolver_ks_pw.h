@@ -88,7 +88,7 @@ namespace ModuleESolver
         /// @brief initialize psi
         void initialize_psi();
     protected:
-        psi::Psi<std::complex<double>, Device>* psi = nullptr;   //hide the psi in ESolver_KS for tmp use
+        psi::Psi<std::complex<double>, psi::DEVICE_CPU>* psi = nullptr;   //hide the psi in ESolver_KS for tmp use
     private:
         psi_initializer* psi_init = nullptr;
         Device * ctx = {};

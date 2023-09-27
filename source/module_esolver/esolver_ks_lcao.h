@@ -90,7 +90,7 @@ namespace ModuleESolver
 #endif
     private:
         // tmp interfaces  before sub-modules are refactored
-        void dftu_cal_occup_m(int& iter, const std::vector<std::vector<TK>>& dm) const;
+        void dftu_cal_occup_m(const int& iter, const std::vector<std::vector<TK>>& dm) const;
 #ifdef __DEEPKS
         void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
         void dpks_cal_projected_DM(const std::vector<std::vector<TK>>& dm) const;
