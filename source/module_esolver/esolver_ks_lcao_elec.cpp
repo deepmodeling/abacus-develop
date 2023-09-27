@@ -597,22 +597,7 @@ namespace ModuleESolver
         {
             const std::vector<std::vector<TK>>& dm =
                 dynamic_cast<const elecstate::ElecStateLCAO<TK>*> (this->pelec)->get_DM()->get_DMK_vector();
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                GlobalC::ld.cal_projected_DM(dm, //this->LOC.dm_gamma,
-                    GlobalC::ucell,
-                    GlobalC::ORB,
-                    GlobalC::GridD);
-            }
-            else
-            {
-                GlobalC::ld.cal_projected_DM_k(dm, //this->LOC.dm_k,
-                    GlobalC::ucell,
-                    GlobalC::ORB,
-                    GlobalC::GridD,
-                    this->kv.nks,
-                    this->kv.kvec_d);
-            }
+            this->dpks_cal_projected_DM(dm);
             GlobalC::ld.cal_descriptor(); // final descriptor
             GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
         }

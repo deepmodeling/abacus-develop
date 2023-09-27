@@ -623,14 +623,7 @@ namespace ModuleESolver
     {
         const Parallel_Orbitals* pv = this->LOWF.ParaV;
         const std::vector<std::vector<TK>>& dm = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            GlobalC::ld.cal_e_delta_band(dm);
-        }
-        else
-        {
-            GlobalC::ld.cal_e_delta_band_k(dm, this->kv.nks);
-        }
+        this->dpks_cal_e_delta_band(dm);
     }
 #endif
     // (4) mohan add 2010-06-24

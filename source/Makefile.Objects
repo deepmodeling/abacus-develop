@@ -204,6 +204,7 @@ OBJS_ESOLVER=esolver.o\
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
+      esolver_ks_lcao_tmpfunc.o\
 
 OBJS_GINT=gint.o\
       gint_gamma.o\
