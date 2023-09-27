@@ -102,10 +102,11 @@ namespace ModuleESolver
         if (this->psi == nullptr)
         {
             int nsk;
+            int ncol;
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
                 nsk = GlobalV::NSPIN;
-                int ncol = this->LOWF.ParaV->ncol_bands;
+                ncol = this->LOWF.ParaV->ncol_bands;
                 if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx"
 #ifdef __CUSOLVER_LCAO
                     || GlobalV::KS_SOLVER == "cusolver"
@@ -114,15 +115,14 @@ namespace ModuleESolver
                 {
                     ncol = this->LOWF.ParaV->ncol;
                 }
-
             }
             else
             {
                 nsk = this->kv.nks;
 #ifdef __MPI
-                int ncol = this->LOWF.ParaV->ncol_bands;
+                ncol = this->LOWF.ParaV->ncol_bands;
 #else
-                int ncol = GlobalV::NBANDS;
+                ncol = GlobalV::NBANDS;
 #endif
 #ifdef __CUSOLVER_LCAO
                 if (GlobalV::KS_SOLVER == "cusolver")
@@ -130,8 +130,8 @@ namespace ModuleESolver
                     ncol = this->LOWF.paraV->ncol;
                 }
 #endif
-                this->psi = new psi::Psi<TK>(nsk, ncol, this->LOWF.ParaV->nrow, nullptr);
             }
+            this->psi = new psi::Psi<TK>(nsk, ncol, this->LOWF.ParaV->nrow, nullptr);
         }
 
 
