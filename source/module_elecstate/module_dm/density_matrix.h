@@ -25,12 +25,18 @@ class DensityMatrix
     ~DensityMatrix();
 
     /**
-     * @brief Constructor of class DensityMatrix
+     * @brief Constructor of class DensityMatrix for multi-k calculation
      * @param _kv pointer of K_Vectors object
      * @param _paraV pointer of Parallel_Orbitals object
      * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
      */
     DensityMatrix(const K_Vectors* _kv, const Parallel_Orbitals* _paraV, const int nspin);
+
+    /**
+     * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
+     * @param _paraV pointer of Parallel_Orbitals object
+     * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
+     */
     DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin);
 
     /**
@@ -42,26 +48,24 @@ class DensityMatrix
 
     /**
      * @brief initialize density matrix DMR from UnitCell and RA
+     * @param ra pointer of Record_adj object (used to find ajacent atoms)
      * @param ucell pointer of UnitCell object
      */
     void init_DMR(Record_adj& ra, const UnitCell* ucell);
 
     /**
      * @brief initialize density matrix DMR from another HContainer
+     * now only support HContainer<double>
      * @param _DMR_in pointer of another HContainer object
      */
     void init_DMR(const hamilt::HContainer<TR>& _DMR_in);
+
     /// @brief initialize density matrix DMR from another HContainer
     /// this is a temprory function for NSPIN=4 case 
+    /// since copy HContainer from another HContainer with different TR is not supported yet
     /// would be refactor in the future
     /// @param _DMR_in 
     void init_DMR(const hamilt::HContainer<std::complex<double>>& _DMR_in);
-
-    /**
-     * @brief initialize density matrix DMR from another HContainer
-     * @param _DMR_in pointer of another HContainer object
-     */
-    void init_DMR_grid(const hamilt::HContainer<TR>& _DMR_in);
 
     /**
      * @brief set _DMK element directly
@@ -72,6 +76,10 @@ class DensityMatrix
      * @param value value to be set
      */
     void set_DMK(const int ispin, const int ik, const int i, const int j, const TK value);
+
+    /**
+     * @brief set _DMK element to zero
+    */
     void set_DMK_zero();
     
     /**
@@ -105,6 +113,11 @@ class DensityMatrix
      * @return HContainer<TR>* pointer of DMR
      */
     hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
+
+    /**
+     * @brief get pointer vector of DMR
+     * @return HContainer<TR>* vector of DMR
+     */
     std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const;
 
     /**
@@ -113,7 +126,16 @@ class DensityMatrix
      * @return TK* pointer of DMK
      */
     TK* get_DMK_pointer(const int ik) const;
+
+    /**
+     * @brief get pointer vector of DMK
+    */
     std::vector<std::vector<TK>> get_DMK_vector() const;
+
+    /**
+     * @brief set _DMK using a input TK* pointer
+     * please make sure the size of TK* is correct
+    */
     void set_DMK_pointer(const int ik, TK* DMK_in);
 
     /**
@@ -126,6 +148,10 @@ class DensityMatrix
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
      */
     void cal_DMR();
+
+    /**
+     * @brief calculate density matrix DMR from dm(k) using base_matrix->add_element()
+     */
     void cal_DMR_test(); // for reference during development
 
     /**
@@ -186,6 +212,8 @@ class DensityMatrix
 
     /**
      * @brief spin-polarization index (1 - none spin and SOC ; 2 - spin polarization)
+     * Attention: this is not as same as GlovalV::NSPIN
+     * _nspin means the number of isolated spin-polarization states
      */
     int _nspin = 1;
 

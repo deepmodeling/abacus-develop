@@ -253,27 +253,6 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<std::complex<doubl
     ModuleBase::Memory::record("DensityMatrix::DMR", this->_DMR.size() * this->_DMR[0]->get_memory_size());
 }
 
-// initialize density matrix DMR from another HContainer (mainly used)
-template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR_grid(const hamilt::HContainer<TR>& DMR_in)
-{
-    // ensure _DMR is empty
-    for (auto& it: this->_DMR_grid)
-    {
-        delete it;
-    }
-    this->_DMR_grid.clear();
-    // set up a HContainer using another one
-    for (int is = 0; is < this->_nspin; ++is) // loop over spin
-    {
-        hamilt::HContainer<TR>* tmp_DMR;
-        tmp_DMR = new hamilt::HContainer<TR>(DMR_in);
-        // zero.out
-        tmp_DMR->set_zero();
-        this->_DMR_grid.push_back(tmp_DMR);
-    }
-}
-
 // get _DMR pointer
 template <typename TK, typename TR>
 hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) const
