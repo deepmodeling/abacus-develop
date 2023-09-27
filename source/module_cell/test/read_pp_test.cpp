@@ -538,6 +538,101 @@ TEST_F(ReadPPTest, SetEmptyElement)
 	}
 }
 
+TEST_F(ReadPPTest, SetUpfQ)
+{
+    std::ifstream ifs;
+    ifs.open("./support/Al.pbe-sp-van.UPF");
+    upf->read_pseudo_upf201(ifs);
+    upf->set_upf_q();
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 100), 7.8994151918886213e-06);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 1, 100), -2.1915710970869145e-05);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 2, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 2, 100), 5.9614487166963409e-05);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 0, 100), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 1, 100), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 2, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 2, 100), 0.0);
+
+    ifs.close();
+}
+
+TEST_F(ReadPPTest, SetQfNew)
+{
+    // Set up input data
+    int nqf = 3;
+    int mesh = 10;
+    int l = 2;
+    int n = 1;
+
+    double qfcoef[] = {1.0, 2.0, 3.0};
+    double r[mesh];
+    double rho[mesh];
+
+    for (int i = 0; i < mesh; ++i)
+    {
+        r[i] = i + 1; // Assuming some values for r
+    }
+
+    // Call the function under test
+    upf->setqfnew(nqf, mesh, l, n, qfcoef, r, rho);
+
+    // Validate the output
+    for (int ir = 0; ir < mesh; ++ir)
+    {
+        double rr = r[ir] * r[ir];
+        double expectedValue = qfcoef[0];
+        for (int iq = 1; iq < nqf; ++iq)
+        {
+            expectedValue += qfcoef[iq] * pow(rr, iq);
+        }
+        expectedValue *= pow(r[ir], l + n);
+        EXPECT_DOUBLE_EQ(expectedValue, rho[ir]);
+    }
+}
+
+TEST_F(ReadPPTest, CheckAtwfcNorm)
+{
+    std::ifstream ifs;
+    ifs.open("./support/Al.pbe-sp-van.UPF");
+    upf->read_pseudo_upf201(ifs);
+    for (int i = 0; i < upf->mesh; ++i)
+    {
+        upf->chi(0, i) = 0.0;
+        upf->chi(1, i) = 110.0;
+    }
+    upf->check_atwfc_norm();
+
+    EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.070211057395439327);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.070211057395439327);
+
+    upf->has_so = true;
+    upf->jjj = new double[upf->nbeta];
+    upf->jchi = new double[upf->nwfc];
+    for (int i = 0; i < upf->nbeta; ++i)
+    {
+        upf->jjj[i] = 0.5;
+    }
+    for (int i = 0; i < upf->nwfc; ++i)
+    {
+        upf->jchi[i] = 0.5;
+    }
+    upf->check_atwfc_norm();
+    EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.070211057395439327);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.070211057395439327);
+
+    ifs.close();
+}
+
 TEST_F(ReadPPTest, InitReader)
 {
 	std::string pp_file = "arbitrary";
