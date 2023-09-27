@@ -37,7 +37,6 @@ class Hamilt
 
     /// first node operator, add operations from each operators
     Operator<T, Device>* ops = nullptr;
-    Operator<double, Device>* opsd = nullptr;
 
 };
 

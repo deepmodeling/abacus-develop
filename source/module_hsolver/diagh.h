@@ -23,9 +23,6 @@ class DiagH
 
     virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) = 0;
 
-    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<Real, Device> &psi, Real *eigenvalue_in) {
-        return;
-    }
 };
 
 } // namespace hsolver

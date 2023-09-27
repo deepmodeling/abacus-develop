@@ -17,7 +17,8 @@
 template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Forces
 {
-  public:
+public:
+    template<typename T>
     friend class Force_Stress_LCAO;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves

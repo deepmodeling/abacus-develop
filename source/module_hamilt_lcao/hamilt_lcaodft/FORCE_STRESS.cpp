@@ -14,35 +14,37 @@
 #include "module_elecstate/elecstate_lcao.h"
 #endif
 
-double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
-double Force_Stress_LCAO::output_acc = 1.0e-8;
-
-Force_Stress_LCAO::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
+template<typename T>
+double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
+template<typename T>
+double Force_Stress_LCAO<T>::output_acc = 1.0e-8;
+template<typename T>
+Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
 {
 }
-Force_Stress_LCAO::~Force_Stress_LCAO()
+template<typename T>
+Force_Stress_LCAO<T>::~Force_Stress_LCAO()
 {
 }
-
-void Force_Stress_LCAO::getForceStress(const bool isforce,
-                                       const bool isstress,
-                                       const bool istestf,
-                                       const bool istests,
-                                       Local_Orbital_Charge& loc,
-                                       const elecstate::ElecState* pelec,
-                                       const psi::Psi<double>* psid,
-                                       const psi::Psi<std::complex<double>>* psi,
-                                       LCAO_Hamilt& uhm,
-                                       ModuleBase::matrix& fcs,
-                                       ModuleBase::matrix& scs,
-                                       const Structure_Factor& sf,
-                                       const K_Vectors& kv,
-                                       ModulePW::PW_Basis* rhopw,
+template<typename T>
+void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
+    const bool isstress,
+    const bool istestf,
+    const bool istests,
+    Local_Orbital_Charge& loc,
+    const elecstate::ElecState* pelec,
+    const psi::Psi<T>* psi,
+    LCAO_Hamilt& uhm,
+    ModuleBase::matrix& fcs,
+    ModuleBase::matrix& scs,
+    const Structure_Factor& sf,
+    const K_Vectors& kv,
+    ModulePW::PW_Basis* rhopw,
 #ifdef __EXX
-                                       Exx_LRI<double>& exx_lri_double,
-                                       Exx_LRI<std::complex<double>>& exx_lri_complex,
+    Exx_LRI<double>& exx_lri_double,
+    Exx_LRI<std::complex<double>>& exx_lri_complex,
 #endif
-                                       ModuleSymmetry::Symmetry* symm)
+    ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
@@ -137,27 +139,26 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
     // implement four terms which needs integration
     //--------------------------------------------------------
     this->calForceStressIntegralPart(GlobalV::GAMMA_ONLY_LOCAL,
-                                     isforce,
-                                     isstress,
-                                     loc,
-                                     pelec,
-                                     psid,
-                                     psi,
-                                     foverlap,
-                                     ftvnl_dphi,
-                                     fvnl_dbeta,
-                                     fvl_dphi,
-                                     soverlap,
-                                     stvnl_dphi,
-                                     svnl_dbeta,
+        isforce,
+        isstress,
+        loc,
+        pelec,
+        psi,
+        foverlap,
+        ftvnl_dphi,
+        fvnl_dbeta,
+        fvl_dphi,
+        soverlap,
+        stvnl_dphi,
+        svnl_dbeta,
 #ifdef __DEEPKS
-                                     svl_dphi,
-                                     svnl_dalpha,
+        svl_dphi,
+        svnl_dalpha,
 #else
-                                     svl_dphi,
+        svl_dphi,
 #endif
-                                     uhm,
-                                     kv);
+        uhm,
+        kv);
     // implement vdw force or stress here
     //  Peize Lin add 2014-04-04, update 2021-03-09
     //  jiyy add 2019-05-18, update 2021-05-02
@@ -665,7 +666,8 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 }
 
 // local pseudopotential, ewald, core correction, scc terms in force
-void Force_Stress_LCAO::calForcePwPart(ModuleBase::matrix& fvl_dvl,
+template<typename T>
+void Force_Stress_LCAO<T>::calForcePwPart(ModuleBase::matrix& fvl_dvl,
                                        ModuleBase::matrix& fewalds,
                                        ModuleBase::matrix& fcc,
                                        ModuleBase::matrix& fscc,
@@ -699,53 +701,73 @@ void Force_Stress_LCAO::calForcePwPart(ModuleBase::matrix& fvl_dvl,
 }
 
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
-void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
-                                                   const bool isforce,
-                                                   const bool isstress,
-                                                   Local_Orbital_Charge& loc,
-                                                   const elecstate::ElecState* pelec,
-                                                   const psi::Psi<double>* psid,
-                                                   const psi::Psi<std::complex<double>>* psi,
-                                                   ModuleBase::matrix& foverlap,
-                                                   ModuleBase::matrix& ftvnl_dphi,
-                                                   ModuleBase::matrix& fvnl_dbeta,
-                                                   ModuleBase::matrix& fvl_dphi,
-                                                   ModuleBase::matrix& soverlap,
-                                                   ModuleBase::matrix& stvnl_dphi,
-                                                   ModuleBase::matrix& svnl_dbeta,
+template<>
+void Force_Stress_LCAO<double>::calForceStressIntegralPart(const bool isGammaOnly,
+    const bool isforce,
+    const bool isstress,
+    Local_Orbital_Charge& loc,
+    const elecstate::ElecState* pelec,
+    const psi::Psi<double>* psi,
+    ModuleBase::matrix& foverlap,
+    ModuleBase::matrix& ftvnl_dphi,
+    ModuleBase::matrix& fvnl_dbeta,
+    ModuleBase::matrix& fvl_dphi,
+    ModuleBase::matrix& soverlap,
+    ModuleBase::matrix& stvnl_dphi,
+    ModuleBase::matrix& svnl_dbeta,
 #if __DEEPKS
-                                                   ModuleBase::matrix& svl_dphi,
-                                                   ModuleBase::matrix& svnl_dalpha,
+    ModuleBase::matrix& svl_dphi,
+    ModuleBase::matrix& svnl_dalpha,
 #else
-                                                   ModuleBase::matrix& svl_dphi,
+    ModuleBase::matrix& svl_dphi,
 #endif
-                                                   LCAO_Hamilt& uhm,
-                                                   const K_Vectors& kv)
+    LCAO_Hamilt& uhm,
+    const K_Vectors& kv)
 {
-    if (isGammaOnly)
-    {       
-        flk.ftable_gamma(isforce,
-                         isstress,
-                         psid,
-                         loc,
-                         pelec,
-                         foverlap,
-                         ftvnl_dphi,
-                         fvnl_dbeta,
-                         fvl_dphi,
-                         soverlap,
-                         stvnl_dphi,
-                         svnl_dbeta,
+    flk.ftable_gamma(isforce,
+        isstress,
+        psi,
+        loc,
+        pelec,
+        foverlap,
+        ftvnl_dphi,
+        fvnl_dbeta,
+        fvl_dphi,
+        soverlap,
+        stvnl_dphi,
+        svnl_dbeta,
 #if __DEEPKS
-                         svl_dphi,
-                         svnl_dalpha,
+        svl_dphi,
+        svnl_dalpha,
 #else
-                         svl_dphi,
+        svl_dphi,
 #endif
-                         uhm);
-    }
-    else
-    {
+        uhm);
+    return;
+}
+template<>
+void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(const bool isGammaOnly,
+    const bool isforce,
+    const bool isstress,
+    Local_Orbital_Charge& loc,
+    const elecstate::ElecState* pelec,
+    const psi::Psi<std::complex<double>>* psi,
+    ModuleBase::matrix& foverlap,
+    ModuleBase::matrix& ftvnl_dphi,
+    ModuleBase::matrix& fvnl_dbeta,
+    ModuleBase::matrix& fvl_dphi,
+    ModuleBase::matrix& soverlap,
+    ModuleBase::matrix& stvnl_dphi,
+    ModuleBase::matrix& svnl_dbeta,
+#if __DEEPKS
+    ModuleBase::matrix& svl_dphi,
+    ModuleBase::matrix& svnl_dalpha,
+#else
+    ModuleBase::matrix& svl_dphi,
+#endif
+    LCAO_Hamilt& uhm,
+    const K_Vectors& kv)
+{
         flk.ftable_k(isforce,
                      isstress,
                      *this->RA,
@@ -766,14 +788,13 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
                      svl_dphi,
 #endif
                      uhm,
-                     kv);
-    }
-    
+            kv);
     return;
 }
 
 // vlocal, hartree, ewald, core correction, exchange-correlation terms in stress
-void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
+template<typename T>
+void Force_Stress_LCAO<T>::calStressPwPart(ModuleBase::matrix& sigmadvl,
                                         ModuleBase::matrix& sigmahar,
                                         ModuleBase::matrix& sigmaewa,
                                         ModuleBase::matrix& sigmacc,
@@ -820,7 +841,8 @@ void Force_Stress_LCAO::calStressPwPart(ModuleBase::matrix& sigmadvl,
 
 #include "module_base/mathzone.h"
 // do symmetry for total force
-void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm)
+template<typename T>
+void Force_Stress_LCAO<T>::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm)
 {
     double* pos;
     double d1, d2, d3;
@@ -891,3 +913,6 @@ void Force_Stress_LCAO::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::S
     delete[] pos;
     return;
 }
+
+template class Force_Stress_LCAO<double>;
+template class Force_Stress_LCAO<std::complex<double>>;

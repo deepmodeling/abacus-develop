@@ -18,8 +18,8 @@
 #include <memory>
 namespace ModuleESolver
 {
-
-    class ESolver_KS_LCAO : public ESolver_KS<std::complex<double>>
+    template <typename TK, typename TR>
+    class ESolver_KS_LCAO : public ESolver_KS<TK>
     {
     public:
         ESolver_KS_LCAO();
@@ -77,17 +77,20 @@ namespace ModuleESolver
         ModuleIO::Output_DM1 create_Output_DM1(int istep);
 
         /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
-        ModuleIO::Output_Mat_Sparse create_Output_Mat_Sparse(int istep);
+        ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
 
         /// @brief check if skip the corresponding output in md calculation
         bool md_skip_out(std::string calculation, int istep, int interval);
 
 #ifdef __EXX
-        std::shared_ptr<Exx_LRI_Interface<double>> exd = nullptr;
-        std::shared_ptr<Exx_LRI_Interface<std::complex<double>>> exc = nullptr;
+        std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;
+        std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc = nullptr;
         std::shared_ptr<Exx_LRI<double>> exx_lri_double = nullptr;
         std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
 #endif
+    private:
+        // tmp interfaces  before sub-modules are refactored
+        void dftu_cal_occup_m(int& iter, const std::vector<std::vector<TK>>& dm) const;
     };
 
 

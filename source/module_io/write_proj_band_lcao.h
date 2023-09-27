@@ -11,13 +11,14 @@
 
 namespace ModuleIO
 {
-	void write_proj_band_lcao(const psi::Psi<double> *psid,
-		const psi::Psi<std::complex<double>> *psi,
+    template <typename TK>
+    void write_proj_band_lcao(
+        const psi::Psi<TK>* psi,
 		LCAO_Hamilt& uhm,
 		const elecstate::ElecState* pelec,
 		const K_Vectors& kv,
 		const UnitCell &ucell, 
-		hamilt::Hamilt<std::complex<double>>* p_ham);
+        hamilt::Hamilt<TK>* p_ham);
 }
 
 #endif
