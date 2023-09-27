@@ -179,7 +179,16 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
 // interface for RI-related calculation, which needs loc.dm_gamma    
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (GlobalC::exx_info.info_global.cal_exx || loc->out_dm)
+        {
+            this->loc->dm_gamma.resize(GlobalV::NSPIN);
+            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            {
+                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
+            }
+        }
+#else
+        if(loc->out_dm) // keep interface for old Output_DM until new output_dm is ready
         {
             this->loc->dm_gamma.resize(GlobalV::NSPIN);
             for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -200,7 +209,11 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
                 this->print_psi(psi);
             }
             // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
-            //this->loc->cal_dk_gamma_from_2D_pub();
+            // keep interface for old Output_DM until new output_dm is ready
+            if(loc->out_dm) 
+            {
+                this->loc->cal_dk_gamma_from_2D_pub();
+            }
         }
     }
 
