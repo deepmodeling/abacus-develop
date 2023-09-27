@@ -170,22 +170,22 @@ private:
     std::map<int, int> orbitalCounts;
     int nspin_ = 0;
     int npol_ = 1;
-    std::vector<std::complex<double>> Wi_;
-    std::vector<ModuleBase::Vector3<double>> lambda_;
-    std::vector<ModuleBase::Vector3<double>> sc_mag_;
-    std::vector<ModuleBase::Vector3<double>> Mi_;
+    std::vector<std::complex<double>> Wi_; // same as overlap matrix
+    std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
+    std::vector<ModuleBase::Vector3<double>> sc_mag_; // in unit of uB
+    std::vector<ModuleBase::Vector3<double>> Mi_; // in unit of uB
     double escon_ = 0.0;
     /**
      * parameters for lambda-loop
     */
-    int nsc_; // which is NSC from INPUT
-    int nsc_min_; // which is NSCMIN from INPUT
-    double sc_thr_; // which is SCDIFF from INPUT
-    std::vector<ModuleBase::Vector3<int>> constrain_; // which is CONSTRL from INPUT
-    std::vector<ModuleBase::Vector3<double>> init_mag_; // which is MW from INPUT, the initial spin
-    bool debug = false; // which is LDESC in the original code
-    double alpha_trial_ = 0.136; // which is INISC in the original code
-    double restrict_current_ = 3; // which is SCCUT in the original code
+    int nsc_;
+    int nsc_min_;
+    double sc_thr_; // in unit of uB
+    std::vector<ModuleBase::Vector3<int>> constrain_;
+    std::vector<ModuleBase::Vector3<double>> init_mag_;
+    bool debug = false;
+    double alpha_trial_ = 0.136; // in unit of uB^2/Ry
+    double restrict_current_ = 3; // in unit of uB^2/Ry
     K_Vectors kv_;
 };
 
