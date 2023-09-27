@@ -58,8 +58,8 @@ class TNLTest : public ::testing::Test
         ucell.set_iat2iwt(2);
         // for NonlocalNew
         ucell.infoNL.Beta = new Numerical_Nonlocal[ucell.ntype];
-        ucell.atoms[0].ncpp.dion.create(5, 5);
-        ucell.atoms[0].ncpp.dion.zero_out();
+        ucell.atoms[0].ncpp.d_real.create(5, 5);
+        ucell.atoms[0].ncpp.d_real.zero_out();
         ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
         ucell.atoms[0].ncpp.d_so.zero_out();
         ucell.atoms[0].ncpp.non_zero_count_soc[0] = 5;
@@ -72,7 +72,7 @@ class TNLTest : public ::testing::Test
         ucell.atoms[0].ncpp.index2_soc[3] = new int[5];
         for(int i = 0; i < 5; ++i)
         {
-            ucell.atoms[0].ncpp.dion(i, i) = 1.0;
+            ucell.atoms[0].ncpp.d_real(i, i) = 1.0;
             ucell.atoms[0].ncpp.d_so(0, i, i) = std::complex<double>(2.0, 0.0);
             ucell.atoms[0].ncpp.d_so(3, i, i) = std::complex<double>(2.0, 0.0);
             ucell.atoms[0].ncpp.index1_soc[0][i] = i;
@@ -143,20 +143,20 @@ TEST_F(TNLTest, testTVNLcd2cd)
     std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
     Grid_Driver gd(0,0,0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    hamilt::Operator<std::complex<double>> *op = new hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>>(
+    hamilt::Operator<std::complex<double>> *op = new hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
         nullptr, 
         kvec_d_in, 
         HR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV
     );
-    hamilt::Operator<std::complex<double>> *op1 = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>>(
+    hamilt::Operator<std::complex<double>> *op1 = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
         nullptr, 
         kvec_d_in, 
         HR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV

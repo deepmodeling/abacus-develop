@@ -344,7 +344,7 @@ namespace ModuleESolver
                 double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
-                
+
                 //<Temporary> It may be changed when more clever parallel algorithm is put forward.
                 //When parallel algorithm for bands are adopted. Density will only be treated in the first group.
                 //(Different ranks should have abtained the same, but small differences always exist in practice.)

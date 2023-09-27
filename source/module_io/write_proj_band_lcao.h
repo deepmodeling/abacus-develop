@@ -7,6 +7,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_psi/psi.h"
+#include "module_hamilt_general/hamilt.h"
 
 namespace ModuleIO
 {
@@ -16,8 +17,7 @@ namespace ModuleIO
 		const elecstate::ElecState* pelec,
 		const K_Vectors& kv,
 		const UnitCell &ucell, 
-		const LCAO_Orbitals &ORB,
-		Grid_Driver &GridD);
+		hamilt::Hamilt<std::complex<double>>* p_ham);
 }
 
 #endif

@@ -4,6 +4,7 @@
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_psi/psi.h"
+#include "module_hamilt_general/hamilt.h"
 
 namespace ModuleIO
 {
@@ -16,6 +17,7 @@ void write_dos_lcao(const psi::Psi<double>* psid,
                     const double& dos_edelta_ev,
                     const double& dos_scale,
                     const double& bcoeff,
-                    const K_Vectors& kv);
+                    const K_Vectors& kv,
+                    hamilt::Hamilt<std::complex<double>>* p_ham);
 }
 #endif

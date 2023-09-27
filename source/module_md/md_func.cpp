@@ -161,6 +161,7 @@ void rand_vel(const int& natom,
 
 void init_vel(const UnitCell& unit_in,
               const int& my_rank,
+              const bool& restart,
               double& temperature,
               double* allmass,
               int& frozen_freedom,
@@ -184,7 +185,12 @@ void init_vel(const UnitCell& unit_in,
         read_vel(unit_in, vel);
         double kinetic = 0.0;
         double t_current = MD_func::current_temp(kinetic, unit_in.nat, frozen_freedom, allmass, vel);
-        if (temperature < 0)
+        if (restart)
+        {
+            std::cout << " RESTART MD, CURRENT TEMPERATURE IS " << t_current * ModuleBase::Hartree_to_K << " K"
+                      << std::endl;
+        }
+        else if (temperature < 0)
         {
             std::cout << " UNSET INITIAL TEMPERATURE, AUTOSET TO " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
@@ -429,10 +435,9 @@ void temp_vector(const int& natom,
     }
 }
 
-double current_step(const int& my_rank, const std::string& file_dir)
+void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
 {
     bool ok = true;
-    int step = 0;
 
     if (my_rank == 0)
     {
@@ -447,7 +452,7 @@ double current_step(const int& my_rank, const std::string& file_dir)
 
         if (ok)
         {
-            file >> step;
+            file >> md_step >> temperature;
             file.close();
         }
     }
@@ -458,13 +463,13 @@ double current_step(const int& my_rank, const std::string& file_dir)
 
     if (!ok)
     {
-        ModuleBase::WARNING_QUIT("current_step", "no Restart_md.dat!");
+        ModuleBase::WARNING_QUIT("current_md_info", "no Restart_md.dat!");
     }
 
 #ifdef __MPI
-    MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&md_step, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-    return step;
 }
 
 } // namespace MD_func

@@ -6,6 +6,7 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "write_orb_info.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     const psi::Psi<std::complex<double>> *psi,
@@ -13,8 +14,7 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
-    const LCAO_Orbitals &ORB,
-    Grid_Driver &GridD)
+    hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO","write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
@@ -103,36 +103,25 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
         } // if
         else
         {
-            GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                             GlobalV::OUT_LEVEL,
-                                                             ORB.get_rcutmax_Phi(),
-                                                             ucell.infoNL.get_rcutmax_Beta(),
-                                                             GlobalV::GAMMA_ONLY_LOCAL);
-
-            atom_arrange::search(GlobalV::SEARCH_PBC,
-                                 GlobalV::ofs_running,
-                                 GridD,
-                                 ucell,
-                                 GlobalV::SEARCH_RADIUS,
-                                 GlobalV::test_atom_input); // qifeng-2019-01-21
-
-            uhm.LM->allocate_HS_R(pv->nnr);
-            uhm.LM->zeros_HSR('S');
-            uhm.genH.calculate_S_no(uhm.LM->SlocR.data());
-            uhm.genH.build_ST_new('S', false, ucell, uhm.LM->SlocR.data());
             std::vector<ModuleBase::ComplexMatrix> Mulk;
             Mulk.resize(1);
             Mulk[0].create(pv->ncol, pv->nrow);
 
             for (int ik = 0; ik < kv.nks; ik++)
             {
-
                 if (is == kv.isk[ik])
                 {
-                    uhm.LM->allocate_HS_k(pv->nloc);
-                    uhm.LM->zeros_HSk('S');
-                    uhm.LM->folding_fixedH(ik,kv.kvec_d);
-
+                    // calculate SK for current k point
+                    // the target matrix is LM->Sloc2 with collumn-major
+                    if(GlobalV::NSPIN == 4)
+                    {
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, uhm.LM, 1);
+                    }
+                    else
+                    {
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, uhm.LM, 1);
+                    }
+                    // calculate Mulk
                     psi->fix_k(ik);
                     psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
                     std::complex<double>* p_dwfc = Dwfc.get_pointer();
@@ -187,14 +176,6 @@ void ModuleIO::write_proj_band_lcao(const psi::Psi<double> *psid,
 
                 } // if
             } // ik
-#ifdef __MPI
-            atom_arrange::delete_vector(GlobalV::ofs_running,
-                                        GlobalV::SEARCH_PBC,
-                                        GridD,
-                                        ucell,
-                                        GlobalV::SEARCH_RADIUS,
-                                        GlobalV::test_atom_input);
-#endif
         } // else
 #ifdef __MPI
         MPI_Reduce(weightk.real().c, weight.c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
