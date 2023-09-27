@@ -15,7 +15,8 @@ Output_Mat_Sparse::Output_Mat_Sparse(int out_mat_hsR,
                                      const Parallel_Orbitals& pv,
                                      LCAO_Hamilt& UHM,
                                      LCAO_Matrix& LM,
-                                     const K_Vectors& kv)
+                                     const K_Vectors& kv,
+                                     hamilt::Hamilt<std::complex<double>>* p_ham)
     : _out_mat_hsR(out_mat_hsR),
       _out_mat_dh(out_mat_dh),
       _out_mat_t(out_mat_t),
@@ -25,7 +26,8 @@ Output_Mat_Sparse::Output_Mat_Sparse(int out_mat_hsR,
       _pv(pv),
       _UHM(UHM),
       _LM(LM),
-      _kv(kv)
+      _kv(kv),
+      _p_ham(p_ham)
 {
 }
 
@@ -33,7 +35,7 @@ void Output_Mat_Sparse::write()
 {
     if (_out_mat_hsR)
     {
-        output_HS_R(_istep, this->_v_eff, this->_UHM, _kv);
+        output_HS_R(_istep, this->_v_eff, this->_UHM, _kv, _p_ham);
     }
 
     if (_out_mat_t)

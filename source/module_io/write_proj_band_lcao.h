@@ -7,6 +7,7 @@
 #include "module_cell/unitcell.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_general/hamilt.h"
 
 namespace ModuleIO
 {
@@ -16,8 +17,7 @@ namespace ModuleIO
 		const elecstate::ElecState* pelec,
 		const K_Vectors& kv,
 		const UnitCell &ucell, 
-		const LCAO_Orbitals &ORB,
-		Grid_Driver &GridD);
+		hamilt::Hamilt<std::complex<double>>* p_ham);
 }
 
 #endif
