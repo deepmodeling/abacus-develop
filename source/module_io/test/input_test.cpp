@@ -70,7 +70,8 @@ TEST_F(InputTest, Default)
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);
 		EXPECT_TRUE(INPUT.out_wannier_eig);
-        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_TRUE(INPUT.out_wannier_wvfn_formatted);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0], 0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
@@ -414,7 +415,8 @@ TEST_F(InputTest, Read)
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);
 		EXPECT_TRUE(INPUT.out_wannier_eig);
-        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_TRUE(INPUT.out_wannier_wvfn_formatted);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0], 0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);

@@ -75,6 +75,7 @@ class Input
     bool out_wannier_amn;
     bool out_wannier_unk;
     bool out_wannier_eig;
+    bool out_wannier_wvfn_formatted;
 
     //==========================================================
     // Stochastic DFT
