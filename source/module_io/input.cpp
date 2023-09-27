@@ -1011,10 +1011,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
-            if (ecutrho <= 0.0)
-            {
-                ecutrho = 4.0 * ecutwfc;
-            }
         }
         else if (strcmp("ecutrho", word) == 0)
         {
@@ -2521,6 +2517,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             vdw_cutoff_radius = "95";
         }
+    }
+
+    if (ecutrho <= 0.0)
+    {
+        ecutrho = 4.0 * ecutwfc;
     }
 
     if (esolver_type == "sdft"&&psi_initializer)

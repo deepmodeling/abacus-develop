@@ -463,7 +463,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
-        EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
+        EXPECT_DOUBLE_EQ(INPUT.ecutrho, 0.0);
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
         EXPECT_EQ(INPUT.ncz,0);
@@ -674,8 +674,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
         EXPECT_EQ(INPUT.of_kernel_file,"WTkernel.txt");
-        EXPECT_EQ(INPUT.device,"cpu");
-        EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
+        EXPECT_EQ(INPUT.device, "cpu");
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
         EXPECT_EQ(INPUT.ncz,0);
@@ -749,6 +748,7 @@ TEST_F(InputTest, Default_2)
 	INPUT.scf_thr = -1.0;
 	INPUT.scf_thr_type = -1;
     EXPECT_DOUBLE_EQ(INPUT.ecutwfc, 20.0);
+    EXPECT_DOUBLE_EQ(INPUT.ecutrho, 80.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
