@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+pseudo_dir .
+orbital_dir .
+ntype 2
+nbands 35
+gamma_only 0
+calculation scf
+symmetry 0
+
+out_level ie
+out_chg 1
+
+smearing_method gaussian
+smearing_sigma 0.02
+#Parameters (3.PW)
+ecutwfc 50
+scf_thr 1e-8
+scf_nmax 1
+pw_diag_thr 0.00001
+lspinorb 1
+nspin 4
+
+#Parameters (LCAO)
+basis_type pw
+
+mixing_beta 0.4
+mixing_gg0 1.5
+
+psi_initializer 1
+init_wfc atomic
+ks_solver dav

@@ -25,9 +25,10 @@ class psi_initializer_atomic : public psi_initializer
 
         // setters
 
+        /* I leave this function here for deprecation of UnitCell in the future */
         /// @brief setter of pseudpotential filenames
         /// @param pseudopot_files pseudpotential filenames organized in an array
-        void set_pseudopot_files(std::string* pseudopot_files);
+        //void set_pseudopot_files(std::string* pseudopot_files);
         // I wont write a function to set ovlp_pswfcjlq, it is totally useless
 
         /// @brief specialized normalization of wfc function
