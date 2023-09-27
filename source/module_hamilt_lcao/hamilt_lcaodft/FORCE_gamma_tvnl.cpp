@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include "module_base/timer.h"
 
-void Force_LCAO_gamma::cal_fvnl_dbeta_new(
-	const std::vector<ModuleBase::matrix> &dm2d, 
+void Force_LCAO_gamma::cal_fvnl_dbeta(
+    const elecstate::DensityMatrix<double, double>* DM,
 	const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& fvnl_dbeta, 
@@ -85,9 +85,6 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                     atom1->iw2n[ iw1 ], // N1
                     GlobalC::ucell.atoms[T0].tau[I0], T0, 1); //R0,T0
 #endif
-                //=================================================================
-                //          end of new two-center integral (temporary)
-                //=================================================================
 
                 assert(nlm.size()==4);
                 nlm_tot[ad1].insert({iw1,nlm});
@@ -204,7 +201,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
                         for(int is=0; is<GlobalV::NSPIN; ++is)
                         {
                             //sum += dm2d[is][index];
-                            sum += dm2d[is](iw2_local, iw1_local);
+                            //sum += dm2d[is](iw2_local, iw1_local);
+                            sum += DM->get_DMK(is+1, 0, iw2_local, iw1_local);
                         }
                         sum *= 2.0;
 
@@ -238,8 +236,8 @@ void Force_LCAO_gamma::cal_fvnl_dbeta_new(
 }
 
 void Force_LCAO_gamma::cal_ftvnl_dphi(
-	const std::vector<ModuleBase::matrix> &dm2d, 
-	const bool isforce, 
+    const elecstate::DensityMatrix<double, double>* DM,
+    const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& ftvnl_dphi, 
 	ModuleBase::matrix& stvnl_dphi)
@@ -263,7 +261,8 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
                 double sum = 0.0;
                 for(int is=0; is<GlobalV::NSPIN; ++is)
                 {
-                    sum += dm2d[is](nu, mu);
+                    //sum += dm2d[is](nu, mu);
+                    sum += DM->get_DMK(is+1, 0, nu, mu);
                 }
                 sum *= 2.0;
 

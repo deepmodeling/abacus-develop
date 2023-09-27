@@ -625,10 +625,24 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO::out_mat_dh = INPUT.out_mat_dh;
-    elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;
+    }
+    else if (!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao = INPUT.out_wfc_lcao;
+    }
     if (INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)
     {
-        elecstate::ElecStateLCAO::need_psi_grid = false;
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            elecstate::ElecStateLCAO<double>::need_psi_grid = false;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = false;
+        }
     }
     if (INPUT.calculation == "test_neighbour" && GlobalV::NPROC > 1)
     {

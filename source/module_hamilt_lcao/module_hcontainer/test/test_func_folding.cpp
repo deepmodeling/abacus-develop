@@ -2,7 +2,9 @@
 #include "../hcontainer_funcs.h"
 #include "../hcontainer.h"
 #include <chrono>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
