@@ -239,7 +239,7 @@ void Atom_pseudo::bcast_atom_pseudo(void)
 	Parallel_Common::bcast_double( vloc_at, mesh);
 // == end of pseudo_vl ==
 
-// == pseudo_nc ==
+// == pseudo ==
 	if(GlobalV::MY_RANK != 0)
 	{
 		delete[] lll;

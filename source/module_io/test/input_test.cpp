@@ -124,6 +124,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.bx,0);
         EXPECT_EQ(INPUT.by,0);
         EXPECT_EQ(INPUT.bz,0);
+        EXPECT_EQ(INPUT.nsx, 0);
+        EXPECT_EQ(INPUT.nsy, 0);
+        EXPECT_EQ(INPUT.nsz, 0);
         EXPECT_EQ(INPUT.diago_proc,0);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);
@@ -462,7 +465,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
-        EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
+        EXPECT_DOUBLE_EQ(INPUT.ecutrho, 0.0);
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
         EXPECT_EQ(INPUT.ncz,0);
@@ -472,6 +475,9 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.bx,2);
         EXPECT_EQ(INPUT.by,2);
         EXPECT_EQ(INPUT.bz,2);
+        EXPECT_EQ(INPUT.nsx, 0);
+        EXPECT_EQ(INPUT.nsy, 0);
+        EXPECT_EQ(INPUT.nsz, 0);
         EXPECT_EQ(INPUT.diago_proc,4);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);
@@ -670,8 +676,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.of_full_pw_dim,0);
         EXPECT_FALSE(INPUT.of_read_kernel);
         EXPECT_EQ(INPUT.of_kernel_file,"WTkernel.txt");
-        EXPECT_EQ(INPUT.device,"cpu");
-        EXPECT_DOUBLE_EQ(INPUT.ecutrho,80.0);
+        EXPECT_EQ(INPUT.device, "cpu");
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
         EXPECT_EQ(INPUT.ncz,0);
@@ -752,6 +757,7 @@ TEST_F(InputTest, Default_2)
     // the 1st calling
     INPUT.Default_2();
     // ^^^^^^^^^^^^^^
+    EXPECT_DOUBLE_EQ(INPUT.ecutrho, 80.0);
     EXPECT_EQ(INPUT.vdw_s6, "0.75");
     EXPECT_EQ(INPUT.vdw_cutoff_radius, "56.6918");
     EXPECT_EQ(INPUT.bndpar,1);
@@ -972,9 +978,21 @@ TEST_F(InputTest, Default_2)
 
 TEST_F(InputTest, Check)
 {
-	INPUT.nbands = -1;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+    INPUT.ecutwfc = 20.0;
+    INPUT.ecutrho = 10;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("ecutrho must > ecutwfc"));
+    INPUT.ecutrho = 30;
+    testing::internal::CaptureStdout();
+    INPUT.Check();
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("ecutrho < 4*ecutwfc, not recommended"));
+    //
+    INPUT.nbands = -1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("NBANDS must >= 0"));
 	INPUT.nbands = 2;

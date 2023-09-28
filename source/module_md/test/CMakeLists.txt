@@ -10,7 +10,7 @@ list(APPEND depend_files
   ../../module_cell/atom_pseudo.cpp
   ../../module_cell/read_atoms.cpp
   ../../module_cell/read_cell_pseudopots.cpp
-  ../../module_cell/pseudo_nc.cpp
+  ../../module_cell/pseudo.cpp
   ../../module_cell/read_pp.cpp
   ../../module_cell/read_pp_upf100.cpp
   ../../module_cell/read_pp_upf201.cpp
@@ -33,6 +33,7 @@ list(APPEND depend_files
   ../../module_base/global_variable.cpp
   ../../module_base/libm/branred.cpp
   ../../module_base/libm/sincos.cpp
+  ../../module_base/math_integral.cpp
   ../../module_cell/module_neighbor/sltk_adjacent_set.cpp
   ../../module_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../module_cell/module_neighbor/sltk_atom.cpp
