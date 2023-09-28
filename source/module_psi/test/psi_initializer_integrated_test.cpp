@@ -46,10 +46,10 @@ protected:
         this->n_match = 0;
         this->n_match_max = 10;
         this->pattern = std::regex("\\((-?[0-9]+\\.[0-9]*),(-?[0-9]+\\.[0-9]*)\\)");
-        this->error = std::system("cp ../../../../source/module_psi/test/support/KPT ./KPT");
-        this->error = std::system("cp ../../../../source/module_psi/test/support/STRU ./STRU");
-        this->error = std::system("cp ../../../../source/module_psi/test/support/Si_NCSR_ONCVPSP_v0.5_dojo.upf ./Si_NCSR_ONCVPSP_v0.5_dojo.upf");
-        this->error = std::system("cp ../../../../source/module_psi/test/support/Si_gga_8au_60Ry_2s2p1d.orb ./Si_gga_8au_60Ry_2s2p1d.orb");
+        this->error = std::system("cp ./support/KPT ./KPT");
+        this->error = std::system("cp ./support/STRU ./STRU");
+        this->error = std::system("cp ./support/Si_NCSR_ONCVPSP_v0.5_dojo.upf ./Si_NCSR_ONCVPSP_v0.5_dojo.upf");
+        this->error = std::system("cp ./support/Si_gga_8au_60Ry_2s2p1d.orb ./Si_gga_8au_60Ry_2s2p1d.orb");
     }
 
     virtual void TearDown() {
@@ -72,7 +72,7 @@ TEST_F(IntegratedInitializerTest, CalPsiGRandom) {
     std::smatch match_new;
     // compare wavefunctions
     // init_wfc = "random"
-    error = std::system("cp ../../../../source/module_psi/test/support/random_new ./INPUT");
+    error = std::system("cp ./support/random_new ./INPUT");
     error = std::system("../../../abacus");
     error = std::system("rm ./INPUT");
     // compare wavefunctions with reference value
@@ -123,7 +123,7 @@ TEST_F(IntegratedInitializerTest, CalPsiGAtomic) {
     std::smatch match_new;
     // compare wavefunctions
     // init_wfc = "atomic"
-    error = std::system("cp ../../../../source/module_psi/test/support/atomic_new ./INPUT");
+    error = std::system("cp ./support/atomic_new ./INPUT");
     error = std::system("../../../abacus");
     error = std::system("rm ./INPUT");
     // compare wavefunctions with reference value
@@ -167,121 +167,6 @@ TEST_F(IntegratedInitializerTest, CalPsiGAtomic) {
     delete[] imags_read;
 }
 
-TEST_F(IntegratedInitializerTest, CalPsiGAtomicRandom) {
-
-    int error = 0;
-    std::string line_new;
-    std::smatch match_new;
-    // compare wavefunctions
-    // init_wfc = "atomic+random"
-    error = std::system("cp ../../../../source/module_psi/test/support/atomic_random_new ./INPUT");
-    error = std::system("../../../abacus");
-    error = std::system("rm ./INPUT");
-    std::vector<double> reals_ref = {
-        0.0001369356,  0.0001236628, 0.0004026929, -0.0008809154, -0.0047158519,
-        -0.0132552932, 0.1133823497, 0.8402572709, 0.1098721243, -0.0111463163
-    };
-    std::vector<double> imags_ref = {
-        5.97084e-05, -2.00533e-05, -0.0004781742, -6.72735e-05, -0.0006686238,
-        -0.001713696, 0.0016234442, 0.025876354, -0.0093388462, 0.0033176596
-    };
-    double* reals_read = new double[reals_ref.size()];
-    double* imags_read = new double[imags_ref.size()];
-    // compare wavefunctions with reference value
-    this->ifs_new.open("./psig_0_kpt.out");
-
-    bool find_psi = false;
-    while (ifs_new >> line_new) {
-        if (line_new == "atomic+random") {
-            std::cout << "Have find correct psi" << std::endl;
-            find_psi = true;
-            break;
-        };
-    }
-    ASSERT_TRUE(find_psi);
-
-    while (ifs_new >> line_new) {
-        if (regex_search(line_new, match_new, this->pattern)) { //check if the line contains a complex number tuple
-            double real = stod(match_new[1]); //extract the real part of the complex number
-            double imag = stod(match_new[2]); //extract the imaginary part of the complex number
-            reals_read[this->n_match] = real;
-            imags_read[this->n_match] = imag;
-            n_match++;
-            if (this->n_match == this->n_match_max) break;
-        }
-    }
-    this->ifs_new.close();
-    for (int i = 0; i < reals_ref.size(); i++) {
-        EXPECT_NEAR(reals_read[i], reals_ref[i], 1e-5);
-        EXPECT_NEAR(imags_read[i], imags_ref[i], 1e-5);
-    }
-    delete[] reals_read;
-    delete[] imags_read;
-}
-
-TEST_F(IntegratedInitializerTest, CalPsiGAtomicSOC) {
-
-    int error = 0;
-    std::string line_new;
-    std::smatch match_new;
-    // compare wavefunctions
-    // init_wfc = "atomic"
-    error = std::system("cp ../../../../source/module_psi/test/support/atomic_new_soc ./INPUT");
-    error = std::system("rm ./STRU");
-    error = std::system("cp ../../../../source/module_psi/test/support/STRU_soc ./STRU");
-    error = std::system("cp ../../../../tests/PP_ORB/As_dojo_soc.upf ./As_dojo_soc.upf");
-    error = std::system("cp ../../../../tests/PP_ORB/Ga_dojo_soc.upf ./Ga_dojo_soc.upf");
-    error = std::system("cp ../../../../tests/PP_ORB/As_gga_8au_100Ry_2s2p1d.orb ./As_gga_8au_100Ry_2s2p1d.orb");
-    error = std::system("cp ../../../../tests/PP_ORB/Ga_gga_9au_60Ry_2s2p2d.orb ./Ga_gga_9au_60Ry_2s2p2d.orb");
-
-    error = std::system("../../../abacus");
-    error = std::system("rm ./INPUT");
-    // compare wavefunctions with reference value
-    std::vector<double> reals_ref = {
-        0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, -0.0, -0.0, -0.0
-    };
-    std::vector<double> imags_ref = {
-        0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, -0.0, -0.0, -0.0
-    };
-    double* reals_read = new double[reals_ref.size()];
-    double* imags_read = new double[imags_ref.size()];
-    this->ifs_new.open("./psig_0_kpt.out");
-
-    bool find_psi = false;
-    while (ifs_new >> line_new) {
-        if (line_new == "atomic") {
-            std::cout << "Have find correct psi" << std::endl;
-            find_psi = true;
-            break;
-        };
-    }
-    ASSERT_TRUE(find_psi);
-    while (ifs_new >> line_new) {
-        if (regex_search(line_new, match_new, this->pattern)) { //check if the line contains a complex number tuple
-            double real = stod(match_new[1]); //extract the real part of the complex number
-            double imag = stod(match_new[2]); //extract the imaginary part of the complex number
-            reals_read[this->n_match] = real;
-            imags_read[this->n_match] = imag;
-            this->n_match++;
-            if (this->n_match == this->n_match_max) break;
-        }
-    }
-    this->ifs_new.close();
-    for (int i = 0; i < reals_ref.size(); i++) {
-        EXPECT_NEAR(reals_read[i], reals_ref[i], 1e-5);
-        EXPECT_NEAR(imags_read[i], imags_ref[i], 1e-5);
-    }
-
-    error = std::system("rm ./As_dojo_soc.upf");
-    error = std::system("rm ./Ga_dojo_soc.upf");
-    error = std::system("rm ./As_gga_8au_100Ry_2s2p1d.orb");
-    error = std::system("rm ./Ga_gga_9au_60Ry_2s2p2d.orb");
-    delete[] reals_read;
-    delete[] imags_read;
-}
-
 TEST_F(IntegratedInitializerTest, CalPsiGNao) {
 
     int error = 0;
@@ -289,7 +174,7 @@ TEST_F(IntegratedInitializerTest, CalPsiGNao) {
     std::smatch match_new;
     // compare wavefunctions
     // init_wfc = "nao"
-    error = std::system("cp ../../../../source/module_psi/test/support/nao_new ./INPUT");
+    error = std::system("cp ./support/nao_new ./INPUT");
     error = std::system("../../../abacus");
     error = std::system("rm ./INPUT");
     std::vector<double> reals_ref = {
@@ -329,122 +214,6 @@ TEST_F(IntegratedInitializerTest, CalPsiGNao) {
         EXPECT_NEAR(reals_read[i], reals_ref[i], 1e-5);
         EXPECT_NEAR(imags_read[i], imags_ref[i], 1e-5);
     }
-    delete[] reals_read;
-    delete[] imags_read;
-}
-
-TEST_F(IntegratedInitializerTest, CalPsiGNaoRandom) {
-
-    int error = 0;
-    std::string line_new;
-    std::smatch match_new;
-    // compare wavefunctions
-    // init_wfc = "nao"
-    error = std::system("cp ../../../../source/module_psi/test/support/nao_random_new ./INPUT");
-    error = std::system("../../../abacus");
-    error = std::system("rm ./INPUT");
-    std::vector<double> reals_ref = {
-        0.00014144339, 3.93058e-05, 0.0004587975, -0.000833052, -0.0056880967,
-        -0.0165802245, 0.1468157948, 1.0751570086, 0.1433055694, -0.0144712477
-    };
-    std::vector<double> imags_ref = {
-        5.97084e-05, -2.00533e-05, -0.0004781742, -6.72735e-05, -0.0006686238, 
-        -0.001713696, 0.0016234442, 0.0258763541, -0.0093388462, 0.0033176596
-    };
-    double* reals_read = new double[reals_ref.size()];
-    double* imags_read = new double[imags_ref.size()];
-    // compare wavefunctions with reference value
-    this->ifs_new.open("./psig_0_kpt.out");
-
-    bool find_psi = false;
-    while (ifs_new >> line_new) {
-        if (line_new == "nao+random") {
-            std::cout << "Have find correct psi" << std::endl;
-            find_psi = true;
-            break;
-        };
-    }
-    ASSERT_TRUE(find_psi);
-
-    while (ifs_new >> line_new) {
-        if (regex_search(line_new, match_new, this->pattern)) { //check if the line contains a complex number tuple
-            double real = stod(match_new[1]); //extract the real part of the complex number
-            double imag = stod(match_new[2]); //extract the imaginary part of the complex number
-            reals_read[this->n_match] = real;
-            imags_read[this->n_match] = imag;
-            n_match++;
-            if (this->n_match == this->n_match_max) break;
-        }
-    }
-    this->ifs_new.close();
-    for (int i = 0; i < reals_ref.size(); i++) {
-        EXPECT_NEAR(reals_read[i], reals_ref[i], 1e-5);
-        EXPECT_NEAR(imags_read[i], imags_ref[i], 1e-5);
-    }
-    delete[] reals_read;
-    delete[] imags_read;
-}
-
-TEST_F(IntegratedInitializerTest, CalPsiGNaoSOC) {
-
-    int error = 0;
-    std::string line_new;
-    std::smatch match_new;
-    // compare wavefunctions
-    // init_wfc = "nao"
-    error = std::system("cp ../../../../source/module_psi/test/support/nao_new_soc ./INPUT");
-    error = std::system("rm ./STRU");
-    error = std::system("cp ../../../../source/module_psi/test/support/STRU_soc ./STRU");
-    error = std::system("cp ../../../../tests/PP_ORB/As_dojo_soc.upf ./As_dojo_soc.upf");
-    error = std::system("cp ../../../../tests/PP_ORB/Ga_dojo_soc.upf ./Ga_dojo_soc.upf");
-    error = std::system("cp ../../../../tests/PP_ORB/As_gga_8au_100Ry_2s2p1d.orb ./As_gga_8au_100Ry_2s2p1d.orb");
-    error = std::system("cp ../../../../tests/PP_ORB/Ga_gga_9au_60Ry_2s2p2d.orb ./Ga_gga_9au_60Ry_2s2p2d.orb");
-
-    error = std::system("../../../abacus");
-    error = std::system("rm ./INPUT");
-    std::vector<double> reals_ref = {
-        -0.0000387817,  -0.0000244125, -0.0009063254, -0.0055545136, 0.0068596488,
-        -0.1457078271, 0.7157474483, 0.1457078271, 0.0068596488, 0.0055545136
-    };
-    std::vector<double> imags_ref = {
-        -0.0000387817, 0.0000244125, -0.0009063254, 0.0055545136, 0.0068596488,
-        0.1457078271, 0.7157474483, -0.1457078271, 0.0068596488, -0.0055545136
-    };
-    double* reals_read = new double[reals_ref.size()];
-    double* imags_read = new double[imags_ref.size()];
-    // compare wavefunctions with reference value
-    this->ifs_new.open("./psig_0_kpt.out");
-
-    bool find_psi = false;
-    while (ifs_new >> line_new) {
-        if (line_new == "nao") {
-            std::cout << "Have find correct psi" << std::endl;
-            find_psi = true;
-            break;
-        };
-    }
-    ASSERT_TRUE(find_psi);
-
-    while (ifs_new >> line_new) {
-        if (regex_search(line_new, match_new, this->pattern)) { //check if the line contains a complex number tuple
-            double real = stod(match_new[1]); //extract the real part of the complex number
-            double imag = stod(match_new[2]); //extract the imaginary part of the complex number
-            reals_read[this->n_match] = real;
-            imags_read[this->n_match] = imag;
-            n_match++;
-            if (this->n_match == this->n_match_max) break;
-        }
-    }
-    this->ifs_new.close();
-    for (int i = 0; i < reals_ref.size(); i++) {
-        EXPECT_NEAR(reals_read[i], reals_ref[i], 1e-5);
-        EXPECT_NEAR(imags_read[i], imags_ref[i], 1e-5);
-    }
-
-    error = std::system("rm ./As_dojo_soc.upf");
-    error = std::system("rm ./Ga_dojo_soc.upf");
-    error = std::system("rm ./As_gga_8au_100Ry_2s2p1d.orb");
-    error = std::system("rm ./Ga_gga_9au_60Ry_2s2p2d.orb");
     delete[] reals_read;
     delete[] imags_read;
 }

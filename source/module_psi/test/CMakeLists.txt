@@ -13,3 +13,5 @@ AddTest(
         psi_initializer_integrated_test.cpp
 )
 endif()
+
+install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
