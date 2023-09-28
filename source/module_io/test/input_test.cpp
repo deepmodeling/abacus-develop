@@ -748,7 +748,6 @@ TEST_F(InputTest, Default_2)
 	INPUT.scf_thr = -1.0;
 	INPUT.scf_thr_type = -1;
     EXPECT_DOUBLE_EQ(INPUT.ecutwfc, 20.0);
-    EXPECT_DOUBLE_EQ(INPUT.ecutrho, 80.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 20.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
@@ -756,6 +755,7 @@ TEST_F(InputTest, Default_2)
     // the 1st calling
     INPUT.Default_2();
     // ^^^^^^^^^^^^^^
+    EXPECT_DOUBLE_EQ(INPUT.ecutrho, 80.0);
     EXPECT_EQ(INPUT.vdw_s6, "0.75");
     EXPECT_EQ(INPUT.vdw_cutoff_radius, "56.6918");
     EXPECT_EQ(INPUT.bndpar,1);
