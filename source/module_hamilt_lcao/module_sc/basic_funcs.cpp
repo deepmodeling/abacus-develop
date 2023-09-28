@@ -23,9 +23,9 @@ std::pair<int,int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>&
     {
         for (int j = 0; j < 3; j++)
         {
-            if ((max < abs(array[i][j])))
+            if ((max < std::abs(array[i][j])))
             {
-                max = abs(array[i][j]);
+                max = std::abs(array[i][j]);
                 i_max = i;
                 j_max = j;
             }

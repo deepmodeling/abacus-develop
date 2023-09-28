@@ -184,8 +184,8 @@ private:
     std::vector<ModuleBase::Vector3<int>> constrain_;
     std::vector<ModuleBase::Vector3<double>> init_mag_;
     bool debug = false;
-    double alpha_trial_ = 0.136; // in unit of uB^2/Ry
-    double restrict_current_ = 3; // in unit of uB^2/Ry
+    double alpha_trial_ = 0.00073498; // in unit of Ry/uB^2 = 0.01 eV/uB^2
+    double restrict_current_ = 0.22049; // in unit of Ry/uB = 3 eV/uB
     K_Vectors kv_;
 };
 
