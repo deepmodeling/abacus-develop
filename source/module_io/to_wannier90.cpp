@@ -1,4 +1,5 @@
 #include "to_wannier90.h"
+#include "binstream.h"
 
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/math_integral.h"
@@ -45,6 +46,7 @@ void toWannier90::init_wannier_pw(const bool out_wannier_mmn,
     const bool out_wannier_amn, 
     const bool out_wannier_unk, 
     const bool out_wannier_eig,
+    const bool wvfn_formatted,
     const ModuleBase::matrix& ekb,
     const ModulePW::PW_Basis_K* wfcpw,
     const ModulePW::PW_Basis_Big* bigpw,
@@ -68,7 +70,7 @@ void toWannier90::init_wannier_pw(const bool out_wannier_mmn,
 
     if (out_wannier_unk)
     {
-        writeUNK(wfcpw, *psi, bigpw);
+        writeUNK(wvfn_formatted, wfcpw, *psi, bigpw);
     }
     if (out_wannier_eig)
     {
@@ -109,6 +111,7 @@ void toWannier90::init_wannier_lcao(const bool out_wannier_mmn,
                                     const bool out_wannier_amn, 
                                     const bool out_wannier_unk, 
                                     const bool out_wannier_eig,
+                                    const bool wvfn_formatted,
                                     const Grid_Technique& gt,
                                     const ModuleBase::matrix& ekb,
                                     const ModulePW::PW_Basis_K* wfcpw,
@@ -146,7 +149,7 @@ void toWannier90::init_wannier_lcao(const bool out_wannier_mmn,
     }
     if (out_wannier_unk)
     {
-        writeUNK(wfcpw, this->unk_inLcao[0], bigpw);
+        writeUNK(wvfn_formatted,wfcpw, this->unk_inLcao[0], bigpw);
     }
     if (out_wannier_eig)
     {
@@ -428,7 +431,8 @@ void toWannier90::outEIG(const ModuleBase::matrix& ekb)
     }
 }
 
-void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw,
+void toWannier90::writeUNK(const bool wvfn_formatted,
+                           const ModulePW::PW_Basis_K* wfcpw,
                            const psi::Psi<std::complex<double>>& psi_pw,
                            const ModulePW::PW_Basis_Big* bigpw)
 {
@@ -559,9 +563,11 @@ void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw,
         for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
         {
             std::ofstream unkfile;
-
+            Binstream unkfile_b;
+            
             if (GlobalV::MY_RANK == 0)
             {
+                
                 std::stringstream name;
                 if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
                 {
@@ -571,16 +577,22 @@ void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw,
                 {
                     if (wannier_spin == "up")
                         name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
-                             << ik + 1 - start_k_index << ".1";
+                            << ik + 1 - start_k_index << ".1";
                     else if (wannier_spin == "down")
                         name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
-                             << ik + 1 - start_k_index << ".2";
+                            << ik + 1 - start_k_index << ".2";
                 }
-
-                unkfile.open(name.str(), std::ios::out);
-
-                unkfile << std::setw(12) << wfcpw->nx << std::setw(12) << wfcpw->ny << std::setw(12) << wfcpw->nz
-                        << std::setw(12) << ik + 1 << std::setw(12) << num_bands << std::endl;
+                if (wvfn_formatted)
+                {
+                    unkfile.open(name.str(), std::ios::out);
+                    unkfile << std::setw(12) << wfcpw->nx << std::setw(12) << wfcpw->ny << std::setw(12) << wfcpw->nz
+                            << std::setw(12) << ik + 1 << std::setw(12) << num_bands << std::endl;
+                }
+                else
+                {
+                    unkfile_b.open(name.str(), "w");
+                    unkfile_b << int(20) << wfcpw->nx << wfcpw->ny << wfcpw->nz << ik + 1 << num_bands << 20;
+                }
             }
 
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
@@ -589,6 +601,14 @@ void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw,
                     continue;
 
                 wfcpw->recip2real(&psi_pw(ik, ib, 0), porter, ik);
+
+                if (GlobalV::MY_RANK == 0)
+                {
+                    if (!wvfn_formatted)
+                    {
+                        unkfile_b << wfcpw->nz * wfcpw->ny * wfcpw->nx * 8 * 2; // sizeof(double) = 8
+                    }
+                }
 
                 // save the rho one z by one z.
                 for (int iz = 0; iz < wfcpw->nz; iz++)
@@ -627,24 +647,47 @@ void toWannier90::writeUNK(const ModulePW::PW_Basis_K* wfcpw,
                     // write data
                     if (GlobalV::MY_RANK == 0)
                     {
-                        for (int iy = 0; iy < wfcpw->ny; iy++)
+                        if (wvfn_formatted)
                         {
-                            for (int ix = 0; ix < wfcpw->nx; ix++)
+                            for (int iy = 0; iy < wfcpw->ny; iy++)
                             {
-                                unkfile << std::setw(20) << std::setprecision(9) << std::setiosflags(std::ios::scientific)
-                                        << zpiece[ix * wfcpw->ny + iy].real() << std::setw(20) << std::setprecision(9)
-                                        << std::setiosflags(std::ios::scientific) << zpiece[ix * wfcpw->ny + iy].imag()
-                                        << std::endl;
+                                for (int ix = 0; ix < wfcpw->nx; ix++)
+                                {
+                                    unkfile << std::setw(20) << std::setprecision(9) << std::setiosflags(std::ios::scientific)
+                                            << zpiece[ix * wfcpw->ny + iy].real() << std::setw(20) << std::setprecision(9)
+                                            << std::setiosflags(std::ios::scientific) << zpiece[ix * wfcpw->ny + iy].imag()
+                                            << std::endl;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int iy = 0; iy < wfcpw->ny; iy++)
+                            {
+                                for (int ix = 0; ix < wfcpw->nx; ix++)
+                                {
+                                    unkfile_b << zpiece[ix * wfcpw->ny + iy].real() << zpiece[ix * wfcpw->ny + iy].imag();
+                                }
                             }
                         }
                     }
                 } // end iz
+                if (GlobalV::MY_RANK == 0)
+                {
+                    if (!wvfn_formatted)
+                    {
+                        unkfile_b << wfcpw->nz * wfcpw->ny * wfcpw->nx * 8 * 2; // sizeof(double) = 8
+                    }
+                }
                 MPI_Barrier(POOL_WORLD);
-            }
+            } // ib
 
             if (GlobalV::MY_RANK == 0)
             {
-                unkfile.close();
+                if (wvfn_formatted)
+                    unkfile.close();
+                else
+                    unkfile_b.close();
             }
         }
     }
