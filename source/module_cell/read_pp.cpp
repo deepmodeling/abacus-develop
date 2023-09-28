@@ -498,6 +498,7 @@ void Pseudopot_upf::setqfnew(const int& nqf,
  */
 void Pseudopot_upf::check_atwfc_norm()
 {
+    double norm = 0.0;
     double* norm_pswfc = new double[mesh];
     double* norm_beta = new double[kkbeta];
     double* work = new double[nbeta];
@@ -507,7 +508,7 @@ void Pseudopot_upf::check_atwfc_norm()
         {
             norm_pswfc[ir] = chi(iw, ir) * chi(iw, ir);
         }
-        double norm = ModuleBase::Integral::simpson(mesh, norm_pswfc, rab);
+        ModuleBase::Integral::Simpson_Integral(mesh, norm_pswfc, rab, norm);
         if (norm < 1e-8)
         {
             // set occupancy to a small negative number so that this wfc
@@ -547,7 +548,7 @@ void Pseudopot_upf::check_atwfc_norm()
                     {
                         norm_beta[ik] = beta(ib, ik) * chi(iw, ik);
                     }
-                    work[ib] = ModuleBase::Integral::simpson(kkbeta, norm_beta, rab);
+                    ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, rab, work[ib]);
                 }
                 else
                 {

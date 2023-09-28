@@ -609,8 +609,8 @@ TEST_F(ReadPPTest, CheckAtwfcNorm)
     EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
     EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
     EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.070211057395439327);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.070211057395439327);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.069913165961999812);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.069913165961999812);
 
     upf->has_so = true;
     upf->jjj = new double[upf->nbeta];
@@ -627,8 +627,8 @@ TEST_F(ReadPPTest, CheckAtwfcNorm)
     EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
     EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
     EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.070211057395439327);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.070211057395439327);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.069913165961999812);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.069913165961999812);
 
     ifs.close();
 }

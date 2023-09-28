@@ -7,12 +7,9 @@ namespace ModuleESolver
 {   ESolver_FP::ESolver_FP()
     {
         // pw_rho = new ModuleBase::PW_Basis();
-        
+
         pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
-        if (GlobalV::use_uspp)
-        {
-            pw_rhos = new ModulePW::PW_Basis(GlobalV::device_flag, GlobalV::precision_flag);
-        }
+        pw_rhos = new ModulePW::PW_Basis(GlobalV::device_flag, GlobalV::precision_flag);
 
         //temporary, it will be removed
         pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);
@@ -32,10 +29,7 @@ namespace ModuleESolver
             delete psid;
         }
         delete pw_rho;
-        if (GlobalV::use_uspp)
-        {
-            delete pw_rhos;
-        }
+        delete pw_rhos;
         delete this->pelec;
     }
     void ESolver_FP::Init(Input& inp, UnitCell& cell)
