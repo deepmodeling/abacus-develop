@@ -350,8 +350,18 @@ int DensityMatrix<TK, TR>::get_DMK_nks() const
 {
 #ifdef __DEBUG
     assert(this->_DMK.size() != 0);
+    assert(this->_kv != nullptr);
 #endif
     return this->_kv->nks;
+}
+
+template <typename TK, typename TR>
+int DensityMatrix<TK, TR>::get_DMK_size() const
+{
+#ifdef __DEBUG
+    assert(this->_DMK.size() != 0);
+#endif
+    return this->_DMK.size();
 }
 
 template <typename TK, typename TR>
@@ -382,9 +392,9 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
         hamilt::HContainer<TR>* tmp_DMR = this->_DMR[is-1];
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
-        // #ifdef _OPENMP
-        // #pragma omp parallel for
-        // #endif
+#ifdef _OPENMP
+        #pragma omp parallel for
+#endif
         for (int iap = 0; iap < tmp_DMR->size_atom_pairs(); ++iap)
         {
             hamilt::AtomPair<double>& tmp_ap = tmp_DMR->get_atom_pair(iap);
@@ -808,5 +818,6 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
 // T of HContainer can be double or complex<double>
 template class DensityMatrix<double, double>;               // Gamma-Only case
 template class DensityMatrix<std::complex<double>, double>; // Multi-k case
+//template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
 
 } // namespace elecstate

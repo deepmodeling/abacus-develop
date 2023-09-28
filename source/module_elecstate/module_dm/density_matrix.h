@@ -96,6 +96,7 @@ class DensityMatrix
      * @brief get total number of k-points of density matrix dm(k)
      */
     int get_DMK_nks() const;
+    int get_DMK_size() const;
 
     /**
      * @brief get number of rows of density matrix dm(k)
