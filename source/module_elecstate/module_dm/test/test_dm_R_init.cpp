@@ -179,7 +179,17 @@ TEST_F(DMTest, DMInit2)
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    // release memory
     delete kv;
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
+    {
+        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
+        {
+            delete[] ra.info[iat1][ad];
+        }
+        delete[] ra.info[iat1];
+    }
+    delete[] ra.info;
 }
 
 // test for construct DMR from another HContainer<double>
