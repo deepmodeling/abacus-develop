@@ -25,4 +25,46 @@ void folding_HR(const hamilt::HContainer<double>& hR,
                 const int ncol,
                 const int hk_type);
 
+#ifdef __MPI
+/**
+ * @brief transfer the HContainer from serial object to parallel object
+ * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
+ * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
+ * @param my_rank the rank of current process
+*/
+template<typename TR>
+void transferSerial2Parallels(const hamilt::HContainer<TR>& hR_s,
+                             hamilt::HContainer<TR>* hR_p,
+                             const int serial_rank);
+/**
+ * @brief transfer the HContainer from parallel object to serial object
+ * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
+ * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
+ * @param my_rank the rank of current process
+*/
+template<typename TR>
+void transferParallels2Serial(const hamilt::HContainer<TR>& hR_p,
+                             hamilt::HContainer<TR>* hR_s,
+                             const int serial_rank);
+
+/**
+ * @brief transfer the HContainer from all serial objects to all parallel objects
+ * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
+ * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
+*/
+template<typename TR>
+void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s,
+                             hamilt::HContainer<TR>* hR_p);
+
+/**
+ * @brief transfer the HContainer from all serial objects to all parallel objects
+ * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
+ * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
+*/
+template<typename TR>
+void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p,
+                             hamilt::HContainer<TR>* hR_s);
+
+#endif // __MPI
+
 } // namespace hamilt
