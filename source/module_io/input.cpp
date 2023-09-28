@@ -184,7 +184,11 @@ void Input::Default(void)
     out_wannier_eig = true;
     out_wannier_mmn = true;
     out_wannier_unk = true;
-    for(int i=0;i<3;i++){kspacing[i] = 0;}
+    out_wannier_wvfn_formatted = true;
+    for (int i = 0; i < 3; i++)
+    {
+        kspacing[i] = 0;
+    }
     min_dist_coef = 0.2;
     //----------------------------------------------------------
     // electrons / spin
@@ -837,6 +841,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_wannier_eig", word) == 0) // add by renxi for wannier90
         {
             read_bool(ifs, out_wannier_eig);
+        }
+        else if (strcmp("out_wannier_wvfn_formatted", word) == 0)
+        {
+            read_bool(ifs, out_wannier_wvfn_formatted);
         }
         //----------------------------------------------------------
         // electrons / spin
@@ -2908,6 +2916,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_wannier_amn);
     Parallel_Common::bcast_bool(out_wannier_unk);
     Parallel_Common::bcast_bool(out_wannier_eig);
+    Parallel_Common::bcast_bool(out_wannier_wvfn_formatted);
 
     Parallel_Common::bcast_string(dft_functional);
     Parallel_Common::bcast_double(xc_temperature);

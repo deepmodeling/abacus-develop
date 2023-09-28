@@ -631,6 +631,7 @@ namespace ModuleESolver
                                         INPUT.out_wannier_amn, 
                                         INPUT.out_wannier_unk, 
                                         INPUT.out_wannier_eig,
+                                        INPUT.out_wannier_wvfn_formatted,
                                         this->GridT,
                                         this->pelec->ekb,
                                         this->pw_wfc,
