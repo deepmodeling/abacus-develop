@@ -12,6 +12,7 @@
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
+    - [psi\_initializer](#psi_initializer)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -460,6 +461,16 @@ These variables are used to control general system parameters.
   - triclinic: triclinic (14)
 - **Default**: none
 
+### psi_initializer
+
+- **Type**: Integer
+- **Description**: (for `basis_type pw` only presently) Whether to enable the newly implemented wavefunction initializer (experimental)
+  
+  Available options are:
+  - 0: turn off, use the old version of initializer.
+  - 1: turn on, use the new version of initializer.
+- **Default**: 0
+
 ### init_wfc
 
 - **Type**: String
@@ -470,6 +481,11 @@ These variables are used to control general system parameters.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
   - file: from file
   - random: random numbers
+  
+  If set `psi_initializer 1`, additional available options are:
+  - nao: from numerical orbital files. If they are not enough, other wave functions are initialized with random numbers. In this case, `NUMERICAL_ORBITAL` section in `STRU` file must present, numerical orbitals with the highest qualities are recommended.
+  - nao+random: add small random numbers on nao-wavefunctions
+  NOTE: for `psi_initializer 1` case, `init_wfc file` is not supported.
 - **Default**: atomic
 
 ### init_chg
