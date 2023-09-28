@@ -988,15 +988,6 @@ ModuleIO::Output_DM ESolver_KS_LCAO::create_Output_DM(int is, int iter)
 {
     int precision = 3;
     
-    const elecstate::DensityMatrix<double,double>* DM
-            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM();
-    this->LOC.dm_gamma.resize(GlobalV::NSPIN);
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        this->LOC.set_dm_gamma(is, DM->get_DMK_pointer(is));    
-    }
-    this->LOC.cal_dk_gamma_from_2D_pub();
-    
     return ModuleIO::Output_DM(this->GridT,
                                is,
                                iter,

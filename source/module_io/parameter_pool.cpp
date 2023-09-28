@@ -459,6 +459,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.out_wannier_eig = *static_cast<bool*>(input_parameters["out_wannier_eig"].get());
     }
+    else if (input_parameters.count("out_wannier_wvfn_formatted") != 0)
+    {
+        INPUT.out_wannier_wvfn_formatted = *static_cast<bool*>(input_parameters["out_wannier_wvfn_formatted"].get());
+    }
     else if (input_parameters.count("nche_sto") != 0)
     {
         INPUT.nche_sto = *static_cast<int*>(input_parameters["nche_sto"].get());

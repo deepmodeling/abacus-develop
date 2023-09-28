@@ -288,6 +288,7 @@
     - [out\_wannier\_amn](#out_wannier_amn)
     - [out\_wannier\_eig](#out_wannier_eig)
     - [out\_wannier\_unk](#out_wannier_unk)
+    - [out\_wannier\_wvfn\_formatted](#out_wannier_wvfn_formatted)
   - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
@@ -2650,10 +2651,17 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### out_wannier_unk
 
 - **Type**: Bool
-- **Description**: write the "*.UNK" file or not.
-  - 0: don't write the "*.UNK" file.
-  - 1: write the "*.UNK" file.
+- **Description**: write the "UNK.*" file or not.
+  - 0: don't write the "UNK.*" file.
+  - 1: write the "UNK.*" file.
 - **Default**: 1
+
+### out_wannier_wvfn_formatted
+
+- **Type**: Bool
+- **Description**: write the "UNK.*" file in ASCII format or binary format.
+  - 0: write the "UNK.*" file in binary format.
+  - 1: write the "UNK.*" file in ASCII format (text file format).
 
 [back to top](#full-list-of-input-keywords)
 
