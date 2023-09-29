@@ -9,10 +9,22 @@ Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 class psi_initializer_nao : public psi_initializer
 {
     public:
-        /// @brief constructor of psi initializer (nao)
-        /// @param sf_in Structure factor interface, link ESolver
-        /// @param pw_wfc_in ModulePW::PW_Basis_K interface, link ESolver
-        psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in);
+        #ifdef __MPI
+        /// @brief parameterized constructor of psi initializer (with MPI support)
+        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
+        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
+        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
+        /// @param p_parakpts_in interface, link with Parallel_Kpoints GlobalC::Pkpoints
+        /// @param random_seed_in random seed
+        psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in = 1);
+        #else
+        /// @brief parameterized constructor of psi initializer (without MPI support)
+        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
+        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
+        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
+        /// @param random_seed_in random seed
+        psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in = 1);
+        #endif
         /// @brief default destructor
         ~psi_initializer_nao();
 
@@ -23,13 +35,20 @@ class psi_initializer_nao : public psi_initializer
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
         psi::Psi<std::complex<double>>* cal_psig(int ik) override;
 
+        /// @brief initialize only once, for nao, it should be, read numerical orbitals, create ovlp_Xjlq(, calculate ovlp_flzjlq)
+        /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now
+        /// @attention if one variable is necessary for all methods, initialize it in constructor, not here.
+        void initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in = nullptr) override;
         // setters
 
         /// @brief setter of numerical orbital files
         /// @param orbital_files array storing numerical orbital files
         void set_orbital_files(std::string* orbital_files);
         // I wont write a function to set ovlp_flzjlq, it is totally useless
-
+        
+        /// @brief allocate memory for ovlp_flzjlq and initialize all elements to 0
+        /// @attention warning! p_ucell must be set in advance!
+        void create_ovlp_Xjlq() override;
         /// @brief before refactor and reorganization of UnitCell class, it is temporary to write this function here.
         /// In future version, it will be moved into UnitCell class.
         void read_orbital_files();
