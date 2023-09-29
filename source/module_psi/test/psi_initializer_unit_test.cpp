@@ -50,8 +50,8 @@ psi initializer unit test
 // so here we define them again to avoid undefined reference error
 Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
-pseudo_nc::pseudo_nc() {}
-pseudo_nc::~pseudo_nc() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
 #ifdef __MPI
 void Atom_pseudo::bcast_atom_pseudo() {}
 #endif
