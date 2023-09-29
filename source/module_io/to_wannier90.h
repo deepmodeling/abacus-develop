@@ -74,6 +74,7 @@ class toWannier90
         const bool out_wannier_amn, 
         const bool out_wannier_unk, 
         const bool out_wannier_eig,
+        const bool wvfn_formatted,
         const ModuleBase::matrix& ekb,
         const ModulePW::PW_Basis_K* wfcpw,
         const ModulePW::PW_Basis_Big* bigpw,
@@ -84,6 +85,7 @@ class toWannier90
                            const bool out_wannier_amn, 
                            const bool out_wannier_unk, 
                            const bool out_wannier_eig,
+                           const bool wvfn_formatted,
                            const Grid_Technique& gt,
                            const ModuleBase::matrix& ekb,
                            const ModulePW::PW_Basis_K* wfcpw,
@@ -113,7 +115,8 @@ class toWannier90
                                  const int npwx,
                                  ModuleBase::ComplexMatrix &trial_orbitals_k);
     void integral(const int meshr, const double *psir, const double *r, const double *rab, const int &l, double *table);
-    void writeUNK(const ModulePW::PW_Basis_K* wfcpw,
+    void writeUNK(const bool wvfn_formatted,
+                  const ModulePW::PW_Basis_K* wfcpw,
                   const psi::Psi<std::complex<double>>& psi_pw,
                   const ModulePW::PW_Basis_Big* bigpw);
     // void ToRealSpace(const int &ik, const int &ib, const ModuleBase::ComplexMatrix *evc, std::complex<double> *psir,

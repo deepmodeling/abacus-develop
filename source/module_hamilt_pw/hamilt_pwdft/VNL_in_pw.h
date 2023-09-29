@@ -60,8 +60,9 @@ public:
 	int calculate_nqx(const double &ecutwfc,const double &dq);
 
 	int nhm;
+    int nbetam; // max number of beta functions
 
-	int lmaxq;
+    int lmaxq;
 
 	ModuleBase::matrix indv;		// indes linking  atomic beta's to beta's in the solid
 	ModuleBase::matrix nhtol;      	// correspondence n <-> angular momentum l

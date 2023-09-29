@@ -61,6 +61,7 @@
 109_PW_CR_moveatoms
 110_PW_SY
 110_PW_SY_symmetry
+110_PW_SY_symmetry_12K
 111_PW_elec_add
 111_PW_elec_minus
 111_PW_S2_elec_add
