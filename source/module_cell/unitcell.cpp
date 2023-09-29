@@ -805,6 +805,10 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
 
             ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
         }
+        if (atoms[it].ncpp.tvanp)
+        {
+            GlobalV::use_uspp = true;
+        }
     }
 
     check_structure(GlobalV::MIN_DIST_COEF);

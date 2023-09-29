@@ -75,6 +75,7 @@ class Input
     bool out_wannier_amn;
     bool out_wannier_unk;
     bool out_wannier_eig;
+    bool out_wannier_wvfn_formatted;
 
     //==========================================================
     // Stochastic DFT
@@ -169,6 +170,7 @@ class Input
     int ncx, ncy, ncz; // three dimension of FFT charge/grid
     int nx, ny, nz; // three dimension of FFT wavefunc
     int bx, by, bz; // big mesh ball. mohan add 2011-04-21
+    int nsx, nsy, nsz; // three dimension of FFT smooth charge density
 
     //==========================================================
     // technique

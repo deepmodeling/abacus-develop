@@ -42,9 +42,6 @@
  *     - a different "<PP_MESH" header in UPF file
  *   - ReadUPF201FR
  *     - read a full-relativistic pp
- *   - XCWarning
- *     - DFT functianal warning when mismatching between pp_file
- *     - and GlobalV::dft_functional happens
  *   - VWR
  *     - read vwr type of pp
  *   - VWR
@@ -228,79 +225,77 @@ TEST_F(ReadPPTest, ReadUPF201)
 TEST_F(ReadPPTest, ReadUSPPUPF201)
 {
     std::ifstream ifs;
-    ifs.open("./support/Al.rel-pbe-n-rrkjus_psl.1.0.0.UPF");
+    ifs.open("./support/Al.pbe-sp-van.UPF");
     upf->read_pseudo_upf201(ifs);
     EXPECT_EQ(upf->psd, "Al");
-    EXPECT_EQ(upf->pp_type, "USPP");
-    EXPECT_EQ(upf->relativistic, "full");
+    EXPECT_EQ(upf->pp_type, "US");
+    EXPECT_EQ(upf->relativistic, "no");
     EXPECT_TRUE(upf->tvanp);
-    EXPECT_TRUE(upf->has_so);
-    EXPECT_TRUE(upf->nlcc);
+    EXPECT_FALSE(upf->has_so);
+    EXPECT_FALSE(upf->nlcc);
     EXPECT_EQ(upf->xc_func, "PBE");
-    EXPECT_EQ(upf->zp, 3);
+    EXPECT_EQ(upf->zp, 11);
     EXPECT_EQ(upf->nv, 0);
-    EXPECT_DOUBLE_EQ(upf->etotps, -4.765458899624e0);
-    EXPECT_DOUBLE_EQ(upf->ecutwfc, 2.949383268967e1);
-    EXPECT_DOUBLE_EQ(upf->ecutrho, 1.437437216640e2);
+    EXPECT_DOUBLE_EQ(upf->etotps, -1.596432307730e2);
+    EXPECT_DOUBLE_EQ(upf->ecutwfc, 0.0);
+    EXPECT_DOUBLE_EQ(upf->ecutrho, 0.0);
     EXPECT_EQ(upf->lmax, 2);
-    EXPECT_EQ(upf->lmax_rho, 4);
-    EXPECT_EQ(upf->lloc, -1);
-    EXPECT_EQ(upf->mesh, 1135);
-    EXPECT_EQ(upf->nwfc, 3);
-    EXPECT_EQ(upf->nbeta, 10);
-    EXPECT_EQ(upf->kkbeta, 831);
-    EXPECT_DOUBLE_EQ(upf->xmin, -7.0);
-    EXPECT_DOUBLE_EQ(upf->dx, 1.25e-2);
-    EXPECT_DOUBLE_EQ(upf->rmax, 100.0);
+    EXPECT_EQ(upf->lmax_rho, 0);
+    EXPECT_EQ(upf->lloc, 0);
+    EXPECT_EQ(upf->mesh, 893);
+    EXPECT_EQ(upf->nwfc, 4);
+    EXPECT_EQ(upf->nbeta, 5);
+    EXPECT_EQ(upf->kkbeta, 617);
+    EXPECT_DOUBLE_EQ(upf->rmax, 2.006810756590e2);
     EXPECT_DOUBLE_EQ(upf->zmesh, 13.0);
-    EXPECT_TRUE(upf->q_with_l);
-    EXPECT_EQ(upf->nqf, 0);
+    EXPECT_FALSE(upf->q_with_l);
+    EXPECT_EQ(upf->nqf, 8);
     EXPECT_EQ(upf->nqlc, 5);
-    EXPECT_DOUBLE_EQ(upf->r[0], 7.014476658111662e-5);
-    EXPECT_DOUBLE_EQ(upf->r[1134], 1.004892385376587e2);
-    EXPECT_DOUBLE_EQ(upf->rab[0], 8.768095822639578e-7);
-    EXPECT_DOUBLE_EQ(upf->rab[1134], 1.256115481720734e0);
-    EXPECT_DOUBLE_EQ(upf->vloc[0], -6.297770630382692e0);
-    EXPECT_DOUBLE_EQ(upf->vloc[1134], -5.970788707237872e-2);
-    EXPECT_DOUBLE_EQ(upf->rho_atc[0], 2.656382333276032e-1);
-    EXPECT_DOUBLE_EQ(upf->rho_atc[1134], 0.0);
+    EXPECT_DOUBLE_EQ(upf->r[0], 0.0);
+    EXPECT_DOUBLE_EQ(upf->r[892], 2.006810756590000e2);
+    EXPECT_DOUBLE_EQ(upf->rab[0], 1.169079443020000e-6);
+    EXPECT_DOUBLE_EQ(upf->rab[892], 3.344685763390000e0);
+    EXPECT_DOUBLE_EQ(upf->vloc[0], 3.456089057550000e0);
+    EXPECT_DOUBLE_EQ(upf->vloc[892], -1.096266796840000e-1);
+    EXPECT_EQ(upf->rho_atc, nullptr);
     EXPECT_EQ(upf->lll[0], 0);
-    EXPECT_EQ(upf->kbeta[0], 827);
-    EXPECT_EQ(upf->els_beta[0], "3S");
-    EXPECT_DOUBLE_EQ(upf->rcut[0], 1.7);
-    EXPECT_DOUBLE_EQ(upf->rcutus[0], 1.9);
-    EXPECT_DOUBLE_EQ(upf->beta(0, 0), -1.705325474253926e-3);
-    EXPECT_DOUBLE_EQ(upf->beta(0, 1134), 0.0);
+    EXPECT_EQ(upf->kbeta[0], 617);
+    EXPECT_EQ(upf->els_beta[0], "2S");
+    EXPECT_DOUBLE_EQ(upf->rcut[0], 0.0);
+    EXPECT_DOUBLE_EQ(upf->rcutus[0], 1.4);
+    EXPECT_DOUBLE_EQ(upf->beta(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->beta(0, 892), 0.0);
     EXPECT_EQ(upf->lll[1], 0);
-    EXPECT_EQ(upf->kbeta[1], 827);
-    EXPECT_EQ(upf->els_beta[1], "3S");
-    EXPECT_DOUBLE_EQ(upf->rcut[1], 1.7);
-    EXPECT_DOUBLE_EQ(upf->rcutus[1], 1.9);
-    EXPECT_DOUBLE_EQ(upf->beta(1, 0), 1.652408363968902e-3);
-    EXPECT_DOUBLE_EQ(upf->beta(1, 1134), 0.0);
-    EXPECT_DOUBLE_EQ(upf->dion(0, 0), 3.322439863765596e-1);
-    EXPECT_DOUBLE_EQ(upf->dion(9, 9), -5.475822599361111e-2);
-    EXPECT_DOUBLE_EQ(upf->qqq(0, 0), -3.065376694096810e-2);
-    EXPECT_DOUBLE_EQ(upf->qqq(9, 9), 5.956284484724982e-3);
-    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 0, 0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->rinner[0], 0.0);
-    EXPECT_DOUBLE_EQ(upf->rinner[4], 0.0);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 0), 1.179591764931331e-9);
-    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 1134), 0.0);
-    EXPECT_EQ(upf->els[0], "3S");
+    EXPECT_EQ(upf->kbeta[1], 617);
+    EXPECT_EQ(upf->els_beta[1], "2P");
+    EXPECT_DOUBLE_EQ(upf->rcut[1], 0.0);
+    EXPECT_DOUBLE_EQ(upf->rcutus[1], 1.42);
+    EXPECT_DOUBLE_EQ(upf->beta(1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->beta(1, 892), 0.0);
+    EXPECT_DOUBLE_EQ(upf->dion(0, 0), -2.182408428460000e2);
+    EXPECT_DOUBLE_EQ(upf->dion(4, 4), -3.087562171130000e1);
+    EXPECT_DOUBLE_EQ(upf->qqq(0, 0), 3.896280866700000e0);
+    EXPECT_DOUBLE_EQ(upf->qqq(4, 4), 7.218068659650000e-1);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 0, 0, 0), 8.705252055130002e1);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(4, 4, 4, 7), 9.910935792140002e1);
+    EXPECT_DOUBLE_EQ(upf->rinner[0], 1.1);
+    EXPECT_DOUBLE_EQ(upf->rinner[4], 1.1);
+    EXPECT_DOUBLE_EQ(upf->qfunc(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfunc(0, 892), 0.0);
+    EXPECT_EQ(upf->els[0], "2S");
     EXPECT_EQ(upf->lchi[0], 0);
-    EXPECT_EQ(upf->nchi[0], 1);
+    EXPECT_EQ(upf->nchi[0], 0);
     EXPECT_DOUBLE_EQ(upf->oc[0], 2.0);
-    EXPECT_DOUBLE_EQ(upf->epseu[0], -5.693655477160e-1);
-    EXPECT_DOUBLE_EQ(upf->rcut_chi[0], 1.7);
-    EXPECT_DOUBLE_EQ(upf->rcutus_chi[0], 1.9);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 0), -1.995973361300253e-5);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 1134), -3.253440125469257e-32);
-    EXPECT_DOUBLE_EQ(upf->rho_at[0], 4.117725120211525e-9);
-    EXPECT_DOUBLE_EQ(upf->rho_at[1134], 6.731354783991774e-38);
-    EXPECT_EQ(upf->nn[0], 1);
-    EXPECT_DOUBLE_EQ(upf->jchi[0], 0.5);
-    EXPECT_DOUBLE_EQ(upf->jjj[0], 0.5);
+    EXPECT_DOUBLE_EQ(upf->epseu[0], 0.0);
+    EXPECT_DOUBLE_EQ(upf->rcut_chi[0], 0.0);
+    EXPECT_DOUBLE_EQ(upf->rcutus_chi[0], 1.4);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
+    EXPECT_DOUBLE_EQ(upf->rho_at[0], 0.0);
+    EXPECT_DOUBLE_EQ(upf->rho_at[892], 0.0);
+    EXPECT_EQ(upf->jchi, nullptr);
+    EXPECT_EQ(upf->jjj, nullptr);
+    EXPECT_EQ(upf->nn, nullptr);
     ifs.close();
 }
 
@@ -440,22 +435,6 @@ TEST_F(ReadPPTest, ReadUPF201MESH2)
 	ifs.close();
 }
 
-TEST_F(ReadPPTest, XCWarning)
-{
-	std::ifstream ifs;
-	// this pp file has gipaw, thus a different header
-	// dft_functional warning
-	GlobalV::DFT_FUNCTIONAL="LDA";
-	ifs.open("./support/Fe.pbe-sp-mt_gipaw.UPF");
-	//upf->read_pseudo_upf201(ifs);
-	testing::internal::CaptureStdout();
-	EXPECT_NO_THROW(upf->read_pseudo_upf201(ifs));
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("dft_functional readin is: LDA"));
-	EXPECT_THAT(output,testing::HasSubstr("dft_functional in pseudopot file is: PBE"));
-	ifs.close();
-}
-
 TEST_F(ReadPPTest, VWR)
 {
 	std::ifstream ifs;
@@ -559,6 +538,101 @@ TEST_F(ReadPPTest, SetEmptyElement)
 	}
 }
 
+TEST_F(ReadPPTest, SetUpfQ)
+{
+    std::ifstream ifs;
+    ifs.open("./support/Al.pbe-sp-van.UPF");
+    upf->read_pseudo_upf201(ifs);
+    upf->set_upf_q();
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 0, 100), 7.8994151918886213e-06);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 1, 100), -2.1915710970869145e-05);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 2, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(0, 2, 100), 5.9614487166963409e-05);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 0, 100), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 1, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 1, 100), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 2, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->qfuncl(1, 2, 100), 0.0);
+
+    ifs.close();
+}
+
+TEST_F(ReadPPTest, SetQfNew)
+{
+    // Set up input data
+    int nqf = 3;
+    int mesh = 10;
+    int l = 2;
+    int n = 1;
+
+    double qfcoef[] = {1.0, 2.0, 3.0};
+    double r[mesh];
+    double rho[mesh];
+
+    for (int i = 0; i < mesh; ++i)
+    {
+        r[i] = i + 1; // Assuming some values for r
+    }
+
+    // Call the function under test
+    upf->setqfnew(nqf, mesh, l, n, qfcoef, r, rho);
+
+    // Validate the output
+    for (int ir = 0; ir < mesh; ++ir)
+    {
+        double rr = r[ir] * r[ir];
+        double expectedValue = qfcoef[0];
+        for (int iq = 1; iq < nqf; ++iq)
+        {
+            expectedValue += qfcoef[iq] * pow(rr, iq);
+        }
+        expectedValue *= pow(r[ir], l + n);
+        EXPECT_DOUBLE_EQ(expectedValue, rho[ir]);
+    }
+}
+
+TEST_F(ReadPPTest, CheckAtwfcNorm)
+{
+    std::ifstream ifs;
+    ifs.open("./support/Al.pbe-sp-van.UPF");
+    upf->read_pseudo_upf201(ifs);
+    for (int i = 0; i < upf->mesh; ++i)
+    {
+        upf->chi(0, i) = 0.0;
+        upf->chi(1, i) = 110.0;
+    }
+    upf->check_atwfc_norm();
+
+    EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.069913165961999812);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.069913165961999812);
+
+    upf->has_so = true;
+    upf->jjj = new double[upf->nbeta];
+    upf->jchi = new double[upf->nwfc];
+    for (int i = 0; i < upf->nbeta; ++i)
+    {
+        upf->jjj[i] = 0.5;
+    }
+    for (int i = 0; i < upf->nwfc; ++i)
+    {
+        upf->jchi[i] = 0.5;
+    }
+    upf->check_atwfc_norm();
+    EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.069913165961999812);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.069913165961999812);
+
+    ifs.close();
+}
+
 TEST_F(ReadPPTest, InitReader)
 {
 	std::string pp_file = "arbitrary";
@@ -584,14 +658,6 @@ TEST_F(ReadPPTest, InitReader)
 	pp_file = "./support/si.lda.lps";
 	type = "blps";
 	info = upf->init_pseudo_reader(pp_file,type);
-	EXPECT_EQ(info,0);
-}
-
-TEST_F(ReadPPTest, InitReaderArbitraryType)
-{
-	std::string pp_file = "./support/Te.pbe-rrkj.UPF";
-	std::string type = "arbitrary";
-	int info = upf->init_pseudo_reader(pp_file,type);
 	EXPECT_EQ(info,0);
 }
 

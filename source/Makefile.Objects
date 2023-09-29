@@ -144,7 +144,7 @@ OBJS_BASE=abfs-vector3_order.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
-    pseudo_nc.o\
+    pseudo.o\
     read_pp.o\
     read_pp_upf100.o\
     read_pp_upf201.o\
