@@ -43,7 +43,7 @@ class psi_initializer_nao : public psi_initializer
 
         /// @brief setter of numerical orbital files
         /// @param orbital_files array storing numerical orbital files
-        void set_orbital_files(std::string* orbital_files);
+        void set_orbital_files(std::string* orbital_files) override;
         // I wont write a function to set ovlp_flzjlq, it is totally useless
         
         /// @brief allocate memory for ovlp_flzjlq and initialize all elements to 0
@@ -53,7 +53,7 @@ class psi_initializer_nao : public psi_initializer
         /// In future version, it will be moved into UnitCell class.
         void read_orbital_files();
         /// @brief calculate overlap integral between f_{l\\zeta} the radial numerical orbital and spherical Bessel function
-        void cal_ovlp_flzjlq();
+        void cal_ovlp_flzjlq() override;
         
         // getters
 

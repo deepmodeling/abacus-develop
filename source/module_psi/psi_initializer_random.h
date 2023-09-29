@@ -38,7 +38,7 @@ class psi_initializer_random : public psi_initializer
         void random(std::complex<double>* psi,
                     const int iw_start,
                     const int iw_end,
-                    const int ik);
+                    const int ik) override;
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)

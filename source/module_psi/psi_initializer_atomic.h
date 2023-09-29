@@ -52,14 +52,14 @@ class psi_initializer_atomic : public psi_initializer
         /// @param n_rgrid number of grid points in realspace
         /// @param pswfc pseudo wavefunction in pseudopotential files
         /// @param rgrid realspace grid points, r1, r2, ...
-        void normalize_pswfc(int n_rgrid, double* pswfc, double* rgrid);
+        void normalize_pswfc(int n_rgrid, double* pswfc, double* rgrid) override;
         /// @brief simple unitary phase factor
         /// @param arg the argument of the phase factor
         /// @param mode +1 for real part, -1 for imaginary part, 0 for the whole
         /// @return the phase factor
-        std::complex<double> phase_factor(double arg, int mode = 0);
+        std::complex<double> phase_factor(double arg, int mode = 0) override;
         /// @brief calculate the overlap between pseudo atomic wavefunctions and planewave basis
-        void cal_ovlp_pswfcjlq();
+        void cal_ovlp_pswfcjlq() override;
 
         // historically left functions
         // getters
