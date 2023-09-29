@@ -13,9 +13,9 @@ AddTest(
     SOURCES
         psi_initializer_unit_test.cpp
         ../../module_hamilt_pw/hamilt_pwdft/soc.cpp
-        ../../module_cell/unitcell.cpp
         ../../module_cell/atom_spec.cpp
         ../../module_cell/parallel_kpoints.cpp
+        mock_unitcell.cpp
 )
 endif()
 

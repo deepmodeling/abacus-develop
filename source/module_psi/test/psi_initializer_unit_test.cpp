@@ -50,14 +50,12 @@ psi initializer unit test
 // so here we define them again to avoid undefined reference error
 Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
-pseudo::pseudo() {}
-pseudo::~pseudo() {}
 #ifdef __MPI
 void Atom_pseudo::bcast_atom_pseudo() {}
 #endif
-int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running) {return 0;}
-void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log) {}
-bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning) {return true;}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+
 pseudopot_cell_vnl::pseudopot_cell_vnl() {}
 pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
 pseudopot_cell_vl::pseudopot_cell_vl() {}
