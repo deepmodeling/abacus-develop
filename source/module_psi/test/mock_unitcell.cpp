@@ -87,16 +87,13 @@ void UnitCell::bcast_unitcell2() {}
 void UnitCell::set_iat2itia(void) {}
 void UnitCell::setup_cell(const std::string &fn, std::ofstream &log) {}
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom) {}
-int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running) {return 0;}
-bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning) {return true;}
 void UnitCell::read_pseudo(std::ofstream &ofs) {}
 int UnitCell::find_type(const std::string &label) {return 0;}
 void UnitCell::print_tau(void) const {}
-void UnitCell::print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const {}
+void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const {}
 void UnitCell::check_dtau(void) {}
 void UnitCell::setup_cell_after_vc(std::ofstream &log) {}
 void UnitCell::remake_cell() {}
-void UnitCell::read_cell_pseudopots(const std::string &fn, std::ofstream &log) {}
 void UnitCell::cal_nwfc(std::ofstream &log) {}
 void UnitCell::cal_meshx() {}
 void UnitCell::cal_natomwfc(std::ofstream &log) {}
