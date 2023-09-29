@@ -12,6 +12,7 @@
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
+    - [psi\_initializer](#psi_initializer)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -460,15 +461,35 @@ These variables are used to control general system parameters.
   - triclinic: triclinic (14)
 - **Default**: none
 
+### psi_initializer
+
+- **Type**: Integer
+- **Description**: enable the experimental feature psi_initializer, to support use numerical atomic orbitals initialize wavefunction (`basis_type pw` case).
+  
+  NOTE: this feature is not well-implemented for `nspin 4` case (closed presently), and cannot use with `calculation nscf`/`esolver_type sdft` cases.
+  Available options are:
+  - 0: disable psi_initializer
+  - 1: enable psi_initializer
+- **Default**: 0
+
 ### init_wfc
 
 - **Type**: String
 - **Description**: Only useful for plane wave basis only now. It is the name of the starting wave functions. In the future. we should also make this variable available for localized orbitals set.
   
   Available options are:
+  
+  `psi_initializer 0` case:
   - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
   - file: from file
+  - random: random numbers
+  
+  `psi_initializer 1` case:
+  - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
+  - atomic+random: add small random numbers on atomic pseudo-wavefunctions
+  - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
+  - nao+random: add small random numbers on numerical atomic orbitals
   - random: random numbers
 - **Default**: atomic
 
