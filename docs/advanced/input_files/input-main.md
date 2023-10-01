@@ -482,18 +482,14 @@ These variables are used to control general system parameters.
   
   Available options are:
   
-  `psi_initializer 0` case:
   - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
   - file: from file
   - random: random numbers
   
-  `psi_initializer 1` case:
-  - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
-  - atomic+random: add small random numbers on atomic pseudo-wavefunctions
+  with `psi_initializer 1`, two more options are supported:
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
-  - random: random numbers
 - **Default**: atomic
 
 ### init_chg
