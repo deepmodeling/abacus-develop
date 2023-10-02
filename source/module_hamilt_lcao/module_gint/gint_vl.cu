@@ -252,7 +252,6 @@ __global__ void get_vldr3(int ij_index,
 }
 
 __global__ void psi_multiple(int grid_index,
-                             int k,
                              int *how_many_atoms,
                              double *atom_pair_index1_g,
                              double *atom_pair_index2_g,
@@ -271,6 +270,8 @@ __global__ void psi_multiple(int grid_index,
 {
     int atomnow1 = blockIdx.x;
     int atomnow2 = blockIdx.y;
+    int k = blockIdx.z;
+    grid_index += k;
     int iw1 = threadIdx.x;
     int iw2 = threadIdx.y;
     if (atomnow1 >= how_many_atoms[grid_index] || atomnow2 >= how_many_atoms[grid_index])
@@ -553,7 +554,7 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaMemcpy(atom_pair_index2_g, atom_pair_index2, atom_pair_num * sizeof(double), cudaMemcpyHostToDevice);
 
     int psi_size = max_size * bxyz;
-    int ALIGN_SIZE = 32;
+    const int ALIGN_SIZE = 32;
     int psi_size_up = ((psi_size + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
     double *dr = new double[psi_size_up * nbz * 4]; // [ x,y,z,distance]
     int *it = new int[psi_size_up * nbz];
@@ -637,7 +638,7 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
             cudaMemset(cal_flag, 0, nbz * bxyz * max_size * sizeof(bool));
 
             dim3 grid1(nbz);
-            dim3 block1(32); // how_many_atoms,bxyz
+            dim3 block1(ALIGN_SIZE); 
             get_psi<<<grid1, block1>>>(dr_g,
                                        it_g,
                                        psir_ylm_start_g,
@@ -652,9 +653,6 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
                                        psi_u,
                                        dpsi_u,
                                        psir_ylm);
-            /* std::stringstream filename;
-            filename << "psi" << i << "_" << j;
-            dump_cuda_array_to_file(psir_ylm, max_size * bxyz * nwmax_now , nbz, filename.str());*/
             dim3 grid3(nbz);
             dim3 block3(bx, by, bz);
             get_vldr3<<<grid3, block3>>>(i * nby * nbz + j * nbz,
@@ -668,28 +666,24 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
                                          start_ind_g,
                                          vldr3);
 
-            dim3 grid4(max_size, max_size);
+            dim3 grid4(max_size, max_size, nbz);
             dim3 block4(nwmax, nwmax);
-            for (int k = 0; k < nbz; k++)
-            {
-                psi_multiple<<<grid4, block4>>>(i * nby * nbz + j * nbz + k,
-                                                k,
-                                                how_many_atoms,
-                                                atom_pair_index1_g,
-                                                atom_pair_index2_g,
-                                                bcell_start,
-                                                which_atom,
-                                                iat2it,
-                                                iat2ia,
-                                                itiaiw2iwt,
-                                                cal_flag,
-                                                psir_ylm,
-                                                trace_lo,
-                                                atom_nw,
-                                                vldr3,
-                                                GridVlocal,
-                                                lgd);
-            }
+            psi_multiple<<<grid4, block4>>>(i * nby * nbz + j * nbz,
+                                            how_many_atoms,
+                                            atom_pair_index1_g,
+                                            atom_pair_index2_g,
+                                            bcell_start,
+                                            which_atom,
+                                            iat2it,
+                                            iat2ia,
+                                            itiaiw2iwt,
+                                            cal_flag,
+                                            psir_ylm,
+                                            trace_lo,
+                                            atom_nw,
+                                            vldr3,
+                                            GridVlocal,
+                                            lgd);
         } // j
     }     // i
 
