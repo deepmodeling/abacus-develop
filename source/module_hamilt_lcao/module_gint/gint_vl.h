@@ -5,7 +5,7 @@
 void gint_gamma_vl_gpu(double* GridVlocal_now,
                        int lgd_now,
                        int nnnmax,
-                       int max_size,
+                       const int max_size,
                        double vfactor,
                        const double* vlocal,
                        const double* ylmcoef_now,

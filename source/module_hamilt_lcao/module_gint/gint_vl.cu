@@ -4,6 +4,8 @@
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include <fstream>
+#include <sstream>
 
 __constant__ double ylmcoef[36];
 __constant__ int bx_g[1];
@@ -18,250 +20,228 @@ __constant__ int ntype_g[1];
 __constant__ double delta_r_g[1];
 __constant__ double vfactor_g[1];
 
-__global__ void cu_gamma_vlocal_step1(int ij_index,
-                                      int *how_many_atoms,
-                                      int *bcell_start,
-                                      int *which_bigcell,
-                                      int *which_atom,
-                                      int *iat2it,
-                                      int *it,
-                                      double *meshball_positions,
-                                      double *tau_in_bigcell,
-                                      double *meshcell_pos,
-                                      double *dr,
-                                      double *distance,
-                                      double *ORB_Phi_getRcut,
-                                      bool *cal_flag,
-                                      int *ucell_atom_nwl,
-                                      double *ylma,
-                                      int *ip,
-                                      double *dx,
-                                      double *dx2,
-                                      double *dx3,
-                                      double *c1,
-                                      double *c2,
-                                      double *c3,
-                                      double *c4,
-                                      bool *atom_iw2_new,
-                                      int *atom_iw2_ylm,
-                                      int *atom_nw,
-                                      int nr_max,
-                                      double *psi_u,
-                                      double *dpsi_u,
-                                      double *psir_ylm)
+void dump_cuda_array_to_file(double * cuda_array, int width, int hight, const std::string & filename)
+{
+    double *h_data = new double[width * hight];
+    cudaMemcpy(h_data, cuda_array, width * hight * sizeof(double), cudaMemcpyDeviceToHost);
+
+    std::ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        std::cerr << "Failed to open file for writing." << std::endl;
+    }
+    for (int j = 0; j < hight; ++j) {
+        for (int i = 0; i < width; ++i) {
+            outFile << "hight" << j << "   width:" << i << "   "<< h_data[j * width + i] << std::endl;
+        }
+    }
+    outFile.close();
+    delete[] h_data;
+}
+
+__global__ void get_psi(double *dr_all,
+                        int *it_all,
+                        int *psir_ylm_start,
+                        int *num_psir,
+                        int psi_size_up,
+                        bool *cal_flag,
+                        int *ucell_atom_nwl,
+                        bool *atom_iw2_new,
+                        int *atom_iw2_ylm,
+                        int *atom_nw,
+                        int nr_max,
+                        double *psi_u,
+                        double *dpsi_u,
+                        double *psir_ylm)
 {
     // int grid_index_now = blockIdx.x;
-    int size = how_many_atoms[ij_index + blockIdx.x];
-    if (size != 0)
+    int size = num_psir[blockIdx.x];
+    int loop_size = size / blockDim.x;
+
+    if (loop_size != 0)
     {
-        double mt[] = {0, 0, 0};
-        int id = threadIdx.x;
-        int ib = threadIdx.y;
-        if (id >= size)
+        int start_index = loop_size * threadIdx.x + psi_size_up * blockIdx.x;
+        int end_index = start_index + loop_size;
+        for (int index = start_index; index < end_index; index++)
         {
-            return;
-        }
-        int dist_tmp = blockIdx.x * bxyz_g[0] * max_size_g[0] + ib * max_size_g[0] + id;
-        int pos_tmp = dist_tmp * 3;
-        int mcell_index = bcell_start[ij_index + blockIdx.x] + id;
-        int imcell = which_bigcell[mcell_index];
-        int iat = which_atom[mcell_index];
-        it[dist_tmp] = iat2it[iat];
-        mt[0] = meshball_positions[imcell * 3 + 0] - tau_in_bigcell[iat * 3 + 0];
-        mt[1] = meshball_positions[imcell * 3 + 1] - tau_in_bigcell[iat * 3 + 1];
-        mt[2] = meshball_positions[imcell * 3 + 2] - tau_in_bigcell[iat * 3 + 2];
-        dr[pos_tmp + 0] = meshcell_pos[ib * 3 + 0] + mt[0];
-        dr[pos_tmp + 1] = meshcell_pos[ib * 3 + 1] + mt[1];
-        dr[pos_tmp + 2] = meshcell_pos[ib * 3 + 2] + mt[2];
+            int it = it_all[index];
+            if (it < 0) continue;
 
-        distance[dist_tmp] = sqrt(dr[pos_tmp + 0] * dr[pos_tmp + 0] + dr[pos_tmp + 1] * dr[pos_tmp + 1] + dr[pos_tmp + 2] * dr[pos_tmp + 2]);
-        if (distance[dist_tmp] > ORB_Phi_getRcut[it[dist_tmp]])
-        {
-            cal_flag[dist_tmp] = false;
-            return;
-        }
-        else
-        {
+            double dr[3];
+            dr[0] = dr_all[index * 4];
+            dr[1] = dr_all[index * 4 + 1];
+            dr[2] = dr_all[index * 4 + 2];
+            double distance = dr_all[index * 4 + 3];
+            int dist_tmp = psir_ylm_start[index];
+
             cal_flag[dist_tmp] = true;
-        }
-        if (distance[dist_tmp] < 1.0E-9)
-            distance[dist_tmp] += 1.0E-9;
 
-        //	Ylm::sph_harm (	ucell.atoms[it].nwl,dr[grid_index*bxyz_now*max_size_now*3+ib][id][0] /
-        // distance[ib][id],dr[grid_index*bxyz_now*max_size_now*3+ib][id][1] /
-        // distance[ib][id],dr[grid_index*bxyz_now*max_size_now*3+ib][id][2] / distance[ib][id],ylma);
-        dr[pos_tmp + 0] /= distance[dist_tmp];
-        dr[pos_tmp + 1] /= distance[dist_tmp];
-        dr[pos_tmp + 2] /= distance[dist_tmp];
+            // begin calculation
+            double ylma[150];
+            /***************************
+            L = 0
+            ***************************/
+            ylma[0] = ylmcoef[0]; // l=0, m=0
+            int nwl = ucell_atom_nwl[it];
 
-        // begin calculation
-
-        int index_ylma = dist_tmp * nnnmax_g[0];
-
-        /***************************
-        L = 0
-        ***************************/
-        ylma[index_ylma + 0] = ylmcoef[0]; // l=0, m=0
-        if (ucell_atom_nwl[it[dist_tmp]] == 0)
-            goto YLM_END;
-
-        /***************************
-        L = 1
-        ***************************/
-        ylma[index_ylma + 1] = ylmcoef[1] * dr[pos_tmp + 2];  // l=1, m=0
-        ylma[index_ylma + 2] = -ylmcoef[1] * dr[pos_tmp + 0]; // l=1, m=1
-        ylma[index_ylma + 3] = -ylmcoef[1] * dr[pos_tmp + 1]; // l=1, m=-1
-        if (ucell_atom_nwl[it[dist_tmp]] == 1)
-            goto YLM_END;
-
-        /***************************
-        L = 2
-        ***************************/
-        ylma[index_ylma + 4] = ylmcoef[2] * dr[pos_tmp + 2] * ylma[index_ylma + 1] - ylmcoef[3] * ylma[index_ylma + 0]; // l=2, m=0
-        {
-            double tmp0 = ylmcoef[4] * dr[pos_tmp + 2];
-            ylma[index_ylma + 5] = tmp0 * ylma[index_ylma + 2]; // l=2,m=1
-            ylma[index_ylma + 6] = tmp0 * ylma[index_ylma + 3]; // l=2,m=-1
-
-            tmp0 = ylmcoef[4] * dr[pos_tmp + 0];
-            ylma[index_ylma + 7] = ylmcoef[5] * ylma[index_ylma + 4] - ylmcoef[6] * ylma[index_ylma + 0] - tmp0 * ylma[index_ylma + 2]; // l=2,m=2
-            ylma[index_ylma + 8] = -tmp0 * ylma[index_ylma + 3];
-            //	ylma[grid_index*nnnmax+8] = tmp1+tmp2*ylma[grid_index*nnnmax+3];//l=2,m=-2
-            if (ucell_atom_nwl[it[dist_tmp]] == 2)
+            if (nwl == 0)
                 goto YLM_END;
 
             /***************************
-            L = 3
+            L = 1
             ***************************/
-            ylma[index_ylma + 9] = ylmcoef[7] * dr[pos_tmp + 2] * ylma[index_ylma + 4] - ylmcoef[8] * ylma[index_ylma + 1]; // l=3, m=0
-
-            tmp0 = ylmcoef[9] * dr[pos_tmp + 2];
-            ylma[index_ylma + 10] = tmp0 * ylma[index_ylma + 5] - ylmcoef[10] * ylma[index_ylma + 2]; // l=3,m=1
-            ylma[index_ylma + 11] = tmp0 * ylma[index_ylma + 6] - ylmcoef[10] * ylma[index_ylma + 3]; // l=3,m=-1
-
-            tmp0 = ylmcoef[11] * dr[pos_tmp + 2];
-            ylma[index_ylma + 12] = tmp0 * ylma[index_ylma + 7]; // l=3,m=2
-            ylma[index_ylma + 13] = tmp0 * ylma[index_ylma + 8]; // l=3,m=-2
-
-            tmp0 = ylmcoef[14] * dr[pos_tmp + 0];
-            ylma[index_ylma + 14] = ylmcoef[12] * ylma[index_ylma + 10] - ylmcoef[13] * ylma[index_ylma + 2] - tmp0 * ylma[index_ylma + 7]; // l=3,m=3
-            ylma[index_ylma + 15] = ylmcoef[12] * ylma[index_ylma + 11] - ylmcoef[13] * ylma[index_ylma + 3] - tmp0 * ylma[index_ylma + 8]; // l=3,m=-3
-            if (ucell_atom_nwl[it[dist_tmp]] == 3)
+            ylma[1] = ylmcoef[1] * dr[2];  // l=1, m=0
+            ylma[2] = -ylmcoef[1] * dr[0]; // l=1, m=1
+            ylma[3] = -ylmcoef[1] * dr[1]; // l=1, m=-1
+            if (nwl == 1)
                 goto YLM_END;
 
             /***************************
-            L = 4
+            L = 2
             ***************************/
-            ylma[index_ylma + 16] = ylmcoef[15] * dr[pos_tmp + 2] * ylma[index_ylma + 9] - ylmcoef[16] * ylma[index_ylma + 4]; // l=4,m=0
-
-            tmp0 = ylmcoef[17] * dr[pos_tmp + 2];
-            ylma[index_ylma + 17] = tmp0 * ylma[index_ylma + 10] - ylmcoef[18] * ylma[index_ylma + 5]; // l=4,m=1
-            ylma[index_ylma + 18] = tmp0 * ylma[index_ylma + 11] - ylmcoef[18] * ylma[index_ylma + 6]; // l=4,m=-1
-
-            tmp0 = ylmcoef[19] * dr[pos_tmp + 2];
-            ylma[index_ylma + 19] = tmp0 * ylma[index_ylma + 12] - ylmcoef[20] * ylma[index_ylma + 7]; // l=4,m=2
-            ylma[index_ylma + 20] = tmp0 * ylma[index_ylma + 13] - ylmcoef[20] * ylma[index_ylma + 8]; // l=4,m=-2
-
-            tmp0 = 3.0 * dr[pos_tmp + 2];
-            ylma[index_ylma + 21] = tmp0 * ylma[index_ylma + 14]; // l=4,m=3
-            ylma[index_ylma + 22] = tmp0 * ylma[index_ylma + 15]; // l=4,m=-3
-
-            tmp0 = ylmcoef[23] * dr[pos_tmp + 0];
-            ylma[index_ylma + 23] = ylmcoef[21] * ylma[index_ylma + 19] - ylmcoef[22] * ylma[index_ylma + 7] - tmp0 * ylma[index_ylma + 14]; // l=4,m=4
-            ylma[index_ylma + 24] = ylmcoef[21] * ylma[index_ylma + 20] - ylmcoef[22] * ylma[index_ylma + 8] - tmp0 * ylma[index_ylma + 15]; // l=4,m=-4
-            if (ucell_atom_nwl[it[dist_tmp]] == 4)
-                goto YLM_END;
-
-            /***************************
-            L = 5
-            ***************************/
-            ylma[index_ylma + 25] = ylmcoef[24] * dr[pos_tmp + 2] * ylma[index_ylma + 16] - ylmcoef[25] * ylma[index_ylma + 9]; // l=5,m=0
-
-            tmp0 = ylmcoef[26] * dr[pos_tmp + 2];
-            ylma[index_ylma + 26] = tmp0 * ylma[index_ylma + 17] - ylmcoef[27] * ylma[index_ylma + 10]; // l=5,m=1
-            ylma[index_ylma + 27] = tmp0 * ylma[index_ylma + 18] - ylmcoef[27] * ylma[index_ylma + 11]; // l=5,m=-1
-
-            tmp0 = ylmcoef[28] * dr[pos_tmp + 2];
-            ylma[index_ylma + 28] = tmp0 * ylma[index_ylma + 19] - ylmcoef[29] * ylma[index_ylma + 12]; // l=5,m=2
-            ylma[index_ylma + 29] = tmp0 * ylma[index_ylma + 20] - ylmcoef[29] * ylma[index_ylma + 13]; // l=5,m=-2
-
-            tmp0 = ylmcoef[30] * dr[pos_tmp + 2];
-            ylma[index_ylma + 30] = tmp0 * ylma[index_ylma + 21] - ylmcoef[31] * ylma[index_ylma + 14]; // l=5,m=3
-            ylma[index_ylma + 31] = tmp0 * ylma[index_ylma + 22] - ylmcoef[31] * ylma[index_ylma + 15]; // l=5,m=-3
-
-            tmp0 = ylmcoef[32] * dr[pos_tmp + 2];
-            ylma[index_ylma + 32] = tmp0 * ylma[index_ylma + 23]; // l=5,m=4
-            ylma[index_ylma + 33] = tmp0 * ylma[index_ylma + 24]; // l=5,m=-4
-
-            tmp0 = ylmcoef[35] * dr[pos_tmp + 0];
-            ylma[index_ylma + 34] = ylmcoef[33] * ylma[index_ylma + 30] - ylmcoef[34] * ylma[index_ylma + 14] - tmp0 * ylma[index_ylma + 23]; // l=5,m=5
-            ylma[index_ylma + 35] = ylmcoef[33] * ylma[index_ylma + 31] - ylmcoef[34] * ylma[index_ylma + 15] - tmp0 * ylma[index_ylma + 24]; // l=5,m=-5
-            if (ucell_atom_nwl[it[dist_tmp]] == 5)
-                goto YLM_END;
-
-            // if ucell_atom_nwl[it] > 5
-            for (int il = 6; il <= ucell_atom_nwl[it[dist_tmp]]; il++)
+            ylma[4] = ylmcoef[2] * dr[2] * ylma[1] - ylmcoef[3] * ylma[0]; // l=2, m=0
             {
-                int istart = il * il;
-                int istart1 = (il - 1) * (il - 1);
-                int istart2 = (il - 2) * (il - 2);
+                double tmp0 = ylmcoef[4] * dr[2];
+                ylma[5] = tmp0 * ylma[2]; // l=2,m=1
+                ylma[6] = tmp0 * ylma[3]; // l=2,m=-1
 
-                double fac2 = sqrt(4.0 * istart - 1.0);
-                double fac4 = sqrt(4.0 * istart1 - 1.0);
+                tmp0 = ylmcoef[4] * dr[0];
+                ylma[7] = ylmcoef[5] * ylma[4] - ylmcoef[6] * ylma[0] - tmp0 * ylma[2]; // l=2,m=2
+                ylma[8] = -tmp0 * ylma[3];
+                //	ylma[grid_index*nnnmax+8] = tmp1+tmp2*ylma[grid_index*nnnmax+3];//l=2,m=-2
+                if (nwl == 2)
+                    goto YLM_END;
 
-                for (int im = 0; im < 2 * il - 1; im++)
+                /***************************
+                L = 3
+                ***************************/
+                ylma[9] = ylmcoef[7] * dr[2] * ylma[4] - ylmcoef[8] * ylma[1]; // l=3, m=0
+
+                tmp0 = ylmcoef[9] * dr[2];
+                ylma[10] = tmp0 * ylma[5] - ylmcoef[10] * ylma[2]; // l=3,m=1
+                ylma[11] = tmp0 * ylma[6] - ylmcoef[10] * ylma[3]; // l=3,m=-1
+
+                tmp0 = ylmcoef[11] * dr[2];
+                ylma[12] = tmp0 * ylma[7]; // l=3,m=2
+                ylma[13] = tmp0 * ylma[8]; // l=3,m=-2
+
+                tmp0 = ylmcoef[14] * dr[0];
+                ylma[14] = ylmcoef[12] * ylma[10] - ylmcoef[13] * ylma[2] - tmp0 * ylma[7]; // l=3,m=3
+                ylma[15] = ylmcoef[12] * ylma[11] - ylmcoef[13] * ylma[3] - tmp0 * ylma[8]; // l=3,m=-3
+                if (nwl == 3)
+                    goto YLM_END;
+
+                /***************************
+                L = 4
+                ***************************/
+                ylma[16] = ylmcoef[15] * dr[2] * ylma[9] - ylmcoef[16] * ylma[4]; // l=4,m=0
+
+                tmp0 = ylmcoef[17] * dr[2];
+                ylma[17] = tmp0 * ylma[10] - ylmcoef[18] * ylma[5]; // l=4,m=1
+                ylma[18] = tmp0 * ylma[11] - ylmcoef[18] * ylma[6]; // l=4,m=-1
+
+                tmp0 = ylmcoef[19] * dr[2];
+                ylma[19] = tmp0 * ylma[12] - ylmcoef[20] * ylma[7]; // l=4,m=2
+                ylma[20] = tmp0 * ylma[13] - ylmcoef[20] * ylma[8]; // l=4,m=-2
+
+                tmp0 = 3.0 * dr[2];
+                ylma[21] = tmp0 * ylma[14]; // l=4,m=3
+                ylma[22] = tmp0 * ylma[15]; // l=4,m=-3
+
+                tmp0 = ylmcoef[23] * dr[0];
+                ylma[23] = ylmcoef[21] * ylma[19] - ylmcoef[22] * ylma[7] - tmp0 * ylma[14]; // l=4,m=4
+                ylma[24] = ylmcoef[21] * ylma[20] - ylmcoef[22] * ylma[8] - tmp0 * ylma[15]; // l=4,m=-4
+                if (nwl == 4)
+                    goto YLM_END;
+
+                /***************************
+                L = 5
+                ***************************/
+                ylma[25] = ylmcoef[24] * dr[2] * ylma[16] - ylmcoef[25] * ylma[9]; // l=5,m=0
+
+                tmp0 = ylmcoef[26] * dr[2];
+                ylma[26] = tmp0 * ylma[17] - ylmcoef[27] * ylma[10]; // l=5,m=1
+                ylma[27] = tmp0 * ylma[18] - ylmcoef[27] * ylma[11]; // l=5,m=-1
+
+                tmp0 = ylmcoef[28] * dr[2];
+                ylma[28] = tmp0 * ylma[19] - ylmcoef[29] * ylma[12]; // l=5,m=2
+                ylma[29] = tmp0 * ylma[20] - ylmcoef[29] * ylma[13]; // l=5,m=-2
+
+                tmp0 = ylmcoef[30] * dr[2];
+                ylma[30] = tmp0 * ylma[21] - ylmcoef[31] * ylma[14]; // l=5,m=3
+                ylma[31] = tmp0 * ylma[22] - ylmcoef[31] * ylma[15]; // l=5,m=-3
+
+                tmp0 = ylmcoef[32] * dr[2];
+                ylma[32] = tmp0 * ylma[23]; // l=5,m=4
+                ylma[33] = tmp0 * ylma[24]; // l=5,m=-4
+
+                tmp0 = ylmcoef[35] * dr[0];
+                ylma[34] = ylmcoef[33] * ylma[30] - ylmcoef[34] * ylma[14] - tmp0 * ylma[23]; // l=5,m=5
+                ylma[35] = ylmcoef[33] * ylma[31] - ylmcoef[34] * ylma[15] - tmp0 * ylma[24]; // l=5,m=-5
+                if (nwl == 5)
+                    goto YLM_END;
+
+                // if nwl > 5
+                for (int il = 6; il <= nwl; il++)
                 {
-                    int imm = (im + 1) / 2;
-                    //			if (im % 2 == 0) imm *= -1;
+                    int istart = il * il;
+                    int istart1 = (il - 1) * (il - 1);
+                    int istart2 = (il - 2) * (il - 2);
 
-                    ylma[index_ylma + istart + im] = fac2 / sqrt((double)istart - imm * imm) * (dr[pos_tmp + 2] * ylma[index_ylma + istart1 + im] - sqrt((double)istart1 - imm * imm) / fac4 * ylma[index_ylma + istart2 + im]);
+                    double fac2 = sqrt(4.0 * istart - 1.0);
+                    double fac4 = sqrt(4.0 * istart1 - 1.0);
+
+                    for (int im = 0; im < 2 * il - 1; im++)
+                    {
+                        int imm = (im + 1) / 2;
+                        //			if (im % 2 == 0) imm *= -1;
+
+                        ylma[istart + im] = fac2 / sqrt((double)istart - imm * imm) * (dr[2] * ylma[istart1 + im] - sqrt((double)istart1 - imm * imm) / fac4 * ylma[istart2 + im]);
+                    }
+
+                    double bl1 = sqrt(2.0 * il / (2.0 * il + 1.0));
+                    double bl2 = sqrt((2.0 * il - 2.0) / (2.0 * il - 1.0));
+                    double bl3 = sqrt(2.0) / fac2;
+
+                    ylma[istart + 2 * il - 1] = (bl3 * ylma[istart + 2 * il - 5] - bl2 * ylma[istart2 + 2 * il - 5] - 2.0 * dr[0] * ylma[istart1 + 2 * il - 3]) / bl1;
+                    ylma[istart + 2 * il] = (bl3 * ylma[istart + 2 * il - 4] - bl2 * ylma[istart2 + 2 * il - 4] - 2.0 * dr[0] * ylma[istart1 + 2 * il - 2]) / bl1;
                 }
-
-                double bl1 = sqrt(2.0 * il / (2.0 * il + 1.0));
-                double bl2 = sqrt((2.0 * il - 2.0) / (2.0 * il - 1.0));
-                double bl3 = sqrt(2.0) / fac2;
-
-                ylma[index_ylma + istart + 2 * il - 1] = (bl3 * ylma[index_ylma + istart + 2 * il - 5] - bl2 * ylma[index_ylma + istart2 + 2 * il - 5] - 2.0 * dr[pos_tmp + 0] * ylma[index_ylma + istart1 + 2 * il - 3]) / bl1;
-                ylma[index_ylma + istart + 2 * il] = (bl3 * ylma[index_ylma + istart + 2 * il - 4] - bl2 * ylma[index_ylma + istart2 + 2 * il - 4] - 2.0 * dr[pos_tmp + 0] * ylma[index_ylma + istart1 + 2 * il - 2]) / bl1;
             }
-        }
-    YLM_END:
-        distance[dist_tmp] /= delta_r_g[0];
+        YLM_END:
+            distance /= delta_r_g[0];
 
-        ip[dist_tmp] = (int)(distance[dist_tmp]);
-        dx[dist_tmp] = distance[dist_tmp] - ip[dist_tmp];
-        dx2[dist_tmp] = dx[dist_tmp] * dx[dist_tmp];
-        dx3[dist_tmp] = dx2[dist_tmp] * dx[dist_tmp];
+            int ip = (int)(distance);
+            double dx = distance - ip;
+            double dx2 = dx * dx;
+            double dx3 = dx2 * dx;
 
-        c3[dist_tmp] = 3.0 * dx2[dist_tmp] - 2.0 * dx3[dist_tmp];
-        c1[dist_tmp] = 1.0 - c3[dist_tmp];
-        c2[dist_tmp] = (dx[dist_tmp] - 2.0 * dx2[dist_tmp] + dx3[dist_tmp]) * delta_r_g[0];
-        c4[dist_tmp] = (dx3[dist_tmp] - dx2[dist_tmp]) * delta_r_g[0];
+            double c3 = 3.0 * dx2 - 2.0 * dx3;
+            double c1 = 1.0 - c3;
+            double c2 = (dx - 2.0 * dx2 + dx3) * delta_r_g[0];
+            double c4 = (dx3 - dx2) * delta_r_g[0];
 
-        int iw;
-        double phi = 0.0;
-        for (iw = 0; iw < atom_nw[it[dist_tmp]]; ++iw)
-        {
-            if (atom_iw2_new[it[dist_tmp] * nwmax_g[0] + iw])
+            int iw;
+            double phi = 0.0;
+            for (iw = 0; iw < atom_nw[it]; ++iw)
             {
-                phi = c1[dist_tmp] * psi_u[it[dist_tmp] * nwmax_g[0] * nr_max + iw * nr_max + ip[dist_tmp]] + c2[dist_tmp] * dpsi_u[it[dist_tmp] * nwmax_g[0] * nr_max + iw * nr_max + ip[dist_tmp]] + c3[dist_tmp] * psi_u[it[dist_tmp] * nwmax_g[0] * nr_max + iw * nr_max + ip[dist_tmp] + 1] + c4[dist_tmp] * dpsi_u[it[dist_tmp] * nwmax_g[0] * nr_max + iw * nr_max + ip[dist_tmp] + 1];
+                if (atom_iw2_new[it * nwmax_g[0] + iw])
+                {
+                    phi = c1 * psi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip] + c2 * dpsi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip] + c3 * psi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip + 1] + c4 * dpsi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip + 1];
+                }
+                psir_ylm[dist_tmp * nwmax_g[0] + iw] = phi * ylma[atom_iw2_ylm[it * nwmax_g[0] + iw]];
             }
-            psir_ylm[dist_tmp * nwmax_g[0] + iw] = phi * ylma[dist_tmp * nnnmax_g[0] + atom_iw2_ylm[it[dist_tmp] * nwmax_g[0] + iw]];
         }
-        //}//ib
-        //}//id
     } // if size
 }
-__global__ void cu_gamma_vlocal_step3(int ij_index,
-                                      int nbx,
-                                      int nby,
-                                      int nbz,
-                                      int nbz_start,
-                                      int ncy,
-                                      int nczp,
-                                      double *vlocal,
-                                      int *start_ind_g,
-                                      double *vldr3)
+__global__ void get_vldr3(int ij_index,
+                          int nbx,
+                          int nby,
+                          int nbz,
+                          int nbz_start,
+                          int ncy,
+                          int nczp,
+                          double *vlocal,
+                          int *start_ind_g,
+                          double *vldr3)
 {
     int k = blockIdx.x;
     int ii = threadIdx.x;
@@ -271,21 +251,23 @@ __global__ void cu_gamma_vlocal_step3(int ij_index,
     vldr3[k * bx_g[0] * by_g[0] * bz_g[0] + ii * by_g[0] * bz_g[0] + jj * bz_g[0] + kk] = vlocal[vindex] * vfactor_g[0];
 }
 
-__global__ void cu_gamma_vlocal_step4w(int grid_index,
-                                       int k,
-                                       int *how_many_atoms,
-                                       int *bcell_start,
-                                       int *which_atom,
-                                       int *iat2it,
-                                       int *iat2ia,
-                                       int *itiaiw2iwt,
-                                       bool *cal_flag,
-                                       double *psir_ylm,
-                                       int *trace_lo,
-                                       int *atom_nw,
-                                       double *vldr3,
-                                       double *GridVlocal,
-                                       int lgd)
+__global__ void psi_multiple(int grid_index,
+                             int k,
+                             int *how_many_atoms,
+                             double *atom_pair_index1_g,
+                             double *atom_pair_index2_g,
+                             int *bcell_start,
+                             int *which_atom,
+                             int *iat2it,
+                             int *iat2ia,
+                             int *itiaiw2iwt,
+                             bool *cal_flag,
+                             double *psir_ylm,
+                             int *trace_lo,
+                             int *atom_nw,
+                             double *vldr3,
+                             double *GridVlocal,
+                             int lgd)
 {
     int atomnow1 = blockIdx.x;
     int atomnow2 = blockIdx.y;
@@ -297,18 +279,15 @@ __global__ void cu_gamma_vlocal_step4w(int grid_index,
     }
     int iat1 = which_atom[bcell_start[grid_index] + atomnow1];
     int iat2 = which_atom[bcell_start[grid_index] + atomnow2];
-    if (iat2it[iat1] > iat2it[iat2])
-    {
-        return;
-    }
-    if (iw1 >= atom_nw[iat2it[iat1]] || iw2 >= atom_nw[iat2it[iat2]])
+    int it1 = iat2it[iat1];
+    int it2 = iat2it[iat2];
+    if (iw1 >= atom_nw[it1] || iw2 >= atom_nw[it2])
     {
         return;
     }
 
-    int lo1 = trace_lo[itiaiw2iwt[iat2it[iat1] * namax_g[0] + iat2ia[iat1]]];
-    int lo2 = trace_lo[itiaiw2iwt[iat2it[iat2] * namax_g[0] + iat2ia[iat2]]];
-
+    int lo1 = trace_lo[itiaiw2iwt[it1 * namax_g[0] + iat2ia[iat1]]];
+    int lo2 = trace_lo[itiaiw2iwt[it2 * namax_g[0] + iat2ia[iat2]]];
     if (lo1 <= lo2)
     {
         int lo1_iw1 = lo1 + iw1;
@@ -317,12 +296,13 @@ __global__ void cu_gamma_vlocal_step4w(int grid_index,
         for (int ib = 0; ib < bxyz_g[0]; ++ib)
         {
             int vldr3_index = k * bxyz_g[0] + ib;
-            int calc_index1 = vldr3_index * max_size_g[0] + atomnow1;
-            int calc_index2 = vldr3_index * max_size_g[0] + atomnow2;
+            int calc_index1 = vldr3_index * max_size_g[0];
+            int calc_index2 = calc_index1 + atomnow2;
+            calc_index1 += atomnow1;
             if (cal_flag[calc_index1] &&
                 cal_flag[calc_index2])
             {
-                v2 += psir_ylm[(calc_index1)*nwmax_g[0] + iw1] * vldr3[vldr3_index] * psir_ylm[(calc_index2)*nwmax_g[0] + iw2];
+                v2 += psir_ylm[calc_index1 * nwmax_g[0] + iw1] * vldr3[vldr3_index] * psir_ylm[calc_index2 * nwmax_g[0] + iw2];
             }
         }
         atomicAdd(&(GridVlocal[lo1_iw1 * lgd + lo2_iw2]), v2);
@@ -372,51 +352,17 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     const int ncx = pwncx;
     const int ncy = pwncy;
     const int nczp = pwnczp;
-    const int max_size_now = max_size;
     const int nwmax_now = GlobalC::ucell.nwmax;
     const int namax_now = GlobalC::ucell.namax;
     const int nype_now = GlobalC::ucell.ntype;
 
-    size_t size_meshball_positions = GridT.meshball_ncells * 3;
-    size_t size_tau_in_bigcell = GlobalC::ucell.nat * 3;
-    size_t size_meshcell_pos = bxyz_now * 3;
-
-    double *meshball_positions_now = new double[size_meshball_positions];
-    for (int i = 0; i < GridT.meshball_ncells; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            meshball_positions_now[i * 3 + j] = GridT.meshball_positions[i][j];
-        }
-    }
-
-    double *tau_in_bigcell_now = new double[size_tau_in_bigcell];
-    for (int i = 0; i < GlobalC::ucell.nat; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            tau_in_bigcell_now[i * 3 + j] = GridT.tau_in_bigcell[i][j];
-        }
-    }
-
-    double *meshcell_pos_now = new double[size_meshcell_pos];
-    for (int i = 0; i < bxyz_now; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            meshcell_pos_now[i * 3 + j] = GridT.meshcell_pos[i][j];
-        }
-    }
-
     size_t size_phi = GlobalC::ucell.ntype;
-    double *phi_getRcut_now = new double[size_phi];
     double max_cut = 0;
     for (int i = 0; i < size_phi; i++)
     {
-        phi_getRcut_now[i] = GlobalC::ORB.Phi[i].getRcut();
-        if (phi_getRcut_now[i] > max_cut)
+        if (GlobalC::ORB.Phi[i].getRcut() > max_cut)
         {
-            max_cut = phi_getRcut_now[i];
+            max_cut = GlobalC::ORB.Phi[i].getRcut();
         }
     }
 
@@ -492,7 +438,7 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaMemcpyToSymbol(by_g, &by, sizeof(int));
     cudaMemcpyToSymbol(bz_g, &bz, sizeof(int));
     cudaMemcpyToSymbol(bxyz_g, &bxyz_now, sizeof(int));
-    cudaMemcpyToSymbol(max_size_g, &max_size_now, sizeof(int));
+    cudaMemcpyToSymbol(max_size_g, &max_size, sizeof(int));
     cudaMemcpyToSymbol(nwmax_g, &nwmax_now, sizeof(int));
     cudaMemcpyToSymbol(namax_g, &namax_now, sizeof(int));
     cudaMemcpyToSymbol(nnnmax_g, &nnnmax, sizeof(int));
@@ -538,25 +484,6 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaMalloc((void **)&iat2ia, size_iat2ia * sizeof(int));
     cudaMemcpy(iat2ia, GlobalC::ucell.iat2ia, size_iat2ia * sizeof(int), cudaMemcpyHostToDevice);
 
-    double *meshball_positions;
-    cudaMalloc((void **)&meshball_positions, size_meshball_positions * sizeof(double));
-    cudaMemcpy(meshball_positions,
-               meshball_positions_now,
-               size_meshball_positions * sizeof(double),
-               cudaMemcpyHostToDevice);
-
-    double *tau_in_bigcell;
-    cudaMalloc((void **)&tau_in_bigcell, size_tau_in_bigcell * sizeof(double));
-    cudaMemcpy(tau_in_bigcell, tau_in_bigcell_now, size_tau_in_bigcell * sizeof(double), cudaMemcpyHostToDevice);
-
-    double *meshcell_pos;
-    cudaMalloc((void **)&meshcell_pos, size_meshcell_pos * sizeof(double));
-    cudaMemcpy(meshcell_pos, meshcell_pos_now, size_meshcell_pos * sizeof(double), cudaMemcpyHostToDevice);
-
-    double *ORB_Phi_getRcut;
-    cudaMalloc((void **)&ORB_Phi_getRcut, size_phi * sizeof(double));
-    cudaMemcpy(ORB_Phi_getRcut, phi_getRcut_now, size_phi * sizeof(double), cudaMemcpyHostToDevice);
-
     double *vlocal_cu;
     cudaMalloc((void **)&vlocal_cu, ncx * ncy * nczp * sizeof(double));
     cudaMemcpy(vlocal_cu, vlocal, ncx * ncy * nczp * sizeof(double), cudaMemcpyHostToDevice);
@@ -596,135 +523,181 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaMalloc((void **)&start_ind_g, nbxx * sizeof(int));
     cudaMemcpy(start_ind_g, start_ind, nbxx * sizeof(int), cudaMemcpyHostToDevice);
 
-    // para
-    double *dr;
-    cudaMalloc((void **)&dr, nbz * bxyz_now * max_size_now * 3 * sizeof(double));
-    cudaMemset(dr, 0, nbz * bxyz_now * max_size_now * 3 * sizeof(double));
-
-    double *distance;
-    cudaMalloc((void **)&distance, nbz * bxyz_now * max_size_now * sizeof(double));
-    cudaMemset(distance, 0, nbz * bxyz_now * max_size_now * sizeof(double));
-
     double *vldr3;
     cudaMalloc((void **)&vldr3, nbz * bxyz_now * sizeof(double));
     cudaMemset(vldr3, 0, nbz * bxyz_now * sizeof(double));
 
-    int *it;
-    cudaMalloc((void **)&it, nbz * bxyz_now * max_size_now * sizeof(int));
-    cudaMemset(it, 0, nbz * bxyz_now * max_size_now * sizeof(int));
-
-    double *ylma;
-    cudaMalloc((void **)&ylma, nbz * max_size_now * bxyz_now * nnnmax * sizeof(double));
-    cudaMemset(ylma, 0, nbz * max_size_now * bxyz_now * nnnmax * sizeof(double));
-
     double *psir_ylm;
-    cudaMalloc((void **)&psir_ylm, nbz * max_size_now * bxyz_now * nwmax_now * sizeof(double));
-    cudaMemset(psir_ylm, 0, nbz * max_size_now * bxyz_now * nwmax_now * sizeof(double));
-
-    int *ip;
-    cudaMalloc((void **)&ip, nbz * max_size_now * bxyz_now * sizeof(int));
-    cudaMemset(ip, 0, nbz * max_size_now * bxyz_now * sizeof(int));
-
-    double *dx, *dx2, *dx3, *c1, *c2, *c3, *c4;
-    cudaMalloc((void **)&dx, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(dx, 0, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMalloc((void **)&dx2, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(dx2, 0, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMalloc((void **)&dx3, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(dx3, 0, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMalloc((void **)&c1, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(c1, 0, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMalloc((void **)&c2, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(c2, 0, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMalloc((void **)&c3, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(c3, 0, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMalloc((void **)&c4, nbz * max_size_now * bxyz_now * sizeof(double));
-    cudaMemset(c4, 0, nbz * max_size_now * bxyz_now * sizeof(double));
+    cudaMalloc((void **)&psir_ylm, nbz * max_size * bxyz_now * nwmax_now * sizeof(double));
+    cudaMemset(psir_ylm, 0, nbz * max_size * bxyz_now * nwmax_now * sizeof(double));
 
     bool *cal_flag;
-    cudaMalloc((void **)&cal_flag, nbz * bxyz_now * max_size_now * sizeof(bool));
-    cudaMemset(cal_flag, 0, nbz * bxyz_now * max_size_now * sizeof(bool));
+    cudaMalloc((void **)&cal_flag, nbz * bxyz_now * max_size * sizeof(bool));
+    cudaMemset(cal_flag, 0, nbz * bxyz_now * max_size * sizeof(bool));
 
     double *GridVlocal;
     cudaMalloc((void **)&GridVlocal, lgd_now * lgd_now * sizeof(double));
     cudaMemset(GridVlocal, 0, lgd_now * lgd_now * sizeof(double));
 
+    const size_t atom_pair_num = (max_size * (max_size + 1)) / 2;
+
+    double *atom_pair_index1 = new double[atom_pair_num];
+    double *atom_pair_index2 = new double[atom_pair_num];
+    for (int x = 0; x < max_size; x++)
+    {
+        for (int y = 0; y < max_size - x; y++)
+        {
+            int index = ((max_size * 2 - x + 1) * x) / 2 + y;
+            atom_pair_index1[index] = x;
+            atom_pair_index2[index] = y;
+        }
+    }
+    double *atom_pair_index1_g;
+    cudaMalloc((void **)&atom_pair_index1_g, atom_pair_num * sizeof(double));
+
+    double *atom_pair_index2_g;
+    cudaMalloc((void **)&atom_pair_index2_g, atom_pair_num * sizeof(double));
+
+    cudaMemcpy(atom_pair_index1_g, atom_pair_index1, atom_pair_num * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(atom_pair_index2_g, atom_pair_index2, atom_pair_num * sizeof(double), cudaMemcpyHostToDevice);
+
+    int psi_size = max_size * bxyz_now;
+    int ALIGN_SIZE = 32;
+    int psi_size_up = ((psi_size + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
+    double *dr = new double[psi_size_up * nbz * 4]; // [ x,y,z,distance]
+    int *it = new int[psi_size_up * nbz];
+    int *psir_ylm_start = new int[psi_size_up * nbz];
+    int *num_psir = new int[nbz];
     // begin kernel
+
+    double *dr_g; // [ x,y,z,distance]
+    cudaMalloc((void **)&dr_g, psi_size_up * nbz * 4 * sizeof(double));
+
+    int *it_g;
+    cudaMalloc((void **)&it_g, psi_size_up * nbz * sizeof(int));
+
+    int *psir_ylm_start_g;
+    cudaMalloc((void **)&psir_ylm_start_g, psi_size_up * nbz * sizeof(int));
+
+    int *num_psir_g;
+    cudaMalloc((void **)&num_psir_g, nbz * sizeof(int));
 
     cudaEventRecord(t2);
 
-    // printf("maxsize=%d\n", max_size_now);
+    // printf("maxsize=%d\n", max_size);
 
     for (int i = 0; i < nbx; i++)
     {
         for (int j = 0; j < nby; j++)
         {
-            dim3 grid1(nbz);
-            dim3 block1(max_size_now, bxyz_now); // how_many_atoms,bxyz
-            cu_gamma_vlocal_step1<<<grid1, block1>>>(i * nby * nbz + j * nbz,
-                                                     how_many_atoms,
-                                                     bcell_start,
-                                                     which_bigcell,
-                                                     which_atom,
-                                                     iat2it,
-                                                     it,
-                                                     meshball_positions,
-                                                     tau_in_bigcell,
-                                                     meshcell_pos,
-                                                     dr,
-                                                     distance,
-                                                     ORB_Phi_getRcut,
-                                                     cal_flag,
-                                                     ucell_atom_nwl,
-                                                     ylma,
-                                                     ip,
-                                                     dx,
-                                                     dx2,
-                                                     dx3,
-                                                     c1,
-                                                     c2,
-                                                     c3,
-                                                     c4,
-                                                     atom_iw2_new,
-                                                     atom_iw2_ylm,
-                                                     atom_nw,
-                                                     nr_max,
-                                                     psi_u,
-                                                     dpsi_u,
-                                                     psir_ylm);
+            int num_psi_pos = 0;
+            for (int z_index = 0; z_index < nbz; z_index++)
+            {
+                int num_get_psi = 0;
+                int grid_index = i * nby * nbz + j * nbz + z_index;
+                for (int id = 0; id < GridT.how_many_atoms[grid_index]; id++)
+                {
+                    for (int ib = 0; ib < bxyz_now; ib++)
+                    {
+                        int mcell_index = GridT.bcell_start[grid_index] + id;
+                        int imcell = GridT.which_bigcell[mcell_index];
+                        int iat = GridT.which_atom[mcell_index];
+                        int it_temp = GlobalC::ucell.iat2it[iat];
+                        double dr_temp[3];
+                        dr_temp[0] = GridT.meshcell_pos[ib][0] + GridT.meshball_positions[imcell][0] - GridT.tau_in_bigcell[iat][0];
+                        dr_temp[1] = GridT.meshcell_pos[ib][1] + GridT.meshball_positions[imcell][1] - GridT.tau_in_bigcell[iat][1];
+                        dr_temp[2] = GridT.meshcell_pos[ib][2] + GridT.meshball_positions[imcell][2] - GridT.tau_in_bigcell[iat][2];
 
+                        double distance = sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] + dr_temp[2] * dr_temp[2]);
+                        if (distance <= GlobalC::ORB.Phi[it_temp].getRcut())
+                        {
+                            int pos_temp = num_psi_pos + num_get_psi;
+                            if (distance < 1.0E-9) distance += 1.0E-9;
+                            dr[pos_temp * 4] = dr_temp[0] / distance;
+                            dr[pos_temp * 4 + 1] = dr_temp[1] / distance;
+                            dr[pos_temp * 4 + 2] = dr_temp[2] / distance;
+                            dr[pos_temp * 4 + 3] = distance;
+                            it[pos_temp] = it_temp;
+                            int dist_tmp = z_index * bxyz_now * max_size + ib * max_size + id;
+                            psir_ylm_start[pos_temp] = dist_tmp;
+                            num_get_psi++;
+                        }
+                    }
+                }
+                int num_get_psi_up = ((num_get_psi + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
+                for (;num_get_psi < num_get_psi_up; num_get_psi++)
+                {
+                    int pos_temp = num_psi_pos + num_get_psi;
+                    dr[pos_temp * 4] = 0.0;
+                    dr[pos_temp * 4 + 1] = 0.0;
+                    dr[pos_temp * 4 + 2] = 0.0;
+                    dr[pos_temp * 4 + 3] = 0.0;
+                    it[pos_temp] = -1;
+                    psir_ylm_start[pos_temp] = psir_ylm_start[pos_temp - 1] + 1;
+                }
+                num_psir[z_index] = num_get_psi_up; // align to ALIGN_SIZE 32
+                num_psi_pos += psi_size_up;
+            }
+
+            cudaMemcpy(dr_g, dr, psi_size_up * nbz * 4 * sizeof(double), cudaMemcpyHostToDevice);
+            cudaMemcpy(it_g, it, psi_size_up * nbz * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(psir_ylm_start_g, psir_ylm_start, psi_size_up * nbz * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemset(cal_flag, 0, nbz * bxyz_now * max_size * sizeof(bool));
+
+            dim3 grid1(nbz);
+            dim3 block1(32); // how_many_atoms,bxyz
+            get_psi<<<grid1, block1>>>(dr_g,
+                                       it_g,
+                                       psir_ylm_start_g,
+                                       num_psir_g,
+                                       psi_size_up,
+                                       cal_flag,
+                                       ucell_atom_nwl,
+                                       atom_iw2_new,
+                                       atom_iw2_ylm,
+                                       atom_nw,
+                                       nr_max,
+                                       psi_u,
+                                       dpsi_u,
+                                       psir_ylm);
+            /* std::stringstream filename;
+            filename << "psi" << i << "_" << j;
+            dump_cuda_array_to_file(psir_ylm, max_size * bxyz_now * nwmax_now , nbz, filename.str());*/
             dim3 grid3(nbz);
             dim3 block3(bx, by, bz);
-            cu_gamma_vlocal_step3<<<grid3, block3>>>(i * nby * nbz + j * nbz,
-                                                     nbx,
-                                                     nby,
-                                                     nbz,
-                                                     nbz_start,
-                                                     ncy,
-                                                     nczp,
-                                                     vlocal_cu,
-                                                     start_ind_g,
-                                                     vldr3);
+            get_vldr3<<<grid3, block3>>>(i * nby * nbz + j * nbz,
+                                         nbx,
+                                         nby,
+                                         nbz,
+                                         nbz_start,
+                                         ncy,
+                                         nczp,
+                                         vlocal_cu,
+                                         start_ind_g,
+                                         vldr3);
 
-            dim3 grid4(max_size_now, max_size_now);
+            dim3 grid4(max_size, max_size);
             dim3 block4(nwmax_now, nwmax_now);
             for (int k = 0; k < nbz; k++)
             {
-                cu_gamma_vlocal_step4w<<<grid4, block4>>>(i * nby * nbz + j * nbz + k,
-                                                          k,
-                                                          how_many_atoms,
-                                                          bcell_start,
-                                                          which_atom,
-                                                          iat2it,
-                                                          iat2ia,
-                                                          itiaiw2iwt,
-                                                          cal_flag,
-                                                          psir_ylm,
-                                                          trace_lo,
-                                                          atom_nw,
-                                                          vldr3,
-                                                          GridVlocal,
-                                                          lgd_now);
+                psi_multiple<<<grid4, block4>>>(i * nby * nbz + j * nbz + k,
+                                                k,
+                                                how_many_atoms,
+                                                atom_pair_index1_g,
+                                                atom_pair_index2_g,
+                                                bcell_start,
+                                                which_atom,
+                                                iat2it,
+                                                iat2ia,
+                                                itiaiw2iwt,
+                                                cal_flag,
+                                                psir_ylm,
+                                                trace_lo,
+                                                atom_nw,
+                                                vldr3,
+                                                GridVlocal,
+                                                lgd_now);
             }
         } // j
     }     // i
@@ -735,20 +708,8 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaEventRecord(t3);
     cudaDeviceSynchronize();
     // free
-    cudaFree(dr);
-    cudaFree(distance);
-    cudaFree(ylma);
     cudaFree(vldr3);
-    cudaFree(it);
     cudaFree(psir_ylm);
-    cudaFree(ip);
-    cudaFree(dx);
-    cudaFree(dx2);
-    cudaFree(dx3);
-    cudaFree(c1);
-    cudaFree(c2);
-    cudaFree(c3);
-    cudaFree(c4);
     cudaFree(cal_flag);
 
     cudaFree(how_many_atoms);
@@ -757,10 +718,6 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaFree(which_atom);
     cudaFree(iat2it);
     cudaFree(iat2ia);
-    cudaFree(meshball_positions);
-    cudaFree(tau_in_bigcell);
-    cudaFree(meshcell_pos);
-    cudaFree(ORB_Phi_getRcut);
     cudaFree(vlocal_cu);
     cudaFree(ucell_atom_nwl);
     cudaFree(psi_u);
@@ -773,12 +730,22 @@ void gint_gamma_vl_gpu(double *GridVlocal_now,
     cudaFree(start_ind_g);
     cudaFree(GridVlocal);
 
+    cudaFree(atom_pair_index1_g);
+    cudaFree(atom_pair_index2_g);
+    cudaFree(dr_g);
+    cudaFree(it_g);
+    cudaFree(psir_ylm_start_g);
+    cudaFree(num_psir_g);
+
+    delete[] atom_pair_index1;
+    delete[] atom_pair_index2;
+    delete[] dr;
+    delete[] it;
+    delete[] psir_ylm_start;
+    delete[] num_psir;
+
     delete[] atom_nw_now;
     delete[] itiaiw2iwt_now;
-    delete[] meshball_positions_now;
-    delete[] tau_in_bigcell_now;
-    delete[] meshcell_pos_now;
-    delete[] phi_getRcut_now;
     delete[] ucell_atom_nwl_now;
     delete[] psi_u_now;
     delete[] dpsi_u_now;
