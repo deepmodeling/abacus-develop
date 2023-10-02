@@ -221,13 +221,19 @@ __global__ void get_psi(double *dr_all,
 
             int iw;
             double phi = 0.0;
+            int it_nw = it * nwmax_g[0];
+            const int it_nw_nr_ip = it_nw * nr_max + ip;
+            int iw_nr = it_nw_nr_ip;
+            dist_tmp = dist_tmp * nwmax_g[0];
             for (iw = 0; iw < atom_nw[it]; ++iw)
             {
-                if (atom_iw2_new[it * nwmax_g[0] + iw])
+                int it_nw_iw = it_nw + iw;
+                if (atom_iw2_new[it_nw_iw])
                 {
-                    phi = c1 * psi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip] + c2 * dpsi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip] + c3 * psi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip + 1] + c4 * dpsi_u[it * nwmax_g[0] * nr_max + iw * nr_max + ip + 1];
+                    phi = c1 * psi_u[iw_nr] + c2 * dpsi_u[iw_nr] + c3 * psi_u[iw_nr + 1] + c4 * dpsi_u[iw_nr + 1];
                 }
-                psir_ylm[dist_tmp * nwmax_g[0] + iw] = phi * ylma[atom_iw2_ylm[it * nwmax_g[0] + iw]];
+                psir_ylm[dist_tmp + iw] = phi * ylma[atom_iw2_ylm[it_nw_iw]];
+                iw_nr += nr_max;
             }
         }
     } // if size
