@@ -10,6 +10,7 @@ endif()
 add_library(
     base
     OBJECT
+    clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
     element_basis_index.cpp
