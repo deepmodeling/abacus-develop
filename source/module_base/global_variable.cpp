@@ -81,6 +81,7 @@ int SCF_THR_TYPE = 1;
 
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000; // number of points describing reciprocal radial tab
+int NQXQ = 10000; // number of points describing reciprocal radial tab for Q
 
 int NURSE = 0; // used for debug.
 bool COLOUR = 0;
