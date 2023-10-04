@@ -632,7 +632,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         //------------------------  t loop  --------------------------
         std::cout << "ik=" << ik << ": ";
         auto start = std::chrono::high_resolution_clock::now();
-        const int print_step = ceil(20 / nbatch) * nbatch;
+        const int print_step = ceil(20.0 / nbatch) * nbatch;
         for (int it = 1; it < nt; ++it)
         {
             // evaluate time cost
