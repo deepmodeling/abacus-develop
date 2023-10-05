@@ -211,43 +211,7 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
     }
     if (GlobalV::psi_initializer)
     {
-        if(GlobalV::init_wfc == "atomic")
-        {
-            this->psi_init = new psi_initializer_atomic(&(this->sf), this->pw_wfc);
-            // there are things only need to calculate once
-            //this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
-            // not parallelized function, but we have GlobalC now, 
-            // in the future once GlobalC is removed, we will parallelize this function
-            this->psi_init->cal_ovlp_pswfcjlq();
-        }
-        else if(GlobalV::init_wfc == "random")
-        {
-            this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc);
-        }
-        else if(GlobalV::init_wfc == "nao")
-        {
-            this->psi_init = new psi_initializer_nao(&(this->sf), this->pw_wfc);
-            // there are things only need to calculate once
-            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
-            this->psi_init->cal_ovlp_flzjlq();
-        }
-        else if(GlobalV::init_wfc == "atomic+random")
-        {
-            this->psi_init = new psi_initializer_atomic_random(&(this->sf), this->pw_wfc);
-            // there are things only need to calculate once
-            //this->psi_init->set_pseudopot_files(GlobalC::ucell.pseudo_fn);
-            // not parallelized function, but we have GlobalC now, 
-            // in the future once GlobalC is removed, we will parallelize this function
-            this->psi_init->cal_ovlp_pswfcjlq();
-        }
-        else if(GlobalV::init_wfc == "nao+random")
-        {
-            this->psi_init = new psi_initializer_nao_random(&(this->sf), this->pw_wfc);
-            // there are things only need to calculate once
-            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
-            this->psi_init->cal_ovlp_flzjlq();
-        }
-        else ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::init", "for new psi initializer, init_wfc type not supported");
+        this->allocate_psi_init();
     }
     // temporary
     this->Init_GlobalC(inp, ucell);
@@ -316,8 +280,23 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                 this->pw_wfc->nz);
         this->pw_wfc->initparameters(false, INPUT.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
         this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
-        this->wf.init_after_vc(this->kv.nks);
-        this->wf.init_at_1(&this->sf);
+        if(GlobalV::psi_initializer)
+        {
+            if(GlobalV::init_wfc.substr(0, 3) == "nao")
+            {
+                this->psi_init->cal_ovlp_flzjlq(); // for nao, we recalculate the overlap matrix between flz and jlq
+            }
+            else if(GlobalV::init_wfc.substr(0, 6) == "atomic")
+            {
+                this->psi_init->cal_ovlp_pswfcjlq(); // for atomic, we recalculate the overlap matrix between pswfc and jlq
+            }
+            // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and reallocate
+        }
+        else
+        {
+            this->wf.init_after_vc(this->kv.nks); // reallocate wanf2, the planewave expansion of lcao
+            this->wf.init_at_1(&this->sf); // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
+        }
     }
 
 #ifdef USE_PAW
@@ -401,7 +380,22 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     */
     if(GlobalV::psi_initializer)
     {
-        this->initialize_psi();
+        /*
+            beforescf function will be called everytime before scf. However, once atomic coordinates changed,
+            structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
+            psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
+            related to atomic coordinates.
+
+            What the old strategy does is only to initialize for once...
+        */
+        if(GlobalV::init_wfc == "random")
+        {
+            if(istep == 0) this->initialize_psi();
+        }
+        else
+        {
+            this->initialize_psi();
+        }
     }
 }
 
@@ -464,6 +458,89 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
     }
 }
 
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::allocate_psi_init()
+{
+    if(this->psi_init != nullptr)
+    {
+        delete this->psi_init;
+        this->psi_init = nullptr;
+    }
+    if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0))
+    {
+        GlobalV::init_wfc = "random";
+        std::cout << " WARNING: atomic pseudowavefunction is required but there is NOT ANY, set to random automatically." << std::endl;
+        #ifdef __MPI
+        this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
+        #else
+        this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
+        #endif
+        this->psi_init->initialize_only_once();
+    }
+    else
+    {
+        if(GlobalV::init_wfc == "atomic")
+        {
+            #ifdef __MPI
+            this->psi_init = new psi_initializer_atomic(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
+            #else
+            this->psi_init = new psi_initializer_atomic(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
+            #endif
+            this->psi_init->initialize_only_once(&(GlobalC::ppcell));
+            this->psi_init->cal_ovlp_pswfcjlq();
+        }
+        else if(GlobalV::init_wfc == "random")
+        {
+            #ifdef __MPI
+            this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
+            #else
+            this->psi_init = new psi_initializer_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
+            #endif
+            this->psi_init->initialize_only_once();
+        }
+        else if(GlobalV::init_wfc == "nao")
+        {
+            if(GlobalV::NSPIN == 4)
+            {
+                ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
+            }
+            #ifdef __MPI
+            this->psi_init = new psi_initializer_nao(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
+            #else
+            this->psi_init = new psi_initializer_nao(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
+            #endif
+            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
+            this->psi_init->initialize_only_once();
+            this->psi_init->cal_ovlp_flzjlq();
+        }
+        else if(GlobalV::init_wfc == "atomic+random")
+        {
+            #ifdef __MPI
+            this->psi_init = new psi_initializer_atomic_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
+            #else
+            this->psi_init = new psi_initializer_atomic_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
+            #endif
+            this->psi_init->initialize_only_once(&(GlobalC::ppcell));
+            this->psi_init->cal_ovlp_pswfcjlq();
+        }
+        else if(GlobalV::init_wfc == "nao+random")
+        {
+            if(GlobalV::NSPIN == 4)
+            {
+                ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
+            }
+            #ifdef __MPI
+            this->psi_init = new psi_initializer_nao_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
+            #else
+            this->psi_init = new psi_initializer_nao_random(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
+            #endif
+            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
+            this->psi_init->initialize_only_once();
+            this->psi_init->cal_ovlp_flzjlq();
+        }
+        else ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for new psi initializer, init_wfc type not supported");
+    }
+}
 /*
   Although ESolver_KS_PW supports template, but in this function it has no relationship with
   heterogeneous calculation, so all templates function are specialized to double
