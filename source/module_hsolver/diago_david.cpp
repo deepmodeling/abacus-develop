@@ -615,18 +615,25 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 
         auto* swap = new T[notconv * this->nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-        if (psi::device::get_current_precision(swap) == "single") {
-            MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0,POOL_WORLD);
+        if (std::is_same<T, double>::value)
+        {
+            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
         }
-        else {
-            MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0,POOL_WORLD);
-        }
-        syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
-        if (psi::device::get_current_precision(swap) == "single") {
-            MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
-        }
-        else {
-            MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+        else
+        {
+            if (psi::device::get_current_precision(swap) == "single") {
+                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+            }
+            else {
+                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+            }
+            syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
+            if (psi::device::get_current_precision(swap) == "single") {
+                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+            }
+            else {
+                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+            }
         }
         delete[] swap;
 
