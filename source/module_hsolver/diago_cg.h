@@ -98,7 +98,7 @@ class DiagoCG : public DiagH<T, Device>
     void diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in);
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-    using zdot_real_op = hsolver::zdot_real_op<Real, Device>;
+    using dot_real_op = hsolver::dot_real_op<T, Device>;
 
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;

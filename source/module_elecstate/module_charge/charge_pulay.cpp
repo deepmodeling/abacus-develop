@@ -416,7 +416,7 @@ void Charge_Mixing::generate_Abar(ModuleBase::matrix &A)const
 			}
 		}
 	}
-	Parallel_Reduce::reduce_double_pool(A.c, A.nr * A.nc);
+    Parallel_Reduce::reduce_pool(A.c, A.nr * A.nc);
 	return;
 }
 
@@ -493,7 +493,7 @@ void Charge_Mixing::generate_dRR(const int &m)
 			}
 		}
 	}
-	Parallel_Reduce::reduce_double_pool(dRR, dstep);
+    Parallel_Reduce::reduce_pool(dRR, dstep);
 
 	return;
 }

@@ -215,7 +215,7 @@ double Charge::sum_rho(void) const
     sum_rho *= elecstate::get_ucell_omega() / static_cast<double>(this->rhopw->nxyz);
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(sum_rho);
+    Parallel_Reduce::reduce_pool(sum_rho);
 #endif
 
     // mohan fixed bug 2010-01-18,
@@ -286,7 +286,7 @@ void Charge::atomic_rho(const int spin_number_need,
             }
             ne[is] *= omega / (double)this->rhopw->nxyz;
 #ifdef __MPI
-            Parallel_Reduce::reduce_double_pool(ne[is]);
+            Parallel_Reduce::reduce_pool(ne[is]);
 #endif
             GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "Electron number from rho", ne[is]);
@@ -595,7 +595,7 @@ void Charge::atomic_rho(const int spin_number_need,
                 ne[is] += rho_in[is][ir];
             ne[is] *= omega / (double)this->rhopw->nxyz;
     #ifdef __MPI
-            Parallel_Reduce::reduce_double_pool(ne[is]);
+            Parallel_Reduce::reduce_pool(ne[is]);
     #endif
             // we check that everything is correct
             double neg = 0.0;
@@ -611,9 +611,9 @@ void Charge::atomic_rho(const int spin_number_need,
             }
 
     #ifdef __MPI
-            Parallel_Reduce::reduce_double_pool(neg);
-            Parallel_Reduce::reduce_double_pool(ima);
-            Parallel_Reduce::reduce_double_pool(sumrea);
+            Parallel_Reduce::reduce_pool(neg);
+            Parallel_Reduce::reduce_pool(ima);
+            Parallel_Reduce::reduce_pool(sumrea);
     #endif
             // mohan fix bug 2011-04-03
             neg = neg / (double)this->rhopw->nxyz * omega;
@@ -671,7 +671,7 @@ double Charge::check_ne(const double* rho_in) const
         ne += rho_in[ir];
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(ne);
+    Parallel_Reduce::reduce_pool(ne);
 #endif
     ne = ne * elecstate::get_ucell_omega() / (double)this->rhopw->nxyz;
     std::cout << std::setprecision(10);

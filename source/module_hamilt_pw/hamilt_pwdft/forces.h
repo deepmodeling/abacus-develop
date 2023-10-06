@@ -66,7 +66,7 @@ public:
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
-    using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
+    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_vkb1_nl_op = hamilt::cal_vkb1_nl_op<FPTYPE, Device>;
     using cal_force_nl_op = hamilt::cal_force_nl_op<FPTYPE, Device>;
 

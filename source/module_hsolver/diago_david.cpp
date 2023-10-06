@@ -17,15 +17,51 @@
 
 using namespace hsolver;
 
+template class consts<double>;
+template class consts<std::complex<double>>;
+template class consts<std::complex<float>>;
+
+template<> consts<double>::consts()
+{
+    zero = 0.0;
+    one = 1.0;
+    neg_one = -1.0;
+}
+template<> consts<std::complex<double>>::consts()
+{
+    zero = std::complex<double>(0.0, 0.0);
+    one = std::complex<double>(1.0, 0.0);
+    neg_one = std::complex<double>(-1.0, 0.0);
+}
+template<> consts<std::complex<float>>::consts()
+{
+    zero = std::complex<float>(0.0, 0.0);
+    one = std::complex<float>(1.0, 0.0);
+    neg_one = std::complex<float>(-1.0, 0.0);
+}
+
+inline double get_real(const double& x)
+{
+    return x;
+}
+inline double get_real(const std::complex<double>& x)
+{
+    return x.real();
+}
+inline float get_real(const std::complex<float>& x)
+{
+    return x.real();
+}
+
 template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
     test_david = 2;
-    this->one = new T(1.0, 0.0);
-    this->zero = new T(0.0, 0.0);
-    this->neg_one = new T(-1.0, 0.0);
+    this->one = &this->cs.one;
+    this->zero = &this->cs.zero;
+    this->neg_one = &this->cs.neg_one;
     // 1: check which function is called and which step is executed
     // 2: check the eigenvalues of the result of each iteration
     // 3: check the eigenvalues and errors of the last result
@@ -44,9 +80,6 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
     if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, this->d_precondition);
     }
-    delete this->one;
-    delete this->zero;
-    delete this->neg_one;
 }
 
 template <typename T, typename Device>
@@ -232,7 +265,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
             setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * this->dmx);
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
-            gemm_op<Real, Device>()(this->ctx,
+            gemm_op<T, Device>()(this->ctx,
                                       'N',
                                       'N',
                                       this->dim,           // m: row of A,C
@@ -342,7 +375,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
                               this->dim, // m: row of A,C
@@ -379,7 +412,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
             Real* e_temp_gpu = nullptr;
             resmem_var_op()(this->ctx, e_temp_gpu, nbase);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_gpu, e_temp_cpu.data(), nbase);
-            vector_mul_vector_op<Real, Device>()(this->ctx,
+            vector_mul_vector_op<T, Device>()(this->ctx,
                                                    nbase,
                                                    vc_ev_vector + m * nbase,
                                                    vc_ev_vector + m * nbase,
@@ -389,7 +422,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            vector_mul_vector_op<Real, Device>()(this->ctx,
+            vector_mul_vector_op<T, Device>()(this->ctx,
                                                    nbase,
                                                    vc_ev_vector + m * nbase,
                                                    vc_ev_vector + m * nbase,
@@ -400,7 +433,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
                               this->dim, // m: row of A,C
@@ -424,7 +457,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         if (this->device == psi::GpuDevice)
         {
 #if defined(__CUDA) || defined(__ROCM)
-            vector_div_vector_op<Real, Device>()(this->ctx,
+            vector_div_vector_op<T, Device>()(this->ctx,
                                                    this->dim,
                                                    &basis(nbase + m, 0),
                                                    &basis(nbase + m, 0),
@@ -433,7 +466,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            vector_div_vector_op<Real, Device>()(this->ctx,
+            vector_div_vector_op<T, Device>()(this->ctx,
                                                    this->dim,
                                                    &basis(nbase + m, 0),
                                                    &basis(nbase + m, 0),
@@ -475,7 +508,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     // calculate the square matrix for future lagranges
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //  haozhihan replace 2022-10-18
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
                               nbase, // m: row of A,C
@@ -543,7 +576,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         return;
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
                               notconv,
@@ -558,7 +591,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               hcc + nbase,        // notconv * (nbase + notconv)
                               this->nbase_x);
 
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'C',
                               'N',
                               notconv,
@@ -577,8 +610,8 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        matrixTranspose_op<Real, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-        matrixTranspose_op<Real, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
+        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
+        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
 
         auto* swap = new T[notconv * this->nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
@@ -600,8 +633,8 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * this->nbase_x, notconv * this->nbase_x );
         // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * this->nbase_x, notconv * this->nbase_x );
 
-        matrixTranspose_op<Real, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-        matrixTranspose_op<Real, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
+        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
+        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
     }
 #endif
 
@@ -643,7 +676,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
             resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue, this->nbase_x);
 
-            dnevx_op<Real, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
+            dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
 
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue, eigenvalue_gpu, this->nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
@@ -651,7 +684,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         }
         else
         {
-            dnevx_op<Real, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, this->eigenvalue, this->vcc);
+            dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, this->eigenvalue, this->vcc);
         }
     }
 
@@ -692,7 +725,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     basis.zero_out();
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
                               this->dim,            // m: row of A,C
@@ -710,7 +743,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan repalce 2022-10-18
-    gemm_op<Real, Device>()(this->ctx,
+    gemm_op<T, Device>()(this->ctx,
                               'N',
                               'N',
                               this->dim,                // m: row of A,C
@@ -776,9 +809,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                                                                                this->nbase_x * this->nbase_x,
                                                                                "DAV::vcc");
 
-        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
-        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);
-        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, vcc_cpu, vcc, this->nbase_x * this->nbase_x);
+        syncmem_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
+        syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);
+        syncmem_d2h_op()(this->cpu_ctx, this->ctx, vcc_cpu, vcc, this->nbase_x * this->nbase_x);
 
         for (int i = 0; i < nbase; i++)
         {
@@ -787,9 +820,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
             vcc_cpu[i * this->nbase_x + i] = this->one[0];
         }
 
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, this->nbase_x * this->nbase_x);
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, this->nbase_x * this->nbase_x);
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, this->nbase_x * this->nbase_x);
+        syncmem_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, this->nbase_x * this->nbase_x);
+        syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, this->nbase_x * this->nbase_x);
+        syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, this->nbase_x * this->nbase_x);
 
         psi::memory::delete_memory_op<T, psi::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
         psi::memory::delete_memory_op<T, psi::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
@@ -844,7 +877,7 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // haozhihan repalce 2022-10-16
-        gemm_op<Real, Device>()(this->ctx,
+        gemm_op<T, Device>()(this->ctx,
                                   'C',
                                   'N',
                                   mm_size, // m: row of A,C
@@ -863,7 +896,7 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
     // calculate other lagranges for this band
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //  haozhihan repalce 2022-10-16
-    gemv_op<Real, Device>()(this->ctx,
+    gemv_op<T, Device>()(this->ctx,
                               'C',
                               this->dim,
                               mv_size,
@@ -877,16 +910,16 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
                               1);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    Parallel_Reduce::reduce_complex_double_pool(lagrange_m, m + 1);
+    Parallel_Reduce::reduce_pool(lagrange_m, m + 1);
 
-    T var = {0, 0};
-    syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_m + m, 1);
-    double psi_norm = var.real();
+    T var = *this->zero;
+    syncmem_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_m + m, 1);
+    double psi_norm = get_real(var);
 
     assert(psi_norm > 0.0);
 
     // haozhihan replace 2022-10-24
-    gemv_op<Real, Device>()(this->ctx,
+    gemv_op<T, Device>()(this->ctx,
                               'N',
                               this->dim,
                               m,
@@ -899,7 +932,7 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
                               psi_m,
                               1);
 
-    psi_norm -= zdot_real_op<Real, Device>()(this->ctx, m, lagrange_m, lagrange_m, false);
+    psi_norm -= dot_real_op<T, Device>()(this->ctx, m, lagrange_m, lagrange_m, false);
 
     // for (int j = 0; j < m; j++)
     // {
@@ -927,7 +960,7 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // haozhihan repalce 2022-10-16
-        vector_div_constant_op<Real, Device>()(this->ctx, this->dim, psi_m, psi_m, psi_norm);
+        vector_div_constant_op<T, Device>()(this->ctx, this->dim, psi_m, psi_m, psi_norm);
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // for (int i = 0; i < npw; i++)
         // {
@@ -1038,5 +1071,11 @@ template class DiagoDavid<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoDavid<std::complex<float>, psi::DEVICE_GPU>;
 template class DiagoDavid<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+#ifdef __LCAO
+template class DiagoDavid<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class DiagoDavid<double, psi::DEVICE_GPU>;
+#endif
 #endif
 } // namespace hsolver

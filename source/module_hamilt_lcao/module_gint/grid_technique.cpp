@@ -257,7 +257,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 		GlobalV::ofs_running << " No atoms on this sub-FFT-mesh." << std::endl;
 		stop = 1;
 	} 	
-	Parallel_Reduce::reduce_int_all( stop );
+    Parallel_Reduce::reduce_all(stop);
 	if(stop)
 	{
 		ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid","No atom on this sub-FFT-mesh.");

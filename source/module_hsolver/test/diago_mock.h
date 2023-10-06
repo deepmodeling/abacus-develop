@@ -515,7 +515,7 @@ class OperatorMock_d : public hamilt::OperatorPW<std::complex<double>>
                     hpsi0[i] += DIAGOTEST::hmatrix_local[i * DIAGOTEST::h_nc + j] * tmpsi_in[j];
                 }
             }
-            Parallel_Reduce::reduce_complex_double_pool(hpsi0, DIAGOTEST::npw);
+            Parallel_Reduce::reduce_pool(hpsi0, DIAGOTEST::npw);
             DIAGOTEST::divide_psi<std::complex<double>>(hpsi0, tmhpsi);
             tmhpsi += nbasis;
             tmpsi_in += nbasis;

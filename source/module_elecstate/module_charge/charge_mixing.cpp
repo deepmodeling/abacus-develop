@@ -152,7 +152,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 		}
 	}
 
-	Parallel_Reduce::reduce_double_pool( scf_thr2 );
+	Parallel_Reduce::reduce_pool( scf_thr2 );
 	assert( nelec != 0);
 	assert( GlobalC::ucell.omega > 0);
 	assert( this->rhopw->nxyz > 0);
@@ -478,7 +478,7 @@ double Charge_Mixing::rhog_dot_product(
 		break;
     }
 
-    Parallel_Reduce::reduce_double_pool( sum );
+    Parallel_Reduce::reduce_pool( sum );
 
 	ModuleBase::timer::tick("Charge_Mixing","rhog_dot_product");
 

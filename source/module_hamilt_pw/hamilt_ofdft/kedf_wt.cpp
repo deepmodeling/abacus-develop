@@ -65,7 +65,7 @@ double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
         // energy *= 0.5 * this->dV * 0.5;
     }
     this->WTenergy = energy;
-    Parallel_Reduce::reduce_double_all(this->WTenergy);
+    Parallel_Reduce::reduce_all(this->WTenergy);
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -140,7 +140,7 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
         // energy *= 0.5 * this->dV * 0.5;
     }
     this->WTenergy = energy;
-    Parallel_Reduce::reduce_double_all(this->WTenergy);
+    Parallel_Reduce::reduce_all(this->WTenergy);
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -221,7 +221,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
     {
         for (int b = a; b < 3; ++b)
         {
-            Parallel_Reduce::reduce_double_all(this->stress(a,b));
+            Parallel_Reduce::reduce_all(this->stress(a, b));
 
             if (GlobalV::GAMMA_ONLY_PW)
             {
