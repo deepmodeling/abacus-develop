@@ -50,7 +50,7 @@ void Input::Init(const std::string &fn)
         ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
     }
 #ifdef __MPI
-    Bcast();
+    this->Bcast();
 #endif
 
     // mohan move forward 2011-02-26
