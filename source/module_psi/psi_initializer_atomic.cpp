@@ -10,41 +10,51 @@
 #include "module_base/timer.h"
 // three global variables definition
 #include "module_base/global_variable.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-psi_initializer_atomic::psi_initializer_atomic(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in) : psi_initializer(sf_in, pw_wfc_in)
+#ifdef __MPI
+psi_initializer_atomic::psi_initializer_atomic(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in) 
+                       : psi_initializer(sf_in, pw_wfc_in, p_ucell_in, p_parakpts_in, random_seed_in)
+#else
+psi_initializer_atomic::psi_initializer_atomic(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in) 
+                       : psi_initializer(sf_in, pw_wfc_in, p_ucell_in, random_seed_in)
+#endif
 {
     this->set_method("atomic");
-    // find correct dimension for ovlp_flzjlq
-    int dim1 = GlobalC::ucell.ntype;
-    int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+}
+
+psi_initializer_atomic::~psi_initializer_atomic() {}
+
+/* I leave this function here for deprecation of UnitCell in the future */
+/*
+void psi_initializer_atomic::set_pseudopot_files(std::string* pseudopot_files)
+{
+    ModuleBase::timer::tick("psi_initializer_atomic", "set_pseudopot_files");
+    for (int itype = 0; itype < this->p_ucell->ntype; itype++)
     {
-        dim2 = (GlobalC::ucell.atoms[it].ncpp.nchi > dim2) ? GlobalC::ucell.atoms[it].ncpp.nchi : dim2;
+        this->pseudopot_files.push_back(pseudopot_files[itype]);
+    }
+    ModuleBase::timer::tick("psi_initializer_atomic", "set_pseudopot_files");
+}
+*/
+
+void psi_initializer_atomic::create_ovlp_Xjlq()
+{
+   // find correct dimension for ovlp_flzjlq
+    int dim1 = this->p_ucell->ntype;
+    int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
+    for (int it = 0; it < this->p_ucell->ntype; it++)
+    {
+        dim2 = (this->p_ucell->atoms[it].ncpp.nchi > dim2) ? this->p_ucell->atoms[it].ncpp.nchi : dim2;
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic::psi_initializer_atomic", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic::create_ovlp_Xjlq", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
     int dim3 = GlobalV::NQX;
     // allocate memory for ovlp_flzjlq
     this->ovlp_pswfcjlq.create(dim1, dim2, dim3);
     this->ovlp_pswfcjlq.zero_out();
 }
-
-
-psi_initializer_atomic::~psi_initializer_atomic() {}
-
-void psi_initializer_atomic::set_pseudopot_files(std::string* pseudopot_files)
-{
-    ModuleBase::timer::tick("psi_initializer_atomic", "set_pseudopot_files");
-    for (int itype = 0; itype < GlobalC::ucell.ntype; itype++)
-    {
-        this->pseudopot_files.push_back(pseudopot_files[itype]);
-    }
-    ModuleBase::timer::tick("psi_initializer_atomic", "set_pseudopot_files");
-}
-
 
 void psi_initializer_atomic::normalize_pswfc(int n_rgrid, double* pswfc, double* rab)
 {
@@ -63,6 +73,19 @@ void psi_initializer_atomic::normalize_pswfc(int n_rgrid, double* pswfc, double*
     ModuleBase::timer::tick("psi_initializer_atomic", "normalize_pswfc");
 }
 
+void psi_initializer_atomic::initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in)
+{
+    ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
+    if(p_pspot_nl_in == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic::initialize_only_once", "pseudopot_cell_vnl object cannot be mullptr for atomic, quit.");
+    }
+    this->p_pspot_nl = p_pspot_nl_in;
+    this->create_ovlp_Xjlq();
+    //this->set_pseudopot_files();
+    //this->cal_ovlp_pswfcjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init and init_after_vc
+    ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
+}
 
 void psi_initializer_atomic::cal_ovlp_pswfcjlq()
 {
@@ -73,20 +96,20 @@ void psi_initializer_atomic::cal_ovlp_pswfcjlq()
     {
         qgrid[iq] = GlobalV::DQ * iq;
     }
-    for (int it=0; it<GlobalC::ucell.ntype; it++)
+    for (int it=0; it<this->p_ucell->ntype; it++)
     {
-        maxn_rgrid = (GlobalC::ucell.atoms[it].ncpp.msh > maxn_rgrid) ? GlobalC::ucell.atoms[it].ncpp.msh : maxn_rgrid;
+        maxn_rgrid = (this->p_ucell->atoms[it].ncpp.msh > maxn_rgrid) ? this->p_ucell->atoms[it].ncpp.msh : maxn_rgrid;
     }
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",maxn_rgrid);
     
-    const double pref = ModuleBase::FOUR_PI / sqrt(GlobalC::ucell.omega);
+    const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell->omega);
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
 
-    for (int it=0; it<GlobalC::ucell.ntype; it++)
+    for (int it=0; it<this->p_ucell->ntype; it++)
     {
-		Atom* atom = &GlobalC::ucell.atoms[it];
+		Atom* atom = &this->p_ucell->atoms[it];
 
 		GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
 
@@ -131,11 +154,11 @@ std::complex<double> psi_initializer_atomic::phase_factor(double arg, int mode)
 
 psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
 {
-    ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
+    ModuleBase::timer::tick("psi_initializer_atomic", "cal_psig");
     this->psig->fix_k(ik);
     //this->print_status(psi);
     const int npw = this->pw_wfc->npwk[ik];
-    int lmax = GlobalC::ucell.lmax_ppwf;
+    int lmax = this->p_ucell->lmax_ppwf;
     const int total_lm = (lmax + 1) * (lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
     std::complex<double> *aux = new std::complex<double>[npw];
@@ -149,34 +172,34 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
     ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
     int index = 0;
     double *ovlp_pswfcjlg = new double[npw];
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    for (int it = 0; it < this->p_ucell->ntype; it++)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < this->p_ucell->atoms[it].na; ia++)
         {
 /* FOR EVERY ATOM */
             std::complex<double> *sk = this->sf->get_sk(ik, it, ia, this->pw_wfc);
-            for (int ipswfc = 0; ipswfc < GlobalC::ucell.atoms[it].ncpp.nchi; ipswfc++)
+            for (int ipswfc = 0; ipswfc < this->p_ucell->atoms[it].ncpp.nchi; ipswfc++)
             {
 /* FOR EVERY PSWFC OF ATOM */
-                if (GlobalC::ucell.atoms[it].ncpp.oc[ipswfc] >= 0.0)
+                if (this->p_ucell->atoms[it].ncpp.oc[ipswfc] >= 0.0)
                 {
 /* IF IS OCCUPIED, GET L */
-                    const int l = GlobalC::ucell.atoms[it].ncpp.lchi[ipswfc];
+                    const int l = this->p_ucell->atoms[it].ncpp.lchi[ipswfc];
                     std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, l);
 
                     for (int ig=0; ig<npw; ig++)
                     {
                         ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
                             this->ovlp_pswfcjlq, it, ipswfc, 
-                            GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * GlobalC::ucell.tpiba );
+                            GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell->tpiba );
                     }
 /* NSPIN == 4 */
                     if(GlobalV::NSPIN == 4)
                     {
-                        if(GlobalC::ucell.atoms[it].ncpp.has_so)
+                        if(this->p_ucell->atoms[it].ncpp.has_so)
                         {
                             Soc soc; soc.rot_ylm(l + 1);
-                            const double j = GlobalC::ucell.atoms[it].ncpp.jchi[ipswfc];
+                            const double j = this->p_ucell->atoms[it].ncpp.jchi[ipswfc];
     /* NOT NONCOLINEAR CASE, rotation matrix become identity */
                             if (!(GlobalV::DOMAG||GlobalV::DOMAG_Z))
                             {
@@ -192,7 +215,7 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
                                             if(fabs(cg_coeffs[is]) > 1e-8)
                                             {
         /* GET COMPLEX SPHERICAL HARMONIC FUNCTION */
-                                                const int ind = GlobalC::ppcell.lmaxkb + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
+                                                const int ind = this->p_pspot_nl->lmaxkb + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
                                                 ModuleBase::GlobalFunc::ZEROS(aux, npw);
                                                 for(int n1 = 0; n1 < 2*l+1; n1++)
                                                 {
@@ -244,11 +267,11 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
                                 else
                                 {
         /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
-                                    for(int jpsiwfc = 0; jpsiwfc < GlobalC::ucell.atoms[it].ncpp.nchi; jpsiwfc++)
+                                    for(int jpsiwfc = 0; jpsiwfc < this->p_ucell->atoms[it].ncpp.nchi; jpsiwfc++)
                                     {
                                         if(
-                                            (GlobalC::ucell.atoms[it].ncpp.lchi[jpsiwfc] == l)
-                                          &&(fabs(GlobalC::ucell.atoms[it].ncpp.jchi[jpsiwfc] - l + 0.5) < 1e-4))
+                                            (this->p_ucell->atoms[it].ncpp.lchi[jpsiwfc] == l)
+                                          &&(fabs(this->p_ucell->atoms[it].ncpp.jchi[jpsiwfc] - l + 0.5) < 1e-4))
                                         {
                                             ipswfc_noncolin_soc = jpsiwfc;
                                             break;
@@ -260,7 +283,7 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
                                         chiaux[ig] =  l *
                                             ModuleBase::PolyInt::Polynomial_Interpolation(
                                                 this->ovlp_pswfcjlq, it, ipswfc_noncolin_soc, 
-                                                GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * GlobalC::ucell.tpiba);
+                                                GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * this->p_ucell->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
                                         chiaux[ig] *= 1/(2.0*l+1.0);
                                     }
@@ -268,13 +291,17 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
             /* ROTATE ACCORDING TO NONCOLINEAR */
                                 double alpha, gamma;
                                 std::complex<double> fup, fdw;
-                                alpha = GlobalC::ucell.atoms[it].angle1[ia];
-                                gamma = -1 * GlobalC::ucell.atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
+                                alpha = this->p_ucell->atoms[it].angle1[ia];
+                                gamma = -1 * this->p_ucell->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
 
                                 for(int m = 0; m < 2*l+1; m++)
                                 {
                                     const int lm = l*l +m;
-                                    if(index+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+                                    if(index+2*l+1 > this->p_ucell->natomwfc)
+                                    {
+                                        std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell->natomwfc<<std::endl;
+                                        //ModuleBase::WARNING_QUIT("psi_initializer_atomic::cal_psig()","error: too many wfcs");
+                                    }
                                     for(int ig = 0;ig<npw;ig++)
                                     {
                                         aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
@@ -304,14 +331,18 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
                         {//atomic_wfc_nc
                             double alpha, gamman;
                             std::complex<double> fup, fdown;
-                            //alpha = GlobalC::ucell.magnet.angle1_[it];
-                            //gamman = -GlobalC::ucell.magnet.angle2_[it] + 0.5*ModuleBase::PI;
-                            alpha = GlobalC::ucell.atoms[it].angle1[ia];
-                            gamman = -1 * GlobalC::ucell.atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
+                            //alpha = this->p_ucell->magnet.angle1_[it];
+                            //gamman = -this->p_ucell->magnet.angle2_[it] + 0.5*ModuleBase::PI;
+                            alpha = this->p_ucell->atoms[it].angle1[ia];
+                            gamman = -1 * this->p_ucell->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
                             for(int m = 0; m < 2*l+1; m++)
                             {
                                 const int lm = l*l +m;
-                                if(index+2*l+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+                                if(index+2*l+1 > this->p_ucell->natomwfc)
+                                {
+                                    std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell->natomwfc<<std::endl;
+                                    //ModuleBase::WARNING_QUIT("psi_initializer_atomic::cal_psig()","error: too many wfcs");
+                                }
                                 for(int ig = 0;ig<npw;ig++)
                                 {
                                      aux[ig] = sk[ig] * ylm(lm,ig) * ovlp_pswfcjlg[ig];
@@ -362,11 +393,8 @@ psi::Psi<std::complex<double>>* psi_initializer_atomic::cal_psig(int ik)
 	/* complement the rest of bands if there are */
 	if(this->get_nbands_complem() > 0)
 	{
-		this->random_t(this->psig->get_pointer(), index, this->psig->get_nbands(), ik, this->pw_wfc);
+		this->random_t(this->psig->get_pointer(), index, this->psig->get_nbands(), ik);
 	}
-    ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
-#ifdef PSI_INITIALIZER_TEST
-	this->write_psig();
-#endif
+    ModuleBase::timer::tick("psi_initializer_atomic", "cal_psig");
     return this->psig;
 }
