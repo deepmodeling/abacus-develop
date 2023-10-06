@@ -448,7 +448,7 @@ class HPsi_f
 };
 
 //totally same as the original function
-template<> void hamilt::HamiltPW<std::complex<double>>::sPsi
+template<> void hamilt::Hamilt<std::complex<double>>::sPsi
 (
     const std::complex<double> *psi, 
     std::complex<double> *spsi, 
@@ -463,7 +463,7 @@ template<> void hamilt::HamiltPW<std::complex<double>>::sPsi
 }
 
 //totally same as the original function
-template<> void hamilt::HamiltPW<std::complex<float>>::sPsi
+template<> void hamilt::Hamilt<std::complex<float>>::sPsi
 (
     const std::complex<float> *psi, 
     std::complex<float> *spsi, 
