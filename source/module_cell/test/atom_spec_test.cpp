@@ -27,7 +27,7 @@
 
 #define private public
 #include "module_cell/read_pp.h"
-#include "module_cell/pseudo_nc.h"
+#include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 
@@ -191,7 +191,7 @@ TEST_F(AtomSpecTest, BcastAtom2)
 		ifs.open("./support/C.upf");
 		GlobalV::PSEUDORCUT = 15.0;
 		upf.read_pseudo_upf201(ifs);
-		atom.ncpp.set_pseudo_nc(upf);
+		atom.ncpp.set_pseudo(upf);
 		ifs.close();
 		EXPECT_TRUE(atom.ncpp.has_so);
 	}

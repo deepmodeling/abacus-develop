@@ -257,6 +257,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
+    nsx = 0;
+    nsy = 0;
+    nsz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -1018,7 +1021,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
-            ecutrho = 4.0 * ecutwfc;
+        }
+        else if (strcmp("ecutrho", word) == 0)
+        {
+            read_value(ifs, ecutrho);
         }
         else if (strcmp("nx", word) == 0)
         {
@@ -1046,6 +1052,18 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("bz", word) == 0)
         {
             read_value(ifs, bz);
+        }
+        else if (strcmp("nsx", word) == 0)
+        {
+            read_value(ifs, nsx);
+        }
+        else if (strcmp("nsy", word) == 0)
+        {
+            read_value(ifs, nsy);
+        }
+        else if (strcmp("nsz", word) == 0)
+        {
+            read_value(ifs, nsz);
         }
         else if (strcmp("erf_ecut", word) == 0)
         {
@@ -2511,6 +2529,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (ecutrho <= 0.0)
+    {
+        ecutrho = 4.0 * ecutwfc;
+    }
+
     if (esolver_type == "sdft"&&psi_initializer)
     {
         GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
@@ -2975,6 +2998,9 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
+    Parallel_Common::bcast_int(nsx);
+    Parallel_Common::bcast_int(nsy);
+    Parallel_Common::bcast_int(nsz);
     Parallel_Common::bcast_double(erf_ecut);
     Parallel_Common::bcast_double(erf_height);
     Parallel_Common::bcast_double(erf_sigma);
@@ -3319,6 +3345,15 @@ void Input::Bcast()
 void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
+
+    if (ecutrho <= ecutwfc)
+    {
+        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+    }
+    else if (ecutrho / ecutwfc < 4 - 1e-8)
+    {
+        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+    }
 
     if (nbands < 0)
         ModuleBase::WARNING_QUIT("Input", "NBANDS must >= 0");
