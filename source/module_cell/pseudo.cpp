@@ -2,53 +2,23 @@
 
 pseudo::pseudo()
 {
-// pseudo_h
-	els = new std::string[1];
-	lchi = nullptr;
-	oc = nullptr;
-	jjj = nullptr;
-	jchi = nullptr;
-	nn = nullptr;
-	has_so = false;
-	zv = 0;
-
-// pseudo local parts
-	vloc_at =  nullptr;
-
-// pseudo_atom
-	r = nullptr;
-	rab = nullptr;
-	rho_at = nullptr;
-	rho_atc = nullptr;
-
-// pseudo
-	lll = nullptr;
 }
 
 pseudo::~pseudo()
 {
-// pseudo_h
-	delete[] els;
-	delete[] lchi;
-	delete[] oc;
-	delete[] jjj;
-	delete[] jchi;
-	delete[] nn;
-
-// pseudo local parts
-	delete[] vloc_at;
-
-// pseudo_atom
-	delete[] r;
-	delete[] rab;
-	delete[] rho_at;
-	delete[] rho_atc;
-
-// pseudo
-	delete[] lll;
+    delete[] els;
+    delete[] lchi;
+    delete[] oc;
+    delete[] jjj;
+    delete[] jchi;
+    delete[] nn;
+    delete[] vloc_at;
+    delete[] r;
+    delete[] rab;
+    delete[] rho_at;
+    delete[] rho_atc;
+    delete[] lll;
 }
-
-
 
 //---------------------------------------------------------------------
 void pseudo::set_pseudo(const Pseudopot_upf& upf)
@@ -69,8 +39,6 @@ void pseudo::set_pseudo(const Pseudopot_upf& upf)
 	{
 		lll[i] = upf.lll[i];
 	}
-
-    kkbeta = upf.kkbeta;
 
     betar.create(upf.beta.nr, upf.beta.nc);
 	
@@ -139,31 +107,32 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 
 	this->nchi = upf.nwfc;
 	this->nbeta = upf.nbeta;
+    this->kkbeta = upf.kkbeta;
 
-	delete[] els;
-	this->els = new std::string[nchi];
-	assert(this->els != 0);
+    delete[] els;
+    this->els = new std::string[nchi];
+    assert(this->els != 0);
 
-	delete[] lchi;
-	this->lchi = new int[this->nchi];
-	assert(this->lchi != 0);
+    delete[] lchi;
+    this->lchi = new int[this->nchi];
+    assert(this->lchi != 0);
 
-	delete[] oc;
-	this->oc = new double[nchi];
-	assert(this->oc != 0);
+    delete[] oc;
+    this->oc = new double[nchi];
+    assert(this->oc != 0);
 
-	for (int i = 0;i < nchi;i++)
-	{
-		this->els[i] = upf.els[i];
-		this->lchi[i] = upf.lchi[i];
-		this->oc[i] = upf.oc[i];
-	}
+    for (int i = 0; i < nchi; i++)
+    {
+        this->els[i] = upf.els[i];
+        this->lchi[i] = upf.lchi[i];
+        this->oc[i] = upf.oc[i];
+    }
 
-	delete[] jjj;
-	this->jjj = new double[nbeta];
-	assert(this->jjj != 0);
+    delete[] jjj;
+    this->jjj = new double[nbeta];
+    assert(this->jjj != 0);
 
-	delete[] nn;
+    delete[] nn;
 	this->nn = new int[nchi];
 	assert(this->nn != 0);
 
@@ -196,22 +165,15 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 		{
 			this->jjj[i]  = 0;
 		}
-	} 
+    }
 
-	/*
-		jchi = new double[nwfc];
-		if (upf.has_so){
-			for(i=0;i<upf.nwfc;i++){
-				jchi[i] = upf.jchi[i];
-			}
-		}else{
-			for(i=0;i<upf.nwfc;i++){
-				jchi[i] = 0;
-			}
-		} // endif
-	*/
-
-	return;
+    // uspp
+    this->nqlc = upf.nqlc;
+    this->qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
+    this->qfuncl = upf.qfuncl;
+    this->qqq.create(nbeta, nbeta);
+    this->qqq = upf.qqq;
+    return;
 } // end subroutine set_pseudo_upf
 
 
