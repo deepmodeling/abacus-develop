@@ -107,7 +107,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     //======================================
     // Initalize non local pseudopotential
     //======================================
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     GlobalC::ppcell.cal_effective_D();
@@ -332,7 +332,7 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
         return;
     }
 
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)

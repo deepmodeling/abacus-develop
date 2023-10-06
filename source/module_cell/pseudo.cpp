@@ -168,11 +168,14 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
     }
 
     // uspp
-    this->nqlc = upf.nqlc;
-    this->qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
-    this->qfuncl = upf.qfuncl;
-    this->qqq.create(nbeta, nbeta);
-    this->qqq = upf.qqq;
+    if (tvanp)
+    {
+        this->nqlc = upf.nqlc;
+        this->qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
+        this->qfuncl = upf.qfuncl;
+        this->qqq.create(nbeta, nbeta);
+        this->qqq = upf.qqq;
+    }
     return;
 } // end subroutine set_pseudo_upf
 

@@ -272,19 +272,22 @@ void Atom_pseudo::bcast_atom_pseudo(void)
 // == end of psesudo_nc ==
 
     // uspp   liuyu 2023-10-03
-    Parallel_Common::bcast_int(nqlc);
-    if (GlobalV::MY_RANK != 0)
+    if (tvanp)
     {
-        qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
-    }
-    const int dim = nqlc * nbeta * (nbeta + 1) / 2 * mesh;
-    Parallel_Common::bcast_double(qfuncl.ptr, dim);
+        Parallel_Common::bcast_int(nqlc);
+        if (GlobalV::MY_RANK != 0)
+        {
+            qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
+        }
+        const int dim = nqlc * nbeta * (nbeta + 1) / 2 * mesh;
+        Parallel_Common::bcast_double(qfuncl.ptr, dim);
 
-    if (GlobalV::MY_RANK != 0)
-    {
-        qqq.create(nbeta, nbeta);
+        if (GlobalV::MY_RANK != 0)
+        {
+            qqq.create(nbeta, nbeta);
+        }
+        Parallel_Common::bcast_double(qqq.c, nbeta * nbeta);
     }
-    Parallel_Common::bcast_double(qqq.c, nbeta * nbeta);
 
     return;
 }

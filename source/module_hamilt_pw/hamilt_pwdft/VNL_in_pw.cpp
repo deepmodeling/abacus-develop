@@ -189,8 +189,6 @@ void pseudopot_cell_vnl::init(const int ntype,
     {
         GlobalV::ofs_running << "\n nhm = 0, not allocate some matrix.";
     }
-    delete[] indv_ijkb0;
-    this->indv_ijkb0 = new int[GlobalC::ucell.nat];
 
     // nqxq = ((sqrt(gcutm)+sqrt(xqq[1]*xqq[1]+xqq[2]*xqq[2]+xqq[3]*xqq[3])/
     // dq+4)*cell_factor;
@@ -226,8 +224,7 @@ void pseudopot_cell_vnl::init(const int ntype,
 
         if (lmaxq > 0)
         {
-            container::TensorShape new_shape({ntype, lmaxq, nbetam * (nbetam + 1) / 2, GlobalV::NQXQ});
-            this->qrad.resize(new_shape);
+            this->qrad.create(ntype, lmaxq, nbetam * (nbetam + 1) / 2, GlobalV::NQXQ);
         }
     }
 
@@ -506,7 +503,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
 } // end subroutine getvnl
 
-void pseudopot_cell_vnl::init_vnl(UnitCell& cell)
+void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
@@ -526,9 +523,21 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell)
     // l of the beta functions but includes the l of the local potential
     for (int it = 0; it < cell.ntype; it++)
     {
-        cell.atoms[it].ncpp.nqlc = std::min(cell.atoms[it].ncpp.nqlc, lmaxq);
-        if (cell.atoms[it].ncpp.nqlc < 0)
-            cell.atoms[it].ncpp.nqlc = 0;
+        if (cell.atoms[it].ncpp.tvanp)
+        {
+            cell.atoms[it].ncpp.nqlc = std::min(cell.atoms[it].ncpp.nqlc, lmaxq);
+            if (cell.atoms[it].ncpp.nqlc < 0)
+                cell.atoms[it].ncpp.nqlc = 0;
+        }
+    }
+
+    // In the spin-orbit case we need the unitary matrix u which rotates the
+    // real spherical harmonics and yields the complex ones.
+    Soc soc;
+    soc.fcoef.create(cell.ntype, this->nhm, this->nhm);
+    if (GlobalV::LSPINORB)
+    {
+        soc.rot_ylm(this->lmaxkb);
     }
 
     // For each pseudopotential we initialize the indices nhtol, nhtolm,
@@ -536,6 +545,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell)
     // the atomic D terms
     this->dvan.zero_out();
     this->dvan_so.zero_out(); // added by zhengdy-soc
+    delete[] indv_ijkb0;
+    this->indv_ijkb0 = new int[GlobalC::ucell.nat];
     int ijkb0 = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -593,9 +604,6 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell)
         // Here we initialize the D of the solid
         if (cell.atoms[it].ncpp.has_so)
         {
-            Soc soc;
-            soc.rot_ylm(this->lmaxkb);
-            soc.fcoef.create(cell.ntype, this->nhm, this->nhm);
             for (int ip = 0; ip < Nprojectors; ip++)
             {
                 const int l1 = this->nhtol(it, ip);
@@ -684,6 +692,88 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell)
 
     // compute the qq coefficients by integrating the Q.
     // The qq are the g=0 components of Q
+    if (rho_basis->ig_gge0 >= 0)
+    {
+        ModuleBase::matrix ylmk0(lmaxq * lmaxq, 1);
+        const double qnorm = 0.0; // only G=0 term
+        std::complex<double> qgm(0.0, 0.0);
+        ModuleBase::YlmReal::Ylm_Real(lmaxq * lmaxq, 1, &(rho_basis->gcar[rho_basis->ig_gge0]), ylmk0);
+        for (int it = 0; it < cell.ntype; it++)
+        {
+            Atom_pseudo* upf = &cell.atoms[it].ncpp;
+            if (upf->tvanp)
+            {
+                if (upf->has_so)
+                {
+                    for (int ih = 0; ih < upf->nh; ih++)
+                    {
+                        for (int jh = 0; jh < upf->nh; jh++)
+                        {
+                            this->radial_fft_q(1, ih, jh, it, &qnorm, ylmk0, &qgm);
+                            this->qq_nt(it, ih, jh) = cell.omega * qgm.real();
+                            for (int kh = 0; kh < upf->nh; kh++)
+                            {
+                                for (int lh = 0; lh < upf->nh; lh++)
+                                {
+                                    int ijs = 0;
+                                    for (int is1 = 0; is1 < 2; ++is1)
+                                    {
+                                        for (int is2 = 0; is2 < 2; ++is2)
+                                        {
+                                            for (int is = 0; is < 2; is++)
+                                            {
+                                                this->qq_so(it, ijs, kh, lh) += cell.omega * qgm.real()
+                                                                                * soc.fcoef(it, is1, is, kh, ih)
+                                                                                * soc.fcoef(it, is, is2, jh, lh);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (int ih = 0; ih < upf->nh; ih++)
+                    {
+                        for (int jh = ih; jh < upf->nh; jh++)
+                        {
+                            this->radial_fft_q(1, ih, jh, it, &qnorm, ylmk0, &qgm);
+                            if (GlobalV::LSPINORB)
+                            {
+                                this->qq_so(it, 0, ih, jh) = cell.omega * qgm.real();
+                                this->qq_so(it, 0, jh, ih) = this->qq_so(it, 0, ih, jh);
+                                this->qq_so(it, 3, ih, jh) = this->qq_so(it, 0, ih, jh);
+                                this->qq_so(it, 3, jh, ih) = this->qq_so(it, 0, ih, jh);
+                            }
+                            this->qq_nt(it, ih, jh) = cell.omega * qgm.real();
+                            this->qq_nt(it, jh, ih) = cell.omega * qgm.real();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, this->qq_nt.ptr, this->qq_nt.getSize(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->qq_so.ptr, this->qq_so.getSize(), MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
+    // set the atomic specific qq_at matrices
+    for (int ia = 0; ia < cell.nat; ia++)
+    {
+        int it = cell.iat2it[ia];
+        for (int ih = 0; ih < nhm; ih++)
+        {
+            for (int jh = ih; jh < nhm; jh++)
+            {
+                this->qq_at(ia, ih, jh) = qq_nt(it, ih, jh);
+                this->qq_at(ia, jh, ih) = qq_nt(it, jh, ih);
+            }
+        }
+    }
 
     // h) It fills the interpolation table for the beta functions
     /**********************************************************
@@ -788,7 +878,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                         // the Q are symmetric with respect to indices nb and mb
                         for (int mb = nb; mb < nbeta; mb++)
                         {
-                            const int ijv = mb * (mb + 1) + nb;
+                            const int ijv = mb * (mb + 1) / 2 + nb;
                             if ((l >= std::abs(upf->lll[nb] - upf->lll[mb])) && (l <= (upf->lll[nb] + upf->lll[mb]))
                                 && ((l + upf->lll[nb] + upf->lll[mb]) % 2 == 0))
                             {
@@ -799,7 +889,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
                                 // then we integrate with all the Q functions
                                 double vqint;
                                 ModuleBase::Integral::Simpson_Integral(kkbeta, aux, upf->rab, vqint);
-                                qrad.get_value<double>(it, l, ijv, iq) = vqint * pref;
+                                qrad(it, l, ijv, iq) = vqint * pref;
                             }
                         }
                     }
@@ -811,8 +901,95 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
     }
 }
 
+void pseudopot_cell_vnl::radial_fft_q(const int ng,
+                                      const int ih,
+                                      const int jh,
+                                      const int itype,
+                                      const double* qnorm,
+                                      const ModuleBase::matrix ylm,
+                                      std::complex<double>* qg)
+{
+    // computes the indices which correspond to ih,jh
+    const int nb = indv(itype, ih);
+    const int mb = indv(itype, jh);
+    assert(nb < nbetam);
+    assert(mb < nbetam);
+    int ijv = 0;
+    if (nb >= mb)
+    {
+        ijv = nb * (nb + 1) / 2 + mb;
+    }
+    else
+    {
+        ijv = mb * (mb + 1) / 2 + nb;
+    }
+    const int ivl = nhtolm(itype, ih);
+    const int jvl = nhtolm(itype, jh);
+
+    for (int ig = 0; ig < ng; ig++)
+    {
+        qg[ig] = {0, 0};
+    }
+    // makes the sum over the non zero LM
+    int l = -1;
+    std::complex<double> pref(0.0, 0.0);
+    for (int lm = 0; lm < this->lpx(ivl, jvl); lm++)
+    {
+        int lp = this->lpl(ivl, jvl, lm);
+        assert(lp >= 0);
+        assert(lp < 49);
+        if (lp == 0)
+        {
+            l = 0;
+        }
+        else if (lp < 4)
+        {
+            l = 1;
+        }
+        else if (lp < 9)
+        {
+            l = 2;
+        }
+        else if (lp < 16)
+        {
+            l = 3;
+        }
+        else if (lp < 25)
+        {
+            l = 4;
+        }
+        else if (lp < 36)
+        {
+            l = 5;
+        }
+        else
+        {
+            l = 6;
+        }
+        pref = pow(ModuleBase::NEG_IMAG_UNIT, l) * this->ap(lp, ivl, jvl);
+
+        double qm1 = -1.0; // any number smaller than qnorm
+        double work = 0.0;
+        for (int ig = 0; ig < ng; ig++)
+        {
+            if (std::abs(qnorm[ig] - qm1) > 1e-6)
+            {
+                work = ModuleBase::PolyInt::Polynomial_Interpolation(this->qrad,
+                                                                     itype,
+                                                                     l,
+                                                                     ijv,
+                                                                     GlobalV::NQXQ,
+                                                                     GlobalV::DQ,
+                                                                     qnorm[ig]);
+                qm1 = qnorm[ig];
+            }
+            qg[ig] += pref * work * ylm(lm, ig);
+        }
+    }
+}
+
 #ifdef __LCAO
-std::complex<double> pseudopot_cell_vnl::Cal_C(int alpha, int lu, int mu, int L, int M)   // pengfei Li  2018-3-23
+std::complex<double> pseudopot_cell_vnl::Cal_C(int alpha, int lu, int mu, int L, int M) // pengfei Li  2018-3-23
 {
 	std::complex<double> cf;
 	if(alpha == 0)

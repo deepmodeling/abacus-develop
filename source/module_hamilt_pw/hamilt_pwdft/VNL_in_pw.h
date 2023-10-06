@@ -1,8 +1,6 @@
 #ifndef VNL_IN_PW_H
 #define VNL_IN_PW_H
 
-#include <ATen/tensor.h>
-
 #include "VL_in_pw.h"
 #include "module_base/complexarray.h"
 #include "module_base/complexmatrix.h"
@@ -37,7 +35,7 @@ public:
 
 	int lmaxkb; // max angular momentum for non-local projectors
 
-	void init_vnl(UnitCell &cell);
+    void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
     template <typename FPTYPE, typename Device>
     void getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const;
@@ -96,10 +94,10 @@ public:
     ModuleBase::realArray qq_at;    // the integral of q functions in the solid (ONE PER ATOM)
     ModuleBase::realArray qq_nt;    // the integral of q functions in the solid (ONE PER NTYP) used to be the qq array
     ModuleBase::ComplexArray qq_so; // Q_{nm} for spin-orbit case
-    container::Tensor qrad{container::DataType::DT_DOUBLE, container::TensorShape({0})}; // radial FT of Q functions
-    ModuleBase::realArray ap;
-    ModuleBase::IntArray lpx;
-    ModuleBase::IntArray lpl;
+    ModuleBase::realArray ap;       // the expansion coefficients
+    ModuleBase::IntArray lpx;       // for each input limi,ljmj is the number of LM in the sum
+    ModuleBase::IntArray lpl;       // for each input limi,ljmj points to the allowed LM
+    ModuleBase::realArray qrad;     // radial FT of Q functions
 
     mutable ModuleBase::ComplexMatrix vkb;    // all beta functions in reciprocal space
     mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
@@ -112,6 +110,31 @@ public:
     double CG(int l1, int m1, int l2, int m2, int L, int M);
 
     void print_vnl(std::ofstream& ofs);
+
+    /**
+     * @brief Compute the radial Fourier transform of the Q functions
+     *
+     * The interpolation table for the radial Fourier transform is stored in qrad.
+     *
+     * The formula implemented here is:
+     *   \[ q(g,i,j) = \sum_\text{lm} (-i)^l \text{ap}(\text{lm},i,j)
+     *   \text{yr}_\text{lm}(g) \text{qrad}(g,l,i,j) \]
+     *
+     * @param ng [in] the number of G vectors
+     * @param ih [in] the first index of Q
+     * @param jh [in] the second index of Q
+     * @param itype [in] the atomic type
+     * @param qnorm [in] the norm of q+g vectors
+     * @param ylm [in] the real spherical harmonics
+     * @param qg [out] the Fourier transform of interest
+     */
+    void radial_fft_q(const int ng,
+                      const int ih,
+                      const int jh,
+                      const int itype,
+                      const double* qnorm,
+                      const ModuleBase::matrix ylm,
+                      std::complex<double>* qg);
 
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
     void cal_effective_D();
@@ -147,7 +170,7 @@ public:
     /**
      * @brief Compute interpolation table qrad
      *
-     * Compute interpolation table qrad(i,nm,l+1,nt) = Q^{(L)}_{nm,nt}(q_i)
+     * Compute interpolation table qrad(i,nm,l,nt) = Q^{(L)}_{nm,nt}(q_i)
      * of angular momentum L, for atom of type nt, on grid q_i, where
      * nm = combined index for n,m=1,nh(nt)
      *
