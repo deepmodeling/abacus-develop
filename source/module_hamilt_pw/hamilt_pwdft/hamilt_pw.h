@@ -1,11 +1,10 @@
 #ifndef HAMILTPW_H
 #define HAMILTPW_H
 
+#include "module_base/macros.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
-
-#include <module_base/macros.h>
 
 namespace hamilt
 {
