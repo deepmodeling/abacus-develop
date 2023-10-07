@@ -85,7 +85,7 @@ namespace ModuleESolver
     }
 
     //Some API to operate E_Solver
-    void determine_esolver(ESolver*& p_esolver)
+    void init_esolver(ESolver*& p_esolver)
     {
         //determine type of esolver based on INPUT information
         std::string esolver_type = determine_type();

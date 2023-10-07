@@ -25,7 +25,7 @@ void Driver::driver_run()
 
     // 1. Determine type of Esolver
     ModuleESolver::ESolver *p_esolver = nullptr;
-    ModuleESolver::determine_esolver(p_esolver);
+    ModuleESolver::init_esolver(p_esolver);
 
     // 2. Setup cell and atom information
 #ifndef __LCAO
