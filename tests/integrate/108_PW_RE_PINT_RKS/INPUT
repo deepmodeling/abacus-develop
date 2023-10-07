@@ -1,0 +1,27 @@
+INPUT_PARAMETERS
+# Created by Atomic Simulation Enviroment
+calculation         cell-relax
+suffix		    autotest
+relax_nmax	    100
+force_thr_ev        0.01
+stress_thr          1
+out_stru            1
+out_level           ie
+pseudo_rcut         10.0
+pseudo_mesh         1
+ecutwfc             30
+basis_type          pw
+ks_solver           cg
+smearing_method     gaussian
+smearing_sigma      0.01
+mixing_type         broyden
+mixing_beta         0.7
+scf_thr             1e-08
+cal_force           1
+cal_stress          1
+out_stru            1
+chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
+pseudo_dir	    ../../../tests/PP_ORB
+orbital_dir	    ../../../tests/PP_ORB
+psi_initializer 1
+init_wfc nao

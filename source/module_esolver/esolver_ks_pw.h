@@ -83,7 +83,9 @@ namespace ModuleESolver
         void Init_GlobalC(Input& inp, UnitCell& cell);
         //calculate conductivities from j-j correlation function
         void calcondw(const int nt,const double dt, const double fwhmin, const double wcut, const double dw_in, double *ct11, double *ct12, double *ct22);
-
+        /// @brief allocate psi_init the new psi_initializer
+        void allocate_psi_init();
+        /// @brief initialize psi
         void initialize_psi();
     private:
         psi_initializer* psi_init = nullptr;
