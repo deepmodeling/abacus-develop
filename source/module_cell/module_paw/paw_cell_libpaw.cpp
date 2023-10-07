@@ -280,8 +280,8 @@ void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
         {
             for(int iz = 0; iz < nz; iz ++)
             {
-                int ind_fortran = ix*ny*nz + iy*nz + iz;
-                int ind_c = iz*ny*nx + iy*nx + ix;
+                int ind_c = ix*ny*nz + iy*nz + iz;
+                int ind_fortran = iz*ny*nx + iy*nx + ix;
 
                 vloc[ind_c] = vloc_tmp[ind_fortran*nspden];
                 ncoret[ind_c] = ncoret_tmp[ind_fortran*nspden];
@@ -318,8 +318,8 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
             {
                 for(int iz = 0; iz < nz; iz ++)
                 {
-                    int ind_fortran = ix*ny*nz + iy*nz + iz;
-                    int ind_c = iz*ny*nx + iy*nx + ix;
+                    int ind_c = ix*ny*nz + iy*nz + iz;
+                    int ind_fortran = iz*ny*nx + iy*nx + ix;
 
                     nhat[is][ind_c] = nhat_tmp[ind_fortran*nspden+is];
                 }
@@ -343,10 +343,10 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
             {
                 for(int iz = 0; iz < nz; iz ++)
                 {
-                    int ind_fortran = (ix*ny*nz + iy*nz + iz)*nspden + is;
-                    int ind_c = is*nfft + iz*ny*nx + iy*nx + ix;
-                    vks_hartree[ind_c] = vks[ind_fortran] / 2.0;
-                    vxc_hartree[ind_c] = vxc[ind_fortran] / 2.0;
+                    int ind_c = (ix*ny*nz + iy*nz + iz)*nspden + is;
+                    int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
+                    vks_hartree[ind_fortran] = vks[ind_c] / 2.0;
+                    vxc_hartree[ind_fortran] = vxc[ind_c] / 2.0;
                 }
             }
         }
