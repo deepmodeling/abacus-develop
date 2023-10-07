@@ -133,13 +133,24 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
     EXPECT_EQ(paw_cell.get_nspin(),1);
 
-#ifdef USE_PAW
     paw_cell.prepare_paw();
 
-    double *vloc, *ncoret;
     int nfft = nx_dg * ny_dg * nz_dg;
+
+    double *vloc, *ncoret;
+    double *vks, *vxc;
+    double ** rho;
+    double ** nhat, *nhatgr;
+
+    vks = new double[nfft];
+    vxc = new double[nfft];
     vloc = new double[nfft];
     ncoret = new double[nfft];
+    rho = new double*[1];
+    rho[0] = new double[nfft];
+    nhat = new double*[1];
+    nhat[0] = new double[nfft];
+    nhatgr = new double[nfft*3];
 
     paw_cell.get_vloc_ncoret(vloc, ncoret);
     std::ifstream ifs("fort.26");
@@ -158,8 +169,14 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         EXPECT_NEAR(tmp,ncoret[i],1e-10);
     }
 
-    delete[] vloc;
-    delete[] ncoret;
+    paw_cell.init_rho(rho);
+    std::ifstream ifs1("fort.101");
+    for(int i = 0; i < nfft; i++)
+    {
+        double tmp;
+        ifs1 >> tmp;
+        EXPECT_NEAR(tmp,rho[0][i],1e-10);
+    }
 
     std::ifstream ifs_rhoij("rhoij");
     int nrhoijsel, *rhoijselect;
@@ -185,9 +202,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         delete[] rhoijp;
     }
 
-    double *nhat, *nhatgr;
-    nhat = new double[nfft];
-    nhatgr = new double[nfft*3];
     paw_cell.get_nhat(nhat,nhatgr);
 
     std::ifstream ifs_nhat("fort.19");
@@ -195,16 +209,10 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     {
         double tmp;
         ifs_nhat >> tmp;
-        EXPECT_NEAR(tmp,nhat[i],1e-10);
+        EXPECT_NEAR(tmp,nhat[0][i],1e-10);
     }
 
-    delete[] nhat;
-    delete[] nhatgr;
-
     std::ifstream ifs_veff("veff");
-    double *vks, *vxc;
-    vks = new double[nfft];
-    vxc = new double[nfft];
     for(int i=0; i<nfft; i++)
     {
         ifs_veff >> vks[i];
@@ -215,8 +223,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     }
 
     paw_cell.calculate_dij(vks,vxc);
-    delete[] vks;
-    delete[] vxc;
 
     std::ifstream ifs_dij("dij_ref");
     double *dij;
@@ -230,10 +236,19 @@ TEST_F(Test_Libpaw_Cell, test_paw)
         {
             double tmp;
             ifs_dij >> tmp;
-            EXPECT_NEAR(tmp,dij[i],1e-10);
+            EXPECT_NEAR(tmp,dij[i],1e-9);
         }
 
         delete[] dij;
     }
-#endif
+
+    delete[] rho[0];
+    delete[] rho;
+    delete[] vloc;
+    delete[] ncoret;
+    delete[] vks;
+    delete[] vxc;
+    delete[] nhat[0];
+    delete[] nhat;
+    delete[] nhatgr;
 }

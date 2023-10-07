@@ -1,55 +1,42 @@
 #include "read_pp.h"
-#include <iostream>
-#include <fstream>
+
 #include <math.h>
-#include <string>
-#include <sstream>
+
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
-
+#include "module_base/math_integral.h" // for numerical integration
 
 Pseudopot_upf::Pseudopot_upf()
 {
-	this->els = new std::string[1];
-	this->lchi = nullptr;
-	this->oc = nullptr;
-
-	this->r = nullptr;
-	this->rab = nullptr;
-	this->vloc = nullptr;
-
-	this->kkbeta = nullptr;
-	this->lll = nullptr;
-
-	this->rho_at = nullptr;
-	this->rho_atc = nullptr;
-
-	this->nn = nullptr;//zhengdy-soc
-	this->jchi = nullptr;
-	this->jjj = nullptr;
-
-	functional_error = 0;//xiaohui add 2015-03-24
 }
 
 Pseudopot_upf::~Pseudopot_upf()
 {
-	delete [] els; 
-	delete [] lchi;
-	delete [] oc;
-
-	delete [] r;    //mesh_1
-	delete [] rab;  //mesh_2
-	delete [] vloc;  //local_1
-
-	delete [] kkbeta; // nl_1
-	delete [] lll; // nl_2
-
-	delete [] rho_at;// psrhoatom_1
-	delete [] rho_atc;
-
-	delete [] nn;
-	delete [] jjj;
-	delete [] jchi;
+    delete[] r;
+    delete[] rab;
+    delete[] rho_atc;
+    delete[] vloc;
+    delete[] rho_at;
+    delete[] lll;
+    delete[] kbeta;
+    delete[] els;
+    delete[] els_beta;
+    delete[] nchi;
+    delete[] lchi;
+    delete[] oc;
+    delete[] epseu;
+    delete[] rcut_chi;
+    delete[] rcutus_chi;
+    delete[] rinner;
+    delete[] rcut;
+    delete[] rcutus;
+    delete[] nn;
+    delete[] jchi;
+    delete[] jjj;
 }
 
 int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
@@ -96,8 +83,10 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 		int info = read_pseudo_blps(ifs);
 		return info;
 	}
-
-	return 0;
+    else
+    {
+        return 4;
+    }
 }
 
 
@@ -421,4 +410,172 @@ void Pseudopot_upf::set_empty_element(void)
 		this->rho_at[ir] = 0;
 	}
 	return;
+}
+
+/**
+ * For USPP we set the augmentation charge as an l-dependent array in all
+ * cases. This is already the case when upf%q_with_l is .true.
+ * For vanderbilt US pseudos, where nqf and rinner are non zero, we do here
+ * what otherwise would be done multiple times in many parts of the code
+ * (such as in init_us_1, addusforce_r, bp_calc_btq, compute_qdipol)
+ * whenever the q_l(r) were to be constructed.
+ * For simple rrkj3 pseudos we duplicate the information contained in q(r)
+ * for all q_l(r).
+ *
+ * This requires a little extra memory but unifies the treatment of q_l(r)
+ * and allows further weaking with the augmentation charge.
+ */
+void Pseudopot_upf::set_upf_q()
+{
+    if (tvanp && !q_with_l)
+    {
+        qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
+        for (int nb = 0; nb < nbeta; nb++)
+        {
+            int ln = lll[nb];
+            for (int mb = nb; mb < nbeta; mb++)
+            {
+                int lm = lll[mb];
+                int nmb = mb * (mb + 1) / 2 + nb;
+
+                for (int l = std::abs(ln - lm); l <= ln + lm; l += 2)
+                {
+                    // copy q(r) to the l-dependent grid
+                    for (int ir = 0; ir < mesh; ir++)
+                    {
+                        qfuncl(l, nmb, ir) = qfunc(nmb, ir);
+                    }
+
+                    // adjust the inner values on the l-dependent grid if nqf and rinner are defined
+                    if (nqf > 0 && rinner[l] > 0.0)
+                    {
+                        int ilast = 0;
+                        for (int ir = 0; ir < kkbeta; ++ir)
+                        {
+                            if (r[ir] < rinner[l])
+                            {
+                                ilast = ir + 1;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        this->setqfnew(nqf, ilast, l, 2, &qfcoef(nb, mb, l, 0), r, &qfuncl(l, nmb, 0));
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Pseudopot_upf::setqfnew(const int& nqf,
+                             const int& mesh,
+                             const int& l,
+                             const int& n,
+                             const double* qfcoef,
+                             const double* r,
+                             double* rho)
+{
+    for (int ir = 0; ir < mesh; ++ir)
+    {
+        double rr = r[ir] * r[ir];
+        rho[ir] = qfcoef[0];
+        for (int iq = 1; iq < nqf; ++iq)
+        {
+            rho[ir] += qfcoef[iq] * pow(rr, iq);
+        }
+        rho[ir] *= pow(r[ir], l + n);
+    }
+}
+
+/**
+ * @brief check and renormalize the norm of the atomic wavefunctions
+ *
+ * check for the presence of zero wavefunctions first
+ * check the normalization of the atomic wfc (only those with non-negative occupations)
+ * and renormalize them if the calculated norm is incorrect by more than 1e-6
+ */
+void Pseudopot_upf::check_atwfc_norm()
+{
+    double norm = 0.0;
+    double* norm_pswfc = new double[mesh];
+    double* norm_beta = new double[kkbeta];
+    double* work = new double[nbeta];
+    for (int iw = 0; iw < nwfc; iw++)
+    {
+        for (int ir = 0; ir < mesh; ir++)
+        {
+            norm_pswfc[ir] = chi(iw, ir) * chi(iw, ir);
+        }
+        ModuleBase::Integral::Simpson_Integral(mesh, norm_pswfc, rab, norm);
+        if (norm < 1e-8)
+        {
+            // set occupancy to a small negative number so that this wfc
+            // is not going to be used for starting wavefunctions
+            oc[iw] = -1e-8;
+            GlobalV::ofs_running << "WARNING: norm of atomic wavefunction # " << iw + 1 << " of atomic type " << psd
+                                 << " is zero" << std::endl;
+        }
+        // only occupied states are normalized
+        if (oc[iw] < 0)
+        {
+            continue;
+        }
+        // the US part if needed
+        if (tvanp)
+        {
+            for (int ib = 0; ib < nbeta; ib++)
+            {
+                bool match = false;
+                if (lchi[iw] == lll[ib])
+                {
+                    if (has_so)
+                    {
+                        if (std::abs(jchi[iw] - jjj[ib]) < 1e-6)
+                        {
+                            match = true;
+                        }
+                    }
+                    else
+                    {
+                        match = true;
+                    }
+                }
+                if (match)
+                {
+                    for (int ik = 0; ik < kkbeta; ik++)
+                    {
+                        norm_beta[ik] = beta(ib, ik) * chi(iw, ik);
+                    }
+                    ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, rab, work[ib]);
+                }
+                else
+                {
+                    work[ib] = 0.0;
+                }
+            }
+            for (int ib1 = 0; ib1 < nbeta; ib1++)
+            {
+                for (int ib2 = 0; ib2 < nbeta; ib2++)
+                {
+                    norm += qqq(ib1, ib2) * work[ib1] * work[ib2];
+                }
+            }
+        } // endif tvanp
+
+        norm = std::sqrt(norm);
+        if (std::abs(norm - 1.0) > 1e-6)
+        {
+            GlobalV::ofs_running << "WARNING: norm of atomic wavefunction # " << iw + 1 << " of atomic type " << psd
+                                 << " is " << norm << ", renormalized" << std::endl;
+            for (int ir = 0; ir < mesh; ir++)
+            {
+                chi(iw, ir) /= norm;
+            }
+        }
+    }
+    delete[] norm_pswfc;
+    delete[] norm_beta;
+    delete[] work;
 }

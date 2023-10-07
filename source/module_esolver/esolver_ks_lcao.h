@@ -14,11 +14,12 @@
 #include "module_io/output_dm.h"
 #include "module_io/output_dm1.h"
 #include "module_io/output_mat_sparse.h"
-
+#include "module_basis/module_nao/two_center_bundle.h"
+#include <memory>
 namespace ModuleESolver
 {
 
-    class ESolver_KS_LCAO : public ESolver_KS<double>
+    class ESolver_KS_LCAO : public ESolver_KS<std::complex<double>>
     {
     public:
         ESolver_KS_LCAO();
@@ -51,6 +52,8 @@ namespace ModuleESolver
         LCAO_Hamilt UHM;
         LCAO_Matrix LM;
         Grid_Technique GridT;
+
+        std::unique_ptr<TwoCenterBundle> two_center_bundle;
 
         // Temporarily store the stress to unify the interface with PW,
         // because it's hard to seperate force and stress calculation in LCAO.

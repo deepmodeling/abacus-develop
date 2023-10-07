@@ -127,7 +127,7 @@ void test_deepks::folding_nnr(const Test_Deepks::K_Vectors &kv)
 
 	for(int ik=0;ik<kv.nkstot;ik++)
 	{
-		ModuleBase::GlobalFunc::ZEROS(ld.H_V_delta_k[ik], ParaO.nloc);
+		ModuleBase::GlobalFunc::ZEROS(ld.H_V_delta_k[ik].data(), ParaO.nloc);
 		index=0;
 		for (int T1 = 0; T1 < ucell.ntype; ++T1)
 		{

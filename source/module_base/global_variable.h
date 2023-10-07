@@ -59,6 +59,9 @@ extern int OUT_FREQ_ION;
 extern double relax_scale_force;
 extern bool relax_new;
 
+extern bool use_paw;
+extern bool use_uspp;
+
 extern bool fixed_atoms;
 
 extern int RELAX_NMAX; // 8.3
@@ -281,6 +284,12 @@ extern std::string chg_extrap;
 extern int out_pot;
 
 extern std::string init_chg; //  output charge if out_chg > 0, and output every "out_chg" elec step.
+/// @brief method to initialize wavefunction
+/// @author kirk0830, 20230920
+extern std::string init_wfc; 
+/// @brief whether use the new psi initializer to initialize psi
+/// @author ykhuang, 20230920
+extern bool psi_initializer;
 extern int out_chg;
 
 extern double nelec;

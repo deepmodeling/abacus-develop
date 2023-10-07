@@ -16,7 +16,7 @@
 #endif
 
 #if defined(__ROCM) || defined(__UT_USE_ROCM)
-#include <hipfft.h>
+#include <hipfft/hipfft.h>
 #include <hip/hip_runtime.h>
 #endif
 

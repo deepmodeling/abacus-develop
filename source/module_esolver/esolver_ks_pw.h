@@ -2,6 +2,9 @@
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
+#include "module_psi/psi_initializer.h"
+#include <module_base/macros.h>
+
 // #include "Basis_PW.h"
 // #include "Estate_PW.h"
 // #include "Hamilton_PW.h"
@@ -11,9 +14,11 @@
 namespace ModuleESolver
 {
 
-    template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
-    class ESolver_KS_PW : public ESolver_KS<FPTYPE, Device>
+    template<typename T, typename Device = psi::DEVICE_CPU>
+    class ESolver_KS_PW : public ESolver_KS<T, Device>
     {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         ESolver_KS_PW();
         ~ESolver_KS_PW();
@@ -78,15 +83,17 @@ namespace ModuleESolver
         void Init_GlobalC(Input& inp, UnitCell& cell);
         //calculate conductivities from j-j correlation function
         void calcondw(const int nt,const double dt, const double fwhmin, const double wcut, const double dw_in, double *ct11, double *ct12, double *ct22);
-
-
+        /// @brief allocate psi_init the new psi_initializer
+        void allocate_psi_init();
+        /// @brief initialize psi
+        void initialize_psi();
     private:
-        
+        psi_initializer* psi_init = nullptr;
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
-        psi::Psi<std::complex<FPTYPE>, Device>* kspw_psi = nullptr;
+        psi::Psi<T, Device>* kspw_psi = nullptr;
         psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
-        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, T, psi::DEVICE_CPU, Device>;
     };
 }  // namespace ModuleESolver
 #endif

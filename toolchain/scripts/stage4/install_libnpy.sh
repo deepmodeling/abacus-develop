@@ -25,33 +25,38 @@ cd "${BUILDDIR}"
 case "$with_libnpy" in
   __INSTALL__)
     echo "==================== Installing LIBNPY ===================="
-    pkg_install_dir="${INSTALLDIR}/libnpy-${libnpy_ver}"
+    dirname="libnpy-${libnpy_ver}"
+    pkg_install_dir="${INSTALLDIR}/$dirname"
+    #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
+    url="https://github.com/llohse/libnpy/archive/refs/tags/v${libnpy_ver}.tar.gz"
+    filename="libnpy-${libnpy_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
-        echo "libnpy-${libnpy_ver} is already installed, skipping it."
+        echo "$dirname is already installed, skipping it."
     else
-        url="https://github.com/llohse/libnpy/archive/refs/tags/${libnpy_ver}.tar.gz"
-        filename="libnpy-v${libnpy_ver}.tar.gz"
         if [ -f $filename ]; then
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "wget ${DOWNLOADER_FLAGS} --quiet $url -O $filename"
-            if ! wget ${DOWNLOADER_FLAGS} --quiet $url -O $filename; then
+            echo "wget --quiet $url -O $filename"
+            if ! wget --quiet $url -O $filename; then
             report_error "failed to download $url"
+            recommend_offline_installation $filename $url
             fi
         # checksum
         checksum "$filename" "$libnpy_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
-        [ -d libnpy-${libnpy_ver} ] && rm -rf libnpy-${libnpy_ver}
+        [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
-        cp -r libnpy-${libnpy_ver} "${pkg_install_dir}/"
+        mkdir -p "${pkg_install_dir}"
+        cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding LIBNPY from system paths NOW ===================="
+        recommend_offline_installation $filename $url
         # How to do it in libnpy? -- Zhaoqing in 2023/08/23
         # check_lib -lxcf03 "libxc"
         # check_lib -lxc "libxc"
@@ -59,6 +64,7 @@ case "$with_libnpy" in
         # add_lib_from_paths LIBXC_LDFLAGS "libxc.*" $LIB_PATHS
         ;;
     __DONTUSE__) ;;
+    
     *)
     echo "==================== Linking LIBNPY to user paths ===================="
     check_dir "${pkg_install_dir}"

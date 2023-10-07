@@ -11,6 +11,7 @@
 #include "module_hamilt_general/module_vdw/vdw.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks 2021-06-03
+#include "module_elecstate/elecstate_lcao.h"
 #endif
 
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
@@ -162,7 +163,6 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
     //  jiyy add 2019-05-18, update 2021-05-02
     ModuleBase::matrix force_vdw;
     ModuleBase::matrix stress_vdw;
-
     auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
     if (vdw_solver != nullptr)
     {
@@ -226,11 +226,12 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         {
             stress_dftu.create(3, 3);
         }
-        GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu, kv);
+        GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);
     }
-
     if (!GlobalV::GAMMA_ONLY_LOCAL)
+    {
         this->flk.finish_k();
+    }
 #ifdef __EXX
     // Force and Stress contribution from exx
     ModuleBase::matrix force_exx;
@@ -371,7 +372,9 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 
                 if (GlobalV::GAMMA_ONLY_LOCAL)
                 {
-                    GlobalC::ld.cal_gdmx(loc.dm_gamma[0],
+                    const std::vector<std::vector<double>>& dm_gamma
+                        = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
+                    GlobalC::ld.cal_gdmx(dm_gamma[0],
                         GlobalC::ucell,
                         GlobalC::ORB,
                         GlobalC::GridD,
@@ -379,7 +382,9 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                 }
                 else
                 {
-                    GlobalC::ld.cal_gdmx_k(loc.dm_k,
+                    const std::vector<std::vector<std::complex<double>>>& dm_k
+                        = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM()->get_DMK_vector();
+                    GlobalC::ld.cal_gdmx_k(dm_k,
                         GlobalC::ucell,
                         GlobalC::ORB,
                         GlobalC::GridD,
@@ -544,6 +549,10 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 #endif
             }
         }
+        if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        {
+            symm->stress_symmetry(scs, GlobalC::ucell);
+        } // end symmetry
 
 #ifdef __DEEPKS
         if (GlobalV::deepks_out_labels) // not parallelized yet
@@ -554,6 +563,10 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         }
         if (GlobalV::deepks_scf)
         {
+            if (ModuleSymmetry::Symmetry::symm_flag == 1)
+            {
+                symm->stress_symmetry(svnl_dalpha, GlobalC::ucell);
+            } // end symmetry
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -582,11 +595,6 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
             }
         }
 #endif
-
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
-        {
-            symm->stress_symmetry(scs, GlobalC::ucell);
-        } // end symmetry
 
         // print Rydberg stress or not
         bool ry = false;
@@ -715,7 +723,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
                                                    const K_Vectors& kv)
 {
     if (isGammaOnly)
-    {
+    {       
         flk.ftable_gamma(isforce,
                          isstress,
                          psid,
@@ -760,6 +768,7 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
                      uhm,
                      kv);
     }
+    
     return;
 }
 

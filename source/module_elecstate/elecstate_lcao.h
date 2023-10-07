@@ -5,10 +5,11 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 
 namespace elecstate
 {
-
+template <typename TK>
 class ElecStateLCAO : public ElecState
 {
   public:
@@ -28,20 +29,30 @@ class ElecStateLCAO : public ElecState
         this->lowf = lowf_in;
         this->classname = "ElecStateLCAO";
     }
+
+    virtual ~ElecStateLCAO()
+    {
+        if (this->DM != nullptr)
+            delete this->DM;
+    }
+
     // void init(Charge* chg_in):charge(chg_in){} override;
 
     // interface for HSolver to calculate rho from Psi
-    virtual void psiToRho(const psi::Psi<std::complex<double>>& psi) override;
-    virtual void psiToRho(const psi::Psi<double>& psi) override;
+    virtual void psiToRho(const psi::Psi<TK>& psi) override;
+    //virtual void psiToRho(const psi::Psi<double>& psi) override;
     // return current electronic density rho, as a input for constructing Hamiltonian
     // const double* getRho(int spin) const override;
 
     // update charge density for next scf step
     // void getNewRho() override;
 
-    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1) override;
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1) override;
+    virtual void print_psi(const psi::Psi<TK>& psi_in, const int istep = -1) override;
+    //virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1) override;
 
+    // initial density matrix
+    void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
+    DensityMatrix<TK,double>* get_DM() const { return const_cast<DensityMatrix<TK,double>*>(this->DM); } 
     static int out_wfc_lcao;
     static int out_wfc_flag;
     static bool need_psi_grid;
@@ -60,6 +71,7 @@ class ElecStateLCAO : public ElecState
     Local_Orbital_Charge* loc = nullptr;
     LCAO_Hamilt* uhm = nullptr;
     Local_Orbital_wfc* lowf = nullptr;
+    DensityMatrix<TK,double>* DM = nullptr;
     
 };
 

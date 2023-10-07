@@ -34,7 +34,7 @@ void stress_fill(
 
 //force for gamma only calculations
 //Pulay and HF terms are calculated together
-void LCAO_Deepks::cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm,
+void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD,
@@ -44,6 +44,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm,
     this->F_delta.zero_out();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
+    int nrow = this->pv->nrow;
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
 		Atom* atom0 = &ucell.atoms[T0]; 
@@ -145,14 +146,14 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm,
                             for(int is = 0; is < GlobalV::NSPIN; is ++)
                             {
                                 // HF term is minus, only one projector for each atom force.
-                                this->F_delta(iat, 0) -= 2 * dm[is](iw1_local, iw2_local) * nlm[0];
-                                this->F_delta(iat, 1) -= 2 * dm[is](iw1_local, iw2_local) * nlm[1];
-                                this->F_delta(iat, 2) -= 2 * dm[is](iw1_local, iw2_local) * nlm[2];
+                                this->F_delta(iat, 0) -= 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[0];
+                                this->F_delta(iat, 1) -= 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[1];
+                                this->F_delta(iat, 2) -= 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[2];
 
                                 // Pulay term is plus, only one projector for each atom force.
-                                this->F_delta(ibt, 0) += 2 * dm[is](iw1_local, iw2_local) * nlm[0];
-                                this->F_delta(ibt, 1) += 2 * dm[is](iw1_local, iw2_local) * nlm[1];
-                                this->F_delta(ibt, 2) += 2 * dm[is](iw1_local, iw2_local) * nlm[2];
+                                this->F_delta(ibt, 0) += 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[0];
+                                this->F_delta(ibt, 1) += 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[1];
+                                this->F_delta(ibt, 2) += 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[2];
                             }
 
                             if(isstress)
@@ -193,7 +194,8 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm,
                                     {
                                         for(int is = 0; is < GlobalV::NSPIN; is ++)
                                         {
-                                            svnl_dalpha(ipol, jpol) += dm[is](iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
+                                            //svnl_dalpha(ipol, jpol) += dm[is](iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
+                                            svnl_dalpha(ipol, jpol) += dm[is][iw1_local * nrow + iw2_local] * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
                                         }
                                     }
                                 }
@@ -216,7 +218,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm,
 //force for multi-k calculations
 //Pulay and HF terms are calculated together
 
-void LCAO_Deepks::cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<double>>>& dm,/**<[in] density matrix*/
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD,
@@ -229,7 +231,7 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm
     this->F_delta.zero_out();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
-
+    int nrow = this->pv->nrow;
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
 		Atom* atom0 = &ucell.atoms[T0]; 
@@ -303,7 +305,8 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm
                             {
                                 const double arg = - ( kvec_d[ik] * (dR2-dR1) ) * ModuleBase::TWO_PI;
                                 const std::complex<double> kphase = std::complex <double> ( cos(arg),  sin(arg) );
-                                tmp += dm[ik](iw1_local, iw2_local) * kphase;
+                                //tmp += dm[ik](iw1_local, iw2_local) * kphase;
+                                tmp += dm[ik][iw1_local * nrow + iw2_local] * kphase;
                             }
                             dm_current=tmp.real();
 

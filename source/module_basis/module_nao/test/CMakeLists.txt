@@ -48,7 +48,10 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base container kernels orb
+    ../two_center_bundle.cpp
+    ../two_center_integrator.cpp
+    ../real_gaunt_table.cpp
+  LIBS ${math_libs} device base container orb
 )
 
 AddTest(
@@ -57,7 +60,7 @@ AddTest(
     real_gaunt_table_test.cpp
     ../real_gaunt_table.cpp
     ../../module_ao/ORB_gaunt_table.cpp
-  LIBS ${math_libs} device base container kernels
+  LIBS ${math_libs} device base container
 )
 
 AddTest(
@@ -72,5 +75,22 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-  LIBS ${math_libs} device base container kernels orb
+    ../two_center_bundle.cpp
+  LIBS ${math_libs} device base container orb
+)
+
+AddTest(
+  TARGET two_center_bundle
+  SOURCES
+    two_center_bundle_test.cpp
+    ../two_center_bundle.cpp
+    ../two_center_integrator.cpp
+    ../two_center_table.cpp
+    ../real_gaunt_table.cpp
+    ../radial_collection.cpp
+    ../atomic_radials.cpp
+    ../beta_radials.cpp
+    ../radial_set.cpp
+    ../numerical_radial.cpp
+  LIBS ${math_libs} device base container orb
 )

@@ -6,6 +6,12 @@
 #include <thrust/inner_product.h>
 #include <thrust/execution_policy.h>
 
+#include <cuda_runtime.h>
+
+#define WARP_SIZE 32
+#define FULL_MASK 0xffffffff
+#define THREAD_PER_BLOCK 256
+
 namespace hsolver {
 
 
@@ -21,7 +27,7 @@ void xdot_wrapper(const int &n, const double * x, const int &incx, const double 
     cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
 }
 
-void createBLAShandle(){
+void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
         cublasErrcheck(cublasCreate(&cublas_handle));
     }
@@ -31,6 +37,176 @@ void destoryBLAShandle(){
     if (cublas_handle != nullptr) {
         cublasErrcheck(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
+    }
+}
+
+template <typename FPTYPE>
+__forceinline__ __device__ void warp_reduce(FPTYPE& val) {
+    for (int offset = 16; offset > 0; offset >>= 1)
+        val += __shfl_down_sync(FULL_MASK, val, offset);
+}
+
+template <typename Real>
+__global__ void line_minimize_with_block(
+        thrust::complex<Real>* grad,
+        thrust::complex<Real>* hgrad,
+        thrust::complex<Real>* psi,
+        thrust::complex<Real>* hpsi,
+        const int n_basis,
+        const int n_basis_max)
+{
+    int band_idx = blockIdx.x; // band_idx
+    int tid = threadIdx.x; // basis_idx
+    int item = 0;
+    Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
+    Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
+    __shared__ Real data[THREAD_PER_BLOCK * 3];
+
+    data[tid] = 0;
+
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        data[tid] += (grad[item] * thrust::conj(grad[item])).real();
+    }
+    __syncthreads();
+    // just do some parallel reduction in shared memory
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+        if (tid < ii) {
+            data[tid] += data[tid + ii];
+        }
+        __syncthreads();
+    }
+
+    Real norm = 1.0 / sqrt(data[0]);
+    __syncthreads();
+
+    data[tid] = 0;
+    data[THREAD_PER_BLOCK + tid] = 0;
+    data[2 * THREAD_PER_BLOCK + tid] = 0;
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        grad[item] *= norm;
+        hgrad[item] *= norm;
+        data[tid] += (hpsi[item] * thrust::conj(psi[item])).real();
+        data[THREAD_PER_BLOCK + tid] += (grad[item] * thrust::conj(hpsi[item])).real();
+        data[2 * THREAD_PER_BLOCK + tid] += (grad[item] * thrust::conj(hgrad[item])).real();
+    }
+    __syncthreads();
+
+    // just do some parallel reduction in shared memory
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+        if (tid < ii) {
+            data[tid] += data[tid + ii];
+            data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + ii];
+            data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + ii];
+        }
+        __syncthreads();
+    }
+    epsilo_0 = data[0];
+    epsilo_1 = data[THREAD_PER_BLOCK];
+    epsilo_2 = data[2 * THREAD_PER_BLOCK];
+
+    theta = 0.5 * abs(atan(2 * epsilo_1/(epsilo_0 - epsilo_2)));
+    cos_theta = cos(theta);
+    sin_theta = sin(theta);
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        psi [item] = psi [item] * cos_theta + grad [item] * sin_theta;
+        hpsi[item] = hpsi[item] * cos_theta + hgrad[item] * sin_theta;
+    }
+}
+
+template <typename Real>
+__global__ void calc_grad_with_block(
+        const Real* prec,
+        Real* err,
+        Real* beta,
+        thrust::complex<Real>* psi,
+        thrust::complex<Real>* hpsi,
+        thrust::complex<Real>* grad,
+        thrust::complex<Real>* grad_old,
+        const int n_basis,
+        const int n_basis_max)
+{
+    int band_idx = blockIdx.x; // band_idx
+    int tid = threadIdx.x; // basis_idx
+    int item = 0;
+    Real err_st = 0.0;
+    Real beta_st = 0.0;
+    Real epsilo = 0.0;
+    Real grad_2 = 0.0;
+    thrust::complex<Real> grad_1 = {0, 0};
+    __shared__ Real data[THREAD_PER_BLOCK * 2];
+
+    // Init shared memory
+    data[tid] = 0;
+
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        data[tid] += (psi[item] * thrust::conj(psi[item])).real();
+    }
+    __syncthreads();
+    // just do some parallel reduction in shared memory
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+        if (tid < ii) {
+            data[tid] += data[tid + ii];
+        }
+        __syncthreads();
+    }
+
+    Real norm = 1.0 / sqrt(data[0]);
+    __syncthreads();
+
+    data[tid] = 0;
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        psi[item] *= norm;
+        hpsi[item] *= norm;
+        data[tid] += (hpsi[item] * thrust::conj(psi[item])).real();
+    }
+    __syncthreads();
+
+    // just do some parallel reduction in shared memory
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+        if (tid < ii) {
+            data[tid] += data[tid + ii];
+        }
+        __syncthreads();
+    }
+    epsilo = data[0];
+    __syncthreads();
+
+    data[tid] = 0;
+    data[THREAD_PER_BLOCK + tid] = 0;
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        grad_1 = hpsi[item] - epsilo * psi[item];
+        grad_2 = thrust::norm(grad_1);
+        data[tid] += grad_2;
+        data[THREAD_PER_BLOCK + tid] += grad_2 / prec[basis_idx];
+    }
+    __syncthreads();
+
+    // just do some parallel reduction in shared memory
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+        if (tid < ii) {
+            data[tid] += data[tid + ii];
+            data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + ii];
+        }
+        __syncthreads();
+    }
+    err_st = data[0];
+    beta_st = data[THREAD_PER_BLOCK];
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+        item = band_idx * n_basis_max + basis_idx;
+        grad_1 = hpsi[item] - epsilo * psi[item];
+        grad[item] = -grad_1 / prec[basis_idx] + beta_st / beta[band_idx] * grad_old[item];
+    }
+
+    __syncthreads();
+    if (tid == 0) {
+        beta[band_idx] = beta_st;
+        err[band_idx] = sqrt(err_st);
     }
 }
 
@@ -129,6 +305,49 @@ __global__ void matrix_setTo_another_kernel(
     }
 }
 
+template <typename T>
+void line_minimize_with_block_op<T, psi::DEVICE_GPU>::operator()(
+        T* grad_out,
+        T* hgrad_out,
+        T* psi_out,
+        T* hpsi_out,
+        const int &n_basis,
+        const int &n_basis_max,
+        const int &n_band)
+{
+    auto A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    auto B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
+    auto C = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    auto D = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+
+    line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
+            A, B, C, D,
+            n_basis, n_basis_max);
+}
+
+template <typename T>
+void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
+        T* psi_out,
+        T* hpsi_out,
+        T* grad_out,
+        T* grad_old_out,
+        const int &n_basis,
+        const int &n_basis_max,
+        const int &n_band)
+{
+    auto A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
+    auto B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
+    auto C = reinterpret_cast<thrust::complex<Real>*>(grad_out);
+    auto D = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
+
+    calc_grad_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
+            prec_in, err_out, beta_out,
+            A, B, C, D,
+            n_basis, n_basis_max);
+}
 
 // for this implementation, please check
 // https://thrust.github.io/doc/group__transformed__reductions_ga321192d85c5f510e52300ae762c7e995.html denghui modify
@@ -496,6 +715,8 @@ void matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>::operator()(
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct zdot_real_op<float, psi::DEVICE_GPU>;
+template struct calc_grad_with_block_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct line_minimize_with_block_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<float, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<float, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<float, psi::DEVICE_GPU>;
@@ -503,6 +724,8 @@ template struct constantvector_addORsub_constantVector_op<float, psi::DEVICE_GPU
 template struct matrixSetToAnother<float, psi::DEVICE_GPU>;
 
 template struct zdot_real_op<double, psi::DEVICE_GPU>;
+template struct calc_grad_with_block_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct line_minimize_with_block_op<std::complex<double>, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
 template struct vector_div_vector_op<double, psi::DEVICE_GPU>;

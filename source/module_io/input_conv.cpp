@@ -30,6 +30,8 @@
 #include "module_md/md_func.h"
 #include "module_psi/kernels/device.h"
 
+#include <algorithm>
+
 template <typename T>
 void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 {
@@ -201,7 +203,9 @@ void Input_Conv::Convert(void)
     //  suffix
     if (INPUT.calculation == "md" && INPUT.mdp.md_restart) // md restart  liuyu add 2023-04-12
     {
-        int istep = MD_func::current_step(GlobalV::MY_RANK, GlobalV::global_readin_dir);
+        int istep = 0;
+        MD_func::current_md_info(GlobalV::MY_RANK, GlobalV::global_readin_dir, istep, INPUT.mdp.md_tfirst);
+        INPUT.mdp.md_tfirst *= ModuleBase::Hartree_to_K;
         if (INPUT.read_file_dir == "auto")
         {
             GlobalV::stru_file = INPUT.stru_file = GlobalV::global_stru_dir + "STRU_MD_" + std::to_string(istep);
@@ -292,12 +296,6 @@ void Input_Conv::Convert(void)
     Force_Stress_LCAO::force_invalid_threshold_ev = INPUT.force_thr_ev2;
 #endif
 
-    if ((INPUT.calculation == "relax" || INPUT.calculation == "cell-relax") && INPUT.chg_extrap != "atomic")
-    {
-        std::cout << " For relaxation, charge extrapolation is set to atomic." << std::endl;
-        INPUT.chg_extrap = "atomic";
-    }
-
     BFGS_Basic::relax_bfgs_w1 = INPUT.relax_bfgs_w1;
     BFGS_Basic::relax_bfgs_w2 = INPUT.relax_bfgs_w2;
 
@@ -312,6 +310,8 @@ void Input_Conv::Convert(void)
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
     GlobalV::relax_new = INPUT.relax_new;
+
+    GlobalV::use_paw = INPUT.use_paw;
 
     GlobalV::OUT_LEVEL = INPUT.out_level;
     Ions_Move_CG::RELAX_CG_THR = INPUT.relax_cg_thr; // pengfei add 2013-09-09
@@ -478,10 +478,12 @@ void Input_Conv::Convert(void)
     //----------------------------------------------------------
     if (INPUT.restart_save)
     {
+        std::string dft_functional_lower = INPUT.dft_functional;
+        std::transform(INPUT.dft_functional.begin(), INPUT.dft_functional.end(), dft_functional_lower.begin(), tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
-        if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "hse"
-            || INPUT.dft_functional == "opt_orb" || INPUT.dft_functional == "scan0")
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
+            || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
         {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
@@ -493,9 +495,11 @@ void Input_Conv::Convert(void)
     }
     if (INPUT.restart_load)
     {
+        std::string dft_functional_lower = INPUT.dft_functional;
+        std::transform(INPUT.dft_functional.begin(), INPUT.dft_functional.end(), dft_functional_lower.begin(), tolower);
         GlobalC::restart.folder = GlobalV::global_readin_dir + "restart/";
-        if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "hse"
-            || INPUT.dft_functional == "opt_orb" || INPUT.dft_functional == "scan0")
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
+            || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
         {
             GlobalC::restart.info_load.load_charge = true;
         }
@@ -517,17 +521,19 @@ void Input_Conv::Convert(void)
 #ifdef __EXX
 #ifdef __LCAO
 
-    if (INPUT.dft_functional == "hf" || INPUT.dft_functional == "pbe0" || INPUT.dft_functional == "scan0")
+    std::string dft_functional_lower = INPUT.dft_functional;
+    std::transform(INPUT.dft_functional.begin(), INPUT.dft_functional.end(), dft_functional_lower.begin(), tolower);
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     }
-    else if (INPUT.dft_functional == "hse")
+    else if (dft_functional_lower == "hse")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse;
     }
-    else if (INPUT.dft_functional == "opt_orb")
+    else if (dft_functional_lower == "opt_orb")
     {
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
@@ -602,6 +608,8 @@ void Input_Conv::Convert(void)
     GlobalV::OUT_FREQ_ELEC = INPUT.out_freq_elec;
     GlobalV::OUT_FREQ_ION = INPUT.out_freq_ion;
     GlobalV::init_chg = INPUT.init_chg;
+    GlobalV::init_wfc = INPUT.init_wfc;
+    GlobalV::psi_initializer = INPUT.psi_initializer;
     GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::out_chg = INPUT.out_chg;
     GlobalV::nelec = INPUT.nelec;
@@ -617,10 +625,24 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO::out_mat_dh = INPUT.out_mat_dh;
-    elecstate::ElecStateLCAO::out_wfc_lcao = INPUT.out_wfc_lcao;
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;
+    }
+    else if (!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao = INPUT.out_wfc_lcao;
+    }
     if (INPUT.calculation == "nscf" && !INPUT.towannier90 && !INPUT.berry_phase)
     {
-        elecstate::ElecStateLCAO::need_psi_grid = false;
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            elecstate::ElecStateLCAO<double>::need_psi_grid = false;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = false;
+        }
     }
     if (INPUT.calculation == "test_neighbour" && GlobalV::NPROC > 1)
     {

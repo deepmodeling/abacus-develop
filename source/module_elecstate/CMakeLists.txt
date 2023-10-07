@@ -12,6 +12,7 @@ list(APPEND objects
     potentials/H_Hartree_pw.cpp
     potentials/pot_xc.cpp
     potentials/pot_local.cpp
+    potentials/pot_local_paw.cpp
     potentials/potential_new.cpp
     potentials/potential_types.cpp
     module_charge/charge.cpp
@@ -33,6 +34,8 @@ if(ENABLE_LCAO)
       elecstate_lcao.cpp
       elecstate_lcao_tddft.cpp
       potentials/H_TDDFT_pw.cpp
+      module_dm/density_matrix.cpp
+      module_dm/cal_dm_psi.cpp
   )
 endif()
 

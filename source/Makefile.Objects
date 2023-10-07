@@ -13,11 +13,15 @@ HEADERS = *.h
 
 VPATH=./src_global:\
 ./module_basis/module_ao:\
+./module_basis/module_nao:\
 ./module_cell/module_neighbor:\
 ./module_cell/module_symmetry:\
 ./module_cell:\
 ./module_base:\
 ./module_base/kernels:\
+./module_base/module_container/base/core:\
+./module_base/module_container/ATen/core:\
+./module_base/module_container/ATen/kernels:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -28,6 +32,7 @@ VPATH=./src_global:\
 ./module_elecstate/kernels:\
 ./module_elecstate/potentials:\
 ./module_elecstate/module_charge:\
+./module_elecstate/module_dm:\
 ./module_psi:\
 ./module_psi/kernels:\
 ./module_hamilt_general:\
@@ -39,6 +44,7 @@ VPATH=./src_global:\
 ./module_hamilt_pw/hamilt_stodft:\
 ./module_hamilt_pw/hamilt_pwdft/operator_pw:\
 ./module_hamilt_pw/hamilt_pwdft/kernels:\
+./module_hamilt_lcao/module_hcontainer:\
 ./module_hamilt_lcao/hamilt_lcaodft:\
 ./module_hamilt_lcao/module_tddft:\
 ./module_hamilt_lcao/module_deepks:\
@@ -64,6 +70,7 @@ ${OBJS_HSOLVER}\
 ${OBJS_MD}\
 ${OBJS_NEIGHBOR}\
 ${OBJS_PSI}\
+${OBJS_PSI_INITIALIZER}\
 ${OBJS_PW}\
 ${OBJS_RELAXATION}\
 ${OBJS_SURCHEM}\
@@ -81,12 +88,14 @@ ${OBJS_ESOLVER_LCAO}\
 ${OBJS_GINT}\
 ${OBJS_HAMILT_LCAO}\
 ${OBJS_HSOLVER_LCAO}\
+${OBJS_HCONTAINER}\
 ${OBJS_ORBITAL}\
 ${OBJS_IO_LCAO}\
 ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_TENSOR}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -130,10 +139,12 @@ OBJS_BASE=abfs-vector3_order.o\
     formatter_physfmt.o\
     formatter_table.o\
     formatter_contextfmt.o\
+	cubic_spline.o\
+	spherical_bessel_transformer.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
-    pseudo_nc.o\
+    pseudo.o\
     read_pp.o\
     read_pp_upf100.o\
     read_pp_upf201.o\
@@ -169,12 +180,15 @@ OBJS_ELECSTAT=elecstate.o\
     potential_new.o\
     potential_types.o\
     pot_local.o\
+    pot_local_paw.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
+      density_matrix.o\
+      cal_dm_psi.o\
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -231,17 +245,26 @@ OBJS_HAMILT_OF=kedf_tf.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\
-    ekinetic_lcao.o\
-    nonlocal_lcao.o\
-    overlap_lcao.o\
+    ekinetic_new.o\
+    nonlocal_new.o\
+    overlap_new.o\
     veff_lcao.o\
     meta_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
 
+OBJS_HCONTAINER=base_matrix.o\
+    atom_pair.o\
+    hcontainer.o\
+    output_hcontainer.o\
+    func_folding.o\
+    func_transfer.o\
+    transfer.o\
+
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
+    diago_bpcg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
@@ -285,10 +308,26 @@ OBJS_ORBITAL=ORB_atomic.o\
       ORB_table_phi.o\
       parallel_2d.o\
       parallel_orbitals.o\
+	  atomic_radials.o\
+	  beta_radials.o\
+	  numerical_radial.o\
+	  radial_collection.o\
+	  radial_set.o\
+	  real_gaunt_table.o\
+	  two_center_bundle.o\
+	  two_center_integrator.o\
+	  two_center_table.o\
 
 OBJS_PSI=psi.o\
-    memory_op.o\
+    psi_memory_op.o\
     device.o\
+
+OBJS_PSI_INITIALIZER=psi_initializer.o\
+                     psi_initializer_random.o\
+                     psi_initializer_atomic.o\
+                     psi_initializer_atomic_random.o\
+                     psi_initializer_nao.o\
+                     psi_initializer_nao_random.o\
 
 OBJS_PW=fft.o\
     pw_basis.o\
@@ -396,6 +435,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_dm.o\
       output_dm1.o\
       write_dm_sparse.o\
+      sparse_matrix.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_gamma_2d_to_grid.o\
@@ -509,3 +549,16 @@ OBJS_DFTU=dftu.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o
+
+OBJS_TENSOR=tensor.o\
+    tensor_buffer.o\
+    tensor_map.o\
+    tensor_shape.o\
+    tensor_types.o\
+    einsum_op.o\
+    blas_op.o\
+    lapack_op.o\
+    linalg_op.o\
+    memory_op_impl.o\
+    cpu_allocator.o\
+    refcount.o

@@ -7,7 +7,7 @@
 #include <algorithm>
 namespace hsolver
 {
-void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
+void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            psi::Psi<std::complex<double>>& psi,
                            elecstate::ElecState* pes,
                            ModulePW::PW_Basis_K* wfc_basis,
@@ -28,7 +28,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<double>* pHamilt,
 
     // select the method of diagonalization
     this->method = method_in;
-    this->initDiagh();
+    this->initDiagh(psi);
 
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)

@@ -25,6 +25,9 @@
  *   - MD_func::read_vel
  *     - read atomic velocity from STRU
  *
+ *   - MD_func::init_vel
+ *     - initialize the atomic velocities
+ *
  *   - MD_func::compute_stress
  *     - calculate the contribution of classical kinetic energy of atoms to stress
  *
@@ -34,11 +37,11 @@
  *   - MD_func::print_stress
  *     - output stress
  *
- *   - MD_func::current_step
- *     - test the current_step function with the correct file path
+ *   - MD_func::current_md_info
+ *     - test the current_md_info function with the correct file path
  *
  *   - MD_func::current_step_warning
- *     - test the current_step function with an incorrect file path
+ *     - test the current_md_info function with an incorrect file path
  */
 
 class MD_func_test : public testing::Test
@@ -92,7 +95,7 @@ TEST_F(MD_func_test, randomvel)
 {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, temperature, GlobalV::MY_RANK, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     EXPECT_NEAR(vel[0].x, 9.9105892783200826e-06, doublethreshold);
     EXPECT_NEAR(vel[0].y, -3.343699576563167e-05, doublethreshold);
@@ -112,7 +115,7 @@ TEST_F(MD_func_test, getmassmbl)
 {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, temperature, GlobalV::MY_RANK, allmass, frozen_freedom, ionmbl, vel);
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
     for (int i = 0; i < natom; ++i)
     {
@@ -143,9 +146,56 @@ TEST_F(MD_func_test, readvel)
     EXPECT_DOUBLE_EQ(vel[3].z, -2.83313122596e-05);
 }
 
+TEST_F(MD_func_test, InitVelCase1)
+{
+    ucell.init_vel = 1;
+    temperature = -1.0;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
+
+    EXPECT_NEAR(temperature, 300.0 / ModuleBase::Hartree_to_K, doublethreshold);
+}
+
+TEST_F(MD_func_test, InitVelCase2)
+{
+    ucell.init_vel = 1;
+    temperature = 300.0 / ModuleBase::Hartree_to_K;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
+
+    EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
+}
+
+TEST_F(MD_func_test, InitVelCase3)
+{
+    ucell.init_vel = 1;
+    temperature = 310.0 / ModuleBase::Hartree_to_K;
+
+    EXPECT_EXIT(MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel),
+                ::testing::ExitedWithCode(0),
+                "");
+}
+
+TEST_F(MD_func_test, InitVelCase4)
+{
+    ucell.init_vel = 0;
+    temperature = 300.0 / ModuleBase::Hartree_to_K;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
+
+    EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
+}
+
+TEST_F(MD_func_test, InitVelCase5)
+{
+    ucell.init_vel = 1;
+    temperature = 330.0 / ModuleBase::Hartree_to_K;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, true, temperature, allmass, frozen_freedom, ionmbl, vel);
+
+    EXPECT_DOUBLE_EQ(temperature, 330.0 / ModuleBase::Hartree_to_K);
+}
+
 TEST_F(MD_func_test, compute_stress)
 {
-    MD_func::init_vel(ucell, temperature, GlobalV::MY_RANK, allmass, frozen_freedom, ionmbl, vel);
+    temperature = 300.0 / ModuleBase::Hartree_to_K;
+    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
     MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
     EXPECT_DOUBLE_EQ(stress(0, 0), 5.2064533063673623e-06);
     EXPECT_DOUBLE_EQ(stress(0, 1), -1.6467487572445481e-06);
@@ -332,16 +382,20 @@ TEST_F(MD_func_test, print_stress)
     remove("running.log");
 }
 
-TEST_F(MD_func_test, current_step)
+TEST_F(MD_func_test, current_md_info)
 {
     // Set up the file directory and create the Restart_md.dat file
     std::string file_dir = "./";
     std::ofstream file(file_dir + "Restart_md.dat");
     file << 123;
     file.close();
+    int istep = -1;
+    double temperature = 0.0;
+    MD_func::current_md_info(0, file_dir, istep, temperature);
 
     // Call the function with the correct file path and check the result
-    EXPECT_EQ(MD_func::current_step(0, file_dir), 123);
+    EXPECT_EQ(istep, 123);
+    EXPECT_DOUBLE_EQ(temperature, 0.0);
     remove("Restart_md.dat");
 }
 
@@ -349,5 +403,7 @@ TEST_F(MD_func_test, current_step_warning)
 {
     // Call the function and check that it outputs a warning and quits
     std::string file_dir = "./";
-    EXPECT_EXIT(MD_func::current_step(0, file_dir), ::testing::ExitedWithCode(0), "");
+    int istep = 0;
+    double temperature = 0.0;
+    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(0), "");
 }

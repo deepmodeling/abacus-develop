@@ -21,7 +21,7 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
 
-void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
+void DiagoBlas::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
     matd h_mat, s_mat;
@@ -33,7 +33,7 @@ void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, doub
     BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
 }
 
-void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+void DiagoBlas::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
     matcd h_mat, s_mat;

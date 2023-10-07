@@ -89,12 +89,35 @@ void test_deepks::read_dm_k(const int nks)
 	}
 }
 
+void test_deepks::set_dm_new(void)
+{
+	// dm_gamma
+	dm_new.resize(dm.size());
+	for(int i = 0; i < dm.size(); i++)
+	{
+		dm_new[i].resize(dm[i].nr * dm[i].nc);
+		dm_new[i].assign(dm[i].c, dm[i].c + dm[i].nr * dm[i].nc);
+	}
+}
+
+void test_deepks::set_dm_k_new(void)
+{
+	// dm_k
+	dm_k_new.resize(dm_k.size());
+	for(int i = 0; i < dm_k.size(); i++)
+	{
+		dm_k_new[i].resize(dm_k[i].nr * dm_k[i].nc);
+		dm_k_new[i].assign(dm_k[i].c, dm_k[i].c + dm_k[i].nr * dm_k[i].nc);
+	}
+}
+
 void test_deepks::check_pdm(void)
 {
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		this->read_dm();
-		this->ld.cal_projected_DM(dm,
+		this->set_dm_new();
+		this->ld.cal_projected_DM(dm_new,
 			ucell,
 			ORB,
             Test_Deepks::GridD);
@@ -102,7 +125,8 @@ void test_deepks::check_pdm(void)
 	else
 	{
 		this->read_dm_k(kv.nkstot);
-		this->ld.cal_projected_DM_k(dm_k,
+		this->set_dm_k_new();
+		this->ld.cal_projected_DM_k(dm_k_new,
 			ucell,
 			ORB,
             Test_Deepks::GridD,
@@ -118,7 +142,7 @@ void test_deepks::check_gdmx(void)
 	this->ld.init_gdmx(ucell.nat);
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		this->ld.cal_gdmx(dm[0],
+		this->ld.cal_gdmx(dm_new[0],
 			ucell,
 			ORB,
             Test_Deepks::GridD,
@@ -126,7 +150,7 @@ void test_deepks::check_gdmx(void)
 	}
 	else
 	{
-		this->ld.cal_gdmx_k(dm_k,
+		this->ld.cal_gdmx_k(dm_k_new,
 			ucell,
 			ORB,
             Test_Deepks::GridD,
@@ -223,12 +247,12 @@ void test_deepks::check_e_deltabands(void)
 {
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-        this->ld.cal_e_delta_band(dm);
+        this->ld.cal_e_delta_band(dm_new);
 	}
 	else
 	{
 		this->folding_nnr(kv);
-        this->ld.cal_e_delta_band_k(dm_k, kv.nkstot);
+        this->ld.cal_e_delta_band_k(dm_k_new, kv.nkstot);
 	}
 
 	std::ofstream ofs("E_delta_bands.dat");
@@ -266,7 +290,7 @@ void test_deepks::check_f_delta()
 	svnl_dalpha.create(3,3);
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		ld.cal_f_delta_gamma(dm,
+		ld.cal_f_delta_gamma(dm_new,
             ucell,
             ORB,
             Test_Deepks::GridD,
@@ -274,7 +298,7 @@ void test_deepks::check_f_delta()
 	}
 	else
 	{
-		ld.cal_f_delta_k(dm_k,
+		ld.cal_f_delta_k(dm_k_new,
 			ucell,
             ORB,
             Test_Deepks::GridD,

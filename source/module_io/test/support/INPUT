@@ -44,6 +44,9 @@ device                         cpu #the computing device for ABACUS
 
 #Parameters (2.PW)
 ecutwfc                        20 ##energy cutoff for wave functions
+erf_ecut                       20 #the value of the constant energy cutoff
+erf_height                     20 #the height of the energy step for reciprocal vectors
+erf_sigma                      4 #the width of the energy step for reciprocal vectors
 pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations
 scf_thr                        1e-08 #charge density error
 scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao
@@ -180,7 +183,7 @@ md_tlast                       -1 #temperature last
 md_dumpfreq                    1 #The period to dump MD information
 md_restartfreq                 5 #The period to output MD restart information
 md_seed                        -1 #random seed for MD
-md_prec_level                  1 #precision level for vc-md
+md_prec_level                  2 #precision level for vc-md
 ref_cell_factor                1.2 #construct a reference cell bigger than the initial cell
 md_restart                     0 #whether restart
 lj_rcut                        8.5 #cutoff radius of LJ potential
@@ -328,6 +331,11 @@ gdir                           3 #calculate the polarization in the direction of
 towannier90                    0 #use wannier90 code interface or not
 nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name
 wannier_spin                   up #calculate spin in wannier90 code interface
+out_wannier_mmn                1 #output .mmn file or not
+out_wannier_amn                1 #output .amn file or not
+out_wannier_unk                1 #output UNK. file or not
+out_wannier_eig                1 #output .eig file or not
+out_wannier_wvfn_formatted     1 #output UNK. file in text format or in binary format
 
 #Parameters (18.implicit_solvation)
 imp_sol                        0 #calculate implicit solvation correction or not

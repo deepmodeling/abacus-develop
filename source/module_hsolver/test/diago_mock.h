@@ -448,7 +448,7 @@ class HPsi_f
 };
 
 //totally same as the original function
-template<> void hamilt::HamiltPW<double>::sPsi
+template<> void hamilt::HamiltPW<std::complex<double>>::sPsi
 (
     const std::complex<double> *psi, 
     std::complex<double> *spsi, 
@@ -463,7 +463,7 @@ template<> void hamilt::HamiltPW<double>::sPsi
 }
 
 //totally same as the original function
-template<> void hamilt::HamiltPW<float>::sPsi
+template<> void hamilt::HamiltPW<std::complex<float>>::sPsi
 (
     const std::complex<float> *psi, 
     std::complex<float> *spsi, 
@@ -479,7 +479,7 @@ template<> void hamilt::HamiltPW<float>::sPsi
 
 //Mock function h_psi
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.h"
-class OperatorMock_d : public hamilt::OperatorPW<double>
+class OperatorMock_d : public hamilt::OperatorPW<std::complex<double>>
 {
     ~OperatorMock_d()
     {
@@ -491,11 +491,12 @@ class OperatorMock_d : public hamilt::OperatorPW<double>
     }
     virtual void act
     (
-        const psi::Psi<std::complex<double>> *psi_in, 
-        const int n_npwx, 
-        const std::complex<double>* tmpsi_in, 
-        std::complex<double>* tmhpsi
-    )const 
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const std::complex<double>* tmpsi_in,
+        std::complex<double>* tmhpsi,
+        const int ngk_ik = 0)const
     {
         int nprocs=1, mypnum=0;
     #ifdef __MPI    
@@ -504,7 +505,7 @@ class OperatorMock_d : public hamilt::OperatorPW<double>
     #endif        
 
         std::complex<double> *hpsi0 = new std::complex<double>[DIAGOTEST::npw];
-        for(int m = 0; m< n_npwx; m++)
+        for (int m = 0; m < nbands; m++)
         {
             for(int i=0;i<DIAGOTEST::npw;i++)
             {
@@ -516,14 +517,14 @@ class OperatorMock_d : public hamilt::OperatorPW<double>
             }
             Parallel_Reduce::reduce_complex_double_pool(hpsi0, DIAGOTEST::npw);
             DIAGOTEST::divide_psi<std::complex<double>>(hpsi0, tmhpsi);
-            tmhpsi += psi_in->get_nbasis();
-            tmpsi_in += psi_in->get_nbasis();
+            tmhpsi += nbasis;
+            tmpsi_in += nbasis;
         }
         delete [] hpsi0;
     }
 };
 
-class OperatorMock_f : public hamilt::OperatorPW<float>
+class OperatorMock_f : public hamilt::OperatorPW<std::complex<float>>
 {
     ~OperatorMock_f()
     {
@@ -535,11 +536,12 @@ class OperatorMock_f : public hamilt::OperatorPW<float>
     }
     virtual void act
     (
-        const psi::Psi<std::complex<float>> *psi_in, 
-        const int n_npwx, 
-        const std::complex<float>* tmpsi_in, 
-        std::complex<float>* tmhpsi
-    )const 
+        const int nbands,
+        const int nbasis,
+        const int npol,
+        const std::complex<float>* tmpsi_in,
+        std::complex<float>* tmhpsi,
+        const int ngk_ik = 0)const
     {
         int nprocs=1, mypnum=0;
     #ifdef __MPI    
@@ -548,7 +550,7 @@ class OperatorMock_f : public hamilt::OperatorPW<float>
     #endif        
 
         std::complex<float> *hpsi0 = new std::complex<float>[DIAGOTEST::npw];
-        for(int m = 0; m< n_npwx; m++)
+        for (int m = 0; m < nbands; m++)
         {
             for(int i=0;i<DIAGOTEST::npw;i++)
             {
@@ -562,39 +564,39 @@ class OperatorMock_f : public hamilt::OperatorPW<float>
 	        MPI_Allreduce(MPI_IN_PLACE, hpsi0, DIAGOTEST::npw, MPI_C_FLOAT_COMPLEX, MPI_SUM, MPI_COMM_WORLD);
 #endif
             DIAGOTEST::divide_psi_f<std::complex<float>>(hpsi0, tmhpsi);	
-            tmhpsi += psi_in->get_nbasis();
-            tmpsi_in += psi_in->get_nbasis();
+            tmhpsi += nbasis;
+            tmpsi_in += nbasis;
         }
         delete [] hpsi0;
     }
 };
 
-template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
+template<> void hamilt::HamiltPW<std::complex<double>>::updateHk(const int ik)
 {
     return;
 }
 
-template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->ops = new OperatorMock_d;
 }
 
-template<> hamilt::HamiltPW<double>::~HamiltPW()
+template<> hamilt::HamiltPW<std::complex<double>>::~HamiltPW()
 {
     delete this->ops;
 }
 
-template<> void hamilt::HamiltPW<float>::updateHk(const int ik)
+template<> void hamilt::HamiltPW<std::complex<float>>::updateHk(const int ik)
 {
     return;
 }
 
-template<> hamilt::HamiltPW<float>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
 {
     this->ops = new OperatorMock_f;
 }
 
-template<> hamilt::HamiltPW<float>::~HamiltPW()
+template<> hamilt::HamiltPW<std::complex<float>>::~HamiltPW()
 {
     delete this->ops;
 }

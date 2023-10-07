@@ -17,11 +17,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 //---------------------------------------
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#include "module_base/parallel_common.h"
+#endif
+
 namespace ModuleESolver
 {
 
-    template<typename FPTYPE, typename Device>
-    ESolver_KS<FPTYPE, Device>::ESolver_KS()
+    template<typename T, typename Device>
+    ESolver_KS<T, Device>::ESolver_KS()
     {
         classname = "ESolver_KS";
         basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
@@ -66,8 +71,8 @@ namespace ModuleESolver
         this->wf.out_wfc_r = INPUT.out_wfc_r;
     }
 
-    template<typename FPTYPE, typename Device>
-    ESolver_KS<FPTYPE, Device>::~ESolver_KS()
+    template<typename T, typename Device>
+    ESolver_KS<T, Device>::~ESolver_KS()
     {
         delete this->pw_wfc;
         delete this->p_hamilt;
@@ -75,16 +80,92 @@ namespace ModuleESolver
         delete this->p_chgmix;
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+        {
+            int * atom_type;
+            double ** atom_coord;
+            std::vector<std::string> filename_list;
+
+            atom_type = new int [GlobalC::ucell.nat];
+            atom_coord = new double * [GlobalC::ucell.nat];
+            filename_list.resize(GlobalC::ucell.ntype);
+
+            for(int ia = 0; ia < GlobalC::ucell.nat; ia ++)
+            {
+                atom_coord[ia] = new double [3];
+            }
+
+            int iat = 0;
+            for(int it = 0; it < GlobalC::ucell.ntype; it ++)
+            {
+                for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia ++)
+                {
+                    atom_type[iat] = it;
+                    atom_coord[iat][0] = GlobalC::ucell.atoms[it].taud[ia].x;
+                    atom_coord[iat][1] = GlobalC::ucell.atoms[it].taud[ia].y;
+                    atom_coord[iat][2] = GlobalC::ucell.atoms[it].taud[ia].z;
+                    iat ++;
+                }
+            }            
+
+            if(GlobalV::MY_RANK == 0)
+            {
+                std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
+                if (!ifa)
+                {
+                    ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
+                }
+
+                std::string line;
+                while(!ifa.eof())
+                {
+                    getline(ifa,line);
+                    if (line.find("PAW_FILES") != std::string::npos) break;
+                }
+
+                for(int it = 0; it < GlobalC::ucell.ntype; it++)
+                {
+                    ifa >> filename_list[it];
+                }
+            }
+#ifdef __MPI
+            for(int it = 0; it < GlobalC::ucell.ntype; it++)
+            {
+                Parallel_Common::bcast_string(filename_list[it]);
+            }
+#endif
+            
+            GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
+                GlobalC::ucell.omega,GlobalC::ucell.nat,GlobalC::ucell.ntype,
+                atom_type,(const double **) atom_coord,
+                filename_list);
+
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                delete [] atom_coord[iat];
+            }
+            delete [] atom_coord;
+            delete [] atom_type;
+        }
+#endif
         ucell.cal_nelec(GlobalV::nelec);
 
         /* it has been established that that
          xc_func is same for all elements, therefore
          only the first one if used*/
-        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        if(GlobalV::use_paw)
+        {
+            XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
+        }
+        else
+        {
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        }
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
         // symmetry analysis should be performed every time the cell is changed
@@ -102,8 +183,8 @@ namespace ModuleESolver
         // mohan add 2021-01-30
         Print_Info::setup_parameters(ucell, this->kv);
 
-        if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
-        {
+        //if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
+        //{
             //Envelope function is calculated as lcao_in_pw
             //new plane wave basis
     #ifdef __MPI
@@ -122,9 +203,9 @@ namespace ModuleESolver
             this->pw_wfc->setuptransform();
             for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-            this->pw_wfc->collect_local_pw(); 
+            this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
             this->print_wfcfft(inp, GlobalV::ofs_running);
-        }
+        //}
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
         GlobalC::Pgrid.init(this->pw_rho->nx,
@@ -140,10 +221,25 @@ namespace ModuleESolver
 
         // Initialize charge extrapolation
         CE.Init_CE(GlobalC::ucell.nat);
+
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+        {
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
+            GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+            GlobalC::paw_cell.prepare_paw();
+            GlobalC::paw_cell.set_sij();
+
+            GlobalC::paw_cell.set_eigts(
+                this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                this->sf.eigts1.c,this->sf.eigts2.c,this->sf.eigts3.c);
+        }
+#endif
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     {
         ModuleBase::TITLE("ESolver_KS", "init_after_vc");
 
@@ -166,8 +262,8 @@ namespace ModuleESolver
         }
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
     {
         ModuleBase::timer::tick(this->classname, "hamilt2density");
         //Temporarily, before HSolver is constructed, it should be overrided by
@@ -178,8 +274,8 @@ namespace ModuleESolver
         ModuleBase::timer::tick(this->classname, "hamilt2density");
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
     {
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -217,8 +313,8 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::Run(const int istep, UnitCell& ucell)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
             || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))
@@ -247,7 +343,7 @@ namespace ModuleESolver
                 double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
-                
+
                 //<Temporary> It may be changed when more clever parallel algorithm is put forward.
                 //When parallel algorithm for bands are adopted. Density will only be treated in the first group.
                 //(Different ranks should have abtained the same, but small differences always exist in practice.)
@@ -255,7 +351,7 @@ namespace ModuleESolver
                 //they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
                 if(GlobalV::MY_STOGROUP == 0)
                 {
-                    // FPTYPE drho = this->estate.caldr2(); 
+                    // double drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
 
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
@@ -318,7 +414,7 @@ namespace ModuleESolver
 #ifdef __MPI
                 double duration = (double)(MPI_Wtime() - iterstart);
 #else
-                FPTYPE duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<FPTYPE>(1e6);
+                double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<double>(1e6);
 #endif
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
@@ -336,8 +432,8 @@ namespace ModuleESolver
         return;
     };
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::printhead()
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::printhead()
     {
         std::cout << " " << std::setw(7) << "ITER";
         if (GlobalV::NSPIN == 2)
@@ -351,14 +447,14 @@ namespace ModuleESolver
         std::cout << std::setw(11) << "TIME(s)" << std::endl;
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
     {
         this->pelec->print_etot(this->conv_elec, iter, drho, duration, INPUT.printe, ethr);
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::writehead(std::ofstream& ofs_running, const int istep, const int iter)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::writehead(std::ofstream& ofs_running, const int istep, const int iter)
     {
         ofs_running
             << "\n "
@@ -368,14 +464,14 @@ namespace ModuleESolver
             << "--------------------------------\n";
     }
 
-    template<typename FPTYPE, typename Device>
-    int ESolver_KS<FPTYPE, Device>::getniter()
+    template<typename T, typename Device>
+    int ESolver_KS<T, Device>::getniter()
     {
         return this->niter;
     }
 
-    template <typename FPTYPE, typename Device>
-    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
+    template<typename T, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
     {
         int precision = 3;
         std::string tag = "CHG";
@@ -393,8 +489,8 @@ namespace ModuleESolver
                                     prefix);
     }
 
-    template <typename FPTYPE, typename Device>
-    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
+    template<typename T, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
     {
         int precision = 11;
         std::string tag = "TAU";
@@ -412,8 +508,8 @@ namespace ModuleESolver
                                     prefix);
     }
 
-    template <typename FPTYPE, typename Device>
-    ModuleIO::Output_Potential ESolver_KS<FPTYPE, Device>::create_Output_Potential(int iter, const std::string& prefix)
+    template<typename T, typename Device>
+    ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int iter, const std::string& prefix)
     {
         int precision = 3;
         std::string tag = "POT";
@@ -434,10 +530,10 @@ namespace ModuleESolver
 
 
 
-template class ESolver_KS<float, psi::DEVICE_CPU>;
-template class ESolver_KS<double, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<float>, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS<float, psi::DEVICE_GPU>;
-template class ESolver_KS<double, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 }

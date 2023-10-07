@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <algorithm>
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -179,7 +180,15 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
-    for(int i=0;i<3;i++){kspacing[i] = 0;}
+    out_wannier_amn = true;
+    out_wannier_eig = true;
+    out_wannier_mmn = true;
+    out_wannier_unk = true;
+    out_wannier_wvfn_formatted = true;
+    for (int i = 0; i < 3; i++)
+    {
+        kspacing[i] = 0;
+    }
     min_dist_coef = 0.2;
     //----------------------------------------------------------
     // electrons / spin
@@ -224,6 +233,8 @@ void Input::Default(void)
     relax_bfgs_init = 0.5; // bohr
     relax_scale_force = 0.5;
     nbspline = -1;
+
+    use_paw = false;
     //----------------------------------------------------------
     // ecutwfc
     //----------------------------------------------------------
@@ -232,6 +243,9 @@ void Input::Default(void)
     gamma_only_local = false;
     ecutwfc = 50.0;
     ecutrho = 0.0;
+    erf_ecut = 0.0;
+    erf_height = 0.0;
+    erf_sigma = 0.1;
     ncx = 0;
     ncy = 0;
     ncz = 0;
@@ -241,6 +255,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
+    nsx = 0;
+    nsy = 0;
+    nsz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -287,10 +304,11 @@ void Input::Default(void)
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
     init_wfc = "atomic";
+    psi_initializer = false;
     mem_saver = 0;
     printe = 100; // must > 0
     init_chg = "atomic";
-    chg_extrap = "atomic"; // xiaohui modify 2015-02-01
+    chg_extrap = "default"; // xiaohui modify 2015-02-01
     out_freq_elec = 0;
     out_freq_ion = 0;
     out_chg = 0;
@@ -319,7 +337,7 @@ void Input::Default(void)
     out_app_flag = true;
     out_mat_r = 0; // jingan add 2019-8-14
     out_mat_dh = 0;
-    out_wfc_lcao = false;
+    out_wfc_lcao = 0;
     out_alllog = false;
     dos_emin_ev = -15; //(ev)
     dos_emax_ev = 15; //(ev)
@@ -819,6 +837,26 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, wannier_spin);
         }
+        else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_mmn);
+        }
+        else if (strcmp("out_wannier_amn", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_amn);
+        }
+        else if (strcmp("out_wannier_unk", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_unk);
+        }
+        else if (strcmp("out_wannier_eig", word) == 0) // add by renxi for wannier90
+        {
+            read_bool(ifs, out_wannier_eig);
+        }
+        else if (strcmp("out_wannier_wvfn_formatted", word) == 0)
+        {
+            read_bool(ifs, out_wannier_wvfn_formatted);
+        }
         //----------------------------------------------------------
         // electrons / spin
         //----------------------------------------------------------
@@ -975,7 +1013,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, relax_new);
         }
-
+        else if (strcmp("use_paw", word) == 0)
+        {
+            read_bool(ifs, use_paw);
+        }
         //----------------------------------------------------------
         // plane waves
         //----------------------------------------------------------
@@ -986,7 +1027,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
-            ecutrho = 4.0 * ecutwfc;
+        }
+        else if (strcmp("ecutrho", word) == 0)
+        {
+            read_value(ifs, ecutrho);
         }
         else if (strcmp("nx", word) == 0)
         {
@@ -1014,6 +1058,30 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("bz", word) == 0)
         {
             read_value(ifs, bz);
+        }
+        else if (strcmp("nsx", word) == 0)
+        {
+            read_value(ifs, nsx);
+        }
+        else if (strcmp("nsy", word) == 0)
+        {
+            read_value(ifs, nsy);
+        }
+        else if (strcmp("nsz", word) == 0)
+        {
+            read_value(ifs, nsz);
+        }
+        else if (strcmp("erf_ecut", word) == 0)
+        {
+            read_value(ifs, erf_ecut);
+        }
+        else if (strcmp("erf_height", word) == 0)
+        {
+            read_value(ifs, erf_height);
+        }
+        else if (strcmp("erf_sigma", word) == 0)
+        {
+            read_value(ifs, erf_sigma);
         }
         //----------------------------------------------------------
         // diagonalization
@@ -1168,6 +1236,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, init_wfc);
         }
+        else if (strcmp("psi_initializer", word) == 0)
+        {
+            read_value(ifs, psi_initializer);
+        }
         else if (strcmp("mem_saver", word) == 0)
         {
             read_value(ifs, mem_saver);
@@ -1285,7 +1357,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
-            read_bool(ifs, out_wfc_lcao);
+            read_value(ifs, out_wfc_lcao);
         }
         else if (strcmp("out_alllog", word) == 0)
         {
@@ -2480,6 +2552,17 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (ecutrho <= 0.0)
+    {
+        ecutrho = 4.0 * ecutwfc;
+    }
+
+    if (esolver_type == "sdft"&&psi_initializer)
+    {
+        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
+        psi_initializer = false;
+    }
+
     if (nbndsto_str == "all")
     {
         nbands_sto = 0;
@@ -2503,11 +2586,18 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (of_kinetic != "wt")
         of_read_kernel = false; // sunliang add 2022-09-12
 
+    if(dft_functional == "default" && use_paw)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dft_functional must be set when use_paw is true");
+    }
+
     if (exx_hybrid_alpha == "default")
     {
-        if (dft_functional == "hf" || INPUT.rpa)
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || rpa)
             exx_hybrid_alpha = "1";
-        else if (dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+        else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
     }
     if (exx_real_number == "default")
@@ -2519,9 +2609,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if (exx_ccp_rmesh_times == "default")
     {
-        if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "scan0")
+        std::string dft_functional_lower = dft_functional;
+        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+        if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
             exx_ccp_rmesh_times = "5";
-        else if (dft_functional == "hse")
+        else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
     }
     if (symmetry == "default")
@@ -2642,8 +2734,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (!out_md_control)
             out_level = "m"; // zhengdy add 2019-04-07
-        if (mdp.md_tlast < 0.0)
-            mdp.md_tlast = mdp.md_tfirst;
         if (mdp.md_plast < 0.0)
             mdp.md_plast = mdp.md_pfirst;
 
@@ -2655,7 +2745,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             mdp.md_pfreq = 1.0 / 400 / mdp.md_dt;
         }
-        if (mdp.md_restart)
+        if (mdp.md_tfirst < 0 || mdp.md_restart)
         {
             init_vel = 1;
         }
@@ -2768,14 +2858,23 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 	{
 		bessel_descriptor_ecut = std::to_string(ecutwfc);
 	}
+    // charge extrapolation liuyu 2023/09/16
+    if (chg_extrap == "default" && calculation == "md")
+    {
+        chg_extrap = "second-order";
+    }
+    else if (chg_extrap == "default" && (calculation == "relax" || calculation == "cell-relax"))
+    {
+        chg_extrap = "first-order";
+    }
+    else if (chg_extrap == "default")
+    {
+        chg_extrap = "atomic";
+    }
 
     if (calculation != "md")
     {
         mdp.md_prec_level = 0;
-    }
-    if (mdp.md_prec_level != 1)
-    {
-        ref_cell_factor = 1.0;
     }
 
     if (scf_thr == -1.0)
@@ -2784,9 +2883,17 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             scf_thr = 1.0e-7;
         }
-        else if (basis_type == "pw")
+        else if (basis_type == "pw" and calculation != "nscf")
         {
             scf_thr = 1.0e-9;
+        }
+        else if (basis_type == "pw" and calculation == "nscf")
+        {
+            scf_thr = 1.0e-6; 
+            // In NSCF calculation, the diagonalization threshold is set to 0.1*scf/nelec.
+            // In other words, the scf_thr is used to control diagonalization convergence
+            // threthod in NSCF. In this case, the default 1.0e-9 is too strict. 
+            //renxi 20230908
         }
     }
 
@@ -2853,6 +2960,11 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(towannier90);
     Parallel_Common::bcast_string(nnkpfile);
     Parallel_Common::bcast_string(wannier_spin);
+    Parallel_Common::bcast_bool(out_wannier_mmn);
+    Parallel_Common::bcast_bool(out_wannier_amn);
+    Parallel_Common::bcast_bool(out_wannier_unk);
+    Parallel_Common::bcast_bool(out_wannier_eig);
+    Parallel_Common::bcast_bool(out_wannier_wvfn_formatted);
 
     Parallel_Common::bcast_string(dft_functional);
     Parallel_Common::bcast_double(xc_temperature);
@@ -2894,6 +3006,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(relax_scale_force);
     Parallel_Common::bcast_bool(relax_new);
 
+    Parallel_Common::bcast_bool(use_paw);
+
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
     Parallel_Common::bcast_double(ecutwfc);
@@ -2907,6 +3021,12 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
+    Parallel_Common::bcast_int(nsx);
+    Parallel_Common::bcast_int(nsy);
+    Parallel_Common::bcast_int(nsz);
+    Parallel_Common::bcast_double(erf_ecut);
+    Parallel_Common::bcast_double(erf_height);
+    Parallel_Common::bcast_double(erf_sigma);
 
     Parallel_Common::bcast_int(diago_proc); // mohan add 2012-01-03
     Parallel_Common::bcast_int(pw_diag_nmax);
@@ -2945,6 +3065,8 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
+    Parallel_Common::bcast_bool(psi_initializer);
+    
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
@@ -2973,7 +3095,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
-    Parallel_Common::bcast_bool(out_wfc_lcao);
+    Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
     Parallel_Common::bcast_bool(out_app_flag);
@@ -3255,6 +3377,15 @@ void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
 
+    if (ecutrho <= ecutwfc)
+    {
+        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+    }
+    else if (ecutrho / ecutwfc < 4 - 1e-8)
+    {
+        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+    }
+
     if (nbands < 0)
         ModuleBase::WARNING_QUIT("Input", "NBANDS must >= 0");
     //	if(nbands_istate < 0) ModuleBase::WARNING_QUIT("Input","NBANDS_ISTATE must > 0");
@@ -3265,6 +3396,16 @@ void Input::Check(void)
 
     // std::cout << "diago_proc=" << diago_proc << std::endl;
     // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
+#ifndef USE_PAW
+    if(use_paw)
+    {
+        ModuleBase::WARNING_QUIT("Input", "to use PAW, compile with USE_PAW");
+        if(basis_type != "pw")
+        {
+            ModuleBase::WARNING_QUIT("Input", "PAW is for pw basis only");
+        }
+    }
+#endif
 
     if (diago_proc > 1 && basis_type == "lcao" && diago_proc != GlobalV::NPROC)
     {
@@ -3337,8 +3478,6 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_tfirst < 0 && esolver_type != "tddft")
-            ModuleBase::WARNING_QUIT("Input::Check", "temperature of MD calculation should be set!");
         if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_type == "msst")
@@ -3354,10 +3493,6 @@ void Input::Check(void)
             {
                 ModuleBase::WARNING_QUIT("Input::Check", "Can not find DP model !");
             }
-        }
-        if (mdp.md_prec_level == 1 && !(mdp.md_type == "npt" && mdp.md_pmode == "iso"))
-        {
-            ModuleBase::WARNING_QUIT("Input::Check", "md_prec_level = 1 only used in isotropic vc-md currently!");
         }
     }
     else if (calculation == "gen_bessel")
@@ -3383,11 +3518,6 @@ void Input::Check(void)
     {
         ModuleBase::WARNING_QUIT("Input", "wrong 'init_chg',not 'atomic', 'file',please check");
     }
-    // xiaohui modify 2014-05-10, chg_extrap value changes to 0~7
-    // if (chg_extrap <0 ||chg_extrap > 7)
-    //{
-    //	ModuleBase::WARNING_QUIT("Input","wrong 'chg_extrap',neither 0~7.");
-    // }xiaohui modify 2015-02-01
     if (gamma_only_local == 0)
     {
         if (out_dm == 1)
@@ -3403,16 +3533,30 @@ void Input::Check(void)
         }
     }
 
-    // if(chg_extrap==4 && local_basis==0) xiaohui modify 2013-09-01
     if (chg_extrap == "dm" && basis_type == "pw") // xiaohui add 2013-09-01, xiaohui modify 2015-02-01
     {
         ModuleBase::WARNING_QUIT(
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-    if (init_wfc != "atomic" && init_wfc != "atomic+random" && init_wfc != "random" && init_wfc != "file")
+
+    if (
+        (init_wfc != "atomic") 
+     && (init_wfc != "random") 
+     && (init_wfc != "atomic+random")
+     && (init_wfc != "nao")
+     && (init_wfc != "nao+random")
+     && (init_wfc != "file")
+     )
     {
-        ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        if(psi_initializer)
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        }   
     }
 
     if (nbands > 100000)
@@ -3441,7 +3585,7 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
@@ -3515,6 +3659,11 @@ void Input::Check(void)
         if (kpar > 1)
         {
             ModuleBase::WARNING_QUIT("Input", "kpar > 1 has not been supported for lcao calculation.");
+        }
+
+        if (out_wfc_lcao != 0 && out_wfc_lcao != 1 && out_wfc_lcao != 2)
+        {
+            ModuleBase::WARNING_QUIT("Input", "out_wfc_lcao must be 0, 1, or 2");
         }
     }
     else if (basis_type == "lcao_in_pw")
@@ -3591,7 +3740,9 @@ void Input::Check(void)
         }
     }
 
-    if (dft_functional == "hf" || dft_functional == "pbe0" || dft_functional == "hse" || dft_functional == "scan0")
+    std::string dft_functional_lower = dft_functional;
+    std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
     {
         const double exx_hybrid_alpha_value = std::stod(exx_hybrid_alpha);
         if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
@@ -3613,7 +3764,7 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "exx_distribute_type must be htime or kmeans2 or kmeans1");
         }
     }
-    if (dft_functional == "opt_orb")
+    if (dft_functional_lower == "opt_orb")
     {
         if (exx_opt_orb_lmax < 0)
         {
