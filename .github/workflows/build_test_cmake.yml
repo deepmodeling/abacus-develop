@@ -51,5 +51,5 @@ jobs:
       - name: Build
         run: |
           git config --global --add safe.directory `pwd`
-          cmake -B build -DBUILD_TESTING=ON ${{ matrix.build_args }}
+          cmake -B build ${{ matrix.build_args }}
           cmake --build build -j2
