@@ -9,8 +9,7 @@ threshold=0.0000001
 # check accuracy
 ca=8
 # regex of case name
-case="^[^#].*PINT.*$"
-#case="^[^#].*_.*$"
+case="^[^#].*_.*$"
 # enable AddressSanitizer
 sanitize=false
 
