@@ -1,4 +1,4 @@
-#include "module_hamilt_general/operator.h"
+#include "operator.h"
 
 #include "module_base/timer.h"
 
