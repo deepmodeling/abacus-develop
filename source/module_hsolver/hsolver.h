@@ -43,7 +43,20 @@ class HSolver
     {
         return;
     }
-
+    /// @brief solve function for lcao_in_pw
+    /// @param phm interface to hamilt
+    /// @param ppsi reference to psi
+    /// @param pes interface to elecstate
+    /// @param transform transformation matrix between lcao and pw
+    /// @param skip_charge 
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
+                       psi::Psi<T, Device>& ppsi,
+                       elecstate::ElecState* pes,
+                       psi::Psi<std::complex<double>>& transform,
+                       const bool skip_charge = false)
+    {
+        return;
+    }
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<Real, Device>& ppsi,
                        elecstate::ElecState* pes,

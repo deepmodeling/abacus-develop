@@ -634,7 +634,14 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
-        this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
+        if(GlobalV::BASIS_TYPE != "lcao_in_pw")
+        {
+            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
+        }
+        else
+        {
+            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, this->psi_init->psig[0]);
+        }
 
         if (GlobalV::out_bandgap)
         {
