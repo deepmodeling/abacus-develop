@@ -83,6 +83,9 @@ class Local_Orbital_Charge
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 
+    void set_dm_k(int ik, std::complex<double>* dm_k_in); // set dm_k from a pointer
+    void set_dm_gamma(int is, double* dm_gamma_in); // set dm_gamma from a pointer
+
 private:
 
 	// whether the DM array has been allocated

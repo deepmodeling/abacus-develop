@@ -1,0 +1,8 @@
+This test for:
+*C-diamond
+*k-points 12*12*12
+*old upf pseudopotential
+*smearing_method default
+*ks_solver cg
+*mixing_type plain
+*mixing_beta 0.7

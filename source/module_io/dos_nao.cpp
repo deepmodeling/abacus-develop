@@ -31,10 +31,11 @@ void out_dos_nao(const psi::Psi<double>* psid,
                   const Parallel_Kpoints& Pkpoints,
                   const UnitCell& ucell,
                   const elecstate::efermi& eferm,
-                  int nbands)
+                  int nbands,
+                  hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Driver", "init");
-    write_dos_lcao(psid, psi, uhm, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv);
+    write_dos_lcao(psid, psi, uhm, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
     int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
     if (INPUT.out_dos == 3)

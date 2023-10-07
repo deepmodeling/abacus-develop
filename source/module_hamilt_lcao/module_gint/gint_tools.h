@@ -6,6 +6,7 @@
 #include "grid_technique.h"
 #include <cstdlib>
 #include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 namespace Gint_Tools
 {
@@ -27,6 +28,7 @@ class Gint_inout
         bool isforce;
         bool isstress;
         int ispin;
+        
 
     //output
         double** rho;
@@ -44,7 +46,7 @@ class Gint_inout
         }
 
 	// force, multi-k
-        Gint_inout(double** DM_R_in, const double* vl_in, bool isforce_in, bool isstress_in,
+        Gint_inout(double** DM_R_in, const int ispin_in, const double* vl_in, bool isforce_in, bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -55,10 +57,11 @@ class Gint_inout
             fvl_dphi = fvl_dphi_in;
             svl_dphi = svl_dphi_in;
             job = job_in;
+            ispin = ispin_in;
         }
 
 	// force (mGGA), multi-k
-        Gint_inout(double** DM_R_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
+        Gint_inout(double** DM_R_in, const int ispin_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -70,6 +73,7 @@ class Gint_inout
             fvl_dphi = fvl_dphi_in;
             svl_dphi = svl_dphi_in;
             job = job_in;
+            ispin = ispin_in;
         }
 
 	// vlocal, multi-k
@@ -98,7 +102,7 @@ class Gint_inout
         }
 
 	// force, gamma point
-        Gint_inout(double*** DM_in, const double* vl_in, const bool isforce_in, const bool isstress_in,
+        Gint_inout(double*** DM_in, const int ispin_in, const double* vl_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -109,10 +113,11 @@ class Gint_inout
             fvl_dphi = fvl_dphi_in;
             svl_dphi = svl_dphi_in;
             job = job_in;
+            ispin = ispin_in;
         }
 
 	// force (mGGA), gamma point
-        Gint_inout(double*** DM_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
+        Gint_inout(double*** DM_in, const int ispin_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
@@ -124,6 +129,7 @@ class Gint_inout
             fvl_dphi = fvl_dphi_in;
             svl_dphi = svl_dphi_in;
             job = job_in;
+            ispin = ispin_in;
         }
 
 	// vlocal, gamma point
@@ -278,7 +284,25 @@ namespace Gint_Tools
         double** psi,
 		double** psi_DMR,
         double* DMR,
+        const hamilt::HContainer<double>* DM,
 		const int job);
+
+    // sum_nu rho_mu,nu psi_nu, for gamma point
+    void mult_psi_DM_new(
+        const Grid_Technique& gt, 
+        const int bxyz,
+        const int& grid_index,
+        const int na_grid,  					    // how many atoms on this (i,j,k) grid
+		const int LD_pool,
+		const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
+		const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
+		const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
+		const bool*const*const cal_flag,	    	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
+		double** psi_DM,
+		const hamilt::HContainer<double>* DM,
+		const int job);
+
 }
 
 

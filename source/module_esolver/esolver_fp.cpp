@@ -7,8 +7,9 @@ namespace ModuleESolver
 {   ESolver_FP::ESolver_FP()
     {
         // pw_rho = new ModuleBase::PW_Basis();
-        
+
         pw_rho = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
+        pw_rhos = new ModulePW::PW_Basis(GlobalV::device_flag, GlobalV::precision_flag);
 
         //temporary, it will be removed
         pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);
@@ -28,6 +29,7 @@ namespace ModuleESolver
             delete psid;
         }
         delete pw_rho;
+        delete pw_rhos;
         delete this->pelec;
     }
     void ESolver_FP::Init(Input& inp, UnitCell& cell)
@@ -51,8 +53,25 @@ namespace ModuleESolver
         this->pw_rho->setuptransform();
         this->pw_rho->collect_local_pw(); 
         this->pw_rho->collect_uniqgg();
+
+        if (GlobalV::use_uspp)
+        {
+#ifdef __MPI
+            this->pw_rhos->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+#endif
+            if (this->classname == "ESolver_OF")
+                this->pw_rhos->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
+            if (inp.nsx * inp.nsy * inp.nsz == 0)
+                this->pw_rhos->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, 4.0 * inp.ecutwfc);
+            else
+                this->pw_rhos->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nsx, inp.nsy, inp.nsz);
+            this->pw_rhos->initparameters(false, 4.0 * inp.ecutwfc);
+            this->pw_rhos->setuptransform();
+            this->pw_rhos->collect_local_pw();
+            this->pw_rhos->collect_uniqgg();
+        }
+
         this->print_rhofft(inp, GlobalV::ofs_running);
-        
     }
 
     void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
@@ -96,10 +115,13 @@ namespace ModuleESolver
 
     void ESolver_FP::print_rhofft(Input&inp, std::ofstream &ofs)
     {
-        std::cout << " UNIFORM GRID DIM     : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz
+        std::cout << " UNIFORM GRID DIM        : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz
                   << std::endl;
-        std::cout << " UNIFORM GRID DIM(BIG): " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
+        std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
                   << std::endl;
+        if (GlobalV::use_uspp)
+            std::cout << " UNIFORM GRID DIM(SMOOTH): " << pw_rhos->nx << " * " << pw_rhos->ny << " * " << pw_rhos->nz
+                      << std::endl;
 
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -146,5 +168,44 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::OUT(ofs,"number of |g|", this->pw_rho->ngg);
         ModuleBase::GlobalFunc::OUT(ofs,"max |g|", this->pw_rho->gg_uniq[ this->pw_rho->ngg-1]);
 	    ModuleBase::GlobalFunc::OUT(ofs,"min |g|", this->pw_rho->gg_uniq[0]);
+
+        if (GlobalV::use_uspp)
+        {
+            ecut = 4 * INPUT.ecutwfc;
+            if (inp.nsx * inp.nsy * inp.nsz > 0)
+            {
+                ecut = this->pw_rhos->gridecut_lat * this->pw_rhos->tpiba2;
+                ofs << "use input fft dimensions for the smooth part of charge density." << std::endl;
+                ofs << "calculate energy cutoff from nsx, nsy, nsz:" << std::endl;
+            }
+            ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for smooth charge/potential (unit:Ry)", ecut);
+
+            ModuleBase::GlobalFunc::OUT(ofs,
+                                        "fft grid for smooth charge/potential",
+                                        this->pw_rhos->nx,
+                                        this->pw_rhos->ny,
+                                        this->pw_rhos->nz);
+            ModuleBase::GlobalFunc::OUT(ofs, "nrxx", this->pw_rhos->nrxx);
+
+            ofs << "\n SETUP PLANE WAVES FOR SMOOTH CHARGE/POTENTIAL" << std::endl;
+            ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", this->pw_rhos->npwtot);
+            ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", this->pw_rhos->nstot);
+
+            ofs << "\n PARALLEL PW FOR SMOOTH CHARGE/POTENTIAL" << std::endl;
+            ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW"
+                << std::endl;
+            for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
+            {
+                ofs << " " << std::setw(8) << i + 1 << std::setw(15) << this->pw_rhos->nst_per[i] << std::setw(15)
+                    << this->pw_rhos->npw_per[i] << std::endl;
+            }
+            ofs << " --------------- sum -------------------" << std::endl;
+            ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << this->pw_rhos->nstot
+                << std::setw(15) << this->pw_rhos->npwtot << std::endl;
+
+            ModuleBase::GlobalFunc::OUT(ofs, "number of |g|", this->pw_rhos->ngg);
+            ModuleBase::GlobalFunc::OUT(ofs, "max |g|", this->pw_rhos->gg_uniq[this->pw_rhos->ngg - 1]);
+            ModuleBase::GlobalFunc::OUT(ofs, "min |g|", this->pw_rhos->gg_uniq[0]);
+        }
     }
 }
