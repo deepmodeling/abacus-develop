@@ -15,21 +15,21 @@ jobs:
         include:
           - tag: gnu
             build_args: ""
-            name: "Build with GNU compilers"
+            name: "Build with GNU toolchain"
           - tag: intel
             build_args: ""
-            name: "Build with Intel compilers"
+            name: "Build with Intel toolchain"
 
           - tag: gnu
             build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
-            name: "Build with GNU compilers and extra components"
+            name: "Build extra components with GNU toolchain"
           - tag: intel
             build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
-            name: "Build with Intel compilers and extra components"
+            name: "Build extra components with Intel toolchain"
 
           - tag: cuda
             build_args: "-DUSE_CUDA=1"
-            name: "Build with CUDA kit"
+            name: "Build with CUDA support"
           - tag: gnu
             build_args: "-DENABLE_LCAO=OFF"
             name: "Build without LCAO"
