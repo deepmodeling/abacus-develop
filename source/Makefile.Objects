@@ -255,6 +255,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
+    sc_lambda_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
