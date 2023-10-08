@@ -53,6 +53,7 @@ class Operator
 
     ///do operation : |hpsi_choosed> = V|psi_choosed>
     ///V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
+    /// interface type 1: pointer-only (default)
     virtual void act(const int nbands,
         const int nbasis,
         const int npol,
@@ -60,13 +61,17 @@ class Operator
         T* tmhpsi,
         const int ngk_ik = 0)const {};
 
-    /// an developer-friendly interface for act() function
-    virtual psi::Psi<T> act(const psi::Psi<T>& psi_in) const { return psi_in; };
+    /// developer-friendly interfaces for act() function
+    /// interface type 2: input and change the Psi-type HPsi
+    virtual void act(const psi::Psi<T>& psi_in, psi::Psi<T>& psi_out) const {};
+    /// interface type 3: return a Psi-type HPsi
+    // virtual psi::Psi<T> act(const psi::Psi<T>& psi_in) const { return psi_in; };
 
     Operator* next_op = nullptr;
 
-    protected:
+protected:
     int ik = 0;
+    int act_type = 1;   ///< determine which act() interface would be called in hPsi()
 
     mutable bool in_place = false;
 
