@@ -13,6 +13,7 @@
 #include "paw_element.h"
 #include "paw_atom.h"
 #include "module_base/matrix3.h"
+#include "module_base/global_variable.h"
 
 class Paw_Cell
 {
@@ -183,7 +184,8 @@ class Paw_Cell
     void set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double lat0);
     // FFT grid information, sets ngfft and ngfftdg
     void set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
-        const int nxdg_in, const int nydg_in, const int nzdg_in);
+        const int nxdg_in, const int nydg_in, const int nzdg_in,
+        const int * start_z_in, const int * num_z_in);
     // Sets natom, ntypat, typat and xred
     void set_libpaw_atom(const int natom_in, const int ntypat_in, const int * typat_in, const double * xred_in);
     // Sets filename_list
@@ -211,7 +213,8 @@ class Paw_Cell
     int get_libpaw_xclevel() {return xclevel;}
     int get_nspin() {return nspden;}
     
-    int get_nrxx() {return nx*ny*nz;}
+    int get_nfft() {return nfft;}
+    int get_nrxx() {return nx*ny*num_z[GlobalV::RANK_IN_POOL];}
     int get_val(const int it) {return paw_element_list[it].get_zval();}
     int get_zat(const int it) {return paw_element_list[it].get_zat();}
 
@@ -252,6 +255,17 @@ class Paw_Cell
     void calculate_dij(double* vks, double* vxc);
     void get_dij(int iat, int size_dij, double* dij);
     void get_sij(int iat, int size_sij, double* sij);
+
+// Part V. Relevant for parallel computing
+// Note about the parallelization of PAW: ABINIT supports the parallelization based on
+// real-space grid points, but it has a rather complicated way of determining the parallelization scheme
+// Furthermore, I'm calling libpaw to calculate vloc, ncoret, nhat and dij, which presumably will not be the
+// most time consuming part. So I opt to not use parallelization in PAW for now.
+// The parallelization part here keeps a record of how ABACUS distributes the xy planes, which will be used
+// when distributing vloc, ncoret and nhat
+
+    private:
+    std::vector<int> start_z, num_z;
 };
 
 namespace GlobalC

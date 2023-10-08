@@ -217,7 +217,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
 
         double* nhatgr;
-        nhatgr = new double[3*GlobalC::paw_cell.get_nrxx()];
+        nhatgr = new double[3*GlobalC::paw_cell.get_nfft()];
         GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
         delete[] nhatgr;
     }

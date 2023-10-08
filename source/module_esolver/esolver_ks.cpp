@@ -227,7 +227,8 @@ namespace ModuleESolver
         {
             GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->startz,this->pw_wfc->numz);
             GlobalC::paw_cell.prepare_paw();
             GlobalC::paw_cell.set_sij();
 
