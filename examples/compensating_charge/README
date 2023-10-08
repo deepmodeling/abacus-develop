@@ -17,7 +17,7 @@ block_down          0.65
 block_up            0.75
 block_height        0.01
 block               1
-nelec               487
+nelec               217
 ```
 
 Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#gate-field-compensating-charge). An additional electron is included via `nelec` so as to trigger on the positive compensating charge. The energy contribution from the compensating charge is given as `E_gatefield` in the output file. See `running_scf.ref` for the output of this example. Note that both `pw` and `lcao` (specified via `basis type`) are supported for this functionality. 
