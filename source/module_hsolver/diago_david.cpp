@@ -98,6 +98,14 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     // However, in most cases, total number of plane waves should be much larger than nband*PW_DIAG_NDIM
 
     /// initialize variables
+    /// k_first = 0 means that nks is more like a dimension of "basis" to be contracted in "HPsi".In LR-TDDFT the formula writes :
+    /// $$\sum_{ jb\mathbf{k}'}A^I_{ia\mathbf{k}, jb\mathbf{k}' }X ^ I_{ jb\mathbf{k}'}$$
+    /// In the code :
+    /// - "H" means A
+    /// - "Psi" means X
+    /// - "band" means the superscript I : the number of excited states to be solved
+    /// - k : k-points, the same meaning as the ground state
+    /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b), corresponding to "bands" of the ground state
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
