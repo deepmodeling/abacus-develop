@@ -184,12 +184,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
         {
             //update HK only
             //in cal_type=lcao_sc_mag, HK only need to be updated
-            // folding fixed should only be called once
-            // with folding_fixed here, the lcao_dftu should not be invoked
-            // only by comment out the folding_fixed here, the lcao_dftu could be invoked
-            this->folding_fixed(ik_in, this->kvec_d);
             this->contributeHk(ik_in);
-            return;
             break;
         }
         case lcao_exx:

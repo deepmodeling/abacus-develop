@@ -1,7 +1,7 @@
 #include "spin_constrain.h"
 
 template<typename FPTYPE, typename Device>
-SpinConstrain<FPTYPE, Device>& SpinConstrain<FPTYPE, Device>::getInstance() {
+SpinConstrain<FPTYPE, Device>& SpinConstrain<FPTYPE, Device>::getScInstance() {
     static SpinConstrain<FPTYPE, Device> instance; // Guaranteed to be created and destroyed only once
     return instance;
 }
@@ -378,4 +378,4 @@ const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<FPTYPE, Device>::get_
     return this->constrain_;
 }
 
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

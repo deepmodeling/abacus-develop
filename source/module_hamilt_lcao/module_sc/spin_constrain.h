@@ -37,7 +37,7 @@ public:
                 LCAO_Matrix* LM_in,
                 hsolver::HSolver<FPTYPE, Device>* phsol_in,
                 hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
-                psi::Psi<std::complex<double>>* psi_in,
+                psi::Psi<FPTYPE>* psi_in,
                 elecstate::ElecState* pelec_in);
 
     /// calculate h_lambda operator for spin-constrained DFT
@@ -81,7 +81,7 @@ public:
     Parallel_Orbitals *ParaV = nullptr;
     hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
-    psi::Psi<std::complex<double>>* psi = nullptr;
+    psi::Psi<FPTYPE>* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
     LCAO_Matrix* LM = nullptr;
     std::string KS_SOLVER;
@@ -93,7 +93,7 @@ public:
      * pubic methods for setting and getting spin-constrained DFT parameters
     */
     /// Public method to access the Singleton instance
-    static SpinConstrain& getInstance();
+    static SpinConstrain& getScInstance();
     /// Delete copy and move constructors and assign operators
     SpinConstrain(SpinConstrain const&) = delete;
     SpinConstrain(SpinConstrain&&) = delete;

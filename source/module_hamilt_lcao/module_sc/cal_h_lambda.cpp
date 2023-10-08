@@ -131,4 +131,4 @@ void SpinConstrain<FPTYPE, Device>::cal_weight_func(const std::vector<std::compl
     return;
 }
 
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

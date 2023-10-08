@@ -18,15 +18,15 @@ class OperatorScLambda : public T
 
 #endif
 
-template<typename T>
-class OperatorScLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
+template<typename TK, typename TR>
+class OperatorScLambda<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OperatorScLambda<OperatorLCAO<T>>(LCAO_Matrix* LM_in,
+    OperatorScLambda<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                    std::vector<double>* HR_pointer_in,
-                                    std::vector<T>* HK_pointer_in)
-        : HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), OperatorLCAO<T>(LM_in, kvec_d_in)
+                                    hamilt::HContainer<TR>* hR_in,
+                                    std::vector<TK>* hK_in)
+        : OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_sc_lambda;
     }
@@ -34,10 +34,6 @@ class OperatorScLambda<OperatorLCAO<T>> : public OperatorLCAO<T>
     virtual void contributeHR() override;
 
     virtual void contributeHk(int ik) override;
-
-  private:
-    std::vector<double>* HR_pointer = nullptr;
-    std::vector<T>* HK_pointer = nullptr;
 };
 
 } // namespace hamilt

@@ -207,4 +207,4 @@ std::vector<std::vector<std::vector<double>>> SpinConstrain<FPTYPE, Device>::con
     return AorbMulP;
 }
 
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

@@ -689,7 +689,7 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 #endif
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
+        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, GlobalC::ucell);
     }
 
@@ -853,7 +853,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
+        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->LM, this->LOC.dm_k, GlobalC::ucell);
         sc.run_lambda_loop(iter);
     }
@@ -985,7 +985,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
 
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
+        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, this->LM, this->LOC.dm_k, GlobalC::ucell);
     }
 

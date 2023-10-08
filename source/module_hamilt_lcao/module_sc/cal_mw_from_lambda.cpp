@@ -12,7 +12,7 @@ void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
     // diagonalization without update charge
     this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);
-    elecstate::ElecStateLCAO* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO*>(this->pelec);
+    elecstate::ElecStateLCAO<FPTYPE>* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO<FPTYPE>*>(this->pelec);
     this->pelec->calculate_weights();
     this->pelec->calEBand();
     if (this->KS_SOLVER == "genelpa" || this->KS_SOLVER == "scalapack_gvx" || this->KS_SOLVER == "lapack")
@@ -23,4 +23,4 @@ void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
 }
 
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

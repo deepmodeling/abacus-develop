@@ -124,4 +124,4 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     file.close();
 }
 
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

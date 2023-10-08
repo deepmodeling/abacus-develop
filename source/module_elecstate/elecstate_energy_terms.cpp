@@ -36,7 +36,7 @@ double ElecState::get_solvent_model_Acav()
 
 double ElecState::get_spin_constrain_energy()
 {
-    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
     return sc.cal_escon();
 }
 

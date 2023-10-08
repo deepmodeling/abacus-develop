@@ -16,7 +16,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
                             LCAO_Matrix* LM_in,
                             hsolver::HSolver<FPTYPE, Device>* phsol_in,
                             hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
-                            psi::Psi<std::complex<double>>* psi_in,
+                            psi::Psi<FPTYPE>* psi_in,
                             elecstate::ElecState* pelec_in)
 {
     // get pointer to outter pointers
@@ -109,4 +109,4 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     this->nsc_min_ = nsc_min_in;
 }
 
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

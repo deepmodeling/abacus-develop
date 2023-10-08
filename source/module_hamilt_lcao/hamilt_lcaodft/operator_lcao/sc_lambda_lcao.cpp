@@ -6,19 +6,19 @@ namespace hamilt
 {
 
 // contribute to HR is not needed.
-template<typename T>
-void OperatorScLambda<OperatorLCAO<T>>::contributeHR()
+template <typename TK, typename TR>
+void OperatorScLambda<OperatorLCAO<TK, TR>>::contributeHR()
 {
     return;
 }
 
 // contribute to Hk
-template<>
-void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
+template <>
+void OperatorScLambda<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorScLambda", "contributeHk");
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
-    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getInstance();
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
     std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
     std::fill(h_lambda.begin(), h_lambda.end(), std::complex<double>(0, 0));
     sc.cal_weight_func(this->LM->Sloc2);
@@ -31,6 +31,22 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
 }
 
-template class OperatorScLambda<OperatorLCAO<std::complex<double>>>;
+// contribute to Hk
+template <>
+void OperatorScLambda<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
+{
+    // no need to implement this function
+}
+
+// contribute to Hk
+template <>
+void OperatorScLambda<OperatorLCAO<double, double>>::contributeHk(int ik)
+{
+    // no need to implement this function
+}
+
+template class OperatorScLambda<OperatorLCAO<double, double>>;
+template class OperatorScLambda<OperatorLCAO<std::complex<double>, double>>;
+template class OperatorScLambda<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
 } // namespace hamilt

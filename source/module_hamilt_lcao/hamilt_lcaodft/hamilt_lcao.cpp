@@ -333,13 +333,13 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
 
     if (GlobalV::sc_mag_switch)
     {
-        Operator<std::complex<double>>* sc_lambda = new OperatorScLambda<OperatorLCAO<std::complex<double>>>(
+        Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(
             LM_in,
-            kv.kvec_d,
-            nullptr,// no explicit call yet
-            &(LM_in->Hloc2)
+            kv->kvec_d,
+            this->hR,// no explicit call yet
+            &(this->getHk(LM_in))
         );
-        this->ops->add(sc_lambda);
+        this->getOperator()->add(sc_lambda);
     }
 
     ModuleBase::Memory::record("HamiltLCAO::hR", this->hR->get_memory_size());
