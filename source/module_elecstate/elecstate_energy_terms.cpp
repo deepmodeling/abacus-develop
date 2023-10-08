@@ -34,13 +34,13 @@ double ElecState::get_solvent_model_Acav()
     return GlobalC::solvent_model.cal_Acav(GlobalC::ucell, this->charge->nxyz);
 }
 
+#ifdef __LCAO
 double ElecState::get_spin_constrain_energy()
 {
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
     return sc.cal_escon();
 }
 
-#ifdef __LCAO
 double ElecState::get_dftu_energy()
 {
     return GlobalC::dftu.get_energy();
