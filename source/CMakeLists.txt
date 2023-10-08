@@ -100,10 +100,11 @@ elseif(USE_ROCM)
   target_link_libraries(
     device 
     device_rocm 
-    hip::device
     hip::host
+    hip::device
     hip::hipfft
     roc::hipblas
+    roc::hipsolver
   )
 endif()
 

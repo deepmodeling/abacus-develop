@@ -175,7 +175,7 @@ class HContainer
     HContainer(int natom);
 
     // use unitcell to initialize atom_pairs
-    HContainer(const UnitCell& ucell_);
+    HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV = nullptr);
 
     /**
      * @brief use 2d-block-recycle parallel case to initialize atom_pairs, mainly used now.
@@ -291,9 +291,10 @@ class HContainer
      *   3. get_size_for_loop_R() and loop_R() can not be used
      *   4. get_AP_size() can be used
      *   5. data(i, j) can be used to get pointer of target atom-pair with R = 0, 0, 0 , data(i,j,R) can not be used
-     *   6. insert_pair() can be used, but the R index will be ignored
-     *   7. get_atom_pair(), find_atom_pair() can be used
+     *   6. insert_pair() can be safely used, but the R index will be ignored
+     *   7. find_matrix() can be safely used, but the R index will be ignored
      *   8. operator() can be used, but the R index will be ignored
+     *   9. get_atom_pair(), find_atom_pair() can be used, be careful that AtomPair::get_HR_values() is dangerous in this mode.
      */
     void fix_gamma();
 
@@ -361,6 +362,24 @@ class HContainer
      * new <IJR> pair from read-in HContainer will be inserted into this->atom-pairs
     */
     void shape_synchron( const HContainer<T>& other);
+
+    /**
+     * @brief get sparse_ap
+     * @return std::vector<std::vector<int>>&
+    */
+    const std::vector<std::vector<int>>& get_sparse_ap() const
+    {
+        return sparse_ap;
+    }
+
+    /**
+     * @brief get sparse_ap_index
+     * @return std::vector<std::vector<int>>&
+    */
+    const std::vector<std::vector<int>>& get_sparse_ap_index() const
+    {
+        return sparse_ap_index;
+    }
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)

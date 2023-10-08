@@ -805,6 +805,10 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
 
             ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
         }
+        if (atoms[it].ncpp.tvanp)
+        {
+            GlobalV::use_uspp = true;
+        }
     }
 
     check_structure(GlobalV::MIN_DIST_COEF);
@@ -1004,7 +1008,16 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 	//=====================
 	// Use localized basis
 	//=====================
-	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") //xiaohui add 2013-09-02
+	if(
+		(GlobalV::BASIS_TYPE=="lcao")
+	  ||(GlobalV::BASIS_TYPE=="lcao_in_pw")
+	  ||(
+            (GlobalV::BASIS_TYPE=="pw")
+		  &&(GlobalV::psi_initializer)
+		  &&(GlobalV::init_wfc.substr(0, 3)=="nao")
+		  &&(GlobalV::ESOLVER_TYPE == "ksdft")
+	    )
+	 ) //xiaohui add 2013-09-02
 	{
 		ModuleBase::GlobalFunc::AUTO_SET("NBANDS",GlobalV::NBANDS);
 	}

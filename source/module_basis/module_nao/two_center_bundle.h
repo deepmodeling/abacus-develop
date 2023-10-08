@@ -9,8 +9,8 @@
 class TwoCenterBundle
 {
   public:
-    TwoCenterBundle() {}
-    ~TwoCenterBundle();
+    TwoCenterBundle() = default;
+    ~TwoCenterBundle() = default;
 
     //void build(const int nfile_orb,
     //           const std::string* file_orb,

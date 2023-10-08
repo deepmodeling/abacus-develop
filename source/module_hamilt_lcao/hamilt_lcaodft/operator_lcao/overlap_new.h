@@ -17,7 +17,7 @@ namespace hamilt
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
-template <class T, typename TR>
+template <class T>
 class OverlapNew : public T
 {
 };
@@ -32,13 +32,15 @@ class OverlapNew : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class OverlapNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
+class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OverlapNew<OperatorLCAO<TK>, TR>(LCAO_Matrix* LM_in,
+    OverlapNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                     hamilt::HContainer<TR>* hR_in,
+                                     std::vector<TK>* hK_in,
                                      hamilt::HContainer<TR>* SR_in,
-                                     TK* SK_pointer_in,
+                                     std::vector<TK>* SK_pointer_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
                                      const Parallel_Orbitals* paraV);
@@ -47,12 +49,14 @@ class OverlapNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
 
     virtual void contributeHk(int ik) override;
 
+    TK* getSk();
+
   private:
     const UnitCell* ucell = nullptr;
 
     hamilt::HContainer<TR>* SR = nullptr;
 
-    TK* SK_pointer = nullptr;
+    std::vector<TK>* SK_pointer = nullptr;
 
     bool SR_fixed_done = false;
 
@@ -78,6 +82,10 @@ class OverlapNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
                     const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     TR* data_pointer);
+
+    // if k vector is not changed, then do nothing and return
+    // default of kvec_d_old is (-10,-10,-10), which is not a valid k vector
+    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10,-10,-10);
 };
 
 } // namespace hamilt

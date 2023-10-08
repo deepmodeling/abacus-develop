@@ -4,27 +4,25 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 
 // Constructor
 template <typename TK, typename TR>
-hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::EkineticNew(
+hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     LCAO_Matrix* LM_in,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-    hamilt::HContainer<TR>* HR_in,
-    TK* HK_pointer_in,
+    hamilt::HContainer<TR>* hR_in,
+    std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
     const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK>(LM_in, kvec_d_in)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
 {
     this->cal_type = lcao_fixed;
     this->ucell = ucell_in;
-    this->HR = HR_in;
-    this->HK_pointer = HK_pointer_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
-    assert(this->HR != nullptr);
-    assert(this->HK_pointer != nullptr);
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
     this->initialize_HR(GridD_in, paraV);
@@ -32,7 +30,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::EkineticNew(
 
 // destructor
 template <typename TK, typename TR>
-hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::~EkineticNew()
+hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::~EkineticNew()
 {
     if (this->allocated)
     {
@@ -42,9 +40,12 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::~EkineticNew()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Driver* GridD,
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD,
                                                                       const Parallel_Orbitals* paraV)
 {
+    ModuleBase::TITLE("EkineticNew", "initialize_HR");
+    ModuleBase::timer::tick("EkineticNew", "initialize_HR");
+
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -65,8 +66,11 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
+            // Note: the distance of atoms should less than the cutoff radius, 
+            // When equal, the theoretical value of matrix element is zero, 
+            // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index2).norm() * this->ucell->lat0
-                <= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
             {
                 is_adj[ad1] = true;
             }
@@ -80,16 +84,25 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
-            HR->insert_pair(tmp);
+            this->hR->insert_pair(tmp);
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    HR->allocate(true);
+    this->hR->allocate(true);
+
+    ModuleBase::timer::tick("EkineticNew", "initialize_HR");
 }
 
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
+    ModuleBase::TITLE("EkineticNew", "calculate_HR");
+    if(this->HR_fixed==nullptr || this->HR_fixed->size_atom_pairs()<=0)
+    {
+        ModuleBase::WARNING_QUIT("hamilt::EkineticNew::calculate_HR", "HR_fixed is nullptr or empty");
+    }
+    ModuleBase::timer::tick("EkineticNew", "calculate_HR");
+
     const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -119,11 +132,13 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
             }
         }
     }
+
+    ModuleBase::timer::tick("EkineticNew", "calculate_HR");
 }
 
 // cal_HR_IJR()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& iat1,
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                                    const int& iat2,
                                                                    const Parallel_Orbitals* paraV,
                                                                    const ModuleBase::Vector3<double>& dtau,
@@ -152,6 +167,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& ia
     const int* iw2l2 = atom2.iw2l;
     const int* iw2n2 = atom2.iw2n;
     const int* iw2m2 = atom2.iw2m;
+#ifndef USE_NEW_TWO_CENTER
     // ---------------------------------------------
     // get tau1 (in cell <0,0,0>) and tau2 (in cell R)
     // in principle, only dtau is needed in this function
@@ -159,6 +175,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& ia
     // ---------------------------------------------
     const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
     const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
+#endif
     // ---------------------------------------------
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
@@ -172,12 +189,24 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& ia
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
+#ifdef USE_NEW_TWO_CENTER
+        int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+#endif
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
             const int iw2 = col_indexes[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
+#ifdef USE_NEW_TWO_CENTER
+            //=================================================================
+            //          new two-center integral (temporary)
+            //=================================================================
+            // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
+            uot.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
+                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
+#else
             uot.snap_psipsi(orb, // orbitals
                             olm,
                             0,
@@ -193,6 +222,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& ia
                             m2,
                             N2 // info of atom2
             );
+#endif
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];
@@ -205,7 +235,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(const int& ia
 
 // set_HR_fixed()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::set_HR_fixed(void* HR_fixed_in)
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fixed_in)
 {
     this->HR_fixed = static_cast<hamilt::HContainer<TR>*>(HR_fixed_in);
     this->allocated = false;
@@ -213,24 +243,24 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::set_HR_fixed(void* HR_fi
 
 // contributeHR()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
+    ModuleBase::TITLE("EkineticNew", "contributeHR");
+    ModuleBase::timer::tick("EkineticNew", "contributeHR");
+
     if (!this->HR_fixed_done)
     {
         // if this Operator is the first node of the sub_chain, then HR_fixed is nullptr
         if (this->HR_fixed == nullptr)
         {
-            this->HR_fixed = new hamilt::HContainer<TR>(*this->HR);
+            this->HR_fixed = new hamilt::HContainer<TR>(*this->hR);
+            this->HR_fixed->set_zero();
             this->allocated = true;
-        }
-        else
-        {
-            this->HR_fixed->shape_synchron( *this->HR);
         }
         if(this->next_sub_op != nullptr)
         {
             // pass pointer of HR_fixed to the next node
-            static_cast<OperatorLCAO<TK>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
+            static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
         }
         // calculate the values in HR_fixed
         this->calculate_HR();
@@ -239,26 +269,13 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
     // last node of sub-chain, add HR_fixed into HR
     if(this->next_sub_op == nullptr)
     {
-        this->HR->add(*(this->HR_fixed));
+        this->hR->add(*(this->HR_fixed));
     }
+
+    ModuleBase::timer::tick("EkineticNew", "contributeHR");
     return;
 }
 
-// contributeHk()
-template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK>, TR>::contributeHk(int ik)
-{
-    if (!this->is_first_node)
-    {
-        return;
-    }
-    else
-    {
-        const int ncol = this->HR->get_atom_pair(0).get_paraV()->get_col_size();
-        hamilt::folding_HR(*this->HR, this->HK_pointer, this->kvec_d[ik], ncol, 0);
-    }
-}
-
-template class hamilt::EkineticNew<hamilt::OperatorLCAO<double>, double>;
-template class hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>>, double>;
-template class hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>>;
+template class hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>;
+template class hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
+template class hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

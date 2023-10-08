@@ -46,7 +46,7 @@ tool_quit.o\
 tool_check.o\
 mathzone_add1.o\
 
-OBJS_CELL=pseudo_nc.o\
+OBJS_CELL=pseudo.o\
 atom_spec.o\
 atom_pseudo.o\
 read_pp.o\

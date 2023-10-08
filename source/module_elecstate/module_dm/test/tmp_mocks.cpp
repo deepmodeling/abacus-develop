@@ -47,10 +47,10 @@ LCAO_Orbitals::~LCAO_Orbitals()
 }
 #endif
 
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 }
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 }
 

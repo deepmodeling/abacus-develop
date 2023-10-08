@@ -245,6 +245,19 @@ TEST_F(DMTest, cal_DMR_blas_complex)
             EXPECT_NEAR(ptr1[j], -0.77 * 2, 1e-10);
         }
     }
+    // merge DMR
+    DM.sum_DMR_spin();
+    // compare the result for spin-up after sum
+    for (int i = 0; i < DM.get_DMR_pointer(1)->size_atom_pairs(); i++)
+    {
+        double* ptr1 = DM.get_DMR_pointer(1)->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        //
+        for (int j = 0; j < DM.get_DMR_pointer(1)->get_atom_pair(i).get_size(); j++)
+        {
+            //std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
+            EXPECT_NEAR(ptr1[j], -0.77 * 3, 1e-10);
+        }
+    }
     delete kv;
 }
 

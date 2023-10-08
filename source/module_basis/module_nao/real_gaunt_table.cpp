@@ -8,7 +8,9 @@
 
 void RealGauntTable::build(const int lmax)
 {
+#ifdef __DEBUG
     assert( lmax >= 0 );
+#endif
 
     // do nothing if lmax < lmax_ -- or shall we shrink the map & tensor?
     if (lmax <= lmax_)
@@ -75,8 +77,10 @@ void RealGauntTable::build(const int lmax)
 
 const double& RealGauntTable::operator()(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const
 {
+#ifdef __DEBUG
     assert( is_valid_lm(l1, l2, l3, m1, m2, m3) );
     assert( l1 <= lmax_ && l2 <= lmax_ && l3 <= 2 * lmax_ );
+#endif
     return real_gaunt_table_.get_value<double>(index_map(l1, m1), index_map(l2, m2), index_map(l3, m3));
 }
 
@@ -85,8 +89,10 @@ double RealGauntTable::real_gaunt_lookup(const int l1, const int l2, const int l
     // This function calculates and returns the Gaunt coefficients of real spherical harmonics
     // from tabulated standard Gaunt coefficients.
 
+#ifdef __DEBUG
     assert( is_valid_lm(l1, l2, l3, m1, m2, m3) );
     assert( l1 <= lmax_ && l2 <= lmax_ && l3 <= 2 * lmax_ );
+#endif
 
     if ( !gaunt_select_l(l1, l2, l3) || !real_gaunt_select_m(m1, m2, m3) )
     {
@@ -116,7 +122,9 @@ double RealGauntTable::gaunt(const int l1, const int l2, const int l3, const int
 {
     // This function computes the Gaunt coefficients from the Wigner-3j expression
 
+#ifdef __DEBUG
     assert( is_valid_lm(l1, l2, l3, m1, m2, m3) );
+#endif
     if ( !gaunt_select_l(l1, l2, l3) || !gaunt_select_m(m1, m2, m3) )
     {
         return 0.0;
@@ -172,8 +180,10 @@ bool RealGauntTable::real_gaunt_select_m(const int m1, const int m2, const int m
 
 double RealGauntTable::gaunt_lookup(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const
 {
+#ifdef __DEBUG
     assert( is_valid_lm(l1, l2, l3, m1, m2, m3) );
     assert( l1 <= 2 * lmax_ && l2 <= 2 * lmax_ && l3 <= 2 * lmax_ );
+#endif
 
     return ( gaunt_select_l(l1, l2, l3) && gaunt_select_m(m1, m2, m3) )
             ? gaunt_table_.at( gaunt_key(l1, l2, l3, m1, m2, m3) )
@@ -182,7 +192,9 @@ double RealGauntTable::gaunt_lookup(const int l1, const int l2, const int l3, co
 
 std::array<int, 6> RealGauntTable::gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const
 {
+#ifdef __DEBUG
     assert( is_valid_lm(l1, l2, l3, m1, m2, m3) );
+#endif
 
     std::array<int, 6> key{l1, l2, l3, m1, m2, m3};
     arrange(key[0], key[1], key[3], key[4]);
@@ -208,7 +220,9 @@ void RealGauntTable::arrange(int& l1, int& l2, int& m1, int& m2) const
 
 double RealGauntTable::factorial(const int n) const
 {
+#ifdef __DEBUG
     assert( n >= 0 );
+#endif
     double val = 1.0;
     for(int i = 2; i <= n; i++)
     {
@@ -219,6 +233,8 @@ double RealGauntTable::factorial(const int n) const
 
 int RealGauntTable::index_map(int l, int m) const
 {
+#ifdef __DEBUG
     assert( std::abs(m) <= l );
+#endif
     return l * l + l + m;
 }

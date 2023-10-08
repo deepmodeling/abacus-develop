@@ -61,6 +61,7 @@ int md_prec_level = 0;
 int SCF_NMAX = 100;
 
 bool use_paw = false;
+bool use_uspp = false;
 
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
 std::string KS_SOLVER = "cg"; // xiaohui add 2013-09-01
@@ -254,6 +255,10 @@ std::string chg_extrap = "";
 int out_pot = 0;
 
 std::string init_chg = "";
+
+std::string init_wfc = "atomic";
+bool psi_initializer = false;
+
 int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
