@@ -395,7 +395,7 @@ if(ENABLE_DEEPKS)
 endif()
 
 function(git_submodule_update)
-  if(${GIT_SUBMOD_RESULT} EQUAL "0")
+  if(GIT_SUBMOD_RESULT EQUAL "0")
     message(DEBUG "Submodule init'ed")
   else()
     find_package(Git REQUIRED)
