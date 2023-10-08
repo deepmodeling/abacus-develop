@@ -1,21 +1,19 @@
-#include "spin_constrain.h"
-
 #include <iostream>
 
 #include "module_base/matrix.h"
 #include "module_base/name_angular.h"
-#include "module_base/tool_title.h"
 #include "module_base/scalapack_connector.h"
+#include "module_base/tool_title.h"
+#include "module_elecstate/elecstate_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "spin_constrain.h"
 
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
-                        LCAO_Matrix& LM,
-                        const std::vector<ModuleBase::ComplexMatrix> &dm,
-                        const UnitCell& ucell,
-                        bool print)
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step, LCAO_Matrix& LM, const UnitCell& ucell, bool print)
 {
     ModuleBase::TITLE("module_sc", "cal_MW");
-
+    const std::vector<std::vector<FPTYPE>>& dm
+        = dynamic_cast<const elecstate::ElecStateLCAO<FPTYPE>*>(this->pelec)->get_DM()->get_DMK_vector();
     ModuleBase::matrix orbMulP;
     orbMulP = this->cal_MW_k(LM, dm);
     
@@ -80,11 +78,9 @@ void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step,
     
 }
 
-template<typename FPTYPE, typename Device>
-ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
-    LCAO_Matrix& LM,
-    const std::vector<ModuleBase::ComplexMatrix> &dm
-)
+template <typename FPTYPE, typename Device>
+ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
+                                                           const std::vector<std::vector<std::complex<double>>>& dm)
 {
     ModuleBase::TITLE("module_sc", "cal_MW_k");
     int nw = this->get_nw();
@@ -95,8 +91,7 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
 
     for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
-        LM.zeros_HSk('S');
-		LM.folding_fixedH(ik, this->kv_.kvec_d);
+        dynamic_cast<hamilt::HamiltLCAO<FPTYPE, FPTYPE>*>(this->p_hamilt)->updateSk(ik, &LM, 1);
 
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow);
@@ -114,7 +109,7 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(
                 &nw,
                 &nw,
                 &one_float,
-                dm[ik].c,
+                dm[ik].data(),
                 &one_int,
                 &one_int,
                 this->ParaV->desc,

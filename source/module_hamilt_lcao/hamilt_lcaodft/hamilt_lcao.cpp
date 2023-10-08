@@ -317,7 +317,6 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             this->getOperator()->add(deepks);
         }
     #endif
-        //end node should be OperatorDFTU
         if (GlobalV::dft_plus_u)
         {
             Operator<TK>* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
@@ -329,17 +328,16 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             );
             this->getOperator()->add(dftu);
         }
-    }
-
-    if (GlobalV::sc_mag_switch)
-    {
-        Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(
-            LM_in,
-            kv->kvec_d,
-            this->hR,// no explicit call yet
-            &(this->getHk(LM_in))
-        );
-        this->getOperator()->add(sc_lambda);
+        if (GlobalV::sc_mag_switch)
+        {
+            Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(
+                LM_in,
+                kv->kvec_d,
+                this->hR,// no explicit call yet
+                &(this->getHk(LM_in))
+            );
+            this->getOperator()->add(sc_lambda);
+        }
     }
 
     ModuleBase::Memory::record("HamiltLCAO::hR", this->hR->get_memory_size());
