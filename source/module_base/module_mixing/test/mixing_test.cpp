@@ -130,7 +130,7 @@ class Mixing_Test : public testing::Test
     }
 };
 
-TEST_F(Mixing_Test, Broyden_Solve_LinearEq)
+TEST_F(Mixing_Test, BroydenSolveLinearEq)
 {
     omp_set_num_threads(1);
     init_method("broyden");
@@ -177,7 +177,7 @@ TEST_F(Mixing_Test, Broyden_Solve_LinearEq)
     clear();
 }
 
-TEST_F(Mixing_Test, Pulay_Solve_LinearEq)
+TEST_F(Mixing_Test, PulaySolveLinearEq)
 {
     omp_set_num_threads(1);
     init_method("pulay");
@@ -225,7 +225,7 @@ TEST_F(Mixing_Test, Pulay_Solve_LinearEq)
     clear();
 }
 
-TEST_F(Mixing_Test, Plain_Solve_LinearEq)
+TEST_F(Mixing_Test, PlainSolveLinearEq)
 {
     omp_set_num_threads(1);
     init_method("plain");
@@ -253,7 +253,7 @@ TEST_F(Mixing_Test, Plain_Solve_LinearEq)
     clear();
 }
 
-TEST_F(Mixing_Test, other_cover)
+TEST_F(Mixing_Test, OtherCover)
 {
      this->mixing = new Base_Mixing::Broyden_Mixing(2, 0.7);
      Base_Mixing::Mixing_Data nodata;
