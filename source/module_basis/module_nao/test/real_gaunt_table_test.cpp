@@ -236,7 +236,9 @@ TEST_F(RealGauntTableTest, Check3)
                                     gaunt_symmetry[cnt_sym++] = RealGauntTable::instance().gaunt(l2,l1,l3,-m2,-m1,-m3);
                                     gaunt_symmetry[cnt_sym++] = RealGauntTable::instance().gaunt(l1,l2,l3,-m1,-m2,-m3);
                                 }
-                            
+                                for(int i=0;i<cnt_sym;i++){
+                                    EXPECT_NEAR(gaunt_symmetry[i],gaunt,tol);
+                                }                            
                             }
                         }   
                     }                    
