@@ -1092,7 +1092,7 @@ void toWannier90_LCAO::unkdotA(
                     for (int iR = 0; iR < R_num; iR++)
                     {
                         ModuleBase::Vector3<double> R = R_coor_car[iR];
-                        double kRn = kv.kvec_c[ik] * R * ModuleBase::TWO_PI;
+                        double kRn = -1.0 * kv.kvec_c[ik] * R * ModuleBase::TWO_PI;
                         std::complex<double> kRn_phase(cos(kRn), sin(kRn));
                         std::complex<double> tmp(0.0, 0.0);
 
