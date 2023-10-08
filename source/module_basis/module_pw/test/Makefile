@@ -62,7 +62,7 @@ ifeq ($(INTEL), ON)
 ##==========================
     LIBS += -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
     INCLUDES += -I${MKLROOT}/include/fftw
-    OPTS += -simd -qopenmp
+    OPTS +=  -qopenmp
 else
 ##==========================
 ## fftw 

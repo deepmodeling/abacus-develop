@@ -51,7 +51,7 @@ ifeq ($(DEBUG), ON)
     OPTS +=  -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 endif
 ifeq ($(INTEL), ON)
-    OPTS += -simd -qopenmp -lifcore
+    OPTS += -qopenmp -lifcore
     ##==========================
     ## MKL package
     ##==========================
