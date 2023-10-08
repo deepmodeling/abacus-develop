@@ -37,21 +37,21 @@ option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 
 # get commit info
 if(COMMIT_INFO)
-  find_program(GIT_EXECUTABLE git)
-  if(NOT GIT_EXECUTABLE)
+  find_package(Git)
+  if(NOT Git_FOUND)
     message(WARNING "Git is not found, and abacus will not output the git commit information in log. \n\
 You can install Git first and reinstall abacus.")
   else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
-      COMMAND git log -1 --pretty=format:%h
+      COMMAND ${GIT_EXECUTABLE} log -1 --pretty=format:%h
       OUTPUT_VARIABLE GIT_COMMIT_HASH
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
     )
     execute_process(
-      COMMAND git log -1 --format=%cd
+      COMMAND ${GIT_EXECUTABLE} log -1 --format=%cd
       OUTPUT_VARIABLE GIT_COMMIT_DATE
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -144,7 +144,6 @@ endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
   add_compile_options(-fp-model=strict) # stick to strict floating point model on Intel Compiler
   set(USE_ABACUS_LIBM OFF) # Force turn off USE_ABACUS_LIBM on Intel Compiler
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
 endif()
 
@@ -153,7 +152,6 @@ if (USE_ABACUS_LIBM)
 endif()
 
 if (ENABLE_NATIVE_OPTIMIZATION)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -mtune=native")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 endif()
 
@@ -195,7 +193,6 @@ target_link_libraries(${ABACUS_BIN_NAME} Threads::Threads)
 if(USE_OPENMP)
   find_package(OpenMP REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} OpenMP::OpenMP_CXX)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_CXX_FLAGS}")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   add_link_options(${OpenMP_CXX_LIBRARIES})
 endif()
