@@ -98,8 +98,8 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     // However, in most cases, total number of plane waves should be much larger than nband*PW_DIAG_NDIM
 
     /// initialize variables
-    this->dim = psi.get_current_nbas();
-    this->dmx = psi.get_nbasis();
+    this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
+    this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
     this->nbase_x = DiagoDavid::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
 
@@ -165,20 +165,23 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         if(GlobalV::use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&psi(m, 0)),
+#ifdef __DEBUG
+            assert(psi.get_k_first());
+#endif 
+            GlobalC::paw_cell.paw_nl_psi(1, reinterpret_cast<const std::complex<double>*> (&psi(m, 0)),
                 reinterpret_cast<std::complex<double>*>(&this->sphi[m * this->dim]));
 #endif
         }
         else
         {
-            phm_in->sPsi(&psi(m, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+            phm_in->sPsi(psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), &this->sphi[m * this->dim], (size_t)this->dim);
         }
     }
     // begin SchmitOrth
     for (int m = 0; m < this->n_band; m++)
     {
         // haozhihan replace 2022-10-23
-        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), &psi(m, 0), this->dim);
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), this->dim);
 
         this->SchmitOrth(this->dim,
                          this->n_band,
@@ -781,7 +784,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     basis.zero_out();
     for (int m = 0; m < nband; m++)
     {
-        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), &psi(m, 0), this->dim);
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(m, 0), psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), this->dim);
         /*for (int ig = 0; ig < npw; ig++)
             basis(m, ig) = psi(m, ig);*/
     }
