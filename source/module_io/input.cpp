@@ -184,7 +184,11 @@ void Input::Default(void)
     out_wannier_eig = true;
     out_wannier_mmn = true;
     out_wannier_unk = true;
-    for(int i=0;i<3;i++){kspacing[i] = 0;}
+    out_wannier_wvfn_formatted = true;
+    for (int i = 0; i < 3; i++)
+    {
+        kspacing[i] = 0;
+    }
     min_dist_coef = 0.2;
     //----------------------------------------------------------
     // electrons / spin
@@ -251,6 +255,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
+    nsx = 0;
+    nsy = 0;
+    nsz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -297,6 +304,7 @@ void Input::Default(void)
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
     init_wfc = "atomic";
+    psi_initializer = false;
     mem_saver = 0;
     printe = 100; // must > 0
     init_chg = "atomic";
@@ -837,6 +845,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, out_wannier_eig);
         }
+        else if (strcmp("out_wannier_wvfn_formatted", word) == 0)
+        {
+            read_bool(ifs, out_wannier_wvfn_formatted);
+        }
         //----------------------------------------------------------
         // electrons / spin
         //----------------------------------------------------------
@@ -1007,7 +1019,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
-            ecutrho = 4.0 * ecutwfc;
+        }
+        else if (strcmp("ecutrho", word) == 0)
+        {
+            read_value(ifs, ecutrho);
         }
         else if (strcmp("nx", word) == 0)
         {
@@ -1035,6 +1050,18 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("bz", word) == 0)
         {
             read_value(ifs, bz);
+        }
+        else if (strcmp("nsx", word) == 0)
+        {
+            read_value(ifs, nsx);
+        }
+        else if (strcmp("nsy", word) == 0)
+        {
+            read_value(ifs, nsy);
+        }
+        else if (strcmp("nsz", word) == 0)
+        {
+            read_value(ifs, nsz);
         }
         else if (strcmp("erf_ecut", word) == 0)
         {
@@ -1200,6 +1227,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("init_wfc", word) == 0)
         {
             read_value(ifs, init_wfc);
+        }
+        else if (strcmp("psi_initializer", word) == 0)
+        {
+            read_value(ifs, psi_initializer);
         }
         else if (strcmp("mem_saver", word) == 0)
         {
@@ -2496,6 +2527,17 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (ecutrho <= 0.0)
+    {
+        ecutrho = 4.0 * ecutwfc;
+    }
+
+    if (esolver_type == "sdft"&&psi_initializer)
+    {
+        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
+        psi_initializer = false;
+    }
+
     if (nbndsto_str == "all")
     {
         nbands_sto = 0;
@@ -2897,6 +2939,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_wannier_amn);
     Parallel_Common::bcast_bool(out_wannier_unk);
     Parallel_Common::bcast_bool(out_wannier_eig);
+    Parallel_Common::bcast_bool(out_wannier_wvfn_formatted);
 
     Parallel_Common::bcast_string(dft_functional);
     Parallel_Common::bcast_double(xc_temperature);
@@ -2953,6 +2996,9 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
+    Parallel_Common::bcast_int(nsx);
+    Parallel_Common::bcast_int(nsy);
+    Parallel_Common::bcast_int(nsz);
     Parallel_Common::bcast_double(erf_ecut);
     Parallel_Common::bcast_double(erf_height);
     Parallel_Common::bcast_double(erf_sigma);
@@ -2994,6 +3040,8 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
+    Parallel_Common::bcast_bool(psi_initializer);
+    
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
@@ -3296,6 +3344,15 @@ void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
 
+    if (ecutrho <= ecutwfc)
+    {
+        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+    }
+    else if (ecutrho / ecutwfc < 4 - 1e-8)
+    {
+        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+    }
+
     if (nbands < 0)
         ModuleBase::WARNING_QUIT("Input", "NBANDS must >= 0");
     //	if(nbands_istate < 0) ModuleBase::WARNING_QUIT("Input","NBANDS_ISTATE must > 0");
@@ -3449,9 +3506,24 @@ void Input::Check(void)
             "Input",
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
-    if (init_wfc != "atomic" && init_wfc != "atomic+random" && init_wfc != "random" && init_wfc != "file")
+
+    if (
+        (init_wfc != "atomic") 
+     && (init_wfc != "random") 
+     && (init_wfc != "atomic+random")
+     && (init_wfc != "nao")
+     && (init_wfc != "nao+random")
+     && (init_wfc != "file")
+     )
     {
-        ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        if(psi_initializer)
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
+        }   
     }
 
     if (nbands > 100000)

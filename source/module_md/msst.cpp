@@ -161,6 +161,7 @@ void MSST::write_restart(const std::string& global_out_dir)
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
+        file << mdp.md_tfirst << std::endl;
         file << omega[mdp.msst_direction] << std::endl;
         file << e0 << std::endl;
         file << v0 << std::endl;
@@ -191,7 +192,7 @@ void MSST::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            file >> step_rst_ >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
+            file >> step_rst_ >> mdp.md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
             file.close();
         }
     }
@@ -207,6 +208,7 @@ void MSST::restart(const std::string& global_readin_dir)
 
 #ifdef __MPI
     MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&mdp.md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&omega[mdp.msst_direction], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&e0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&v0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);

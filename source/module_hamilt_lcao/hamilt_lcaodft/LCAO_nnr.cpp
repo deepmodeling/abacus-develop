@@ -349,7 +349,7 @@ void LCAO_Matrix::folding_fixedH(
     {
 		int beg, len;
 		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, (int)pv->nloc, 1024, beg, len);
-		ModuleBase::GlobalFunc::ZEROS(GlobalC::ld.H_V_delta_k[ik] + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(GlobalC::ld.H_V_delta_k[ik].data() + beg, len);
 	}
 #endif
 

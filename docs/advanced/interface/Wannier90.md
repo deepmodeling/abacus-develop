@@ -94,7 +94,8 @@ To construct the MLWFs using the wave functions of ABACUS generally requires fou
     - [out_wannier_mmn](../input_files/input-main.md#out_wannier_mmn): control whether to output the "*.mmn" file.
     - [out_wannier_amn](../input_files/input-main.md#out_wannier_amn): control whether to output the "*.amn" file.
     - [out_wannier_eig](../input_files/input-main.md#out_wannier_eig): control whether to output the "*.eig" file.
-    - [out_wannier_unk](../input_files/input-main.md#out_wannier_unk): control whether to output the "*.UNK" file.
+    - [out_wannier_unk](../input_files/input-main.md#out_wannier_unk): control whether to output the "UNK.*" file.
+    - [out_wannier_wvfn_formatted](../input_files/input-main.md#out_wannier_wvfn_formatted): control what format of the Wannier function file to output, `true`: output the formatted text file; `false`: output the binary file. Note that the `wvfn_formatted` option in `*.win` file (input file of Wannier90) has to be set accordingly with this option.
 
     Note: You need to turn off the symmetry during the entire nscf calculation.
 

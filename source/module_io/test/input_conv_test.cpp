@@ -149,7 +149,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_t,false);
 	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_dh,INPUT.out_mat_dh);
 	EXPECT_EQ(GlobalV::out_interval,1);
-    EXPECT_EQ(elecstate::ElecStateLCAO::out_wfc_lcao, false);
+    EXPECT_EQ(elecstate::ElecStateLCAO<double>::out_wfc_lcao, false);
     EXPECT_EQ(berryphase::berry_phase_flag, false);
     EXPECT_EQ(GlobalV::imp_sol,false);
 	EXPECT_EQ(GlobalV::eb_k,80);
@@ -390,7 +390,7 @@ TEST_F(InputConvTest,neighbour  )
 	INPUT.towannier90=false;
 	INPUT.berry_phase=false;
 	Input_Conv::Convert();
-	EXPECT_EQ(elecstate::ElecStateLCAO::need_psi_grid,false);
+	EXPECT_EQ(elecstate::ElecStateLCAO<double>::need_psi_grid,false);
 }
 
 TEST_F(InputConvTest,neighbour2  )

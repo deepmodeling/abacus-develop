@@ -75,6 +75,10 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
 {
     nfile = 3;
     orb.build(nfile, file, 'o');
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    orb.set_transformer(sbt);
+
     double rmax = orb.rcut_max() * 2.0;
     double dr = 0.01;
     int nr = static_cast<int>(rmax / dr) + 1;

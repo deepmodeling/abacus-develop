@@ -125,21 +125,37 @@ bool Exx_LRI_Interface<Tdata>::exx_after_converge(
     auto add_exx_operator = [&]() {
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
+            hamilt::HamiltLCAO<double, double>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(&hamilt);
             hamilt::Operator<double>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&lm,
-                                                                        nullptr, // no explicit call yet
-                                                                        &(lm.Hloc),
+                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>>(&lm,
+                                                                        hamilt_lcao->getHR(), 
+                                                                        &(hamilt_lcao->getHk(&lm)),
                                                                         kv);
-            hamilt.opsd->add(exx);
+            hamilt_lcao->getOperator()->add(exx);
         }
         else
         {
-            hamilt::Operator<std::complex<double>>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&lm,
-                                                                                      nullptr, // no explicit call yet
-                                                                                      &(lm.Hloc2),
-                                                                                      kv);
-            hamilt.ops->add(exx);
+            hamilt::Operator<std::complex<double>>* exx;
+            if(GlobalV::NSPIN < 4)
+            {
+                hamilt::HamiltLCAO<std::complex<double>, double>* hamilt_lcao = 
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(&hamilt);
+                exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, double>>(&lm,
+                                                                                    hamilt_lcao->getHR(), 
+                                                                                    &(hamilt_lcao->getHk(&lm)),
+                                                                                    kv);
+                hamilt_lcao->getOperator()->add(exx);
+            }
+            else
+            {
+                hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* hamilt_lcao = 
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(&hamilt);
+                exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&lm,
+                                                                                              hamilt_lcao->getHR(), 
+                                                                                              &(hamilt_lcao->getHk(&lm)),
+                                                                                              kv);
+                hamilt_lcao->getOperator()->add(exx);
+            }
         }
     };
     

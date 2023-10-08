@@ -20,11 +20,12 @@ namespace hsolver{
 //----------------------------------------------------------------------
 template<typename T, typename Device>
 void DiagoIterAssist<T, Device>::diagH_subspace(
-    hamilt::Hamilt<T, Device>* pHamilt,
-    const psi::Psi<T, Device> &psi,
-    psi::Psi<T, Device> &evc,
-    Real *en,
-    int n_band)
+    hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+    const psi::Psi<T, Device> &psi, // [in] wavefunction
+    psi::Psi<T, Device> &evc, // [out] wavefunction
+    Real *en, // [out] eigenvalues
+    int n_band // [in] number of bands to be calculated, also number of rows of evc, if set to 0, n_band = nstart, default 0
+    )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace");
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
@@ -107,13 +108,27 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") && GlobalV::CALCULATION == "nscf")
+    if (
+        (
+            (GlobalV::BASIS_TYPE == "lcao")
+          ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        )
+      &&(GlobalV::CALCULATION == "nscf")
+      )
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
-             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+    else if (
+        (
+            (GlobalV::BASIS_TYPE == "lcao")
+          ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        )
+      &&(
+            (GlobalV::CALCULATION == "scf")
+          ||(GlobalV::CALCULATION == "md")
+          ||(GlobalV::CALCULATION == "relax")
+        )
+        ) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,
@@ -300,9 +315,18 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
-             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+    else if (
+        (
+            GlobalV::BASIS_TYPE == "lcao" 
+          ||GlobalV::BASIS_TYPE == "lcao_in_pw"
+          ||(GlobalV::BASIS_TYPE == "pw" && GlobalV::psi_initializer)
+        )
+      &&(
+            GlobalV::CALCULATION == "scf"
+          ||GlobalV::CALCULATION == "md"
+          ||GlobalV::CALCULATION == "relax"
+        )
+        ) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,

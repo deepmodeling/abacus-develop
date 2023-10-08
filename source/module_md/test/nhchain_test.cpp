@@ -152,6 +152,8 @@ TEST_F(NHC_test, write_restart)
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("3"));
     getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("0.000950045"));
+    getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("4"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("-0.110497   -0.554723   -0.465415   -0.424699   "));

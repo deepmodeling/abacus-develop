@@ -41,6 +41,12 @@ class Gint_Gamma : public Gint
 	// calcualte the envelope function
 	void cal_env(const double* wfc, double* rho);
 
+    //------------------------------------------------------
+    // in veff_lcao.cpp
+    //------------------------------------------------------
+    /// transfer this->hRGint to Veff::hR
+    void transfer_pvpR(hamilt::HContainer<double>* hR);
+
 private:
 
     double***  DM;   //pointer to LOC.DM

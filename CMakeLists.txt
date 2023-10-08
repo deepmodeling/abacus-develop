@@ -288,6 +288,7 @@ if(USE_ROCM)
   find_package(HIP REQUIRED)
   find_package(hipfft REQUIRED)
   find_package(hipblas REQUIRED)
+  find_package(hipsolver REQUIRED)
 
   if(HIP_FOUND)
     message(STATUS "Found HIP: " ${HIP_VERSION})
@@ -297,15 +298,13 @@ if(USE_ROCM)
 
   include_directories(
     ${ROCM_PATH}/include
-    ${ROCM_PATH}/hip/include
-    ${ROCM_PATH}/hipfft/include
-    ${ROCM_PATH}/hipblas/include
   )
   target_link_libraries(${ABACUS_BIN_NAME}
-    hip::device
     hip::host
+    hip::device
     hip::hipfft
     roc::hipblas
+    roc::hipsolver
   )
   add_compile_definitions(__ROCM)
   add_compile_definitions(__UT_USE_ROCM)
@@ -611,6 +610,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt_ofdft
     hamilt_stodft
     psi
+    psi_initializer
     esolver
     vdw
     device

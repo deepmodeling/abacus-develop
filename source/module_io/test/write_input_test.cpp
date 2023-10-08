@@ -312,8 +312,9 @@ TEST_F(write_input,print)
         EXPECT_THAT(output,testing::HasSubstr("wannier_spin                   up #calculate spin in wannier90 code interface"));
         EXPECT_THAT(output,testing::HasSubstr("out_wannier_mmn                1 #output .mmn file or not"));
         EXPECT_THAT(output,testing::HasSubstr("out_wannier_amn                1 #output .amn file or not"));
-        EXPECT_THAT(output,testing::HasSubstr("out_wannier_unk                1 #output .UNK file or not"));
+        EXPECT_THAT(output,testing::HasSubstr("out_wannier_unk                1 #output UNK. file or not"));
         EXPECT_THAT(output,testing::HasSubstr("out_wannier_eig                1 #output .eig file or not"));
+        EXPECT_THAT(output,testing::HasSubstr("out_wannier_wvfn_formatted     1 #output UNK. file in text format or in binary format"));
         EXPECT_THAT(output,testing::HasSubstr(""));
         EXPECT_THAT(output,testing::HasSubstr("#Parameters (18.implicit_solvation)"));    
         EXPECT_THAT(output,testing::HasSubstr("imp_sol                        0 #calculate implicit solvation correction or not"));

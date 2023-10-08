@@ -29,10 +29,10 @@
 *   - Vdwd3Parameters::initial_parameters()
 */
 
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 }
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 }
 Atom::Atom()
