@@ -552,7 +552,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            symm->stress_symmetry(scs, GlobalC::ucell);
+            symm->symmetrize_mat3(scs, GlobalC::ucell);
         } // end symmetry
 
 #ifdef __DEEPKS
@@ -566,7 +566,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         {
             if (ModuleSymmetry::Symmetry::symm_flag == 1)
             {
-                symm->stress_symmetry(svnl_dalpha, GlobalC::ucell);
+                symm->symmetrize_mat3(svnl_dalpha, GlobalC::ucell);
             } // end symmetry
             for (int i = 0; i < 3; i++)
             {
@@ -844,27 +844,7 @@ void Force_Stress_LCAO<T>::calStressPwPart(ModuleBase::matrix& sigmadvl,
 template<typename T>
 void Force_Stress_LCAO<T>::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm)
 {
-    double* pos;
     double d1, d2, d3;
-    pos = new double[GlobalC::ucell.nat * 3];
-    ModuleBase::GlobalFunc::ZEROS(pos, GlobalC::ucell.nat * 3);
-    int iat = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            pos[3 * iat] = GlobalC::ucell.atoms[it].taud[ia].x;
-            pos[3 * iat + 1] = GlobalC::ucell.atoms[it].taud[ia].y;
-            pos[3 * iat + 2] = GlobalC::ucell.atoms[it].taud[ia].z;
-            for (int k = 0; k < 3; ++k)
-            {
-                symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                symm->check_boundary(pos[iat * 3 + k]);
-            }
-            iat++;
-        }
-    }
-
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         ModuleBase::Mathzone::Cartesian_to_Direct(fcs(iat, 0),
@@ -887,7 +867,7 @@ void Force_Stress_LCAO<T>::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    symm->force_symmetry(fcs, pos, GlobalC::ucell);
+    symm->symmetrize_vec3_nat(fcs.c);
     for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
     {
         ModuleBase::Mathzone::Direct_to_Cartesian(fcs(iat, 0),
@@ -910,7 +890,6 @@ void Force_Stress_LCAO<T>::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    delete[] pos;
     return;
 }
 

@@ -68,7 +68,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigmatot, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigmatot, GlobalC::ucell);
     }
 
 	bool ry = false;
@@ -190,7 +190,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 	}
 	
 
-    Parallel_Reduce::reduce_all(s_kin.c, 9);
+	Parallel_Reduce::reduce_all( s_kin.c, 9 );
 
 	for(int l=0;l<3;++l)
 	{
@@ -202,7 +202,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     }
     delete[] gk[0];
     delete[] gk[1];
@@ -285,7 +285,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
             	stowf.shchi[ik].c,&npwx,
             	&ModuleBase::ZERO,&becp(nksbands,0),&nkb);
 		
-        Parallel_Reduce::reduce_pool(becp.c, becp.size);
+		Parallel_Reduce::reduce_pool( becp.c, becp.size);
 
         for (int i = 0; i < 3; ++i)
         {
@@ -409,7 +409,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 		}
 	}
 	// sum up forcenl from all processors
-    Parallel_Reduce::reduce_all(sigmanlc.c, 9);
+	Parallel_Reduce::reduce_all( sigmanlc.c, 9);
 
         
 	for (int ipol = 0; ipol<3; ++ipol)
@@ -430,7 +430,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     }
 	
 	//  this->print(ofs_running, "nonlocal stress", stresnl);

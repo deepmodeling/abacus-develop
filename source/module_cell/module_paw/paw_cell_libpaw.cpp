@@ -267,8 +267,27 @@ void Paw_Cell::prepare_paw()
 
 void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
 {
+    double * vloc_tmp, * ncoret_tmp;
+    vloc_tmp = new double[nfft];
+    ncoret_tmp = new double[nfft];
+    
     get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
-            gmet.data(), ucvol, xred.data(), ncoret, vloc);
+            gmet.data(), ucvol, xred.data(), ncoret_tmp, vloc_tmp);
+
+    for(int ix = 0; ix < nx; ix ++)
+    {
+        for(int iy = 0; iy < ny; iy ++)
+        {
+            for(int iz = 0; iz < nz; iz ++)
+            {
+                int ind_c = ix*ny*nz + iy*nz + iz;
+                int ind_fortran = iz*ny*nx + iy*nx + ix;
+
+                vloc[ind_c] = vloc_tmp[ind_fortran*nspden];
+                ncoret[ind_c] = ncoret_tmp[ind_fortran*nspden];
+            }
+        }
+    }
 }
 
 void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp)
@@ -287,15 +306,24 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
     get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
             ucvol,nhat_tmp,nhatgr);
 
-    for(int ir = 0; ir < nfft; ir ++)
+    for(int is = 0; is < nspden; is ++)
     {
-        for(int is = 0; is < nspden; is ++)
+        // I'm not sure about this yet !!!
+        // need to check for nspin = 2 later
+        // Fortran is column major, and rhor is of dimension (nfft, nspden)
+        // so presumably should be this way m
+        for(int ix = 0; ix < nx; ix ++)
         {
-            // I'm not sure about this yet !!!
-            // need to check for nspin = 2 later
-            // Fortran is column major, and rhor is of dimension (nfft, nspden)
-            // so presumably should be this way m
-            nhat[is][ir] = nhat_tmp[ir*nspden+is];
+            for(int iy = 0; iy < ny; iy ++)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    int ind_c = ix*ny*nz + iy*nz + iz;
+                    int ind_fortran = iz*ny*nx + iy*nx + ix;
+
+                    nhat[is][ind_c] = nhat_tmp[ind_fortran*nspden+is];
+                }
+            }
         }
     }
     delete[] nhat_tmp;
@@ -307,10 +335,21 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
     double * vks_hartree, * vxc_hartree;
     vks_hartree = new double[nspden * nfft];
     vxc_hartree = new double[nspden * nfft];
-    for(int i = 0; i < nspden * nfft; i ++)
+    for(int is = 0; is < nspden; is ++)
     {
-        vks_hartree[i] = vks[i] / 2.0;
-        vxc_hartree[i] = vxc[i] / 2.0;
+        for(int ix = 0; ix < nx; ix ++)
+        {
+            for(int iy = 0; iy < ny; iy ++)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    int ind_c = (ix*ny*nz + iy*nz + iz)*nspden + is;
+                    int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
+                    vks_hartree[ind_fortran] = vks[ind_c] / 2.0;
+                    vxc_hartree[ind_fortran] = vxc[ind_c] / 2.0;
+                }
+            }
+        }
     }
     calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);
     delete[] vks_hartree;
@@ -381,8 +420,9 @@ void Paw_Cell::set_dij()
 
 void Paw_Cell::set_sij()
 {
+    int at_ind = 0;
     for(int it = 0; it < ntypat; it ++)
-    {
+    {   
         const int nproj = paw_element_list[it].get_mstates();
         const int size_sij = nproj * (nproj+1) / 2 * nspden;
         double* sij_libpaw = new double[size_sij];
@@ -399,7 +439,13 @@ void Paw_Cell::set_sij()
                 sij[jproj*nproj+iproj] = sij_libpaw[ind];
             }
         }
-        paw_atom_list[it].set_sij(sij);
+        const int na = nat_type[it];
+        for(int ia = 0; ia < na; ia ++)
+        {
+            int iat = atom_map[at_ind];
+            at_ind ++;
+            paw_atom_list[iat].set_sij(sij);
+        }
 
         delete[] sij_libpaw;
         delete[] sij;

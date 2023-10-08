@@ -13,7 +13,7 @@ gamma_only        1
 smearing_method	  gauss
 smearing_sigma	  0.02
 mixing_type       pulay
-mixing_beta       0.4
+mixing_beta       0.1
 
 #Parameters (electric field and dipole correction)
 efield_flag         1
