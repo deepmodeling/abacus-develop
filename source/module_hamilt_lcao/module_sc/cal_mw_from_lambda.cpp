@@ -1,9 +1,9 @@
-#include "spin_constrain.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/cal_dm.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "spin_constrain.h"
 
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
@@ -17,7 +17,7 @@ void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
     this->pelec->calEBand();
     if (this->KS_SOLVER == "genelpa" || this->KS_SOLVER == "scalapack_gvx" || this->KS_SOLVER == "lapack")
     {
-        elecstate::cal_dm(this->ParaV, pelec_lcao->wg, *(this->psi), pelec_lcao->get_loc()->dm_k);
+        elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
     }
     this->cal_MW(i_step, *(this->LM), GlobalC::ucell);
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
