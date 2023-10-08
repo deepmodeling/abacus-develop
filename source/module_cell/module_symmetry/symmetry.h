@@ -102,9 +102,13 @@ public:
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
+
+    /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
     void symmetrize_vec3_nat(double* v)const;
+    /// symmetrize a 3*3 tensor, which can be stress or variation of unitcell in cell-relax
     void symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const;
-	void write();
+
+    void write();
 
 	void print_pos(const double* pos, const int &nat);
 
