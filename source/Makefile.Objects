@@ -552,7 +552,7 @@ OBJS_DFTU=dftu.o\
       dftu_occup.o\
       dftu_hamilt.o
 
-${OBJS_SC}=basic_funcs.o\
+OBJS_SC=basic_funcs.o\
       cal_h_lambda.o\
       cal_mw_from_lambda.o\
       cal_mw.o\
