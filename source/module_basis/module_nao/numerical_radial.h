@@ -3,158 +3,185 @@
 
 #include <cassert>
 #include <string>
+#include <memory>
 
 #include "module_base/spherical_bessel_transformer.h"
 
-//! A class that represents a numerical radial function.
-/*!
- *  This class is supposed to be the underlying container for numerical
- *  atomic orbitals, Kleinman-Bylander beta functions, and all other
- *  similar numerical radial functions in three-dimensional space which
- *  is associated with some angular momentum l and whose r & k space
- *  values are related by an l-th order spherical Bessel transform.
+/**
+ * @brief A class that represents a numerical radial function.
  *
- *  A NumericalRadial object can be initialized by "build", which requires
- *  the angular momentum, the number of grid points, the grid and the
- *  corresponding values. One can initialize the object in either r or
- *  k space. After initialization, one can set the grid in the other
- *  space. Values in the other space are automatically computed by a
- *  spherical Bessel transform.
+ * This class is supposed to be the underlying container for numerical
+ * atomic orbitals, Kleinman-Bylander beta functions, and all other
+ * similar numerical radial functions in three-dimensional space which
+ * is associated with some angular momentum l and whose r & k space
+ * values are related by an l-th order spherical Bessel transform.
  *
- *  This class also provides a convenient interface to compute the radial
- *  table for various two-center intergrals.
+ * A NumericalRadial object can be initialized by "build", which requires
+ * the angular momentum, the number of grid points, the grid and the
+ * corresponding values. Grid does not have to be uniform. One can initialize
+ * the object in either r or k space. After initialization, one can set the
+ * grid in the other space via set_grid or set_uniform_grid. Values in the
+ * other space are automatically computed by a spherical Bessel transform.
  *
- *  Usage:
+ * Usage:
  *
- *      int l = 1;
- *      int itype = 3;
- *      int izeta = 5;
- *      std::string symbol = "Au";
+ *     int l = 1;
+ *     int itype = 3;
+ *     int izeta = 5;
+ *     std::string symbol = "Au";
  *
- *      // Prepares the grid & values to initialize the objects
- *      int sz = 2000;
- *      double dr = 0.01;
- *      double* grid = new double[sz];
- *      for (int ir = 0; ir != sz; ++ir) {
- *          double r = ir * dr;
- *          grid[ir] = r;
- *          f[ir] = std::exp(-r*r);
- *      }
+ *     // Prepares the grid & values to initialize the objects
+ *     int sz = 2000;
+ *     double dr = 0.01;
+ *     double* grid = new double[sz];
+ *     for (int ir = 0; ir != sz; ++ir) {
+ *         grid[ir] = ir * dr; 
+ *         f[ir] = std::exp(-grid[ir] * grid[ir]);
+ *     }
+ *     // grid does not necessarily have to be uniform; it just
+ *     // has to be positive and strictly increasing.
  *
- *      // The class will interpret the input values as r^p * F(r)
- *      // where F is the underlying radial function that the class object
- *      // actually represents.
- *      int p1 = 0;
- *      int p2 = -2;
+ *     // The class will interpret the input values as r^p * F(r)
+ *     // where F is the underlying radial function that the class object
+ *     // actually represents.
+ *     int p1 = 0;
+ *     int p2 = -2;
  *
- *      NumericalRadial chi1, chi2;
- *      chi1.build(0, true, sz, grid, f, p1);
- *      chi2.build(2, true, sz, grid, f, p2);
+ *     NumericalRadial chi1, chi2;
+ *     chi1.build(0, true, sz, grid, f, p1);
+ *     chi2.build(2, true, sz, grid, f, p2);
  *
- *      // Now chi1 represents exp(-r^2); chi2 actually represents
- *      // r^2*exp(-r^2), even though the values stored is also exp(-r^2).
+ *     // Now chi1 represents exp(-r^2); chi2 actually represents
+ *     // r^2*exp(-r^2), even though the values stored is also exp(-r^2).
  *
- *      // Adds the k-space grid.
- *      chi1.set_uniform_grid(false, sz, PI/dr, 't');
- *      chi2.set_uniform_grid(false, sz, PI/dr, 't');
- *      // k-space values are automatically computed above
+ *     // Adds the k-space grid.
+ *     chi1.set_uniform_grid(false, sz, PI/dr, 't');
+ *     chi2.set_uniform_grid(false, sz, PI/dr, 't');
+ *     // k-space values are automatically computed above
  *
- *      // calculates various radial tables between chi1 & chi2
- *      double* table = new double[sz];
- *      chi1.radtab('S', chi2, 0, table);
- *
- *                                                                          */
+ */
 class NumericalRadial
 {
+public:
+    NumericalRadial() = default;
+    NumericalRadial(NumericalRadial const&); ///< Deep-copy grid & values
 
-  public:
-    NumericalRadial();
-    NumericalRadial(NumericalRadial const&); //!< deep copy
-
-    //! deep copy
+    /// Deep-copy grid & values
     NumericalRadial& operator=(NumericalRadial const&);
 
     ~NumericalRadial();
 
-    //! Initializes the object by providing the grid & values in one space.
-    void build(const int l,               //!< angular momentum
-               const bool for_r_space,    //!< specifies whether the input corresponds to r or k space
-               const int ngrid,           //!< number of input grid points
-               const double* const grid,  //!< must be strictly increasing, and every element must be larger than zero
-               const double* const value, //!< values on the grid
-               const int p = 0,           //!< exponent of the implicit power term in input values, @see @ref group1
-               const int izeta = 0,       //!< index for the multiplicity of radial functions of the same itype and l
-               const std::string symbol = "", //!< chemical symbol
-               const int itype = 0            //!< index for the element in calculation
+    /**
+     * @brief Initializes the object by providing the grid & values in one space.
+     *
+     * @param[in] l             Angular momentum.
+     * @param[in] for_r_space   Specifies whether the input corresponds to r or k space.
+     * @param[in] ngrid         Number of grid points.
+     * @param[in] grid          Grid points, must be positive & strictly increasing.
+     * @param[in] value         Values on the grid.
+     * @param[in] p             Implicit exponent in input values, see @ref pr_ & @ref pk_.
+     * @param[in] izeta         Multiplicity index of radial functions of the same itype and l.
+     * @param[in] symbol        Chemical symbol.
+     * @param[in] itype         Index for the element in calculation.
+     * @param[in] init_sbt      If true, internal SphericalBesselTransformer will be initialized.
+     *
+     * @note init_sbt is only useful when the internal SphericalBesselTransformer (sbt_) is
+     *       null-initialized; The function will NOT reset sbt_ if it is already usable.
+     */
+    void build(const int l,
+               const bool for_r_space,
+               const int ngrid,
+               const double* const grid,
+               const double* const value,
+               const int p = 0,
+               const int izeta = 0,
+               const std::string symbol = "",
+               const int itype = 0,
+               const bool init_sbt = true
     );
 
-    //! Sets a SphericalBesselTransformer.
-    /*!
-     *  By default the class uses an internal SphericalBesselTransformer,
-     *  but one can optionally use an external one. This could be beneficial
-     *  when there are a lot of NumericalRadial objects whose grids are all
-     *  FFT-compliant and have the same size. In that case, one can set up
-     *  an external transformer, set the FFTW plan flag to FFTW_MEASURE,
-     *  and have all NumericalRadial objects use the external transformer.
-     *                                                                      */
-    void set_transformer(ModuleBase::SphericalBesselTransformer* sbt = nullptr, //!< pointer to external transformer.
-                                                                                //!< nullptr instructs the object to use
-                                                                                //!< an an internal transformer.
-                         int update = 0 //!< Specifies whether and how values are recomputed with the new transformer.
-                                        //!< Accepted values are:
-                                        //!< *  0: does not recompute values;
-                                        //!< *  1: calls a forward transform
-                                        //!< * -1: calls a backward transform
-    );
+    /** 
+     * @brief Sets a SphericalBesselTransformer.
+     * 
+     * By default the class uses an internal SphericalBesselTransformer, but one can optionally
+     * use a shared one. This could be beneficial when there are a lot of NumericalRadial objects
+     * whose grids have the same size.
+     *
+     * @param[in] sbt       An external transformer.
+     * @param[in] update    Specifies whether and how values are recomputed with the new transformer.
+     *                      Accepted values are:
+     *                      *  0: does not recompute values;
+     *                      *  1: calls a forward transform;
+     *                      * -1: calls a backward transform.
+     */
+    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update = 0);
 
-    //! Sets up a new grid
-    void set_grid(const bool for_r_space,   //!< specifies whether to set grid for the r or k space
-                  const int ngrid,          //!< number of grid points
-                  const double* const grid, //!< must be stricly increasing, and every element must be larger than zero
-                  const char mode = 'i'     //!< specifies how values are updated, could be 'i' or 't'.
-                                            //!< - 'i': new values are obtained by interpolating and zero-padding
-                                            //!<        the existing values from current space.
-                                            //!< - 't': new values are obtained via transform from the other space
-    );
+    /**
+     * @brief Sets up a grid.
+     *
+     * This function can be used to set up the grid which is absent in "build" (in which
+     * case values on the new grid are automatically computed by a spherical Bessel transform)
+     * or interpolate on an existing grid to a new grid.
+     *
+     * @param[in] for_r_space   Specifies whether to set grid for the r or k space.
+     * @param[in] ngrid         Number of grid points.
+     * @param[in] grid          Grid points, must be positive & strictly increasing.
+     * @param[in] mode          Specifies how values are updated, could be 'i' or 't':
+     *                          - 'i': New values are obtained by interpolating and zero-padding
+     *                                 the existing values from current space. With this option,
+     *                                 it is an error if the designated space does not have a grid;
+     *                          - 't': New values are obtained via transform from the other space.
+     *                                 With this option, it is an error if the other space does not
+     *                                 have a grid.
+     */
+    void set_grid(const bool for_r_space, const int ngrid, const double* const grid, const char mode = 'i');
 
-    /*!
-     *  Sets up a new uniform grid by
+    /**
+     * @brief Sets up a uniform grid.
+     *
+     * The functionality of this function is similar to @ref set_grid, except that
+     * the new grid is a uniform grid specified by the cutoff and the number of grid
+     * points given by
      *
      *                    cutoff
      *      grid[i] = i * -------
      *                    ngrid-1
      *
-     *  @see set_grid
+     * @see set_grid
      *
-     *  If enable_fft is true, this function will not only set up the grid & values
-     *  in the designated space, but also sets the grid (and updates values accordingly)
-     *  in the other space such that r & k grids are FFT-compliant.
-     *                                                                                  */
+     * If enable_fft is true, this function will not only set up the grid & values
+     * in the designated space, but also sets the grid in the other space such that
+     * the r & k grids are FFT-compliant (and updates values via a FFT-based spherical
+     * Bessel transform).
+     */
     void set_uniform_grid(const bool for_r_space,
                           const int ngrid,
                           const double cutoff,
                           const char mode = 'i',
                           const bool enable_fft = false);
 
-    //! Updates values on an existing grid.
-    /*!
-     *  The number of values to read from "value" is nr_ or nk_ depending on for_r_space.
-     *  Values of the other space will also be updated if they exist.
-     *  This function does not check the index bound; use with care!
-     *                                                                                  */
-    void set_value(const bool for_r_space,    //!< specifies whether to set grid for the r or k space
-                   const double* const value, //!< new values
-                   const int p                //!< see @ref group1
+    /**
+     * @brief Updates values on an existing grid.
+     *
+     * This function does not alter the grid; it merely updates values on the existing
+     * grid.  The number of values to read from "value" is nr_ or nk_. Values of the
+     * other space will be automatically updated if they exist.
+     *
+     * @note This function does not check the index bound; use with care!
+     */
+    void set_value(const bool for_r_space,
+                   const double* const value,
+                   const int p
     );
 
-    //! Removes the grid & values from one space.
-    void wipe(const bool r_space /*! specifies whether to wipe off the r or k space info */);
-
-    //! Saves the data to file (what data, in what format?)
-    void save(std::string file = "" /*! file name */) const;
+    /// Removes the grid & values in r or k space.
+    void wipe(const bool r_space = true, const bool k_space = true);
 
     //! Computes the radial table for two-center integrals.
     /*!
+     * TODO shall be removed from this class in the future;
+     *     the functionality should be moved to TwoCenterTable class.
+     *
      *  This function requires that both "this" and "ket" have existing kgrid_, and the
      *  two kgrid_ be identical.
      *
@@ -204,150 +231,126 @@ class NumericalRadial
                 const bool deriv = false    //!< [in] if true, calculates the derivative of the table
     ) const;
 
-    //! Normalizes the radial function.
-    /*!
-     *  The radial function is normalized such that
+    /**
+     * @brief Normalizes the radial function.
+     *
+     * The radial function is normalized such that
      *
      *      / +inf     2
      *      |      dx x  f(x) = 1
      *      /  0
      *
-     *  where x is r or k.
-     *                                                                                  */
+     * where x is r or k. The integral is evaluated with Simpson's rule. Values in the other space
+     * are updated automatically via a spherical Bessel transform.
+     */
     void normalize(bool for_r_space = true);
 
-    /*!
-     *  @name Getters
-     *                                                                                  */
+    /**
+     * @name Getters
+     */
     ///@{
-    //! gets symbol_
     std::string const& symbol() const { return symbol_; }
-
-    //! gets itype_
     int itype() const { return itype_; }
-
-    //! gets izeta_
     int izeta() const { return izeta_; }
-
-    //! gets the angular momentum
     int l() const { return l_; }
-
-    //! gets the number of r-space grid points
     int nr() const { return nr_; }
-
-    //! gets the number of k-space grid points
     int nk() const { return nk_; }
-
-    //! gets r-space grid cutoff distance
     double rcut() const { return rgrid_ ? rgrid_[nr_ - 1] : 0.0; }
-
-    //! gets k-space grid cutoff distance
     double kcut() const { return kgrid_ ? kgrid_[nk_ - 1] : 0.0; }
-
-    //! gets the pointer to r-space grid points
-    const double* ptr_rgrid() const { return rgrid_; }
-
-    //! gets the pointer to k-space grid points
-    const double* ptr_kgrid() const { return kgrid_; }
-
-    //! gets the pointer to r-space values
-    const double* ptr_rvalue() const { return rvalue_; }
-
-    //! gets the pointer to k-space values
-    const double* ptr_kvalue() const { return kvalue_; }
-
-    //! gets the exponent of the pre-multiplied power term in rvalues_. @see pr_
+    const double* rgrid() const { return rgrid_; }
+    const double* kgrid() const { return kgrid_; }
+    const double* rvalue() const { return rvalue_; }
+    const double* kvalue() const { return kvalue_; }
     double pr() const { return pr_; }
-
-    //! gets the exponent of the pre-multiplied power term in kvalues_. @see pk_
     double pk() const { return pk_; }
-
-    //! gets the flag for FFT-compliancy. @see is_fft_compliant_
     bool is_fft_compliant() const { return is_fft_compliant_; }
+    ModuleBase::SphericalBesselTransformer sbt() const { return sbt_; }
 
-    //! gets the pointer to the SphericalBesselTransformer
-    const ModuleBase::SphericalBesselTransformer* ptr_sbt() const { return sbt_; }
-
+    double rgrid(int ir) const { return rgrid_[ir]; }
+    double kgrid(int ik) const { return kgrid_[ik]; }
+    double rvalue(int ir) const { return rvalue_[ir]; }
+    double kvalue(int ik) const { return kvalue_[ik]; }
     ///@}
 
-  private:
-    std::string symbol_ = ""; //!< chemical symbol
-    int itype_ = 0;           //!< element index in calculation
-    int l_ = -1;              //!< angular momentum
-    int izeta_ = 0;           //!< further index for NumericalRadial objects with the same itype_and l_
+private:
+    std::string symbol_ = "";   ///< chemical symbol
+    int itype_ = 0;             ///< element index in calculation
+    int l_ = -1;                ///< angular momentum
+    int izeta_ = 0;             ///< further index for NumericalRadial objects with the same itype_and l_
 
-    int nr_ = 0; //!< number of r-space grid points
-    int nk_ = 0; //!< number of k-space grid points
+    int nr_ = 0;                ///< number of r-space grid points
+    int nk_ = 0;                ///< number of k-space grid points
 
-    double* rgrid_ = nullptr; //!< r-space grid
-    double* kgrid_ = nullptr; //!< k-space grid
+    double* rgrid_ = nullptr;   ///< r-space grid
+    double* kgrid_ = nullptr;   ///< k-space grid
 
-    //! A flag that tells whether the r & k grids are FFT-compliant.
-    /*!
-     *  r & k grids are considered FFT-compliant if they
-     *  1. have the same number of grid points;
-     *  2. are both uniform;
-     *  3. both starts from 0;
-     *  4. satisfy dr*dk = pi/(N-1) where N >= 2 is the number of each grid points
-     *                                                                              */
+    double* rvalue_ = nullptr;  ///< r-space value
+    double* kvalue_ = nullptr;  ///< k-space value
+
+    /**
+     * @brief A flag that tells whether the r & k grids are FFT-compliant.
+     *
+     * r & k grids are considered FFT-compliant if they
+     * -# have the same number of grid points;
+     * -# are both uniform;
+     * -# both starts from 0;
+     * -# satisfy dr*dk = pi/(N-1) where N >= 2 is the number of each grid points.
+     *
+     * If the grids are FFT-compliant, spherical Bessel transforms are performed
+     * with an FFT-based algorithm. Otherwise, the transforms are performed with
+     * numerical integration (Simpson's rule).
+     */
     bool is_fft_compliant_ = false;
 
-    double* rvalue_ = nullptr; //!< r-space value
-    double* kvalue_ = nullptr; //!< k-space value
-
-    /*!
-     *  @name Exponents of the implicit power terms
+    /**
+     * @name Implicit exponents in values
      *
-     *  Sometimes a radial function is given in the form of pow(r,p) * F(r) rather
-     *  than F(r) (same applies to k). For example, the Kleinman-Bylander beta
-     *  functions are often given as r*beta(r) instead of bare beta(r). Very often
-     *  r*beta(r) is adequate; bare beta(r) is not necessary at all.
+     * Sometimes a radial function is given in the form of pow(r,p) * F(r) rather
+     * than F(r) (same applies to k). For example, the Kleinman-Bylander beta
+     * functions are often given as r*beta(r) instead of bare beta(r). Very often
+     * using r*beta(r) is adequate; there's no need to get bare beta(r) at all.
      *
-     *  This class takes care of this situation. When building the object, one can
-     *  optionally provide an exponent p so that the values are interpreted as
-     *  pow(r[i],p) * F(r[i]). pr_ & pk_ keep track of these exponents within r & k
-     *  values. They are automatically taken account during spherical Bessel
-     *  transforms.
-     *                                                                              */
+     * This class takes care of this situation. When building the object, one can
+     * optionally provide an exponent p so that the input values are interpreted as
+     * pow(x[i],p) * F(x[i]), where F(x) is what the object actually represents.
+     * pr_ & pk_ keep track of these exponents within r & k values. They are taken
+     * taken account automatically during spherical Bessel transforms.
+     */
     ///@{
-    /*!
-     *  This parameter affects how this class interprets rvalues_. Specifically,
-     *  rvalues_[ir] is interpreted as pow(rgrid_[ir], pr_) * F(rgrid_[ir])
-     *  during spherical Bessel transforms.
-     *                                                                              */
-    int pr_ = 0; //!< exponent of the implicit power term in rvalues_
+    /**
+     * This parameter affects how this class interprets rvalues_. Specifically,
+     * rvalues_[ir] is interpreted as pow(rgrid_[ir], pr_) * F(rgrid_[ir])
+     * during spherical Bessel transforms.
+     */
+    int pr_ = 0; ///< implicit exponent in rvalues_
 
-    /*!
-     *  This parameter affects how this class interprets kvalues_. Specifically,
-     *  kvalues_[ik] is interpreted as pow(kgrid_[ik], pk_) * F(kgrid_[ik])
-     *  during spherical Bessel transforms.
-     *                                                                              */
-    int pk_ = 0; //!< exponent of the implicit power term in kvalues_
+    /**
+     * This parameter affects how this class interprets kvalues_. Specifically,
+     * kvalues_[ik] is interpreted as pow(kgrid_[ik], pk_) * F(kgrid_[ik])
+     * during spherical Bessel transforms.
+     */
+    int pk_ = 0; ///< implicit exponent in kvalues_
     ///@}
 
-    //! Pointer to the object that provides spherical Bessel transforms
-    /*!
-     *  @see set_transformer
-     *                                                                              */
-    ModuleBase::SphericalBesselTransformer* sbt_;
+    /// An object that provides spherical Bessel transforms
+    ModuleBase::SphericalBesselTransformer sbt_{nullptr};
 
-    //! A flag that marks the ownership of sbt_
-    bool use_internal_transformer_;
-
-    //! Transforms the r-space values to get k-space values, or vice versa.
-    /*!
-     *  The grid & values where the transform is initiated must exist; this function
-     *  does nothing if grid in the destination space does not exist.
+    /**
+     * @brief Transforms the r-space values to get k-space values, or vice versa.
      *
-     *  forward : r to k
-     *  backward: k to r
-     *                                                                              */
+     * The grid & values where the transform is initiated must exist; this function
+     * does nothing if grid in the destination space does not exist.
+     *
+     * forward : r to k
+     * backward: k to r
+     */
     void transform(const bool forward);
 
-    //! Checks whether the given two grids are FFT-compliant
-    /*!
-     *  @see is_fft_compliant
-     *                                                                              */
+    /**
+     * @brief Checks whether the given two grids are FFT-compliant.
+     *
+     * @see is_fft_compliant_
+     */
     bool is_fft_compliant(const int nr, const double* const rgrid, const int nk, const double* const kgrid) const;
 };
 

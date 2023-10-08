@@ -33,8 +33,10 @@ void TwoCenterIntegrator::calculate(const int itype1,
                                     double* out,
                                     double* grad_out) const
 {
+#ifdef __DEBUG
     assert( is_tabulated_ );
     assert( out || grad_out );
+#endif
 
     if (out) *out = 0.0;
     if (grad_out) std::fill(grad_out, grad_out + 3, 0.0);
@@ -98,7 +100,9 @@ void TwoCenterIntegrator::snap(const int itype1,
                                const bool deriv,
                                std::vector<std::vector<double>>& out) const
 {
+#ifdef __DEBUG
     assert( is_tabulated_ );
+#endif
 
     out.resize(deriv ? 4 : 1);
 

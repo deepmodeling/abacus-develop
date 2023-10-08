@@ -12,7 +12,7 @@
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell.h"
-#include "module_cell/pseudo_nc.h"
+#include "module_cell/pseudo.h"
 #include "module_cell/setup_nonlocal.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_cell/parallel_kpoints.h"
@@ -21,8 +21,8 @@
 
 bool berryphase::berry_phase_flag=0;
 
-pseudo_nc::pseudo_nc(){}
-pseudo_nc::~pseudo_nc(){}
+pseudo::pseudo(){}
+pseudo::~pseudo(){}
 Atom::Atom(){}
 Atom::~Atom(){}
 Atom_pseudo::Atom_pseudo(){}

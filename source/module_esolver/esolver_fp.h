@@ -15,6 +15,7 @@ namespace ModuleESolver
     {
     public:
         ModulePW::PW_Basis* pw_rho;
+        ModulePW::PW_Basis* pw_rhos;    ///< smooth grid for smooth part of the charge density (for uspp)
         ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
         ESolver_FP();
         virtual ~ESolver_FP();

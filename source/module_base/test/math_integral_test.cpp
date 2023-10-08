@@ -19,8 +19,27 @@
  *  - function Simpson_Integral with dr as input
  *  - function Simpson_Integral_0toall
  *  - function Simpson_Integral_alltoinf
- * 
+ *  - function Simpson_Integral with f(x) = sin(x)
+ *  - function Simpson_Integral with f(x) = 1 / (1 + x^2)
+ *  - function Simpson_Integral with f(x) = exp(x)
  */
+
+// generate irregular grid with sinx
+void sinspace(double start, double end, const int nums, double* xv, double* h){
+    double astart = asin(start);
+    double aend = asin(end);
+    double step = (aend - astart) / (nums - 1);
+
+    for(int i = 0; i < nums; ++i){
+        h[i] = sin(astart + i * step);
+    }
+    // calculate the difference
+    xv[0] = start;
+    for(int i = 0; i< nums - 1; ++i){
+        h[i] = h[i+1] - h[i];
+        xv[i+1] = xv[i] + h[i]; 
+    }
+}
 
 class SimpsonIntegralSinx : public testing::Test
 {
@@ -297,4 +316,101 @@ TEST_F(SimpsonIntegralSinx, ThreePoints)
     
     ref = I(x[2]) - I(x[0]);
     EXPECT_DOUBLE_EQ(ref, ModuleBase::Integral::simpson(3, y, x[1]-x[0]));
+}
+
+class SimpsonIntegralITF : public testing::Test{
+
+};
+
+TEST_F(SimpsonIntegralITF, UniformGridOdd)
+{
+    double start = -1.0, end = 1.0;
+    const int ngrid_max = 10000;
+    double *f = new double[ngrid_max];
+    int ind = 0;
+    for (int ngrid = 3; ngrid <= ngrid_max; ngrid += 2) {
+        const double dx = (end - start) / (ngrid - 1);
+        for (int i = 0; i < ngrid; ++i) {
+            double x = start + i * dx;
+            f[i] = 1.0 / (1.0 + x * x);
+        }
+        
+        double tol = (end-start) * std::pow(dx, 4) * 24 / 180;
+        EXPECT_NEAR(std::atan(end) - std::atan(start), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
+    }
+    delete[] f;
+}
+
+TEST_F(SimpsonIntegralITF, SinGridOdd)
+{
+    double start = -1.0, end = 1.0;
+    const int ngrid_max = 10000;
+    double *xv = new double[ngrid_max];
+    double *h = new double[ngrid_max];
+    double *f = new double[ngrid_max];
+
+    for (int ngrid = 3; ngrid <= ngrid_max; ngrid += 2) {
+        sinspace(start, end, ngrid, xv, h);
+        for (int i = 0; i < ngrid; ++i) {
+            f[i] = 1.0 / (1.0 + xv[i] * xv[i]);
+        }
+        
+        // crude estimate for irregular-grid error bound
+        double dx = h[ngrid / 2];
+        double tol = (end-start) * std::pow(dx, 4);
+        EXPECT_NEAR(std::atan(end) - std::atan(start), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
+    }
+    
+    delete[] xv;
+    delete[] h;
+    delete[] f;
+}
+
+class SimpsonIntegralExp : public testing::Test{
+
+};
+
+TEST_F(SimpsonIntegralExp, UniformGridOdd)
+{
+    double start = 0.0, end = 1.0;
+    const int ngrid_max = 10000;
+    double *f = new double[ngrid_max];
+    double *errs = new double[ngrid_max];
+
+    for (int ngrid = 3; ngrid <= ngrid_max; ngrid += 2) {
+        const double dx = (end - start) / (ngrid - 1);
+        for (int i = 0; i < ngrid; ++i) {
+            double x = start + i * dx;
+            f[i] = std::exp(x);
+        }
+        
+        double tol = (end-start) * std::exp(1) * std::pow(dx, 4) / 180;
+        EXPECT_NEAR(std::exp(end) - std::exp(start), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
+    }
+    delete[] f;
+}
+
+TEST_F(SimpsonIntegralExp, SinGridOdd)
+{
+    double start = 0.0, end = 1.0;
+    const int ngrid_max = 10000;
+    double *xv = new double[ngrid_max];
+    double *h = new double[ngrid_max];
+    double *f = new double[ngrid_max];
+
+   // skip ngrid = 3 since the errors exceeds the threshold
+    for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
+        sinspace(start, end, ngrid, xv, h);
+        for (int i = 0; i < ngrid; ++i) {
+            f[i] = std::exp(xv[i]);
+        }
+
+        double dx = h[ngrid / 2];
+        double tol = (end-start) * std::pow(dx, 4);
+        EXPECT_NEAR(std::exp(end) - std::exp(start), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
+    }
+    
+    delete[] xv;
+    delete[] h;
+    delete[] f;
 }

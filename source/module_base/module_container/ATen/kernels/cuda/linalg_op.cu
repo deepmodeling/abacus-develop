@@ -154,7 +154,7 @@ static std::vector<T> compute_stride(const std::vector<T>& shape) {
 
 template <typename T, bool Conjugate>
 struct transpose_op<T, DEVICE_GPU, Conjugate> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator()(
         const Tensor& input,
         const std::vector<int>& perm,
@@ -188,7 +188,7 @@ struct transpose_op<T, DEVICE_GPU, Conjugate> {
 
 template <typename T>
 struct stride_op<T, DEVICE_GPU> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator()(
         const Tensor& input,
         const TensorShape& stride,
@@ -221,7 +221,7 @@ struct stride_op<T, DEVICE_GPU> {
 
 template <typename T>
 struct inflate_op<T, DEVICE_GPU> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator()(
         const Tensor& input,
         const TensorShape& stride,
@@ -254,7 +254,7 @@ struct inflate_op<T, DEVICE_GPU> {
 
 template <typename T>
 struct reduce_op<T, DEVICE_GPU> {
-    using Type = typename PossibleStdComplexToThrustComplex<T>::type;
+    using Type = typename GetTypeThrust<T>::type;
     void operator()(
         const Tensor& input,
         const int64_t& inner_most_dim,

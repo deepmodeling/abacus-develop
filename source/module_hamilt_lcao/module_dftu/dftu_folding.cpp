@@ -2,6 +2,9 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 namespace ModuleDFTU
 {
@@ -207,18 +210,7 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                                 iic = mu * this->LM->ParaV->ncol + nu;
                             }
 
-                            if (dim1 == 0)
-                            {
-                                if (GlobalV::NSPIN != 4)
-                                {
-                                    mat_k[iic] += this->LM->SlocR[nnr] * kphase;
-                                }
-                                else
-                                {
-                                    mat_k[iic] += this->LM->SlocR_soc[nnr] * kphase;
-                                }
-                            }
-                            else if (dim1 <= 3)
+                            if (dim1 <= 3)
                             {
                                 mat_k[iic] += mat_ptr[nnr] * kphase;
                             }
@@ -239,4 +231,37 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
 
     return;
 }
+
+void DFTU::folding_matrix_k_new(const int ik,
+    hamilt::Hamilt<std::complex<double>>* p_ham)
+{
+    ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
+    ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");
+
+    int hk_type = 0;
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    {
+        hk_type = 1;
+    }
+
+    // get SR and fold to mat_k
+    if(GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, this->LM, hk_type);
+    }
+    else
+    {
+        if(GlobalV::NSPIN != 4)
+        {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, this->LM, hk_type);
+        }
+        else
+        {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, this->LM, hk_type);
+        }
+    }
+}
+
+    
+
 } // namespace ModuleDFTU
