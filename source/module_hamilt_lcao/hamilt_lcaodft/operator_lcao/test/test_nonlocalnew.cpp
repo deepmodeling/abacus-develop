@@ -57,8 +57,8 @@ class NonlocalNewTest : public ::testing::Test
             ucell.atoms[0].iw2m[iw] = 0;
             ucell.atoms[0].iw2n[iw] = 0;
         }
-        ucell.atoms[0].ncpp.dion.create(5, 5);
-        ucell.atoms[0].ncpp.dion.zero_out();
+        ucell.atoms[0].ncpp.d_real.create(5, 5);
+        ucell.atoms[0].ncpp.d_real.zero_out();
         ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
         ucell.atoms[0].ncpp.d_so.zero_out();
         ucell.atoms[0].ncpp.non_zero_count_soc[0] = 5;
@@ -71,7 +71,7 @@ class NonlocalNewTest : public ::testing::Test
         ucell.atoms[0].ncpp.index2_soc[3] = new int[5];
         for(int i = 0; i < 5; ++i)
         {
-            ucell.atoms[0].ncpp.dion(i, i) = 1.0;
+            ucell.atoms[0].ncpp.d_real(i, i) = 1.0;
             ucell.atoms[0].ncpp.d_so(0, i, i) = std::complex<double>(2.0, 0.0);
             ucell.atoms[0].ncpp.d_so(3, i, i) = std::complex<double>(2.0, 0.0);
             ucell.atoms[0].ncpp.index1_soc[0][i] = i;
@@ -143,11 +143,11 @@ TEST_F(NonlocalNewTest, constructHRd2d)
     EXPECT_EQ(ucell.infoNL.Beta[0].get_rcut_max(), 1.0);
     EXPECT_EQ(LCAO_Orbitals::get_const_instance().Phi[0].getRcut(), 1.0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    hamilt::NonlocalNew<hamilt::OperatorLCAO<double>, double> op(
+    hamilt::NonlocalNew<hamilt::OperatorLCAO<double, double>> op(
         nullptr, 
         kvec_d_in, 
         HR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV
@@ -211,11 +211,11 @@ TEST_F(NonlocalNewTest, constructHRd2cd)
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
     std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
     Grid_Driver gd(0,0,0);
-    hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>>, double> op(
+    hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, double>> op(
         nullptr, 
         kvec_d_in, 
         HR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV

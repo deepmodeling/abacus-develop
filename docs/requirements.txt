@@ -1,4 +1,4 @@
-urllib3 == 1.26.15
+urllib3
 myst_parser[linkify]
 sphinx_rtd_theme
-deepmodeling_sphinx >= 0.1.2
+deepmodeling_sphinx

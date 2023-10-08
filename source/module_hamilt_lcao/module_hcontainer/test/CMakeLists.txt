@@ -22,10 +22,24 @@ AddTest(
 )
 
 AddTest(
-  TARGET func_folding_test
+  TARGET hcontainer_folding_test
   LIBS ${math_libs} psi base device
   SOURCES test_func_folding.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
   ../func_folding.cpp ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+)
+
+AddTest(
+  TARGET hcontainer_transfer_test
+  LIBS ${math_libs} psi base device
+  SOURCES test_transfer.cpp ../func_transfer.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
+  ../transfer.cpp ../../../module_basis/module_ao/parallel_2d.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+)
+
+install(FILES parallel_hcontainer_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME hontainer_para_test
+      COMMAND ${BASH} parallel_hcontainer_tests.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(

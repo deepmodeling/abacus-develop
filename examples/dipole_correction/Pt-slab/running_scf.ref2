@@ -1,13 +1,15 @@
                                                                                      
-                             WELCOME TO ABACUS                                       
-                                                                                     
-               'Atomic-orbital Based Ab-initio Computation at UStc'                  
-                                                                                     
+                              ABACUS v3.3.4
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
                      Website: http://abacus.ustc.edu.cn/                             
-                                                                                     
-    Version: Parallel, in development
-    Processor Number is 16
-    Start Time is Sun Sep 25 10:10:23 2022
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: e0530a7ae (Tue Sep 19 10:10:45 2023 +0800)
+
+    Start Time is Sat Oct  7 10:49:39 2023
                                                                                      
  ------------------------------------------------------------------------------------
 
@@ -16,9 +18,8 @@
                            global_in_card = INPUT
                                pseudo_dir = 
                               orbital_dir = 
-                              pseudo_type = auto
                                     DRANK = 1
-                                    DSIZE = 16
+                                    DSIZE = 8
                                    DCOLOR = 1
                                     GRANK = 1
                                     GSIZE = 1
@@ -46,61 +47,45 @@
 
  READING UNITCELL INFORMATION
                                     ntype = 1
-                 atom label for species 1 = Pt
-                  lattice constant (Bohr) = 1.88973
-              lattice constant (Angstrom) = 1
+                  lattice constant (Bohr) = 1.88972
+              lattice constant (Angstrom) = 0.999994
 
  READING ATOM TYPE 1
                                atom label = Pt
                       L=0, number of zeta = 1
                       L=1, number of zeta = 1
                       L=2, number of zeta = 1
-             number of atom for this type = 27
+             number of atom for this type = 12
 
-                        TOTAL ATOM NUMBER = 27
+                        TOTAL ATOM NUMBER = 12
 
- CARTESIAN COORDINATES ( UNIT = 1.88973 Bohr ).
+ CARTESIAN COORDINATES ( UNIT = 1.88972 Bohr ).
          atom                   x                   y                   z                 mag                  vx                  vy                  vz
-     tauc_Pt1                   0                   0       3.28805224601                   0                   0                   0                   0
-     tauc_Pt2         1.405985941      0.811746361996       1.64352612299                   0                   0                   0                   0
-     tauc_Pt3  -3.43847172957e-12       1.62349272299                   0                   0                   0                   0                   0
-     tauc_Pt4         2.811971882                   0       3.28705224602                   0                   0                   0                   0
-     tauc_Pt5         4.218042047      0.811746361996       1.64352612299                   0                   0                   0                   0
-     tauc_Pt6         2.811971882       1.62349272299                   0                   0                   0                   0                   0
-     tauc_Pt7       5.62402823901                   0       3.28705224602                   0                   0                   0                   0
-     tauc_Pt8       7.03001418101      0.811746361996       1.64352612299                   0                   0                   0                   0
-     tauc_Pt9       5.62402798801       1.62349272299                   0                   0                   0                   0                   0
-    tauc_Pt10      -1.40598594101         2.435239085       3.28705224602                   0                   0                   0                   0
-    tauc_Pt11   7.95585819446e-13         3.246985446       1.64352612299                   0                   0                   0                   0
-    tauc_Pt12        -1.406028053         4.058804748                   0                   0                   0                   0                   0
-    tauc_Pt13       1.40598594099         2.435239085       3.28705224602                   0                   0                   0                   0
-    tauc_Pt14       2.81205610599         3.246985446       1.64352612299                   0                   0                   0                   0
-    tauc_Pt15          1.40594383         4.058804748                   0                   0                   0                   0                   0
-    tauc_Pt16         4.218042298         2.435239085       3.28705224602                   0                   0                   0                   0
-    tauc_Pt17       5.62402823899         3.246985446       1.64352612299                   0                   0                   0                   0
-    tauc_Pt18       4.21799993501         4.058804748                   0                   0                   0                   0                   0
-    tauc_Pt19        5.6239857503         4.870551327       3.28705224602                   0                   0                   0                   0
-    tauc_Pt20        -1.406028053       5.68229747101       1.64352612299                   0                   0                   0                   0
-    tauc_Pt21         -2.81201412          6.49404405                   0                   0                   0                   0                   0
-    tauc_Pt22  -4.22369999113e-05         4.870551327       3.28705224602                   0                   0                   0                   0
-    tauc_Pt23         1.406028053       5.68229747101       1.64352612299                   0                   0                   0                   0
-    tauc_Pt24  -4.22370033495e-05          6.49404405                   0                   0                   0                   0                   0
-    tauc_Pt25       2.81201411999         4.870551327       3.28705224602                   0                   0                   0                   0
-    tauc_Pt26       4.21800018699       5.68229747101       1.64352612299                   0                   0                   0                   0
-    tauc_Pt27       2.81201386799          6.49404405                   0                   0                   0                   0                   0
+     tauc_Pt1                   5                   0                   0                   0                   0                   0                   0
+     tauc_Pt2                   5           2.7742217                   0                   0                   0                   0                   0
+     tauc_Pt3                   5      -1.38711080001           2.4025464                   0                   0                   0                   0
+     tauc_Pt4                   5            1.387111           2.4025461                   0                   0                   0                   0
+     tauc_Pt5       7.26514239999           2.7742215           1.6016975                   0                   0                   0                   0
+     tauc_Pt6       7.26514239999   5.04629671383e-12           1.6016975                   0                   0                   0                   0
+     tauc_Pt7       7.26514239999           1.3871107            4.004244                   0                   0                   0                   0
+     tauc_Pt8       7.26514239999          -1.3871108            4.004244                   0                   0                   0                   0
+     tauc_Pt9       9.53028479998                   0           3.2033951                   0                   0                   0                   0
+    tauc_Pt10       9.53028479998           2.7742217           3.2033951                   0                   0                   0                   0
+    tauc_Pt11       9.53028479998           1.3871108           0.8008486                   0                   0                   0                   0
+    tauc_Pt12       9.53028479998           4.1613325           0.8008486                   0                   0                   0                   0
 
 
-                          Volume (Bohr^3) = 10477.6263259
-                             Volume (A^3) = 1552.62217762
+                          Volume (Bohr^3) = 3598.25582199
+                             Volume (A^3) = 533.205863258
 
  Lattice vectors: (Cartesian coordinate: in unit of a_0)
-        +8.4359998703                  +0                  +0
-        -4.2179999352        +7.305790194                  +0
-                   +0                  +0      +25.1919994354
+                  +20                  +0                  +0
+                   +0            +5.54844                  +0
+                   +0            -2.77422            +4.80509
  Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)
-      +0.118539594046    +0.0684388665331                  -0
-                   +0     +0.136877733065                  -0
-                   +0                  -0    +0.0396951422043
+                +0.05                  -0                  -0
+                   -0     +0.180230839659     +0.104056323607
+                   +0                  -0     +0.208112647214
 
 
 
@@ -142,12 +127,13 @@
                            L of projector = 3
                            L of projector = 3
      initial pseudo atomic orbital number = 0
-                                   NLOCAL = 243
+                                   NLOCAL = 108
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- Warning: number valence electrons > 10 for Pt: [Xe] 4f14 5d9 6s1
- Please make sure the pseudopential file is what you need
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 10 for Pt: [Xe] 4f14 5d9 6s1
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                   
 
 
@@ -170,46 +156,37 @@
 
  SETUP THE PLANE WAVE BASIS
  energy cutoff for charge/potential (unit:Ry) = 240
-          [fft grid for charge/potential] = 80, 80, 240
-                      [fft grid division] = 1, 1, 1
-      [big fft grid for charge/potential] = 80, 80, 240
-                                     nbxx = 96000
-                                     nrxx = 96000
+            fft grid for charge/potential = [ 192, 54, 54 ]
+                        fft grid division = [ 1, 1, 1 ]
+        big fft grid for charge/potential = [ 192, 54, 54 ]
+                                     nbxx = 72576
+                                     nrxx = 72576
 
  SETUP PLANE WAVES FOR CHARGE/POTENTIAL
-                    number of plane waves = 657685
-                         number of sticks = 4195
+                    number of plane waves = 225979
+                         number of sticks = 7557
 
  PARALLEL PW FOR CHARGE/POTENTIAL
      PROC   COLUMNS(POT)             PW
-        1            262          41106
-        2            262          41106
-        3            263          41111
-        4            263          41111
-        5            263          41111
-        6            262          41108
-        7            262          41104
-        8            262          41104
-        9            262          41102
-       10            262          41102
-       11            262          41102
-       12            262          41104
-       13            262          41104
-       14            262          41104
-       15            262          41104
-       16            262          41102
+        1            945          28248
+        2            945          28248
+        3            945          28248
+        4            944          28247
+        5            944          28247
+        6            945          28247
+        7            945          28247
+        8            944          28247
  --------------- sum -------------------
-       16           4195         657685
-                            number of |g| = 15452
-                                  max |g| = 21.7092295846
-                                  min |g| = 0.0749420552356
+        8           7557         225979
+                            number of |g| = 10211
+                                  max |g| = 21.7064383323
+                                  min |g| = 0.0025
 
  SETUP THE ELECTRONS NUMBER
             electron number of element Pt = 18
-      total electron number of element Pt = 486
-                           occupied bands = 243
-                                   NBANDS = 291
- DONE : SETUP UNITCELL Time : 0.0626181661653 (SEC)
+      total electron number of element Pt = 216
+            AUTOSET number of electrons:  = 216
+ DONE : SETUP UNITCELL Time : 0.0279294838892 (SEC)
 
 
 
@@ -248,7 +225,7 @@
 
   KPOINTS            DIRECT_X            DIRECT_Y            DIRECT_Z              WEIGHT
         1                   0                   0                   0                   2
- DONE : INIT K-POINTS Time : 0.0629154803427 (SEC)
+ DONE : INIT K-POINTS Time : 0.0282481621125 (SEC)
 
 
 
@@ -271,35 +248,29 @@
 
  SETUP PLANE WAVES FOR WAVE FUNCTIONS
      energy cutoff for wavefunc (unit:Ry) = 60
-            [fft grid for wave functions] = 80, 80, 240
-                    number of plane waves = 82245
-                         number of sticks = 1045
+              fft grid for wave functions = [ 192, 54, 54 ]
+                    number of plane waves = 28191
+                         number of sticks = 1885
 
  PARALLEL PW FOR WAVE FUNCTIONS
      PROC   COLUMNS(POT)             PW
-        1             65           5139
-        2             65           5139
-        3             65           5139
-        4             65           5139
-        5             65           5139
-        6             65           5139
-        7             65           5139
-        8             65           5143
-        9             65           5143
-       10             65           5143
-       11             65           5139
-       12             65           5139
-       13             65           5139
-       14             68           5142
-       15             66           5142
-       16             66           5142
+        1            235           3524
+        2            235           3524
+        3            236           3524
+        4            236           3524
+        5            236           3524
+        6            236           3524
+        7            236           3524
+        8            235           3523
  --------------- sum -------------------
-       16           1045          82245
- DONE : INIT PLANEWAVE Time : 0.0744120962803 (SEC)
+        8           1885          28191
+ DONE : INIT PLANEWAVE Time : 0.0339779810711 (SEC)
 
- DONE : INIT CHARGE Time : 0.0937088444976 (SEC)
+                           occupied bands = 108
+                                   NBANDS = 130
+                                     npwx = 3524
 
-                                     npwx = 5139
+ Warning_Memory_Consuming allocated:  Psi_PW 6.99035644531 MB
 
  SETUP NONLOCAL PSEUDOPOTENTIALS IN PLANE WAVE BASIS
  Pt non-local projectors:
@@ -311,26 +282,15 @@
  projector 6 L=2
  projector 7 L=3
  projector 8 L=3
-      TOTAL NUMBER OF NONLOCAL PROJECTORS = 864
- DONE : LOCAL POTENTIAL Time : 0.27646168272 (SEC)
+      TOTAL NUMBER OF NONLOCAL PROJECTORS = 384
+
+ Warning_Memory_Consuming allocated:  VNL::vkb 10.32421875 MB
+ DONE : LOCAL POTENTIAL Time : 0.12226707901 (SEC)
 
 
  Init Non-Local PseudoPotential table : 
  Init Non-Local-Pseudopotential done.
- DONE : NON-LOCAL POTENTIAL Time : 0.305757151783 (SEC)
-
-                                 init_chg = atomic
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90155
-                     Ion dipole (Ry a.u.) = -7.90172
-                   Total dipole (Ry a.u.) = -0.000165965
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.442675
-                      Total length (Bohr) = 42.8454
- DONE : INIT POTENTIAL Time : 0.527319 (SEC)
+ DONE : NON-LOCAL POTENTIAL Time : 0.173561732397 (SEC)
 
 
  Make real space PAO into reciprocal space.
@@ -339,1714 +299,999 @@
                                     max q = 934
 
  number of pseudo atomic orbitals for Pt is 0
- DONE : INIT BASIS Time : 0.528411 (SEC)
+ DONE : INIT BASIS Time : 0.173835881656 (SEC)
 
 
  -------------------------------------------
  SELF-CONSISTENT
  -------------------------------------------
+                                 init_chg = atomic
+
+
+ Adding external electric field: 
+         Computed dipole along efield_dir = 2
+                   Elec. dipole (Ry a.u.) = -0.00101274
+                     Ion dipole (Ry a.u.) = 0.0761034
+                   Total dipole (Ry a.u.) = 0.0771162
+            Amplitute of Efield (Hartree) = 0.005
+                 Potential amplitute (Ry) = -1.36105
+                      Total length (Bohr) = 9.43648
+ DONE : INIT SCF Time : 0.284393 (SEC)
+
 
  PW ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
- Notice: Threshold on eigenvalues was too large.
- hsover_error=4.86 > DRHO=2.73541
- Origin diag_ethr = 0.01
- New    diag_ethr = 0.000562842
+
+ Warning_Memory_Consuming allocated:  DiagSub::hpsi 6.99036 MB
+
+ Warning_Memory_Consuming allocated:  DiagSub::evctemp 6.99036 MB
+Average iterative diagonalization steps: 15.1846 ; where current threshold is: 0.01 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.91364
-                     Ion dipole (Ry a.u.) = -7.90172
-                   Total dipole (Ry a.u.) = 0.0119239
+                   Elec. dipole (Ry a.u.) = 0.0310486
+                     Ion dipole (Ry a.u.) = 0.0761034
+                   Total dipole (Ry a.u.) = 0.0450548
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = -0.593314
-                      Total length (Bohr) = 42.8454
+                 Potential amplitute (Ry) = -0.755953
+                      Total length (Bohr) = 9.43648
 
- Density error is 4.56509181171
-                          Error Threshold = 0.000562841524829
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6543.68481188                -89031.3993577
-     E_Harris                -6546.88843928                -89074.9869446
-      E_Fermi               -0.041571630508               -0.565611050059
+ Density error is 36.987244351
+                          Error Threshold = 0.01
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2901.2285918215    -39473.2400492892
+E_Harris       -2913.3959541148    -39638.7855061080
+E_Fermi            0.4354094655         5.9240496941
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   2--------------------------------
+Average iterative diagonalization steps: 2.86153846154 ; where current threshold is: 0.01 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87886077277
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0228556283908
+                   Elec. dipole (Ry a.u.) = 0.0324122947289
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0436911378649
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 2.38696987985
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.730216163519
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 975.144386625
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6444.8649409                -87686.8860367
-     E_Harris                -6566.71541438                  -89344.74678
-      E_Fermi               +0.570422300132                +7.76099354806
+ Density error is 16.1333084936
+                          Error Threshold = 0.01
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2907.2084490705    -39554.6001811022
+E_Harris       -2928.9383631916    -39850.2508301986
+E_Fermi            0.3303195920         4.4942286128
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   3--------------------------------
+Average iterative diagonalization steps: 2.08461538462 ; where current threshold is: 0.00746912430257 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87636814571
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0253482554501
+                   Elec. dipole (Ry a.u.) = 0.032532302788
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0435711298058
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 2.60056497915
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.727951256635
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 351.274567759
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6547.90847536                -89088.8652473
-     E_Harris                -6560.15803412                -89255.5290446
-      E_Fermi               -0.735288219939                -10.0041094634
+ Density error is 39.5910591983
+                          Error Threshold = 0.00746912430257
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2907.2030576200    -39554.5268266549
+E_Harris       -3071.3404293165    -41787.7303364713
+E_Fermi            0.3039922743         4.1360270787
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   4--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.00746912430257 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.85775168459
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0439647165672
+                   Elec. dipole (Ry a.u.) = 0.0322020520523
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0439013805416
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 4.19582362248
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.734184064419
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 81.0480406715
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6559.10859478                -89241.2506898
-     E_Harris                -6552.28755199                -89148.4456415
-      E_Fermi                -1.14875400283                -15.6296000388
+ Density error is 26.1269272285
+                          Error Threshold = 0.00746912430257
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2907.9629820761    -39564.8661293074
+E_Harris       -2772.3667701094    -37719.9850193445
+E_Fermi            0.2863141195         3.8955034424
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   5--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.00746912430257 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.85351992663
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0481964745284
+                   Elec. dipole (Ry a.u.) = 0.0323308472585
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0437725853354
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 4.55844616505
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.731753318089
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 178.700357988
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6559.57071248                -89247.5381236
-     E_Harris                -6560.26587823                -89256.9963389
-      E_Fermi                -1.90694227811                -25.9452807393
+ Density error is 6.68763484154
+                          Error Threshold = 0.00746912430257
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.8309383051    -39576.6752796355
+E_Harris       -2823.3209196222    -38413.2517894616
+E_Fermi            0.3052709976         4.1534250014
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   6--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.00309612724145 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.85059571634
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0511206848144
+                   Elec. dipole (Ry a.u.) = 0.0344023357078
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.041701096886
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 4.8090239577
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.692658206606
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 153.50033969
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6557.66955494                -89221.6715483
-     E_Harris                 -6560.0636557                -89254.2449602
-      E_Fermi                -2.15015916559                 -29.254416259
+ Density error is 6.08628880859
+                          Error Threshold = 0.00309612724145
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4195013656    -39571.0773928912
+E_Harris       -2912.1384223835    -39621.6759091458
+E_Fermi            0.3056905282         4.1591330088
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   7--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.00281772630028 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.84653644967
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0551799514917
+                   Elec. dipole (Ry a.u.) = 0.0372106636741
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0388927689197
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 5.15686559162
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.63965675494
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 93.2132470132
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6555.24842523                -89188.7303886
-     E_Harris                -6558.32306633                -89230.5630269
-      E_Fermi                 -2.3859906646                -32.4630684133
+ Density error is 1.11156514938
+                          Error Threshold = 0.00281772630028
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4737559964    -39571.8155650134
+E_Harris       -2919.3615930737    -39719.9521881595
+E_Fermi            0.3074981572         4.1837270631
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   8--------------------------------
+Average iterative diagonalization steps: 2.13076923077 ; where current threshold is: 0.000514613495083 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.84573340931
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0559829918534
+                   Elec. dipole (Ry a.u.) = 0.0384834567269
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0376199758669
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 5.225678728
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.615635386966
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 25.563063847
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6556.42529896                -89204.7425773
-     E_Harris                -6556.98637792                -89212.3764481
-      E_Fermi                -2.78328141545                -37.8684863876
+ Density error is 0.867796646868
+                          Error Threshold = 0.000514613495083
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4674706693    -39571.7300487506
+E_Harris       -2872.7097936973    -39085.2218946873
+E_Fermi            0.3249458645         4.4211152991
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=   9--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.000401757706884 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.84918668276
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0525297184025
+                   Elec. dipole (Ry a.u.) = 0.0389449809461
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0371584516477
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 4.92976511233
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.606925060433
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 13.3387210032
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6555.73752752                -89195.3849667
-     E_Harris                -6556.91365883                -89211.3870541
-      E_Fermi                -2.88948461262                -39.3134550149
+ Density error is 2.00811430552
+                          Error Threshold = 0.000401757706884
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4663674762    -39571.7150390380
+E_Harris       -2889.9037905600    -39319.1582234139
+E_Fermi            0.3323869660         4.5223566792
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  10--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.000401757706884 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.91290095562
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.0111845544656
+                   Elec. dipole (Ry a.u.) = 0.0389267255549
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.037176707039
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = -0.529959153054
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.607269593639
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 11.3204531519
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6542.21925669                -89011.4594563
-     E_Harris                -6555.82625144                -89196.5921175
-      E_Fermi                -2.71947592381                -37.0003681376
+ Density error is 0.488719121095
+                          Error Threshold = 0.000401757706884
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4334648356    -39571.2673756470
+E_Harris       -2909.6917841887    -39588.3876887523
+E_Fermi            0.3266875282         4.4448118489
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  11--------------------------------
+Average iterative diagonalization steps: 2.03076923077 ; where current threshold is: 0.000226258852359 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.86641139631
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0353050048468
+                   Elec. dipole (Ry a.u.) = 0.0390846244045
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0370188081894
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 3.4537663709
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.604289575513
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 1389.48959512
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6451.30040751                -87774.4450518
-     E_Harris                -6579.01087315                -89512.0350788
-      E_Fermi               +0.441321388278                +6.00448552985
+ Density error is 1.86185561607
+                          Error Threshold = 0.000226258852359
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4592388470    -39571.6180490626
+E_Harris       -2886.0665893804    -39266.9504229999
+E_Fermi            0.3201118005         4.3553444834
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  12--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.000226258852359 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.86999981574
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0317165854171
+                   Elec. dipole (Ry a.u.) = 0.0393484506416
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367549819522
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 3.14627199401
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.599310394404
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 11.1749722121
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6551.10248703                -89132.3220056
-     E_Harris                -6552.22355958                -89147.5749801
-      E_Fermi                 -1.9694326003                 -26.795505191
+ Density error is 0.312403165559
+                          Error Threshold = 0.000226258852359
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4466770500    -39571.4471370461
+E_Harris       -2924.4156659497    -39788.7163773812
+E_Fermi            0.3224179051         4.3867206466
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  13--------------------------------
+Average iterative diagonalization steps: 2.02307692308 ; where current threshold is: 0.000144631095166 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87345057733
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0282658238319
+                   Elec. dipole (Ry a.u.) = 0.0390540418048
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0370493907891
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 2.850573622
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.604866759588
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 7.69339570036
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6550.86516728                -89129.0931048
-     E_Harris                -6551.45769199                 -89137.154817
-      E_Fermi                 -1.7587827111                -23.9294664149
+ Density error is 5.69250879817
+                          Error Threshold = 0.000144631095166
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4081785555    -39570.9233381567
+E_Harris       -2906.9852600817    -39551.5635391237
+E_Fermi            0.3291478351         4.4782860417
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  14--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.000144631095166 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87071790458
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0309984965784
+                   Elec. dipole (Ry a.u.) = 0.0391767176696
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0369267149242
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 3.08473841792
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.602551503321
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 7.53027113803
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6551.5330398                -89138.1799765
-     E_Harris                -6550.98756128                -89130.7583605
-      E_Fermi                -1.60252488179                -21.8034695791
+ Density error is 0.240273012225
+                          Error Threshold = 0.000144631095166
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4624711814    -39571.6620272284
+E_Harris       -2896.8055805386    -39413.0618935224
+E_Fermi            0.3176656042         4.3220622758
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  15--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 0.000111237505659 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87038738738
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0313290137744
+                   Elec. dipole (Ry a.u.) = 0.0394454050456
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0366580275482
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 3.1130606866
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.597480578151
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 16.0008125772
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6553.3435422                -89162.8131255
-     E_Harris                -6551.91035905                -89143.3136684
-      E_Fermi                -1.69551557919                -23.0686729248
+ Density error is 0.0322727089259
+                          Error Threshold = 0.000111237505659
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4660112642    -39571.7101925256
+E_Harris       -2928.5166513023    -39844.5131455899
+E_Fermi            0.3212254471         4.3704964238
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  16--------------------------------
+Average iterative diagonalization steps: 2.32307692308 ; where current threshold is: 1.49410689472e-05 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87585083184
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.025865569318
+                   Elec. dipole (Ry a.u.) = 0.0393860908687
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367173417251
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 2.64489399603
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598600012034
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 103.984858594
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6549.16692532                -89105.9873376
-     E_Harris                -6555.67449929                -89194.5274236
-      E_Fermi                -1.55074996305                -21.0990356708
+ Density error is 0.157273640429
+                          Error Threshold = 1.49410689472e-05
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4637855374    -39571.6799099582
+E_Harris       -2912.4093714012    -39625.3623596545
+E_Fermi            0.3225316461         4.3882681725
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  17--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 1.49410689472e-05 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87956500895
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0221513922127
+                   Elec. dipole (Ry a.u.) = 0.0394319991212
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0366714334726
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 2.32662334873
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.59773358758
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 22.7593786349
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6549.23794027                -89106.9535454
-     E_Harris                -6551.13490446                -89132.7630674
-      E_Fermi                 -1.4298298871                -19.4538336353
+ Density error is 0.0265501920861
+                          Error Threshold = 1.49410689472e-05
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4655691375    -39571.7041770835
+E_Harris       -2912.5807959333    -39627.6947100686
+E_Fermi            0.3237668353         4.4050737830
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  18--------------------------------
+Average iterative diagonalization steps: 2.01538461538 ; where current threshold is: 1.22917555954e-05 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.87856584264
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0231505585213
+                   Elec. dipole (Ry a.u.) = 0.03937723607
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367261965238
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 2.41224266595
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598767128265
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 6.55744384206
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6549.86044795                 -89115.423197
-     E_Harris                -6549.80724557                -89114.6993414
-      E_Fermi                -1.30165503023                -17.7099252415
+ Density error is 0.0576861213844
+                          Error Threshold = 1.22917555954e-05
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4649671078    -39571.6959860488
+E_Harris       -2912.7974058982    -39630.6418398348
+E_Fermi            0.3241199716         4.4098784499
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  19--------------------------------
+Average iterative diagonalization steps: 2 ; where current threshold is: 1.22917555954e-05 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90463948304
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.00292308188515
+                   Elec. dipole (Ry a.u.) = 0.0393413899393
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367620426546
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.177972685214
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.599443650733
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 5.90843871791
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6544.96749907                -89048.8512122
-     E_Harris                -6549.90260995                -89115.9968404
-      E_Fermi                -1.34650566673                -18.3201494568
+ Density error is 0.000806246810558
+                          Error Threshold = 1.22917555954e-05
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654440978    -39571.7024758311
+E_Harris       -2907.0707898573    -39552.7272314202
+E_Fermi            0.3235479301         4.4020954251
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  20--------------------------------
+Average iterative diagonalization steps: 2.39230769231 ; where current threshold is: 3.73262412295e-07 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89464796824
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00706843292064
+                   Elec. dipole (Ry a.u.) = 0.0393473665559
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.036756066038
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.03415315118
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.599330854307
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 706.994943782
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6533.23250451                -88889.1884201
-     E_Harris                -6570.45749829                -89395.6604435
-      E_Fermi              +0.0766660383999                +1.04309496533
+ Density error is 0.000210101640301
+                          Error Threshold = 3.73262412295e-07
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654455888    -39571.7024961171
+E_Harris       -2908.4573777899    -39571.5927280820
+E_Fermi            0.3237587188         4.4049633522
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  21--------------------------------
+Average iterative diagonalization steps: 2.11538461538 ; where current threshold is: 9.72692779173e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89463898635
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00707741480816
+                   Elec. dipole (Ry a.u.) = 0.0393516818609
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367517507329
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.03492281592
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.599249411743
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 54.6772617307
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6550.77508946                -89127.8675331
-     E_Harris                -6550.08585721                -89118.4900473
-      E_Fermi                -0.51177568085                -6.96306535739
+ Density error is 0.000848037998541
+                          Error Threshold = 9.72692779173e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654387115    -39571.7024025466
+E_Harris       -2908.4956998205    -39572.1141260563
+E_Fermi            0.3240658674         4.4091423239
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  22--------------------------------
+Average iterative diagonalization steps: 2.08461538462 ; where current threshold is: 9.72692779173e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89423072229
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00748567887386
+                   Elec. dipole (Ry a.u.) = 0.0393678242008
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.036735608393
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.06990727271
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598944758064
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 65.3426543739
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6550.69605457                -89126.7922083
-     E_Harris                -6550.84495005                -89128.8180352
-      E_Fermi               -0.523390890717                -7.12109839504
+ Density error is 0.000122286246632
+                          Error Threshold = 9.72692779173e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654439210    -39571.7024734254
+E_Harris       -2908.6694261190    -39574.4777936089
+E_Fermi            0.3241366674         4.4101056078
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  23--------------------------------
+Average iterative diagonalization steps: 2.08461538462 ; where current threshold is: 5.66140030704e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89459278569
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00712361547115
+                   Elec. dipole (Ry a.u.) = 0.0393723021625
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367311304314
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.0388817857
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598860245688
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 61.7304913984
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6550.40629743                -89122.8498602
-     E_Harris                -6550.70613873                -89126.9294103
-      E_Fermi               -0.545709487388                -7.42475848114
+ Density error is 0.00210622697396
+                          Error Threshold = 5.66140030704e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654200462    -39571.7021485913
+E_Harris       -2908.4811822110    -39571.9166038462
+E_Fermi            0.3241882982         4.4108080805
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  24--------------------------------
+Average iterative diagonalization steps: 2.2 ; where current threshold is: 5.66140030704e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89355947605
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00815692511139
+                   Elec. dipole (Ry a.u.) = 0.0393795508897
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367238817042
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.12742687085
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598723440774
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 58.3731125955
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6547.40409043                -89082.0027383
-     E_Harris                -6550.43819894                -89123.2839024
-      E_Fermi                -0.52504652498                -7.14362445483
+ Density error is 0.000677448947472
+                          Error Threshold = 5.66140030704e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654438887    -39571.7024729857
+E_Harris       -2908.5473307439    -39572.8166008083
+E_Fermi            0.3240968824         4.4095643042
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  25--------------------------------
+Average iterative diagonalization steps: 2.09230769231 ; where current threshold is: 5.66140030704e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.8890888088
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.0126275923601
+                   Elec. dipole (Ry a.u.) = 0.0393767671316
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367266654623
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.5105217311
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.59877597852
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 18.2445169578
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6545.66777885                -89058.3790074
-     E_Harris                -6548.28435403                -89093.9793391
-      E_Fermi               -0.558287944266                -7.59589716672
+ Density error is 4.13207696864e-05
+                          Error Threshold = 5.66140030704e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654523277    -39571.7025878038
+E_Harris       -2908.7995425583    -39576.2481185858
+E_Fermi            0.3241189242         4.4098641993
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  26--------------------------------
+Average iterative diagonalization steps: 2.04615384615 ; where current threshold is: 1.91299859659e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89264601433
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00907038682518
+                   Elec. dipole (Ry a.u.) = 0.0393785588273
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367248737665
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 1.20570209648
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598742163924
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 24.0242865609
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6545.42272393                -89055.0448641
-     E_Harris                 -6548.5674054                -89097.8304505
-      E_Fermi               -0.576495115149                -7.84361843519
+ Density error is 0.000195036097226
+                          Error Threshold = 1.91299859659e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654530685    -39571.7025978836
+E_Harris       -2908.3648206010    -39570.3334229214
+E_Fermi            0.3241271429         4.4099760205
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  27--------------------------------
+Average iterative diagonalization steps: 2.16153846154 ; where current threshold is: 1.91299859659e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89840624426
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00331015690262
+                   Elec. dipole (Ry a.u.) = 0.0393720773869
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367313552069
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.712103634679
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598864487868
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 3.08159984317
-                          Error Threshold = 0.000939319302821
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.74458798                -89073.0297472
-     E_Harris                -6547.35376493                -89081.3180248
-      E_Fermi               -0.528828622613                -7.19508253303
+ Density error is 0.000254523084452
+                          Error Threshold = 1.91299859659e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654495840    -39571.7025504746
+E_Harris       -2908.4589138831    -39571.6136277016
+E_Fermi            0.3240873266         4.4094342920
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  28--------------------------------
+Average iterative diagonalization steps: 2.08461538462 ; where current threshold is: 1.91299859659e-08 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89913683392
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00257956723646
+                   Elec. dipole (Ry a.u.) = 0.0393712750845
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367321575093
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.649498853226
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598879629685
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 20.6141688981
-                          Error Threshold = 0.000634074041804
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.64087716                -89071.6186891
-     E_Harris                -6547.55695538                -89084.0825727
-      E_Fermi               -0.235583112398                -3.20527268119
+ Density error is 4.0695821502e-06
+                          Error Threshold = 1.91299859659e-08
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654513007    -39571.7025738310
+E_Harris       -2908.2192538387    -39568.3528855147
+E_Fermi            0.3240556841         4.4090037735
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  29--------------------------------
+Average iterative diagonalization steps: 2.27692307692 ; where current threshold is: 1.88406581028e-09 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89950352278
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00221287838042
+                   Elec. dipole (Ry a.u.) = 0.0393711671279
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.036732265466
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.618077007616
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.598881667147
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 15.3266890333
-                          Error Threshold = 0.000634074041804
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.74350736                -89073.0150446
-     E_Harris                -6547.29589158                -89080.5306175
-      E_Fermi               -0.183490937403                -2.49652228004
+ Density error is 1.56252770632e-06
+                          Error Threshold = 1.88406581028e-09
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654513247    -39571.7025741571
+E_Harris       -2908.4649675877    -39571.6959925777
+E_Fermi            0.3240596979         4.4090583842
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  30--------------------------------
+Average iterative diagonalization steps: 2.03076923077 ; where current threshold is: 7.23392456631e-10 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.89957875886
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00213764229666
+                   Elec. dipole (Ry a.u.) = 0.0393714540207
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367319785731
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.611629970655
-                      Total length (Bohr) = 42.8453784341
+                 Potential amplitute (Ry) = -0.59887625263
+                      Total length (Bohr) = 9.43647827144
 
- Density error is 6.55201659403
-                          Error Threshold = 0.000634074041804
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.30776956                -89067.0865277
-     E_Harris                -6546.89249987                -89075.0421917
-      E_Fermi               -0.137645131327                  -1.872758088
+ Density error is 9.93361517644e-07
+                          Error Threshold = 7.23392456631e-10
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham     -2908.4654513126    -39571.7025739929
+E_Harris       -2908.4641342411    -39571.6846543156
+E_Fermi            0.3240606818         4.4090717703
+------------------------------------------------------
 
  PW ALGORITHM --------------- ION=   1  ELEC=  31--------------------------------
+Average iterative diagonalization steps: 2.01538461538 ; where current threshold is: 4.59889591502e-10 . 
 
 
  Adding external electric field: 
          Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.8998859019
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.00183049926268
+                   Elec. dipole (Ry a.u.) = 0.0393725259375
+                     Ion dipole (Ry a.u.) = 0.0761034325938
+                   Total dipole (Ry a.u.) = 0.0367309066563
             Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.585310651606
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 1.29321422231
-                          Error Threshold = 0.000634074041804
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.50479091                -89069.7671407
-     E_Harris                -6546.73401306                -89072.8858681
-      E_Fermi               -0.112376691548                -1.52896332744
-
- PW ALGORITHM --------------- ION=   1  ELEC=  32--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90083155393
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.000884847231888
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.504277013354
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 7.09785227266
-                          Error Threshold = 0.000266093461381
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.38543945                -89068.1432807
-     E_Harris                 -6546.8903324                -89075.0127018
-      E_Fermi               -0.053149081211               -0.723130347935
-
- PW ALGORITHM --------------- ION=   1  ELEC=  33--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90125836999
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.000458031165414
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.467702821574
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.529213303163
-                          Error Threshold = 0.000266093461381
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.52937837                -89070.1016702
-     E_Harris                -6546.64380086                -89071.6584681
-      E_Fermi              -0.0440982093522               -0.599986918787
-
- PW ALGORITHM --------------- ION=   1  ELEC=  34--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90130097014
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.000415431020909
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.464052382949
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.876674237463
-                          Error Threshold = 0.000108891626165
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.51627882                -89069.9234418
-     E_Harris                -6546.65551968                -89071.8179108
-      E_Fermi              -0.0209699328976               -0.285310574085
-
- PW ALGORITHM --------------- ION=   1  ELEC=  35--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90156977173
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = -0.000146629425374
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.44101857078
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.61435365928
-                          Error Threshold = 0.000108891626165
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.57991088                -89070.7892003
-     E_Harris                -6546.62343806                 -89071.381418
-      E_Fermi             -0.00531424360343              -0.0723039935668
-
- PW ALGORITHM --------------- ION=   1  ELEC=  36--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90248458525
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000768184089729
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.362627508278
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.111556245982
-                          Error Threshold = 0.000108891626165
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.57077519                -89070.6649029
-     E_Harris                -6546.60375647                -89071.1136362
-      E_Fermi             +0.00285169991983              +0.0387993678958
-
- PW ALGORITHM --------------- ION=   1  ELEC=  37--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90210933608
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000392934922358
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.394782893444
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.934862095948
-                          Error Threshold = 2.29539600785e-05
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.55343724                -89070.4290079
-     E_Harris                -6546.63158579                -89071.4922735
-      E_Fermi              +0.0471591783035               +0.641633537926
-
- PW ALGORITHM --------------- ION=   1  ELEC=  38--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90215567158
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000439270422308
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.390812369383
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.0434177615639
-                          Error Threshold = 2.29539600785e-05
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59013912                -89070.9283627
-     E_Harris                -6546.59827697                -89071.0390837
-      E_Fermi              +0.0316782720351               +0.431005002471
-
- PW ALGORITHM --------------- ION=   1  ELEC=  39--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90234906446
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000632663300394
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.374240387287
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.0314528908143
-                          Error Threshold = 8.93369579504e-06
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59290757                -89070.9660294
-     E_Harris                -6546.59707609                -89071.0227449
-      E_Fermi              +0.0387090669897               +0.526663875324
-
- PW ALGORITHM --------------- ION=   1  ELEC=  40--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90248807725
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000771676091164
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.362328276032
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.00726362714538
-                          Error Threshold = 6.47178823339e-06
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59426165                -89070.9844526
-     E_Harris                -6546.59594229                -89071.0073188
-      E_Fermi              +0.0477251159653               +0.649333514839
-
- PW ALGORITHM --------------- ION=   1  ELEC=  41--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90248509167
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000768690505779
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.362584113103
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.0122069014498
-                          Error Threshold = 1.4945734867e-06
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59427038                -89070.9845713
-     E_Harris                 -6546.5960649                 -89071.008987
-      E_Fermi               +0.052863545966               +0.719245441622
-
- PW ALGORITHM --------------- ION=   1  ELEC=  42--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.9025251767
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000808775535762
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.359149196545
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.00706041507006
-                          Error Threshold = 1.4945734867e-06
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59484606                -89070.9924038
-     E_Harris                -6546.59579951                -89071.0053762
-      E_Fermi              +0.0549918991882               +0.748203172801
-
- PW ALGORITHM --------------- ION=   1  ELEC=  43--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253185328
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000815452121429
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358577074866
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.00450888789219
-                          Error Threshold = 1.45276030248e-06
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59505998                -89070.9953143
-     E_Harris                 -6546.5957731                -89071.0050169
-      E_Fermi              +0.0575039646685               +0.782381577082
-
- PW ALGORITHM --------------- ION=   1  ELEC=  44--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90249979884
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000783397684921
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.361323843791
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.00138046630124
-                          Error Threshold = 9.27754710327e-07
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6546.5952601                -89070.9980372
-     E_Harris                -6546.59551217                -89071.0014667
-      E_Fermi              +0.0574948701106               +0.782257839273
-
- PW ALGORITHM --------------- ION=   1  ELEC=  45--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90254400938
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000827608222854
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.357535409334
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.00316169703545
-                          Error Threshold = 2.84046564042e-07
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59521983                -89070.9974892
-     E_Harris                 -6546.5955883                -89071.0025026
-      E_Fermi              +0.0568092055961                +0.77292889496
-
- PW ALGORITHM --------------- ION=   1  ELEC=  46--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90252380365
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.00080740248975
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.359266853897
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.00103677134516
-                          Error Threshold = 2.84046564042e-07
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59537764                -89070.9996363
-     E_Harris                -6546.59550001                -89071.0013013
-      E_Fermi              +0.0580582171039               +0.789922568334
-
- PW ALGORITHM --------------- ION=   1  ELEC=  47--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90254124545
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.00082484429346
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.357772252536
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.000448344817499
-                          Error Threshold = 2.13327437276e-07
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59541781                -89071.0001829
-     E_Harris                -6546.59547548                -89071.0009676
-      E_Fermi              +0.0573685400306               +0.780539030357
-
- PW ALGORITHM --------------- ION=   1  ELEC=  48--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253098995
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000814588795687
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358651053902
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.000421233857217
-                          Error Threshold = 9.22520200615e-08
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59543112                 -89071.000364
-     E_Harris                -6546.59547854                -89071.0010092
-      E_Fermi              +0.0577836659415               +0.786187108133
-
- PW ALGORITHM --------------- ION=   1  ELEC=  49--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.9025304475
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000814046341734
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358697537192
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 0.000114835850194
-                          Error Threshold = 8.66736331722e-08
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59545246                -89071.0006543
-     E_Harris                -6546.59546744                -89071.0008582
-      E_Fermi              +0.0576632173801               +0.784548321382
-
- PW ALGORITHM --------------- ION=   1  ELEC=  50--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253599303
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000819591873304
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358222336394
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 7.81709880954e-05
-                          Error Threshold = 2.36287757601e-08
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6546.5954519                -89071.0006467
-     E_Harris                -6546.59546434                 -89071.000816
-      E_Fermi              +0.0577353415437                +0.78552962097
-
- PW ALGORITHM --------------- ION=   1  ELEC=  51--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253325823
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000816857068679
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358456683873
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 6.24136876224e-05
-                          Error Threshold = 1.60845654517e-08
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59545679                -89071.0007133
-     E_Harris                -6546.59546349                -89071.0008044
-      E_Fermi              +0.0578612626045               +0.787242864895
-
- PW ALGORITHM --------------- ION=   1  ELEC=  52--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.9025334839
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000817082736271
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358437346246
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 2.2089940203e-05
-                          Error Threshold = 1.2842322556e-08
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6546.5954593                -89071.0007475
-     E_Harris                -6546.59546279                -89071.0007949
-      E_Fermi              +0.0577780498084               +0.786110696722
-
- PW ALGORITHM --------------- ION=   1  ELEC=  53--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253621551
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000819814355353
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358203271739
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 1.53573712355e-05
-                          Error Threshold = 4.5452551858e-09
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59545982                -89071.0007544
-     E_Harris                -6546.59546234                -89071.0007888
-      E_Fermi              +0.0577222672886               +0.785351736604
-
- PW ALGORITHM --------------- ION=   1  ELEC=  54--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.9025331932
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.00081679203808
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358462256394
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 2.52084084792e-05
-                          Error Threshold = 3.15995292912e-09
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59545976                -89071.0007537
-     E_Harris                -6546.59546255                -89071.0007916
-      E_Fermi              +0.0578187379662                +0.78666428751
-
- PW ALGORITHM --------------- ION=   1  ELEC=  55--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253639325
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000819992094325
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358188041152
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 1.01405629569e-05
-                          Error Threshold = 3.15995292912e-09
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546046                -89071.0007632
-     E_Harris                -6546.59546201                -89071.0007843
-      E_Fermi              +0.0577660160707               +0.785946969321
-
- PW ALGORITHM --------------- ION=   1  ELEC=  56--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253336907
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000816967909609
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358447185829
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 2.13316295201e-05
-                          Error Threshold = 2.08653558785e-09
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                 -6546.5954601                -89071.0007583
-     E_Harris                -6546.59546249                -89071.0007908
-      E_Fermi              +0.0578902953034               +0.787637875029
-
- PW ALGORITHM --------------- ION=   1  ELEC=  57--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253474175
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000818340590547
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358329559761
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 7.25236556879e-06
-                          Error Threshold = 2.08653558785e-09
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546126                -89071.0007741
-     E_Harris                -6546.59546192                -89071.0007831
-      E_Fermi                +0.05778659397               +0.786226946004
-
- PW ALGORITHM --------------- ION=   1  ELEC=  58--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253468867
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.00081828750842
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358334108409
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 5.64952088465e-07
-                          Error Threshold = 1.49225628987e-09
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546163                -89071.0007791
-     E_Harris                 -6546.5954617                -89071.0007801
-      E_Fermi              +0.0578090349335               +0.786532270977
-
- PW ALGORITHM --------------- ION=   1  ELEC=  59--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253424874
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000817847582726
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358371805974
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 8.53336596267e-07
-                          Error Threshold = 1.16245285692e-10
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546161                -89071.0007789
-     E_Harris                -6546.59546175                -89071.0007807
-      E_Fermi              +0.0577986643853               +0.786391172429
-
- PW ALGORITHM --------------- ION=   1  ELEC=  60--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.902534752
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000818350837267
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358328681712
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 7.93183384593e-07
-                          Error Threshold = 1.16245285692e-10
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546164                -89071.0007793
-     E_Harris                -6546.59546174                -89071.0007806
-      E_Fermi              +0.0577959890447               +0.786354772553
-
- PW ALGORITHM --------------- ION=   1  ELEC=  61--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253463729
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000818236133697
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358338510747
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 2.74121580321e-07
-                          Error Threshold = 1.16245285692e-10
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546169                -89071.0007799
-     E_Harris                -6546.59546172                -89071.0007803
-      E_Fermi              +0.0578153287264               +0.786617902423
-
- PW ALGORITHM --------------- ION=   1  ELEC=  62--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253430459
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000817903433662
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358367020065
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 1.9719094582e-07
-                          Error Threshold = 5.64036173501e-11
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546169                -89071.0007799
-     E_Harris                -6546.59546172                -89071.0007804
-      E_Fermi              +0.0578166407384               +0.786635753261
-
- PW ALGORITHM --------------- ION=   1  ELEC=  63--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253471905
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000818317888765
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358331505094
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 5.39950894989e-07
-                          Error Threshold = 4.05742686872e-11
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546168                -89071.0007798
-     E_Harris                -6546.59546174                -89071.0007806
-      E_Fermi               +0.057806306519               +0.786495148993
-
- PW ALGORITHM --------------- ION=   1  ELEC=  64--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.9025344934
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000818092236375
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358350841418
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 1.16597602669e-07
-                          Error Threshold = 4.05742686872e-11
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546171                -89071.0007802
-     E_Harris                -6546.59546172                -89071.0007804
-      E_Fermi               +0.057813813071               +0.786597280872
-
- PW ALGORITHM --------------- ION=   1  ELEC=  65--------------------------------
-
-
- Adding external electric field: 
-         Computed dipole along efield_dir = 2
-                   Elec. dipole (Ry a.u.) = -7.90253851659
-                     Ion dipole (Ry a.u.) = -7.90171640116
-                   Total dipole (Ry a.u.) = 0.000822115433246
-            Amplitute of Efield (Hartree) = 0.005
-                 Potential amplitute (Ry) = 0.358006090633
-                      Total length (Bohr) = 42.8453784341
-
- Density error is 7.11448592285e-08
-                          Error Threshold = 2.39912762694e-11
-
-       Energy                       Rydberg                            eV
-   E_KohnSham                -6546.59546165                -89071.0007793
-     E_Harris                -6546.59546173                -89071.0007804
-       E_band                -1076.70236269                -14649.2871827
-   E_one_elec                -70989.6405205                 -965863.61005
-    E_Hartree                +35398.4908392                +481621.176014
-         E_xc                -634.363096169                -8630.95270882
-      E_Ewald                +29678.9985233                 +403803.49085
-      E_entropy(-TS)       -0.0749163320998                -1.01928898982
-      E_descf                            +0                            +0
-     E_efield             -0.00629112673183               -0.085595170393
-        E_exx                            +0                            +0
-      E_Fermi              +0.0578070489857               +0.786505250771
+                 Potential amplitute (Ry) = -0.598856022391
+                      Total length (Bohr) = 9.43647827144
+
+ Density error is 1.87521340258e-08
+                          Error Threshold = 4.59889591502e-10
+----------------------------------------------------------
+    Energy           Rydberg                 eV         
+----------------------------------------------------------
+E_KohnSham         -2908.4654513224    -39571.7025741265
+E_KS(sigma->0)     -2908.4102741943    -39570.9518507845
+E_Harris           -2908.4607878339    -39571.6391241106
+E_band              -412.4541157087     -5611.7261371899
+E_one_elec        -18286.4276611650   -248799.6122566571
+E_Hartree           9119.8188620424    124081.5012516529
+E_xc                -279.4911499039     -3802.6721792648
+E_Ewald             6537.4637088076     88946.7569079966
+E_entropy(-TS)        -0.1103542563        -1.5014466839
+E_descf                0.0000000000         0.0000000000
+E_exx                  0.0000000000         0.0000000000
+E_efield               0.2811431527         3.8251488300
+E_Fermi                0.3240638172         4.4091144297
+----------------------------------------------------------
 
  charge density convergence is achieved
- final etot is -89071.0007793 eV
+ final etot is -39571.702574 eV
+ EFERMI = 4.4091144297 eV
 
  STATE ENERGY(eV) AND OCCUPATIONS    NSPIN == 1
- 1/1 kpoint (Cartesian) = 0 0 0 (5139 pws)
-       1       -98.6629        2.00000
-       2       -98.6370        2.00000
-       3       -98.6369        2.00000
-       4       -98.6369        2.00000
-       5       -98.6368        2.00000
-       6       -98.6368        2.00000
-       7       -98.6368        2.00000
-       8       -98.6238        2.00000
-       9       -98.6238        2.00000
-      10       -97.5843        2.00000
-      11       -97.5707        2.00000
-      12       -97.5707        2.00000
-      13       -97.5706        2.00000
-      14       -97.5706        2.00000
-      15       -97.5706        2.00000
-      16       -97.5697        2.00000
-      17       -97.5654        2.00000
-      18       -97.5650        2.00000
-      19       -97.5644        2.00000
-      20       -97.5635        2.00000
-      21       -97.5635        2.00000
-      22       -97.5634        2.00000
-      23       -97.5633        2.00000
-      24       -97.5633        2.00000
-      25       -97.5628        2.00000
-      26       -97.5612        2.00000
-      27       -97.5612        2.00000
-      28       -53.6134        2.00000
-      29       -53.5354        2.00000
-      30       -53.5354        2.00000
-      31       -53.5353        2.00000
-      32       -53.5351        2.00000
-      33       -53.5351        2.00000
-      34       -53.5351        2.00000
-      35       -53.4918        2.00000
-      36       -53.4918        2.00000
-      37       -53.2143        2.00000
-      38       -53.2143        2.00000
-      39       -53.2143        2.00000
-      40       -53.2142        2.00000
-      41       -53.2142        2.00000
-      42       -53.2138        2.00000
-      43       -53.1836        2.00000
-      44       -53.1834        2.00000
-      45       -53.1828        2.00000
-      46       -53.1828        2.00000
-      47       -52.8773        2.00000
-      48       -52.8773        2.00000
-      49       -52.8773        2.00000
-      50       -52.8771        2.00000
-      51       -52.8770        2.00000
-      52       -52.8770        2.00000
-      53       -52.7700        2.00000
-      54       -52.7700        2.00000
-      55       -52.0095        2.00000
-      56       -51.9519        2.00000
-      57       -51.9519        2.00000
-      58       -51.9519        2.00000
-      59       -51.9519        2.00000
-      60       -51.9519        2.00000
-      61       -51.9514        2.00000
-      62       -51.8906        2.00000
-      63       -51.8904        2.00000
-      64       -51.8873        2.00000
-      65       -51.8873        2.00000
-      66       -51.8543        2.00000
-      67       -51.8543        2.00000
-      68       -51.8543        2.00000
-      69       -51.8543        2.00000
-      70       -51.8539        2.00000
-      71       -51.8539        2.00000
-      72       -51.8287        2.00000
-      73       -51.8287        2.00000
-      74       -51.6755        2.00000
-      75       -51.6755        2.00000
-      76       -51.6754        2.00000
-      77       -51.6754        2.00000
-      78       -51.6754        2.00000
-      79       -51.6754        2.00000
-      80       -51.6624        2.00000
-      81       -51.6623        2.00000
-      82       -51.6623        2.00000
-      83       -51.6623        2.00000
-      84       -51.6620        2.00000
-      85       -51.6620        2.00000
-      86       -51.6428        2.00000
-      87       -51.6419        2.00000
-      88       -51.6419        2.00000
-      89       -51.6402        2.00000
-      90       -51.6402        2.00000
-      91       -51.6018        2.00000
-      92       -51.6018        2.00000
-      93       -51.5827        2.00000
-      94       -51.5827        2.00000
-      95       -51.5827        2.00000
-      96       -51.5826        2.00000
-      97       -51.5825        2.00000
-      98       -51.5825        2.00000
-      99       -51.5623        2.00000
-     100       -51.5623        2.00000
-     101       -51.5437        2.00000
-     102       -51.5436        2.00000
-     103       -51.5436        2.00000
-     104       -51.5436        2.00000
-     105       -51.5434        2.00000
-     106       -51.5434        2.00000
-     107       -51.5300        2.00000
-     108       -51.5300        2.00000
-     109       -10.2401        2.00000
-     110       -8.18973        2.00000
-     111       -8.18577        2.00000
-     112       -8.18569        2.00000
-     113       -8.18564        2.00000
-     114       -8.18531        2.00000
-     115       -8.18529        2.00000
-     116       -8.18514        2.00000
-     117       -7.48685        2.00000
-     118       -7.48678        2.00000
-     119       -7.48677        2.00000
-     120       -7.48650        2.00000
-     121       -7.48630        2.00000
-     122       -7.48626        2.00000
-     123       -6.95068        2.00000
-     124       -6.95065        2.00000
-     125       -6.95053        2.00000
-     126       -6.95037        2.00000
-     127       -6.95026        2.00000
-     128       -6.95025        2.00000
-     129       -6.93804        2.00000
-     130       -6.84190        2.00000
-     131       -6.84184        2.00000
-     132       -6.84105        2.00000
-     133       -6.84105        2.00000
-     134       -6.68468        2.00000
-     135       -6.68468        2.00000
-     136       -6.08888        2.00000
-     137       -6.08885        2.00000
-     138       -6.07164        2.00000
-     139       -6.07153        2.00000
-     140       -6.07153        2.00000
-     141       -6.07121        2.00000
-     142       -5.82359        2.00000
-     143       -5.82346        2.00000
-     144       -5.82346        2.00000
-     145       -5.82342        2.00000
-     146       -5.82251        2.00000
-     147       -5.82249        2.00000
-     148       -5.66420        2.00000
-     149       -5.66420        2.00000
-     150       -5.66418        2.00000
-     151       -5.66376        2.00000
-     152       -5.66374        2.00000
-     153       -5.66373        2.00000
-     154       -5.17457        2.00000
-     155       -5.17456        2.00000
-     156       -4.80442        2.00000
-     157       -4.80439        2.00000
-     158       -4.80433        2.00000
-     159       -4.80426        2.00000
-     160       -4.80425        2.00000
-     161       -4.80388        2.00000
-     162       -3.30133        2.00000
-     163       -3.30132        2.00000
-     164       -2.97878        2.00000
-     165       -2.97874        2.00000
-     166       -2.97870        2.00000
-     167       -2.97842        2.00000
-     168       -2.97793        2.00000
-     169       -2.97786        2.00000
-     170       -2.97280        2.00000
-     171       -2.97280        2.00000
-     172       -2.77175        2.00000
-     173       -2.77175        2.00000
-     174       -2.69857        2.00000
-     175       -2.69827        2.00000
-     176       -2.69825        2.00000
-     177       -2.69798        2.00000
-     178       -2.69791        2.00000
-     179       -2.69790        2.00000
-     180       -2.65264        2.00000
-     181       -2.65260        2.00000
-     182       -2.64657        2.00000
-     183       -2.64657        2.00000
-     184       -2.64505        2.00000
-     185       -2.64505        2.00000
-     186       -2.40271        2.00000
-     187       -2.29911        2.00000
-     188       -2.29893        2.00000
-     189       -2.29886        2.00000
-     190       -2.29886        2.00000
-     191       -2.29848        2.00000
-     192       -2.29847        2.00000
-     193       -1.76749        2.00000
-     194       -1.76744        2.00000
-     195       -1.76742        2.00000
-     196       -1.76728        2.00000
-     197       -1.76727        2.00000
-     198       -1.76706        2.00000
-     199       -1.14541        2.00000
-     200       -1.14540        2.00000
-     201       -1.14352        2.00000
-     202       -1.14346        2.00000
-     203       -1.14344        2.00000
-     204       -1.14340        2.00000
-     205       -1.14299        2.00000
-     206       -1.14298        2.00000
-     207      -0.860115        2.00000
-     208      -0.851363        2.00000
-     209      -0.851224        2.00000
-     210      -0.851185        2.00000
-     211      -0.850666        2.00000
-     212      -0.850659        2.00000
-     213      -0.850644        2.00000
-     214      -0.391373        2.00000
-     215      -0.391340        2.00000
-     216      -0.391301        2.00000
-     217      -0.391190        2.00000
-     218      -0.390667        2.00000
-     219      -0.390649        2.00000
-     220      -0.115214        2.00000
-     221      -0.114983        2.00000
-     222      -0.113453        2.00000
-     223      -0.113453        2.00000
-     224      0.0320699        1.99991
-     225      0.0321081        1.99991
-     226       0.230003        1.99617
-     227       0.230180        1.99616
-     228       0.230192        1.99616
-     229       0.230364        1.99615
-     230       0.230418        1.99615
-     231       0.230568        1.99614
-     232       0.268185        1.99294
-     233       0.392452        1.95944
-     234       0.392454        1.95943
-     235       0.397453        1.95682
-     236       0.397546        1.95677
-     237       0.512329        1.84582
-     238       0.512332        1.84582
-     239       0.603689        1.65795
-     240       0.603693        1.65794
-     241       0.603801        1.65765
-     242       0.603832        1.65757
-     243       0.603845        1.65754
-     244       0.603860        1.65750
-     245        1.10919      0.0935354
-     246        1.10922      0.0935061
-     247        1.10939      0.0933284
-     248        1.10946      0.0932614
-     249        1.10947      0.0932559
-     250        1.10954      0.0931772
-     251        2.51971        0.00000
-     252        2.51977        0.00000
-     253        2.73511        0.00000
-     254        2.73515        0.00000
-     255        2.73589        0.00000
-     256        2.73596        0.00000
-     257        2.73597        0.00000
-     258        2.73606        0.00000
-     259        3.25951        0.00000
-     260        4.79348        0.00000
-     261        4.79387        0.00000
-     262        4.79388        0.00000
-     263        4.79397        0.00000
-     264        4.79406        0.00000
-     265        4.79407        0.00000
-     266        5.61382        0.00000
-     267        5.61383        0.00000
-     268        5.61747        0.00000
-     269        5.61752        0.00000
-     270        6.05930        0.00000
-     271        6.05930        0.00000
-     272        6.65445        0.00000
-     273        7.57445        0.00000
-     274        7.89483        0.00000
-     275        7.89560        0.00000
-     276        7.89561        0.00000
-     277        7.89562        0.00000
-     278        7.89574        0.00000
-     279        7.89575        0.00000
-     280        8.18031        0.00000
-     281        8.18031        0.00000
-     282        8.23796        0.00000
-     283        8.23811        0.00000
-     284        8.23951        0.00000
-     285        8.23951        0.00000
-     286        8.28798        0.00000
-     287        9.32160        0.00000
-     288        9.48733        0.00000
-     289        9.48736        0.00000
-     290        9.48751        0.00000
-     291        9.48752        0.00000
+ 1/1 kpoint (Cartesian) = 0.0000 0.0000 0.0000 (3524 pws)
+       1       -94.4336        2.00000
+       2       -94.4216        2.00000
+       3       -94.2383        2.00000
+       4       -94.2275        2.00000
+       5       -93.9581        2.00000
+       6       -93.9456        2.00000
+       7       -93.9235        2.00000
+       8       -93.9083        2.00000
+       9       -93.8873        2.00000
+      10       -93.8796        2.00000
+      11       -93.8467        2.00000
+      12       -93.8368        2.00000
+      13       -48.8767        2.00000
+      14       -48.6845        2.00000
+      15       -48.6653        2.00000
+      16       -48.6004        2.00000
+      17       -48.5871        2.00000
+      18       -48.5756        2.00000
+      19       -48.5682        2.00000
+      20       -48.5461        2.00000
+      21       -48.5104        2.00000
+      22       -48.4913        2.00000
+      23       -48.4911        2.00000
+      24       -48.4811        2.00000
+      25       -48.3982        2.00000
+      26       -48.3728        2.00000
+      27       -48.3188        2.00000
+      28       -48.2959        2.00000
+      29       -48.2621        2.00000
+      30       -48.2362        2.00000
+      31       -48.2323        2.00000
+      32       -48.2166        2.00000
+      33       -48.2104        2.00000
+      34       -48.2103        2.00000
+      35       -48.1550        2.00000
+      36       -48.1334        2.00000
+      37       -48.1219        2.00000
+      38       -48.0769        2.00000
+      39       -48.0747        2.00000
+      40       -48.0457        2.00000
+      41       -47.7559        2.00000
+      42       -47.7289        2.00000
+      43       -47.7197        2.00000
+      44       -47.7054        2.00000
+      45       -47.6781        2.00000
+      46       -47.6706        2.00000
+      47       -47.5415        2.00000
+      48       -47.5258        2.00000
+      49       -5.69578        2.00000
+      50       -4.15722        2.00000
+      51       -3.41635        2.00000
+      52       -2.89804        2.00000
+      53       -2.87989        2.00000
+      54       -2.81196        2.00000
+      55       -2.76594        2.00000
+      56       -2.71601        2.00000
+      57       -2.65868        2.00000
+      58       -2.22732        2.00000
+      59       -2.14606        2.00000
+      60       -2.08560        2.00000
+      61       -1.94121        2.00000
+      62       -1.92439        2.00000
+      63       -1.90013        2.00000
+      64      -0.346915        2.00000
+      65      -0.318323        2.00000
+      66      -0.310576        2.00000
+      67       0.100344        2.00000
+      68       0.112554        2.00000
+      69       0.127298        2.00000
+      70       0.256103        2.00000
+      71       0.324112        2.00000
+      72       0.356873        2.00000
+      73       0.536593        2.00000
+      74       0.553920        2.00000
+      75       0.657221        2.00000
+      76       0.687510        2.00000
+      77       0.889678        2.00000
+      78       0.991555        2.00000
+      79       0.997802        2.00000
+      80        1.17024        2.00000
+      81        1.64483        2.00000
+      82        1.65510        2.00000
+      83        1.66433        2.00000
+      84        2.53953        2.00000
+      85        2.54719        2.00000
+      86        2.55536        2.00000
+      87        2.58883        2.00000
+      88        2.67568        2.00000
+      89        2.69455        2.00000
+      90        2.71290        2.00000
+      91        2.71826        2.00000
+      92        3.14241        2.00000
+      93        3.35749        2.00000
+      94        3.36689        2.00000
+      95        3.92856        1.98749
+      96        3.95065        1.98281
+      97        3.96309        1.97955
+      98        3.96742        1.97830
+      99        4.02542        1.95386
+     100        4.02846        1.95210
+     101        4.11498        1.87365
+     102        4.13172        1.85060
+     103        4.14924        1.82318
+     104        4.16592        1.79374
+     105        4.21112        1.69652
+     106        4.30159        1.42372
+     107        4.32393        1.34201
+     108        4.33546        1.29813
+     109        4.44439       0.854522
+     110        4.44860       0.837387
+     111        4.49591       0.651915
+     112        4.62525       0.261313
+     113        4.65744       0.196855
+     114        4.66909       0.176660
+     115        4.73980      0.0856811
+     116        6.48944        0.00000
+     117        6.49856        0.00000
+     118        6.52343        0.00000
+     119        6.62901        0.00000
+     120        6.74867        0.00000
+     121        6.77322        0.00000
+     122        9.14552        0.00000
+     123        9.52904        0.00000
+     124        9.62024        0.00000
+     125        9.65815        0.00000
+     126        9.83652        0.00000
+     127        9.90738        0.00000
+     128        9.92903        0.00000
+     129        10.0072        0.00000
+     130        10.4879        0.00000
+
+
+ Warning_Memory_Consuming allocated:  Force::vkb1 20.6484 MB
+Atomic forces are not shifted if gate_flag or efield_flag == true!
 
 
 
-
- ><><><><><><><><><><><><><><><><><><><><><><
+ ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
 
     TOTAL-FORCE (eV/Angstrom)
 
- ><><><><><><><><><><><><><><><><><><><><><><
+ ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
 
      atom              x              y              z
-      Pt1    -0.00460205    -0.00102787   +11.67123103
-      Pt2    -0.01413622    -0.00462181    +0.05449006
-      Pt3    +0.00130591    +0.00097810   -11.75572822
-      Pt4    +0.00417225    +0.00352660   +11.71237550
-      Pt5    +0.00054861    +0.00136112    +0.04513959
-      Pt6    -0.00084827    +0.00373284   -11.75334380
-      Pt7    +0.00118566    -0.00217069   +11.71240316
-      Pt8    +0.01212359    -0.01177696    +0.05668525
-      Pt9    +0.00002165    -0.00115558   -11.75373141
-     Pt10    -0.00102079    -0.00298083   +11.71256228
-     Pt11    +0.00441877    +0.00198198    +0.04134952
-     Pt12    +0.00195728    -0.00212053   -11.75538013
-     Pt13    +0.00384826    +0.00390680   +11.70967899
-     Pt14    -0.00307448    +0.00458929    +0.04232755
-     Pt15    +0.00560581    -0.00089643   -11.75144854
-     Pt16    -0.00202925    +0.00012256   +11.71268670
-     Pt17    -0.00487044    -0.00069693    +0.04258944
-     Pt18    -0.00458891    +0.00030180   -11.75244216
-     Pt19    -0.00411682    -0.00251279   +11.71150769
-     Pt20    +0.00278454    +0.00022784    +0.04237287
-     Pt21    -0.00268402    +0.00065701   -11.75712881
-     Pt22    +0.00745962    +0.00074677   +11.71119753
-     Pt23    +0.00310325    -0.00153916    +0.04429976
-     Pt24    +0.00489141    -0.00069273   -11.75396406
-     Pt25    -0.00267927    -0.00090532   +11.70884551
-     Pt26    -0.00728228    +0.01417332    +0.05488912
-     Pt27    -0.00149381    -0.00320839   -11.75346440
+      Pt1         -1.40730239         -0.00005985        -35.42567255
+      Pt2         -1.40750076         +0.00012179        -35.42558268
+      Pt3         -0.19666746         -0.00006358         -0.65603671
+      Pt4         -0.19646086         +0.00010283         -0.65595915
+      Pt5         -0.07555507         +0.00003988         -0.54729612
+      Pt6         -0.07478727         -0.00007103         -0.54665700
+      Pt7         -0.59667580         -0.00064806       -114.51323267
+      Pt8         -0.59679822         +0.00064947       -114.51310003
+      Pt9         +0.51133939         +0.00011099        -19.81601962
+     Pt10         +0.51116013         +0.00002092        -19.81607838
+     Pt11         +1.76973971         +0.00010127         -2.11212928
+     Pt12         +1.76971285         -0.00008173         -2.11221058
 
 
  --------------------------------------------
- !FINAL_ETOT_IS -89071.0007793224212946 eV
+ !FINAL_ETOT_IS -39571.7025741264951648 eV
  --------------------------------------------
 
 
+TIME STATISTICS
+------------------------------------------------------------------------------
+     CLASS_NAME              NAME         TIME(Sec)  CALLS   AVG(Sec) PER(%)
+------------------------------------------------------------------------------
+                     total                 94.93          15   6.33   100.00
+Driver               driver_line           94.92           1  94.92    99.99
+Ions                 opt_ions              94.75           1  94.75    99.81
+ESolver_KS_PW        Run                   94.49           1  94.49    99.54
+PW_Basis             recip2real             0.26         162   0.00     0.28
+PW_Basis             gathers_scatterp       0.12         162   0.00     0.13
+Potential            update_from_charge     1.40          32   0.04     1.48
+Potential            cal_v_eff              1.40          32   0.04     1.47
+H_Hartree_pw         v_hartree              0.17          32   0.01     0.18
+PW_Basis             real2recip             0.46         256   0.00     0.49
+PW_Basis             gatherp_scatters       0.26         256   0.00     0.28
+PotXC                cal_v_eff              1.16          32   0.04     1.22
+XC_Functional        v_xc                   1.15          32   0.04     1.21
+HSolverPW            solve                 92.64          31   2.99    97.59
+Nonlocal             getvnl                 0.21          31   0.01     0.22
+pp_cell_vnl          getvnl                 0.22          32   0.01     0.23
+DiagoIterAssist      diagH_subspace         7.60          31   0.25     8.01
+Operator             hPsi                  73.71       10202   0.01    77.65
+Operator             EkineticPW             0.58       10202   0.00     0.61
+Operator             VeffPW                19.97       10202   0.00    21.04
+PW_Basis_K           recip2real            12.18       17768   0.00    12.83
+PW_Basis_K           gathers_scatterp       4.36       17768   0.00     4.59
+PW_Basis_K           real2recip             8.06       14201   0.00     8.49
+PW_Basis_K           gatherp_scatters       2.79       14201   0.00     2.94
+Operator             NonlocalPW            53.02       10202   0.01    55.86
+Nonlocal             add_nonlocal_pp       24.90       10202   0.00    26.23
+DiagoIterAssist      LAPACK_subspace        0.11          31   0.00     0.12
+DiagoCG              diag_once             82.12          31   2.65    86.51
+ElecStatePW          psiToRho               2.39          31   0.08     2.52
+Charge               mix_rho                0.23          30   0.01     0.24
+Charge               Pulay_mixing           0.22          30   0.01     0.23
+Forces               cal_force_nl           0.15           1   0.15     0.16
+------------------------------------------------------------------------------
 
-
-
-
-  |CLASS_NAME---------|NAME---------------|TIME(Sec)-----|CALLS----|AVG------|PER%-------
-                                      total     1799.77624        17    105.87    100.00%
-                 Driver         driver_line     1799.76606         1   1799.77    100.00%
-              Potential            init_pot        0.22125         1      0.22      0.01%
-               PW_Basis          recip2real        0.87246       336      0.00      0.05%
-               PW_Basis    gathers_scatterp        0.41949       336      0.00      0.02%
-                 Charge          atomic_rho        0.12217         1      0.12      0.01%
-              Potential            v_of_rho        4.43052        66      0.07      0.25%
-          XC_Functional                v_xc        3.80217        67      0.06      0.21%
-               PW_Basis          real2recip        1.36389       536      0.00      0.08%
-               PW_Basis    gatherp_scatters        0.63944       536      0.00      0.04%
-           H_Hartree_pw           v_hartree        0.44561        66      0.01      0.02%
-                 Efield          add_efield        0.18160        66      0.00      0.01%
-          ESolver_KS_PW                 Run     1798.17655         1   1798.18     99.91%
-              HSolverPW               solve     1792.48557        66     27.16     99.59%
-            pp_cell_vnl              getvnl        1.60776        67      0.02      0.09%
-                 WF_igk              get_sk        0.23522      1836      0.00      0.01%
-        DiagoIterAssist      diagH_subspace       84.31838        65      1.30      4.68%
-             OperatorPW                hPsi     1420.83015     58556      0.02     78.94%
-               Operator          EkineticPW        1.36305     58556      0.00      0.08%
-               Operator              VeffPW      222.43688     58556      0.00     12.36%
-             PW_Basis_K          recip2real      124.79294     94120      0.00      6.93%
-             PW_Basis_K    gathers_scatterp       45.52997     94120      0.00      2.53%
-             PW_Basis_K          real2recip       73.11058     77406      0.00      4.06%
-             PW_Basis_K    gatherp_scatters       18.60677     77406      0.00      1.03%
-               Operator          NonlocalPW     1195.51727     58556      0.02     66.43%
-               Nonlocal     add_nonlocal_pp      596.52963     58556      0.01     33.14%
-        DiagoIterAssist        diagH_LAPACK        2.30362        65      0.04      0.13%
-                DiagoCG           diag_once     1677.22800        66     25.41     93.19%
-            ElecStatePW            psiToRho       25.50445        66      0.39      1.42%
-                 Charge             rho_mpi        3.53590        66      0.05      0.20%
-                 Charge             mix_rho        0.68980        64      0.01      0.04%
-                 Forces        cal_force_nl        0.77304         1      0.77      0.04%
- ----------------------------------------------------------------------------------------
-
- CLASS_NAME---------|NAME---------------|MEMORY(MB)--------
-                                         48.0537
-             wavefunc                 psi        22.8187
-         Charge_Pulay                Rrho         5.8594
-         Charge_Pulay               dRrho         5.1270
-         Charge_Pulay                drho         5.1270
+ NAME---------------|MEMORY(MB)--------
+               total       663.1722
+         Force::vkb1       165.1816
+            VNL::vkb        82.5908
+              Psi_PW        55.9209
+       DiagSub::hpsi        55.9209
+    DiagSub::evctemp        55.9209
+        ChgMix::Rrho        34.1719
+       ChgMix::dRrho        29.9004
+        ChgMix::drho        29.9004
+        Force::dbecp        18.2812
+           FFT::grid        17.0859
+    Veff<PW>::porter         8.5430
+   Veff<PW>::porter1         8.5430
+    Meta<PW>::porter         8.5430
+       ElecSPW::wfcr         8.5430
+     ElecSPW::wfcr_a         8.5430
+           VNL::vkb1         6.8826
+  Nonlocal<PW>::becp         6.0938
+    Nonlocal<PW>::ps         6.0938
+         Force::becp         6.0938
+            Chg::rho         4.2715
+       Chg::rho_save         4.2715
+       Chg::rho_core         4.2715
+       Pot::veff_fix         4.2715
+           Pot::veff         4.2715
+   ChgMix::rho_save2         4.2715
+        SF::strucFac         3.4482
+            VNL::ylm         3.4413
+   YlmReal::Ylm_Real         3.4413
+        DiagSub::hcc         2.0630
+        DiagSub::scc         2.0630
+        DiagSub::vcc         2.0630
+           Chg::rhog         1.7241
+      Chg::rhog_save         1.7241
+      Chg::rhog_core         1.7241
+ -------------   < 1.0 MB has been ignored ----------------
  ----------------------------------------------------------
 
- Start  Time  : Sun Sep 25 10:10:23 2022
- Finish Time  : Sun Sep 25 10:40:22 2022
- Total  Time  : 0 h 29 mins 59 secs 
+ Start  Time  : Sat Oct  7 10:49:39 2023
+ Finish Time  : Sat Oct  7 10:51:14 2023
+ Total  Time  : 0 h 1 mins 35 secs 

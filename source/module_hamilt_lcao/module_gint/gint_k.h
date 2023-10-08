@@ -61,6 +61,13 @@ class Gint_k : public Gint
     // and is (Vna + delta_Vh + Vxc) if Vna is used.
     void folding_vl_k(const int &ik, LCAO_Matrix* LM, const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
+    /**
+     * @brief transfer pvpR to this->hRGint
+     * then pass this->hRGint to Veff<OperatorLCAO>::hR
+    */
+    void transfer_pvpR(hamilt::HContainer<double> *hR);
+    void transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR);
+
     //------------------------------------------------------
     // in gint_k_env.cpp 
     //------------------------------------------------------

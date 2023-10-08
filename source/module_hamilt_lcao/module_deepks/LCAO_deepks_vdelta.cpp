@@ -27,7 +27,7 @@ void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
 {
     ModuleBase::TITLE("LCAO_DESCRIPTOR", "add_v_delta");
     ModuleBase::timer::tick ("LCAO_gen_fixedH","add_v_delta");
-    ModuleBase::GlobalFunc::ZEROS(this->H_V_delta, pv->nrow * pv->ncol); //init before calculate
+    ModuleBase::GlobalFunc::ZEROS(this->H_V_delta.data(), pv->nrow * pv->ncol); //init before calculate
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
@@ -372,7 +372,7 @@ void LCAO_Deepks::check_v_delta_k(const int nnr)
 
 //calculating sum of correction band energies
 //for gamma_only calculations
-void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm)
+void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
     this->e_delta_band = 0;
@@ -388,7 +388,8 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm)
                 const int index = nu * pv->nrow + mu;
                 for (int is = 0; is < dm.size(); ++is)  //dm.size() == GlobalV::NSPIN
                 {
-                    this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
+                    //this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
+					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[index];
                 }
             }
         }
@@ -401,7 +402,7 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm)
 
 //calculating sum of correction band energies
 //for multi_k calculations
-void LCAO_Deepks::cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
+void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm,
     const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
@@ -426,7 +427,8 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix
                 }
                 for(int ik=0;ik<nks;ik++)
                 {
-                    e_delta_band_k += dm[ik](nu, mu) * this->H_V_delta_k[ik][iic];
+                    //e_delta_band_k += dm[ik](nu, mu) * this->H_V_delta_k[ik][iic];
+					e_delta_band_k += dm[ik][nu * this->pv->nrow + mu] * this->H_V_delta_k[ik][iic];
                 }
             }
         }

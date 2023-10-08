@@ -25,11 +25,9 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 	// --------------------------------------
 	this->xc_func="PZ";
 	this->pp_type="NC";
-	this->tvanp=false;
-	GlobalV::ofs_running << " Always use PZ-LDA by now." << std::endl;
-	
+    this->tvanp = false;
 
-	// (1) read in mesh
+    // (1) read in mesh
 	std::string value;
 	int length=0;
 	ifs >> value; length = value.find(","); value.erase(length,1);
@@ -295,9 +293,11 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
     // kbeta(nbeta): number of mesh points for projector i (must be .le.mesh )
     delete[] kbeta;
     kbeta = new int[nbeta];
+    kkbeta = 0;
     for (int ib = 0; ib < nbeta; ++ib)
     {
         kbeta[ib] = mesh;
+        kkbeta = (kbeta[ib] > kkbeta) ? kbeta[ib] : kkbeta;
     }
     // nonlocal projector
     beta.create(nbeta,mesh);

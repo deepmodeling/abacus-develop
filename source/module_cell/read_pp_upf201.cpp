@@ -109,21 +109,6 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
     }
 
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</UPF>", false);
-
-    if (GlobalV::DFT_FUNCTIONAL != "default")
-    {
-        std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
-        transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
-        if (xc_func1 != xc_func)
-        {
-            functional_error = 1;
-
-            std::cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
-            std::cout << " dft_functional in pseudopot file is: " << xc_func << std::endl;
-            GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
-            GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << xc_func << std::endl;
-        }
-    }
     return 0;
 }
 
@@ -307,7 +292,7 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         }
         else if (name[ip] == "z_valence")
         {
-            zp = atoi(val[ip].c_str());
+            zp = atof(val[ip].c_str());
         }
         else if (name[ip] == "total_psenergy")
         {

@@ -1,0 +1,25 @@
+INPUT_PARAMETERS
+suffix         autotest
+ntype          2
+
+calculation    scf
+ecutwfc        20
+scf_thr            1.0e-8
+scf_nmax          50
+out_chg     0
+
+smearing_method       gaussian
+smearing_sigma   0.02
+
+mixing_type    pulay
+mixing_beta    0.4
+
+ks_solver     cg
+basis_type    pw
+gamma_only    1
+nspin         2
+pseudo_dir	../../../tests/PP_ORB
+orbital_dir	../../../tests/PP_ORB
+
+psi_initializer 1
+init_wfc nao

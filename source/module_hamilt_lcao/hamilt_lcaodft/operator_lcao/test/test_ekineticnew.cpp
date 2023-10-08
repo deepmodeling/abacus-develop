@@ -110,11 +110,11 @@ TEST_F(EkineticNewTest, constructHRd2d)
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     std::vector<double> hk(paraV->get_row_size() * paraV->get_col_size(), 0.0);
     Grid_Driver gd(0,0,0);
-    hamilt::EkineticNew<hamilt::OperatorLCAO<double>, double> op(
+    hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>> op(
         nullptr, 
         kvec_d_in, 
         HR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV
@@ -165,11 +165,11 @@ TEST_F(EkineticNewTest, constructHRd2cd)
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
     std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
     Grid_Driver gd(0,0,0);
-    hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>>, double> op(
+    hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, double>> op(
         nullptr, 
         kvec_d_in, 
         HR, 
-        hk.data(), 
+        &hk, 
         &ucell, 
         &gd,
         paraV
