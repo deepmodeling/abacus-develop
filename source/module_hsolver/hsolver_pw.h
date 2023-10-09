@@ -47,7 +47,7 @@ class HSolverPW: public HSolver<T, Device>
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
-               psi::Psi<std::complex<double>>& transform,
+               psi::Psi<T, Device>& transform,
                const bool skip_charge) override;
     virtual Real cal_hsolerror() override;
     virtual Real set_diagethr(const int istep, const int iter, const Real drho) override;

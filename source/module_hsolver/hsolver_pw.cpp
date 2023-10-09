@@ -235,7 +235,7 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_KS_PW::p_hamilt
                                       psi::Psi<T, Device>& psi,      // ESolver_KS_PW::kspw_psi
                                       elecstate::ElecState* pes,     // ESolver_KS_PW::pes
-                                      psi::Psi<std::complex<double>>& transform,
+                                      psi::Psi<T, Device>& transform,
                                       const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
@@ -245,7 +245,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
     {
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
-
 #ifdef USE_PAW
 	    if(GlobalV::use_paw)
         {
@@ -289,13 +288,12 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
         }
 #endif
         /* manually copy from CPU to GPU here (if Device = GPU), will be deleted when exit this function */
-        psi::Psi<T, Device> template_transform(transform);
         psi.fix_k(ik);
         transform.fix_k(ik);
         /// solve eigenvector and eigenvalue for H(k)
         hsolver::DiagoIterAssist<T, Device>::diagH_subspace(
             pHamilt,                                // interface to hamilt
-            template_transform,                     // transform matrix between lcao and pw
+            transform,                              // transform matrix between lcao and pw
             psi,                                    // psi in pw basis
             eigenvalues.data() + ik * pes->ekb.nc,  // eigenvalues
             psi.get_nbands()                        // number of the lowest energies bands

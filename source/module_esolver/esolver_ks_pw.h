@@ -88,7 +88,7 @@ namespace ModuleESolver
         /// @brief initialize psi
         void initialize_psi();
     private:
-        psi_initializer* psi_init = nullptr;
+        psi_initializer<T, Device>* psi_init = nullptr;
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
         psi::Psi<T, Device>* kspw_psi = nullptr;

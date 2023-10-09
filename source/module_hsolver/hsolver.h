@@ -52,7 +52,7 @@ class HSolver
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
-                       psi::Psi<std::complex<double>>& transform,
+                       psi::Psi<T, Device>& transform,
                        const bool skip_charge = false)
     {
         return;

@@ -2784,6 +2784,28 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         by = 1;
         bz = 1;
     }
+    else if (basis_type == "lcao_in_pw")
+    {
+        if (ks_solver != "lapack")
+        {
+            ModuleBase::WARNING_QUIT("Input", "ks_solver must be lapack when basis_type is lcao_in_pw");
+        }
+        else
+        {
+            /*
+                then psi initialization setting adjustment
+            */
+            if (!psi_initializer)
+            {
+                psi_initializer = true;
+            }
+            if (init_wfc != "nao")
+            {
+                init_wfc = "nao";
+                GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
+            }
+        }
+    }
     else if (basis_type == "lcao")
     {
         if (ks_solver == "default")

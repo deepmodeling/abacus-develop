@@ -15,24 +15,27 @@
 #include "module_base/parallel_common.h"
 #endif
 
+template <typename T, typename Device>
 #ifdef __MPI
-psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in)
-					: psi_initializer(sf_in, pw_wfc_in, p_ucell_in, p_parakpts_in, random_seed_in)
+psi_initializer_nao<T, Device>::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in)
+					: psi_initializer<T, Device>(sf_in, pw_wfc_in, p_ucell_in, p_parakpts_in, random_seed_in)
 #else
-psi_initializer_nao::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in)
-					: psi_initializer(sf_in, pw_wfc_in, p_ucell_in, random_seed_in)
+psi_initializer_nao<T, Device>::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in)
+					: psi_initializer<T, Device>(sf_in, pw_wfc_in, p_ucell_in, random_seed_in)
 #endif
 {
 	this->set_method("nao");
 }
 
-psi_initializer_nao::~psi_initializer_nao() {}
+template <typename T, typename Device>
+psi_initializer_nao<T, Device>::~psi_initializer_nao() {}
 
 /*
 I don't know why some variables are distributed while others not... for example the orbital_files...
 We need not only read and import, but also distribute here
 */
-void psi_initializer_nao::set_orbital_files(std::string* orbital_files)
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::set_orbital_files(std::string* orbital_files)
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
 	#ifdef __MPI
@@ -54,7 +57,8 @@ void psi_initializer_nao::set_orbital_files(std::string* orbital_files)
 	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
 }
 
-void psi_initializer_nao::create_ovlp_Xjlq()
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::create_ovlp_Xjlq()
 {
     // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell->ntype;
@@ -70,7 +74,7 @@ void psi_initializer_nao::create_ovlp_Xjlq()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_nao::psi_initializer_nao", "there is not ANY numerical atomic orbital read in present system, quit.");
+        ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::psi_initializer_nao", "there is not ANY numerical atomic orbital read in present system, quit.");
     }
     int dim3 = GlobalV::NQX;
     // allocate memory for ovlp_flzjlq
@@ -78,7 +82,8 @@ void psi_initializer_nao::create_ovlp_Xjlq()
     this->ovlp_flzjlq.zero_out();
 }
 
-void psi_initializer_nao::read_orbital_files()
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::read_orbital_files()
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
 	#ifdef __MPI
@@ -103,12 +108,12 @@ void psi_initializer_nao::read_orbital_files()
 
 			if(!ifs_it)
 			{
-				GlobalV::ofs_warning<<"psi_initializer_nao::read_orbital_files: cannot open orbital file: "<<this->orbital_files[it]<<std::endl;
-				ModuleBase::WARNING_QUIT("psi_initializer_nao::read_orbital_files", "cannot open orbital file.");
+				GlobalV::ofs_warning<<"psi_initializer_nao<T, Device>::read_orbital_files: cannot open orbital file: "<<this->orbital_files[it]<<std::endl;
+				ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::read_orbital_files", "cannot open orbital file.");
 			}
 			else
 			{
-				GlobalV::ofs_running<<"psi_initializer_nao::read_orbital_files: reading orbital file: "<<this->orbital_files[it]<<std::endl;
+				GlobalV::ofs_running<<"psi_initializer_nao<T, Device>::read_orbital_files: reading orbital file: "<<this->orbital_files[it]<<std::endl;
 			}
 			ifs_it.close();
 
@@ -160,7 +165,7 @@ void psi_initializer_nao::read_orbital_files()
 					{
 						if(ifs_it.eof())
 						{
-							GlobalV::ofs_warning<<" psi_initializer_nao::read_orbital_files: cannot find orbital of element "<<this->p_ucell->atoms[it].label<<std::endl
+							GlobalV::ofs_warning<<" psi_initializer_nao<T, Device>::read_orbital_files: cannot find orbital of element "<<this->p_ucell->atoms[it].label<<std::endl
 												<<" angular momentum l = "<<l<<std::endl
 												<<" index of chi = "<<ichi<<std::endl;
 						}
@@ -255,7 +260,8 @@ void psi_initializer_nao::read_orbital_files()
 	ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
 }
 
-void psi_initializer_nao::initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in)
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in)
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "initialize_only_once");
 	this->create_ovlp_Xjlq();
@@ -264,7 +270,8 @@ void psi_initializer_nao::initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in
 	ModuleBase::timer::tick("psi_initializer_nao", "initialize_only_once");
 }
 
-void psi_initializer_nao::cal_ovlp_flzjlq()
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::cal_ovlp_flzjlq()
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
 	//this->read_orbital_files();
@@ -325,7 +332,8 @@ void psi_initializer_nao::cal_ovlp_flzjlq()
 	ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
 }
 
-psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
+template <typename T, typename Device>
+psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
 {
 	ModuleBase::timer::tick("psi_initializer_nao", "initialize");
 	assert(ik>=0);
@@ -384,11 +392,14 @@ psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
 										for(int ig=0; ig<npw; ig++)
 										{
 											//if(is_N==0)
-											(*(this->psig))(ibasis, ig) =
-											lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
-											//else
-                                            (*(this->psig))(ibasis + 1, ig + this->pw_wfc->npwk_max)
-                                                = lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
+											(*(this->psig))(ibasis, ig) = 
+												this->template cast_to_T<T>(
+													lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
+												);
+											(*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
+												this->template cast_to_T<T>(
+													lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
+												);
                                         }
                                         ibasis += 2;
                                     }
@@ -434,16 +445,26 @@ psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
 											fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
 											//build the orthogonal wfc
 											//first rotation with angle (alpha + ModuleBase::PI) around (OX)
-											(*(this->psig))(ibasis,ig) = (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5*gamma)) * fup;
-                                            (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max)
-                                                = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown;
+											(*(this->psig))(ibasis, ig) = 
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
+												);
+											(*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
+												);
                                             // second rotation with angle gamma around(OZ)
                                             fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                             fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
-											(*(this->psig))(ibasis+2*L+1,ig) = (cos(0.5*gamma) + ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fup;
-                                            (*(this->psig))(ibasis + 2 * L + 1, ig + this->pw_wfc->npwk_max)
-                                                = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown;
-                                        }
+											(*(this->psig))(ibasis+2,ig) =
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
+												);
+											(*(this->psig))(ibasis + 2, ig + this->pw_wfc->npwk_max) =
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
+												);
+										}
                                         ibasis++;
                                     }
 									ibasis += 2*L +1;
@@ -472,15 +493,25 @@ psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
 										fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
 										//build the orthogonal wfc
 										//first rotation with angle(alpha+ModuleBase::PI) around(OX)
-										(*(this->psig))(ibasis,ig) = (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup;
-                                        (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max)
-                                            = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown;
+										(*(this->psig))(ibasis, ig) = 
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
+											);
+										(*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
+											);
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-										(*(this->psig))(ibasis+2*L+1,ig) = (cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fup;
-                                        (*(this->psig))(ibasis + 2 * L + 1, ig + this->pw_wfc->npwk_max)
-                                            = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown;
+										(*(this->psig))(ibasis+2,ig) =
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
+											);
+										(*(this->psig))(ibasis + 2, ig + this->pw_wfc->npwk_max) =
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
+											);
                                     } // end ig
                                     ibasis++;
                                 } // end m
@@ -495,8 +526,10 @@ psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
 							const int lm = L*L+m;
 							for(int ig=0; ig<npw; ig++)
 							{
-								(*(this->psig))(ibasis, ig) =
-								lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
+								(*(this->psig))(ibasis, ig) = 
+									this->template cast_to_T<T>(
+										lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
+									);
 							}
 							++ibasis;
 						}
@@ -520,3 +553,16 @@ psi::Psi<std::complex<double>>* psi_initializer_nao::cal_psig(int ik)
 	
 	return this->psig;
 }
+
+template class psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>;
+template class psi_initializer_nao<std::complex<float>, psi::DEVICE_CPU>;
+// gamma point calculation
+template class psi_initializer_nao<double, psi::DEVICE_CPU>;
+template class psi_initializer_nao<float, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class psi_initializer_nao<std::complex<double>, psi::DEVICE_GPU>;
+template class psi_initializer_nao<std::complex<float>, psi::DEVICE_GPU>;
+// gamma point calculation
+template class psi_initializer_nao<double, psi::DEVICE_GPU>;
+template class psi_initializer_nao<float, psi::DEVICE_GPU>;
+#endif
