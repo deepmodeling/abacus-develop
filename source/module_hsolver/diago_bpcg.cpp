@@ -1,13 +1,13 @@
-#include <module_hsolver/diago_bpcg.h>
+#include "module_hsolver/diago_bpcg.h"
+
+#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/einsum_op.h>
+#include <ATen/kernels/lapack_op.h>
 
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/lapack_op.h>
-#include <ATen/kernels/einsum_op.h>
 
 namespace hsolver {
 

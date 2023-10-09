@@ -1,5 +1,5 @@
-#include "module_io/rho_io.h"
 #include "module_io/cube_io.h"
+#include "module_io/rho_io.h"
 
 void ModuleIO::write_rho(
 #ifdef __MPI
