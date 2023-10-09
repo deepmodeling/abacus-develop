@@ -21,7 +21,7 @@ smearing_method                       fixed	#type of smearing_method: gauss; fd;
 #smearing_sigma                          0.002	#energy range for smearing_method
 
 #Parameters (6.Charge Mixing)
-mixing_type                    pulay	#plain; kerker; pulay; pulay-kerker; broyden
+mixing_type                    broyden	#plain; kerker; pulay; pulay-kerker; broyden
 mixing_beta                    0.7	#mixing parameter: 0 means no new charge
 
 bx 5

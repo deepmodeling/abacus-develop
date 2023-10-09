@@ -22,6 +22,7 @@ VPATH=./src_global:\
 ./module_base/module_container/base/core:\
 ./module_base/module_container/ATen/core:\
 ./module_base/module_container/ATen/kernels:\
+./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_esolver:\
@@ -142,6 +143,8 @@ OBJS_BASE=abfs-vector3_order.o\
     formatter_contextfmt.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
+    mixing_data.o\
+
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -479,7 +482,8 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
       RI_2D_Comm.o\
-      Mix_DMk_2D.o
+      Mix_DMk_2D.o\
+      Mix_Matrix.o\
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\
@@ -495,10 +499,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge.o\
     charge_init.o\
     charge_mpi.o\
-    charge_broyden.o\
     charge_extra.o\
     charge_mixing.o\
-    charge_pulay.o\
     fp_energy.o\
     forces.o\
     force_op.o\

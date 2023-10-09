@@ -5,7 +5,7 @@ This test for: DOS
 *sg15 pseudopotential
 *smearing_method gauss
 *ks_solver genelpa
-*mixing_type pulay-kerker
+*mixing_type broyden-kerker
 *mixing_beta 0.7
 *restart from 4*4*4kpoint consequence
 *do nscf

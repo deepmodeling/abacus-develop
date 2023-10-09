@@ -304,7 +304,8 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     {
         GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                         this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                         this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                         this->pw_wfc->startz,this->pw_wfc->numz);
 
         GlobalC::paw_cell.prepare_paw();
         GlobalC::paw_cell.set_sij();
@@ -443,9 +444,8 @@ void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
 {
-    // mohan add 2010-07-16
     if (iter == 1)
-        this->p_chgmix->reset();
+        this->p_chgmix->mix_reset();
 
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)

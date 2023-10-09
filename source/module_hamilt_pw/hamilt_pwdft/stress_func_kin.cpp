@@ -149,7 +149,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	//do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     } // end symmetry
 
     delete[] gk[0];
@@ -157,8 +157,8 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
     delete[] gk[2];
 	delete[] gk;
     delete[] kfac;
-
-    ModuleBase::timer::tick("Stress_Func","stress_kin");
+		
+	ModuleBase::timer::tick("Stress_Func","stress_kin");
 	return;
 }
 

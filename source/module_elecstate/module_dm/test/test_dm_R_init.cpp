@@ -101,6 +101,7 @@ class DMTest : public testing::Test
 #endif
 };
 
+// test for construct DMR from GlobalC::GridD and UnitCell
 TEST_F(DMTest, DMInit1)
 {
     // initalize a kvectors
@@ -127,7 +128,72 @@ TEST_F(DMTest, DMInit1)
     delete kv;
 }
 
+// test for construct DMR from RA and UnitCell
 TEST_F(DMTest, DMInit2)
+{
+    // initalize a kvectors
+    K_Vectors* kv = nullptr;
+    int nspin = 1;
+    int nks = 2; // since nspin = 1
+    kv = new K_Vectors;
+    kv->nks = nks;
+    kv->kvec_d.resize(nks);
+    kv->kvec_d[1].x = 0.5;
+    // construct DM
+    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    // initialize Record_adj using Grid_Driver
+    Grid_Driver gd(0, 0, 0);
+    Record_adj ra;
+    ra.na_each = new int[ucell.nat];
+    ra.info = new int**[ucell.nat];
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
+    {
+        auto tau1 = ucell.get_tau(iat1);
+        int T1, I1;
+        ucell.iat2iait(iat1, &I1, &T1);
+        AdjacentAtomInfo adjs;
+        gd.Find_atom(ucell, tau1, T1, I1, &adjs);
+        ra.na_each[iat1] = adjs.adj_num + 1;
+        ra.info[iat1] = new int*[ra.na_each[iat1]];
+        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
+        {
+            ra.info[iat1][ad] = new int[5];
+            const int T2 = adjs.ntype[ad];
+            const int I2 = adjs.natom[ad];
+            ra.info[iat1][ad][3] = T2;
+            ra.info[iat1][ad][4] = I2;
+            ModuleBase::Vector3<int>& R_index = adjs.box[ad];
+            ra.info[iat1][ad][0] = R_index.x;
+            ra.info[iat1][ad][1] = R_index.y;
+            ra.info[iat1][ad][2] = R_index.z;
+            ra.info[iat1][ad][3] = T2;
+            ra.info[iat1][ad][4] = I2;
+        }
+    }
+    DM.init_DMR(ra, &ucell);
+    // compare
+    EXPECT_EQ(DM.get_DMR_pointer(1)->size_atom_pairs(), test_size * test_size);
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_i(), 2);
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    // release memory
+    delete kv;
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
+    {
+        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
+        {
+            delete[] ra.info[iat1][ad];
+        }
+        delete[] ra.info[iat1];
+    }
+    delete[] ra.info;
+}
+
+// test for construct DMR from another HContainer<double>
+TEST_F(DMTest, DMInit3)
 {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
@@ -152,6 +218,60 @@ TEST_F(DMTest, DMInit2)
     EXPECT_EQ(DM1.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
     EXPECT_EQ(DM1.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
     EXPECT_EQ(DM1.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    //
+    delete kv;
+}
+
+// test for construct DMR from another HContainer<complex<double>>
+TEST_F(DMTest, DMInit4)
+{
+    // initalize a kvectors
+    K_Vectors* kv = nullptr;
+    int nspin = 2;
+    int nks = 4; // since nspin = 2
+    kv = new K_Vectors;
+    kv->nks = nks;
+    kv->kvec_d.resize(nks);
+    kv->kvec_d[1].x = 0.5;
+    kv->kvec_d[3].x = 0.5;
+    // construct a new HContainer
+    Grid_Driver gd(0, 0, 0);
+    hamilt::HContainer<std::complex<double>>* tmp_DMR;
+    tmp_DMR = new hamilt::HContainer<std::complex<double>>(paraV);
+    // set up a HContainer
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
+    {
+        auto tau1 = ucell.get_tau(iat1);
+        int T1, I1;
+        ucell.iat2iait(iat1, &I1, &T1);
+        AdjacentAtomInfo adjs;
+        gd.Find_atom(ucell, tau1, T1, I1, &adjs);
+        // std::cout << "adjs.adj_num: " <<adjs.adj_num << std::endl;
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+        {
+            const int T2 = adjs.ntype[ad];
+            const int I2 = adjs.natom[ad];
+            int iat2 = ucell.itia2iat(T2, I2);
+            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            {
+                continue;
+            }
+            ModuleBase::Vector3<int>& R_index = adjs.box[ad];
+            // std::cout << "R_index: " << R_index.x << " " << R_index.y << " " << R_index.z << std::endl;
+            hamilt::AtomPair<std::complex<double>> tmp_ap(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
+            tmp_DMR->insert_pair(tmp_ap);
+        }
+    }
+    // construct a DM from this HContainer
+    elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
+    DM.init_DMR(*tmp_DMR);
+    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    // compare
+    EXPECT_EQ(DM.get_DMR_pointer(2)->size_atom_pairs(), test_size * test_size);
+    EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_atom_i(), 2);
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
+    EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
     //
     delete kv;
 }

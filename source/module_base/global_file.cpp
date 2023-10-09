@@ -3,11 +3,13 @@
 // DATE : 2008-11-10
 //==========================================================
 #include "global_file.h"
-#include "global_variable.h"
-#include "global_function.h"
+
 #ifdef __MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
+
+#include "global_function.h"
+#include "global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
 

@@ -147,7 +147,10 @@ TEST_F(Test_PAW, test_paw)
 
     paw_cell.set_libpaw_cell(latvec, lat0);
 
-    paw_cell.set_libpaw_fft(nx, ny, nz, nx, ny, nz);
+    GlobalV::NPROC = 1;
+    std::vector<int> start_z = {0};
+    std::vector<int> num_z = {nz};
+    paw_cell.set_libpaw_fft(nx, ny, nz, nx, ny, nz, start_z.data(), num_z.data());
 
     paw_cell.set_libpaw_atom(nat, ntyp, typat, xred);
 

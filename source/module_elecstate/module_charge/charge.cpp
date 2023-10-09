@@ -62,15 +62,6 @@ void Charge::destroy()
     {
         for (int i = 0; i < GlobalV::NSPIN; i++)
         {
-            delete[] rho[i];
-            delete[] rhog[i];
-            delete[] rho_save[i];
-            delete[] rhog_save[i];
-            if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
-            {
-                delete[] kin_r[i];
-                delete[] kin_r_save[i];
-            }
             if(GlobalV::use_paw)
             {
                 delete[] nhat[i];
@@ -83,6 +74,12 @@ void Charge::destroy()
         delete[] rhog_save;
         delete[] rho_core;
         delete[] rhog_core;
+        delete[] _space_rho;
+        delete[] _space_rho_save;
+        delete[] _space_rhog;
+        delete[] _space_rhog_save;
+        delete[] _space_kin_r;
+        delete[] _space_kin_r_save;
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
             delete[] kin_r;
@@ -120,6 +117,15 @@ void Charge::allocate(const int& nspin_in)
     }
 
     // allocate memory
+    _space_rho = new double[nspin * nrxx];
+    _space_rho_save = new double[nspin * nrxx];
+    _space_rhog = new std::complex<double>[nspin * ngmc];
+    _space_rhog_save = new std::complex<double>[nspin * ngmc];
+    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+    {
+        _space_kin_r = new double[nspin * nrxx];
+        _space_kin_r_save = new double[nspin * nrxx];
+    }
     rho = new double*[nspin];
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
@@ -137,19 +143,21 @@ void Charge::allocate(const int& nspin_in)
 
     for (int is = 0; is < nspin; is++)
     {
-        rho[is] = new double[nrxx];
-        rhog[is] = new std::complex<double>[ngmc];
-        rho_save[is] = new double[nrxx];
-        rhog_save[is] = new std::complex<double>[ngmc];
+        rho[is] = _space_rho + is * nrxx;
+        rhog[is] = _space_rhog + is * ngmc;
+        rho_save[is] = _space_rho_save + is * nrxx;
+        rhog_save[is] = _space_rhog_save + is * ngmc;
         ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
-            kin_r[is] = new double[nrxx];
+            _space_kin_r = new double[nspin * nrxx];
+            _space_kin_r_save = new double[nspin * nrxx];
+            kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
-            kin_r_save[is] = new double[nrxx];
+            kin_r_save[is] = _space_kin_r_save + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r_save[is], nrxx);
         }
         if(GlobalV::use_paw)
