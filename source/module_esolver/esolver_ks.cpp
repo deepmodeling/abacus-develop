@@ -72,17 +72,17 @@ namespace ModuleESolver
         ESolver_FP::Init(inp,ucell);
 
         //------------------Charge Mixing------------------
-        p_chgmix->set_mixing(INPUT.mixing_mode,
-                             INPUT.mixing_beta,
-                             INPUT.mixing_ndim,
-                             INPUT.mixing_gg0,
-                             INPUT.mixing_tau);
+        p_chgmix->set_mixing(GlobalV::MIXING_MODE,
+                             GlobalV::MIXING_BETA,
+                             GlobalV::MIXING_NDIM,
+                             GlobalV::MIXING_GG0,
+                             GlobalV::MIXING_TAU);
         // using bandgap to auto set mixing_beta
-        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
+        if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
         {
             p_chgmix->need_auto_set();
         }
-        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
+        else if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
         {
             ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
         }

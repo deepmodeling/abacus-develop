@@ -242,6 +242,13 @@ int of_full_pw_dim = 0;
 bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
 
+// mixing parameters
+std::string MIXING_MODE = "broyden";
+double MIXING_BETA = 0.7;
+int MIXING_NDIM = 8;
+double MIXING_GG0 = 0.0;
+bool MIXING_TAU = 0;
+
 //==========================================================
 // device flags added by denghui
 //==========================================================
