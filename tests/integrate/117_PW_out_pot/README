@@ -1,5 +1,5 @@
 This test for:
 *fcc Ce
 *SG15 pseudopotential containing f electron
-*mixing_type pulay
+*mixing_type broyden
 *mixing_beta 0.7

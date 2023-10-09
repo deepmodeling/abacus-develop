@@ -29,4 +29,4 @@ cal_stress              1
 #cell_factor         10
 stress_thr          1e-6
 
-mixing_type       pulay
+mixing_type       broyden

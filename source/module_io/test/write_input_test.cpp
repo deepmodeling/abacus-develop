@@ -11,6 +11,7 @@
  *   - Print()
  *     - output the information in the input file.
  */
+
 class write_input : public testing::Test
 {
      protected:
@@ -365,7 +366,7 @@ TEST_F(write_input, Smearing6)
     remove("write_input_test.log");
 }
 
-TEST_F(write_input, Mixing7)
+TEST_F(write_input,Mixing7)
 {
     INPUT.Default();
     INPUT.Read("./support/witestfile");
@@ -376,10 +377,10 @@ TEST_F(write_input, Mixing7)
     std::ifstream ifs("write_input_test.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(output, testing::HasSubstr("#Parameters (7.Charge Mixing)"));
-    EXPECT_THAT(output, testing::HasSubstr("mixing_type                    pulay #plain; pulay; broyden"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_type                    broyden #plain; pulay; broyden"));
     EXPECT_THAT(output,
                 testing::HasSubstr("mixing_beta                    0.7 #mixing parameter: 0 means no new charge"));
-    EXPECT_THAT(output, testing::HasSubstr("mixing_ndim                    8 #mixing dimension in pulay"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_ndim                    8 #mixing dimension in pulay or broyden"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_gg0                     0 #mixing parameter in kerker"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_tau                     0 #whether to mix tau in mGGA calculation"));
     EXPECT_THAT(output,

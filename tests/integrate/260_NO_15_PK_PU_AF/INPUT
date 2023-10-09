@@ -22,7 +22,7 @@ smearing_sigma    0.07
 #relax_method    cg
 #relax_bfgs_init    0.5
 
-mixing_type    pulay
+mixing_type    broyden
 mixing_beta    0.4
 #mixing_gg0    1.5
 

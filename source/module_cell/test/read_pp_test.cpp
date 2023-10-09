@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include<memory>
-
 /************************************************
  *  unit test of read_pp
  ***********************************************/

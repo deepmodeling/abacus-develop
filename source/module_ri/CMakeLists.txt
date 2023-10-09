@@ -6,6 +6,7 @@ if (ENABLE_LIBRI)
         RI_2D_Comm.cpp
         exx_lip.cpp
         Mix_DMk_2D.cpp
+        Mix_Matrix.cpp
   )
 
   if(ENABLE_LCAO)

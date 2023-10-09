@@ -444,9 +444,8 @@ void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
 {
-    // mohan add 2010-07-16
     if (iter == 1)
-        this->p_chgmix->reset();
+        this->p_chgmix->mix_reset();
 
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)

@@ -720,7 +720,7 @@ void Input_Conv::Convert(void)
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
 
     //-----------------------------------------------
-    // NCSCD related parameters
+    // Deltaspin related parameters
     //-----------------------------------------------
     GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
     GlobalV::sc_thr = INPUT.sc_thr;
@@ -728,6 +728,13 @@ void Input_Conv::Convert(void)
     GlobalV::nsc_min = INPUT.nsc_min;
     GlobalV::sc_file = INPUT.sc_file;
 
+    // mixing parameters
+    GlobalV::MIXING_MODE = INPUT.mixing_mode;
+    GlobalV::MIXING_BETA = INPUT.mixing_beta;
+    GlobalV::MIXING_NDIM = INPUT.mixing_ndim;
+    GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
+    GlobalV::MIXING_TAU = INPUT.mixing_tau;
+    
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }
