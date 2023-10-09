@@ -32,6 +32,8 @@ list(APPEND objects_advanced
     unk_overlap_pw.cpp
     berryphase.cpp
     to_wannier90.cpp
+    to_wannier90_pw.cpp
+    to_wannier90_lcao.cpp
     winput.cpp
 )
 

@@ -10,8 +10,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/istate_charge.h"
 #include "module_io/istate_envelope.h"
-#include "module_io/to_wannier90.h"
-// #include "module_io/to_wannier90_lcao.h"
+#include "module_io/to_wannier90_lcao.h"
 #include "module_io/write_HS_R.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -627,31 +626,17 @@ namespace ModuleESolver
         // add by jingan in 2018.11.7
         if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
         {
-            toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-            myWannier.init_wannier_lcao(INPUT.out_wannier_mmn, 
-                                        INPUT.out_wannier_amn, 
-                                        INPUT.out_wannier_unk, 
-                                        INPUT.out_wannier_eig,
-                                        INPUT.out_wannier_wvfn_formatted,
-                                        this->GridT,
-                                        this->pelec->ekb,
-                                        this->pw_wfc,
-                                        this->pw_big,
-                                        this->sf,
-                                        this->kv,
-                                        nullptr);
+            toWannier90_LCAO myWannier(
+                INPUT.out_wannier_mmn,
+                INPUT.out_wannier_amn,
+                INPUT.out_wannier_unk, 
+                INPUT.out_wannier_eig,
+                INPUT.out_wannier_wvfn_formatted,
+                INPUT.nnkpfile,
+                INPUT.wannier_spin
+            );
 
-            // toWannier90_LCAO myWannier(
-            //     INPUT.out_wannier_mmn,
-            //     INPUT.out_wannier_amn,
-            //     INPUT.out_wannier_unk, 
-            //     INPUT.out_wannier_eig,
-            //     INPUT.out_wannier_wvfn_formatted,
-            //     INPUT.nnkpfile,
-            //     INPUT.wannier_spin
-            // );
-
-            // myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), this->LOWF.ParaV);
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), this->LOWF.ParaV);
         }
 
         // add by jingan

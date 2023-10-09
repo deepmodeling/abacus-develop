@@ -399,6 +399,8 @@ OBJS_IO=input.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
+    to_wannier90_pw.o\
+    to_wannier90_lcao.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
     winput.o\
