@@ -1,4 +1,5 @@
 #include "paw_atom.h"
+#include "module_base/global_variable.h"
 
 void Paw_Atom::init_paw_atom(const int nproj_in)
 {
@@ -6,11 +7,19 @@ void Paw_Atom::init_paw_atom(const int nproj_in)
     nproj = nproj_in;
 
     ca.resize(nproj);
-    rhoij.resize(nproj*(nproj + 1) / 2);
-    rhoijp.resize(nproj*(nproj + 1) / 2);
-    rhoijselect.resize(nproj*(nproj + 1) / 2);
+    rhoij.resize(GlobalV::NSPIN);
+    for(int is = 0; is < GlobalV::NSPIN; is ++)
+    {
+        rhoij[is].resize(nproj*(nproj + 1) / 2);
+    }
+    rhoijp.resize(GlobalV::NSPIN * nproj*(nproj + 1) / 2);
+    rhoijselect.resize(GlobalV::NSPIN * nproj*(nproj + 1) / 2);
 
-    dij.resize(nproj*nproj);
+    dij.resize(GlobalV::NSPIN);
+    for(int is = 0; is < GlobalV::NSPIN; is ++)
+    {
+        dij[is].resize(nproj*nproj);
+    }
     sij.resize(nproj*nproj);
 
     this -> reset_rhoij();
@@ -33,13 +42,16 @@ void Paw_Atom::reset_rhoij()
     nrhoijsel = 0;
     for(int i = 0; i < nproj*(nproj+1)/2; i ++)
     {
-        rhoij[i] = 0.0;
+        for(int is = 0; is < GlobalV::NSPIN; is ++)
+        {
+            rhoij[is][i] = 0.0;
+        }
         rhoijp[i] = 0.0;
         rhoijselect[i] = -1;
     }    
 }
 
-void Paw_Atom::accumulate_rhoij()
+void Paw_Atom::accumulate_rhoij(const int current_spin)
 {
     for(int iproj = 0; iproj < nproj; iproj ++)
     {
@@ -47,7 +59,7 @@ void Paw_Atom::accumulate_rhoij()
         for(int jproj = 0; jproj < iproj+1; jproj ++)
         {
             std::complex<double> tmp = std::conj(ca[iproj]) * ca[jproj];
-            rhoij[i0 + jproj] += tmp.real() * weight;
+            rhoij[current_spin][i0 + jproj] += tmp.real() * weight;
         }
     }
 }
@@ -55,12 +67,25 @@ void Paw_Atom::accumulate_rhoij()
 void Paw_Atom::convert_rhoij()
 {
     nrhoijsel = 0;
-    for(int i = 0; i < rhoij.size(); i ++)
+    for(int i = 0; i < rhoij[0].size(); i ++)
     {
-        if(std::abs(rhoij[i]) > 1e-10)
+        bool nonzero = false;
+        for(int is = 0; is < GlobalV::NSPIN; is ++)
+        {
+            if(std::abs(rhoij[is][i]) > 1e-10)
+            {
+                nonzero = true;
+                break;
+            }
+        }
+
+        if(nonzero)
         {
             rhoijselect[nrhoijsel] = i+1; //index in fortran
-            rhoijp[nrhoijsel] = rhoij[i];
+            for(int is = 0; is < GlobalV::NSPIN; is ++)
+            {
+                rhoijp[nrhoijsel + is * rhoij[0].size()] = rhoij[is][i];
+            }
             nrhoijsel ++;
         }
     }
@@ -68,17 +93,23 @@ void Paw_Atom::convert_rhoij()
 
 void Paw_Atom::reset_dij()
 {
-    for(int i = 0; i < nproj*nproj; i ++)
+    for(int is = 0; is < GlobalV::NSPIN; is ++)
     {
-        dij[i] = 0.0;
+        for(int i = 0; i < nproj*nproj; i ++)
+        {
+            dij[is][i] = 0.0;
+        }
     }
 }
 
-void Paw_Atom::set_dij(const double* dij_in)
+void Paw_Atom::set_dij(double** dij_in)
 {
-    for(int i = 0; i < nproj*nproj; i ++)
+    for(int is = 0; is < GlobalV::NSPIN; is ++)
     {
-        dij[i] = dij_in[i];
+        for(int i = 0; i < nproj*nproj; i ++)
+        {
+            dij[is][i] = dij_in[is][i];
+        }
     }
 }
 

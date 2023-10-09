@@ -349,7 +349,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
                     int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
                     int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
 
-                    nhat[is][ind_c] = nhat_tmp[ind_fortran*nspden+is];
+                    nhat[is][ind_c] = nhat_tmp[ind_fortran+is*nfft];
                 }
 #else
                 for(int iz = 0; iz < nz; iz ++)
@@ -357,7 +357,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
                     int ind_c = ix*ny*nz + iy*nz + iz;
                     int ind_fortran = iz*ny*nx + iy*nx + ix;
 
-                    nhat[is][ind_c] = nhat_tmp[ind_fortran*nspden+is];
+                    nhat[is][ind_c] = nhat_tmp[ind_fortran+is*nfft];
                 }
 #endif
             }
@@ -384,6 +384,8 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
     // Collecting vks and vxc from all processes; I hope there could be a better way
     // but this is what I can think of right now.
     const int nxy = nx * ny;
+    const int nrxx = nxy * num_z[GlobalV::RANK_IN_POOL];
+
     for(int is = 0; is < nspden; is ++)
     {
         double * vks_send = new double[num_z[GlobalV::RANK_IN_POOL]];
@@ -394,8 +396,8 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
         {
             for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz++)
             {
-                vks_send[iz] = vks[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz)*nspden + is];
-                vxc_send[iz] = vxc[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz)*nspden + is];
+                vks_send[iz] = vks[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz) + is*nrxx];
+                vxc_send[iz] = vxc[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz) + is*nrxx];
             }
 
             MPI_Gatherv(vks_send,num_z[GlobalV::RANK_IN_POOL],MPI_DOUBLE,vks_receive,num_z.data(),start_z.data(),MPI_DOUBLE,0,MPI_COMM_WORLD);
@@ -405,8 +407,8 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
             {
                 for(int iz = 0; iz < nz; iz ++)
                 {
-                    vks_collected[(ixy*nz + iz)*nspden + is] = vks_receive[iz];
-                    vxc_collected[(ixy*nz + iz)*nspden + is] = vxc_receive[iz];
+                    vks_collected[(ixy*nz + iz) + is*nfft] = vks_receive[iz];
+                    vxc_collected[(ixy*nz + iz) + is*nfft] = vxc_receive[iz];
                 }
             }
         }
@@ -423,15 +425,19 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
                 {
                     for(int iz = 0; iz < nz; iz ++)
                     {
-                        int ind_c = (ix*ny*nz + iy*nz + iz)*nspden + is;
-                        int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
+                        int ind_c = (ix*ny*nz + iy*nz + iz) + is * nfft;
+                        int ind_fortran = iz*ny*nx + iy*nx + ix + is*nfft;
                         vks_hartree[ind_fortran] = vks_collected[ind_c] / 2.0;
                         vxc_hartree[ind_fortran] = vxc_collected[ind_c] / 2.0;
                     }
                 }
-            }
-            calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);          
+            }        
         }
+    }
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);
     }
 
     if(GlobalV::RANK_IN_POOL == 0)
@@ -453,7 +459,7 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
             {
                 for(int iz = 0; iz < nz; iz ++)
                 {
-                    int ind_c = (ix*ny*nz + iy*nz + iz)*nspden + is;
+                    int ind_c = ix*ny*nz + iy*nz + iz + is*nfft;
                     int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
                     vks_hartree[ind_fortran] = vks[ind_c] / 2.0;
                     vxc_hartree[ind_fortran] = vxc[ind_c] / 2.0;
@@ -532,7 +538,12 @@ void Paw_Cell::set_dij()
         const int nproj = paw_element_list[it].get_mstates();
         const int size_dij = nproj * (nproj+1) / 2 * nspden;
         double* dij_libpaw = new double[size_dij];
-        double* dij = new double[nproj * nproj];
+        double** dij;
+        dij = new double*[nspden];
+        for(int is = 0; is < nspden; is ++)
+        {
+           dij[is] = new double[nproj * nproj];
+        }
 
         get_dij(iat,size_dij,dij_libpaw);
 
@@ -540,18 +551,25 @@ void Paw_Cell::set_dij()
         Parallel_Common::bcast_double(dij_libpaw,size_dij);
 #endif
 
-        for(int jproj = 0; jproj < nproj; jproj ++)
+        for(int is = 0; is < nspden; is ++)
         {
-            for(int iproj = jproj; iproj < nproj; iproj ++)
+            for(int jproj = 0; jproj < nproj; jproj ++)
             {
-                const int ind = iproj * (iproj+1) / 2 + jproj;
-                dij[iproj*nproj+jproj] = dij_libpaw[ind] * 2.0; //hartree to rydberg
-                dij[jproj*nproj+iproj] = dij_libpaw[ind] * 2.0;
+                for(int iproj = jproj; iproj < nproj; iproj ++)
+                {
+                    const int ind = iproj * (iproj+1) / 2 + jproj + is*nproj * (nproj+1) / 2;
+                    dij[is][iproj*nproj+jproj] = dij_libpaw[ind] * 2.0; //hartree to rydberg
+                    dij[is][jproj*nproj+iproj] = dij_libpaw[ind] * 2.0;
+                }
             }
         }
         paw_atom_list[iat].set_dij(dij);
 
         delete[] dij_libpaw;
+        for(int is = 0; is < nspden; is ++)
+        {
+            delete[] dij[is];
+        }
         delete[] dij;
     }
 }
