@@ -34,7 +34,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi()
 
 template <typename T, typename Device> Psi<T, Device>::~Psi()
 {
-    delete_memory_op()(this->ctx, this->psi);
+    if (this->allocate_inside) delete_memory_op()(this->ctx, this->psi);
 }
 
 template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
@@ -103,6 +103,8 @@ Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nban
     this->nbands = nband_in;
     this->nbasis = psi_in.nbasis;
     this->psi_current = psi_pointer;
+    this->allocate_inside = false;
+    this->psi = psi_pointer;
 }
 
 template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in)

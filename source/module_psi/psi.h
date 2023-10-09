@@ -138,6 +138,8 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
 
     bool k_first = true;
 
+    bool allocate_inside = true;  ///<whether allocate psi inside Psi class
+
     using set_memory_op = psi::memory::set_memory_op<T, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
     using resize_memory_op = psi::memory::resize_memory_op<T, Device>;
