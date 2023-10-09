@@ -106,29 +106,8 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     }
 	
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)
-	{
-		double *pos;
-		double d1,d2,d3;
-		pos = new double[GlobalC::ucell.nat*3];
-		ModuleBase::GlobalFunc::ZEROS(pos, GlobalC::ucell.nat*3);
-		int iat = 0;
-		for(int it = 0;it < GlobalC::ucell.ntype;it++)
-		{
-			//Atom* atom = &ucell.atoms[it];
-			for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
-			{
-				pos[3*iat  ] = GlobalC::ucell.atoms[it].taud[ia].x ;
-				pos[3*iat+1] = GlobalC::ucell.atoms[it].taud[ia].y ;
-				pos[3*iat+2] = GlobalC::ucell.atoms[it].taud[ia].z;
-				for(int k=0; k<3; ++k)
-				{
-                    p_symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                    p_symm->check_boundary(pos[iat * 3 + k]);
-                }
-				iat++;				
-			}
-		}
-		
+    {
+        double d1, d2, d3;
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
 			ModuleBase::Mathzone::Cartesian_to_Direct(force(iat,0),force(iat,1),force(iat,2),
@@ -139,7 +118,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 			
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-        p_symm->force_symmetry(force, pos, GlobalC::ucell);
+        p_symm->symmetrize_vec3_nat(force.c);
         for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
         {
 			ModuleBase::Mathzone::Direct_to_Cartesian(force(iat,0),force(iat,1),force(iat,2),
@@ -148,9 +127,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
                                         GlobalC::ucell.a3.x, GlobalC::ucell.a3.y, GlobalC::ucell.a3.z,
                                         d1,d2,d3);
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
-		}
-        // cout << "nrotk =" << p_symm->nrotk << endl;
-        delete[] pos;
+        }
     }
 
  	GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
