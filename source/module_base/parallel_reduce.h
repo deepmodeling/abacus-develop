@@ -2,7 +2,7 @@
 #define PARALLEL_REDUCE_H
 
 #ifdef __MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include <complex>

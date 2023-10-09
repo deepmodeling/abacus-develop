@@ -1,6 +1,7 @@
 #include "parallel_reduce.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
+
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
 #include "parallel_global.h"
 
 template<>

@@ -12,10 +12,9 @@
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/macros.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-
-#include <module_base/macros.h>
+#include "module_psi/kernels/device.h"
 
 template<typename T> struct consts
 {

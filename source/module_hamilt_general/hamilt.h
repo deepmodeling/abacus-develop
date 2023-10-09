@@ -1,12 +1,12 @@
 #ifndef MODULEHAMILT_H
 #define MODULEHAMILT_H
 
+#include <complex>
+#include <vector>
+
 #include "matrixblock.h"
 #include "module_psi/psi.h"
 #include "operator.h"
-
-#include <complex>
-#include <vector>
 
 namespace hamilt
 {

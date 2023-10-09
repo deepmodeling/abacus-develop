@@ -1,10 +1,11 @@
 #ifndef OPERATOR_H
 #define OPERATOR_H
 
-#include<complex>
-#include "module_psi/psi.h"
+#include <complex>
+
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
+#include "module_psi/psi.h"
 
 namespace hamilt
 {

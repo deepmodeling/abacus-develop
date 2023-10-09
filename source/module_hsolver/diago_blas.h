@@ -8,14 +8,14 @@
 #ifndef DIAGOBLAS_H
 #define DIAGOBLAS_H
 
+#include <complex>
+#include <utility>
+#include <vector>
+
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-
-#include <complex>
-#include <utility>
-#include <vector>
 
 namespace hsolver
 {

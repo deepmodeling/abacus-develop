@@ -1,12 +1,12 @@
 #ifndef DIAGH_H
 #define DIAGH_H
 
+#include <string>
+
 #include "module_base/complexmatrix.h"
+#include "module_base/macros.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_psi/psi.h"
-#include "string"
- 
-#include <module_base/macros.h>
 
 namespace hsolver
 {
