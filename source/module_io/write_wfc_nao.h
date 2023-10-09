@@ -1,8 +1,9 @@
 #ifndef WRITE_WFC_NAO_H
 #define WRITE_WFC_NAO_H
+#include <complex>
+
 #include "module_base/matrix.h"
 #include "module_base/vector3.h"
-#include <complex>
 
 // mohan add 2010-09-09
 namespace ModuleIO

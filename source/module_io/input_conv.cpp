@@ -1,5 +1,7 @@
 #include "module_io/input_conv.h"
 
+#include <algorithm>
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_cell/module_symmetry/symmetry.h"
@@ -22,6 +24,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #endif
+
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/potentials/efield.h"
@@ -29,8 +32,6 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_md/md_func.h"
 #include "module_psi/kernels/device.h"
-
-#include <algorithm>
 
 template <typename T>
 void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)

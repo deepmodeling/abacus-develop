@@ -1,13 +1,14 @@
 #include "esolver.h"
+
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #endif
-#include "esolver_of.h"
-#include "esolver_lj.h"
 #include "esolver_dp.h"
+#include "esolver_lj.h"
+#include "esolver_of.h"
 #include "module_md/md_para.h"
 
 namespace ModuleESolver

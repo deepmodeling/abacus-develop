@@ -4,12 +4,14 @@
 //======================
 
 #include "write_wfc_r.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/tool_title.h"
-#include "module_base/timer.h"
+
+#include <cstdlib>
 #include <fstream>
 #include <stdexcept>
-#include <cstdlib>
+
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleIO
 {
