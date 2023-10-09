@@ -270,6 +270,13 @@ extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be t
 extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
 extern std::string of_kernel_file; // The name of WT kernel file.
 
+// mixing parameters
+extern std::string MIXING_MODE;
+extern double MIXING_BETA;
+extern int MIXING_NDIM;
+extern double MIXING_GG0;
+extern bool MIXING_TAU;
+
 //==========================================================
 // device flags added by denghui
 //==========================================================

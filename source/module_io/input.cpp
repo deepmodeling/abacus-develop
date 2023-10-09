@@ -296,7 +296,7 @@ void Input::Default(void)
     //----------------------------------------------------------
     //  charge mixing
     //----------------------------------------------------------
-    mixing_mode = "pulay";
+    mixing_mode = "broyden";
     mixing_beta = -10.0;
     mixing_ndim = 8;
     mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27

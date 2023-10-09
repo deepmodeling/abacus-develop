@@ -17,7 +17,7 @@ noncolin	1
 smearing_method    gaussian
 smearing_sigma       0.07
 
-mixing_type    pulay 
+mixing_type    broyden 
 mixing_beta    0.5
 mixing_ndim 10
 

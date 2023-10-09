@@ -105,7 +105,7 @@ extern "C"
     // dsytrf_ computes the Bunch-Kaufman factorization of a double precision
     // symmetric matrix, while dsytri takes its output to perform martrix inversion
     void dsytrf_(const char* uplo, const int* n, double * a, const int* lda,
-                 int *ipiv,double *work, int* lwork ,int *info);
+                 int *ipiv,double *work, const int* lwork ,int *info);
     void dsytri_(const char* uplo,const int* n,double *a, const int *lda,
                  int *ipiv, double * work,int *info);
     // Peize Lin add dsptrf and dsptri 2016-06-21, to compute inverse real symmetry indefinit matrix.

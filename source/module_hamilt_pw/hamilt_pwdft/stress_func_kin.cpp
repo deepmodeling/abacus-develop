@@ -156,6 +156,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
     delete[] gk[1];
     delete[] gk[2];
 	delete[] gk;
+    delete[] kfac;
 		
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
 	return;

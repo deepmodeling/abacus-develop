@@ -58,22 +58,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 			exx_lri->mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
 			if(GlobalC::exx_info.info_global.separate_loop)
 			{
-				if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
-				else
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain)
-					                .set_mixing_beta(GlobalC::exx_info.info_global.mixing_beta_for_loop1);
+                exx_lri->mix_DMk_2D.set_mixing(nullptr);
 			}
 			else
 			{
-				if(chgmix.get_mixing_mode() == "plain")
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
-				else if(chgmix.get_mixing_mode() == "pulay")
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
-				else
-					throw std::invalid_argument(
-						"mixing_mode = " + chgmix.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
-						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
+				exx_lri->mix_DMk_2D.set_mixing(chgmix.mixing);
             }
         }
         // for exx two_level scf
@@ -88,9 +77,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const Local_Orbital_Charge& l
     {
         if (!GlobalC::exx_info.info_global.separate_loop && exx_lri->two_level_step)
         {
-			exx_lri->mix_DMk_2D.set_mixing_beta(chgmix.get_mixing_beta());
-			if(chgmix.get_mixing_mode() == "pulay")
-				exx_lri->mix_DMk_2D.set_coef_pulay(iter, chgmix);
 			const bool flag_restart = (iter==1) ? true : false;
 			if(GlobalV::GAMMA_ONLY_LOCAL)
 				exx_lri->mix_DMk_2D.mix(loc.dm_gamma, flag_restart);

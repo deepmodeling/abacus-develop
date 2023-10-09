@@ -8,7 +8,7 @@ ks_solver                     cg
 smearing_method                      gaussian
 relax_nmax                         1
 smearing_sigma                         0.02
-mixing_type                   pulay
+mixing_type                   broyden
 mixing_beta                   0.4
 vdw_method                    d3_0
 fixed_axes                    c

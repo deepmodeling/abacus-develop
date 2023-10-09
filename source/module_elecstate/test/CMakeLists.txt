@@ -86,8 +86,6 @@ AddTest(
   LIBS  base ${math_libs}  psi  device planewave_serial cell_info
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
-  ../module_charge/charge_broyden.cpp
-  ../module_charge/charge_pulay.cpp
   ../../module_io/output.cpp
 )
 

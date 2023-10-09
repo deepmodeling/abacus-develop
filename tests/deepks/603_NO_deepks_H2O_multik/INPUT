@@ -10,7 +10,7 @@ orbital_dir ../../PP_ORB
 basis_type lcao
 dft_functional pbe
 gamma_only 0
-mixing_type pulay
+mixing_type broyden
 mixing_beta 0.400000
 smearing_method gaussian
 smearing_sigma 0.020000

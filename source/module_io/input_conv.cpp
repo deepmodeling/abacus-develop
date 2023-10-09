@@ -724,6 +724,13 @@ void Input_Conv::Convert(void)
     GlobalV::of_read_kernel = INPUT.of_read_kernel;
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
 
+    // mixing parameters
+    GlobalV::MIXING_MODE = INPUT.mixing_mode;
+    GlobalV::MIXING_BETA = INPUT.mixing_beta;
+    GlobalV::MIXING_NDIM = INPUT.mixing_ndim;
+    GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
+    GlobalV::MIXING_TAU = INPUT.mixing_tau;
+    
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }
