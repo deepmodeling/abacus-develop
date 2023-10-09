@@ -56,10 +56,11 @@ class Mixing
                            std::function<void(std::complex<double>*)> screen,
                            const bool& need_calcoef)
         = 0;
+    
     /**
-     * @brief calculate
+     * @brief calculate coeficients for mixing
      *
-     * @tparam T class type
+     * @param mdata Mixing_Data
      * @param inner_product pointer to the inner dot function
      */
     virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) = 0;
@@ -75,7 +76,8 @@ class Mixing
      */
     void mix_data(const Mixing_Data& mdata, double* data_mix)
     {
-        if(mdata.length <= 0) return;
+        if (mdata.length <= 0)
+            return;
         double* FP_data = static_cast<double*>(mdata.data);
         if (mdata.ndim_use == 1)
         {
@@ -100,7 +102,8 @@ class Mixing
     }
     void mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
     {
-        if(mdata.length <= 0) return;
+        if (mdata.length <= 0)
+            return;
         std::complex<double>* FP_data = static_cast<std::complex<double>*>(mdata.data);
         if (mdata.ndim_use == 1)
         {
