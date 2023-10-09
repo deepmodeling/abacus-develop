@@ -2,10 +2,9 @@
 #define HSOLVERPW_H
 
 #include "hsolver.h"
+#include "module_base/macros.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-
-#include <module_base/macros.h>
 
 namespace hsolver {
 

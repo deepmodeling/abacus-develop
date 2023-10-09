@@ -79,23 +79,6 @@ class RealGauntTable
                 + real_gaunt_table_.NumElements() * sizeof(double);
     }
 
-  private:
-    RealGauntTable() {}
-
-    /// maximum angular momentum of the table (for the first two dimensions)
-    int lmax_ = -1;
-
-    /*!
-     * @brief Table of standard Gaunt coefficients.
-     *
-     * This table maps (l1,l2,l3,m1,m2,m3) to a standard Gaunt coefficient.
-     * Due to the selection rule and symmetry, only those which survive the
-     * selection rule and satisfy l1 >= l2 >= l3 && m3 >= 0 are stored.
-     *                                                                                  */
-    std::map<std::array<int, 6>, double> gaunt_table_;
-
-    /// table of real Gaunt coefficients
-    container::Tensor real_gaunt_table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
     /*!
      * @brief Computes the standard Gaunt coefficients.
@@ -116,6 +99,25 @@ class RealGauntTable
      *       some numerical issue for large l and is yet to be studied later.
      *                                                                                  */
     double gaunt(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+
+
+  private:
+    RealGauntTable() {}
+
+    /// maximum angular momentum of the table (for the first two dimensions)
+    int lmax_ = -1;
+
+    /*!
+     * @brief Table of standard Gaunt coefficients.
+     *
+     * This table maps (l1,l2,l3,m1,m2,m3) to a standard Gaunt coefficient.
+     * Due to the selection rule and symmetry, only those which survive the
+     * selection rule and satisfy l1 >= l2 >= l3 && m3 >= 0 are stored.
+     *                                                                                  */
+    std::map<std::array<int, 6>, double> gaunt_table_;
+
+    /// table of real Gaunt coefficients
+    container::Tensor real_gaunt_table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
     /// selection rule of standard & real Gaunt coefficients regarding l1, l2, l3
     bool gaunt_select_l(const int l1, const int l2, const int l3) const;

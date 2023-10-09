@@ -129,7 +129,7 @@ int GRANK = MY_RANK;
 int GSIZE = DSIZE;
 
 //----------------------------------------------------------
-// EXPLAIN :
+// EXPLAIN : The input file name and directory
 //----------------------------------------------------------
 std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
@@ -241,6 +241,13 @@ bool of_full_pw = true;
 int of_full_pw_dim = 0;
 bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
+
+// mixing parameters
+std::string MIXING_MODE = "broyden";
+double MIXING_BETA = 0.7;
+int MIXING_NDIM = 8;
+double MIXING_GG0 = 0.0;
+bool MIXING_TAU = 0;
 
 //==========================================================
 // device flags added by denghui

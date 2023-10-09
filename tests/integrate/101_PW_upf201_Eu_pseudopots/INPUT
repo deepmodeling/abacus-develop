@@ -14,5 +14,5 @@ basis_type		pw
 smearing_method            gauss
 smearing_sigma               0.002
 
-mixing_type         pulay       // about charge mixing
+mixing_type         broyden       // about charge mixing
 mixing_beta         0.7

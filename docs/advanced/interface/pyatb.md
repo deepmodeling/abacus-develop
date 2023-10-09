@@ -42,7 +42,7 @@ ks_solver             genelpa
 nspin                 4
 smearing_method       gauss
 smearing_sigma        0.02
-mixing_type           pulay
+mixing_type           broyden
 mixing_beta           0.7
 scf_nmax              200
 scf_thr               1e-8

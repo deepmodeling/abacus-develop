@@ -432,7 +432,7 @@ These variables are used to control general system parameters.
 ### kpar
 
 - **Type**: Integer
-- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI threads.
+- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
 - **Default**: 1
 
 ### bndpar
@@ -574,8 +574,8 @@ These variables are used to control general system parameters.
 - **Type**: Integer
 - **Availability**: pw base
 - **Description**: 
-  - 0: it will be set to the number of MPI threads. Normally, it is fine just leave it to the default value.
-  - `>0`: it specifies the number of threads used for carrying out diagonalization. Must be less than or equal to total number of MPI threads. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI threads.
+  - 0: it will be set to the number of MPI processes. Normally, it is fine just leave it to the default value.
+  - `>0`: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI processes.
 - **Default**: 0
 
 ### nbspline
@@ -907,9 +907,9 @@ calculations.
 - **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
-  - **pulay**: Standard Pulay method.
-  - **broyden**: Broyden method.
-- **Default**: pulay
+  - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
+  - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+- **Default**: broyden
 
 ### mixing_beta
 
@@ -929,7 +929,7 @@ calculations.
 ### mixing_ndim
 
 - **Type**: Integer
-- **Description**: It indicates the mixing dimensions in Pulay, Pulay method uses the density from previous mixing_ndim steps and do a charge mixing based on this density.
+- **Description**: It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
 - **Default**: 8
 
 ### mixing_gg0
@@ -2075,7 +2075,7 @@ These variables are relevant when using hybrid functionals.
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different processes, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
   - `order`: Atom pairs are simply distributed by their orders. 
   - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
   - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
