@@ -22,7 +22,7 @@
 #include "module_io/dm_io.h"
 #include "module_elecstate/elecstate_lcao.h"
 
-#include "module_hamilt_lcao/module_sc/spin_constrain.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
 namespace ModuleESolver
 {

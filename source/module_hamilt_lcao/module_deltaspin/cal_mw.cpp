@@ -11,7 +11,7 @@
 template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step, LCAO_Matrix& LM, const UnitCell& ucell, bool print)
 {
-    ModuleBase::TITLE("module_sc", "cal_MW");
+    ModuleBase::TITLE("module_deltaspin", "cal_MW");
     const std::vector<std::vector<FPTYPE>>& dm
         = dynamic_cast<const elecstate::ElecStateLCAO<FPTYPE>*>(this->pelec)->get_DM()->get_DMK_vector();
     ModuleBase::matrix orbMulP;
@@ -82,7 +82,7 @@ template <typename FPTYPE, typename Device>
 ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
                                                            const std::vector<std::vector<std::complex<double>>>& dm)
 {
-    ModuleBase::TITLE("module_sc", "cal_MW_k");
+    ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
     int nw = this->get_nw();
     const int nlocal = nw/2;
     ModuleBase::matrix MecMulP, orbMulP;

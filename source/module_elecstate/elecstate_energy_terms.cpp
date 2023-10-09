@@ -4,7 +4,7 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/module_sc/spin_constrain.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
 namespace elecstate
 {

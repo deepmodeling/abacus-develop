@@ -13,7 +13,7 @@
 #include "module_io/output_rho.h"
 #include "module_io/output_potential.h"
 #include "string.h"
-#include "module_hamilt_lcao/module_sc/spin_constrain.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
 namespace ModuleESolver
 {

@@ -49,7 +49,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_tddft:\
 ./module_hamilt_lcao/module_deepks:\
 ./module_hamilt_lcao/module_dftu:\
-./module_hamilt_lcao/module_sc:\
+./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\

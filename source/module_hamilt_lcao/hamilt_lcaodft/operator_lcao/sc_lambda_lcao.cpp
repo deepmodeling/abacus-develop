@@ -1,5 +1,5 @@
 #include "sc_lambda_lcao.h"
-#include "module_hamilt_lcao/module_sc/spin_constrain.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include <algorithm>
 
 namespace hamilt

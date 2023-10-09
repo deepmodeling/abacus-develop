@@ -59,8 +59,8 @@ add_test(NAME operators_para_test
 #  SOURCES test_sc_lambda_lcao.cpp
 #  ../sc_lambda_lcao.cpp
 #  ../../../../module_hamilt_general/operator.cpp
-#  ../../../module_sc/spin_constrain.cpp
-#  ../../../module_sc/cal_h_lambda.cpp
+#  ../../../module_deltaspin/spin_constrain.cpp
+#  ../../../module_deltaspin/cal_h_lambda.cpp
 #  ../../../../module_cell/klist.cpp
 #  ../../../../module_cell/parallel_kpoints.cpp
 #  ../../../../module_io/output.cpp
