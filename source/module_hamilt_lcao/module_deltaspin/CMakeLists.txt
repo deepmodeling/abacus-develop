@@ -11,13 +11,13 @@ if(ENABLE_LCAO)
   )
 
   add_library(
-      sc
+      deltaspin
       OBJECT
       ${objects}
   )
 
   if(ENABLE_COVERAGE)
-    add_coverage(sc)
+    add_coverage(deltaspin)
   endif()
 
   if(BUILD_TESTING)

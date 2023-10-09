@@ -8,7 +8,7 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 #)
 
 AddTest(
-  TARGET sc_basic_func_test
+  TARGET deltaspin_basic_func_test
   LIBS ${math_libs} base device
   SOURCES basic_test.cpp ../basic_funcs.cpp
 )

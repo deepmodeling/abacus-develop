@@ -96,7 +96,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
-${OBJS_SC}\
+${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 
 OBJS_MAIN=main.o\
@@ -552,7 +552,7 @@ OBJS_DFTU=dftu.o\
       dftu_occup.o\
       dftu_hamilt.o
 
-OBJS_SC=basic_funcs.o\
+OBJS_DELTASPIN=basic_funcs.o\
       cal_h_lambda.o\
       cal_mw_from_lambda.o\
       cal_mw.o\
