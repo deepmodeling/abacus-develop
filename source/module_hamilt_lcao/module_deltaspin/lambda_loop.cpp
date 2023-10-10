@@ -112,17 +112,17 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
                     }
                 }
             }
-            print_2d("diagonal gradient: ", spin_nu_gradient_diag);
-            std::cout << "maximum gradient appears at: " << std::endl;
-            for (int it = 0; it < ntype; it++)
-            {
-                std::cout << "( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )" << std::endl;
-            }
-            std::cout << "maximum gradient: " << std::endl;
-            for (int it = 0; it < ntype; it++)
-            {
-                std::cout << max_gradient[it] << std::endl;
-            }
+            //print_2d("diagonal gradient: ", spin_nu_gradient_diag);
+            //std::cout << "maximum gradient appears at: " << std::endl;
+            //for (int it = 0; it < ntype; it++)
+            //{
+            //    std::cout << "( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )" << std::endl;
+            //}
+            //std::cout << "maximum gradient: " << std::endl;
+            //for (int it = 0; it < ntype; it++)
+            //{
+            //    std::cout << max_gradient[it] << std::endl;
+            //}
             for (int it = 0; it < ntype; it++)
             {
                 if (i_step >= this->nsc_min_ && bound_gradient[it] > 0 && std::abs(max_gradient[it]) < bound_gradient[it])
@@ -149,8 +149,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         }
         mean_error = sum_2d(temp_1) / num_component;
         rms_error = std::sqrt(mean_error);
-        std::cout << "\n Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << "       RMS =" << rms_error << std::endl;
-
+        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << "       RMS =" << rms_error << std::endl;
         if (rms_error < this->sc_thr_ || i_step == this->nsc_ - 1)
         {
             if (rms_error < this->sc_thr_)
@@ -173,6 +172,15 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         }
 
         boundary = std::abs(alpha_trial * maxval_abs_2d(search));
+
+        if (boundary > this->restrict_current_)
+        {
+            alpha_trial = copysign(1.0, alpha_trial) * this->restrict_current_ / maxval_abs_2d(search);
+            boundary = std::abs(alpha_trial * maxval_abs_2d(search));
+            std::cout << "restriction needed: true" << std::endl;
+            std::cout << "alpha_trial after restrict = " << alpha_trial << std::endl;
+            std::cout << "boundary after = " << boundary << std::endl;
+        }
 
         dnu_last_step = dnu;
         temp_1 = dnu;
@@ -247,9 +255,10 @@ CG_STOP:
 
     if (debug)
     {
-        print_2d("(Debug) after-optimization spin: (print in the inner loop): ", this->Mi_);
+        print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
         print_2d("target spin: ", this->sc_mag_);
     }
+    print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
     std::cout << "Inner optimization for lambda ends." << std::endl;
     std::cout << "===============================================================================" << std::endl;
 

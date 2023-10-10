@@ -138,6 +138,6 @@ void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &
     ofs << info << std::endl;
     for (const auto &row : array)
     {
-        ofs << row.x << " " << row.y << " " << row.z << std::endl;
+        ofs << std::setprecision(16) << row.x << " " << row.y << " " << row.z << std::endl;
     }
 }
