@@ -195,6 +195,22 @@ public:
      * @param cell UnitCell
      */
     void newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+
+    /**
+     * @brief calculate D functions in the soc case when tvanp is true
+     *
+     * @param iat the index of atom
+     * @param cell UnitCell
+     */
+    void newd_so(const int& iat, UnitCell& cell);
+
+    /**
+     * @brief calculate D functions in the noncolin case when tvanp is true
+     *
+     * @param iat the index of atom
+     * @param cell UnitCell
+     */
+    void newd_nc(const int& iat, UnitCell& cell);
 };
 
 #endif // VNL_IN_PW

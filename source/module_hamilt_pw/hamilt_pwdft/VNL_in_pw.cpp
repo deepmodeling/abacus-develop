@@ -1296,6 +1296,36 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
     else
     {
         newq(veff, rho_basis, cell);
+
+        for (int iat = 0; iat < cell.nat; iat++)
+        {
+            int it = cell.iat2it[iat];
+            if (GlobalV::NONCOLIN)
+            {
+                if (cell.atoms[it].ncpp.has_so)
+                {
+                    this->newd_so(iat, cell);
+                }
+                else
+                {
+                    this->newd_nc(iat, cell);
+                }
+            }
+            else
+            {
+                for (int is = 0; is < GlobalV::NSPIN; is++)
+                {
+                    for (int ih = 0; ih < cell.atoms[it].ncpp.nh; ih++)
+                    {
+                        for (int jh = ih; jh < cell.atoms[it].ncpp.nh; jh++)
+                        {
+                            deeq(is, iat, ih, jh) += this->dvan(it, ih, jh);
+                            deeq(is, iat, jh, ih) = deeq(is, iat, ih, jh);
+                        }
+                    }
+                }
+            }
+        }
     }
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
@@ -1460,86 +1490,174 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     delete[] qnorm;
 }
 
+void pseudopot_cell_vnl::newd_so(const int& iat, UnitCell& cell)
+{
+    ModuleBase::TITLE("pseudopot_cell_vnl", "newd_so");
+
+    const int it = cell.iat2it[iat];
+    Atom_pseudo* upf = &cell.atoms[it].ncpp;
+    int ijs = 0;
+    for (int is1 = 0; is1 < 2; is1++)
+    {
+        for (int is2 = 0; is2 < 2; is2++)
+        {
+            for (int ih = 0; ih < upf->nh; ih++)
+            {
+                for (int jh = 0; jh < upf->nh; jh++)
+                {
+                    deeq_nc(ijs, iat, ih, jh) = dvan_so(ijs, it, ih, jh);
+
+                    for (int kh = 0; kh < upf->nh; kh++)
+                    {
+                        for (int lh = 0; lh < upf->nh; lh++)
+                        {
+                            if (GlobalV::DOMAG)
+                            {
+                                deeq_nc(ijs, iat, ih, jh)
+                                    += deeq(0, iat, kh, lh)
+                                           * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh)
+                                              + soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh))
+                                       + deeq(1, iat, kh, lh)
+                                             * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh)
+                                                + soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh))
+                                       + ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, kh, lh)
+                                             * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 1, is2, lh, jh)
+                                                - soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 0, is2, lh, jh))
+                                       + deeq(3, iat, kh, lh)
+                                             * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh)
+                                                - soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh));
+                            }
+                            else
+                            {
+                                deeq_nc(ijs, iat, ih, jh)
+                                    += deeq(0, iat, kh, lh)
+                                       * (soc.fcoef(it, is1, 0, ih, kh) * soc.fcoef(it, 0, is2, lh, jh)
+                                          + soc.fcoef(it, is1, 1, ih, kh) * soc.fcoef(it, 1, is2, lh, jh));
+                            }
+                        }
+                    }
+                }
+            }
+            ijs++;
+        }
+    }
+}
+
+void pseudopot_cell_vnl::newd_nc(const int& iat, UnitCell& cell)
+{
+    ModuleBase::TITLE("pseudopot_cell_vnl", "newd_nc");
+
+    const int it = cell.iat2it[iat];
+    Atom_pseudo* upf = &cell.atoms[it].ncpp;
+
+    for (int ih = 0; ih < upf->nh; ih++)
+    {
+        for (int jh = 0; jh < upf->nh; jh++)
+        {
+            if (GlobalV::LSPINORB)
+            {
+                deeq_nc(0, iat, ih, jh) = dvan_so(0, it, ih, jh) + deeq(0, iat, ih, jh) + deeq(3, iat, ih, jh);
+                deeq_nc(3, iat, ih, jh) = dvan_so(3, it, ih, jh) + deeq(0, iat, ih, jh) - deeq(3, iat, ih, jh);
+            }
+            else
+            {
+                deeq_nc(0, iat, ih, jh) = dvan(it, ih, jh) + deeq(0, iat, ih, jh) + deeq(3, iat, ih, jh);
+                deeq_nc(3, iat, ih, jh) = dvan(it, ih, jh) + deeq(0, iat, ih, jh) - deeq(3, iat, ih, jh);
+            }
+            deeq_nc(1, iat, ih, jh) = deeq(1, iat, ih, jh) + ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, ih, jh);
+            deeq_nc(2, iat, ih, jh) = deeq(1, iat, ih, jh) + ModuleBase::IMAG_UNIT * deeq(2, iat, ih, jh);
+        }
+    }
+}
+
 template <>
-float * pseudopot_cell_vnl::get_nhtol_data() const
+float* pseudopot_cell_vnl::get_nhtol_data() const
 {
     return this->s_nhtol;
 }
 template <>
-double * pseudopot_cell_vnl::get_nhtol_data() const
+double* pseudopot_cell_vnl::get_nhtol_data() const
 {
     return this->d_nhtol;
 }
 
 template <>
-float * pseudopot_cell_vnl::get_nhtolm_data() const
+float* pseudopot_cell_vnl::get_nhtolm_data() const
 {
     return this->s_nhtolm;
 }
 template <>
-double * pseudopot_cell_vnl::get_nhtolm_data() const
+double* pseudopot_cell_vnl::get_nhtolm_data() const
 {
     return this->d_nhtolm;
 }
 
 template <>
-float * pseudopot_cell_vnl::get_indv_data() const
+float* pseudopot_cell_vnl::get_indv_data() const
 {
     return this->s_indv;
 }
 template <>
-double * pseudopot_cell_vnl::get_indv_data() const
+double* pseudopot_cell_vnl::get_indv_data() const
 {
     return this->d_indv;
 }
 
 template <>
-float * pseudopot_cell_vnl::get_tab_data() const
+float* pseudopot_cell_vnl::get_tab_data() const
 {
     return this->s_tab;
 }
 template <>
-double * pseudopot_cell_vnl::get_tab_data() const
+double* pseudopot_cell_vnl::get_tab_data() const
 {
     return this->d_tab;
 }
 
 template <>
-float * pseudopot_cell_vnl::get_deeq_data() const
+float* pseudopot_cell_vnl::get_deeq_data() const
 {
     return this->s_deeq;
 }
 template <>
-double * pseudopot_cell_vnl::get_deeq_data() const
+double* pseudopot_cell_vnl::get_deeq_data() const
 {
     return this->d_deeq;
 }
 
 template <>
-std::complex<float> * pseudopot_cell_vnl::get_vkb_data() const
+std::complex<float>* pseudopot_cell_vnl::get_vkb_data() const
 {
     return this->c_vkb;
 }
 template <>
-std::complex<double> * pseudopot_cell_vnl::get_vkb_data() const
+std::complex<double>* pseudopot_cell_vnl::get_vkb_data() const
 {
     return this->z_vkb;
 }
 
 template <>
-std::complex<float> * pseudopot_cell_vnl::get_deeq_nc_data() const
+std::complex<float>* pseudopot_cell_vnl::get_deeq_nc_data() const
 {
     return this->c_deeq_nc;
 }
 template <>
-std::complex<double> * pseudopot_cell_vnl::get_deeq_nc_data() const
+std::complex<double>* pseudopot_cell_vnl::get_deeq_nc_data() const
 {
     return this->z_deeq_nc;
 }
 
-template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<float>*) const;
-template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<double>*) const;
+    template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
+                                                                     int const&,
+                                                                     std::complex<float>*) const;
+    template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
+                                                                      int const&,
+                                                                      std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
-template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<float>*) const;
-template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int const&, std::complex<double>*) const;
+    template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
+                                                                     int const&,
+                                                                     std::complex<float>*) const;
+    template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
+                                                                      int const&,
+                                                                      std::complex<double>*) const;
 #endif
