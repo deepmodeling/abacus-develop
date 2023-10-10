@@ -227,9 +227,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 }
 
 /* 
-    heterogenous programming puzzling here
-    seems transform can be on CPU and psi on GPU, but inside the function, it is,
-    seems impossible for these two to be on different devices
+    lcao_in_pw
 */
 template <typename T, typename Device>
 void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_KS_PW::p_hamilt
@@ -287,17 +285,28 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
             GlobalC::paw_cell.get_vkb();
         }
 #endif
-        /* manually copy from CPU to GPU here (if Device = GPU), will be deleted when exit this function */
         psi.fix_k(ik);
         transform.fix_k(ik);
         /// solve eigenvector and eigenvalue for H(k)
-        hsolver::DiagoIterAssist<T, Device>::diagH_subspace(
+
+        //hsolver::DiagoIterAssist<T, Device>::diagH_subspace(
+        //    pHamilt,                                // interface to hamilt
+        //    transform,                              // transform matrix between lcao and pw
+        //    psi,                                    // psi in pw basis
+        //    eigenvalues.data() + ik * pes->ekb.nc,  // eigenvalues
+        //    psi.get_nbands()                        // number of the lowest energies bands
+        //    );
+
+        
+        hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
             pHamilt,                                // interface to hamilt
-            transform,                              // transform matrix between lcao and pw
+            transform.get_pointer(),                // transform matrix between lcao and pw
+            transform.get_nbands(),
+            transform.get_nbasis(),
             psi,                                    // psi in pw basis
-            eigenvalues.data() + ik * pes->ekb.nc,  // eigenvalues
-            psi.get_nbands()                        // number of the lowest energies bands
+            eigenvalues.data() + ik * pes->ekb.nc   // eigenvalues
             );
+        
         if(skip_charge)
         {
             GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<T, Device>::avg_iter
@@ -307,8 +316,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
         /// calculate the contribution of Psi for charge density rho
      }
     castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
-
-    this->endDiagh();
 
     if(skip_charge)
     {

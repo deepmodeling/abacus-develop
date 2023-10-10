@@ -555,7 +555,16 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                   ||(GlobalV::KS_SOLVER == "lapack")
                     )
                 {
-                    // diagH_subspace_init will be the function change dimension from natomwfc/nlocal to nbands
+                    /* 
+                        when ecutwfc is too small, lcao_in_pw will fail here, not all kpoints can be initialized 
+                        curious about why...
+                    */
+                    #ifdef __DEBUG
+                        printf("GlobalV::MY_RANK = %d, %s %d, function ESolver_KS_PW::initialize_psi() debug info\n", 
+                                GlobalV::MY_RANK);
+                        printf("GlobalV::MY_RANK = %d, %s %d, before diagH, kpt% = (%d/%d)\n", 
+                                GlobalV::MY_RANK, __FILE__, __LINE__, ik+1, this->pw_wfc->nks);
+                    #endif
                     hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
                         this->p_hamilt,
                         psig->get_pointer(), psig->get_nbands(), psig->get_nbasis(),

@@ -21,6 +21,8 @@ psi initializer unit test
       - constructor of psi_initializer_nao
     - psi_initializer_nao_random::psi_initializer_nao_random
       - constructor of psi_initializer_nao_random
+    - psi_initializer::cast_to_T (psi_initializer specialized as random)
+      - function cast std::complex<double> to float, double, std::complex<float>, std::complex<double>
     - psi_initializer_random::allocate
       - allocate wavefunctions with random-specific method
     - psi_initializer_atomic::allocate
@@ -330,6 +332,22 @@ TEST_F(PsiIntializerUnitTest, ConstructorNaoRandom) {
     #ifdef __MPI
     EXPECT_EQ(this->p_parakpts, this->psi_init->get_interface_parakpts());
     #endif
+}
+
+TEST_F(PsiIntializerUnitTest, CastToT) {
+    #ifdef __MPI
+    this->psi_init = new psi_initializer_random<std::complex<double>, psi::DEVICE_CPU>(this->p_sf, this->p_pw_wfc, this->p_ucell, this->p_parakpts, this->random_seed);
+    #else
+    this->psi_init = new psi_initializer_random<std::complex<double>, psi::DEVICE_CPU>(this->p_sf, this->p_pw_wfc, this->p_ucell, this->random_seed);
+    #endif
+    std::complex<double> cd = {1.0, 2.0};
+    std::complex<float> cf = {1.0, 2.0};
+    double d = 1.0;
+    float f = 1.0;
+    EXPECT_EQ(this->psi_init->template cast_to_T<std::complex<double>>(cd), cd);
+    EXPECT_EQ(this->psi_init->template cast_to_T<std::complex<float>>(cd), cf);
+    EXPECT_EQ(this->psi_init->template cast_to_T<double>(cd), d);
+    EXPECT_EQ(this->psi_init->template cast_to_T<float>(cd), f);
 }
 
 TEST_F(PsiIntializerUnitTest, AllocateRandom) {
