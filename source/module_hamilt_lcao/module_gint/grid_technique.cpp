@@ -211,6 +211,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 	int iat=0;
 	int normal;
 	this->total_atoms_on_grid = 0;
+	int nat_local = 0;
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
 	{
 		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
@@ -240,6 +241,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 
 				this->in_this_processor[iat] = true;
 			}
+			if(this->in_this_processor[iat]) ++nat_local;
 			++iat;
 		}
 	}
@@ -259,6 +261,19 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 	if(stop)
 	{
 		ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid","No atom on this sub-FFT-mesh.");
+	}
+
+	// calculate the trach of local ia to global iat
+	if(nat_local>0)
+	{
+		this->trace_iat.resize(nat_local);
+		for(int iat=GlobalC::ucell.nat-1; iat>=0;iat--)
+		{
+			if(this->in_this_processor[iat])
+			{
+				this->trace_iat[--nat_local] = iat;
+			}
+		}
 	}
 
 	// need how_many_atoms first.

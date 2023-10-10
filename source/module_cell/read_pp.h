@@ -104,9 +104,10 @@ public:
     int init_pseudo_reader(const std::string& fn, std::string& type);
     void print_pseudo_upf(std::ofstream& ofs);
 
-    bool functional_error;               // xiaohui add 2015-03-24
     int average_p(const double& lambda); // zhengdy add 2020-10-20
     void set_empty_element();            // Peize Lin add for bsse 2022.04.07
+    void set_upf_q();                    // liuyu add 2023-09-21
+    void check_atwfc_norm();             // liuyu add 2023-09-26
 
   private:
     int set_pseudo_type(const std::string& fn, std::string& type);
@@ -135,6 +136,24 @@ public:
     // void read_pseudo_upf201_fullwfc(std::ifstream& ifs);
     void read_pseudo_upf201_so(std::ifstream& ifs);
     void getnameval(std::ifstream&, int&, std::string*, std::string*);
+
+    /**
+     * @brief Computes the Q function from its polynomial expansion (r < rinner)
+     * @param nqf number of polynomial coefficients
+     * @param mesh number of mesh points
+     * @param l angular momentum
+     * @param n additional exponent, result is multiplied by r^n
+     * @param qfcoef polynomial coefficients
+     * @param r radial mesh
+     * @param rho output: r^n * Q(r)
+     */
+    void setqfnew(const int& nqf,
+                  const int& mesh,
+                  const int& l,
+                  const int& n,
+                  const double* qfcoef,
+                  const double* r,
+                  double* rho);
 };
 
 #endif //pseudopot_upf class

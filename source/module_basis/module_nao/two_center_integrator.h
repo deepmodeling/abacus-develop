@@ -115,6 +115,9 @@ class TwoCenterIntegrator
               std::vector<std::vector<double>>& out
     ) const;
 
+    /// Returns the amount of heap memory used by table_ (in bytes).
+    size_t table_memory() const { return table_.memory(); }
+
   private:
     bool is_tabulated_;
     char op_;

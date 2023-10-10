@@ -3,6 +3,7 @@
 #include "module_io/nscf_fermi_surf.h"
 #include "module_io/write_dos_lcao.h"
 #include "module_elecstate/fp_energy.h"
+#include "module_hamilt_general/hamilt.h"
 
 namespace ModuleIO
 {
@@ -18,7 +19,8 @@ void out_dos_nao(const psi::Psi<double>* psid,
                   const Parallel_Kpoints& Pkpoints,
                   const UnitCell& ucell,
                   const elecstate::efermi& eferm,
-                  int nbands);
+                  int nbands,
+                  hamilt::Hamilt<std::complex<double>>* p_ham);
 }
 
 #endif

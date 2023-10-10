@@ -15,7 +15,7 @@ gamma_only          1
 basis_type          lcao
 ks_solver           scalapack_gvx
 
-mixing_type         pulay
+mixing_type         broyden
 mixing_beta         0.4
 
 smearing_method     gauss

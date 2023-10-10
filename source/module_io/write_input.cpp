@@ -1,7 +1,7 @@
-#include "module_io/input.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_io/input.h"
 
 void Input::Print(const std::string &fn) const
 {
@@ -88,6 +88,7 @@ void Input::Print(const std::string &fn) const
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "ecutrho", ecutrho, "#energy cutoff for charge density and potential");
     ModuleBase::GlobalFunc::OUTP(ofs, "erf_ecut", erf_ecut, "#the value of the constant energy cutoff");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "erf_height",
@@ -128,6 +129,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "nx", nx, "number of points along x axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "ny", ny, "number of points along y axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "nz", nz, "number of points along z axis for FFT grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsx", nsx, "number of points along x axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsy", nsy, "number of points along y axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsz", nsz, "number of points along z axis for FFT smooth grid");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "cell_factor",
                                  cell_factor,
@@ -238,7 +242,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ofs << "\n#Parameters (7.Charge Mixing)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; pulay; broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay or broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_tau", mixing_tau, "whether to mix tau in mGGA calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dftu", mixing_dftu, "whether to mix locale in DFT+U calculation");
@@ -403,8 +407,9 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "wannier_spin", wannier_spin, "calculate spin in wannier90 code interface");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_mmn", out_wannier_mmn, "output .mmn file or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_amn", out_wannier_amn, "output .amn file or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_unk", out_wannier_unk, "output .UNK file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_unk", out_wannier_unk, "output UNK. file or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_eig", out_wannier_eig, "output .eig file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_wvfn_formatted", out_wannier_wvfn_formatted, "output UNK. file in text format or in binary format");
 
     ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "imp_sol", imp_sol, "calculate implicit solvation correction or not");

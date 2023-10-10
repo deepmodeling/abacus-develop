@@ -1,4 +1,5 @@
 #include <cmath>
+#include <memory>
 
 #include "gtest/gtest.h"
 #include "module_base/spherical_bessel_transformer.h"
@@ -104,26 +105,26 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_EQ(chi.rcut(), chi2.rcut());
     EXPECT_EQ(chi.kcut(), chi2.kcut());
 
-    ASSERT_NE(chi2.ptr_rgrid(), nullptr);
-    ASSERT_NE(chi2.ptr_rvalue(), nullptr);
+    ASSERT_NE(chi2.rgrid(), nullptr);
+    ASSERT_NE(chi2.rvalue(), nullptr);
     for (int ir = 0; ir != sz; ++ir)
     {
-        EXPECT_EQ(chi.ptr_rgrid()[ir], chi2.ptr_rgrid()[ir]);
-        EXPECT_EQ(chi.ptr_rvalue()[ir], chi2.ptr_rvalue()[ir]);
+        EXPECT_EQ(chi.rgrid(ir), chi2.rgrid(ir));
+        EXPECT_EQ(chi.rvalue(ir), chi2.rvalue(ir));
     }
 
-    ASSERT_NE(chi2.ptr_kgrid(), nullptr);
-    ASSERT_NE(chi2.ptr_kvalue(), nullptr);
+    ASSERT_NE(chi2.kgrid(), nullptr);
+    ASSERT_NE(chi2.kvalue(), nullptr);
     for (int ik = 0; ik != sz; ++ik)
     {
-        EXPECT_EQ(chi.ptr_kgrid()[ik], chi2.ptr_kgrid()[ik]);
-        EXPECT_EQ(chi.ptr_kvalue()[ik], chi2.ptr_kvalue()[ik]);
+        EXPECT_EQ(chi.kgrid(ik), chi2.kgrid(ik));
+        EXPECT_EQ(chi.kvalue(ik), chi2.kvalue(ik));
     }
 
     EXPECT_EQ(chi.pr(), chi2.pr());
     EXPECT_EQ(chi.pk(), chi2.pk());
     EXPECT_EQ(chi.is_fft_compliant(), chi2.is_fft_compliant());
-    EXPECT_NE(chi.ptr_sbt(), chi2.ptr_sbt());
+    EXPECT_EQ(chi2.sbt(), chi.sbt());
 
     NumericalRadial chi3;
     chi3 = chi;
@@ -137,20 +138,20 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_EQ(chi.rcut(), chi3.rcut());
     EXPECT_EQ(chi.kcut(), chi3.kcut());
 
-    ASSERT_NE(chi3.ptr_rgrid(), nullptr);
-    ASSERT_NE(chi3.ptr_rvalue(), nullptr);
+    ASSERT_NE(chi3.rgrid(), nullptr);
+    ASSERT_NE(chi3.rvalue(), nullptr);
     for (int ir = 0; ir != sz; ++ir)
     {
-        EXPECT_EQ(chi.ptr_rgrid()[ir], chi3.ptr_rgrid()[ir]);
-        EXPECT_EQ(chi.ptr_rvalue()[ir], chi3.ptr_rvalue()[ir]);
+        EXPECT_EQ(chi.rgrid(ir), chi3.rgrid(ir));
+        EXPECT_EQ(chi.rvalue(ir), chi3.rvalue(ir));
     }
 
-    ASSERT_NE(chi3.ptr_kgrid(), nullptr);
-    ASSERT_NE(chi3.ptr_kvalue(), nullptr);
+    ASSERT_NE(chi3.kgrid(), nullptr);
+    ASSERT_NE(chi3.kvalue(), nullptr);
     for (int ik = 0; ik != sz; ++ik)
     {
-        EXPECT_EQ(chi.ptr_kgrid()[ik], chi3.ptr_kgrid()[ik]);
-        EXPECT_EQ(chi.ptr_kvalue()[ik], chi3.ptr_kvalue()[ik]);
+        EXPECT_EQ(chi.kgrid(ik), chi3.kgrid(ik));
+        EXPECT_EQ(chi.kvalue(ik), chi3.kvalue(ik));
     }
 
     EXPECT_EQ(chi.pr(), chi3.pr());
@@ -158,15 +159,9 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_EQ(chi.is_fft_compliant(), chi3.is_fft_compliant());
 
     SphericalBesselTransformer sbt;
-    chi.set_transformer(&sbt, 1);
+    chi.set_transformer(sbt, 1);
     chi3 = chi;
-    EXPECT_EQ(chi3.ptr_sbt(), chi.ptr_sbt());
-
-    // nullptr means use an internal transformer
-    chi.set_transformer(nullptr, 0);
-    chi.set_transformer(nullptr, -1);
-    chi3 = chi;
-    EXPECT_NE(chi3.ptr_sbt(), chi.ptr_sbt());
+    EXPECT_EQ(chi3.sbt(), chi.sbt());
 
     // self assignment is not common, but it should not throw
     EXPECT_NO_THROW(chi3 = chi3);
@@ -202,22 +197,22 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     EXPECT_EQ(chi.nk(), 0);
     EXPECT_EQ(chi.rcut(), grid[sz - 1]);
 
-    ASSERT_NE(chi.ptr_rgrid(), nullptr);
-    ASSERT_NE(chi.ptr_rvalue(), nullptr);
+    ASSERT_NE(chi.rgrid(), nullptr);
+    ASSERT_NE(chi.rvalue(), nullptr);
     for (int ir = 0; ir != sz; ++ir)
     {
-        EXPECT_EQ(chi.ptr_rgrid()[ir], grid[ir]);
-        EXPECT_EQ(chi.ptr_rvalue()[ir], f[ir]);
+        EXPECT_EQ(chi.rgrid(ir), grid[ir]);
+        EXPECT_EQ(chi.rvalue(ir), f[ir]);
     }
 
-    EXPECT_EQ(chi.ptr_kgrid(), nullptr);
-    EXPECT_EQ(chi.ptr_kvalue(), nullptr);
+    EXPECT_EQ(chi.kgrid(), nullptr);
+    EXPECT_EQ(chi.kvalue(), nullptr);
 
     EXPECT_EQ(chi.pr(), pr);
     EXPECT_EQ(chi.pk(), 0);
     EXPECT_EQ(chi.is_fft_compliant(), false);
 
-    EXPECT_NE(chi.ptr_sbt(), nullptr);
+    EXPECT_TRUE(chi.sbt().is_ready());
 }
 
 TEST_F(NumericalRadialTest, GridSetAndWipe)
@@ -263,20 +258,20 @@ TEST_F(NumericalRadialTest, GridSetAndWipe)
     for (int ik = 0; ik != nk; ++ik)
     {
         double k = ik * dk;
-        EXPECT_NEAR(pref * k / std::pow(k * k + 1, 3), chi.ptr_kvalue()[ik], tol);
+        EXPECT_NEAR(pref * k / std::pow(k * k + 1, 3), chi.kvalue(ik), tol);
     }
 
     EXPECT_EQ(chi.is_fft_compliant(), false);
 
     chi.wipe(true);
-    EXPECT_EQ(chi.ptr_rgrid(), nullptr);
-    EXPECT_EQ(chi.ptr_rvalue(), nullptr);
+    EXPECT_EQ(chi.rgrid(), nullptr);
+    EXPECT_EQ(chi.rvalue(), nullptr);
     EXPECT_EQ(chi.nr(), 0);
     EXPECT_EQ(chi.is_fft_compliant(), false);
 
     chi.wipe(false);
-    EXPECT_EQ(chi.ptr_kgrid(), nullptr);
-    EXPECT_EQ(chi.ptr_kvalue(), nullptr);
+    EXPECT_EQ(chi.kgrid(), nullptr);
+    EXPECT_EQ(chi.kvalue(), nullptr);
     EXPECT_EQ(chi.nk(), 0);
 
     delete[] kgrid;
@@ -312,7 +307,7 @@ TEST_F(NumericalRadialTest, SetUniformGrid)
     for (int ir = 0; ir != sz; ++ir)
     {
         double r = ir * dr;
-        EXPECT_NEAR(r * r * std::exp(-r), chi.ptr_rvalue()[ir], tol);
+        EXPECT_NEAR(r * r * std::exp(-r), chi.rvalue(ir), tol);
     }
 }
 
@@ -347,7 +342,7 @@ TEST_F(NumericalRadialTest, Interpolate) {
     for (int ir = 0; ir != sz; ++ir)
     {
         double r = ir * dr;
-        EXPECT_NEAR(r*r*std::exp(-r), chi.ptr_rvalue()[ir], tol*2); // slightly relax the tolerance due to interpolation
+        EXPECT_NEAR(r*r*std::exp(-r), chi.rvalue(ir), tol*2); // slightly relax the tolerance due to interpolation
     }
 }
 
@@ -373,12 +368,12 @@ TEST_F(NumericalRadialTest, ZeroPadding) {
 
     for (int ik = 0; ik != sz1; ++ik)
     {
-        EXPECT_EQ(f[ik], chi.ptr_kvalue()[ik]);
+        EXPECT_EQ(f[ik], chi.kvalue(ik));
     }
 
     for (int ik = sz1; ik != sz2; ++ik)
     {
-        EXPECT_EQ(0.0, chi.ptr_kvalue()[ik]);
+        EXPECT_EQ(0.0, chi.kvalue(ik));
     }
 }
 
@@ -406,7 +401,7 @@ TEST_F(NumericalRadialTest, SetValue)
 
     for (int i = 0; i != sz; ++i)
     {
-        EXPECT_EQ(chi.ptr_rvalue()[i], f[i]);
+        EXPECT_EQ(chi.rvalue(i), f[i]);
     }
 
     chi.build(1, false, sz, grid, f, p);
@@ -418,7 +413,7 @@ TEST_F(NumericalRadialTest, SetValue)
 
     for (int i = 0; i != sz; ++i)
     {
-        EXPECT_EQ(chi.ptr_kvalue()[i], f[i]);
+        EXPECT_EQ(chi.kvalue(i), f[i]);
     }
 }
 
@@ -466,8 +461,8 @@ TEST_F(NumericalRadialTest, RadialTable)
     for (int ik = 1; ik != sz; ++ik)
     {
         double k = ik * dk;
-        ASSERT_NEAR(chi1.ptr_kvalue()[ik], 4 * pref * std::exp(-k * k / 4), tol);
-        ASSERT_NEAR(chi2.ptr_kvalue()[ik], pref * k * k * std::exp(-k * k / 4), tol);
+        ASSERT_NEAR(chi1.kvalue(ik), 4 * pref * std::exp(-k * k / 4), tol);
+        ASSERT_NEAR(chi2.kvalue(ik), pref * k * k * std::exp(-k * k / 4), tol);
     }
 
     double* table = new double[sz];

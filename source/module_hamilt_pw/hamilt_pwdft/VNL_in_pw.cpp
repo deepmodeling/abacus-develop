@@ -86,15 +86,21 @@ void pseudopot_cell_vnl::init(const int ntype,
 		}
 	}
 
-//----------------------------------------------------------
-// MEMBER VARIABLE :
-// NAME : nhm(max number of different beta functions per atom)
-//----------------------------------------------------------
-	this->nhm = 0;
-	for (it=0;it<ntype;it++)
-	{	
-		this->nhm = std::max(nhm, GlobalC::ucell.atoms[it].ncpp.nh);
-	}
+    //----------------------------------------------------------
+    // MEMBER VARIABLE :
+    // NAME : nhm(max number of different beta functions per atom)
+    // NAME : nbetam(max number of beta functions)
+    // NAME : nwfcm(max number of wavefunctions)
+    //----------------------------------------------------------
+    this->nhm = 0;
+    this->nbetam = 0;
+    int nwfcm = 0;
+    for (it = 0; it < ntype; it++)
+    {
+        this->nhm = std::max(nhm, GlobalC::ucell.atoms[it].ncpp.nh);
+        this->nbetam = std::max(nbetam, GlobalC::ucell.atoms[it].ncpp.nbeta);
+        nwfcm = std::max(nwfcm, GlobalC::ucell.atoms[it].ncpp.nchi);
+    }
 
 //----------------------------------------------------------
 // MEMBER VARIABLE :
@@ -168,44 +174,48 @@ void pseudopot_cell_vnl::init(const int ntype,
 		ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(double));
 	}
 
-	//this->nqx = 10000;		// calculted in allocate_nlpot.f90
-	//GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ); //LiuXh modify 20180515
-	//GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ) + 1000; //LiuXh add 20180515
-	//GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ) * 10; //LiuXh add 20180515
-	GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ) * cell_factor; //LiuXh add 20180619
-	// nqx = (sqrt(ecutwfc)/dq+4)*cell_factor;
+    // this->nqx = 10000;		// calculted in allocate_nlpot.f90
+    // GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ); //LiuXh modify 20180515
+    // GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ) + 1000; //LiuXh add 20180515
+    // GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ) * 10; //LiuXh add 20180515
+    //  GlobalV::NQX = this->calculate_nqx(INPUT.ecutwfc,GlobalV::DQ) * cell_factor; //LiuXh add 20180619
+    GlobalV::NQX = static_cast<int>((sqrt(INPUT.ecutwfc) / GlobalV::DQ + 4.0) * cell_factor);
 
-	
-	// mohan update 2021-02-22
-	const int nbrx = 10;
-	const int nbrx_nc = 20;
-	//  max number of beta functions
-	if(GlobalV::NSPIN!=4) 
-	{
-		this->tab.create(ntype, nbrx, GlobalV::NQX);
-		ModuleBase::Memory::record("VNL::tab", ntype * nbrx * GlobalV::NQX * sizeof(double));
-	}
-	else 
-	{
-		this->tab.create(ntype, nbrx_nc, GlobalV::NQX);
-		ModuleBase::Memory::record("VNL::tab", ntype * nbrx_nc * GlobalV::NQX * sizeof(double));
-	}
+    // mohan update 2021-02-22
+    // liuyu update 2023-09-28
+    if (nbetam > 0)
+    {
+        const int nbrx_nc = 2 * nbetam;
+        // nbetam: max number of beta functions
+        if (GlobalV::NSPIN != 4)
+        {
+            this->tab.create(ntype, nbetam, GlobalV::NQX);
+            ModuleBase::Memory::record("VNL::tab", ntype * nbetam * GlobalV::NQX * sizeof(double));
+        }
+        else
+        {
+            this->tab.create(ntype, nbrx_nc, GlobalV::NQX);
+            ModuleBase::Memory::record("VNL::tab", ntype * nbrx_nc * GlobalV::NQX * sizeof(double));
+        }
+    }
 
-	
-	// mohan update 2021-02-22
-	int nchix = 10;
-	int nchix_nc = 20;
-	// nchix : max number of atomic wavefunctions per atom
-	if(GlobalV::NSPIN!=4) 
-	{
-		this->tab_at.create(ntype, nchix, GlobalV::NQX);
-		ModuleBase::Memory::record("VNL::tab_at", ntype * nchix * GlobalV::NQX * sizeof(double));
-	}
-	else 
-	{
-		this->tab_at.create(ntype, nchix_nc, GlobalV::NQX);
-		ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * GlobalV::NQX * sizeof(double));
-	}
+    // mohan update 2021-02-22
+    // liuyu update 2023-09-28
+    if (nwfcm > 0)
+    {
+        int nchix_nc = 2 * nwfcm;
+        // nwfcm : max number of atomic wavefunctions per atom
+        if (GlobalV::NSPIN != 4)
+        {
+            this->tab_at.create(ntype, nwfcm, GlobalV::NQX);
+            ModuleBase::Memory::record("VNL::tab_at", ntype * nwfcm * GlobalV::NQX * sizeof(double));
+        }
+        else
+        {
+            this->tab_at.create(ntype, nchix_nc, GlobalV::NQX);
+            ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * GlobalV::NQX * sizeof(double));
+        }
+    }
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
             resmem_sd_op()(gpu_ctx, s_tab, this->tab.getSize());

@@ -2,10 +2,10 @@ name: Build Test
 on:
   push:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
   test:
@@ -13,37 +13,43 @@ jobs:
     strategy:
       matrix:
         include:
-        - tag: gnu
-          build_args: ""
-          name: "Build with GNU compilers"
-        - tag: gnu
-          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
-          name: "Build with GNU compilers and extra components"
-        - tag: intel
-          build_args: ""
-          name: "Build with Intel compilers"
-        - tag: cuda
-          build_args: "-DUSE_CUDA=1"
-          name: "Build with CUDA kit"
-        - tag: intel
-          build_args: "-DENABLE_LCAO=OFF"
-          name: "Build without LCAO"
-        - tag: intel
-          build_args: "-DENABLE_MPI=0"
-          name: "Build with Intel compilers without LCAO and MPI"
-        - tag: gnu
-          build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1 -DUSE_ELPA=0"
-          name: "Build with GNU compilers and extra components without ELPA"
-        - tag: gnu
-          build_args: "-DENABLE_MPI=0"
-          name: "Build with GNU compilers without LCAO and MPI"
+          - tag: gnu
+            build_args: ""
+            name: "Build with GNU toolchain"
+          - tag: intel
+            build_args: ""
+            name: "Build with Intel toolchain"
+
+          - tag: gnu
+            build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
+            name: "Build extra components with GNU toolchain"
+          - tag: intel
+            build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
+            name: "Build extra components with Intel toolchain"
+
+          - tag: cuda
+            build_args: "-DUSE_CUDA=1"
+            name: "Build with CUDA support"
+          - tag: gnu
+            build_args: "-DENABLE_LCAO=OFF"
+            name: "Build without LCAO"
+          - tag: gnu
+            build_args: "-DUSE_ELPA=0"
+            name: "Build without ELPA"
+          - tag: gnu
+            build_args: "-DENABLE_MPI=0"
+            name: "Build without LCAO and MPI"
+
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: Build
         run: |
           git config --global --add safe.directory `pwd`
-          cmake -B build -DBUILD_TESTING=ON ${{ matrix.build_args }}
+          cmake -B build ${{ matrix.build_args }}
           cmake --build build -j2

@@ -1,16 +1,17 @@
 #include "esolver_ks.h"
 
+#include <time.h>
+#ifdef __MPI
+#include <mpi.h>
+#else
+#include <chrono>
+#endif
+
 #include <iostream>
 
-#include "../module_io/print_info.h"
+#include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
-#include "time.h"
-#ifdef __MPI
-#include "mpi.h"
-#else
-#include "chrono"
-#endif
 
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
@@ -47,20 +48,6 @@ namespace ModuleESolver
         ///----------------------------------------------------------
         p_chgmix = new Charge_Mixing();
         p_chgmix->set_rhopw(this->pw_rho);
-        p_chgmix->set_mixing(INPUT.mixing_mode,
-                             INPUT.mixing_beta,
-                             INPUT.mixing_ndim,
-                             INPUT.mixing_gg0,
-                             INPUT.mixing_tau);
-        // using bandgap to auto set mixing_beta
-        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
-        {
-            p_chgmix->need_auto_set();
-        }
-        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-        }
 
         ///----------------------------------------------------------
         /// wavefunc
@@ -84,6 +71,23 @@ namespace ModuleESolver
     void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
+
+        //------------------Charge Mixing------------------
+        p_chgmix->set_mixing(GlobalV::MIXING_MODE,
+                             GlobalV::MIXING_BETA,
+                             GlobalV::MIXING_NDIM,
+                             GlobalV::MIXING_GG0,
+                             GlobalV::MIXING_TAU);
+        // using bandgap to auto set mixing_beta
+        if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
+        {
+            p_chgmix->need_auto_set();
+        }
+        else if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
+        {
+            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+        }
+        
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
@@ -227,7 +231,8 @@ namespace ModuleESolver
         {
             GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->startz,this->pw_wfc->numz);
             GlobalC::paw_cell.prepare_paw();
             GlobalC::paw_cell.set_sij();
 
@@ -343,7 +348,7 @@ namespace ModuleESolver
                 double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
-                
+
                 //<Temporary> It may be changed when more clever parallel algorithm is put forward.
                 //When parallel algorithm for bands are adopted. Density will only be treated in the first group.
                 //(Different ranks should have abtained the same, but small differences always exist in practice.)
@@ -396,8 +401,8 @@ namespace ModuleESolver
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
-                        //conv_elec = this->estate.mix_rho();
-                        p_chgmix->mix_rho(iter, pelec->charge);
+                        
+                        p_chgmix->mix_rho(pelec->charge);
                         //----------charge mixing done-----------
                     }
                 }

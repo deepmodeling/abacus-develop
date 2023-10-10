@@ -24,6 +24,9 @@ std::ostream& operator<<(std::ostream& os, const DataType& data_type) {
         case DataType::DT_COMPLEX_DOUBLE:
             os << "complex<double>";
             break;
+        default:
+            os << "unknown";
+            break;
     }
     return os;
 }

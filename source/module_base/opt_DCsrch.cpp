@@ -1,6 +1,7 @@
-#include "./opt_DCsrch.h"
-#include <string.h>
+#include "opt_DCsrch.h"
+
 #include <math.h>
+#include <string.h>
 
 // This file is translated from fortran codes dcstep.f of scipy.
 // The structure and all annotation of the original file have been retained.

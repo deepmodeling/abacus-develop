@@ -4,18 +4,20 @@
 // UPDATE : Peize Lin at 2019-11-21
 //==========================================================
 #include "timer.h"
-#include "chrono"
-#include <vector>
+
 #include <math.h>
-#include "module_base/formatter.h"
 
 #ifdef __MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include <vector>
+
+#include "chrono"
+#include "module_base/formatter.h"
 
 namespace ModuleBase
 {
@@ -258,7 +260,7 @@ void timer::print_all(std::ofstream &ofs)
 		const std::string &name = timer_pool_order_A.first.second;
 		const Timer_One &timer_one = timer_pool_order_A.second;
 
-		if(timer_one.cpu_second < small)
+		if(timer_one.cpu_second < 0)
 			continue;
 		class_names.push_back(class_name);
 		names.push_back(name);

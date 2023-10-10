@@ -6,5 +6,5 @@ This test for: cell-relax
 *sg15 pseudopotential
 *smearing_method gauss
 *ks_solver cg
-*mixing_type pulay-kerker
+*mixing_type broyden-kerker
 *mixing_beta 0.7

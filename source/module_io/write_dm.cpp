@@ -1,6 +1,6 @@
-#include "module_io/dm_io.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
+#include "module_io/dm_io.h"
 
 //-------------------------------------------------
 // NOTE for ModuleIO::write_dm

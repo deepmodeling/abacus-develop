@@ -138,8 +138,8 @@ static const char *_cufftGetErrorString(cufftResult_t error)
 #endif
 
 #ifdef __ROCM
-#include <hipfft.h>
-#include <hipblas.h>
+#include <hipfft/hipfft.h>
+#include <hipblas/hipblas.h>
 #include <hip/hip_runtime.h>
 namespace HipCheck
 {
@@ -167,6 +167,8 @@ static const char *_hipblasGetErrorString(hipblasStatus_t error)
 		return "HIPBLAS_STATUS_NOT_SUPPORTED";
 	case HIPBLAS_STATUS_HANDLE_IS_NULLPTR:
 		return "HIPBLAS_STATUS_HANDLE_IS_NULLPTR";
+	default:
+		return "<unknown>";
 	}
 	return "<unknown>";
 }

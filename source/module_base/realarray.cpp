@@ -2,8 +2,9 @@
  * ESCP:Electro-Structure Calculate Package.
  ********************************************/
 
-#include <cstdlib>
 #include "realarray.h"
+
+#include <cstdlib>
 
 namespace ModuleBase
 {

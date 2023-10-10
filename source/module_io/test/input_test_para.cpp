@@ -77,7 +77,8 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_TRUE(INPUT.out_wannier_amn);
         EXPECT_TRUE(INPUT.out_wannier_unk);
         EXPECT_TRUE(INPUT.out_wannier_eig);
-        EXPECT_DOUBLE_EQ(INPUT.kspacing[0],0.0);
+        EXPECT_TRUE(INPUT.out_wannier_wvfn_formatted);
+        EXPECT_DOUBLE_EQ(INPUT.kspacing[0], 0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[1],0.0);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[2],0.0);
         EXPECT_DOUBLE_EQ(INPUT.min_dist_coef,0.2);
@@ -129,6 +130,9 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.bx,0);
         EXPECT_EQ(INPUT.by,0);
         EXPECT_EQ(INPUT.bz,0);
+        EXPECT_EQ(INPUT.nsx, 0);
+        EXPECT_EQ(INPUT.nsy, 0);
+        EXPECT_EQ(INPUT.nsz, 0);
         EXPECT_EQ(INPUT.diago_proc,0);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);
@@ -152,7 +156,7 @@ TEST_F(InputParaTest,Bcast)
   //      EXPECT_EQ(INPUT.occupations,"smearing");
         EXPECT_EQ(INPUT.smearing_method,"fixed");
         EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
-        EXPECT_EQ(INPUT.mixing_mode,"pulay");
+        EXPECT_EQ(INPUT.mixing_mode,"broyden");
         EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
         EXPECT_DOUBLE_EQ(INPUT.mixing_gg0,0.00);

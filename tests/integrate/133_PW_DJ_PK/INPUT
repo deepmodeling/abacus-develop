@@ -15,6 +15,6 @@ relax_nmax                   1
 #init_wfc       random
 
 ks_solver           cg
-mixing_type         pulay
+mixing_type         broyden
 mixing_beta         0.7
 mixing_gg0          1.5

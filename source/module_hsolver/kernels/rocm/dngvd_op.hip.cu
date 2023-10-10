@@ -4,11 +4,11 @@
 
 namespace hsolver {
 
-void createCUSOLVERhandle() {
+void createGpuSolverHandle() {
     return;
 }
 
-void destoryCUSOLVERhandle() {
+void destroyGpuSolverHandle() {
     return;
 }
 

@@ -1,18 +1,19 @@
 #include "hsolver_pw.h"
 
-#include "diago_cg.h"
-#include "diago_bpcg.h"
-#include "diago_david.h"
-#include "diago_iter_assist.h"
-#include "module_base/tool_quit.h"
-#include "module_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include <algorithm>
+
+#include "diago_bpcg.h"
+#include "diago_cg.h"
+#include "diago_david.h"
+#include "module_base/timer.h"
+#include "module_base/tool_quit.h"
+#include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hsolver/diago_iter_assist.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #endif
 namespace hsolver {
 
@@ -173,7 +174,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
         /// calculate the contribution of Psi for charge density rho
-    }
+     }
     castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
     this->endDiagh();
@@ -216,12 +217,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
 
         double* nhatgr;
-        nhatgr = new double[3*GlobalC::paw_cell.get_nrxx()];
+        nhatgr = new double[3*GlobalC::paw_cell.get_nfft()];
         GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
         delete[] nhatgr;
     }
 #endif
-
     ModuleBase::timer::tick("HSolverPW", "solve");
     return;
 }
@@ -268,18 +268,18 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
                                            const int ik)
 {
     psi.fix_k(ik);
-    if(!this->initialed_psi)
+    if(GlobalV::psi_initializer) // new psi initialization method branch
+    {
+        // do nothing here, because we have already initialize, allocate and make initial guess
+        // basis_type lcao_in_pw function may be inserted here
+    }
+    else if(!this->initialed_psi) // old psi initialization method branch
     {
         if(GlobalV::BASIS_TYPE=="pw")
         {
-            // generate PAOs first, then diagonalize to get
-            // inital wavefunctions.
             hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
         }
-        else
-        {
-            ModuleBase::WARNING_QUIT("HSolverPW::updatePsiK", "lcao_in_pw is not supported now.");
-        }
+        /* lcao_in_pw now is based on newly implemented psi initializer, so it does not appear here*/
     }
 }
 

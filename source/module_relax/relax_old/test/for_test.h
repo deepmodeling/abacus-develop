@@ -97,10 +97,10 @@ Atom_pseudo::Atom_pseudo()
 Atom_pseudo::~Atom_pseudo()
 {
 }
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 }
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 }
 

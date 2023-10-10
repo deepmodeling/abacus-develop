@@ -57,12 +57,12 @@ public:
     ModuleBase::matrix	o_delta;
 
     ///Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
-    double* H_V_delta;
+    std::vector<double> H_V_delta;
     ///Correction term to Hamiltonian, for multi-k
     ///In R space:
     double* H_V_deltaR;
     ///In k space:
-    std::complex<double>** H_V_delta_k;
+    std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
     ///(Unit: Ry/Bohr) Total Force due to the DeePKS correction term \f$E_{\delta}\f$
     ModuleBase::matrix	F_delta;
@@ -77,6 +77,9 @@ public:
     int get_hr_cal(){ return this->hr_cal; }
     void set_hr_cal(bool cal){ this->hr_cal = cal; }
 
+    // temporary add two getters for inl_index and gedm
+    int get_inl(const int& T0, const int& I0, const int& L0, const int& N0) { return inl_index[T0](I0, L0, N0); }
+    const double* get_gedms(const int& inl){ return gedm[inl]; }
 //-------------------
 // private variables
 //-------------------
@@ -85,6 +88,8 @@ private:
 	int lmaxd = 0; //max l of descirptors
 	int nmaxd = 0; //#. descriptors per l
 	int inlmax = 0; //tot. number {i,n,l} - atom, n, l
+    int nat_gdm = 0;
+    int nks_V_delta = 0;
 
     bool init_pdm = false; //for DeePKS NSCF calculation
     
@@ -198,7 +203,8 @@ public:
 
     // array for storing gdmx, used for calculating gvx
 	void init_gdmx(const int nat);
-	void del_gdmx(const int nat);
+	//void del_gdmx(const int nat);
+	void del_gdmx();
 
     // array for storing gdm_epsl, used for calculating gvx
 	void init_gdmepsl();
@@ -271,11 +277,13 @@ public:
 
     ///calculate projected density matrix:
     ///pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
-    void cal_projected_DM(const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+    void cal_projected_DM(//const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+        const std::vector<std::vector<double>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD);
-    void cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
+    void cal_projected_DM_k(//const std::vector<ModuleBase::ComplexMatrix>& dm,
+        const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
@@ -285,12 +293,14 @@ public:
 
     //calculate the gradient of pdm with regard to atomic positions
     //d/dX D_{Inl,mm'}
-    void cal_gdmx(const ModuleBase::matrix& dm,
+    void cal_gdmx(//const ModuleBase::matrix& dm,
+        const std::vector<double>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
         const bool isstress);
-    void cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
+    void cal_gdmx_k(//const std::vector<ModuleBase::ComplexMatrix>& dm,
+        const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
@@ -332,8 +342,11 @@ public:
     void check_v_delta_k(const int nnr);
 
     ///calculate tr(\rho V_delta)
-    void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+    //void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
+    void cal_e_delta_band(const std::vector<std::vector<double>>& dm/**<[in] density matrix*/);
+    //void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+    //    const int nks);
+    void cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm/**<[in] density matrix*/,
         const int nks);
 
 //-------------------
@@ -351,14 +364,16 @@ public:
 public:
 
     //for gamma only, pulay and HF terms of force are calculated together
-    void cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+    void cal_f_delta_gamma(//const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+        const std::vector<std::vector<double>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
         const bool isstress, ModuleBase::matrix& svnl_dalpha);
 
     //for multi-k, pulay and HF terms of force are calculated together
-    void cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+    void cal_f_delta_k(//const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+        const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
@@ -495,8 +510,10 @@ private:
 public:
   
     ///print density matrices
-    void print_dm(const ModuleBase::matrix &dm);
-    void print_dm_k(const int nks, const std::vector<ModuleBase::ComplexMatrix>& dm);
+    //void print_dm(const ModuleBase::matrix &dm);
+    void print_dm(const std::vector<double> &dm);
+    //void print_dm_k(const int nks, const std::vector<ModuleBase::ComplexMatrix>& dm);
+    void print_dm_k(const int nks, const std::vector<std::vector<std::complex<double>>>& dm);
 
 	///----------------------------------------------------------------------
 	///The following 4 functions save the `[dm_eig], [e_base], [f_base], [grad_vx]`

@@ -316,6 +316,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
+        file << mdp.md_tfirst << std::endl;
         file << mdp.md_tchain << std::endl;
         for (int i = 0; i < mdp.md_tchain; ++i)
         {
@@ -376,7 +377,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
         if (ok)
         {
             double Mnum;
-            file >> step_rst_ >> Mnum;
+            file >> step_rst_ >> mdp.md_tfirst >> Mnum;
 
             if (Mnum != mdp.md_tchain)
             {
@@ -447,6 +448,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
 
 #ifdef __MPI
     MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&mdp.md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     if (npt_flag)

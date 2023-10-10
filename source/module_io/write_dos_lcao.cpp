@@ -1,29 +1,32 @@
 #include "write_dos_lcao.h"
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+#include <sys/time.h>
+#include <vector>
+
 #include "cal_dos.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "write_orb_info.h"
+
 #ifdef __LCAO
 #include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #endif
-#include <vector>
 
 #include "module_base/blas_connector.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/scalapack_connector.h"
-#ifdef __MPI
-#include <mpi.h>
-#endif
-#include <sys/time.h>
 
 void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                               const psi::Psi<std::complex<double>>* psi,
@@ -33,7 +36,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
                               const double& dos_edelta_ev,
                               const double& dos_scale,
                               const double& bcoeff,
-                              const K_Vectors& kv)
+                              const K_Vectors& kv,
+                              hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
@@ -176,23 +180,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
         } // if
         else
         {
-            GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                             GlobalV::OUT_LEVEL,
-                                                             GlobalC::ORB.get_rcutmax_Phi(),
-                                                             GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                             GlobalV::GAMMA_ONLY_LOCAL);
-
-            atom_arrange::search(GlobalV::SEARCH_PBC,
-                                 GlobalV::ofs_running,
-                                 GlobalC::GridD,
-                                 GlobalC::ucell,
-                                 GlobalV::SEARCH_RADIUS,
-                                 GlobalV::test_atom_input); // qifeng-2019-01-21
-
-            uhm.LM->allocate_HS_R(pv->nnr);
-            uhm.LM->zeros_HSR('S');
-            uhm.genH.calculate_S_no(uhm.LM->SlocR.data());
-            uhm.genH.build_ST_new('S', false, GlobalC::ucell, uhm.LM->SlocR.data());
             std::vector<ModuleBase::ComplexMatrix> Mulk;
             Mulk.resize(1);
             Mulk[0].create(pv->ncol, pv->nrow);
@@ -202,9 +189,16 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
 
                 if (is == kv.isk[ik])
                 {
-                    uhm.LM->allocate_HS_k(pv->nloc);
-                    uhm.LM->zeros_HSk('S');
-                    uhm.LM->folding_fixedH(ik, kv.kvec_d);
+                    // calculate SK for current k point
+                    // the target matrix is LM->Sloc2 with collumn-major
+                    if(GlobalV::NSPIN == 4)
+                    {
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, uhm.LM, 1);
+                    }
+                    else
+                    {
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, uhm.LM, 1);
+                    }
 
                     psi->fix_k(ik);
                     psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
@@ -277,14 +271,6 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psid,
 
                 } // if
             } // ik
-#ifdef __MPI
-            atom_arrange::delete_vector(GlobalV::ofs_running,
-                                        GlobalV::SEARCH_PBC,
-                                        GlobalC::GridD,
-                                        GlobalC::ucell,
-                                        GlobalV::SEARCH_RADIUS,
-                                        GlobalV::test_atom_input);
-#endif
         } // else
 #ifdef __MPI
         MPI_Reduce(pdosk[is].c, pdos[is].c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);

@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix			autotest
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
+nbands			16
+#Parameters (Accuracy)
+ecutwfc			50
+scf_nmax			20
+
+basis_type		pw
+gamma_only		1
+
+psi_initializer 1
+init_wfc nao
+
+smearing_method		gauss
+smearing_sigma			0.01
+
+calculation		relax
+relax_nmax			50
+force_thr_ev		1.0e-3
