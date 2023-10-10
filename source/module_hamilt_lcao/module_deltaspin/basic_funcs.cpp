@@ -50,17 +50,6 @@ T sum_2d(const std::vector<ModuleBase::Vector3<T>>& array)
 template int sum_2d<int>(const std::vector<ModuleBase::Vector3<int>>& array);
 template double sum_2d<double>(const std::vector<ModuleBase::Vector3<double>>& array);
 
-double sum_2d(const std::vector<ModuleBase::Vector3<int>>& array)
-{
-    ModuleBase::Vector3<int> sum;
-    for (const auto& element: array)
-    {
-            sum += element;
-    }
-    double final_sum = sum.x + sum.y + sum.z;
-    return final_sum;
-}
-
 void scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& array,
                         double scalar,
                         std::vector<ModuleBase::Vector3<double>>& result)
