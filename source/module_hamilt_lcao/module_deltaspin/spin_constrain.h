@@ -60,15 +60,6 @@ public:
 
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 
-    inline double output_cut(const double& result)
-    {
-        if(std::abs(result) < 1e-6)
-        {
-            return 0.0;
-        }
-        return result;
-    }
-
     void run_lambda_loop(int outer_step);
 
 public:
