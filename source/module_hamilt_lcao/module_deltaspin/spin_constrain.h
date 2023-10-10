@@ -41,9 +41,7 @@ public:
                 elecstate::ElecState* pelec_in);
 
     /// calculate h_lambda operator for spin-constrained DFT
-    void cal_h_lambda(std::complex<double>* h_lambda);
-
-    void cal_weight_func(const std::vector<std::complex<double>>& Sloc2);
+    void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2);
 
     void cal_MW(
         const int& step,
@@ -169,7 +167,6 @@ private:
     std::map<int, int> orbitalCounts;
     int nspin_ = 0;
     int npol_ = 1;
-    std::vector<std::complex<double>> Wi_; // same as overlap matrix
     std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
     std::vector<ModuleBase::Vector3<double>> sc_mag_; // in unit of uB
     std::vector<ModuleBase::Vector3<double>> Mi_; // in unit of uB

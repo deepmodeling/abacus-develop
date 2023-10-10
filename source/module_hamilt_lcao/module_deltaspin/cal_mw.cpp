@@ -96,8 +96,6 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow);
 
-        this->cal_weight_func(LM.Sloc2);
-
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -113,8 +111,7 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
-                //LM.Sloc2.data(),
-                this->Wi_.data(),
+                LM.Sloc2.data(),
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
