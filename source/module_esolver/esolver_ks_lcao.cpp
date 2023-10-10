@@ -593,6 +593,12 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         // update real space Hamiltonian
         this->p_hamilt->refresh();
     }
+
+    if (GlobalV::sc_mag_switch && iter > 1)
+    {
+        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+        sc.run_lambda_loop(iter-1);
+    }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
 {
@@ -852,7 +858,6 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     {
         SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->LM, GlobalC::ucell);
-        sc.run_lambda_loop(iter);
     }
 
     // (11) calculate the total energy.
