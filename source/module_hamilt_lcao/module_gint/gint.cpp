@@ -5,6 +5,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "gint_vl.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -47,6 +48,37 @@ void Gint::cal_gint(Gint_inout *inout)
 
     if(max_size!=0)
     {
+		if (inout->job == Gint_Tools::job_type::vlocal && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+		{
+			double* ylmcoef = new double[100];
+			ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
+			for (int i = 0; i < 100; i++)
+			{
+				ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
+			}
+			gint_gamma_vl_gpu(this->hRGint,
+							lgd,
+							100, // TODO temp set to 64 (Lmax+1)^2
+							max_size,
+							GlobalC::ucell.omega / this->ncxyz,
+							inout->vl,
+							ylmcoef,
+							this->bx,
+							this->by,
+							this->bz,
+							this->bxyz,
+							this->gridt->ncx,
+							this->gridt->ncy,
+							this->nplane,
+							GlobalV::NLOCAL,
+							this->nbxx,
+							this->gridt->start_ind,
+							*this->gridt);
+			ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
+			return;
+		}
+		else
+		{
 #ifdef __MKL
 		const int mkl_threads = mkl_get_max_threads();
 		mkl_set_num_threads(1);
@@ -130,55 +162,6 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 			}
 
-            if (inout->job == Gint_Tools::job_type::vlocal && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
-            {
-                double* ylmcoef = new double[100];
-                ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
-                for (int i = 0; i < 100; i++)
-                {
-                    ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
-                }
-                gint_gamma_vl_gpu(pvpR_grid,
-<<<<<<< HEAD
-                                lgd,
-                                100, // TODO temp set to 64 (Lmax+1)^2
-                                max_size,
-                                GlobalC::ucell.omega / this->ncxyz,
-                                inout->vl,
-                                ylmcoef,
-                                this->bx,
-                                this->by,
-                                this->bz,
-                                this->bxyz,
-                                this->gridt->ncx,
-                                this->gridt->ncy,
-                                this->nplane,
-                                GlobalV::NLOCAL,
-                                *this->gridt);
-                ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-                return;
-=======
-                                  lgd,
-                                  100, // TODO temp set to 64 (Lmax+1)^2
-                                  max_size,
-                                  GlobalC::ucell.omega / this->ncxyz,
-                                  inout->vl,
-                                  ylmcoef,
-                                  this->bx,
-                                  this->by,
-                                  this->bz,
-                                  this->bxyz,
-                                  this->gridt->ncx,
-                                  this->gridt->ncy,
-                                  this->nplane,
-                                  GlobalV::NLOCAL,
-                                  this->nbxx,
-                                  this->gridt->start_ind,
-                                  *this->gridt);
->>>>>>> 9422fbf30 (debugging cu vlocal)
-            }
-            else
-            {
     		#pragma omp for
 #endif
             // entering the main loop of grid points
@@ -306,7 +289,6 @@ void Gint::cal_gint(Gint_inout *inout)
 					delete[] vkdr3;
 				}
 			} // int grid_index
-            }
 #ifdef _OPENMP
 			if(inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta)
 			{
@@ -343,6 +325,7 @@ void Gint::cal_gint(Gint_inout *inout)
 			}
 #endif
 		} // end of #pragma omp parallel
+		}
 
 #ifdef __MKL
     mkl_set_num_threads(mkl_threads);

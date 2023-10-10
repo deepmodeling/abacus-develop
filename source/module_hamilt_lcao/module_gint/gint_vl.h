@@ -2,7 +2,7 @@
 #define GINT_VL_H
 #include "grid_technique.h"
 
-void gint_gamma_vl_gpu(double* GridVlocal_now,
+void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                        int lgd_now,
                        int nnnmax,
                        const int max_size,
