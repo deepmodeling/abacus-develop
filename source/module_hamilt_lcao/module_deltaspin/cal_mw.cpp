@@ -72,7 +72,7 @@ void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step, LCAO_Matrix& LM, con
         this->Mi_[i].x = total_charge_soc[1];
         this->Mi_[i].y = total_charge_soc[2];
         this->Mi_[i].z = total_charge_soc[3];
-        std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setprecision(16) << " (" << Mi_[i].x << ", " << Mi_[i].y
+        if (print) std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setprecision(16) << " (" << Mi_[i].x << ", " << Mi_[i].y
            << ", " << Mi_[i].z << ")" << std::endl;
     }
     

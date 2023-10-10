@@ -411,7 +411,6 @@ namespace ModuleESolver
 		        MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
                 MPI_Bcast(pelec->charge->rho[0], this->pw_rho->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
-
                 // Hamilt should be used after it is constructed.
                 // this->phamilt->update(conv_elec);
                 updatepot(istep, iter);

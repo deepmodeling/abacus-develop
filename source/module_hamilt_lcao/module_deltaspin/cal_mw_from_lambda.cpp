@@ -19,7 +19,7 @@ void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
     {
         elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
     }
-    this->cal_MW(i_step, *(this->LM), GlobalC::ucell);
+    this->cal_MW(i_step, *(this->LM), GlobalC::ucell, true);
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
 }
 

@@ -505,6 +505,12 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 {
     if (iter == 1)
         this->p_chgmix->mix_reset();
+    
+    if (GlobalV::sc_mag_switch && iter > 1)
+    {
+        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+        sc.run_lambda_loop(iter-1);
+    }
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
@@ -592,12 +598,6 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         }
         // update real space Hamiltonian
         this->p_hamilt->refresh();
-    }
-
-    if (GlobalV::sc_mag_switch && iter > 1)
-    {
-        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
-        sc.run_lambda_loop(iter-1);
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
@@ -857,7 +857,7 @@ void ESolver_KS_LCAO::eachiterfinish(int iter)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->LM, GlobalC::ucell);
+        sc.cal_MW(iter, this->LM, GlobalC::ucell, true);
     }
 
     // (11) calculate the total energy.
@@ -988,7 +988,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, this->LM, GlobalC::ucell);
+        sc.cal_MW(istep, this->LM, GlobalC::ucell, true);
     }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
