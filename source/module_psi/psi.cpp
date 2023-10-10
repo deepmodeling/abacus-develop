@@ -61,6 +61,24 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, cons
                                          sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
+template <typename T, typename Device> Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
+{
+    this->k_first = k_first_in;
+    this->ngk = ngk_in;
+    this->current_b = 0;
+    this->current_k = 0;
+    this->npol = GlobalV::NPOL;
+    this->device = device::get_device_type<Device>(this->ctx);
+    this->nk = nk_in;
+    this->nbands = nbd_in;
+    this->nbasis = nbs_in;
+    this->current_nbasis = nbs_in;
+    this->psi_current = this->psi = psi_pointer;
+    this->allocate_inside = false;
+    // Currently only GPU's implementation is supported for device recording!
+    device::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
+}
+
 template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
 {
     assert(nk_in <= psi_in.get_nk());
