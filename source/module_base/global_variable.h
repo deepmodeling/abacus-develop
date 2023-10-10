@@ -93,6 +93,7 @@ extern int SCF_THR_TYPE; // type of the criterion of scf_thr, 1: reci drho for p
 
 extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX; // 20 mohan add 2009-09-10
+extern int NQXQ; // liuyu add 2023-10-03
 
 extern int NURSE; // 21 mohan add 2010-09-10
 extern bool COLOUR; // mohan add 2011-04-26

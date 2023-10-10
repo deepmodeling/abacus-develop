@@ -36,7 +36,6 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 					upf.set_empty_element();			
 				}
                 upf.set_upf_q(); // liuyu add 2023-09-21
-                upf.check_atwfc_norm(); // liuyu add 2023-09-26
                 // average pseudopotential if needed
                 error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
             }

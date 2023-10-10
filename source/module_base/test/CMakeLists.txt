@@ -201,3 +201,11 @@ AddTest(
   LIBS formatter
   SOURCES formatter_fmt_test.cpp formatter_physfmt_test.cpp formatter_table_test.cpp formatter_contextfmt_test.cpp
 )
+
+AddTest(
+  TARGET clebsch_gordan_coeff_test
+  SOURCES clebsch_gordan_coeff_test.cpp ../clebsch_gordan_coeff.cpp ../intarray.cpp ../realarray.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp  
+  ../math_ylmreal.cpp  ../global_variable.cpp ../ylm.cpp  ../timer.cpp  ../vector3.h ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
+  ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
+  LIBS ${math_libs} formatter device
+)

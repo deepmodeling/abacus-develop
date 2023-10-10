@@ -147,7 +147,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     //======================================
     // Initalize non local pseudopotential
     //======================================
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     GlobalC::ppcell.cal_effective_D();
@@ -270,7 +270,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     }
     else
     {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell);
+        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         this->pw_wfc->initgrids(GlobalC::ucell.lat0,
