@@ -12,7 +12,6 @@
 #include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
-#include "module_hamilt_pw/hamilt_pwdft/soc.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_psi/kernels/device.h"
 
@@ -533,7 +532,6 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
 
     // In the spin-orbit case we need the unitary matrix u which rotates the
     // real spherical harmonics and yields the complex ones.
-    Soc soc;
     soc.fcoef.create(cell.ntype, this->nhm, this->nhm);
     if (GlobalV::LSPINORB)
     {
@@ -868,7 +866,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
 
             for (int l = 0; l < upf->nqlc; l++)
             {
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                for (int iq = 0; iq < GlobalV::NQXQ; iq++)
                 {
                     const double q = iq * GlobalV::DQ;
                     // here we compute the spherical bessel function for each q_i
@@ -983,7 +981,7 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
                                                                      qnorm[ig]);
                 qm1 = qnorm[ig];
             }
-            qg[ig] += pref * work * ylm(lm, ig);
+            qg[ig] += pref * work * ylm(lp, ig);
         }
     }
 }
@@ -1224,7 +1222,9 @@ void pseudopot_cell_vnl::print_vnl(std::ofstream &ofs)
 }
 
 // ----------------------------------------------------------------------
-void pseudopot_cell_vnl::cal_effective_D(void)
+void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
+                                         const ModulePW::PW_Basis* rho_basis,
+                                         UnitCell& cell)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
 
@@ -1235,78 +1235,229 @@ void pseudopot_cell_vnl::cal_effective_D(void)
 	3. rotate to effective matrix when spin-orbital coupling is used
 	*/
 
-    for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+    if (!GlobalV::use_uspp)
     {
-        const int it = GlobalC::ucell.iat2it[iat];
-        const int nht = GlobalC::ucell.atoms[it].ncpp.nh;
-        // nht: number of beta functions per atom type
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int iat = 0; iat < cell.nat; iat++)
         {
-            for (int ih = 0; ih < nht; ih++)
+            const int it = cell.iat2it[iat];
+            const int nht = cell.atoms[it].ncpp.nh;
+            // nht: number of beta functions per atom type
+            for (int is = 0; is < GlobalV::NSPIN; is++)
             {
-                for (int jh = ih; jh < nht; jh++)
+                for (int ih = 0; ih < nht; ih++)
                 {
-                    if (GlobalV::LSPINORB)
+                    for (int jh = ih; jh < nht; jh++)
                     {
-                        this->deeq_nc(is, iat, ih, jh) = this->dvan_so(is, it, ih, jh);
-                        this->deeq_nc(is, iat, jh, ih) = this->dvan_so(is, it, jh, ih);
-                    }
-                    else if (GlobalV::NSPIN == 4)
-                    {
-                        if (is == 0)
+                        if (GlobalV::LSPINORB)
                         {
-                            this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
-                            this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                            this->deeq_nc(is, iat, ih, jh) = this->dvan_so(is, it, ih, jh);
+                            this->deeq_nc(is, iat, jh, ih) = this->dvan_so(is, it, jh, ih);
                         }
-                        else if (is == 1)
+                        else if (GlobalV::NSPIN == 4)
                         {
-                            this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
-                            this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                            if (is == 0)
+                            {
+                                this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                                this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                            }
+                            else if (is == 1)
+                            {
+                                this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                                this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                            }
+                            else if (is == 2)
+                            {
+                                this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
+                                this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
+                            }
+                            else if (is == 3)
+                            {
+                                this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                                this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                            }
                         }
-                        else if (is == 2)
+                        else
                         {
-                            this->deeq_nc(is, iat, ih, jh) = std::complex<double>(0.0, 0.0);
-                            this->deeq_nc(is, iat, jh, ih) = std::complex<double>(0.0, 0.0);
-                        }
-                        else if (is == 3)
-                        {
-                            this->deeq_nc(is, iat, ih, jh) = this->dvan(it, ih, jh);
-                            this->deeq_nc(is, iat, jh, ih) = this->dvan(it, ih, jh);
-                        }
-                    }
-                    else
-                    {
-                        this->deeq(is, iat, ih, jh) = this->dvan(it, ih, jh);
-                        this->deeq(is, iat, jh, ih) = this->dvan(it, ih, jh);
-                        // in most of pseudopotential files, number of projections of one orbital is only one, 
-                        // which lead to diagonal matrix of dion
-                        // when number larger than 1, non-diagonal dion should be calculated.
-                        if(ih != jh && std::fabs(this->deeq(is, iat, ih, jh))>0.0)
-                        {
-                            this->multi_proj = true;
+                            this->deeq(is, iat, ih, jh) = this->dvan(it, ih, jh);
+                            this->deeq(is, iat, jh, ih) = this->dvan(it, ih, jh);
+                            // in most of pseudopotential files, number of projections of one orbital is only one,
+                            // which lead to diagonal matrix of dion
+                            // when number larger than 1, non-diagonal dion should be calculated.
+                            if (ih != jh && std::fabs(this->deeq(is, iat, ih, jh)) > 0.0)
+                            {
+                                this->multi_proj = true;
+                            }
                         }
                     }
                 }
             }
         }
     }
+    else
+    {
+        newq(veff, rho_basis, cell);
+    }
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {
-            castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_deeq, this->deeq.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
-            castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_deeq_nc, this->deeq_nc.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+            castmem_d2s_h2d_op()(gpu_ctx,
+                                 cpu_ctx,
+                                 this->s_deeq,
+                                 this->deeq.ptr,
+                                 GlobalV::NSPIN * cell.nat * this->nhm * this->nhm);
+            castmem_z2c_h2d_op()(gpu_ctx,
+                                 cpu_ctx,
+                                 this->c_deeq_nc,
+                                 this->deeq_nc.ptr,
+                                 GlobalV::NSPIN * cell.nat * this->nhm * this->nhm);
         }
         else {
-            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_deeq_nc, this->deeq_nc.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+            syncmem_z2z_h2d_op()(gpu_ctx,
+                                 cpu_ctx,
+                                 this->z_deeq_nc,
+                                 this->deeq_nc.ptr,
+                                 GlobalV::NSPIN * cell.nat * this->nhm * this->nhm);
         }
-        syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, this->d_deeq, this->deeq.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+        syncmem_d2d_h2d_op()(gpu_ctx,
+                             cpu_ctx,
+                             this->d_deeq,
+                             this->deeq.ptr,
+                             GlobalV::NSPIN * cell.nat * this->nhm * this->nhm);
     }
     else {
         if (GlobalV::precision_flag == "single") {
-            castmem_d2s_h2h_op()(cpu_ctx, cpu_ctx, this->s_deeq, this->deeq.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
-            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, this->c_deeq_nc, this->deeq_nc.ptr, GlobalV::NSPIN * GlobalC::ucell.nat * this->nhm * this->nhm);
+            castmem_d2s_h2h_op()(cpu_ctx,
+                                 cpu_ctx,
+                                 this->s_deeq,
+                                 this->deeq.ptr,
+                                 GlobalV::NSPIN * cell.nat * this->nhm * this->nhm);
+            castmem_z2c_h2h_op()(cpu_ctx,
+                                 cpu_ctx,
+                                 this->c_deeq_nc,
+                                 this->deeq_nc.ptr,
+                                 GlobalV::NSPIN * cell.nat * this->nhm * this->nhm);
         }
         // There's no need to synchronize double precision pointers while in a CPU environment.
     }
+}
+
+void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell)
+{
+    ModuleBase::TITLE("pseudopot_cell_vnl", "newq");
+
+    const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
+    double fact = 1.0;
+    if (rho_basis->gamma_only)
+    {
+        fact = 2.0;
+    }
+
+    const int npw = rho_basis->npw;
+    ModuleBase::matrix ylmk0(lmaxq * lmaxq, npw);
+    ModuleBase::YlmReal::Ylm_Real(lmaxq * lmaxq, npw, rho_basis->gcar, ylmk0);
+
+    double* qnorm = new double[npw];
+    for (int ig = 0; ig < npw; ig++)
+    {
+        qnorm[ig] = rho_basis->gcar[ig].norm() * cell.tpiba;
+    }
+
+    // fourier transform of the total effective potential
+    ModuleBase::ComplexMatrix vaux(GlobalV::NSPIN, npw);
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        rho_basis->real2recip(&veff(is, 0), &vaux(is, 0));
+    }
+
+    for (int it = 0; it < cell.ntype; it++)
+    {
+        Atom_pseudo* upf = &cell.atoms[it].ncpp;
+        if (upf->tvanp)
+        {
+            // nij = max number of (ih,jh) pairs per atom type
+            int nij = upf->nh * (upf->nh + 1) / 2;
+            ModuleBase::ComplexMatrix qg(nij, npw);
+
+            // Compute and store Q(G) for this atomic species
+            // (without structure factor)
+            int ijh = 0;
+            for (int ih = 0; ih < upf->nh; ih++)
+            {
+                for (int jh = ih; jh < upf->nh; jh++)
+                {
+                    radial_fft_q(npw, ih, jh, it, qnorm, ylmk0, &qg(ijh, 0));
+                    ijh++;
+                }
+            }
+
+            // Compute and store V(G) times the structure factor e^(-iG*tau)
+            const int natom = cell.atoms[it].na;
+            ModuleBase::ComplexMatrix aux(natom, npw);
+            ModuleBase::matrix deeaux(natom, nij);
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                for (int ia = 0; ia < natom; ia++)
+                {
+                    const ModuleBase::Vector3<double> tau = cell.atoms[it].tau[ia];
+                    for (int ig = 0; ig < npw; ig++)
+                    {
+                        const ModuleBase::Vector3<double> g = rho_basis->gcar[ig];
+                        const std::complex<double> phase = ci_tpi * (g * tau);
+                        aux(ia, ig) = vaux(is, ig) * exp(phase);
+                    }
+                }
+                // here we compute the integral Q*V for all atoms of this kind
+                const char transa = 'C', transb = 'N';
+                const double zero = 0.0;
+                const int complex_npw = 2 * npw;
+                double* qg_ptr = reinterpret_cast<double*>(qg.c);
+                double* aux_ptr = reinterpret_cast<double*>(aux.c);
+
+                dgemm_(&transa,
+                       &transb,
+                       &nij,
+                       &natom,
+                       &complex_npw,
+                       &fact,
+                       qg_ptr,
+                       &complex_npw,
+                       aux_ptr,
+                       &complex_npw,
+                       &zero,
+                       deeaux.c,
+                       &nij);
+                // I'm not sure if this is correct for gamma_only
+                if (rho_basis->gamma_only && rho_basis->ig_gge0 >= 0)
+                {
+                    const double neg = -1.0;
+                    dger_(&nij, &natom, &neg, qg_ptr, &complex_npw, aux_ptr, &complex_npw, deeaux.c, &nij);
+                }
+
+                for (int ia = 0; ia < natom; ia++)
+                {
+                    int ijh = 0;
+                    const int iat = cell.itia2iat(it, ia);
+                    for (int ih = 0; ih < upf->nh; ih++)
+                    {
+                        for (int jh = ih; jh < upf->nh; jh++)
+                        {
+                            deeq(is, iat, ih, jh) = cell.omega * deeaux(ia, ijh);
+                            if (jh > ih)
+                            {
+                                deeq(is, iat, jh, ih) = deeq(is, iat, ih, jh);
+                            }
+                            ijh++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, deeq.ptr, deeq.getSize(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
+    delete[] qnorm;
 }
 
 template <>

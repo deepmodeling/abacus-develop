@@ -7,6 +7,7 @@
 #include "module_base/intarray.h"
 #include "module_base/realarray.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/soc.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
 #ifdef __LCAO
@@ -136,8 +137,14 @@ public:
                       const ModuleBase::matrix ylm,
                       std::complex<double>* qg);
 
-    // calculate the effective coefficient matrix for non-local pseudopotential projectors
-    void cal_effective_D();
+    /**
+     * @brief calculate the effective coefficient matrix for non-local pseudopotential projectors
+     *
+     * @param veff effective potential
+     * @param rho_basis potential FFT grids
+     * @param cell UnitCell
+     */
+    void cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
 #ifdef __LCAO
     ORB_gaunt_table MGT;
 #endif
@@ -167,6 +174,8 @@ public:
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
     Structure_Factor* psf = nullptr;
 
+    Soc soc;
+
     /**
      * @brief Compute interpolation table qrad
      *
@@ -177,6 +186,15 @@ public:
      * @param cell UnitCell
      */
     void compute_qrad(UnitCell& cell);
+
+    /**
+     * @brief computes the integral of the effective potential with the Q function
+     *
+     * @param veff effective potential
+     * @param rho_basis potential FFT grids
+     * @param cell UnitCell
+     */
+    void newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
 };
 
 #endif // VNL_IN_PW

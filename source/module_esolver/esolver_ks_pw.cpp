@@ -150,8 +150,6 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-    GlobalC::ppcell.cal_effective_D();
-
     if (!GlobalV::psi_initializer)
     {
         //==================================================
@@ -370,11 +368,18 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     //=========================================================
     this->pelec->init_scf(istep, this->sf.strucFac);
     // Symmetry_rho should behind init_scf, because charge should be initialized first.
+    // liuyu comment: Symmetry_rho should be located between init_rho and v_of_rho?
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
     }
+
+    // liuyu move here 2023-10-09
+    // D in uspp need vloc, thus behind init_scf()
+    // calculate the effective coefficient matrix for non-local pseudopotential projectors
+    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+    GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
     /*
         after init_rho (in pelec->init_scf), we have rho now.
         before hamilt2density, we update Hk and initialize psi
