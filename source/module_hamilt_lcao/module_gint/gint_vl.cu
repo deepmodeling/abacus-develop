@@ -45,7 +45,7 @@ __global__ void get_psi_and_vldr3(double *dr_all,
                         int *it_all,
                         int *psir_ylm_start,
                         int *num_psir,
-                        int psi_size_up,
+                        int psi_size_max,
                         int *ucell_atom_nwl,
                         bool *atom_iw2_new,
                         int *atom_iw2_ylm,
@@ -54,7 +54,6 @@ __global__ void get_psi_and_vldr3(double *dr_all,
                         double *psi_u,
                         double *dpsi_u,
                         double *psir_ylm,
-                        //int bxyz_up,
                         double *vlocal,
                         int *vindex_local,
                         double *vldr3)
@@ -62,7 +61,7 @@ __global__ void get_psi_and_vldr3(double *dr_all,
     int size = num_psir[blockIdx.x];
     {
         {
-            int start_index = psi_size_up * blockIdx.x;
+            int start_index = psi_size_max * blockIdx.x;
             int end_index = start_index + size;
             start_index += threadIdx.x;
             for (int index = start_index; index < end_index; index += blockDim.x)
@@ -323,7 +322,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                        const Grid_Technique &GridT)
 {
     // printf("\n**************START GPU SEG***************\n");
-
+#ifdef __DEBUG
     cudaEvent_t t1, t2, t3, t4;
     cudaEventCreate(&t1);
     cudaEventCreate(&t2);
@@ -331,6 +330,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     cudaEventCreate(&t4);
 
     cudaEventRecord(t1);
+#endif
 
     const Numerical_Orbital_Lm *pointer;
     // const double delta_r = GlobalC::ORB.dr_uniform;
@@ -351,10 +351,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
         }
     }
 
-    int *atom_nw_now;
-    int *ucell_atom_nwl_now;
-    atom_nw_now = new int[ntype];
-    ucell_atom_nwl_now = new int[ntype];
+    int *atom_nw_now = new int[ntype];
+    int *ucell_atom_nwl_now = new int[ntype];
     for (int i = 0; i < ntype; i++)
     {
         atom_nw_now[i] = GlobalC::ucell.atoms[i].nw;
@@ -375,7 +373,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
         {
             if (j < atomx->nw)
             {
-
                 atom_iw2_new_now[i * nwmax + j] = atomx->iw2_new[j];
                 atom_iw2_ylm_now[i * nwmax + j] = atomx->iw2_ylm[j];
                 pointer = &GlobalC::ORB.Phi[i].PhiLN(atomx->iw2l[j], atomx->iw2n[j]);
@@ -395,7 +392,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             }
             else
             {
-
                 atom_iw2_new_now[i * nwmax + j] = false;
                 atom_iw2_ylm_now[i * nwmax + j] = 0;
                 for (int k = 0; k < nr_max; k++)
@@ -404,16 +400,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                     dpsi_u_now[i * nwmax * nr_max + j * nr_max + k] = 0;
                 }
             }
-        }
-    }
-
-    size_t size_itiaiw2iwt = ntype * namax;
-    int *itiaiw2iwt_now = new int[size_itiaiw2iwt];
-    for (int i = 0; i < ntype; i++)
-    {
-        for (int j = 0; j < namax; j++)
-        {
-            itiaiw2iwt_now[i * namax + j] = GlobalC::ucell.itiaiw2iwt(i, j, 0);
         }
     }
 
@@ -431,33 +417,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     cudaMemcpyToSymbol(vfactor_g, &vfactor, sizeof(double));
 
     // read only
-
-    int *how_many_atoms_g;
-    cudaMalloc((void **)&how_many_atoms_g, nbx * nby * nbz * sizeof(int));
-    cudaMemcpy(how_many_atoms_g, GridT.how_many_atoms, nbx * nby * nbz * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *bcell_start_g;
-    cudaMalloc((void **)&bcell_start_g, nbx * nby * nbz * sizeof(int));
-    cudaMemcpy(bcell_start_g, GridT.bcell_start, nbx * nby * nbz * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *which_bigcell;
-    cudaMalloc((void **)&which_bigcell, GridT.total_atoms_on_grid * sizeof(int));
-    cudaMemcpy(which_bigcell, GridT.which_bigcell, GridT.total_atoms_on_grid * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *which_atom_g;
-    cudaMalloc((void **)&which_atom_g, GridT.total_atoms_on_grid * sizeof(int));
-    cudaMemcpy(which_atom_g, GridT.which_atom, GridT.total_atoms_on_grid * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *iat2it_g;
-    size_t size_iat2it = GlobalC::ucell.nat;
-    cudaMalloc((void **)&iat2it_g, size_iat2it * sizeof(int));
-    cudaMemcpy(iat2it_g, GlobalC::ucell.iat2it, size_iat2it * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *iat2ia_g;
-    size_t size_iat2ia = GlobalC::ucell.nat;
-    cudaMalloc((void **)&iat2ia_g, size_iat2ia * sizeof(int));
-    cudaMemcpy(iat2ia_g, GlobalC::ucell.iat2ia, size_iat2ia * sizeof(int), cudaMemcpyHostToDevice);
-
     double *vlocal_cu;
     cudaMalloc((void **)&vlocal_cu, ncx * ncy * nczp * sizeof(double));
     cudaMemcpy(vlocal_cu, vlocal, ncx * ncy * nczp * sizeof(double), cudaMemcpyHostToDevice);
@@ -484,19 +443,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     cudaMemcpy(atom_iw2_new, atom_iw2_new_now, ntype * nwmax * sizeof(bool), cudaMemcpyHostToDevice);
     cudaMemcpy(atom_iw2_ylm, atom_iw2_ylm_now, ntype * nwmax * sizeof(int), cudaMemcpyHostToDevice);
 
-    int *trace_lo_g;
-    size_t size_trace_lo = NLOCAL_now;
-    cudaMalloc((void **)&trace_lo_g, size_trace_lo * sizeof(int));
-    cudaMemcpy(trace_lo_g, GridT.trace_lo, size_trace_lo * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *itiaiw2iwt_g;
-    cudaMalloc((void **)&itiaiw2iwt_g, size_itiaiw2iwt * sizeof(int));
-    cudaMemcpy(itiaiw2iwt_g, itiaiw2iwt_now, size_itiaiw2iwt * sizeof(int), cudaMemcpyHostToDevice);
-
-    int *start_ind_g;
-    cudaMalloc((void **)&start_ind_g, nbxx * sizeof(int));
-    cudaMemcpy(start_ind_g, start_ind, nbxx * sizeof(int), cudaMemcpyHostToDevice);
-
     double *vldr3;
     cudaMalloc((void **)&vldr3, nbz * bxyz * sizeof(double));
     cudaMemset(vldr3, 0, nbz * bxyz * sizeof(double));
@@ -504,7 +450,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     double *psir_ylm;
     cudaMalloc((void **)&psir_ylm, nbz * max_size * bxyz * nwmax * sizeof(double));
     cudaMemset(psir_ylm, 0, nbz * max_size * bxyz * nwmax * sizeof(double));
-
 
     double *GridVlocal_now = new double[lgd * lgd];
 
@@ -545,24 +490,24 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     int *num_atom_pair_g;
     cudaMalloc((void **)&num_atom_pair_g, nbz * sizeof(int));
 
-    int psi_size = max_size * bxyz;
-    int psi_size_up = ((psi_size + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
-    double *dr = new double[psi_size_up * nbz * 4]; // [ x,y,z,distance]
-    int *it = new int[psi_size_up * nbz];
-    int *psir_ylm_start = new int[psi_size_up * nbz];
+    int psi_size_max = max_size * bxyz;
+    //int psi_size_up = psi_size_max;//((psi_size_max + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
+    double *dr = new double[psi_size_max * nbz * 4]; // [ x,y,z,distance]
+    int *it = new int[psi_size_max * nbz];
+    int *psir_ylm_start = new int[psi_size_max * nbz];
     int *num_psir = new int[nbz];
-    //int bxyz_up = ((bxyz + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
+
     int *vindex = new int[nbz * bxyz];
     // begin kernel
     
     double *dr_g; // [ x,y,z,distance]
-    cudaMalloc((void **)&dr_g, psi_size_up * nbz * 4 * sizeof(double));
+    cudaMalloc((void **)&dr_g, psi_size_max * nbz * 4 * sizeof(double));
 
     int *it_g;
-    cudaMalloc((void **)&it_g, psi_size_up * nbz * sizeof(int));
+    cudaMalloc((void **)&it_g, psi_size_max * nbz * sizeof(int));
 
     int *psir_ylm_start_g;
-    cudaMalloc((void **)&psir_ylm_start_g, psi_size_up * nbz * sizeof(int));
+    cudaMalloc((void **)&psir_ylm_start_g, psi_size_max * nbz * sizeof(int));
 
     int *num_psir_g;
     cudaMalloc((void **)&num_psir_g, nbz * sizeof(int));
@@ -570,17 +515,20 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     int *vindex_g;
     cudaMalloc((void **)&vindex_g, nbz * bxyz * sizeof(int));
 
+#ifdef __DEBUG
+
     cudaEventRecord(t2);
 
     // printf("maxsize=%d\n", max_size);
     float copy_per_calc = 0;
     float calc_psi = 0;
     float calc_multiple = 0;
-
+#endif
     for (int i = 0; i < nbx; i++)
     {
         for (int j = 0; j < nby; j++)
         {
+#ifdef __DEBUG
             cudaEvent_t t1_5, t1_6, t1_7, t1_8;
             cudaEventCreate(&t1_5);
             cudaEventCreate(&t1_6);
@@ -588,7 +536,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             cudaEventCreate(&t1_8);
 
             cudaEventRecord(t1_5);
-
+#endif
             int num_psi_pos = 0;
             for (int z_index = 0; z_index < nbz; z_index++)
             {
@@ -626,7 +574,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                     }
                 }
                 num_psir[z_index] = num_get_psi;
-                num_psi_pos += psi_size_up;
+                num_psi_pos += psi_size_max;
 
                 int vindex_temp = z_index * bxyz;
                 for (int bx_index = 0; bx_index < bx; bx_index++)
@@ -641,10 +589,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                         }
                     }
                 }
-                /*for (; vindex_temp < (z_index + 1) * bxyz_up;vindex_temp++)
-                {
-                    vindex[vindex_temp] = -1; 
-                }*/
 
                 int atom_pair_index_in_nbz = atom_pair_size_of_meshcell * z_index;
                 int atom_pair_index_in_meshcell = 0;
@@ -673,9 +617,9 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 }
                 num_atom_pair[z_index] = atom_pair_index_in_meshcell;
             }
-            cudaMemcpy(dr_g, dr, psi_size_up * nbz * 4 * sizeof(double), cudaMemcpyHostToDevice);
-            cudaMemcpy(it_g, it, psi_size_up * nbz * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemcpy(psir_ylm_start_g, psir_ylm_start, psi_size_up * nbz * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(dr_g, dr, psi_size_max * nbz * 4 * sizeof(double), cudaMemcpyHostToDevice);
+            cudaMemcpy(it_g, it, psi_size_max * nbz * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(psir_ylm_start_g, psir_ylm_start, psi_size_max * nbz * sizeof(int), cudaMemcpyHostToDevice);
             cudaMemcpy(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice);
             cudaMemcpy(vindex_g, vindex, nbz * bxyz * sizeof(int), cudaMemcpyHostToDevice);
             cudaMemset(psir_ylm, 0, nbz * max_size * bxyz * nwmax * sizeof(double));
@@ -689,15 +633,17 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             cudaMemcpy(atom_pair_nw1_g, atom_pair_nw1, atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice);
             cudaMemcpy(atom_pair_nw2_g, atom_pair_nw2, atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice);
             cudaMemcpy(num_atom_pair_g, num_atom_pair, nbz * sizeof(int), cudaMemcpyHostToDevice);
+#ifdef __DEBUG
             cudaEventRecord(t1_6);
             cudaDeviceSynchronize();
+#endif
             dim3 grid1(nbz);
             dim3 block1(ALIGN_SIZE);
             get_psi_and_vldr3<<<grid1, block1>>>(dr_g,
                                        it_g,
                                        psir_ylm_start_g,
                                        num_psir_g,
-                                       psi_size_up,
+                                       psi_size_max,
                                        ucell_atom_nwl,
                                        atom_iw2_new,
                                        atom_iw2_ylm,
@@ -706,14 +652,15 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                        psi_u,
                                        dpsi_u,
                                        psir_ylm,
-                                       //bxyz_up,
                                        vlocal_cu,
                                        vindex_g,
                                        vldr3);
+#ifdef __DEBUG
             cudaDeviceSynchronize();
             cudaEventRecord(t1_7);
             cudaDeviceSynchronize();
-            dim3 grid4(nbz, 128);
+#endif
+            dim3 grid4(nbz, 256);
             dim3 block4(nwmax, nwmax);
             psi_multiple<<<grid4, block4>>>(atom_pair_index1_g,
                                             atom_pair_index2_g,
@@ -723,19 +670,13 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                             atom_pair_nw2_g,
                                             num_atom_pair_g,
                                             i * nby * nbz + j * nbz,
-                                            //how_many_atoms_g,
-                                            //bcell_start_g,
-                                            //which_atom_g,
-                                            //iat2it_g,
-                                            //iat2ia_g,
-                                            //itiaiw2iwt_g,
-                                            //trace_lo_g,
-                                            //atom_nw_g,
                                             psir_ylm,
                                             atom_pair_size_of_meshcell,
                                             vldr3,
                                             GridVlocal,
                                             lgd);
+
+#ifdef __DEBUG
             cudaDeviceSynchronize();
             cudaEventRecord(t1_8);
             float copy_per_calc_temp = 0;
@@ -749,6 +690,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             copy_per_calc += copy_per_calc_temp;
             calc_psi += calc_psi_temp;
             calc_multiple += calc_multiple_temp;
+#endif
 
         } // j
     }     // i
@@ -779,29 +721,23 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             }
         }
     }
+#ifdef __DEBUG
 
     // printf("GridVlocal_now[0]: %lf\n", GridVlocal_now[0]);
     cudaEventRecord(t3);
+#endif
+
     // free
     cudaFree(vldr3);
     cudaFree(psir_ylm);
+    cudaFree(atom_nw_g);
 
-    cudaFree(how_many_atoms_g);
-    cudaFree(bcell_start_g);
-    cudaFree(which_bigcell);
-    cudaFree(which_atom_g);
-    cudaFree(iat2it_g);
-    cudaFree(iat2ia_g);
     cudaFree(vlocal_cu);
     cudaFree(ucell_atom_nwl);
     cudaFree(psi_u);
     cudaFree(dpsi_u);
     cudaFree(atom_iw2_new);
     cudaFree(atom_iw2_ylm);
-    cudaFree(atom_nw_g);
-    cudaFree(trace_lo_g);
-    cudaFree(itiaiw2iwt_g);
-    cudaFree(start_ind_g);
     cudaFree(GridVlocal);
 
     cudaFree(atom_pair_index1_g);
@@ -834,13 +770,14 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
 
     delete[] GridVlocal_now;
     delete[] atom_nw_now;
-    delete[] itiaiw2iwt_now;
+    //delete[] itiaiw2iwt_now;
     delete[] ucell_atom_nwl_now;
     delete[] psi_u_now;
     delete[] dpsi_u_now;
     delete[] atom_iw2_new_now;
     delete[] atom_iw2_ylm_now;
 
+#ifdef __DEBUG
     cudaEventRecord(t4);
     float copy = 0;
     float calc = 0;
@@ -851,4 +788,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
 
     printf("copy time = %f\ncal time = %f\nfree time = %f\n", copy, calc, free);
     printf("copy_per calc time = %f\ncal psi time = %f\nmultiple time = %f\n", copy_per_calc, calc_psi, calc_multiple);
+#endif
+
 }
