@@ -89,7 +89,11 @@ extern "C"
     // solve the eigenproblem Ax=ex, where A is Symmetric and real double
 	void dsyev_(const char* jobz,const char* uplo,const int* n,double *a,
                 const int* lda,double* w,double* work,const int* lwork, int* info);
-    
+
+    // liuyu add 2023-10-03
+    // dgetri and dgetrf computes the inverse of a n*n real matrix
+    void dgetri_(const int* n, double* a, const int* lda, const int* ipiv, double* work, const int* lwork, int* info);
+    void dgetrf_(const int* m, const int* n, double* a, const int* lda, int* ipiv, int* info);
 
     // dsytrf_ computes the Bunch-Kaufman factorization of a double precision
     // symmetric matrix, while dsytri takes its output to perform martrix inversion
