@@ -64,7 +64,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         switch (act_type)
         {
         case 2:
-            op->act(*psi_input, *this->hpsi);
+            op->act(*psi_input, *this->hpsi, nbands);
             break;
         default:
             op->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, this->hpsi->get_pointer(), psi_input->get_ngk(op->ik));
