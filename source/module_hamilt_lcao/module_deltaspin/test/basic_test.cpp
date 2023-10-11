@@ -8,7 +8,18 @@
 
 /**
  * - Tested Functions:
- *  - maxval_abs_2d()
+ *  - maxval_abs_2d(): return the maximum absolute value of an array of Vector3
+ *  - maxloc_abs_2d(): return the location of the maximum absolute value of an array of Vector3
+ *  - sum_2d(): return the sum of an array of Vector3
+ *  - scalar_multiply_2d(): multiply an array of Vector3 by a scalar
+ *  - add_scalar_multiply_2d(): add an array of Vector3 to another array of Vector3 multiplied by a scalar
+ *      result[i] = array_1[i] + scalar * array_2[i];
+ *  - subtract_2d(): subtract an array of Vector3 from another array of Vector3
+ *      result[i] = array_1[i] - array_2[i];
+ *  - fill_scalar_2d(): fill an array of Vector3 with a scalar
+ *  - where_fill_scalar_2d(): fill an array of Vector3 with a scalar if the corresponding element is equal to mask
+ *  - where_fill_scalar_else_2d(): fill an array of Vector3 with a scalar if the corresponding element is equal to mask, other places are filled with another array of Vector3 "rest"
+ * - print_2d(): print an array of Vector3
  */
 
 class BasicFuncsTest : public testing::Test
