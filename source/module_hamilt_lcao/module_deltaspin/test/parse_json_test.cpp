@@ -82,6 +82,9 @@ TEST_F(SpinConstrainTest, ScDataFormat1)
 				EXPECT_DOUBLE_EQ(sc_data.target_mag[0],1.0);
 				EXPECT_DOUBLE_EQ(sc_data.target_mag[1],2.0);
 				EXPECT_DOUBLE_EQ(sc_data.target_mag[2],3.0);
+				EXPECT_EQ(sc_data.constrain[0], 0);
+				EXPECT_EQ(sc_data.constrain[1], 0);
+				EXPECT_EQ(sc_data.constrain[2], 1);
 			}
         }
 	}
@@ -107,9 +110,18 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
 				EXPECT_DOUBLE_EQ(sc_data.target_mag_val,1.5);
 				EXPECT_DOUBLE_EQ(sc_data.target_mag_angle1,60.0);
 				EXPECT_DOUBLE_EQ(sc_data.target_mag_angle2,90.0);
-			}
+            }
         }
 	}
+}
+
+TEST_F(SpinConstrainTest, ScDataWarning)
+{
+	sc.clear_ScData();
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(sc.Set_ScData_From_Json("./support/sc_f3.json"), ::testing::ExitedWithCode(0), "");
+	std::string output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("Error opening sc_file"));
 }
 
 TEST_F(SpinConstrainTest, SetScLambdaAndMag)

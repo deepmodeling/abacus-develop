@@ -25,7 +25,6 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::ifstream file(filename);
     if (!file.is_open()) {
         ModuleBase::WARNING_QUIT("SpinConstrain::parseScJsonFile","Error opening sc_file");
-        return;
     }
 
     std::string line;
