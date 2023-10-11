@@ -68,7 +68,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
             print_2d("initial lambda: ", initial_lambda);
             print_2d("initial spin: ", spin);
-            print_2d("target spin: ", this->sc_mag_);
+            print_2d("target spin: ", this->target_mag_);
         }
         else
         {
@@ -137,7 +137,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             spin = new_spin;
         }
         // continue the lambda loop
-        subtract_2d(spin, this->sc_mag_, delta_spin);
+        subtract_2d(spin, this->target_mag_, delta_spin);
         where_fill_scalar_2d(this->constrain_, 0, zero, delta_spin);
         search = delta_spin;
         for (int ia = 0; ia < nat; ia++)
@@ -190,7 +190,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         if (debug)
         {
             print_2d("(Debug) before-trial-step spin:", spin);
-            print_2d("(Debug) target spin:", this->sc_mag_);
+            print_2d("(Debug) target spin:", this->target_mag_);
         }
 
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
@@ -198,7 +198,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 
         spin_plus = this->Mi_;
 
-        where_fill_scalar_else_2d(this->constrain_, 0, zero, this->sc_mag_, target_spin_mask);
+        where_fill_scalar_else_2d(this->constrain_, 0, zero, this->target_mag_, target_spin_mask);
         where_fill_scalar_else_2d(this->constrain_, 0, zero, spin, spin_mask);
         where_fill_scalar_else_2d(this->constrain_, 0, zero, spin_plus, spin_plus_mask);
 
@@ -256,7 +256,7 @@ CG_STOP:
     if (debug)
     {
         print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
-        print_2d("target spin: ", this->sc_mag_);
+        print_2d("target spin: ", this->target_mag_);
     }
     print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
     std::cout << "Inner optimization for lambda ends." << std::endl;

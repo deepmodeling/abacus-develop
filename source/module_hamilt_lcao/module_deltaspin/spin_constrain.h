@@ -103,24 +103,18 @@ public:
     void set_sc_lambda();
     /// set sc_lambda from variable
     void set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in);
-    /// set init_mag
-    void set_init_mag();
-    /// set init_mag from variable
-    void set_init_mag(const ModuleBase::Vector3<double>* init_mag_in, int nat_in);
-    /// set sc_mag
-    void set_sc_mag();
-    /// set sc_mag from variable
-    void set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in);
+    /// set target_mag
+    void set_target_mag();
+    /// set target_mag from variable
+    void set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in);
     /// set constrain
     void set_constrain();
     /// set constrain from variable
     void set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
-    /// get init_mag
-    const std::vector<ModuleBase::Vector3<double>>& get_init_mag() const;
-    /// get sc_mag
-    const std::vector<ModuleBase::Vector3<double>>& get_sc_mag() const;
+    /// get target_mag
+    const std::vector<ModuleBase::Vector3<double>>& get_target_mag() const;
     /// get constrain
     const std::vector<ModuleBase::Vector3<int>>& get_constrain() const;
     /// get nat
@@ -159,7 +153,7 @@ private:
     int nspin_ = 0;
     int npol_ = 1;
     std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
-    std::vector<ModuleBase::Vector3<double>> sc_mag_; // in unit of uB
+    std::vector<ModuleBase::Vector3<double>> target_mag_; // in unit of uB
     std::vector<ModuleBase::Vector3<double>> Mi_; // in unit of uB
     double escon_ = 0.0;
     /**
@@ -183,12 +177,11 @@ private:
 struct ScAtomData {
     int index;
     std::vector<double> lambda;
-    std::vector<double> init_mag;
-    std::vector<double> sc_mag;
+    std::vector<double> target_mag;
     std::vector<int> constrain;
-    double sc_spin_val;
-    double sc_spin_angle1;
-    double sc_spin_angle2;
+    double target_mag_val;
+    double target_mag_angle1;
+    double target_mag_angle2;
 };
 
 #endif // SPIN_CONSTRAIN_H

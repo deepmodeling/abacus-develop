@@ -221,49 +221,28 @@ void SpinConstrain<FPTYPE, Device>::set_sc_lambda()
     }
 }
 
-// set init_mag from ScData
+// set target_mag from ScData
 template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_init_mag()
+void SpinConstrain<FPTYPE, Device>::set_target_mag()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
-    this->init_mag_.resize(nat);
-    for (auto& itype_data : this->ScData) {
-        int itype = itype_data.first;
-        for (auto& element_data : itype_data.second) {
-            int index = element_data.index;
-            int iat = this->get_iat(itype, index);
-            ModuleBase::Vector3<double> init_mag;
-            init_mag.x = element_data.init_mag[0];
-            init_mag.y = element_data.init_mag[1];
-            init_mag.z = element_data.init_mag[2];
-            this->init_mag_[iat] = init_mag;
-        }
-    }
-}
-
-// set sc_mag from ScData
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_sc_mag()
-{
-    this->check_atomCounts();
-    int nat = this->get_nat();
-    this->sc_mag_.resize(nat);
+    this->target_mag_.resize(nat);
     for (auto& itype_data : this->ScData) {
         int itype = itype_data.first;
         for (auto& element_data : itype_data.second) {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
             ModuleBase::Vector3<double> mag;
-            mag.x = element_data.sc_mag[0];
-            mag.y = element_data.sc_mag[1];
-            mag.z = element_data.sc_mag[2];
-            this->sc_mag_[iat] = mag;
+            mag.x = element_data.target_mag[0];
+            mag.y = element_data.target_mag[1];
+            mag.z = element_data.target_mag[2];
+            this->target_mag_[iat] = mag;
         }
     }
 }
 
-// set sc_mag from ScData
+// set constrain from ScData
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_constrain()
 {
@@ -301,37 +280,20 @@ void SpinConstrain<FPTYPE, Device>::set_sc_lambda(const ModuleBase::Vector3<doub
     }
 }
 
-// set init_mag from variable
+// set target_mag from variable
 template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_init_mag(const ModuleBase::Vector3<double>* init_mag_in, int nat_in)
+void SpinConstrain<FPTYPE, Device>::set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in)
 {
     this->check_atomCounts();
     int nat = this->get_nat();
     if (nat_in != nat)
     {
-        ModuleBase::WARNING_QUIT("SpinConstrain::set_init_mag","init_mag_in size mismatch with nat");
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_target_mag","target_mag_in size mismatch with nat");
     }
-    this->init_mag_.resize(nat);
+    this->target_mag_.resize(nat);
     for (int iat=0; iat < nat; ++iat)
     {
-        this->init_mag_[iat] = init_mag_in[iat];
-    }
-}
-
-// set sc_mag from variable
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_sc_mag(const ModuleBase::Vector3<double>* sc_mag_in, int nat_in)
-{
-    this->check_atomCounts();
-    int nat = this->get_nat();
-    if (nat_in != nat)
-    {
-        ModuleBase::WARNING_QUIT("SpinConstrain::set_sc_mag","sc_mag_in size mismatch with nat");
-    }
-    this->sc_mag_.resize(nat);
-    for (int iat=0; iat < nat; ++iat)
-    {
-        this->sc_mag_[iat] = sc_mag_in[iat];
+        this->target_mag_[iat] = target_mag_in[iat];
     }
 }
 
@@ -358,17 +320,10 @@ const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::g
     return this->lambda_;
 }
 
-/// get init_mag
 template<typename FPTYPE, typename Device>
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_init_mag() const
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_target_mag() const
 {
-    return this->init_mag_;
-}
-
-template<typename FPTYPE, typename Device>
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<FPTYPE, Device>::get_sc_mag() const
-{
-    return this->sc_mag_;
+    return this->target_mag_;
 }
 
 /// get_constrain

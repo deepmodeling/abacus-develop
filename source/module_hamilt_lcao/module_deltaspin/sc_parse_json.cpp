@@ -36,11 +36,10 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex index_regex("\"index\": (\\d+)");
     std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
-    std::regex init_mag_regex("\"init_mag\": \\[(.+?)\\]");
-    std::regex sc_mag_regex("\"sc_mag\": \\[(.+?)\\]");
-    std::regex sc_spin_val_regex("\"sc_spin_val\": ([0-9.]+)");
-    std::regex sc_spin_angle1_regex("\"sc_spin_angle1\": ([0-9.]+)");
-    std::regex sc_spin_angle2_regex("\"sc_spin_angle2\": ([0-9.]+)");
+    std::regex target_mag_regex("\"target_mag\": \\[(.+?)\\]");
+    std::regex target_mag_val_regex("\"target_mag_val\": ([0-9.]+)");
+    std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([0-9.]+)");
+    std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([0-9.]+)");
     std::regex constrain_regex("\"constrain\": \\[(.+?)\\]");
 
     while (getline(file, line)) {
@@ -69,39 +68,26 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
 
             getline(file, line); // Read the following line
 
-            if (std::regex_search(line, match, init_mag_regex)) {
+            if (std::regex_search(line, match, target_mag_regex)) {
                 std::stringstream ss(match[1]);
                 double value;
                 while (ss >> value) {
-                    element_data.init_mag.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
-                }
-            }
-
-            getline(file, line); // Read the following line
-
-            if (std::regex_search(line, match, sc_mag_regex)) {
-                std::stringstream ss(match[1]);
-                double value;
-                while (ss >> value) {
-                    element_data.sc_mag.push_back(value);
+                    element_data.target_mag.push_back(value);
                     if (ss.peek() == ',') {
                         ss.ignore();
                     }
                 }
             } else {
-                if (std::regex_search(line, match, sc_spin_val_regex)) {
-                    element_data.sc_spin_val = std::stod(match[1]);
+                if (std::regex_search(line, match, target_mag_val_regex)) {
+                    element_data.target_mag_val = std::stod(match[1]);
                 }
                 getline(file, line); // Read the following line
-                if (std::regex_search(line, match, sc_spin_angle1_regex)) {
-                    element_data.sc_spin_angle1 = std::stod(match[1]);
+                if (std::regex_search(line, match, target_mag_angle1_regex)) {
+                    element_data.target_mag_angle1 = std::stod(match[1]);
                 }
                 getline(file, line); // Read the following line
-                if (std::regex_search(line, match, sc_spin_angle2_regex)) {
-                    element_data.sc_spin_angle2 = std::stod(match[1]);
+                if (std::regex_search(line, match, target_mag_angle2_regex)) {
+                    element_data.target_mag_angle2 = std::stod(match[1]);
                 }
             }
 
