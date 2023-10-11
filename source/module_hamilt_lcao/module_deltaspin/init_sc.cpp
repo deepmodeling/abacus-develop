@@ -87,7 +87,6 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
         Parallel_Common::bcast_int(constrain[iat].x);
         Parallel_Common::bcast_int(constrain[iat].y);
         Parallel_Common::bcast_int(constrain[iat].z);
-        std::cout << sc_lambda[iat].x << " " << sc_lambda[iat].y << " " << sc_lambda[iat].z << std::endl;
     }
     if(GlobalV::MY_RANK != 0)
     {

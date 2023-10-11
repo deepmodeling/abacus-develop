@@ -50,7 +50,6 @@ TEST_F(BasicFuncsTest, Sum2dIntArray)
     arrayInt.push_back(ModuleBase::Vector3<int>(7, 8, 9));
     int sum = sum_2d(arrayInt);
     double sum2 = sum_2d(arrayInt);
-    std::cout << sum2 << std::endl;
     EXPECT_EQ(sum, 45);
     EXPECT_DOUBLE_EQ(sum2, 45.0);
 }
