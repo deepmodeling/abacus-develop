@@ -30,26 +30,29 @@ class pseudo
       int mesh;            // number of point in the radial mesh
       int nchi;            // nwfc,number of wavefunctions
       int nbeta;           // number of projectors
-      std::string* els;    // els[nchi]
-      int* lchi;           // lchi[nchi]
-      double* oc;          // oc[nchi]
+      int nqlc;            // number of angular momenta in Q
+      int kkbeta;          // kkbeta, point where the beta are zero
 
-      double* jjj;  // total angual momentum, jjj[nbeta]
-      double* jchi; // jchi(nwfc), added by zhengdy-soc
-      int* nn;
+      std::string* els = nullptr; // els[nchi]
+      int* lchi = nullptr;        // lchi[nchi]
+      double* oc = nullptr;       // oc[nchi]
+
+      double* jjj = nullptr;  // total angual momentum, jjj[nbeta]
+      double* jchi = nullptr; // jchi(nwfc), added by zhengdy-soc
+      int* nn = nullptr;
 
       // Local pseudopotentials
-      double* vloc_at; // [mesh], local potential( = pseudopot_upf.vloc )
+      double* vloc_at = nullptr; // [mesh], local potential( = pseudopot_upf.vloc )
 
       // <PP_MESH>
-      double* r;   // radial logaritmic mesh, r[0:mesh-1]
-      double* rab; // derivative of the radial mesh, rab[0:mesh-1]
+      double* r = nullptr;   // radial logaritmic mesh, r[0:mesh-1]
+      double* rab = nullptr; // derivative of the radial mesh, rab[0:mesh-1]
 
       //<PP_NLCC>
-      double* rho_atc; // radial core charge density, rho_atc[0:mesh-1]
+      double* rho_atc = nullptr; // radial core charge density, rho_atc[0:mesh-1]
 
       //<PP_RHOATOM>
-      double* rho_at; // radial atomic charge density, rho_at[0:mesh-1]
+      double* rho_at = nullptr; // radial atomic charge density, rho_at[0:mesh-1]
 
       // <PP_PSWFC>
       ModuleBase::matrix chi; // radial atomic orbitals, chi(nchi, mesh)
@@ -59,8 +62,7 @@ class pseudo
       double rcut; // cut-off radius
 
       // <PP_BETA>
-      int* lll;   // lll(nbeta), angular momentum of the beta function
-      int kkbeta; // kkbeta(nbeta), point where the beta are zero
+      int* lll = nullptr; // lll(nbeta), angular momentum of the beta function
 
       // <PP_DIJ>
       ModuleBase::matrix dion;  // dion(nbeta,nbeta)
@@ -68,6 +70,10 @@ class pseudo
 
       // other
       int nh; // number of beta functions per atomic type
+
+      // uspp
+      ModuleBase::realArray qfuncl; // qfuncl(2*lmax+1,nbeta*(nbeta+1)/2,mesh) Q_{mu,nu}(|r|) function for |r|> r_L
+      ModuleBase::matrix qqq;       // qqq(nbeta,nbeta) q_{mu,nu}
 
       void set_pseudo_h(const Pseudopot_upf& upf);
       void set_pseudo_atom(const Pseudopot_upf& upf);

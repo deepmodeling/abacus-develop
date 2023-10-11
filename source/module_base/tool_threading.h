@@ -1,10 +1,11 @@
 #ifndef TOOL_THREADING_H 
 #define TOOL_THREADING_H 
 
-#include <functional>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include <functional>
 
 namespace ModuleBase
 {

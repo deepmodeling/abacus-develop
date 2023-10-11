@@ -6,6 +6,10 @@
 #ifndef WRITE_WFC_R_H
 #define WRITE_WFC_R_H
 
+#ifdef __MPI
+#include "mpi.h"
+#endif
+
 #include <complex>
 #include <string>
 #include <vector>
@@ -15,10 +19,6 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_psi/psi.h"
-
-#ifdef __MPI
-#include "mpi.h"
-#endif
 
 namespace ModuleIO
 {

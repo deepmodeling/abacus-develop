@@ -381,6 +381,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
                 {
                     nhat[0][ind_c] = nhat_tmp[ind_fortran];
                 }
+#endif
             }
 #endif
         }
@@ -520,8 +521,6 @@ void Paw_Cell::init_rho(double ** rho)
     // need to check for nspin = 2 later
     // Fortran is column major, and rhor is of dimension (nfft, nspden)
     // so presumably should be this way
-    double sum1,sum2;
-    sum1 = sum2 = 0.0;
     for(int ix = 0; ix < nx; ix ++)
     {
         for(int iy = 0; iy < ny; iy ++)
@@ -535,9 +534,6 @@ void Paw_Cell::init_rho(double ** rho)
                 {
                     rho[0][ind_c] = rho_tmp[ind_fortran+nfft];
                     rho[1][ind_c] = rho_tmp[ind_fortran] - rho_tmp[ind_fortran+nfft];
-
-                    sum1 += rho[0][ind_c];
-                    sum2 += rho[1][ind_c];
                 }
                 else
                 {
@@ -547,7 +543,6 @@ void Paw_Cell::init_rho(double ** rho)
         }
     }
 
-    std::cout << "sum : " << sum1 << " " << sum2 << std::endl;
 #else
     for(int ix = 0; ix < nx; ix ++)
     {

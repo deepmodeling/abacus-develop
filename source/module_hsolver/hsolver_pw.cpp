@@ -1,15 +1,15 @@
 #include "hsolver_pw.h"
 
-#include "diago_cg.h"
-#include "diago_bpcg.h"
-#include "diago_david.h"
-#include "diago_iter_assist.h"
-#include "module_base/tool_quit.h"
-#include "module_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_elecstate/elecstate_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include <algorithm>
+
+#include "diago_bpcg.h"
+#include "diago_cg.h"
+#include "diago_david.h"
+#include "module_base/timer.h"
+#include "module_base/tool_quit.h"
+#include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef USE_PAW

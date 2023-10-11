@@ -1,9 +1,11 @@
 #include "esolver_ks_pw.h"
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/binstream.h"
+
 namespace ModuleESolver
 {
 

@@ -1,6 +1,8 @@
 #include "math_bspline.h"
-#include <cstdlib>
+
 #include <assert.h>
+
+#include <cstdlib>
 
 namespace ModuleBase
 {

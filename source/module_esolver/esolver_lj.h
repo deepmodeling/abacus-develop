@@ -1,7 +1,7 @@
 #ifndef ESOLVER_LJ_H
 #define ESOLVER_LJ_H
 
-#include "./esolver.h"
+#include "esolver.h"
 
 namespace ModuleESolver
 {
