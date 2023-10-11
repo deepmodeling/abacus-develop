@@ -381,7 +381,6 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
                 {
                     nhat[0][ind_c] = nhat_tmp[ind_fortran];
                 }
-#endif
             }
 #endif
         }
@@ -575,8 +574,9 @@ void Paw_Cell::set_dij()
     {
         const int it = atom_type[iat];
         const int nproj = paw_element_list[it].get_mstates();
-        const int size_dij = nproj * (nproj+1) / 2 * nspden;
-        double* dij_libpaw = new double[size_dij];
+        const int size_dij = nproj * (nproj+1) / 2;
+
+        double* dij_libpaw = new double[size_dij * nspden];
         double** dij;
         dij = new double*[nspden];
         for(int is = 0; is < nspden; is ++)
@@ -587,7 +587,7 @@ void Paw_Cell::set_dij()
         get_dij(iat,size_dij,dij_libpaw);
 
 #ifdef __MPI
-        Parallel_Common::bcast_double(dij_libpaw,size_dij);
+        Parallel_Common::bcast_double(dij_libpaw,size_dij*nspden);
 #endif
 
         for(int is = 0; is < nspden; is ++)

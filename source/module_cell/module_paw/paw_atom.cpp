@@ -7,11 +7,13 @@ void Paw_Atom::init_paw_atom(const int nproj_in)
     nproj = nproj_in;
 
     ca.resize(nproj);
+
     rhoij.resize(GlobalV::NSPIN);
     for(int is = 0; is < GlobalV::NSPIN; is ++)
     {
         rhoij[is].resize(nproj*(nproj + 1) / 2);
     }
+
     rhoijp.resize(GlobalV::NSPIN * nproj*(nproj + 1) / 2);
     rhoijselect.resize(nproj*(nproj + 1) / 2);
 
@@ -40,15 +42,20 @@ void Paw_Atom::set_ca(std::vector<std::complex<double>> & ca_in, const double we
 void Paw_Atom::reset_rhoij()
 {
     nrhoijsel = 0;
+
     for(int i = 0; i < nproj*(nproj+1)/2; i ++)
     {
         for(int is = 0; is < GlobalV::NSPIN; is ++)
         {
             rhoij[is][i] = 0.0;
         }
-        rhoijp[i] = 0.0;
         rhoijselect[i] = -1;
     }    
+
+    for(int i = 0; i < GlobalV::NSPIN * nproj*(nproj + 1) / 2; i ++)
+    {
+        rhoijp[i] = 0.0;
+    }
 }
 
 void Paw_Atom::accumulate_rhoij(const int current_spin)
