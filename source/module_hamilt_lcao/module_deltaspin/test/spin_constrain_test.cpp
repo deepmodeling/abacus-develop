@@ -81,19 +81,25 @@ TEST_F(SpinConstrainTest, OrbitalCounts)
 	EXPECT_EQ(sc.get_iwt(1,1,2), 32); // npol = 2
 }
 
-TEST_F(SpinConstrainTest, SetScLambdaAndMag)
+TEST_F(SpinConstrainTest, SetScLambdaMagConstrain)
 {
 	sc.clear_ScData();
 	sc.Set_ScData_From_Json("./support/sc_f1.json");
 	std::map<int, int> atomCounts = {{0,5},{1,10}};
 	sc.clear_atomCounts();
 	sc.set_atomCounts(atomCounts);
+	int nat = sc.get_nat();
 	sc.set_sc_lambda();
 	sc.set_target_mag();
-	std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
-	std::vector<ModuleBase::Vector3<double>> target_mag = sc.get_target_mag();
-	EXPECT_EQ(sc_lambda.size(), sc.get_nat());
-	for (const auto& sc_elem : sc.get_ScData())
+    sc.set_constrain();
+    std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
+    std::vector<ModuleBase::Vector3<double>> target_mag = sc.get_target_mag();
+	std::vector<ModuleBase::Vector3<int>> constrain = sc.get_constrain();
+    sc.set_sc_lambda(sc_lambda.data(), nat);
+	sc.set_target_mag(target_mag.data(), nat);
+	sc.set_constrain(constrain.data(), nat);
+    EXPECT_EQ(sc_lambda.size(), sc.get_nat());
+    for (const auto& sc_elem : sc.get_ScData())
 	{
 		int itype = sc_elem.first;
         const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
@@ -106,6 +112,9 @@ TEST_F(SpinConstrainTest, SetScLambdaAndMag)
 			EXPECT_DOUBLE_EQ(sc_data.target_mag[0],target_mag[iat].x);
 			EXPECT_DOUBLE_EQ(sc_data.target_mag[1],target_mag[iat].y);
 			EXPECT_DOUBLE_EQ(sc_data.target_mag[2],target_mag[iat].z);
+			EXPECT_EQ(sc_data.constrain[0],constrain[iat].x);
+			EXPECT_EQ(sc_data.constrain[1],constrain[iat].y);
+			EXPECT_EQ(sc_data.constrain[2],constrain[iat].z);
 		}
 	}
 	for (int iat = 0; iat < sc.get_nat(); iat++)
@@ -120,4 +129,27 @@ TEST_F(SpinConstrainTest, SetScLambdaAndMag)
 			EXPECT_DOUBLE_EQ(target_mag[iat].z,0.0);
 		}
 	}
+}
+
+TEST_F(SpinConstrainTest, CalEscon)
+{
+    sc.zero_Mi();
+	sc.clear_ScData();
+	sc.Set_ScData_From_Json("./support/sc_f1.json");
+	std::map<int, int> atomCounts = {{0,5},{1,10}};
+	sc.clear_atomCounts();
+	sc.set_atomCounts(atomCounts);
+	int nat = sc.get_nat();
+	sc.set_sc_lambda();
+	double escon = sc.cal_escon();
+    double escon1 = sc.get_escon();
+	EXPECT_DOUBLE_EQ(escon, escon1);
+    EXPECT_DOUBLE_EQ(escon1, 0.0);
+}
+
+TEST_F(SpinConstrainTest, NSPIN)
+{
+    sc.set_nspin(4);
+	int nspin = sc.get_nspin();
+	EXPECT_EQ(nspin, 4);
 }

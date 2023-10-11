@@ -21,6 +21,12 @@ double SpinConstrain<FPTYPE, Device>::cal_escon()
     return this->escon_;
 }
 
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::get_escon()
+{
+    return this->escon_;
+}
+
 // set atomCounts
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_atomCounts(const std::map<int, int>& atomCounts_in) {
@@ -331,6 +337,21 @@ template<typename FPTYPE, typename Device>
 const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<FPTYPE, Device>::get_constrain() const
 {
     return this->constrain_;
+}
+
+/// zero atomic magnetic moment
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::zero_Mi()
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    this->Mi_.resize(nat);
+    for (int iat=0; iat < nat; ++iat)
+    {
+        this->Mi_[iat].x = 0.0;
+        this->Mi_[iat].y = 0.0;
+        this->Mi_[iat].z = 0.0;
+    }
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

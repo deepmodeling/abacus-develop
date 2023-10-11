@@ -58,6 +58,8 @@ public:
 
     double cal_escon();
 
+    double get_escon();
+
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 
     void run_lambda_loop(int outer_step);
@@ -141,6 +143,8 @@ public:
     void set_nspin(int nspin);
     /// get nspin
     int get_nspin();
+    /// zero atomic magnetic moment
+    void zero_Mi();
 
 private:
     SpinConstrain(){};                               // Private constructor

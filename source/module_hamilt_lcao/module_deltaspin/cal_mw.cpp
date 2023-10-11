@@ -22,13 +22,7 @@ void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step, LCAO_Matrix& LM, con
     size_t nw = this->get_nw();
     int nat = this->get_nat();
 
-    this->Mi_.resize(nat);
-    for (int iat=0; iat < nat; ++iat)
-    {
-        this->Mi_[iat].x = 0.0;
-        this->Mi_[iat].y = 0.0;
-        this->Mi_[iat].z = 0.0;
-    }
+    this->zero_Mi();
     
     const int nlocal = nw / 2;
     for (size_t i = 0; i != ucell.nat; ++i)
