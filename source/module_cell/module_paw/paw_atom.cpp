@@ -13,7 +13,7 @@ void Paw_Atom::init_paw_atom(const int nproj_in)
         rhoij[is].resize(nproj*(nproj + 1) / 2);
     }
     rhoijp.resize(GlobalV::NSPIN * nproj*(nproj + 1) / 2);
-    rhoijselect.resize(GlobalV::NSPIN * nproj*(nproj + 1) / 2);
+    rhoijselect.resize(nproj*(nproj + 1) / 2);
 
     dij.resize(GlobalV::NSPIN);
     for(int is = 0; is < GlobalV::NSPIN; is ++)

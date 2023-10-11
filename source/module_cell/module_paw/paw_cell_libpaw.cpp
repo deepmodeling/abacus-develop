@@ -330,37 +330,59 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
     double* nhat_tmp;
     nhat_tmp = new double[nfft*nspden];
 
+#ifdef __MPI
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
+                ucvol,nhat_tmp,nhatgr); 
+    }
+    Parallel_Common::bcast_double(nhat_tmp,nfft*nspden);
+#else
     get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
             ucvol,nhat_tmp,nhatgr);
-
-    for(int is = 0; is < nspden; is ++)
-    {
-        // I'm not sure about this yet !!!
-        // need to check for nspin = 2 later
-        // Fortran is column major, and rhor is of dimension (nfft, nspden)
-        // so presumably should be this way m
-        for(int ix = 0; ix < nx; ix ++)
-        {
-            for(int iy = 0; iy < ny; iy ++)
-            {
-#ifdef __MPI
-                for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
-                {
-                    int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
-                    int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
-
-                    nhat[is][ind_c] = nhat_tmp[ind_fortran+is*nfft];
-                }
-#else
-                for(int iz = 0; iz < nz; iz ++)
-                {
-                    int ind_c = ix*ny*nz + iy*nz + iz;
-                    int ind_fortran = iz*ny*nx + iy*nx + ix;
-
-                    nhat[is][ind_c] = nhat_tmp[ind_fortran+is*nfft];
-                }
 #endif
+
+    // I'm not sure about this yet !!!
+    // need to check for nspin = 2 later
+    // Fortran is column major, and rhor is of dimension (nfft, nspden)
+    // so presumably should be this way m
+    for(int ix = 0; ix < nx; ix ++)
+    {
+        for(int iy = 0; iy < ny; iy ++)
+        {
+#ifdef __MPI
+            for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
+            {
+                int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
+                int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
+
+                if(nspden == 2)
+                {
+                    nhat[0][ind_c] = nhat_tmp[ind_fortran+nfft];
+                    nhat[1][ind_c] = nhat_tmp[ind_fortran] - nhat_tmp[ind_fortran+nfft];
+                }
+                else
+                {
+                    nhat[0][ind_c] = nhat_tmp[ind_fortran];
+                }
             }
+#else
+            for(int iz = 0; iz < nz; iz ++)
+            {
+                int ind_c = ix*ny*nz + iy*nz + iz;
+                int ind_fortran = iz*ny*nx + iy*nx + ix;
+
+                if(nspden == 2)
+                {
+                    nhat[0][ind_c] = nhat_tmp[ind_fortran+nfft];
+                    nhat[1][ind_c] = nhat_tmp[ind_fortran] - nhat_tmp[ind_fortran+nfft];
+                }
+                else
+                {
+                    nhat[0][ind_c] = nhat_tmp[ind_fortran];
+                }
+            }
+#endif
         }
     }
     delete[] nhat_tmp;
@@ -494,36 +516,58 @@ void Paw_Cell::init_rho(double ** rho)
             gmet.data(), ucvol, xred.data(), rho_tmp);
 
 #ifdef __MPI
-    for(int is = 0; is < nspden; is ++)
+    // I'm not sure about this yet !!!
+    // need to check for nspin = 2 later
+    // Fortran is column major, and rhor is of dimension (nfft, nspden)
+    // so presumably should be this way
+    double sum1,sum2;
+    sum1 = sum2 = 0.0;
+    for(int ix = 0; ix < nx; ix ++)
     {
-        // I'm not sure about this yet !!!
-        // need to check for nspin = 2 later
-        // Fortran is column major, and rhor is of dimension (nfft, nspden)
-        // so presumably should be this way m
-        for(int ix = 0; ix < nx; ix ++)
+        for(int iy = 0; iy < ny; iy ++)
         {
-            for(int iy = 0; iy < ny; iy ++)
+            for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
             {
-                for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
-                {
-                    int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
-                    int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
+                int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
+                int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
 
-                    rho[is][ind_c] = rho_tmp[ind_fortran*nspden+is];
+                if(nspden == 2)
+                {
+                    rho[0][ind_c] = rho_tmp[ind_fortran+nfft];
+                    rho[1][ind_c] = rho_tmp[ind_fortran] - rho_tmp[ind_fortran+nfft];
+
+                    sum1 += rho[0][ind_c];
+                    sum2 += rho[1][ind_c];
+                }
+                else
+                {
+                    rho[0][ind_c] = rho_tmp[ind_fortran];
                 }
             }
         }
     }
+
+    std::cout << "sum : " << sum1 << " " << sum2 << std::endl;
 #else
-    for(int ir = 0; ir < nfft; ir ++)
+    for(int ix = 0; ix < nx; ix ++)
     {
-        for(int is = 0; is < nspden; is ++)
+        for(int iy = 0; iy < ny; iy ++)
         {
-            // I'm not sure about this yet !!!
-            // need to check for nspin = 2 later
-            // Fortran is column major, and rhor is of dimension (nfft, nspden)
-            // so presumably should be this way m
-            rho[is][ir] = rho_tmp[ir*nspden+is];
+            for(int iz = 0; iz < nz; iz ++)
+            {
+                int ind_c = ix*ny*nz + iy*nz + iz;
+                int ind_fortran = iz*ny*nx + iy*nx + ix;
+
+                if(nspden == 2)
+                {
+                    rho[0][ind_c] = rho_tmp[ind_fortran+nfft];
+                    rho[1][ind_c] = rho_tmp[ind_fortran] - rho_tmp[ind_fortran+nfft];
+                }
+                else
+                {
+                    rho[0][ind_c] = rho_tmp[ind_fortran];
+                }
+            }
         }
     }
 #endif
