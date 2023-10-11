@@ -8,9 +8,13 @@
  ***********************************************/
 
 /**
- * 
- * 
- * 
+ * - Tested functions:
+ *  - SpinConstrain::clear_ScData()
+ *     clear the map from element index to ScAtomData
+ *  - SpinConstrain::Set_ScData_From_Json()
+ *     set the map from element index to ScAtomData from json file
+ *  - SpinConstrain::get_ScData()
+ *     get the map from element index to ScAtomData
  */
 
 K_Vectors::K_Vectors(){}
@@ -21,40 +25,6 @@ class SpinConstrainTest : public testing::Test
   protected:
   	SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
 };
-
-TEST_F(SpinConstrainTest, AtomCounts)
-{
-	std::map<int, int> atomCounts = {{0,5},{1,10}};
-	sc.clear_atomCounts();
-	sc.set_atomCounts(atomCounts);
-	std::map<int, int> atomCounts2 = sc.get_atomCounts();
-	int ntype = atomCounts2.size();
-	EXPECT_EQ(ntype, 2);
-    int nat = sc.get_nat();
-	EXPECT_EQ(nat, 15);
-}
-
-TEST_F(SpinConstrainTest, OrbitalCounts)
-{
-	std::map<int, int> orbitalCounts = {{0,5},{1,10}};
-	std::map<int, int> atomCounts = {{0,1},{1,2}};
-	sc.clear_atomCounts();
-	sc.clear_orbitalCounts();
-	sc.set_atomCounts(atomCounts);
-	sc.set_orbitalCounts(orbitalCounts);
-	std::map<int, int> orbitalCounts2 = sc.get_orbitalCounts();
-	int ntype = orbitalCounts2.size();
-	EXPECT_EQ(ntype, 2);
-	EXPECT_EQ(sc.get_nw(), 25);
-	sc.set_npol(2);
-	EXPECT_EQ(sc.get_npol(),2);
-	EXPECT_EQ(sc.get_nw(), 50); // npol = 2
-	sc.set_npol(1);
-	EXPECT_EQ(sc.get_npol(),1);
-	EXPECT_EQ(sc.get_iwt(1,1,2), 17);
-	sc.set_npol(2);
-	EXPECT_EQ(sc.get_iwt(1,1,2), 32); // npol = 2
-}
 
 TEST_F(SpinConstrainTest, ScDataFormat1)
 {
@@ -122,45 +92,4 @@ TEST_F(SpinConstrainTest, ScDataWarning)
 	EXPECT_EXIT(sc.Set_ScData_From_Json("./support/sc_f3.json"), ::testing::ExitedWithCode(0), "");
 	std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Error opening sc_file"));
-}
-
-TEST_F(SpinConstrainTest, SetScLambdaAndMag)
-{
-	sc.clear_ScData();
-	sc.Set_ScData_From_Json("./support/sc_f1.json");
-	std::map<int, int> atomCounts = {{0,5},{1,10}};
-	sc.clear_atomCounts();
-	sc.set_atomCounts(atomCounts);
-	sc.set_sc_lambda();
-	sc.set_target_mag();
-	std::vector<ModuleBase::Vector3<double>> sc_lambda = sc.get_sc_lambda();
-	std::vector<ModuleBase::Vector3<double>> target_mag = sc.get_target_mag();
-	EXPECT_EQ(sc_lambda.size(), sc.get_nat());
-	for (const auto& sc_elem : sc.get_ScData())
-	{
-		int itype = sc_elem.first;
-        const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
-        for (const ScAtomData& sc_data : sc_atoms) {
-			int index = sc_data.index;
-			int iat = sc.get_iat(itype, index);
-			EXPECT_DOUBLE_EQ(sc_data.lambda[0]*sc.meV_to_Ry,sc_lambda[iat].x);
-			EXPECT_DOUBLE_EQ(sc_data.lambda[1]*sc.meV_to_Ry,sc_lambda[iat].y);
-			EXPECT_DOUBLE_EQ(sc_data.lambda[2]*sc.meV_to_Ry,sc_lambda[iat].z);
-			EXPECT_DOUBLE_EQ(sc_data.target_mag[0],target_mag[iat].x);
-			EXPECT_DOUBLE_EQ(sc_data.target_mag[1],target_mag[iat].y);
-			EXPECT_DOUBLE_EQ(sc_data.target_mag[2],target_mag[iat].z);
-		}
-	}
-	for (int iat = 0; iat < sc.get_nat(); iat++)
-	{
-		if (! (iat == 1 || iat ==5 || iat ==9))
-		{
-			EXPECT_DOUBLE_EQ(sc_lambda[iat].x,0.0);
-			EXPECT_DOUBLE_EQ(sc_lambda[iat].y,0.0);
-			EXPECT_DOUBLE_EQ(sc_lambda[iat].z,0.0);
-			EXPECT_DOUBLE_EQ(target_mag[iat].x,0.0);
-			EXPECT_DOUBLE_EQ(target_mag[iat].y,0.0);
-			EXPECT_DOUBLE_EQ(target_mag[iat].z,0.0);
-		}
-	}
 }
