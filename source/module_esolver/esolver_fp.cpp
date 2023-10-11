@@ -40,35 +40,40 @@ namespace ModuleESolver
         }
 
 #ifdef __MPI
-            this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+        this->pw_rhos->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
-        if (this->classname == "ESolver_OF") this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
-        // Initalize the plane wave basis set
-        if (inp.nx * inp.ny * inp.nz == 0)
-            this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ecutrho);
-	    else
-            this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
-        
-        this->pw_rho->initparameters(false, inp.ecutrho);
-        this->pw_rho->setuptransform();
-        this->pw_rho->collect_local_pw(); 
-        this->pw_rho->collect_uniqgg();
+        if (this->classname == "ESolver_OF")
+            this->pw_rhos->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
+        if (inp.nsx * inp.nsy * inp.nsz == 0)
+            this->pw_rhos->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, 4.0 * inp.ecutwfc);
+        else
+            this->pw_rhos->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nsx, inp.nsy, inp.nsz);
+        this->pw_rhos->initparameters(false, 4.0 * inp.ecutwfc);
+        this->pw_rhos->setuptransform();
+        this->pw_rhos->collect_local_pw();
+        this->pw_rhos->collect_uniqgg();
 
-        if (GlobalV::use_uspp)
+        if (GlobalV::double_grid)
         {
 #ifdef __MPI
-            this->pw_rhos->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+            this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
             if (this->classname == "ESolver_OF")
-                this->pw_rhos->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
-            if (inp.nsx * inp.nsy * inp.nsz == 0)
-                this->pw_rhos->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, 4.0 * inp.ecutwfc);
+                this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
+            // Initalize the plane wave basis set
+            if (inp.nx * inp.ny * inp.nz == 0)
+                this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ecutrho);
             else
-                this->pw_rhos->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nsx, inp.nsy, inp.nsz);
-            this->pw_rhos->initparameters(false, 4.0 * inp.ecutwfc);
-            this->pw_rhos->setuptransform();
-            this->pw_rhos->collect_local_pw();
-            this->pw_rhos->collect_uniqgg();
+                this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
+
+            this->pw_rho->initparameters(false, inp.ecutrho);
+            this->pw_rho->setuptransform();
+            this->pw_rho->collect_local_pw();
+            this->pw_rho->collect_uniqgg();
+        }
+        else
+        {
+            this->pw_rho = this->pw_rhos;
         }
 
         this->print_rhofft(inp, GlobalV::ofs_running);
@@ -119,7 +124,7 @@ namespace ModuleESolver
                   << std::endl;
         std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
                   << std::endl;
-        if (GlobalV::use_uspp)
+        if (GlobalV::double_grid)
             std::cout << " UNIFORM GRID DIM(SMOOTH): " << pw_rhos->nx << " * " << pw_rhos->ny << " * " << pw_rhos->nz
                       << std::endl;
 
@@ -169,7 +174,7 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::OUT(ofs,"max |g|", this->pw_rho->gg_uniq[ this->pw_rho->ngg-1]);
 	    ModuleBase::GlobalFunc::OUT(ofs,"min |g|", this->pw_rho->gg_uniq[0]);
 
-        if (GlobalV::use_uspp)
+        if (GlobalV::double_grid)
         {
             ecut = 4 * INPUT.ecutwfc;
             if (inp.nsx * inp.nsy * inp.nsz > 0)

@@ -166,6 +166,9 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
     GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
 
+    // interpolate potential on the smooth mesh if necessary
+    this->pelec->pot->interpolate_vrs(this->pw_rho, this->pw_rhos);
+
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
     // Calculate electron numbers

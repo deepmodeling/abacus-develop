@@ -20,7 +20,7 @@ namespace elecstate
  *     d. it should be called after Charge is initialized;
  *     e. it can only be called once in one SCF loop
  * 3. Func pot_register() and components
- *     a. need vector<string> for choose target potentials 
+ *     a. need vector<string> for choose target potentials
  *     b. "local", PotLocal introduces local pseudopotential part of potentials;
  *     c. "hartree", PotHartree introduces Coulombic interaction of electrons part of potentials;
  *     d. "xc", PotXC introduces exchange-correlation including meta-gga part of potentials;
@@ -34,13 +34,15 @@ namespace elecstate
  *     a. in principle, it should be added to components, but it related to real time(istep)
  *     b. it should be called after update_from_charge() as a compensation;
  * 6. Func get_vnew()
- *     a. this function is designed for a special demand: 
- *         1. update etxc and vtxc when SCF converged and 
+ *     a. this function is designed for a special demand:
+ *         1. update etxc and vtxc when SCF converged and
  *         2. use the final delta_V_eff for calculating force correction
  * 7. Func write_potential()
  * 8. Func write_elecstat_pot()
  * 9. interfaces for v_effective_fixed/v_effective/vofk_effective
-*/
+ * 10. Func interpolate_vrs()
+ *    a. interpolate v_effective on the smooth mesh
+ */
 class Potential : public PotBase
 {
   public:
@@ -63,6 +65,8 @@ class Potential : public PotBase
     void update_from_charge(const Charge* chg, const UnitCell* ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
+    // interpolate potential on the smooth mesh if necessary
+    void interpolate_vrs(const ModulePW::PW_Basis* rho_basis_in, const ModulePW::PW_Basis* rho_basis_out);
 
     PotBase* get_pot_type(const std::string& pot_type);
 

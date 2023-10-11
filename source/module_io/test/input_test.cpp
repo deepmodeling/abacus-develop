@@ -754,9 +754,15 @@ TEST_F(InputTest, Default_2)
     EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
     EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
     INPUT.nbndsto_str = "all";
+    INPUT.nx = INPUT.ny = INPUT.nz = 4;
+    INPUT.nsx = INPUT.nsy = INPUT.nsz = 0;
     // the 1st calling
     INPUT.Default_2();
     // ^^^^^^^^^^^^^^
+    EXPECT_EQ(INPUT.nsx, 4);
+    EXPECT_EQ(INPUT.nsy, 4);
+    EXPECT_EQ(INPUT.nsz, 4);
+    EXPECT_FALSE(GlobalV::double_grid);
     EXPECT_DOUBLE_EQ(INPUT.ecutrho, 80.0);
     EXPECT_EQ(INPUT.vdw_s6, "0.75");
     EXPECT_EQ(INPUT.vdw_cutoff_radius, "56.6918");
@@ -803,9 +809,15 @@ TEST_F(InputTest, Default_2)
 	INPUT.scf_thr_type = -1;
     INPUT.nbndsto_str = "0";
     INPUT.esolver_type = "sdft";
+    INPUT.nx = INPUT.ny = INPUT.nz = 0;
+    INPUT.nsx = INPUT.nsy = INPUT.nsz = 4;
     // the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
+    EXPECT_EQ(INPUT.nx, 4);
+    EXPECT_EQ(INPUT.ny, 4);
+    EXPECT_EQ(INPUT.nz, 4);
+    EXPECT_FALSE(GlobalV::double_grid);
     EXPECT_EQ(INPUT.chg_extrap, "first-order");
     EXPECT_EQ(INPUT.vdw_s6, "1.0");
     EXPECT_EQ(INPUT.vdw_s8, "0.722");
@@ -845,9 +857,12 @@ TEST_F(InputTest, Default_2)
 	INPUT.ks_solver = "cg";
 	GlobalV::NPROC = 8;
 	INPUT.diago_proc = 1;
-	// the 3rd calling
-	INPUT.Default_2();
-	// ^^^^^^^^^^^^^^
+    INPUT.nx = INPUT.ny = INPUT.nz = 6;
+    INPUT.nsx = INPUT.nsy = INPUT.nsz = 4;
+    // the 3rd calling
+    INPUT.Default_2();
+    // ^^^^^^^^^^^^^^
+    EXPECT_TRUE(GlobalV::double_grid);
     EXPECT_EQ(INPUT.chg_extrap, "atomic");
     EXPECT_EQ(INPUT.vdw_s6, "1.0");
     EXPECT_EQ(INPUT.vdw_s8, "0.7875");
@@ -866,10 +881,16 @@ TEST_F(InputTest, Default_2)
 	INPUT.calculation = "get_pchg";
     INPUT.chg_extrap = "default";
     INPUT.symmetry = "default";
-	// the 4th calling
-	INPUT.Default_2();
-	// ^^^^^^^^^^^^^^
-	EXPECT_EQ(GlobalV::CALCULATION,"get_pchg");
+    INPUT.ecutwfc = 10;
+    INPUT.ecutrho = 100;
+    INPUT.nx = INPUT.ny = INPUT.nz = 0;
+    INPUT.nsx = INPUT.nsy = INPUT.nsz = 0;
+    GlobalV::double_grid = false;
+    // the 4th calling
+    INPUT.Default_2();
+    // ^^^^^^^^^^^^^^
+    EXPECT_TRUE(GlobalV::double_grid);
+    EXPECT_EQ(GlobalV::CALCULATION, "get_pchg");
     EXPECT_EQ(INPUT.relax_nmax, 1);
     EXPECT_EQ(INPUT.out_stru, 0);
     EXPECT_EQ(INPUT.symmetry, "0");
@@ -983,12 +1004,14 @@ TEST_F(InputTest, Check)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("ecutrho must > ecutwfc"));
-    INPUT.ecutrho = 30;
+    EXPECT_THAT(output, testing::HasSubstr("ecutrho/ecutwfc must >= 4"));
+
+    INPUT.nx = INPUT.ny = INPUT.nz = 8;
+    INPUT.nsx = INPUT.nsy = INPUT.nsz = 10;
     testing::internal::CaptureStdout();
     INPUT.Check();
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("ecutrho < 4*ecutwfc, not recommended"));
+    EXPECT_THAT(output, testing::HasSubstr("smooth grids is denser than dense grids"));
     //
     INPUT.nbands = -1;
     testing::internal::CaptureStdout();

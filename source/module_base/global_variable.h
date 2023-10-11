@@ -60,6 +60,7 @@ extern bool relax_new;
 
 extern bool use_paw;
 extern bool use_uspp;
+extern bool double_grid;
 
 extern bool fixed_atoms;
 

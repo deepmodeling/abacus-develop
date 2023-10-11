@@ -690,13 +690,19 @@ These variables are used to control the plane wave related parameters.
 ### nx, ny, nz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. 
+
+    Note: You must specify all three dimensions for this setting to be used.
 - **Default**: 0
 
 ### nsx, nsy, nsz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the smooth part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the smooth part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. 
+
+    Note: You must specify all three dimensions for this setting to be used.
+
+    Note: These parameters must be used combined with [nx,ny,nz](#nx-ny-nz). If [nx,ny,nz](#nx-ny-nz) are unset, nsx,nsy,nsz are used as [nx,ny,nz](#nx-ny-nz).
 - **Default**: 0
 
 ### pw_seed

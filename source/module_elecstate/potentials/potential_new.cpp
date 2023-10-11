@@ -270,6 +270,49 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
     return;
 }
 
+void Potential::interpolate_vrs(const ModulePW::PW_Basis* rho_basis_in, const ModulePW::PW_Basis* rho_basis_out)
+{
+    ModuleBase::TITLE("Potential", "interpolate_vrs");
+    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+
+    if (GlobalV::double_grid)
+    {
+        if (rho_basis_in->gamma_only != rho_basis_out->gamma_only)
+        {
+            ModuleBase::WARNING_QUIT("Potential::interpolate_vrs", "gamma_only is not consistent");
+        }
+
+        ModuleBase::ComplexMatrix vrs_in(GlobalV::NSPIN, rho_basis_in->npw);
+        ModuleBase::ComplexMatrix vrs_out(GlobalV::NSPIN, rho_basis_out->npw);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            rho_basis_in->real2recip(&v_effective(is, 0), &vrs_in(is, 0));
+        }
+
+        for (int in = 0; in < rho_basis_in->npw; in++)
+        {
+            for (int out = 0; out < rho_basis_out->npw; out++)
+            {
+                if (rho_basis_in->gcar[in] == rho_basis_out->gcar[out])
+                {
+                    for (int is = 0; is < GlobalV::NSPIN; is++)
+                    {
+                        vrs_out(is, out) = vrs_in(is, in);
+                    }
+                }
+            }
+        }
+
+        this->v_effective.create(GlobalV::NSPIN, rho_basis_out->nrxx);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            rho_basis_out->recip2real(&vrs_out(is, 0), &v_effective(is, 0));
+        }
+    }
+
+    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+}
+
 template <>
 float * Potential::get_v_effective_data()
 {

@@ -58,6 +58,12 @@ pseudo::~pseudo() {}
 
 pseudopot_cell_vnl::pseudopot_cell_vnl() {}
 pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
+Soc::~Soc()
+{
+}
+Fcoef::~Fcoef()
+{
+}
 pseudopot_cell_vl::pseudopot_cell_vl() {}
 pseudopot_cell_vl::~pseudopot_cell_vl() {}
 Magnetism::Magnetism() {}

@@ -2529,9 +2529,30 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (nx * ny * nz && nsx * nsy * nsz == 0)
+    {
+        nsx = nx;
+        nsy = ny;
+        nsz = nz;
+    }
+    if (nsx * nsy * nsz && nx * ny * nz == 0)
+    {
+        nx = nsx;
+        ny = nsy;
+        nz = nsz;
+    }
+    if (nsx < nx || nsy < ny || nsz < nz)
+    {
+        GlobalV::double_grid = true;
+    }
+
     if (ecutrho <= 0.0)
     {
         ecutrho = 4.0 * ecutwfc;
+    }
+    if (nx * ny * nz == 0 && ecutrho / ecutwfc > 4 + 1e-8)
+    {
+        GlobalV::double_grid = true;
     }
 
     if (esolver_type == "sdft"&&psi_initializer)
@@ -3346,13 +3367,14 @@ void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
 
-    if (ecutrho <= ecutwfc)
+    if (ecutrho / ecutwfc < 4 - 1e-8)
     {
-        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+        ModuleBase::WARNING_QUIT("Input", "ecutrho/ecutwfc must >= 4");
     }
-    else if (ecutrho / ecutwfc < 4 - 1e-8)
+
+    if (nsx > nx || nsy > ny || nsz > nz)
     {
-        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+        ModuleBase::WARNING_QUIT("Input", "smooth grids is denser than dense grids");
     }
 
     if (nbands < 0)

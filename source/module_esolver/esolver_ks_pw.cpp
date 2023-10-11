@@ -380,6 +380,9 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
     GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
+
+    // interpolate potential on the smooth mesh if necessary
+    this->pelec->pot->interpolate_vrs(this->pw_rho, this->pw_rhos);
     /*
         after init_rho (in pelec->init_scf), we have rho now.
         before hamilt2density, we update Hk and initialize psi
