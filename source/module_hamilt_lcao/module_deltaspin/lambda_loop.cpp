@@ -167,8 +167,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         if(i_step>=1)
         {
             beta = mean_error / mean_error_old;
-            temp_1 = search;
-            add_scalar_multiply_2d(temp_1, search_old, beta, search);
+            add_scalar_multiply_2d(search, search_old, beta, search);
         }
 
         boundary = std::abs(alpha_trial * maxval_abs_2d(search));
@@ -183,8 +182,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         }
 
         dnu_last_step = dnu;
-        temp_1 = dnu;
-        add_scalar_multiply_2d(temp_1, search, alpha_trial, dnu);
+        add_scalar_multiply_2d(dnu, search, alpha_trial, dnu);
         delta_lambda = dnu;
 
         if (debug)
@@ -230,9 +228,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
 
         alpha_plus = alpha_opt - alpha_trial;
         scalar_multiply_2d(search, alpha_plus, temp_1);
-
-        temp_2 = dnu;
-        add_scalar_multiply_2d(temp_2, temp_1, one, dnu);
+        add_scalar_multiply_2d(dnu, temp_1, one, dnu);
         delta_lambda = dnu;
 
         search_old = search;
