@@ -61,7 +61,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     }
 
     auto call_act = [&, this](const Operator* op) -> void {
-        switch (act_type)
+        switch (op->get_act_type())
         {
         case 2:
             op->act(*psi_input, *this->hpsi, nbands);

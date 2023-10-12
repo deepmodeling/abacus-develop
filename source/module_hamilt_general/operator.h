@@ -72,6 +72,7 @@ class Operator
 
     Operator* next_op = nullptr;
 
+    virtual int get_act_type() const { return this->act_type; }
 protected:
     int ik = 0;
     int act_type = 1;   ///< determine which act() interface would be called in hPsi()
