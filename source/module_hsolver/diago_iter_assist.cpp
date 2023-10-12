@@ -250,6 +250,20 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     // do hPsi for all bands
     psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
     hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
+    if(pHamilt->ops == nullptr)
+    {
+        ModuleBase::WARNING("DiagoIterAssist::diagH_subspace_init",
+         "Severe warning: Operators in Hamilt are not allocated yet, will return value of psi to evc directly\n");
+        for(int iband = 0; iband < evc.get_nbands(); iband++)
+        {
+            for(int ig = 0; ig < evc.get_nbasis(); ig++)
+            {
+                evc(iband, ig) = psi[iband * evc.get_nbasis() + ig];
+            }
+            en[iband] = 0.0;
+        }
+        return;
+    }
     pHamilt->ops->hPsi(hpsi_in);
 
     gemm_op<Real, Device>()(
