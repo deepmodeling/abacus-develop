@@ -12,7 +12,8 @@
 
 class Force_LCAO_gamma
 {
-  public:
+public:
+    template <typename T>
     friend class Force_Stress_LCAO;
 
     Force_LCAO_gamma();

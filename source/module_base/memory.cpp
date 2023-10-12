@@ -235,7 +235,7 @@ void Memory::print_all(std::ofstream &ofs)
 
 	const double small = 1.0; 
 #ifdef __MPI
-		Parallel_Reduce::reduce_double_all(Memory::total);
+    Parallel_Reduce::reduce_all(Memory::total);
 #endif
     ofs <<"\n NAME---------------|MEMORY(MB)--------" << std::endl;
 //	std::cout<<"\n"<<std::setw(41)<< " " <<std::setprecision(4)<<total;
@@ -262,7 +262,7 @@ void Memory::print_all(std::ofstream &ofs)
 		}
 		print_flag[k] = true;
 #ifdef __MPI
-		Parallel_Reduce::reduce_double_all(consume[k]);
+        Parallel_Reduce::reduce_all(consume[k]);
 #endif
 	    if ( consume[k] < small ) 
         {

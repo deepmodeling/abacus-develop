@@ -145,14 +145,14 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 #ifdef __MPI
     if (GlobalV::CAL_FORCE)
     {
-        Parallel_Reduce::reduce_double_pool(force_dftu.c, force_dftu.nr * force_dftu.nc);
+        Parallel_Reduce::reduce_pool(force_dftu.c, force_dftu.nr * force_dftu.nc);
     }
 #endif
 
     if (GlobalV::CAL_STRESS)
     {
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_pool(stress_dftu.c, stress_dftu.nr * stress_dftu.nc);
+        Parallel_Reduce::reduce_pool(stress_dftu.c, stress_dftu.nr * stress_dftu.nc);
 #endif
 
         for (int i = 0; i < 3; i++)

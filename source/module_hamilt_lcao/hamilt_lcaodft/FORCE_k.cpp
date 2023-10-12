@@ -98,10 +98,10 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                   isstress,
                                   svnl_dalpha);
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
+        Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
         if (isstress)
         {
-            Parallel_Reduce::reduce_double_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+            Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
         }
 #endif
         if (GlobalV::deepks_out_unittest)
@@ -131,17 +131,17 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     //----------------------------------------------------------------
     if (isforce)
     {
-        Parallel_Reduce::reduce_double_pool(foverlap.c, foverlap.nr * foverlap.nc);
-        Parallel_Reduce::reduce_double_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
-        Parallel_Reduce::reduce_double_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
-        Parallel_Reduce::reduce_double_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
+        Parallel_Reduce::reduce_pool(foverlap.c, foverlap.nr * foverlap.nc);
+        Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
+        Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
+        Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
     }
     if (isstress)
     {
-        Parallel_Reduce::reduce_double_pool(soverlap.c, soverlap.nr * soverlap.nc);
-        Parallel_Reduce::reduce_double_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
-        Parallel_Reduce::reduce_double_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
-        Parallel_Reduce::reduce_double_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
+        Parallel_Reduce::reduce_pool(soverlap.c, soverlap.nr * soverlap.nc);
+        Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
+        Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
+        Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");

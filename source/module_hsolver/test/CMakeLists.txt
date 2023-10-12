@@ -42,6 +42,16 @@ AddTest(
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
 )
+if(ENABLE_LCAO)
+AddTest(
+  TARGET HSolver_dav_real
+  LIBS ${math_libs} base psi device
+  SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
+          ../../module_basis/module_pw/test/test_tool.cpp
+          ../../module_hamilt_general/operator.cpp
+          ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+)
+endif()
 
 AddTest(
   TARGET HSolver_base

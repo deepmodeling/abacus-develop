@@ -171,7 +171,7 @@ void surchem::cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_
         }
     }
     
-    Parallel_Reduce::reduce_double_pool(forcesol.c, forcesol.nr * forcesol.nc);
+    Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
     ModuleBase::timer::tick("surchem", "cal_force_sol");
     return;
 }

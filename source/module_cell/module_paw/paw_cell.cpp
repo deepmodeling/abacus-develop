@@ -473,7 +473,7 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
         }
 
 #ifdef __MPI
-         Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
 #endif
 
         paw_atom_list[iat].set_ca(ca, weight);
@@ -555,7 +555,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
         }
 
 #ifdef __MPI
-        Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
 #endif
 
         // sum_ij D_ij ca_j

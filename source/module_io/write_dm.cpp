@@ -144,7 +144,7 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_int_all( count, GlobalV::NLOCAL );
+        Parallel_Reduce::reduce_all(count, GlobalV::NLOCAL);
 
         // reduce the density matrix for 'i' line.
         ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
@@ -160,7 +160,7 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_double_all( tmp, GlobalV::NLOCAL );
+        Parallel_Reduce::reduce_all(tmp, GlobalV::NLOCAL);
 
         if(GlobalV::MY_RANK==0)
         {
