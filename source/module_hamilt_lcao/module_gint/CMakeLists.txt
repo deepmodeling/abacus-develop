@@ -1,4 +1,4 @@
-add_subdirectory(gint_gpu)
+#add_subdirectory(gint_gpu)
 
 list(APPEND objects
     gint.cpp
@@ -21,6 +21,7 @@ list(APPEND objects
     grid_meshk.cpp
     grid_technique.cpp
     gint_gpu/gint_vl.cu
+    gint_gpu/gpu_task_generator.cpp
 )
 
 add_library(
