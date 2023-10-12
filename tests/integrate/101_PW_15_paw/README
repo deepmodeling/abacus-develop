@@ -1,0 +1,5 @@
+This test for:
+*Si-diamond
+*sg15 pseudopotential
+*mixing_type broyden-kerker
+*mixing_beta 0.7
