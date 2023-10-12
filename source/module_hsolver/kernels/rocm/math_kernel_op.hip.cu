@@ -203,13 +203,13 @@ __global__ void calc_grad_with_block(
 }
 
 // Define the CUDA kernel:
-template <typename FPTYPE>
+template <typename T>
 __launch_bounds__(1024) 
 __global__ void vector_div_constant_kernel(
     const int size, 
-    thrust::complex<FPTYPE>* result, 
-    const thrust::complex<FPTYPE>* vector, 
-    const FPTYPE constant)
+    T* result,
+    const T* vector,
+    const typename GetTypeReal<T>::type constant)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
@@ -218,13 +218,13 @@ __global__ void vector_div_constant_kernel(
     }
 }
 
-template <typename FPTYPE>
+template <typename T>
 __launch_bounds__(1024) 
 __global__ void vector_mul_vector_kernel(
     const int size, 
-    thrust::complex<FPTYPE>* result, 
-    const thrust::complex<FPTYPE>* vector1, 
-    const FPTYPE* vector2)
+    T* result,
+    const T* vector1,
+    const typename GetTypeReal<T>::type* vector2)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
@@ -233,13 +233,13 @@ __global__ void vector_mul_vector_kernel(
     }
 }
 
-template <typename FPTYPE>
+template <typename FPTYTPE>
 __launch_bounds__(1024) 
 __global__ void vector_div_vector_kernel(
     const int size, 
-    thrust::complex<FPTYPE>* result, 
-    const thrust::complex<FPTYPE>* vector1, 
-    const FPTYPE* vector2)
+    T* result,
+    const T* vector1,
+    const typename GetTypeReal<T>::type* vector2)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size) 
@@ -265,13 +265,13 @@ __global__ void constantvector_addORsub_constantVector_kernel(
     }
 }
 
-template <typename FPTYPE>
+template <typename T>
 __launch_bounds__(1024) 
 __global__ void matrix_transpose_kernel(
         const int row,
         const int col,
-        const thrust::complex<FPTYPE>* in,
-        thrust::complex<FPTYPE>* out)
+    const T* in,
+    T* out)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < row)
@@ -284,14 +284,14 @@ __global__ void matrix_transpose_kernel(
 }
 
 
-template <typename FPTYPE>
+template <typename T>
 __launch_bounds__(1024) 
 __global__ void matrix_setTo_another_kernel(
         const int n,
         const int LDA,
         const int LDB,
-        const thrust::complex<FPTYPE>* matrix_A,
-        thrust::complex<FPTYPE>* matrix_B)
+    const T* matrix_A,
+    T* matrix_B)
 {
     int j = blockIdx.x * blockDim.x + threadIdx.x;
     if (j < LDA && j < LDB)
@@ -347,33 +347,81 @@ void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
             n_basis, n_basis_max);
 }
 
+template <>
+double dot_real_op<double, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    const double* psi_L,
+    const double* psi_R,
+    const bool reduce)
+{
+    double result = 0.0;
+    xdot_wrapper(dim, psi_L, 1, psi_R, 1, result);
+    if (reduce) {
+        Parallel_Reduce::reduce_pool(result);
+    }
+    return result;
+}
+
 // for this implementation, please check
 // https://thrust.github.io/doc/group__transformed__reductions_ga321192d85c5f510e52300ae762c7e995.html denghui modify
 // 2022-10-03 Note that ddot_(2*dim,a,1,           b,1) = REAL( zdotc_(dim,a,1,b,1) ) GPU specialization of actual computation.
 template <typename FPTYPE>
-FPTYPE zdot_real_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+inline FPTYPE dot_complex_wrapper(
     const psi::DEVICE_GPU* d,
     const int& dim,
     const std::complex<FPTYPE>* psi_L,
     const std::complex<FPTYPE>* psi_R,
     const bool reduce)
 {
-  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  // denghui modify 2022-10-07
-  // Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
-  const FPTYPE* pL = reinterpret_cast<const FPTYPE*>(psi_L);
-  const FPTYPE* pR = reinterpret_cast<const FPTYPE*>(psi_R);
-  FPTYPE result = 0.0;
-  xdot_wrapper(dim * 2, pL, 1, pR, 1, result);
-  if (reduce) {
-      Parallel_Reduce::reduce_double_pool(result);
-  }
-  return result;
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // denghui modify 2022-10-07
+    // Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )
+    const FPTYPE* pL = reinterpret_cast<const FPTYPE*>(psi_L);
+    const FPTYPE* pR = reinterpret_cast<const FPTYPE*>(psi_R);
+    FPTYPE result = 0.0;
+    xdot_wrapper(dim * 2, pL, 1, pR, 1, result);
+    if (reduce) {
+        Parallel_Reduce::reduce_pool(result);
+    }
+    return result;
+}
+template <>
+float dot_real_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    const std::complex<float>* psi_L,
+    const std::complex<float>* psi_R,
+    const bool reduce)
+{
+    return dot_complex_wrapper(d, dim, psi_L, psi_R, reduce);
+}
+template <>
+double dot_real_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    const std::complex<double>* psi_L,
+    const std::complex<double>* psi_R,
+    const bool reduce)
+{
+    return dot_complex_wrapper(d, dim, psi_L, psi_R, reduce);
 }
 
+template <>
+void vector_div_constant_op<double psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int dim,
+    double* result,
+    const double* vector,
+    const double constant)
+{
+    int thread = 1024;
+    int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<double>), dim3(block), dim3(thread), 0, 0, dim, result, vector, constant);
+}
 // vector operator: result[i] = vector[i] / constant
 template <typename FPTYPE>
-void vector_div_constant_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+inline void vector_div_constant_complex_wrapper(
     const psi::DEVICE_GPU* d,
     const int dim,
     std::complex<FPTYPE>* result,
@@ -382,15 +430,47 @@ void vector_div_constant_op<FPTYPE, psi::DEVICE_GPU>::operator()(
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector);
-
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<FPTYPE>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector_tmp, constant);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<thrust::complex<FPTYPE>>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector_tmp, constant);
+}
+template <>
+void vector_div_constant_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int dim,
+    std::complex<float>* result,
+    const std::complex<float>* vector,
+    const float constant)
+{
+    vector_div_constant_complex_wrapper(d, dim, result, vector, constant);
+}
+template <>
+void vector_div_constant_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int dim,
+    std::complex<double>* result,
+    const std::complex<double>* vector,
+    const double constant)
+{
+    vector_div_constant_complex_wrapper(d, dim, result, vector, constant);
+}
+// vector operator: result[i] = vector1[i](not complex) * vector2[i](not complex)
+template <>
+void vector_mul_vector_op<double, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    double* result,
+    const double* vector1,
+    const double* vector2)
+{
+    int thread = 1024;
+    int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<double>), dim3(block), dim3(thread), 0, 0, dim, result, vector1, vector2);
 }
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename FPTYPE> 
-void vector_mul_vector_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+template <typename FPTYPE>
+inline void vector_mul_vector_complex_wrapper(
     const psi::DEVICE_GPU* d,
     const int& dim,
     std::complex<FPTYPE>* result,
@@ -399,16 +479,46 @@ void vector_mul_vector_op<FPTYPE, psi::DEVICE_GPU>::operator()(
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<FPTYPE>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector1_tmp, vector2);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<thrust::complex<FPTYPE>>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector1_tmp, vector2);
 }
-
-
+template <>
+void vector_mul_vector_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    std::complex<float>* result,
+    const std::complex<float>* vector1,
+    const float* vector2)
+{
+    vector_mul_vector_complex_wrapper(d, dim, result, vector1, vector2);
+}
+template <>
+void vector_mul_vector_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    std::complex<double>* result,
+    const std::complex<double>* vector1,
+    const double* vector2)
+{
+    vector_mul_vector_complex_wrapper(d, dim, result, vector1, vector2);
+}
+// vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
+template <>
+void vector_div_vector_op<double, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    double* result,
+    const double* vector1,
+    const double* vector2)
+{
+    int thread = 1024;
+    int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<double>), dim3(block), dim3(thread), 0, 0, dim, result, vector1, vector2);
+}
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename FPTYPE> 
-void vector_div_vector_op<FPTYPE, psi::DEVICE_GPU>::operator()(
+inline void vector_div_vector_op_complex_wrapper(
     const psi::DEVICE_GPU* d,
     const int& dim,
     std::complex<FPTYPE>* result,
@@ -417,10 +527,29 @@ void vector_div_vector_op<FPTYPE, psi::DEVICE_GPU>::operator()(
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<FPTYPE>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector1_tmp, vector2);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<thrust::complex<FPTYPE>>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector1_tmp, vector2);
+}
+template <>
+void vector_div_vector_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    std::complex<float>* result,
+    const std::complex<float>* vector1,
+    const float* vector2)
+{
+    vector_div_vector_op_complex_wrapper(d, dim, result, vector1, vector2);
+}
+template <>
+void vector_div_vector_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& dim,
+    std::complex<double>* result,
+    const std::complex<double>* vector1,
+    const double* vector2)
+{
+    vector_div_vector_op_complex_wrapper(d, dim, result, vector1, vector2);
 }
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
@@ -469,8 +598,36 @@ void axpy_op<double, psi::DEVICE_GPU>::operator()(
     hipblasZaxpy(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incX, (hipblasDoubleComplex*)Y, incY);
 }
 
-template <> 
-void gemv_op<float, psi::DEVICE_GPU>::operator()(
+template <>
+void gemv_op<double, psi::DEVICE_GPU>::operator()(
+    const psi::DEVICE_GPU* d,
+    const char& trans,
+    const int& m,
+    const int& n,
+    const double* alpha,
+    const double* A,
+    const int& lda,
+    const double* X,
+    const int& incx,
+    const double* beta,
+    double* Y,
+    const int& incy)
+{
+    hipblasOperation_t cutrans = {};
+    if (trans == 'N') {
+        cutrans = HIPBLAS_OP_N;
+    }
+    else if (trans == 'T') {
+        cutrans = HIPBLAS_OP_T;
+    }
+    else if (trans == 'C') {
+        cutrans = HIPBLAS_OP_C;
+    }
+    hipblasZgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx);
+}
+
+template <>
+void gemv_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
     const psi::DEVICE_GPU* d,
     const char& trans,
     const int& m,
@@ -491,14 +648,11 @@ void gemv_op<float, psi::DEVICE_GPU>::operator()(
     else if (trans == 'T'){
         cutrans = HIPBLAS_OP_T;
     } 
-    else if (trans == 'C'){
-        cutrans = HIPBLAS_OP_C;
-    }
-    hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incx);
+    hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx);
 }
 
 template <> 
-void gemv_op<double, psi::DEVICE_GPU>::operator()(
+void gemv_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
     const psi::DEVICE_GPU* d,
     const char& trans,
     const int& m,
@@ -545,9 +699,43 @@ void scal_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     hipblasZscal(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incx);
 }
 
+template <>
+void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+    const char& transa,
+    const char& transb,
+    const int& m,
+    const int& n,
+    const int& k,
+    const double* alpha,
+    const double* a,
+    const int& lda,
+    const double* b,
+    const int& ldb,
+    const double* beta,
+    double* c,
+    const int& ldc)
+{
+    hipblasOperation_t cutransA;
+    hipblasOperation_t cutransB;
+    // cutransA
+    if (transa == 'N') {
+        cutransA = HIPBLAS_OP_N;
+    }
+    else if (transa == 'T') {
+        cutransA = HIPBLAS_OP_T;
+    }
+    // cutransB
+    if (transb == 'N') {
+        cutransB = HIPBLAS_OP_N;
+    }
+    else if (transb == 'T') {
+        cutransB = HIPBLAS_OP_T;
+    }
+    hipblasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+}
 
 template <>
-void gemm_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+void gemm_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                  const char& transa, 
                                                  const char& transb, 
                                                  const int& m, 
@@ -588,7 +776,7 @@ void gemm_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 }
 
 template <>
-void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+void gemm_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                  const char& transa, 
                                                  const char& transb, 
                                                  const int& m, 
@@ -629,7 +817,36 @@ void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
 }
 
 template <>
-void matrixTranspose_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+    const int& row,
+    const int& col,
+    const double* input_matrix,
+    double* output_matrix)
+{
+    double* device_temp = nullptr;
+    psi::memory::resize_memory_op<double, psi::DEVICE_GPU>()(d, device_temp, row * col);
+
+    if (row == col)
+    {
+        double ONE = 1.0, ZERO = 0.0;
+        // use 'geam' API todo transpose.
+        hipblasDgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row, &ONE, input_matrix, col, &ZERO, input_matrix, col, device_temp, col);
+    }
+    else
+    {
+        int thread = 1024;
+        int block = (row + col + thread - 1) / thread;
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<double>), dim3(block), dim3(thread), 0, 0, row, col, input_matrix, device_temp);
+    }
+
+    psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
+
+    psi::memory::delete_memory_op<double, psi::DEVICE_GPU>()(d, device_temp);
+
+}
+
+template <>
+void matrixTranspose_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                              const int& row,
                                                              const int& col,
                                                              const std::complex<float>* input_matrix,
@@ -653,7 +870,7 @@ void matrixTranspose_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GP
     {
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<float>), dim3(block), dim3(thread), 0, 0, row, col, (thrust::complex<float>*)input_matrix, (thrust::complex<float>*)device_temp);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<thrust::complex<float>>), dim3(block), dim3(thread), 0, 0, row, col, (thrust::complex<float>*)input_matrix, (thrust::complex<float>*)device_temp);
     }
 
     psi::memory::synchronize_memory_op<std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -663,7 +880,7 @@ void matrixTranspose_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GP
 }
 
 template <>
-void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
+void matrixTranspose_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                              const int& row,
                                                              const int& col,
                                                              const std::complex<double>* input_matrix,
@@ -681,7 +898,7 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
     {
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<double>), dim3(block), dim3(thread), 0, 0, row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<thrust::complex<double>>), dim3(block), dim3(thread), 0, 0, row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
     }
     
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -690,40 +907,72 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
     
 }
 
-
-template <typename FPTYPE> 
-void matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>::operator()(
+template <>
+void matrixSetToAnother < double, psi::DEVICE_GPU > ::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& n,
+    const double* A,
+    const int& LDA,
+    double* B,
+    const int& LDB)
+{
+    int thread = 1024;
+    int block = (LDA + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<double>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, A, B);
+}
+template <>
+void matrixSetToAnother < std::complex<float>, psi::DEVICE_GPU > ::operator()(
             const psi::DEVICE_GPU* d,
             const int& n,
-            const std::complex<FPTYPE>* A,
+    const std::complex<float>* A,
             const int& LDA,
-            std::complex<FPTYPE>* B,
+    std::complex<float>* B,
             const int& LDB)
 {
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<FPTYPE>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, reinterpret_cast<const thrust::complex<FPTYPE>*>(A), reinterpret_cast<thrust::complex<FPTYPE>*>(B));
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<thrust::complex<float>>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, reinterpret_cast<const thrust::complex<float>*>(A), reinterpret_cast<thrust::complex<float>*>(B));
+}
+template <>
+void matrixSetToAnother < std::complex<double>, psi::DEVICE_GPU > ::operator()(
+    const psi::DEVICE_GPU* d,
+    const int& n,
+    const std::complex<double>* A,
+    const int& LDA,
+    std::complex<double>* B,
+    const int& LDB)
+{
+    int thread = 1024;
+    int block = (LDA + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<thrust::complex<double>>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, reinterpret_cast<const thrust::complex<double>*>(A), reinterpret_cast<thrust::complex<double>*>(B));
 }
 
 
 
 // Explicitly instantiate functors for the types of functor registered.
-template struct zdot_real_op<float, psi::DEVICE_GPU>;
+template struct dot_real_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct line_minimize_with_block_op<std::complex<float>, psi::DEVICE_GPU>;
-template struct vector_div_constant_op<float, psi::DEVICE_GPU>;
-template struct vector_mul_vector_op<float, psi::DEVICE_GPU>;
-template struct vector_div_vector_op<float, psi::DEVICE_GPU>;
+template struct vector_div_constant_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct vector_mul_vector_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct vector_div_vector_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<float, psi::DEVICE_GPU>;
-template struct matrixSetToAnother<float, psi::DEVICE_GPU>;
+template struct matrixSetToAnother<std::complex<float>, psi::DEVICE_GPU>;
 
-template struct zdot_real_op<double, psi::DEVICE_GPU>;
+template struct dot_real_op<std::complex<double>, psi::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<double>, psi::DEVICE_GPU>;
 template struct line_minimize_with_block_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct vector_div_constant_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct vector_mul_vector_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct vector_div_vector_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
+template struct matrixSetToAnother<std::complex<double>, psi::DEVICE_GPU>;
+
+#ifdef __LCAO
+template struct dot_real_op<double, psi::DEVICE_GPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_GPU>;
-template struct vector_div_vector_op<double, psi::DEVICE_GPU>;
-template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
+template struct vector_div_vector_op<double psi::DEVICE_GPU>;
 template struct matrixSetToAnother<double, psi::DEVICE_GPU>;
-
+#endif
 }  // namespace hsolver

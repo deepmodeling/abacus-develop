@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include<memory>
-
 /************************************************
  *  unit test of read_pp
  ***********************************************/
@@ -592,45 +591,6 @@ TEST_F(ReadPPTest, SetQfNew)
         expectedValue *= pow(r[ir], l + n);
         EXPECT_DOUBLE_EQ(expectedValue, rho[ir]);
     }
-}
-
-TEST_F(ReadPPTest, CheckAtwfcNorm)
-{
-    std::ifstream ifs;
-    ifs.open("./support/Al.pbe-sp-van.UPF");
-    upf->read_pseudo_upf201(ifs);
-    for (int i = 0; i < upf->mesh; ++i)
-    {
-        upf->chi(0, i) = 0.0;
-        upf->chi(1, i) = 110.0;
-    }
-    upf->check_atwfc_norm();
-
-    EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.069913165961999812);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.069913165961999812);
-
-    upf->has_so = true;
-    upf->jjj = new double[upf->nbeta];
-    upf->jchi = new double[upf->nwfc];
-    for (int i = 0; i < upf->nbeta; ++i)
-    {
-        upf->jjj[i] = 0.5;
-    }
-    for (int i = 0; i < upf->nwfc; ++i)
-    {
-        upf->jchi[i] = 0.5;
-    }
-    upf->check_atwfc_norm();
-    EXPECT_DOUBLE_EQ(upf->oc[0], -1e-8);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 0), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 0), 0.069913165961999812);
-    EXPECT_DOUBLE_EQ(upf->chi(1, 892), 0.069913165961999812);
-
-    ifs.close();
 }
 
 TEST_F(ReadPPTest, InitReader)

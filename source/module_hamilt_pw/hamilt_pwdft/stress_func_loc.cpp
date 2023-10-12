@@ -146,7 +146,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 	{
 		for(int m=0;m<l+1;m++)
 		{
-			Parallel_Reduce::reduce_double_pool( sigma(l,m) );
+            Parallel_Reduce::reduce_pool(sigma(l, m));
 		}
 	}
 	for(int l = 0;l< 3;l++)

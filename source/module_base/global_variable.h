@@ -93,6 +93,7 @@ extern int SCF_THR_TYPE; // type of the criterion of scf_thr, 1: reci drho for p
 
 extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX; // 20 mohan add 2009-09-10
+extern int NQXQ; // liuyu add 2023-10-03
 
 extern int NURSE; // 21 mohan add 2010-09-10
 extern bool COLOUR; // mohan add 2011-04-26
@@ -269,6 +270,13 @@ extern bool of_full_pw;     // If set to 1, ecut will be ignored while collectin
 extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be testricted to be (0) either odd or even; (1) odd only; (2) even only.
 extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
 extern std::string of_kernel_file; // The name of WT kernel file.
+
+// mixing parameters
+extern std::string MIXING_MODE;
+extern double MIXING_BETA;
+extern int MIXING_NDIM;
+extern double MIXING_GG0;
+extern bool MIXING_TAU;
 
 //==========================================================
 // device flags added by denghui

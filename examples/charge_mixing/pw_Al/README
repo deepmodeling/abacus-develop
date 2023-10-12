@@ -1,5 +1,5 @@
 Showcasing different charge mixing methods
-- INPUT_1 : pulay mixing with beta=0.7, takes 5 steps to converge
+- INPUT_1 : broyden mixing with beta=0.7, takes 5 steps to converge
 - INPUT_2 : plain mixing with beta=0.7, takes 8 steps to converge
-- INPUT_3 : pulay mixing with beta=0.2, takes 6 steps to converge
+- INPUT_3 : broyden mixing with beta=0.2, takes 6 steps to converge
 - INPUT_4 : plain mixing with beta=0.2, takes 37 steps to converge

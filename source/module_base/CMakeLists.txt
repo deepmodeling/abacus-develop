@@ -10,6 +10,7 @@ endif()
 add_library(
     base
     OBJECT
+    clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
     element_basis_index.cpp
@@ -52,6 +53,7 @@ add_library(
     formatter_physfmt.cpp
     formatter_table.cpp
     formatter_contextfmt.cpp
+    module_mixing/mixing_data.cpp
     ${LIBM_SRC}
 )
 
@@ -74,6 +76,7 @@ if(BUILD_TESTING)
   add_subdirectory(test)
   add_subdirectory(test_parallel)
   add_subdirectory(kernels/test)
+  add_subdirectory(module_mixing/test)
   if (USE_ABACUS_LIBM)
     add_subdirectory(libm/test)
   endif()

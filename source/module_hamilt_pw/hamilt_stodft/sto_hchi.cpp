@@ -104,7 +104,7 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 			{
 				zgemm_(&transc,&transn,&nkb,&npm,&npw,&ModuleBase::ONE,GlobalC::ppcell.vkb.c,&npwx,chig,&npwx,&ModuleBase::ZERO,becp,&nkb);
 			}
-			Parallel_Reduce::reduce_complex_double_pool( becp, nkb * GlobalV::NPOL * m);
+            Parallel_Reduce::reduce_pool(becp, nkb * GlobalV::NPOL * m);
 
 			complex<double> *Ps  = new complex<double> [nkb * GlobalV::NPOL * m];
    			ModuleBase::GlobalFunc::ZEROS( Ps, GlobalV::NPOL * m * nkb);

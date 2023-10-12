@@ -65,6 +65,11 @@ FFT::~FFT()
 #include "module_hsolver/diago_cg.h"
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
+
+template<typename T> consts<T>::consts() {}
+template class consts<std::complex<float>>;
+template class consts<std::complex<double>>;
+
 namespace hsolver
 {
 
@@ -168,7 +173,6 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return;
 }
-
 template class DiagoDavid<std::complex<float>, psi::DEVICE_CPU>;
 template class DiagoDavid<std::complex<double>, psi::DEVICE_CPU>;
 

@@ -1,13 +1,14 @@
 #include "esolver.h"
+
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #endif
-#include "esolver_of.h"
-#include "esolver_lj.h"
 #include "esolver_dp.h"
+#include "esolver_lj.h"
+#include "esolver_of.h"
 #include "module_md/md_para.h"
 
 namespace ModuleESolver
@@ -113,7 +114,12 @@ namespace ModuleESolver
 #ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")
         {
-            p_esolver = new ESolver_KS_LCAO();
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+                p_esolver = new ESolver_KS_LCAO<double, double>();
+            else if (GlobalV::NSPIN < 4)
+                p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+            else
+                p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
         else if (esolver_type == "ksdft_lcao_tddft")
         {

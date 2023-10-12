@@ -28,8 +28,8 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
             this->abs_magnetization += std::abs(diff);
         }
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_pool( this->tot_magnetization );
-        Parallel_Reduce::reduce_double_pool( this->abs_magnetization );
+        Parallel_Reduce::reduce_pool(this->tot_magnetization);
+        Parallel_Reduce::reduce_pool(this->abs_magnetization);
 #endif
         this->tot_magnetization *= elecstate::get_ucell_omega() / nxyz;
         this->abs_magnetization *= elecstate::get_ucell_omega() / nxyz;
@@ -61,8 +61,8 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
 			this->abs_magnetization += std::abs(diff);
 		}
 #ifdef __MPI
-		Parallel_Reduce::reduce_double_pool( this->tot_magnetization_nc, 3 );
-		Parallel_Reduce::reduce_double_pool( this->abs_magnetization );
+        Parallel_Reduce::reduce_pool(this->tot_magnetization_nc, 3);
+        Parallel_Reduce::reduce_pool(this->abs_magnetization);
 #endif
 		for(int i=0;i<3;i++)this->tot_magnetization_nc[i] *= elecstate::get_ucell_omega() / nxyz;
 		this->abs_magnetization *= elecstate::get_ucell_omega() / nxyz;

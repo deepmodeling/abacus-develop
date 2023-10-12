@@ -5,5 +5,5 @@ This test for: electric field
 *sg15 pseudopotential
 *smearing_method fixed
 *ks_solver cg
-*mixing_type pulay
+*mixing_type broyden
 *mixing_beta 0.7

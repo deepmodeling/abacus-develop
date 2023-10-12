@@ -4,9 +4,10 @@
 #ifndef FUNC_EACH_2_H
 #define FUNC_EACH_2_H
 
-#include <vector>
+#include <functional>
 #include <map>
-#include<functional>
+#include <vector>
+
 namespace ModuleBase
 {
 namespace GlobalFunc

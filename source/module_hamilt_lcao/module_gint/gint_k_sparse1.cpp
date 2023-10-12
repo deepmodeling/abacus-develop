@@ -51,10 +51,10 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(nonzero_num, total_R_num);
-    Parallel_Reduce::reduce_int_all(minus_nonzero_num, total_R_num);
-    // Parallel_Reduce::reduce_int_pool(nonzero_num, total_R_num);
-    // Parallel_Reduce::reduce_int_pool(minus_nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(minus_nonzero_num, total_R_num);
+    // Parallel_Reduce::reduce_pool(nonzero_num, total_R_num);
+    // Parallel_Reduce::reduce_pool(minus_nonzero_num, total_R_num);
 
     double* tmp = nullptr;
     tmp = new double[GlobalV::NLOCAL];
@@ -108,7 +108,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
                     }
                 }
                 
-                Parallel_Reduce::reduce_double_pool(tmp, GlobalV::NLOCAL);
+                Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
 
                 if (LM->ParaV->global2local_row(row) >= 0)
                 {
@@ -208,10 +208,10 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(nonzero_num, total_R_num);
-    Parallel_Reduce::reduce_int_all(minus_nonzero_num, total_R_num);
-    // Parallel_Reduce::reduce_int_pool(nonzero_num, total_R_num);
-    // Parallel_Reduce::reduce_int_pool(minus_nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(minus_nonzero_num, total_R_num);
+    // Parallel_Reduce::reduce_pool(nonzero_num, total_R_num);
+    // Parallel_Reduce::reduce_pool(minus_nonzero_num, total_R_num);
 
     std::complex<double>* tmp_soc = nullptr;
     tmp_soc = new std::complex<double>[GlobalV::NLOCAL];
@@ -264,7 +264,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
                     }
                 }
                 
-                Parallel_Reduce::reduce_complex_double_pool(tmp_soc, GlobalV::NLOCAL);
+                Parallel_Reduce::reduce_pool(tmp_soc, GlobalV::NLOCAL);
 
                 if (LM->ParaV->global2local_row(row) >= 0)
                 {
