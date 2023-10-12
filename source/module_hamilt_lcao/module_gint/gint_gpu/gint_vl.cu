@@ -6,7 +6,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include <fstream>
 #include <sstream>
-#define __DEBUG
+//#define __DEBUG
 __constant__ double ylmcoef[36];
 __constant__ int bxyz_g[1];
 __constant__ int max_size_g[1];
@@ -434,10 +434,9 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
         for (int j = 0; j < nby; j++)
         {
 #ifdef __DEBUG
-            cudaEvent_t t1_5, t1_6, t1_7, t1_8;
+            cudaEvent_t t1_5, t1_6, t1_8;
             cudaEventCreate(&t1_5);
             cudaEventCreate(&t1_6);
-            cudaEventCreate(&t1_7);
             cudaEventCreate(&t1_8);
 
             cudaEventRecord(t1_5);
@@ -462,7 +461,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             cudaMemcpy(num_atom_pair_g, num_atom_pair, nbz * sizeof(int), cudaMemcpyHostToDevice);
 #ifdef __DEBUG
             cudaEventRecord(t1_6);
-            //cudaDeviceSynchronize();
 #endif
             const int ALIGN_SIZE = 32;
             dim3 grid1(nbz);
@@ -480,11 +478,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                                                 psi_u,
                                                                 psir_ylm_left,
                                                                 psir_ylm_right);
-/*#ifdef __DEBUG
-            cudaDeviceSynchronize();
-            cudaEventRecord(t1_7);
-            cudaDeviceSynchronize();
-#endif*/
             dim3 grid4(nbz, 256);
             dim3 block4(nwmax, nwmax);
             psi_multiple<<<grid4, block4>>>(atom_pair_input_info_g,
@@ -497,18 +490,13 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                             lgd);
 
 #ifdef __DEBUG
-            //cudaDeviceSynchronize();
             cudaEventRecord(t1_8);
             float copy_per_calc_temp = 0;
-            float calc_psi_temp = 0;
             float calc_multiple_temp = 0;
-            //cudaDeviceSynchronize();
 
             cudaEventElapsedTime(&copy_per_calc_temp, t1_5, t1_6);
-            cudaEventElapsedTime(&calc_psi_temp, t1_6, t1_7);
-            cudaEventElapsedTime(&calc_multiple_temp, t1_7, t1_8);
+            cudaEventElapsedTime(&calc_multiple_temp, t1_6, t1_8);
             copy_per_calc += copy_per_calc_temp;
-            calc_psi += calc_psi_temp;
             calc_multiple += calc_multiple_temp;
 #endif
 
