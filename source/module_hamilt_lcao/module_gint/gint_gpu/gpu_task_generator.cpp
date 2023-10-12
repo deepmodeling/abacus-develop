@@ -4,20 +4,21 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void gpu_task_generate_vlocal(const Grid_Technique &GridT, int i, int j, int bx,
-                              int by, int bz, int bxyz,
-                              int atom_pair_size_of_meshcell, int psi_size_max,
-                              int max_size, const int ncx, const int ncy,
-                              const int nczp, double *dr, int *it,
+void gpu_task_generate_vlocal(const Grid_Technique &GridT, 
+                              const int i, const int j, 
+                              const int bx, const int by, const int bz, const int bxyz,
+                              const int atom_pair_size_of_meshcell,
+                              const int psi_size_max, const int max_size,
+                              const int ncx, const int ncy, const int nczp, 
+                              double *dr, int *it,
                               int *psir_ylm_start, int *ib_index, int *num_psir,
                               int *start_ind, int *vindex,
                               int *atom_pair_input_info, int *num_atom_pair) {
   const int nbx = GridT.nbx;
   const int nby = GridT.nby;
   const int nbz = GridT.nbzp;
-  const int nwmax = GlobalC::ucell.nwmax;
-  const int namax = GlobalC::ucell.namax;
-  const int ntype = GlobalC::ucell.ntype;
+  
+  #pragma omp parallel for
   for (int z_index = 0; z_index < nbz; z_index++) {
     int num_get_psi = 0;
     int grid_index = i * nby * nbz + j * nbz + z_index;
@@ -89,10 +90,8 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, int i, int j, int bx,
               atom_pair_index_in_nbz + atom_pair_index_in_meshcell;
           atom_pair_input_info[atom_pair_index] = atom1;
           atom_pair_input_info[atom_pair_index + 1] = atom2;
-          atom_pair_input_info[atom_pair_index + 2] =
-              GlobalC::ucell.atoms[it1].nw;
-          atom_pair_input_info[atom_pair_index + 3] =
-              GlobalC::ucell.atoms[it2].nw;
+          atom_pair_input_info[atom_pair_index + 2] = GlobalC::ucell.atoms[it1].nw;
+          atom_pair_input_info[atom_pair_index + 3] = GlobalC::ucell.atoms[it2].nw;
           atom_pair_input_info[atom_pair_index + 4] = lo1;
           atom_pair_input_info[atom_pair_index + 5] = lo2;
           atom_pair_index_in_meshcell += 6;
