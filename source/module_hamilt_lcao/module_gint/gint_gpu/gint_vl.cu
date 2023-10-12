@@ -220,7 +220,7 @@ __global__ void get_psi_and_vldr3(double *input_double,
                 double temp = phi * ylma[atom_iw2_ylm[it_nw_iw]];
                 psir_ylm_right[dist_tmp] = temp;
                 psir_ylm_left[dist_tmp] = temp * vlbr3_value;
-                dist_tmp++;
+                dist_tmp += bxyz_g[0];
                 iw_nr += nr_max;
                 iw_nr += nr_max;
                 it_nw_iw++;
@@ -258,15 +258,14 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
         int lo1_iw1 = atom_pair_input_info_g[atom_pair_index + 4] + iw1;
         int lo2_iw2 = atom_pair_input_info_g[atom_pair_index + 5] + iw2;
         double v2 = 0.0;
-        int vldr3_index = blockIdx.x * bxyz_g[0];
+        int vldr3_index = blockIdx.x * max_size_g[0];
 
-        for (int ib = 0; ib < bxyz_g[0]; ++ib)
+        int calc_index1 = ((vldr3_index + atomnow1) * nwmax_g[0] + iw1)* bxyz_g[0];
+        int calc_index2 = ((vldr3_index + atomnow2) * nwmax_g[0] + iw2)* bxyz_g[0];
+
+        for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1, ++calc_index2)
         {
-            int calc_index1 = vldr3_index * max_size_g[0];
-            int calc_index2 = calc_index1 + atomnow2;
-            calc_index1 += atomnow1;
-            v2 += psir_ylm_left[calc_index1 * nwmax_g[0] + iw1] * psir_ylm_right[calc_index2 * nwmax_g[0] + iw2];
-            vldr3_index++;
+            v2 += psir_ylm_left[calc_index1] * psir_ylm_right[calc_index2];
         }
         atomicAdd(&(GridVlocal[lo1_iw1 * lgd + lo2_iw2]), v2);
     }
@@ -463,7 +462,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             cudaMemcpy(num_atom_pair_g, num_atom_pair, nbz * sizeof(int), cudaMemcpyHostToDevice);
 #ifdef __DEBUG
             cudaEventRecord(t1_6);
-            cudaDeviceSynchronize();
+            //cudaDeviceSynchronize();
 #endif
             const int ALIGN_SIZE = 32;
             dim3 grid1(nbz);
@@ -481,11 +480,11 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                                                 psi_u,
                                                                 psir_ylm_left,
                                                                 psir_ylm_right);
-#ifdef __DEBUG
+/*#ifdef __DEBUG
             cudaDeviceSynchronize();
             cudaEventRecord(t1_7);
             cudaDeviceSynchronize();
-#endif
+#endif*/
             dim3 grid4(nbz, 256);
             dim3 block4(nwmax, nwmax);
             psi_multiple<<<grid4, block4>>>(atom_pair_input_info_g,
@@ -498,12 +497,12 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                             lgd);
 
 #ifdef __DEBUG
-            cudaDeviceSynchronize();
+            //cudaDeviceSynchronize();
             cudaEventRecord(t1_8);
             float copy_per_calc_temp = 0;
             float calc_psi_temp = 0;
             float calc_multiple_temp = 0;
-            cudaDeviceSynchronize();
+            //cudaDeviceSynchronize();
 
             cudaEventElapsedTime(&copy_per_calc_temp, t1_5, t1_6);
             cudaEventElapsedTime(&calc_psi_temp, t1_6, t1_7);
