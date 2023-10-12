@@ -11,9 +11,10 @@
 namespace hsolver
 {
 
-template <typename FPTYPE, typename Device> struct dngvd_op
-{
-    /// @brief DNGVD computes all the eigenvalues and eigenvectors of a complex generalized
+    template <typename T, typename Device> struct dngvd_op
+    {
+        using Real = typename GetTypeReal<T>::type;
+        /// @brief DNGVD computes all the eigenvalues and eigenvectors of a complex generalized
     /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
     ///
     /// In this op, the CPU version is implemented through the `gvd` interface, and the CUDA version
@@ -31,18 +32,19 @@ template <typename FPTYPE, typename Device> struct dngvd_op
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (col major)
-    void operator()(const Device* d,
-                    const int nstart,
-                    const int ldh,
-                    const std::complex<FPTYPE>* A,
-                    const std::complex<FPTYPE>* B,
-                    FPTYPE* W,
-                    std::complex<FPTYPE>* V);
+        void operator()(const Device* d,
+            const int nstart,
+            const int ldh,
+            const T* A,
+            const T* B,
+            Real* W,
+            T* V);
 };
 
 
-template <typename FPTYPE, typename Device> struct dnevx_op
+    template <typename T, typename Device> struct dnevx_op
 {
+        using Real = typename GetTypeReal<T>::type;
     /// @brief DNEVX computes the first m eigenvalues and their corresponding eigenvectors of
     /// a complex generalized Hermitian-definite eigenproblem
     ///
@@ -61,12 +63,12 @@ template <typename FPTYPE, typename Device> struct dnevx_op
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (row major)
     void operator()(const Device* d,
-                    const int nstart,
-                    const int ldh,
-                    const std::complex<FPTYPE>* A,
-                    const int m,
-                    FPTYPE* W,
-                    std::complex<FPTYPE>* V);
+        const int nstart,
+        const int ldh,
+        const T* A,
+        const int m,
+        Real* W,
+        T* V);
 };
 
 

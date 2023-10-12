@@ -41,10 +41,22 @@ bool elecstate::ElecStateLCAO<double>::need_psi_grid = 1;
 template<>
 bool elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = 1;
 //
-int hsolver::HSolverLCAO::out_mat_hs = 0;
-int hsolver::HSolverLCAO::out_mat_hsR = 0;
-int hsolver::HSolverLCAO::out_mat_t = 0;
-int hsolver::HSolverLCAO::out_mat_dh = 0;
+template<>
+int hsolver::HSolverLCAO<double>::out_mat_hs = 0;
+template<>
+int hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = 0;
+template<>
+int hsolver::HSolverLCAO<double>::out_mat_hsR = 0;
+template<>
+int hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = 0;
+template<>
+int hsolver::HSolverLCAO<double>::out_mat_t = 0;
+template<>
+int hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = 0;
+template<>
+int hsolver::HSolverLCAO<double>::out_mat_dh = 0;
+template<>
+int hsolver::HSolverLCAO <std::complex<double>> ::out_mat_dh = 0;
 int Local_Orbital_Charge::out_dm = 0;
 int Local_Orbital_Charge::out_dm1 = 0;
 double module_tddft::Evolve_elec::td_force_dt;
@@ -118,7 +130,10 @@ int elecstate::H_TDDFT_pw::heavi_count;
 std::vector<double> elecstate::H_TDDFT_pw::heavi_t0;
 std::vector<double> elecstate::H_TDDFT_pw::heavi_amp; // Ry/bohr
 
-double Force_Stress_LCAO::force_invalid_threshold_ev = 0.0;
+template<>
+double Force_Stress_LCAO<double>::force_invalid_threshold_ev = 0.0;
+template<>
+double Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = 0.0;
 double BFGS_Basic::relax_bfgs_w1 = -1.0;
 double BFGS_Basic::relax_bfgs_w2 = -1.0;
 double Ions_Move_Basic::relax_bfgs_rmax = -1.0;

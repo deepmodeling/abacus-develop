@@ -27,7 +27,9 @@ static bool is_init = false;
 template<> AbacusDevice_t get_device_type <DEVICE_CPU> (const DEVICE_CPU* dev) {
     return CpuDevice;
 }
-
+template<> std::string get_current_precision(const double* var) {
+    return "double";
+}
 template<> std::string get_current_precision (const std::complex<float> * var) {
     return "single";
 }

@@ -29,14 +29,6 @@ namespace ModuleESolver
 }
     ESolver_FP::~ESolver_FP()
     {
-        if (this->psi != nullptr)
-        {
-            delete psi;
-        }
-        if (this->psid != nullptr)
-        {
-            delete psid;
-        }
         delete pw_rho;
         if (GlobalV::double_grid)
         {

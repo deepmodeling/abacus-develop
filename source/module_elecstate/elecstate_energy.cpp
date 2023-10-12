@@ -208,7 +208,7 @@ double ElecState::cal_delta_escf() const
     }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(descf);
+    Parallel_Reduce::reduce_pool(descf);
 #endif
 
     descf *= this->omega / this->charge->rhopw->nxyz;

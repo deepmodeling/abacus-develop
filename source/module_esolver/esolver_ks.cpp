@@ -61,6 +61,7 @@ namespace ModuleESolver
     template<typename T, typename Device>
     ESolver_KS<T, Device>::~ESolver_KS()
     {
+        delete this->psi;
         delete this->pw_wfc;
         delete this->p_hamilt;
         delete this->phsol;
@@ -540,5 +541,8 @@ template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
 template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+#ifdef __LCAO
+template class ESolver_KS<double, psi::DEVICE_CPU>;
 #endif
 }

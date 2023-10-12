@@ -45,7 +45,7 @@ void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::m
             }
         }
 
-        Parallel_Reduce::reduce_double_all(line, GlobalV::NLOCAL);
+        Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
 
         if(GlobalV::DRANK == 0)
         {
@@ -158,7 +158,7 @@ void ModuleIO::output_soc_single_R(std::ofstream &ofs, const std::map<size_t, st
             }
         }
 
-        Parallel_Reduce::reduce_complex_double_all(line, GlobalV::NLOCAL);
+        Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
 
         if (GlobalV::DRANK == 0)
         {

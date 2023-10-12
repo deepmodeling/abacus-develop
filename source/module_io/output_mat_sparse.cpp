@@ -6,17 +6,18 @@
 namespace ModuleIO
 {
 
-Output_Mat_Sparse::Output_Mat_Sparse(int out_mat_hsR,
-                                     int out_mat_dh,
-                                     int out_mat_t,
-                                     int out_mat_r,
-                                     int istep,
-                                     const ModuleBase::matrix& v_eff,
-                                     const Parallel_Orbitals& pv,
-                                     LCAO_Hamilt& UHM,
-                                     LCAO_Matrix& LM,
-                                     const K_Vectors& kv,
-                                     hamilt::Hamilt<std::complex<double>>* p_ham)
+    template<typename T>
+    Output_Mat_Sparse<T>::Output_Mat_Sparse(int out_mat_hsR,
+        int out_mat_dh,
+        int out_mat_t,
+        int out_mat_r,
+        int istep,
+        const ModuleBase::matrix& v_eff,
+        const Parallel_Orbitals& pv,
+        LCAO_Hamilt& UHM,
+        LCAO_Matrix& LM,
+        const K_Vectors& kv,
+        hamilt::Hamilt<T>* p_ham)
     : _out_mat_hsR(out_mat_hsR),
       _out_mat_dh(out_mat_dh),
       _out_mat_t(out_mat_t),
@@ -29,9 +30,11 @@ Output_Mat_Sparse::Output_Mat_Sparse(int out_mat_hsR,
       _kv(kv),
       _p_ham(p_ham)
 {
-}
-
-void Output_Mat_Sparse::write()
+    }
+    template<>
+    void Output_Mat_Sparse<double>::write() {}
+    template<>
+    void Output_Mat_Sparse<std::complex<double>>::write()
 {
     if (_out_mat_hsR)
     {
@@ -64,4 +67,6 @@ void Output_Mat_Sparse::write()
     }
 }
 
+    template class Output_Mat_Sparse<double>;
+    template class Output_Mat_Sparse<std::complex<double>>;
 } // namespace ModuleIO

@@ -114,7 +114,12 @@ namespace ModuleESolver
 #ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")
         {
-            p_esolver = new ESolver_KS_LCAO();
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+                p_esolver = new ESolver_KS_LCAO<double, double>();
+            else if (GlobalV::NSPIN < 4)
+                p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+            else
+                p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
         else if (esolver_type == "ksdft_lcao_tddft")
         {

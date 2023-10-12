@@ -31,7 +31,7 @@ AddTest(
 )
 AddTest(
   TARGET base_memory
-  SOURCES memory_test.cpp ../memory.cpp
+  SOURCES memory_test.cpp ../memory.cpp ../parallel_reduce.cpp
 )
 ADDTest(
   TARGET base_global_function

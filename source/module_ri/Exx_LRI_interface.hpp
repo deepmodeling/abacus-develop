@@ -4,8 +4,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
 {
 	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
@@ -15,8 +15,8 @@ void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name)
 {
 	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
@@ -25,8 +25,8 @@ void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
 	iar(exx_lri->Hexxs);
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
 {
 #ifdef __MPI
 		if ( GlobalC::exx_info.info_global.cal_exx )
@@ -70,8 +70,8 @@ void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_M
 #endif // __MPI
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter)
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
@@ -88,8 +88,8 @@ void Exx_LRI_Interface<Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc,
     }
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
 {
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -113,9 +113,9 @@ void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, co
     }
 }
 
-template<typename Tdata>
-bool Exx_LRI_Interface<Tdata>::exx_after_converge(
-    hamilt::Hamilt<std::complex<double>>& hamilt,
+template<typename T, typename Tdata>
+bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
+    hamilt::Hamilt<T>& hamilt,
     LCAO_Matrix& lm,
     const Local_Orbital_Charge& loc,
     const K_Vectors& kv,
