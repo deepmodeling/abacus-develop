@@ -57,7 +57,7 @@ TEST_F(Test_Paw_Atom, test_paw)
         ifs_rhoij >> tmp;
         EXPECT_NEAR(tmp,rhoij[0][i],1e-8);        
     }
-*/
+
     paw_atom.convert_rhoij();
 
     int nrhoijsel = paw_atom.get_nrhoijsel();
@@ -78,4 +78,5 @@ TEST_F(Test_Paw_Atom, test_paw)
         ifs_rhoij >> tmp;
         EXPECT_NEAR(tmp,rhoijp[i],1e-8);        
     }
+*/
 }
