@@ -4,7 +4,7 @@
 #include "module_hamilt_lcao/module_gint/gint.h"
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
-                       int nnnmax, const int max_size, double vfactor,
+                       const int max_size, double vfactor,
                        const double *vlocal, const double *ylmcoef_now,
                        int pwbx, int pwby, int pwbz, int pwbxyz, int pwncx,
                        int pwncy, int pwnczp, int NLOCAL_now, int nbxx,

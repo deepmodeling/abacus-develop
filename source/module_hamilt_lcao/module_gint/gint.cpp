@@ -58,7 +58,6 @@ void Gint::cal_gint(Gint_inout *inout)
 			}
 			gint_gamma_vl_gpu(this->hRGint,
 							lgd,
-							100, // TODO temp set to 64 (Lmax+1)^2
 							max_size,
 							GlobalC::ucell.omega / this->ncxyz,
 							inout->vl,

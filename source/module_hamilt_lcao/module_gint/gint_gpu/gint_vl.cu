@@ -54,8 +54,6 @@ __global__ void get_psi_and_vldr3(double *input_double,
         start_index += threadIdx.x;
         for (int index = start_index; index < end_index; index += blockDim.x)
         {
-            int index_int = index * 2;
-            int it = input_int[index_int];
 
             double dr[3];
             int index_double = index * 5;
@@ -66,6 +64,9 @@ __global__ void get_psi_and_vldr3(double *input_double,
             double vlbr3_value = input_double[index_double + 4];
             // begin calculation
             double ylma[49];    // Attention!!! At present, we only use L=5 at most. So (L+1) * (L+1)=36
+            int index_int = index * 2;
+            int it = input_int[index_int];
+            int dist_tmp = input_int[index_int + 1];
 
             /***************************
             L = 0
@@ -97,7 +98,6 @@ __global__ void get_psi_and_vldr3(double *input_double,
                 tmp0 = ylmcoef[4] * dr[0];
                 ylma[7] = ylmcoef[5] * ylma[4] - ylmcoef[6] * ylma[0] - tmp0 * ylma[2]; // l=2,m=2
                 ylma[8] = -tmp0 * ylma[3];
-                //	ylma[grid_index*nnnmax+8] = tmp1+tmp2*ylma[grid_index*nnnmax+3];//l=2,m=-2
                 if (nwl == 2)
                     goto YLM_END;
 
@@ -209,9 +209,7 @@ __global__ void get_psi_and_vldr3(double *input_double,
 
             double phi = 0.0;
             int it_nw = it * nwmax_g[0];
-            const int it_nw_nr_ip = it_nw * nr_max + ip;
-            int iw_nr = it_nw_nr_ip * 2;
-            int dist_tmp = input_int[index * 2 + 1];//psir_ylm_start[index];
+            int iw_nr = (it_nw * nr_max + ip) * 2;
             int it_nw_iw = it_nw;
             for (int iw = 0; iw < atom_nw[it]; ++iw)
             {
@@ -223,7 +221,8 @@ __global__ void get_psi_and_vldr3(double *input_double,
                 psir_ylm_right[dist_tmp] = temp;
                 psir_ylm_left[dist_tmp] = temp * vlbr3_value;
                 dist_tmp++;
-                iw_nr += nr_max * 2;
+                iw_nr += nr_max;
+                iw_nr += nr_max;
                 it_nw_iw++;
             }
         }
@@ -275,7 +274,6 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                        const int lgd,
-                       const int nnnmax,
                        const int max_size,
                        const double vfactor,
                        const double *vlocal,
