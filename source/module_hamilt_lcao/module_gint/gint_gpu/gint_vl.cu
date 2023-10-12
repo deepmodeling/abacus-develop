@@ -1,5 +1,5 @@
 #include "omp.h"
-#include "gint_tools.h"
+#include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "gint_vl.h"
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"

@@ -5,7 +5,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "gint_vl.h"
+#include "gint_gpu/gint_vl.h"
 
 #ifdef _OPENMP
 #include <omp.h>

@@ -1,6 +1,6 @@
 #ifndef GINT_VL_H
 #define GINT_VL_H
-#include "grid_technique.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                        int lgd_now,

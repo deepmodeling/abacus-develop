@@ -1,3 +1,5 @@
+add_subdirectory(gint_gpu)
+
 list(APPEND objects
     gint.cpp
     gint_gamma.cpp
@@ -18,7 +20,7 @@ list(APPEND objects
     grid_meshcell.cpp
     grid_meshk.cpp
     grid_technique.cpp
-    gint_vl.cu
+    gint_gpu/gint_vl.cu
 )
 
 add_library(
