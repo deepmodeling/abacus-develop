@@ -257,9 +257,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
-    nsx = 0;
-    nsy = 0;
-    nsz = 0;
+    ndx = 0;
+    ndy = 0;
+    ndz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -1053,17 +1053,17 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, bz);
         }
-        else if (strcmp("nsx", word) == 0)
+        else if (strcmp("ndx", word) == 0)
         {
-            read_value(ifs, nsx);
+            read_value(ifs, ndx);
         }
-        else if (strcmp("nsy", word) == 0)
+        else if (strcmp("ndy", word) == 0)
         {
-            read_value(ifs, nsy);
+            read_value(ifs, ndy);
         }
-        else if (strcmp("nsz", word) == 0)
+        else if (strcmp("ndz", word) == 0)
         {
-            read_value(ifs, nsz);
+            read_value(ifs, ndz);
         }
         else if (strcmp("erf_ecut", word) == 0)
         {
@@ -2529,19 +2529,19 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
-    if (nx * ny * nz && nsx * nsy * nsz == 0)
+    if (nx * ny * nz && ndx * ndy * ndz == 0)
     {
-        nsx = nx;
-        nsy = ny;
-        nsz = nz;
+        ndx = nx;
+        ndy = ny;
+        ndz = nz;
     }
-    if (nsx * nsy * nsz && nx * ny * nz == 0)
+    if (ndx * ndy * ndz && nx * ny * nz == 0)
     {
-        nx = nsx;
-        ny = nsy;
-        nz = nsz;
+        nx = ndx;
+        ny = ndy;
+        nz = ndz;
     }
-    if (nsx < nx || nsy < ny || nsz < nz)
+    if (ndx > nx || ndy > ny || ndz > nz)
     {
         GlobalV::double_grid = true;
     }
@@ -3010,6 +3010,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(gamma_only_local);
     Parallel_Common::bcast_double(ecutwfc);
     Parallel_Common::bcast_double(ecutrho);
+    Parallel_Common::bcast_bool(GlobalV::double_grid);
     Parallel_Common::bcast_int(ncx);
     Parallel_Common::bcast_int(ncy);
     Parallel_Common::bcast_int(ncz);
@@ -3019,9 +3020,9 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
-    Parallel_Common::bcast_int(nsx);
-    Parallel_Common::bcast_int(nsy);
-    Parallel_Common::bcast_int(nsz);
+    Parallel_Common::bcast_int(ndx);
+    Parallel_Common::bcast_int(ndy);
+    Parallel_Common::bcast_int(ndz);
     Parallel_Common::bcast_double(erf_ecut);
     Parallel_Common::bcast_double(erf_height);
     Parallel_Common::bcast_double(erf_sigma);
@@ -3372,7 +3373,7 @@ void Input::Check(void)
         ModuleBase::WARNING_QUIT("Input", "ecutrho/ecutwfc must >= 4");
     }
 
-    if (nsx > nx || nsy > ny || nsz > nz)
+    if (ndx < nx || ndy < ny || ndz < nz)
     {
         ModuleBase::WARNING_QUIT("Input", "smooth grids is denser than dense grids");
     }

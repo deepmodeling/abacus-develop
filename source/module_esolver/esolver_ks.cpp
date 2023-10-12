@@ -196,9 +196,9 @@ namespace ModuleESolver
     #endif
             this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
                                     ucell.latvec,
-                                    this->pw_rhos->nx,
-                                    this->pw_rhos->ny,
-                                    this->pw_rhos->nz);
+                                    this->pw_rho->nx,
+                                    this->pw_rho->ny,
+                                    this->pw_rho->nz);
             this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
 #ifdef __MPI
             if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);

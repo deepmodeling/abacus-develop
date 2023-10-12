@@ -336,6 +336,7 @@ OBJS_PSI_INITIALIZER=psi_initializer.o\
 OBJS_PW=fft.o\
     pw_basis.o\
     pw_basis_k.o\
+    pw_basis_sup.o\
     pw_distributeg.o\
     pw_distributeg_method1.o\
     pw_distributeg_method2.o\

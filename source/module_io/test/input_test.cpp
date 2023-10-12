@@ -124,9 +124,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.bx,0);
         EXPECT_EQ(INPUT.by,0);
         EXPECT_EQ(INPUT.bz,0);
-        EXPECT_EQ(INPUT.nsx, 0);
-        EXPECT_EQ(INPUT.nsy, 0);
-        EXPECT_EQ(INPUT.nsz, 0);
+        EXPECT_EQ(INPUT.ndx, 0);
+        EXPECT_EQ(INPUT.ndy, 0);
+        EXPECT_EQ(INPUT.ndz, 0);
         EXPECT_EQ(INPUT.diago_proc,0);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);
@@ -475,9 +475,9 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.bx,2);
         EXPECT_EQ(INPUT.by,2);
         EXPECT_EQ(INPUT.bz,2);
-        EXPECT_EQ(INPUT.nsx, 0);
-        EXPECT_EQ(INPUT.nsy, 0);
-        EXPECT_EQ(INPUT.nsz, 0);
+        EXPECT_EQ(INPUT.ndx, 0);
+        EXPECT_EQ(INPUT.ndy, 0);
+        EXPECT_EQ(INPUT.ndz, 0);
         EXPECT_EQ(INPUT.diago_proc,4);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);
@@ -755,13 +755,13 @@ TEST_F(InputTest, Default_2)
     EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
     INPUT.nbndsto_str = "all";
     INPUT.nx = INPUT.ny = INPUT.nz = 4;
-    INPUT.nsx = INPUT.nsy = INPUT.nsz = 0;
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 0;
     // the 1st calling
     INPUT.Default_2();
     // ^^^^^^^^^^^^^^
-    EXPECT_EQ(INPUT.nsx, 4);
-    EXPECT_EQ(INPUT.nsy, 4);
-    EXPECT_EQ(INPUT.nsz, 4);
+    EXPECT_EQ(INPUT.ndx, 4);
+    EXPECT_EQ(INPUT.ndy, 4);
+    EXPECT_EQ(INPUT.ndz, 4);
     EXPECT_FALSE(GlobalV::double_grid);
     EXPECT_DOUBLE_EQ(INPUT.ecutrho, 80.0);
     EXPECT_EQ(INPUT.vdw_s6, "0.75");
@@ -810,7 +810,7 @@ TEST_F(InputTest, Default_2)
     INPUT.nbndsto_str = "0";
     INPUT.esolver_type = "sdft";
     INPUT.nx = INPUT.ny = INPUT.nz = 0;
-    INPUT.nsx = INPUT.nsy = INPUT.nsz = 4;
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 4;
     // the 2nd calling
 	INPUT.Default_2();
 	// ^^^^^^^^^^^^^^
@@ -857,8 +857,8 @@ TEST_F(InputTest, Default_2)
 	INPUT.ks_solver = "cg";
 	GlobalV::NPROC = 8;
 	INPUT.diago_proc = 1;
-    INPUT.nx = INPUT.ny = INPUT.nz = 6;
-    INPUT.nsx = INPUT.nsy = INPUT.nsz = 4;
+    INPUT.nx = INPUT.ny = INPUT.nz = 4;
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 6;
     // the 3rd calling
     INPUT.Default_2();
     // ^^^^^^^^^^^^^^
@@ -884,7 +884,7 @@ TEST_F(InputTest, Default_2)
     INPUT.ecutwfc = 10;
     INPUT.ecutrho = 100;
     INPUT.nx = INPUT.ny = INPUT.nz = 0;
-    INPUT.nsx = INPUT.nsy = INPUT.nsz = 0;
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 0;
     GlobalV::double_grid = false;
     // the 4th calling
     INPUT.Default_2();
@@ -1006,8 +1006,8 @@ TEST_F(InputTest, Check)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("ecutrho/ecutwfc must >= 4"));
 
-    INPUT.nx = INPUT.ny = INPUT.nz = 8;
-    INPUT.nsx = INPUT.nsy = INPUT.nsz = 10;
+    INPUT.nx = INPUT.ny = INPUT.nz = 10;
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 8;
     testing::internal::CaptureStdout();
     INPUT.Check();
     output = testing::internal::GetCapturedStdout();

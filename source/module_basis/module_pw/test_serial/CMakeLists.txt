@@ -12,6 +12,7 @@ add_library(
     ../fft.cpp
     ../pw_basis.cpp
     ../pw_basis_k.cpp
+    ../pw_basis_sup.cpp
     ../pw_distributeg.cpp
     ../pw_distributeg_method1.cpp
     ../pw_distributeg_method2.cpp

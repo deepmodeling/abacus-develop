@@ -382,7 +382,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
 
     // interpolate potential on the smooth mesh if necessary
-    this->pelec->pot->interpolate_vrs(this->pw_rho, this->pw_rhos);
+    this->pelec->pot->interpolate_vrs(this->pw_rhod, this->pw_rho);
     /*
         after init_rho (in pelec->init_scf), we have rho now.
         before hamilt2density, we update Hk and initialize psi

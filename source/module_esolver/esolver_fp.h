@@ -4,6 +4,7 @@
 
 #include "esolver.h"
 #include "module_basis/module_pw/pw_basis.h"
+#include "module_basis/module_pw/pw_basis_sup.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -15,7 +16,8 @@ namespace ModuleESolver
     {
     public:
         ModulePW::PW_Basis* pw_rho;
-        ModulePW::PW_Basis* pw_rhos;    ///< smooth grid for smooth part of the charge density (for uspp)
+        ModulePW::PW_Basis* pw_rhod; ///< dense grid for dense part of the charge density (for uspp)
+        ModulePW::PW_Basis_Sup* pw_rhod_sup;
         ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
         ESolver_FP();
         virtual ~ESolver_FP();

@@ -167,7 +167,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
 
     // interpolate potential on the smooth mesh if necessary
-    this->pelec->pot->interpolate_vrs(this->pw_rho, this->pw_rhos);
+    this->pelec->pot->interpolate_vrs(this->pw_rhod, this->pw_rho);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
