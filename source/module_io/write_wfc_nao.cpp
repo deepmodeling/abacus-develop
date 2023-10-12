@@ -1,8 +1,9 @@
 #include "write_wfc_nao.h"
-#include "module_base/timer.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
+
 #include "binstream.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/timer.h"
 
 void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {

@@ -38,22 +38,24 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
 
     if(add)
     {
+        FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] += factor / FPTYPE(this->nxyz) * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
+            out[ig] += tmpfac * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
     else
     {
+        FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] = this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] / FPTYPE(this->nxyz);
+            out[ig] = tmpfac * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
     ModuleBase::timer::tick(this->classname, "real2recip");
@@ -103,22 +105,24 @@ void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const boo
 
     if(add)
     {
+        FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] += factor / FPTYPE(this->nxyz) * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
+            out[ig] += tmpfac * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
     else
     {
+        FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
         for(int ig = 0 ; ig < this->npw ; ++ig)
         {
-            out[ig] = this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] / FPTYPE(this->nxyz);
+            out[ig] = tmpfac * this->ft.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
     ModuleBase::timer::tick(this->classname, "real2recip");

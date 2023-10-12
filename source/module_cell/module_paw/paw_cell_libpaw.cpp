@@ -139,7 +139,8 @@ void Paw_Cell::set_libpaw_cell(const ModuleBase::Matrix3 latvec, const double la
 
 // FFT grid information, sets ngfft and ngfftdg
 void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
-        const int nxdg_in, const int nydg_in, const int nzdg_in)
+        const int nxdg_in, const int nydg_in, const int nzdg_in,
+        const int * start_z_in, const int * num_z_in)
 {
     ModuleBase::TITLE("Paw_Cell", "set_libpaw_fft");
     ngfft.resize(3);
@@ -148,10 +149,25 @@ void Paw_Cell::set_libpaw_fft(const int nx_in, const int ny_in, const int nz_in,
     ngfft[0] = nx_in;
     ngfft[1] = ny_in;
     ngfft[2] = nz_in;
+
+    nx = nx_in;
+    ny = ny_in;
+    nz = nz_in;
+
     ngfftdg[0] = nxdg_in;
     ngfftdg[1] = nydg_in;
     ngfftdg[2] = nzdg_in;
     nfft = ngfftdg[0]*ngfftdg[1]*ngfftdg[2];
+
+#ifdef __MPI
+    start_z.resize(GlobalV::NPROC);
+    num_z.resize(GlobalV::NPROC);
+    for(int iproc = 0; iproc < GlobalV::NPROC; iproc ++)
+    {
+        start_z[iproc] = start_z_in[iproc];
+        num_z[iproc] = num_z_in[iproc];
+    }
+#endif
 }
 
 // Sets natom, ntypat, typat and xred
@@ -181,6 +197,7 @@ void Paw_Cell::set_libpaw_files()
 {
     ModuleBase::TITLE("Paw_Cell", "set_libpaw_files");
 
+    filename_list = new char[ntypat*264];
     if(GlobalV::MY_RANK == 0)
     {
         std::ifstream ifa(GlobalV::stru_file.c_str(), std::ios::in);
@@ -196,7 +213,6 @@ void Paw_Cell::set_libpaw_files()
             if (line.find("PAW_FILES") != std::string::npos) break;
         }
 
-        filename_list = new char[ntypat*264];
         for(int i = 0; i < ntypat*264; i++)
         {
             filename_list[i] = ' ';
@@ -267,8 +283,38 @@ void Paw_Cell::prepare_paw()
 
 void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
 {
+    double * vloc_tmp, * ncoret_tmp;
+    vloc_tmp = new double[nfft];
+    ncoret_tmp = new double[nfft];
+    
     get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
-            gmet.data(), ucvol, xred.data(), ncoret, vloc);
+            gmet.data(), ucvol, xred.data(), ncoret_tmp, vloc_tmp);
+
+    for(int ix = 0; ix < nx; ix ++)
+    {
+        for(int iy = 0; iy < ny; iy ++)
+        {
+#ifdef __MPI
+            for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
+            {
+                int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
+                int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
+
+                vloc[ind_c] = vloc_tmp[ind_fortran];
+                ncoret[ind_c] = ncoret_tmp[ind_fortran];
+            }
+#else
+            for(int iz = 0; iz < nz; iz ++)
+            {
+                int ind_c = ix*ny*nz + iy*nz + iz;
+                int ind_fortran = iz*ny*nx + iy*nx + ix;
+
+                vloc[ind_c] = vloc_tmp[ind_fortran];
+                ncoret[ind_c] = ncoret_tmp[ind_fortran];
+            }
+#endif
+        }
+    }
 }
 
 void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp)
@@ -287,15 +333,34 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
     get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
             ucvol,nhat_tmp,nhatgr);
 
-    for(int ir = 0; ir < nfft; ir ++)
+    for(int is = 0; is < nspden; is ++)
     {
-        for(int is = 0; is < nspden; is ++)
+        // I'm not sure about this yet !!!
+        // need to check for nspin = 2 later
+        // Fortran is column major, and rhor is of dimension (nfft, nspden)
+        // so presumably should be this way m
+        for(int ix = 0; ix < nx; ix ++)
         {
-            // I'm not sure about this yet !!!
-            // need to check for nspin = 2 later
-            // Fortran is column major, and rhor is of dimension (nfft, nspden)
-            // so presumably should be this way m
-            nhat[is][ir] = nhat_tmp[ir*nspden+is];
+            for(int iy = 0; iy < ny; iy ++)
+            {
+#ifdef __MPI
+                for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
+                {
+                    int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
+                    int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
+
+                    nhat[is][ind_c] = nhat_tmp[ind_fortran*nspden+is];
+                }
+#else
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    int ind_c = ix*ny*nz + iy*nz + iz;
+                    int ind_fortran = iz*ny*nx + iy*nx + ix;
+
+                    nhat[is][ind_c] = nhat_tmp[ind_fortran*nspden+is];
+                }
+#endif
+            }
         }
     }
     delete[] nhat_tmp;
@@ -305,16 +370,101 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
 {
     ModuleBase::TITLE("Paw_Cell", "calculate_dij");
     double * vks_hartree, * vxc_hartree;
+
+#ifdef __MPI
+    double * vks_collected, * vxc_collected;
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        vks_hartree = new double[nspden * nfft];
+        vxc_hartree = new double[nspden * nfft];
+        vks_collected = new double[nspden * nfft];
+        vxc_collected = new double[nspden * nfft];
+    }
+
+    // Collecting vks and vxc from all processes; I hope there could be a better way
+    // but this is what I can think of right now.
+    const int nxy = nx * ny;
+    for(int is = 0; is < nspden; is ++)
+    {
+        double * vks_send = new double[num_z[GlobalV::RANK_IN_POOL]];
+        double * vxc_send = new double[num_z[GlobalV::RANK_IN_POOL]];
+        double * vks_receive = new double[nz];
+        double * vxc_receive = new double[nz];
+        for(int ixy = 0; ixy < nxy; ixy ++)
+        {
+            for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz++)
+            {
+                vks_send[iz] = vks[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz)*nspden + is];
+                vxc_send[iz] = vxc[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz)*nspden + is];
+            }
+
+            MPI_Gatherv(vks_send,num_z[GlobalV::RANK_IN_POOL],MPI_DOUBLE,vks_receive,num_z.data(),start_z.data(),MPI_DOUBLE,0,MPI_COMM_WORLD);
+            MPI_Gatherv(vxc_send,num_z[GlobalV::RANK_IN_POOL],MPI_DOUBLE,vxc_receive,num_z.data(),start_z.data(),MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+            if(GlobalV::RANK_IN_POOL == 0)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    vks_collected[(ixy*nz + iz)*nspden + is] = vks_receive[iz];
+                    vxc_collected[(ixy*nz + iz)*nspden + is] = vxc_receive[iz];
+                }
+            }
+        }
+        delete[] vks_send;
+        delete[] vxc_send;
+        delete[] vks_receive;
+        delete[] vxc_receive;
+    
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            for(int ix = 0; ix < nx; ix ++)
+            {
+                for(int iy = 0; iy < ny; iy ++)
+                {
+                    for(int iz = 0; iz < nz; iz ++)
+                    {
+                        int ind_c = (ix*ny*nz + iy*nz + iz)*nspden + is;
+                        int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
+                        vks_hartree[ind_fortran] = vks_collected[ind_c] / 2.0;
+                        vxc_hartree[ind_fortran] = vxc_collected[ind_c] / 2.0;
+                    }
+                }
+            }
+            calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);          
+        }
+    }
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        delete[] vks_hartree;
+        delete[] vxc_hartree;
+        delete[] vks_collected;
+        delete[] vxc_collected;
+    }
+
+#else
     vks_hartree = new double[nspden * nfft];
     vxc_hartree = new double[nspden * nfft];
-    for(int i = 0; i < nspden * nfft; i ++)
+    for(int is = 0; is < nspden; is ++)
     {
-        vks_hartree[i] = vks[i] / 2.0;
-        vxc_hartree[i] = vxc[i] / 2.0;
+        for(int ix = 0; ix < nx; ix ++)
+        {
+            for(int iy = 0; iy < ny; iy ++)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    int ind_c = (ix*ny*nz + iy*nz + iz)*nspden + is;
+                    int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
+                    vks_hartree[ind_fortran] = vks[ind_c] / 2.0;
+                    vxc_hartree[ind_fortran] = vxc[ind_c] / 2.0;
+                }
+            }
+        }
     }
     calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);
     delete[] vks_hartree;
     delete[] vxc_hartree;
+#endif
 }
 
 void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
@@ -337,6 +487,28 @@ void Paw_Cell::init_rho(double ** rho)
     init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
             gmet.data(), ucvol, xred.data(), rho_tmp);
 
+#ifdef __MPI
+    for(int is = 0; is < nspden; is ++)
+    {
+        // I'm not sure about this yet !!!
+        // need to check for nspin = 2 later
+        // Fortran is column major, and rhor is of dimension (nfft, nspden)
+        // so presumably should be this way m
+        for(int ix = 0; ix < nx; ix ++)
+        {
+            for(int iy = 0; iy < ny; iy ++)
+            {
+                for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz ++)
+                {
+                    int ind_c = ix*ny*num_z[GlobalV::RANK_IN_POOL] + iy*num_z[GlobalV::RANK_IN_POOL] + iz;
+                    int ind_fortran = (iz+start_z[GlobalV::RANK_IN_POOL])*ny*nx + iy*nx + ix;
+
+                    rho[is][ind_c] = rho_tmp[ind_fortran*nspden+is];
+                }
+            }
+        }
+    }
+#else
     for(int ir = 0; ir < nfft; ir ++)
     {
         for(int is = 0; is < nspden; is ++)
@@ -348,6 +520,7 @@ void Paw_Cell::init_rho(double ** rho)
             rho[is][ir] = rho_tmp[ir*nspden+is];
         }
     }
+#endif
     delete[] rho_tmp;
 }
 
@@ -362,6 +535,10 @@ void Paw_Cell::set_dij()
         double* dij = new double[nproj * nproj];
 
         get_dij(iat,size_dij,dij_libpaw);
+
+#ifdef __MPI
+        Parallel_Common::bcast_double(dij_libpaw,size_dij);
+#endif
 
         for(int jproj = 0; jproj < nproj; jproj ++)
         {
@@ -381,8 +558,9 @@ void Paw_Cell::set_dij()
 
 void Paw_Cell::set_sij()
 {
+    int at_ind = 0;
     for(int it = 0; it < ntypat; it ++)
-    {
+    {   
         const int nproj = paw_element_list[it].get_mstates();
         const int size_sij = nproj * (nproj+1) / 2 * nspden;
         double* sij_libpaw = new double[size_sij];
@@ -399,7 +577,13 @@ void Paw_Cell::set_sij()
                 sij[jproj*nproj+iproj] = sij_libpaw[ind];
             }
         }
-        paw_atom_list[it].set_sij(sij);
+        const int na = nat_type[it];
+        for(int ia = 0; ia < na; ia ++)
+        {
+            int iat = atom_map[at_ind];
+            at_ind ++;
+            paw_atom_list[iat].set_sij(sij);
+        }
 
         delete[] sij_libpaw;
         delete[] sij;

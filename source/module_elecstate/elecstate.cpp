@@ -192,7 +192,7 @@ void ElecState::calEBand()
         //==================================
         this->f_en.eband /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_all(this->f_en.eband);
+        Parallel_Reduce::reduce_all(this->f_en.eband);
 #endif
     }
     return;

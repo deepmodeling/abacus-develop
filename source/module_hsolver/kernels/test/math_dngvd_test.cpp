@@ -143,7 +143,7 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
 
     // run
     hsolver::createGpuBlasHandle();
-    hsolver::matrixTranspose_op<double, psi::DEVICE_GPU>()(gpu_ctx, 2, 3, device_transpose, device_transpose);
+    hsolver::matrixTranspose_op<std::complex<double>, psi::DEVICE_GPU>()(gpu_ctx, 2, 3, device_transpose, device_transpose);
     hsolver::destoryBLAShandle();
 
     // copy transpose data from GPU to CPU

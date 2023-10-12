@@ -120,9 +120,9 @@ class DiagoCGPrepare
         DIAGOTEST::npw_local = new int[nprocs];
 #ifdef __MPI				
 	    DIAGOTEST::cal_division(DIAGOTEST::npw);
-	    DIAGOTEST::divide_hpsi_f(psi,psi_local); //will distribute psi and Hmatrix to each process
+        DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix_f, DIAGOTEST::hmatrix_local_f); //will distribute psi and Hmatrix to each process
 	    precondition_local = new float[DIAGOTEST::npw_local[mypnum]];
-	    DIAGOTEST::divide_psi_f<float>(precondition,precondition_local);	
+        DIAGOTEST::divide_psi<float>(precondition, precondition_local);
 #else
 	    DIAGOTEST::hmatrix_local_f = DIAGOTEST::hmatrix_f;
 	    DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
@@ -164,7 +164,7 @@ TEST_P(DiagoCGFloatTest, RandomHamilt)
     hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
     //std::cout<<"maxiter "<<hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX<<std::endl;
     //std::cout<<"eps "<<hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR<<std::endl;
-    HPsi_f hpsi(dcp.nband, dcp.npw, dcp.sparsity);
+    HPsi<std::complex<float>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
     DIAGOTEST::hmatrix_f = hpsi.hamilt();
 
     DIAGOTEST::npw = dcp.npw;
@@ -189,7 +189,7 @@ TEST(DiagoCGFloatTest, Hamilt)
 {
     int dim = 2;
     int nbnd = 2;
-    HPsi_f hpsi(nbnd, dim);
+    HPsi<std::complex<float>> hpsi(nbnd, dim);
     std::vector<std::complex<float>> hm = hpsi.hamilt();
     EXPECT_EQ(DIAGOTEST::h_nr, 2);
     EXPECT_EQ(DIAGOTEST::h_nc, 2);
@@ -258,7 +258,7 @@ TEST(DiagoCGFloatTest, readH)
     DiagoCGPrepare dcp(nband, dim, 0, true, 1e-5, 500, 1e-0);
     hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = dcp.maxiter;
     hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
-    HPsi_f hpsi;
+    HPsi<std::complex<float>> hpsi;
     hpsi.create(nband, dim);
     DIAGOTEST::hmatrix_f = hpsi.hamilt();
     DIAGOTEST::npw = dim;

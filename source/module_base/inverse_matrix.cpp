@@ -74,4 +74,36 @@ void Inverse_Matrix_Complex::using_zheev( const ModuleBase::ComplexMatrix &Sin, 
     return;
 }
 
+void Inverse_Matrix_Real(const int dim, const double* in, double* out)
+{
+    int info = 0;
+    int lda = dim;
+    int lwork = 64 * dim;
+    int* ipiv = new int[dim];
+    double* work = new double[lwork];
+
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
+            out[i * dim + j] = in[i * dim + j];
+        }
+    }
+
+    dgetrf_(&dim, &dim, out, &lda, ipiv, &info);
+    if (info != 0)
+    {
+        std::cout << "ERROR: LAPACK dgetrf error, info = " << info << std::endl;
+        exit(1);
+    }
+    dgetri_(&dim, out, &lda, ipiv, work, &lwork, &info);
+    if (info != 0)
+    {
+        std::cout << "ERROR: LAPACK dgetri error, info = " << info << std::endl;
+        exit(1);
+    }
+
+    delete[] ipiv;
+    delete[] work;
+}
 }

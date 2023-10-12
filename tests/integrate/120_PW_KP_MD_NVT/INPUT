@@ -20,7 +20,7 @@ cal_force           1
 force_thr_ev    1.0e-3
 
 ks_solver       cg
-mixing_type     pulay
+mixing_type     broyden
 mixing_beta     0.7
 
 md_tchain        4

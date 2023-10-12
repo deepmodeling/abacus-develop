@@ -1,7 +1,8 @@
-#include "./math_chebyshev.h"
-#include "./constants.h"
-#include "./blas_connector.h"
-#include "./global_function.h"
+#include "math_chebyshev.h"
+
+#include "blas_connector.h"
+#include "constants.h"
+#include "global_function.h"
 namespace ModuleBase
 {
 

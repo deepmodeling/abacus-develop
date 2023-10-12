@@ -24,7 +24,7 @@ smearing_method gaussian
 smearing_sigma 0.01
 
 #Parameters (5.Mixing)
-mixing_type pulay
+mixing_type broyden
 mixing_beta 0.4
 out_pot 2
 ```

@@ -1,6 +1,6 @@
-#include "module_io/dm_io.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
+#include "module_io/dm_io.h"
 
 //-------------------------------------------------
 // NOTE for ModuleIO::write_dm
@@ -144,7 +144,7 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_int_all( count, GlobalV::NLOCAL );
+        Parallel_Reduce::reduce_all(count, GlobalV::NLOCAL);
 
         // reduce the density matrix for 'i' line.
         ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
@@ -160,7 +160,7 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_double_all( tmp, GlobalV::NLOCAL );
+        Parallel_Reduce::reduce_all(tmp, GlobalV::NLOCAL);
 
         if(GlobalV::MY_RANK==0)
         {

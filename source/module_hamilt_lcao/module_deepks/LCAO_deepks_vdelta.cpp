@@ -395,7 +395,7 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
         }
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_all(this->e_delta_band);
+    Parallel_Reduce::reduce_all(this->e_delta_band);
 #endif
     return;
 }
@@ -436,7 +436,7 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
 
     this->e_delta_band = e_delta_band_k.real();
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_all(this->e_delta_band);
+    Parallel_Reduce::reduce_all(this->e_delta_band);
 #endif
     return;
 }
