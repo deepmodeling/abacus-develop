@@ -311,6 +311,7 @@ extern double sc_thr;
 extern int nsc;
 extern int nsc_min;
 extern double alpha_trial;
+extern double sccut;
 extern std::string sc_file;
 } // namespace GlobalV
 #endif

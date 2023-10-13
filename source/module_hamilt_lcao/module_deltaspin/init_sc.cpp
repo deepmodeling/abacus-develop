@@ -12,6 +12,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
                                             int nsc_in,
                                             int nsc_min_in,
                                             double alpha_trial_in,
+                                            double sccut_in,
                                             bool decay_grad_switch_in,
                                             K_Vectors kv_in,
                                             std::string KS_SOLVER_in,
@@ -27,6 +28,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     this->nsc_min_ = nsc_min_in;
     this->decay_grad_switch_ = decay_grad_switch_in;
     this->alpha_trial_ = alpha_trial_in/ModuleBase::Ry_to_eV;
+    this->restrict_current_ = sccut_in/ModuleBase::Ry_to_eV;
     // get pointer to outter pointers
     this->ParaV = ParaV_in;
     this->phsol = phsol_in;

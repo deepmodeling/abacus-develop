@@ -897,6 +897,7 @@ TEST_F(write_input, Deltaspin22)
     EXPECT_THAT(output, testing::HasSubstr("sc_file                        none #file name for parameters used in non-collinear spin-constrained DFT (json format)"));
     EXPECT_THAT(output, testing::HasSubstr("alpha_trial                    0.01 #Initial trial step size for lambda"));
     ifs.close();
+    EXPECT_THAT(output, testing::HasSubstr("sccut                          3 #Maximal step size for lambda in eV/uB"));
     remove("write_input_test.log");
 }
 #undef private

@@ -264,6 +264,7 @@ namespace ModuleESolver
                 GlobalV::nsc,
                 GlobalV::nsc_min,
                 GlobalV::alpha_trial,
+                GlobalV::sccut,
                 GlobalV::decay_grad_switch,
                 this->kv,
                 GlobalV::KS_SOLVER,

@@ -733,6 +733,7 @@ void Input_Conv::Convert(void)
     GlobalV::nsc = INPUT.nsc;
     GlobalV::nsc_min = INPUT.nsc_min;
     GlobalV::alpha_trial = INPUT.alpha_trial;
+    GlobalV::sccut = INPUT.sccut;
     GlobalV::sc_file = INPUT.sc_file;
 
     // mixing parameters

@@ -60,6 +60,8 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
         //std::cout << "bound_gradient " << bound_gradient[it] << std::endl;
     }
 
+    std::cout << "sccut " << this->restrict_current_ << std::endl;
+
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
     std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;

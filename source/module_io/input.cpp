@@ -612,6 +612,7 @@ void Input::Default(void)
     nsc = 100;
     nsc_min = 2;
     alpha_trial = 0.01;
+    sccut = 3.0;
     sc_file = "none";
     return;
 }
@@ -2205,6 +2206,9 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("alpha_trial", word) == 0){
             read_value(ifs, alpha_trial);
         }
+        else if (strcmp("sccut", word) == 0){
+            read_value(ifs, sccut);
+        }
         else if (strcmp("sc_file", word) == 0){
             read_value(ifs, sc_file);
         }
@@ -3380,6 +3384,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nsc_min);
     Parallel_Common::bcast_string(sc_file);
     Parallel_Common::bcast_double(alpha_trial);
+    Parallel_Common::bcast_double(sccut);
 
     return;
 }
@@ -3897,6 +3902,10 @@ void Input::Check(void)
         if (alpha_trial <= 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "alpha_trial must > 0");
+        }
+        if (sccut <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
         }
     }
 

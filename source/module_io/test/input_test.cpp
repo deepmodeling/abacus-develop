@@ -374,6 +374,7 @@ TEST_F(InputTest, Default)
     EXPECT_EQ(INPUT.nsc, 100);
     EXPECT_EQ(INPUT.nsc_min, 2);
     EXPECT_DOUBLE_EQ(INPUT.alpha_trial, 0.01);
+    EXPECT_DOUBLE_EQ(INPUT.sccut, 3.0);
     EXPECT_EQ(INPUT.sc_file, "none");
 }
 
@@ -733,6 +734,7 @@ TEST_F(InputTest, Read)
     EXPECT_EQ(INPUT.nsc, 50);
 	EXPECT_EQ(INPUT.nsc_min, 4);
     EXPECT_DOUBLE_EQ(INPUT.alpha_trial, 0.02);
+	EXPECT_DOUBLE_EQ(INPUT.sccut, 4.0);
     EXPECT_EQ(INPUT.sc_file, "sc.json");
 }
 
@@ -1578,6 +1580,13 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("alpha_trial must > 0"));
 	INPUT.alpha_trial = 0.01;
+	// warning 9 of Deltapsin
+    INPUT.sccut = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("sccut must > 0"));
+	INPUT.sccut = 3.0;
     // restore to default values
     INPUT.nspin = 1;
 	INPUT.sc_file = "none";
