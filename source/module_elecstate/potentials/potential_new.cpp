@@ -18,6 +18,7 @@
 namespace elecstate
 {
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
+                     const ModulePW::PW_Basis* rho_basis_smooth_in,
                      const UnitCell* ucell_in,
                      const ModuleBase::matrix* vloc_in,
                      Structure_Factor* structure_factors_in,
@@ -26,6 +27,7 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
     : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), etxc_(etxc_in), vtxc_(vtxc_in)
 {
     this->rho_basis_ = rho_basis_in;
+    this->rho_basis_smooth_ = rho_basis_smooth_in;
     this->fixed_mode = true;
     this->dynamic_mode = true;
 
@@ -150,6 +152,9 @@ void Potential::update_from_charge(const Charge* chg, const UnitCell* ucell)
 
     this->cal_v_eff(chg, ucell, this->v_effective);
 
+    // interpolate potential on the smooth mesh if necessary
+    this->interpolate_vrs();
+
 #ifdef USE_PAW
     if(GlobalV::use_paw)
     {
@@ -270,44 +275,42 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
     return;
 }
 
-void Potential::interpolate_vrs(const ModulePW::PW_Basis* rho_basis_in, const ModulePW::PW_Basis* rho_basis_out)
+void Potential::interpolate_vrs()
 {
     ModuleBase::TITLE("Potential", "interpolate_vrs");
     ModuleBase::timer::tick("Potential", "interpolate_vrs");
 
     if (GlobalV::double_grid)
     {
-        if (rho_basis_in->gamma_only != rho_basis_out->gamma_only)
+        if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {
             ModuleBase::WARNING_QUIT("Potential::interpolate_vrs", "gamma_only is not consistent");
         }
 
-        ModuleBase::ComplexMatrix vrs_in(GlobalV::NSPIN, rho_basis_in->npw);
-        ModuleBase::ComplexMatrix vrs_out(GlobalV::NSPIN, rho_basis_out->npw);
+        ModuleBase::ComplexMatrix vrs_in(GlobalV::NSPIN, rho_basis_->npw);
+        ModuleBase::ComplexMatrix vrs_out(GlobalV::NSPIN, rho_basis_smooth_->npw);
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            rho_basis_in->real2recip(&v_effective(is, 0), &vrs_in(is, 0));
+            rho_basis_->real2recip(&v_effective(is, 0), &vrs_in(is, 0));
         }
 
-        for (int in = 0; in < rho_basis_in->npw; in++)
+        const ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<const ModulePW::PW_Basis_Sup*>(rho_basis_);
+
+        pw_rhod_sup->recip_gd2gs(vrs_in, vrs_out);
+
+        this->v_eff_smooth.create(GlobalV::NSPIN, rho_basis_smooth_->nrxx);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            for (int out = 0; out < rho_basis_out->npw; out++)
+            rho_basis_smooth_->recip2real(&vrs_out(is, 0), &v_eff_smooth(is, 0));
+            for (int ig = 0; ig < rho_basis_smooth_->nrxx; ig++)
             {
-                if (rho_basis_in->gcar[in] == rho_basis_out->gcar[out])
-                {
-                    for (int is = 0; is < GlobalV::NSPIN; is++)
-                    {
-                        vrs_out(is, out) = vrs_in(is, in);
-                    }
-                }
+                GlobalV::ofs_running << std::fixed << std::setprecision(10) << v_eff_smooth(is, ig) << std::endl;
             }
         }
-
-        this->v_effective.create(GlobalV::NSPIN, rho_basis_out->nrxx);
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            rho_basis_out->recip2real(&vrs_out(is, 0), &v_effective(is, 0));
-        }
+    }
+    else
+    {
+        this->v_eff_smooth = this->v_effective;
     }
 
     ModuleBase::timer::tick("Potential", "interpolate_vrs");

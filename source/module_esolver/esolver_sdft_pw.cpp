@@ -49,7 +49,8 @@ void ESolver_SDFT_PW::Init(Input &inp, UnitCell &ucell)
     // Initializee the potential.
     if(this->pelec->pot == nullptr)
     {
-        this->pelec->pot = new elecstate::Potential(pw_rho,
+        this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                    pw_rho,
                                                     &GlobalC::ucell,
                                                     &(GlobalC::ppcell.vloc),
                                                     &(sf),

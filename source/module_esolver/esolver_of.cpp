@@ -118,7 +118,8 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    this->pelec->pot = new elecstate::Potential(pw_rho,
+    this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                pw_rho,
                                                 &GlobalC::ucell,
                                                 &GlobalC::ppcell.vloc,
                                                 &sf,
@@ -165,9 +166,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
     GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
-
-    // interpolate potential on the smooth mesh if necessary
-    this->pelec->pot->interpolate_vrs(this->pw_rhod, this->pw_rho);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -282,7 +280,8 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     this->pelec->omega = GlobalC::ucell.omega;
 
     delete this->pelec->pot;
-    this->pelec->pot = new elecstate::Potential(this->pw_rho,
+    this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                this->pw_rho,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(this->sf),

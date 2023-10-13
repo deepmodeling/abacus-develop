@@ -71,6 +71,11 @@ void PW_Basis_Sup::distribute_g(const int* fftixy2ip_s, // fftixy2ip of smooth g
     return;
 }
 
+///
+/// get igs2igd and igd2igs
+/// Known: gcar and npw of dense grids, gcar_s and npw_s of smooth grids
+/// output: igs2igd[igs], igd2igs[isd]
+///
 void PW_Basis_Sup::link_igs_igd(const ModuleBase::Vector3<double>* gcar_s, // G vectors  of smooth grids
                                 const int& npw_s                           // npw of smooth grids
 )
@@ -96,6 +101,56 @@ void PW_Basis_Sup::link_igs_igd(const ModuleBase::Vector3<double>* gcar_s, // G 
                 igs2igd[igs] = igd;
                 igd2igs[igd] = igs;
             }
+        }
+    }
+}
+
+///
+/// transform recip data from smooth grids to dense grids
+///
+void PW_Basis_Sup::recip_gs2gd(const ModuleBase::ComplexMatrix& data_s, // data of smooth grids
+                               ModuleBase::ComplexMatrix& data_d        // data of dense grids
+) const
+{
+    assert(data_s.nr == data_d.nr);
+    assert(data_s.nc <= data_d.nc);
+    if (data_s.nc == data_d.nc)
+    {
+        data_d = data_s;
+        return;
+    }
+    for (int igs = 0; igs < data_s.nc; igs++)
+    {
+        int igd = this->igs2igd[igs];
+
+        for (int ir = 0; ir < data_s.nr; ir++)
+        {
+            data_d(ir, igd) = data_s(ir, igs);
+        }
+    }
+}
+
+///
+/// transform recip data from dense grids to smooth grids
+///
+void PW_Basis_Sup::recip_gd2gs(const ModuleBase::ComplexMatrix& data_d, // data of dense grids
+                               ModuleBase::ComplexMatrix& data_s        // data of smooth grids
+) const
+{
+    assert(data_s.nr == data_d.nr);
+    assert(data_s.nc <= data_d.nc);
+    if (data_s.nc == data_d.nc)
+    {
+        data_s = data_d;
+        return;
+    }
+    for (int igs = 0; igs < data_s.nc; igs++)
+    {
+        int igd = this->igs2igd[igs];
+
+        for (int ir = 0; ir < data_s.nr; ir++)
+        {
+            data_s(ir, igs) = data_d(ir, igd);
         }
     }
 }

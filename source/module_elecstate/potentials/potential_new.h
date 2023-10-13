@@ -50,6 +50,7 @@ class Potential : public PotBase
     Potential(){};
     // In constructor, size of every potential components should be allocated
     Potential(const ModulePW::PW_Basis* rho_basis_in,
+              const ModulePW::PW_Basis* rho_basis_smooth_in,
               const UnitCell* ucell_in,
               const ModuleBase::matrix* vloc_in,
               Structure_Factor* structure_factors_in,
@@ -65,8 +66,6 @@ class Potential : public PotBase
     void update_from_charge(const Charge* chg, const UnitCell* ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
-    // interpolate potential on the smooth mesh if necessary
-    void interpolate_vrs(const ModulePW::PW_Basis* rho_basis_in, const ModulePW::PW_Basis* rho_basis_out);
 
     PotBase* get_pot_type(const std::string& pot_type);
 
@@ -80,6 +79,14 @@ class Potential : public PotBase
         return this->v_effective;
     }
 
+    ModuleBase::matrix& get_veff_smooth()
+    {
+        return this->v_eff_smooth;
+    }
+    const ModuleBase::matrix& get_veff_smooth() const
+    {
+        return this->v_eff_smooth;
+    }
 
     double* get_effective_v(int is)
     {
@@ -152,11 +159,15 @@ class Potential : public PotBase
   private:
     void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
+    // interpolate potential on the smooth mesh if necessary
+    void interpolate_vrs();
 
     void allocate();
 
     std::vector<double> v_effective_fixed;
     ModuleBase::matrix v_effective;
+
+    ModuleBase::matrix v_eff_smooth; // used in uspp liuyu 2023-10-12
 
     ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
 

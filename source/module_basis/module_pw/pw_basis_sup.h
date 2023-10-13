@@ -1,6 +1,7 @@
 #ifndef PWBASIS_SUP_H
 #define PWBASIS_SUP_H
 
+#include "module_base/complexmatrix.h"
 #include "pw_basis.h"
 
 namespace ModulePW
@@ -43,8 +44,15 @@ class PW_Basis_Sup : public PW_Basis
                       const int& npw_s                           // npw of smooth grids
     );
 
-    int* igs2igd = nullptr; // ig of smooth grids to ig of dense grids
-    int* igd2igs = nullptr; // ig of dense grids to ig of smooth grids
+    // recip of smooth grids to recip of dense grids
+    void recip_gs2gd(const ModuleBase::ComplexMatrix& data_s, // data of smooth grids
+                     ModuleBase::ComplexMatrix& data_d        // data of dense grids
+    ) const;
+
+    // recip of dense grids to recip of smooth grids
+    void recip_gd2gs(const ModuleBase::ComplexMatrix& data_d, // data of dense grids
+                     ModuleBase::ComplexMatrix& data_s        // data of smooth grids
+    ) const;
 
   protected:
     // distribute plane waves to different processors
@@ -69,6 +77,9 @@ class PW_Basis_Sup : public PW_Basis
                          const int& nx_s,        // nx of smooth grids
                          const int& ny_s         // ny of smooth grids
     );
+
+    int* igs2igd = nullptr; // ig of smooth grids to ig of dense grids
+    int* igd2igs = nullptr; // ig of dense grids to ig of smooth grids
 
 }; // class PW_Basis_Sup
 

@@ -13,7 +13,6 @@ namespace ModuleESolver
         if (GlobalV::double_grid)
         {
             pw_rhod = new ModulePW::PW_Basis_Sup(GlobalV::device_flag, GlobalV::precision_flag);
-            pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
         }
         else
         {
@@ -23,7 +22,7 @@ namespace ModuleESolver
         //temporary, it will be removed
         pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);
         pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
-        sf.set(INPUT.nbspline);
+        sf.set(pw_rhod, INPUT.nbspline);
 
         this->symm.epsilon = this->symm.epsilon_input = INPUT.symmetry_prec;
 }
@@ -60,6 +59,7 @@ namespace ModuleESolver
 
         if (GlobalV::double_grid)
         {
+            ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
 #ifdef __MPI
             this->pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
@@ -70,10 +70,10 @@ namespace ModuleESolver
             else
                 this->pw_rhod->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
             this->pw_rhod->initparameters(false, inp.ecutrho);
-            this->pw_rhod_sup->setuptransform(this->pw_rho->fftixy2ip, this->pw_rho->nx, this->pw_rho->ny);
+            pw_rhod_sup->setuptransform(this->pw_rho->fftixy2ip, this->pw_rho->nx, this->pw_rho->ny);
             this->pw_rhod->collect_local_pw();
             this->pw_rhod->collect_uniqgg();
-            this->pw_rhod_sup->link_igs_igd(this->pw_rho->gcar, this->pw_rho->npw);
+            pw_rhod_sup->link_igs_igd(this->pw_rho->gcar, this->pw_rho->npw);
         }
 
         this->print_rhofft(inp, GlobalV::ofs_running);
@@ -86,14 +86,28 @@ namespace ModuleESolver
         if (GlobalV::md_prec_level == 2)
         {
             if (inp.nx * inp.ny * inp.nz == 0)
-                this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
+                this->pw_rho->initgrids(cell.lat0, cell.latvec, 4.0 * inp.ecutwfc);
             else
                 this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
 
-            this->pw_rho->initparameters(false, inp.ecutrho);
+            this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
             this->pw_rho->setuptransform();
             this->pw_rho->collect_local_pw(); 
             this->pw_rho->collect_uniqgg();
+
+            if (GlobalV::double_grid)
+            {
+                ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
+                if (inp.ndx * inp.ndy * inp.ndz == 0)
+                    this->pw_rhod->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
+                else
+                    this->pw_rhod->initgrids(cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
+                this->pw_rhod->initparameters(false, inp.ecutrho);
+                pw_rhod_sup->setuptransform(this->pw_rho->fftixy2ip, this->pw_rho->nx, this->pw_rho->ny);
+                this->pw_rhod->collect_local_pw();
+                this->pw_rhod->collect_uniqgg();
+                pw_rhod_sup->link_igs_igd(this->pw_rho->gcar, this->pw_rho->npw);
+            }
         }
         else
         {
@@ -103,7 +117,14 @@ namespace ModuleESolver
             pw_rho->collect_local_pw();
             pw_rho->collect_uniqgg();
 
-            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
+            if (GlobalV::double_grid)
+            {
+                this->pw_rhod->initgrids(cell.lat0, cell.latvec, pw_rhod->nx, pw_rhod->ny, pw_rhod->nz);
+                this->pw_rhod->collect_local_pw();
+                this->pw_rhod->collect_uniqgg();
+            }
+
+            GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rhod);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
         }
         this->pelec->omega = GlobalC::ucell.omega;
@@ -176,6 +197,9 @@ namespace ModuleESolver
 
         if (GlobalV::double_grid)
         {
+            ofs << std::endl;
+            ofs << std::endl;
+            ofs << std::endl;
             double ecut = INPUT.ecutrho;
             if (inp.ndx * inp.ndy * inp.ndz > 0)
             {
