@@ -369,7 +369,8 @@ TEST_F(InputTest, Default)
     EXPECT_TRUE(INPUT.mdp.dump_vel);
     EXPECT_TRUE(INPUT.mdp.dump_virial);
     EXPECT_EQ(INPUT.sc_mag_switch,0);
-    EXPECT_DOUBLE_EQ(INPUT.sc_thr,1e-6);
+    EXPECT_FALSE(INPUT.decay_grad_switch);
+    EXPECT_DOUBLE_EQ(INPUT.sc_thr, 1e-6);
     EXPECT_EQ(INPUT.nsc, 100);
     EXPECT_EQ(INPUT.nsc_min, 2);
 	EXPECT_EQ(INPUT.sc_file,"none");
@@ -726,8 +727,9 @@ TEST_F(InputTest, Read)
     EXPECT_FALSE(INPUT.mdp.dump_vel);
     EXPECT_FALSE(INPUT.mdp.dump_virial);
     EXPECT_EQ(INPUT.sc_mag_switch, 0);
-	EXPECT_DOUBLE_EQ(INPUT.sc_thr,1e-4);
-	EXPECT_EQ(INPUT.nsc, 50);
+    EXPECT_TRUE(INPUT.decay_grad_switch);
+    EXPECT_DOUBLE_EQ(INPUT.sc_thr, 1e-4);
+    EXPECT_EQ(INPUT.nsc, 50);
 	EXPECT_EQ(INPUT.nsc_min, 4);
     EXPECT_EQ(INPUT.sc_file,"sc.json");
 }
@@ -1515,52 +1517,52 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please set right files directory for reading in."));
 	INPUT.read_file_dir = "auto";
-	// Start to check NCSCD parameters
+	// Start to check deltaspin parameters
 	INPUT.sc_mag_switch = 1;
 	INPUT.sc_file = "none";
 	INPUT.basis_type = "lcao";
 	INPUT.ks_solver = "genelpa";
-	// warning 1 of NCSCD
+	// warning 1 of Deltaspin
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("sc_file (json format) must be set when sc_mag_switch > 0"));
-	// warning 2 of NCSCD
+	// warning 2 of Deltaspin
 	INPUT.sc_file = "sc.json";
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("sc_file does not exist"));
 	INPUT.sc_file = "./support/sc.json";
-	// warning 3 of NCSCD
+	// warning 3 of Deltaspin
 	INPUT.nspin = 1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("nspin must be 4 when sc_mag_switch > 0"));
 	INPUT.nspin = 4;
-	// warning 4 of NCSCD
+	// warning 4 of Deltaspin
 	INPUT.calculation = "nscf";
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("calculation must be scf when sc_mag_switch > 0"));
 	INPUT.calculation = "scf";
-	// warning 5 of NCSCD
+	// warning 5 of Deltaspin
 	INPUT.sc_thr = -1;
 		testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("sc_thr must > 0"));
 	INPUT.sc_thr = 1e-6;
-	// warning 6 of NCSCD
+	// warning 6 of Deltaspin
 	INPUT.nsc = -1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("nsc must > 0"));
 	INPUT.nsc = 100;
-	// warning 7 of NCSCD
+	// warning 7 of Deltaspin
 	INPUT.nsc_min = -1;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
@@ -1573,7 +1575,7 @@ TEST_F(InputTest, Check)
 	INPUT.sc_mag_switch = 0;
 	INPUT.ks_solver = "default";
 	INPUT.basis_type = "pw";
-	// End of checking NCSCD parameters
+	// End of checking Deltaspin parameters
 
 	/*
 	testing::internal::CaptureStdout();

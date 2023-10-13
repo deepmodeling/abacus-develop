@@ -604,9 +604,10 @@ void Input::Default(void)
     //==========================================================
     precision = "double";
     //==========================================================
-    // variables for NCSCD
+    // variables for deltaspin
     //==========================================================
     sc_mag_switch = 0;
+    decay_grad_switch = false;
     sc_thr = 1e-6;
     nsc = 100;
     nsc_min = 2;
@@ -2183,10 +2184,13 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, precision);
         }
         //----------------------------------------------------------------------------------
-        //    NCSCD
+        //    Deltaspin
         //----------------------------------------------------------------------------------
         else if (strcmp("sc_mag_switch", word) == 0){
             read_value(ifs, sc_mag_switch);
+        }
+        else if (strcmp("decay_grad_switch", word) == 0){
+            read_bool(ifs, decay_grad_switch);
         }
         else if (strcmp("sc_thr", word) == 0){
             read_value(ifs, sc_thr);
@@ -3363,7 +3367,7 @@ void Input::Bcast()
     //----------------------------------------------------------------------------------
     Parallel_Common::bcast_string(device);
     /**
-     *  NCSCD variables
+     *  Deltaspin variables
     */
     Parallel_Common::bcast_int(sc_mag_switch);
     Parallel_Common::bcast_double(sc_thr);
@@ -3849,7 +3853,7 @@ void Input::Check(void)
 		}
 	}
 
-    // NCSCD variables checking
+    // Deltaspin variables checking
     if (sc_mag_switch)
     {
         if (sc_file == "none")

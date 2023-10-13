@@ -728,6 +728,7 @@ void Input_Conv::Convert(void)
     // Deltaspin related parameters
     //-----------------------------------------------
     GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
+    GlobalV::decay_grad_switch = INPUT.decay_grad_switch;
     GlobalV::sc_thr = INPUT.sc_thr;
     GlobalV::nsc = INPUT.nsc;
     GlobalV::nsc_min = INPUT.nsc_min;

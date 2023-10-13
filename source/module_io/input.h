@@ -559,18 +559,19 @@ class Input
     bool test_skip_ewald = false;
 
     //==========================================================
-    // variables for non-collinear spin-constrained DFT (NCSCD)
+    // variables for non-collinear spin-constrained DFT (deltaspin)
     //==========================================================
     /**
      * 0: none spin-constrained DFT;
      * 1: constrain atomic spin via values at xyz;
      * 2: constrain atomic spin via spin value and angles
-    */
+     */
     int sc_mag_switch;
+    bool decay_grad_switch;
     double sc_thr; // threshold for spin-constrained DFT
     int nsc; // maximum number of inner lambda loop
     int nsc_min; // minimum number of inner lambda loop
-    std::string sc_file; // file name for NCSCD (json format)
+    std::string sc_file; // file name for Deltaspin (json format)
 
     // whether to use PAW
     //==========================================================
