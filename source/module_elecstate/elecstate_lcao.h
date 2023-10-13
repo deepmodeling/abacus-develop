@@ -57,7 +57,7 @@ class ElecStateLCAO : public ElecState
     static int out_wfc_flag;
     static bool need_psi_grid;
 
-    virtual double get_spin_constrain_energy() override;
+    double get_spin_constrain_energy() override;
 
   protected:
     // calculate electronic charge density on grid points or density matrix in real space
