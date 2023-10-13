@@ -1,3 +1,4 @@
+remove_definitions(-DUSE_PAW)
 enable_testing()
 
 find_program(BASH bash)
