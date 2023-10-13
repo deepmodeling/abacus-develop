@@ -133,10 +133,10 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
             ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
-            this->rhopw->real2recip(chr->rho[is], chr->rhog[is]);
+            chr->rhopw->real2recip(chr->rho[is], chr->rhog[is]);
 
             ModuleBase::GlobalFunc::NOTE("Perform FFT on rho_save(r) to obtain rho_save(G).");
-            this->rhopw->real2recip(chr->rho_save[is], chr->rhog_save[is]);
+            chr->rhopw->real2recip(chr->rho_save[is], chr->rhog_save[is]);
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");

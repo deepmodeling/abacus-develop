@@ -33,40 +33,16 @@ class PW_Basis_Sup : public PW_Basis
     }
     ~PW_Basis_Sup();
 
-    // distribute plane waves and grids and set up fft
-    void setuptransform(const int* fftixy2ip_s, // fftixy2ip of smooth grids
-                        const int& nx_s,        // nx of smooth grids
-                        const int& ny_s         // ny of smooth grids
-    );
-
-    // get igs2igd and igd2igs
-    void link_igs_igd(const ModuleBase::Vector3<double>* gcar_s, // G vectors  of smooth grids
-                      const int& npw_s                           // npw of smooth grids
-    );
-
-    // recip of smooth grids to recip of dense grids
-    void recip_gs2gd(const ModuleBase::ComplexMatrix& data_s, // data of smooth grids
-                     ModuleBase::ComplexMatrix& data_d        // data of dense grids
-    ) const;
-
-    // recip of dense grids to recip of smooth grids
-    void recip_gd2gs(const ModuleBase::ComplexMatrix& data_d, // data of dense grids
-                     ModuleBase::ComplexMatrix& data_s        // data of smooth grids
-    ) const;
+    // distribute plane waves and grids and set up fft according to the smooth grids
+    void setuptransform(const ModulePW::PW_Basis* pw_rho);
 
   protected:
-    // distribute plane waves to different processors
-    void distribute_g(const int* fftixy2ip_s, // fftixy2ip of smooth grids
-                      const int& nx_s,        // nx of smooth grids
-                      const int& ny_s         // ny of smooth grids
-    );
+    // distribute plane waves to different processors according to the smooth grids
+    void distribute_g(const ModulePW::PW_Basis* pw_rho);
 
     // method 3: ONLY for dense grids in uspp
     // consider the consistence of sticks between dense and smooth grids
-    void distribution_method3(const int* fftixy2ip_s, // fftixy2ip of smooth grids
-                              const int& nx_s,        // nx of smooth grids
-                              const int& ny_s         // ny of smooth grids
-    );
+    void distribution_method3(const ModulePW::PW_Basis* pw_rho);
 
     // Distribute sticks to cores in method 3.
     void divide_sticks_3(const int* st_length2D, // st_length2D[ixy], number of planewaves in stick on (x, y).
@@ -78,9 +54,9 @@ class PW_Basis_Sup : public PW_Basis
                          const int& ny_s         // ny of smooth grids
     );
 
-    int* igs2igd = nullptr; // ig of smooth grids to ig of dense grids
-    int* igd2igs = nullptr; // ig of dense grids to ig of smooth grids
-
+    void get_ig2isz_is2fftixy(int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
+                              int* st_length2D, // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+                              const ModulePW::PW_Basis* pw_rho);
 }; // class PW_Basis_Sup
 
 } // namespace ModulePW

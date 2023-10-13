@@ -70,10 +70,9 @@ namespace ModuleESolver
             else
                 this->pw_rhod->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
             this->pw_rhod->initparameters(false, inp.ecutrho);
-            pw_rhod_sup->setuptransform(this->pw_rho->fftixy2ip, this->pw_rho->nx, this->pw_rho->ny);
+            pw_rhod_sup->setuptransform(this->pw_rho);
             this->pw_rhod->collect_local_pw();
             this->pw_rhod->collect_uniqgg();
-            pw_rhod_sup->link_igs_igd(this->pw_rho->gcar, this->pw_rho->npw);
         }
 
         this->print_rhofft(inp, GlobalV::ofs_running);
@@ -103,10 +102,9 @@ namespace ModuleESolver
                 else
                     this->pw_rhod->initgrids(cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
                 this->pw_rhod->initparameters(false, inp.ecutrho);
-                pw_rhod_sup->setuptransform(this->pw_rho->fftixy2ip, this->pw_rho->nx, this->pw_rho->ny);
+                pw_rhod_sup->setuptransform(this->pw_rho);
                 this->pw_rhod->collect_local_pw();
                 this->pw_rhod->collect_uniqgg();
-                pw_rhod_sup->link_igs_igd(this->pw_rho->gcar, this->pw_rho->npw);
             }
         }
         else

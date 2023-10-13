@@ -7,8 +7,6 @@ namespace ModulePW
 
 PW_Basis_Sup::~PW_Basis_Sup()
 {
-    delete[] igs2igd;
-    delete[] igd2igs;
 }
 
 ///
@@ -16,14 +14,11 @@ PW_Basis_Sup::~PW_Basis_Sup()
 /// set up maps for fft and create arrays for MPI_Alltoall
 /// set up ffts
 ///
-void PW_Basis_Sup::setuptransform(const int* fftixy2ip_s, // fftixy2ip of smooth grids
-                                  const int& nx_s,        // nx of smooth grids
-                                  const int& ny_s         // ny of smooth grids
-)
+void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
 {
     ModuleBase::timer::tick(this->classname, "setuptransform");
     this->distribute_r();
-    this->distribute_g(fftixy2ip_s, nx_s, ny_s);
+    this->distribute_g(pw_rho);
     this->getstartgr();
     this->ft.clear();
     if (this->xprime)
@@ -57,102 +52,15 @@ void PW_Basis_Sup::setuptransform(const int* fftixy2ip_s, // fftixy2ip of smooth
 /// Known: G, GT, GGT, fftnx, fftny, nz, poolnproc, poolrank, ggecut
 /// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig], nst, nstot
 ///
-void PW_Basis_Sup::distribute_g(const int* fftixy2ip_s, // fftixy2ip of smooth grids
-                                const int& nx_s,        // nx of smooth grids
-                                const int& ny_s         // ny of smooth grids
-)
+void PW_Basis_Sup::distribute_g(const ModulePW::PW_Basis* pw_rho)
 {
     ModuleBase::timer::tick(this->classname, "distributeg");
-    this->distribution_method3(fftixy2ip_s, nx_s, ny_s);
+    this->distribution_method3(pw_rho);
     ModuleBase::CHECK_WARNING_QUIT((this->npw == 0),
                                    "pw_distributeg.cpp",
                                    "Current core has no plane waves! Please reduce the cores.");
     ModuleBase::timer::tick(this->classname, "distributeg");
     return;
-}
-
-///
-/// get igs2igd and igd2igs
-/// Known: gcar and npw of dense grids, gcar_s and npw_s of smooth grids
-/// output: igs2igd[igs], igd2igs[isd]
-///
-void PW_Basis_Sup::link_igs_igd(const ModuleBase::Vector3<double>* gcar_s, // G vectors  of smooth grids
-                                const int& npw_s                           // npw of smooth grids
-)
-{
-    delete[] igs2igd;
-    delete[] igd2igs;
-    igs2igd = new int[npw_s];
-    igd2igs = new int[this->npw];
-    for (int i = 0; i < npw_s; ++i)
-    {
-        igs2igd[i] = -1;
-    }
-    for (int i = 0; i < this->npw; ++i)
-    {
-        igd2igs[i] = -1;
-    }
-    for (int igs = 0; igs < npw_s; igs++)
-    {
-        for (int igd = 0; igd < this->npw; igd++)
-        {
-            if (gcar_s[igs] == this->gcar[igd])
-            {
-                igs2igd[igs] = igd;
-                igd2igs[igd] = igs;
-            }
-        }
-    }
-}
-
-///
-/// transform recip data from smooth grids to dense grids
-///
-void PW_Basis_Sup::recip_gs2gd(const ModuleBase::ComplexMatrix& data_s, // data of smooth grids
-                               ModuleBase::ComplexMatrix& data_d        // data of dense grids
-) const
-{
-    assert(data_s.nr == data_d.nr);
-    assert(data_s.nc <= data_d.nc);
-    if (data_s.nc == data_d.nc)
-    {
-        data_d = data_s;
-        return;
-    }
-    for (int igs = 0; igs < data_s.nc; igs++)
-    {
-        int igd = this->igs2igd[igs];
-
-        for (int ir = 0; ir < data_s.nr; ir++)
-        {
-            data_d(ir, igd) = data_s(ir, igs);
-        }
-    }
-}
-
-///
-/// transform recip data from dense grids to smooth grids
-///
-void PW_Basis_Sup::recip_gd2gs(const ModuleBase::ComplexMatrix& data_d, // data of dense grids
-                               ModuleBase::ComplexMatrix& data_s        // data of smooth grids
-) const
-{
-    assert(data_s.nr == data_d.nr);
-    assert(data_s.nc <= data_d.nc);
-    if (data_s.nc == data_d.nc)
-    {
-        data_s = data_d;
-        return;
-    }
-    for (int igs = 0; igs < data_s.nc; igs++)
-    {
-        int igd = this->igs2igd[igs];
-
-        for (int ir = 0; ir < data_s.nr; ir++)
-        {
-            data_s(ir, igs) = data_d(ir, igd);
-        }
-    }
 }
 
 ///
@@ -173,11 +81,11 @@ void PW_Basis_Sup::recip_gd2gs(const ModuleBase::ComplexMatrix& data_d, // data 
 ///       we divide sticks corresponding to smooth girds first, and then the left ones are divided
 ///       to ensure the approximate equality of planewaves on each core.
 ///
-/// Known: fftixy2ip[ixy], nx, ny of smooth grids
+/// Known: smooth grids
 /// Known: G, GT, GGT, fftny, fftnx, nz, poolnproc, poolrank, ggecut
 /// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip], nst
 ///
-void PW_Basis_Sup::distribution_method3(const int* fftixy2ip_s, const int& nx_s, const int& ny_s)
+void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
 {
     // initial the variables needed by all process
     int* st_bottom2D = new int[fftnxy]; // st_bottom2D[ixy], minimum z of stick on (x, y).
@@ -224,7 +132,7 @@ void PW_Basis_Sup::distribution_method3(const int* fftixy2ip_s, const int& nx_s,
         // (3) Distribute the sticks to cores.
         // get nst_per, npw_per, fftixy2ip, and startnsz_per
         this->startnsz_per = new int[this->poolnproc];
-        this->divide_sticks_3(st_length2D, st_i, st_j, st_length, fftixy2ip_s, nx_s, ny_s);
+        this->divide_sticks_3(st_length2D, st_i, st_j, st_length, pw_rho->fftixy2ip, pw_rho->nx, pw_rho->ny);
         delete[] st_length;
 
         // (4) Get map from istot to (iy, ix)
@@ -265,7 +173,7 @@ void PW_Basis_Sup::distribution_method3(const int* fftixy2ip_s, const int& nx_s,
     this->nstnz = this->nst * this->nz;
 
     // (5) Construct ig2isz and is2fftixy.
-    this->get_ig2isz_is2fftixy(st_bottom2D, st_length2D);
+    this->get_ig2isz_is2fftixy(st_bottom2D, st_length2D, pw_rho);
 
     delete[] st_bottom2D;
     delete[] st_length2D;
@@ -374,6 +282,144 @@ void PW_Basis_Sup::divide_sticks_3(
     {
         this->startnsz_per[ip] = this->startnsz_per[ip - 1] + this->nst_per[ip - 1] * this->nz;
     }
+    return;
+}
+
+///
+/// (5) Construct ig2isz, and is2fftixy.
+/// is2fftixy contains the x-coordinate and y-coordinate of sticks on current core.
+/// ig2isz contains the z-coordinate of planewaves on current core.
+/// We will scan all the sticks and find the planewaves on them, then store the information into ig2isz and is2fftixy.
+/// known: smooth grids
+/// known: this->nstot, st_bottom2D, st_length2D
+/// output: ig2isz, is2fftixy
+///
+void PW_Basis_Sup::get_ig2isz_is2fftixy(
+    int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
+    int* st_length2D, // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+    const ModulePW::PW_Basis* pw_rho)
+{
+    if (this->npw == 0)
+    {
+        delete[] this->ig2isz;
+        this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
+        delete[] this->is2fftixy;
+        this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
+#if defined(__CUDA) || defined(__ROCM)
+        if (this->device == "gpu")
+        {
+            delmem_int_op()(gpu_ctx, this->d_is2fftixy);
+            d_is2fftixy = nullptr;
+        }
+#endif
+        return;
+    }
+
+    delete[] this->ig2isz;
+    this->ig2isz = new int[this->npw]; // map ig to the z coordinate of this planewave.
+    ModuleBase::GlobalFunc::ZEROS(this->ig2isz, this->npw);
+    delete[] this->is2fftixy;
+    this->is2fftixy = new int[this->nst]; // map is (index of sticks) to ixy (iy + ix * fftny).
+    for (int is = 0; is < this->nst; ++is)
+    {
+        this->is2fftixy[is] = -1;
+    }
+    int* fftixy2is = new int[this->fftnxy]; // map ixy to is.
+    for (int ixy = 0; ixy < this->fftnxy; ++ixy)
+    {
+        fftixy2is[ixy] = -1;
+    }
+    bool* found = new bool[this->fftnxyz]; // whether the planewave on (x, y, z) has been found on the smooth grid.
+    for (int i = 0; i < this->fftnxyz; ++i)
+    {
+        found[i] = false;
+    }
+
+    // get is2fftixy
+    int st_move = 0; // this is the st_move^th stick on current core.
+    for (int ixy = 0; ixy < this->fftnxy; ++ixy)
+    {
+        if (this->fftixy2ip[ixy] == this->poolrank)
+        {
+            this->is2fftixy[st_move] = ixy;
+            fftixy2is[ixy] = st_move;
+            st_move++;
+        }
+        if (st_move == this->nst)
+            break;
+    }
+
+    // distribute planewaves in the same order as smooth grids first.
+    int pw_filled = 0; // how many current core's planewaves have been found.
+    for (int ig = 0; ig < pw_rho->npw; ig++)
+    {
+        int isz = pw_rho->ig2isz[ig];
+        int iz = isz % pw_rho->nz;
+        int is = isz / pw_rho->nz;
+        int ixy = pw_rho->is2fftixy[is];
+        int ix = ixy / pw_rho->fftny;
+        int iy = ixy % pw_rho->fftny;
+        if (ix >= int(pw_rho->nx / 2) + 1)
+            ix -= pw_rho->nx;
+        if (iy >= int(pw_rho->ny / 2) + 1)
+            iy -= pw_rho->ny;
+        if (iz >= int(pw_rho->nz / 2) + 1)
+            iz -= pw_rho->nz;
+
+        if (ix < 0)
+            ix += this->nx;
+        if (iy < 0)
+            iy += this->ny;
+        if (iz < 0)
+            iz += this->nz;
+        int ixy_now = ix * this->fftny + iy;
+        int index = ixy_now * this->nz + iz;
+        int is_now = fftixy2is[ixy_now];
+        int isz_now = is_now * this->nz + iz;
+        this->ig2isz[ig] = isz_now;
+        pw_filled++;
+        found[index] = true;
+        if (xprime && ix == 0)
+            ng_xeq0++;
+    }
+    assert(pw_filled == pw_rho->npw);
+
+    // distribute the lefted planewaves.
+    for (int ixy = 0; ixy < this->fftnxy; ++ixy)
+    {
+        if (this->fftixy2ip[ixy] == this->poolrank)
+        {
+            int zstart = st_bottom2D[ixy];
+            for (int iz = zstart; iz < zstart + st_length2D[ixy]; ++iz)
+            {
+                int z = iz;
+                if (z < 0)
+                    z += this->nz;
+                if (!found[ixy * this->nz + z])
+                {
+                    found[ixy * this->nz + z] = true;
+                    int is = fftixy2is[ixy];
+                    this->ig2isz[pw_filled] = is * this->nz + z;
+                    pw_filled++;
+                    if (xprime && ixy / fftny == 0)
+                        ng_xeq0++;
+                }
+            }
+        }
+        if (pw_filled == this->npw)
+            break;
+    }
+
+    delete[] fftixy2is;
+    delete[] found;
+
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == "gpu")
+    {
+        resmem_int_op()(gpu_ctx, d_is2fftixy, this->nst);
+        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
+    }
+#endif
     return;
 }
 

@@ -287,25 +287,20 @@ void Potential::interpolate_vrs()
             ModuleBase::WARNING_QUIT("Potential::interpolate_vrs", "gamma_only is not consistent");
         }
 
-        ModuleBase::ComplexMatrix vrs_in(GlobalV::NSPIN, rho_basis_->npw);
-        ModuleBase::ComplexMatrix vrs_out(GlobalV::NSPIN, rho_basis_smooth_->npw);
+        ModuleBase::ComplexMatrix vrs(GlobalV::NSPIN, rho_basis_->npw);
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            rho_basis_->real2recip(&v_effective(is, 0), &vrs_in(is, 0));
+            rho_basis_->real2recip(&v_effective(is, 0), &vrs(is, 0));
         }
-
-        const ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<const ModulePW::PW_Basis_Sup*>(rho_basis_);
-
-        pw_rhod_sup->recip_gd2gs(vrs_in, vrs_out);
 
         this->v_eff_smooth.create(GlobalV::NSPIN, rho_basis_smooth_->nrxx);
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            rho_basis_smooth_->recip2real(&vrs_out(is, 0), &v_eff_smooth(is, 0));
-            for (int ig = 0; ig < rho_basis_smooth_->nrxx; ig++)
-            {
-                GlobalV::ofs_running << std::fixed << std::setprecision(10) << v_eff_smooth(is, ig) << std::endl;
-            }
+            rho_basis_smooth_->recip2real(&vrs(is, 0), &v_eff_smooth(is, 0));
+            // for (int ig = 0; ig < rho_basis_smooth_->nrxx; ig++)
+            // {
+            //     GlobalV::ofs_running << std::fixed << std::setprecision(10) << v_eff_smooth(is, ig) << std::endl;
+            // }
         }
     }
     else
