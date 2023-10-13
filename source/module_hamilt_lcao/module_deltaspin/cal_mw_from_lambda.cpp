@@ -24,3 +24,4 @@ void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+template class SpinConstrain<double, psi::DEVICE_CPU>;

@@ -145,6 +145,8 @@ public:
     int get_nspin();
     /// zero atomic magnetic moment
     void zero_Mi();
+    /// get sc_grad_decay
+    double get_sc_decay_grad(int itype);
 
 private:
     SpinConstrain(){};                               // Private constructor
@@ -152,6 +154,7 @@ private:
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
+    std::map<int, double> sc_decay_grad;
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
     int nspin_ = 0;

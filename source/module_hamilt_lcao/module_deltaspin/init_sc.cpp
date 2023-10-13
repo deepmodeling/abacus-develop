@@ -97,3 +97,4 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+template class SpinConstrain<double, psi::DEVICE_CPU>;

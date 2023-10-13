@@ -250,6 +250,19 @@ void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* pa
     this->DM = new DensityMatrix<TK,double>(kv, paraV, nspin);
 }
 
+template<>
+double ElecStateLCAO<double>::get_spin_constrain_energy()
+{
+    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double>::getScInstance();
+    return sc.cal_escon();
+}
+
+template<>
+double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
+{
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>>::getScInstance();
+    return sc.cal_escon();
+}
 
 template class ElecStateLCAO<double>; // Gamma_only case
 template class ElecStateLCAO<std::complex<double>>; // multi-k case

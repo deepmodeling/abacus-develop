@@ -2,6 +2,7 @@
     {
         "element": "Si",
         "itype": 1,
+        "ScDecayGrad": 0.9,
         "ScAtomData": [
             {
                 "index": 0,

@@ -205,7 +205,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             for (int ic = 0; ic < 3; ic++)
             {
                 temp_1[ia][ic] = (target_spin_mask[ia][ic] - spin_mask[ia][ic]) * (spin_plus_mask[ia][ic] - spin_mask[ia][ic]);
-                temp_2[ia][ic] = pow(spin_mask[ia][ic] - spin_plus_mask[ia][ic], 2);
+                temp_2[ia][ic] = std::pow(spin_mask[ia][ic] - spin_plus_mask[ia][ic], 2);
             }
         }
         sum_k = sum_2d(temp_1);
@@ -261,3 +261,4 @@ CG_STOP:
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+template class SpinConstrain<double, psi::DEVICE_CPU>;

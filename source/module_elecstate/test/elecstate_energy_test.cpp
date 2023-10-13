@@ -37,10 +37,6 @@ double ElecState::get_solvent_model_Acav()
 {
     return 0.5;
 }
-double ElecState::get_spin_constrain_energy()
-{
-    return 0.5;
-}
 #ifdef __LCAO
 double ElecState::get_dftu_energy()
 {
@@ -117,7 +113,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarris)
     elecstate->f_en.deband_harris = 0.1;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.2);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
@@ -126,7 +122,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
     GlobalV::imp_sol = true;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 2.1);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.6);
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
@@ -136,7 +132,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.8);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.3);
 #else
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
 #endif
@@ -147,7 +143,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
     elecstate->f_en.deband = 0.1;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.2);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
@@ -156,7 +152,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
     GlobalV::imp_sol = true;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 2.1);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
@@ -166,7 +162,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.8);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
 #else
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
 #endif

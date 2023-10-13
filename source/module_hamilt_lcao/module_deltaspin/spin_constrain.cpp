@@ -354,4 +354,12 @@ void SpinConstrain<FPTYPE, Device>::zero_Mi()
     }
 }
 
+/// get sc_grad_decay
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::get_sc_decay_grad(int itype)
+{
+    return this->sc_decay_grad[itype];
+}
+
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+template class SpinConstrain<double, psi::DEVICE_CPU>;

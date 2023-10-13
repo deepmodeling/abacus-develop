@@ -83,6 +83,7 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
             }
         }
 	}
+    EXPECT_DOUBLE_EQ(sc.get_sc_decay_grad(1),0.9);
 }
 
 TEST_F(SpinConstrainTest, ScDataWarning)

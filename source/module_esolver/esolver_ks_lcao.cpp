@@ -560,7 +560,7 @@ namespace ModuleESolver
 
     if (GlobalV::sc_mag_switch && iter > 1)
     {
-        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);
     }
 }
@@ -633,7 +633,7 @@ namespace ModuleESolver
 #endif
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->LM, GlobalC::ucell);
     }
 
@@ -771,7 +771,7 @@ namespace ModuleESolver
     // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, this->LM, GlobalC::ucell);
     }
 
@@ -884,7 +884,7 @@ namespace ModuleESolver
 
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, this->LM, GlobalC::ucell, true);
     }
 

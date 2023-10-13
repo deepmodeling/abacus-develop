@@ -69,3 +69,4 @@ void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda,
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+template class SpinConstrain<double, psi::DEVICE_CPU>;

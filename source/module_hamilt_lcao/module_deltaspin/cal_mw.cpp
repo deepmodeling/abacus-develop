@@ -8,73 +8,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "spin_constrain.h"
 
-template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::cal_MW(const int& step, LCAO_Matrix& LM, const UnitCell& ucell, bool print)
-{
-    ModuleBase::TITLE("module_deltaspin", "cal_MW");
-    const std::vector<std::vector<FPTYPE>>& dm
-        = dynamic_cast<const elecstate::ElecStateLCAO<FPTYPE>*>(this->pelec)->get_DM()->get_DMK_vector();
-    ModuleBase::matrix orbMulP;
-    orbMulP = this->cal_MW_k(LM, dm);
-    
-    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
-
-    size_t nw = this->get_nw();
-    int nat = this->get_nat();
-
-    this->zero_Mi();
-    
-    const int nlocal = nw / 2;
-    for (size_t i = 0; i != ucell.nat; ++i)
-    {
-        std::vector<double> total_charge_soc(this->nspin_,0.0);
-        const int t = ucell.iat2it[i];
-        int num = 0;
-        for (size_t L = 0; L != ucell.atoms[t].nwl + 1; ++L)
-        {
-            std::vector<double> sum_l(this->nspin_, 0.0);
-            for (size_t Z = 0; Z != ucell.atoms[t].l_nchi[L]; ++Z)
-            {
-                std::vector<double> sum_m(this->nspin_, 0.0);
-                for (size_t M = 0; M != (2 * L + 1); ++M)
-                {
-                    double spin[4];
-                    for (int j = 0; j < 4; j++)
-                    {
-                        sum_m[j] += AorbMulP[j][i][num];
-                    }
-                    num++;
-                }
-
-                double spin[4];
-                for (int j = 0; j < 4; j++)
-                {
-                    sum_l[j] += sum_m[j];
-                }
-            }
-
-            if (ucell.atoms[t].l_nchi[L])
-            {
-                double spin[4];
-                for (int j = 0; j < 4; j++)
-                {
-                    total_charge_soc[j] += sum_l[j];
-                }
-            }
-        }
-
-        this->Mi_[i].x = total_charge_soc[1];
-        this->Mi_[i].y = total_charge_soc[2];
-        this->Mi_[i].z = total_charge_soc[3];
-        if (print) std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setprecision(16) << " (" << Mi_[i].x << ", " << Mi_[i].y
-           << ", " << Mi_[i].z << ")" << std::endl;
-    }
-    
-}
-
-template <typename FPTYPE, typename Device>
-ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
-                                                           const std::vector<std::vector<std::complex<double>>>& dm)
+template <>
+ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_k(
+    LCAO_Matrix& LM,
+    const std::vector<std::vector<std::complex<double>>>& dm)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
     int nw = this->get_nw();
@@ -85,7 +22,8 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
 
     for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
-        dynamic_cast<hamilt::HamiltLCAO<FPTYPE, FPTYPE>*>(this->p_hamilt)->updateSk(ik, &LM, 1);
+        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)
+            ->updateSk(ik, &LM, 1);
 
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow);
@@ -162,6 +100,87 @@ ModuleBase::matrix SpinConstrain<FPTYPE, Device>::cal_MW_k(LCAO_Matrix& LM,
     return orbMulP;
 }
 
+template <>
+ModuleBase::matrix SpinConstrain<double, psi::DEVICE_CPU>::cal_MW_k(
+    LCAO_Matrix& LM,
+    const std::vector<std::vector<std::complex<double>>>& dm)
+{
+    ModuleBase::matrix orbMulP;
+    return orbMulP;
+}
+
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& step,
+                                                                  LCAO_Matrix& LM,
+                                                                  const UnitCell& ucell,
+                                                                  bool print)
+{
+    ModuleBase::TITLE("module_deltaspin", "cal_MW");
+    const std::vector<std::vector<std::complex<double>>>& dm
+        = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_vector();
+    ModuleBase::matrix orbMulP;
+    orbMulP = this->cal_MW_k(LM, dm);
+
+    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
+
+    size_t nw = this->get_nw();
+    int nat = this->get_nat();
+
+    this->zero_Mi();
+
+    const int nlocal = nw / 2;
+    for (size_t i = 0; i != ucell.nat; ++i)
+    {
+        std::vector<double> total_charge_soc(this->nspin_, 0.0);
+        const int t = ucell.iat2it[i];
+        int num = 0;
+        for (size_t L = 0; L != ucell.atoms[t].nwl + 1; ++L)
+        {
+            std::vector<double> sum_l(this->nspin_, 0.0);
+            for (size_t Z = 0; Z != ucell.atoms[t].l_nchi[L]; ++Z)
+            {
+                std::vector<double> sum_m(this->nspin_, 0.0);
+                for (size_t M = 0; M != (2 * L + 1); ++M)
+                {
+                    double spin[4];
+                    for (int j = 0; j < 4; j++)
+                    {
+                        sum_m[j] += AorbMulP[j][i][num];
+                    }
+                    num++;
+                }
+
+                double spin[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    sum_l[j] += sum_m[j];
+                }
+            }
+
+            if (ucell.atoms[t].l_nchi[L])
+            {
+                double spin[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    total_charge_soc[j] += sum_l[j];
+                }
+            }
+        }
+
+        this->Mi_[i].x = total_charge_soc[1];
+        this->Mi_[i].y = total_charge_soc[2];
+        this->Mi_[i].z = total_charge_soc[3];
+        if (print)
+            std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setprecision(16)
+                      << " (" << Mi_[i].x << ", " << Mi_[i].y << ", " << Mi_[i].z << ")" << std::endl;
+    }
+}
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix& LM, const UnitCell& ucell, bool print)
+{
+}
+
 template<typename FPTYPE, typename Device>
 std::vector<std::vector<std::vector<double>>> SpinConstrain<FPTYPE, Device>::convert(const ModuleBase::matrix &orbMulP)
 {
@@ -193,4 +212,5 @@ std::vector<std::vector<std::vector<double>>> SpinConstrain<FPTYPE, Device>::con
     return AorbMulP;
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+// template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
+/// template class SpinConstrain<double, psi::DEVICE_CPU>;
