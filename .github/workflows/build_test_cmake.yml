@@ -21,10 +21,10 @@ jobs:
             name: "Build with Intel toolchain"
 
           - tag: gnu
-            build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
+            build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1 -DENABLE_PAW=1"
             name: "Build extra components with GNU toolchain"
           - tag: intel
-            build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1"
+            build_args: "-DENABLE_LIBXC=1 -DENABLE_DEEPKS=1 -DENABLE_LIBRI=1 -DENABLE_PAW"
             name: "Build extra components with Intel toolchain"
 
           - tag: cuda
