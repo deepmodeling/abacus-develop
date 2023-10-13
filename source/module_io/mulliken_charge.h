@@ -13,7 +13,8 @@
 // convert to namespace, liuyu 2023-04-18
 namespace ModuleIO
 {
-	void out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in);
+    template<typename T>
+    void out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<T>* ham_in);
 
     /* 
     1. cal_mulliken:    for gamma-only
@@ -25,13 +26,11 @@ namespace ModuleIO
             return  ModuleBase::matrix with shape (GlobalV::NSPIN, GlobalV::NLOCAL/2)
     */
 
-    ModuleBase::matrix cal_mulliken(const std::vector<std::vector<double>> &dm,
-        LCAO_Matrix *LM
+    template<typename T>
+    ModuleBase::matrix cal_mulliken(const std::vector<std::vector<T>>& dm,
+        LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<T>* ham_in
     );
 
-    ModuleBase::matrix cal_mulliken_k(const std::vector<std::vector<std::complex<double>>> &dm,
-        LCAO_Matrix *LM, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in
-    );
 
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
 

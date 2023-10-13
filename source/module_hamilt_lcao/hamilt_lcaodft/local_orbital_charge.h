@@ -24,10 +24,13 @@ class Local_Orbital_Charge
     void allocate_dm_wfc(const Grid_Technique& gt,
         elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
-        psi::Psi<double>* psid,
+        psi::Psi<double>* psi,
+        const K_Vectors& kv);
+    void allocate_dm_wfc(const Grid_Technique& gt,
+        elecstate::ElecState* pelec,
+        Local_Orbital_wfc& lowf,
         psi::Psi<std::complex<double>>* psi,
         const K_Vectors& kv);
-
 	//-----------------
 	// in DM_gamma.cpp
 	//-----------------

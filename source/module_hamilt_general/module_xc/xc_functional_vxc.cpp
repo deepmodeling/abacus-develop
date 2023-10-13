@@ -164,8 +164,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool( etxc );
-    Parallel_Reduce::reduce_double_pool( vtxc );
+    Parallel_Reduce::reduce_pool(etxc);
+    Parallel_Reduce::reduce_pool(vtxc);
 #endif
     etxc *= ucell->omega / chr->rhopw->nxyz;
     vtxc *= ucell->omega / chr->rhopw->nxyz;
@@ -417,8 +417,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc_libxc(		// Peiz
     // for MPI, reduce the exchange-correlation energy
     //-------------------------------------------------
     #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool( etxc );
-    Parallel_Reduce::reduce_double_pool( vtxc );
+    Parallel_Reduce::reduce_pool(etxc);
+    Parallel_Reduce::reduce_pool(vtxc);
     #endif
 
     etxc *= omega / chr->rhopw->nxyz;
@@ -759,8 +759,8 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional::v
     // for MPI, reduce the exchange-correlation energy
     //-------------------------------------------------
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool( etxc );
-    Parallel_Reduce::reduce_double_pool( vtxc );
+    Parallel_Reduce::reduce_pool(etxc);
+    Parallel_Reduce::reduce_pool(vtxc);
 #endif
 
     etxc *= omega / chr->rhopw->nxyz;

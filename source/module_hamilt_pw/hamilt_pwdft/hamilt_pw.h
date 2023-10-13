@@ -25,14 +25,6 @@ class HamiltPW : public Hamilt<T, Device>
 
     // for target K point, update consequence of hPsi() and matrix()
     void updateHk(const int ik) override;
-
-    // core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void sPsi(const T *psi_in, T *spsi, const size_t size) const override;
-
-  private:
-
-    Device *ctx = {};
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // namespace hamilt

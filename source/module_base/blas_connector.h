@@ -193,9 +193,16 @@ public:
 		zgemm_(&transb, &transa, &n, &m, &k,
 			&alpha, b, &ldb, a, &lda,
 			&beta, c, &ldc);
-	}
+    }
     static inline
     void gemv(const char trans, const int m, const int n,
+        const double alpha, const double* A, const int lda, const double* X, const int incx,
+        const double beta, double* Y, const int incy)
+    {
+        dgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+    }
+    static inline
+        void gemv(const char trans, const int m, const int n,
               const std::complex<float> alpha, const std::complex<float> *A, const int lda, const std::complex<float> *X, const int incx,
               const std::complex<float> beta, std::complex<float> *Y, const int incy)
     {

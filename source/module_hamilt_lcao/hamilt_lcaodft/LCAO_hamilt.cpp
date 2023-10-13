@@ -508,7 +508,7 @@ void LCAO_Hamilt::calculat_HR_dftu_sparse(const int &current_spin, const double 
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
 
     double *HR_tmp = new double[this->LM->ParaV->nloc];
     double *SR_tmp = new double[this->LM->ParaV->nloc];
@@ -621,7 +621,7 @@ void LCAO_Hamilt::calculat_HR_dftu_soc_sparse(const int &current_spin, const dou
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
 
     std::complex<double> *HR_soc_tmp = new std::complex<double>[this->LM->ParaV->nloc];
     std::complex<double> *SR_soc_tmp = new std::complex<double>[this->LM->ParaV->nloc];

@@ -39,7 +39,7 @@ double KEDF_LKT::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rh
         // Waiting for update
     }
     this->LKTenergy = energy;
-    Parallel_Reduce::reduce_double_all(this->LKTenergy);
+    Parallel_Reduce::reduce_all(this->LKTenergy);
 
     delete[] as;
     for (int i = 0; i < 3; ++i)
@@ -124,7 +124,7 @@ void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_r
         }
 
         this->LKTenergy *= this->cTF * this->dV;
-        Parallel_Reduce::reduce_double_all(this->LKTenergy);
+        Parallel_Reduce::reduce_all(this->LKTenergy);
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -180,7 +180,7 @@ void KEDF_LKT::get_stress(const double cell_vol, const double *const *prho, Modu
                         integral_term += 1.0 / 3.0 * as[ir] * std::pow(prho[0][ir], 5.0 / 3.0) * coef;
                     }
                 }
-                Parallel_Reduce::reduce_double_all(integral_term);
+                Parallel_Reduce::reduce_all(integral_term);
                 integral_term *= this->cTF * this->dV / cell_vol;
 
                 this->stress(alpha, beta) += integral_term;

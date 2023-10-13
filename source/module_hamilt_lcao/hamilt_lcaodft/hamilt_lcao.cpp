@@ -103,7 +103,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         }
     }
 
-    // Gamma_only case to initialize HamiltLCAO, opsd will be used
+    // Gamma_only case to initialize HamiltLCAO
     //
     // code block to construct Operator Chains
     if(std::is_same<TK, double>::value)
@@ -375,39 +375,18 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
 }
 
-template <>
-void HamiltLCAO<double, double>::refresh()
+template <typename TK, typename TR>
+void HamiltLCAO<TK, TR>::refresh()
 {
-    dynamic_cast<hamilt::OperatorLCAO<double, double>*>(this->opsd)->set_hr_done(false);
-}
-template <>
-void HamiltLCAO<std::complex<double>, double>::refresh()
-{
-    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->ops)->set_hr_done(false);
-}
-template <>
-void HamiltLCAO<std::complex<double>, std::complex<double>>::refresh()
-{
-    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->ops)->set_hr_done(false);
+    dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(false);
 }
 
 // get Operator base class pointer
-template <>
-Operator<double>*& HamiltLCAO<double, double>::getOperator()
-{
-    return this->opsd;
-}
-template <>
-Operator<std::complex<double>>*& HamiltLCAO<std::complex<double>, double>::getOperator()
+template <typename TK, typename TR>
+Operator<TK>*& HamiltLCAO<TK, TR>::getOperator()
 {
     return this->ops;
 }
-template <>
-Operator<std::complex<double>>*& HamiltLCAO<std::complex<double>, std::complex<double>>::getOperator()
-{
-    return this->ops;
-}
-
 // getHk
 template <>
 std::vector<double>& HamiltLCAO<double, double>::getHk(LCAO_Matrix* LM)

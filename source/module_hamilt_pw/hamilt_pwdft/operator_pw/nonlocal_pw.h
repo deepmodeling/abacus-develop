@@ -76,8 +76,8 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     Real * deeq = nullptr;
     T * deeq_nc = nullptr;
     // using nonlocal_op = nonlocal_pw_op<Real, Device>;
-    using gemv_op = hsolver::gemv_op<Real, Device>;
-    using gemm_op = hsolver::gemm_op<Real, Device>;
+    using gemv_op = hsolver::gemv_op<T, Device>;
+    using gemm_op = hsolver::gemm_op<T, Device>;
     using nonlocal_op = nonlocal_pw_op<Real, Device>;
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;

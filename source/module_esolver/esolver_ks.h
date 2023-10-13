@@ -12,6 +12,7 @@
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver.h"
+#include "module_psi/psi.h"
 #include "module_io/cal_test.h"
 #include "module_io/output_potential.h"
 #include "string.h"
@@ -93,6 +94,9 @@ namespace ModuleESolver
         Charge_Mixing* p_chgmix = nullptr;
         wavefunc wf;
         Charge_Extra CE;
+
+        // wavefunction coefficients
+        psi::Psi<T>* psi = nullptr;
 
     protected:
         std::string basisname; //PW or LCAO

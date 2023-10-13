@@ -16,8 +16,12 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
-int DiagoElpa::DecomposedState = 0;
-void DiagoElpa::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+    template<>
+    int DiagoElpa<double>::DecomposedState = 0;
+    template<>
+    int DiagoElpa<std::complex<double>>::DecomposedState = 0;
+    template<>
+    void DiagoElpa<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
@@ -42,7 +46,8 @@ void DiagoElpa::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<std:
 #endif
 }
 
-void DiagoElpa::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
+    template<>
+    void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
@@ -70,7 +75,8 @@ void DiagoElpa::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<doub
 }
 
 #ifdef __MPI
-bool DiagoElpa::ifElpaHandle(const bool &newIteration, const bool &ifNSCF)
+    template<typename T>
+    bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF)
 {
     int doHandle = false;
     if (newIteration)
