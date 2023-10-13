@@ -14,6 +14,10 @@
 #include "module_cell/parallel_kpoints.h"
 #endif
 
+// diagonalization support
+#include "module_hsolver/diago_iter_assist.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+
 #include "module_base/macros.h"
 #include <type_traits>
 /*
@@ -268,6 +272,10 @@ class psi_initializer
         // tool interfaces
         /// @brief method of Spherical Bessel Transformation
         ModuleBase::SphericalBesselTransformer sbt; // useful for atomic-like methods
+        /// @brief interface to the diagonalization method class
+        hsolver::DiagoIterAssist<T, Device>* p_diago = nullptr;
+        /// @brief interface to the hamiltonian method class
+        hamilt::HamiltPW<T, Device>* p_hamilt = nullptr;
     private:
         // basic properties
         int mem_saver = 0; // will deprecated this variable soon

@@ -38,9 +38,22 @@ RepIn_NAO<T, Device>::~RepIn_NAO()
 }
 
 template<typename T, typename Device>
+void RepIn_NAO<T, Device>::representation_init(const std::string* orbital_files)
+{
+	if(orbital_files == nullptr)
+	{
+		ModuleBase::WARNING_QUIT("RepIn_NAO::representation_init", "orbital_files is not set");
+	}
+	this->set_orbital_files(orbital_files);
+	this->create_ovlp_Xjlq();
+	this->read_orbital_files();
+	this->cal_ovlp_flzjlq();
+}
+
+template<typename T, typename Device>
 void RepIn_NAO<T, Device>::set_orbital_files(std::string* orbital_files)
 {
-	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
+	ModuleBase::timer::tick("RepIn_NAO", "set_orbital_files");
 	#ifdef __MPI
 	if(GlobalV::MY_RANK == 0)
 	{
@@ -57,7 +70,7 @@ void RepIn_NAO<T, Device>::set_orbital_files(std::string* orbital_files)
 	}
 	Parallel_Common::bcast_string(this->orbital_files.data(), this->p_ucell->ntype);
 	#endif
-	ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
+	ModuleBase::timer::tick("RepIn_NAO", "set_orbital_files");
 }
 
 template<typename T, typename Device>
@@ -77,7 +90,7 @@ void RepIn_NAO<T, Device>::create_ovlp_Xjlq()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_nao::psi_initializer_nao", "there is not ANY numerical atomic orbital read in present system, quit.");
+        ModuleBase::WARNING_QUIT("RepIn_NAO::RepIn_NAO", "there is not ANY numerical atomic orbital read in present system, quit.");
     }
     int dim3 = GlobalV::NQX;
     // allocate memory for ovlp_flzjlq
@@ -88,7 +101,7 @@ void RepIn_NAO<T, Device>::create_ovlp_Xjlq()
 template<typename T, typename Device>
 void RepIn_NAO<T, Device>::read_orbital_files()
 {
-	ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
+	ModuleBase::timer::tick("RepIn_NAO", "read_orbital_files");
 	#ifdef __MPI
 	if(GlobalV::MY_RANK==0)
 	{
@@ -111,12 +124,12 @@ void RepIn_NAO<T, Device>::read_orbital_files()
 
 			if(!ifs_it)
 			{
-				GlobalV::ofs_warning<<"psi_initializer_nao::read_orbital_files: cannot open orbital file: "<<this->orbital_files[it]<<std::endl;
-				ModuleBase::WARNING_QUIT("psi_initializer_nao::read_orbital_files", "cannot open orbital file.");
+				GlobalV::ofs_warning<<"RepIn_NAO::read_orbital_files: cannot open orbital file: "<<this->orbital_files[it]<<std::endl;
+				ModuleBase::WARNING_QUIT("RepIn_NAO::read_orbital_files", "cannot open orbital file.");
 			}
 			else
 			{
-				GlobalV::ofs_running<<"psi_initializer_nao::read_orbital_files: reading orbital file: "<<this->orbital_files[it]<<std::endl;
+				GlobalV::ofs_running<<"RepIn_NAO::read_orbital_files: reading orbital file: "<<this->orbital_files[it]<<std::endl;
 			}
 			ifs_it.close();
 
@@ -168,7 +181,7 @@ void RepIn_NAO<T, Device>::read_orbital_files()
 					{
 						if(ifs_it.eof())
 						{
-							GlobalV::ofs_warning<<" psi_initializer_nao::read_orbital_files: cannot find orbital of element "<<this->p_ucell->atoms[it].label<<std::endl
+							GlobalV::ofs_warning<<" RepIn_NAO::read_orbital_files: cannot find orbital of element "<<this->p_ucell->atoms[it].label<<std::endl
 												<<" angular momentum l = "<<l<<std::endl
 												<<" index of chi = "<<ichi<<std::endl;
 						}
@@ -260,13 +273,13 @@ void RepIn_NAO<T, Device>::read_orbital_files()
 		}
 	}
 	#endif
-	ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
+	ModuleBase::timer::tick("RepIn_NAO", "read_orbital_files");
 }
 
 template<typename T, typename Device>
 void RepIn_NAO<T, Device>::cal_ovlp_flzjlq()
 {
-	ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
+	ModuleBase::timer::tick("RepIn_NAO", "cal_ovlp_flzjlq");
 	//this->read_orbital_files();
     this->ovlp_flzjlq.zero_out();
 	for(int it=0; it<this->p_ucell->ntype; it++)
@@ -322,13 +335,13 @@ void RepIn_NAO<T, Device>::cal_ovlp_flzjlq()
 			ofs.close();
 		}
 	}
-	ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
+	ModuleBase::timer::tick("RepIn_NAO", "cal_ovlp_flzjlq");
 }
 
 template<typename T, typename Device>
 void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 {
-	ModuleBase::timer::tick("psi_initializer_nao", "initialize");
+	ModuleBase::timer::tick("RepIn_NAO", "initialize");
 	assert(this->ik>=0);
 	psig->fix_k(this->ik);
 	const int npw = this->pw_wfc->npwk[this->ik];
@@ -512,7 +525,7 @@ void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 	delete[] aux;
 	delete[] chiaux;
 	delete[] gk;
-	ModuleBase::timer::tick("psi_initializer_nao", "initialize");
+	ModuleBase::timer::tick("RepIn_NAO", "initialize");
 }
 
 // template instantiation

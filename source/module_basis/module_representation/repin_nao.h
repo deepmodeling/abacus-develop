@@ -21,6 +21,8 @@ class RepIn_NAO : public RepIn<T, Device>
         void set_orbital_files(std::string* orbital_files) override;
         // I wont write a function to set ovlp_flzjlq, it is totally useless
         
+        void representation_init(const std::string* orbital_files) override;
+
         /// @brief allocate memory for ovlp_flzjlq and initialize all elements to 0
         /// @attention warning! p_ucell must be set in advance!
         void create_ovlp_Xjlq() override;

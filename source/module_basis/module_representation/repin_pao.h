@@ -31,6 +31,7 @@ class RepIn_PAO : public RepIn<T, Device>
         /// @brief calculate the overlap between pseudo atomic wavefunctions and planewave basis
         void cal_ovlp_pswfcjlq() override;
 
+        void representation_init(const std::string* pseudopot_files) override;
         // historically left functions
         // getters
 

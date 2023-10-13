@@ -53,6 +53,7 @@ void Representation<T, Device>::transform(const psi::Psi<T, Device>& psi_in,
     this->repin->cal_psig(this->psig);
     for (auto& r : this->repout)
     {
+        //        psi::Psi&      psi::Psi*       psi::Psi&
         //        nbands*nbasis1 nbasis1*nbasis2 nbands*nbasis2
         // LCAO:  nbands*nlocal  nlocal*npwx     nbands*npwx
         r->project(psi_in,       this->psig,     psi_out);
@@ -133,7 +134,8 @@ void Representation<T, Device>::add_transform_pair(const std::string repin_name,
     {
         if(this->representations["input"][0] != repin_name)
         {
-            throw std::runtime_error("Representation<T, Device>::add_transform_pair: repin_name is not consistent");
+            ModuleBase::WARNING_QUIT("Representation::add_transform_pair", 
+            "to change psi want to transform, first do Representation::clean_representation() first.");
         }
         else
         {
@@ -143,6 +145,7 @@ void Representation<T, Device>::add_transform_pair(const std::string repin_name,
     else
     {
         this->set_repin(repin_name);
+        this->repin->representation_init(this->external_files);
     }
     this->add_repout(repout_name);
 }
@@ -169,7 +172,33 @@ void Representation<T, Device>::clean_representations()
             r = nullptr;
         }
     }
+}
 
+template<typename T, typename Device>
+void Representation<T, Device>::allocate_psig(const int nks, const int nbands, const int nbasis, const int* npwk)
+{
+    this->psig = new psi::Psi<T, Device>(nks, nbands, nbasis, npwk);
+}
+
+template<typename T, typename Device>
+void Representation<T, Device>::deallocate_psig()
+{
+    if (this->psig != nullptr)
+    {
+        delete this->psig;
+        this->psig = nullptr;
+    }
+}
+
+template<typename T, typename Device>
+void Representation<T, Device>::align_kpoint(int ik_in)
+{
+    this->ik = ik_in;
+    this->repin->set_kpoint(ik_in);
+    for (auto& r : this->repout)
+    {
+        r->set_kpoint(ik_in);
+    }
 }
 
 // explicit instantiation

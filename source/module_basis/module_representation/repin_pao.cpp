@@ -32,6 +32,120 @@ RepIn_PAO<T, Device>::~RepIn_PAO()
 }
 
 template<typename T, typename Device>
+void RepIn_PAO<T, Device>::representation_init(const std::string* pseudopot_files)
+{
+    ModuleBase::timer::tick("RepIn_PAO", "representation_init");
+    this->create_ovlp_Xjlq();
+    this->cal_ovlp_pswfcjlq();
+    ModuleBase::timer::tick("RepIn_PAO", "representation_init");
+}
+
+template<typename T, typename Device>
+void RepIn_PAO<T, Device>::create_ovlp_Xjlq()
+{
+   // find correct dimension for ovlp_flzjlq
+    int dim1 = this->p_ucell->ntype;
+    int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
+    for (int it = 0; it < this->p_ucell->ntype; it++)
+    {
+        dim2 = (this->p_ucell->atoms[it].ncpp.nchi > dim2) ? this->p_ucell->atoms[it].ncpp.nchi : dim2;
+    }
+    if (dim2 == 0)
+    {
+        ModuleBase::WARNING_QUIT("RepIn_PAO::create_ovlp_Xjlq", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+    }
+    int dim3 = GlobalV::NQX;
+    // allocate memory for ovlp_flzjlq
+    this->ovlp_pswfcjlq.create(dim1, dim2, dim3);
+    this->ovlp_pswfcjlq.zero_out();
+}
+
+template<typename T, typename Device>
+void RepIn_PAO<T, Device>::normalize_pswfc(int n_rgrid, double* pswfc, double* rab)
+{
+    ModuleBase::timer::tick("RepIn_PAO", "normalize_pswfc");
+    double* norm_pswfc = new double[n_rgrid];
+    for (int ir = 0; ir < n_rgrid; ir++)
+    {
+        norm_pswfc[ir] = pswfc[ir] * pswfc[ir]; // because in pseudopotential the pswfc already multiplied by r
+    }
+    double norm = ModuleBase::Integral::simpson(n_rgrid, norm_pswfc, rab);
+    delete[] norm_pswfc;
+    for (int ir = 0; ir < n_rgrid; ir++)
+    {
+        pswfc[ir] /= sqrt(norm);
+    }
+    ModuleBase::timer::tick("RepIn_PAO", "normalize_pswfc");
+}
+
+template<typename T, typename Device>
+std::complex<double> RepIn_PAO<T, Device>::phase_factor(double arg, int mode)
+{
+    if(mode == 1) return std::complex<double>(cos(arg),0);
+    else if (mode == -1) return std::complex<double>(0, sin(arg));
+    else if (mode == 0) return std::complex<double>(cos(arg), sin(arg));
+    else return std::complex<double>(1,0);
+}
+
+template<typename T, typename Device>
+void RepIn_PAO<T, Device>::cal_ovlp_pswfcjlq()
+{
+    ModuleBase::timer::tick("RepIn_PAO", "cal_ovlp_pswfcjlq");
+    int maxn_rgrid = 0;
+    double* qgrid = new double[GlobalV::NQX];
+    for (int iq = 0; iq < GlobalV::NQX; iq++)
+    {
+        qgrid[iq] = GlobalV::DQ * iq;
+    }
+    for (int it=0; it<this->p_ucell->ntype; it++)
+    {
+        maxn_rgrid = (this->p_ucell->atoms[it].ncpp.msh > maxn_rgrid) ? this->p_ucell->atoms[it].ncpp.msh : maxn_rgrid;
+    }
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",maxn_rgrid);
+    
+    const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell->omega);
+
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
+
+    for (int it=0; it<this->p_ucell->ntype; it++)
+    {
+		Atom* atom = &this->p_ucell->atoms[it];
+
+		GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
+
+        for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
+        {
+            int n_rgrid;
+            if(GlobalV::PSEUDO_MESH)
+                n_rgrid = atom->ncpp.mesh;
+            else
+                n_rgrid = atom->ncpp.msh;
+            double* pswfc = new double[n_rgrid];
+            for (int ir=0; ir<n_rgrid; ir++)
+            {
+                pswfc[ir] = atom->ncpp.chi(ic, ir); // copy pswfc from atom->ncpp.chi to pswfc
+            }
+            this->normalize_pswfc(n_rgrid, pswfc, atom->ncpp.rab);
+            if (atom->ncpp.oc[ic] >= 0.0) // reasonable occupation number, but is it always true?
+            {
+                const int l = atom->ncpp.lchi[ic];
+                double* ovlp_pswfcjlq_q = new double[GlobalV::NQX];
+                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r, pswfc, GlobalV::NQX, qgrid, ovlp_pswfcjlq_q, 1);
+                for (int iq = 0; iq < GlobalV::NQX; iq++)
+                {
+                    this->ovlp_pswfcjlq(it, ic, iq) = pref * ovlp_pswfcjlq_q[iq];
+                }
+                delete [] ovlp_pswfcjlq_q;
+            }
+            delete [] pswfc;
+        }
+    }
+    delete [] qgrid;
+    ModuleBase::timer::tick("RepIn_PAO", "cal_ovlp_pswfcjlq");
+}
+
+template<typename T, typename Device>
 void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 {
     ModuleBase::timer::tick("RepIn_PAO", "cal_psig");
@@ -180,7 +294,7 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
                                     if(index+2*l+1 > this->p_ucell->natomwfc)
                                     {
                                         std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell->natomwfc<<std::endl;
-                                        //ModuleBase::WARNING_QUIT("psi_initializer_atomic::cal_psig()","error: too many wfcs");
+                                        //ModuleBase::WARNING_QUIT("RepIn_PAO::cal_psig()","error: too many wfcs");
                                     }
                                     for(int ig = 0;ig<npw;ig++)
                                     {
@@ -221,7 +335,7 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
                                 if(index+2*l+1 > this->p_ucell->natomwfc)
                                 {
                                     std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell->natomwfc<<std::endl;
-                                    //ModuleBase::WARNING_QUIT("psi_initializer_atomic::cal_psig()","error: too many wfcs");
+                                    //ModuleBase::WARNING_QUIT("RepIn_PAO::cal_psig()","error: too many wfcs");
                                 }
                                 for(int ig = 0;ig<npw;ig++)
                                 {
@@ -270,112 +384,7 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
     delete[] gk;
     delete[] aux;
     delete[] chiaux;
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_psig");
-}
-
-template<typename T, typename Device>
-void RepIn_PAO<T, Device>::create_ovlp_Xjlq()
-{
-   // find correct dimension for ovlp_flzjlq
-    int dim1 = this->p_ucell->ntype;
-    int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
-    for (int it = 0; it < this->p_ucell->ntype; it++)
-    {
-        dim2 = (this->p_ucell->atoms[it].ncpp.nchi > dim2) ? this->p_ucell->atoms[it].ncpp.nchi : dim2;
-    }
-    if (dim2 == 0)
-    {
-        ModuleBase::WARNING_QUIT("RepIn_PAO::create_ovlp_Xjlq", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
-    }
-    int dim3 = GlobalV::NQX;
-    // allocate memory for ovlp_flzjlq
-    this->ovlp_pswfcjlq.create(dim1, dim2, dim3);
-    this->ovlp_pswfcjlq.zero_out();
-}
-
-template<typename T, typename Device>
-void RepIn_PAO<T, Device>::normalize_pswfc(int n_rgrid, double* pswfc, double* rab)
-{
-    ModuleBase::timer::tick("psi_initializer_atomic", "normalize_pswfc");
-    double* norm_pswfc = new double[n_rgrid];
-    for (int ir = 0; ir < n_rgrid; ir++)
-    {
-        norm_pswfc[ir] = pswfc[ir] * pswfc[ir]; // because in pseudopotential the pswfc already multiplied by r
-    }
-    double norm = ModuleBase::Integral::simpson(n_rgrid, norm_pswfc, rab);
-    delete[] norm_pswfc;
-    for (int ir = 0; ir < n_rgrid; ir++)
-    {
-        pswfc[ir] /= sqrt(norm);
-    }
-    ModuleBase::timer::tick("psi_initializer_atomic", "normalize_pswfc");
-}
-
-template<typename T, typename Device>
-std::complex<double> RepIn_PAO<T, Device>::phase_factor(double arg, int mode)
-{
-    if(mode == 1) return std::complex<double>(cos(arg),0);
-    else if (mode == -1) return std::complex<double>(0, sin(arg));
-    else if (mode == 0) return std::complex<double>(cos(arg), sin(arg));
-    else return std::complex<double>(1,0);
-}
-
-template<typename T, typename Device>
-void RepIn_PAO<T, Device>::cal_ovlp_pswfcjlq()
-{
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
-    int maxn_rgrid = 0;
-    double* qgrid = new double[GlobalV::NQX];
-    for (int iq = 0; iq < GlobalV::NQX; iq++)
-    {
-        qgrid[iq] = GlobalV::DQ * iq;
-    }
-    for (int it=0; it<this->p_ucell->ntype; it++)
-    {
-        maxn_rgrid = (this->p_ucell->atoms[it].ncpp.msh > maxn_rgrid) ? this->p_ucell->atoms[it].ncpp.msh : maxn_rgrid;
-    }
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",maxn_rgrid);
-    
-    const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell->omega);
-
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
-
-    for (int it=0; it<this->p_ucell->ntype; it++)
-    {
-		Atom* atom = &this->p_ucell->atoms[it];
-
-		GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
-
-        for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
-        {
-            int n_rgrid;
-            if(GlobalV::PSEUDO_MESH)
-                n_rgrid = atom->ncpp.mesh;
-            else
-                n_rgrid = atom->ncpp.msh;
-            double* pswfc = new double[n_rgrid];
-            for (int ir=0; ir<n_rgrid; ir++)
-            {
-                pswfc[ir] = atom->ncpp.chi(ic, ir); // copy pswfc from atom->ncpp.chi to pswfc
-            }
-            this->normalize_pswfc(n_rgrid, pswfc, atom->ncpp.rab);
-            if (atom->ncpp.oc[ic] >= 0.0) // reasonable occupation number, but is it always true?
-            {
-                const int l = atom->ncpp.lchi[ic];
-                double* ovlp_pswfcjlq_q = new double[GlobalV::NQX];
-                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r, pswfc, GlobalV::NQX, qgrid, ovlp_pswfcjlq_q, 1);
-                for (int iq = 0; iq < GlobalV::NQX; iq++)
-                {
-                    this->ovlp_pswfcjlq(it, ic, iq) = pref * ovlp_pswfcjlq_q[iq];
-                }
-                delete [] ovlp_pswfcjlq_q;
-            }
-            delete [] pswfc;
-        }
-    }
-    delete [] qgrid;
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
+    ModuleBase::timer::tick("RepIn_PAO", "cal_psig");
 }
 
 // template instantiation

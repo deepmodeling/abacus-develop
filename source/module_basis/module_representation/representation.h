@@ -109,15 +109,17 @@ class Representation
     public:
         Representation();
         ~Representation();
-
-        // main function
+        /*
+            main function
+        */
         /// @brief transform one psi in one representation to another representation
         /// @param psi_in input psi
         /// @param psi_out output psi
         void transform(const psi::Psi<T, Device>& psi_in, 
                              psi::Psi<T, Device>& psi_out);
-        
-        // configure representations
+        /*
+            representation configuration
+        */
         /// @brief configure of Representation class
         /// @param sf_in link to Structure_Factor
         /// @param pw_wfc_in link to ModulePW::PW_Basis_K
@@ -145,22 +147,52 @@ class Representation
                                 const std::string repout_name);
         /// @brief clean all representations and deallocate memory
         void clean_representations();
-
+        /*
+            transform setting
+        */
+        /// @brief setter of variable external_files
+        /// @param external_files_in array of external filenames. For nao, it is GlobalC::ucell.orbital_fn.
+        void set_external_files(std::string* external_files_in) { this->external_files = external_files_in; }
+        /// @brief getter of variable external_files
+        /// @return external_files
+        std::string* get_external_files() const { return this->external_files; }
+        /*
+            wavefunction operations
+        */
+        /// @brief allocate memory for pw representation wavefunction
+        /// @param nks number of kpoints included in psi
+        /// @param nbands number of nbands
+        /// @param nbasis maximal number of pw basis over all kpoints
+        /// @param npwk number of pw basis for each kpoint
+        void allocate_psig(const int nks, const int nbands, const int nbasis, const int* npwk);
+        /// @brief getter of psig
+        /// @return pw representation wavefunction
+        psi::Psi<T, Device>* get_psig() const { return this->psig; }
+        /// @brief deallocate memory for psig
+        void deallocate_psig();
+        /// @brief align kpoint of repin and repout
+        /// @param ik index of kpoint
+        void align_kpoint(int ik);
+    
+    protected:
         // intermediate psi
         /// @brief intermediate psi, in pw representation
         /// @details if it is basis_type lcao_in_pw calculation, this psi is the same as old-version-implemented wanf2, will always be used
-        psi::Psi<T, Device>* psig;
+        psi::Psi<T, Device>* psig = nullptr;
+    
     private:
         // interfaces
-        Structure_Factor* p_sf;
-        ModulePW::PW_Basis_K* pw_wfc;
-        UnitCell* p_ucell;
-        Parallel_Kpoints* p_parakpts;
-        pseudopot_cell_vnl* p_pspot_nl;
+        Structure_Factor* p_sf = nullptr;
+        ModulePW::PW_Basis_K* pw_wfc = nullptr;
+        UnitCell* p_ucell = nullptr;
+        Parallel_Kpoints* p_parakpts = nullptr;
+        pseudopot_cell_vnl* p_pspot_nl = nullptr;
         // representations
         std::map<std::string, std::vector<std::string>> representations;
         /// @brief interface to functional class, RepIn, transforms psi from one representation to pw
-        RepIn<T, Device>* repin;
+        RepIn<T, Device>* repin = nullptr;
+        /// @brief external files read-in, to perform numerical integration on, get psig.
+        std::string* external_files = nullptr;
         /// @brief interfaces to functional class, RepOut, transforms psi from pw to one representation
         /// @details there may be multiple output representations, so use vector. Multiple requirements may be from out_qo, out_wannier, out_cohp in INPUT file
         std::vector<RepOut<T, Device>*> repout;
