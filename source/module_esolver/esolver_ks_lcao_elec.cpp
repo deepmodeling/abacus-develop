@@ -263,6 +263,7 @@ namespace ModuleESolver
                 GlobalV::sc_thr,
                 GlobalV::nsc,
                 GlobalV::nsc_min,
+                GlobalV::decay_grad_switch,
                 this->kv,
                 GlobalV::KS_SOLVER,
                 &(this->LM),

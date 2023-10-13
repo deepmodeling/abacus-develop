@@ -54,7 +54,11 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
     const double zero = 0.0;
     const double one = 1.0;
 
-    bound_gradient[0] = 0.9*13.6058; // temporary for iron
+    for (int it = 0; it < ntype; it++)
+    {
+        bound_gradient[it] = this->decay_grad_[it];
+        //std::cout << "bound_gradient " << bound_gradient[it] << std::endl;
+    }
 
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;

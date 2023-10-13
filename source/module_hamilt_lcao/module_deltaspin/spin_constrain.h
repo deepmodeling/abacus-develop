@@ -1,18 +1,18 @@
 #ifndef SPIN_CONSTRAIN_H
 #define SPIN_CONSTRAIN_H
 
-#include <vector>
 #include <map>
-#include "module_base/vector3.h"
-#include "module_base/tool_title.h"
+#include <vector>
+
+#include "module_base/constants.h"
 #include "module_base/tool_quit.h"
+#include "module_base/tool_title.h"
+#include "module_base/vector3.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
+#include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hsolver/hsolver.h"
-#include "module_cell/klist.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 
 struct ScAtomData;
 
@@ -24,45 +24,39 @@ public:
      * pubic interface for spin-constrained DFT
     */
     /// initialize spin-constrained DFT
-    void init_sc(const UnitCell& ucell,
-                int NPOL,
-                std::string sc_file,
-                Parallel_Orbitals* ParaV_in,
-                int nspin_in,
-                double sc_thr_in,
-                int nsc_in,
-                int nsc_min_in,
-                K_Vectors kv_in,
-                std::string KS_SOLVER_in,
-                LCAO_Matrix* LM_in,
-                hsolver::HSolver<FPTYPE, Device>* phsol_in,
-                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
-                psi::Psi<FPTYPE>* psi_in,
-                elecstate::ElecState* pelec_in);
+  void init_sc(const UnitCell& ucell,
+               int NPOL,
+               std::string sc_file,
+               Parallel_Orbitals* ParaV_in,
+               int nspin_in,
+               double sc_thr_in,
+               int nsc_in,
+               int nsc_min_in,
+               bool decay_grad_switch_in,
+               K_Vectors kv_in,
+               std::string KS_SOLVER_in,
+               LCAO_Matrix* LM_in,
+               hsolver::HSolver<FPTYPE, Device>* phsol_in,
+               hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+               psi::Psi<FPTYPE>* psi_in,
+               elecstate::ElecState* pelec_in);
 
-    /// calculate h_lambda operator for spin-constrained DFT
-    void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2);
+  /// calculate h_lambda operator for spin-constrained DFT
+  void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2);
 
-    void cal_MW(
-        const int& step,
-        LCAO_Matrix& LM,
-        const UnitCell& ucell,
-        bool print=false);
+  void cal_MW(const int& step, LCAO_Matrix& LM, const UnitCell& ucell, bool print = false);
 
-    ModuleBase::matrix cal_MW_k(
-        LCAO_Matrix& LM,
-        const std::vector<std::vector<std::complex<double>>> &dm
-    );
+  ModuleBase::matrix cal_MW_k(LCAO_Matrix& LM, const std::vector<std::vector<std::complex<double>>>& dm);
 
-    void cal_mw_from_lambda(int i_step);
+  void cal_mw_from_lambda(int i_step);
 
-    double cal_escon();
+  double cal_escon();
 
-    double get_escon();
+  double get_escon();
 
-    std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
+  std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix& orbMulP);
 
-    void run_lambda_loop(int outer_step);
+  void run_lambda_loop(int outer_step);
 
 public:
     /**
@@ -145,16 +139,23 @@ public:
     int get_nspin();
     /// zero atomic magnetic moment
     void zero_Mi();
-    /// get sc_grad_decay
-    double get_sc_decay_grad(int itype);
+    /// get decay_grad
+    double get_decay_grad(int itype);
+    /// set decay_grad
+    void set_decay_grad();
+    /// get decay_grad
+    const std::vector<double>& get_decay_grad();
+    /// set decay_grad from variable
+    void set_decay_grad(const double* decay_grad_in, int ntype_in);
 
-private:
+  private:
     SpinConstrain(){};                               // Private constructor
     ~SpinConstrain(){};                              // Destructor
     SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
     SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
-    std::map<int, double> sc_decay_grad;
+    std::map<int, double> ScDecayGrad; // in unit of uB^2/eV
+    std::vector<double> decay_grad_;   // in unit of uB^2/Ry
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
     int nspin_ = 0;
@@ -168,6 +169,7 @@ private:
     */
     int nsc_;
     int nsc_min_;
+    bool decay_grad_switch_ = false;
     double sc_thr_; // in unit of uB
     std::vector<ModuleBase::Vector3<int>> constrain_;
     bool debug = false;

@@ -30,7 +30,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::string line;
     int current_itype = 0;
     std::string current_element;
-    double current_sc_decay_grad = 0.0;
+    double current_decay_grad = 0.0;
 
     std::regex itype_regex("\"itype\": (\\d+)");
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
@@ -51,7 +51,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
         } else if (std::regex_search(line, match, element_regex)) {
             current_element = match[1];
         } else if (std::regex_search(line, match, ScDecayGrad_regex)) {
-            current_sc_decay_grad = std::stod(match[1]);
+            current_decay_grad = std::stod(match[1]);
         } else if (std::regex_search(line, match, index_regex)) {
             ScAtomData element_data;
             element_data.index = std::stoi(match[1]);
@@ -108,7 +108,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
             }
 
             this->ScData[current_itype].push_back(element_data);
-            this->sc_decay_grad[current_itype] = current_sc_decay_grad;
+            this->ScDecayGrad[current_itype] = current_decay_grad;
         }
     }
     file.close();

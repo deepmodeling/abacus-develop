@@ -354,11 +354,56 @@ void SpinConstrain<FPTYPE, Device>::zero_Mi()
     }
 }
 
-/// get sc_grad_decay
-template<typename FPTYPE, typename Device>
-double SpinConstrain<FPTYPE, Device>::get_sc_decay_grad(int itype)
+/// get grad_decay
+template <typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::get_decay_grad(int itype)
 {
-    return this->sc_decay_grad[itype];
+    return this->ScDecayGrad[itype];
+}
+
+/// set grad_decy
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_decay_grad()
+{
+    this->check_atomCounts();
+    int ntype = this->get_ntype();
+    this->decay_grad_.resize(ntype);
+    for (int itype = 0; itype < ntype; ++itype)
+    {
+        this->decay_grad_[itype] = 0.0;
+    }
+    if (this->decay_grad_switch_)
+    {
+        for (auto& itype_data: this->ScDecayGrad)
+        {
+            int itype = itype_data.first;
+            this->decay_grad_[itype] = itype_data.second * ModuleBase::Ry_to_eV;
+        }
+    }
+}
+
+/// get decay_grad
+template <typename FPTYPE, typename Device>
+const std::vector<double>& SpinConstrain<FPTYPE, Device>::get_decay_grad()
+{
+    return this->decay_grad_;
+}
+
+/// set grad_decy from variable
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_decay_grad(const double* decay_grad_in, int ntype_in)
+{
+    this->check_atomCounts();
+    int ntype = this->get_ntype();
+    if (ntype_in != ntype)
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_decay_grad", "decay_grad_in size mismatch with ntype");
+    }
+    this->decay_grad_.resize(ntype);
+    for (int itype = 0; itype < ntype; ++itype)
+    {
+        this->decay_grad_[itype] = decay_grad_in[itype];
+    }
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
