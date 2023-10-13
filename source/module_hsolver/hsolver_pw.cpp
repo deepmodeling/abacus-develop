@@ -226,6 +226,144 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     return;
 }
 
+/* 
+    lcao_in_pw
+*/
+template <typename T, typename Device>
+void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_KS_PW::p_hamilt
+                                      psi::Psi<T, Device>& psi,      // ESolver_KS_PW::kspw_psi
+                                      elecstate::ElecState* pes,     // ESolver_KS_PW::pes
+                                      psi::Psi<T, Device>& transform,
+                                      const bool skip_charge)
+{
+    ModuleBase::TITLE("HSolverPW", "solve");
+    ModuleBase::timer::tick("HSolverPW", "solve");
+    std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
+    for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+    {
+        /// update H(k) for each k point
+        pHamilt->updateHk(ik);
+#ifdef USE_PAW
+	    if(GlobalV::use_paw)
+        {
+            const int npw = this->wfc_basis->npwk[ik];
+            ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+            for (int ig = 0;ig < npw; ig++)
+            {
+                _gk[ig] = this->wfc_basis->getgpluskcar(ik,ig);
+            }
+
+            double* kpt;
+            kpt = new double[3];
+            kpt[0] = this->wfc_basis->kvec_c[ik].x;
+            kpt[1] = this->wfc_basis->kvec_c[ik].y;
+            kpt[2] = this->wfc_basis->kvec_c[ik].z;
+
+            double ** kpg;
+            kpg = new double*[npw];
+            for(int ipw=0;ipw<npw;ipw++)
+            {
+                kpg[ipw] = new double[3];
+                kpg[ipw][0] = _gk[ipw].x;
+                kpg[ipw][1] = _gk[ipw].y;
+                kpg[ipw][2] = _gk[ipw].z;
+            }
+
+            GlobalC::paw_cell.set_paw_k(npw,kpt,
+                this->wfc_basis->get_ig2ix(ik).data(),
+                this->wfc_basis->get_ig2iy(ik).data(),
+                this->wfc_basis->get_ig2iz(ik).data(),
+                (const double **) kpg,GlobalC::ucell.tpiba);
+
+            delete[] kpt;
+            for(int ipw = 0; ipw < npw; ipw++)
+            {
+                delete[] kpg[ipw];
+            }
+            delete[] kpg;
+
+            GlobalC::paw_cell.get_vkb();
+        }
+#endif
+        psi.fix_k(ik);
+        transform.fix_k(ik);
+        /// solve eigenvector and eigenvalue for H(k)
+
+        //hsolver::DiagoIterAssist<T, Device>::diagH_subspace(
+        //    pHamilt,                                // interface to hamilt
+        //    transform,                              // transform matrix between lcao and pw
+        //    psi,                                    // psi in pw basis
+        //    eigenvalues.data() + ik * pes->ekb.nc,  // eigenvalues
+        //    psi.get_nbands()                        // number of the lowest energies bands
+        //    );
+
+
+        hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
+            pHamilt,                                // interface to hamilt
+            transform.get_pointer(),                // transform matrix between lcao and pw
+            transform.get_nbands(),
+            transform.get_nbasis(),
+            psi,                                    // psi in pw basis
+            eigenvalues.data() + ik * pes->ekb.nc   // eigenvalues
+            );
+
+        if(skip_charge)
+        {
+            GlobalV::ofs_running<< "Average iterative diagonalization steps for k-points "<<ik<<" is: "<<DiagoIterAssist<T, Device>::avg_iter
+                <<" ; where current threshold is: "<<DiagoIterAssist<T, Device>::PW_DIAG_THR<<" . "<<std::endl;
+            DiagoIterAssist<T, Device>::avg_iter = 0.0;
+        }
+        /// calculate the contribution of Psi for charge density rho
+     }
+    castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
+
+    if(skip_charge)
+    {
+        ModuleBase::timer::tick("HSolverPW", "solve");
+        return;
+    }
+    reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        if(typeid(Real) != typeid(double))
+        {
+            ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
+        }
+
+        GlobalC::paw_cell.reset_rhoij();
+        for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+        {
+            psi.fix_k(ik);
+            int nbands = psi.get_nbands();
+            for(int ib = 0; ib < nbands; ib ++)
+            {
+                GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*> (psi.get_pointer(ib)), pes->wg(ik,ib));
+            }
+        }
+
+        std::vector<std::vector<double>> rhoijp;
+        std::vector<std::vector<int>> rhoijselect;
+        std::vector<int> nrhoijsel;
+
+        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        {
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+        }
+
+        double* nhatgr;
+        nhatgr = new double[3*GlobalC::paw_cell.get_nrxx()];
+        GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
+        delete[] nhatgr;
+    }
+#endif
+    ModuleBase::timer::tick("HSolverPW", "solve");
+    return;
+}
+
 template<typename T, typename Device>
 void HSolverPW<T, Device>::endDiagh()
 {

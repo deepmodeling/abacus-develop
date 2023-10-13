@@ -90,7 +90,7 @@ namespace ModuleESolver
     protected:
         psi::Psi<std::complex<double>, psi::DEVICE_CPU>* psi = nullptr;   //hide the psi in ESolver_KS for tmp use
     private:
-        psi_initializer* psi_init = nullptr;
+        psi_initializer<T, Device>* psi_init = nullptr;
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
         psi::Psi<T, Device>* kspw_psi = nullptr;

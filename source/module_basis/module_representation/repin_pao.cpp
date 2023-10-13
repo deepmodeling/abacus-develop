@@ -34,7 +34,7 @@ RepIn_PAO<T, Device>::~RepIn_PAO()
 template<typename T, typename Device>
 void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 {
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_psig");
+    ModuleBase::timer::tick("RepIn_PAO", "cal_psig");
     psig->fix_k(this->ik);
     //this->print_status(psi);
     const int npw = this->pw_wfc->npwk[this->ik];
