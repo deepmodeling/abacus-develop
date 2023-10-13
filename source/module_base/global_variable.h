@@ -310,6 +310,7 @@ extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with dec
 extern double sc_thr;
 extern int nsc;
 extern int nsc_min;
+extern double alpha_trial;
 extern std::string sc_file;
 } // namespace GlobalV
 #endif

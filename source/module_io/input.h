@@ -571,6 +571,7 @@ class Input
     double sc_thr; // threshold for spin-constrained DFT
     int nsc; // maximum number of inner lambda loop
     int nsc_min; // minimum number of inner lambda loop
+    double alpha_trial; // initial trial step size for lambda
     std::string sc_file; // file name for Deltaspin (json format)
 
     // whether to use PAW

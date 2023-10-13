@@ -32,6 +32,7 @@ public:
                double sc_thr_in,
                int nsc_in,
                int nsc_min_in,
+               double alpha_trial_in,
                bool decay_grad_switch_in,
                K_Vectors kv_in,
                std::string KS_SOLVER_in,
@@ -173,7 +174,7 @@ public:
     double sc_thr_; // in unit of uB
     std::vector<ModuleBase::Vector3<int>> constrain_;
     bool debug = false;
-    double alpha_trial_ = 0.00073498; // in unit of Ry/uB^2 = 0.01 eV/uB^2
+    double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
     double restrict_current_ = 0.22049; // in unit of Ry/uB = 3 eV/uB
     K_Vectors kv_;
 };
