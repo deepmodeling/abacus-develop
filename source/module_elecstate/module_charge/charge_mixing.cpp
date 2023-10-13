@@ -174,7 +174,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
             }
         }
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_pool(drho);
+        Parallel_Reduce::reduce_pool(drho);
 #endif
         assert(nelec != 0);
         assert(GlobalC::ucell.omega > 0);
@@ -450,7 +450,7 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
         rnorm += rho1[ir] * rho2[ir];
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(rnorm);
+    Parallel_Reduce::reduce_pool(rnorm);
 #endif
     return rnorm;
 }
@@ -576,7 +576,7 @@ double Charge_Mixing::rhog_dot_product(const std::complex<double>* const* const 
         break;
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(sum);
+    Parallel_Reduce::reduce_pool(sum);
 #endif
     ModuleBase::timer::tick("Charge_Mixing", "rhog_dot_product");
 

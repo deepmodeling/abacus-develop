@@ -22,10 +22,10 @@
 	class Local_Orbital_Charge;
 	class Parallel_Orbitals;
 	
-	template<typename Tdata>
+    template<typename T, typename Tdata>
 	class RPA_LRI;
 
-    template<typename Tdata>
+    template<typename T, typename Tdata>
     class Exx_LRI_Interface;
 
 template<typename Tdata>
@@ -71,8 +71,10 @@ private:
     int two_level_step = 0;
     Mix_DMk_2D mix_DMk_2D;
     
-	friend class RPA_LRI<Tdata>;
-    friend class Exx_LRI_Interface<Tdata>;
+    friend class RPA_LRI<double, Tdata>;
+    friend class RPA_LRI<std::complex<double>, Tdata>;
+    friend class Exx_LRI_Interface<double, Tdata>;
+    friend class Exx_LRI_Interface<std::complex<double>, Tdata>;
 };
 
 #include "Exx_LRI.hpp"

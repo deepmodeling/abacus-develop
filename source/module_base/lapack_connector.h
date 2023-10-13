@@ -24,6 +24,11 @@ extern "C"
 
     // solve the generalized eigenproblem Ax=eBx, where A is Hermitian and complex couble
     // zhegv_ & zhegvd_ returns all eigenvalues while zhegvx_ returns selected ones
+    void dsygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
+        double* a, const int* lda,
+        const double* b, const int* ldb, double* w,
+        double* work, int* lwork,
+        int* iwork, int* liwork, int* info);
 
     void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<float>* a, const int* lda,
@@ -36,6 +41,12 @@ extern "C"
                  const std::complex<double>* b, const int* ldb, double* w,
                  std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
                  int* iwork, int* liwork, int* info);
+
+    void dsyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+        double* a, const int* lda,
+        const double* vl, const double* vu, const int* il, const int* iu, const double* abstol,
+        const int* m, double* w, double* z, const int* ldz,
+        double* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
 
     void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
              std::complex<float> *a, const int* lda,
@@ -317,6 +328,20 @@ public:
                 iwork, &liwork, &info);
     }
 
+    // wrap function of fortran lapack routine zhegvd. (pointer version)
+    static inline
+        void xhegvd(const int itype, const char jobz, const char uplo, const int n,
+            double* a, const int lda,
+            const double* b, const int ldb, double* w,
+            double* work, int lwork, double* rwork, int lrwork,
+            int* iwork, int liwork, int& info)
+    {
+        // call the fortran routine
+        dsygvd_(&itype, &jobz, &uplo, &n,
+            a, &lda, b, &ldb, w,
+            work, &lwork,
+            iwork, &liwork, &info);
+    }
 
     // wrap function of fortran lapack routine zhegvd. (pointer version)
     static inline
@@ -362,7 +387,21 @@ public:
                 work, &lwork, rwork, iwork, ifail, &info);
     }
 
-    // wrap function of fortran lapack routine zheevx.
+    // wrap function of fortran lapack routine dsyevx.
+    static inline
+        void xheevx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            const int m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+    {
+        dsyevx_(&jobz, &range, &uplo, &n,
+            a, &lda, &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+    }
+
+    // wrap function of fortran lapack routine cheevx.
     static inline
     void xheevx( const int itype, const char jobz, const char range, const char uplo, const int n,
                  std::complex<float>* a, const int lda,

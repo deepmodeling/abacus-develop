@@ -370,7 +370,7 @@ void Gint_k::folding_vl_k(const int &ik,
 {
 #endif
         // collect the matrix after folding.
-        Parallel_Reduce::reduce_complex_double_pool( tmp.data(), tmp.size() );
+            Parallel_Reduce::reduce_pool(tmp.data(), tmp.size());
 #ifdef _OPENMP
 }
 #endif

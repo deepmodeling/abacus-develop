@@ -182,7 +182,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     ewalds = 0.50 * ModuleBase::e2 * (ewaldg + ewaldr);
 
 	// mohan fix bug 2010-07-26
-    Parallel_Reduce::reduce_double_pool( ewalds );
+    Parallel_Reduce::reduce_pool(ewalds);
 
     if (GlobalV::test_energy>1)
     {

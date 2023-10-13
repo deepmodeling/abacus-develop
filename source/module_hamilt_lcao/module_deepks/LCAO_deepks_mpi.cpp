@@ -15,7 +15,7 @@ void LCAO_Deepks::allsum_deepks(
 {
     for(int inl=0;inl<inlmax;inl++)
     {
-        Parallel_Reduce::reduce_double_all(mat[inl],ndim);
+        Parallel_Reduce::reduce_all(mat[inl], ndim);
     }
 }
 #endif

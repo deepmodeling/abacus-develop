@@ -26,7 +26,7 @@
  * self-realized functions in module_hsolver/test/diago_elpa_utils.h
  */
 
-template <typename T> class HamiltTEST : public hamilt::Hamilt<std::complex<double>>
+template <typename T> class HamiltTEST : public hamilt::Hamilt<T>
 {
     public:
     int desc[9];
@@ -60,10 +60,10 @@ template<class T> class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoBlas;
+            dh = new hsolver::DiagoBlas<T>;
 #ifdef __ELPA
         else if(ks_solver == "genelpa")
-            dh = new hsolver::DiagoElpa;
+            dh = new hsolver::DiagoElpa<T>;
 #endif
         else
         {
@@ -82,7 +82,7 @@ template<class T> class DiagoPrepare
     std::vector<T> s;
     std::vector<T> h_local;
     std::vector<T> s_local;
-    hsolver::DiagH<std::complex<double>>* dh=0;
+    hsolver::DiagH<T>* dh = 0;
     psi::Psi<T> psi;
     std::vector<double> e_solver; 
     std::vector<double> e_lapack;

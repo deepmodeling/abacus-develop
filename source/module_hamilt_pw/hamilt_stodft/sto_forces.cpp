@@ -221,7 +221,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
             	stowf.shchi[ik].c,&npwx,
             	&ModuleBase::ZERO,&becp(nksbands,0),&nkb);
         
-        Parallel_Reduce::reduce_complex_double_pool( becp.c, becp.size);
+        Parallel_Reduce::reduce_pool(becp.c, becp.size);
 
         //out.printcm_real("becp",becp,1.0e-4);
         // Calculate the derivative of beta,
@@ -328,7 +328,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
     }// end ik
 
     // sum up forcenl from all processors
-    Parallel_Reduce::reduce_double_all(forcenl.c, forcenl.nr * forcenl.nc);
+    Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr* forcenl.nc);
 
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
     return;

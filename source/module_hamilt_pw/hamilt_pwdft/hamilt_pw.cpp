@@ -124,19 +124,6 @@ void HamiltPW<T, Device>::updateHk(const int ik)
 }
 
 template<typename T, typename Device>
-void HamiltPW<T, Device>::sPsi
-(
-    const T *psi,
-    T *spsi,
-    size_t size
-) const
-{
-    // ModuleBase::GlobalFunc::COPYARRAY(psi, spsi, size);
-    // denghui replaced at 2022.11.04
-    syncmem_complex_op()(this->ctx, this->ctx, spsi, psi, size);
-}
-
-template<typename T, typename Device>
 template<typename T_in, typename Device_in>
 HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
 {

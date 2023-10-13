@@ -7,14 +7,15 @@
 namespace hsolver
 {
 
-class DiagoElpa : public DiagH<std::complex<double>>
-{
+    template<typename T>
+    class DiagoElpa : public DiagH<T>
+    {
+    private:
+        using Real = typename GetTypeReal<T>::type;
 
-  public:
-    void diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) override;
+    public:
+        void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
 
-    void diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, double* eigenvalue_in) override;
-    
     static int DecomposedState;
 
   private:

@@ -276,7 +276,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 );
             }
 
-            Parallel_Reduce::reduce_complex_double_pool(becp, nkb * nbands);
+            Parallel_Reduce::reduce_pool(becp, nkb * nbands);
 
             this->add_nonlocal_pp(tmhpsi, becp, nbands);
         }

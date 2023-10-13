@@ -467,7 +467,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     {
         assert(nbands <= wfcatom.nr);
         // replace by haozhihan 2022-11-23
-        hsolver::matrixSetToAnother<float, psi::DEVICE_GPU>()(
+        hsolver::matrixSetToAnother<std::complex<float>, psi::DEVICE_GPU>()(
                 gpu_ctx,
                 nbands,
                 c_wfcatom,
@@ -560,7 +560,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 	{
 		assert(nbands <= wfcatom.nr);
 		// replace by haozhihan 2022-11-23
-		hsolver::matrixSetToAnother<double, psi::DEVICE_GPU>()(
+        hsolver::matrixSetToAnother<std::complex<double>, psi::DEVICE_GPU>()(
 			gpu_ctx,
 			nbands,
 			z_wfcatom,
