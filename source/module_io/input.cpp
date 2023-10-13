@@ -4,23 +4,25 @@
 //==========================================================
 // #include "global.h"
 #include "module_io/input.h"
-#include "version.h"
-#include "module_base/constants.h"
-#include "module_base/global_file.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/timer.h"
-#include "module_base/parallel_common.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 #include <vector>
-#include <algorithm>
+
+#include "module_base/constants.h"
+#include "module_base/global_file.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_base/parallel_common.h"
+#include "module_base/timer.h"
+#include "version.h"
 Input INPUT;
 
 void Input::Init(const std::string &fn)
@@ -48,7 +50,7 @@ void Input::Init(const std::string &fn)
         ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
     }
 #ifdef __MPI
-    Bcast();
+    this->Bcast();
 #endif
 
     // mohan move forward 2011-02-26
@@ -294,7 +296,7 @@ void Input::Default(void)
     //----------------------------------------------------------
     //  charge mixing
     //----------------------------------------------------------
-    mixing_mode = "pulay";
+    mixing_mode = "broyden";
     mixing_beta = -10.0;
     mixing_ndim = 8;
     mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27

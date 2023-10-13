@@ -42,7 +42,13 @@ class Charge
     double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
     double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
                                    // wenfei 2021-07-28
+  private:
+    //temporary
+    double *_space_rho = nullptr, *_space_rho_save = nullptr;
+    std::complex<double> *_space_rhog = nullptr, *_space_rhog_save = nullptr;
+    double *_space_kin_r = nullptr, *_space_kin_r_save = nullptr;
 
+  public:
     double **nhat = nullptr; //compensation charge for PAW
     double **nhat_save = nullptr; //compensation charge for PAW
                                  // wenfei 2023-09-05

@@ -3,11 +3,11 @@
 
 #include "diago_lapack.h"
 
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_variable.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;

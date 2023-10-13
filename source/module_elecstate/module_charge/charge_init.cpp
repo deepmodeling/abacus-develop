@@ -257,8 +257,8 @@ void Charge::set_rho_core(
     }
 
 	// mohan fix bug 2011-04-03
-	Parallel_Reduce::reduce_double_pool( rhoneg );
-	Parallel_Reduce::reduce_double_pool( rhoima );
+    Parallel_Reduce::reduce_pool(rhoneg);
+    Parallel_Reduce::reduce_pool(rhoima);
 
 	// mohan changed 2010-2-2, make this same as in atomic_rho.
 	// still lack something......

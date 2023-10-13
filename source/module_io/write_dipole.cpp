@@ -55,9 +55,9 @@ void ModuleIO::write_dipole(const double* rho_save,
     dipole_elec_x *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
     dipole_elec_y *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
     dipole_elec_z *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
-    Parallel_Reduce::reduce_double_pool(dipole_elec_x);
-    Parallel_Reduce::reduce_double_pool(dipole_elec_y);
-    Parallel_Reduce::reduce_double_pool(dipole_elec_z);
+    Parallel_Reduce::reduce_pool(dipole_elec_x);
+    Parallel_Reduce::reduce_pool(dipole_elec_y);
+    Parallel_Reduce::reduce_pool(dipole_elec_z);
 
     ofs << istep << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
 #else
@@ -78,9 +78,9 @@ void ModuleIO::write_dipole(const double* rho_save,
         dipole_elec[2] += rho_save[ir] * z;
     }
 
-    Parallel_Reduce::reduce_double_pool(dipole_elec[0]);
-    Parallel_Reduce::reduce_double_pool(dipole_elec[1]);
-    Parallel_Reduce::reduce_double_pool(dipole_elec[2]);
+    Parallel_Reduce::reduce_pool(dipole_elec[0]);
+    Parallel_Reduce::reduce_pool(dipole_elec[1]);
+    Parallel_Reduce::reduce_pool(dipole_elec[2]);
     for (int i = 0; i < 3; ++i)
     {
         dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / rhopw->nxyz;

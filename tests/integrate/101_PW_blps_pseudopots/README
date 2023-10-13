@@ -1,5 +1,5 @@
 This test for:
 *Si-diamond
 *BLPS (Bulk local pseudopotential)
-*mixing_type pulay-kerker
+*mixing_type broyden-kerker
 *mixing_beta 0.7

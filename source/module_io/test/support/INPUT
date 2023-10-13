@@ -159,9 +159,9 @@ smearing_method                gauss #type of smearing_method: gauss; fd; fixed;
 smearing_sigma                 0.002 #energy range for smearing
 
 #Parameters (7.Charge Mixing)
-mixing_type                    pulay #plain; pulay; broyden
+mixing_type                    broyden #plain; pulay; broyden
 mixing_beta                    0.7 #mixing parameter: 0 means no new charge
-mixing_ndim                    8 #mixing dimension in pulay
+mixing_ndim                    8 #mixing dimension in pulay or broyden
 mixing_gg0                     0 #mixing parameter in kerker
 
 #Parameters (8.DOS)

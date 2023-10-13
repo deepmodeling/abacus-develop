@@ -11,7 +11,7 @@
 #include <fstream>
 #include <iostream>
 
-template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
+template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in)
 {
     ModuleBase::TITLE("RPA_LRI", "init");
     ModuleBase::timer::tick("RPA_LRI", "init");
@@ -25,7 +25,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     //    exx_lri_rpa.cv = exx_lri_rpa.cv;
 }
 
-template <typename Tdata> void RPA_LRI<Tdata>::cal_rpa_cv()
+template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::cal_rpa_cv()
 {
     std::vector<TA> atoms(GlobalC::ucell.nat);
     for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
@@ -57,14 +57,14 @@ template <typename Tdata> void RPA_LRI<Tdata>::cal_rpa_cv()
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
 }
 
-template <typename Tdata>
-void RPA_LRI<Tdata>::cal_postSCF_exx(const Local_Orbital_Charge& loc,
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::cal_postSCF_exx(const Local_Orbital_Charge& loc,
                 const MPI_Comm& mpi_comm_in,
                 const K_Vectors& kv,
                 const Parallel_Orbitals& pv)
 {
     exx_lri_rpa.mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
-    exx_lri_rpa.mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
+    exx_lri_rpa.mix_DMk_2D.set_mixing(nullptr);
     if(GlobalV::GAMMA_ONLY_LOCAL)
         exx_lri_rpa.mix_DMk_2D.mix(loc.dm_gamma, true);
     else
@@ -75,9 +75,9 @@ void RPA_LRI<Tdata>::cal_postSCF_exx(const Local_Orbital_Charge& loc,
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 
-template <typename Tdata>
-void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
-                                 const psi::Psi<std::complex<double>> &psi,
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_for_RPA(const Parallel_Orbitals& parav,
+    const psi::Psi<T>& psi,
                                  const elecstate::ElecState *pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_for_RPA");
@@ -100,8 +100,8 @@ void RPA_LRI<Tdata>::out_for_RPA(const Parallel_Orbitals &parav,
     return;
 }
 
-template <typename Tdata>
-void RPA_LRI<Tdata>::out_eigen_vector(const Parallel_Orbitals &parav, const psi::Psi<std::complex<double>> &psi)
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi)
 {
 
     ModuleBase::TITLE("DFT_RPA_interface", "out_eigen_vector");
@@ -156,7 +156,7 @@ void RPA_LRI<Tdata>::out_eigen_vector(const Parallel_Orbitals &parav, const psi:
     return;
 }
 
-template <typename Tdata> void RPA_LRI<Tdata>::out_struc()
+template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_struc()
 {
     if (GlobalV::MY_RANK != 0)
         return;
@@ -189,7 +189,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_struc()
     return;
 }
 
-template <typename Tdata> void RPA_LRI<Tdata>::out_bands(const elecstate::ElecState *pelec)
+template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
     if (GlobalV::MY_RANK != 0)
@@ -222,7 +222,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_bands(const elecstate::ElecSt
     return;
 }
 
-template <typename Tdata> void RPA_LRI<Tdata>::out_Cs()
+template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_Cs()
 {
     std::stringstream ss;
     ss << "Cs_data_" << GlobalV::MY_RANK << ".txt";
@@ -253,7 +253,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_Cs()
     return;
 }
 
-template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
+template <typename T, typename Tdata> void RPA_LRI<T, Tdata>::out_coulomb_k()
 {
     int all_mu = 0;
     vector<int> mu_shift(GlobalC::ucell.nat);
@@ -315,7 +315,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
 }
 
 // template<typename Tdata>
-// void RPA_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in)
+// void RPA_LRI<T, Tdata>::init(const MPI_Comm &mpi_comm_in)
 // {
 // 	if(this->info == this->exx.info)
 // 	{
@@ -343,7 +343,7 @@ template <typename Tdata> void RPA_LRI<Tdata>::out_coulomb_k()
 // }
 
 // template<typename Tdata>
-// void RPA_LRI<Tdata>::cal_rpa_ions()
+// void RPA_LRI<T, Tdata>::cal_rpa_ions()
 // {
 // 	// this->rpa_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 

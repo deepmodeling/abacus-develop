@@ -19,7 +19,7 @@ basis_type		    pw
 smearing_method		fixed
 
 #Parameters (5.Mixing)
-mixing_type		    pulay
+mixing_type		    broyden
 mixing_beta		    0.7
 
 efield_flag         1

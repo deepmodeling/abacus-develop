@@ -128,7 +128,7 @@ TEST_P(DiagoDavTest,RandomHamilt)
 	if (DETAILINFO&&ddp.mypnum==0) std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
 			  << ddp.sparsity << ", eps=" << ddp.eps << std::endl;
 
-	HPsi_f hpsi(ddp.nband,ddp.npw,ddp.sparsity);
+    HPsi<std::complex<float>> hpsi(ddp.nband, ddp.npw, ddp.sparsity);
 	DIAGOTEST::hmatrix_f = hpsi.hamilt();
 	DIAGOTEST::npw = ddp.npw;
 	DIAGOTEST::npw_local = new int[ddp.nprocs];
@@ -138,9 +138,9 @@ TEST_P(DiagoDavTest,RandomHamilt)
 
 #ifdef __MPI				
 	DIAGOTEST::cal_division(DIAGOTEST::npw);
-	DIAGOTEST::divide_hpsi_f(psi,psi_local);
+    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix_f, DIAGOTEST::hmatrix_local_f);
 	precondition_local = new float[DIAGOTEST::npw_local[ddp.mypnum]];
-	DIAGOTEST::divide_psi_f<float>(hpsi.precond(),precondition_local);	
+    DIAGOTEST::divide_psi<float>(hpsi.precond(), precondition_local);
 #else
 	DIAGOTEST::hmatrix_local_f = DIAGOTEST::hmatrix_f;
 	DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
@@ -174,7 +174,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 
 	DiagoDavPrepare ddp(nband,DIAGOTEST::npw,0,2,1e-5,500);
 	
-	HPsi_f hpsi(nband,DIAGOTEST::npw);
+    HPsi<std::complex<float>> hpsi(nband, DIAGOTEST::npw);
 	psi::Psi<std::complex<float>> psi = hpsi.psi();
 	DIAGOTEST::npw_local = new int[ddp.nprocs];
 	psi::Psi<std::complex<float>> psi_local;
@@ -182,9 +182,9 @@ TEST(DiagoDavRealSystemTest,dataH)
 
 #ifdef __MPI				
 	DIAGOTEST::cal_division(DIAGOTEST::npw);
-	DIAGOTEST::divide_hpsi_f(psi,psi_local);
+    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix_f, DIAGOTEST::hmatrix_local_f);
 	precondition_local = new float[DIAGOTEST::npw_local[ddp.mypnum]];
-	DIAGOTEST::divide_psi_f<float>(hpsi.precond(),precondition_local);	
+    DIAGOTEST::divide_psi<float>(hpsi.precond(), precondition_local);
 #else
 	DIAGOTEST::hmatrix_local_f = DIAGOTEST::hmatrix_f;
 	DIAGOTEST::npw_local[0] = DIAGOTEST::npw;

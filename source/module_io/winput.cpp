@@ -1,11 +1,13 @@
+#include "winput.h"
+
 #ifdef __MPI
-	#include "mpi.h"
+#include "mpi.h"
 #endif
+
 #include <cstring>
 #include <iostream>
-#include "winput.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 std::string winput::target;//add 2008-06-04
 std::string winput::wlmr_dir;

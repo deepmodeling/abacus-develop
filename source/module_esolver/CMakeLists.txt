@@ -15,6 +15,7 @@ if(ENABLE_LCAO)
       esolver_ks_lcao.cpp
       esolver_ks_lcao_elec.cpp
       esolver_ks_lcao_tddft.cpp
+      esolver_ks_lcao_tmpfunc.cpp
   )
 endif()
 

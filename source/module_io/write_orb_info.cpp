@@ -1,6 +1,7 @@
 #include "write_orb_info.h"
-#include "module_cell/atom_spec.h"
+
 #include "module_base/name_angular.h"
+#include "module_cell/atom_spec.h"
 
 void ModuleIO::write_orb_info(const UnitCell* ucell)
 {
