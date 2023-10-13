@@ -29,6 +29,10 @@ class ElecStateLCAO_TDDFT : public ElecStateLCAO<std::complex<double>>
     }
     void psiToRho_td(const psi::Psi<std::complex<double>>& psi);
     void calculate_weights_td();
+
+    virtual double get_spin_constrain_energy() override {
+        return 0.0;
+    }
 };
 
 } // namespace elecstate
