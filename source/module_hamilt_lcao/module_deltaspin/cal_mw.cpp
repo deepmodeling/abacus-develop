@@ -17,8 +17,8 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
     int nw = this->get_nw();
     const int nlocal = nw/2;
     ModuleBase::matrix MecMulP, orbMulP;
-    MecMulP.create(this->nspin_, nlocal);
-    orbMulP.create(this->nspin_, nlocal);
+    MecMulP.create(this->nspin_, nlocal, true);
+    orbMulP.create(this->nspin_, nlocal, true);
 
     for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
@@ -26,7 +26,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
             ->updateSk(ik, &LM, 1);
 
         ModuleBase::ComplexMatrix mud;
-        mud.create(this->ParaV->ncol, this->ParaV->nrow);
+        mud.create(this->ParaV->ncol, this->ParaV->nrow, true);
 
 #ifdef __MPI
         const char T_char = 'T';
