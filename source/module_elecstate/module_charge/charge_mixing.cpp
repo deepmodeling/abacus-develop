@@ -191,32 +191,56 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     // electronic density
     // rhog and rhog_save are calculated in get_drho() function
-    std::complex<double>* rhog_in = chr->rhog_save[0];
-    std::complex<double>* rhog_out = chr->rhog[0];
+
+    // ONLY smooth part of charge density is mixed by specific mixing method
+    // The high_frequency part is mixed by plain mixing method.
+    // NOTE: chr->rhopw is dense, while this->rhopw is smooth
+    std::vector<std::complex<double>> rhog_in(GlobalV::NSPIN * this->rhopw->npw);
+    std::vector<std::complex<double>> rhog_out(GlobalV::NSPIN * this->rhopw->npw);
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        std::memcpy(&rhog_in[is * rhopw->npw], chr->rhog_save[is], rhopw->npw * sizeof(std::complex<double>));
+        std::memcpy(&rhog_out[is * rhopw->npw], chr->rhog[is], rhopw->npw * sizeof(std::complex<double>));
+    }
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
+    this->mixing->push_data(this->rho_mdata, rhog_in.data(), rhog_out.data(), screen, true);
 
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
 
-    this->mixing->mix_data(this->rho_mdata, rhog_out);
+    this->mixing->mix_data(this->rho_mdata, rhog_out.data());
 
+    // simple mixing for high_frequencies
+    this->high_freq_mix(chr->rhog[0], chr->rhog_save[0], GlobalV::NSPIN * chr->rhopw->npw);
+
+    // combine smooth part and high_frequency part
+    // rhog to rho
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        this->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
+        std::memcpy(chr->rhog[is], &rhog_out[is * rhopw->npw], rhopw->npw * sizeof(std::complex<double>));
+        chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
     }
 
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
+        std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * chr->rhopw->npw);
+        std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * chr->rhopw->npw);
         std::vector<std::complex<double>> taug_in(GlobalV::NSPIN * this->rhopw->npw);
         std::vector<std::complex<double>> taug_out(GlobalV::NSPIN * this->rhopw->npw);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            this->rhopw->real2recip(chr->kin_r[is], &taug_out[is * rhopw->npw]);
-            this->rhopw->real2recip(chr->kin_r_save[is], &taug_in[is * rhopw->npw]);
+            chr->rhopw->real2recip(chr->kin_r[is], &kin_g[is * chr->rhopw->npw]);
+            chr->rhopw->real2recip(chr->kin_r_save[is], &kin_g_save[is * chr->rhopw->npw]);
+            // similar to rhog and rhog_save
+            std::memcpy(&taug_in[is * rhopw->npw],
+                        &kin_g_save[is * chr->rhopw->npw],
+                        rhopw->npw * sizeof(std::complex<double>));
+            std::memcpy(&taug_out[is * rhopw->npw],
+                        &kin_g[is * chr->rhopw->npw],
+                        rhopw->npw * sizeof(std::complex<double>));
         }
         // Note: there is no kerker modification for tau because I'm not sure
         // if we should have it. If necessary we can try it in the future.
@@ -224,9 +248,17 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taug_out.data());
 
+        // simple mixing for high_frequencies
+        this->high_freq_mix(kin_g.data(), kin_g_save.data(), GlobalV::NSPIN * chr->rhopw->npw);
+
+        // combine smooth part and high_frequency part
+        // kin_g to kin_r
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            this->rhopw->recip2real(&taug_out[is * rhopw->npw], chr->kin_r[is]);
+            std::memcpy(&kin_g[is * chr->rhopw->npw],
+                        &taug_out[is * rhopw->npw],
+                        rhopw->npw * sizeof(std::complex<double>));
+            chr->rhopw->recip2real(&kin_g[is * chr->rhopw->npw], chr->kin_r[is]);
         }
     }
 
@@ -286,7 +318,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     ModuleBase::timer::tick("Charge", "mix_rho");
 
     // the charge before mixing.
-    const int nrxx = this->rhopw->nrxx;
+    const int nrxx = chr->rhopw->nrxx;
     std::vector<double> rho123(GlobalV::NSPIN * nrxx);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -583,4 +615,22 @@ double Charge_Mixing::rhog_dot_product(const std::complex<double>* const* const 
     sum *= GlobalC::ucell.omega * 0.5;
 
     return sum;
+}
+
+void Charge_Mixing::high_freq_mix(std::complex<double>* data,
+                                  const std::complex<double>* data_save,
+                                  const int& number) const
+{
+    ModuleBase::TITLE("Charge_Mixing", "high_freq_mix");
+    ModuleBase::timer::tick("Charge_Mixing", "high_freq_mix");
+
+    if (GlobalV::double_grid)
+    {
+        for (int ig = 0; ig < number; ig++)
+        {
+            data[ig] += mixing_beta * (data_save[ig] - data[ig]);
+        }
+    }
+
+    ModuleBase::timer::tick("Charge_Mixing", "high_freq_mix");
 }

@@ -153,8 +153,6 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
-            _space_kin_r = new double[nspin * nrxx];
-            _space_kin_r_save = new double[nspin * nrxx];
             kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
             kin_r_save[is] = _space_kin_r_save + is * nrxx;
