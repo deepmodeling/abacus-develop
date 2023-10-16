@@ -79,15 +79,6 @@ class Potential : public PotBase
         return this->v_effective;
     }
 
-    ModuleBase::matrix& get_veff_smooth()
-    {
-        return this->v_eff_smooth;
-    }
-    const ModuleBase::matrix& get_veff_smooth() const
-    {
-        return this->v_eff_smooth;
-    }
-
     double* get_effective_v(int is)
     {
         if (this->v_effective.nc > 0)
@@ -141,11 +132,29 @@ class Potential : public PotBase
         }
     }
 
-    template <typename FPTYPE>
-    FPTYPE* get_v_effective_data();
+    ModuleBase::matrix& get_veff_smooth()
+    {
+        return this->veff_smooth;
+    }
+    const ModuleBase::matrix& get_veff_smooth() const
+    {
+        return this->veff_smooth;
+    }
+
+    ModuleBase::matrix& get_vofk_smooth()
+    {
+        return this->vofk_smooth;
+    }
+    const ModuleBase::matrix& get_vofk_smooth() const
+    {
+        return this->vofk_smooth;
+    }
 
     template <typename FPTYPE>
-    FPTYPE* get_vofk_effective_data();
+    FPTYPE* get_veff_smooth_data();
+
+    template <typename FPTYPE>
+    FPTYPE* get_vofk_smooth_data();
 
     double* get_fixed_v()
     {
@@ -167,12 +176,13 @@ class Potential : public PotBase
     std::vector<double> v_effective_fixed;
     ModuleBase::matrix v_effective;
 
-    ModuleBase::matrix v_eff_smooth; // used in uspp liuyu 2023-10-12
+    ModuleBase::matrix veff_smooth; // used in uspp liuyu 2023-10-12
+    ModuleBase::matrix vofk_smooth; // used in uspp liuyu 2023-10-12
 
     ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
 
-    float * s_v_effective = nullptr, * s_vofk_effective = nullptr;
-    double * d_v_effective = nullptr, * d_vofk_effective = nullptr;
+    float *s_veff_smooth = nullptr, *s_vofk_smooth = nullptr;
+    double *d_veff_smooth = nullptr, *d_vofk_smooth = nullptr;
 
     ModuleBase::matrix vofk_effective;
 

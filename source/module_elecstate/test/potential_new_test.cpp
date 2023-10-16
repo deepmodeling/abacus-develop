@@ -98,7 +98,7 @@ void Set_GlobalV_Default()
  *     - potentials are divided into 2 types: fixed and dynamic
  *     - fixed potentials: loc, gatefield that are independent of rho
  *     - dynamic potentials: hartree, xc, surchem that are dependent of rho
- *   - Getters: elecstate::Potential::get_v_effective_data() and elecstate::Potential::get_vofk_effective_data()
+ *   - Getters: elecstate::Potential::get_veff_smooth_data() and elecstate::Potential::get_vofk_smooth_data()
  *     - get the pointers to v_effective and vofk_effective
  *   - PotRegist: elecstate::Potential::pot_egist(components_list)
  *     - add new objects of potentials that are derived classes of PotBase
@@ -234,18 +234,18 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
 TEST_F(PotentialNewTest, Getters)
 {
     pot = new elecstate::Potential;
-    pot->v_effective.create(10, 10);
-    pot->vofk_effective.create(10,10);
+    pot->veff_smooth.create(10, 10);
+    pot->vofk_smooth.create(10, 10);
     float* foo;
-    foo = pot->get_v_effective_data<float>();
-    EXPECT_EQ(foo, pot->s_v_effective);
-    foo = pot->get_vofk_effective_data<float>();
-    EXPECT_EQ(foo, pot->s_vofk_effective);
+    foo = pot->get_veff_smooth_data<float>();
+    EXPECT_EQ(foo, pot->s_veff_smooth);
+    foo = pot->get_vofk_smooth_data<float>();
+    EXPECT_EQ(foo, pot->s_vofk_smooth);
     double* doo;
-    doo = pot->get_v_effective_data<double>();
-    EXPECT_EQ(doo, pot->d_v_effective);
-    doo = pot->get_vofk_effective_data<double>();
-    EXPECT_EQ(doo, pot->d_vofk_effective);
+    doo = pot->get_veff_smooth_data<double>();
+    EXPECT_EQ(doo, pot->d_veff_smooth);
+    doo = pot->get_vofk_smooth_data<double>();
+    EXPECT_EQ(doo, pot->d_vofk_smooth);
     delete foo;
     delete doo;
 }

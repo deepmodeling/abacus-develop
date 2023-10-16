@@ -66,12 +66,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         {
             //register Potential by gathered operator
             pot_in->pot_register(pot_register_in);
-            Operator<T, Device>* veff
-                = new Veff<OperatorPW<T, Device>>(isk,
-                                                       pot_in->get_v_effective_data<Real>(),
-                                                       pot_in->get_effective_v().nr,
-                                                       pot_in->get_effective_v().nc,
-                                                       wfc_basis);
+            Operator<T, Device>* veff = new Veff<OperatorPW<T, Device>>(isk,
+                                                                        pot_in->get_veff_smooth_data<Real>(),
+                                                                        pot_in->get_veff_smooth().nr,
+                                                                        pot_in->get_veff_smooth().nc,
+                                                                        wfc_basis);
             if(this->ops == nullptr)
             {
                 this->ops = veff;
@@ -80,13 +79,12 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             {
                 this->ops->add(veff);
             }
-            Operator<T, Device>* meta
-                = new Meta<OperatorPW<T, Device>>(tpiba,
-                                                       isk,
-                                                       pot_in->get_vofk_effective_data<Real>(),
-                                                       pot_in->get_effective_vofk().nr,
-                                                       pot_in->get_effective_vofk().nc,
-                                                       wfc_basis);
+            Operator<T, Device>* meta = new Meta<OperatorPW<T, Device>>(tpiba,
+                                                                        isk,
+                                                                        pot_in->get_vofk_smooth_data<Real>(),
+                                                                        pot_in->get_vofk_smooth().nr,
+                                                                        pot_in->get_vofk_smooth().nc,
+                                                                        wfc_basis);
             this->ops->add(meta);
         }
     }
@@ -102,6 +100,9 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         {
             this->ops->add(nonlocal);
         }
+
+        this->vkb = static_cast<Nonlocal<OperatorPW<T, Device>>*>(nonlocal)->get_vkb();
+        this->becp = static_cast<Nonlocal<OperatorPW<T, Device>>*>(nonlocal)->get_becp();
     }
     return;
 }
@@ -154,6 +155,8 @@ HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
             else {
                 this->ops->add(nonlocal);
             }
+            this->vkb = static_cast<Nonlocal<OperatorPW<T, Device>>*>(nonlocal)->get_vkb();
+            this->becp = static_cast<Nonlocal<OperatorPW<T, Device>>*>(nonlocal)->get_becp();
         }
         else if (node->classname == "Veff") {
             Operator<T, Device>* veff =
@@ -182,6 +185,28 @@ HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
         }
         node = reinterpret_cast<OperatorPW<std::complex<T_in>, Device_in> *>(node->next_op);
     }
+}
+
+template <typename T, typename Device>
+void HamiltPW<T, Device>::sPsi(const psi::Psi<T, Device>& psi, T* spsi, const size_t size, const bool prepared) const
+{
+    ModuleBase::TITLE("HamiltPW", "sPsi");
+    if (GlobalV::double_grid)
+    {
+        // <beta|psi> needed by S|psi> is not prepared
+        if (!prepared)
+        {
+            if (GlobalC::ppcell.nkb > 0)
+            {
+                this->ppcell.getvnl(this->ctx, ik, this->vkb);
+            }
+        }
+    }
+    else
+    {
+        syncmem_op()(this->ctx, this->ctx, spsi, psi_in, size);
+    }
+    ModuleBase::TITLE("HamiltPW", "sPsi");
 }
 
 template class HamiltPW<std::complex<float>, psi::DEVICE_CPU>;

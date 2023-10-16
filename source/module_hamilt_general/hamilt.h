@@ -25,7 +25,10 @@ class Hamilt
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
     virtual void hPsi(const T* psi_in, T* hpsi, const size_t size) const{return;}
-    virtual void sPsi(const T* psi_in, T* spsi, const size_t size) const { syncmem_op()(this->ctx, this->ctx, spsi, psi_in, size); }
+    virtual void sPsi(const psi::Psi<T, Device>& psi, T* spsi, const size_t size, const bool prepared = true) const
+    {
+        syncmem_op()(this->ctx, this->ctx, spsi, psi.get_pointer(), size);
+    }
 
     /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     virtual void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in){return;}

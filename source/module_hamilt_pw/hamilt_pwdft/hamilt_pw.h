@@ -25,6 +25,21 @@ class HamiltPW : public Hamilt<T, Device>
 
     // for target K point, update consequence of hPsi() and matrix()
     void updateHk(const int ik) override;
+
+    void sPsi(const psi::Psi<T, Device>& psi, T* spsi, const size_t size, const bool prepared = true) const;
+
+  private:
+    // used in sPhi, which are calculated in hPsi or sPhi
+    mutable T* ps = nullptr;
+    mutable T* vkb = nullptr;
+    mutable T* becp = nullptr;
+
+    T one{1, 0};
+    T zero{0, 0};
+
+  protected:
+    Device* ctx = {};
+    using syncmem_op = psi::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // namespace hamilt
