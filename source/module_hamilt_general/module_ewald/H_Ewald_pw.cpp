@@ -5,6 +5,9 @@
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 double H_Ewald_pw::alpha=0.0;
 int H_Ewald_pw::mxr = 200;
@@ -60,7 +63,16 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     double charge = 0.0;
     for (int it = 0;it < cell.ntype;it++)
     {
-        charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
+        if(GlobalV::use_paw)
+        {
+#ifdef USE_PAW
+            charge += cell.atoms[it].na * GlobalC::paw_cell.get_zat(it);
+#endif
+        }
+        else
+        {
+            charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
+        }
     }
     if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total ionic charge",charge);
 
@@ -114,7 +126,16 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         std::complex<double> rhon = ModuleBase::ZERO;
         for (int it=0; it<cell.ntype; it++)
         {
-            rhon += static_cast<double>(cell.atoms[it].ncpp.zv) * conj(strucFac(it, ig));
+            if(GlobalV::use_paw)
+            {
+#ifdef USE_PAW
+                rhon += static_cast<double>(GlobalC::paw_cell.get_zat(it)) * conj(strucFac(it, ig));
+#endif
+            }
+            else
+            {
+                rhon += static_cast<double>(cell.atoms[it].ncpp.zv) * conj(strucFac(it, ig));
+            }
         }
         ewaldg += fact * std::abs(rhon) * std::abs(rhon)
                   * exp(- rho_basis->gg[ig] * cell.tpiba2 / alpha / 4.0 ) / rho_basis->gg[ig] / cell.tpiba2;
@@ -129,7 +150,17 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 	{
     	for (int it = 0; it < cell.ntype;it++)
     	{
-        	ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
+            if(GlobalV::use_paw)
+            {
+#ifdef USE_PAW
+                ewaldg = ewaldg - cell.atoms[it].na * GlobalC::paw_cell.get_zat(it) 
+                    * GlobalC::paw_cell.get_zat(it) * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
+#endif
+            }
+            else
+            {
+                ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
+            }
 		}
     }//mohan modify 2007-11-7, 2010-07-26
 
@@ -168,9 +199,18 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                         for (nr = 0;nr < nrm;nr++)
                         {
                             rr = sqrt(r2 [nr]) * cell.lat0;
-                            ewaldr = ewaldr + cell.atoms[nt1].ncpp.zv * cell.atoms[nt2].ncpp.zv *
-                                     erfc(sqrt(alpha) * rr) / rr;
-
+                            if(GlobalV::use_paw)
+                            {
+#ifdef USE_PAW
+                                ewaldr = ewaldr + GlobalC::paw_cell.get_zat(nt1) * GlobalC::paw_cell.get_zat(nt2) *
+                                        erfc(sqrt(alpha) * rr) / rr;
+#endif
+                            }
+                            else
+                            {
+                                ewaldr = ewaldr + cell.atoms[nt1].ncpp.zv * cell.atoms[nt2].ncpp.zv *
+                                        erfc(sqrt(alpha) * rr) / rr;
+                            }
                         } // enddo
                         if (GlobalV::test_energy>1) ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
                     } // enddo
