@@ -66,7 +66,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         if(GlobalV::use_paw)
         {
 #ifdef USE_PAW
-            charge += cell.atoms[it].na * GlobalC::paw_cell.get_zat(it);
+            charge += cell.atoms[it].na * GlobalC::paw_cell.get_val(it);
 #endif
         }
         else
@@ -129,7 +129,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             if(GlobalV::use_paw)
             {
 #ifdef USE_PAW
-                rhon += static_cast<double>(GlobalC::paw_cell.get_zat(it)) * conj(strucFac(it, ig));
+                rhon += static_cast<double>(GlobalC::paw_cell.get_val(it)) * conj(strucFac(it, ig));
 #endif
             }
             else
@@ -153,8 +153,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             if(GlobalV::use_paw)
             {
 #ifdef USE_PAW
-                ewaldg = ewaldg - cell.atoms[it].na * GlobalC::paw_cell.get_zat(it) 
-                    * GlobalC::paw_cell.get_zat(it) * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
+                ewaldg = ewaldg - cell.atoms[it].na * GlobalC::paw_cell.get_val(it) 
+                    * GlobalC::paw_cell.get_val(it) * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
 #endif
             }
             else
@@ -202,7 +202,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                             if(GlobalV::use_paw)
                             {
 #ifdef USE_PAW
-                                ewaldr = ewaldr + GlobalC::paw_cell.get_zat(nt1) * GlobalC::paw_cell.get_zat(nt2) *
+                                ewaldr = ewaldr + GlobalC::paw_cell.get_val(nt1) * GlobalC::paw_cell.get_val(nt2) *
                                         erfc(sqrt(alpha) * rr) / rr;
 #endif
                             }
