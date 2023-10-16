@@ -41,7 +41,12 @@ void print_force(std::ofstream& ofs_running,
     ofs_running << std::setiosflags(std::ios::showpos);
     ofs_running << std::setprecision(8);
 
-    const double fac = ModuleBase::Ry_to_eV / 0.529177;
+    double fac = 1.0;
+
+    if (!ry)
+    {
+        fac = ModuleBase::Ry_to_eV / 0.529177;
+    }
 
     if (GlobalV::TEST_FORCE)
     {
@@ -60,59 +65,22 @@ void print_force(std::ofstream& ofs_running,
             std::stringstream ss;
             ss << cell.atoms[it].label << ia + 1;
 
-            if (ry) // output Rydberg Unit
-            {
-                ofs_running << " " << std::setw(8) << ss.str();
-                if (std::abs(force(iat, 0)) > output_acc)
-                    ofs_running << std::setw(20) << force(iat, 0);
-                else
-                    ofs_running << std::setw(20) << "0";
-                if (std::abs(force(iat, 1)) > output_acc)
-                    ofs_running << std::setw(20) << force(iat, 1);
-                else
-                    ofs_running << std::setw(20) << "0";
-                if (std::abs(force(iat, 2)) > output_acc)
-                    ofs_running << std::setw(20) << force(iat, 2);
-                else
-                    ofs_running << std::setw(20) << "0";
-                ofs_running << std::endl;
-            }
+            ofs_running << " " << std::setw(8) << ss.str();
+            if (std::abs(force(iat, 0)) > output_acc)
+                ofs_running << std::setw(20) << force(iat, 0) * fac;
             else
-            {
-                ofs_running << " " << std::setw(8) << ss.str();
-                if (std::abs(force(iat, 0)) > output_acc)
-                    ofs_running << std::setw(20) << force(iat, 0) * fac;
-                else
-                    ofs_running << std::setw(20) << "0";
-                if (std::abs(force(iat, 1)) > output_acc)
-                    ofs_running << std::setw(20) << force(iat, 1) * fac;
-                else
-                    ofs_running << std::setw(20) << "0";
-                if (std::abs(force(iat, 2)) > output_acc)
-                    ofs_running << std::setw(20) << force(iat, 2) * fac;
-                else
-                    ofs_running << std::setw(20) << "0";
-                ofs_running << std::endl;
-            }
+                ofs_running << std::setw(20) << "0";
+            if (std::abs(force(iat, 1)) > output_acc)
+                ofs_running << std::setw(20) << force(iat, 1) * fac;
+            else
+                ofs_running << std::setw(20) << "0";
+            if (std::abs(force(iat, 2)) > output_acc)
+                ofs_running << std::setw(20) << force(iat, 2) * fac;
+            else
+                ofs_running << std::setw(20) << "0";
+            ofs_running << std::endl;
 
-            if (GlobalV::TEST_FORCE && ry)
-            {
-                std::cout << " " << std::setw(8) << ss.str();
-                if (std::abs(force(iat, 0)) > output_acc)
-                    std::cout << std::setw(20) << force(iat, 0);
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(force(iat, 1)) > output_acc)
-                    std::cout << std::setw(20) << force(iat, 1);
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(force(iat, 2)) > output_acc)
-                    std::cout << std::setw(20) << force(iat, 2);
-                else
-                    std::cout << std::setw(20) << "0";
-                std::cout << std::endl;
-            }
-            else if (GlobalV::TEST_FORCE)
+            if (GlobalV::TEST_FORCE)
             {
                 std::cout << " " << std::setw(8) << ss.str();
                 if (std::abs(force(iat, 0)) > output_acc)
