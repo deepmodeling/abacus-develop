@@ -22,6 +22,7 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
+    if(GlobalV::use_paw) return;
     delete[] indv_ijkb0;
     if (GlobalV::device_flag == "gpu")
     {
@@ -71,6 +72,8 @@ void pseudopot_cell_vnl::init(const int ntype,
                               const ModulePW::PW_Basis_K* wfc_basis,
                               const bool allocate_vkb)
 {
+    if(GlobalV::use_paw) return;
+
     ModuleBase::TITLE("pseudopot_cell_vnl", "init");
     ModuleBase::timer::tick("ppcell_vnl", "init");
 
@@ -277,6 +280,7 @@ void pseudopot_cell_vnl::init(const int ntype,
 //----------------------------------------------------------
 void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in) const
 {
+    if(GlobalV::use_paw) return;
     if (GlobalV::test_pp)
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
@@ -381,6 +385,7 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
 template <typename FPTYPE, typename Device>
 void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>* vkb_in) const
 {
+    if(GlobalV::use_paw) return;
     if (GlobalV::test_pp)
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
@@ -505,6 +510,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
 
 void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
+    if(GlobalV::use_paw) return;
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
 
@@ -1226,6 +1232,7 @@ void pseudopot_cell_vnl::print_vnl(std::ofstream &ofs)
 // ----------------------------------------------------------------------
 void pseudopot_cell_vnl::cal_effective_D(void)
 {
+    if(GlobalV::use_paw) return;
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
 
     /*
