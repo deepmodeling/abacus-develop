@@ -1,7 +1,7 @@
 name: Tests
 description: For developers to report issues related to software testing, such as test failures, missing or incomplete tests, or issues with test automation.
 labels: [Tests]
-assignees: hongriTianqi
+assignees: [insert assignee here]
 
 body:
 - type: textarea
