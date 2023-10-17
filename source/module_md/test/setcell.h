@@ -20,6 +20,20 @@ Magnetism::~Magnetism()
     delete[] this->start_magnetization;
 }
 
+namespace ModuleIO
+{
+void print_force(std::ofstream& ofs_running,
+                 const UnitCell& cell,
+                 const std::string& name,
+                 const ModuleBase::matrix& force,
+                 bool ry = true)
+{
+}
+void printstress_total(const ModuleBase::matrix& scs, bool ry)
+{
+}
+} // namespace ModuleIO
+
 class Setcell
 {
   public:
