@@ -22,7 +22,7 @@ body:
         required: true
 - type: checkboxes
   attributes:
-    label: Task list for Issue attackers
+    label: Task list for Issue attackers (only for developers)
     options:
       - label: Understand the problem or question described by the user.
       - label: Check if the issue is a known problem or has been addressed in the documentation.
