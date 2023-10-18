@@ -7,17 +7,18 @@ add_library(
 add_library(
   psi_initializer
   OBJECT
-  psi_initializer.cpp
-  psi_initializer_random.cpp
-  psi_initializer_atomic.cpp
-  psi_initializer_atomic_random.cpp
-  psi_initializer_nao.cpp
-  psi_initializer_nao_random.cpp
+#  psi_initializer.cpp
+#  psi_initializer_random.cpp
+#  psi_initializer_atomic.cpp
+#  psi_initializer_atomic_random.cpp
+#  psi_initializer_nao.cpp
+#  psi_initializer_nao_random.cpp
+  psi_initializer/psi_initializer.cpp
 )
 
 if(ENABLE_COVERAGE)
   add_coverage(psi)
-  add_coverage(psi_initializer)
+#  add_coverage(psi_initializer)
 endif()
 
 if (BUILD_TESTING)

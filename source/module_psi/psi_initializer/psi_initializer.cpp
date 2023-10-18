@@ -1,4 +1,42 @@
 #include "module_psi/psi_initializer/psi_initializer.h"
+// basic functions support
+#include "module_base/tool_quit.h"
+#include "module_base/timer.h"
+#include "module_base/memory.h"
+// basic data support
+#include "module_base/global_variable.h"
+
+template<typename T, typename Device>
+#ifdef __MPI
+psi_initializer<T, Device>::psi_initializer(
+    UnitCell* p_ucell_in,
+    ModulePW::PW_Basis_K* pw_wfc_in,
+    Parallel_Kpoints* p_parakpts_in,
+    Representation<T, Device>* p_rep_in
+    ): p_ucell(p_ucell_in),
+       pw_wfc(pw_wfc_in),
+       p_parakpts(p_parakpts_in),
+       p_rep(p_rep_in)
+#else
+psi_initializer<T, Device>::psi_initializer(
+    UnitCell* p_ucell_in,
+    ModulePW::PW_Basis_K* pw_wfc_in,
+    Representation<T, Device>* p_rep_in
+    ): p_ucell(p_ucell_in),
+       pw_wfc(pw_wfc_in),
+       p_rep(p_rep_in)
+#endif
+{
+    this->ixy2is = new int[this->pw_wfc->fftnxy];
+    this->pw_wfc->getfftixy2is(this->ixy2is);
+    this->method = GlobalV::init_wfc;
+}
+
+template<typename T, typename Device>
+psi_initializer<T, Device>::~psi_initializer()
+{
+    if (this->ixy2is != nullptr) delete[] this->ixy2is;
+}
 
 template<typename T, typename Device>
 psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
@@ -11,7 +49,8 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
         , then multiplied by the number of atoms, and then add them together.
     */
 
-    if(this->p_rep->psig != nullptr) delete this->p_rep->psig;
+    this->p_rep->deallocate_psig();
+
 	int prefactor = 1;
     int nbands_actual = 0;
     if(GlobalV::init_wfc == "random") 
@@ -148,7 +187,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     const double rr = tmprr[this->pw_wfc->getigl2isz(ik,ig)];
                     const double arg= ModuleBase::TWO_PI * tmparg[this->pw_wfc->getigl2isz(ik,ig)];
                     const double gk2 = this->pw_wfc->getgk2(ik,ig);
-                    psi_slice[ig+startig] = this->p_rep->repin->template cast_to_T<T>(
+                    psi_slice[ig+startig] = RepIn<T, Device>::template cast_to_T<T>(
                         std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
                 }
                 startig += this->pw_wfc->npwk_max;
@@ -175,7 +214,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                 const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
                 const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
                 const double gk2 = this->pw_wfc->getgk2(ik,ig);
-                psi_slice[ig] = this->p_rep->repin->template cast_to_T<T>(
+                psi_slice[ig] = RepIn<T, Device>::template cast_to_T<T>(
                     std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
             }
             if(GlobalV::NPOL==2)
@@ -185,7 +224,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     const double rr = std::rand()/double(RAND_MAX);
                     const double arg= ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
                     const double gk2 = this->pw_wfc->getgk2(ik,ig-this->pw_wfc->npwk_max);
-                    psi_slice[ig] = this->p_rep->repin->template cast_to_T<T>(
+                    psi_slice[ig] = RepIn<T, Device>::template cast_to_T<T>(
                         std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
                 }
             }
@@ -251,4 +290,120 @@ void psi_initializer<T, Device>::stick_to_pool(Real* stick, const int& ir, Real*
 	return;	
     ModuleBase::timer::tick("psi_initializer", "stick_to_pool");
 }
+#endif
+
+template<typename T, typename Device>
+void psi_initializer<T, Device>::initialize()
+{
+    ModuleBase::timer::tick("psi_initializer", "initialize");
+    // get dimension of psig for once
+    int psig_nbands = this->p_rep->get_psig()->get_nbands();
+    int psig_nbasis = this->p_rep->get_psig()->get_nbasis();
+    // register transform, for random, initialize directly
+    if(GlobalV::init_wfc.substr(0, 3) == "nao")
+    {
+        this->p_rep->add_transform_pair("nao", "pw");
+    }
+    else if(GlobalV::init_wfc.substr(0, 6) == "atomic")
+    {
+        this->p_rep->add_transform_pair("pao", "pw");
+    }
+    else
+    {
+        for(int ik = 0; ik < this->pw_wfc->nks; ik++)
+        {
+            this->p_rep->get_psig()->fix_k(ik);
+            this->random_t(this->p_rep->get_psig_pointer(), 
+                           0,                      // range, starting band index (included)
+                           psig_nbands,                 // range, ending band index (excluded)
+                           ik);                    // kpoint index
+        }
+        return;
+    }
+    // do transform
+    for(int ik = 0; ik < this->pw_wfc->nks; ik++)
+    {
+        this->p_rep->align_kpoint(ik);
+        // it is a special use of transform function, in parameter list the input wavefunction is set to nullptr, so that
+        // transform function will recognize it is just a half transform, from basis function to its pw representation
+        // this transform result is stored in representation::psig.
+        // For other case in which input wavefunction is not nullptr, transform function will recognize it is a full transform
+        // then psig will not be the final product but a intermediate one, for example:
+        // a transform from lcao to qo should be:
+        // ```
+        //     add_transform_pair("nao", "qo");
+        //     this->p_rep->transform(psi_in, psi_out);
+        // ```
+        // , where the psi_in is wavefunction in lcao representation, and psi_out is wavefunction in qo representation, can be
+        // created temporarily: 
+        // ```
+        //     psi::Psi<T, Device> psi_out = psi::Psi<T, Device>(nkpts, nbands, nbasis, npwk);
+        // ```
+        // and then delete.
+        this->p_rep->transform(nullptr, nullptr); // HERE psig is calculated
+        // if not enough number of bands initialized, fill with random number
+        int nbands_complem = this->get_nbands_complem();
+        // random number mixing
+        if(GlobalV::init_wfc.find_first_of('+') != std::string::npos)
+        {
+            if(
+                (GlobalV::init_wfc == "atomic+random")
+              ||(GlobalV::init_wfc == "nao+random")
+                )
+            {
+                int iband_start = 0;
+                int iband_end = GlobalV::NBANDS - nbands_complem;
+                psi::Psi<T, Device> psi_random = psi::Psi<T, Device>(1, 
+                                                                     iband_end - iband_start, 
+                                                                     psig_nbasis, 
+                                                                     this->pw_wfc->npwk);
+                psi_random.fix_k(0);
+                this->random_t(psi_random.get_pointer(), 
+                               iband_start, // range, starting band index (included)
+                               iband_end,   // range, ending band index (excluded)
+                               ik);         // kpoint index
+                for(int iband = iband_start; iband < iband_end; iband++)
+                {
+                    for(int ibasis = 0; ibasis < psig_nbasis; ibasis++)
+                    {
+                        this->p_rep->get_psig_pointer()[iband * psig_nbasis + ibasis] 
+                        = 
+                        this->random_mix*
+                            psi_random.get_pointer()[iband * psig_nbasis + ibasis]
+                        + Real(1.0 - this->random_mix)*
+                            this->p_rep->get_psig_pointer()[iband * psig_nbasis + ibasis];
+                    }
+                }
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("psi_initializer", "initialize: unknown mixing method");
+            }
+        }
+        // bands complement with random number
+        if(nbands_complem != 0)
+        {
+            int iband_start = GlobalV::NBANDS - nbands_complem;
+            int iband_end = GlobalV::NBANDS;
+            this->random_t(this->p_rep->get_psig_pointer(), 
+                           iband_start, // range, starting band index (included)
+                           iband_end,   // range, ending band index (excluded)
+                           ik);         // kpoint index
+        }
+    }
+    ModuleBase::timer::tick("psi_initializer", "initialize");
+}
+
+// explicit instantiation
+template class psi_initializer<std::complex<double>, psi::DEVICE_CPU>;
+template class psi_initializer<std::complex<float>, psi::DEVICE_CPU>;
+// gamma point calculation
+template class psi_initializer<double, psi::DEVICE_CPU>;
+template class psi_initializer<float, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class psi_initializer<std::complex<double>, psi::DEVICE_GPU>;
+template class psi_initializer<std::complex<float>, psi::DEVICE_GPU>;
+// gamma point calculation
+template class psi_initializer<double, psi::DEVICE_GPU>;
+template class psi_initializer<float, psi::DEVICE_GPU>;
 #endif

@@ -12,19 +12,24 @@
 #include "module_base/global_variable.h"
 
 template<typename T, typename Device>
+#ifdef __MPI
 RepIn_PAO<T, Device>::RepIn_PAO(Structure_Factor* sf_in, 
                                 ModulePW::PW_Basis_K* pw_wfc_in, 
                                 UnitCell* p_ucell_in, 
                                 Parallel_Kpoints* p_parakpts_in, 
-                                pseudopot_cell_vnl* p_pspot_nl_in)
+                                pseudopot_cell_vnl* p_pspot_nl_in): RepIn<T, Device>(sf_in, pw_wfc_in, p_ucell_in, p_parakpts_in, p_pspot_nl_in)
 {
     this->representation = "pao";
-    this->p_sf = sf_in;
-    this->p_pw_wfc = pw_wfc_in;
-    this->p_ucell = p_ucell_in;
-    this->p_parakpts = p_parakpts_in;
-    this->p_pspot_nl = p_pspot_nl_in;
 }
+#else
+RepIn_PAO<T, Device>::RepIn_PAO(Structure_Factor* sf_in, 
+                                ModulePW::PW_Basis_K* pw_wfc_in, 
+                                UnitCell* p_ucell_in, 
+                                pseudopot_cell_vnl* p_pspot_nl_in): RepIn<T, Device>(sf_in, pw_wfc_in, p_ucell_in, p_pspot_nl_in)
+{
+    this->representation = "pao";
+}
+#endif
 
 template<typename T, typename Device>
 RepIn_PAO<T, Device>::~RepIn_PAO()
@@ -32,16 +37,16 @@ RepIn_PAO<T, Device>::~RepIn_PAO()
 }
 
 template<typename T, typename Device>
-void RepIn_PAO<T, Device>::representation_init(const std::string* pseudopot_files)
+void RepIn_PAO<T, Device>::initialize(std::string* pseudopot_files)
 {
-    ModuleBase::timer::tick("RepIn_PAO", "representation_init");
-    this->create_ovlp_Xjlq();
+    ModuleBase::timer::tick("RepIn_PAO", "initialize");
+    this->create_ovlp_pswfcjlq();
     this->cal_ovlp_pswfcjlq();
-    ModuleBase::timer::tick("RepIn_PAO", "representation_init");
+    ModuleBase::timer::tick("RepIn_PAO", "initialize");
 }
 
 template<typename T, typename Device>
-void RepIn_PAO<T, Device>::create_ovlp_Xjlq()
+void RepIn_PAO<T, Device>::create_ovlp_pswfcjlq()
 {
    // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell->ntype;
@@ -146,7 +151,7 @@ void RepIn_PAO<T, Device>::cal_ovlp_pswfcjlq()
 }
 
 template<typename T, typename Device>
-void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
+void RepIn_PAO<T, Device>::cal_psig(psi::Psi<T, Device>* psig)
 {
     ModuleBase::timer::tick("RepIn_PAO", "cal_psig");
     psig->fix_k(this->ik);
@@ -171,7 +176,7 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
         for (int ia = 0; ia < this->p_ucell->atoms[it].na; ia++)
         {
 /* FOR EVERY ATOM */
-            std::complex<double> *sk = this->sf->get_sk(this->ik, it, ia, this->pw_wfc);
+            std::complex<double> *sk = this->p_sf->get_sk(this->ik, it, ia, this->pw_wfc);
             for (int ipswfc = 0; ipswfc < this->p_ucell->atoms[it].ncpp.nchi; ipswfc++)
             {
 /* FOR EVERY PSWFC OF ATOM */
@@ -225,16 +230,20 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
                                                 }
                                                 for(int ig = 0; ig < npw; ig++)
                                                 {
-                                                    psig->operator()(index, ig + this->pw_wfc->npwk_max*is ) 
-                                                    = lphase * cg_coeffs[is] * sk[ig] * aux[ig] * ovlp_pswfcjlg[ig];
+                                                    psig->operator()(index, ig + this->pw_wfc->npwk_max*is ) =
+                                                                        this->template cast_to_T<T>(
+                                                                            lphase * cg_coeffs[is] * sk[ig] * aux[ig] * ovlp_pswfcjlg[ig]
+                                                                        );
                                                 }
                                             }
                                             else
                                             {
                                                 for(int ig=0; ig < npw; ig++)
                                                 {
-                                                    psig->operator()(index, ig + this->pw_wfc->npwk_max*is ) 
-                                                    = std::complex<double>(0.0, 0.0);
+                                                    psig->operator()(index, ig + this->pw_wfc->npwk_max*is ) = 
+                                                                        this->template cast_to_T<T>(
+                                                                            std::complex<double>(0.0, 0.0)
+                                                                            );
                                                 }
                                             }
                                         }
@@ -308,13 +317,25 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
                                         fdw = this->phase_factor(0.5*alpha, -1)*aux[ig];
                                         //build the orthogonal wfc
                                         //first rotation with angle (alpha + ModuleBase::PI) around (OX)
-                                        psig->operator()(index, ig                       ) = this->phase_factor( 0.5*gamma)*fup;
-                                        psig->operator()(index, ig+this->pw_wfc->npwk_max) = this->phase_factor(-0.5*gamma)*fdw;
+                                        psig->operator()(index, ig) = 
+                                            this->template cast_to_T<T>(
+                                                this->phase_factor(0.5*gamma)*fup
+                                                );
+                                        psig->operator()(index, ig+this->pw_wfc->npwk_max) = 
+                                            this->template cast_to_T<T>(
+                                                this->phase_factor(-0.5*gamma)*fdw
+                                                );
                                         //second rotation with angle gamma around(OZ)
                                         fup = this->phase_factor(0.5*(alpha + ModuleBase::PI),  1)*aux[ig];
                                         fdw = this->phase_factor(0.5*(alpha + ModuleBase::PI), -1)*aux[ig];
-                                        psig->operator()(index+2*l+1, ig                       ) = this->phase_factor( 0.5*gamma)*fup;
-                                        psig->operator()(index+2*l+1, ig+this->pw_wfc->npwk_max) = this->phase_factor(-0.5*gamma)*fdw;
+                                        psig->operator()(index+2*l+1, ig) = 
+                                            this->template cast_to_T<T>(
+                                                this->phase_factor(0.5*gamma)*fup
+                                                );
+                                        psig->operator()(index+2*l+1, ig+this->pw_wfc->npwk_max) = 
+                                            this->template cast_to_T<T>(
+                                                this->phase_factor(-0.5*gamma)*fdw
+                                                );
                                     }
                                     index++;
                                 }
@@ -349,13 +370,25 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
                                      fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
                                      //build the orthogonal wfc
                                      //first rotation with angle(alpha+ModuleBase::PI) around(OX)
-                                     psig->operator()(index,ig) = (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup;
-                                     psig->operator()(index,ig+ this->pw_wfc->npwk_max) = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown;
+                                     psig->operator()(index,ig) = 
+                                        this->template cast_to_T<T>(
+                                            (cos(0.5*gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup
+                                                );
+                                     psig->operator()(index,ig+this->pw_wfc->npwk_max) = 
+                                        this->template cast_to_T<T>(
+                                            (cos(0.5*gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown
+                                                );
                                      //second rotation with angle gamma around(OZ)
                                      fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                      fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-                                     psig->operator()(index+2*l+1,ig) = (cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fup;
-                                     psig->operator()(index+2*l+1,ig+ this->pw_wfc->npwk_max) = (cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fdown;
+                                     psig->operator()(index+2*l+1,ig) = 
+                                        this->template cast_to_T<T>(
+                                            (cos(0.5*gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup
+                                                );
+                                     psig->operator()(index+2*l+1,ig+ this->pw_wfc->npwk_max) = 
+                                        this->template cast_to_T<T>(
+                                            (cos(0.5*gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown
+                                                );
                                 }
                                 index++;
                             }
@@ -369,7 +402,10 @@ void RepIn_PAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
                             const int lm = l * l + m;
                             for (int ig = 0; ig < npw; ig++)
                             {
-                                psig->operator()(index, ig) = lphase * sk [ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig];
+                                psig->operator()(index, ig) = 
+                                    this->template cast_to_T<T>(
+                                        lphase * sk [ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig]
+                                            );
                             }
                             index++;
                         }

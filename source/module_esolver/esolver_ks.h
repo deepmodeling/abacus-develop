@@ -16,6 +16,7 @@
 #include "module_io/cal_test.h"
 #include "module_io/output_potential.h"
 #include "module_io/output_rho.h"
+#include "module_basis/module_representation/representation.h"
 
 namespace ModuleESolver
 {
@@ -96,6 +97,7 @@ namespace ModuleESolver
 
     protected:
         std::string basisname; //PW or LCAO
+        Representation<T, Device> rep;
     protected:
         void print_wfcfft(Input& inp, std::ofstream &ofs);
 

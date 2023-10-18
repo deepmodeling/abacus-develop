@@ -592,6 +592,7 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt_stodft
     psi
     psi_initializer
+    representation
     esolver
     vdw
     device

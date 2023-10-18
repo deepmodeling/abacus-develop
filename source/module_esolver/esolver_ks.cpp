@@ -242,6 +242,11 @@ namespace ModuleESolver
                 this->sf.eigts1.c,this->sf.eigts2.c,this->sf.eigts3.c);
         }
 #endif
+#ifdef __MPI
+        this->rep.configure(&this->sf, this->pw_wfc, &GlobalC::ucell, &GlobalC::Pkpoints, &GlobalC::ppcell);
+#else
+        this->rep.configure(&this->sf, this->pw_wfc, &GlobalC::ucell, &GlobalC::ppcell);
+#endif
     }
 
     template<typename T, typename Device>

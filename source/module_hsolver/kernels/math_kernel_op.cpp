@@ -363,9 +363,19 @@ template struct matrixSetToAnother<std::complex<double>, psi::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, psi::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<double>, psi::DEVICE_CPU>;
 
+template struct gemm_op<double, psi::DEVICE_CPU>;
+template struct gemm_op<float, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template struct gemm_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct gemm_op<std::complex<float>, psi::DEVICE_GPU>;
+//gamma point support
+template struct gemm_op<double, psi::DEVICE_GPU>;
+template struct gemm_op<float, psi::DEVICE_GPU>;
+#endif
+
 #ifdef __LCAO
 template struct gemv_op<double, psi::DEVICE_CPU>;
-template struct gemm_op<double, psi::DEVICE_CPU>;
+// move gemm_op from lcao-specific to general
 template struct dot_real_op<double, psi::DEVICE_CPU>;
 template struct vector_mul_vector_op<double, psi::DEVICE_CPU>;
 template struct vector_div_constant_op<double, psi::DEVICE_CPU>;

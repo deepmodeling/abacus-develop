@@ -4,6 +4,7 @@
 // data structure support
 #include <string>
 #include "module_psi/psi.h"
+#include "module_base/macros.h"
 /*
     RepOut: output wavefunction from one representation via pw to another
     (Interface to various postprocessing software which supports pw basis)
@@ -14,16 +15,21 @@
              2. multiply psi_in with psig, get bands in pw representation, state->pw
              3. multiply bands in pw representation with pw basis in output representation, get psi_out,
                 state->output = state->pw * pw->output
+
+    currently supported representation:  
+    1. pw
 */
 template<typename T, typename Device>
 class RepOut
 {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         RepOut();
         ~RepOut();
-        virtual void project(const psi::Psi<T, Device>& psi_in,
-                             const psi::Psi<T, Device>* psig,
-                                   psi::Psi<T, Device>& psi_out) = 0;
+        virtual void project(psi::Psi<T, Device>* psi_in,
+                             psi::Psi<T, Device>* psig,
+                             psi::Psi<T, Device>* psi_out) = 0;
         void set_kpoint(int ik_in) { this->ik = ik_in; }
     protected:
         int ik = 0;

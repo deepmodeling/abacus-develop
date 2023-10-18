@@ -2,7 +2,7 @@
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
-#include "module_psi/psi_initializer.h"
+#include "module_psi/psi_initializer/psi_initializer.h"
 #include <module_base/macros.h>
 
 // #include "Basis_PW.h"

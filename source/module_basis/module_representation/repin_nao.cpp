@@ -17,19 +17,24 @@
 //#endif
 
 template<typename T, typename Device>
+#ifdef __MPI
 RepIn_NAO<T, Device>::RepIn_NAO(Structure_Factor* sf_in, 
                                 ModulePW::PW_Basis_K* pw_wfc_in, 
                                 UnitCell* p_ucell_in, 
                                 Parallel_Kpoints* p_parakpts_in, 
-                                pseudopot_cell_vnl* p_pspot_nl_in)
+                                pseudopot_cell_vnl* p_pspot_nl_in): RepIn<T, Device>(sf_in, pw_wfc_in, p_ucell_in, p_parakpts_in, p_pspot_nl_in)
 {
     this->representation = "pao";
-    this->p_sf = sf_in;
-    this->p_pw_wfc = pw_wfc_in;
-    this->p_ucell = p_ucell_in;
-    this->p_parakpts = p_parakpts_in;
-    this->p_pspot_nl = p_pspot_nl_in;
 }
+#else
+RepIn_NAO<T, Device>::RepIn_NAO(Structure_Factor* sf_in, 
+                                ModulePW::PW_Basis_K* pw_wfc_in, 
+                                UnitCell* p_ucell_in, 
+                                pseudopot_cell_vnl* p_pspot_nl_in): RepIn<T, Device>(sf_in, pw_wfc_in, p_ucell_in, p_pspot_nl_in)
+{
+    this->representation = "pao";
+}
+#endif
 
 template<typename T, typename Device>
 RepIn_NAO<T, Device>::~RepIn_NAO()
@@ -38,14 +43,14 @@ RepIn_NAO<T, Device>::~RepIn_NAO()
 }
 
 template<typename T, typename Device>
-void RepIn_NAO<T, Device>::representation_init(const std::string* orbital_files)
+void RepIn_NAO<T, Device>::initialize(std::string* orbital_files)
 {
 	if(orbital_files == nullptr)
 	{
-		ModuleBase::WARNING_QUIT("RepIn_NAO::representation_init", "orbital_files is not set");
+		ModuleBase::WARNING_QUIT("RepIn_NAO::initialize", "orbital_files is not set");
 	}
 	this->set_orbital_files(orbital_files);
-	this->create_ovlp_Xjlq();
+	this->create_ovlp_flzjlq();
 	this->read_orbital_files();
 	this->cal_ovlp_flzjlq();
 }
@@ -74,7 +79,7 @@ void RepIn_NAO<T, Device>::set_orbital_files(std::string* orbital_files)
 }
 
 template<typename T, typename Device>
-void RepIn_NAO<T, Device>::create_ovlp_Xjlq()
+void RepIn_NAO<T, Device>::create_ovlp_flzjlq()
 {
     // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell->ntype;
@@ -339,7 +344,7 @@ void RepIn_NAO<T, Device>::cal_ovlp_flzjlq()
 }
 
 template<typename T, typename Device>
-void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
+void RepIn_NAO<T, Device>::cal_psig(psi::Psi<T, Device>* psig)
 {
 	ModuleBase::timer::tick("RepIn_NAO", "initialize");
 	assert(this->ik>=0);
@@ -366,7 +371,7 @@ void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 		for (int ia = 0; ia < this->p_ucell->atoms[it].na; ia++)
 		{
 /* HERE LOOP OVER ALL ATOMIS */
-            std::complex<double>* sk = this->sf->get_sk(this->ik, it, ia, this->pw_wfc);
+            std::complex<double>* sk = this->p_sf->get_sk(this->ik, it, ia, this->pw_wfc);
             int ic = 0; // ic is a flatten index of chi, therefore it is defined here.
             for(int L = 0; L < this->p_ucell->atoms[it].nwl+1; L++)
 			{
@@ -398,11 +403,15 @@ void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 										for(int ig=0; ig<npw; ig++)
 										{
 											//if(is_N==0)
-											psig->operator()(ibasis, ig) =
-											lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
+											psig->operator()(ibasis, ig) = 
+												this->template cast_to_T<T>(
+													lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
+												);
 											//else
-                                            psig->operator()(ibasis + 1, ig + this->pw_wfc->npwk_max)
-                                                = lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
+                                            psig->operator()(ibasis + 1, ig + this->pw_wfc->npwk_max) =
+												this->template cast_to_T<T>(
+													lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
+												);
                                         }
                                         ibasis += 2;
                                     }
@@ -448,15 +457,25 @@ void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 											fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
 											//build the orthogonal wfc
 											//first rotation with angle (alpha + ModuleBase::PI) around (OX)
-											psig->operator()(ibasis,ig) = (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5*gamma)) * fup;
-                                            psig->operator()(ibasis, ig + this->pw_wfc->npwk_max)
-                                                = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown;
+											psig->operator()(ibasis,ig) = 
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
+												);
+                                            psig->operator()(ibasis, ig + this->pw_wfc->npwk_max) =
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
+												);
                                             // second rotation with angle gamma around(OZ)
                                             fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                             fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
-											psig->operator()(ibasis+2*L+1,ig) = (cos(0.5*gamma) + ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fup;
-                                            psig->operator()(ibasis + 2 * L + 1, ig + this->pw_wfc->npwk_max)
-                                                = (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown;
+											psig->operator()(ibasis+2*L+1,ig) =
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
+												);
+                                            psig->operator()(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
+												this->template cast_to_T<T>(
+													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
+												);
                                         }
                                         ibasis++;
                                     }
@@ -486,15 +505,25 @@ void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 										fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
 										//build the orthogonal wfc
 										//first rotation with angle(alpha+ModuleBase::PI) around(OX)
-										psig->operator()(ibasis,ig) = (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup;
-                                        psig->operator()(ibasis, ig + this->pw_wfc->npwk_max)
-                                            = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown;
+										psig->operator()(ibasis, ig) = 
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
+											);
+                                        psig->operator()(ibasis, ig + this->pw_wfc->npwk_max) =
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
+											);
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-										psig->operator()(ibasis+2*L+1,ig) = (cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman))*fup;
-                                        psig->operator()(ibasis + 2 * L + 1, ig + this->pw_wfc->npwk_max)
-                                            = (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown;
+										psig->operator()(ibasis+2*L+1,ig) =
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
+											);
+                                        psig->operator()(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
+											this->template cast_to_T<T>(
+												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
+											);
                                     } // end ig
                                     ibasis++;
                                 } // end m
@@ -509,8 +538,10 @@ void RepIn_NAO<T, Device>::cal_psig(const psi::Psi<T, Device>* psig)
 							const int lm = L*L+m;
 							for(int ig=0; ig<npw; ig++)
 							{
-								psig->operator()(ibasis, ig) =
-								lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig];
+								psig->operator()(ibasis, ig) = 
+									this->template cast_to_T<T>(
+										lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
+									);
 							}
 							++ibasis;
 						}

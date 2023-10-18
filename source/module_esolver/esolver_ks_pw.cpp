@@ -37,11 +37,13 @@
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
 //---------------------------------------------------
+/*
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_nao.h"
 #include "module_psi/psi_initializer_random.h"
 #include "module_psi/psi_initializer_atomic_random.h"
 #include "module_psi/psi_initializer_nao_random.h"
+*/
 //---------------------------------------------------
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -127,7 +129,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     */
     if (GlobalV::psi_initializer) // new method
     {
-        this->psi = this->psi_init->allocate();
+        this->psi = this->psi_init->allocate(); // this operation will not only allocate psi but also for psig in Representation
     }
     else // old method
     {
@@ -209,9 +211,23 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
-    if (GlobalV::psi_initializer)
+    if (this->psi_init == nullptr)
     {
-        this->allocate_psi_init();
+        if (GlobalV::psi_initializer)
+        {
+            #ifdef __MPI
+            this->psi_init = new psi_initializer<T, Device>(&GlobalC::ucell,
+                                                            this->pw_wfc,
+                                                            &GlobalC::Pkpoints,
+                                                            &this->rep
+                                                            );
+            #else
+            this->psi_init = new psi_initializer<T, Device>(&GlobalC::ucell,
+                                                            this->pw_wfc,
+                                                            &this->rep
+                                                            );
+            #endif
+        }
     }
     // temporary
     this->Init_GlobalC(inp, ucell);
@@ -282,6 +298,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
         if(GlobalV::psi_initializer)
         {
+            /*
             if(GlobalV::init_wfc.substr(0, 3) == "nao")
             {
                 this->psi_init->cal_ovlp_flzjlq(); // for nao, we recalculate the overlap matrix between flz and jlq
@@ -291,6 +308,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                 this->psi_init->cal_ovlp_pswfcjlq(); // for atomic, we recalculate the overlap matrix between pswfc and jlq
             }
             // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and reallocate
+            */
         }
         else
         {
@@ -435,7 +453,7 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
         this->pelec->charge->save_rho_before_sum_band();
     }
 }
-
+/*
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_psi_init()
 {
@@ -445,82 +463,21 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
         delete this->psi_init;
         this->psi_init = nullptr;
     }
-    if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0))
-    {
-        GlobalV::init_wfc = "random";
-        std::cout << " WARNING: atomic pseudowavefunction is required but there is NOT ANY, set to random automatically." << std::endl;
-        #ifdef __MPI
-        this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-        #else
-        this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-        #endif
-        this->psi_init->initialize_only_once();
-    }
-    else
-    {
-        if(GlobalV::init_wfc == "atomic")
-        {
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_atomic<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_atomic<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->initialize_only_once(&(GlobalC::ppcell));
-            this->psi_init->cal_ovlp_pswfcjlq();
-        }
-        else if(GlobalV::init_wfc == "random")
-        {
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->initialize_only_once();
-        }
-        else if(GlobalV::init_wfc == "nao")
-        {
-            if(GlobalV::NSPIN == 4)
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
-            }
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_nao<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_nao<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
-            this->psi_init->initialize_only_once();
-            this->psi_init->cal_ovlp_flzjlq();
-        }
-        else if(GlobalV::init_wfc == "atomic+random")
-        {
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_atomic_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_atomic_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->initialize_only_once(&(GlobalC::ppcell));
-            this->psi_init->cal_ovlp_pswfcjlq();
-        }
-        else if(GlobalV::init_wfc == "nao+random")
-        {
-            if(GlobalV::NSPIN == 4)
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
-            }
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_nao_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_nao_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
-            this->psi_init->initialize_only_once();
-            this->psi_init->cal_ovlp_flzjlq();
-        }
-        else ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for new psi initializer, init_wfc type not supported");
-    }
+    #ifdef __MPI
+        this->psi_init = new psi_initializer<T, Device>::psi_initializer(&GlobalC::ucell,
+                                                                         this->pw_wfc,
+                                                                         &GlobalC::Pkpoints,
+                                                                         &this->rep
+                                                                        );
+    #else
+        this->psi_init = new psi_initializer<T, Device>::psi_initializer(&GlobalC::ucell,
+                                                                         this->pw_wfc,
+                                                                         &this->rep
+                                                                        );
+    #endif
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
 }
+*/
 /*
   Although ESolver_KS_PW supports template, but in this function it has no relationship with
   heterogeneous calculation, so all templates function are specialized to double
@@ -531,11 +488,12 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
     ModuleBase::timer::tick("ESolver_KS_PW", "initialize_psi");
     if (GlobalV::psi_initializer)
     {
+        this->psi_init->initialize(); // ESolver_KS::p_rep->psig gets values
         for (int ik = 0; ik < this->pw_wfc->nks; ik++)
         {
-            this->psi->fix_k(ik);
+            this->kspw_psi->fix_k(ik);
             this->p_hamilt->updateHk(ik);
-            psi::Psi<T, Device>* psig = this->psi_init->cal_psig(ik);
+            psi::Psi<T, Device>* psig = this->rep.get_psig();
             std::vector<Real> etatom(psig->get_nbands(), 0.0);
             /*
             if ((this->psi_init->get_method().substr(0, 3) == "nao"))
@@ -654,7 +612,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         }
         else
         {
-            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, this->psi_init->psig[0]);
+            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, this->rep.get_psig()[0]);
         }
         if (GlobalV::out_bandgap)
         {

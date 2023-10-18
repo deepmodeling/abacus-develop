@@ -115,11 +115,12 @@ class Representation
         /// @brief transform one psi in one representation to another representation
         /// @param psi_in input psi
         /// @param psi_out output psi
-        void transform(const psi::Psi<T, Device>& psi_in, 
-                             psi::Psi<T, Device>& psi_out);
+        void transform(psi::Psi<T, Device>* psi_in, 
+                       psi::Psi<T, Device>* psi_out);
         /*
             representation configuration
         */
+        #ifdef __MPI
         /// @brief configure of Representation class
         /// @param sf_in link to Structure_Factor
         /// @param pw_wfc_in link to ModulePW::PW_Basis_K
@@ -131,6 +132,17 @@ class Representation
                        UnitCell* p_ucell_in, 
                        Parallel_Kpoints* p_parakpts_in, 
                        pseudopot_cell_vnl* p_pspot_nl_in);
+        #else
+        /// @brief configure of Representation class
+        /// @param sf_in link to Structure_Factor
+        /// @param pw_wfc_in link to ModulePW::PW_Basis_K
+        /// @param p_ucell_in link to UnitCell
+        /// @param p_pspot_nl_in link to pseudopot_cell_vnl
+        void configure(Structure_Factor* sf_in, 
+                       ModulePW::PW_Basis_K* pw_wfc_in, 
+                       UnitCell* p_ucell_in, 
+                       pseudopot_cell_vnl* p_pspot_nl_in);
+        #endif
         /// @brief set input representation of psi and allocate memory for repin
         /// @param repin_name the name of representation
         /// @attention this function is not designed to be called directly, call add_transform_pair instead
@@ -168,12 +180,20 @@ class Representation
         /// @brief getter of psig
         /// @return pw representation wavefunction
         psi::Psi<T, Device>* get_psig() const { return this->psig; }
+        /// @brief getter of pointer of psig, for psig data i/o
+        /// @return pointer of psi of psig
+        T* get_psig_pointer() const { return this->psig->get_pointer(); }
         /// @brief deallocate memory for psig
         void deallocate_psig();
-        /// @brief align kpoint of repin and repout
+        /// @brief align kpoint for repin and repout (fix k point for psi in repin and repout)
         /// @param ik index of kpoint
         void align_kpoint(int ik);
-    
+        /*
+            getters
+        */
+        /// @brief getter of repin
+        /// @return repin
+        RepIn<T, Device>* get_repin() const { return this->repin; }
     protected:
         // intermediate psi
         /// @brief intermediate psi, in pw representation

@@ -6,11 +6,12 @@
 template<typename T, typename Device>
 class RepIn_PW : public RepIn<T, Device>
 {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         RepIn_PW();
         ~RepIn_PW();
-        void project_in(const psi::Psi<T, Device>& psi_in, 
-                                psi::Psi<T, Device>& psi_out) override;
+        void cal_psig(psi::Psi<T, Device>* psig) override;
 };
 
 #endif // REPIN_PW_H
