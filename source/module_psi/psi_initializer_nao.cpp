@@ -456,11 +456,11 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                             // second rotation with angle gamma around(OZ)
                                             fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                             fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
-											(*(this->psig))(ibasis+2,ig) =
+											(*(this->psig))(ibasis+2*L+1,ig) =
 												this->template cast_to_T<T>(
 													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
 												);
-											(*(this->psig))(ibasis + 2, ig + this->pw_wfc->npwk_max) =
+											(*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
 												this->template cast_to_T<T>(
 													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
 												);
@@ -504,11 +504,11 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-										(*(this->psig))(ibasis+2,ig) =
+										(*(this->psig))(ibasis+2*L+1,ig) =
 											this->template cast_to_T<T>(
 												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
 											);
-										(*(this->psig))(ibasis + 2, ig + this->pw_wfc->npwk_max) =
+										(*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
 											this->template cast_to_T<T>(
 												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
 											);
