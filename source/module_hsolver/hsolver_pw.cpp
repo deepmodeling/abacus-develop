@@ -157,6 +157,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             delete[] kpg;
 
             GlobalC::paw_cell.get_vkb();
+
+            GlobalC::paw_cell.set_currentk(ik);
         }
 #endif
 
@@ -164,6 +166,10 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
+
+#ifdef USE_PAW
+        GlobalC::paw_cell.set_currentk(ik);
+#endif
 
         /// solve eigenvector and eigenvalue for H(k)
         this->hamiltSolvePsiK(pHamilt, psi, eigenvalues.data() + ik * pes->ekb.nc);
@@ -174,7 +180,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
         /// calculate the contribution of Psi for charge density rho
-     }
+    }
     castmem_2d_2h_op()(cpu_ctx, cpu_ctx, pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
     this->endDiagh();
@@ -198,6 +204,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
         {
             psi.fix_k(ik);
+            GlobalC::paw_cell.set_currentk(ik);
             int nbands = psi.get_nbands();
             for(int ib = 0; ib < nbands; ib ++)
             {
@@ -213,7 +220,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
         for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
         {
-            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
         }
 
         double* nhatgr;
