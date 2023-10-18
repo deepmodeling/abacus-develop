@@ -36,6 +36,9 @@ class Paw_Cell
         const std::complex<double> * eigts2_in,
         const std::complex<double> * eigts3_in);
 
+    void set_isk(const int nk, const int * isk_in);
+    void set_currentk(const int ik);
+
     // Given a list of k points, calculate the structure factors
     // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
     // as well as the spherical harmonics Ylm(k+G), and gnorm
@@ -52,7 +55,7 @@ class Paw_Cell
     void reset_rhoij();
 
     // returns rhoij for each atom
-    std::vector<std::vector<double>> get_rhoij();
+    //std::vector<std::vector<double>> get_rhoij();
     // returns rhoijp and related info for each atom
     void get_rhoijp(std::vector<std::vector<double>> & rhoijp,
         std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel);
@@ -159,6 +162,10 @@ class Paw_Cell
 
     void set_ylm(const int npw_in, const double ** kpg);
 
+    std::vector<int> isk;
+
+    int current_k, current_spin;
+
 // Part II. Operations in ABACUS: V_{NL}|psi> and S|psi>
 
     public:
@@ -167,7 +174,7 @@ class Paw_Cell
     // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
     void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
 
-    void set_dij(const int iat, double* dij_in){paw_atom_list[iat].set_dij(dij_in);}
+    void set_dij(const int iat, double** dij_in){paw_atom_list[iat].set_dij(dij_in);}
     void set_dij();
 
     void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}

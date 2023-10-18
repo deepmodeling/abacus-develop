@@ -45,7 +45,17 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) GlobalC::paw_cell.set_libpaw_xc(1,2);
+        if(GlobalV::use_paw)
+        {
+            if(GlobalV::NSPIN != 1)
+            {
+                ModuleBase::WARNING_QUIT("set_xc_type","paw does not support pz with spin polarization");
+            }
+            else
+            {
+                GlobalC::paw_cell.set_libpaw_xc(1,2);
+            }
+        }
 #endif
 	}
     else if (xc_func == "PWLDA")

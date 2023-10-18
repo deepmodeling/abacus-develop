@@ -27,6 +27,14 @@ body:
 
 - type: textarea
   attributes:
+    label: Notice Possible Change of Behavior (Reminder only for developers)
+    description: |
+      Please ensure that you have carefully considered the possible change of behavior your code changes might introduce. Make sure to provide a detailed explanation of these changes and their potential impact on the application. This will help reviewers to better understand your changes and assess their implications.
+    placeholder: |
+      Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
+
+- type: textarea
+  attributes:
     label: Additional Context
     description: |
       Add any other context or references about the feature request here.
