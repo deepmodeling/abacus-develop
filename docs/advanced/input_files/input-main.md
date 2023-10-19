@@ -909,12 +909,15 @@ calculations.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
   - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+  
+  In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.
 - **Default**: broyden
 
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter. We recommend the following options:
+- **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
+We recommend the following options:
   - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
     - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
     - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
@@ -930,6 +933,8 @@ calculations.
 
 - **Type**: Integer
 - **Description**: It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
+  
+  For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
 
 ### mixing_gg0
@@ -938,6 +943,8 @@ calculations.
 - **Description**: Whether to perfom Kerker scaling.
   -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
   -  **0**: No Kerker scaling is performed.
+  
+  For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 0.0
 
 ### mixing_tau
