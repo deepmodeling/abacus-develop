@@ -131,8 +131,12 @@ void Occupy::iweights(const int nks,
                       const std::vector<int>& isk)
 {
     assert(is < 2);
+    double degspin = 2.0;
+    if (GlobalV::NSPIN == 4)
+        degspin = 1.0;
+    if (is != -1)
+        degspin = 1.0;
 
-    double degspin = (GlobalV::NSPIN == 1) ? 2.0 : 1.0;
     double ib_mind = nelec / degspin;
     int ib_min = std::ceil(ib_mind);
     if (ib_min != int(ib_mind))
