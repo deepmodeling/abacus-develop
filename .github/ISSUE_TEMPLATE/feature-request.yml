@@ -25,6 +25,13 @@ body:
   validations:
     required: true
 
+- type: checkboxes
+  attributes:
+    label: Task list only for developers
+    options:
+      - label: Notice possible changes of behavior
+      - label: Explain the changes of codes in core modules of ESolver, HSolver, ElecState, Hamilt, Operator or Psi
+
 - type: textarea
   attributes:
     label: Notice Possible Changes of Behavior (Reminder only for developers)
@@ -32,6 +39,14 @@ body:
       Please ensure that you have carefully considered the possible changes of behavior your code changes might introduce. Make sure to provide a detailed explanation of these changes and their potential impact on the application. This will help reviewers to better understand your changes and assess their implications.
     placeholder: |
       Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
+
+- type: textarea
+  attributes:
+    label: Notice any changes of core modules (Reminder only for developers)
+    description: |
+      Please ensure that you have explained any changes made to core modules in your code. This includes modifications, additions, or removals of any functionality within these modules. This will help reviewers to better understand your changes and assess their implications.
+    placeholder: |
+      Example: I have added a new virtual function in the esolver base class in order to ...
 
 - type: textarea
   attributes:
