@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
     libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
     libxc-dev libgtest-dev libgmock-dev python3-numpy \
-    bc cmake git g++ make bc time sudo unzip vim wget gfortran
+    bc cmake git g++ make bc time sudo unzip vim wget gfortran libmpich-dev mpich
 
 ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
     OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=none
@@ -18,6 +18,8 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
+
+ENV CMAKE_Fortran_COMPILER=/usr/bin/mpifort
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
