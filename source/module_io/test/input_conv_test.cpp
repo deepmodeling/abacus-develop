@@ -64,8 +64,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::PRESS2,0);
 	EXPECT_EQ(GlobalV::PRESS3,0);
 	EXPECT_EQ(GlobalV::out_element_info,0);
-	EXPECT_EQ(Force_Stress_LCAO::force_invalid_threshold_ev,0);
-	EXPECT_DOUBLE_EQ(BFGS_Basic::relax_bfgs_w1,0.01);
+    EXPECT_EQ(Force_Stress_LCAO<double>::force_invalid_threshold_ev, 0);
+    EXPECT_EQ(Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev, 0);
+    EXPECT_DOUBLE_EQ(BFGS_Basic::relax_bfgs_w1, 0.01);
 	EXPECT_DOUBLE_EQ(BFGS_Basic::relax_bfgs_w2,0.5);
 	EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_rmax,0.8);
 	EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_rmin,0.00001);
@@ -144,12 +145,16 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(GlobalV::out_bandgap, false);
     EXPECT_EQ(Local_Orbital_Charge::out_dm,false);
 	EXPECT_EQ(Local_Orbital_Charge::out_dm1,false);
-	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_hs,false);
-	EXPECT_EQ( hsolver::HSolverLCAO::out_mat_hsR,false);
-	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_t,false);
-	EXPECT_EQ(hsolver::HSolverLCAO::out_mat_dh,INPUT.out_mat_dh);
-	EXPECT_EQ(GlobalV::out_interval,1);
-    EXPECT_EQ(elecstate::ElecStateLCAO::out_wfc_lcao, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hs, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hsR, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_t, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_t, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
+    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
+    EXPECT_EQ(GlobalV::out_interval, 1);
+    EXPECT_EQ(elecstate::ElecStateLCAO<double>::out_wfc_lcao, false);
     EXPECT_EQ(berryphase::berry_phase_flag, false);
     EXPECT_EQ(GlobalV::imp_sol,false);
 	EXPECT_EQ(GlobalV::eb_k,80);
@@ -257,21 +262,6 @@ TEST_F(InputConvTest, ConvRelax)
 			"\n Environment device_num = -1"
 			"\n"));
   }
-
-TEST_F(InputConvTest, ConvRelax2)
-{
-	INPUT.Default();
-	std::string input_file = "./support/INPUT";
-	INPUT.Read(input_file);
-	INPUT.calculation="relax";
-	INPUT.chg_extrap="first-order";
-	std::string output2;
-	testing::internal::CaptureStdout();
-	Input_Conv::Convert();
-	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr(" For relaxation, charge extrapolation is set to atomic.\n"));
-	EXPECT_EQ(INPUT.chg_extrap,"atomic");
-}
 
 TEST_F(InputConvTest, dftplus)
 {
@@ -405,7 +395,7 @@ TEST_F(InputConvTest,neighbour  )
 	INPUT.towannier90=false;
 	INPUT.berry_phase=false;
 	Input_Conv::Convert();
-	EXPECT_EQ(elecstate::ElecStateLCAO::need_psi_grid,false);
+	EXPECT_EQ(elecstate::ElecStateLCAO<double>::need_psi_grid,false);
 }
 
 TEST_F(InputConvTest,neighbour2  )

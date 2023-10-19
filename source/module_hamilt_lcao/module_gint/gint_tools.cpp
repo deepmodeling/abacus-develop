@@ -968,6 +968,201 @@ namespace Gint_Tools
 		} // ia1
 	}
 
+	void mult_psi_DM_new(
+        const Grid_Technique& gt, 
+        const int bxyz,
+		const int& grid_index,
+        const int na_grid,  					    // how many atoms on this (i,j,k) grid
+		const int LD_pool,
+		const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
+		const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
+		const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
+		const bool*const*const cal_flag,	    	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
+		double ** psi_DM,
+		const hamilt::HContainer<double>* DM,
+		const int job) // 1: density, 2: force
+	{
+		bool *all_out_of_range = new bool[na_grid];
+		for(int ia=0; ia<na_grid; ++ia) //number of atoms
+		{
+			all_out_of_range[ia] = true;
+			for(int ib=0; ib<gt.bxyz; ++ib) //number of small box in big box
+			{
+				if(cal_flag[ib][ia])
+				{
+					all_out_of_range[ia] = false;
+					//break; //mohan add 2012-07-10
+				}
+			}
+		}
+
+		constexpr char side='L', uplo='U';
+		constexpr char transa='N', transb='N';
+		constexpr double alpha_symm=1, beta=1;
+		constexpr int inc=1;
+		double alpha_gemm;
+
+		switch(job)
+		{
+			case 1:
+				alpha_gemm=2.0;
+				break;
+			case 2:
+				alpha_gemm=1.0;
+				break;
+			default:
+				ModuleBase::WARNING_QUIT("psir_dm","job can only be 1 or 2");
+		}
+
+		for (int ia1=0; ia1<na_grid; ia1++)
+		{
+			if(all_out_of_range[ia1]) continue;
+
+			const int mcell_index1 = gt.bcell_start[grid_index] + ia1;
+            const int iat1 = gt.which_atom[mcell_index1];
+			const double* tmp_matrix = DM->find_pair(iat1, iat1)->get_pointer(0);
+			const int iw1_lo=block_iw[ia1];
+
+			if(job==1)//density
+			{
+            	//ia1==ia2, diagonal part
+				// find the first ib and last ib for non-zeros cal_flag
+				int first_ib=0, last_ib=0;
+				for(int ib=0; ib<bxyz; ++ib)
+				{
+					if(cal_flag[ib][ia1])
+					{
+						first_ib=ib;
+						break;
+					}
+				}
+				for(int ib=bxyz-1; ib>=0; --ib)
+				{
+					if(cal_flag[ib][ia1])
+					{
+						last_ib=ib+1;
+						break;
+					}
+				}
+				const int ib_length=last_ib-first_ib;
+				if(ib_length<=0) continue;
+
+				int cal_num=0;
+				for(int ib=first_ib; ib<last_ib; ++ib)
+				{
+					cal_num += cal_flag[ib][ia1];
+				}
+				// if enough cal_flag is nonzero
+				if(cal_num>ib_length/4)
+				{
+					dsymm_(&side, &uplo, &block_size[ia1], &ib_length,
+						&alpha_symm, tmp_matrix, &block_size[ia1],
+						&psi[first_ib][block_index[ia1]], &LD_pool,
+						&beta, &psi_DM[first_ib][block_index[ia1]], &LD_pool);
+				}
+				else
+				{
+					// int k=1;
+					for(int ib=first_ib; ib<last_ib; ++ib)
+					{
+						if(cal_flag[ib][ia1])
+						{
+							dsymv_(&uplo, &block_size[ia1],
+								&alpha_symm, tmp_matrix, &block_size[ia1],
+								&psi[ib][block_index[ia1]], &inc,
+								&beta, &psi_DM[ib][block_index[ia1]], &inc);
+						}
+					}
+				}
+			}
+
+			int start;
+			switch(job)
+			{
+				case 1:
+					start=ia1+1;
+					break;
+				case 2:
+					start=0;
+					break;
+				default:
+					ModuleBase::WARNING_QUIT("psi_dm","job can only be 1 or 2");
+			}
+
+			for (int ia2=start; ia2<na_grid; ia2++)
+			{
+				if(all_out_of_range[ia2]) continue;
+
+				//---------------------------------------------
+				// check if we need to calculate the big cell.
+				//---------------------------------------------
+				bool same_flag = false;
+				for(int ib=0; ib<gt.bxyz; ++ib)
+				{
+					if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+					{
+						same_flag = true;
+						break;
+					}
+				}
+
+				if(!same_flag) continue;
+
+				const int bcell2 = gt.bcell_start[grid_index] + ia2;
+                const int iat2 = gt.which_atom[bcell2];
+				const double* tmp_matrix = DM->find_pair(iat1, iat2)->get_pointer(0);
+				int first_ib=0, last_ib=0;
+				for(int ib=0; ib<bxyz; ++ib)
+				{
+					if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+					{
+						first_ib=ib;
+						break;
+					}
+				}
+				for(int ib=bxyz-1; ib>=0; --ib)
+				{
+					if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+					{
+						last_ib=ib+1;
+						break;
+					}
+				}
+				const int ib_length=last_ib-first_ib;
+				if(ib_length<=0) continue;
+
+				int cal_pair_num=0;
+				for(int ib=first_ib; ib<last_ib; ++ib)
+				{
+					cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
+				}
+				const int iw2_lo=block_iw[ia2];
+				if(cal_pair_num>ib_length/4)
+				{
+                    dgemm_(&transa, &transb, &block_size[ia2], &ib_length, &block_size[ia1],
+                        &alpha_gemm, tmp_matrix, &block_size[ia2],
+                        &psi[first_ib][block_index[ia1]], &LD_pool,
+                        &beta, &psi_DM[first_ib][block_index[ia2]], &LD_pool);
+				}
+                else
+                {
+                    for(int ib=first_ib; ib<last_ib; ++ib)
+                    {
+                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
+                        {
+                            dgemv_(&transa, &block_size[ia2], &block_size[ia1],
+                                &alpha_gemm, tmp_matrix, &block_size[ia2],
+                                &psi[ib][block_index[ia1]], &inc,
+                                &beta, &psi_DM[ib][block_index[ia2]], &inc);
+                        }
+                    }
+                }
+			}// ia2
+		} // ia1
+		delete[] all_out_of_range;
+	}		
+
 //calculating (psi_DMR)_mu = sum_nu DMR_mu,nu psi_nu
 //note : there is a difference between rho and force
 //in calculating rho, due to symmetry, the summation over mu,nu
@@ -984,6 +1179,7 @@ namespace Gint_Tools
 		double** psi,
 		double ** psi_DMR,
 		double* DMR,
+		const hamilt::HContainer<double>* DM,
 		const int job)
 	{
 		double *psi2, *psi2_dmr;
@@ -1038,7 +1234,7 @@ namespace Gint_Tools
 			const int R1x = gt.ucell_index2x[id1];
 			const int R1y = gt.ucell_index2y[id1];
 			const int R1z = gt.ucell_index2z[id1];
-
+			const double* tmp_matrix = DM->find_matrix(iat, iat, 0, 0, 0)->get_pointer();
 			if(job==1) //density
 			{
 				const int idx1=block_index[ia1];
@@ -1076,11 +1272,21 @@ namespace Gint_Tools
 					assert(offset < gt.nad[iat]);
 				}
 
+				//const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
+				//for (int i = 0; i < block_size[ia1]; i++)
+				//{
+				//	for (int j = 0; j < block_size[ia1]; j++)
+				//	{
+				//		std::cout << i <<" "<<j<<" " << DMR[DM_start+i*block_size[ia1]+j]<<" " << tmp_matrix[i*block_size[ia1]+j] << std::endl;
+				//	}
+				//}
+				//ModuleBase::WARNING_QUIT("cal_psi_dm","test");
+
 				if(cal_num>bxyz/4)
 				{
 					const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
 					dgemm_(&trans, &trans, &block_size[ia1], &bxyz, &block_size[ia1], &alpha,
-						&DMR[DM_start], &block_size[ia1],
+						tmp_matrix, &block_size[ia1],
 						&psi[0][idx1], &LD_pool,
 						&beta, &psi_DMR[0][idx1], &LD_pool);
 				}
@@ -1092,7 +1298,7 @@ namespace Gint_Tools
 						if(cal_flag[ib][ia1])
 						{
 							dgemv_(&trans, &block_size[ia1], &block_size[ia1], &alpha,
-									&DMR[DM_start], &block_size[ia1],
+									tmp_matrix, &block_size[ia1],
 									&psi[ib][idx1], &inc,
 									&beta, &psi_DMR[ib][idx1], &inc);
 						}
@@ -1156,6 +1362,8 @@ namespace Gint_Tools
 				const int dRz = R1z - R2z;
 
 				const int index = gt.cal_RindexAtom(dRx, dRy, dRz, iat2);
+				// get AtomPair
+				const double* tmp_matrix = DM->find_matrix(iat, iat2, dRx, dRy, dRz)->get_pointer();
 				int offset = -1;
 
 				int* find_start = gt.find_R2[iat];
@@ -1188,6 +1396,16 @@ namespace Gint_Tools
         			if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
         			    ++cal_num;
     			}
+				
+				//const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
+				//for (int i = 0; i < block_size[ia1]; i++)
+				//{
+				//	for (int j = 0; j < block_size[ia1]; j++)
+				//	{
+				//		std::cout << i <<" "<<j<<" " << DMR[DM_start+i*block_size[ia1]+j]<<" " << tmp_matrix[i*block_size[ia1]+j] << std::endl;
+				//	}
+				//}
+				//ModuleBase::WARNING_QUIT("cal_psi_dm","test");
 
 				if(cal_num>bxyz/4)
 				{
@@ -1195,7 +1413,7 @@ namespace Gint_Tools
 			        const int idx2=block_index[ia2];
     				const int DM_start = gt.nlocstartg[iat]+ gt.find_R2st[iat][offset];
     				dgemm_(&trans, &trans, &block_size[ia2], &bxyz, &block_size[ia1], &alpha1,
-    					&DMR[DM_start], &block_size[ia2],
+    					tmp_matrix, &block_size[ia2],
     					&psi[0][idx1], &LD_pool,
     					&beta, &psi_DMR[0][idx2], &LD_pool);
 				}
@@ -1210,7 +1428,7 @@ namespace Gint_Tools
         				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
         				{
             				dgemv_(&trans, &block_size[ia2], &block_size[ia1], &alpha1,
-            					&DMR[DM_start], &block_size[ia2],
+            					tmp_matrix, &block_size[ia2],
             					&psi[ib][idx1], &inc,
             					&beta, &psi_DMR[ib][idx2], &inc);
         				}

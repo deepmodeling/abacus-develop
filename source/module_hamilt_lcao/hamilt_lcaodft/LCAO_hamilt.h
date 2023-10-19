@@ -6,6 +6,8 @@
 #include "LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_general/hamilt.h"
 
 #ifdef __EXX
 #include <RI/global/Tensor.h>
@@ -22,7 +24,14 @@ class LCAO_Hamilt
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
-    void calculate_STN_R_sparse(const int &current_spin, const double &sparse_threshold);
+    void calculate_HContainer_sparse_d(const int &current_spin, 
+        const double &sparse_threshold, 
+        const hamilt::HContainer<double>& hR, 
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
+    void calculate_HContainer_sparse_cd(const int &current_spin, 
+        const double &sparse_threshold, 
+        const hamilt::HContainer<std::complex<double>>& hR, 
+        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
     void calculate_dSTN_R_sparse(const int &current_spin, const double &sparse_threshold);
     void calculate_STN_R_sparse_for_S(const double &sparse_threshold);
     void calculate_STN_R_sparse_for_T(const double &sparse_threshold);
@@ -35,8 +44,8 @@ class LCAO_Hamilt
             const int (&nmp)[3],
             const std::vector< std::map <int, std::map < std::pair<int, std::array<int,3>>, RI::Tensor<Tdata> > >>& Hexxs);
 #endif
-    void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold, const int (&nmp)[3]);
-    void calculate_SR_sparse(const double &sparse_threshold);
+    void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold, const int (&nmp)[3], hamilt::Hamilt<std::complex<double>>* p_ham);
+    void calculate_SR_sparse(const double &sparse_threshold, hamilt::Hamilt<std::complex<double>>* p_ham);
     void clear_zero_elements(const int &current_spin, const double &sparse_threshold);
     void destroy_all_HSR_sparse(void);
     void calculate_TR_sparse(const double &sparse_threshold);

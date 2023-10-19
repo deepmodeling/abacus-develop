@@ -36,11 +36,6 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     //=============================
     rho_basis->real2recip(Porter.data(), Porter.data());
 
-    // double charge;
-    // if (rho_basis->gstart == 1)
-    //     charge = cell.omega * Porter[rho_basis->ig2fftc[0]].real();
-    // OUT(GlobalV::ofs_running, "v_h charge", charge);
-
     //=======================================================
     // calculate hartree potential in G-space (NB: V(G=0)=0 )
     //=======================================================
@@ -62,7 +57,7 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
         }
     }
 
-    Parallel_Reduce::reduce_double_pool(ehart);
+    Parallel_Reduce::reduce_pool(ehart);
     ehart *= 0.5 * cell.omega;
     // std::cout << " ehart=" << ehart << std::endl;
     H_Hartree_pw::hartree_energy = ehart;
@@ -116,7 +111,7 @@ void PotHartree::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase:
             rho_tmp[is] = new double[rho_basis_->nrxx];
             for(int ir = 0; ir < rho_basis_->nrxx; ir++)
             {
-                rho_tmp[is][ir] = chg->rho[is][ir] + chg->nhat[is][ir] + chg->rho_core[ir];
+                rho_tmp[is][ir] = chg->rho[is][ir] + chg->nhat[is][ir];
             }
         }
         v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, rho_tmp);

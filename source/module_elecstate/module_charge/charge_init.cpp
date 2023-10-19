@@ -257,8 +257,8 @@ void Charge::set_rho_core(
     }
 
 	// mohan fix bug 2011-04-03
-	Parallel_Reduce::reduce_double_pool( rhoneg );
-	Parallel_Reduce::reduce_double_pool( rhoima );
+    Parallel_Reduce::reduce_pool(rhoneg);
+    Parallel_Reduce::reduce_pool(rhoima);
 
 	// mohan changed 2010-2-2, make this same as in atomic_rho.
 	// still lack something......
@@ -275,6 +275,7 @@ void Charge::set_rho_core(
 
 void Charge::set_rho_core_paw()
 {
+    ModuleBase::TITLE("Charge","set_rho_core_paw");
 #ifdef USE_PAW
     double* tmp = new double[nrxx];
     GlobalC::paw_cell.get_vloc_ncoret(tmp,this->rho_core);

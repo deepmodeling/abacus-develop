@@ -7,6 +7,7 @@
 #include "module_psi/psi.h"
 #include "module_base/parallel_reduce.h"
 #include "module_psi/kernels/memory_op.h"
+#include <module_base/macros.h>
 
 
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
@@ -55,9 +56,9 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
 namespace hsolver
 {
 
-template <typename FPTYPE, typename Device>
+template <typename T, typename Device>
 struct line_minimize_with_block_op {
-    /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
+    /// @brief dot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
     ///
     /// Input Parameters
@@ -68,21 +69,21 @@ struct line_minimize_with_block_op {
     /// \param batch : batch size, the size of the result array res
     ///
     /// \return res : the result vector
-    /// FPTYPE : dot product result
+    /// T : dot product result
     void operator() (
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* hgrad_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
+        T* grad_out,
+        T* hgrad_out,
+        T* psi_out,
+        T* hpsi_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band);
 };
 
 
-template <typename FPTYPE, typename Device>
+template <typename T, typename Device>
 struct calc_grad_with_block_op {
-    /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
+    /// @brief dot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
     ///
     /// Input Parameters
@@ -93,23 +94,25 @@ struct calc_grad_with_block_op {
     /// \param batch : batch size, the size of the result array res
     ///
     /// \return res : the result vector
-    /// FPTYPE : dot product result
+    /// T : dot product result
+    using Real = typename GetTypeReal<T>::type;
     void operator() (
-        const FPTYPE* prec_in,
-        FPTYPE* err_out,
-        FPTYPE* beta_out,
-        std::complex<FPTYPE>* psi_out,
-        std::complex<FPTYPE>* hpsi_out,
-        std::complex<FPTYPE>* grad_out,
-        std::complex<FPTYPE>* grad_old_out,
+        const Real* prec_in,
+        Real* err_out,
+        Real* beta_out,
+        T* psi_out,
+        T* hpsi_out,
+        T* grad_out,
+        T* grad_old_out,
         const int &n_basis,
         const int &n_basis_max,
         const int &n_band);
 };
 
-template <typename FPTYPE, typename Device> 
-struct zdot_real_op {
-  /// @brief zdot_real_op computes the dot product of the given complex arrays(treated as float arrays).
+template <typename T, typename Device>
+struct dot_real_op {
+    using Real = typename GetTypeReal<T>::type;
+    /// @brief dot_real_op computes the dot product of the given complex arrays(treated as float arrays).
   /// And there's may have MPI communications while enabling planewave parallization strategy.
   ///
   /// Input Parameters
@@ -121,17 +124,18 @@ struct zdot_real_op {
   ///
   /// \return
   /// FPTYPE : dot product result
-  FPTYPE operator() (
+    Real operator() (
       const Device* d,
       const int& dim,
-      const std::complex<FPTYPE>* psi_L,
-      const std::complex<FPTYPE>* psi_R,
+        const T* psi_L,
+        const T* psi_R,
       const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
-template <typename FPTYPE, typename Device> struct vector_div_constant_op
+template <typename T, typename Device> struct vector_div_constant_op
 {
+    using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector[i] / constant
     ///
     /// Input Parameters
@@ -144,9 +148,9 @@ template <typename FPTYPE, typename Device> struct vector_div_constant_op
     /// \param result : output array
     void operator()(const Device* d,
                     const int dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector,
-                    const FPTYPE constant);
+        T* result,
+        const T* vector,
+        const Real constant);
 };
 
 // replace vector_div_constant_op : x = alpha * x
@@ -171,8 +175,9 @@ template <typename FPTYPE, typename Device> struct scal_op
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename FPTYPE, typename Device> struct vector_mul_vector_op
+template <typename T, typename Device> struct vector_mul_vector_op
 {
+    using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector1[i](complex) * vector2[i](not complex)
     ///
     /// Input Parameters
@@ -184,15 +189,16 @@ template <typename FPTYPE, typename Device> struct vector_mul_vector_op
     /// Output Parameters
     /// \param result : output array
     void operator()(const Device* d,
-                    const int& dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector1,
-                    const FPTYPE* vector2);
+        const int& dim,
+        T* result,
+        const T* vector1,
+        const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename FPTYPE, typename Device> struct vector_div_vector_op
+template <typename T, typename Device> struct vector_div_vector_op
 {
+    using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector1[i](complex) / vector2[i](not complex)
     ///
     /// Input Parameters
@@ -204,10 +210,10 @@ template <typename FPTYPE, typename Device> struct vector_div_vector_op
     /// Output Parameters
     /// \param result : output array
     void operator()(const Device* d,
-                    const int& dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector1,
-                    const FPTYPE* vector2);
+        const int& dim,
+        T* result,
+        const T* vector1,
+        const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
@@ -260,7 +266,7 @@ template <typename FPTYPE, typename Device> struct axpy_op
 };
 
 // compute y = alpha * op(A) * x + beta * y
-template <typename FPTYPE, typename Device> struct gemv_op
+template <typename T, typename Device> struct gemv_op
 {
     /// @brief y = alpha * op(A) * x + beta * y
     ///
@@ -284,19 +290,19 @@ template <typename FPTYPE, typename Device> struct gemv_op
                     const char& trans,
                     const int& m,
                     const int& n,
-                    const std::complex<FPTYPE>* alpha,
-                    const std::complex<FPTYPE>* A,
+        const T* alpha,
+        const T* A,
                     const int& lda,
-                    const std::complex<FPTYPE>* X,
+        const T* X,
                     const int& incx,
-                    const std::complex<FPTYPE>* beta,
-                    std::complex<FPTYPE>* Y,
+        const T* beta,
+        T* Y,
                     const int& incy);
 };
 
 
 // compute C = alpha * op(A) * op(B) + beta * C
-template <typename FPTYPE, typename Device> struct gemm_op
+template <typename T, typename Device> struct gemm_op
 {
     /// @brief C = alpha * op(A) * op(B) + beta * C
     ///
@@ -319,22 +325,22 @@ template <typename FPTYPE, typename Device> struct gemm_op
     /// Output Parameters
     /// \param c : output matrix C
     void operator()(const Device* d,
-                    const char& transa, 
-                    const char& transb, 
-                    const int& m, 
-                    const int& n, 
-                    const int& k,
-		            const std::complex<FPTYPE> *alpha, 
-                    const std::complex<FPTYPE> *a, 
-                    const int& lda, 
-                    const std::complex<FPTYPE> *b, 
-                    const int& ldb,
-		            const std::complex<FPTYPE> *beta, 
-                    std::complex<FPTYPE> *c, 
-                    const int& ldc);
+        const char& transa,
+        const char& transb,
+        const int& m,
+        const int& n,
+        const int& k,
+        const T* alpha,
+        const T* a,
+        const int& lda,
+        const T* b,
+        const int& ldb,
+        const T* beta,
+        T* c,
+        const int& ldc);
 };
 
-template <typename FPTYPE, typename Device> struct matrixTranspose_op
+template <typename T, typename Device> struct matrixTranspose_op
 {
     /// @brief transpose the input matrix
     ///
@@ -347,13 +353,13 @@ template <typename FPTYPE, typename Device> struct matrixTranspose_op
     /// Output Parameters
     /// \param output_matrix : output matrix
     void operator()(const Device* d,
-                    const int& row,
-                    const int& col,
-                    const std::complex<FPTYPE>* input_matrix,
-                    std::complex<FPTYPE>* output_matrix);
+        const int& row,
+        const int& col,
+        const T* input_matrix,
+        T* output_matrix);
 };
 
-template <typename FPTYPE, typename Device> struct matrixSetToAnother
+template <typename T, typename Device> struct matrixSetToAnother
 {
     /// @brief initialize matrix B with A
     ///
@@ -367,81 +373,87 @@ template <typename FPTYPE, typename Device> struct matrixSetToAnother
     /// Output Parameters
     /// \param B : output matrix B
     void operator()(const Device* d,
-                    const int& n,
-                    const std::complex<FPTYPE>* A,
-                    const int& LDA,
-                    std::complex<FPTYPE>* B,
-                    const int& LDB);
+        const int& n,
+        const T* A,
+        const int& LDA,
+        T* B,
+        const int& LDB);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
-template <typename FPTYPE>
-struct line_minimize_with_block_op<FPTYPE, psi::DEVICE_GPU> {
+template <typename T>
+struct line_minimize_with_block_op<T, psi::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
   void operator()(
-    std::complex<FPTYPE>* grad_out,
-    std::complex<FPTYPE>* hgrad_out,
-    std::complex<FPTYPE>* psi_out,
-    std::complex<FPTYPE>* hpsi_out,
+    T* grad_out,
+    T* hgrad_out,
+    T* psi_out,
+    T* hpsi_out,
     const int &n_basis,
     const int &n_basis_max,
     const int &n_band);
 };
 
-template <typename FPTYPE>
-struct calc_grad_with_block_op<FPTYPE, psi::DEVICE_GPU> {
+template <typename T>
+struct calc_grad_with_block_op<T, psi::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
   void operator()(
-    const FPTYPE* prec_in,
-    FPTYPE* err_out,
-    FPTYPE* beta_out,
-    std::complex<FPTYPE>* psi_out,
-    std::complex<FPTYPE>* hpsi_out,
-    std::complex<FPTYPE>* grad_out,
-    std::complex<FPTYPE>* grad_old_out,
+    const Real* prec_in,
+    Real* err_out,
+    Real* beta_out,
+    T* psi_out,
+    T* hpsi_out,
+    T* grad_out,
+    T* grad_old_out,
     const int &n_basis,
     const int &n_basis_max,
     const int &n_band);
 };
 
 // Partially specialize functor for psi::GpuDevice.
-template <typename FPTYPE> 
-struct zdot_real_op<FPTYPE, psi::DEVICE_GPU> {
-  FPTYPE operator()(
-    const psi::DEVICE_GPU* d,
-    const int& dim,
-    const std::complex<FPTYPE>* psi_L,
-    const std::complex<FPTYPE>* psi_R,
-    const bool reduce = true);
+template <typename T>
+struct dot_real_op<T, psi::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    Real operator()(
+        const psi::DEVICE_GPU* d,
+        const int& dim,
+        const T* psi_L,
+        const T* psi_R,
+        const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
-template <typename FPTYPE> struct vector_div_constant_op<FPTYPE, psi::DEVICE_GPU>
+template <typename T> struct vector_div_constant_op<T, psi::DEVICE_GPU>
 {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(const psi::DEVICE_GPU* d,
-                    const int dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector,
-                    const FPTYPE constant);
+        const int dim,
+        T* result,
+        const T* vector,
+        const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename FPTYPE> struct vector_mul_vector_op<FPTYPE, psi::DEVICE_GPU>
+template <typename T> struct vector_mul_vector_op<T, psi::DEVICE_GPU>
 {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(const psi::DEVICE_GPU* d,
-                    const int& dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector1,
-                    const FPTYPE* vector2);
+        const int& dim,
+        T* result,
+        const T* vector1,
+        const  Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename FPTYPE> struct vector_div_vector_op<FPTYPE, psi::DEVICE_GPU>
+template <typename T> struct vector_div_vector_op<T, psi::DEVICE_GPU>
 {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(const psi::DEVICE_GPU* d,
-                    const int& dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector1,
-                    const FPTYPE* vector2);
+        const int& dim,
+        T* result,
+        const T* vector1,
+        const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
@@ -456,18 +468,18 @@ template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTY
                     const FPTYPE constant2);
 };
 
-template <typename FPTYPE> struct matrixSetToAnother<FPTYPE, psi::DEVICE_GPU>
+template <typename T> struct matrixSetToAnother<T, psi::DEVICE_GPU>
 {
     void operator()(const psi::DEVICE_GPU* d,
-                    const int& n,
-                    const std::complex<FPTYPE>* A, // input
-                    const int& LDA,
-                    std::complex<FPTYPE>* B, // output
-                    const int& LDB);
+        const int& n,
+        const T* A, // input
+        const int& LDA,
+        T* B, // output
+        const int& LDB);
 };
 
 
-void createBLAShandle();
+void createGpuBlasHandle();
 void destoryBLAShandle();
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

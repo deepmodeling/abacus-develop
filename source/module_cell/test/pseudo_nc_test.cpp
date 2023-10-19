@@ -3,32 +3,32 @@
 #include<streambuf>
 
 /************************************************
- *  unit test of pseudo_nc
+ *  unit test of pseudo
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - pseudo_nc
- *   - ~pseudo_nc
+ *   - pseudo
+ *   - ~pseudo
  *   - set_pseudo_h
  *   - set_pseudo_atom
  *   - set_pseudo_vl
- *   - set_pseudo_nc
+ *   - set_pseudo
  *   - print_pseudo_h
  *   - print_pseudo_atom
  *   - print_pseudo_vl
- *   - print_pseudo_nc
+ *   - print_pseudo
  */
 
 #define private public
 #include "module_cell/read_pp.h"
-#include "module_cell/pseudo_nc.h"
+#include "module_cell/pseudo.h"
 
 class NCPPTest : public testing::Test
 {
 protected:
 	std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
-	std::unique_ptr<pseudo_nc> ncpp{new pseudo_nc};
+	std::unique_ptr<pseudo> ncpp{new pseudo};
 };
 
 TEST_F(NCPPTest, SetPseudoH)
@@ -136,9 +136,9 @@ TEST_F(NCPPTest, SetPseudoNC)
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
 	upf->read_pseudo_upf201(ifs);
-	//set_pseudo_nc
-	ncpp->set_pseudo_nc(*upf);
-	for(int i=0;i<ncpp->nbeta;i++)
+    // set_pseudo
+    ncpp->set_pseudo(*upf);
+    for(int i=0;i<ncpp->nbeta;i++)
 	{
 		EXPECT_EQ(ncpp->lll[i],upf->lll[i]);
 	}
@@ -154,12 +154,12 @@ TEST_F(NCPPTest, PrintNC)
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
 	upf->read_pseudo_upf201(ifs);
-	ncpp->set_pseudo_nc(*upf);
-	ifs.close();
+    ncpp->set_pseudo(*upf);
+    ifs.close();
 	//print
 	std::ofstream ofs;
 	ofs.open("./tmp_log");
-	ncpp->print_pseudo_nc(ofs);
+	ncpp->print_pseudo(ofs);
 	ofs.close();
 	ifs.open("./tmp_log");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());

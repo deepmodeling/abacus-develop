@@ -518,7 +518,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<ModuleBase::
     {
         for(int inl = 0; inl < this->inlmax; inl++)
         {
-            Parallel_Reduce::reduce_double_all(this->orbital_pdm_shell[0][hl][inl],(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+            Parallel_Reduce::reduce_all(this->orbital_pdm_shell[0][hl][inl], (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
         }
     }
 #endif    
@@ -701,7 +701,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(const std::vector<std::vector<ModuleBase
         {
             for(int inl = 0; inl < this->inlmax; inl++)
             {
-                Parallel_Reduce::reduce_double_all(this->orbital_pdm_shell[iks][hl][inl],(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
+                Parallel_Reduce::reduce_all(this->orbital_pdm_shell[iks][hl][inl], (2 * this->lmaxd + 1)* (2 * this->lmaxd + 1));
             }
         }
     }

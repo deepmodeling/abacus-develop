@@ -1,11 +1,6 @@
 #ifndef ORB_GEN_TABLES_H
 #define ORB_GEN_TABLES_H
 
-// temporary switch
-// if USE_NEW_TWO_CENTER is defined, the new two-center method is used
-// to replace the old UOT.snap_xxx
-#define USE_NEW_TWO_CENTER
-
 #include <memory>
 #include "ORB_gaunt_table.h"
 #include "ORB_table_beta.h"

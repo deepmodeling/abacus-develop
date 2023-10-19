@@ -13,7 +13,7 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Building
         run: |
           cmake -B build -DENABLE_ASAN=1 -DBUILD_TESTING=ON -DENABLE_DEEPKS=1 -DENABLE_LIBXC=1
@@ -23,7 +23,7 @@ jobs:
         run: |
           cmake --build build --target test ARGS="-V --timeout 21600"
       - name: Publish Report to Dashboard
-        uses: crazy-max/ghaction-github-pages@v2
+        uses: crazy-max/ghaction-github-pages@v4
         if: ${{ ! cancelled() }}
         with:
           target_branch: dashboard

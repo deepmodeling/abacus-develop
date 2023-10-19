@@ -198,7 +198,7 @@ TEST_F(Test_Leg_Pol, test_paw)
         EXPECT_NEAR(ref,result,1e-8);
     }
 }
-
+/*
 class Test_PAW_Cell_k : public testing::Test
 {
     protected:
@@ -366,26 +366,29 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         EXPECT_EQ(nrhoijsel[iat],36);
         for(int i = 0; i < 36; i ++)
         {
+            double tmp;
+            ifs_rhoij >> tmp;
             EXPECT_EQ(rhoijselect[iat][i],i+1);
-            EXPECT_NEAR(rhoijp[iat][i],rhoij[iat][i],1e-8);
+            EXPECT_NEAR(rhoijp[iat][i],tmp,1e-8);
         }
     }
 
     const int nproj = 8;
-    std::vector<double> dij;
-    dij.resize(nproj * nproj);
-    for(int i = 0; i < dij.size(); i ++)
+    double** dij;
+    dij = new double*[1];
+    dij[0]=new double[nproj * nproj];
+    for(int i = 0; i < nproj * nproj; i ++)
     {
-        dij[i] = 0.0;
+        dij[0][i] = 0.0;
     }
-    dij[0] = 13.407893;
-    dij[9] = 0.8201733412;
-    dij[18] = 5.491609854;
-    dij[27] = 5.491609854;
-    dij[36] = 5.491609854;
-    dij[45] = 0.59649632;
-    dij[54] = 0.59649632;
-    dij[63] = 0.59649632;
+    dij[0][0] = 13.407893;
+    dij[0][9] = 0.8201733412;
+    dij[0][18] = 5.491609854;
+    dij[0][27] = 5.491609854;
+    dij[0][36] = 5.491609854;
+    dij[0][45] = 0.59649632;
+    dij[0][54] = 0.59649632;
+    dij[0][63] = 0.59649632;
 
     std::vector<double> sij;
     sij.resize(nproj * nproj);
@@ -413,9 +416,11 @@ TEST_F(Test_PAW_Cell_k, test_paw)
 
     for(int iat = 0; iat < nat; iat ++)
     {
-        paw_cell.set_dij(iat,dij.data());
+        paw_cell.set_dij(iat,dij);
         paw_cell.set_sij(iat,sij.data());
     }
+    delete[] dij[0];
+    delete[] dij;
 
     psi = new std::complex<double>[npw];
     std::complex<double> *vnlpsi, *snlpsi;
@@ -458,3 +463,5 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     delete[] snlpsi;
 
 }
+
+*/

@@ -20,7 +20,7 @@ smearing_method		gauss
 smearing_sigma			0.002
 
 #Parameters (5.Mixing)
-mixing_type		pulay
+mixing_type		broyden
 mixing_beta		0.7
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB

@@ -5,8 +5,7 @@
 
 namespace ModuleIO
 {
-/// @brief manege the output of dos in numerical atomic basis case
-/// @param[in] psid
+    /// @brief manege the output of dos in numerical atomic basis case
 /// @param[in] psi
 /// @param[in] uhm
 /// @param[in] ekb
@@ -19,22 +18,24 @@ namespace ModuleIO
 /// @param[in] ucell
 /// @param[in] eferm
 /// @param[in] nbands
-void out_dos_nao(const psi::Psi<double>* psid,
-                  const psi::Psi<std::complex<double>>* psi,
-                  LCAO_Hamilt& uhm,
-                  const ModuleBase::matrix& ekb,
-                  const ModuleBase::matrix& wg,
-                  const double& dos_edelta_ev,
-                  const double& dos_scale,
-                  const double& dos_sigma,
-                  const K_Vectors& kv,
-                  const Parallel_Kpoints& Pkpoints,
-                  const UnitCell& ucell,
-                  const elecstate::efermi& eferm,
-                  int nbands)
+    template<typename T>
+    void out_dos_nao(
+        const psi::Psi<T>* psi,
+        LCAO_Hamilt& uhm,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const double& dos_edelta_ev,
+        const double& dos_scale,
+        const double& dos_sigma,
+        const K_Vectors& kv,
+        const Parallel_Kpoints& Pkpoints,
+        const UnitCell& ucell,
+        const elecstate::efermi& eferm,
+        int nbands,
+        hamilt::Hamilt<T>* p_ham)
 {
     ModuleBase::TITLE("Driver", "init");
-    write_dos_lcao(psid, psi, uhm, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv);
+    write_dos_lcao(psi, uhm, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
     int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
     if (INPUT.out_dos == 3)
@@ -56,5 +57,32 @@ void out_dos_nao(const psi::Psi<double>* psid,
         GlobalV::ofs_running << " Fermi energy (spin = 1) is " << eferm.ef_up << " Rydberg" << std::endl;
         GlobalV::ofs_running << " Fermi energy (spin = 2) is " << eferm.ef_dw << " Rydberg" << std::endl;
     }
-}
+    }
+
+    template void out_dos_nao(const psi::Psi<double>* psi,
+        LCAO_Hamilt& uhm,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const double& dos_edelta_ev,
+        const double& dos_scale,
+        const double& dos_sigma,
+        const K_Vectors& kv,
+        const Parallel_Kpoints& Pkpoints,
+        const UnitCell& ucell,
+        const elecstate::efermi& eferm,
+        int nbands,
+        hamilt::Hamilt<double>* p_ham);
+    template void out_dos_nao(const psi::Psi<std::complex<double>>* psi,
+        LCAO_Hamilt& uhm,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const double& dos_edelta_ev,
+        const double& dos_scale,
+        const double& dos_sigma,
+        const K_Vectors& kv,
+        const Parallel_Kpoints& Pkpoints,
+        const UnitCell& ucell,
+        const elecstate::efermi& eferm,
+        int nbands,
+        hamilt::Hamilt<std::complex<double>>* p_ham);
 } // namespace ModuleIO

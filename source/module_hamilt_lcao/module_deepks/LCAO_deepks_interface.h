@@ -27,6 +27,7 @@ class LCAO_Deepks_Interface
     /// @param[in] psid
     /// @param[in] dm_gamma
     /// @param[in] dm_k
+    // for Gamma-only
     void out_deepks_labels(double etot,
                            int nks,
                            int nat,
@@ -36,10 +37,21 @@ class LCAO_Deepks_Interface
                            const LCAO_Orbitals& orb,
                            Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
-                           const psi::Psi<std::complex<double>>& psi,
                            const psi::Psi<double>& psid,
-                           const std::vector<ModuleBase::matrix>& dm_gamma,
-                           const std::vector<ModuleBase::ComplexMatrix>& dm_k);
+                           const std::vector<std::vector<double>>& dm_gamma);
+  // for multi-k
+  void out_deepks_labels(double etot,
+                           int nks,
+                           int nat,
+                           const ModuleBase::matrix& ekb,
+                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                           const UnitCell& ucell,
+                           const LCAO_Orbitals& orb,
+                           Grid_Driver& GridD,
+                           const Parallel_Orbitals* ParaV,
+                           const psi::Psi<std::complex<double>>& psi,
+                           const std::vector<std::vector<std::complex<double>>>& dm_k);
+
   private:
     std::shared_ptr<LCAO_Deepks> ld;
 };

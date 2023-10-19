@@ -66,7 +66,7 @@ int ModuleIO::read_wfc_nao_complex(
 
     std::stringstream ss;
 	// read wave functions
-    ss << GlobalV::global_readin_dir << "LOWF_K_" << ik+1 <<".dat";
+    ss << GlobalV::global_readin_dir << "LOWF_K_" << ik+1 <<".txt";
 //	std::cout << " name is = " << ss.str() << std::endl;
 
     std::ifstream ifs;
@@ -217,12 +217,12 @@ int ModuleIO::read_wfc_nao(
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		// read wave functions
-    	ss << GlobalV::global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".dat";
+    	ss << GlobalV::global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".txt";
 		std::cout << " name is = " << ss.str() << std::endl;
 	}
 	else
 	{
-		ss << GlobalV::global_readin_dir << "LOWF_K.dat";
+		ss << GlobalV::global_readin_dir << "LOWF_K.txt";
 	}
 
     std::ifstream ifs;
@@ -338,17 +338,10 @@ void ModuleIO::distri_wfc_nao(double** ctot, const int& is,
     MPI_Comm_rank(ParaV->comm_2D, &myid);
 
 	double *work=new double[maxnloc]; // work/buffer matrix
-	int nb = 0;
-	if(GlobalV::NB2D==0)
-	{
-		if(GlobalV::NLOCAL>0) nb = 1;
-		if(GlobalV::NLOCAL>500) nb = 32;
-		if(GlobalV::NLOCAL>1000) nb = 64;
-	}
-	else if(GlobalV::NB2D>0)
-	{
-		nb = GlobalV::NB2D; // mohan add 2010-06-28
-	}
+#ifdef __DEBUG
+assert(GlobalV::NB2D > 0);
+#endif	
+	int nb = GlobalV::NB2D;
 	int info;
 	int naroc[2]; // maximum number of row or column
 	
@@ -417,17 +410,10 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik
     MPI_Comm_rank(ParaV->comm_2D, &myid);
 
 	std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
-	int nb = 0;
-	if(GlobalV::NB2D==0)
-	{
-		if(GlobalV::NLOCAL>0) nb = 1;
-		if(GlobalV::NLOCAL>500) nb = 32;
-		if(GlobalV::NLOCAL>1000) nb = 64;
-	}
-	else if(GlobalV::NB2D>0)
-	{
-		nb = GlobalV::NB2D; // mohan add 2010-06-28
-	}
+#ifdef __DEBUG
+assert(GlobalV::NB2D > 0);
+#endif	
+	int nb = GlobalV::NB2D;
 	int info;
 	int naroc[2]; // maximum number of row or column
 	

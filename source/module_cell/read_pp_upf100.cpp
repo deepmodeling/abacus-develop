@@ -174,17 +174,8 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	std::string junk;
 	ifs >> junk >> junk >> junk >> junk;
 	ModuleBase::GlobalFunc::READ_VALUE(ifs, xc_func);
-	
-	// dft functional enforced to modify
-	// mohan add 2010-07-15
-	std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
-	transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
-	if(GlobalV::DFT_FUNCTIONAL!="default" && xc_func1 != xc_func)
-	{
-		functional_error = 1;
-	}
-	
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->zp);
+
+    ModuleBase::GlobalFunc::READ_VALUE(ifs, this->zp);
 	ModuleBase::GlobalFunc::READ_VALUE(ifs, this->etotps);
 
 	ifs >> this->ecutwfc >> this->ecutrho;
@@ -282,44 +273,47 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 
 	if (nbeta == 0)
 	{
-		delete[] kkbeta;
-		delete[] lll;
-		this->kkbeta = nullptr;
-		this->lll = nullptr;
-		this->beta.create(1, 1);
-		this->dion.create(1, 1);
-		return;
-	}
-	else
-	{
-		delete[] kkbeta;
-		delete[] lll;
-		this->kkbeta = new int[nbeta]; 
-		this->lll = new int[nbeta]; 
+        delete[] kbeta;
+        delete[] lll;
+        this->kbeta = nullptr;
+        this->lll = nullptr;
+        this->beta.create(1, 1);
+        this->dion.create(1, 1);
+        kkbeta = 0;
+        return;
+    }
+    else
+    {
+        delete[] kbeta;
+        delete[] lll;
+        this->kbeta = new int[nbeta];
+        this->lll = new int[nbeta]; 
 		this->beta.create(nbeta , mesh);
 		this->dion.create(nbeta , nbeta);
+        kkbeta = 0;
 
-		for(int i=0;i<nbeta;i++)
-		{
-			ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false);
-			ifs >> idum;
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->lll[i]);// nl_1
-			ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kkbeta[i]);// nl_2
-			// number of mesh points for projectors
+        for (int i = 0; i < nbeta; i++)
+        {
+            ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false);
+            ifs >> idum;
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, this->lll[i]);// nl_1
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, this->kbeta[i]); // nl_2
+            // number of mesh points for projectors
 
-			for (ir=0;ir<kkbeta[i];ir++)
-			{
+            for (ir = 0; ir < kbeta[i]; ir++)
+            {
 				ifs >> this->beta(i, ir);// nl_3
 			}
 			ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_BETA>");
-		}
+            kkbeta = (kbeta[i] > kkbeta) ? kbeta[i] : kkbeta;
+        }
 
-		// DIJ
-		ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_DIJ>", false);
-		ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nd);//nl_4
-		for (int i=0; i<this->nd; i++)
-		{
-			double swap;
+        // DIJ
+        ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_DIJ>", false);
+        ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nd); // nl_4
+        for (int i = 0; i < this->nd; i++)
+        {
+            double swap;
 			ifs >> nb >> mb >> swap;
 			nb--;
 			mb--;
@@ -327,8 +321,8 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 			assert( mb >= 0);
 			this->dion(mb, nb) = swap;// nl_5
 			this->dion(nb, mb) = swap;
-		}
-		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_DIJ>");
+        }
+        ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_DIJ>");
 
 		// QIJ
 		if (tvanp)
@@ -338,8 +332,8 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 		else // not tvanp
 		{
 		}
-	}
-	return;
+    }
+    return;
 }
 
 void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs)

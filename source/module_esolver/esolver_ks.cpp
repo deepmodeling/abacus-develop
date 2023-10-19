@@ -1,16 +1,17 @@
 #include "esolver_ks.h"
 
+#include <time.h>
+#ifdef __MPI
+#include <mpi.h>
+#else
+#include <chrono>
+#endif
+
 #include <iostream>
 
-#include "../module_io/print_info.h"
+#include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
-#include "time.h"
-#ifdef __MPI
-#include "mpi.h"
-#else
-#include "chrono"
-#endif
 
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
@@ -25,8 +26,8 @@
 namespace ModuleESolver
 {
 
-    template<typename FPTYPE, typename Device>
-    ESolver_KS<FPTYPE, Device>::ESolver_KS()
+    template<typename T, typename Device>
+    ESolver_KS<T, Device>::ESolver_KS()
     {
         classname = "ESolver_KS";
         basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
@@ -47,20 +48,6 @@ namespace ModuleESolver
         ///----------------------------------------------------------
         p_chgmix = new Charge_Mixing();
         p_chgmix->set_rhopw(this->pw_rho);
-        p_chgmix->set_mixing(INPUT.mixing_mode,
-                             INPUT.mixing_beta,
-                             INPUT.mixing_ndim,
-                             INPUT.mixing_gg0,
-                             INPUT.mixing_tau);
-        // using bandgap to auto set mixing_beta
-        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
-        {
-            p_chgmix->need_auto_set();
-        }
-        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-        }
 
         ///----------------------------------------------------------
         /// wavefunc
@@ -71,19 +58,37 @@ namespace ModuleESolver
         this->wf.out_wfc_r = INPUT.out_wfc_r;
     }
 
-    template<typename FPTYPE, typename Device>
-    ESolver_KS<FPTYPE, Device>::~ESolver_KS()
+    template<typename T, typename Device>
+    ESolver_KS<T, Device>::~ESolver_KS()
     {
+        delete this->psi;
         delete this->pw_wfc;
         delete this->p_hamilt;
         delete this->phsol;
         delete this->p_chgmix;
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::Init(Input& inp, UnitCell& ucell)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
+
+        //------------------Charge Mixing------------------
+        p_chgmix->set_mixing(GlobalV::MIXING_MODE,
+                             GlobalV::MIXING_BETA,
+                             GlobalV::MIXING_NDIM,
+                             GlobalV::MIXING_GG0,
+                             GlobalV::MIXING_TAU);
+        // using bandgap to auto set mixing_beta
+        if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
+        {
+            p_chgmix->need_auto_set();
+        }
+        else if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
+        {
+            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+        }
+        
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
@@ -225,13 +230,12 @@ namespace ModuleESolver
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
-
-
-            // ecutrho / 2 = ecutwfc * 2
-            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc*2.0); //in Hartree
+            GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->startz,this->pw_wfc->numz);
             GlobalC::paw_cell.prepare_paw();
+            GlobalC::paw_cell.set_sij();
 
             GlobalC::paw_cell.set_eigts(
                 this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
@@ -240,8 +244,8 @@ namespace ModuleESolver
 #endif
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::init_after_vc(Input& inp, UnitCell& ucell)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     {
         ModuleBase::TITLE("ESolver_KS", "init_after_vc");
 
@@ -264,8 +268,8 @@ namespace ModuleESolver
         }
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
     {
         ModuleBase::timer::tick(this->classname, "hamilt2density");
         //Temporarily, before HSolver is constructed, it should be overrided by
@@ -276,8 +280,8 @@ namespace ModuleESolver
         ModuleBase::timer::tick(this->classname, "hamilt2density");
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
     {
         ofs << "\n\n\n\n";
 	    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -315,8 +319,8 @@ namespace ModuleESolver
         ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::Run(const int istep, UnitCell& ucell)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
     {
         if (!(GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
             || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax"))
@@ -345,7 +349,7 @@ namespace ModuleESolver
                 double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
-                
+
                 //<Temporary> It may be changed when more clever parallel algorithm is put forward.
                 //When parallel algorithm for bands are adopted. Density will only be treated in the first group.
                 //(Different ranks should have abtained the same, but small differences always exist in practice.)
@@ -353,7 +357,7 @@ namespace ModuleESolver
                 //they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
                 if(GlobalV::MY_STOGROUP == 0)
                 {
-                    // FPTYPE drho = this->estate.caldr2(); 
+                    // double drho = this->estate.caldr2(); 
                     // EState should be used after it is constructed.
 
                     drho = p_chgmix->get_drho(pelec->charge, GlobalV::nelec);
@@ -398,8 +402,8 @@ namespace ModuleESolver
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
-                        //conv_elec = this->estate.mix_rho();
-                        p_chgmix->mix_rho(iter, pelec->charge);
+                        
+                        p_chgmix->mix_rho(pelec->charge);
                         //----------charge mixing done-----------
                     }
                 }
@@ -416,7 +420,7 @@ namespace ModuleESolver
 #ifdef __MPI
                 double duration = (double)(MPI_Wtime() - iterstart);
 #else
-                FPTYPE duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<FPTYPE>(1e6);
+                double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<double>(1e6);
 #endif
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
@@ -434,8 +438,8 @@ namespace ModuleESolver
         return;
     };
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::printhead()
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::printhead()
     {
         std::cout << " " << std::setw(7) << "ITER";
         if (GlobalV::NSPIN == 2)
@@ -449,14 +453,14 @@ namespace ModuleESolver
         std::cout << std::setw(11) << "TIME(s)" << std::endl;
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
     {
         this->pelec->print_etot(this->conv_elec, iter, drho, duration, INPUT.printe, ethr);
     }
 
-    template<typename FPTYPE, typename Device>
-    void ESolver_KS<FPTYPE, Device>::writehead(std::ofstream& ofs_running, const int istep, const int iter)
+    template<typename T, typename Device>
+    void ESolver_KS<T, Device>::writehead(std::ofstream& ofs_running, const int istep, const int iter)
     {
         ofs_running
             << "\n "
@@ -466,14 +470,14 @@ namespace ModuleESolver
             << "--------------------------------\n";
     }
 
-    template<typename FPTYPE, typename Device>
-    int ESolver_KS<FPTYPE, Device>::getniter()
+    template<typename T, typename Device>
+    int ESolver_KS<T, Device>::getniter()
     {
         return this->niter;
     }
 
-    template <typename FPTYPE, typename Device>
-    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
+    template<typename T, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, const std::string& prefix)
     {
         int precision = 3;
         std::string tag = "CHG";
@@ -491,8 +495,8 @@ namespace ModuleESolver
                                     prefix);
     }
 
-    template <typename FPTYPE, typename Device>
-    ModuleIO::Output_Rho ESolver_KS<FPTYPE, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
+    template<typename T, typename Device>
+    ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
     {
         int precision = 11;
         std::string tag = "TAU";
@@ -510,8 +514,8 @@ namespace ModuleESolver
                                     prefix);
     }
 
-    template <typename FPTYPE, typename Device>
-    ModuleIO::Output_Potential ESolver_KS<FPTYPE, Device>::create_Output_Potential(int iter, const std::string& prefix)
+    template<typename T, typename Device>
+    ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int iter, const std::string& prefix)
     {
         int precision = 3;
         std::string tag = "POT";
@@ -532,10 +536,13 @@ namespace ModuleESolver
 
 
 
-template class ESolver_KS<float, psi::DEVICE_CPU>;
-template class ESolver_KS<double, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<float>, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS<float, psi::DEVICE_GPU>;
-template class ESolver_KS<double, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+#ifdef __LCAO
+template class ESolver_KS<double, psi::DEVICE_CPU>;
 #endif
 }

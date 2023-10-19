@@ -2,6 +2,7 @@ remove_definitions(-D__DEEPKS)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
+remove_definitions(-DUSE_PAW)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES INPUTs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -91,7 +92,7 @@ AddTest(
 AddTest(
   TARGET io_write_wfc_nao
   LIBS ${math_libs} base device
-  SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp
+  SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp ../binstream.cpp
 )
 
 AddTest(

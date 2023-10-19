@@ -12,7 +12,7 @@ ecutwfc			20
 scf_nmax			20
 
 basis_type		pw
-md_nstep           3
+md_nstep           5
 
 cal_stress          1
 stress_thr      1e-6
@@ -20,7 +20,7 @@ cal_force           1
 force_thr_ev    1.0e-3
 
 ks_solver       cg
-mixing_type     pulay
+mixing_type     broyden
 mixing_beta     0.7
 
 md_tchain        4
@@ -28,5 +28,5 @@ md_type          nvt
 md_tfreq         0.1
 md_tfirst        10
 md_dt            1
-md_restart       0
+md_restart       1
 init_vel         1

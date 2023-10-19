@@ -3,11 +3,13 @@
 // DATE : 2008-11-10
 //==========================================================
 #include "global_file.h"
-#include "global_variable.h"
-#include "global_function.h"
+
 #ifdef __MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
+
+#include "global_function.h"
+#include "global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
 
@@ -69,7 +71,7 @@ void ModuleBase::Global_File::make_dir_out(
 			}
         }
 #ifdef __MPI
-		Parallel_Reduce::reduce_int_all(make_dir);
+        Parallel_Reduce::reduce_all(make_dir);
 #endif
 		if(make_dir>0)break;
 		++times;
@@ -106,7 +108,7 @@ void ModuleBase::Global_File::make_dir_out(
                 }
             }
 #ifdef __MPI
-            Parallel_Reduce::reduce_int_all(make_dir_stru);
+            Parallel_Reduce::reduce_all(make_dir_stru);
 #endif
             if(make_dir_stru>0) break;
             ++times;
@@ -145,7 +147,7 @@ void ModuleBase::Global_File::make_dir_out(
                 }
             }
 #ifdef __MPI
-            Parallel_Reduce::reduce_int_all(make_dir_matrix);
+            Parallel_Reduce::reduce_all(make_dir_matrix);
 #endif
             if(make_dir_matrix>0) break;
             ++times;

@@ -32,7 +32,9 @@
 
 //use lapack to calcualte eigenvalue of matrix hm
 //NOTE: after finish this function, hm stores the eigen vectors.
-void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double * e, bool outtime=false)
+
+
+void lapackEigen(int& npw, std::vector<std::complex<double>>& hm, double* e, bool outtime = false)
 {
 	int lwork = 2 * npw;
 	std::complex<double> *work2= new std::complex<double>[lwork];
@@ -78,12 +80,12 @@ public:
 
 		//do Diago_David::diag()
 		double* en = new double[npw];		
-		hamilt::Hamilt<double> *phm;
-		phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr);
-		hsolver::DiagoDavid<double> dav(precondition);
-		hsolver::DiagoDavid<double>::PW_DIAG_NDIM = order;
-		hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;
-		hsolver::DiagoIterAssist<double>::PW_DIAG_THR = eps;
+		hamilt::Hamilt<std::complex<double>> *phm;
+		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr);
+		hsolver::DiagoDavid<std::complex<double>> dav(precondition);
+		hsolver::DiagoDavid<std::complex<double>>::PW_DIAG_NDIM = order;
+		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = maxiter;
+		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = eps;
 		GlobalV::NPROC_IN_POOL = nprocs;
 		phi.fix_k(0);
 
@@ -128,7 +130,7 @@ TEST_P(DiagoDavTest,RandomHamilt)
 	if (DETAILINFO&&ddp.mypnum==0) std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
 			  << ddp.sparsity << ", eps=" << ddp.eps << std::endl;
 
-	HPsi hpsi(ddp.nband,ddp.npw,ddp.sparsity);
+    HPsi<std::complex<double>> hpsi(ddp.nband, ddp.npw, ddp.sparsity);
 	DIAGOTEST::hmatrix = hpsi.hamilt();
 	DIAGOTEST::npw = ddp.npw;
 	DIAGOTEST::npw_local = new int[ddp.nprocs];
@@ -138,7 +140,7 @@ TEST_P(DiagoDavTest,RandomHamilt)
 
 #ifdef __MPI				
 	DIAGOTEST::cal_division(DIAGOTEST::npw);
-	DIAGOTEST::divide_hpsi(psi,psi_local);
+    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix, DIAGOTEST::hmatrix_local);
 	precondition_local = new double[DIAGOTEST::npw_local[ddp.mypnum]];
 	DIAGOTEST::divide_psi<double>(hpsi.precond(),precondition_local);	
 #else
@@ -163,7 +165,7 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
 		//DiagoDavPrepare(20,2000,8,4,1e-5,500)
 ));
 
-TEST(DiagoDavRealSystemTest,dataH)
+TEST(DiagoDavRealSystemTest, dataH)
 {
 	std::vector<std::complex<double>> hmatrix;
 	std::ifstream ifs("H-KPoints-Si64.dat");
@@ -174,7 +176,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 
 	DiagoDavPrepare ddp(nband,DIAGOTEST::npw,0,2,1e-5,500);
 	
-	HPsi hpsi(nband,DIAGOTEST::npw);
+    HPsi<std::complex<double>> hpsi(nband, DIAGOTEST::npw);
 	psi::Psi<std::complex<double>> psi = hpsi.psi();
 	DIAGOTEST::npw_local = new int[ddp.nprocs];
 	psi::Psi<std::complex<double>> psi_local;
@@ -182,7 +184,7 @@ TEST(DiagoDavRealSystemTest,dataH)
 
 #ifdef __MPI				
 	DIAGOTEST::cal_division(DIAGOTEST::npw);
-	DIAGOTEST::divide_hpsi(psi,psi_local);
+    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix, DIAGOTEST::hmatrix_local);
 	precondition_local = new double[DIAGOTEST::npw_local[ddp.mypnum]];
 	DIAGOTEST::divide_psi<double>(hpsi.precond(),precondition_local);	
 #else

@@ -1,24 +1,24 @@
-#include <module_hsolver/diago_bpcg.h>
+#include "module_hsolver/diago_bpcg.h"
+
+#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/einsum_op.h>
+#include <ATen/kernels/lapack_op.h>
 
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/lapack_op.h>
-#include <ATen/kernels/einsum_op.h>
-
 namespace hsolver {
 
 template<typename T, typename Device>
-DiagoBPCG<T, Device>::DiagoBPCG(const T* precondition_in)
+DiagoBPCG<T, Device>::DiagoBPCG(const Real* precondition_in)
 {
-    this->fp_type   = ct::DataTypeToEnum<T>::value;
-    this->cx_type   = ct::DataTypeToEnum<std::complex<T>>::value;
+    this->r_type   = ct::DataTypeToEnum<Real>::value;
+    this->t_type   = ct::DataTypeToEnum<T>::value;
     this->device_type    = ct::DeviceTypeToEnum<Device>::value;
 
-    this->h_prec  = std::move(ct::TensorMap((void *) precondition_in, fp_type, device_type, {this->n_basis}));
+    this->h_prec  = std::move(ct::TensorMap((void *) precondition_in, r_type, device_type, {this->n_basis}));
 }
 
 template<typename T, typename Device>
@@ -28,38 +28,38 @@ DiagoBPCG<T, Device>::~DiagoBPCG() {
 }
 
 template<typename T, typename Device>
-void DiagoBPCG<T, Device>::init_iter(const psi::Psi<std::complex<T>, Device> &psi_in) {
+void DiagoBPCG<T, Device>::init_iter(const psi::Psi<T, Device> &psi_in) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
     this->n_band        = psi_in.get_nbands();
     this->n_basis       = psi_in.get_nbasis();
 
     // All column major tensors
 
-    this->beta          = std::move(ct::Tensor(fp_type, device_type, {this->n_band}));
-    this->eigen         = std::move(ct::Tensor(fp_type, device_type, {this->n_band}));
-    this->err_st        = std::move(ct::Tensor(fp_type, device_type, {this->n_band}));
+    this->beta          = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
+    this->eigen         = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
+    this->err_st        = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
 
-    this->hsub          = std::move(ct::Tensor(cx_type, device_type, {this->n_band, this->n_band}));
+    this->hsub          = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_band}));
 
-    this->hpsi          = std::move(ct::Tensor(cx_type, device_type, {this->n_band, this->n_basis}));
-    this->work          = std::move(ct::Tensor(cx_type, device_type, {this->n_band, this->n_basis}));
-    this->hgrad         = std::move(ct::Tensor(cx_type, device_type, {this->n_band, this->n_basis}));
-    this->grad_old      = std::move(ct::Tensor(cx_type, device_type, {this->n_band, this->n_basis}));
+    this->hpsi          = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_basis}));
+    this->work          = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_basis}));
+    this->hgrad         = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_basis}));
+    this->grad_old      = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_basis}));
 
-    this->prec          = std::move(ct::Tensor(fp_type, device_type, {this->n_basis}));
+    this->prec          = std::move(ct::Tensor(r_type, device_type, {this->n_basis}));
 
     //TODO: Remove class Psi, using ct::Tensor instead!
-    this->grad_wrapper  = new psi::Psi<std::complex<T>, Device>(1, this->n_band, this->n_basis, psi_in.get_ngk_pointer());
-    this->grad          = std::move(ct::TensorMap(grad_wrapper->get_pointer(), cx_type, device_type, {this->n_band, this->n_basis}));
+    this->grad_wrapper  = new psi::Psi<T, Device>(1, this->n_band, this->n_basis, psi_in.get_ngk_pointer());
+    this->grad          = std::move(ct::TensorMap(grad_wrapper->get_pointer(), t_type, device_type, {this->n_band, this->n_basis}));
 }
 
 template<typename T, typename Device>
-bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, T thr_in)
+bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, Real thr_in)
 {
-    const T * _err_st = err_in.data<T>();
+    const Real * _err_st = err_in.data<Real>();
     if (err_in.device_type() == ct::DeviceType::GpuDevice) {
         ct::Tensor h_err_in = err_in.to_device<ct::DEVICE_CPU>();
-        _err_st = h_err_in.data<T>();
+        _err_st = h_err_in.data<Real>();
     }
     for (int ii = 0; ii < this->n_band; ii++) {
         if (_err_st[ii] > thr_in) {
@@ -77,7 +77,7 @@ void DiagoBPCG<T, Device>::line_minimize(
     ct::Tensor& psi_out,
     ct::Tensor& hpsi_out)
 {
-    line_minimize_with_block_op()(grad_in.data<std::complex<T>>(), hgrad_in.data<std::complex<T>>(), psi_out.data<std::complex<T>>(), hpsi_out.data<std::complex<T>>(), this->n_basis, this->n_basis, this->n_band);
+    line_minimize_with_block_op()(grad_in.data<T>(), hgrad_in.data<T>(), psi_out.data<T>(), hpsi_out.data<T>(), this->n_basis, this->n_basis, this->n_band);
 }
 
 // Finally, the last two!
@@ -90,13 +90,13 @@ void DiagoBPCG<T, Device>::orth_cholesky(ct::Tensor& workspace_in, ct::Tensor& p
     hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
 
     // set hsub matrix to lower format;
-    ct::op::set_matrix<ct_Type, ct_Device>()(
-        'L', hsub_out.data<std::complex<T>>(), this->n_band);
+    ct::op::set_matrix<T, ct_Device>()(
+        'L', hsub_out.data<T>(), this->n_band);
 
-    ct::op::lapack_potrf<ct_Type, ct_Device>()(
-        'U', this->n_band, hsub_out.data<std::complex<T>>(), this->n_band);
-    ct::op::lapack_trtri<ct_Type, ct_Device>()(
-        'U', 'N', this->n_band, hsub_out.data<std::complex<T>>(), this->n_band);
+    ct::op::lapack_potrf<T, ct_Device>()(
+        'U', this->n_band, hsub_out.data<T>(), this->n_band);
+    ct::op::lapack_trtri<T, ct_Device>()(
+        'U', 'N', this->n_band, hsub_out.data<T>(), this->n_band);
 
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
@@ -112,13 +112,13 @@ void DiagoBPCG<T, Device>::calc_grad_with_block(
         ct::Tensor& grad_out,
         ct::Tensor& grad_old_out)
 {
-    calc_grad_with_block_op()(prec_in.data<T>(), err_out.data<T>(), beta_out.data<T>(), psi_in.data<std::complex<T>>(), hpsi_in.data<std::complex<T>>(), grad_out.data<std::complex<T>>(), grad_old_out.data<std::complex<T>>(), this->n_basis, this->n_basis, this->n_band);
+    calc_grad_with_block_op()(prec_in.data<Real>(), err_out.data<Real>(), beta_out.data<Real>(), psi_in.data<T>(), hpsi_in.data<T>(), grad_out.data<T>(), grad_old_out.data<T>(), this->n_basis, this->n_basis, this->n_band);
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_prec()
 {
-    syncmem_var_h2d_op()(this->prec.template data<T>(), this->h_prec.template data<T>(), this->n_basis);
+    syncmem_var_h2d_op()(this->prec.template data<Real>(), this->h_prec.template data<Real>(), this->n_basis);
 }
 
 template<typename T, typename Device>
@@ -131,7 +131,7 @@ void DiagoBPCG<T, Device>::orth_projection(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_in);
     hsub_in = ct::op::einsum("ij,kj->ik", grad_out, psi_in, option);
 
-    // set_matrix_op()('L', hsub_in->data<std::complex<T>>(), this->n_band);
+    // set_matrix_op()('L', hsub_in->data<T>(), this->n_band);
     option = ct::EinsumOption(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/-1.0, /*beta=*/1.0, /*Tensor out=*/&grad_out);
     grad_out = ct::op::einsum("ij,jk->ik", hsub_in, psi_in, option);
@@ -147,18 +147,18 @@ void DiagoBPCG<T, Device>::rotate_wf(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&workspace_in);
     workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
 
-    syncmem_complex_op()(psi_out.template data<std::complex<T>>(), workspace_in.template data<std::complex<T>>(), this->n_band * this->n_basis);
+    syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band * this->n_basis);
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hpsi_with_block(
         hamilt::Hamilt<T, Device>* hamilt_in,
-        const psi::Psi<std::complex<T>, Device>& psi_in,
+        const psi::Psi<T, Device>& psi_in,
         ct::Tensor& hpsi_out)
 {
     // calculate all-band hpsi
     psi::Range all_bands_range(1, psi_in.get_current_k(), 0, psi_in.get_nbands() - 1);
-    hpsi_info info(&psi_in, all_bands_range, hpsi_out.data<std::complex<T>>());
+    hpsi_info info(&psi_in, all_bands_range, hpsi_out.data<T>());
     hamilt_in->ops->hPsi(info);
 }
 
@@ -176,13 +176,13 @@ void DiagoBPCG<T, Device>::diag_hsub(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
     hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
 
-    ct::op::lapack_dnevd<ct_Type, ct_Device>()('V', 'U', hsub_out.data<std::complex<T>>(), this->n_band, eigenvalue_out.data<T>());
+    ct::op::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hsub_with_block(
         hamilt::Hamilt<T, Device> *hamilt_in,
-        const psi::Psi<std::complex<T>, Device> &psi_in,
+        const psi::Psi<T, Device> &psi_in,
         ct::Tensor& psi_out,
         ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out,
@@ -221,20 +221,20 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::diag(
         hamilt::Hamilt<T, Device>* hamilt_in,
-        psi::Psi<std::complex<T>, Device>& psi_in,
-        T* eigenvalue_in)
+        psi::Psi<T, Device>& psi_in,
+        Real* eigenvalue_in)
 {
     const int current_scf_iter = hsolver::DiagoIterAssist<T, Device>::SCF_ITER;
     // Get the pointer of the input psi
-    this->psi = std::move(ct::TensorMap(psi_in.get_pointer(), cx_type, device_type, {this->n_band, this->n_basis}));
+    this->psi = std::move(ct::TensorMap(psi_in.get_pointer(), t_type, device_type, {this->n_band, this->n_basis}));
     // Update the precondition array
     this->calc_prec();
 
     // Improving the initial guess of the wave function psi through a subspace diagonalization.
     this->calc_hsub_with_block(hamilt_in, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
-    setmem_complex_op()(this->grad_old.template data<std::complex<T>>(), 0, this->n_basis * this->n_band);
-    setmem_var_op()(this->beta.template data<T>(), 1E+40, this->n_band);
+    setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band);
+    setmem_var_op()(this->beta.template data<Real>(), 1E+40, this->n_band);
     int ntry = 0;
     int max_iter = current_scf_iter > 1 ?
                    this->nline :
@@ -257,7 +257,7 @@ void DiagoBPCG<T, Device>::diag(
         this->orth_projection(this->psi, this->hsub, this->grad);
 
         // this->grad_old = this->grad;
-        syncmem_complex_op()(this->grad_old.template data<std::complex<T>>(), this->grad.template data<std::complex<T>>(), n_basis * n_band);
+        syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band);
 
         // Calculate H|grad> matrix
         this->calc_hpsi_with_block(hamilt_in, this->grad_wrapper[0], this->hgrad);
@@ -276,14 +276,14 @@ void DiagoBPCG<T, Device>::diag(
         }
     } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
-    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<T>(), this->n_band);
+    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>(), this->n_band);
 }
 
-template class DiagoBPCG<float, psi::DEVICE_CPU>;
-template class DiagoBPCG<double, psi::DEVICE_CPU>;
+template class DiagoBPCG<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoBPCG<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class DiagoBPCG<float, psi::DEVICE_GPU>;
-template class DiagoBPCG<double, psi::DEVICE_GPU>;
+template class DiagoBPCG<std::complex<float>, psi::DEVICE_GPU>;
+template class DiagoBPCG<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

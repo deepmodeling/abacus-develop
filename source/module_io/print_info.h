@@ -5,8 +5,8 @@
 #ifndef PRINT_INFO_H
 #define PRINT_INFO_H
 
-#include "../module_base/timer.h"
-#include "../module_cell/unitcell.h"
+#include "module_base/timer.h"
+#include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
 
 class Print_Info

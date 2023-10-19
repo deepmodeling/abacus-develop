@@ -1,4 +1,5 @@
 if(ENABLE_LCAO)
+remove_definitions(-DUSE_NEW_TWO_CENTER)
 
 AddTest(
   TARGET operator_overlap_test

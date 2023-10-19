@@ -8,9 +8,10 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     this->has_so = false;
 
     this->nbeta = 0;
-    delete[] kkbeta;
+    this->kkbeta = 0;
+    delete[] kbeta;
     delete[] lll;
-    this->kkbeta = nullptr;
+    this->kbeta = nullptr;
     this->lll = nullptr;
     this->beta.create(1, 1);
     this->dion.create(1, 1);
@@ -39,20 +40,18 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> this->lmax >> lloc >> this->mesh >> r2well;
 
-	if(GlobalV::DFT_FUNCTIONAL=="default")
-	{
-        if(pspxc == 2)
-        {
-            this->xc_func = "PZ";
-        }
-        else if (pspxc == 11)
-        {
-            this->xc_func = "PBE";
-        }
+    if (pspxc == 2)
+    {
+        this->xc_func = "PZ";
+    }
+    else if (pspxc == 11)
+    {
+        this->xc_func = "PBE";
     }
     else
     {
-        this->xc_func = GlobalV::DFT_FUNCTIONAL;
+        std::string msg = "Unknown pspxc: " + std::to_string(pspxc);
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
 
     ifs.ignore(300, '\n');
@@ -122,10 +121,10 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
 //chi            -
 //rho_at         -
 
-//lll            -
-//kkbeta         -
-//beta           -
-//dion           -
+// lll            -
+// kbeta         -
+// beta           -
+// dion           -
 
 //nn             -
 //jchi           -

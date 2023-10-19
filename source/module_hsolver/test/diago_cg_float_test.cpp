@@ -100,8 +100,8 @@ class DiagoCGPrepare
 	//======================================================================
         float *en = new float[npw];
         int ik = 1;
-	    hamilt::Hamilt<float>* ha;
-	    ha =new hamilt::HamiltPW<float>(nullptr, nullptr, nullptr);
+	    hamilt::Hamilt<std::complex<float>>* ha;
+	    ha =new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
 	    int* ngk = new int [1];
 	    //psi::Psi<std::complex<float>> psi(ngk,ik,nband,npw);
 	    psi::Psi<std::complex<float>> psi;
@@ -120,9 +120,9 @@ class DiagoCGPrepare
         DIAGOTEST::npw_local = new int[nprocs];
 #ifdef __MPI				
 	    DIAGOTEST::cal_division(DIAGOTEST::npw);
-	    DIAGOTEST::divide_hpsi_f(psi,psi_local); //will distribute psi and Hmatrix to each process
+        DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix_f, DIAGOTEST::hmatrix_local_f); //will distribute psi and Hmatrix to each process
 	    precondition_local = new float[DIAGOTEST::npw_local[mypnum]];
-	    DIAGOTEST::divide_psi_f<float>(precondition,precondition_local);	
+        DIAGOTEST::divide_psi<float>(precondition, precondition_local);
 #else
 	    DIAGOTEST::hmatrix_local_f = DIAGOTEST::hmatrix_f;
 	    DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
@@ -130,7 +130,7 @@ class DiagoCGPrepare
 	    precondition_local = new float[DIAGOTEST::npw];
 	    for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
-        hsolver::DiagoCG<float> cg(precondition_local);
+        hsolver::DiagoCG<std::complex<float>> cg(precondition_local);
         psi_local.fix_k(0);
         float start, end;
         start = MPI_Wtime();
@@ -160,11 +160,11 @@ TEST_P(DiagoCGFloatTest, RandomHamilt)
     DiagoCGPrepare dcp = GetParam();
     //std::cout << "npw=" << dcp.npw << ", nband=" << dcp.nband << ", sparsity="
     //		  << dcp.sparsity << ", eps=" << dcp.eps << std::endl;
-    hsolver::DiagoIterAssist<float>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<float>::PW_DIAG_THR = dcp.eps;
-    //std::cout<<"maxiter "<<hsolver::DiagoIterAssist<float>::PW_DIAG_NMAX<<std::endl;
-    //std::cout<<"eps "<<hsolver::DiagoIterAssist<float>::PW_DIAG_THR<<std::endl;
-    HPsi_f hpsi(dcp.nband, dcp.npw, dcp.sparsity);
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
+    //std::cout<<"maxiter "<<hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX<<std::endl;
+    //std::cout<<"eps "<<hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR<<std::endl;
+    HPsi<std::complex<float>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
     DIAGOTEST::hmatrix_f = hpsi.hamilt();
 
     DIAGOTEST::npw = dcp.npw;
@@ -189,7 +189,7 @@ TEST(DiagoCGFloatTest, Hamilt)
 {
     int dim = 2;
     int nbnd = 2;
-    HPsi_f hpsi(nbnd, dim);
+    HPsi<std::complex<float>> hpsi(nbnd, dim);
     std::vector<std::complex<float>> hm = hpsi.hamilt();
     EXPECT_EQ(DIAGOTEST::h_nr, 2);
     EXPECT_EQ(DIAGOTEST::h_nc, 2);
@@ -234,8 +234,8 @@ TEST(DiagoCGFloatTest, TwoByTwo)
     hm(1, 1) = std::complex<float>{3.0, 0.0};
     // nband, npw, sub, sparsity, reorder, eps, maxiter, threshold
     DiagoCGPrepare dcp(nband, dim, 0, true, 1e-4, 50, 1e-0);
-    hsolver::DiagoIterAssist<float>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<float>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
     HPsi hpsi;
     hpsi.create(nband, dim);
     DIAGOTEST::hmatrix_f = hm;
@@ -256,9 +256,9 @@ TEST(DiagoCGFloatTest, readH)
     int nband = 10; // not nband < dim, here dim = 26 in data-H
     // nband, npw, sparsity, reorder, eps, maxiter, threshold
     DiagoCGPrepare dcp(nband, dim, 0, true, 1e-5, 500, 1e-0);
-    hsolver::DiagoIterAssist<float>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<float>::PW_DIAG_THR = dcp.eps;
-    HPsi_f hpsi;
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
+    HPsi<std::complex<float>> hpsi;
     hpsi.create(nband, dim);
     DIAGOTEST::hmatrix_f = hpsi.hamilt();
     DIAGOTEST::npw = dim;

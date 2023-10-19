@@ -5,7 +5,7 @@ scf_nmax                      400
 scf_thr                       1e-08
 basis_type                    lcao
 ks_solver                     genelpa
-mixing_type                   pulay
+mixing_type                   broyden
 mixing_beta                   0.4
 mixing_gg0                    1.5
 pseudo_dir                    ../../tests/PP_ORB

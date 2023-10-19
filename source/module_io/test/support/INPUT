@@ -159,9 +159,9 @@ smearing_method                gauss #type of smearing_method: gauss; fd; fixed;
 smearing_sigma                 0.002 #energy range for smearing
 
 #Parameters (7.Charge Mixing)
-mixing_type                    pulay #plain; pulay; broyden
+mixing_type                    broyden #plain; pulay; broyden
 mixing_beta                    0.7 #mixing parameter: 0 means no new charge
-mixing_ndim                    8 #mixing dimension in pulay
+mixing_ndim                    8 #mixing dimension in pulay or broyden
 mixing_gg0                     0 #mixing parameter in kerker
 
 #Parameters (8.DOS)
@@ -331,6 +331,11 @@ gdir                           3 #calculate the polarization in the direction of
 towannier90                    0 #use wannier90 code interface or not
 nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name
 wannier_spin                   up #calculate spin in wannier90 code interface
+out_wannier_mmn                1 #output .mmn file or not
+out_wannier_amn                1 #output .amn file or not
+out_wannier_unk                1 #output UNK. file or not
+out_wannier_eig                1 #output .eig file or not
+out_wannier_wvfn_formatted     1 #output UNK. file in text format or in binary format
 
 #Parameters (18.implicit_solvation)
 imp_sol                        0 #calculate implicit solvation correction or not

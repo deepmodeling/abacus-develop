@@ -129,9 +129,7 @@ TEST(ToolThreadingTEST, OmpParalle)
 	EXPECT_THAT(output1,testing::HasSubstr("1"));
     EXPECT_THAT(output1,testing::HasSubstr("0"));
 }
-#ifndef _OPENMP
-#define _OPENMP
-#endif
+#ifdef _OPENMP
 TEST(ToolThreadingTEST, OmpParalleOpenmp)
 {
     std::string output2;
@@ -161,3 +159,4 @@ TEST(ToolThreadingTEST, TryOmpParalleOpenmp)
 	EXPECT_THAT(output4,testing::HasSubstr(std::to_string(omp_get_num_threads())));
     EXPECT_THAT(output4,testing::HasSubstr(std::to_string(omp_get_thread_num())));
 }
+#endif

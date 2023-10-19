@@ -9,13 +9,13 @@ namespace op {
 
 static cublasHandle_t cublas_handle = nullptr;
 
-void createBlasHandle() {
+void createGpuBlasHandle() {
     if (cublas_handle == nullptr) {
         cublasErrcheckInternal(cublasCreate(&cublas_handle));
     }
 }
 
-void destroyBlasHandle() {
+void destroyGpuBlasHandle() {
     if (cublas_handle != nullptr) {
         cublasErrcheckInternal(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;

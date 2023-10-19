@@ -1,7 +1,7 @@
 name: Feature Request
 description: For users or developers who want to propose new features to be added or suggest improvements or enhancements to existing features.
 labels: [Feature Request]
-assignees: mohanchen
+assignees: [insert assignee here]
 
 body:
 - type: textarea
@@ -27,6 +27,14 @@ body:
 
 - type: textarea
   attributes:
+    label: Notice Possible Change of Behavior (Reminder only for developers)
+    description: |
+      Please ensure that you have carefully considered the possible change of behavior your code changes might introduce. Make sure to provide a detailed explanation of these changes and their potential impact on the application. This will help reviewers to better understand your changes and assess their implications.
+    placeholder: |
+      Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
+
+- type: textarea
+  attributes:
     label: Additional Context
     description: |
       Add any other context or references about the feature request here.
@@ -41,7 +49,7 @@ body:
       - label: Research on the existing solutions and relevant research articles/resources.
       - label: Discuss with the team to evaluate the feasibility of implementing the feature.
       - label: Create a design document outlining the proposed solution and implementation details.
-      - label: Get feedback from the team and stakeholders on the design document.
+      - label: Get feedback from the team on the design document.
       - label: Develop the feature following the agreed design.
       - label: Write unit tests and integration tests for the feature.
       - label: Update the documentation to include the new feature.

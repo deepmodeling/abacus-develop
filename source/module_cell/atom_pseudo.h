@@ -7,10 +7,10 @@
 #include "../module_io/output.h"
 #include "../module_base/complexarray.h"
 #include "../module_base/complexmatrix.h"
-#include "pseudo_nc.h"
+#include "pseudo.h"
 
 
-class Atom_pseudo : public pseudo_nc
+class Atom_pseudo : public pseudo
 {
 public:
 
@@ -19,6 +19,7 @@ public:
 
 	// mohan add 2021-05-07
 	ModuleBase::ComplexArray d_so; //(:,:,:), spin-orbit case
+	ModuleBase::matrix d_real; //(:,:), non-spin-orbit case
 	int nproj;
 	int nproj_soc; // dimension of D_ij^so
 	int non_zero_count_soc[4];
@@ -39,7 +40,7 @@ public:
 	}
 	inline void get_d(const int& is, const int& p1, const int& p2, const double*& tmp_d)
 	{
-		tmp_d = &this->dion(p1, p2);
+		tmp_d = &this->d_real(p1, p2);
 		return;
 	}
 	

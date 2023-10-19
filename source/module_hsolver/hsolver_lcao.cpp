@@ -12,7 +12,7 @@ namespace hsolver
 {
 
 template <typename T>
-void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
+void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
                                 psi::Psi<T>& psi,
                                 elecstate::ElecState* pes,
                                 const std::string method_in,
@@ -24,35 +24,35 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
     this->method = method_in;
     if (this->method == "scalapack_gvx")
     {
-        if (pdiagh != nullptr)
+        if (this->pdiagh != nullptr)
         {
-            if (pdiagh->method != this->method)
+            if (this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = nullptr;
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
             }
         }
-        if (pdiagh == nullptr)
+        if (this->pdiagh == nullptr)
         {
-            pdiagh = new DiagoBlas();
-            pdiagh->method = this->method;
+            this->pdiagh = new DiagoBlas<T>();
+            this->pdiagh->method = this->method;
         }
     }
 #ifdef __ELPA
     else if (this->method == "genelpa")
     {
-        if (pdiagh != nullptr)
+        if (this->pdiagh != nullptr)
         {
-            if (pdiagh->method != this->method)
+            if (this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = nullptr;
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
             }
         }
-        if (pdiagh == nullptr)
+        if (this->pdiagh == nullptr)
         {
-            pdiagh = new DiagoElpa();
-            pdiagh->method = this->method;
+            this->pdiagh = new DiagoElpa<T>();
+            this->pdiagh->method = this->method;
         }
     }
 #endif
@@ -63,18 +63,18 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
         // until the obsolete globalc::hm is removed from
         // diago_lapack.cpp
         /*
-        if (pdiagh != nullptr)
+        if (this->pdiagh != nullptr)
         {
-            if (pdiagh->method != this->method)
+            if (this->pdiagh->method != this->method)
             {
-                delete[] pdiagh;
-                pdiagh = nullptr;
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
             }
         }
-        if (pdiagh == nullptr)
+        if (this->pdiagh == nullptr)
         {
-            pdiagh = new DiagoLapack();
-            pdiagh->method = this->method;
+            this->pdiagh = new DiagoLapack();
+            this->pdiagh->method = this->method;
         }
         */
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
@@ -106,8 +106,8 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
 
     if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack")
     {
-        delete pdiagh;
-        pdiagh = nullptr;
+        delete this->pdiagh;
+        this->pdiagh = nullptr;
     }
 
     // used in nscf calculation
@@ -122,43 +122,35 @@ void HSolverLCAO::solveTemplate(hamilt::Hamilt<double>* pHamilt,
     pes->psiToRho(psi);
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 }
+template <typename T>
+int HSolverLCAO<T>::out_mat_hs = 0;
+template <typename T>
+int HSolverLCAO<T>::out_mat_hsR = 0;
+template <typename T>
+int HSolverLCAO<T>::out_mat_t = 0;
+template <typename T>
+int HSolverLCAO<T>::out_mat_dh = 0;
 
-int HSolverLCAO::out_mat_hs = 0;
-int HSolverLCAO::out_mat_hsR = 0;
-int HSolverLCAO::out_mat_t = 0;
-int HSolverLCAO::out_mat_dh = 0;
-
-void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
-                        psi::Psi<std::complex<double>>& psi,
-                        elecstate::ElecState* pes,
-                        const std::string method_in,
-                        const bool skip_charge)
+template <typename T>
+void HSolverLCAO<T>::solve(hamilt::Hamilt<T>* pHamilt,
+    psi::Psi<T>& psi,
+    elecstate::ElecState* pes,
+    const std::string method_in,
+    const bool skip_charge)
 {
-    this->solveTemplate(pHamilt, psi, pes, method, skip_charge);
-}
-void HSolverLCAO::solve(hamilt::Hamilt<double>* pHamilt,
-                        psi::Psi<double>& psi,
-                        elecstate::ElecState* pes,
-                        const std::string method_in,
-                        const bool skip_charge)
-{
-    this->solveTemplate(pHamilt, psi, pes, method, skip_charge);
+    this->solveTemplate(pHamilt, psi, pes, this->method, skip_charge);
 }
 
-void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<std::complex<double>>& psi, double* eigenvalue)
+template <typename T>
+void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
-    pdiagh->diag(hm, psi, eigenvalue);
+    this->pdiagh->diag(hm, psi, eigenvalue);
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
 }
 
-void HSolverLCAO::hamiltSolvePsiK(hamilt::Hamilt<double>* hm, psi::Psi<double>& psi, double* eigenvalue)
-{
-    ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
-    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
-    pdiagh->diag(hm, psi, eigenvalue);
-    ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
-}
+template class HSolverLCAO<double>;
+template class HSolverLCAO<std::complex<double>>;
 
 } // namespace hsolver

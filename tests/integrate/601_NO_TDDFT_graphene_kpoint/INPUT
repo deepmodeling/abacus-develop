@@ -20,7 +20,7 @@ basis_type		lcao
 gamma_only		0
 md_nstep		2
 
-mixing_type		pulay
+mixing_type		broyden
 mixing_beta		0.7
 scf_thr			1.0e-6
 
