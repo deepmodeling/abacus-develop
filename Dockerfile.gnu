@@ -19,6 +19,10 @@ ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
 
+RUN apt-get install -y libmpich-dev mpich
+
+ENV CMAKE_Fortran_COMPILER=/usr/bin/mpifort
+
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
     cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON && \
