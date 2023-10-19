@@ -194,6 +194,7 @@ class Representation
         /// @brief getter of repin
         /// @return repin
         RepIn<T, Device>* get_repin() const { return this->repin; }
+        
     protected:
         // intermediate psi
         /// @brief intermediate psi, in pw representation

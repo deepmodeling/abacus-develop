@@ -346,7 +346,7 @@ void RepIn_NAO<T, Device>::cal_ovlp_flzjlq()
 template<typename T, typename Device>
 void RepIn_NAO<T, Device>::cal_psig(psi::Psi<T, Device>* psig)
 {
-	ModuleBase::timer::tick("RepIn_NAO", "initialize");
+	ModuleBase::timer::tick("RepIn_NAO", "cal_psig");
 	assert(this->ik>=0);
 	psig->fix_k(this->ik);
 	const int npw = this->pw_wfc->npwk[this->ik];
@@ -556,7 +556,7 @@ void RepIn_NAO<T, Device>::cal_psig(psi::Psi<T, Device>* psig)
 	delete[] aux;
 	delete[] chiaux;
 	delete[] gk;
-	ModuleBase::timer::tick("RepIn_NAO", "initialize");
+	ModuleBase::timer::tick("RepIn_NAO", "cal_psig");
 }
 
 // template instantiation

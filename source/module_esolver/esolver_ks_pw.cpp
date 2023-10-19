@@ -100,10 +100,12 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         container::op::destroyGpuSolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
+        this->kspw_psi = nullptr;
     }
     if (GlobalV::precision_flag == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
+        this->__kspw_psi = nullptr;
     }
     if (this->psi_init != nullptr)
     {
@@ -591,19 +593,22 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         {
             /*
                 beforescf function will be called everytime before scf. However, once atomic coordinates changed,
-                structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
-                psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
-                related to atomic coordinates.
+                structure factor will change, therefore all atomwise properties will change. So if during structure
+                changing calculation if psi is needed to initialize every time before scf, especially when structure
+                changes significantly, but for most cases that wont happen. For random wavefunction, we dont, 
+                because random wavefunction is not related to atomic coordinates if consider in physical aspects.
 
-                What the old strategy does is only to initialize for once...
+                What the old strategy does is always only to initialize for once. For efficiency consideration, 
+                we also only initialize psi for once.
             */
-            if(GlobalV::init_wfc == "random")
+            if((istep == 0)&&(iter == 1))
             {
-                if((istep == 0)&&(iter == 1)) this->initialize_psi();
+                this->initialize_psi();
+                this->rep.clean_representations();
             }
             else
             {
-                if(iter == 1) this->initialize_psi();
+                // do nothing
             }
         }
         if(GlobalV::BASIS_TYPE != "lcao_in_pw")

@@ -232,7 +232,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #ifdef __MPI
     }
 #endif
-    ModuleBase::timer::tick("psi_initializer_random", "random_t");
+    ModuleBase::timer::tick("psi_initializer", "random_t");
 }
 
 #ifdef __MPI

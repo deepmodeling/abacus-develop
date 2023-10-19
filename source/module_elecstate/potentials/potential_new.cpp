@@ -42,7 +42,6 @@ Potential::~Potential()
             delete comp;
         }
         this->components.clear();
-        this->components.shrink_to_fit();
     }
     if (GlobalV::device_flag == "gpu") {
         if (GlobalV::precision_flag == "single") {

@@ -155,6 +155,7 @@ void Representation<T, Device>::set_repin(const std::string repin_name)
     if (this->repin != nullptr)
     {
         delete this->repin;
+        this->repin = nullptr;
     }
 
     if (repin_name == "pao")
