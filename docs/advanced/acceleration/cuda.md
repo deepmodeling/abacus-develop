@@ -37,7 +37,7 @@ We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/devel
 
 ## Known limitations
 
-- CG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg` or `dav`,
+- CG, BPCG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg`, `bpcg` or `dav`,
 - Only PW basis is supported, so the input keyword `basis_type` can only take the value `pw`,
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
 - Supported CUDA architectures:
