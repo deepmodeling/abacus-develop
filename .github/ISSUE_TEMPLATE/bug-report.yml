@@ -67,7 +67,7 @@ body:
 
 - type: checkboxes
   attributes:
-    label: Task list for Issue attackers
+    label: Task list for Issue attackers (only for developers)
     options:
       - label: Verify the issue is not a duplicate.
       - label: Describe the bug.

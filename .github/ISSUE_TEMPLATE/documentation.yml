@@ -21,7 +21,7 @@ body:
         required: true
 - type: checkboxes
   attributes:
-    label: Task list for Issue attackers
+    label: Task list for Issue attackers (only for developers)
     options:
       - label: Identify the specific section of the documentation with the issue.
       - label: Investigate the issue and determine the root cause.
