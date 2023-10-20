@@ -1409,8 +1409,9 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 	// allocate flag for each FFT grid.
     int* symflag = new int[fftnx*fftny*fftnz];// which group the grid belongs to
     int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
-    int(*table_xyz)[48] = new int[fftnx*fftny*fftnz][48];// group information
-    for (int i=0; i<fftnx*fftny*fftnz; i++)
+    int(*table_xyz)[48] = new int[fftnx * fftny * fftnz][48];// group information
+    int* count_xyz = new int[fftnx * fftny * fftnz];// how many symmetry operations has been covered
+    for (int i = 0; i < fftnx * fftny * fftnz; i++)
     {
         symflag[i] = -1;
     }
@@ -1510,8 +1511,9 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                         symflag[ixyz] = group_index;
                         isymflag[group_index][rot_count] = invmap[isym];
                         table_xyz[group_index][rot_count] = ixyz;
-                         ++rot_count;
-                        assert(rot_count<=nrotk);
+                        ++rot_count;
+                        assert(rot_count <= nrotk);
+                        count_xyz[group_index] = rot_count;
                     }
                 group_index++;
                 }
@@ -1541,10 +1543,10 @@ for (int g_index = 0; g_index < group_index; g_index++)
     std::complex<double> sum(0, 0);
     int rot_count=0;
 
-    for (int c_index = 0; c_index < nrotk; ++c_index)
+    for (int c_index = 0; c_index < count_xyz[g_index]; ++c_index)
     {
-                int ixyz0=table_xyz[g_index][c_index];
-                int ipw0=ixyz2ipw[ixyz0];
+        int ixyz0 = table_xyz[g_index][c_index];
+        int ipw0 = ixyz2ipw[ixyz0];
                 if (symflag[ixyz0] == g_index)
                 {
                     // note : do not use PBC after rotation. 
