@@ -49,17 +49,17 @@ void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda,
                             {
                                 h_lambda[icc]
                                     = (iwt2 % 2 == 0)
-                                          ? -Sloc2[icc] * lambda_[iat1][2]
-                                          : -Sloc2[icc - 1]
-                                                * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, -1));
+                                          ? -Sloc2[icc] * lambda_[iat2][2]
+                                          : -Sloc2[icc + 1]
+                                                * (lambda_[iat2][0] + lambda_[iat2][1] * std::complex<double>(0, 1));
                             }
                             else
                             {
                                 h_lambda[icc]
                                     = (iwt2 % 2 == 0)
-                                          ? -Sloc2[icc + 1]
-                                                * (lambda_[iat1][0] + lambda_[iat1][1] * std::complex<double>(0, 1))
-                                          : -Sloc2[icc] * (-lambda_[iat1][2]);
+                                          ? -Sloc2[icc - 1]
+                                                * (lambda_[iat2][0] - lambda_[iat2][1] * std::complex<double>(0, 1))
+                                          : -Sloc2[icc] * (-lambda_[iat2][2]);
                             }
                         }
                     }
