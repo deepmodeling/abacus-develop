@@ -10,7 +10,7 @@
 
 template <>
 ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_k(
-    LCAO_Matrix& LM,
+    LCAO_Matrix* LM,
     const std::vector<std::vector<std::complex<double>>>& dm)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
@@ -23,7 +23,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
     for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)
-            ->updateSk(ik, &LM, 1);
+            ->updateSk(ik, LM, 1);
 
         ModuleBase::ComplexMatrix mud;
         mud.create(this->ParaV->ncol, this->ParaV->nrow, true);
@@ -43,7 +43,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
-                LM.Sloc2.data(),
+                LM->Sloc2.data(),
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
@@ -102,7 +102,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
 
 template <>
 ModuleBase::matrix SpinConstrain<double, psi::DEVICE_CPU>::cal_MW_k(
-    LCAO_Matrix& LM,
+    LCAO_Matrix* LM,
     const std::vector<std::vector<std::complex<double>>>& dm)
 {
     ModuleBase::matrix orbMulP;
@@ -111,7 +111,7 @@ ModuleBase::matrix SpinConstrain<double, psi::DEVICE_CPU>::cal_MW_k(
 
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& step,
-                                                                  LCAO_Matrix& LM,
+                                                                  LCAO_Matrix* LM,
                                                                   const UnitCell& ucell,
                                                                   bool print)
 {
@@ -183,7 +183,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& ste
 }
 
 template <>
-void SpinConstrain<double, psi::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix& LM, const UnitCell& ucell, bool print)
+void SpinConstrain<double, psi::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, const UnitCell& ucell, bool print)
 {
 }
 
