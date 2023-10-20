@@ -170,6 +170,12 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& ste
         this->Mi_[i].x = total_charge_soc[1];
         this->Mi_[i].y = total_charge_soc[2];
         this->Mi_[i].z = total_charge_soc[3];
+        if (std::abs(this->Mi_[i].x) < 1e-12)
+            this->Mi_[i].x = 0.0;
+        if (std::abs(this->Mi_[i].y) < 1e-12)
+            this->Mi_[i].y = 0.0;
+        if (std::abs(this->Mi_[i].z) < 1e-12)
+            this->Mi_[i].z = 0.0;
         if (print)
             std::cout << "Total Magnetism on atom: " << i << " " << ucell.atoms[t].label << std::setprecision(16)
                       << " (" << Mi_[i].x << ", " << Mi_[i].y << ", " << Mi_[i].z << ")" << std::endl;
