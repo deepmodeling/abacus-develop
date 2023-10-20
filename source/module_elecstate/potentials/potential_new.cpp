@@ -325,10 +325,6 @@ void Potential::interpolate_vrs()
         {
             rho_basis_->real2recip(&v_effective(is, 0), &vrs(is, 0));
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
-            for (int ig = 0; ig < rho_basis_smooth_->nrxx; ig++)
-            {
-                GlobalV::ofs_running << std::fixed << std::setprecision(10) << veff_smooth(is, ig) << std::endl;
-            }
         }
 
         ModuleBase::ComplexMatrix vrs_ofk;

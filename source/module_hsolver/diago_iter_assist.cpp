@@ -62,6 +62,13 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
 
+    // allocated spsi
+    T* sphi = nullptr;
+    resmem_complex_op()(ctx, sphi, nstart * dmax, "DiagSub::spsi");
+    setmem_complex_op()(ctx, sphi, 0, nstart * dmax);
+    // do sPsi for all bands
+    pHamilt->sPsi(ppsi, sphi, dmax, dmin, nstart);
+
     gemm_op<T, Device>()(
         ctx,
         'C',
@@ -79,22 +86,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         nstart
     );
 
-    gemm_op<T, Device>()(
-        ctx,
-        'C',
-        'N',
-        nstart,
-        nstart,
-        dmin,
-        &one,
-        ppsi,
-        dmax,
-        ppsi,
-        dmax,
-        &zero,
-        scc,
-        nstart
-    );
+    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, sphi, dmax, &zero, scc, nstart);
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
@@ -252,6 +244,19 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
     pHamilt->ops->hPsi(hpsi_in);
 
+    // allocated spsi
+    T* spsi = nullptr;
+    resmem_complex_op()(ctx, spsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::spsi");
+    setmem_complex_op()(ctx, spsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
+    // do sPsi for all bands
+    pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), psi_temp.get_nbands());
+    // test spsi
+    // for (int ig = 0; ig < psi_temp.get_nbands() * psi_temp.get_nbasis(); ig++)
+    // {
+    //     GlobalV::ofs_running << std::fixed << std::setprecision(10) << spsi[ig] << std::endl;
+    // }
+    // exit(0);
+
     gemm_op<T, Device>()(
         ctx,
         'C',
@@ -269,22 +274,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         nstart
     );
 
-    gemm_op<T, Device>()(
-        ctx,
-        'C',
-        'N',
-        nstart,
-        nstart,
-        dmin,
-        &one,
-        ppsi,
-        dmax,
-        ppsi,
-        dmax,
-        &zero,
-        scc,
-        nstart
-    );
+    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {

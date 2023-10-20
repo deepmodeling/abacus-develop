@@ -100,6 +100,11 @@ public:
     ModuleBase::IntArray lpl;       // for each input limi,ljmj points to the allowed LM
     ModuleBase::realArray qrad;     // radial FT of Q functions
 
+    float* s_qq_nt = nullptr;
+    double* d_qq_nt = nullptr;
+    std::complex<float>* c_qq_so = nullptr;  // GPU array of qq_so
+    std::complex<double>* z_qq_so = nullptr; // GPU array of qq_so
+
     mutable ModuleBase::ComplexMatrix vkb;    // all beta functions in reciprocal space
     mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
     std::complex<double>*** vkb1_alpha;
@@ -159,6 +164,10 @@ public:
     FPTYPE* get_tab_data() const;
     template <typename FPTYPE>
     FPTYPE* get_deeq_data() const;
+    template <typename FPTYPE>
+    FPTYPE* get_qq_nt_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_qq_so_data() const;
     template <typename FPTYPE>
     std::complex<FPTYPE>* get_vkb_data() const;
     template <typename FPTYPE>
