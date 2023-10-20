@@ -608,12 +608,12 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   Available options are:
 
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-  - gpu: for GPUs via CUDA.
+  - gpu: for GPUs via CUDA or ROCm.
 
   Known limitations:
 
   - pw basis: required by the `gpu` acceleration options
-  - cg ks_solver: required by the `gpu` acceleration options
+  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 [back to top](#full-list-of-input-keywords)
@@ -835,6 +835,7 @@ calculations.
   For plane-wave basis,
 
   - **cg**: cg method.
+  - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
