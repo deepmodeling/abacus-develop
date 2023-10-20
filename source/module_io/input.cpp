@@ -2807,6 +2807,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
                 GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
             }
         }
+        /*
+            if bx, by and bz is not assigned here, undefined behavior will occur
+        */
+        bx = 1;
+        by = 1;
+        bz = 1;
     }
     else if (basis_type == "lcao")
     {

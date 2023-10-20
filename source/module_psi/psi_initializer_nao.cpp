@@ -299,6 +299,7 @@ void psi_initializer_nao<T, Device>::cal_ovlp_flzjlq()
 					this->ovlp_flzjlq(it, ic, iq) = ovlp_flzjlq_q[iq];
 				}
 				delete[] ovlp_flzjlq_q;
+				delete[] qgrid; /* eliminate direct memory leak, kirk0830, 2023/10/20 */
 				++ic;
 			}
 		}
@@ -396,10 +397,24 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
 												this->template cast_to_T<T>(
 													lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
 												);
-											(*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
+											if(abs((*(this->psig))(ibasis, ig)) == 0)
+											{
+												std::cout << "lphase = " << lphase << std::endl;
+												std::cout << "sk[ig] = " << sk[ig] << std::endl;
+												std::cout << "ylm(lm, ig) = " << ylm(lm, ig) << std::endl;
+												std::cout << "ovlp_flzjlg[ig] = " << ovlp_flzjlg[ig] << std::endl;
+											}
+											(*(this->psig))(ibasis+1, ig + this->pw_wfc->npwk_max) =
 												this->template cast_to_T<T>(
 													lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
 												);
+											if(abs((*(this->psig))(ibasis+1, ig + this->pw_wfc->npwk_max)) == 0)
+											{
+												std::cout << "lphase = " << lphase << std::endl;
+												std::cout << "sk[ig] = " << sk[ig] << std::endl;
+												std::cout << "ylm(lm, ig) = " << ylm(lm, ig) << std::endl;
+												std::cout << "ovlp_flzjlg[ig] = " << ovlp_flzjlg[ig] << std::endl;
+											}
                                         }
                                         ibasis += 2;
                                     }
@@ -449,10 +464,22 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
 												this->template cast_to_T<T>(
 													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
 												);
+											if(abs((*(this->psig))(ibasis, ig)) == 0)
+											{
+												std::cout << "cos(0.5 * gamma) = " << cos(0.5 * gamma) << std::endl;
+												std::cout << "sin(0.5 * gamma) = " << sin(0.5 * gamma) << std::endl;
+												std::cout << "fup = " << fup << std::endl;
+											}
 											(*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
 												this->template cast_to_T<T>(
 													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
 												);
+											if(abs((*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max)) == 0)
+											{
+												std::cout << "cos(0.5 * gamma) = " << cos(0.5 * gamma) << std::endl;
+												std::cout << "sin(0.5 * gamma) = " << sin(0.5 * gamma) << std::endl;
+												std::cout << "fdown = " << fdown << std::endl;
+											}
                                             // second rotation with angle gamma around(OZ)
                                             fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                             fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
@@ -460,10 +487,22 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
 												this->template cast_to_T<T>(
 													(cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
 												);
+											if(abs((*(this->psig))(ibasis+2*L+1,ig)) == 0)
+											{
+												std::cout << "cos(0.5 * gamma) = " << cos(0.5 * gamma) << std::endl;
+												std::cout << "sin(0.5 * gamma) = " << sin(0.5 * gamma) << std::endl;
+												std::cout << "fup = " << fup << std::endl;
+											}
 											(*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
 												this->template cast_to_T<T>(
 													(cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
 												);
+											if(abs((*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max)) == 0)
+											{
+												std::cout << "cos(0.5 * gamma) = " << cos(0.5 * gamma) << std::endl;
+												std::cout << "sin(0.5 * gamma) = " << sin(0.5 * gamma) << std::endl;
+												std::cout << "fdown = " << fdown << std::endl;
+											}
 										}
                                         ibasis++;
                                     }
@@ -497,10 +536,22 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
 											this->template cast_to_T<T>(
 												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
 											);
+										if(abs((*(this->psig))(ibasis, ig)) == 0)
+										{
+											std::cout << "cos(0.5*gamman) = " << cos(0.5*gamman) << std::endl;
+											std::cout << "sin(0.5*gamman) = " << sin(0.5*gamman) << std::endl;
+											std::cout << "fup = " << fup << std::endl;
+										}
 										(*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
 											this->template cast_to_T<T>(
 												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
 											);
+										if(abs((*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max)) == 0)
+										{
+											std::cout << "cos(0.5*gamman) = " << cos(0.5*gamman) << std::endl;
+											std::cout << "sin(0.5*gamman) = " << sin(0.5*gamman) << std::endl;
+											std::cout << "fdown = " << fdown << std::endl;
+										}
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
@@ -508,10 +559,22 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
 											this->template cast_to_T<T>(
 												(cos(0.5*gamman) + ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fup
 											);
+										if(abs((*(this->psig))(ibasis+2*L+1,ig)) == 0)
+										{
+											std::cout << "cos(0.5*gamman) = " << cos(0.5*gamman) << std::endl;
+											std::cout << "sin(0.5*gamman) = " << sin(0.5*gamman) << std::endl;
+											std::cout << "fup = " << fup << std::endl;
+										}
 										(*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
 											this->template cast_to_T<T>(
 												(cos(0.5*gamman) - ModuleBase::IMAG_UNIT*sin(0.5*gamman)) * fdown
 											);
+										if(abs((*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max)) == 0)
+										{
+											std::cout << "cos(0.5*gamman) = " << cos(0.5*gamman) << std::endl;
+											std::cout << "sin(0.5*gamman) = " << sin(0.5*gamman) << std::endl;
+											std::cout << "fdown = " << fdown << std::endl;
+										}
                                     } // end ig
                                     ibasis++;
                                 } // end m

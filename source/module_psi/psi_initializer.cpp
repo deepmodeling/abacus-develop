@@ -25,7 +25,11 @@ template<typename T, typename Device>
 psi_initializer<T, Device>::~psi_initializer()
 {
     delete[] this->ixy2is;
-    if (this->psig != nullptr) delete this->psig;
+    if (this->psig != nullptr)
+    {
+        delete this->psig;
+        this->psig = nullptr;
+    }
 }
 
 template<typename T, typename Device>
@@ -39,7 +43,11 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
         , then multiplied by the number of atoms, and then add them together.
     */
 
-    if(this->psig != nullptr) delete this->psig;
+    if (this->psig != nullptr)
+    {
+        delete this->psig;
+        this->psig = nullptr;
+    }
 	int prefactor = 1;
     int nbands_actual = 0;
     if(GlobalV::init_wfc == "random") 
@@ -75,19 +83,24 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
             /* FOR EVERY ATOM */
                     for(int l = 0; l < this->p_ucell->atoms[it].nwl + 1; l++)
                     {
-            /* EVERY ZETA FOR (2l+1) ORBS, for NSPIN = 4, 4 times (because change to rotate base) */
-                        nbands_local += this->p_ucell->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
-                        /* the following is for rotate base. However it cannot yield correct result because many zeros yielded and cause diag failure */
+            /* EVERY ZETA FOR (2l+1) ORBS */
                         /*
+                            non-rotate basis, nbands_local*=2 for GlobalV::NPOL = 2 is enough
+                        */
+                        //nbands_local += this->p_ucell->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
+                        /*
+                            rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
+                            risky when NSPIN = 4, problematic psi value, needed to be checked
+                        */
                         if(l == 0)
                         {
-                            nbands_local += this->p_ucell->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
+                            nbands_local += this->p_ucell->atoms[it].l_nchi[l] * GlobalV::NPOL;
                         }
                         else
                         {
                             nbands_local += this->p_ucell->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL * GlobalV::NPOL;
                         }
-                        */
+                        
                     }
                 }
             }
@@ -112,6 +125,9 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
             GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
                 nbasis_actual, 
                     this->pw_wfc->npwk);
+    /*
+        WARNING: this will cause DIRECT MEMORY LEAK, psi is not properly deallocated
+    */
     this->psig = new psi::Psi<T, Device>(
         nkpts_actual, 
             nbands_actual, 

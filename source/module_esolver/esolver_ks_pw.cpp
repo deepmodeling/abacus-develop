@@ -555,16 +555,6 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                   ||(GlobalV::KS_SOLVER == "lapack")
                     )
                 {
-                    /* 
-                        when ecutwfc is too small, lcao_in_pw will fail here, not all kpoints can be initialized 
-                        curious about why...
-                    */
-                    #ifdef __DEBUG
-                        printf("GlobalV::MY_RANK = %d, %s %d, function ESolver_KS_PW::initialize_psi() debug info\n", 
-                                GlobalV::MY_RANK);
-                        printf("GlobalV::MY_RANK = %d, %s %d, before diagH, kpt% = (%d/%d)\n", 
-                                GlobalV::MY_RANK, __FILE__, __LINE__, ik+1, this->pw_wfc->nks);
-                    #endif
                     hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
                         this->p_hamilt,
                         psig->get_pointer(), psig->get_nbands(), psig->get_nbasis(),
@@ -595,6 +585,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                 }
             }
         }
+        this->psi_init->set_initialized(true);
     }
     ModuleBase::timer::tick("ESolver_KS_PW", "initialize_psi");
 }
@@ -637,16 +628,12 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                 psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
                 related to atomic coordinates.
 
-                What the old strategy does is only to initialize for once...
+                What the old strategy does is only to initialize for once... we also initialize only once here because
+                this can save a lot of time. But if cell and ion change significantly, re-initialization psi will be
+                more efficient. Or an extrapolation strategy can be used.
             */
-            if(GlobalV::init_wfc == "random")
-            {
-                if((istep == 0)&&(iter == 1)) this->initialize_psi();
-            }
-            else
-            {
-                if(iter == 1) this->initialize_psi();
-            }
+
+            if((istep == 0)&&(iter == 1)&&!(this->psi_init->get_initialized())) this->initialize_psi();
         }
         if(GlobalV::BASIS_TYPE != "lcao_in_pw")
         {
@@ -654,9 +641,13 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         }
         else
         {
+            /*
+                It is not a good choice to overload another solve function here, this will spoil the concept of 
+                multiple inheritance and polymorphism. But for now, we just do it in this way.
+                In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
+            */
             this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, this->psi_init->psig[0]);
         }
-
         if (GlobalV::out_bandgap)
         {
             if (!GlobalV::TWO_EFERMI)

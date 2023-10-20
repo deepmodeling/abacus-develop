@@ -195,6 +195,12 @@ class psi_initializer
         /// @brief getter of mem_saver
         /// @return this->mem_saver
         int get_mem_saver() const { return this->mem_saver; }
+        /// @brief setter of initialized
+        /// @param initialized_in new value of initialized
+        void set_initialized(bool initialized_in) { this->initialized = initialized_in; }
+        /// @brief getter of initialized
+        /// @return this->initialized
+        bool get_initialized() const { return this->initialized; }
         // member variables
         /// @brief interface to the psi::Psi data structure class
         psi::Psi<T, Device>* psig = nullptr;
@@ -277,6 +283,7 @@ class psi_initializer
         // random
         int* ixy2is;
 
+        bool initialized = false; // whether initialized or not
         // atomic+random or nao+random
         double random_mix = 0;
 };
