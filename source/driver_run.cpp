@@ -1,25 +1,29 @@
 #include "driver.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/input.h"
-#include "module_io/winput.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_io/print_info.h"
+#include "module_io/winput.h"
 #include "module_md/run_md.h"
 
-// This is the driver function which defines the workflow of ABACUS calculations
-// It relies on the class Esolver, which is a class that organizes workflows of single point calculations.
-// For calculations involving change of configuration (lattice parameter & ionic motion),
-// this driver calls Esolver::Run and the configuration-changing subroutine
-// in a alternating manner.
-// Information is passed between the two subroutines by class UnitCell
-// Esolver::Run takes in a configuration and provides force and stress, 
-// the configuration-changing subroutine takes force and stress and updates the configuration
+/**
+ * @brief This is the driver function which defines the workflow of ABACUS calculations.
+ * It relies on the class Esolver, which is a class that organizes workflows of single point calculations.
+ * 
+ * For calculations involving change of configuration (lattice parameter & ionic motion),
+ * this driver calls Esolver::Run and the configuration-changing subroutine in a alternating manner.
+ * 
+ * Information is passed between the two subroutines by class UnitCell
+ * 
+ * Esolver::Run takes in a configuration and provides force and stress, 
+ * the configuration-changing subroutine takes force and stress and updates the configuration
+ */
 void Driver::driver_run()
 {
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
 
-    // 1. Initialzie type of Esolver
+    // 1. Determine type of Esolver
     ModuleESolver::ESolver *p_esolver = nullptr;
     ModuleESolver::init_esolver(p_esolver);
 
@@ -52,8 +56,16 @@ void Driver::driver_run()
     }
     else // scf; cell relaxation; nscf; etc
     {
-        Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver);
+        if (GlobalV::precision_flag == "single")
+        {
+            Relax_Driver<float, psi::DEVICE_CPU> rl_driver;
+            rl_driver.relax_driver(p_esolver);
+        }
+        else
+        {
+            Relax_Driver<double, psi::DEVICE_CPU> rl_driver;
+            rl_driver.relax_driver(p_esolver);
+        }
     }
     //---------------------------MD/Relax------------------
 

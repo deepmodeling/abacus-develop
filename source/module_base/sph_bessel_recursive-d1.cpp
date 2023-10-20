@@ -2,12 +2,12 @@
 // AUTHOR : Peize Lin
 // DATE : 2017-04-24
 //==========================================================
-
 #include "sph_bessel_recursive.h"
-#include "constants.h"
 
-#include<cmath>
-#include<stdexcept>
+#include <cmath>
+#include <stdexcept>
+
+#include "constants.h"
 
 namespace ModuleBase
 {

@@ -10,7 +10,7 @@ namespace elecstate
 class ElecState;
 }
 
-template<typename Tdata>
+template<typename T, typename Tdata>
 class Exx_LRI_Interface
 {
 public:
@@ -39,7 +39,7 @@ public:
 
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(
-        hamilt::Hamilt<double>& hamilt,
+        hamilt::Hamilt<T>& hamilt,
         LCAO_Matrix& lm,
         const Local_Orbital_Charge& loc,
         const K_Vectors& kv,

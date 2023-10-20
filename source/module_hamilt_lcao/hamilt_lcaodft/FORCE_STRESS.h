@@ -14,6 +14,7 @@
 #include "module_ri/Exx_LRI.h"
 #endif
 
+template<typename T>
 class Force_Stress_LCAO
 {
     // mohan add 2021-02-09
@@ -26,24 +27,23 @@ class Force_Stress_LCAO
     ~Force_Stress_LCAO();
 
     void getForceStress(const bool isforce,
-                        const bool isstress,
-                        const bool istestf,
-                        const bool istests,
-                        Local_Orbital_Charge& loc,
-                        const elecstate::ElecState* pelec,
-                        const psi::Psi<double>* psid,
-                        const psi::Psi<std::complex<double>>* psi,
-                        LCAO_Hamilt& uhm,
-                        ModuleBase::matrix& fcs,
-                        ModuleBase::matrix& scs,
-                        const Structure_Factor& sf,
-                        const K_Vectors& kv,
-                        ModulePW::PW_Basis* rhopw,
+        const bool isstress,
+        const bool istestf,
+        const bool istests,
+        Local_Orbital_Charge& loc,
+        const elecstate::ElecState* pelec,
+        const psi::Psi<T>* psi,
+        LCAO_Hamilt& uhm,
+        ModuleBase::matrix& fcs,
+        ModuleBase::matrix& scs,
+        const Structure_Factor& sf,
+        const K_Vectors& kv,
+        ModulePW::PW_Basis* rhopw,
 #ifdef __EXX
-                        Exx_LRI<double>& exx_lri_double,
-                        Exx_LRI<std::complex<double>>& exx_lri_complex,
+        Exx_LRI<double>& exx_lri_double,
+        Exx_LRI<std::complex<double>>& exx_lri_complex,
 #endif  
-                        ModuleSymmetry::Symmetry* symm);
+        ModuleSymmetry::Symmetry* symm);
 
   private:
     int nat;
@@ -70,27 +70,26 @@ class Force_Stress_LCAO
                         const Structure_Factor& sf);
 
     void calForceStressIntegralPart(const bool isGammaOnly,
-                                    const bool isforce,
-                                    const bool isstress,
-                                    Local_Orbital_Charge& loc,
-                                    const elecstate::ElecState* pelec,
-                                    const psi::Psi<double>* psid,
-                                    const psi::Psi<std::complex<double>>* psi,
-                                    ModuleBase::matrix& foverlap,
-                                    ModuleBase::matrix& ftvnl_dphi,
-                                    ModuleBase::matrix& fvnl_dbeta,
-                                    ModuleBase::matrix& fvl_dphi,
-                                    ModuleBase::matrix& soverlap,
-                                    ModuleBase::matrix& stvnl_dphi,
-                                    ModuleBase::matrix& svnl_dbeta,
+        const bool isforce,
+        const bool isstress,
+        Local_Orbital_Charge& loc,
+        const elecstate::ElecState* pelec,
+        const psi::Psi<T>* psi,
+        ModuleBase::matrix& foverlap,
+        ModuleBase::matrix& ftvnl_dphi,
+        ModuleBase::matrix& fvnl_dbeta,
+        ModuleBase::matrix& fvl_dphi,
+        ModuleBase::matrix& soverlap,
+        ModuleBase::matrix& stvnl_dphi,
+        ModuleBase::matrix& svnl_dbeta,
 #if __DEEPKS
-                                    ModuleBase::matrix& svl_dphi,
-                                    ModuleBase::matrix& svnl_dalpha,
+        ModuleBase::matrix& svl_dphi,
+        ModuleBase::matrix& svnl_dalpha,
 #else
-                                    ModuleBase::matrix& svl_dphi,
+        ModuleBase::matrix& svl_dphi,
 #endif
-                                    LCAO_Hamilt& uhm,
-                                    const K_Vectors& kv);
+        LCAO_Hamilt& uhm,
+        const K_Vectors& kv);
 
     void calStressPwPart(ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,

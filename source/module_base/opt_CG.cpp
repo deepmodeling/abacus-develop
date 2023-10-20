@@ -1,4 +1,4 @@
-#include "./opt_CG.h"
+#include "opt_CG.h"
 
 namespace ModuleBase
 {
@@ -134,7 +134,7 @@ double Opt_CG::step_length(
 )
 {
     double dAd = this->inner_product(pdirect, pAd, this->nx);
-    Parallel_Reduce::reduce_double_all(dAd);
+    Parallel_Reduce::reduce_all(dAd);
     ifPD = 0;
     // check for positive-definiteness, very important for convergence
     if (dAd == 0)
@@ -183,7 +183,7 @@ void Opt_CG::stantard_CGdirect(
             temp_gradient[i] = this->pgradient_old[i] + this->alpha * pAd[i];
         }
         this->beta = this->inner_product(temp_gradient, temp_gradient, this->nx) / this->gg;
-        Parallel_Reduce::reduce_double_all(this->beta);
+        Parallel_Reduce::reduce_all(this->beta);
         for (int i = 0; i < this->nx; ++i)
         {
             this->pgradient_old[i] = temp_gradient[i];
@@ -193,7 +193,7 @@ void Opt_CG::stantard_CGdirect(
         delete[] temp_gradient;
     }
     this->gg = this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
-    Parallel_Reduce::reduce_double_all(this->gg);
+    Parallel_Reduce::reduce_all(this->gg);
     this->iter++;
 }
 
@@ -209,9 +209,9 @@ void Opt_CG::PR_beta(
     double temp_beta = 0.;
     temp_beta = this->inner_product(pgradient, pgradient, this->nx);
     temp_beta -= this->inner_product(pgradient, this->pgradient_old, this->nx);
-    Parallel_Reduce::reduce_double_all(temp_beta);
+    Parallel_Reduce::reduce_all(temp_beta);
     double gg_old = this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
-    Parallel_Reduce::reduce_double_all(gg_old);
+    Parallel_Reduce::reduce_all(gg_old);
     // temp_beta /= this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
     temp_beta /= gg_old;
     this->beta = std::max(0., temp_beta);
@@ -230,19 +230,19 @@ void Opt_CG::HZ_beta(
     for (int i = 0; i < this->nx; ++i) y[i] = pgradient[i] - this->pgradient_old[i];
     
     double py = this->inner_product(this->pdirect_old, y, this->nx);
-    Parallel_Reduce::reduce_double_all(py);
+    Parallel_Reduce::reduce_all(py);
     double yy = this->inner_product(y, y, this->nx);
-    Parallel_Reduce::reduce_double_all(yy);
+    Parallel_Reduce::reduce_all(yy);
     double pg = this->inner_product(this->pdirect_old, pgradient, this->nx);
-    Parallel_Reduce::reduce_double_all(pg);
+    Parallel_Reduce::reduce_all(pg);
     double yg = this->inner_product(y, pgradient, this->nx);
-    Parallel_Reduce::reduce_double_all(yg);
+    Parallel_Reduce::reduce_all(yg);
     double temp_beta = (yg - 2 * pg * yy / py) /py;
 
     double pp = this->inner_product(this->pdirect_old, this->pdirect_old, this->nx);
-    Parallel_Reduce::reduce_double_all(pp);
+    Parallel_Reduce::reduce_all(pp);
     double gg = this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
-    Parallel_Reduce::reduce_double_all(gg);
+    Parallel_Reduce::reduce_all(gg);
     double temp_eta = -1 / (sqrt(pp) * std::min(this->eta, sqrt(gg)));
 
     this->beta = std::max(temp_beta, temp_eta);

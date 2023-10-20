@@ -180,7 +180,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	{
 		for (int m = 0;m< 3;m++)
 		{
-			Parallel_Reduce::reduce_double_pool( sigma(l,m) );
+            Parallel_Reduce::reduce_pool(sigma(l, m));
 		}
 	}
 

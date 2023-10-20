@@ -51,7 +51,7 @@ HContainer<T>::HContainer(int natom)
 
 // use unitcell to initialize atom_pairs
 template <typename T>
-HContainer<T>::HContainer(const UnitCell& ucell_)
+HContainer<T>::HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV)
 {
     this->gamma_only = false;
     this->current_R = -1;
@@ -65,23 +65,46 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
         atom_begin_row[i+1] = begin;
         atom_begin_col[i+1] = begin;
     }
-    // initialize atom_pairs and sparse_ap
-    this->atom_pairs.resize(ucell_.nat * ucell_.nat, AtomPair<T>(0,0));
-    this->sparse_ap.resize(ucell_.nat);
-    this->sparse_ap_index.resize(ucell_.nat);
+    if(paraV == nullptr)
+    {
+        // initialize atom_pairs and sparse_ap
+        this->atom_pairs.resize(ucell_.nat * ucell_.nat, AtomPair<T>(0, 0));
+        this->sparse_ap.resize(ucell_.nat);
+        this->sparse_ap_index.resize(ucell_.nat);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i = 0; i < ucell_.nat; i++)
-    {
-        this->sparse_ap[i].resize(ucell_.nat);
-        this->sparse_ap_index[i].resize(ucell_.nat);
-        for (int j = 0; j < ucell_.nat; j++)
+        for (int i = 0; i < ucell_.nat; i++)
         {
-            //AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            this->atom_pairs[i * ucell_.nat + j] = AtomPair<T>(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            this->sparse_ap[i][j] = j;
-            this->sparse_ap_index[i][j] = i * ucell_.nat + j;
+            this->sparse_ap[i].resize(ucell_.nat);
+            this->sparse_ap_index[i].resize(ucell_.nat);
+            for (int j = 0; j < ucell_.nat; j++)
+            {
+                //AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
+                this->atom_pairs[i * ucell_.nat + j] = AtomPair<T>(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
+                this->sparse_ap[i][j] = j;
+                this->sparse_ap_index[i][j] = i * ucell_.nat + j;
+            }
+        }
+    }
+    else
+    {
+        this->paraV = paraV;
+        // initialize atom_pairs and sparse_ap
+        this->sparse_ap.resize(ucell_.nat);
+        this->sparse_ap_index.resize(ucell_.nat);
+        for (int i = 0; i < ucell_.nat; i++)
+        {
+            for (int j = 0; j < ucell_.nat; j++)
+            {
+                //check if atom_pair(i, j) is empty in this process
+                if(paraV->get_row_size(i) <= 0 || paraV->get_col_size(j) <= 0)
+                {
+                    continue;
+                }
+                AtomPair<T> atom_ij(i, j, paraV);
+                this->insert_pair(atom_ij);
+            }
         }
     }
     this->allocate(true);
@@ -164,7 +187,14 @@ const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, 
     }
     else
     {
-        return tmp->find_matrix(rx, ry, rz);
+        if(this->gamma_only)
+        {
+            return tmp->find_matrix(0, 0, 0);
+        }
+        else
+        {
+            return tmp->find_matrix(rx, ry, rz);
+        }
     }
 }
 
@@ -178,7 +208,14 @@ BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry
     }
     else
     {
-        return tmp->find_matrix(rx, ry, rz);
+        if(this->gamma_only)
+        {
+            return tmp->find_matrix(0, 0, 0);
+        }
+        else
+        {
+            return tmp->find_matrix(rx, ry, rz);
+        }
     }
 }
 
@@ -259,7 +296,7 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
     // find (rx, ry, rz) in this->atom_pairs[i].R_values
     for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
-        if (it->find_R(rx_in, ry_in, rz_in))
+        if (it->find_R(rx_in, ry_in, rz_in) != -1)
         {
             // push bach the pointer of AtomPair to this->tmp_atom_pairs
             const AtomPair<T>* tmp_pointer = &(*it);
@@ -467,6 +504,11 @@ void HContainer<T>::insert_pair(const AtomPair<T>& atom_ij)
         else
         { //insert atom_ij, and set paraV pointer for HContainer if atom_ij has paraV pointer
             this->atom_pairs.push_back(atom_ij);
+            //if gamma_only case, merge atom_ij to gamma_only
+            if(this->gamma_only)
+            {
+                this->atom_pairs.back().merge_to_gamma();
+            }
             // update sparse_ap
             int index = it - this->sparse_ap[atom_i].begin();
             if(it != this->sparse_ap[atom_i].end())
@@ -552,7 +594,7 @@ void HContainer<T>::shape_synchron( const HContainer<T>& other)
             for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
             {
                 int* R_pointer = other.atom_pairs[i].get_R_index(ir);
-                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]))
+                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]) != -1)
                 {
                     // do nothing
                 }

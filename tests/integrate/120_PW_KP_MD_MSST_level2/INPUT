@@ -10,7 +10,7 @@ ecutwfc         20
 scf_nmax        20
 basis_type      pw
 ks_solver       cg
-mixing_type     pulay
+mixing_type     broyden
 mixing_beta     0.7
 smearing_method    gauss
 smearing_sigma     0.001

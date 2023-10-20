@@ -4,6 +4,10 @@
 #include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#ifdef USE_PAW
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#endif
 
 namespace elecstate
 {
@@ -98,41 +102,67 @@ double ElecState::cal_delta_eband() const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
-    if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
-    {
-        v_ofk = this->pot->get_effective_vofk(0);
-    }
 
-    for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
     {
-        deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
-        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
-        {
-            deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
-        }
-    }
+        ModuleBase::matrix v_xc;
+        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional::v_xc(this->charge->nrxx, this->charge, &GlobalC::ucell);
+        v_xc = std::get<2>(etxc_vtxc_v);
 
-    if (GlobalV::NSPIN == 2)
-    {
-        v_eff = this->pot->get_effective_v(1);
-        v_ofk = this->pot->get_effective_vofk(1);
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
-            deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
-            if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+            deband_aux -= this->charge->rho[0][ir] * v_xc(0,ir);
+        }
+        if (GlobalV::NSPIN == 2)
+        {
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
-                deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
+                deband_aux -= this->charge->rho[1][ir] * v_xc(1,ir);
             }
         }
     }
-    else if (GlobalV::NSPIN == 4)
+#endif
+
+    if(!GlobalV::use_paw)
     {
-        for (int is = 1; is < 4; is++)
+        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
-            v_eff = this->pot->get_effective_v(is);
+            v_ofk = this->pot->get_effective_vofk(0);
+        }
+
+        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
+        {
+            deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
+            if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+            {
+                deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
+            }
+        }
+
+        if (GlobalV::NSPIN == 2)
+        {
+            v_eff = this->pot->get_effective_v(1);
+            v_ofk = this->pot->get_effective_vofk(1);
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
-                deband_aux -= this->charge->rho[is][ir] * v_eff[ir];
+                deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
+                if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+                {
+                    deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
+                }
+            }
+        }
+        else if (GlobalV::NSPIN == 4)
+        {
+            for (int is = 1; is < 4; is++)
+            {
+                v_eff = this->pot->get_effective_v(is);
+                for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
+                {
+                    deband_aux -= this->charge->rho[is][ir] * v_eff[ir];
+                }
             }
         }
     }
@@ -208,7 +238,7 @@ double ElecState::cal_delta_escf() const
     }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(descf);
+    Parallel_Reduce::reduce_pool(descf);
 #endif
 
     descf *= this->omega / this->charge->rhopw->nxyz;

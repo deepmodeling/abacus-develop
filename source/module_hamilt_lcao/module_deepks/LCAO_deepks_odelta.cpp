@@ -35,7 +35,7 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
                 }
             }
         }
-        Parallel_Reduce::reduce_double_all(this->o_delta(0,hl));
+        Parallel_Reduce::reduce_all(this->o_delta(0, hl));
     }
     return;
 }
@@ -75,7 +75,7 @@ void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::Comple
                     }
                 } //end j
             } //end i
-            Parallel_Reduce::reduce_complex_double_all(o_delta_k);
+            Parallel_Reduce::reduce_all(o_delta_k);
             this->o_delta(ik,hl) = o_delta_k.real();
         }// end hl
     }// end nks

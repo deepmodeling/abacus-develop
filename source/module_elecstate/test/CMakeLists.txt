@@ -6,6 +6,7 @@ remove_definitions(-D__UT_USE_ROCM)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D_OPENMP)
+remove_definitions(-DUSE_PAW)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -53,7 +54,7 @@ AddTest(
     ../elecstate.cpp
     ../occupy.cpp
     ../../module_psi/psi.cpp
-    ../../module_psi/kernels/memory_op.cpp
+    ../../module_psi/kernels/psi_memory_op.cpp
 )
 
 AddTest(
@@ -85,8 +86,6 @@ AddTest(
   LIBS  base ${math_libs}  psi  device planewave_serial cell_info
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
-  ../module_charge/charge_broyden.cpp
-  ../module_charge/charge_pulay.cpp
   ../../module_io/output.cpp
 )
 

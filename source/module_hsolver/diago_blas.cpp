@@ -7,21 +7,21 @@
 
 #include "diago_blas.h"
 
+#include <cassert>
+#include <cstring>
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_general/matrixblock.h"
-
-#include <cassert>
-#include <cstring>
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
-
-void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
+    template<>
+    void DiagoBlas<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
     matd h_mat, s_mat;
@@ -32,8 +32,8 @@ void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, doub
     const int inc = 1;
     BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
 }
-
-void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+    template<>
+    void DiagoBlas<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
     matcd h_mat, s_mat;
@@ -45,7 +45,8 @@ void DiagoBlas::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<doubl
     BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
 }
 
-std::pair<int, std::vector<int>> DiagoBlas::pdsygvx_once(const int *const desc,
+    template<typename T>
+    std::pair<int, std::vector<int>> DiagoBlas<T>::pdsygvx_once(const int* const desc,
                                                          const int ncol,
                                                          const int nrow,
                                                          const double *const h_mat,
@@ -167,8 +168,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pdsygvx_once(const int *const desc,
                                  + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 }
-
-std::pair<int, std::vector<int>> DiagoBlas::pzhegvx_once(const int *const desc,
+    template<typename T>
+    std::pair<int, std::vector<int>> DiagoBlas<T>::pzhegvx_once(const int* const desc,
                                                          const int ncol,
                                                          const int nrow,
                                                          const std::complex<double> *const h_mat,
@@ -301,8 +302,8 @@ std::pair<int, std::vector<int>> DiagoBlas::pzhegvx_once(const int *const desc,
                                  + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 }
-
-void DiagoBlas::pdsygvx_diag(const int *const desc,
+    template<typename T>
+    void DiagoBlas<T>::pdsygvx_diag(const int* const desc,
                              const int ncol,
                              const int nrow,
                              const double *const h_mat,
@@ -319,7 +320,8 @@ void DiagoBlas::pdsygvx_diag(const int *const desc,
     }
 }
 
-void DiagoBlas::pzhegvx_diag(const int *const desc,
+    template<typename T>
+    void DiagoBlas<T> ::pzhegvx_diag(const int* const desc,
                              const int ncol,
                              const int nrow,
                              const std::complex<double> *const h_mat,
@@ -336,7 +338,8 @@ void DiagoBlas::pzhegvx_diag(const int *const desc,
     }
 }
 
-void DiagoBlas::post_processing(const int info, const std::vector<int> &vec)
+    template<typename T>
+    void DiagoBlas<T>::post_processing(const int info, const std::vector<int>& vec)
 {
     const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE

@@ -20,6 +20,19 @@ body:
     description: |
       Add any other context or screenshots about the code quality issue here.
 
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers (only for developers)
+    options:
+      - label: Identify the specific code file or section with the code quality issue.
+      - label: Investigate the issue and determine the root cause.
+      - label: Research best practices and potential solutions for the identified issue.
+      - label: Refactor the code to improve code quality, following the suggested solution.
+      - label: Ensure the refactored code adheres to the project's coding standards.
+      - label: Test the refactored code to ensure it functions as expected.
+      - label: Update any relevant documentation, if necessary.
+      - label: Submit a pull request with the refactored code and a description of the changes made.
+
 - type: markdown
   attributes:
     value: >

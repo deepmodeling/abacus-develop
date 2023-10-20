@@ -17,15 +17,15 @@ class OperatorEXX : public T
 
 #endif
 
-template <typename T>
-class OperatorEXX<OperatorLCAO<T>> : public OperatorLCAO<T>
+template <typename TK, typename TR>
+class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OperatorEXX<OperatorLCAO<T>>(LCAO_Matrix* LM_in,
-                                 std::vector<double>* HR_pointer_in,
-                                 std::vector<T>* HK_pointer_in,
+    OperatorEXX<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+                                 hamilt::HContainer<TR>* hR_in,
+                                 std::vector<TK>* hK_in,
                                  const K_Vectors& kv_in)
-        : HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), kv(kv_in), OperatorLCAO<T>(LM_in, kv_in.kvec_d)
+        : kv(kv_in), OperatorLCAO<TK, TR>(LM_in, kv_in.kvec_d, hR_in, hK_in)
     {
         this->cal_type = lcao_exx;
     }
@@ -35,9 +35,6 @@ class OperatorEXX<OperatorLCAO<T>> : public OperatorLCAO<T>
     virtual void contributeHk(int ik) override;
 
   private:
-    std::vector<double>* HR_pointer = nullptr;
-
-    std::vector<T>* HK_pointer = nullptr;
 
     bool HR_fixed_done = false;
 

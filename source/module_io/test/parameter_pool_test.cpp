@@ -146,7 +146,7 @@
 //         //      EXPECT_EQ(INPUT.occupations,"smearing");
 //         EXPECT_EQ(INPUT.smearing_method, "fixed");
 //         EXPECT_DOUBLE_EQ(INPUT.smearing_sigma, 0.01);
-//         EXPECT_EQ(INPUT.mixing_mode, "pulay");
+//         EXPECT_EQ(INPUT.mixing_mode, "broyden");
 //         EXPECT_DOUBLE_EQ(INPUT.mixing_beta, -10.0);
 //         EXPECT_EQ(INPUT.mixing_ndim, 8);
 //         EXPECT_DOUBLE_EQ(INPUT.mixing_gg0, 0.00);

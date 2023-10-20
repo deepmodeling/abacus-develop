@@ -10,6 +10,7 @@ void Gint::gint_kernel_force(
 	double* vldr3,
 	const int LD_pool,
 	double** DM_in,
+	const int is,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl_dphi,
@@ -39,13 +40,15 @@ void Gint::gint_kernel_force(
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
-		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
-			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in, 2);
+		//Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
+		//	psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in, 2);
+		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
+			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, this->DMRGint[is], 2);
 	}
 	else
 	{
 		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag, 
-			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], 2);
+			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], this->DMRGint[is], 2);
 	}
 
 	if(isforce)
@@ -94,6 +97,7 @@ void Gint::gint_kernel_force_meta(
 	double* vkdr3,
 	const int LD_pool,
 	double** DM_in,
+	const int is,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl_dphi,
@@ -195,6 +199,7 @@ void Gint::gint_kernel_force_meta(
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
+		/*
 		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
 			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in, 2);
 		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
@@ -203,17 +208,26 @@ void Gint::gint_kernel_force_meta(
 			dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, DM_in, 2);
 		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
 			dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, DM_in, 2);
+		*/
+		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, this->DMRGint[is], 2);
+		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+			dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, this->DMRGint[is], 2);
+		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
+			dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, this->DMRGint[is], 2);
+		Gint_Tools::mult_psi_DM_new(*this->gridt, this->bxyz, grid_index, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+			dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, this->DMRGint[is], 2);
 	}
 	else
 	{
 		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
-			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], 2);
+			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], this->DMRGint[is], 2);
 		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag, 
-			dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], 2);
+			dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], this->DMRGint[is], 2);
 		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag, 
-			dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], 2);
+			dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], this->DMRGint[is], 2);
 		Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, grid_index, na_grid, block_index, block_size, cal_flag,
-			dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], 2);
+			dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, DM_in[GlobalV::CURRENT_SPIN], this->DMRGint[is], 2);
 	}
 
 	if(isforce)

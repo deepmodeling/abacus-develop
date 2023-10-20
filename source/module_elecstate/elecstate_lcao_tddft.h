@@ -9,8 +9,7 @@
 
 namespace elecstate
 {
-
-class ElecStateLCAO_TDDFT : public ElecStateLCAO
+class ElecStateLCAO_TDDFT : public ElecStateLCAO<std::complex<double>>
 {
   public:
     ElecStateLCAO_TDDFT(Charge* chg_in ,

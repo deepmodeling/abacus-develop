@@ -6,7 +6,8 @@
 #ifndef MIX_DMK_2D_H
 #define MIX_DMK_2D_H
 
-#include "Mix_Data.h"
+#include "Mix_Matrix.h"
+#include "module_base/module_mixing/mixing.h"
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
 
@@ -25,10 +26,10 @@ public:
 
 	/**
 	 * @brief Sets the mixing mode.
-	 * @param mixing_mode Mixing mode.
+	 * @param Mixing Mixing pointer.
 	 * @return Reference to the current object.
 	 */
-	Mix_DMk_2D &set_mixing_mode(const Mixing_Mode mixing_mode);
+	Mix_DMk_2D &set_mixing(Base_Mixing::Mixing* mixing_in);
 
 	/**
 	 * @brief Sets the mixing beta.
@@ -36,16 +37,6 @@ public:
 	 * @return Reference to the current object.
 	 */
 	Mix_DMk_2D &set_mixing_beta(const double mixing_beta);
-
-	/**
-	 * @brief Sets the pulay mixing coefficients from class Charge_Mixing.
-	 * @tparam ChgMix Type of the charge mixing coefficient.
-	 * @param iter Iteration step, start from 1.
-	 * @param chr_mix Object of Charge_Mixing.
-	 * @return Reference to the current object.
-	 */
-	template<typename ChgMix>
-	Mix_DMk_2D &set_coef_pulay(const int iter, const ChgMix& chr_mix);
 
 	/**
 	 * @brief Mixes the double density matrix.
@@ -73,11 +64,9 @@ public:
 	std::vector<const ModuleBase::ComplexMatrix*> get_DMk_k_out() const;
 
 private:
-	std::vector<Mix_Data<ModuleBase::matrix>> mix_DMk_gamma;
-	std::vector<Mix_Data<ModuleBase::ComplexMatrix>> mix_DMk_k;
+	std::vector<Mix_Matrix<ModuleBase::matrix>> mix_DMk_gamma;
+	std::vector<Mix_Matrix<ModuleBase::ComplexMatrix>> mix_DMk_k;
 	bool gamma_only;
 };
-
-#include "Mix_DMk_2D.hpp"
 
 #endif

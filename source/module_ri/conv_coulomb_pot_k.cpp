@@ -70,7 +70,7 @@ Numerical_Orbital_Lm Conv_Coulomb_Pot_K::cal_orbs_ccp<Numerical_Orbital_Lm>(
 	for( size_t ir=0; ir<std::min(orbs.getNr(),Nr); ++ir )
 		r_radial[ir] = orbs.getRadial(ir);
 	for( size_t ir=orbs.getNr(); ir<Nr; ++ir )
-		r_radial[ir] = orbs.get_r_radial().back() + (ir-orbs.getNr())*dr;
+        r_radial[ir] = orbs.get_r_radial().back() + (ir - orbs.getNr() + 1) * dr;
 	
 	Numerical_Orbital_Lm orbs_ccp;
 	orbs_ccp.set_orbital_info(

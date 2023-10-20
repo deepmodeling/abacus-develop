@@ -1,1 +1,1 @@
-Func:PW/mixing_type=pulay,symmetry=1; Sys:Si16 Ref:energy
+Func:PW/mixing_type=broyden,symmetry=1; Sys:Si16 Ref:energy

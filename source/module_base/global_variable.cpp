@@ -60,6 +60,9 @@ int RELAX_NMAX = 20;
 int md_prec_level = 0;
 int SCF_NMAX = 100;
 
+bool use_paw = false;
+bool use_uspp = false;
+
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
 std::string KS_SOLVER = "cg"; // xiaohui add 2013-09-01
 double SEARCH_RADIUS = -1.0;
@@ -78,6 +81,7 @@ int SCF_THR_TYPE = 1;
 
 double DQ = 0.010; // space between Q points of the reciprocal radial tab
 int NQX = 10000; // number of points describing reciprocal radial tab
+int NQXQ = 10000; // number of points describing reciprocal radial tab for Q
 
 int NURSE = 0; // used for debug.
 bool COLOUR = 0;
@@ -126,7 +130,7 @@ int GRANK = MY_RANK;
 int GSIZE = DSIZE;
 
 //----------------------------------------------------------
-// EXPLAIN :
+// EXPLAIN : The input file name and directory
 //----------------------------------------------------------
 std::string global_in_card = "INPUT";
 std::string stru_file = "STRU";
@@ -239,6 +243,13 @@ int of_full_pw_dim = 0;
 bool of_read_kernel = false;
 std::string of_kernel_file = "WTkernel.txt";
 
+// mixing parameters
+std::string MIXING_MODE = "broyden";
+double MIXING_BETA = 0.7;
+int MIXING_NDIM = 8;
+double MIXING_GG0 = 0.0;
+bool MIXING_TAU = 0;
+
 //==========================================================
 // device flags added by denghui
 //==========================================================
@@ -252,6 +263,10 @@ std::string chg_extrap = "";
 int out_pot = 0;
 
 std::string init_chg = "";
+
+std::string init_wfc = "atomic";
+bool psi_initializer = false;
+
 int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing

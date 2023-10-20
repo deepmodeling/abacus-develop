@@ -1,12 +1,14 @@
 #ifdef __MPI
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "mpi.h"
-#include "module_base/global_variable.h"
 #include "module_cell/parallel_kpoints.h"
-#include "module_base/parallel_global.h"
+
+#include <mpi.h>
 
 #include <vector>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "module_base/global_variable.h"
+#include "module_base/parallel_global.h"
 
 /************************************************
  *  unit test of functions in parallel_kpoints.cpp

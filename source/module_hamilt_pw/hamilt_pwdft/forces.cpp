@@ -161,28 +161,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        double* pos;
         double d1, d2, d3;
-        pos = new double[this->nat * 3];
-        ModuleBase::GlobalFunc::ZEROS(pos, this->nat * 3);
-        int iat = 0;
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
-        {
-            // Atom* atom = &GlobalC::ucell.atoms[it];
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-            {
-                pos[3 * iat] = GlobalC::ucell.atoms[it].taud[ia].x;
-                pos[3 * iat + 1] = GlobalC::ucell.atoms[it].taud[ia].y;
-                pos[3 * iat + 2] = GlobalC::ucell.atoms[it].taud[ia].z;
-                for (int k = 0; k < 3; ++k)
-                {
-                    p_symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                    p_symm->check_boundary(pos[iat * 3 + k]);
-                }
-                iat++;
-            }
-        }
-
         for (int iat = 0; iat < this->nat; iat++)
         {
             ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),
@@ -205,7 +184,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             force(iat, 1) = d2;
             force(iat, 2) = d3;
         }
-        p_symm->force_symmetry(force, pos, GlobalC::ucell);
+        p_symm->symmetrize_vec3_nat(force.c);
         for (int iat = 0; iat < this->nat; iat++)
         {
             ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0),
@@ -227,8 +206,6 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             force(iat, 1) = d2;
             force(iat, 2) = d3;
         }
-        // std::cout << "nrotk =" << p_symm->nrotk << std::endl;
-        delete[] pos;
     }
 
     GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
@@ -501,7 +478,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
     }
 
     // this->print(GlobalV::ofs_running, "local forces", forcelc);
-    Parallel_Reduce::reduce_double_pool(forcelc.c, forcelc.nr * forcelc.nc);
+    Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
     delete[] aux;
     ModuleBase::timer::tick("Forces", "cal_force_loc");
     return;
@@ -724,7 +701,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
     }
 #endif
 
-    Parallel_Reduce::reduce_double_pool(forceion.c, forceion.nr * forceion.nc);
+Parallel_Reduce::reduce_pool(forceion.c, forceion.nr* forceion.nc);
 
     // this->print(GlobalV::ofs_running, "ewald forces", forceion);
 
@@ -888,7 +865,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     delete[] rhocg;
 
     delete[] psiv;                                                           // mohan fix bug 2012-03-22
-    Parallel_Reduce::reduce_double_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
+    Parallel_Reduce::reduce_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
     ModuleBase::timer::tick("Forces", "cal_force_cc");
     return;
 }
@@ -1012,13 +989,13 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
             std::complex<FPTYPE>* h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
-            Parallel_Reduce::reduce_complex_double_pool(h_becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
             delmem_complex_h_op()(this->cpu_ctx, h_becp);
         }
         else
         {
-            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_pool(becp, GlobalV::NBANDS * nkb);
         }
         // out.printcm_real("becp",becp,1.0e-4);
         //  Calculate the derivative of beta,
@@ -1057,7 +1034,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
 
         //		don't need to reduce here, keep dbecp different in each processor,
         //		and at last sum up all the forces.
-        //		Parallel_Reduce::reduce_complex_double_pool( dbecp.ptr, dbecp.ndata);
+        //		Parallel_Reduce::reduce_pool( dbecp.ptr, dbecp.ndata);
         cal_force_nl_op()(this->ctx,
                           GlobalC::ppcell.multi_proj,
                           nbands_occ,
@@ -1086,7 +1063,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcenl.c, force, forcenl.nr * forcenl.nc);
     }
     // sum up forcenl from all processors
-    Parallel_Reduce::reduce_double_all(forcenl.c, forcenl.nr * forcenl.nc);
+    Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr* forcenl.nc);
 
     delete[] h_atom_nh;
     delete[] h_atom_na;
@@ -1233,7 +1210,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
         }
     }
 
-    Parallel_Reduce::reduce_double_pool(forcescc.c, forcescc.nr * forcescc.nc);
+    Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr* forcescc.nc);
 
     delete[] psic;    // mohan fix bug 2012-03-22
     delete[] rhocgnt; // mohan fix bug 2012-03-22

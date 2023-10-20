@@ -24,10 +24,13 @@ class Local_Orbital_Charge
     void allocate_dm_wfc(const Grid_Technique& gt,
         elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
-        psi::Psi<double>* psid,
+        psi::Psi<double>* psi,
+        const K_Vectors& kv);
+    void allocate_dm_wfc(const Grid_Technique& gt,
+        elecstate::ElecState* pelec,
+        Local_Orbital_wfc& lowf,
         psi::Psi<std::complex<double>>* psi,
         const K_Vectors& kv);
-
 	//-----------------
 	// in DM_gamma.cpp
 	//-----------------
@@ -82,6 +85,9 @@ class Local_Orbital_Charge
     void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in, const K_Vectors& kv);
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
+
+    void set_dm_k(int ik, std::complex<double>* dm_k_in); // set dm_k from a pointer
+    void set_dm_gamma(int is, double* dm_gamma_in); // set dm_gamma from a pointer
 
 private:
 

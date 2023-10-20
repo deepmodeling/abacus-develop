@@ -1,13 +1,15 @@
 add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
-add_subdirectory(module_paw)
+if(ENABLE_PAW)
+  add_subdirectory(module_paw)
+endif()
 
 add_library(
     cell
     OBJECT
     atom_pseudo.cpp
     atom_spec.cpp
-    pseudo_nc.cpp
+    pseudo.cpp
     read_pp.cpp
     read_pp_upf100.cpp
     read_pp_upf201.cpp

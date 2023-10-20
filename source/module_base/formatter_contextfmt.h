@@ -78,6 +78,7 @@ namespace formatter
                     }
                     Table::add_col(this->cache_title_, (std::vector<std::string>){this->fmt_.format(value)});
                     this->cache_title_ = "";
+                    this->fmt_.reset();
                     this->icol_++;
                 }
                 if (Table::get_mode() == 1) {
@@ -112,8 +113,9 @@ namespace formatter
                 }
                 Table::add_col(this->cache_title_, value_);
                 this->cache_title_ = "";
+                this->fmt_.reset();
                 this->icol_++;
-                this->title_switch_ += 2;
+                this->title_switch_++;
                 return *this;
             }
             /// @brief overloaded operator<<, for inputing data in 1 dimension T*
@@ -138,8 +140,9 @@ namespace formatter
                 }
                 Table::add_col(this->cache_title_, value_);
                 this->cache_title_ = "";
+                this->fmt_.reset();
                 this->icol_++;
-                this->title_switch_ += 2;
+                this->title_switch_++;
                 return *this;
             }
 
@@ -150,6 +153,7 @@ namespace formatter
 
             /// @brief reset all
             void reset();
+            void context_refresh();
             /// @brief print the table
             std::string str(bool next_line = false);
             /// @brief set to mode in which title will be manually input and certainly will be output
@@ -245,7 +249,7 @@ namespace formatter
                 {"scf", std::make_pair(0,
                 std::vector<std::string>{"str_w4", "int_w4", "energy", "energy", "energy", "time"})}, // but for scf it is really a special case
                 {"time_statistics", std::make_pair(0,
-                std::vector<std::string>{"str_w30", "str_w30", "time", "int_w8", "double_w6_f2", "double_w6_f2"})}, // so is time statistics
+                std::vector<std::string>{"mid_title", "mid_title", "time", "int_w8", "time", "percentage"})}, // so is time statistics
                 {"atomic_species", std::make_pair(1,
                 std::vector<std::string>{"str_w4", "mass", "str_w30"})}, // so is ATOMIC_SPECIES
                 {"lattice_vectors", std::make_pair(1,

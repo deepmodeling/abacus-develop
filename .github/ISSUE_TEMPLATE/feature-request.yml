@@ -1,7 +1,7 @@
 name: Feature Request
 description: For users or developers who want to propose new features to be added or suggest improvements or enhancements to existing features.
 labels: [Feature Request]
-assignees: mohanchen
+assignees: [insert assignee here]
 
 body:
 - type: textarea
@@ -25,6 +25,37 @@ body:
   validations:
     required: true
 
+- type: checkboxes
+  attributes:
+    label: Task list only for developers
+    options:
+      - label: Notice possible changes of behavior
+      - label: Explain the changes of codes in core modules of ESolver, HSolver, ElecState, Hamilt, Operator or Psi
+
+- type: textarea
+  attributes:
+    label: Notice Possible Changes of Behavior (Reminder only for developers)
+    description: |
+      Please ensure that you have carefully considered the possible changes of behavior your code changes might introduce. Make sure to provide a detailed explanation of these changes and their potential impact on the application. This will help reviewers to better understand your changes and assess their implications.
+    placeholder: |
+      Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
+
+- type: textarea
+  attributes:
+    label: Notice any changes of core modules (Reminder only for developers)
+    description: |
+      Please ensure that you have explained any changes made to core modules in your code. This includes modifications, additions, or removals of any functionality within these modules. This will help reviewers to better understand your changes and assess their implications.
+    placeholder: |
+      Example: I have added a new virtual function in the esolver base class in order to ...
+
+- type: textarea
+  attributes:
+    label: Notice Possible Changes of Core Modules (Reminder only for developers)
+    description: |
+      Please ensure that you have carefully considered the possible changes of behavior your code changes might introduce in core modules such as ESolver, HSolver, ElecState, Hamilt, Operator, or Psi. Make sure to provide a detailed explanation of these changes and their potential impact on the application. This will help reviewers to better understand your changes and assess their implications.
+    placeholder: |
+      Example: I have add a new virtual function the the esolver base class in order to ...
+
 - type: textarea
   attributes:
     label: Additional Context
@@ -32,6 +63,23 @@ body:
       Add any other context or references about the feature request here.
     placeholder: |
       Example: Here is a mockup of the proposed feature (insert screenshot or link to design), along with relevant research articles and resources that support the implementation of this feature...
+
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers (only for developers)
+    options:
+      - label: Review and understand the proposed feature and its importance.
+      - label: Research on the existing solutions and relevant research articles/resources.
+      - label: Discuss with the team to evaluate the feasibility of implementing the feature.
+      - label: Create a design document outlining the proposed solution and implementation details.
+      - label: Get feedback from the team on the design document.
+      - label: Develop the feature following the agreed design.
+      - label: Write unit tests and integration tests for the feature.
+      - label: Update the documentation to include the new feature.
+      - label: Perform code review and address any issues.
+      - label: Merge the feature into the main branch.
+      - label: Monitor for any issues or bugs reported by users after the feature is released.
+      - label: Address any issues or bugs reported by users and continuously improve the feature.
 
 - type: markdown
   attributes:

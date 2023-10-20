@@ -5,6 +5,7 @@ Atom::Atom()
 {
     na = 0;
     label = "\0";
+    label_orb = "\0";
     nw = 0;
     nwl = 0;
     Rcut = 0.0; // pengfei Li 16-2-29
@@ -45,6 +46,7 @@ Atom::~Atom()
 	delete[] iw2_ylm;
 	delete[] iw2_new;
     delete[] mbl;
+
 }
 
 void Atom::set_index(void)

@@ -4,13 +4,13 @@
 #include "module_base/tool_quit.h"
 #include "module_psi/kernels/device.h"
 
-using hamilt::Ekinetic;
-using hamilt::OperatorPW;
 
-template<typename FPTYPE, typename Device>
-Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(
-    FPTYPE tpiba2_in,
-    const FPTYPE* gk2_in,
+namespace hamilt {
+
+template<typename T, typename Device>
+Ekinetic<OperatorPW<T, Device>>::Ekinetic(
+    Real tpiba2_in,
+    const Real* gk2_in,
     const int gk2_row,
     const int gk2_col)
 {
@@ -26,39 +26,40 @@ Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(
   }
 }
 
-template<typename FPTYPE, typename Device>
-Ekinetic<OperatorPW<FPTYPE, Device>>::~Ekinetic() {}
+template<typename T, typename Device>
+Ekinetic<OperatorPW<T, Device>>::~Ekinetic() {}
 
-template<typename FPTYPE, typename Device>
-void Ekinetic<OperatorPW<FPTYPE, Device>>::act(
-    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi)const
+template<typename T, typename Device>
+void Ekinetic<OperatorPW<T, Device>>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const T* tmpsi_in,
+    T* tmhpsi,
+    const int ngk_ik)const
 {
-  ModuleBase::timer::tick("Operator", "EkineticPW");
-  const int npw = psi_in->get_ngk(this->ik);
-  this->max_npw = psi_in->get_nbasis() / psi_in->npol;
+    ModuleBase::timer::tick("Operator", "EkineticPW");
+    int max_npw = nbasis / npol;
 
-  const FPTYPE *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
+  const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
   // denghui added 20221019
-  ekinetic_op()(this->ctx, n_npwx, npw, this->max_npw, tpiba2, gk2_ik, tmhpsi, tmpsi_in);
-  // for (int ib = 0; ib < n_npwx; ++ib)
+  ekinetic_op()(this->ctx, nbands, ngk_ik, max_npw, tpiba2, gk2_ik, tmhpsi, tmpsi_in);
+  // for (int ib = 0; ib < nbands; ++ib)
   // {
-  //     for (int ig = 0; ig < npw; ++ig)
+  //     for (int ig = 0; ig < ngk_ik; ++ig)
   //     {
   //         tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
   //     }
-  //     tmhpsi += this->max_npw;
-  //     tmpsi_in += this->max_npw;
+  //     tmhpsi += max_npw;
+  //     tmpsi_in += max_npw;
   // }
   ModuleBase::timer::tick("Operator", "EkineticPW");
 }
 
 // copy construct added by denghui at 20221105
-template<typename FPTYPE, typename Device>
+template<typename T, typename Device>
 template<typename T_in, typename Device_in>
-hamilt::Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>> *ekinetic) {
+hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>> *ekinetic) {
     this->classname = "Ekinetic";
     this->cal_type = pw_ekinetic;
     this->ik = ekinetic->get_ik();
@@ -72,15 +73,14 @@ hamilt::Ekinetic<OperatorPW<FPTYPE, Device>>::Ekinetic(const Ekinetic<OperatorPW
     }
 }
 
-namespace hamilt {
-template class Ekinetic<OperatorPW<float, psi::DEVICE_CPU>>;
-template class Ekinetic<OperatorPW<double, psi::DEVICE_CPU>>;
-// template Ekinetic<OperatorPW<double, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<double, psi::DEVICE_CPU>> *ekinetic);
+template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
+template class Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
+// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *ekinetic);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Ekinetic<OperatorPW<float, psi::DEVICE_GPU>>;
-template class Ekinetic<OperatorPW<double, psi::DEVICE_GPU>>;
-// template Ekinetic<OperatorPW<double, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<double, psi::DEVICE_GPU>> *ekinetic);
-// template Ekinetic<OperatorPW<double, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<double, psi::DEVICE_CPU>> *ekinetic);
-// template Ekinetic<OperatorPW<double, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<double, psi::DEVICE_GPU>> *ekinetic);
+template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
+template class Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
+// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *ekinetic);
+// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *ekinetic);
+// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *ekinetic);
 #endif
 } // namespace hamilt

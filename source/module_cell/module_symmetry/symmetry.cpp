@@ -223,6 +223,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
+    this->set_atom_map(ucell);
+
 	delete[] newpos;
     delete[] na;
     delete[] rotpos;
@@ -1391,19 +1393,28 @@ void Symmetry::rho_symmetry( double *rho,
     delete[] rk;
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 }
+
+
 void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
+// ----------------------------------------------------------------------
+// the current way is to cluster the FFT grid points into groups in advance.
+// and use OpenMP to realize parallel calculation, one thread works in one group.
+// ----------------------------------------------------------------------
 
 	// allocate flag for each FFT grid.
-    bool* symflag = new bool[fftnx*fftny*fftnz];
+    int* symflag = new int[fftnx*fftny*fftnz];// which group the grid belongs to
+    int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
+    int(*table_xyz)[48] = new int[fftnx*fftny*fftnz][48];// group information
     for (int i=0; i<fftnx*fftny*fftnz; i++)
     {
-        symflag[i] = false;
+        symflag[i] = -1;
     }
+    int group_index = 0;
 
     assert(nrotk >0 );
     assert(nrotk <=48 );
@@ -1412,19 +1423,18 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int* invmap = new int[nrotk];
     this->gmatrix_invmap(kgmatrix, nrotk, invmap);
 
-    // record the index and gphase but not the final gdirect for each symm-opt
-    int *ipw_record = new int[nrotk];
-    int *ixyz_record = new int[nrotk];
-    std::complex<double>* gphase_record = new std::complex<double> [nrotk];
-
-    //tmp variables
-    ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
-    ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
-    int ipw, ixyz, ii, jj, kk=0;
-    double arg=0.0;
-
+// ---------------------------------------------------
+/* This code defines a lambda function called "rotate_recip" that takes 
+    a 3x3 matrix and a 3D vector as input. It performs a rotation operation 
+    on the vector using the matrix and returns the rotated vector. 
+    Specifically, it calculates the new coordinates of the vector after 
+    the rotation and applies periodic boundary conditions to ensure that 
+    the coordinates are within the FFT-grid dimensions. 
+    The rotated vector is returned by modifying the input vector.
+*/
+// ---------------------------------------------------
     //rotate function (different from real space, without scaling gmatrix)
-    auto rotate_recip = [&] (ModuleBase::Matrix3& g, ModuleBase::Vector3<int>& g0) 
+    auto rotate_recip = [&] (ModuleBase::Matrix3& g, ModuleBase::Vector3<int>& g0, int& ii, int& jj, int& kk) 
     {
         ii = int(g.e11 * g0.x + g.e21 * g0.y + g.e31 * g0.z) ;
         if (ii < 0)
@@ -1446,8 +1456,21 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
         kk = kk%nz;
         return;
     };
+
+// -------------------------------------------
+/* 
+    Trying to group fft grids first.
+    It iterates over each FFT-grid point and checks if it is within the PW-sphere. If it is, put all the FFT-grid points connected by the 
+    rotation operation into one group( the index is stored in int(*table_xyz)).
+    The code marks the point as processed to avoid redundant calculations
+    by using int* symflag.
+*/ 
+// -------------------------------------------
+ModuleBase::timer::tick("Symmetry","group fft grids");
     for (int i = 0; i< fftnx; ++i)
     {
+        //tmp variable
+        ModuleBase::Vector3<int> tmp_gdirect0(0, 0, 0);
         tmp_gdirect0.x=(i>int(nx/2)+1)?(i-nx):i;
         for (int j = 0; j< fftny; ++j)
         {
@@ -1455,22 +1478,18 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             for (int k = 0; k< fftnz; ++k)
             {
                 int ixyz0=(i*fftny+j)*fftnz+k;
-                if (!symflag[ixyz0])
+                if (symflag[ixyz0] == -1)
                 {
                     int ipw0=ixyz2ipw[ixyz0];
                     //if a fft-grid is not in pw-sphere, just do not consider it.
                     if (ipw0==-1) continue;
-
                     tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
-                    std::complex<double> sum(0, 0);
                     int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
                     {
-                        // note : do not use PBC after rotation. 
-                        // we need a real gdirect to get the correspoding rhogtot.
-
-                        rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0);
-
+                        //tmp variables  
+                        int ii, jj, kk=0;
+                        rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0, ii, jj, kk);
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
                             if(!GlobalV::GAMMA_ONLY_PW)
@@ -1481,276 +1500,217 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                             // for gamma_only_pw, just do not consider this rotation.
                             continue;
                         }
-                        ixyz=(ii*fftny+jj)*fftnz+kk;
+                        int ixyz=(ii*fftny+jj)*fftnz+kk;
                         //fft-grid index to (ip, ig)
-                        ipw=ixyz2ipw[ixyz];
+                        int ipw=ixyz2ipw[ixyz];
                         if(ipw==-1) //not in pw-sphere
                         {
-                            //if (std::abs(rhogtot[ipw0].real())>this->epsilon || std::abs(rhogtot[ipw0].imag()>this->epsilon))
-                                //std::cout<<"warning: ipw0 is in pw-sphere but ipw not !!!"<<std::endl;
                             continue;   //else, just skip it
                         }
-                        //fft-grid index to new-gdirect
-                        tmp_gdirect_double.x=static_cast<double>((ii>int(nx/2)+1)?(ii-nx):ii);
-                        tmp_gdirect_double.y=static_cast<double>((jj>int(ny/2)+1)?(jj-ny):jj);
-                        tmp_gdirect_double.z=static_cast<double>((kk>int(nz/2)+1)?(kk-nz):kk);
-                        //calculate phase factor
-                        tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
-                        double cos_arg = 0.0, sin_arg = 0.0;
-                        double arg_gtrans = tmp_gdirect_double * gtrans[invmap[isym]];
-                        std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
-                        // for each pricell in supercell:
-                        for (int ipt = 0;ipt < this->ncell;++ipt)
-                        {
-                            arg = tmp_gdirect_double * ptrans[ipt];
-                            double tmp_cos = 0.0, tmp_sin = 0.0;
-                            ModuleBase::libm::sincos(arg, &tmp_sin, &tmp_cos);
-                            cos_arg += tmp_cos;
-                            sin_arg += tmp_sin;
-                        }
-                        // add nothing to sum, so don't consider this isym into rot_count
-                        cos_arg/=static_cast<double>(ncell);
-                        sin_arg/=static_cast<double>(ncell);
-                        //deal with double-zero
-                        if (equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
-                        std::complex<double> gphase(cos_arg, sin_arg);
-                        gphase = phase_gtrans * gphase;
-                        //deal with small difference from 1
-                        if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
-                        gphase_record[rot_count]=gphase;
-                        sum += rhogtot[ipw]*gphase;
-                        //record
-                        ipw_record[rot_count]=ipw;
-                        ixyz_record[rot_count]=ixyz;
-                        ++rot_count;
+                        symflag[ixyz] = group_index;
+                        isymflag[group_index][rot_count] = invmap[isym];
+                        table_xyz[group_index][rot_count] = ixyz;
+                         ++rot_count;
+                        assert(rot_count<=nrotk);
                     }
-                    assert(rot_count<=nrotk);
-                    sum /= rot_count;
-                    for (int isym = 0; isym < rot_count; ++isym)
+                group_index++;
+                }
+            }
+        }
+    }
+ModuleBase::timer::tick("Symmetry","group fft grids");
+
+// -------------------------------------------
+/*  This code performs symmetry operations on the reciprocal space 
+    charge density using FFT-grids. It iterates over each FFT-grid 
+    point in a particular group, applies a phase factor and sums the 
+    charge density over the symmetry operations, and then divides by 
+    the number of symmetry operations. Finally, it updates the charge
+    density for each FFT-grid point using the calculated sum.
+*/ 
+// -------------------------------------------
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+for (int g_index = 0; g_index < group_index; g_index++)
+{
+    // record the index and gphase but not the final gdirect for each symm-opt
+    int *ipw_record = new int[nrotk];
+    int *ixyz_record = new int[nrotk];
+    std::complex<double>* gphase_record = new std::complex<double> [nrotk];
+    std::complex<double> sum(0, 0);
+    int rot_count=0;
+
+    for (int c_index = 0; c_index < nrotk; ++c_index)
+    {
+                int ixyz0=table_xyz[g_index][c_index];
+                int ipw0=ixyz2ipw[ixyz0];
+                if (symflag[ixyz0] == g_index)
+                {
+                    // note : do not use PBC after rotation. 
+                    // we need a real gdirect to get the correspoding rhogtot.
+                    int k = ixyz0%fftnz;
+                    int j = ((ixyz0-k)/fftnz)%fftny;
+                    int i = ((ixyz0-k)/fftnz-j)/fftny;
+                    //fft-grid index to gdirect
+                    ModuleBase::Vector3<double> tmp_gdirect_double(0.0, 0.0, 0.0);
+                    tmp_gdirect_double.x=static_cast<double>((i>int(nx/2)+1)?(i-nx):i);
+                    tmp_gdirect_double.y=static_cast<double>((j>int(ny/2)+1)?(j-ny):j);
+                    tmp_gdirect_double.z=static_cast<double>((k>int(nz/2)+1)?(k-nz):k);
+                    //calculate phase factor
+                    tmp_gdirect_double = tmp_gdirect_double * ModuleBase::TWO_PI;
+                    double cos_arg = 0.0, sin_arg = 0.0;
+                    double arg_gtrans = tmp_gdirect_double * gtrans[isymflag[g_index][c_index]];
+                    std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
+                    // for each pricell in supercell:
+                    for (int ipt = 0;ipt < this->ncell;++ipt)
                     {
-                        rhogtot[ipw_record[isym]] = sum/gphase_record[isym];
-                        symflag[ixyz_record[isym]] = true;
+                        double arg = tmp_gdirect_double * ptrans[ipt];
+                        double tmp_cos = 0.0, tmp_sin = 0.0;
+                        ModuleBase::libm::sincos(arg, &tmp_sin, &tmp_cos);
+                        cos_arg += tmp_cos;
+                        sin_arg += tmp_sin;
+                    }
+                    // add nothing to sum, so don't consider this isym into rot_count
+                    cos_arg/=static_cast<double>(ncell);
+                    sin_arg/=static_cast<double>(ncell);
+                    //deal with double-zero
+                    if (equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
+                    std::complex<double> gphase(cos_arg, sin_arg);
+                    gphase = phase_gtrans * gphase;
+                    //deal with small difference from 1
+                    if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
+                    gphase_record[rot_count]=gphase;
+                    sum += rhogtot[ipw0]*gphase;
+                    //record
+                    ipw_record[rot_count]=ipw0;
+                    ixyz_record[rot_count]=ixyz0;
+                    ++rot_count;
+                    //assert(rot_count<=nrotk);
+                }//end if section
+    }//end c_index loop
+    sum /= rot_count;
+    for (int isym = 0; isym < rot_count; ++isym)
+        {
+            rhogtot[ipw_record[isym]] = sum/gphase_record[isym];
+        }
+    //g_index++;
+    //Clean the records variables for each fft grid point
+    delete[] ipw_record;
+    delete[] ixyz_record;
+    delete[] gphase_record;
+}//end g_index loop
+    delete[] symflag;
+    delete[] isymflag;
+    delete[] table_xyz;
+    delete[] invmap;
+    ModuleBase::timer::tick("Symmetry","rhog_symmetry");
+}
+
+void Symmetry::set_atom_map(const UnitCell& ucell)
+{
+    ModuleBase::TITLE("Symmetry", "set_atom_map");
+    if (this->isym_rotiat_.size() > 0) return;
+    this->isym_rotiat_.resize(this->nrotk);
+    for (int i = 0; i < this->nrotk; ++i)this->isym_rotiat_[i].resize(this->nat, -1);
+
+    double* pos = this->newpos;
+    double* rotpos = this->rotpos;
+    ModuleBase::GlobalFunc::ZEROS(pos, ucell.nat * 3);
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            pos[3 * iat] = ucell.atoms[it].taud[ia].x;
+            pos[3 * iat + 1] = ucell.atoms[it].taud[ia].y;
+            pos[3 * iat + 2] = ucell.atoms[it].taud[ia].z;
+            for (int k = 0; k < 3; ++k)
+            {
+                this->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
+                this->check_boundary(pos[iat * 3 + k]);
+            }
+            iat++;
+        }
+    }
+    for (int it = 0; it < ntype; it++)
+    {
+        for (int ia = istart[it]; ia < istart[it] + na[it]; ++ia)
+        {
+            const int xx = ia * 3; const int yy = ia * 3 + 1; const int zz = ia * 3 + 2;
+            for (int k = 0;k < this->nrotk;++k)
+            {
+                rotpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
+                rotpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
+                rotpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
+
+                check_translation(rotpos[xx], -floor(rotpos[xx]));
+                check_boundary(rotpos[xx]);
+                check_translation(rotpos[yy], -floor(rotpos[yy]));
+                check_boundary(rotpos[yy]);
+                check_translation(rotpos[zz], -floor(rotpos[zz]));
+                check_boundary(rotpos[zz]);
+
+                for (int ja = istart[it]; ja < istart[it] + na[it]; ++ja)
+                {
+                    double diff1 = check_diff(pos[ja * 3], rotpos[xx]);
+                    double diff2 = check_diff(pos[ja * 3 + 1], rotpos[yy]);
+                    double diff3 = check_diff(pos[ja * 3 + 2], rotpos[zz]);
+                    if (equal(diff1, 0.0) && equal(diff2, 0.0) && equal(diff3, 0.0))
+                    {
+                        this->isym_rotiat_[k][ia] = ja;
+
+                        break;
                     }
                 }
             }
         }
     }
-    delete[] symflag;
-    delete[] ipw_record;
-    delete[] ixyz_record;
-    delete[] gphase_record;
-    delete[] invmap;
-    ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
 
-
-void Symmetry::force_symmetry(ModuleBase::matrix &force , double* pos, const UnitCell &ucell)   // pengfei 2016-12-20
+void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
 {
-	ModuleBase::TITLE("Symmetry","force_symmetry");
-	double *protpos;
-	double *tot_force;
-	int *n;
-	int *start;
-	double diff1,diff2,diff3;
-	protpos = new double[nat*3]; ModuleBase::GlobalFunc::ZEROS(protpos, nat*3);
-	tot_force = new double[nat*3]; ModuleBase::GlobalFunc::ZEROS(tot_force, nat*3);
-	n = new int[nat]; ModuleBase::GlobalFunc::ZEROS(n, nat);
-	start = new int[ntype]; start[0] = 0;
-	for(int it = 0; it < ntype; ++it)
-	{
-		//Atom* atom = &ucell.atoms[it];
-		//na[it] = atom->na;
-		if(it > 0)
-		{
-			start[it] = start[it-1] + ucell.atoms[it-1].na;
-		}
-		//std::cout << "na =" <<ucell.atoms[0].na<<" "<<ucell.atoms[1].na<<" "<<ucell.atoms[2].na<<std::endl;
-		
-	}
-	for(int it = 0; it < ntype; it++)
-	{
-		for(int j = start[it]; j < start[it] + ucell.atoms[it].na; ++j)
-		{
-			const int xx=j*3; const int yy=j*3+1; const int zz=j*3+2;
-			// std::cout << "xx = "<<xx<<" yy ="<<yy<<" zz = "<<zz<<std::endl;
-			// std::cout << "nrotk ="<<nrotk<<std::endl;
-			for(int k = 0 ; k < nrotk; ++k)
-			{
-                protpos[xx] = pos[xx] * gmatrix[k].e11 + pos[yy] * gmatrix[k].e21 + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
-				protpos[yy] = pos[xx] * gmatrix[k].e12 + pos[yy] * gmatrix[k].e22 + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
-				protpos[zz] = pos[xx] * gmatrix[k].e13 + pos[yy] * gmatrix[k].e23 + pos[zz] * gmatrix[k].e33 + gtrans[k].z;    	
+    ModuleBase::TITLE("Symmetry", "symmetrize_vec3_nat");
+    double* vtot;
+    int* n;
+    vtot = new double[nat * 3]; ModuleBase::GlobalFunc::ZEROS(vtot, nat * 3);
+    n = new int[nat]; ModuleBase::GlobalFunc::ZEROS(n, nat);
 
-				check_translation( protpos[xx], -floor(protpos[xx]));
-				check_boundary( protpos[xx] );
-				check_translation( protpos[yy], -floor(protpos[yy]));
-				check_boundary( protpos[yy] );
-				check_translation( protpos[zz], -floor(protpos[zz]));
-				check_boundary( protpos[zz] );
-				
-				for(int l = start[it]; l < start[it] + ucell.atoms[it].na; ++l)
-				{
-					diff1 = check_diff( pos[l*3], protpos[xx]);
-					diff2 = check_diff( pos[l*3+1], protpos[yy]);
-					diff3 = check_diff( pos[l*3+2], protpos[zz]);
-					if (equal(diff1,0.0) && equal(diff2,0.0) && equal(diff3,0.0))
-					{
-						//std::cout <<"nl = " << n[l]<<std::endl;
-						tot_force[l*3] = tot_force[l*3] + force(j,0) * gmatrix[k].e11 + force(j,1) * gmatrix[k].e21 + force(j,2) * gmatrix[k].e31;
-						tot_force[l*3+1] =  tot_force[l*3+1] + force(j,0) * gmatrix[k].e12 + force(j,1) * gmatrix[k].e22 + force(j,2) * gmatrix[k].e32;
-						tot_force[l*3+2] =  tot_force[l*3+2] + force(j,0) * gmatrix[k].e13 + force(j,1) * gmatrix[k].e23 + force(j,2) * gmatrix[k].e33;
-						n[l]++;
-					}
-				}
-				
-			}
-			
-		}
+    for (int j = 0;j < nat; ++j)
+    {
+        const int jx = j * 3; const int jy = j * 3 + 1; const int jz = j * 3 + 2;
+        for (int k = 0; k < nrotk; ++k)
+        {
+            int l = this->isym_rotiat_[k][j];
+            if (l < 0)continue;
+            vtot[l * 3] = vtot[l * 3] + v[jx] * gmatrix[k].e11 + v[jy] * gmatrix[k].e21 + v[jz] * gmatrix[k].e31;
+            vtot[l * 3 + 1] = vtot[l * 3 + 1] + v[jx] * gmatrix[k].e12 + v[jy] * gmatrix[k].e22 + v[jz] * gmatrix[k].e32;
+            vtot[l * 3 + 2] = vtot[l * 3 + 2] + v[jx] * gmatrix[k].e13 + v[jy] * gmatrix[k].e23 + v[jz] * gmatrix[k].e33;
+            n[l]++;
+        }
 	}
-	for(int it = 0; it < ntype; it++)
-	{
-		for(int j = start[it]; j < start[it] + ucell.atoms[it].na; j++)
-		{
-			force(j,0) = tot_force[j*3]/n[j];
-			force(j,1) = tot_force[j*3+1]/n[j];
-			force(j,2) = tot_force[j*3+2]/n[j];
-		}
-	}
-	
-	delete[] protpos;
-	delete[] tot_force;
-	delete[] n;
-	delete[] start;
-	
+    for (int j = 0;j < nat; ++j)
+    {
+        v[j * 3] = vtot[j * 3] / n[j];
+        v[j * 3 + 1] = vtot[j * 3 + 1] / n[j];
+        v[j * 3 + 2] = vtot[j * 3 + 2] / n[j];
+    }
+    delete[] vtot;
+    delete[] n;
 	return;
 }
 
-void Symmetry::stress_symmetry(ModuleBase::matrix& sigma, const UnitCell &ucell)   //zhengdy added 2017
+void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const   //zhengdy added 2017
 {
-	double *tot_sigma, *temp;
-	tot_sigma = new double[9];
-	temp = new double[9];
-	ModuleBase::GlobalFunc::ZEROS(temp, 9);
-	ModuleBase::GlobalFunc::ZEROS(tot_sigma, 9);
-
-	temp[0]=ucell.a1.x;
-	temp[1]=ucell.a1.y;
-	temp[2]=ucell.a1.z;
-	temp[3]=ucell.a2.x;
-	temp[4]=ucell.a2.y;
-	temp[5]=ucell.a2.z;
-	temp[6]=ucell.a3.x;
-	temp[7]=ucell.a3.y;
-	temp[8]=ucell.a3.z;
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j= 0;j<3;j++)
-		{
-			for(int k=0;k<3;k++)
-			{
-				for(int l=0;l<3;l++)
-				{
-					tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
-				}
-			}
-		}
-	}
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j = 0;j<3;j++)
-		{
-			sigma(i,j) = tot_sigma[i*3+j];
-		}
-	}
-
-	ModuleBase::GlobalFunc::ZEROS(temp, 9);
-	ModuleBase::GlobalFunc::ZEROS(tot_sigma, 9);
-
-	for ( int k = 0 ; k < nrotk; ++k)
-	{
-		temp[0] = gmatrix[k].e11;
-		temp[1] = gmatrix[k].e12;
-		temp[2] = gmatrix[k].e13;
-		temp[3] = gmatrix[k].e21;
-		temp[4] = gmatrix[k].e22;
-		temp[5] = gmatrix[k].e23;
-		temp[6] = gmatrix[k].e31;
-		temp[7] = gmatrix[k].e32;
-		temp[8] = gmatrix[k].e33;
-
-		for( int i=0; i<3; i++)
-		{
-			for( int j=0; j<3; j++)
-			{
-				for( int l=0; l<3; l++)
-				{
-					for( int m=0; m<3; m++)
-					{
-						tot_sigma[i * 3 +j] += sigma(l,m) * temp[i * 3 + l] * temp[j * 3 + m];
-					}
-				}
-			}
-		}
-	}
-
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			sigma(i,j) = tot_sigma[i *3 + j] / nrotk;
-		}
-	}
-
-	ModuleBase::GlobalFunc::ZEROS(temp, 9);
-	ModuleBase::GlobalFunc::ZEROS(tot_sigma, 9);
-
-	double det = ucell.a1.x*ucell.a2.y*ucell.a3.z -
-		ucell.a1.x*ucell.a3.y*ucell.a2.z +
-		ucell.a2.x*ucell.a3.y*ucell.a1.z -
-		ucell.a2.x*ucell.a1.y*ucell.a3.z +
-		ucell.a3.x*ucell.a1.y*ucell.a2.z -
-		ucell.a3.x*ucell.a2.y*ucell.a1.z;
-
-	if(det == 0)
-	{
-		det = 1;
-	}
-
-	temp[0] = (ucell.a2.y*ucell.a3.z - ucell.a2.z*ucell.a3.y) / det;
-	temp[1] = -(ucell.a1.y*ucell.a3.z - ucell.a1.z*ucell.a3.y) / det;
-	temp[2] = (ucell.a1.y*ucell.a2.z - ucell.a1.z*ucell.a2.y) / det;
-	temp[3] = -(ucell.a2.x*ucell.a3.z - ucell.a2.z*ucell.a3.x) / det;
-	temp[4] = (ucell.a1.x*ucell.a3.z - ucell.a1.z*ucell.a3.x) / det;
-	temp[5] = -(ucell.a1.x*ucell.a2.z - ucell.a1.z*ucell.a2.x) / det;
-	temp[6] = (ucell.a2.x*ucell.a3.y - ucell.a2.y*ucell.a3.x) / det;
-	temp[7] = -(ucell.a1.x*ucell.a3.y - ucell.a1.y*ucell.a3.x) / det;
-	temp[8] = (ucell.a1.x*ucell.a2.y - ucell.a1.y*ucell.a2.x) / det;
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j= 0;j<3;j++)
-		{
-			for(int k=0;k<3;k++)
-			{
-				for(int l=0;l<3;l++)
-				{
-					tot_sigma[i*3 +j] += sigma(k,l) * temp[i*3+k] * temp[j*3+l];
-				}
-			}
-		}
-	}
-
-	for(int i=0;i<3;i++)
-	{
-		for(int j = 0;j<3;j++)
-		{
-			sigma(i,j) = tot_sigma[i*3+j];
-		}
-	}
-
-	delete [] tot_sigma;
-	delete [] temp;
+    ModuleBase::matrix A = ucell.latvec.to_matrix();
+    ModuleBase::matrix AT = ucell.latvec.Transpose().to_matrix();
+    ModuleBase::matrix invA = ucell.GT.to_matrix();
+    ModuleBase::matrix invAT = ucell.G.to_matrix();
+    ModuleBase::matrix tot_sigma(3, 3, true);
+    sigma = A * sigma * AT;
+    for (int k = 0; k < nrotk; ++k)
+        tot_sigma += invA * gmatrix[k].to_matrix() * sigma * gmatrix[k].Transpose().to_matrix() * invAT;
+    sigma = tot_sigma * static_cast<double>(1.0 / nrotk);
 	return;
 }
 

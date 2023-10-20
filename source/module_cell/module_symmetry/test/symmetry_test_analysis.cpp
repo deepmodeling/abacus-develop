@@ -20,8 +20,12 @@
  ***********************************************/
 // mock the useless functions
 void output::printM3(std::ofstream &ofs, const std::string &description, const ModuleBase::Matrix3 &m){}
-pseudo_nc::pseudo_nc(){}
-pseudo_nc::~pseudo_nc(){}
+pseudo::pseudo()
+{
+}
+pseudo::~pseudo()
+{
+}
 Atom::Atom(){}
 Atom::~Atom(){}
 Atom_pseudo::Atom_pseudo(){}

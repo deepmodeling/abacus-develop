@@ -3,13 +3,14 @@
 
 /************************************************
  *  unit test of class Symmetry
- * 4. function: `force_symmetry`
+ * 4. function: `symmetrize_vec3_nat`
+ * 5. function `symmetrize_mat3`
  *
 ***********************************************/
 // mock the useless functions
 void output::printM3(std::ofstream& ofs, const std::string& description, const ModuleBase::Matrix3& m) {}
-pseudo_nc::pseudo_nc() {}
-pseudo_nc::~pseudo_nc() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
 Atom::Atom() {}
 Atom::~Atom() {}
 Atom_pseudo::Atom_pseudo() {}
@@ -74,7 +75,7 @@ TEST_F(SymmetryTest, ForceSymmetry)
                 force(i, j) = double(rand()) / double(RAND_MAX) * 200 - 100;
 
         std::vector<double> pos = allocate_pos(symm, ucell);
-        symm.force_symmetry(force, pos.data(), ucell);
+        symm.symmetrize_vec3_nat(force.c);
         check_force(supercell_lib[stru], force);
     }
 }
@@ -104,7 +105,7 @@ TEST_F(SymmetryTest, StressSymmetry)
             for (int j = 0;j < 3;++j)
                 stress(i, j) = double(rand()) / double(RAND_MAX) * 2e5 - 1e5;
 
-        symm.stress_symmetry(stress, ucell);
+        symm.symmetrize_mat3(stress, ucell);
         check_stress(supercell_lib[stru], stress);
 
     }
