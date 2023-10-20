@@ -180,6 +180,7 @@ void Paw_Cell::set_libpaw_atom(const int natom_in, const int ntypat_in, const in
 
     typat.resize(natom);
     xred.resize(3 * natom);
+    epsatm.resize(ntypat);
     
     for(int iat = 0; iat < natom; iat ++)
     {
@@ -250,7 +251,7 @@ extern "C"
 {
     void prepare_libpaw_(double&,double&,double*,double*,double*,double&,int*,int*,
     //                   ecut    ecutpaw gmet    rprimd  gprimd  ucvol   ngfft ngfftdg
-        int&,int&,int*,double*,int&,int&,char*,int&,int&);
+        int&,int&,int*,double*,int&,int&,char*,int&,int&,double*);
     //  natom ntypat typat xred ixc xclevel filename_list nspden nsppol
 
     void get_vloc_ncoret_(int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*,double*);
@@ -262,8 +263,8 @@ extern "C"
     void get_nhat_(int&, int&, double*, int*, int&, int&, double*, double*, double&, double*, double*);
     //             natom,ntypat,xred,   ngfft,nfft,nspden,gprimd,  rprimd,  ucvol,   nhat,    nhatgr
 
-    void calculate_dij_(int&, int&, int&, int&,   int&, int&,  double*, double&, double*, double*, double*);
-    //                  natom,ntypat,ixc, xclevel,nfft, nspden,xred,    ucvol,   gprimd,  vks,     vxc
+    void calculate_dij_(int&, int&, int&, int&,   int&, int&,  double*, double&, double*, double*, double*, double&);
+    //                  natom,ntypat,ixc, xclevel,nfft, nspden,xred,    ucvol,   gprimd,  vks,     vxc,     epawdc
 
     void get_dij_(int&, int&, int&, double*);
     //            iatom,size_dij,nspden,dij
@@ -278,7 +279,7 @@ void Paw_Cell::prepare_paw()
 {
     prepare_libpaw_(ecut, ecutpaw, gmet.data(), rprimd.data(), gprimd.data(), ucvol,
             ngfft.data(), ngfftdg.data(), natom, ntypat, typat.data(), xred.data(),
-            ixc, xclevel, filename_list, nspden, nsppol);
+            ixc, xclevel, filename_list, nspden, nsppol, epsatm.data());
 }
 
 void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
@@ -459,7 +460,7 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
 
     if(GlobalV::RANK_IN_POOL == 0)
     {
-        calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);
+        calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree,epawdc);
     }
 
     if(GlobalV::RANK_IN_POOL == 0)
@@ -489,7 +490,7 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
             }
         }
     }
-    calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree);
+    calculate_dij_(natom,ntypat,ixc,xclevel,nfft,nspden,xred.data(),ucvol,gprimd.data(),vks_hartree,vxc_hartree,epawdc);
     delete[] vks_hartree;
     delete[] vxc_hartree;
 #endif
@@ -645,4 +646,17 @@ void Paw_Cell::set_sij()
         delete[] sij_libpaw;
         delete[] sij;
     }
+}
+
+double Paw_Cell::calculate_ecore()
+{
+    double charge = 0.0;
+    double esum = 0.0;
+    for(int ia = 0; ia < natom; ia ++)
+    {
+        const int it = atom_type[ia];
+        esum += epsatm[it];
+        charge += paw_element_list[it].get_zval();
+    }
+    return esum * charge / ucvol * 2.0;
 }
