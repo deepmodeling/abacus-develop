@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                  autotest
+calculation             scf
+pseudo_dir              ../../PP_ORB
+
+#ntype                   1
+symmetry                1
+dft_functional          pbe
+#vdw_method                     d3_bj
+
+#Parameters (2.Iteration)
+ecutwfc                 20
+scf_thr                 1e-10
+scf_nmax                128
+
+cal_force               1
+cal_stress              1
+
+#Parameters (3.Basis)
+basis_type              pw
+#Parameters (4.Smearing)
+smearing_method         mp
+smearing_sigma          0.010
+
+#Parameters (5.Mixing)
+mixing_type             pulay
+mixing_beta             0.2
+# kspacing                0.05
+mixing_gg0              1.5
+ks_solver               dav
+
+#relaxation (6.cell_relax)
+force_thr_ev            0.01
+stress_thr              2
+relax_nmax              32
+out_stru                1
