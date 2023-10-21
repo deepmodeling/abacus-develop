@@ -168,7 +168,7 @@ void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
             goto CG_STOP;
         }
 
-        if(i_step>=1)
+        if (i_step >= 2)
         {
             beta = mean_error / mean_error_old;
             add_scalar_multiply_2d(search, search_old, beta, search);
