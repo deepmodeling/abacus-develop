@@ -1,7 +1,7 @@
 name: Docs
 description: For users or developers to report issues related to software documentation, such as missing or incomplete documentation, or documentation that is difficult to understand.
 labels: [Docs]
-assignees: hongriTianqi
+assignees: [insert assignee here]
 body:
 - type: textarea
   attributes:
@@ -21,7 +21,7 @@ body:
         required: true
 - type: checkboxes
   attributes:
-    label: Task list for Issue attackers
+    label: Task list for Issue attackers (only for developers)
     options:
       - label: Identify the specific section of the documentation with the issue.
       - label: Investigate the issue and determine the root cause.
