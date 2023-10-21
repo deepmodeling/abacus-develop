@@ -291,19 +291,20 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                         gemm_op()(this->ctx,
                                   transa,
                                   transb,
+                                  nh,
                                   nbands,
                                   nh,
-                                  nh,
                                   &this->one,
-                                  &becp[this->ppcell->indv_ijkb0[iat]],
-                                  this->ppcell->nkb,
                                   qqc,
                                   nh,
+                                  &becp[this->ppcell->indv_ijkb0[iat]],
+                                  this->ppcell->nkb,
                                   &this->zero,
                                   &ps[this->ppcell->indv_ijkb0[iat]],
                                   this->ppcell->nkb);
                         iat++;
                     }
+                    delmem_complex_op()(ctx, qqc);
                 }
                 else
                 {
@@ -366,6 +367,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     //     std::cout << "spsi:  " << std::fixed << std::setprecision(10) << spsi[i] << std::endl;
     // }
     // exit(0);
+
+    delmem_complex_op()(ctx, ps);
+    delmem_complex_op()(ctx, becp);
 
     ModuleBase::TITLE("HamiltPW", "sPsi");
 }

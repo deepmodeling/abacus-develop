@@ -183,6 +183,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     delmem_complex_op()(ctx, scc);
     delmem_complex_op()(ctx, vcc);
     delmem_complex_op()(ctx, hphi);
+    delmem_complex_op()(ctx, sphi);
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
@@ -373,6 +374,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     delmem_complex_op()(ctx, scc);
     delmem_complex_op()(ctx, vcc);
     delmem_complex_op()(ctx, hpsi);
+    delmem_complex_op()(ctx, spsi);
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
 
