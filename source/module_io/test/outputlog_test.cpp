@@ -180,29 +180,22 @@ TEST(PrintForce, PrintForce)
     std::ifstream ifs("test.txt");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
+    EXPECT_THAT(output_str, testing::HasSubstr("TOTAL-FORCE (eV/Angstrom)"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+                testing::HasSubstr("---------------------------------------------------------------------"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" test"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
+    EXPECT_THAT(output_str, testing::HasSubstr("atom          x                    y                    z          "));
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+                testing::HasSubstr("---------------------------------------------------------------------"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
+    EXPECT_THAT(output_str, testing::HasSubstr(" Al1        25.7110532015        51.4221064030        77.1331596044"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("     atom              x              y              z"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("      Al1          +25.711053          +51.422106           +77.13316"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" Al2         0.0000000000         0.0000000000         0.0000000000"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr("      Al2                   0                   0                   0"));
+                testing::HasSubstr("---------------------------------------------------------------------"));
     ifs.close();
     std::remove("test.txt");
 }
@@ -227,65 +220,19 @@ TEST(PrintStress, PrintStress)
     std::ifstream ifs("test.txt");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("test"));
+    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("                     147105.23      294210.46      441315.68"));
+    EXPECT_THAT(output_str, testing::HasSubstr("    test (KBAR)                                               "));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("                             0              0              0"));
+    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("                             0              0              0"));
-    ifs.close();
-    std::remove("test.txt");
-}
-
-TEST(PrintstressTotal, PrintstressTotal)
-{
-    ModuleBase::matrix stress(3, 3);
-    stress(0, 0) = 1.0;
-    stress(0, 1) = 2.0;
-    stress(0, 2) = 3.0;
-    stress(1, 0) = 0.0;
-    stress(1, 1) = 0.0;
-    stress(1, 2) = 0.0;
-    stress(2, 0) = 0.0;
-    stress(2, 1) = 0.0;
-    stress(2, 2) = 0.0;
-
-    GlobalV::ofs_running.open("test.txt");
-    ModuleIO::printstress_total(stress, false);
-    GlobalV::ofs_running.close();
-
-    std::ifstream ifs("test.txt");
-    std::string output_str;
+    EXPECT_THAT(output_str, testing::HasSubstr("   147105.2279754489    294210.4559508978    441315.6839263467"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
+    EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
+    EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-STRESS (KBAR)"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(""));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("          +147105.227975         +294210.455951         +441315.683926"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("               +0.000000              +0.000000              +0.000000"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("               +0.000000              +0.000000              +0.000000"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE: +49035.075992 KBAR"));
+    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
     ifs.close();
     std::remove("test.txt");
 }

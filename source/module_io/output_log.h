@@ -38,12 +38,7 @@ void print_force(std::ofstream& ofs_running,
 /// @param name stress term name
 /// @param f stress components
 /// @param ry true if the unit of force is a.u.
-void print_stress(const std::string& name, const ModuleBase::matrix& f, const bool screen, bool ry);
-
-/// @brief output total stress
-/// @param scs total stress
-/// @param ry true if the unit of force is a.u.
-void printstress_total(const ModuleBase::matrix& scs, bool ry);
+void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry);
 
 } // namespace ModuleIO
 

@@ -29,7 +29,7 @@ void print_force(std::ofstream& ofs_running,
                  bool ry = true)
 {
 }
-void printstress_total(const ModuleBase::matrix& scs, bool ry)
+void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
 {
 }
 } // namespace ModuleIO

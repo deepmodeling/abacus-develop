@@ -121,7 +121,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
 	bool ry = false;
-    ModuleIO::printstress_total(sigmatot, ry);
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
 
     if (GlobalV::TEST_STRESS)
     {

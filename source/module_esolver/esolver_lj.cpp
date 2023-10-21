@@ -107,7 +107,7 @@ namespace ModuleESolver
     void ESolver_LJ::cal_Stress(ModuleBase::matrix& stress)
     {
         stress = lj_virial;
-        ModuleIO::printstress_total(stress, false);
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
     void ESolver_LJ::postprocess()

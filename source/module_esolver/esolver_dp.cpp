@@ -136,7 +136,7 @@ namespace ModuleESolver
     void ESolver_DP::cal_Stress(ModuleBase::matrix& stress)
     {
         stress = dp_virial;
-        ModuleIO::printstress_total(stress, false);
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
     void ESolver_DP::postprocess()

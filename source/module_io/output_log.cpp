@@ -1,6 +1,8 @@
 #include "output_log.h"
-#include "module_base/global_variable.h"
+
 #include "module_base/constants.h"
+#include "module_base/formatter.h"
+#include "module_base/global_variable.h"
 
 namespace ModuleIO
 {
@@ -34,169 +36,88 @@ void print_force(std::ofstream& ofs_running,
                  bool ry)
 {
     const double output_acc = 1.0e-8;
-    ModuleBase::GlobalFunc::NEW_PART(name);
-
-    ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z"
-                << std::endl;
-    ofs_running << std::setiosflags(std::ios::showpos);
-    ofs_running << std::setprecision(8);
-
     double fac = 1.0;
-
     if (!ry)
     {
         fac = ModuleBase::Ry_to_eV / 0.529177;
     }
 
-    if (GlobalV::TEST_FORCE)
-    {
-        std::cout << " --------------- " << name << " ---------------" << std::endl;
-        std::cout << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15)
-                  << "z" << std::endl;
-        std::cout << std::setiosflags(std::ios::showpos);
-        std::cout << std::setprecision(6);
-    }
-
+    std::vector<std::string> atom_label;
+    std::vector<double> force_x;
+    std::vector<double> force_y;
+    std::vector<double> force_z;
+    std::string table;
+    context.set_context({"title", "force", "force", "force"});
     int iat = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
         for (int ia = 0; ia < cell.atoms[it].na; ia++)
         {
-            std::stringstream ss;
-            ss << cell.atoms[it].label << ia + 1;
-
-            ofs_running << " " << std::setw(8) << ss.str();
-            if (std::abs(force(iat, 0)) > output_acc)
-                ofs_running << std::setw(20) << force(iat, 0) * fac;
-            else
-                ofs_running << std::setw(20) << "0";
-            if (std::abs(force(iat, 1)) > output_acc)
-                ofs_running << std::setw(20) << force(iat, 1) * fac;
-            else
-                ofs_running << std::setw(20) << "0";
-            if (std::abs(force(iat, 2)) > output_acc)
-                ofs_running << std::setw(20) << force(iat, 2) * fac;
-            else
-                ofs_running << std::setw(20) << "0";
-            ofs_running << std::endl;
-
-            if (GlobalV::TEST_FORCE)
-            {
-                std::cout << " " << std::setw(8) << ss.str();
-                if (std::abs(force(iat, 0)) > output_acc)
-                    std::cout << std::setw(20) << force(iat, 0) * fac;
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(force(iat, 1)) > output_acc)
-                    std::cout << std::setw(20) << force(iat, 1) * fac;
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(force(iat, 2)) > output_acc)
-                    std::cout << std::setw(20) << force(iat, 2) * fac;
-                else
-                    std::cout << std::setw(20) << "0";
-                std::cout << std::endl;
-            }
+            std::string atom_labels = cell.atoms[it].label + std::to_string(ia + 1);
+            double fx = std::abs(force(iat, 0)) > output_acc ? force(iat, 0) * fac : 0.0;
+            double fy = std::abs(force(iat, 1)) > output_acc ? force(iat, 1) * fac : 0.0;
+            double fz = std::abs(force(iat, 2)) > output_acc ? force(iat, 2) * fac : 0.0;
+            atom_label.push_back(atom_labels);
+            force_x.push_back(fx);
+            force_y.push_back(fy);
+            force_z.push_back(fz);
 
             iat++;
         }
     }
 
-    ofs_running << std::resetiosflags(std::ios::showpos);
-    std::cout << std::resetiosflags(std::ios::showpos);
+    context.enable_title();
+    context << "atom" << atom_label << "x" << force_x << "y" << force_y << "z" << force_z;
+    context.center_title();
+    context.set_overall_title("TOTAL-FORCE (eV/Angstrom)");
+    table = context.str();
+    ofs_running << table << std::endl;
+    if (GlobalV::TEST_FORCE)
+    {
+        std::cout << table << std::endl;
+    }
     return;
 }
 
-void print_stress(const std::string& name, const ModuleBase::matrix& f, const bool screen, bool ry)
+void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
 {
     const double output_acc = 1.0e-8;
-    GlobalV::ofs_running << " --------------------------- " << name << " ----------------------------" << std::endl;
-
-    double fac = 1.0;
-
-    if (!ry)
-    {
-        fac = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    }
-
-    std::cout << std::setprecision(5);
-    std::cout << std::setiosflags(std::ios::showpos);
-
-    if (screen)
-    {
-        std::cout << " ------------------- " << name << " --------------------" << std::endl;
-    }
-
-    for (int i = 0; i < 3; i++)
-    {
-        GlobalV::ofs_running << std::setw(15) << " ";
-        if (std::abs(f(i, 0)) > output_acc)
-            GlobalV::ofs_running << std::setw(15) << f(i, 0) * fac;
-        else
-            GlobalV::ofs_running << std::setw(15) << "0";
-        if (std::abs(f(i, 1)) > output_acc)
-            GlobalV::ofs_running << std::setw(15) << f(i, 1) * fac;
-        else
-            GlobalV::ofs_running << std::setw(15) << "0";
-        if (std::abs(f(i, 2)) > output_acc)
-            GlobalV::ofs_running << std::setw(15) << f(i, 2) * fac;
-        else
-            GlobalV::ofs_running << std::setw(15) << "0";
-        GlobalV::ofs_running << std::endl;
-
-        if (screen)
-        {
-            if (std::abs(f(i, 0)) > output_acc)
-                std::cout << std::setw(15) << f(i, 0) * fac;
-            else
-                std::cout << std::setw(15) << "0";
-            if (std::abs(f(i, 1)) > output_acc)
-                std::cout << std::setw(15) << f(i, 1) * fac;
-            else
-                std::cout << std::setw(15) << "0";
-            if (std::abs(f(i, 2)) > output_acc)
-                std::cout << std::setw(15) << f(i, 2) * fac;
-            else
-                std::cout << std::setw(15) << "0";
-            std::cout << std::endl;
-        }
-    }
-
-    std::cout << std::resetiosflags(std::ios::showpos);
-
-    return;
-}
-
-// print total stress
-void printstress_total(const ModuleBase::matrix& scs, bool ry)
-{
     double unit_transform = 1;
-    if (!ry)
+    std::string title = name;
+    if (ry)
     {
+        title += " (a.u.)";
+    }
+    else
+    {
+        title += " (KBAR)";
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     }
 
-    GlobalV::ofs_running << std::setprecision(6) << std::setiosflags(std::ios::showpos)
-                         << std::setiosflags(std::ios::fixed) << std::endl;
-    ModuleBase::GlobalFunc::NEW_PART("TOTAL-STRESS (KBAR)");
-    std::cout << " ><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
-    std::cout << " TOTAL-STRESS (KBAR):" << std::endl;
-    std::cout << " ><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
-
+    std::vector<double> stress_x;
+    std::vector<double> stress_y;
+    std::vector<double> stress_z;
+    std::string table;
+    context.set_context({"double_w20_f10", "double_w20_f10", "double_w20_f10"});
     for (int i = 0; i < 3; i++)
     {
-        std::cout << " " << std::setw(15) << scs(i, 0) * unit_transform << std::setw(15) << scs(i, 1) * unit_transform
-                  << std::setw(15) << scs(i, 2) * unit_transform << std::endl;
-
-        GlobalV::ofs_running << " " << std::setw(23) << scs(i, 0) * unit_transform << std::setw(23)
-                             << scs(i, 1) * unit_transform << std::setw(23) << scs(i, 2) * unit_transform << std::endl;
+        double sx = scs(i, 0) * unit_transform;
+        double sy = scs(i, 1) * unit_transform;
+        double sz = scs(i, 2) * unit_transform;
+        stress_x.push_back(sx);
+        stress_y.push_back(sy);
+        stress_z.push_back(sz);
     }
-    double pressure = (scs(0, 0) + scs(1, 1) + scs(2, 2)) / 3.0 * unit_transform;
-    std::cout << " TOTAL-PRESSURE: " << pressure << " KBAR" << std::endl;
-    GlobalV::ofs_running << " TOTAL-PRESSURE: " << pressure << " KBAR" << std::endl;
-    GlobalV::ofs_running << std::setiosflags(std::ios::left);
-    std::cout << std::resetiosflags(std::ios::showpos);
 
+    context.enable_title();
+    context << title.c_str() << stress_x << " " << stress_y << " " << stress_z;
+    context.center_title();
+    table = context.str();
+    GlobalV::ofs_running << table << std::endl;
+    if (screen)
+    {
+        std::cout << table << std::endl;
+    }
     return;
 }
 
