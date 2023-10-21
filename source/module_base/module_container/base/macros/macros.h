@@ -1,11 +1,33 @@
 #ifndef BASE_MACROS_MACROS_H_
 #define BASE_MACROS_MACROS_H_
 
+#include <stdint.h>
+
 #if __CUDA
 #include <base/macros/cuda.h> 
 #endif 
 
 #include <ATen/core/tensor_types.h>
+
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName&) = delete;      \
+  void operator=(const TypeName&) = delete
+
+#define DISALLOW_MOVE_AND_ASSIGN(TypeName) \
+  TypeName(TypeName&&) = delete;           \
+  void operator=(TypeName&&) = delete
+
+#define DISALLOW_COPY_MOVE_AND_ASSIGN(TypeName) \
+  DISALLOW_COPY_AND_ASSIGN(TypeName);           \
+  DISALLOW_MOVE_AND_ASSIGN(TypeName)
+
+#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
+  TypeName() = delete;                           \
+  DISALLOW_COPY_MOVE_AND_ASSIGN(TypeName)
+
+#define MAX_SIZE_T UINT64_MAX
+
+
 // The macro TEMPLATE_1() expands to a switch statement conditioned on
 // TYPE_ENUM. Each case expands the STMTS after a typedef for T.
 #define SINGLE_ARG(...) __VA_ARGS__

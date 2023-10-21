@@ -1,14 +1,15 @@
-#include <fstream>
-#include <algorithm>
-
 #include "esolver_sdft_pw.h"
+
+#include <algorithm>
+#include <fstream>
+
 #include "module_base/timer.h"
-#include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_hsolver/hsolver_pw_sdft.h"
+#include "module_io/output_log.h"
 #include "module_io/rho_io.h"
 #include "module_io/write_istate_info.h"
-#include "module_io/output_log.h"
 
 //-------------------Temporary------------------
 #include "module_base/global_variable.h"
@@ -148,14 +149,14 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     // be careful that istep start from 0 and iter start from 1
     if(istep==0&&iter==1) 
     {
-        hsolver::DiagoIterAssist<double>::need_subspace = false;
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = false;
     }
     else 
     {
-        hsolver::DiagoIterAssist<double>::need_subspace = true;
+        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = true;
 	}
-    hsolver::DiagoIterAssist<double>::PW_DIAG_THR = ethr; 
-    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = ethr; 
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
     this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, pw_wfc, this->stowf, istep, iter, GlobalV::KS_SOLVER);
     if(GlobalV::MY_STOGROUP==0)
     {

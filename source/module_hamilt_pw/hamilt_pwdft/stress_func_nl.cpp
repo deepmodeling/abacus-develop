@@ -159,13 +159,13 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
             std::complex<FPTYPE> *h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
-            Parallel_Reduce::reduce_complex_double_pool(h_becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
             delmem_complex_h_op()(this->cpu_ctx, h_becp);
         }
         else
         {
-            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_pool(becp, GlobalV::NBANDS * nkb);
         }
         for (int i = 0; i < 3; i++)
         {
@@ -268,11 +268,11 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
 			{
 				sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
 			}
-			Parallel_Reduce::reduce_double_all( sigmanlc[l * 3 + m] ); //qianrui fix a bug for kpar > 1
+            Parallel_Reduce::reduce_all(sigmanlc[l * 3 + m]); //qianrui fix a bug for kpar > 1
 		}
 	}
 
-//        Parallel_Reduce::reduce_double_all(sigmanl.c, sigmanl.nr * sigmanl.nc);
+    //        Parallel_Reduce::reduce_all(sigmanl.c, sigmanl.nr * sigmanl.nc);
         
 	for (int ipol = 0; ipol<3; ipol++)
 	{
@@ -292,7 +292,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
 	//do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     } // end symmetry
 
     delete [] h_atom_nh;

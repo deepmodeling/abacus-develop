@@ -6,6 +6,9 @@
 #include "module_base/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_io/berryphase.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 K_Vectors::K_Vectors()
 {
@@ -157,6 +160,10 @@ void K_Vectors::set(
     this->print_klists(GlobalV::ofs_running);
 
 	//std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
+
+#ifdef USE_PAW
+    GlobalC::paw_cell.set_isk(nks,isk.data());
+#endif
 
     return;
 }

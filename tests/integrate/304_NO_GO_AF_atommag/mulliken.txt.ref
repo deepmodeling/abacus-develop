@@ -41,12 +41,12 @@ fxz^2                        0                         2.6e-06                  
 fyz^2                        0                         2.6e-06                     4.102e-06                     6.703e-06                    -1.502e-06
 fzx^2-zy^2                        0                               0                             0                             0                             0
 fxyz                        0                               0                             0                             0                             0
-fx^3-3*xy^2                        0                       4.141e-06                     6.753e-06                     1.089e-05                    -2.612e-06
-f3yx^2-y^3                        0                       4.141e-06                     6.753e-06                     1.089e-05                    -2.612e-06
-  sum over m                                     2.023e-05                     3.258e-05                           5.28e-05               -1.235e-05
-  sum over m+zeta                                2.023e-05                     3.258e-05                           5.28e-05               -1.235e-05
+fx^3-3*xy^2                        0                       3.636e-06                     6.116e-06                     9.751e-06                     -2.48e-06
+f3yx^2-y^3                        0                       3.636e-06                     6.116e-06                     9.751e-06                     -2.48e-06
+  sum over m                                     1.747e-05                     2.936e-05                          4.683e-05               -1.189e-05
+  sum over m+zeta                                1.747e-05                     2.936e-05                          4.683e-05               -1.189e-05
 Total Charge on atom:  Fe1                  16
-Total Magnetism on atom:  Fe1               3.797
+Total Magnetism on atom:  Fe1               3.634
 
 
 1                 Zeta of Fe2                        Spin 1                        Spin 2                           Sum                          Diff
@@ -86,11 +86,11 @@ fxz^2                        0                       4.102e-06                  
 fyz^2                        0                       4.102e-06                       2.6e-06                     6.703e-06                     1.502e-06
 fzx^2-zy^2                        0                               0                             0                             0                             0
 fxyz                        0                               0                             0                             0                             0
-fx^3-3*xy^2                        0                       6.753e-06                     4.141e-06                     1.089e-05                     2.612e-06
-f3yx^2-y^3                        0                       6.753e-06                     4.141e-06                     1.089e-05                     2.612e-06
-  sum over m                                     3.258e-05                     2.023e-05                           5.28e-05                1.235e-05
-  sum over m+zeta                                3.258e-05                     2.023e-05                           5.28e-05                1.235e-05
+fx^3-3*xy^2                        0                       6.116e-06                     3.636e-06                     9.751e-06                      2.48e-06
+f3yx^2-y^3                        0                       6.116e-06                     3.636e-06                     9.751e-06                      2.48e-06
+  sum over m                                     2.936e-05                     1.747e-05                          4.683e-05                1.189e-05
+  sum over m+zeta                                2.936e-05                     1.747e-05                          4.683e-05                1.189e-05
 Total Charge on atom:  Fe2                  16
-Total Magnetism on atom:  Fe2              -3.797
+Total Magnetism on atom:  Fe2              -3.634
 
 

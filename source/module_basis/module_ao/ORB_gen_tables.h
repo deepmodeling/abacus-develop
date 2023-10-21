@@ -1,6 +1,7 @@
 #ifndef ORB_GEN_TABLES_H
 #define ORB_GEN_TABLES_H
 
+#include <memory>
 #include "ORB_gaunt_table.h"
 #include "ORB_table_beta.h"
 #include "ORB_table_phi.h"
@@ -11,6 +12,7 @@
 #include "module_cell/setup_nonlocal.h"
 #include "module_base/intarray.h"
 #include "module_base/complexarray.h"
+#include "module_basis/module_nao/two_center_bundle.h"
 
 /// used to be 'Use_Overlap_Table',
 /// now the name is 'ORB_gen_tables'
@@ -92,6 +94,9 @@ class ORB_gen_tables
 	/// if we want to add table for descriptors,
 	/// we should consider here -- mohan 2021-02-09
 	ORB_table_alpha talpha;		//caoyu add 2021-03-17
+
+    /// a temporary solution in refactoring
+    std::unique_ptr<TwoCenterBundle> two_center_bundle;
 
 	private:
 

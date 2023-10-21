@@ -101,6 +101,19 @@ class DMTest : public testing::Test
 #endif
 };
 
+TEST_F(DMTest, DMConstructor_GammaOnly)
+{
+    // construct DM
+    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    int nspin = 2;
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin);
+    // compare
+    EXPECT_EQ(DM.get_DMK_size(), nspin);
+    EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
+    EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
+}
+
 TEST_F(DMTest, DMConstructor_nspin1)
 {
     // initalize a kvectors

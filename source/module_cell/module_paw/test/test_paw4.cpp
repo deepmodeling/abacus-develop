@@ -82,8 +82,8 @@ TEST_F(Test_PAW, test_paw)
     }
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp,
-        atom_type, (const double **) atom_coord, filename_list, nx, ny, nz,
-        eigts1_in, eigts2_in, eigts3_in);
+        atom_type, (const double **) atom_coord, filename_list);
+    paw_cell.set_eigts(nx, ny, nz,eigts1_in, eigts2_in, eigts3_in);
 
     delete[] eigts1_in;
     delete[] eigts2_in;
@@ -147,7 +147,10 @@ TEST_F(Test_PAW, test_paw)
 
     paw_cell.set_libpaw_cell(latvec, lat0);
 
-    paw_cell.set_libpaw_fft(nx, ny, nz, nx, ny, nz);
+    GlobalV::NPROC = 1;
+    std::vector<int> start_z = {0};
+    std::vector<int> num_z = {nz};
+    paw_cell.set_libpaw_fft(nx, ny, nz, nx, ny, nz, start_z.data(), num_z.data());
 
     paw_cell.set_libpaw_atom(nat, ntyp, typat, xred);
 
@@ -157,9 +160,7 @@ TEST_F(Test_PAW, test_paw)
     
     paw_cell.set_nspin(1);
 
-#ifdef USE_PAW
     paw_cell.prepare_paw();
-#endif
 
     paw_cell.get_vkb();
 
@@ -170,6 +171,7 @@ TEST_F(Test_PAW, test_paw)
 
     std::ifstream ifs_psi("test4_psi.dat");
 
+    paw_cell.reset_rhoij();
     for(int iband = 0; iband < nband; iband ++)
     {
         for(int ipw = 0; ipw < npw; ipw ++)
@@ -187,16 +189,18 @@ TEST_F(Test_PAW, test_paw)
 
     paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-#ifdef USE_PAW
     for(int iat = 0; iat < nat; iat ++)
     {
         paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijp[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
     }
 
     int nfft = nx * ny * nz;
-    double *nhat, *nhatgr;
-    nhat = new double[nfft];
+    double **nhat, *nhatgr;
+    nhat = new double*[1];
+    nhat[0] = new double[nfft];
     nhatgr = new double[nfft*3];
     paw_cell.get_nhat(nhat,nhatgr);
-#endif
+    delete[] nhat[0];
+    delete[] nhat;
+    delete[] nhatgr;
 }

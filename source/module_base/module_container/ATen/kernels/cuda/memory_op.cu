@@ -7,6 +7,17 @@
 namespace container {
 namespace op {
 
+template <typename T>
+__global__ void set_memory(
+    T* out,
+    const T var,
+    const size_t size)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(idx >= size) {return;}
+    out[idx] = var;
+}
+
 template <typename T_out, typename T_in>
 __global__ void cast_memory(
     T_out* out,
@@ -46,10 +57,11 @@ void resize_memory_op<T, container::DEVICE_GPU>::operator()(
 template <typename T>
 void set_memory_op<T, container::DEVICE_GPU>::operator()(
     T* arr,
-    const int var, 
-    const size_t size) 
+    const T& var, 
+    const size_t& size) 
 {
-    cudaMemset(arr, var, sizeof(T) * size);
+    const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    set_memory<<<block, THREADS_PER_BLOCK>>>(arr, var, size);
 }
 
 template <typename T>

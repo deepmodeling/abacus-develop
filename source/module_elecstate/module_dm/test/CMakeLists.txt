@@ -4,9 +4,13 @@ remove_definitions(-D__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+if(TARGET dm_io_test_serial)
+  remove_definitions(-D__MPI)
+endif()
+
 AddTest(
   TARGET dm_io_test_serial
-  LIBS base ${math_libs} base device cell_info
+  LIBS ${math_libs} base device cell_info
   SOURCES test_dm_io.cpp ../density_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
@@ -18,7 +22,7 @@ AddTest(
 
 AddTest(
   TARGET dm_constructor_test
-  LIBS base ${math_libs} base device
+  LIBS ${math_libs} base device
   SOURCES test_dm_constructor.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
@@ -29,7 +33,7 @@ AddTest(
 
 AddTest(
   TARGET dm_init_test
-  LIBS base ${math_libs} base device
+  LIBS ${math_libs} base device
   SOURCES test_dm_R_init.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
@@ -40,7 +44,7 @@ AddTest(
 
 AddTest(
   TARGET dm_cal_DMR_test
-  LIBS base ${math_libs} base device
+  LIBS ${math_libs} base device
   SOURCES test_cal_dm_R.cpp ../density_matrix.cpp tmp_mocks.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp

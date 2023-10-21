@@ -4,7 +4,7 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
 namespace hsolver
 {
-    class HSolverPW_SDFT : public HSolverPW<double>
+    class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
     {
         public:
           HSolverPW_SDFT(K_Vectors* pkv,
@@ -17,7 +17,7 @@ namespace hsolver
               this->classname = "HSolverPW_SDFT";
               stoiter.init(stowf.nchip, method_sto, pkv, wfc_basis_in, stowf);
         }
-        virtual void solve(hamilt::Hamilt<double>* pHamilt,
+        virtual void solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            psi::Psi<std::complex<double>>& psi,
                            elecstate::ElecState* pes,
                            ModulePW::PW_Basis_K* wfc_basis,

@@ -1,5 +1,15 @@
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
+remove_definitions(-DUSE_PAW)
+
+AddTest(
+  TARGET HSolver_bpcg
+  LIBS ${math_libs} base psi device container
+  SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp  ../diago_iter_assist.cpp  
+          ../../module_basis/module_pw/test/test_tool.cpp
+          ../../module_hamilt_general/operator.cpp
+          ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+)
 AddTest(
   TARGET HSolver_cg
   LIBS ${math_libs} base psi device
@@ -32,6 +42,16 @@ AddTest(
           ../../module_hamilt_general/operator.cpp
           ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
 )
+if(ENABLE_LCAO)
+AddTest(
+  TARGET HSolver_dav_real
+  LIBS ${math_libs} base psi device
+  SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp 
+          ../../module_basis/module_pw/test/test_tool.cpp
+          ../../module_hamilt_general/operator.cpp
+          ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
+)
+endif()
 
 AddTest(
   TARGET HSolver_base
@@ -41,14 +61,14 @@ AddTest(
 
 AddTest(
   TARGET HSolver_pw
-  LIBS ${math_libs} psi device base
-  SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp
+  LIBS ${math_libs} psi device base container
+  SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp
 )
 
 AddTest(
   TARGET HSolver_sdft
-  LIBS ${math_libs} psi device base
-  SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp
+  LIBS ${math_libs} psi device base container
+  SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp
 )
 
 if(ENABLE_LCAO)

@@ -59,6 +59,9 @@ public:
 	std::vector<ModuleBase::matrix> dm;
 	std::vector<ModuleBase::ComplexMatrix> dm_k;
 
+	std::vector<std::vector<double>> dm_new;
+	std::vector<std::vector<std::complex<double>>> dm_k_new;
+
 //preparation
 	void preparation();
 	void set_parameters();//set some global variables
@@ -73,6 +76,10 @@ public:
 
 	void cal_nnr();
 	void folding_nnr(const Test_Deepks::K_Vectors &kv);
+
+// tranfer Matrix into vector<T>
+	void set_dm_new();
+	void set_dm_k_new();
 
 //checking
 	void check_dstable(void);

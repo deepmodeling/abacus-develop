@@ -4,6 +4,7 @@
 #include <complex>
 
 #include "diagh.h"
+#include "module_base/macros.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
@@ -13,9 +14,11 @@
 namespace hsolver
 {
 
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template<typename T, typename Device = psi::DEVICE_CPU>
 class HSolver
 {
+  private:
+    using Real = typename GetTypeReal<T>::type;
   public:
     HSolver(){};
     virtual ~HSolver(){
@@ -32,8 +35,8 @@ class HSolver
         Input &in )=0;*/
 
     // solve Hamiltonian to electronic density in ElecState
-    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
-                       psi::Psi<std::complex<FPTYPE>, Device>& ppsi,
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
+                       psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
                        const bool skip_charge = false)
@@ -41,17 +44,8 @@ class HSolver
         return;
     }
 
-    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
-                       psi::Psi<FPTYPE, Device>& ppsi,
-                       elecstate::ElecState* pes,
-                       const std::string method,
-                       const bool skip_charge = false)
-    {
-        return;
-    }
-
-    virtual void solve(hamilt::Hamilt<FPTYPE, Device>* phm,
-                       psi::Psi<std::complex<FPTYPE>, Device>& ppsi,
+    virtual void solve(hamilt::Hamilt<T, Device>* phm,
+                       psi::Psi<T, Device>& ppsi,
                        elecstate::ElecState* pes,
                        ModulePW::PW_Basis_K* wfc_basis,
                        Stochastic_WF& stowf,
@@ -68,28 +62,28 @@ class HSolver
     // cg, dav, elpa, scalapack-gvx, cusolver
     std::string method = "none";
   public:
-    FPTYPE diag_ethr=0.0; //threshold for diagonalization
+    Real diag_ethr=0.0; //threshold for diagonalization
     //set diag_ethr according to drho
     //for lcao, we suppose the error is zero and we set diag_ethr to 0
-    virtual FPTYPE set_diagethr(const int istep, const int iter, const FPTYPE drho)
+    virtual Real set_diagethr(const int istep, const int iter, const Real drho)
     {
         return 0.0;
     }
     //reset diag_ethr according to drho and hsolver_error
-    virtual FPTYPE reset_diagethr(std::ofstream& ofs_running, const FPTYPE hsover_error, const FPTYPE drho)
+    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho)
     {
         return 0.0;
     }
 
     // calculate hsolver_error
     // for sdft and lcao, we suppose the error is zero 
-    virtual FPTYPE cal_hsolerror()
+    virtual Real cal_hsolerror()
     {
         return 0.0;
     };
 
   protected:
-    DiagH<FPTYPE, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
+    DiagH<T, Device>* pdiagh = nullptr; // for single Hamiltonian matrix diagonal solver
 
 };
 

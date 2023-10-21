@@ -23,9 +23,9 @@
  * using MPI_Allreduce with n numbers. The total array is
  * deemed as the sum of local arrays with the same length.
  *   1. ReduceIntAll:
- *       Tests two variations of reduce_int_all()
+ *       Tests two variations of reduce_all()
  *   2. ReduceDoubleAll:
- *       Tests two variations of reduce_double_all()
+ *       Tests two variations of reduce_all()
  *   3. ReduceComplexAll:
  *       Tests two variations of reduce_complex_all()
  *   4. GatherIntAll:
@@ -41,10 +41,10 @@
  *   9. ReduceDoubleGrid:
  *       Tests reduce_double_grid()
  *   10.ReduceDoublePool:
- *       Tests two variations of reduce_double_pool()
+ *       Tests two variations of reduce_pool()
  *       and two variations of reduce_double_allpool()
  *   11.ReduceComplexPool:
- *       Tests two variations of reduce_complex_double_pool()
+ *       Tests two variations of reduce_pool()
  *   12.GatherDoublePool:
  *       Tests gather_min_double_pool() and gather_max_double_pool()
  *
@@ -90,9 +90,9 @@ TEST_F(ParaReduce,ReduceIntAll)
 
 	// first way of calculating global sum
 	int global_sum_first = local_sum;
-	Parallel_Reduce::reduce_int_all(global_sum_first);
+    Parallel_Reduce::reduce_all(global_sum_first);
 	// second way of calculating global sum
-	Parallel_Reduce::reduce_int_all(rand_array,num_per_process);
+    Parallel_Reduce::reduce_all(rand_array, num_per_process);
 	int global_sum_second = 0;
 	for(int i=0;i<num_per_process;i++)
 	{
@@ -120,9 +120,9 @@ TEST_F(ParaReduce,ReduceDoubleAll)
 
 	// first way of calculating global sum
 	double global_sum_first = local_sum;
-	Parallel_Reduce::reduce_double_all(global_sum_first);
+    Parallel_Reduce::reduce_all(global_sum_first);
 	// second way of calculating global sum
-	Parallel_Reduce::reduce_double_all(rand_array,num_per_process);
+    Parallel_Reduce::reduce_all(rand_array, num_per_process);
 	double global_sum_second = 0;
 	for(int i=0;i<num_per_process;i++)
 	{
@@ -156,10 +156,10 @@ TEST_F(ParaReduce,ReduceComplexAll)
 	}
 	// first way of calculating global sum
 	std::complex<double> global_sum_first = local_sum;
-	Parallel_Reduce::reduce_complex_double_all(global_sum_first);
+    Parallel_Reduce::reduce_all(global_sum_first);
 
 	// second way of calculating global sum
-	Parallel_Reduce::reduce_complex_double_all(rand_array,num_per_process);
+    Parallel_Reduce::reduce_all(rand_array, num_per_process);
 	std::complex<double> global_sum_second = std::complex<double>{0.0,0.0};
 	for(int i=0;i<num_per_process;i++)
 	{
@@ -417,9 +417,9 @@ TEST_F(ParaReduce,ReduceDoublePool)
 
 		// first way of calculating pool sum
 		double pool_sum_first = local_sum;
-		Parallel_Reduce::reduce_double_pool(pool_sum_first);
+        Parallel_Reduce::reduce_pool(pool_sum_first);
 		// second way of calculating pool sum
-		Parallel_Reduce::reduce_double_pool(rand_array,num_per_process);
+        Parallel_Reduce::reduce_pool(rand_array, num_per_process);
 		double pool_sum_second = 0.0;
 		for(int i=0;i<num_per_process;i++)
 		{
@@ -480,10 +480,10 @@ TEST_F(ParaReduce,ReduceComplexPool)
 		}
 		// first way of calculating pool sum
 		std::complex<double> pool_sum_first = local_sum;
-		Parallel_Reduce::reduce_complex_double_pool(pool_sum_first);
+        Parallel_Reduce::reduce_pool(pool_sum_first);
 
 		// second way of calculating pool sum
-		Parallel_Reduce::reduce_complex_double_pool(rand_array,num_per_process);
+        Parallel_Reduce::reduce_pool(rand_array, num_per_process);
 		std::complex<double> pool_sum_second = std::complex<double>{0.0,0.0};
 		for(int i=0;i<num_per_process;i++)
 		{

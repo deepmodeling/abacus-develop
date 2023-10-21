@@ -1,7 +1,7 @@
 #ifndef ATEN_CORE_TENSOR_H_
 #define ATEN_CORE_TENSOR_H_
 
-#include <ATen/core/allocator.h>
+#include <base/core/allocator.h>
 #include <ATen/core/tensor_types.h>
 #include <ATen/core/tensor_shape.h>
 #include <ATen/core/tensor_buffer.h>
@@ -68,7 +68,7 @@ class Tensor {
      */
     Tensor(DataType data_type, DeviceType device, const TensorShape& shape);
 
-    Tensor(Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
+    Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape);
 
     /**
      * @brief Construct a new Tensor object by copying another Tensor.
@@ -318,7 +318,7 @@ class Tensor {
      *
      * @return The related Allocator class pointer.
      */
-    static Allocator* GetAllocator(DeviceType device);
+    static base::Allocator* GetAllocator(DeviceType device);
 
     /**
      * @brief Get the element at the specified indices.

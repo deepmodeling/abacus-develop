@@ -177,7 +177,7 @@ double Efield::cal_elec_dipole(const UnitCell& cell,
         }
     }
 
-    Parallel_Reduce::reduce_double_pool(elec_dipole);
+    Parallel_Reduce::reduce_pool(elec_dipole);
     elec_dipole *= cell.lat0 / bmod * ModuleBase::FOUR_PI / rho_basis->nxyz;
 
     return elec_dipole;
@@ -208,7 +208,7 @@ double Efield::cal_induced_dipole(const UnitCell& cell,
         induced_dipole += induced_rho[ir] * saw;
     }
 
-    Parallel_Reduce::reduce_double_pool(induced_dipole);
+    Parallel_Reduce::reduce_pool(induced_dipole);
     induced_dipole *= cell.lat0 / bmod * ModuleBase::FOUR_PI / rho_basis->nxyz;
 
     return induced_dipole;

@@ -92,7 +92,7 @@ TYPED_TEST(LapackOpTest, Potrf) {
 
 TYPED_TEST(LapackOpTest, dnevd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
-    using Real = typename PossibleComplexToReal<Type>::type;
+    using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
     
     blas_gemm<Type, Device> gemmCalculator;
@@ -139,7 +139,7 @@ TYPED_TEST(LapackOpTest, dnevd) {
 
 TYPED_TEST(LapackOpTest, dngvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
-    using Real = typename PossibleComplexToReal<Type>::type;
+    using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
     
     blas_gemm<Type, Device> gemmCalculator;

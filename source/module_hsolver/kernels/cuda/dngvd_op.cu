@@ -43,7 +43,7 @@ static const char* _cusolverGetErrorEnum(cusolverStatus_t error)
 
 inline void cusolverAssert(cusolverStatus_t code, const char* file, int line, bool abort = true)
 {
-    if (code != CUBLAS_STATUS_SUCCESS)
+    if (code != CUSOLVER_STATUS_SUCCESS)
     {
         fprintf(stderr, "cuSOLVER Assert: %s %s %d\n", _cusolverGetErrorEnum(code), file, line);
         if (abort)
@@ -56,7 +56,7 @@ namespace hsolver
 
 static cusolverDnHandle_t cusolver_H = nullptr;
 
-void createCUSOLVERhandle()
+void createGpuSolverHandle()
 {
     if (cusolver_H == nullptr)
     {
@@ -64,13 +64,44 @@ void createCUSOLVERhandle()
     }
 }
 
-void destoryCUSOLVERhandle()
+void destroyGpuSolverHandle()
 {
     if (cusolver_H != nullptr)
     {
         cusolverErrcheck(cusolverDnDestroy(cusolver_H));
         cusolver_H = nullptr;
     }
+}
+
+static inline
+void xhegvd_wrapper(
+    const cublasFillMode_t& uplo,
+    const int& n,
+    double* A, const int& lda,
+    double* B, const int& ldb,
+    double* W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int* devInfo = nullptr;
+    int lwork = 0, info_gpu = 0;
+    double* work = nullptr;
+    checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverErrcheck(cusolverDnDsygvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+        A, lda, B, ldb, W, &lwork));
+    // allocate memery
+    checkCudaErrors(cudaMalloc((void**)&work, sizeof(double) * lwork));
+
+    // compute eigenvalues and eigenvectors.
+    cusolverErrcheck(cusolverDnDsygvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+        A, lda, B, ldb, W, work, lwork, devInfo));
+
+    checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
+    assert(0 == info_gpu);
+    // free the buffer
+    checkCudaErrors(cudaFree(work));
+    checkCudaErrors(cudaFree(devInfo));
 }
 
 static inline
@@ -138,6 +169,33 @@ void xhegvd_wrapper (
 }
 
 static inline
+void xheevd_wrapper(
+    const cublasFillMode_t& uplo,
+    const int& n,
+    double* A, const int& lda,
+    double* W)
+{
+    // prepare some values for cusolverDnZhegvd_bufferSize
+    int* devInfo = nullptr;
+    int lwork = 0, info_gpu = 0;
+    double* work = nullptr;
+    checkCudaErrors(cudaMalloc((void**)&devInfo, sizeof(int)));
+
+    // calculate the sizes needed for pre-allocated buffer.
+    cusolverErrcheck(cusolverDnDsyevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
+        A, lda, W, &lwork));
+    // allocate memery
+    checkCudaErrors(cudaMalloc((void**)&work, sizeof(double) * lwork));
+    // compute eigenvalues and eigenvectors.
+    cusolverErrcheck(cusolverDnDsyevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n, A, lda, W, work, lwork, devInfo));
+
+    checkCudaErrors(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
+    assert(0 == info_gpu);
+    checkCudaErrors(cudaFree(work));
+    checkCudaErrors(cudaFree(devInfo));
+}
+
+static inline
 void xheevd_wrapper (
         const cublasFillMode_t& uplo,
         const int& n,
@@ -192,46 +250,53 @@ void xheevd_wrapper (
     checkCudaErrors(cudaFree(devInfo));
 }
 
-template <typename FPTYPE>
-struct dngvd_op<FPTYPE, psi::DEVICE_GPU> {
+template <typename T>
+struct dngvd_op<T, psi::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
-            const psi::DEVICE_GPU *d,
-            const int nstart,
-            const int ldh,
-            const std::complex<FPTYPE> *A, // hcc
-            const std::complex<FPTYPE> *B, // scc
-            FPTYPE *W, // eigenvalue
-            std::complex<FPTYPE> *V)
+        const psi::DEVICE_GPU* d,
+        const int nstart,
+        const int ldh,
+        const T* A, // hcc
+        const T* B, // scc
+        Real* W, // eigenvalue
+        T* V)
     {
         assert(nstart == ldh);
         // A to V
-        checkCudaErrors(cudaMemcpy(V, A, sizeof(std::complex<FPTYPE>) * ldh * nstart, cudaMemcpyDeviceToDevice));
+        checkCudaErrors(cudaMemcpy(V, A, sizeof(T) * ldh * nstart, cudaMemcpyDeviceToDevice));
         xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,
-                       (std::complex<FPTYPE> *)B, ldh, W);
+            (T*)B, ldh, W);
     }
 };
 
-template <typename FPTYPE>
-struct dnevx_op<FPTYPE, psi::DEVICE_GPU> {
+template <typename T>
+struct dnevx_op<T, psi::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(
-            const psi::DEVICE_GPU *d,
-            const int nstart,
-            const int ldh,
-            const std::complex<FPTYPE> *A, // hcc
-            const int m,
-            FPTYPE *W, // eigenvalue
-            std::complex<FPTYPE> *V)
+        const psi::DEVICE_GPU* d,
+        const int nstart,
+        const int ldh,
+        const T* A, // hcc
+        const int m,
+        Real* W, // eigenvalue
+        T* V)
     {
         assert(nstart <= ldh);
         // A to V
-        checkCudaErrors(cudaMemcpy(V, A, sizeof(std::complex<FPTYPE>) * nstart * ldh, cudaMemcpyDeviceToDevice));
+        checkCudaErrors(cudaMemcpy(V, A, sizeof(T) * nstart * ldh, cudaMemcpyDeviceToDevice));
         xheevd_wrapper(CUBLAS_FILL_MODE_LOWER, nstart, V, ldh, W);
     }
 };
 
-template struct dngvd_op<float, psi::DEVICE_GPU>;
-template struct dnevx_op<float, psi::DEVICE_GPU>;
+template struct dngvd_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct dnevx_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct dngvd_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct dnevx_op<std::complex<double>, psi::DEVICE_GPU>;
+
+#ifdef __LCAO
 template struct dngvd_op<double, psi::DEVICE_GPU>;
 template struct dnevx_op<double, psi::DEVICE_GPU>;
+#endif
 
 } // namespace hsolver

@@ -3,6 +3,7 @@
 #include <ATen/kernels/linalg_op.h>
 #include <ATen/kernels/blas_op.h>
 
+#include <array>
 #include <algorithm>
 
 namespace container {

@@ -1,6 +1,9 @@
 #include "xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 XC_Functional::XC_Functional(){}
 
@@ -41,6 +44,19 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_LDA_C_PZ);
         func_type = 1;
         use_libxc = false;
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+        {
+            if(GlobalV::NSPIN != 1)
+            {
+                ModuleBase::WARNING_QUIT("set_xc_type","paw does not support pz with spin polarization");
+            }
+            else
+            {
+                GlobalC::paw_cell.set_libpaw_xc(1,2);
+            }
+        }
+#endif
 	}
     else if (xc_func == "PWLDA")
     {
@@ -48,6 +64,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_LDA_C_PW);
         func_type = 1;
         use_libxc = false;
+#ifdef USE_PAW
+        if(GlobalV::use_paw) GlobalC::paw_cell.set_libpaw_xc(1,7);
+#endif
     }
 	else if ( xc_func == "PBE" || xc_func == "SLAPWPBXPBC") //PBX+PBC
 	{
@@ -55,6 +74,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
+#ifdef USE_PAW
+        if(GlobalV::use_paw) GlobalC::paw_cell.set_libpaw_xc(2,11);
+#endif
 	}
 	else if ( xc_func == "PBESOL") //PBX_S+PBC_S
 	{
@@ -69,6 +91,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
+#ifdef USE_PAW
+        if(GlobalV::use_paw) GlobalC::paw_cell.set_libpaw_xc(2,14);
+#endif
 	}
 	else if ( xc_func == "WC") //WC+PBC
 	{

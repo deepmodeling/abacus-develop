@@ -1,7 +1,7 @@
 name: Bug Report
 description: For users or developers to report any programming issues, such as crashes, errors, or unexpected behavior of ABACUS
 labels: [Bug Report]
-assignees: dyzheng
+assignees: [insert assignee here]
 body:
 - type: textarea
   attributes:
@@ -64,6 +64,28 @@ body:
       Add any other context about the problem here.
     placeholder: |
       Example: The issue seems to occur only when using a specific input file, which I have attached below ...
+
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers (only for developers)
+    options:
+      - label: Verify the issue is not a duplicate.
+      - label: Describe the bug.
+      - label: Steps to reproduce.
+      - label: Expected behavior.
+      - label: Error message.
+      - label: Environment details.
+      - label: Additional context.
+      - label: Assign a priority level (low, medium, high, urgent).
+      - label: Assign the issue to a team member.
+      - label: Label the issue with relevant tags.
+      - label: Identify possible related issues.
+      - label: Create a unit test or automated test to reproduce the bug (if applicable).
+      - label: Fix the bug.
+      - label: Test the fix.
+      - label: Update documentation (if necessary).
+      - label: Close the issue and inform the reporter (if applicable).
+
 - type: markdown
   attributes:
     value: >

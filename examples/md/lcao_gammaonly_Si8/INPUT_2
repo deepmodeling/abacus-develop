@@ -22,7 +22,7 @@ smearing_method        gaussian
 smearing_sigma         0.001
 
 #Parameters (5.Mixing)
-mixing_type            pulay
+mixing_type            broyden
 mixing_beta            0.3
 chg_extrap             second-order
 

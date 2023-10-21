@@ -3,11 +3,11 @@
 
 #include "diago_lapack.h"
 
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_variable.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
@@ -15,7 +15,7 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
 
-void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
+void DiagoLapack::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<std::complex<double>> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
     assert(GlobalV::NPROC == 1);
@@ -76,7 +76,7 @@ void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<std::complex<dou
     }
 }
 
-void DiagoLapack::diag(hamilt::Hamilt<double> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
+void DiagoLapack::diag(hamilt::Hamilt<std::complex<double>> *phm_in, psi::Psi<double> &psi, double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
 }

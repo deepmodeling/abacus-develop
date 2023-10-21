@@ -39,12 +39,12 @@ fxz^2                        0                       0.0002132                  
 fyz^2                        0                       0.0002132                     5.131e-05                             0                             0
 fzx^2-zy^2                        0                               0                             0                             0                             0
 fxyz                        0                               0                             0                             0                             0
-fx^3-3*xy^2                        0                       0.0003553                     8.552e-05                             0                             0
-f3yx^2-y^3                        0                       0.0003553                     8.552e-05                             0                             0
-  sum over m                                      0.001705                     0.0004105                             0                             0
-  sum over m+zeta                                 0.001705                     0.0004105                             0                             0
-Total Charge on atom:  Fe               15.93
-Total Magnetism on atom:  Fe                   (2.879, 0, 0)
+fx^3-3*xy^2                        0                       0.0003522                     8.442e-05                             0                             0
+f3yx^2-y^3                        0                       0.0003522                     8.442e-05                             0                             0
+  sum over m                                      0.001691                     0.0004052                             0                             0
+  sum over m+zeta                                 0.001691                     0.0004052                             0                             0
+Total Charge on atom:  Fe               15.95
+Total Magnetism on atom:  Fe                   (2.81, 0, 0)
 
 
 1                 Zeta of Fe                        Spin 1                        Spin 2                        Spin 3                        Spin 4
@@ -84,11 +84,11 @@ fxz^2                        0                       0.0001641                  
 fyz^2                        0                       0.0001641                    -0.0001801                             0                             0
 fzx^2-zy^2                        0                               0                             0                             0                             0
 fxyz                        0                               0                             0                             0                             0
-fx^3-3*xy^2                        0                       0.0002735                    -0.0003002                             0                             0
-f3yx^2-y^3                        0                       0.0002735                    -0.0003002                             0                             0
-  sum over m                                      0.001313                     -0.001441                             0                             0
-  sum over m+zeta                                 0.001313                     -0.001441                             0                             0
-Total Charge on atom:  Fe               16.07
-Total Magnetism on atom:  Fe                   (-2.538, 0, 0)
+fx^3-3*xy^2                        0                        0.000271                    -0.0003019                             0                             0
+f3yx^2-y^3                        0                        0.000271                    -0.0003019                             0                             0
+  sum over m                                      0.001301                     -0.001449                             0                             0
+  sum over m+zeta                                 0.001301                     -0.001449                             0                             0
+Total Charge on atom:  Fe               16.05
+Total Magnetism on atom:  Fe                   (-2.456, 0, 0)
 
 

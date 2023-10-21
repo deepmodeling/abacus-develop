@@ -1,12 +1,8 @@
-#include "unitcell.h"
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
+
 #include "module_base/parallel_common.h"
 #include "module_io/input.h"
-#ifdef __LCAO
-//#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
-
-
-#include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
+#include "unitcell.h"
 
 //==========================================================
 // Read pseudopotential according to the dir
@@ -39,10 +35,11 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 				{
 					upf.set_empty_element();			
 				}
-				//average pseudopotential if needed
-				error_ap = upf.average_p(GlobalV::soc_lambda); //added by zhengdy 2020-10-20
-			}
-		}
+                upf.set_upf_q(); // liuyu add 2023-09-21
+                // average pseudopotential if needed
+                error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
+            }
+        }
 
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
@@ -51,73 +48,73 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 
 		if(error_ap) 
 		{
-			ModuleBase::WARNING_QUIT("UnitCell::read_pseudopot","error when average the pseudopotential.");
-		}
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "error when average the pseudopotential.");
+        }
 
-		if(error==1)
-		{
-			std::cout << " Pseudopotential directory now is : " << pp_address << std::endl;
-			GlobalV::ofs_warning << " Pseudopotential directory now is : " << pp_address << std::endl;
-			ModuleBase::WARNING_QUIT("read_pseudopot","Couldn't find pseudopotential file.");
-		}
-		else if(error==2)
-		{
-			ModuleBase::WARNING_QUIT("read_pseudopot","Pseudopotential data do not match.");
-		}
-		else if(error==3)
-		{
-			ModuleBase::WARNING_QUIT("read_pseudopot","Check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave functions  \n and the corresponding non-local projectors together\n in .vwr pseudopotential file.");
-		}
+        if (error == 1)
+        {
+            std::cout << " Pseudopotential directory now is : " << pp_address << std::endl;
+            GlobalV::ofs_warning << " Pseudopotential directory now is : " << pp_address << std::endl;
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Couldn't find pseudopotential file.");
+        }
+        else if (error == 2)
+        {
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Pseudopotential data do not match.");
+        }
+        else if (error == 3)
+        {
+            ModuleBase::WARNING_QUIT(
+                "UnitCell::read_cell_pseudopots",
+                "Check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave "
+                "functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n "
+                "unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave "
+                "functions  \n and the corresponding non-local projectors together\n in .vwr pseudopotential file.");
+        }
+        else if (error == 4)
+        {
+            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Unknown pseudopotential type.");
+        }
 
-//xiaohui add 2015-03-24
-#ifdef __MPI
-		Parallel_Common::bcast_bool(upf.functional_error);
-#endif
-		//xiaohui add 2015-03-24
+        if (GlobalV::MY_RANK == 0)
+        {
+            atoms[i].ncpp.set_pseudo(upf);
 
-		if(GlobalV::MY_RANK==0)
-		{
-//			upf.print_pseudo_upf( ofs );
-			atoms[i].ncpp.set_pseudo_nc( upf );
+            log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
+            ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", atoms[i].ncpp.pp_type);
+            ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
+            ModuleBase::GlobalFunc::OUT(log, "nonlocal core correction", atoms[i].ncpp.nlcc);
+            // ModuleBase::GlobalFunc::OUT(log, "spin orbital", atoms[i].has_so);
+            ModuleBase::GlobalFunc::OUT(log, "valence electrons", atoms[i].ncpp.zv);
+            ModuleBase::GlobalFunc::OUT(log, "lmax", atoms[i].ncpp.lmax);
+            ModuleBase::GlobalFunc::OUT(log, "number of zeta", atoms[i].ncpp.nchi);
+            ModuleBase::GlobalFunc::OUT(log, "number of projectors", atoms[i].ncpp.nbeta);
+            for (int ib = 0; ib < atoms[i].ncpp.nbeta; ib++)
+            {
+                ModuleBase::GlobalFunc::OUT(log, "L of projector", atoms[i].ncpp.lll[ib]);
+            }
+            //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
+            if (GlobalV::DFT_FUNCTIONAL != "default")
+            {
+                std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
+                transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
+                if (xc_func1 != atoms[i].ncpp.xc_func)
+                {
+                    std::cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                    std::cout << " dft_functional in pseudopot file is: " << atoms[i].ncpp.xc_func << std::endl;
+                    std::cout << " Please make sure this is what you need" << std::endl;
+                    GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                    GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << atoms[i].ncpp.xc_func
+                                         << std::endl;
+                    GlobalV::ofs_warning << " Please make sure this is what you need" << std::endl;
 
-			log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
-			ModuleBase::GlobalFunc::OUT(log,"pseudopotential type",atoms[i].ncpp.pp_type);
-			ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
-			ModuleBase::GlobalFunc::OUT(log,"nonlocal core correction", atoms[i].ncpp.nlcc);
-//			ModuleBase::GlobalFunc::OUT(log,"spin orbital",atoms[i].has_so);
-			ModuleBase::GlobalFunc::OUT(log,"valence electrons", atoms[i].ncpp.zv);
-			ModuleBase::GlobalFunc::OUT(log,"lmax", atoms[i].ncpp.lmax);
-			ModuleBase::GlobalFunc::OUT(log,"number of zeta", atoms[i].ncpp.nchi);
-			ModuleBase::GlobalFunc::OUT(log,"number of projectors", atoms[i].ncpp.nbeta);
-			for(int ib=0; ib<atoms[i].ncpp.nbeta; ib++)
-			{
-				ModuleBase::GlobalFunc::OUT(log,"L of projector", atoms[i].ncpp.lll[ib]);
-			}
-//			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
-		}
-		if(upf.functional_error == 1)
-		{
-			std::cout << "In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file" << std::endl;
-			std::cout << "Please make sure this is what you need" << std::endl;
-			atoms[i].ncpp.xc_func = GlobalV::DFT_FUNCTIONAL;
-			transform(atoms[i].ncpp.xc_func.begin(), atoms[i].ncpp.xc_func.end(), atoms[i].ncpp.xc_func.begin(), (::toupper));
-			if(GlobalV::MY_RANK==0)
-			{
-				log << "\n In Pseudopot_upf::read_pseudo_header : dft_functional from INPUT does not match that in pseudopot file" << std::endl;
-				log << " Please make sure this is what you need" << std::endl;
-				log << " XC functional updated to : " << GlobalV::DFT_FUNCTIONAL << std::endl;
-				ModuleBase::GlobalFunc::OUT(log,"exchange-correlation functional", atoms[i].ncpp.xc_func);
-			}
-		}
-			
-		//atoms[i].print_pseudo_us(ofs);
-	}
-
-//	if(GlobalV::MY_RANK==0)
-//	{
-//		ofs.close();
-//	}
-	return;
+                    atoms[i].ncpp.xc_func = xc_func1;
+                    log << " XC functional updated to : " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                    ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
+                }
+            }
+        }
+    }
+    return;
 }
 
 

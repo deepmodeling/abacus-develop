@@ -2,6 +2,7 @@ remove_definitions(-D__DEEPKS)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
+remove_definitions(-DUSE_PAW)
 
 find_program(BASH bash)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -17,7 +18,7 @@ list(APPEND cell_simple_srcs
     ../read_cell_pseudopots.cpp
     ../atom_spec.cpp
     ../atom_pseudo.cpp
-    ../pseudo_nc.cpp
+    ../pseudo.cpp
     ../read_pp.cpp
     ../read_pp_upf201.cpp
     ../read_pp_upf100.cpp
@@ -37,21 +38,21 @@ AddTest(
 AddTest(
   TARGET cell_pseudo_nc
   LIBS ${math_libs} base device
-  SOURCES pseudo_nc_test.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
+  SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
   	../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_pseudo
   LIBS ${math_libs} base device
-  SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
+  SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
   	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
   TARGET cell_atom_spec
   LIBS ${math_libs} base device
-  SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo_nc.cpp ../read_pp.cpp ../read_pp_upf201.cpp 
+  SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_upf201.cpp 
   	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 

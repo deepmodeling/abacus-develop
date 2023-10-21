@@ -4,8 +4,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
 {
 	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
@@ -15,8 +15,8 @@ void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name)
 {
 	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
@@ -25,8 +25,8 @@ void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
 	iar(exx_lri->Hexxs);
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
 {
 #ifdef __MPI
 		if ( GlobalC::exx_info.info_global.cal_exx )
@@ -58,22 +58,11 @@ void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_M
 			exx_lri->mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
 			if(GlobalC::exx_info.info_global.separate_loop)
 			{
-				if(GlobalC::exx_info.info_global.mixing_beta_for_loop1==1.0)
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::No);
-				else
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain)
-					                .set_mixing_beta(GlobalC::exx_info.info_global.mixing_beta_for_loop1);
+                exx_lri->mix_DMk_2D.set_mixing(nullptr);
 			}
 			else
 			{
-				if(chgmix.get_mixing_mode() == "plain")
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Plain);
-				else if(chgmix.get_mixing_mode() == "pulay")
-					exx_lri->mix_DMk_2D.set_mixing_mode(Mixing_Mode::Pulay);
-				else
-					throw std::invalid_argument(
-						"mixing_mode = " + chgmix.get_mixing_mode() + ", mix_DMk_2D unsupported.\n"
-						+ std::string(__FILE__) + " line " + std::to_string(__LINE__));
+				exx_lri->mix_DMk_2D.set_mixing(chgmix.mixing);
             }
         }
         // for exx two_level scf
@@ -81,16 +70,13 @@ void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_M
 #endif // __MPI
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter)
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && exx_lri->two_level_step)
         {
-			exx_lri->mix_DMk_2D.set_mixing_beta(chgmix.get_mixing_beta());
-			if(chgmix.get_mixing_mode() == "pulay")
-				exx_lri->mix_DMk_2D.set_coef_pulay(iter, chgmix);
 			const bool flag_restart = (iter==1) ? true : false;
 			if(GlobalV::GAMMA_ONLY_LOCAL)
 				exx_lri->mix_DMk_2D.mix(loc.dm_gamma, flag_restart);
@@ -102,8 +88,8 @@ void Exx_LRI_Interface<Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc,
     }
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
 {
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -127,9 +113,9 @@ void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, co
     }
 }
 
-template<typename Tdata>
-bool Exx_LRI_Interface<Tdata>::exx_after_converge(
-    hamilt::Hamilt<double>& hamilt,
+template<typename T, typename Tdata>
+bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
+    hamilt::Hamilt<T>& hamilt,
     LCAO_Matrix& lm,
     const Local_Orbital_Charge& loc,
     const K_Vectors& kv,
@@ -139,21 +125,37 @@ bool Exx_LRI_Interface<Tdata>::exx_after_converge(
     auto add_exx_operator = [&]() {
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
+            hamilt::HamiltLCAO<double, double>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(&hamilt);
             hamilt::Operator<double>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&lm,
-                                                                        nullptr, // no explicit call yet
-                                                                        &(lm.Hloc),
+                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>>(&lm,
+                                                                        hamilt_lcao->getHR(), 
+                                                                        &(hamilt_lcao->getHk(&lm)),
                                                                         kv);
-            hamilt.opsd->add(exx);
+            hamilt_lcao->getOperator()->add(exx);
         }
         else
         {
-            hamilt::Operator<std::complex<double>>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(&lm,
-                                                                                      nullptr, // no explicit call yet
-                                                                                      &(lm.Hloc2),
-                                                                                      kv);
-            hamilt.ops->add(exx);
+            hamilt::Operator<std::complex<double>>* exx;
+            if(GlobalV::NSPIN < 4)
+            {
+                hamilt::HamiltLCAO<std::complex<double>, double>* hamilt_lcao = 
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(&hamilt);
+                exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, double>>(&lm,
+                                                                                    hamilt_lcao->getHR(), 
+                                                                                    &(hamilt_lcao->getHk(&lm)),
+                                                                                    kv);
+                hamilt_lcao->getOperator()->add(exx);
+            }
+            else
+            {
+                hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* hamilt_lcao = 
+                    dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(&hamilt);
+                exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&lm,
+                                                                                              hamilt_lcao->getHR(), 
+                                                                                              &(hamilt_lcao->getHk(&lm)),
+                                                                                              kv);
+                hamilt_lcao->getOperator()->add(exx);
+            }
         }
     };
     

@@ -19,7 +19,7 @@ namespace hamilt
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
-template <class T, typename TR>
+template <class T>
 class NonlocalNew : public T
 {
 };
@@ -34,31 +34,23 @@ class NonlocalNew : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class NonlocalNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
+class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    NonlocalNew<OperatorLCAO<TK>, TR>(LCAO_Matrix* LM_in,
+    NonlocalNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      hamilt::HContainer<TR>* HR_in,
-                                      TK* HK_pointer_in,
+                                      hamilt::HContainer<TR>* hR_in,
+                                      std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
                                       Grid_Driver* GridD_in,
                                       const Parallel_Orbitals* paraV);
-    ~NonlocalNew<OperatorLCAO<TK>, TR>();
+    ~NonlocalNew<OperatorLCAO<TK, TR>>();
 
     /**
      * @brief contributeHR() is used to calculate the HR matrix
      * <phi_{\mu, 0}|beta_p1>D_{p1, p2}<beta_p2|phi_{\nu, R}>
      */
     virtual void contributeHR() override;
-
-    /**
-     * @brief contributeHk() is used to calculate the HK matrix
-     * <phi_{\mu, k}|beta_p1>D_{p1, p2}<beta_p2|phi_{\nu, k}> = \sum_{R} e^{ikR} HR
-     * in this class, VNL_R has been added into total HR, skip this step.
-     * @param ik: index of k-point
-     */
-    virtual void contributeHk(int ik) override;
 
     virtual void set_HR_fixed(void*) override;
 

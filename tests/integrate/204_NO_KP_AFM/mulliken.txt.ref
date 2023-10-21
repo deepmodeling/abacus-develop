@@ -46,7 +46,7 @@ f3yx^2-y^3                        0                        0.001208             
   sum over m                                      0.006619                      0.004121                            0.01074                 0.002497
   sum over m+zeta                                 0.006619                      0.004121                            0.01074                 0.002497
 Total Charge on atom:  Fe                  16
-Total Magnetism on atom:  Fe                3.09
+Total Magnetism on atom:  Fe               3.089
 
 
 1                 Zeta of Fe                        Spin 1                        Spin 2                           Sum                          Diff
@@ -90,7 +90,8 @@ fx^3-3*xy^2                        0                       0.0006582            
 f3yx^2-y^3                        0                       0.0007621                      0.001208                       0.00197                    -0.0004456
   sum over m                                      0.004121                      0.006618                            0.01074                -0.002496
   sum over m+zeta                                 0.004121                      0.006618                            0.01074                -0.002496
+
 Total Charge on atom:  Fe                  16
-Total Magnetism on atom:  Fe              -3.091
+Total Magnetism on atom:  Fe              -3.089
 
 

@@ -210,12 +210,12 @@ typename std::enable_if<std::is_same<
 }
 
 // Make the conj params only works for the matmul equations.
-inline Tensor einsum(const std::string& equation, const Tensor& A) {
+inline static Tensor einsum(const std::string& equation, const Tensor& A) {
     const EinsumOption& option = {};
     return std::move(op::einsum_impl(equation, option, A));
 }
 
-inline Tensor einsum(const std::string& equation, const Tensor& A, const Tensor& B, const EinsumOption& option = {}) {
+inline static Tensor einsum(const std::string& equation, const Tensor& A, const Tensor& B, const EinsumOption& option = {}) {
     return std::move(op::einsum_impl(equation, option, A, B));
 }
 

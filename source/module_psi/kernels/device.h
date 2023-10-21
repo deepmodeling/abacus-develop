@@ -28,7 +28,7 @@ namespace device {
 
 template<typename Device> AbacusDevice_t get_device_type (const Device* dev);
 
-template<typename FPTYPE> std::string get_current_precision (const std::complex<FPTYPE>* var);
+template<typename T> std::string get_current_precision(const T* var);
 
 template<typename Device> void print_device_info (const Device* dev, std::ofstream& ofs_device) {return;}
 
