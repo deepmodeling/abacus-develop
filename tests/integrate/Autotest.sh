@@ -6,6 +6,8 @@ abacus=abacus
 np=4
 # threshold with unit: eV
 threshold=0.0000001
+force_threshold=0.0001
+stress_threshold=0.001
 # check accuracy
 ca=8
 # regex of case name
@@ -15,29 +17,31 @@ sanitize=false
 
 while getopts a:n:t:c:s:r:g flag
 do
-    case "${flag}" in
-        a) abacus=${OPTARG};;
-        n) np=${OPTARG};;
+	case "${flag}" in
+		a) abacus=${OPTARG};;
+		n) np=${OPTARG};;
 		t) threshold=${OPTARG};;
 		c) ca=${OPTARG};;
 		s) sanitize=${OPTARG};;
 		r) case=${OPTARG};;
 		g) g=true;; #generate test reference
-    esac
+	esac
 done
 
 # number of OpenMP threads
 nt=$OMP_NUM_THREADS
 if [[ -z "$nt" ]]; then
-    nt=$(expr `nproc` / ${np})
-    export OMP_NUM_THREADS=${nt}
+	nt=$(expr `nproc` / ${np})
+	export OMP_NUM_THREADS=${nt}
 fi
 
 echo "-----AUTO TESTS OF ABACUS ------"
 echo "ABACUS path: $abacus"
 echo "Number of processes: $np"
 echo "Number of threads: $nt"
-echo "Test accuracy: $threshold eV"
+echo "Test accuracy totenergy: $threshold eV"
+echo "Test accuracy force: $force_threshold"
+echo "Test accuracy stress: $stress_threshold"
 echo "Check accuaracy: $ca"
 echo "Test cases: $case"
 echo "Generate reference: $g"
@@ -63,7 +67,7 @@ check_out(){
 	#------------------------------------------------------
 	if test -e "jd"; then
 		jd=`cat jd`
- 		echo "[----------] $jd"
+		 echo "[----------] $jd"
 	fi
 
 	#------------------------------------------------------
@@ -100,16 +104,30 @@ check_out(){
 		# deviation should be positively defined
 		#--------------------------------------------------
 		if [ ! -n "$deviation" ]; then
-            echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
+			echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
 			let fatal++
 			fatal_case_list+=$dir'\n'
 			break
-        else
+		else
 			if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
+				if [ $key == "totalforceref" -o $key == "totalstressref"]; then
+					if [ $key == "totalforceref" && $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ];then
+						echo -e "[WARNING   ] "\
+							"$key cal=$cal ref=$ref deviation=$deviation"
+						let failed++
+						failed_case_list+=$dir'\n'
+					elif [ $key == "totalstressref" && $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ];then
+						echo -e "[WARNING   ] "\
+							"$key cal=$cal ref=$ref deviation=$deviation"
+						let failed++
+						failed_case_list+=$dir'\n'
+					fi
+				else
 				echo -e "[WARNING   ] "\
 					"$key cal=$cal ref=$ref deviation=$deviation"
 				let failed++
 				failed_case_list+=$dir'\n'
+				fi
 				if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
 					let fatal++
 					fatal_case_list+=$dir
@@ -152,7 +170,7 @@ if [ "$sanitize" == true ]; then
 	mkdir ../html
 	echo -e "# Address Sanitizer Diagnostics\n" > ../html/README.md
 	report=$(realpath ../html/README.md)
-    export ASAN_OPTIONS="log_path=asan"
+	export ASAN_OPTIONS="log_path=asan"
 fi
 
 for dir in $testdir; do
@@ -161,11 +179,11 @@ for dir in $testdir; do
 	TIMEFORMAT='[----------] Time elapsed: %R seconds'
 	#parallel test
 	time {
-        if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
-            mpirun -np 1 $abacus > log.txt
-        else
-            mpirun -np $np $abacus > log.txt
-        fi
+		if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
+			mpirun -np 1 $abacus > log.txt
+		else
+			mpirun -np $np $abacus > log.txt
+		fi
 
 		if [ "$sanitize" == true ]; then
 			echo -e "## Test case ${dir}\n" >> ${report}
