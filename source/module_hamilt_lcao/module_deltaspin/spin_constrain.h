@@ -191,6 +191,7 @@ struct ScAtomData {
     std::vector<double> lambda;
     std::vector<double> target_mag;
     std::vector<int> constrain;
+    int mag_type;
     double target_mag_val;
     double target_mag_angle1;
     double target_mag_angle2;

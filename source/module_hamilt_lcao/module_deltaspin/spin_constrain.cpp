@@ -1,5 +1,7 @@
 #include "spin_constrain.h"
 
+#include <cmath>
+
 template<typename FPTYPE, typename Device>
 SpinConstrain<FPTYPE, Device>& SpinConstrain<FPTYPE, Device>::getScInstance() {
     static SpinConstrain<FPTYPE, Device> instance; // Guaranteed to be created and destroyed only once
@@ -232,16 +234,33 @@ void SpinConstrain<FPTYPE, Device>::set_target_mag()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
-    this->target_mag_.resize(nat);
+    this->target_mag_.resize(nat, 0.0);
     for (auto& itype_data : this->ScData) {
         int itype = itype_data.first;
         for (auto& element_data : itype_data.second) {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
-            ModuleBase::Vector3<double> mag;
-            mag.x = element_data.target_mag[0];
-            mag.y = element_data.target_mag[1];
-            mag.z = element_data.target_mag[2];
+            ModuleBase::Vector3<double> mag(0.0, 0.0, 0.0);
+            if (element_data.mag_type == 0)
+            {
+                mag.x = element_data.target_mag[0];
+                mag.y = element_data.target_mag[1];
+                mag.z = element_data.target_mag[2];
+            }
+            else if (element_data.mag_type == 1)
+            {
+                double radian_angle1 = element_data.target_mag_angle1 * M_PI / 180.0;
+                double radian_angle2 = element_data.target_mag_angle2 * M_PI / 180.0;
+                mag.x = element_data.target_mag_val * std::sin(radian_angle1) * std::cos(radian_angle2);
+                mag.y = element_data.target_mag_val * std::sin(radian_angle1) * std::sin(radian_angle2);
+                mag.z = element_data.target_mag_val * std::cos(radian_angle1);
+                if (std::abs(mag.x) < 1e-14)
+                    mag.x = 0.0;
+                if (std::abs(mag.y) < 1e-14)
+                    mag.y = 0.0;
+                if (std::abs(mag.z) < 1e-14)
+                    mag.z = 0.0;
+            }
             this->target_mag_[iat] = mag;
         }
     }

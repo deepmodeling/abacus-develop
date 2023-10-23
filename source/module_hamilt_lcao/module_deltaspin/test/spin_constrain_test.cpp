@@ -289,3 +289,69 @@ TYPED_TEST(SpinConstrainTest, SetScDecayGrad)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("decay_grad_in size mismatch with ntype"));
 }
+
+TYPED_TEST(SpinConstrainTest, SetTargetMagType1)
+{
+    std::map<int, int> atomCounts = {
+        {0, 1},
+        {1, 5}
+    };
+    this->sc.clear_atomCounts();
+    this->sc.clear_orbitalCounts();
+    this->sc.set_atomCounts(atomCounts);
+    std::map<int, int> orbitalCounts = {
+        {0, 1},
+        {1, 1}
+    };
+    this->sc.set_orbitalCounts(orbitalCounts);
+    this->sc.clear_ScData();
+    this->sc.Set_ScData_From_Json("./support/sc_f2.json");
+    // set target mag type 1
+    this->sc.set_target_mag();
+    std::vector<ModuleBase::Vector3<double>> target_mag = this->sc.get_target_mag();
+    for (const auto& sc_elem: this->sc.get_ScData())
+    {
+        int itype = sc_elem.first;
+        const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
+        for (const ScAtomData& sc_data: sc_atoms)
+        {
+            int index = sc_data.index;
+            int iat = this->sc.get_iat(itype, index);
+            double mag_x = sc_data.target_mag_val * std::sin(sc_data.target_mag_angle1 * M_PI / 180)
+                           * std::cos(sc_data.target_mag_angle2 * M_PI / 180);
+            double mag_y = sc_data.target_mag_val * std::sin(sc_data.target_mag_angle1 * M_PI / 180)
+                           * std::sin(sc_data.target_mag_angle2 * M_PI / 180);
+            double mag_z = sc_data.target_mag_val * std::cos(sc_data.target_mag_angle1 * M_PI / 180);
+            if (std::abs(mag_x) < 1e-14)
+                mag_x = 0.0;
+            if (std::abs(mag_y) < 1e-14)
+                mag_y = 0.0;
+            if (std::abs(mag_z) < 1e-14)
+                mag_z = 0.0;
+            EXPECT_DOUBLE_EQ(mag_x, target_mag[iat].x);
+            EXPECT_DOUBLE_EQ(mag_y, target_mag[iat].y);
+            EXPECT_DOUBLE_EQ(mag_z, target_mag[iat].z);
+        }
+    }
+    for (int iat = 0; iat < this->sc.get_nat(); iat++)
+    {
+        if (iat == 1)
+        {
+            EXPECT_DOUBLE_EQ(target_mag[iat].x, 1.0);
+            EXPECT_DOUBLE_EQ(target_mag[iat].y, 0.0);
+            EXPECT_DOUBLE_EQ(target_mag[iat].z, 0.0);
+        }
+        else if (iat == 5)
+        {
+            EXPECT_DOUBLE_EQ(target_mag[iat].x, 0.0);
+            EXPECT_DOUBLE_EQ(target_mag[iat].y, 1.5);
+            EXPECT_DOUBLE_EQ(target_mag[iat].z, 0.0);
+        }
+        else
+        {
+            EXPECT_DOUBLE_EQ(target_mag[iat].x, 0.0);
+            EXPECT_DOUBLE_EQ(target_mag[iat].y, 0.0);
+            EXPECT_DOUBLE_EQ(target_mag[iat].z, 0.0);
+        }
+    }
+}

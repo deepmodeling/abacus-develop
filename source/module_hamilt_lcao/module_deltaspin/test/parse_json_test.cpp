@@ -55,7 +55,8 @@ TEST_F(SpinConstrainTest, ScDataFormat1)
 				EXPECT_EQ(sc_data.constrain[0], 0);
 				EXPECT_EQ(sc_data.constrain[1], 0);
 				EXPECT_EQ(sc_data.constrain[2], 1);
-			}
+                EXPECT_EQ(sc_data.mag_type, 0);
+            }
         }
 	}
 }
@@ -78,8 +79,9 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
 				EXPECT_DOUBLE_EQ(sc_data.lambda[1],0.4);
 				EXPECT_DOUBLE_EQ(sc_data.lambda[2],0.5);
 				EXPECT_DOUBLE_EQ(sc_data.target_mag_val,1.5);
-				EXPECT_DOUBLE_EQ(sc_data.target_mag_angle1,60.0);
-				EXPECT_DOUBLE_EQ(sc_data.target_mag_angle2,90.0);
+                EXPECT_DOUBLE_EQ(sc_data.target_mag_angle1, 90.0);
+                EXPECT_DOUBLE_EQ(sc_data.target_mag_angle2,90.0);
+                EXPECT_EQ(sc_data.mag_type, 1);
             }
         }
 	}

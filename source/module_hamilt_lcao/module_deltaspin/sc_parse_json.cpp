@@ -31,6 +31,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     int current_itype = 0;
     std::string current_element;
     double current_decay_grad = 0.0;
+    int mag_type = 0;
 
     std::regex itype_regex("\"itype\": (\\d+)");
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
@@ -80,7 +81,10 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
                         ss.ignore();
                     }
                 }
-            } else {
+                element_data.mag_type = 0;
+            }
+            else
+            {
                 if (std::regex_search(line, match, target_mag_val_regex)) {
                     element_data.target_mag_val = std::stod(match[1]);
                 }
@@ -92,6 +96,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
                 if (std::regex_search(line, match, target_mag_angle2_regex)) {
                     element_data.target_mag_angle2 = std::stod(match[1]);
                 }
+                element_data.mag_type = 1;
             }
 
             getline(file, line); // Read the following line
