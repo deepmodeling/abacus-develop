@@ -28,7 +28,7 @@ class Gint_inout
         bool isforce;
         bool isstress;
         int ispin;
-        
+        bool if_symm = false;   // if true, use dsymv in gint_kernel_rho; if false, use dgemv.
 
     //output
         double** rho;
@@ -38,11 +38,12 @@ class Gint_inout
         Gint_Tools::job_type job;
 
 	// electron density and kin_r, multi-k
-        Gint_inout(double **DM_R_in, double** rho_in, Gint_Tools::job_type job_in)
+        Gint_inout(double** DM_R_in, double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
         {
             DM_R = DM_R_in;
             rho = rho_in;
             job = job_in;
+            if_symm = if_symm_in;
         }
 
 	// force, multi-k
@@ -94,11 +95,12 @@ class Gint_inout
         }
 
 	// electron density and kin_r, gamma point
-        Gint_inout(double ***DM_in, double** rho_in, Gint_Tools::job_type job_in)
+        Gint_inout(double*** DM_in, double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
         {
             DM = DM_in;
             rho = rho_in;
             job = job_in;
+            if_symm = if_symm_in;
         }
 
 	// force, gamma point
@@ -270,7 +272,7 @@ namespace Gint_Tools
 		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
 		double** psi_DM,
 		const double*const*const DM,
-		const int job);
+        const bool if_symm);
 
 	// sum_nu,R rho_mu,nu(R) psi_nu, for multi-k
     void mult_psi_DMR(
@@ -285,7 +287,7 @@ namespace Gint_Tools
 		double** psi_DMR,
         double* DMR,
         const hamilt::HContainer<double>* DM,
-		const int job);
+        const bool if_symm);
 
     // sum_nu rho_mu,nu psi_nu, for gamma point
     void mult_psi_DM_new(
@@ -301,7 +303,7 @@ namespace Gint_Tools
 		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
 		double** psi_DM,
 		const hamilt::HContainer<double>* DM,
-		const int job);
+        const bool if_symm);
 
 }
 
