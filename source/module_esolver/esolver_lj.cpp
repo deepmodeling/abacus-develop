@@ -2,12 +2,14 @@
 
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_io/output_log.h"
 
 namespace ModuleESolver
 {
 
     void ESolver_LJ::Init(Input& inp, UnitCell& ucell)
     {
+        ucell_ = &ucell;
         lj_potential = 0;
         lj_force.create(ucell.nat, 3);
         lj_virial.create(3, 3);
@@ -99,11 +101,13 @@ namespace ModuleESolver
     void ESolver_LJ::cal_Force(ModuleBase::matrix& force)
     {
         force = lj_force;
+        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "   TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
     void ESolver_LJ::cal_Stress(ModuleBase::matrix& stress)
     {
         stress = lj_virial;
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
     void ESolver_LJ::postprocess()

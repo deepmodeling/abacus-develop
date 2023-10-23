@@ -8,9 +8,9 @@ s                        0                           0.998
 s                        1                       -0.005203
   sum over m                                     -0.005203
   sum over m+zeta                                   0.9928
-px                        0                        0.007171
+pz                        0                        0.007171
+px                        0                               0
 py                        0                               0
-pz                        0                               0
   sum over m                                      0.007171
   sum over m+zeta                                 0.007171
 Total Charge on atom:  H                   1
@@ -22,9 +22,9 @@ s                        0                           0.998
 s                        1                       -0.005203
   sum over m                                     -0.005203
   sum over m+zeta                                   0.9928
-px                        0                        0.007171
+pz                        0                        0.007171
+px                        0                               0
 py                        0                               0
-pz                        0                               0
   sum over m                                      0.007171
   sum over m+zeta                                 0.007171
 Total Charge on atom:  H                   1

@@ -20,12 +20,14 @@
 
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
+#include "module_io/output_log.h"
 
 namespace ModuleESolver
 {
 
     void ESolver_DP::Init(Input& inp, UnitCell& ucell)
     {
+        ucell_ = &ucell;
         dp_potential = 0;
         dp_force.create(ucell.nat, 3);
         dp_virial.create(3, 3);
@@ -128,11 +130,13 @@ namespace ModuleESolver
     void ESolver_DP::cal_Force(ModuleBase::matrix& force)
     {
         force = dp_force;
+        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "   TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
     void ESolver_DP::cal_Stress(ModuleBase::matrix& stress)
     {
         stress = dp_virial;
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
     void ESolver_DP::postprocess()
