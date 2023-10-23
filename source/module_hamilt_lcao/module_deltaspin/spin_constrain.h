@@ -149,6 +149,8 @@ public:
     const std::vector<double>& get_decay_grad();
     /// set decay_grad from variable
     void set_decay_grad(const double* decay_grad_in, int ntype_in);
+    /// set decay grad switch
+    void set_decay_grad_switch(bool decay_grad_switch_in);
 
   private:
     SpinConstrain(){};                               // Private constructor

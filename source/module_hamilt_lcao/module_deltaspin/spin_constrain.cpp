@@ -17,7 +17,6 @@ double SpinConstrain<FPTYPE, Device>::cal_escon()
         this->escon_ += this->lambda_[iat].y * this->Mi_[iat].y;
         this->escon_ += this->lambda_[iat].z * this->Mi_[iat].z;
     }
-    //std::cout << "this->escon_ " << this->escon_ << std::endl;
     return this->escon_;
 }
 
@@ -355,10 +354,19 @@ void SpinConstrain<FPTYPE, Device>::zero_Mi()
 }
 
 /// get grad_decay
+/// this function can only be called by the root process because only
+/// root process reads the ScDecayGrad from json file
 template <typename FPTYPE, typename Device>
 double SpinConstrain<FPTYPE, Device>::get_decay_grad(int itype)
 {
     return this->ScDecayGrad[itype];
+}
+
+/// set decay_grad_switch_
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_decay_grad_switch(bool decay_grad_switch_in)
+{
+    this->decay_grad_switch_ = decay_grad_switch_in;
 }
 
 /// set grad_decy
