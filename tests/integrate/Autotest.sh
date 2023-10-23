@@ -123,10 +123,10 @@ check_out(){
 						failed_case_list+=$dir'\n'
 					fi
 				else
-				echo -e "[WARNING   ] "\
-					"$key cal=$cal ref=$ref deviation=$deviation"
-				let failed++
-				failed_case_list+=$dir'\n'
+					echo -e "[WARNING   ] "\
+						"$key cal=$cal ref=$ref deviation=$deviation"
+					let failed++
+					failed_case_list+=$dir'\n'
 				fi
 				if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
 					let fatal++
