@@ -4,8 +4,9 @@
 #include "module_base/global_function.h"
 #include <algorithm>
 
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2)
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(std::complex<double>* h_lambda,
+                                                                        const std::vector<std::complex<double>>& Sloc2)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
@@ -40,30 +41,45 @@ void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda,
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
 						    {
                                 icc = mu + nu * pv->nrow;
+                                if (iwt1 % 2 == 0)
+                                {
+                                    h_lambda[icc] = (iwt2 % 2 == 0)
+                                                        ? -Sloc2[icc] * this->lambda_[iat2][2]
+                                                        : -Sloc2[icc + 1]
+                                                              * (this->lambda_[iat2][0]
+                                                                 + this->lambda_[iat2][1] * std::complex<double>(0, 1));
+                                }
+                                else
+                                {
+                                    h_lambda[icc]
+                                        = (iwt2 % 2 == 0)
+                                              ? -Sloc2[icc - 1]
+                                                    * (this->lambda_[iat2][0] - this->lambda_[iat2][1] * std::complex<double>(0, 1))
+                                              : -Sloc2[icc] * (-this->lambda_[iat2][2]);
+                                }
                             }
                             else
                             {
                                 icc = mu * pv->ncol + nu;
-                            }
-                            if (iwt1 % 2 == 0)
-                            {
-                                h_lambda[icc]
-                                    = (iwt2 % 2 == 0)
-                                          ? -Sloc2[icc] * lambda_[iat2][2]
-                                          : -Sloc2[icc + 1]
-                                                * (lambda_[iat2][0] + lambda_[iat2][1] * std::complex<double>(0, 1));
-                            }
-                            else
-                            {
-                                h_lambda[icc]
-                                    = (iwt2 % 2 == 0)
-                                          ? -Sloc2[icc - 1]
-                                                * (lambda_[iat2][0] - lambda_[iat2][1] * std::complex<double>(0, 1))
-                                          : -Sloc2[icc] * (-lambda_[iat2][2]);
+                                if (iwt1 % 2 == 0)
+                                {
+                                    h_lambda[icc] = (iwt2 % 2 == 0)
+                                                        ? -Sloc2[icc] * this->lambda_[iat1][2]
+                                                        : -Sloc2[icc - 1]
+                                                              * (this->lambda_[iat1][0]
+                                                                 + this->lambda_[iat1][1] * std::complex<double>(0, 1));
+                                }
+                                else
+                                {
+                                    h_lambda[icc]
+                                        = (iwt2 % 2 == 0)
+                                              ? -Sloc2[icc + 1]
+                                                    * (this->lambda_[iat1][0] - this->lambda_[iat1][1] * std::complex<double>(0, 1))
+                                              : -Sloc2[icc] * (-this->lambda_[iat1][2]);
+                                }
                             }
                         }
                     }
-
                 }
             }
         }
@@ -71,6 +87,3 @@ void SpinConstrain<FPTYPE, Device>::cal_h_lambda(std::complex<double>* h_lambda,
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
     return;
 }
-
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;

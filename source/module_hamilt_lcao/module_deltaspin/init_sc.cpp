@@ -2,8 +2,8 @@
 #include "module_base/parallel_common.h"
 
 // init sc
-template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::init_sc(const UnitCell& ucell,
                                             int NPOL,
                                             std::string sc_file,
                                             Parallel_Orbitals* ParaV_in,
@@ -17,9 +17,9 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
                                             K_Vectors kv_in,
                                             std::string KS_SOLVER_in,
                                             LCAO_Matrix* LM_in,
-                                            hsolver::HSolver<FPTYPE, Device>* phsol_in,
-                                            hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
-                                            psi::Psi<FPTYPE>* psi_in,
+                                            hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>* phsol_in,
+                                            hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* p_hamilt_in,
+                                            psi::Psi<std::complex<double>>* psi_in,
                                             elecstate::ElecState* pelec_in)
 {
     // input parameters for lambda loop
@@ -113,6 +113,3 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
         delete[] decay_grad;
     }
 }
-
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;

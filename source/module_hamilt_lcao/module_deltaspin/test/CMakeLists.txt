@@ -18,4 +18,10 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES spin_constrain_test.cpp ../spin_constrain.cpp ../sc_parse_json.cpp
 )
+
+AddTest(
+  TARGET deltaspin_template_helpers
+  LIBS ${math_libs} base device
+  SOURCES template_helpers_test.cpp ../spin_constrain.cpp ../template_helpers.cpp
+)
 endif() 

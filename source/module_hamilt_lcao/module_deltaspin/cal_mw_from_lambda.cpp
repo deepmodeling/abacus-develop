@@ -5,14 +5,15 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "spin_constrain.h"
 
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_mw_from_lambda(int i_step)
 {
     ModuleBase::TITLE("SpinConstrain","cal_mw_from_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
     // diagonalization without update charge
     this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);
-    elecstate::ElecStateLCAO<FPTYPE>* pelec_lcao = dynamic_cast<elecstate::ElecStateLCAO<FPTYPE>*>(this->pelec);
+    elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
+        = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
     this->pelec->calculate_weights();
     this->pelec->calEBand();
     if (this->KS_SOLVER == "genelpa" || this->KS_SOLVER == "scalapack_gvx" || this->KS_SOLVER == "lapack")
@@ -22,6 +23,3 @@ void SpinConstrain<FPTYPE, Device>::cal_mw_from_lambda(int i_step)
     this->cal_MW(i_step, this->LM, GlobalC::ucell);
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
 }
-
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;

@@ -5,8 +5,8 @@
 
 #include "basic_funcs.h"
 
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::run_lambda_loop(int outer_step)
+template<>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int outer_step)
 {
     // init controlling parameters
     int nat = this->get_nat();
@@ -263,6 +263,3 @@ CG_STOP:
     std::cout << "===============================================================================" << std::endl;
 
 }
-
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;

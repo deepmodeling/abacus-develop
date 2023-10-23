@@ -8,6 +8,7 @@ if(ENABLE_LCAO)
       basic_funcs.cpp
       lambda_loop.cpp
       cal_mw_from_lambda.cpp
+      template_helpers.cpp
   )
 
   add_library(
