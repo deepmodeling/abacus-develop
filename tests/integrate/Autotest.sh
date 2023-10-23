@@ -110,18 +110,16 @@ check_out(){
 			break
 		else
 			if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
-				if [ $key == "totalforceref" -o $key == "totalstressref" ]; then
-					if [ $key == "totalforceref" && $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ];then
-						echo -e "[WARNING   ] "\
-							"$key cal=$cal ref=$ref deviation=$deviation"
-						let failed++
-						failed_case_list+=$dir'\n'
-					elif [ $key == "totalstressref" && $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ];then
-						echo -e "[WARNING   ] "\
-							"$key cal=$cal ref=$ref deviation=$deviation"
-						let failed++
-						failed_case_list+=$dir'\n'
-					fi
+				if [ $key == "totalforceref" && $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ];then
+					echo -e "[WARNING   ] "\
+						"$key cal=$cal ref=$ref deviation=$deviation"
+					let failed++
+					failed_case_list+=$dir'\n'
+				elif [ $key == "totalstressref" && $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ];then
+					echo -e "[WARNING   ] "\
+						"$key cal=$cal ref=$ref deviation=$deviation"
+					let failed++
+					failed_case_list+=$dir'\n'
 				else
 					echo -e "[WARNING   ] "\
 						"$key cal=$cal ref=$ref deviation=$deviation"
