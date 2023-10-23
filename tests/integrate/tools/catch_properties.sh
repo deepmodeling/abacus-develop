@@ -91,7 +91,7 @@ fi
 #echo "has_stress:"$has_stress
 if ! test -z "$has_stress" && [  $has_stress == 1 ]; then
 	#grep -A6 "TOTAL-STRESS" $running_path|sed '1,4d'|sed '4,8d' >stress.txt
-    grep -A6 "TOTAL-STRESS" $running_path| awk 'NF==3' | tail -3> stress.txt
+    grep -A4 "TOTAL-STRESS" $running_path| awk 'NF==3' | tail -3> stress.txt
 	total_stress=`sum_file stress.txt`
 	rm stress.txt
 	echo "totalstressref $total_stress" >>$1
