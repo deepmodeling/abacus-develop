@@ -109,6 +109,7 @@ public:
     mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
     std::complex<double>*** vkb1_alpha;
     std::complex<double>*** vkb_alpha;
+    Structure_Factor* psf = nullptr;
 
     // other variables
     std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
@@ -181,7 +182,6 @@ public:
     std::complex<double>* z_vkb = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
-    Structure_Factor* psf = nullptr;
 
     Soc soc;
 

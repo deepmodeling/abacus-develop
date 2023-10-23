@@ -1,11 +1,13 @@
 #ifndef ELECSTATEPW_H
 #define ELECSTATEPW_H
 
+#include <module_base/macros.h>
+
 #include "elecstate.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
-#include <module_base/macros.h>
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 namespace elecstate
 {
@@ -16,13 +18,14 @@ class ElecStatePW : public ElecState
   private:
     using Real = typename GetTypeReal<T>::type;
   public:
-    ElecStatePW(
-      ModulePW::PW_Basis_K *wfc_basis_in, 
-      Charge* chg_in, 
-      K_Vectors *pkv_in,
-      ModulePW::PW_Basis* rhopw_in,
-      ModulePW::PW_Basis_Big* bigpw_in
-    );
+    ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
+                Charge* chg_in,
+                K_Vectors* pkv_in,
+                UnitCell* ucell_in,
+                pseudopot_cell_vnl* ppcell_in,
+                ModulePW::PW_Basis* rhodpw_in,
+                ModulePW::PW_Basis* rhopw_in,
+                ModulePW::PW_Basis_Big* bigpw_in);
     // void init(Charge* chg_in):charge(chg_in){} override;
 
     ~ElecStatePW();
@@ -35,7 +38,10 @@ class ElecStatePW : public ElecState
     // void getNewRho() override;
 
   protected:
-    ModulePW::PW_Basis_K *basis;
+    ModulePW::PW_Basis* rhopw_smooth = nullptr;
+    ModulePW::PW_Basis_K* basis = nullptr;
+    UnitCell* ucell = nullptr;
+    const pseudopot_cell_vnl* ppcell = nullptr;
 
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
@@ -44,11 +50,16 @@ class ElecStatePW : public ElecState
     void parallelK();
     // calcualte rho for each k
     void rhoBandK(const psi::Psi<T, Device>& psi);
+    // add to the charge density in reciprocal space the part which is due to the US augmentation.
+    void add_usrho(const psi::Psi<T, Device>& psi);
+    // \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
+    void addusdens_g(const Real* becsum);
 
     void init_rho_data();
 
     Device * ctx = {};
     bool init_rho = false;
+    mutable T* vkb = nullptr;
     Real ** rho = nullptr, ** kin_r = nullptr;
     Real * rho_data = nullptr, * kin_r_data = nullptr;
     T * wfcr = nullptr, * wfcr_another_spin = nullptr;
@@ -64,6 +75,9 @@ class ElecStatePW : public ElecState
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
+
+    using gemv_op = hsolver::gemv_op<T, Device>;
+    using gemm_op = hsolver::gemm_op<T, Device>;
 };
 
 } // namespace elecstate

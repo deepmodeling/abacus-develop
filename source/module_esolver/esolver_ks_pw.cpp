@@ -189,7 +189,10 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
                                                             &(this->chr),
                                                             &(this->kv),
+                                                            &ucell,
+                                                            &(GlobalC::ppcell),
                                                             this->pw_rhod,
+                                                            this->pw_rho,
                                                             this->pw_big);
     }
 
@@ -250,7 +253,10 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
                                                             &(this->chr),
                                                             (K_Vectors*)(&(this->kv)),
+                                                            &ucell,
+                                                            &(GlobalC::ppcell),
                                                             this->pw_rhod,
+                                                            this->pw_rho,
                                                             this->pw_big);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);

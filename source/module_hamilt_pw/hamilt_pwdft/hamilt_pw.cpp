@@ -250,10 +250,6 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
 
             Parallel_Reduce::reduce_pool(this->becp, this->ppcell->nkb * nbands);
         }
-        // for (int i = 0; i < nbands * this->ppcell->nkb; i++)
-        // {
-        //     std::cout << "becp:  " << std::fixed << std::setprecision(10) << becp[i] << std::endl;
-        // }
 
         resmem_complex_op()(this->ctx, ps, this->ppcell->nkb * nbands, "Hamilt<PW>::ps");
         setmem_complex_op()(this->ctx, ps, 0, this->ppcell->nkb * nbands);
@@ -263,6 +259,8 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         if (GlobalV::NONCOLIN)
         {
             // spsi_nc
+            std::cout << " noncolinear in uspp is not implemented yet " << std::endl;
+            exit(0);
         }
         else
         {
@@ -312,21 +310,6 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                 }
             }
 
-            // for (int i = 0; i < nbands * this->ppcell->nkb; i++)
-            // {
-            //     std::cout << "ps:  " << std::fixed << std::setprecision(10) << ps[i] << std::endl;
-            // }
-            // std::cout << "nbands = " << nbands << std::endl;
-            // std::cout << "nrow = " << nrow << std::endl;
-            // for (int i = 0; i < this->ppcell->nkb * nbands; i++)
-            // {
-            //     std::cout << "becp:  " << std::fixed << std::setprecision(10) << becp[i] << std::endl;
-            // }
-            // for (int i = 0; i < nbands * nrow; i++)
-            // {
-            //     std::cout << "psi:  " << std::fixed << std::setprecision(10) << spsi[i] << std::endl;
-            // }
-
             if (nbands == 1)
             {
                 const int inc = 1;
@@ -362,11 +345,6 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             }
         }
     }
-    // for (int i = 0; i < nbands * nrow; i++)
-    // {
-    //     std::cout << "spsi:  " << std::fixed << std::setprecision(10) << spsi[i] << std::endl;
-    // }
-    // exit(0);
 
     delmem_complex_op()(ctx, ps);
     delmem_complex_op()(ctx, becp);
