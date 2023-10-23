@@ -259,7 +259,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         if (GlobalV::imp_sol)
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, 0);
     }
-    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "   TOTAL-FORCE (eV/Angstrom)", force, 0);
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
 
     return;
 }
