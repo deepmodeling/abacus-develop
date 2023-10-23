@@ -213,7 +213,23 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
+    if (!this->valid_group)
+    {   // select the operations that have the inverse
+        std::vector<int>invmap(this->nrotk, -1);
+        this->gmatrix_invmap(this->gmatrix, this->nrotk, invmap.data());
+        int nrotk_new = 0;
+        for (int isym = 0;isym < this->nrotk;++isym)
+        {
+            if (invmap[isym] != -1)
+            {
+                this->gmatrix[nrotk_new] = this->gmatrix[isym];
+                this->gtrans[nrotk_new] = this->gtrans[isym];
+                ++nrotk_new;
+            }
+        }
+        this->nrotk = nrotk_new;
+    }
 
     //convert gmatrix to reciprocal space
     this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
