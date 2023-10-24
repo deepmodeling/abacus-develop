@@ -21,7 +21,6 @@ public:
     void cal_Stress(ModuleBase::matrix& stress) override;
 public:
     Stochastic_WF stowf;
-    Stochastic_Iter stoiter;
 
 protected:
     virtual void beforescf(const int istep) override; 
@@ -71,34 +70,31 @@ private:
      * @return N order of Chebyshev
      */
     int set_cond_nche(const double dt, const int nbatch, const double cond_thr);
-
-    /**
-     * @brief calculate thermal current and electrical current
-     * 
-     */
-    void cal_j(const psi::Psi<std::complex<double>>& psi_in,
-               psi::Psi<std::complex<double>>& j1psi,
-               psi::Psi<std::complex<double>>& j2psi,
-               hamilt::Velocity& velop,
-               const int& start_band,
-               const int& nbands,
-               const int& npw);
     
     /**
      * @brief calculate Jmatrix  <leftv|J|rightv>
      * 
      */
     void cal_jmatrix(const psi::Psi<std::complex<double>>& leftv,
-                     const psi::Psi<std::complex<double>>& rightv,
+                     psi::Psi<std::complex<double>>& rightv,
+#ifdef __MPI                
+                     psi::Psi<std::complex<double>>& tmppsi_all,
+                     int* nrecv_ks, int* displs_ks,
+                     int* nrecv_sto, int* displs_sto,
+#endif                      
+                     double *en,
+                     psi::Psi<std::complex<double>>& tmphpsil,
+                     psi::Psi<std::complex<double>>& tmphpsir,
                      psi::Psi<std::complex<double>>& batchj1psi,
                      psi::Psi<std::complex<double>>& batchj2psi,
+                     const int& bsize_psi,
                      ModuleBase::ComplexMatrix& j1, 
                      ModuleBase::ComplexMatrix& j2,
                      hamilt::Velocity& velop,
                      const int& ik,
                      const std::complex<double>& factor,
-                     const int bandinfo[6],
-                     const int& bsize_psi);
+                     const int bandinfo[6]
+                     );
 
 
 };
