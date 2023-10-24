@@ -2,8 +2,6 @@ name: Container
 
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
     branches:
       - develop
 
