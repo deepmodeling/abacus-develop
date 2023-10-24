@@ -13,10 +13,18 @@ target_link_libraries(
     base cell symmetry md surchem xc_
     neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
-    pthread vdw dftu hcontainer paw
+    pthread vdw dftu hcontainer
     deepks device numerical_atomic_orbitals container psi_initializer
     ${ABACUS_LINK_LIBRARIES}
 )
+
+if(ENABLE_PAW)
+  target_link_libraries(
+    test_deepks
+    paw
+  )
+endif()
+
 if(USE_ELPA)
   target_link_libraries(
       test_deepks
