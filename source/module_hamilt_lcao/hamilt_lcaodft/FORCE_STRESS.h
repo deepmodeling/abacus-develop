@@ -53,9 +53,6 @@ class Force_Stress_LCAO
     Stress_Func<double> sc_pw;
     Forces<double> f_pw;
 
-    void print_force(const std::string& name, ModuleBase::matrix& f, const bool screen, bool ry) const;
-    void printforce_total(const bool ry, const bool istestf, ModuleBase::matrix& fcs);
-
     void forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm);
 
     void calForcePwPart(ModuleBase::matrix& fvl_dvl,

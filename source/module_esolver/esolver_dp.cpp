@@ -130,7 +130,7 @@ namespace ModuleESolver
     void ESolver_DP::cal_Force(ModuleBase::matrix& force)
     {
         force = dp_force;
-        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "   TOTAL-FORCE (eV/Angstrom)", force, false);
+        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
     void ESolver_DP::cal_Stress(ModuleBase::matrix& stress)
