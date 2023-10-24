@@ -39,8 +39,6 @@ class HamiltPW : public Hamilt<T, Device>
     // used in sPhi, which are calculated in hPsi or sPhi
     const pseudopot_cell_vnl* ppcell = nullptr;
     mutable T* vkb = nullptr;
-    mutable T* becp = nullptr;
-    mutable T* ps = nullptr;
     Real* qq_nt = nullptr;
     T* qq_so = nullptr;
     const T one{1, 0};

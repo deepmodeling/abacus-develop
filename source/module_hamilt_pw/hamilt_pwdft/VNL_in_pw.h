@@ -141,7 +141,16 @@ public:
                       const int itype,
                       const double* qnorm,
                       const ModuleBase::matrix ylm,
-                      std::complex<double>* qg);
+                      std::complex<double>* qg) const;
+    template <typename FPTYPE, typename Device>
+    void radial_fft_q(Device* ctx,
+                      const int ng,
+                      const int ih,
+                      const int jh,
+                      const int itype,
+                      const FPTYPE* qnorm,
+                      const FPTYPE* ylm,
+                      std::complex<FPTYPE>* qg) const;
 
     /**
      * @brief calculate the effective coefficient matrix for non-local pseudopotential projectors

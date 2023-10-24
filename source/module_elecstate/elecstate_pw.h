@@ -53,7 +53,7 @@ class ElecStatePW : public ElecState
     // add to the charge density in reciprocal space the part which is due to the US augmentation.
     void add_usrho(const psi::Psi<T, Device>& psi);
     // \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
-    void addusdens_g(const Real* becsum);
+    void addusdens_g(const Real* becsum, T* rhog);
 
     void init_rho_data();
 

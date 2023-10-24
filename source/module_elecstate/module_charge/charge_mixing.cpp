@@ -628,7 +628,7 @@ void Charge_Mixing::high_freq_mix(std::complex<double>* data,
     {
         for (int ig = 0; ig < number; ig++)
         {
-            data[ig] += mixing_beta * (data_save[ig] - data[ig]);
+            data[ig] = data_save[ig] + mixing_beta * (data[ig] - data_save[ig]);
         }
     }
 

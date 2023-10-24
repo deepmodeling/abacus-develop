@@ -134,7 +134,6 @@ HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
     this->qq_nt = hamilt->qq_nt;
     this->qq_so = hamilt->qq_so;
     this->vkb = hamilt->vkb;
-    this->becp = hamilt->becp;
     OperatorPW<std::complex<T_in>, Device_in> * node =
             reinterpret_cast<OperatorPW<std::complex<T_in>, Device_in> *>(hamilt->ops);
 
@@ -208,10 +207,12 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
     if (GlobalV::use_uspp)
     {
+        T* becp = nullptr;
+        T* ps = nullptr;
         // psi updated, thus update <beta|psi>
         if (this->ppcell->nkb > 0)
         {
-            resmem_complex_op()(this->ctx, this->becp, nbands * this->ppcell->nkb, "Hamilt<PW>::becp");
+            resmem_complex_op()(this->ctx, becp, nbands * this->ppcell->nkb, "Hamilt<PW>::becp");
             char transa = 'C';
             char transb = 'N';
             if (nbands == 1)
@@ -227,7 +228,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           psi_in,
                           inc,
                           &this->zero,
-                          this->becp,
+                          becp,
                           inc);
             }
             else
@@ -244,18 +245,17 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           psi_in,
                           nrow,
                           &this->zero,
-                          this->becp,
+                          becp,
                           this->ppcell->nkb);
             }
 
-            Parallel_Reduce::reduce_pool(this->becp, this->ppcell->nkb * nbands);
+            Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
         }
 
         resmem_complex_op()(this->ctx, ps, this->ppcell->nkb * nbands, "Hamilt<PW>::ps");
         setmem_complex_op()(this->ctx, ps, 0, this->ppcell->nkb * nbands);
 
         // spsi = psi + sum qq <beta|psi> |beta>
-        int iat = 0;
         if (GlobalV::NONCOLIN)
         {
             // spsi_nc
@@ -286,6 +286,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     }
                     for (int ia = 0; ia < atoms->na; ia++)
                     {
+                        const int iat = GlobalC::ucell.itia2iat(it, ia);
                         gemm_op()(this->ctx,
                                   transa,
                                   transb,
@@ -300,13 +301,8 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                                   &this->zero,
                                   &ps[this->ppcell->indv_ijkb0[iat]],
                                   this->ppcell->nkb);
-                        iat++;
                     }
                     delmem_complex_op()(ctx, qqc);
-                }
-                else
-                {
-                    iat += atoms->na;
                 }
             }
 
@@ -344,10 +340,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           nrow);
             }
         }
+        delmem_complex_op()(this->ctx, ps);
+        delmem_complex_op()(this->ctx, becp);
     }
-
-    delmem_complex_op()(ctx, ps);
-    delmem_complex_op()(ctx, becp);
 
     ModuleBase::TITLE("HamiltPW", "sPsi");
 }

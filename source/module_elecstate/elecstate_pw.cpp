@@ -25,7 +25,6 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
     this->rhopw_smooth = rhopw_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->vkb = this->ppcell->template get_vkb_data<Real>();
     this->init_ks(chg_in, pkv_in, pkv_in->nks, rhodpw_in, bigpw_in);
 }
 
@@ -246,6 +245,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     const int npwx = psi.get_nbasis() / npol;
     const int nbands = psi.get_nbands() * npol;
     const int nkb = this->ppcell->nkb;
+    this->vkb = this->ppcell->template get_vkb_data<Real>();
     T* becp = nullptr;
     resmem_complex_op()(this->ctx, becp, nbands * nkb, "ElecState<PW>::becp");
     Real* becsum = nullptr;
@@ -385,16 +385,39 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                         }
                     }
                 }
+                delmem_complex_op()(this->ctx, auxk1);
+                delmem_complex_op()(this->ctx, auxk2);
+                delmem_complex_op()(this->ctx, aux_gk);
             }
         }
     }
+    delmem_complex_op()(this->ctx, becp);
+
+    // transform soft charge to recip space using smooth grids
+    T* rhog = nullptr;
+    resmem_complex_op()(this->ctx, rhog, this->charge->rhopw->npw * GlobalV::NSPIN, "ElecState<PW>::rhog");
+    setmem_complex_op()(this->ctx, rhog, 0, this->charge->rhopw->npw * GlobalV::NSPIN);
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        this->rhopw_smooth->real2recip(this->rho[is], &rhog[is * this->charge->rhopw->npw]);
+    }
 
     // \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
-    this->addusdens_g(becsum);
+    // add to the charge density in reciprocal space the part which is due to the US augmentation.
+    this->addusdens_g(becsum, rhog);
+
+    // transform back to real space using dense grids
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        this->charge->rhopw->recip2real(&rhog[is * this->charge->rhopw->npw], this->rho[is]);
+    }
+
+    delmem_var_op()(this->ctx, becsum);
+    delmem_complex_op()(this->ctx, rhog);
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::addusdens_g(const Real* becsum)
+void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
 {
     const T one{1, 0};
     const T zero{0, 0};
@@ -404,9 +427,6 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum)
     Structure_Factor* psf = this->ppcell->psf;
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
 
-    T* aux = nullptr;
-    resmem_complex_op()(this->ctx, aux, GlobalV::NSPIN * npw, "ElecState<PW>::aux");
-    setmem_complex_op()(this->ctx, aux, 0, GlobalV::NSPIN * npw);
     Real* qmod = nullptr;
     resmem_var_op()(this->ctx, qmod, npw, "ElecState<PW>::qmod");
     T* qgm = nullptr;
@@ -478,17 +498,24 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum)
                 {
                     for (int jh = ih; jh < atom->ncpp.nh; jh++)
                     {
-                        // this->ppcell->radial_fft_q(npw, ih, jh, it, qmod, ylmk0, qgm);
+                        this->ppcell->radial_fft_q(this->ctx, npw, ih, jh, it, qmod, ylmk0, qgm);
                         for (int ig = 0; ig < npw; ig++)
                         {
-                            aux[is * npw + ig] += qgm[ig] * aux2[ijh * npw + ig];
+                            rhog[is * npw + ig] += qgm[ig] * aux2[ijh * npw + ig];
                         }
                         ijh++;
                     }
                 }
             }
+            delmem_complex_op()(this->ctx, skk);
+            delmem_complex_op()(this->ctx, aux2);
+            delmem_complex_op()(this->ctx, tbecsum);
         }
     }
+
+    delmem_var_op()(this->ctx, qmod);
+    delmem_complex_op()(this->ctx, qgm);
+    delmem_var_op()(this->ctx, ylmk0);
 }
 
 template class ElecStatePW<std::complex<float>, psi::DEVICE_CPU>;

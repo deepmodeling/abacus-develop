@@ -934,7 +934,7 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
                                       const int itype,
                                       const double* qnorm,
                                       const ModuleBase::matrix ylm,
-                                      std::complex<double>* qg)
+                                      std::complex<double>* qg) const
 {
     // computes the indices which correspond to ih,jh
     const int nb = indv(itype, ih);
@@ -1011,6 +1011,97 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
                 qm1 = qnorm[ig];
             }
             qg[ig] += pref * work * ylm(lp, ig);
+        }
+    }
+}
+
+template <typename FPTYPE, typename Device>
+void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
+                                      const int ng,
+                                      const int ih,
+                                      const int jh,
+                                      const int itype,
+                                      const FPTYPE* qnorm,
+                                      const FPTYPE* ylm,
+                                      std::complex<FPTYPE>* qg) const
+{
+    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+
+    // computes the indices which correspond to ih,jh
+    const int nb = indv(itype, ih);
+    const int mb = indv(itype, jh);
+    assert(nb < nbetam);
+    assert(mb < nbetam);
+    int ijv = 0;
+    if (nb >= mb)
+    {
+        ijv = nb * (nb + 1) / 2 + mb;
+    }
+    else
+    {
+        ijv = mb * (mb + 1) / 2 + nb;
+    }
+    const int ivl = nhtolm(itype, ih);
+    const int jvl = nhtolm(itype, jh);
+
+    setmem_complex_op()(ctx, qg, 0, ng);
+
+    const double* qnorm_double = reinterpret_cast<const double*>(qnorm);
+
+    // makes the sum over the non zero LM
+    int l = -1;
+    std::complex<FPTYPE> pref(0.0, 0.0);
+    for (int lm = 0; lm < this->lpx(ivl, jvl); lm++)
+    {
+        int lp = this->lpl(ivl, jvl, lm);
+        assert(lp >= 0);
+        assert(lp < 49);
+        if (lp == 0)
+        {
+            l = 0;
+        }
+        else if (lp < 4)
+        {
+            l = 1;
+        }
+        else if (lp < 9)
+        {
+            l = 2;
+        }
+        else if (lp < 16)
+        {
+            l = 3;
+        }
+        else if (lp < 25)
+        {
+            l = 4;
+        }
+        else if (lp < 36)
+        {
+            l = 5;
+        }
+        else
+        {
+            l = 6;
+        }
+        pref = static_cast<std::complex<FPTYPE>>(pow(ModuleBase::NEG_IMAG_UNIT, l) * this->ap(lp, ivl, jvl));
+
+        double qm1 = -1.0; // any number smaller than qnorm
+        double work = 0.0;
+        for (int ig = 0; ig < ng; ig++)
+        {
+            if (std::abs(qnorm_double[ig] - qm1) > 1e-6)
+            {
+                work = ModuleBase::PolyInt::Polynomial_Interpolation(this->qrad,
+                                                                     itype,
+                                                                     l,
+                                                                     ijv,
+                                                                     GlobalV::NQXQ,
+                                                                     GlobalV::DQ,
+                                                                     qnorm_double[ig]);
+                qm1 = qnorm_double[ig];
+            }
+            qg[ig] += pref * static_cast<FPTYPE>(work) * ylm[lp * ng + ig];
         }
     }
 }
@@ -1712,4 +1803,39 @@ std::complex<double>* pseudopot_cell_vnl::get_qq_so_data() const
     template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
                                                                       int const&,
                                                                       std::complex<double>*) const;
+#endif
+
+    template void pseudopot_cell_vnl::radial_fft_q<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
+                                                                           const int,
+                                                                           const int,
+                                                                           const int,
+                                                                           const int,
+                                                                           const float*,
+                                                                           const float*,
+                                                                           std::complex<float>*) const;
+    template void pseudopot_cell_vnl::radial_fft_q<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
+                                                                            const int,
+                                                                            const int,
+                                                                            const int,
+                                                                            const int,
+                                                                            const double*,
+                                                                            const double*,
+                                                                            std::complex<double>*) const;
+#if defined(__CUDA) || defined(__ROCM)
+    template void pseudopot_cell_vnl::radial_fft_q<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
+                                                                           const int,
+                                                                           const int,
+                                                                           const int,
+                                                                           const int,
+                                                                           const float*,
+                                                                           const float*,
+                                                                           std::complex<float>*) const;
+    template void pseudopot_cell_vnl::radial_fft_q<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
+                                                                            const int,
+                                                                            const int,
+                                                                            const int,
+                                                                            const int,
+                                                                            const double*,
+                                                                            const double*,
+                                                                            std::complex<double>*) const;
 #endif
