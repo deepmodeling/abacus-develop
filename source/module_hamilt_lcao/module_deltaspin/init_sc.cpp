@@ -1,51 +1,60 @@
 #include "spin_constrain.h"
 #include "module_base/parallel_common.h"
 
-// init sc
+/// @brief  set input parameters
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::init_sc(const UnitCell& ucell,
-                                            int NPOL,
-                                            std::string sc_file,
-                                            Parallel_Orbitals* ParaV_in,
-                                            int nspin_in,
-                                            double sc_thr_in,
-                                            int nsc_in,
-                                            int nsc_min_in,
-                                            double alpha_trial_in,
-                                            double sccut_in,
-                                            bool decay_grad_switch_in,
-                                            K_Vectors kv_in,
-                                            std::string KS_SOLVER_in,
-                                            LCAO_Matrix* LM_in,
-                                            hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>* phsol_in,
-                                            hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* p_hamilt_in,
-                                            psi::Psi<std::complex<double>>* psi_in,
-                                            elecstate::ElecState* pelec_in)
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_input_parameters(double sc_thr_in,
+                                                                                int nsc_in,
+                                                                                int nsc_min_in,
+                                                                                double alpha_trial_in,
+                                                                                double sccut_in,
+                                                                                bool decay_grad_switch_in)
 {
-    // input parameters for lambda loop
     this->sc_thr_ = sc_thr_in;
     this->nsc_ = nsc_in;
     this->nsc_min_ = nsc_min_in;
+    this->alpha_trial_ = alpha_trial_in / ModuleBase::Ry_to_eV;
+    this->restrict_current_ = sccut_in / ModuleBase::Ry_to_eV;
     this->decay_grad_switch_ = decay_grad_switch_in;
-    this->alpha_trial_ = alpha_trial_in/ModuleBase::Ry_to_eV;
-    this->restrict_current_ = sccut_in/ModuleBase::Ry_to_eV;
-    // get pointer to outter pointers
+}
+
+/// @brief  set ParaV
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_ParaV(Parallel_Orbitals* ParaV_in)
+{
     this->ParaV = ParaV_in;
-    this->phsol = phsol_in;
-    this->p_hamilt = p_hamilt_in;
-    this->psi = psi_in;
-    this->pelec = pelec_in;
-    this->KS_SOLVER = KS_SOLVER_in;
-    this->kv_ = kv_in;
-    this->LM = LM_in;
-    // get nloc
     int nloc = this->ParaV->nloc;
     if (nloc <= 0)
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::init_sc", "nloc <= 0");
     }
+}
+
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_solver_parameters(
+    int nspin_in,
+    K_Vectors kv_in,
+    hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>* phsol_in,
+    hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* p_hamilt_in,
+    psi::Psi<std::complex<double>>* psi_in,
+    elecstate::ElecState* pelec_in,
+    std::string KS_SOLVER_in,
+    LCAO_Matrix* LM_in)
+{
     /// set nspin
     this->set_nspin(nspin_in);
+    this->kv_ = kv_in;
+    this->phsol = phsol_in;
+    this->p_hamilt = p_hamilt_in;
+    this->psi = psi_in;
+    this->pelec = pelec_in;
+    this->KS_SOLVER = KS_SOLVER_in;
+    this->LM = LM_in;
+}
+
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(const UnitCell& ucell, int NPOL, std::string sc_file)
+{
     /// set ScData
     this->clear_ScData();
     this->clear_atomCounts();
@@ -53,7 +62,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::init_sc(const UnitCel
     std::map<int, int> orbitalCounts = ucell.get_orbitalCounts();
     this->set_atomCounts(atomCounts);
     this->set_orbitalCounts(orbitalCounts);
-    this->set_npol(GlobalV::NPOL);
+    this->set_npol(NPOL);
     // std::cout << "nw = " << this->get_nw() << std::endl;
     ModuleBase::Vector3<double>* sc_lambda;
     ModuleBase::Vector3<double>* init_mag;
@@ -64,7 +73,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::init_sc(const UnitCel
     int ntype = this->get_ntype();
     if(GlobalV::MY_RANK == 0)
     {
-        this->Set_ScData_From_Json(GlobalV::sc_file);
+        this->Set_ScData_From_Json(sc_file);
         this->set_sc_lambda();
         this->set_target_mag();
         this->set_constrain();
@@ -112,4 +121,31 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::init_sc(const UnitCel
         delete [] constrain;
         delete[] decay_grad;
     }
+}
+
+// init sc
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::init_sc(const UnitCell& ucell,
+                                            int NPOL,
+                                            std::string sc_file,
+                                            Parallel_Orbitals* ParaV_in,
+                                            int nspin_in,
+                                            double sc_thr_in,
+                                            int nsc_in,
+                                            int nsc_min_in,
+                                            double alpha_trial_in,
+                                            double sccut_in,
+                                            bool decay_grad_switch_in,
+                                            K_Vectors kv_in,
+                                            std::string KS_SOLVER_in,
+                                            LCAO_Matrix* LM_in,
+                                            hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>* phsol_in,
+                                            hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* p_hamilt_in,
+                                            psi::Psi<std::complex<double>>* psi_in,
+                                            elecstate::ElecState* pelec_in)
+{
+    this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, decay_grad_switch_in);
+    this->set_ParaV(ParaV_in);
+    this->set_solver_parameters(nspin_in, kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in, LM_in);
+    this->bcast_ScData(ucell, NPOL, sc_file);
 }

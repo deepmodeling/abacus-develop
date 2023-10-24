@@ -58,3 +58,36 @@ void SpinConstrain<double, psi::DEVICE_CPU>::init_sc(const UnitCell& ucell,
                                             elecstate::ElecState* pelec_in)
 {
 }
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::set_input_parameters(double sc_thr_in,
+                                                                                int nsc_in,
+                                                                                int nsc_min_in,
+                                                                                double alpha_trial_in,
+                                                                                double sccut_in,
+                                                                                bool decay_grad_switch_in)
+{
+}
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::set_ParaV(Parallel_Orbitals* ParaV_in)
+{
+}
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::set_solver_parameters(
+    int nspin_in,
+    K_Vectors kv_in,
+    hsolver::HSolver<double, psi::DEVICE_CPU>* phsol_in,
+    hamilt::Hamilt<double, psi::DEVICE_CPU>* p_hamilt_in,
+    psi::Psi<double>* psi_in,
+    elecstate::ElecState* pelec_in,
+    std::string KS_SOLVER_in,
+    LCAO_Matrix* LM_in)
+{
+}
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::bcast_ScData(const UnitCell& ucell, int NPOL, std::string sc_file)
+{
+}

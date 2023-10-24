@@ -78,4 +78,8 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
                                nullptr,
                                nullptr,
                                nullptr));
+    EXPECT_NO_THROW(sc.set_input_parameters(0.0, 0, 0, 0.0, 0.0, false));
+    EXPECT_NO_THROW(sc.set_ParaV(nullptr));
+    EXPECT_NO_THROW(sc.set_solver_parameters(0, kv, nullptr, nullptr, nullptr, nullptr, "", nullptr));
+    EXPECT_NO_THROW(sc.bcast_ScData(ucell, 0, ""));
 }

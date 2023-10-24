@@ -151,6 +151,26 @@ public:
     void set_decay_grad(const double* decay_grad_in, int ntype_in);
     /// set decay grad switch
     void set_decay_grad_switch(bool decay_grad_switch_in);
+    /// set input parameters
+    void set_input_parameters(double sc_thr_in,
+                              int nsc_in,
+                              int nsc_min_in,
+                              double alpha_trial_in,
+                              double sccut_in,
+                              bool decay_grad_switch_in);
+    /// @brief set orbital parallel info
+    void set_ParaV(Parallel_Orbitals* ParaV_in);
+    /// @brief set parameters for solver
+    void set_solver_parameters(int nspin_in,
+                               K_Vectors kv_in,
+                               hsolver::HSolver<FPTYPE, Device>* phsol_in,
+                               hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+                               psi::Psi<FPTYPE>* psi_in,
+                               elecstate::ElecState* pelec_in,
+                               std::string KS_SOLVER_in,
+                               LCAO_Matrix* LM_in);
+    /// bcast sc data read from json file
+    void bcast_ScData(const UnitCell& ucell, int NPOL, std::string sc_file);
 
   private:
     SpinConstrain(){};                               // Private constructor
