@@ -17,7 +17,6 @@ list(APPEND objects
     stress_func_kin.cpp
     stress_func_loc.cpp
     stress_func_nl.cpp
-    stress_func_print.cpp
     stress_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp

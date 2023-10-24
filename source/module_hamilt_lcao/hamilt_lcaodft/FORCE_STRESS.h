@@ -102,6 +102,5 @@ class Force_Stress_LCAO
                          const Structure_Factor& sf);
 
     static double force_invalid_threshold_ev;
-    static double output_acc; // control the accuracy
 };
 #endif
