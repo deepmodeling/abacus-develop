@@ -77,7 +77,7 @@ fi
 #echo $etot
 #echo "hasforce:"$has_force
 if ! test -z "$has_force" && [ $has_force == 1 ]; then
-	nn3=`echo "$natom + 4" |bc`
+	nn3=`echo "$natom + 1" |bc`
 	#nn1=`echo "$natom + 1" |bc`
 	#nn5=`echo "$natom + 6" |bc`
 	#grep -A$nn3 "TOTAL-FORCE" $running_path|sed '1,5d'|sed ''$nn1','$nn5'd'|awk '{printf $2"\t"$3"\t"$4"\n"}' > force.txt

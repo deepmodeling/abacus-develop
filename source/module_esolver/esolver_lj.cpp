@@ -101,7 +101,7 @@ namespace ModuleESolver
     void ESolver_LJ::cal_Force(ModuleBase::matrix& force)
     {
         force = lj_force;
-        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "   TOTAL-FORCE (eV/Angstrom)", force, false);
+        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
     void ESolver_LJ::cal_Stress(ModuleBase::matrix& stress)
