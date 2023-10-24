@@ -433,5 +433,34 @@ void SpinConstrain<FPTYPE, Device>::set_decay_grad(const double* decay_grad_in, 
     }
 }
 
+/// @brief  set input parameters
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_input_parameters(double sc_thr_in,
+                                                                                int nsc_in,
+                                                                                int nsc_min_in,
+                                                                                double alpha_trial_in,
+                                                                                double sccut_in,
+                                                                                bool decay_grad_switch_in)
+{
+    this->sc_thr_ = sc_thr_in;
+    this->nsc_ = nsc_in;
+    this->nsc_min_ = nsc_min_in;
+    this->alpha_trial_ = alpha_trial_in / ModuleBase::Ry_to_eV;
+    this->restrict_current_ = sccut_in / ModuleBase::Ry_to_eV;
+    this->decay_grad_switch_ = decay_grad_switch_in;
+}
+
+/// @brief  set ParaV
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_ParaV(Parallel_Orbitals* ParaV_in)
+{
+    this->ParaV = ParaV_in;
+    int nloc = this->ParaV->nloc;
+    if (nloc <= 0)
+    {
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_ParaV", "nloc <= 0");
+    }
+}
+
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
 template class SpinConstrain<double, psi::DEVICE_CPU>;
