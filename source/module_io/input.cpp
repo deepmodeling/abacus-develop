@@ -2189,7 +2189,7 @@ bool Input::Read(const std::string &fn)
         //    Deltaspin
         //----------------------------------------------------------------------------------
         else if (strcmp("sc_mag_switch", word) == 0){
-            read_value(ifs, sc_mag_switch);
+            read_bool(ifs, sc_mag_switch);
         }
         else if (strcmp("decay_grad_switch", word) == 0){
             read_bool(ifs, decay_grad_switch);
@@ -3377,7 +3377,7 @@ void Input::Bcast()
     /**
      *  Deltaspin variables
     */
-    Parallel_Common::bcast_int(sc_mag_switch);
+    Parallel_Common::bcast_bool(sc_mag_switch);
     Parallel_Common::bcast_bool(decay_grad_switch);
     Parallel_Common::bcast_double(sc_thr);
     Parallel_Common::bcast_int(nsc);

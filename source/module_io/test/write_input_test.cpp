@@ -889,7 +889,7 @@ TEST_F(write_input, Deltaspin22)
     std::ifstream ifs("write_input_test.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(output, testing::HasSubstr("#Parameters (22.non-collinear spin-constrained DFT)"));
-    EXPECT_THAT(output, testing::HasSubstr("sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization via values at xyz; 3: via spin value and angles"));
+    EXPECT_THAT(output, testing::HasSubstr("sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization"));
     EXPECT_THAT(output, testing::HasSubstr("decay_grad_switch              0 #switch to control gradient break condition"));
     EXPECT_THAT(output, testing::HasSubstr("sc_thr                         1e-06 #Convergence criterion of spin-constrained iteration (RMS)"));
     EXPECT_THAT(output, testing::HasSubstr("nsc                            100 #Maximal number of spin-constrained iteration"));

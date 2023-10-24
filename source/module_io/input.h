@@ -563,10 +563,9 @@ class Input
     //==========================================================
     /**
      * 0: none spin-constrained DFT;
-     * 1: constrain atomic spin via values at xyz;
-     * 2: constrain atomic spin via spin value and angles
+     * 1: constrain atomic spin;
      */
-    int sc_mag_switch;
+    bool sc_mag_switch;
     bool decay_grad_switch;
     double sc_thr; // threshold for spin-constrained DFT in uB
     int nsc; // maximum number of inner lambda loop
