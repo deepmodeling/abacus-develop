@@ -21,7 +21,7 @@ namespace ModuleESolver
         void cal_Stress(ModuleBase::matrix& stress) override;
         void postprocess() override;
 
-
+      private:
         double LJ_energy(const double d);
         ModuleBase::Vector3<double> LJ_force(const double d,
             const ModuleBase::Vector3<double> dr);
@@ -35,6 +35,7 @@ namespace ModuleESolver
         double lj_potential;
         ModuleBase::matrix lj_force;
         ModuleBase::matrix lj_virial;
+        UnitCell* ucell_; ///< pointer to the unitcell information
         //---------------------------------------------------
     };
 }

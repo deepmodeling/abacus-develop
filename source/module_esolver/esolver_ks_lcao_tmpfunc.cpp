@@ -1,6 +1,9 @@
 #include "esolver_ks_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#endif
 namespace ModuleESolver
 {
     template <>

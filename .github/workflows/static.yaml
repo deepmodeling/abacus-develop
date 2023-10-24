@@ -2,8 +2,6 @@ name: Static Analysis
 
 on:
   pull_request_target:
-    paths-ignore:
-      - 'docs/**'
 
 jobs:
   clang-tidy:
