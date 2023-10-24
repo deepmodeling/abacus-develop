@@ -24,4 +24,10 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES template_helpers_test.cpp ../spin_constrain.cpp ../template_helpers.cpp
 )
+
+AddTest(
+  TARGET deltaspin_cal_h_lambda
+  LIBS ${math_libs} base device cell_info
+  SOURCES cal_h_lambda_test.cpp ../spin_constrain.cpp ../cal_h_lambda.cpp ../../../module_io/output.cpp
+)
 endif() 
