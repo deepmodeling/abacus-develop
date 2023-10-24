@@ -223,8 +223,11 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         {
             if (invmap[isym] != -1)
             {
-                this->gmatrix[nrotk_new] = this->gmatrix[isym];
-                this->gtrans[nrotk_new] = this->gtrans[isym];
+                if(nrotk_new < isym)
+                {
+                    this->gmatrix[nrotk_new] = this->gmatrix[isym];
+                    this->gtrans[nrotk_new] = this->gtrans[isym];
+                }
                 ++nrotk_new;
             }
         }
