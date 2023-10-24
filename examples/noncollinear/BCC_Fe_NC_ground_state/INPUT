@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 pseudo_dir                      ../../../tests/PP_ORB
 orbital_dir                     ../../../tests/PP_ORB
-suffix    			autotest
+suffix    			ABACUS
 calculation   			scf
 ecutwfc       			200
 scf_thr          		1.0e-5

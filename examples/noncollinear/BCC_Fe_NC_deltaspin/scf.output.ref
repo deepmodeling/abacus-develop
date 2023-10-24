@@ -1,0 +1,1525 @@
+                                                                                     
+                              ABACUS v3.4.0
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: unknown
+
+ Tue Oct 24 10:27:17 2023
+ MAKE THE DIR         : OUT.autotest/
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 50 * 50 * 50
+ UNIFORM GRID DIM(BIG)   : 10 * 10 * 10
+ DONE(0.540395   SEC) : SETUP UNITCELL
+ DONE(0.629091   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  NBASE       
+ 4       1               8           108         
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-10au   27          2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.814002   SEC) : INIT PLANEWAVE
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(4.28615    SEC) : INIT SCF
+ ITER   ETOT(eV)       EDIFF(eV)      DRHO       TIME(s)    
+ GE1    -6.825108e+03  0.000000e+00   1.631e-01  1.515e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+0.0000000000000000e+00 0.0000000000000000e+00 0.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 0.0000000000000000e+00
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.9974973682646806e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.9974973682601025e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  1 -- 1       RMS =5.7590537408223508e-01
+Step (Outer -- Inner) =  1 -- 2       RMS =5.7704502696471693e-01
+Step (Outer -- Inner) =  1 -- 3       RMS =1.3296457784193403e+00
+Step (Outer -- Inner) =  1 -- 4       RMS =1.3501950283781594e-01
+Step (Outer -- Inner) =  1 -- 5       RMS =1.3474270288971690e-01
+Step (Outer -- Inner) =  1 -- 6       RMS =1.3344218910869279e-01
+Step (Outer -- Inner) =  1 -- 7       RMS =1.3220299645896452e-01
+Step (Outer -- Inner) =  1 -- 8       RMS =1.3186977204456019e-01
+Step (Outer -- Inner) =  1 -- 9       RMS =1.2975130315380770e-01
+Step (Outer -- Inner) =  1 -- 10       RMS =7.5688474683928572e-02
+Step (Outer -- Inner) =  1 -- 11       RMS =4.0068402425900457e-02
+Step (Outer -- Inner) =  1 -- 12       RMS =4.0068276698233520e-02
+Step (Outer -- Inner) =  1 -- 13       RMS =4.0068150732238496e-02
+Step (Outer -- Inner) =  1 -- 14       RMS =4.0068009526494627e-02
+Step (Outer -- Inner) =  1 -- 15       RMS =4.0067844607592294e-02
+Step (Outer -- Inner) =  1 -- 16       RMS =4.0067643016289567e-02
+Step (Outer -- Inner) =  1 -- 17       RMS =4.0067383166712094e-02
+Step (Outer -- Inner) =  1 -- 18       RMS =4.0067025722054492e-02
+Step (Outer -- Inner) =  1 -- 19       RMS =4.0066491230759518e-02
+Step (Outer -- Inner) =  1 -- 20       RMS =4.0065595806516439e-02
+Step (Outer -- Inner) =  1 -- 21       RMS =4.0063822875748216e-02
+Step (Outer -- Inner) =  1 -- 22       RMS =4.0059203679351667e-02
+Step (Outer -- Inner) =  1 -- 23       RMS =4.0038416862081629e-02
+Step (Outer -- Inner) =  1 -- 24       RMS =3.9479588300702473e-02
+Step (Outer -- Inner) =  1 -- 25       RMS =3.7185445978827190e-02
+Step (Outer -- Inner) =  1 -- 26       RMS =3.7100915093241892e-02
+Step (Outer -- Inner) =  1 -- 27       RMS =3.1068007665398890e-02
+Step (Outer -- Inner) =  1 -- 28       RMS =2.7690423698105832e-02
+Step (Outer -- Inner) =  1 -- 29       RMS =2.7689391735506452e-02
+Step (Outer -- Inner) =  1 -- 30       RMS =2.7686956497562708e-02
+Step (Outer -- Inner) =  1 -- 31       RMS =2.7678297131722648e-02
+Step (Outer -- Inner) =  1 -- 32       RMS =2.7591178675775579e-02
+Step (Outer -- Inner) =  1 -- 33       RMS =2.4562071256881726e-02
+Step (Outer -- Inner) =  1 -- 34       RMS =2.2829748355392417e-02
+Step (Outer -- Inner) =  1 -- 35       RMS =2.2813682972888834e-02
+Step (Outer -- Inner) =  1 -- 36       RMS =2.2198704769654690e-02
+Step (Outer -- Inner) =  1 -- 37       RMS =2.0376336518669925e-02
+Step (Outer -- Inner) =  1 -- 38       RMS =2.0368341075694744e-02
+Step (Outer -- Inner) =  1 -- 39       RMS =2.0269804339411904e-02
+Step (Outer -- Inner) =  1 -- 40       RMS =1.8599168861282704e-02
+Step (Outer -- Inner) =  1 -- 41       RMS =1.7358165378688981e-02
+Step (Outer -- Inner) =  1 -- 42       RMS =1.3128169276715647e-02
+Step (Outer -- Inner) =  1 -- 43       RMS =1.0893185231097677e-02
+Step (Outer -- Inner) =  1 -- 44       RMS =1.0893049958983603e-02
+Step (Outer -- Inner) =  1 -- 45       RMS =1.0892828240418572e-02
+Step (Outer -- Inner) =  1 -- 46       RMS =1.0892408277852620e-02
+Step (Outer -- Inner) =  1 -- 47       RMS =1.0891415001081355e-02
+Step (Outer -- Inner) =  1 -- 48       RMS =1.0887885357300328e-02
+Step (Outer -- Inner) =  1 -- 49       RMS =1.0852905350281281e-02
+Step (Outer -- Inner) =  1 -- 50       RMS =9.5285673310880649e-03
+Step (Outer -- Inner) =  1 -- 51       RMS =8.7864603504832928e-03
+Step (Outer -- Inner) =  1 -- 52       RMS =8.7823952928279859e-03
+Step (Outer -- Inner) =  1 -- 53       RMS =8.7172760186388192e-03
+Step (Outer -- Inner) =  1 -- 54       RMS =8.1330663106236045e-03
+Step (Outer -- Inner) =  1 -- 55       RMS =5.3367829912398567e-03
+Step (Outer -- Inner) =  1 -- 56       RMS =3.9825441963167547e-03
+Step (Outer -- Inner) =  1 -- 57       RMS =3.9825227041940508e-03
+Step (Outer -- Inner) =  1 -- 58       RMS =3.9824934362583759e-03
+Step (Outer -- Inner) =  1 -- 59       RMS =3.9824509247597291e-03
+Step (Outer -- Inner) =  1 -- 60       RMS =3.9823834844540124e-03
+Step (Outer -- Inner) =  1 -- 61       RMS =3.9822623386701521e-03
+Step (Outer -- Inner) =  1 -- 62       RMS =3.9819994159966624e-03
+Step (Outer -- Inner) =  1 -- 63       RMS =3.9812077852354770e-03
+Step (Outer -- Inner) =  1 -- 64       RMS =3.9763183347561485e-03
+Step (Outer -- Inner) =  1 -- 65       RMS =2.8301102006765711e-03
+Step (Outer -- Inner) =  1 -- 66       RMS =1.7028383499491781e-03
+Step (Outer -- Inner) =  1 -- 67       RMS =1.7028304408922936e-03
+Step (Outer -- Inner) =  1 -- 68       RMS =1.7028200906354404e-03
+Step (Outer -- Inner) =  1 -- 69       RMS =1.7028057341959403e-03
+Step (Outer -- Inner) =  1 -- 70       RMS =1.7027842508790198e-03
+Step (Outer -- Inner) =  1 -- 71       RMS =1.7027486459282582e-03
+Step (Outer -- Inner) =  1 -- 72       RMS =1.7026802147241708e-03
+Step (Outer -- Inner) =  1 -- 73       RMS =1.7025135350883297e-03
+Step (Outer -- Inner) =  1 -- 74       RMS =1.7018799697914656e-03
+Step (Outer -- Inner) =  1 -- 75       RMS =1.6938920196285987e-03
+Step (Outer -- Inner) =  1 -- 76       RMS =1.5687985050817654e-03
+Step (Outer -- Inner) =  1 -- 77       RMS =1.4666895676722178e-03
+Step (Outer -- Inner) =  1 -- 78       RMS =1.3125050624320329e-03
+Step (Outer -- Inner) =  1 -- 79       RMS =1.2235899031121378e-03
+Step (Outer -- Inner) =  1 -- 80       RMS =1.2226328017785669e-03
+Step (Outer -- Inner) =  1 -- 81       RMS =1.1716075305974079e-03
+Step (Outer -- Inner) =  1 -- 82       RMS =1.0532722847134688e-03
+Step (Outer -- Inner) =  1 -- 83       RMS =1.0531637823117980e-03
+Step (Outer -- Inner) =  1 -- 84       RMS =1.0527529604424288e-03
+Step (Outer -- Inner) =  1 -- 85       RMS =1.0477471961016155e-03
+Step (Outer -- Inner) =  1 -- 86       RMS =9.5983463669439785e-04
+Step (Outer -- Inner) =  1 -- 87       RMS =8.9646868647116191e-04
+Step (Outer -- Inner) =  1 -- 88       RMS =5.1770219309436698e-04
+Step (Outer -- Inner) =  1 -- 89       RMS =3.5061589070614732e-04
+Step (Outer -- Inner) =  1 -- 90       RMS =3.5061452595598977e-04
+Step (Outer -- Inner) =  1 -- 91       RMS =3.5061280451035101e-04
+Step (Outer -- Inner) =  1 -- 92       RMS =3.5061051122637987e-04
+Step (Outer -- Inner) =  1 -- 93       RMS =3.5060727563344013e-04
+Step (Outer -- Inner) =  1 -- 94       RMS =3.5060231623032403e-04
+Step (Outer -- Inner) =  1 -- 95       RMS =3.5059384121071644e-04
+Step (Outer -- Inner) =  1 -- 96       RMS =3.5057679520542696e-04
+Step (Outer -- Inner) =  1 -- 97       RMS =3.5053183781060942e-04
+Step (Outer -- Inner) =  1 -- 98       RMS =3.5032917011977241e-04
+Step (Outer -- Inner) =  1 -- 99       RMS =3.4519563365943879e-04
+Step (Outer -- Inner) =  1 -- 100       RMS =3.2235100297654714e-04
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+-4.5823577586308353e-08 -7.4655055901580668e-08 1.9994951696042780e+00
+4.5829203664188446e-08 7.4664283186886431e-08 1.9993928696425587e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE2    -6.823850e+03  1.258032e+00   1.674e-01  1.333e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+7.2359334177874518e-12 1.1254350054316636e-11 -7.5613295920991752e-02
+-7.3299058318911143e-12 -1.1334993862856364e-11 -7.5613279145056361e-02
+initial spin: 
+1.4066110783818374e-07 2.1798734363129586e-07 1.9992625826207850e+00
+-1.4068643776725048e-07 -2.1802050905828024e-07 1.9995862662363459e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  2 -- 1       RMS =3.4519563365943879e-04
+Step (Outer -- Inner) =  2 -- 2       RMS =9.0082140079413807e-03
+Step (Outer -- Inner) =  2 -- 3       RMS =8.9779167381198715e-03
+Step (Outer -- Inner) =  2 -- 4       RMS =8.9271756369683607e-03
+Step (Outer -- Inner) =  2 -- 5       RMS =8.7142122818134916e-03
+Step (Outer -- Inner) =  2 -- 6       RMS =8.3874699051148943e-03
+Step (Outer -- Inner) =  2 -- 7       RMS =8.3873254062988151e-03
+Step (Outer -- Inner) =  2 -- 8       RMS =8.3870787470395353e-03
+Step (Outer -- Inner) =  2 -- 9       RMS =8.3865329661584002e-03
+Step (Outer -- Inner) =  2 -- 10       RMS =8.3845898041099640e-03
+Step (Outer -- Inner) =  2 -- 11       RMS =8.3594019586730219e-03
+Step (Outer -- Inner) =  2 -- 12       RMS =8.0594650413161380e-03
+Step (Outer -- Inner) =  2 -- 13       RMS =7.6468635137206149e-03
+Step (Outer -- Inner) =  2 -- 14       RMS =7.3670450069364731e-03
+Step (Outer -- Inner) =  2 -- 15       RMS =7.3107524012977895e-03
+Step (Outer -- Inner) =  2 -- 16       RMS =7.0076455984550137e-03
+Step (Outer -- Inner) =  2 -- 17       RMS =6.9172495803578498e-03
+Step (Outer -- Inner) =  2 -- 18       RMS =6.5681897792110927e-03
+Step (Outer -- Inner) =  2 -- 19       RMS =6.5587001979000121e-03
+Step (Outer -- Inner) =  2 -- 20       RMS =3.4225539105620043e-03
+Step (Outer -- Inner) =  2 -- 21       RMS =2.1062416511647137e-03
+Step (Outer -- Inner) =  2 -- 22       RMS =2.1062353059310862e-03
+Step (Outer -- Inner) =  2 -- 23       RMS =2.1062278048203762e-03
+Step (Outer -- Inner) =  2 -- 24       RMS =2.1062186532843992e-03
+Step (Outer -- Inner) =  2 -- 25       RMS =2.1062069530340148e-03
+Step (Outer -- Inner) =  2 -- 26       RMS =2.1061911488279104e-03
+Step (Outer -- Inner) =  2 -- 27       RMS =2.1061682397292411e-03
+Step (Outer -- Inner) =  2 -- 28       RMS =2.1061317778155297e-03
+Step (Outer -- Inner) =  2 -- 29       RMS =2.1060655040458570e-03
+Step (Outer -- Inner) =  2 -- 30       RMS =2.1059176348431278e-03
+Step (Outer -- Inner) =  2 -- 31       RMS =2.1054431238577902e-03
+Step (Outer -- Inner) =  2 -- 32       RMS =2.1018953797939917e-03
+Step (Outer -- Inner) =  2 -- 33       RMS =1.1342959385978537e-03
+Step (Outer -- Inner) =  2 -- 34       RMS =7.2420917471242862e-04
+Step (Outer -- Inner) =  2 -- 35       RMS =7.2420676573309620e-04
+Step (Outer -- Inner) =  2 -- 36       RMS =7.2420385686565491e-04
+Step (Outer -- Inner) =  2 -- 37       RMS =7.2420016893184490e-04
+Step (Outer -- Inner) =  2 -- 38       RMS =7.2419526505278426e-04
+Step (Outer -- Inner) =  2 -- 39       RMS =7.2418832419192435e-04
+Step (Outer -- Inner) =  2 -- 40       RMS =7.2417761209049147e-04
+Step (Outer -- Inner) =  2 -- 41       RMS =7.2415904591314117e-04
+Step (Outer -- Inner) =  2 -- 42       RMS =7.2412075391639988e-04
+Step (Outer -- Inner) =  2 -- 43       RMS =7.2401493009559617e-04
+Step (Outer -- Inner) =  2 -- 44       RMS =7.2348014715943923e-04
+Step (Outer -- Inner) =  2 -- 45       RMS =6.9771001287220508e-04
+Step (Outer -- Inner) =  2 -- 46       RMS =6.3368142330419170e-04
+Step (Outer -- Inner) =  2 -- 47       RMS =6.3358852492510103e-04
+Step (Outer -- Inner) =  2 -- 48       RMS =6.3314093123150437e-04
+Step (Outer -- Inner) =  2 -- 49       RMS =6.1753137327424761e-04
+Step (Outer -- Inner) =  2 -- 50       RMS =5.6736692042340592e-04
+Step (Outer -- Inner) =  2 -- 51       RMS =5.6700470240816545e-04
+Step (Outer -- Inner) =  2 -- 52       RMS =5.5769707156270033e-04
+Step (Outer -- Inner) =  2 -- 53       RMS =5.1675265648820482e-04
+Step (Outer -- Inner) =  2 -- 54       RMS =5.1458124078018156e-04
+Step (Outer -- Inner) =  2 -- 55       RMS =4.6260577191643625e-04
+Step (Outer -- Inner) =  2 -- 56       RMS =4.3118159308222162e-04
+Step (Outer -- Inner) =  2 -- 57       RMS =4.2616375080715502e-04
+Step (Outer -- Inner) =  2 -- 58       RMS =3.9712800071751623e-04
+Step (Outer -- Inner) =  2 -- 59       RMS =3.8506778628657172e-04
+Step (Outer -- Inner) =  2 -- 60       RMS =3.5012120859525490e-04
+Step (Outer -- Inner) =  2 -- 61       RMS =3.4999101213297395e-04
+Step (Outer -- Inner) =  2 -- 62       RMS =3.4859086255579748e-04
+Step (Outer -- Inner) =  2 -- 63       RMS =3.1048760008124991e-04
+Step (Outer -- Inner) =  2 -- 64       RMS =2.8835278598050997e-04
+Step (Outer -- Inner) =  2 -- 65       RMS =2.8728106118424302e-04
+Step (Outer -- Inner) =  2 -- 66       RMS =2.5583160557260111e-04
+Step (Outer -- Inner) =  2 -- 67       RMS =2.3771469716727802e-04
+Step (Outer -- Inner) =  2 -- 68       RMS =2.3721581110339570e-04
+Step (Outer -- Inner) =  2 -- 69       RMS =1.5474724031424471e-04
+Step (Outer -- Inner) =  2 -- 70       RMS =1.1512721549815370e-04
+Step (Outer -- Inner) =  2 -- 71       RMS =1.1512658916115206e-04
+Step (Outer -- Inner) =  2 -- 72       RMS =1.1512572323251226e-04
+Step (Outer -- Inner) =  2 -- 73       RMS =1.1512445443808436e-04
+Step (Outer -- Inner) =  2 -- 74       RMS =1.1512242680387780e-04
+Step (Outer -- Inner) =  2 -- 75       RMS =1.1511876600417961e-04
+Step (Outer -- Inner) =  2 -- 76       RMS =1.1511066719600401e-04
+Step (Outer -- Inner) =  2 -- 77       RMS =1.1508555129232226e-04
+Step (Outer -- Inner) =  2 -- 78       RMS =1.1491769293561781e-04
+Step (Outer -- Inner) =  2 -- 79       RMS =3.1308245452225099e-05
+Step (Outer -- Inner) =  2 -- 80       RMS =4.2451081840915273e-06
+Step (Outer -- Inner) =  2 -- 81       RMS =4.2449694425452545e-06
+Step (Outer -- Inner) =  2 -- 82       RMS =4.2447248949773914e-06
+Step (Outer -- Inner) =  2 -- 83       RMS =4.2440580020568296e-06
+Step (Outer -- Inner) =  2 -- 84       RMS =4.2371229789311685e-06
+Step (Outer -- Inner) =  2 -- 85       RMS =4.1401927357368528e-06
+Step (Outer -- Inner) =  2 -- 86       RMS =4.0424739803451861e-06
+Step (Outer -- Inner) =  2 -- 87       RMS =3.8659741535589609e-06
+Step (Outer -- Inner) =  2 -- 88       RMS =3.7486887653074831e-06
+Step (Outer -- Inner) =  2 -- 89       RMS =3.7458522061684948e-06
+Step (Outer -- Inner) =  2 -- 90       RMS =2.2430421635688340e-06
+Step (Outer -- Inner) =  2 -- 91       RMS =1.1579707813185333e-06
+Step (Outer -- Inner) =  2 -- 92       RMS =1.1579632191188932e-06
+Step (Outer -- Inner) =  2 -- 93       RMS =1.1579625183067442e-06
+Step (Outer -- Inner) =  2 -- 94       RMS =1.1579592893094597e-06
+Step (Outer -- Inner) =  2 -- 95       RMS =1.1579522624467394e-06
+Step (Outer -- Inner) =  2 -- 96       RMS =1.1579398958987807e-06
+Step (Outer -- Inner) =  2 -- 97       RMS =1.1579270314330851e-06
+Step (Outer -- Inner) =  2 -- 98       RMS =1.1579167604174600e-06
+Step (Outer -- Inner) =  2 -- 99       RMS =1.1578784836811040e-06
+Step (Outer -- Inner) =  2 -- 100       RMS =1.1578157697836601e-06
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000021042522329e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000019014065007e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE3    -6.826311e+03  -2.460679e+00  1.692e-01  1.245e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.5799021686771267e-14 1.0646882322320290e-15 -7.6403145897781050e-02
+2.4549482670362245e-14 2.0388677270443689e-14 -7.6403145901067032e-02
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000020836662102e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000019241701126e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  3 -- 1       RMS =1.1578784836811040e-06
+Step (Outer -- Inner) =  3 -- 2       RMS =1.0558405199028040e+00
+Step (Outer -- Inner) =  3 -- 3       RMS =1.4735632090659886e-01
+Step (Outer -- Inner) =  3 -- 4       RMS =1.4416708479055432e-01
+Step (Outer -- Inner) =  3 -- 5       RMS =1.4416488626461152e-01
+Step (Outer -- Inner) =  3 -- 6       RMS =1.4416196602848086e-01
+Step (Outer -- Inner) =  3 -- 7       RMS =1.4415719701219545e-01
+Step (Outer -- Inner) =  3 -- 8       RMS =1.4414650097910989e-01
+Step (Outer -- Inner) =  3 -- 9       RMS =1.4410309554244849e-01
+Step (Outer -- Inner) =  3 -- 10       RMS =1.4288311959469391e-01
+Step (Outer -- Inner) =  3 -- 11       RMS =1.3861095736899931e-01
+Step (Outer -- Inner) =  3 -- 12       RMS =1.3851066748272800e-01
+Step (Outer -- Inner) =  3 -- 13       RMS =9.5025436002110025e-02
+Step (Outer -- Inner) =  3 -- 14       RMS =5.8270751788398252e-02
+Step (Outer -- Inner) =  3 -- 15       RMS =5.8270612606519570e-02
+Step (Outer -- Inner) =  3 -- 16       RMS =5.8270440754112883e-02
+Step (Outer -- Inner) =  3 -- 17       RMS =5.8270237722041457e-02
+Step (Outer -- Inner) =  3 -- 18       RMS =5.8269988006389391e-02
+Step (Outer -- Inner) =  3 -- 19       RMS =5.8269666111607443e-02
+Step (Outer -- Inner) =  3 -- 20       RMS =5.8269226632103523e-02
+Step (Outer -- Inner) =  3 -- 21       RMS =5.8268581072032637e-02
+Step (Outer -- Inner) =  3 -- 22       RMS =5.8267535021266796e-02
+Step (Outer -- Inner) =  3 -- 23       RMS =5.8265584302474006e-02
+Step (Outer -- Inner) =  3 -- 24       RMS =5.8261048603015321e-02
+Step (Outer -- Inner) =  3 -- 25       RMS =5.8245281351396221e-02
+Step (Outer -- Inner) =  3 -- 26       RMS =5.8096009219218009e-02
+Step (Outer -- Inner) =  3 -- 27       RMS =5.1215351873580645e-02
+Step (Outer -- Inner) =  3 -- 28       RMS =4.7296544514819329e-02
+Step (Outer -- Inner) =  3 -- 29       RMS =4.7288521315360765e-02
+Step (Outer -- Inner) =  3 -- 30       RMS =4.7241631865622392e-02
+Step (Outer -- Inner) =  3 -- 31       RMS =4.0647068225688719e-02
+Step (Outer -- Inner) =  3 -- 32       RMS =3.1611672317771969e-02
+Step (Outer -- Inner) =  3 -- 33       RMS =3.1611427443545288e-02
+Step (Outer -- Inner) =  3 -- 34       RMS =3.1611065713712930e-02
+Step (Outer -- Inner) =  3 -- 35       RMS =3.1610474191887866e-02
+Step (Outer -- Inner) =  3 -- 36       RMS =3.1609368353251580e-02
+Step (Outer -- Inner) =  3 -- 37       RMS =3.1606820999030984e-02
+Step (Outer -- Inner) =  3 -- 38       RMS =3.1598285118035557e-02
+Step (Outer -- Inner) =  3 -- 39       RMS =3.1528352929513857e-02
+Step (Outer -- Inner) =  3 -- 40       RMS =2.2753573488788401e-02
+Step (Outer -- Inner) =  3 -- 41       RMS =1.8255678848508958e-02
+Step (Outer -- Inner) =  3 -- 42       RMS =1.8255525533686034e-02
+Step (Outer -- Inner) =  3 -- 43       RMS =1.8255293359234915e-02
+Step (Outer -- Inner) =  3 -- 44       RMS =1.8254902623749861e-02
+Step (Outer -- Inner) =  3 -- 45       RMS =1.8254139428570577e-02
+Step (Outer -- Inner) =  3 -- 46       RMS =1.8252245368021711e-02
+Step (Outer -- Inner) =  3 -- 47       RMS =1.8244847770398833e-02
+Step (Outer -- Inner) =  3 -- 48       RMS =1.8144579758037627e-02
+Step (Outer -- Inner) =  3 -- 49       RMS =1.6823967153990739e-02
+Step (Outer -- Inner) =  3 -- 50       RMS =1.5450165739631603e-02
+Step (Outer -- Inner) =  3 -- 51       RMS =1.4503071818803906e-02
+Step (Outer -- Inner) =  3 -- 52       RMS =6.0943471698386899e-03
+Step (Outer -- Inner) =  3 -- 53       RMS =1.7937187856862514e-03
+Step (Outer -- Inner) =  3 -- 54       RMS =1.7937056999076419e-03
+Step (Outer -- Inner) =  3 -- 55       RMS =1.7936892612074782e-03
+Step (Outer -- Inner) =  3 -- 56       RMS =1.7936661353561811e-03
+Step (Outer -- Inner) =  3 -- 57       RMS =1.7936288831727873e-03
+Step (Outer -- Inner) =  3 -- 58       RMS =1.7935557713298293e-03
+Step (Outer -- Inner) =  3 -- 59       RMS =1.7933561849367927e-03
+Step (Outer -- Inner) =  3 -- 60       RMS =1.7922583983602794e-03
+Step (Outer -- Inner) =  3 -- 61       RMS =1.6210267362966940e-03
+Step (Outer -- Inner) =  3 -- 62       RMS =1.3837085580144951e-03
+Step (Outer -- Inner) =  3 -- 63       RMS =1.3837002728250918e-03
+Step (Outer -- Inner) =  3 -- 64       RMS =1.3836886912390782e-03
+Step (Outer -- Inner) =  3 -- 65       RMS =1.3836711771187072e-03
+Step (Outer -- Inner) =  3 -- 66       RMS =1.3836416125324103e-03
+Step (Outer -- Inner) =  3 -- 67       RMS =1.3835829422663127e-03
+Step (Outer -- Inner) =  3 -- 68       RMS =1.3834312420347428e-03
+Step (Outer -- Inner) =  3 -- 69       RMS =1.3827715062378458e-03
+Step (Outer -- Inner) =  3 -- 70       RMS =1.3683018457277237e-03
+Step (Outer -- Inner) =  3 -- 71       RMS =1.2912067276164565e-03
+Step (Outer -- Inner) =  3 -- 72       RMS =1.2745277323594970e-03
+Step (Outer -- Inner) =  3 -- 73       RMS =1.1973111082885061e-03
+Step (Outer -- Inner) =  3 -- 74       RMS =1.1914238802594036e-03
+Step (Outer -- Inner) =  3 -- 75       RMS =1.1088932638782429e-03
+Step (Outer -- Inner) =  3 -- 76       RMS =1.0305284358724258e-03
+Step (Outer -- Inner) =  3 -- 77       RMS =9.6546785202903166e-04
+Step (Outer -- Inner) =  3 -- 78       RMS =8.7436702871283379e-04
+Step (Outer -- Inner) =  3 -- 79       RMS =8.2059648280974394e-04
+Step (Outer -- Inner) =  3 -- 80       RMS =8.1928858640745042e-04
+Step (Outer -- Inner) =  3 -- 81       RMS =3.3004934530994292e-04
+Step (Outer -- Inner) =  3 -- 82       RMS =1.6976598892828431e-04
+Step (Outer -- Inner) =  3 -- 83       RMS =1.6976549369345873e-04
+Step (Outer -- Inner) =  3 -- 84       RMS =1.6976490365740090e-04
+Step (Outer -- Inner) =  3 -- 85       RMS =1.6976420856706041e-04
+Step (Outer -- Inner) =  3 -- 86       RMS =1.6976331997598738e-04
+Step (Outer -- Inner) =  3 -- 87       RMS =1.6976212630851636e-04
+Step (Outer -- Inner) =  3 -- 88       RMS =1.6976042817661759e-04
+Step (Outer -- Inner) =  3 -- 89       RMS =1.6975772400706305e-04
+Step (Outer -- Inner) =  3 -- 90       RMS =1.6975285636897937e-04
+Step (Outer -- Inner) =  3 -- 91       RMS =1.6974201760511522e-04
+Step (Outer -- Inner) =  3 -- 92       RMS =1.6970711521337078e-04
+Step (Outer -- Inner) =  3 -- 93       RMS =1.6943992065644649e-04
+Step (Outer -- Inner) =  3 -- 94       RMS =1.1269977236899993e-04
+Step (Outer -- Inner) =  3 -- 95       RMS =8.3912252102388328e-05
+Step (Outer -- Inner) =  3 -- 96       RMS =8.3911949778529916e-05
+Step (Outer -- Inner) =  3 -- 97       RMS =8.3911557022272576e-05
+Step (Outer -- Inner) =  3 -- 98       RMS =8.3911027908188676e-05
+Step (Outer -- Inner) =  3 -- 99       RMS =8.3910284422627853e-05
+Step (Outer -- Inner) =  3 -- 100       RMS =8.3909140166868413e-05
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+1.1014149279372277e-09 0.0000000000000000e+00 1.9998599603314537e+00
+-1.1009623654665948e-09 0.0000000000000000e+00 1.9998495561431886e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE4    -6.826364e+03  -5.322426e-02  5.246e-03  1.233e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.4668902752590929e-12 -1.7920866271340619e-11 6.0353737699830878e-05
+-2.5554528758433761e-12 -1.7845564086115454e-11 6.0347353784961921e-05
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9998591737694360e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9998502883178357e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  4 -- 1       RMS =8.3910284422627853e-05
+Step (Outer -- Inner) =  4 -- 2       RMS =5.1569184434651187e-03
+Step (Outer -- Inner) =  4 -- 3       RMS =5.1437805859949563e-03
+Step (Outer -- Inner) =  4 -- 4       RMS =5.1144100295712333e-03
+Step (Outer -- Inner) =  4 -- 5       RMS =4.9995078549663037e-03
+Step (Outer -- Inner) =  4 -- 6       RMS =4.9137399627190315e-03
+Step (Outer -- Inner) =  4 -- 7       RMS =4.9132037507628127e-03
+Step (Outer -- Inner) =  4 -- 8       RMS =4.9097668162704526e-03
+Step (Outer -- Inner) =  4 -- 9       RMS =3.5122441316130272e-03
+Step (Outer -- Inner) =  4 -- 10       RMS =2.6783798156353074e-03
+Step (Outer -- Inner) =  4 -- 11       RMS =2.6783735733602338e-03
+Step (Outer -- Inner) =  4 -- 12       RMS =2.6783664704760389e-03
+Step (Outer -- Inner) =  4 -- 13       RMS =2.6783581571776936e-03
+Step (Outer -- Inner) =  4 -- 14       RMS =2.6783481026195770e-03
+Step (Outer -- Inner) =  4 -- 15       RMS =2.6783353915806694e-03
+Step (Outer -- Inner) =  4 -- 16       RMS =2.6783185001865522e-03
+Step (Outer -- Inner) =  4 -- 17       RMS =2.6782945401201889e-03
+Step (Outer -- Inner) =  4 -- 18       RMS =2.6782576143161789e-03
+Step (Outer -- Inner) =  4 -- 19       RMS =2.6781936718592069e-03
+Step (Outer -- Inner) =  4 -- 20       RMS =2.6780618843676293e-03
+Step (Outer -- Inner) =  4 -- 21       RMS =2.6776983364949435e-03
+Step (Outer -- Inner) =  4 -- 22       RMS =2.6758684238349442e-03
+Step (Outer -- Inner) =  4 -- 23       RMS =2.5894983723890367e-03
+Step (Outer -- Inner) =  4 -- 24       RMS =2.3707389116492043e-03
+Step (Outer -- Inner) =  4 -- 25       RMS =2.3703887919925295e-03
+Step (Outer -- Inner) =  4 -- 26       RMS =2.3686117618030287e-03
+Step (Outer -- Inner) =  4 -- 27       RMS =2.2845886367978000e-03
+Step (Outer -- Inner) =  4 -- 28       RMS =2.0719594478226604e-03
+Step (Outer -- Inner) =  4 -- 29       RMS =2.0716325250217556e-03
+Step (Outer -- Inner) =  4 -- 30       RMS =2.0699564879130437e-03
+Step (Outer -- Inner) =  4 -- 31       RMS =1.9883165677706651e-03
+Step (Outer -- Inner) =  4 -- 32       RMS =1.7861925341024348e-03
+Step (Outer -- Inner) =  4 -- 33       RMS =1.7859279420817638e-03
+Step (Outer -- Inner) =  4 -- 34       RMS =1.7846674431371253e-03
+Step (Outer -- Inner) =  4 -- 35       RMS =1.7450393754202948e-03
+Step (Outer -- Inner) =  4 -- 36       RMS =1.6037231352622485e-03
+Step (Outer -- Inner) =  4 -- 37       RMS =1.6018608191791651e-03
+Step (Outer -- Inner) =  4 -- 38       RMS =1.3665500831606986e-03
+Step (Outer -- Inner) =  4 -- 39       RMS =1.0366151229379431e-03
+Step (Outer -- Inner) =  4 -- 40       RMS =1.0366046213055717e-03
+Step (Outer -- Inner) =  4 -- 41       RMS =1.0365879357210502e-03
+Step (Outer -- Inner) =  4 -- 42       RMS =1.0365581442146078e-03
+Step (Outer -- Inner) =  4 -- 43       RMS =1.0364947514582086e-03
+Step (Outer -- Inner) =  4 -- 44       RMS =1.0363129819726672e-03
+Step (Outer -- Inner) =  4 -- 45       RMS =1.0353393556091404e-03
+Step (Outer -- Inner) =  4 -- 46       RMS =9.7391726299634533e-04
+Step (Outer -- Inner) =  4 -- 47       RMS =8.4609279637731100e-04
+Step (Outer -- Inner) =  4 -- 48       RMS =8.4604030201769313e-04
+Step (Outer -- Inner) =  4 -- 49       RMS =8.4589025204558251e-04
+Step (Outer -- Inner) =  4 -- 50       RMS =8.4509556910041688e-04
+Step (Outer -- Inner) =  4 -- 51       RMS =7.9937808008995258e-04
+Step (Outer -- Inner) =  4 -- 52       RMS =6.9862695302504998e-04
+Step (Outer -- Inner) =  4 -- 53       RMS =6.9856657291276017e-04
+Step (Outer -- Inner) =  4 -- 54       RMS =6.9836503646941012e-04
+Step (Outer -- Inner) =  4 -- 55       RMS =6.9676446591639639e-04
+Step (Outer -- Inner) =  4 -- 56       RMS =4.2680915506735213e-04
+Step (Outer -- Inner) =  4 -- 57       RMS =3.0512174426839723e-04
+Step (Outer -- Inner) =  4 -- 58       RMS =3.0512027045251442e-04
+Step (Outer -- Inner) =  4 -- 59       RMS =3.0511826330887736e-04
+Step (Outer -- Inner) =  4 -- 60       RMS =3.0511537996829799e-04
+Step (Outer -- Inner) =  4 -- 61       RMS =3.0511085056599533e-04
+Step (Outer -- Inner) =  4 -- 62       RMS =3.0510288816987399e-04
+Step (Outer -- Inner) =  4 -- 63       RMS =3.0508624287997171e-04
+Step (Outer -- Inner) =  4 -- 64       RMS =3.0503966400225954e-04
+Step (Outer -- Inner) =  4 -- 65       RMS =3.0480142166470418e-04
+Step (Outer -- Inner) =  4 -- 66       RMS =2.9315118333867997e-04
+Step (Outer -- Inner) =  4 -- 67       RMS =2.6437147434165087e-04
+Step (Outer -- Inner) =  4 -- 68       RMS =2.6433398820060729e-04
+Step (Outer -- Inner) =  4 -- 69       RMS =2.6415827491572106e-04
+Step (Outer -- Inner) =  4 -- 70       RMS =2.5902997965807778e-04
+Step (Outer -- Inner) =  4 -- 71       RMS =2.3932235645534797e-04
+Step (Outer -- Inner) =  4 -- 72       RMS =2.3890275914358145e-04
+Step (Outer -- Inner) =  4 -- 73       RMS =4.3465666135764643e-05
+Step (Outer -- Inner) =  4 -- 74       RMS =1.3796046841330465e-05
+Step (Outer -- Inner) =  4 -- 75       RMS =1.3795965604459153e-05
+Step (Outer -- Inner) =  4 -- 76       RMS =1.3795879486778480e-05
+Step (Outer -- Inner) =  4 -- 77       RMS =1.3795773716075039e-05
+Step (Outer -- Inner) =  4 -- 78       RMS =1.3795637926979180e-05
+Step (Outer -- Inner) =  4 -- 79       RMS =1.3795420921107555e-05
+Step (Outer -- Inner) =  4 -- 80       RMS =1.3795056575728686e-05
+Step (Outer -- Inner) =  4 -- 81       RMS =1.3794240583218497e-05
+Step (Outer -- Inner) =  4 -- 82       RMS =1.3791497719519362e-05
+Step (Outer -- Inner) =  4 -- 83       RMS =1.3764360079895807e-05
+Step (Outer -- Inner) =  4 -- 84       RMS =1.2930071111271419e-05
+Step (Outer -- Inner) =  4 -- 85       RMS =1.2402957187385669e-05
+Step (Outer -- Inner) =  4 -- 86       RMS =1.2390356642316020e-05
+Step (Outer -- Inner) =  4 -- 87       RMS =1.2166802812922267e-06
+Step (Outer -- Inner) =  4 -- 88       RMS =1.3171836520209261e-08
+Step (Outer -- Inner) =  4 -- 89       RMS =1.3125353974507513e-08
+Step (Outer -- Inner) =  4 -- 90       RMS =1.3068190645042019e-08
+Step (Outer -- Inner) =  4 -- 91       RMS =1.2601104261761235e-08
+Step (Outer -- Inner) =  4 -- 92       RMS =1.1970656428186154e-08
+Step (Outer -- Inner) =  4 -- 93       RMS =1.1970688828043539e-08
+Step (Outer -- Inner) =  4 -- 94       RMS =1.1970730631165625e-08
+Step (Outer -- Inner) =  4 -- 95       RMS =1.1970910077083770e-08
+Step (Outer -- Inner) =  4 -- 96       RMS =1.1970846703377627e-08
+Step (Outer -- Inner) =  4 -- 97       RMS =1.1960704710411159e-08
+Step (Outer -- Inner) =  4 -- 98       RMS =1.1962507969314825e-08
+Step (Outer -- Inner) =  4 -- 99       RMS =1.1893208143554303e-08
+Step (Outer -- Inner) =  4 -- 100       RMS =1.1450899121682917e-08
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999819298273e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999785475548e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE5    -6.826365e+03  -8.832507e-04  2.711e-03  1.241e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.4668902752590929e-12 -1.9631294057604410e-11 -4.2275786252101214e-04
+-2.5554528758433761e-12 -1.9705239986789442e-11 -4.2278078952507866e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999758151306e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999837586180e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  5 -- 1       RMS =1.1893208143554303e-08
+Step (Outer -- Inner) =  5 -- 2       RMS =2.0819991855348689e-03
+Step (Outer -- Inner) =  5 -- 3       RMS =1.6641446037879604e-03
+Step (Outer -- Inner) =  5 -- 4       RMS =1.6641412657923480e-03
+Step (Outer -- Inner) =  5 -- 5       RMS =1.6641378124675598e-03
+Step (Outer -- Inner) =  5 -- 6       RMS =1.6641341676568665e-03
+Step (Outer -- Inner) =  5 -- 7       RMS =1.6641301811377435e-03
+Step (Outer -- Inner) =  5 -- 8       RMS =1.6641257209894238e-03
+Step (Outer -- Inner) =  5 -- 9       RMS =1.6641205656087517e-03
+Step (Outer -- Inner) =  5 -- 10       RMS =1.6641143709051037e-03
+Step (Outer -- Inner) =  5 -- 11       RMS =1.6641066231632945e-03
+Step (Outer -- Inner) =  5 -- 12       RMS =1.6640964207183015e-03
+Step (Outer -- Inner) =  5 -- 13       RMS =1.6640821016094709e-03
+Step (Outer -- Inner) =  5 -- 14       RMS =1.6640602811980999e-03
+Step (Outer -- Inner) =  5 -- 15       RMS =1.6640230038436194e-03
+Step (Outer -- Inner) =  5 -- 16       RMS =1.6639476083531559e-03
+Step (Outer -- Inner) =  5 -- 17       RMS =1.6637456761275284e-03
+Step (Outer -- Inner) =  5 -- 18       RMS =1.6627924512922030e-03
+Step (Outer -- Inner) =  5 -- 19       RMS =1.6312730016540238e-03
+Step (Outer -- Inner) =  5 -- 20       RMS =1.5250507672728087e-03
+Step (Outer -- Inner) =  5 -- 21       RMS =1.5239922669253363e-03
+Step (Outer -- Inner) =  5 -- 22       RMS =1.4773442989150479e-03
+Step (Outer -- Inner) =  5 -- 23       RMS =1.3530793946547840e-03
+Step (Outer -- Inner) =  5 -- 24       RMS =1.3528087989646605e-03
+Step (Outer -- Inner) =  5 -- 25       RMS =1.3510834298150281e-03
+Step (Outer -- Inner) =  5 -- 26       RMS =8.0617489359365241e-04
+Step (Outer -- Inner) =  5 -- 27       RMS =3.8420551706030569e-04
+Step (Outer -- Inner) =  5 -- 28       RMS =3.8420394337448146e-04
+Step (Outer -- Inner) =  5 -- 29       RMS =3.8420196379876956e-04
+Step (Outer -- Inner) =  5 -- 30       RMS =3.8419933821868711e-04
+Step (Outer -- Inner) =  5 -- 31       RMS =3.8419557068269667e-04
+Step (Outer -- Inner) =  5 -- 32       RMS =3.8418967245650981e-04
+Step (Outer -- Inner) =  5 -- 33       RMS =3.8417907436609082e-04
+Step (Outer -- Inner) =  5 -- 34       RMS =3.8415579170784534e-04
+Step (Outer -- Inner) =  5 -- 35       RMS =3.8408256868573750e-04
+Step (Outer -- Inner) =  5 -- 36       RMS =3.8355655973250553e-04
+Step (Outer -- Inner) =  5 -- 37       RMS =1.5568734029094411e-04
+Step (Outer -- Inner) =  5 -- 38       RMS =7.9229455303735181e-05
+Step (Outer -- Inner) =  5 -- 39       RMS =7.9229227940977179e-05
+Step (Outer -- Inner) =  5 -- 40       RMS =7.9228978602202847e-05
+Step (Outer -- Inner) =  5 -- 41       RMS =7.9228677537753042e-05
+Step (Outer -- Inner) =  5 -- 42       RMS =7.9228295971480676e-05
+Step (Outer -- Inner) =  5 -- 43       RMS =7.9227803451104197e-05
+Step (Outer -- Inner) =  5 -- 44       RMS =7.9227120716720561e-05
+Step (Outer -- Inner) =  5 -- 45       RMS =7.9226083959646151e-05
+Step (Outer -- Inner) =  5 -- 46       RMS =7.9224318600046572e-05
+Step (Outer -- Inner) =  5 -- 47       RMS =7.9220731940209360e-05
+Step (Outer -- Inner) =  5 -- 48       RMS =7.9210972410375307e-05
+Step (Outer -- Inner) =  5 -- 49       RMS =7.9162691793787943e-05
+Step (Outer -- Inner) =  5 -- 50       RMS =7.6994676039716424e-05
+Step (Outer -- Inner) =  5 -- 51       RMS =7.1315894619099982e-05
+Step (Outer -- Inner) =  5 -- 52       RMS =7.1304060233599894e-05
+Step (Outer -- Inner) =  5 -- 53       RMS =7.1235154833778209e-05
+Step (Outer -- Inner) =  5 -- 54       RMS =6.1362041294325232e-05
+Step (Outer -- Inner) =  5 -- 55       RMS =4.7902886525219998e-05
+Step (Outer -- Inner) =  5 -- 56       RMS =4.7902525203162647e-05
+Step (Outer -- Inner) =  5 -- 57       RMS =4.7902003418662803e-05
+Step (Outer -- Inner) =  5 -- 58       RMS =4.7901160084411494e-05
+Step (Outer -- Inner) =  5 -- 59       RMS =4.7899598145905449e-05
+Step (Outer -- Inner) =  5 -- 60       RMS =4.7896079861126477e-05
+Step (Outer -- Inner) =  5 -- 61       RMS =4.7884767581160109e-05
+Step (Outer -- Inner) =  5 -- 62       RMS =4.7802564207664476e-05
+Step (Outer -- Inner) =  5 -- 63       RMS =1.4682562552934133e-05
+Step (Outer -- Inner) =  5 -- 64       RMS =6.3382597852812582e-06
+Step (Outer -- Inner) =  5 -- 65       RMS =6.3382390791404064e-06
+Step (Outer -- Inner) =  5 -- 66       RMS =6.3382169729842064e-06
+Step (Outer -- Inner) =  5 -- 67       RMS =6.3381853875949409e-06
+Step (Outer -- Inner) =  5 -- 68       RMS =6.3381469436396387e-06
+Step (Outer -- Inner) =  5 -- 69       RMS =6.3380880959683815e-06
+Step (Outer -- Inner) =  5 -- 70       RMS =6.3380085523275051e-06
+Step (Outer -- Inner) =  5 -- 71       RMS =6.3378691587232214e-06
+Step (Outer -- Inner) =  5 -- 72       RMS =6.3376031912067425e-06
+Step (Outer -- Inner) =  5 -- 73       RMS =6.3368522594998739e-06
+Step (Outer -- Inner) =  5 -- 74       RMS =6.3330775551611738e-06
+Step (Outer -- Inner) =  5 -- 75       RMS =6.1285815068532837e-06
+Step (Outer -- Inner) =  5 -- 76       RMS =5.6592694869542383e-06
+Step (Outer -- Inner) =  5 -- 77       RMS =5.6588355760221129e-06
+Step (Outer -- Inner) =  5 -- 78       RMS =5.6573225121637666e-06
+Step (Outer -- Inner) =  5 -- 79       RMS =5.6424602349613402e-06
+Step (Outer -- Inner) =  5 -- 80       RMS =5.0529636551106417e-06
+Step (Outer -- Inner) =  5 -- 81       RMS =4.7127876836772836e-06
+Step (Outer -- Inner) =  5 -- 82       RMS =4.7112214206373890e-06
+Step (Outer -- Inner) =  5 -- 83       RMS =4.6922127671290920e-06
+Step (Outer -- Inner) =  5 -- 84       RMS =4.3544568035721077e-06
+Step (Outer -- Inner) =  5 -- 85       RMS =4.1061335486344468e-06
+Step (Outer -- Inner) =  5 -- 86       RMS =2.2073725341892779e-06
+Step (Outer -- Inner) =  5 -- 87       RMS =1.4027906882282318e-06
+Step (Outer -- Inner) =  5 -- 88       RMS =1.4027861430724448e-06
+Step (Outer -- Inner) =  5 -- 89       RMS =1.4027831808415121e-06
+Step (Outer -- Inner) =  5 -- 90       RMS =1.4027826367686259e-06
+Step (Outer -- Inner) =  5 -- 91       RMS =1.4027753041873276e-06
+Step (Outer -- Inner) =  5 -- 92       RMS =1.4027534417167689e-06
+Step (Outer -- Inner) =  5 -- 93       RMS =1.4027389057534376e-06
+Step (Outer -- Inner) =  5 -- 94       RMS =1.4027151696285527e-06
+Step (Outer -- Inner) =  5 -- 95       RMS =1.4026604091168268e-06
+Step (Outer -- Inner) =  5 -- 96       RMS =1.4025353617020732e-06
+Step (Outer -- Inner) =  5 -- 97       RMS =1.4020581389760880e-06
+Step (Outer -- Inner) =  5 -- 98       RMS =1.3957846059926424e-06
+Step (Outer -- Inner) =  5 -- 99       RMS =1.3006870879504916e-06
+Step (Outer -- Inner) =  5 -- 100       RMS =1.2182452545607448e-06
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 3.1243265548587967e-09 1.9999975634801983e+00
+0.0000000000000000e+00 -3.1297776526975563e-09 1.9999982771881413e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE6    -6.826365e+03  -3.975746e-05  5.660e-04  1.199e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.4668902752590929e-12 -8.3456210673733773e-12 -2.6673967591632399e-04
+-2.5554528758433761e-12 -8.3503074427561842e-12 -2.6653847169827004e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999982080343621e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999973656916359e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  6 -- 1       RMS =1.3006870879504916e-06
+Step (Outer -- Inner) =  6 -- 2       RMS =3.7837325035865342e-03
+Step (Outer -- Inner) =  6 -- 3       RMS =3.1189108321151835e-05
+Step (Outer -- Inner) =  6 -- 4       RMS =3.1013157335455681e-05
+Step (Outer -- Inner) =  6 -- 5       RMS =3.0770319710351541e-05
+Step (Outer -- Inner) =  6 -- 6       RMS =3.0765484844660061e-05
+Step (Outer -- Inner) =  6 -- 7       RMS =3.0707967049864987e-05
+Step (Outer -- Inner) =  6 -- 8       RMS =3.0226905558382910e-05
+Step (Outer -- Inner) =  6 -- 9       RMS =2.8271338232217964e-05
+Step (Outer -- Inner) =  6 -- 10       RMS =2.6952203807065041e-05
+Step (Outer -- Inner) =  6 -- 11       RMS =2.6951603824097534e-05
+Step (Outer -- Inner) =  6 -- 12       RMS =2.6950360239464650e-05
+Step (Outer -- Inner) =  6 -- 13       RMS =2.6946733557258755e-05
+Step (Outer -- Inner) =  6 -- 14       RMS =2.6923506230267232e-05
+Step (Outer -- Inner) =  6 -- 15       RMS =5.2557556189080179e-06
+Step (Outer -- Inner) =  6 -- 16       RMS =5.0549486956844264e-07
+Step (Outer -- Inner) =  6 -- 17       RMS =5.0547123341307162e-07
+Step (Outer -- Inner) =  6 -- 18       RMS =5.0542915344297604e-07
+Step (Outer -- Inner) =  6 -- 19       RMS =5.0520275450747214e-07
+Step (Outer -- Inner) =  6 -- 20       RMS =1.6222180865616241e-07
+Step (Outer -- Inner) =  6 -- 21       RMS =3.4524422833734114e-08
+Step (Outer -- Inner) =  6 -- 22       RMS =3.4523947361887771e-08
+Step (Outer -- Inner) =  6 -- 23       RMS =3.4523064917771651e-08
+Step (Outer -- Inner) =  6 -- 24       RMS =3.4524859965706318e-08
+Step (Outer -- Inner) =  6 -- 25       RMS =3.4528594692301442e-08
+Step (Outer -- Inner) =  6 -- 26       RMS =3.4529957680039000e-08
+Step (Outer -- Inner) =  6 -- 27       RMS =3.4530692088308162e-08
+Step (Outer -- Inner) =  6 -- 28       RMS =3.4472278865404538e-08
+Step (Outer -- Inner) =  6 -- 29       RMS =1.0073816994558928e-08
+Step (Outer -- Inner) =  6 -- 30       RMS =4.7376294123298344e-09
+Step (Outer -- Inner) =  6 -- 31       RMS =4.7375984182558085e-09
+Step (Outer -- Inner) =  6 -- 32       RMS =4.7376478482314178e-09
+Step (Outer -- Inner) =  6 -- 33       RMS =4.7375823682931522e-09
+Step (Outer -- Inner) =  6 -- 34       RMS =4.7375806940647933e-09
+Step (Outer -- Inner) =  6 -- 35       RMS =4.7375606362919924e-09
+Step (Outer -- Inner) =  6 -- 36       RMS =4.7375256349249999e-09
+Step (Outer -- Inner) =  6 -- 37       RMS =4.7375463541358238e-09
+Step (Outer -- Inner) =  6 -- 38       RMS =4.7375086929110676e-09
+Step (Outer -- Inner) =  6 -- 39       RMS =4.7374562563480979e-09
+Step (Outer -- Inner) =  6 -- 40       RMS =4.7371910881719784e-09
+Step (Outer -- Inner) =  6 -- 41       RMS =4.7373466407989112e-09
+Step (Outer -- Inner) =  6 -- 42       RMS =4.7372526045551033e-09
+Step (Outer -- Inner) =  6 -- 43       RMS =4.7270071112876981e-09
+Step (Outer -- Inner) =  6 -- 44       RMS =4.9240816533255799e-09
+Step (Outer -- Inner) =  6 -- 45       RMS =4.4091770969220495e-09
+Step (Outer -- Inner) =  6 -- 46       RMS =4.3977470955046600e-09
+Step (Outer -- Inner) =  6 -- 47       RMS =4.4293691787718387e-09
+Step (Outer -- Inner) =  6 -- 48       RMS =4.1101815799911496e-09
+Step (Outer -- Inner) =  6 -- 49       RMS =4.0904655635550385e-09
+Step (Outer -- Inner) =  6 -- 50       RMS =3.6178397318538712e-09
+Step (Outer -- Inner) =  6 -- 51       RMS =3.6503879500555415e-09
+Step (Outer -- Inner) =  6 -- 52       RMS =3.6197598786640038e-09
+Step (Outer -- Inner) =  6 -- 53       RMS =3.6862584365491722e-09
+Step (Outer -- Inner) =  6 -- 54       RMS =3.4482248293521059e-09
+Step (Outer -- Inner) =  6 -- 55       RMS =3.4312472947703711e-09
+Step (Outer -- Inner) =  6 -- 56       RMS =3.2366956651286049e-09
+Step (Outer -- Inner) =  6 -- 57       RMS =3.1039892402875980e-09
+Step (Outer -- Inner) =  6 -- 58       RMS =3.1180797655624652e-09
+Step (Outer -- Inner) =  6 -- 59       RMS =3.0383669764328629e-09
+Step (Outer -- Inner) =  6 -- 60       RMS =3.0276771708031883e-09
+Step (Outer -- Inner) =  6 -- 61       RMS =2.9336516681187405e-09
+Step (Outer -- Inner) =  6 -- 62       RMS =2.5909959167818558e-09
+Step (Outer -- Inner) =  6 -- 63       RMS =2.3716970203855108e-09
+Step (Outer -- Inner) =  6 -- 64       RMS =2.3589770405326622e-09
+Step (Outer -- Inner) =  6 -- 65       RMS =1.6171634480008406e-08
+Step (Outer -- Inner) =  6 -- 66       RMS =8.6222497515003423e-09
+Step (Outer -- Inner) =  6 -- 67       RMS =6.3793889826467602e-09
+Step (Outer -- Inner) =  6 -- 68       RMS =6.0609438241515165e-09
+Step (Outer -- Inner) =  6 -- 69       RMS =4.9113901035515996e-09
+Step (Outer -- Inner) =  6 -- 70       RMS =4.8021026402027432e-09
+Step (Outer -- Inner) =  6 -- 71       RMS =4.1123165464242048e-09
+Step (Outer -- Inner) =  6 -- 72       RMS =4.0264530325306275e-09
+Step (Outer -- Inner) =  6 -- 73       RMS =3.1993999012869693e-09
+Step (Outer -- Inner) =  6 -- 74       RMS =3.2569081991339220e-09
+Step (Outer -- Inner) =  6 -- 75       RMS =3.2350249058586810e-09
+Step (Outer -- Inner) =  6 -- 76       RMS =2.9323448867967909e-09
+Step (Outer -- Inner) =  6 -- 77       RMS =2.9506487968798445e-09
+Step (Outer -- Inner) =  6 -- 78       RMS =2.7400405641666092e-09
+Step (Outer -- Inner) =  6 -- 79       RMS =2.5563553193605736e-09
+Step (Outer -- Inner) =  6 -- 80       RMS =2.4489926151880715e-09
+Step (Outer -- Inner) =  6 -- 81       RMS =2.4429805117812443e-09
+Step (Outer -- Inner) =  6 -- 82       RMS =2.5599583462563673e-09
+Step (Outer -- Inner) =  6 -- 83       RMS =1.8794787016315747e-09
+Step (Outer -- Inner) =  6 -- 84       RMS =1.8782917070844407e-09
+Step (Outer -- Inner) =  6 -- 85       RMS =1.9842841222200281e-09
+Step (Outer -- Inner) =  6 -- 86       RMS =1.5956171335678903e-09
+Step (Outer -- Inner) =  6 -- 87       RMS =1.4585341965160801e-09
+Step (Outer -- Inner) =  6 -- 88       RMS =1.4568869355114272e-09
+Step (Outer -- Inner) =  6 -- 89       RMS =1.3068586030322046e-09
+Step (Outer -- Inner) =  6 -- 90       RMS =1.3982704800964152e-09
+Step (Outer -- Inner) =  6 -- 91       RMS =1.1564449169289822e-09
+Step (Outer -- Inner) =  6 -- 92       RMS =1.1415992307303235e-09
+Step (Outer -- Inner) =  6 -- 93       RMS =1.1242512883750327e-09
+Step (Outer -- Inner) =  6 -- 94       RMS =1.1241827190955527e-09
+Step (Outer -- Inner) =  6 -- 95       RMS =1.5942608070544131e-09
+Step (Outer -- Inner) =  6 -- 96       RMS =8.5207649313319462e-10
+Meet convergence criterion ( < 1.0000000000000001e-09 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000014599433e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000014915669e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE7    -6.826365e+03  3.927606e-06   9.395e-04  1.239e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+9.9015572060360557e-13 -8.3456210673733773e-12 -2.6932901279383073e-04
+8.0055678838018978e-13 -8.3503074427561842e-12 -2.6980625058301835e-04
+initial spin: 
+1.9883874412495471e-09 0.0000000000000000e+00 2.0000000022970124e+00
+-1.9926874514237996e-09 0.0000000000000000e+00 2.0000000014315207e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  7 -- 1       RMS =1.5942608070544131e-09
+Step (Outer -- Inner) =  7 -- 2       RMS =2.6647943670950048e-03
+Step (Outer -- Inner) =  7 -- 3       RMS =3.4252504715492595e-05
+Step (Outer -- Inner) =  7 -- 4       RMS =3.4145910957820339e-05
+Step (Outer -- Inner) =  7 -- 5       RMS =3.3947317281303036e-05
+Step (Outer -- Inner) =  7 -- 6       RMS =3.3914061977785311e-05
+Step (Outer -- Inner) =  7 -- 7       RMS =3.3323069816412111e-05
+Step (Outer -- Inner) =  7 -- 8       RMS =3.2832924957301032e-05
+Step (Outer -- Inner) =  7 -- 9       RMS =3.2333460632643313e-05
+Step (Outer -- Inner) =  7 -- 10       RMS =3.1223017090700433e-05
+Step (Outer -- Inner) =  7 -- 11       RMS =3.1220995318374123e-05
+Step (Outer -- Inner) =  7 -- 12       RMS =3.1213538437908843e-05
+Step (Outer -- Inner) =  7 -- 13       RMS =3.1109319831021804e-05
+Step (Outer -- Inner) =  7 -- 14       RMS =3.0031657252678488e-05
+Step (Outer -- Inner) =  7 -- 15       RMS =2.7654077995879801e-05
+Step (Outer -- Inner) =  7 -- 16       RMS =2.6197055366749969e-05
+Step (Outer -- Inner) =  7 -- 17       RMS =2.6194122537696892e-05
+Step (Outer -- Inner) =  7 -- 18       RMS =2.6179683677840464e-05
+Step (Outer -- Inner) =  7 -- 19       RMS =2.5504083191394967e-05
+Step (Outer -- Inner) =  7 -- 20       RMS =2.3794157381584093e-05
+Step (Outer -- Inner) =  7 -- 21       RMS =2.3791093474229919e-05
+Step (Outer -- Inner) =  7 -- 22       RMS =2.3775662186783887e-05
+Step (Outer -- Inner) =  7 -- 23       RMS =2.3033651947690665e-05
+Step (Outer -- Inner) =  7 -- 24       RMS =2.1180792651813266e-05
+Step (Outer -- Inner) =  7 -- 25       RMS =2.1178021499502810e-05
+Step (Outer -- Inner) =  7 -- 26       RMS =2.1164797144548374e-05
+Step (Outer -- Inner) =  7 -- 27       RMS =2.0722886858900942e-05
+Step (Outer -- Inner) =  7 -- 28       RMS =1.9241990311064612e-05
+Step (Outer -- Inner) =  7 -- 29       RMS =1.9228202859671633e-05
+Step (Outer -- Inner) =  7 -- 30       RMS =1.8670494344405088e-05
+Step (Outer -- Inner) =  7 -- 31       RMS =1.7082797599930353e-05
+Step (Outer -- Inner) =  7 -- 32       RMS =1.7077629658195693e-05
+Step (Outer -- Inner) =  7 -- 33       RMS =1.7029990869845907e-05
+Step (Outer -- Inner) =  7 -- 34       RMS =1.4320195843925937e-05
+Step (Outer -- Inner) =  7 -- 35       RMS =1.2844082997786764e-05
+Step (Outer -- Inner) =  7 -- 36       RMS =1.2843065561035866e-05
+Step (Outer -- Inner) =  7 -- 37       RMS =1.2839664748041208e-05
+Step (Outer -- Inner) =  7 -- 38       RMS =1.2812060517999971e-05
+Step (Outer -- Inner) =  7 -- 39       RMS =9.0518061822508734e-06
+Step (Outer -- Inner) =  7 -- 40       RMS =7.1455649132382423e-06
+Step (Outer -- Inner) =  7 -- 41       RMS =7.1455081445512773e-06
+Step (Outer -- Inner) =  7 -- 42       RMS =7.1454355049309598e-06
+Step (Outer -- Inner) =  7 -- 43       RMS =7.1453158195558788e-06
+Step (Outer -- Inner) =  7 -- 44       RMS =7.1451024134933346e-06
+Step (Outer -- Inner) =  7 -- 45       RMS =7.1446297540211838e-06
+Step (Outer -- Inner) =  7 -- 46       RMS =7.1431754998067674e-06
+Step (Outer -- Inner) =  7 -- 47       RMS =7.1338165130600930e-06
+Step (Outer -- Inner) =  7 -- 48       RMS =3.9466513926596088e-06
+Step (Outer -- Inner) =  7 -- 49       RMS =1.6937031312913116e-06
+Step (Outer -- Inner) =  7 -- 50       RMS =1.6937002505803796e-06
+Step (Outer -- Inner) =  7 -- 51       RMS =1.6936908130859918e-06
+Step (Outer -- Inner) =  7 -- 52       RMS =1.6936763526344422e-06
+Step (Outer -- Inner) =  7 -- 53       RMS =1.6936488746539061e-06
+Step (Outer -- Inner) =  7 -- 54       RMS =1.6936231780847632e-06
+Step (Outer -- Inner) =  7 -- 55       RMS =1.6935729225059089e-06
+Step (Outer -- Inner) =  7 -- 56       RMS =1.6934390448610028e-06
+Step (Outer -- Inner) =  7 -- 57       RMS =1.6929403651119091e-06
+Step (Outer -- Inner) =  7 -- 58       RMS =1.6867764215158365e-06
+Step (Outer -- Inner) =  7 -- 59       RMS =1.5922248829145125e-06
+Step (Outer -- Inner) =  7 -- 60       RMS =1.5106245639556681e-06
+Step (Outer -- Inner) =  7 -- 61       RMS =1.3881693757112668e-06
+Step (Outer -- Inner) =  7 -- 62       RMS =1.3142615837564031e-06
+Step (Outer -- Inner) =  7 -- 63       RMS =1.3127985045660417e-06
+Step (Outer -- Inner) =  7 -- 64       RMS =6.1374655975186219e-07
+Step (Outer -- Inner) =  7 -- 65       RMS =2.1710892874595004e-07
+Step (Outer -- Inner) =  7 -- 66       RMS =2.1710907455905503e-07
+Step (Outer -- Inner) =  7 -- 67       RMS =2.1710966397533052e-07
+Step (Outer -- Inner) =  7 -- 68       RMS =2.1711077635630076e-07
+Step (Outer -- Inner) =  7 -- 69       RMS =2.1710268492281503e-07
+Step (Outer -- Inner) =  7 -- 70       RMS =2.1710523517494887e-07
+Step (Outer -- Inner) =  7 -- 71       RMS =2.1709071207927065e-07
+Step (Outer -- Inner) =  7 -- 72       RMS =2.1707761045863385e-07
+Step (Outer -- Inner) =  7 -- 73       RMS =2.1700463276312871e-07
+Step (Outer -- Inner) =  7 -- 74       RMS =2.1566358116721561e-07
+Step (Outer -- Inner) =  7 -- 75       RMS =2.0709726393146484e-07
+Step (Outer -- Inner) =  7 -- 76       RMS =1.9687994276404217e-07
+Step (Outer -- Inner) =  7 -- 77       RMS =1.7763387029735485e-07
+Step (Outer -- Inner) =  7 -- 78       RMS =1.7761936408173791e-07
+Step (Outer -- Inner) =  7 -- 79       RMS =1.7760760121001017e-07
+Step (Outer -- Inner) =  7 -- 80       RMS =1.7758182355327366e-07
+Step (Outer -- Inner) =  7 -- 81       RMS =1.7743392359885294e-07
+Step (Outer -- Inner) =  7 -- 82       RMS =1.5875805900846617e-07
+Step (Outer -- Inner) =  7 -- 83       RMS =1.3058825993983641e-07
+Step (Outer -- Inner) =  7 -- 84       RMS =1.3059048540610142e-07
+Step (Outer -- Inner) =  7 -- 85       RMS =1.3058422988505224e-07
+Step (Outer -- Inner) =  7 -- 86       RMS =1.3057981154840666e-07
+Step (Outer -- Inner) =  7 -- 87       RMS =1.3057007919312227e-07
+Step (Outer -- Inner) =  7 -- 88       RMS =1.3054302418476863e-07
+Step (Outer -- Inner) =  7 -- 89       RMS =1.3034630336932247e-07
+Step (Outer -- Inner) =  7 -- 90       RMS =2.6231953386106798e-08
+Step (Outer -- Inner) =  7 -- 91       RMS =3.0347693595676793e-09
+Step (Outer -- Inner) =  7 -- 92       RMS =3.0345092069925451e-09
+Step (Outer -- Inner) =  7 -- 93       RMS =3.0343850226134788e-09
+Step (Outer -- Inner) =  7 -- 94       RMS =3.0337070887707727e-09
+Step (Outer -- Inner) =  7 -- 95       RMS =3.4033967342362179e-09
+Step (Outer -- Inner) =  7 -- 96       RMS =2.8982072476649854e-09
+Step (Outer -- Inner) =  7 -- 97       RMS =2.8977241205826751e-09
+Step (Outer -- Inner) =  7 -- 98       RMS =3.0291853068118974e-09
+Step (Outer -- Inner) =  7 -- 99       RMS =2.9453180600645970e-09
+Step (Outer -- Inner) =  7 -- 100       RMS =3.2980005504331181e-09
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+2.8974017350991210e-09 0.0000000000000000e+00 2.0000000058349321e+00
+-2.8979676539707227e-09 0.0000000000000000e+00 2.0000000037975334e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE8    -6.826365e+03  -5.927323e-05  9.201e-05  1.244e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.8720359554890627e-13 -8.3456210673733773e-12 -2.7278351684092452e-04
+-3.5091577597168021e-13 -8.3503074427561842e-12 -2.7278295954351502e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000047950803e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000053904170e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  8 -- 1       RMS =2.9453180600645970e-09
+Step (Outer -- Inner) =  8 -- 2       RMS =3.9806064752711357e-04
+Step (Outer -- Inner) =  8 -- 3       RMS =3.9349528998360657e-04
+Step (Outer -- Inner) =  8 -- 4       RMS =3.8854730895140216e-04
+Step (Outer -- Inner) =  8 -- 5       RMS =3.8853043046208568e-04
+Step (Outer -- Inner) =  8 -- 6       RMS =3.8848731773515662e-04
+Step (Outer -- Inner) =  8 -- 7       RMS =3.8819716525407671e-04
+Step (Outer -- Inner) =  8 -- 8       RMS =3.5076329054166449e-04
+Step (Outer -- Inner) =  8 -- 9       RMS =3.2525660189429000e-04
+Step (Outer -- Inner) =  8 -- 10       RMS =3.2525376708133455e-04
+Step (Outer -- Inner) =  8 -- 11       RMS =3.2524956715900195e-04
+Step (Outer -- Inner) =  8 -- 12       RMS =3.2524252809398093e-04
+Step (Outer -- Inner) =  8 -- 13       RMS =3.2522828700112832e-04
+Step (Outer -- Inner) =  8 -- 14       RMS =3.2518880089830635e-04
+Step (Outer -- Inner) =  8 -- 15       RMS =3.2497585303926393e-04
+Step (Outer -- Inner) =  8 -- 16       RMS =3.0417012398015512e-04
+Step (Outer -- Inner) =  8 -- 17       RMS =2.6924164379676539e-04
+Step (Outer -- Inner) =  8 -- 18       RMS =2.6923766693315049e-04
+Step (Outer -- Inner) =  8 -- 19       RMS =2.6923063992053098e-04
+Step (Outer -- Inner) =  8 -- 20       RMS =2.6921568408696926e-04
+Step (Outer -- Inner) =  8 -- 21       RMS =2.6917191977764377e-04
+Step (Outer -- Inner) =  8 -- 22       RMS =2.6891744694493964e-04
+Step (Outer -- Inner) =  8 -- 23       RMS =2.3237297978789091e-04
+Step (Outer -- Inner) =  8 -- 24       RMS =1.8243189527663114e-04
+Step (Outer -- Inner) =  8 -- 25       RMS =1.8243056537037178e-04
+Step (Outer -- Inner) =  8 -- 26       RMS =1.8242860885424634e-04
+Step (Outer -- Inner) =  8 -- 27       RMS =1.8242543239098896e-04
+Step (Outer -- Inner) =  8 -- 28       RMS =1.8241960897417281e-04
+Step (Outer -- Inner) =  8 -- 29       RMS =1.8240657495975320e-04
+Step (Outer -- Inner) =  8 -- 30       RMS =1.8236518239358169e-04
+Step (Outer -- Inner) =  8 -- 31       RMS =1.8207366366056351e-04
+Step (Outer -- Inner) =  8 -- 32       RMS =1.7411706211647812e-05
+Step (Outer -- Inner) =  8 -- 33       RMS =4.0044308503342392e-06
+Step (Outer -- Inner) =  8 -- 34       RMS =4.0043926734429450e-06
+Step (Outer -- Inner) =  8 -- 35       RMS =4.0043558915010169e-06
+Step (Outer -- Inner) =  8 -- 36       RMS =4.0043019487546613e-06
+Step (Outer -- Inner) =  8 -- 37       RMS =4.0042055335911682e-06
+Step (Outer -- Inner) =  8 -- 38       RMS =4.0040459956882365e-06
+Step (Outer -- Inner) =  8 -- 39       RMS =4.0036121121366332e-06
+Step (Outer -- Inner) =  8 -- 40       RMS =4.0009213477783815e-06
+Step (Outer -- Inner) =  8 -- 41       RMS =1.2274626603740050e-06
+Step (Outer -- Inner) =  8 -- 42       RMS =2.7329656055998815e-07
+Step (Outer -- Inner) =  8 -- 43       RMS =2.7329549380480237e-07
+Step (Outer -- Inner) =  8 -- 44       RMS =2.7329544688800021e-07
+Step (Outer -- Inner) =  8 -- 45       RMS =2.7328628894386540e-07
+Step (Outer -- Inner) =  8 -- 46       RMS =2.7328744173180673e-07
+Step (Outer -- Inner) =  8 -- 47       RMS =2.7327061952191156e-07
+Step (Outer -- Inner) =  8 -- 48       RMS =2.7321555346556258e-07
+Step (Outer -- Inner) =  8 -- 49       RMS =2.7275518087594329e-07
+Step (Outer -- Inner) =  8 -- 50       RMS =2.6027033146863598e-07
+Step (Outer -- Inner) =  8 -- 51       RMS =2.5207127976819063e-07
+Step (Outer -- Inner) =  8 -- 52       RMS =2.5180808424495347e-07
+Step (Outer -- Inner) =  8 -- 53       RMS =1.6612316200260324e-07
+Step (Outer -- Inner) =  8 -- 54       RMS =1.2073115843020958e-07
+Step (Outer -- Inner) =  8 -- 55       RMS =1.2073151926485619e-07
+Step (Outer -- Inner) =  8 -- 56       RMS =1.2073196066329404e-07
+Step (Outer -- Inner) =  8 -- 57       RMS =1.2073265889722053e-07
+Step (Outer -- Inner) =  8 -- 58       RMS =1.2073348263885570e-07
+Step (Outer -- Inner) =  8 -- 59       RMS =1.2073432527657546e-07
+Step (Outer -- Inner) =  8 -- 60       RMS =1.2073578631035485e-07
+Step (Outer -- Inner) =  8 -- 61       RMS =1.2072831674108633e-07
+Step (Outer -- Inner) =  8 -- 62       RMS =1.2072066501206476e-07
+Step (Outer -- Inner) =  8 -- 63       RMS =1.2072273221527877e-07
+Step (Outer -- Inner) =  8 -- 64       RMS =1.2071674227676987e-07
+Step (Outer -- Inner) =  8 -- 65       RMS =1.2063933133704551e-07
+Step (Outer -- Inner) =  8 -- 66       RMS =1.1349981685819867e-07
+Step (Outer -- Inner) =  8 -- 67       RMS =9.9871876277740855e-08
+Step (Outer -- Inner) =  8 -- 68       RMS =9.9866100916554627e-08
+Step (Outer -- Inner) =  8 -- 69       RMS =9.9863610857515114e-08
+Step (Outer -- Inner) =  8 -- 70       RMS =9.9831098234470685e-08
+Step (Outer -- Inner) =  8 -- 71       RMS =9.9586518638192291e-08
+Step (Outer -- Inner) =  8 -- 72       RMS =7.9876838973321698e-08
+Step (Outer -- Inner) =  8 -- 73       RMS =6.9370509403581128e-08
+Step (Outer -- Inner) =  8 -- 74       RMS =6.9372371556228620e-08
+Step (Outer -- Inner) =  8 -- 75       RMS =6.9365671157332464e-08
+Step (Outer -- Inner) =  8 -- 76       RMS =6.9352159937305595e-08
+Step (Outer -- Inner) =  8 -- 77       RMS =6.9303048539888713e-08
+Step (Outer -- Inner) =  8 -- 78       RMS =6.7298782382313101e-08
+Step (Outer -- Inner) =  8 -- 79       RMS =6.1365624345359388e-08
+Step (Outer -- Inner) =  8 -- 80       RMS =6.1352410542307191e-08
+Step (Outer -- Inner) =  8 -- 81       RMS =6.1196006692425052e-08
+Step (Outer -- Inner) =  8 -- 82       RMS =4.8780857084570882e-08
+Step (Outer -- Inner) =  8 -- 83       RMS =4.2067494485443238e-08
+Step (Outer -- Inner) =  8 -- 84       RMS =4.2068911796416567e-08
+Step (Outer -- Inner) =  8 -- 85       RMS =4.2061315921120020e-08
+Step (Outer -- Inner) =  8 -- 86       RMS =4.2064747003978383e-08
+Step (Outer -- Inner) =  8 -- 87       RMS =4.2025213734186340e-08
+Step (Outer -- Inner) =  8 -- 88       RMS =4.1045546661188436e-08
+Step (Outer -- Inner) =  8 -- 89       RMS =3.7776058006147215e-08
+Step (Outer -- Inner) =  8 -- 90       RMS =3.7748128684346217e-08
+Step (Outer -- Inner) =  8 -- 91       RMS =3.6461404520523333e-08
+Step (Outer -- Inner) =  8 -- 92       RMS =3.2967629772818195e-08
+Step (Outer -- Inner) =  8 -- 93       RMS =3.2951652571301440e-08
+Step (Outer -- Inner) =  8 -- 94       RMS =3.2895846047457280e-08
+Step (Outer -- Inner) =  8 -- 95       RMS =1.0367054652000686e-08
+Step (Outer -- Inner) =  8 -- 96       RMS =4.6701847302817016e-09
+Step (Outer -- Inner) =  8 -- 97       RMS =4.6702357768199960e-09
+Step (Outer -- Inner) =  8 -- 98       RMS =4.6701270653062921e-09
+Step (Outer -- Inner) =  8 -- 99       RMS =4.6702945551184292e-09
+Step (Outer -- Inner) =  8 -- 100       RMS =4.6702546486309399e-09
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999920397256e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999917840581e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE9    -6.826365e+03  -3.845147e-07  1.032e-05  1.233e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.8720359554890627e-13 -8.3456210673733773e-12 -2.3545672550828256e-04
+-3.5091577597168021e-13 -8.3503074427561842e-12 -2.3545663537679902e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999920386440e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999917849700e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  9 -- 1       RMS =4.6702945551184292e-09
+Step (Outer -- Inner) =  9 -- 2       RMS =3.0607588332881789e-05
+Step (Outer -- Inner) =  9 -- 3       RMS =2.3568338927260300e-05
+Step (Outer -- Inner) =  9 -- 4       RMS =1.8130350576812600e-05
+Step (Outer -- Inner) =  9 -- 5       RMS =1.8130320193251153e-05
+Step (Outer -- Inner) =  9 -- 6       RMS =1.8130282851021458e-05
+Step (Outer -- Inner) =  9 -- 7       RMS =1.8130239140481168e-05
+Step (Outer -- Inner) =  9 -- 8       RMS =1.8130190328293525e-05
+Step (Outer -- Inner) =  9 -- 9       RMS =1.8130148140359227e-05
+Step (Outer -- Inner) =  9 -- 10       RMS =1.8130087483758631e-05
+Step (Outer -- Inner) =  9 -- 11       RMS =1.8130022943866216e-05
+Step (Outer -- Inner) =  9 -- 12       RMS =1.8129933839425596e-05
+Step (Outer -- Inner) =  9 -- 13       RMS =1.8129813079723401e-05
+Step (Outer -- Inner) =  9 -- 14       RMS =1.8129642800098091e-05
+Step (Outer -- Inner) =  9 -- 15       RMS =1.8129378170367565e-05
+Step (Outer -- Inner) =  9 -- 16       RMS =1.8128910208908455e-05
+Step (Outer -- Inner) =  9 -- 17       RMS =1.8127914009460827e-05
+Step (Outer -- Inner) =  9 -- 18       RMS =1.8125018312519046e-05
+Step (Outer -- Inner) =  9 -- 19       RMS =1.8108394193317718e-05
+Step (Outer -- Inner) =  9 -- 20       RMS =1.5888130310408817e-05
+Step (Outer -- Inner) =  9 -- 21       RMS =1.2736381154524441e-05
+Step (Outer -- Inner) =  9 -- 22       RMS =1.2736272115594873e-05
+Step (Outer -- Inner) =  9 -- 23       RMS =1.2736117992973937e-05
+Step (Outer -- Inner) =  9 -- 24       RMS =1.2735844135752235e-05
+Step (Outer -- Inner) =  9 -- 25       RMS =1.2735314677419721e-05
+Step (Outer -- Inner) =  9 -- 26       RMS =1.2734012299920692e-05
+Step (Outer -- Inner) =  9 -- 27       RMS =1.2728977655311243e-05
+Step (Outer -- Inner) =  9 -- 28       RMS =1.2662298269410020e-05
+Step (Outer -- Inner) =  9 -- 29       RMS =1.1721330039753600e-05
+Step (Outer -- Inner) =  9 -- 30       RMS =1.0847757552984654e-05
+Step (Outer -- Inner) =  9 -- 31       RMS =1.0117074983135215e-05
+Step (Outer -- Inner) =  9 -- 32       RMS =9.2104742969565917e-06
+Step (Outer -- Inner) =  9 -- 33       RMS =8.6571902551300016e-06
+Step (Outer -- Inner) =  9 -- 34       RMS =8.6016539119293666e-06
+Step (Outer -- Inner) =  9 -- 35       RMS =8.0634317140260177e-06
+Step (Outer -- Inner) =  9 -- 36       RMS =6.4535179223592789e-06
+Step (Outer -- Inner) =  9 -- 37       RMS =5.5734211966600988e-06
+Step (Outer -- Inner) =  9 -- 38       RMS =5.5733241723488019e-06
+Step (Outer -- Inner) =  9 -- 39       RMS =5.5731337334443157e-06
+Step (Outer -- Inner) =  9 -- 40       RMS =5.5726853455909204e-06
+Step (Outer -- Inner) =  9 -- 41       RMS =5.5711789651691152e-06
+Step (Outer -- Inner) =  9 -- 42       RMS =5.5582158997073222e-06
+Step (Outer -- Inner) =  9 -- 43       RMS =4.4444048743176550e-06
+Step (Outer -- Inner) =  9 -- 44       RMS =3.8406019259299348e-06
+Step (Outer -- Inner) =  9 -- 45       RMS =3.8405199283130331e-06
+Step (Outer -- Inner) =  9 -- 46       RMS =3.8403674892193669e-06
+Step (Outer -- Inner) =  9 -- 47       RMS =3.8399789447557071e-06
+Step (Outer -- Inner) =  9 -- 48       RMS =3.8384699469596534e-06
+Step (Outer -- Inner) =  9 -- 49       RMS =3.8185992315746107e-06
+Step (Outer -- Inner) =  9 -- 50       RMS =3.5385191984510650e-06
+Step (Outer -- Inner) =  9 -- 51       RMS =3.2775366777558875e-06
+Step (Outer -- Inner) =  9 -- 52       RMS =3.0593290221377912e-06
+Step (Outer -- Inner) =  9 -- 53       RMS =2.7841541485914925e-06
+Step (Outer -- Inner) =  9 -- 54       RMS =2.6170949527881373e-06
+Step (Outer -- Inner) =  9 -- 55       RMS =2.6035257920574332e-06
+Step (Outer -- Inner) =  9 -- 56       RMS =2.4295294388030576e-06
+Step (Outer -- Inner) =  9 -- 57       RMS =2.2356601737597978e-06
+Step (Outer -- Inner) =  9 -- 58       RMS =2.1075510251224039e-06
+Step (Outer -- Inner) =  9 -- 59       RMS =1.9608726082387353e-06
+Step (Outer -- Inner) =  9 -- 60       RMS =1.6949838302212034e-06
+Step (Outer -- Inner) =  9 -- 61       RMS =1.6949332636400936e-06
+Step (Outer -- Inner) =  9 -- 62       RMS =1.6948444461174362e-06
+Step (Outer -- Inner) =  9 -- 63       RMS =1.6945884442494599e-06
+Step (Outer -- Inner) =  9 -- 64       RMS =1.6933057828756868e-06
+Step (Outer -- Inner) =  9 -- 65       RMS =1.6403065409239863e-06
+Step (Outer -- Inner) =  9 -- 66       RMS =1.4922633123346996e-06
+Step (Outer -- Inner) =  9 -- 67       RMS =1.4918348092951389e-06
+Step (Outer -- Inner) =  9 -- 68       RMS =1.4883585703563149e-06
+Step (Outer -- Inner) =  9 -- 69       RMS =1.0781201935869841e-06
+Step (Outer -- Inner) =  9 -- 70       RMS =8.6904115929764926e-07
+Step (Outer -- Inner) =  9 -- 71       RMS =8.6902698039064291e-07
+Step (Outer -- Inner) =  9 -- 72       RMS =8.6901843620370616e-07
+Step (Outer -- Inner) =  9 -- 73       RMS =8.6899943092764392e-07
+Step (Outer -- Inner) =  9 -- 74       RMS =8.6894785199167282e-07
+Step (Outer -- Inner) =  9 -- 75       RMS =8.6881311337056026e-07
+Step (Outer -- Inner) =  9 -- 76       RMS =8.6815702564602787e-07
+Step (Outer -- Inner) =  9 -- 77       RMS =8.3996256509202203e-07
+Step (Outer -- Inner) =  9 -- 78       RMS =7.6301629546829050e-07
+Step (Outer -- Inner) =  9 -- 79       RMS =7.6282431680492793e-07
+Step (Outer -- Inner) =  9 -- 80       RMS =7.6141676394429664e-07
+Step (Outer -- Inner) =  9 -- 81       RMS =2.7984675153272636e-07
+Step (Outer -- Inner) =  9 -- 82       RMS =1.3748425029463040e-07
+Step (Outer -- Inner) =  9 -- 83       RMS =1.3748443259183671e-07
+Step (Outer -- Inner) =  9 -- 84       RMS =1.3748479766312435e-07
+Step (Outer -- Inner) =  9 -- 85       RMS =1.3747596957380818e-07
+Step (Outer -- Inner) =  9 -- 86       RMS =1.3747682667097414e-07
+Step (Outer -- Inner) =  9 -- 87       RMS =1.3747817701386835e-07
+Step (Outer -- Inner) =  9 -- 88       RMS =1.3748032687344227e-07
+Step (Outer -- Inner) =  9 -- 89       RMS =1.3747383271372106e-07
+Step (Outer -- Inner) =  9 -- 90       RMS =1.3746685473666320e-07
+Step (Outer -- Inner) =  9 -- 91       RMS =1.3746278832963755e-07
+Step (Outer -- Inner) =  9 -- 92       RMS =1.3741148050060095e-07
+Step (Outer -- Inner) =  9 -- 93       RMS =1.3604320038620238e-07
+Step (Outer -- Inner) =  9 -- 94       RMS =1.2906070224766788e-07
+Step (Outer -- Inner) =  9 -- 95       RMS =1.2797769502597738e-07
+Step (Outer -- Inner) =  9 -- 96       RMS =1.2113398234593150e-07
+Step (Outer -- Inner) =  9 -- 97       RMS =1.1521679088351386e-07
+Step (Outer -- Inner) =  9 -- 98       RMS =1.0301720329755472e-07
+Step (Outer -- Inner) =  9 -- 99       RMS =1.0301215686182833e-07
+Step (Outer -- Inner) =  9 -- 100       RMS =1.0300030567732572e-07
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999998344902534e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999998095770455e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE10   -6.826365e+03  1.105181e-08   1.146e-05  1.192e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.8720359554890627e-13 -8.3456210673733773e-12 -2.3259609269135617e-04
+-3.5091577597168021e-13 -8.3503074427561842e-12 -2.3259600989649617e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999998314154739e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999998122547356e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  10 -- 1       RMS =1.0301215686182833e-07
+Step (Outer -- Inner) =  10 -- 2       RMS =3.6516882214371354e-05
+Step (Outer -- Inner) =  10 -- 3       RMS =3.6425107552607985e-05
+Step (Outer -- Inner) =  10 -- 4       RMS =3.6400161511035581e-05
+Step (Outer -- Inner) =  10 -- 5       RMS =3.5717351640889757e-05
+Step (Outer -- Inner) =  10 -- 6       RMS =3.5198711395813173e-05
+Step (Outer -- Inner) =  10 -- 7       RMS =3.5189370548773229e-05
+Step (Outer -- Inner) =  10 -- 8       RMS =3.4898708969433620e-05
+Step (Outer -- Inner) =  10 -- 9       RMS =3.4011116866741677e-05
+Step (Outer -- Inner) =  10 -- 10       RMS =3.3999472685598919e-05
+Step (Outer -- Inner) =  10 -- 11       RMS =3.3615004389151351e-05
+Step (Outer -- Inner) =  10 -- 12       RMS =3.2401674037170131e-05
+Step (Outer -- Inner) =  10 -- 13       RMS =3.2389168497036817e-05
+Step (Outer -- Inner) =  10 -- 14       RMS =3.2038695807377841e-05
+Step (Outer -- Inner) =  10 -- 15       RMS =3.0702498250511953e-05
+Step (Outer -- Inner) =  10 -- 16       RMS =3.0666416270756845e-05
+Step (Outer -- Inner) =  10 -- 17       RMS =1.2946522047998015e-05
+Step (Outer -- Inner) =  10 -- 18       RMS =6.6789350101271670e-06
+Step (Outer -- Inner) =  10 -- 19       RMS =6.6789165439366542e-06
+Step (Outer -- Inner) =  10 -- 20       RMS =6.6788952355910133e-06
+Step (Outer -- Inner) =  10 -- 21       RMS =6.6788723857786501e-06
+Step (Outer -- Inner) =  10 -- 22       RMS =6.6788404206946356e-06
+Step (Outer -- Inner) =  10 -- 23       RMS =6.6788029183989924e-06
+Step (Outer -- Inner) =  10 -- 24       RMS =6.6787550845174190e-06
+Step (Outer -- Inner) =  10 -- 25       RMS =6.6786859355725973e-06
+Step (Outer -- Inner) =  10 -- 26       RMS =6.6785613472894493e-06
+Step (Outer -- Inner) =  10 -- 27       RMS =6.6783379142650486e-06
+Step (Outer -- Inner) =  10 -- 28       RMS =6.6778079636707129e-06
+Step (Outer -- Inner) =  10 -- 29       RMS =6.6758726621535544e-06
+Step (Outer -- Inner) =  10 -- 30       RMS =6.6538061514187982e-06
+Step (Outer -- Inner) =  10 -- 31       RMS =6.1958132269501215e-06
+Step (Outer -- Inner) =  10 -- 32       RMS =5.8851238925137243e-06
+Step (Outer -- Inner) =  10 -- 33       RMS =5.4963762829752337e-06
+Step (Outer -- Inner) =  10 -- 34       RMS =4.8033168375566982e-06
+Step (Outer -- Inner) =  10 -- 35       RMS =4.8032165933864168e-06
+Step (Outer -- Inner) =  10 -- 36       RMS =4.8030012384057229e-06
+Step (Outer -- Inner) =  10 -- 37       RMS =4.8024521440921786e-06
+Step (Outer -- Inner) =  10 -- 38       RMS =4.8001592058399860e-06
+Step (Outer -- Inner) =  10 -- 39       RMS =4.7575918216700910e-06
+Step (Outer -- Inner) =  10 -- 40       RMS =4.4620810746015516e-06
+Step (Outer -- Inner) =  10 -- 41       RMS =3.6398518788487548e-06
+Step (Outer -- Inner) =  10 -- 42       RMS =2.6278803595295759e-06
+Step (Outer -- Inner) =  10 -- 43       RMS =2.6278596376509303e-06
+Step (Outer -- Inner) =  10 -- 44       RMS =2.6278388027466159e-06
+Step (Outer -- Inner) =  10 -- 45       RMS =2.6278033939021752e-06
+Step (Outer -- Inner) =  10 -- 46       RMS =2.6277519159276771e-06
+Step (Outer -- Inner) =  10 -- 47       RMS =2.6276403087633327e-06
+Step (Outer -- Inner) =  10 -- 48       RMS =2.6273799636145752e-06
+Step (Outer -- Inner) =  10 -- 49       RMS =2.6263625664442344e-06
+Step (Outer -- Inner) =  10 -- 50       RMS =2.6135684531625804e-06
+Step (Outer -- Inner) =  10 -- 51       RMS =2.4059699588282246e-06
+Step (Outer -- Inner) =  10 -- 52       RMS =2.2443799912944710e-06
+Step (Outer -- Inner) =  10 -- 53       RMS =1.9320806015768484e-06
+Step (Outer -- Inner) =  10 -- 54       RMS =1.7589098128982346e-06
+Step (Outer -- Inner) =  10 -- 55       RMS =1.7586912827826181e-06
+Step (Outer -- Inner) =  10 -- 56       RMS =1.7577280216931053e-06
+Step (Outer -- Inner) =  10 -- 57       RMS =1.7361030936120947e-06
+Step (Outer -- Inner) =  10 -- 58       RMS =1.6239088218745505e-06
+Step (Outer -- Inner) =  10 -- 59       RMS =1.6051318246115486e-06
+Step (Outer -- Inner) =  10 -- 60       RMS =1.5003285272924098e-06
+Step (Outer -- Inner) =  10 -- 61       RMS =1.4693154526454933e-06
+Step (Outer -- Inner) =  10 -- 62       RMS =1.3579345471883189e-06
+Step (Outer -- Inner) =  10 -- 63       RMS =1.3563810540552502e-06
+Step (Outer -- Inner) =  10 -- 64       RMS =1.1282188969264186e-06
+Step (Outer -- Inner) =  10 -- 65       RMS =8.3059520506531557e-07
+Step (Outer -- Inner) =  10 -- 66       RMS =8.3058705746729960e-07
+Step (Outer -- Inner) =  10 -- 67       RMS =8.3058325019982635e-07
+Step (Outer -- Inner) =  10 -- 68       RMS =8.3056626296613134e-07
+Step (Outer -- Inner) =  10 -- 69       RMS =8.3054024520160952e-07
+Step (Outer -- Inner) =  10 -- 70       RMS =8.3047450217394570e-07
+Step (Outer -- Inner) =  10 -- 71       RMS =8.3026631555428789e-07
+Step (Outer -- Inner) =  10 -- 72       RMS =8.2876933897277484e-07
+Step (Outer -- Inner) =  10 -- 73       RMS =2.8294324735946611e-07
+Step (Outer -- Inner) =  10 -- 74       RMS =1.3120013935834151e-07
+Step (Outer -- Inner) =  10 -- 75       RMS =1.3120033379135091e-07
+Step (Outer -- Inner) =  10 -- 76       RMS =1.3120060732275811e-07
+Step (Outer -- Inner) =  10 -- 77       RMS =1.3120101806638861e-07
+Step (Outer -- Inner) =  10 -- 78       RMS =1.3119193080040247e-07
+Step (Outer -- Inner) =  10 -- 79       RMS =1.3119326452686498e-07
+Step (Outer -- Inner) =  10 -- 80       RMS =1.3119737963114342e-07
+Step (Outer -- Inner) =  10 -- 81       RMS =1.3119947781421851e-07
+Step (Outer -- Inner) =  10 -- 82       RMS =1.3118979912084289e-07
+Step (Outer -- Inner) =  10 -- 83       RMS =1.3117293073014737e-07
+Step (Outer -- Inner) =  10 -- 84       RMS =1.3113492197416700e-07
+Step (Outer -- Inner) =  10 -- 85       RMS =1.2800321598400100e-07
+Step (Outer -- Inner) =  10 -- 86       RMS =1.1967468297723255e-07
+Step (Outer -- Inner) =  10 -- 87       RMS =1.1964561937536329e-07
+Step (Outer -- Inner) =  10 -- 88       RMS =1.1942924785463345e-07
+Step (Outer -- Inner) =  10 -- 89       RMS =9.4324065547011312e-08
+Step (Outer -- Inner) =  10 -- 90       RMS =8.0802113842908384e-08
+Step (Outer -- Inner) =  10 -- 91       RMS =8.0803654586230036e-08
+Step (Outer -- Inner) =  10 -- 92       RMS =8.0795716472691242e-08
+Step (Outer -- Inner) =  10 -- 93       RMS =8.0789693908861755e-08
+Step (Outer -- Inner) =  10 -- 94       RMS =8.0785472102991725e-08
+Step (Outer -- Inner) =  10 -- 95       RMS =8.0756530962362984e-08
+Step (Outer -- Inner) =  10 -- 96       RMS =8.0370440340559290e-08
+Step (Outer -- Inner) =  10 -- 97       RMS =7.4893424273077345e-08
+Step (Outer -- Inner) =  10 -- 98       RMS =6.9145235458846807e-08
+Step (Outer -- Inner) =  10 -- 99       RMS =6.5116654439456657e-08
+Step (Outer -- Inner) =  10 -- 100       RMS =5.1865395750322696e-09
+Reach maximum number of steps ( 100 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000079691964e+00
+0.0000000000000000e+00 0.0000000000000000e+00 1.9999999901059076e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE11   -6.826365e+03  -4.869832e-08  1.190e-05  1.208e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.8720359554890627e-13 -8.3456210673733773e-12 -2.3600943500757111e-04
+-3.5091577597168021e-13 -8.3503074427561842e-12 -2.3600969957984107e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000001263633589e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000973312573e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  11 -- 1       RMS =6.5116654439456657e-08
+Step (Outer -- Inner) =  11 -- 2       RMS =2.5838036521639451e-05
+Step (Outer -- Inner) =  11 -- 3       RMS =2.5786010802068455e-05
+Step (Outer -- Inner) =  11 -- 4       RMS =2.5634632334282035e-05
+Step (Outer -- Inner) =  11 -- 5       RMS =2.5319368899004452e-05
+Step (Outer -- Inner) =  11 -- 6       RMS =2.5315919495905632e-05
+Step (Outer -- Inner) =  11 -- 7       RMS =2.5285067881188693e-05
+Step (Outer -- Inner) =  11 -- 8       RMS =2.4559888416988169e-05
+Step (Outer -- Inner) =  11 -- 9       RMS =2.4035152126715125e-05
+Step (Outer -- Inner) =  11 -- 10       RMS =2.3963945947424758e-05
+Step (Outer -- Inner) =  11 -- 11       RMS =2.3297791614012111e-05
+Step (Outer -- Inner) =  11 -- 12       RMS =2.1001631653022511e-05
+Step (Outer -- Inner) =  11 -- 13       RMS =1.9553525937033030e-05
+Step (Outer -- Inner) =  11 -- 14       RMS =1.9553100363101562e-05
+Step (Outer -- Inner) =  11 -- 15       RMS =1.9552237379545052e-05
+Step (Outer -- Inner) =  11 -- 16       RMS =1.9549880310905865e-05
+Step (Outer -- Inner) =  11 -- 17       RMS =1.9537629655981451e-05
+Step (Outer -- Inner) =  11 -- 18       RMS =1.8707703586345946e-05
+Step (Outer -- Inner) =  11 -- 19       RMS =1.7033391434865516e-05
+Step (Outer -- Inner) =  11 -- 20       RMS =1.7032729203558195e-05
+Step (Outer -- Inner) =  11 -- 21       RMS =1.7031092163471811e-05
+Step (Outer -- Inner) =  11 -- 22       RMS =1.7024581412595442e-05
+Step (Outer -- Inner) =  11 -- 23       RMS =1.6925251589065758e-05
+Step (Outer -- Inner) =  11 -- 24       RMS =1.5947786933997917e-05
+Step (Outer -- Inner) =  11 -- 25       RMS =1.3213974917939957e-05
+Step (Outer -- Inner) =  11 -- 26       RMS =1.1682899637220035e-05
+Step (Outer -- Inner) =  11 -- 27       RMS =1.1682605355454348e-05
+Step (Outer -- Inner) =  11 -- 28       RMS =1.1681991067533544e-05
+Step (Outer -- Inner) =  11 -- 29       RMS =1.1680292007677993e-05
+Step (Outer -- Inner) =  11 -- 30       RMS =1.1671644593255675e-05
+Step (Outer -- Inner) =  11 -- 31       RMS =1.1250110693886180e-05
+Step (Outer -- Inner) =  11 -- 32       RMS =1.0205969071481971e-05
+Step (Outer -- Inner) =  11 -- 33       RMS =1.0204568877023643e-05
+Step (Outer -- Inner) =  11 -- 34       RMS =1.0197971135916362e-05
+Step (Outer -- Inner) =  11 -- 35       RMS =1.0002876817279339e-05
+Step (Outer -- Inner) =  11 -- 36       RMS =9.2649822645712960e-06
+Step (Outer -- Inner) =  11 -- 37       RMS =9.2506771798575020e-06
+Step (Outer -- Inner) =  11 -- 38       RMS =1.5332827726032522e-06
+Step (Outer -- Inner) =  11 -- 39       RMS =3.8212848748198904e-08
+Step (Outer -- Inner) =  11 -- 40       RMS =3.8179992032090094e-08
+Step (Outer -- Inner) =  11 -- 41       RMS =3.7886476190647766e-08
+Step (Outer -- Inner) =  11 -- 42       RMS =3.7536500978048371e-08
+Step (Outer -- Inner) =  11 -- 43       RMS =3.5855129576430105e-08
+Step (Outer -- Inner) =  11 -- 44       RMS =3.4628651021395857e-08
+Step (Outer -- Inner) =  11 -- 45       RMS =3.4628908142357157e-08
+Step (Outer -- Inner) =  11 -- 46       RMS =3.4619895555538699e-08
+Step (Outer -- Inner) =  11 -- 47       RMS =3.4610675213918710e-08
+Step (Outer -- Inner) =  11 -- 48       RMS =3.4561022900041369e-08
+Step (Outer -- Inner) =  11 -- 49       RMS =3.2339785731961402e-08
+Step (Outer -- Inner) =  11 -- 50       RMS =3.0919926548110399e-08
+Step (Outer -- Inner) =  11 -- 51       RMS =3.0921345084846215e-08
+Step (Outer -- Inner) =  11 -- 52       RMS =3.0885601571951154e-08
+Step (Outer -- Inner) =  11 -- 53       RMS =1.6698853552757216e-08
+Step (Outer -- Inner) =  11 -- 54       RMS =1.0224063323758371e-08
+Step (Outer -- Inner) =  11 -- 55       RMS =1.0224077603768485e-08
+Step (Outer -- Inner) =  11 -- 56       RMS =1.0224150704468608e-08
+Step (Outer -- Inner) =  11 -- 57       RMS =1.0224189788620583e-08
+Step (Outer -- Inner) =  11 -- 58       RMS =1.0224316925257498e-08
+Step (Outer -- Inner) =  11 -- 59       RMS =1.0224931597542367e-08
+Step (Outer -- Inner) =  11 -- 60       RMS =1.0226675922183772e-08
+Step (Outer -- Inner) =  11 -- 61       RMS =1.0225437553658112e-08
+Step (Outer -- Inner) =  11 -- 62       RMS =1.0225361852430086e-08
+Step (Outer -- Inner) =  11 -- 63       RMS =1.0225202448597783e-08
+Step (Outer -- Inner) =  11 -- 64       RMS =1.0224610836846778e-08
+Step (Outer -- Inner) =  11 -- 65       RMS =1.0214004600295230e-08
+Step (Outer -- Inner) =  11 -- 66       RMS =1.0217920381221642e-08
+Step (Outer -- Inner) =  11 -- 67       RMS =9.5016473666344770e-09
+Step (Outer -- Inner) =  11 -- 68       RMS =8.9294938453320539e-09
+Step (Outer -- Inner) =  11 -- 69       RMS =2.8942213990013312e-09
+Step (Outer -- Inner) =  11 -- 70       RMS =1.1267953137189756e-09
+Step (Outer -- Inner) =  11 -- 71       RMS =1.1270288074649078e-09
+Step (Outer -- Inner) =  11 -- 72       RMS =1.1276406870285993e-09
+Step (Outer -- Inner) =  11 -- 73       RMS =1.1270131928066364e-09
+Step (Outer -- Inner) =  11 -- 74       RMS =1.1367582383468565e-09
+Step (Outer -- Inner) =  11 -- 75       RMS =1.1407325795810036e-09
+Step (Outer -- Inner) =  11 -- 76       RMS =1.1296712097254851e-09
+Step (Outer -- Inner) =  11 -- 77       RMS =1.0625758421174787e-09
+Step (Outer -- Inner) =  11 -- 78       RMS =9.2845877541275262e-10
+Meet convergence criterion ( < 1.0000000000000001e-09 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000016227002e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000015934423e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE12   -6.826365e+03  2.589324e-09   1.036e-05  1.220e+02  
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1.000e-09
+initial lambda: 
+-2.8720359554890627e-13 -8.3456210673733773e-12 -2.3843055955646784e-04
+-3.5091577597168021e-13 -8.3503074427561842e-12 -2.3843064373256311e-04
+initial spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000007559287e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000024905775e+00
+target spin: 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000000000000e+00
+Step (Outer -- Inner) =  12 -- 1       RMS =1.0625758421174787e-09
+Step (Outer -- Inner) =  12 -- 2       RMS =1.2396376205656225e-05
+Step (Outer -- Inner) =  12 -- 3       RMS =1.2314986320616375e-05
+Step (Outer -- Inner) =  12 -- 4       RMS =1.2218385360676504e-05
+Step (Outer -- Inner) =  12 -- 5       RMS =1.2216475641686903e-05
+Step (Outer -- Inner) =  12 -- 6       RMS =1.2194102630575666e-05
+Step (Outer -- Inner) =  12 -- 7       RMS =1.2001697703830869e-05
+Step (Outer -- Inner) =  12 -- 8       RMS =1.1340707779508103e-05
+Step (Outer -- Inner) =  12 -- 9       RMS =1.0897434491362721e-05
+Step (Outer -- Inner) =  12 -- 10       RMS =1.0897017553069159e-05
+Step (Outer -- Inner) =  12 -- 11       RMS =1.0895932630809481e-05
+Step (Outer -- Inner) =  12 -- 12       RMS =1.0890512375570600e-05
+Step (Outer -- Inner) =  12 -- 13       RMS =1.0511115278069982e-05
+Step (Outer -- Inner) =  12 -- 14       RMS =9.7642247739386739e-06
+Step (Outer -- Inner) =  12 -- 15       RMS =9.7639178441998758e-06
+Step (Outer -- Inner) =  12 -- 16       RMS =9.7631837845768392e-06
+Step (Outer -- Inner) =  12 -- 17       RMS =9.7605904241265478e-06
+Step (Outer -- Inner) =  12 -- 18       RMS =9.7319921446376867e-06
+Step (Outer -- Inner) =  12 -- 19       RMS =9.0758258651602422e-06
+Step (Outer -- Inner) =  12 -- 20       RMS =8.6454884251416293e-06
+Step (Outer -- Inner) =  12 -- 21       RMS =8.5196015923796440e-06
+Step (Outer -- Inner) =  12 -- 22       RMS =8.0397058833980340e-06
+Step (Outer -- Inner) =  12 -- 23       RMS =8.0289078098837147e-06
+Step (Outer -- Inner) =  12 -- 24       RMS =6.1448230739265312e-07
+Step (Outer -- Inner) =  12 -- 25       RMS =1.2263480196533640e-07
+Step (Outer -- Inner) =  12 -- 26       RMS =1.2263392925385870e-07
+Step (Outer -- Inner) =  12 -- 27       RMS =1.2263347075787042e-07
+Step (Outer -- Inner) =  12 -- 28       RMS =1.2263343813282100e-07
+Step (Outer -- Inner) =  12 -- 29       RMS =1.2263427545382996e-07
+Step (Outer -- Inner) =  12 -- 30       RMS =1.2261475626246947e-07
+Step (Outer -- Inner) =  12 -- 31       RMS =1.2257596116562659e-07
+Step (Outer -- Inner) =  12 -- 32       RMS =1.2028366501615681e-07
+Step (Outer -- Inner) =  12 -- 33       RMS =1.1510668244714206e-07
+Step (Outer -- Inner) =  12 -- 34       RMS =1.1509069199536529e-07
+Step (Outer -- Inner) =  12 -- 35       RMS =1.1507450162941658e-07
+Step (Outer -- Inner) =  12 -- 36       RMS =1.1485441996042125e-07
+Step (Outer -- Inner) =  12 -- 37       RMS =1.0652593536794520e-07
+Step (Outer -- Inner) =  12 -- 38       RMS =1.0148775965092645e-07
+Step (Outer -- Inner) =  12 -- 39       RMS =1.0145322847629775e-07
+Step (Outer -- Inner) =  12 -- 40       RMS =1.0099950260716208e-07
+Step (Outer -- Inner) =  12 -- 41       RMS =9.6208606991494984e-08
+Step (Outer -- Inner) =  12 -- 42       RMS =8.6673995308008795e-08
+Step (Outer -- Inner) =  12 -- 43       RMS =8.1078630999494115e-08
+Step (Outer -- Inner) =  12 -- 44       RMS =8.1063657760620502e-08
+Step (Outer -- Inner) =  12 -- 45       RMS =8.1001293272139142e-08
+Step (Outer -- Inner) =  12 -- 46       RMS =7.2170230168577031e-08
+Step (Outer -- Inner) =  12 -- 47       RMS =5.9297353092123179e-08
+Step (Outer -- Inner) =  12 -- 48       RMS =5.9288827687407216e-08
+Step (Outer -- Inner) =  12 -- 49       RMS =5.9290096461814196e-08
+Step (Outer -- Inner) =  12 -- 50       RMS =5.9291643282125050e-08
+Step (Outer -- Inner) =  12 -- 51       RMS =5.9284635385962954e-08
+Step (Outer -- Inner) =  12 -- 52       RMS =5.9279388501903836e-08
+Step (Outer -- Inner) =  12 -- 53       RMS =5.9245560709853902e-08
+Step (Outer -- Inner) =  12 -- 54       RMS =5.8333745483342536e-08
+Step (Outer -- Inner) =  12 -- 55       RMS =5.4438234067265913e-08
+Step (Outer -- Inner) =  12 -- 56       RMS =5.4223721442357435e-08
+Step (Outer -- Inner) =  12 -- 57       RMS =4.9079775412737229e-08
+Step (Outer -- Inner) =  12 -- 58       RMS =4.5949580003843111e-08
+Step (Outer -- Inner) =  12 -- 59       RMS =4.5543242270075242e-08
+Step (Outer -- Inner) =  12 -- 60       RMS =4.2652006047047948e-08
+Step (Outer -- Inner) =  12 -- 61       RMS =3.1776471447663432e-08
+Step (Outer -- Inner) =  12 -- 62       RMS =2.0326194350998613e-08
+Step (Outer -- Inner) =  12 -- 63       RMS =2.0326369363196724e-08
+Step (Outer -- Inner) =  12 -- 64       RMS =2.0326558004747387e-08
+Step (Outer -- Inner) =  12 -- 65       RMS =2.0326771026343777e-08
+Step (Outer -- Inner) =  12 -- 66       RMS =2.0327192799971673e-08
+Step (Outer -- Inner) =  12 -- 67       RMS =2.0328106982434660e-08
+Step (Outer -- Inner) =  12 -- 68       RMS =2.0328617635925983e-08
+Step (Outer -- Inner) =  12 -- 69       RMS =2.0319797979507577e-08
+Step (Outer -- Inner) =  12 -- 70       RMS =2.0313668222159949e-08
+Step (Outer -- Inner) =  12 -- 71       RMS =2.0191168938394923e-08
+Step (Outer -- Inner) =  12 -- 72       RMS =1.8879741330970403e-08
+Step (Outer -- Inner) =  12 -- 73       RMS =1.6250071451187253e-08
+Step (Outer -- Inner) =  12 -- 74       RMS =1.4805596043332896e-08
+Step (Outer -- Inner) =  12 -- 75       RMS =1.4806403517340649e-08
+Step (Outer -- Inner) =  12 -- 76       RMS =1.4807591654650354e-08
+Step (Outer -- Inner) =  12 -- 77       RMS =1.4639795964435229e-08
+Step (Outer -- Inner) =  12 -- 78       RMS =1.3716720749935688e-08
+Step (Outer -- Inner) =  12 -- 79       RMS =1.3395237913252735e-08
+Step (Outer -- Inner) =  12 -- 80       RMS =1.2311833122676044e-08
+Step (Outer -- Inner) =  12 -- 81       RMS =1.2312769515433139e-08
+Step (Outer -- Inner) =  12 -- 82       RMS =1.2191690058917899e-08
+Step (Outer -- Inner) =  12 -- 83       RMS =1.1390361349560267e-08
+Step (Outer -- Inner) =  12 -- 84       RMS =1.0899243451644589e-09
+Step (Outer -- Inner) =  12 -- 85       RMS =1.5554775542802817e-10
+Meet convergence criterion ( < 1.0000000000000001e-09 ), exit.
+after-optimization spin: (print in the inner loop): 
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000002672045e+00
+0.0000000000000000e+00 0.0000000000000000e+00 2.0000000002716107e+00
+Inner optimization for lambda ends.
+===============================================================================
+ GE13   -6.826365e+03  2.558234e-08   6.081e-06  1.218e+02  
+Total Magnetism on atom: 0 Fe (0.0000000000000000e+00, 0.0000000000000000e+00, 1.9999999983980949e+00)
+Total Magnetism on atom: 1 Fe (0.0000000000000000e+00, 0.0000000000000000e+00, 2.0000000021357693e+00)
+TIME STATISTICS
+------------------------------------------------------------------------------------
+     CLASS_NAME                 NAME            TIME(Sec)  CALLS   AVG(Sec) PER(%)
+------------------------------------------------------------------------------------
+                     total                      1636.31      65156   0.03   100.00
+Driver               reading                      0.16           1   0.16     0.01
+Input                Init                         0.06           1   0.06     0.00
+Input_Conv           Convert                      0.00           1   0.00     0.00
+Driver               driver_line                1636.23          1 1636.23   99.99
+UnitCell             check_tau                    0.00           1   0.00     0.00
+PW_Basis             setuptransform               0.20           1   0.20     0.01
+PW_Basis             distributeg                  0.01           1   0.01     0.00
+mymath               heapsort                     0.00           3   0.00     0.00
+PW_Basis_K           setuptransform               0.18           1   0.18     0.01
+PW_Basis_K           distributeg                  0.01           1   0.01     0.00
+PW_Basis             setup_struc_factor           0.00           1   0.00     0.00
+ORB_control          read_orb_first               0.53           1   0.53     0.03
+LCAO_Orbitals        Read_Orbitals                0.53           1   0.53     0.03
+NOrbital_Lm          extra_uniform                0.02           9   0.00     0.00
+Mathzone_Add1        SplineD2                     0.00           9   0.00     0.00
+Mathzone_Add1        Cubic_Spline_Interpolation   0.01           9   0.00     0.00
+Sphbes               Spherical_Bessel             0.15       14666   0.00     0.01
+ppcell_vl            init_vloc                    0.06           1   0.06     0.00
+Ions                 opt_ions                   1634.22          1 1634.22   99.87
+ESolver_KS_LCAO      Run                        1634.22          1 1634.22   99.87
+ESolver_KS_LCAO      beforescf                    2.14           1   2.14     0.13
+ESolver_KS_LCAO      beforesolver                 1.07           1   1.07     0.07
+ESolver_KS_LCAO      set_matrix_grid              0.90           1   0.90     0.05
+atom_arrange         search                       0.01           1   0.01     0.00
+Grid_Technique       init                         0.80           1   0.80     0.05
+Grid_BigCell         grid_expansion_index         0.01           2   0.01     0.00
+Record_adj           for_2d                       0.08           1   0.08     0.01
+Grid_Driver          Find_atom                    0.01          46   0.00     0.00
+LCAO_Hamilt          grid_prepare                 0.00           1   0.00     0.00
+Veff                 initialize_HR                0.01           1   0.01     0.00
+OverlapNew           initialize_SR                0.01           1   0.01     0.00
+EkineticNew          initialize_HR                0.01           1   0.01     0.00
+NonlocalNew          initialize_HR                0.03           1   0.03     0.00
+Charge               set_rho_core                 0.34           1   0.34     0.02
+PW_Basis             recip2real                   0.84         174   0.00     0.05
+PW_Basis             gathers_scatterp             0.68         174   0.00     0.04
+Charge               atomic_rho                   0.27           1   0.27     0.02
+Potential            init_pot                     0.44           1   0.44     0.03
+Potential            update_from_charge           2.38          14   0.17     0.15
+Potential            cal_fixed_v                  0.00           1   0.00     0.00
+PotLocal             cal_fixed_v                  0.00           1   0.00     0.00
+Potential            cal_v_eff                    2.37          14   0.17     0.15
+H_Hartree_pw         v_hartree                    0.09          14   0.01     0.01
+PW_Basis             real2recip                   0.50         154   0.00     0.03
+PW_Basis             gatherp_scatters             0.35         154   0.00     0.02
+PotXC                cal_v_eff                    2.26          14   0.16     0.14
+XC_Functional        v_xc                         2.25          14   0.16     0.14
+H_Ewald_pw           compute_ewald                0.00           1   0.00     0.00
+HSolverLCAO          solve                      1615.52       2307   0.70    98.73
+HamiltLCAO           updateHk                   1046.45       2307   0.45    63.95
+OperatorLCAO         init                       1018.44       9228   0.11    62.24
+Veff                 contributeHR               996.90          13  76.68    60.92
+Gint_interface       cal_gint                   1503.27         65  23.13    91.87
+Gint_interface       cal_gint_vlocal            978.96          52  18.83    59.83
+Gint_Tools           cal_psir_ylm               140.26       13000   0.01     8.57
+Gint_k               transfer_pvpR               17.91          13   1.38     1.09
+OverlapNew           calculate_SR                 3.80           1   3.80     0.23
+OverlapNew           contributeHk                 7.10        2307   0.00     0.43
+EkineticNew          contributeHR                 3.87          13   0.30     0.24
+EkineticNew          calculate_HR                 3.86           1   3.86     0.24
+NonlocalNew          contributeHR                17.25          13   1.33     1.05
+NonlocalNew          calculate_HR                17.05           1  17.05     1.04
+OperatorScLambda     contributeHk                 9.06        2307   0.00     0.55
+SpinConstrain        cal_h_lambda                 8.75        2307   0.00     0.53
+OperatorLCAO         contributeHk                 6.96        2307   0.00     0.43
+HSolverLCAO          hamiltSolvePsiK             30.38        2307   0.01     1.86
+DiagoElpa            elpa_solve                  24.22        2307   0.01     1.48
+ElecStateLCAO        psiToRho                   535.15          13  41.17    32.70
+elecstate            cal_dm                       1.02        2307   0.00     0.06
+psiMulPsiMpi         pdgemm                       0.94        2307   0.00     0.06
+DensityMatrix        cal_DMR                      0.50          13   0.04     0.03
+ Local_Orbital_wfc   wfc_2d_to_grid               2.32        2308   0.00     0.14
+Gint                 transfer_DMR                 2.43          13   0.19     0.15
+Gint_interface       cal_gint_rho               524.29          13  40.33    32.04
+HamiltLCAO           updateSk                     7.36        2322   0.00     0.45
+Charge_Mixing        get_drho                     0.02          13   0.00     0.00
+Charge               mix_rho                      0.13          12   0.01     0.01
+Charge               Pulay_mixing                 0.04          12   0.00     0.00
+SpinConstrain        cal_mw_from_lambda         986.00        2294   0.43    60.26
+ModuleIO             write_istate_info            0.00           1   0.00     0.00
+------------------------------------------------------------------------------------
+
+ START  Time  : Tue Oct 24 10:27:17 2023
+ FINISH Time  : Tue Oct 24 10:54:33 2023
+ TOTAL  Time  : 1636
+ SEE INFORMATION IN : OUT.autotest/
