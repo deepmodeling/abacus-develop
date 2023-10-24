@@ -110,16 +110,30 @@ check_out(){
             break
         else
             if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
-                if [[ $key == "totalforceref" && $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ]]; then
-                    echo -e "[WARNING   ] "\
-                        "$key cal=$cal ref=$ref deviation=$deviation"
-                    let failed++
-                    failed_case_list+=$dir'\n'
-                elif [[ $key == "totalstressref" && $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ]]; then
-                    echo -e "[WARNING   ] "\
-                        "$key cal=$cal ref=$ref deviation=$deviation"
-                    let failed++
-                    failed_case_list+=$dir'\n'
+                if [ $key == "totalforceref" ]; then
+                    if [ $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ]; then
+                        echo -e "[WARNING   ] "\
+                            "$key cal=$cal ref=$ref deviation=$deviation"
+                        let failed++
+                        failed_case_list+=$dir'\n'
+                    else
+                        #echo "$key cal=$cal ref=$ref deviation=$deviation"
+                        #echo "[ PASS ] $key"
+                        echo -e "\e[0;32m[      OK  ] \e[0m $key"
+                    fi
+
+                elif [ $key == "totalstressref" ]; then
+                    if [ $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ]; then
+                        echo -e "[WARNING   ] "\
+                            "$key cal=$cal ref=$ref deviation=$deviation"
+                        let failed++
+                        failed_case_list+=$dir'\n'
+                    else
+                        #echo "$key cal=$cal ref=$ref deviation=$deviation"
+                        #echo "[ PASS ] $key"
+                        echo -e "\e[0;32m[      OK  ] \e[0m $key"
+                    fi
+
                 else
                     echo -e "[WARNING   ] "\
                         "$key cal=$cal ref=$ref deviation=$deviation"
