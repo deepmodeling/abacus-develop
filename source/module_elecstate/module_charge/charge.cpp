@@ -334,40 +334,39 @@ void Charge::atomic_rho(const int spin_number_need,
                         //----------------------------------------------------------
                         // Here we check the electron number
                         //----------------------------------------------------------
-                        const std::vector<double> rhoatm = [&]() -> std::vector<double> {
-                            std::vector<double> rhoatm(mesh);
-                            for (int ir = 0; ir < mesh; ++ir)
-                            {
-                                double r2 = atom->ncpp.r[ir] * atom->ncpp.r[ir];
-                                rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
-                            }
-                            rhoatm[0] = pow((rhoatm[2] / rhoatm[1]), 1. / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add
-                            rhoatm[0] = pow(rhoatm[0], atom->ncpp.r[1]);
-                            rhoatm[0] = rhoatm[1] / rhoatm[0];
+                        // const std::vector<double> rhoatm = [&]() -> std::vector<double> {
+                        //     std::vector<double> rhoatm(mesh);
+                        //     for (int ir = 0; ir < mesh; ++ir)
+                        //     {
+                        //         double r2 = atom->ncpp.r[ir] * atom->ncpp.r[ir];
+                        //         rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
+                        //     }
+                        //     rhoatm[0] = pow((rhoatm[2] / rhoatm[1]), 1. / (atom->ncpp.r[2] - atom->ncpp.r[1])); //
+                        //     zws add rhoatm[0] = pow(rhoatm[0], atom->ncpp.r[1]); rhoatm[0] = rhoatm[1] / rhoatm[0];
 
-                            double charge = 0.0;
-                            ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh,
-                                                                atom->ncpp.rho_at,
-                                                                atom->ncpp.rab,
-                                                                charge);
-                            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge from rho_at", charge);
-                            assert(charge != 0.0
-                                || charge == atom->ncpp.zv); // Peize Lin add charge==atom->zv for bsse 2021.04.07
+                        //     double charge = 0.0;
+                        //     ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh,
+                        //                                         atom->ncpp.rho_at,
+                        //                                         atom->ncpp.rab,
+                        //                                         charge);
+                        //     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge from rho_at", charge);
+                        //     assert(charge != 0.0
+                        //         || charge == atom->ncpp.zv); // Peize Lin add charge==atom->zv for bsse 2021.04.07
 
-                            double scale = 1.0;
-                            if (charge != atom->ncpp.zv)
-                            {
-                                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge should be", atom->ncpp.zv);
-                                scale = atom->ncpp.zv / charge;
-                            }
+                        //     double scale = 1.0;
+                        //     if (charge != atom->ncpp.zv)
+                        //     {
+                        //         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge should be", atom->ncpp.zv);
+                        //         scale = atom->ncpp.zv / charge;
+                        //     }
 
-                            for (int ir = 0; ir < mesh; ++ir)
-                            {
-                                rhoatm[ir] *= scale;
-                                rhoatm[ir] *= (ModuleBase::FOUR_PI * atom->ncpp.r[ir] * atom->ncpp.r[ir]);
-                            }
-                            return rhoatm;
-                        }();
+                        //     for (int ir = 0; ir < mesh; ++ir)
+                        //     {
+                        //         rhoatm[ir] *= scale;
+                        //         rhoatm[ir] *= (ModuleBase::FOUR_PI * atom->ncpp.r[ir] * atom->ncpp.r[ir]);
+                        //     }
+                        //     return rhoatm;
+                        // }();
 
                         assert(ucell.meshx > 0);
                         //----------------------------------------------------------
@@ -379,8 +378,8 @@ void Charge::atomic_rho(const int spin_number_need,
                             std::vector<double> rho1d(ucell.meshx);
                             for (int ir = 0; ir < mesh; ir++)
                             {
-                                //              rho1d [ir] = atom->rho_at[ir];
-                                rho1d[ir] = rhoatm[ir];
+                                rho1d[ir] = atom->ncpp.rho_at[ir];
+                                // rho1d[ir] = rhoatm[ir];
                             }
                             ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab, rho_lgl[0]);
                             gstart = 1;
@@ -409,13 +408,13 @@ void Charge::atomic_rho(const int spin_number_need,
                                 {
                                     if (atom->ncpp.r[ir] < 1.0e-8)
                                     {
-                                        rho1d[ir] = rhoatm[ir];
-                                        // rho1d[ir] = atom->rho_at[ir];
+                                        // rho1d[ir] = rhoatm[ir];
+                                        rho1d[ir] = atom->ncpp.rho_at[ir];
                                     }
                                     else
                                     {
                                         const double gxx = gx * atom->ncpp.r[ir];
-                                        rho1d[ir] = rhoatm[ir] * ModuleBase::libm::sin(gxx) / gxx;
+                                        rho1d[ir] = atom->ncpp.rho_at[ir] * ModuleBase::libm::sin(gxx) / gxx;
                                     }
                                 }
                                 ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab, rho_lgl[igg]);

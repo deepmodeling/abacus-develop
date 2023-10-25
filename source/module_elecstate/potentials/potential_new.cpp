@@ -327,10 +327,9 @@ void Potential::interpolate_vrs()
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
         }
 
-        ModuleBase::ComplexMatrix vrs_ofk;
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
-            vrs_ofk.create(GlobalV::NSPIN, rho_basis_->npw);
+            ModuleBase::ComplexMatrix vrs_ofk(GlobalV::NSPIN, rho_basis_->npw);
             for (int is = 0; is < GlobalV::NSPIN; is++)
             {
                 rho_basis_->real2recip(&vofk_effective(is, 0), &vrs_ofk(is, 0));
