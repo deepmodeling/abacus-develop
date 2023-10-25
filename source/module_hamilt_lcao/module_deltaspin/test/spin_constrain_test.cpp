@@ -355,3 +355,51 @@ TYPED_TEST(SpinConstrainTest, SetTargetMagType1)
         }
     }
 }
+
+TYPED_TEST(SpinConstrainTest, SetInputParameters)
+{
+    double sc_thr = 1e-6;
+    int nsc = 100;
+    int nsc_min = 2;
+    double alpha_trial = 0.01;
+    double sccut = 3.0;
+    bool decay_grad_switch = 1;
+    this->sc.set_input_parameters(sc_thr, nsc, nsc_min, alpha_trial, sccut, decay_grad_switch);
+    EXPECT_DOUBLE_EQ(this->sc.get_sc_thr(), sc_thr);
+    EXPECT_EQ(this->sc.get_nsc(), nsc);
+    EXPECT_EQ(this->sc.get_nsc_min(), nsc_min);
+    EXPECT_DOUBLE_EQ(this->sc.get_alpha_trial(), alpha_trial / 13.605698);
+    EXPECT_DOUBLE_EQ(this->sc.get_sccut(), sccut / 13.605698);
+    EXPECT_EQ(this->sc.get_decay_grad_switch(), decay_grad_switch);
+}
+
+TYPED_TEST(SpinConstrainTest, SetSolverParameters)
+{
+    K_Vectors kv;
+    this->sc.set_solver_parameters(4, kv, nullptr, nullptr, nullptr, nullptr, "genelpa", nullptr);
+    EXPECT_EQ(this->sc.get_nspin(), 4);
+    EXPECT_EQ(this->sc.phsol, nullptr);
+    EXPECT_EQ(this->sc.p_hamilt, nullptr);
+    EXPECT_EQ(this->sc.psi, nullptr);
+    EXPECT_EQ(this->sc.pelec, nullptr);
+    EXPECT_EQ(this->sc.KS_SOLVER, "genelpa");
+    EXPECT_EQ(this->sc.LM, nullptr);
+}
+
+TYPED_TEST(SpinConstrainTest, SetParaV)
+{
+    Parallel_Orbitals paraV;
+    // warning 1
+    paraV.nloc = 0;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(this->sc.set_ParaV(&paraV), ::testing::ExitedWithCode(0), "");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("nloc <= 0"));
+    // normal set
+    int nrow = 4;
+    int ncol = 4;
+    std::ofstream ofs("test.log");
+    paraV.set_global2local(nrow, ncol, false, ofs);
+    this->sc.set_ParaV(&paraV);
+    EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
+}

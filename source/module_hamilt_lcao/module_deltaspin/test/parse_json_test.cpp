@@ -20,19 +20,23 @@
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 
+template <typename T>
 class SpinConstrainTest : public testing::Test
 {
   protected:
-  	SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
 };
 
-TEST_F(SpinConstrainTest, ScDataFormat1)
+using MyTypes = ::testing::Types<double, std::complex<double>>;
+TYPED_TEST_SUITE(SpinConstrainTest, MyTypes);
+
+TYPED_TEST(SpinConstrainTest, ScDataFormat1)
 {
-	sc.clear_ScData();
-	sc.Set_ScData_From_Json("./support/sc_f1.json");
-	EXPECT_EQ(sc.get_ScData().size(), 2);
-	for (const auto& sc_elem : sc.get_ScData())
-	{
+    this->sc.clear_ScData();
+    this->sc.Set_ScData_From_Json("./support/sc_f1.json");
+    EXPECT_EQ(this->sc.get_ScData().size(), 2);
+    for (const auto& sc_elem: this->sc.get_ScData())
+    {
         const int& it = sc_elem.first;
         const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
 		if (it == 0)
@@ -61,13 +65,13 @@ TEST_F(SpinConstrainTest, ScDataFormat1)
 	}
 }
 
-TEST_F(SpinConstrainTest, ScDataFormat2)
+TYPED_TEST(SpinConstrainTest, ScDataFormat2)
 {
-	sc.clear_ScData();
-	sc.Set_ScData_From_Json("./support/sc_f2.json");
-	EXPECT_EQ(sc.get_ScData().size(), 1);
-	for (const auto& sc_elem : sc.get_ScData())
-	{
+    this->sc.clear_ScData();
+    this->sc.Set_ScData_From_Json("./support/sc_f2.json");
+    EXPECT_EQ(this->sc.get_ScData().size(), 1);
+    for (const auto& sc_elem: this->sc.get_ScData())
+    {
         const int& it = sc_elem.first;
         const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
 		EXPECT_EQ(sc_atoms.size(), 2);
@@ -85,14 +89,14 @@ TEST_F(SpinConstrainTest, ScDataFormat2)
             }
         }
 	}
-    EXPECT_DOUBLE_EQ(sc.get_decay_grad(1),0.9);
+    EXPECT_DOUBLE_EQ(this->sc.get_decay_grad(1), 0.9);
 }
 
-TEST_F(SpinConstrainTest, ScDataWarning)
+TYPED_TEST(SpinConstrainTest, ScDataWarning)
 {
-	sc.clear_ScData();
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(sc.Set_ScData_From_Json("./support/sc_f3.json"), ::testing::ExitedWithCode(0), "");
-	std::string output = testing::internal::GetCapturedStdout();
+    this->sc.clear_ScData();
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(this->sc.Set_ScData_From_Json("./support/sc_f3.json"), ::testing::ExitedWithCode(0), "");
+    std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Error opening sc_file"));
 }

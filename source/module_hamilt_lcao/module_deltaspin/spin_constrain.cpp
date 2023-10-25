@@ -381,13 +381,6 @@ double SpinConstrain<FPTYPE, Device>::get_decay_grad(int itype)
     return this->ScDecayGrad[itype];
 }
 
-/// set decay_grad_switch_
-template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_decay_grad_switch(bool decay_grad_switch_in)
-{
-    this->decay_grad_switch_ = decay_grad_switch_in;
-}
-
 /// set grad_decy
 template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_decay_grad()
@@ -434,13 +427,13 @@ void SpinConstrain<FPTYPE, Device>::set_decay_grad(const double* decay_grad_in, 
 }
 
 /// @brief  set input parameters
-template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_input_parameters(double sc_thr_in,
-                                                                                int nsc_in,
-                                                                                int nsc_min_in,
-                                                                                double alpha_trial_in,
-                                                                                double sccut_in,
-                                                                                bool decay_grad_switch_in)
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_input_parameters(double sc_thr_in,
+                                                         int nsc_in,
+                                                         int nsc_min_in,
+                                                         double alpha_trial_in,
+                                                         double sccut_in,
+                                                         bool decay_grad_switch_in)
 {
     this->sc_thr_ = sc_thr_in;
     this->nsc_ = nsc_in;
@@ -450,16 +443,64 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_input_parameters(
     this->decay_grad_switch_ = decay_grad_switch_in;
 }
 
-template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_solver_parameters(
-    int nspin_in,
-    K_Vectors kv_in,
-    hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>* phsol_in,
-    hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* p_hamilt_in,
-    psi::Psi<std::complex<double>>* psi_in,
-    elecstate::ElecState* pelec_in,
-    std::string KS_SOLVER_in,
-    LCAO_Matrix* LM_in)
+/// get sc_thr
+template <typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::get_sc_thr()
+{
+    return this->sc_thr_;
+}
+
+/// get nsc
+template <typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_nsc()
+{
+    return this->nsc_;
+}
+
+/// get nsc_min
+template <typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::get_nsc_min()
+{
+    return this->nsc_min_;
+}
+
+/// get alpha_trial
+template <typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::get_alpha_trial()
+{
+    return this->alpha_trial_;
+}
+
+/// get sccut
+template <typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::get_sccut()
+{
+    return this->restrict_current_;
+}
+
+/// set decay_grad_switch
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_decay_grad_switch(bool decay_grad_switch_in)
+{
+    this->decay_grad_switch_ = decay_grad_switch_in;
+}
+
+/// get decay_grad_switch
+template <typename FPTYPE, typename Device>
+bool SpinConstrain<FPTYPE, Device>::get_decay_grad_switch()
+{
+    return this->decay_grad_switch_;
+}
+
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_solver_parameters(int nspin_in,
+                                                          K_Vectors kv_in,
+                                                          hsolver::HSolver<FPTYPE, Device>* phsol_in,
+                                                          hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+                                                          psi::Psi<FPTYPE>* psi_in,
+                                                          elecstate::ElecState* pelec_in,
+                                                          std::string KS_SOLVER_in,
+                                                          LCAO_Matrix* LM_in)
 {
     /// set nspin
     this->set_nspin(nspin_in);
@@ -473,8 +514,8 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_solver_parameters
 }
 
 /// @brief  set ParaV
-template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_ParaV(Parallel_Orbitals* ParaV_in)
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_ParaV(Parallel_Orbitals* ParaV_in)
 {
     this->ParaV = ParaV_in;
     int nloc = this->ParaV->nloc;

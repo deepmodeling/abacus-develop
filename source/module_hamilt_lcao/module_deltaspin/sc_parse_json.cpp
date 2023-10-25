@@ -120,8 +120,8 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     file.close();
 }
 
-template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(std::string sc_file, int nat, int ntype)
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::bcast_ScData(std::string sc_file, int nat, int ntype)
 {
     /// set ScData
     this->clear_ScData();
@@ -142,6 +142,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(std::str
         constrain = const_cast<ModuleBase::Vector3<int>*>(this->get_constrain().data());
         decay_grad = const_cast<double*>(this->get_decay_grad().data());
     }
+#ifdef __MPI
     else
     {
         sc_lambda = new ModuleBase::Vector3<double>[nat];
@@ -180,6 +181,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(std::str
         delete[] constrain;
         delete[] decay_grad;
     }
+#endif
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

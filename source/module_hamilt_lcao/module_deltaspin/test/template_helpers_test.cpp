@@ -59,30 +59,4 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     ModuleBase::matrix orbMulP;
     EXPECT_NO_THROW(sc.convert(orbMulP));
     EXPECT_NO_THROW(sc.run_lambda_loop(0));
-    K_Vectors kv;
-    EXPECT_NO_THROW(sc.init_sc(0.0,
-                               0,
-                               0,
-                               0.0,
-                               0.0,
-                               false,
-                               ucell,
-                               "",
-                               0,
-                               nullptr,
-                               0,
-                               kv,
-                               "",
-                               nullptr,
-                               nullptr,
-                               nullptr,
-                               nullptr,
-                               nullptr));
-    EXPECT_NO_THROW(sc.set_input_parameters(0.0, 0, 0, 0.0, 0.0, false));
-    EXPECT_NO_THROW(sc.set_ParaV(nullptr));
-    EXPECT_NO_THROW(sc.set_solver_parameters(0, kv, nullptr, nullptr, nullptr, nullptr, "", nullptr));
-    EXPECT_NO_THROW(sc.bcast_ScData("", 0, 0));
-    std::map<int, int> atomCounts;
-    std::map<int, int> orbitalCounts;
-    EXPECT_NO_THROW(sc.set_orb_counts(atomCounts, orbitalCounts));
 }

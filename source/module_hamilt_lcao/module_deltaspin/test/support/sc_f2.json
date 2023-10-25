@@ -9,14 +9,16 @@
                 "lambda": [0.1, 0.1, 0.2],
                 "target_mag_val": 1.0,
                 "target_mag_angle1": 90.0,
-                "target_mag_angle2": 0.0
+                "target_mag_angle2": 0.0,
+                "constrain": [1, 1, 1]
             },
             {
                 "index": 4,
                 "lambda": [0.2, 0.4, 0.5],
                 "target_mag_val": 1.5,
                 "target_mag_angle1": 90.0,
-                "target_mag_angle2": 90.0
+                "target_mag_angle2": 90.0,
+                "constrain": [1, 1, 1]
             }
         ]
     }

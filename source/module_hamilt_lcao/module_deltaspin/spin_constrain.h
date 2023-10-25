@@ -71,10 +71,10 @@ public:
     elecstate::ElecState* pelec = nullptr;
     LCAO_Matrix* LM = nullptr;
     std::string KS_SOLVER;
-
     const double meV_to_Ry = 7.349864435130999e-05;
+    K_Vectors kv_;
 
-public:
+  public:
     /**
      * pubic methods for setting and getting spin-constrained DFT parameters
     */
@@ -158,6 +158,18 @@ public:
                               double alpha_trial_in,
                               double sccut_in,
                               bool decay_grad_switch_in);
+    /// get sc_thr
+    double get_sc_thr();
+    /// get nsc
+    int get_nsc();
+    /// get nsc_min
+    int get_nsc_min();
+    /// get alpha_trial
+    double get_alpha_trial();
+    /// get sccut
+    double get_sccut();
+    /// get decay_grad_switch
+    bool get_decay_grad_switch();
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
@@ -171,8 +183,6 @@ public:
                                LCAO_Matrix* LM_in);
     /// bcast sc data read from json file
     void bcast_ScData(std::string sc_file, int nat, int ntype);
-    /// set orbital counts
-    void set_orb_counts(std::map<int, int> atomCounts, std::map<int, int> orbitalCounts);
 
   private:
     SpinConstrain(){};                               // Private constructor
@@ -184,15 +194,15 @@ public:
     std::vector<double> decay_grad_;   // in unit of uB^2/Ry
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
-    int nspin_ = 0;
-    int npol_ = 1;
     std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
     std::vector<ModuleBase::Vector3<double>> target_mag_; // in unit of uB
     std::vector<ModuleBase::Vector3<double>> Mi_; // in unit of uB
     double escon_ = 0.0;
+    int nspin_ = 0;
+    int npol_ = 1;
     /**
-     * parameters for lambda-loop
-    */
+     * input parameters for lambda-loop
+     */
     int nsc_;
     int nsc_min_;
     bool decay_grad_switch_ = false;
@@ -201,7 +211,6 @@ public:
     bool debug = false;
     double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
     double restrict_current_; // in unit of Ry/uB = 3 eV/uB
-    K_Vectors kv_;
 };
 
 

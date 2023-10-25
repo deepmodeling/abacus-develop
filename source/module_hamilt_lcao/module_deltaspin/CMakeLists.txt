@@ -9,7 +9,6 @@ if(ENABLE_LCAO)
       lambda_loop.cpp
       cal_mw_from_lambda.cpp
       template_helpers.cpp
-      set_orb_counts.cpp
   )
 
   add_library(
