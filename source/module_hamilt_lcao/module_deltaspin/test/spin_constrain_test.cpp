@@ -402,4 +402,5 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     paraV.set_global2local(nrow, ncol, false, ofs);
     this->sc.set_ParaV(&paraV);
     EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
+    remove("test.log");
 }

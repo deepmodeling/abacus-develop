@@ -5,8 +5,9 @@
 #include <algorithm>
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(std::complex<double>* h_lambda,
-                                                                        const std::vector<std::complex<double>>& Sloc2)
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
+    std::complex<double>* h_lambda,
+    const std::vector<std::complex<double>>& Sloc2, bool column_major)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
@@ -38,7 +39,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(std::com
                             const int nu = pv->global2local_col(iwt2);
                             if (nu < 0) continue;
                             int icc;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                            if (column_major)
 						    {
                                 icc = mu + nu * pv->nrow;
                                 if (iwt1 % 2 == 0)

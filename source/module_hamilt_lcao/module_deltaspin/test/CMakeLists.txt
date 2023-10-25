@@ -40,6 +40,8 @@ AddTest(
   SOURCES cal_h_lambda_test.cpp
     ../spin_constrain.cpp
     ../cal_h_lambda.cpp
+    ../../../module_basis/module_ao/parallel_2d.cpp
+    ../../../module_basis/module_ao/parallel_orbitals.cpp
 )
 
 AddTest(
