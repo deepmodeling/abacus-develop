@@ -44,7 +44,6 @@ public:
   protected:
     int nat = 0;
     int npwx = 0;
-    static FPTYPE output_acc;
 
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
@@ -58,9 +57,6 @@ public:
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,
                        const bool vnew_exist);
-
-    static void print(const std::string& name, const ModuleBase::matrix& f, bool rv = true);
-    static void print_to_files(std::ofstream& ofs, const std::string& name, const ModuleBase::matrix& f);
 
   private:
     Device* ctx = {};
