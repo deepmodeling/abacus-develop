@@ -22,7 +22,7 @@ Symmetry::~Symmetry()
 
 int Symmetry::symm_flag = 0;
 bool Symmetry::symm_autoclose = false;
-
+bool Symmetry::pricell_loop = true;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
@@ -224,6 +224,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
     this->set_atom_map(ucell);
+
+    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(ucell);
 
 	delete[] newpos;
     delete[] na;
@@ -1565,7 +1567,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
                     double arg_gtrans = tmp_gdirect_double * gtrans[isymflag[g_index][c_index]];
                     std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
                     // for each pricell in supercell:
-                    for (int ipt = 0;ipt < this->ncell;++ipt)
+                    for (int ipt = 0;ipt < ((ModuleSymmetry::Symmetry::pricell_loop) ? this->ncell : 1);++ipt)
                     {
                         double arg = tmp_gdirect_double * ptrans[ipt];
                         double tmp_cos = 0.0, tmp_sin = 0.0;
@@ -2066,4 +2068,27 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
 #endif
     return;
 }
+
+bool Symmetry::magmom_same_check(const UnitCell& ucell) const
+{
+    ModuleBase::TITLE("Symmetry", "magmom_same_check");
+    bool pricell_loop = true;
+    for (int it = 0;it < ntype;++it)
+    {
+        if (pricell_loop)
+            for (int ia = 1;ia < ucell.atoms[it].na;++ia)
+            {
+                if (!equal(ucell.atoms[it].m_loc_[ia].x, ucell.atoms[it].m_loc_[0].x) ||
+                    !equal(ucell.atoms[it].m_loc_[ia].y, ucell.atoms[it].m_loc_[0].y) ||
+                    !equal(ucell.atoms[it].m_loc_[ia].z, ucell.atoms[it].m_loc_[0].z))
+                {
+                    pricell_loop = false;
+                    break;
+                }
+            }
+    }
+    std::cout << "pricell_loop=" << pricell_loop << std::endl;
+    return pricell_loop;
+}
+
 }
