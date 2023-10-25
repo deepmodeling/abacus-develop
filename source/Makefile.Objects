@@ -564,6 +564,7 @@ OBJS_DELTASPIN=basic_funcs.o\
       sc_parse_json.o\
       spin_constrain.o\
       template_helpers.o\
+      set_orb_counts.o\
 
 OBJS_TENSOR=tensor.o\
     tensor_buffer.o\

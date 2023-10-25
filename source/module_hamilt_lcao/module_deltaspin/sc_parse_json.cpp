@@ -121,25 +121,16 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
 }
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(const UnitCell& ucell, int NPOL, std::string sc_file)
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(std::string sc_file, int nat, int ntype)
 {
     /// set ScData
     this->clear_ScData();
-    this->clear_atomCounts();
-    std::map<int, int> atomCounts = ucell.get_atomCounts();
-    std::map<int, int> orbitalCounts = ucell.get_orbitalCounts();
-    this->set_atomCounts(atomCounts);
-    this->set_orbitalCounts(orbitalCounts);
-    this->set_npol(NPOL);
-    // std::cout << "nw = " << this->get_nw() << std::endl;
     ModuleBase::Vector3<double>* sc_lambda;
     ModuleBase::Vector3<double>* init_mag;
     ModuleBase::Vector3<double>* target_mag;
     ModuleBase::Vector3<int>* constrain;
     double* decay_grad;
-    int nat = this->get_nat();
-    int ntype = this->get_ntype();
-    if(GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0)
     {
         this->Set_ScData_From_Json(sc_file);
         this->set_sc_lambda();
@@ -178,15 +169,15 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::bcast_ScData(const Un
     {
         Parallel_Common::bcast_double(decay_grad[it]);
     }
-    if(GlobalV::MY_RANK != 0)
+    if (GlobalV::MY_RANK != 0)
     {
         this->set_sc_lambda(sc_lambda, nat);
         this->set_target_mag(target_mag, nat);
         this->set_constrain(constrain, nat);
         this->set_decay_grad(decay_grad, ntype);
-        delete [] sc_lambda;
-        delete [] target_mag;
-        delete [] constrain;
+        delete[] sc_lambda;
+        delete[] target_mag;
+        delete[] constrain;
         delete[] decay_grad;
     }
 }

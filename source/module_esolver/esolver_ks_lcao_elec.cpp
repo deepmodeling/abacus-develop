@@ -255,17 +255,17 @@ namespace ModuleESolver
         if (GlobalV::sc_mag_switch)
         {
             SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
-            sc.init_sc(GlobalC::ucell,
-                GlobalV::NPOL,
-                GlobalV::sc_file,
-                &(this->orb_con.ParaV),
-                GlobalV::NSPIN,
-                GlobalV::sc_thr,
+            sc.init_sc(GlobalV::sc_thr,
                 GlobalV::nsc,
                 GlobalV::nsc_min,
                 GlobalV::alpha_trial,
                 GlobalV::sccut,
                 GlobalV::decay_grad_switch,
+                GlobalC::ucell,
+                GlobalV::sc_file,
+                GlobalV::NPOL,
+                &(this->orb_con.ParaV),
+                GlobalV::NSPIN,
                 this->kv,
                 GlobalV::KS_SOLVER,
                 &(this->LM),

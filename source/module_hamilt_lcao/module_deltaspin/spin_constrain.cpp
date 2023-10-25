@@ -450,6 +450,28 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_input_parameters(
     this->decay_grad_switch_ = decay_grad_switch_in;
 }
 
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_solver_parameters(
+    int nspin_in,
+    K_Vectors kv_in,
+    hsolver::HSolver<std::complex<double>, psi::DEVICE_CPU>* phsol_in,
+    hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU>* p_hamilt_in,
+    psi::Psi<std::complex<double>>* psi_in,
+    elecstate::ElecState* pelec_in,
+    std::string KS_SOLVER_in,
+    LCAO_Matrix* LM_in)
+{
+    /// set nspin
+    this->set_nspin(nspin_in);
+    this->kv_ = kv_in;
+    this->phsol = phsol_in;
+    this->p_hamilt = p_hamilt_in;
+    this->psi = psi_in;
+    this->pelec = pelec_in;
+    this->KS_SOLVER = KS_SOLVER_in;
+    this->LM = LM_in;
+}
+
 /// @brief  set ParaV
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_ParaV(Parallel_Orbitals* ParaV_in)
