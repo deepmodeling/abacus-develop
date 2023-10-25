@@ -47,7 +47,7 @@ void print_force(std::ofstream& ofs_running,
     std::vector<double> force_y;
     std::vector<double> force_z;
     std::string table;
-    context.set_context({"title", "force", "force", "force"});
+    context.set_context({"short_title", "force", "force", "force"});
     int iat = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -67,9 +67,8 @@ void print_force(std::ofstream& ofs_running,
     }
 
     context.enable_title();
-    context << "atom" << atom_label << "x" << force_x << "y" << force_y << "z" << force_z;
+    context << name.c_str() << atom_label << "" << force_x << "" << force_y << "" << force_z;
     context.center_title();
-    context.set_overall_title("TOTAL-FORCE (eV/Angstrom)");
     table = context.str();
     ofs_running << table << std::endl;
     if (GlobalV::TEST_FORCE)

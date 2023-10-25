@@ -164,7 +164,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
                                   force_gate,
                                   0);
     }
-    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "   TOTAL-FORCE (eV/Angstrom)", force, 0);
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
     ModuleBase::timer::tick("Sto_Force", "cal_force");
     return;
 }

@@ -110,7 +110,11 @@ void K_Vectors::set(
                 this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
             }
             else
-                ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint", "Refine the lattice parameters in STRU or use a different`symmetry_prec`. ");
+                ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint", "Possible solutions: \n \
+1. Refine the lattice parameters in STRU;\n \
+2. Use a different`symmetry_prec`.  \n \
+3. Close symemtry: set `symmetry` to 0 in INPUT. \n \
+4. Set `symmetry_autoclose` to 1 in INPUT to automatically close symmetry when this error occurs.");
         }
         if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
