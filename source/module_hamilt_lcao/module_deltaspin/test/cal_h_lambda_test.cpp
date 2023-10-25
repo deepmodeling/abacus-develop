@@ -1,7 +1,6 @@
 #include "../spin_constrain.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "prepare_unitcell.h"
 
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
