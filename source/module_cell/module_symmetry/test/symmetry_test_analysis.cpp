@@ -237,9 +237,6 @@ TEST_F(SymmetryTest, AtomOrderingNew)
 
 }
 
-
-
-
 TEST_F(SymmetryTest, SG_Pricell)
 {
     for (int stru = 0; stru < supercell_lib.size(); stru++)
@@ -263,6 +260,19 @@ TEST_F(SymmetryTest, SG_Pricell)
     }
 }
 
+TEST_F(SymmetryTest, SubGroup)
+{
+    ModuleSymmetry::Symmetry symm;
+    EXPECT_EQ(symm.subgroup(30, 1, 6, 8, 0, 0, 6, 0, 0, 8), 29);//24, T_h
+    EXPECT_EQ(symm.subgroup(32, 1, 9, 0, 6, 0, 9, 0, 6, 0), 20);//16, D_4h
+    EXPECT_EQ(symm.subgroup(17, 0, 5, 2, 0, 2, 7, 0, 0, 0), 25);//12, C_6v
+    EXPECT_EQ(symm.subgroup(10, 1, 3, 0, 1, 0, 3, 0, 1, 0), 8);//8, D_2h
+    EXPECT_EQ(symm.subgroup(10, 1, 1, 2, 0, 0, 3, 1, 0, 1), 12);//6, C_3v
+    EXPECT_EQ(symm.subgroup(7, 1, 1, 0, 1, 0, 1, 0, 2, 0), 15);//4, S_4
+    EXPECT_EQ(symm.subgroup(5, 0, 2, 2, 0, 0, 0, 0, 0, 0), 9);///3, C_3
+    EXPECT_EQ(symm.subgroup(4, 0, 0, 1, 0, 0, 1, 1, 0, 0), 4);//C_1h
+    EXPECT_EQ(symm.subgroup(4, 0, 0, 1, 0, 0, 0, 2, 0, 0), 1);//C_1
+}
 
 int main(int argc, char** argv)
 {
