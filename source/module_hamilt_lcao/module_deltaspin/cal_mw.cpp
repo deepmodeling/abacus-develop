@@ -124,9 +124,9 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& ste
     {
         int it = sc_elem.first;
         int nat_it = sc_elem.second;
-        int num = 0;
         for (int ia = 0; ia < nat_it; ia++)
         {
+            int num = 0;
             int iat = this->get_iat(it, ia);
             std::vector<double> total_charge_soc(this->nspin_, 0.0);
             for (const auto& lnchi: this->get_lnchiCounts().at(it))
