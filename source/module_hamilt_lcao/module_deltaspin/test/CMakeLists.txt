@@ -71,4 +71,12 @@ AddTest(
     ../../../module_basis/module_ao/parallel_2d.cpp
     ../../../module_basis/module_ao/parallel_orbitals.cpp
 )
+
+AddTest(
+  TARGET deltaspin_cal_mw_helper
+  LIBS ${math_libs} base device
+  SOURCES cal_mw_helper_test.cpp
+    ../spin_constrain.cpp
+    ../cal_mw_helper.cpp
+)
 endif() 

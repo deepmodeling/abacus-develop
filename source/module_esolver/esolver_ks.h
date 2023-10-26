@@ -15,8 +15,6 @@
 #include "module_psi/psi.h"
 #include "module_io/cal_test.h"
 #include "module_io/output_potential.h"
-#include "string.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/output_rho.h"
 
 namespace ModuleESolver
@@ -49,8 +47,6 @@ namespace ModuleESolver
 
         // get current step of Ionic simulation
         virtual int getniter() override;
-
-        friend class SpinConstrain;
 
     protected:
         // Something to do before SCF iterations.

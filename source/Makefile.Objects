@@ -558,6 +558,7 @@ OBJS_DFTU=dftu.o\
 OBJS_DELTASPIN=basic_funcs.o\
       cal_h_lambda.o\
       cal_mw_from_lambda.o\
+      cal_mw_helper.o\
       cal_mw.o\
       init_sc.o\
       lambda_loop.o\
