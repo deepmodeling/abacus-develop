@@ -13,12 +13,6 @@ InfoNonlocal::InfoNonlocal()
 InfoNonlocal::~InfoNonlocal()
 {
 }
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
 #endif
 Magnetism::Magnetism()
 {

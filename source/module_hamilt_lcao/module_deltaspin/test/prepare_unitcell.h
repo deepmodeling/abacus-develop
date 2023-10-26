@@ -7,7 +7,7 @@
 class UcellTestPrepare
 {
 public:
-	UcellTestPrepare()=default;
+    UcellTestPrepare()=default;
 	UcellTestPrepare(std::string latname_in,
 		int lmaxmax_in,
 		bool init_vel_in,
@@ -166,14 +166,7 @@ public:
             ucell.atoms[it].mass = ucell.atom_mass[it]; // mass set here
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
-                if (ucell.Coordinate == "Direct")
-                {
-                    ucell.atoms[it].taud[ia].x = this->coordinates[this->atomic_index * 3 + 0];
-                    ucell.atoms[it].taud[ia].y = this->coordinates[this->atomic_index * 3 + 1];
-                    ucell.atoms[it].taud[ia].z = this->coordinates[this->atomic_index * 3 + 2];
-                    ucell.atoms[it].tau[ia] = ucell.atoms[it].taud[ia] * ucell.latvec;
-                }
-                else if (ucell.Coordinate == "Cartesian")
+                if (ucell.Coordinate == "Cartesian")
                 {
                     ucell.atoms[it].tau[ia].x = this->coordinates[this->atomic_index * 3 + 0];
                     ucell.atoms[it].tau[ia].y = this->coordinates[this->atomic_index * 3 + 1];
@@ -195,29 +188,11 @@ public:
                                                               ucell.atoms[it].taud[ia].z);
                 }
                 ucell.atoms[it].dis[ia].set(0, 0, 0);
-                if (this->init_vel)
-                {
-                    ucell.atoms[it].vel[ia].x = this->velocity[this->atomic_index * 3 + 0];
-                    ucell.atoms[it].vel[ia].y = this->velocity[this->atomic_index * 3 + 1];
-                    ucell.atoms[it].vel[ia].z = this->velocity[this->atomic_index * 3 + 2];
-                }
-                else
-                {
-                    ucell.atoms[it].vel[ia].set(0, 0, 0);
-                }
+                ucell.atoms[it].vel[ia].set(0, 0, 0);
                 ucell.atoms[it].m_loc_[ia].set(0, 0, 0);
                 ucell.atoms[it].angle1[ia] = 0;
                 ucell.atoms[it].angle2[ia] = 0;
-                if (this->selective_dynamics)
-                {
-                    ucell.atoms[it].mbl[ia].x = this->mbl[this->atomic_index * 3 + 0];
-                    ucell.atoms[it].mbl[ia].y = this->mbl[this->atomic_index * 3 + 1];
-                    ucell.atoms[it].mbl[ia].z = this->mbl[this->atomic_index * 3 + 2];
-                }
-                else
-                {
-                    ucell.atoms[it].mbl[ia] = {1, 1, 1};
-                }
+                ucell.atoms[it].mbl[ia] = {1, 1, 1};
                 ++(this->atomic_index);
             }
         }
@@ -311,44 +286,6 @@ UcellTestPrepare::UcellTestPrepare(std::string latname_in,
 	mbl = {0};
 	velocity = {0};
 }
-
-UcellTestPrepare::UcellTestPrepare(std::string latname_in,
-		int lmaxmax_in,
-		bool init_vel_in,
-		bool selective_dynamics_in,
-		bool relax_new_in,
-		std::string fixed_axes_in,
-		double lat0_in,
-		std::valarray<double> latvec_in,
-		std::vector<std::string> elements_in,
-		std::vector<std::string> pp_files_in,
-		std::vector<std::string> pp_types_in,
-		std::vector<std::string> orb_files_in,
-		std::valarray<int> natom_in,
-		std::vector<double> atomic_mass_in,
-		std::string coor_type_in,
-		std::valarray<double> coordinates_in,
-		std::valarray<double> mbl_in,
-		std::valarray<double> velocity_in):
-	latname(latname_in),
-	lmaxmax(lmaxmax_in),
-	init_vel(init_vel_in),
-	selective_dynamics(selective_dynamics_in),
-	relax_new(relax_new_in),
-	fixed_axes(fixed_axes_in),
-	lat0(lat0_in),
-	latvec(latvec_in),
-	elements(elements_in),
-	pp_files(pp_files_in),
-	pp_types(pp_types_in),
-	orb_files(orb_files_in),
-	natom(natom_in),
-	atomic_mass(atomic_mass_in),
-	coor_type(coor_type_in),
-	coordinates(coordinates_in),
-	mbl(mbl_in),
-	velocity(velocity_in) // velocity assume the existence of mbl in print_stru_file()
-{}
 
 UcellTestPrepare::UcellTestPrepare(const UcellTestPrepare &utp):
 	latname(utp.latname),
