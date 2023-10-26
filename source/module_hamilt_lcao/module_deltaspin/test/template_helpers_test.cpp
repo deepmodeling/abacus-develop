@@ -22,24 +22,6 @@ K_Vectors::K_Vectors()
 K_Vectors::~K_Vectors()
 {
 }
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
 
 class SpinConstrainTest : public testing::Test
 {
@@ -54,8 +36,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2, true));
     EXPECT_NO_THROW(sc.cal_mw_from_lambda(0));
     EXPECT_NO_THROW(sc.cal_MW_k(nullptr, std::vector<std::vector<std::complex<double>>>(0)));
-    UnitCell ucell;
-    EXPECT_NO_THROW(sc.cal_MW(0, nullptr, ucell, false));
+    EXPECT_NO_THROW(sc.cal_MW(0, nullptr, false));
     ModuleBase::matrix orbMulP;
     EXPECT_NO_THROW(sc.convert(orbMulP));
     EXPECT_NO_THROW(sc.run_lambda_loop(0));

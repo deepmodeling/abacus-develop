@@ -634,7 +634,7 @@ namespace ModuleESolver
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, &(this->LM), GlobalC::ucell);
+        sc.cal_MW(iter, &(this->LM));
     }
 
     // (4) mohan add 2010-06-24
@@ -772,7 +772,7 @@ namespace ModuleESolver
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, &(this->LM), GlobalC::ucell);
+        sc.cal_MW(iter, &(this->LM));
     }
 
     // (11) calculate the total energy.
@@ -885,7 +885,7 @@ namespace ModuleESolver
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, &(this->LM), GlobalC::ucell, true);
+        sc.cal_MW(istep, &(this->LM), true);
     }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)

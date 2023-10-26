@@ -103,6 +103,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& step,
                                                                   LCAO_Matrix* LM,
+                                                                  const UnitCell& ucell,
                                                                   bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW");

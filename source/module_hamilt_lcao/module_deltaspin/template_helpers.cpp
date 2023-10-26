@@ -22,7 +22,7 @@ ModuleBase::matrix SpinConstrain<double, psi::DEVICE_CPU>::cal_MW_k(
 }
 
 template <>
-void SpinConstrain<double, psi::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, const UnitCell& ucell, bool print)
+void SpinConstrain<double, psi::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, bool print)
 {
 }
 
