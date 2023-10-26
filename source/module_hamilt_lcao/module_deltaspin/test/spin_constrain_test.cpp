@@ -14,8 +14,6 @@
  * - Tested functions:
  *  - SpinConstrain::getScInstance()
  *      get the instance of SpinConstrain
- *  - SpinConstrain::clear_atomCounts()
- *      which is a map from element index to atom number
  *  - SpinConstrain::set_atomCounts()
  *     set the map from element index to atom number
  *  - SpinConstrain::get_atomCounts()
@@ -24,8 +22,6 @@
  *     get the total number of atoms
  *  - SpinConstrain::get_iat()
  *     get the atom index from (itype, atom_index)
- *  - SpinConstrain::clear_orbitalCounts()
- *     clear the map from element index to orbital number
  *  - SpinConstrain::set_orbitalCounts()
  *     set the map from element index to orbital number
  *  - SpinConstrain::get_orbitalCounts()
@@ -71,7 +67,6 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nat <= 0"));
     // Warning 3: itype out of range
-    this->sc.clear_atomCounts();
     std::map<int, int> atomCounts1 = {
         {1, 1},
         {2, 2}
@@ -82,7 +77,6 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("itype out of range [0, ntype)"));
     // Warning 4: number of atoms <= 0 for some element
-    this->sc.clear_atomCounts();
     std::map<int, int> atomCounts2 = {
         {0, 2 },
         {1, -1}
@@ -92,13 +86,14 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("number of atoms <= 0 for some element"));
-    this->sc.clear_atomCounts();
 }
 
 TYPED_TEST(SpinConstrainTest, AtomCounts)
 {
-	std::map<int, int> atomCounts = {{0,5},{1,10}};
-    this->sc.clear_atomCounts();
+    std::map<int, int> atomCounts = {
+        {0, 5 },
+        {1, 10}
+    };
     this->sc.set_atomCounts(atomCounts);
     std::map<int, int> atomCounts2 = this->sc.get_atomCounts();
     int ntype = atomCounts2.size();
@@ -121,9 +116,10 @@ TYPED_TEST(SpinConstrainTest, AtomCounts)
 TYPED_TEST(SpinConstrainTest, OrbitalCounts)
 {
 	std::map<int, int> orbitalCounts = {{0,5},{1,10}};
-	std::map<int, int> atomCounts = {{0,1},{1,2}};
-    this->sc.clear_atomCounts();
-    this->sc.clear_orbitalCounts();
+    std::map<int, int> atomCounts = {
+        {0, 1},
+        {1, 2}
+    };
     this->sc.set_atomCounts(atomCounts);
     this->sc.set_orbitalCounts(orbitalCounts);
     std::map<int, int> orbitalCounts2 = this->sc.get_orbitalCounts();
@@ -157,13 +153,11 @@ TYPED_TEST(SpinConstrainTest, OrbitalCounts)
 
 TYPED_TEST(SpinConstrainTest, SetScLambdaMagConstrain)
 {
-    this->sc.clear_ScData();
     this->sc.Set_ScData_From_Json("./support/sc_f1.json");
     std::map<int, int> atomCounts = {
         {0, 5 },
         {1, 10}
     };
-    this->sc.clear_atomCounts();
     this->sc.set_atomCounts(atomCounts);
     int nat = this->sc.get_nat();
     this->sc.set_sc_lambda();
@@ -227,13 +221,11 @@ TYPED_TEST(SpinConstrainTest, SetScLambdaMagConstrain)
 TYPED_TEST(SpinConstrainTest, CalEscon)
 {
     this->sc.zero_Mi();
-    this->sc.clear_ScData();
     this->sc.Set_ScData_From_Json("./support/sc_f1.json");
     std::map<int, int> atomCounts = {
         {0, 5 },
         {1, 10}
     };
-    this->sc.clear_atomCounts();
     this->sc.set_atomCounts(atomCounts);
     int nat = this->sc.get_nat();
     this->sc.set_sc_lambda();
@@ -264,15 +256,12 @@ TYPED_TEST(SpinConstrainTest, SetScDecayGrad)
         {0, 1},
         {1, 5}
     };
-    this->sc.clear_atomCounts();
-    this->sc.clear_orbitalCounts();
     this->sc.set_atomCounts(atomCounts);
     std::map<int, int> orbitalCounts = {
         {0, 1},
         {1, 1}
     };
     this->sc.set_orbitalCounts(orbitalCounts);
-    this->sc.clear_ScData();
     this->sc.Set_ScData_From_Json("./support/sc_f2.json");
     EXPECT_DOUBLE_EQ(this->sc.get_decay_grad(1), 0.9);
     this->sc.set_decay_grad_switch(true);
@@ -296,15 +285,12 @@ TYPED_TEST(SpinConstrainTest, SetTargetMagType1)
         {0, 1},
         {1, 5}
     };
-    this->sc.clear_atomCounts();
-    this->sc.clear_orbitalCounts();
     this->sc.set_atomCounts(atomCounts);
     std::map<int, int> orbitalCounts = {
         {0, 1},
         {1, 1}
     };
     this->sc.set_orbitalCounts(orbitalCounts);
-    this->sc.clear_ScData();
     this->sc.Set_ScData_From_Json("./support/sc_f2.json");
     // set target mag type 1
     this->sc.set_target_mag();

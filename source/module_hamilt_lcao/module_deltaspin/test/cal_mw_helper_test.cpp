@@ -34,8 +34,6 @@ TEST_F(SpinConstrainTest, Convert)
     std::map<int, int> orbitalCounts = {
         {0, 1}
     };
-    sc.clear_atomCounts();
-    sc.clear_orbitalCounts();
     sc.set_atomCounts(atomCounts);
     sc.set_orbitalCounts(orbitalCounts);
     sc.set_nspin(4);

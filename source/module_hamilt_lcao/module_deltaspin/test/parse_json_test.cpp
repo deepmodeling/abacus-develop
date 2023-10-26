@@ -9,8 +9,6 @@
 
 /**
  * - Tested functions:
- *  - SpinConstrain::clear_ScData()
- *     clear the map from element index to ScAtomData
  *  - SpinConstrain::Set_ScData_From_Json()
  *     set the map from element index to ScAtomData from json file
  *  - SpinConstrain::get_ScData()
@@ -32,7 +30,6 @@ TYPED_TEST_SUITE(SpinConstrainTest, MyTypes);
 
 TYPED_TEST(SpinConstrainTest, ScDataFormat1)
 {
-    this->sc.clear_ScData();
     this->sc.Set_ScData_From_Json("./support/sc_f1.json");
     EXPECT_EQ(this->sc.get_ScData().size(), 2);
     for (const auto& sc_elem: this->sc.get_ScData())
@@ -67,7 +64,6 @@ TYPED_TEST(SpinConstrainTest, ScDataFormat1)
 
 TYPED_TEST(SpinConstrainTest, ScDataFormat2)
 {
-    this->sc.clear_ScData();
     this->sc.Set_ScData_From_Json("./support/sc_f2.json");
     EXPECT_EQ(this->sc.get_ScData().size(), 1);
     for (const auto& sc_elem: this->sc.get_ScData())
@@ -94,7 +90,6 @@ TYPED_TEST(SpinConstrainTest, ScDataFormat2)
 
 TYPED_TEST(SpinConstrainTest, ScDataWarning)
 {
-    this->sc.clear_ScData();
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.Set_ScData_From_Json("./support/sc_f3.json"), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();

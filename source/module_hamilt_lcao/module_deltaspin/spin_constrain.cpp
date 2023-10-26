@@ -31,6 +31,7 @@ double SpinConstrain<FPTYPE, Device>::get_escon()
 // set atomCounts
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_atomCounts(const std::map<int, int>& atomCounts_in) {
+    this->atomCounts.clear();
     this->atomCounts = atomCounts_in;
 }
 
@@ -138,23 +139,10 @@ int SpinConstrain<FPTYPE, Device>::get_iat(int itype, int atom_index)
     return iat;
 }
 
-// clear atomCounts
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::clear_atomCounts()
-{
-    this->atomCounts.clear();
-}
-
-// clear orbitalCounts
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::clear_orbitalCounts()
-{
-    this->orbitalCounts.clear();
-}
-
 // set orbitalCounts
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in) {
+    this->orbitalCounts.clear();
     this->orbitalCounts = orbitalCounts_in;
 }
 
@@ -163,6 +151,20 @@ template<typename FPTYPE, typename Device>
 const std::map<int, int>& SpinConstrain<FPTYPE, Device>::get_orbitalCounts() const
 {
     return this->orbitalCounts;
+}
+
+// set lnchiCounts
+template<typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in) {
+    this->lnchiCounts.clear();
+    this->lnchiCounts = lnchiCounts_in;
+}
+
+// get lnchiCounts
+template<typename FPTYPE, typename Device>
+const std::map<int, std::map<int, int>>& SpinConstrain<FPTYPE, Device>::get_lnchiCounts() const
+{
+    return this->lnchiCounts;
 }
 
 template<typename FPTYPE, typename Device>

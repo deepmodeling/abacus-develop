@@ -22,12 +22,9 @@ void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
                                             elecstate::ElecState* pelec_in)
 {
     this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, decay_grad_switch_in);
-    std::map<int, int> atomCounts = ucell.get_atomCounts();
-    std::map<int, int> orbitalCounts = ucell.get_orbitalCounts();
-    this->clear_atomCounts();
-    this->clear_orbitalCounts();
-    this->set_atomCounts(atomCounts);
-    this->set_orbitalCounts(orbitalCounts);
+    this->set_atomCounts(ucell.get_atomCounts());
+    this->set_orbitalCounts(ucell.get_orbitalCounts());
+    this->set_lnchiCounts(ucell.get_lnchiCounts());
     this->bcast_ScData(sc_file, this->get_nat(), this->get_ntype());
     this->set_npol(NPOL);
     this->set_ParaV(ParaV_in);

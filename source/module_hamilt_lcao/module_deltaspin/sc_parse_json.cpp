@@ -14,12 +14,6 @@ const std::map<int, std::vector<ScAtomData>>& SpinConstrain<FPTYPE, Device>::get
 }
 
 template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::clear_ScData()
-{
-    this->ScData.clear();
-}
-
-template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& filename)
 {
     ModuleBase::TITLE("SpinConstrain", "ScJsonFile");
@@ -27,6 +21,8 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     if (!file.is_open()) {
         ModuleBase::WARNING_QUIT("SpinConstrain::parseScJsonFile","Error opening sc_file");
     }
+
+    this->ScData.clear();
 
     std::string line;
     int current_itype = 0;
@@ -124,7 +120,6 @@ template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::bcast_ScData(std::string sc_file, int nat, int ntype)
 {
     /// set ScData
-    this->clear_ScData();
     ModuleBase::Vector3<double>* sc_lambda;
     ModuleBase::Vector3<double>* init_mag;
     ModuleBase::Vector3<double>* target_mag;

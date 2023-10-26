@@ -87,8 +87,6 @@ public:
     void Set_ScData_From_Json(const std::string& filename);
     /// get sc_data
     const std::map<int, std::vector<ScAtomData>>& get_ScData() const;
-    /// clear sc_data
-    void clear_ScData();
     /// set element index to atom index map
     void set_atomCounts(const std::map<int, int>& atomCounts_in);
     /// get element index to atom index map
@@ -97,6 +95,10 @@ public:
     void set_orbitalCounts(const std::map<int, int>& orbitalCounts_in);
     /// get element index to orbital index map
     const std::map<int, int>& get_orbitalCounts() const;
+    /// set lnchiCounts
+    void set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in);
+    /// get lnchiCounts
+    const std::map<int, std::map<int, int>>& get_lnchiCounts() const;
     /// set sc_lambda
     void set_sc_lambda();
     /// set sc_lambda from variable
@@ -127,10 +129,6 @@ public:
     int get_nw();
     /// get iwt
     int get_iwt(int itype, int iat, int orbital_index);
-    /// clear atomCounts
-    void clear_atomCounts();
-    /// clear orbitalCounts
-    void clear_orbitalCounts();
     /// set npol
     void set_npol(int npol);
     /// get npol
@@ -194,6 +192,7 @@ public:
     std::vector<double> decay_grad_;   // in unit of uB^2/Ry
     std::map<int, int> atomCounts;
     std::map<int, int> orbitalCounts;
+    std::map<int, std::map<int, int>> lnchiCounts;
     std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
     std::vector<ModuleBase::Vector3<double>> target_mag_; // in unit of uB
     std::vector<ModuleBase::Vector3<double>> Mi_; // in unit of uB

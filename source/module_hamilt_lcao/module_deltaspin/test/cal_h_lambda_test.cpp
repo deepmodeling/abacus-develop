@@ -37,8 +37,6 @@ TEST_F(SpinConstrainTest, CalHLambda)
     std::map<int, int> orbitalCounts = {
         {0, 1}
     };
-    sc.clear_atomCounts();
-    sc.clear_orbitalCounts();
     sc.set_atomCounts(atomCounts);
     sc.set_orbitalCounts(orbitalCounts);
     sc.set_npol(2);

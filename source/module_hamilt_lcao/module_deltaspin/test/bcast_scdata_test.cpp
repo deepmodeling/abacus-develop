@@ -43,8 +43,6 @@ TYPED_TEST(SpinConstrainTest, BcastScData)
         {0, 1},
         {1, 5}
     };
-    this->sc.clear_atomCounts();
-    this->sc.clear_orbitalCounts();
     this->sc.set_atomCounts(atomCounts);
     std::map<int, int> orbitalCounts = {
         {0, 1},
