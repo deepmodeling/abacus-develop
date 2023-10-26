@@ -594,6 +594,22 @@ TEST_F(UcellTest,GetOrbitalCounts)
 	EXPECT_EQ(orbitalCounts[1],9);
 }
 
+TEST_F(UcellTest, GetLnchiCounts)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+    GlobalV::relax_new = utp.relax_new;
+    ucell = utp.SetUcellInfo();
+    // test set_iat2itia
+    ucell->set_iat2itia();
+    std::map<int, std::map<int, int>> LnchiCounts = ucell->get_lnchiCounts();
+    EXPECT_EQ(LnchiCounts[0][0], 1);
+    EXPECT_EQ(LnchiCounts[0][1], 1);
+    EXPECT_EQ(LnchiCounts[0][2], 1);
+    EXPECT_EQ(LnchiCounts[1][0], 1);
+    EXPECT_EQ(LnchiCounts[1][1], 1);
+    EXPECT_EQ(LnchiCounts[1][2], 1);
+}
+
 TEST_F(UcellTest,CheckDTau)
 {
 	UcellTestPrepare utp = UcellTestLib["C1H2-CheckDTau"];
