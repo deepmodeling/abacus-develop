@@ -66,7 +66,7 @@ public:
 	int ntype;
 	int atomic_index;
 
-    UnitCell* SetUcellInfo(const std::vector<int>& nw, int& nlocal)
+    UnitCell* SetUcellInfo()
     {
 		//basic info
 		this->ntype = this->elements.size();
@@ -132,7 +132,6 @@ public:
         for (int it = 0; it < ucell.ntype; ++it)
         {
             ucell.atoms[it].label = this->elements[it];
-            /*
             ucell.atoms[it].nw = 0;
             ucell.atoms[it].nwl = 2;
             delete[] ucell.atoms[it].l_nchi;
@@ -142,7 +141,6 @@ public:
                 ucell.atoms[it].l_nchi[L] = 1;
                 ucell.atoms[it].nw += (2*L + 1) * ucell.atoms[it].l_nchi[L];
             }
-            */
             ucell.atoms[it].na = this->natom[it];
             // coordinates and related physical quantities
             delete[] ucell.atoms[it].tau;
@@ -197,55 +195,6 @@ public:
             }
         }
         ucell.nat = this->natom.sum();
-        // set_nw
-        assert(nw.size() == ucell.ntype);
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
-            ucell.atoms[it].nw = nw[it];
-        }
-        // cal_nloc
-        nlocal = 0;
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
-            nlocal += ucell.atoms[it].na * ucell.atoms[it].nw;
-        }
-        // cal_namax
-        int namax = 0;
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
-            namax = std::max(namax, ucell.atoms[it].na);
-        }
-        ucell.namax = namax;
-        // cal_index
-        assert(nlocal > 0);
-        delete[] ucell.iwt2iat;
-        delete[] ucell.iwt2iw;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
-        ucell.iwt2iat = new int[nlocal];
-        ucell.iwt2iw = new int[nlocal];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat]; // set_iat2itia
-        ucell.itia2iat.create(ucell.ntype, ucell.namax);
-        ucell.set_iat2iwt(1);
-        int iat = 0;
-        int iwt = 0;
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-            {
-                ucell.iat2it[iat] = it;
-                ucell.iat2ia[iat] = ia;
-                ucell.itia2iat(it, ia) = iat;
-                for (int iw = 0; iw < ucell.atoms[it].nw; iw++)
-                {
-                    ucell.iwt2iat[iwt] = iat;
-                    ucell.iwt2iw[iwt] = iw;
-                    ++iwt;
-                }
-                ++iat;
-            }
-        }
         return &ucell;
     }
 };

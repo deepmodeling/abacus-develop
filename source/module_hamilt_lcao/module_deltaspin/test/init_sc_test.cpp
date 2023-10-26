@@ -49,13 +49,9 @@ class SpinConstrainTest : public testing::Test
   protected:
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["SiO"];
-    // nw is the number of orbitals of each atom
-    // it should container ucell.nat elements
-    std::vector<int> nw = {1, 1};
-    int nlocal;
     void SetUp() override
     {
-        ucell = utp.SetUcellInfo(nw, nlocal);
+        ucell = utp.SetUcellInfo();
     }
     SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
 };
@@ -94,6 +90,23 @@ TYPED_TEST(SpinConstrainTest, InitSc)
                      nullptr,
                      nullptr,
                      nullptr);
+    EXPECT_EQ(this->sc.get_nat(), 6);
+    EXPECT_EQ(this->sc.get_ntype(), 2);
+    EXPECT_EQ(this->sc.get_npol(), 2);
+    EXPECT_EQ(this->sc.get_nsc(), 100);
+    std::map<int, int> atomCounts = this->sc.get_atomCounts();
+    EXPECT_EQ(atomCounts[0], 1);
+    EXPECT_EQ(atomCounts[1], 5);
+    std::map<int, int> orbitalCounts = this->sc.get_orbitalCounts();
+    EXPECT_EQ(orbitalCounts[0], 9);
+    EXPECT_EQ(orbitalCounts[1], 9);
+    std::map<int, std::map<int, int>> LnchiCounts = this->sc.get_lnchiCounts();
+    EXPECT_EQ(LnchiCounts[0][0], 1);
+    EXPECT_EQ(LnchiCounts[0][1], 1);
+    EXPECT_EQ(LnchiCounts[0][2], 1);
+    EXPECT_EQ(LnchiCounts[1][0], 1);
+    EXPECT_EQ(LnchiCounts[1][1], 1);
+    EXPECT_EQ(LnchiCounts[1][2], 1);
 }
 
 int main(int argc, char** argv)
