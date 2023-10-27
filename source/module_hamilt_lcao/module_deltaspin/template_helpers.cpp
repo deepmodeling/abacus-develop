@@ -44,6 +44,17 @@ void SpinConstrain<double, psi::DEVICE_CPU>::run_lambda_loop(int outer_step)
 }
 
 template <>
+bool SpinConstrain<double, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error)
+{
+    return false;
+}
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::print_termination()
+{
+}
+
+template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
                                                         const ModuleBase::ComplexMatrix& mud,
                                                         int nw)

@@ -561,6 +561,7 @@ OBJS_DELTASPIN=basic_funcs.o\
       cal_mw_helper.o\
       cal_mw.o\
       init_sc.o\
+      lambda_loop_helper.o\
       lambda_loop.o\
       sc_parse_json.o\
       spin_constrain.o\

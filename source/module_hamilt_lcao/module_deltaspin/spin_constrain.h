@@ -60,6 +60,12 @@ public:
 
   void run_lambda_loop(int outer_step);
 
+  /// lambda loop helper functions
+  bool check_rms_stop(int outer_step, int i_step, double rms_error);
+
+  /// print termination message
+  void print_termination();
+
   /// calculate mw from AorbMulP matrix
   void calculate_MW(const std::vector<std::vector<std::vector<double>>>& AorbMulP);
 

@@ -135,7 +135,8 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
                         << bound_gradient[it] << " in atom type " << it << " ), exit." << std::endl;
                     // roll back to the last step
                     add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->lambda_);
-                    goto CG_STOP;
+                    this->print_termination();
+                    break;
                 }
             }
             spin = new_spin;
@@ -153,19 +154,10 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         }
         mean_error = sum_2d(temp_1) / num_component;
         rms_error = std::sqrt(mean_error);
-        std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << i_step + 1 << "       RMS =" << rms_error << std::endl;
-        if (rms_error < this->sc_thr_ || i_step == this->nsc_ - 1)
+        if (this->check_rms_stop(outer_step, i_step, rms_error))
         {
-            if (rms_error < this->sc_thr_)
-            {
-                std::cout << "Meet convergence criterion ( < " << this->sc_thr_ << " ), exit." << std::endl;
-            }
-            else if (i_step == this->nsc_ - 1)
-            {
-                std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
-            }
             add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
-            goto CG_STOP;
+            break;
         }
 
         if (i_step >= 2)
@@ -250,16 +242,4 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         }
         alpha_trial = alpha_trial * pow(g, 0.7);
     }
-    
-CG_STOP:
-
-    if (debug)
-    {
-        print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
-        print_2d("target spin: ", this->target_mag_);
-    }
-    print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
-    std::cout << "Inner optimization for lambda ends." << std::endl;
-    std::cout << "===============================================================================" << std::endl;
-
 }
