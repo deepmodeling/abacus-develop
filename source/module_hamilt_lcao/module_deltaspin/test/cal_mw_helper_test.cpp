@@ -10,13 +10,15 @@ K_Vectors::~K_Vectors()
 }
 
 /************************************************
- *  unit test of the function of cal_mw
+ *  unit test of the functions in cal_mw_helper.cpp
  ***********************************************/
 
 /**
  * Tested function:
- *  - SpinConstrain::cal_mw
- *    - this function calculates the atomic magnetic moment
+ *  - SpinConstrain::convert
+ *    - convert the data structure for calculation of mw
+ *  - SpinConstrain::calculate_MW
+ *    - calculate mw from AorbMulP matrix
  */
 
 class SpinConstrainTest : public testing::Test
@@ -26,7 +28,7 @@ class SpinConstrainTest : public testing::Test
         = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
 };
 
-TEST_F(SpinConstrainTest, Convert)
+TEST_F(SpinConstrainTest, CalculateMW)
 {
     std::map<int, int> atomCounts = {
         {0, 1}
@@ -34,8 +36,12 @@ TEST_F(SpinConstrainTest, Convert)
     std::map<int, int> orbitalCounts = {
         {0, 1}
     };
+    std::map<int, std::map<int, int>> lnchiCounts = {
+        {0, {{0, 1}}}
+    };
     sc.set_atomCounts(atomCounts);
     sc.set_orbitalCounts(orbitalCounts);
+    sc.set_lnchiCounts(lnchiCounts);
     sc.set_nspin(4);
     sc.set_npol(2);
     ModuleBase::matrix orbMulP;
@@ -55,4 +61,10 @@ TEST_F(SpinConstrainTest, Convert)
     EXPECT_EQ(AorbMulP[1][0][0], 2.0);
     EXPECT_EQ(AorbMulP[2][0][0], 3.0);
     EXPECT_EQ(AorbMulP[3][0][0], 4.0);
+    // calculate_MW
+    sc.calculate_MW(AorbMulP);
+    testing::internal::CaptureStdout();
+    sc.print_Mi(true);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (2, 3, 4)"));
 }
