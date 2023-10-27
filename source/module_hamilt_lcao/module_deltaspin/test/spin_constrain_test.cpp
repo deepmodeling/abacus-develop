@@ -390,3 +390,12 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
     remove("test.log");
 }
+
+TYPED_TEST(SpinConstrainTest, PrintMi)
+{
+    this->sc.zero_Mi();
+    testing::internal::CaptureStdout();
+    this->sc.print_Mi(true);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0, 0, 0)"));
+}
