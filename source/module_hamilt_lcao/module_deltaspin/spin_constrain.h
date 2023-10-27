@@ -64,7 +64,7 @@ public:
   bool check_rms_stop(int outer_step, int i_step, double rms_error);
 
   /// apply restriction
-  void check_restrction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
+  void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
 
   /// check gradient decay
   bool check_gradient_decay(std::vector<ModuleBase::Vector3<double>> new_spin,

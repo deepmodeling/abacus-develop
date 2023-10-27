@@ -41,7 +41,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_header()
 
 /// check restriction
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_restrction(
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_restriction(
     const std::vector<ModuleBase::Vector3<double>>& search,
     double& alpha_trial)
 {

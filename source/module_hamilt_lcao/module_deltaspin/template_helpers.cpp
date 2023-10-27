@@ -50,8 +50,8 @@ bool SpinConstrain<double, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int 
 }
 
 template <>
-void SpinConstrain<double, psi::DEVICE_CPU>::check_restrction(const std::vector<ModuleBase::Vector3<double>>& search,
-                                                              double& alpha_trial)
+void SpinConstrain<double, psi::DEVICE_CPU>::check_restriction(const std::vector<ModuleBase::Vector3<double>>& search,
+                                                               double& alpha_trial)
 {
 }
 

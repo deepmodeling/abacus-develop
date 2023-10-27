@@ -79,7 +79,7 @@ TEST_F(SpinConstrainTest, CheckRestriction)
     };
     double alpha_trial = 0.1 / 13.605698;
     testing::internal::CaptureStdout();
-    sc.check_restrction(search, alpha_trial);
+    sc.check_restriction(search, alpha_trial);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("alpha after restrict = 0.075"));
     EXPECT_THAT(output, testing::HasSubstr("boundary after = 3"));

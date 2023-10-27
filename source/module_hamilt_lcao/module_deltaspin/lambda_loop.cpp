@@ -164,26 +164,12 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
             add_scalar_multiply_2d(search, search_old, beta, search);
         }
 
-        boundary = std::abs(alpha_trial * maxval_abs_2d(search));
-
-        if (boundary > this->restrict_current_)
-        {
-            alpha_trial = copysign(1.0, alpha_trial) * this->restrict_current_ / maxval_abs_2d(search);
-            boundary = std::abs(alpha_trial * maxval_abs_2d(search));
-            std::cout << "restriction needed: true" << std::endl;
-            std::cout << "alpha_trial after restrict = " << alpha_trial << std::endl;
-            std::cout << "boundary after = " << boundary << std::endl;
-        }
+        /// check if restriction is needed
+        this->check_restriction(search, alpha_trial);
 
         dnu_last_step = dnu;
         add_scalar_multiply_2d(dnu, search, alpha_trial, dnu);
         delta_lambda = dnu;
-
-        if (debug)
-        {
-            print_2d("(Debug) before-trial-step spin:", spin);
-            print_2d("(Debug) target spin:", this->target_mag_);
-        }
 
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
         this->cal_mw_from_lambda(i_step);
@@ -205,20 +191,8 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         sum_k = sum_2d(temp_1);
         sum_k2 = sum_2d(temp_2);
         alpha_opt = sum_k * alpha_trial / sum_k2;
-        boundary = std::abs(alpha_opt * maxval_abs_2d(search));
-
-        if (this->restrict_current_ > 0 && boundary > this->restrict_current_)
-        {
-            alpha_opt = copysign(1.0, alpha_opt) * this->restrict_current_ / maxval_abs_2d(search);
-            boundary = std::abs(alpha_opt * maxval_abs_2d(search));
-            //std::cout << "restriction needed: true" << std::endl;
-            //std::cout << "alpha_opt after restrict = " << alpha_opt << std::endl;
-            //std::cout << "boundary after = " << boundary << std::endl;
-        }
-        else
-        {
-            //std::cout << "restriction needed: false" << std::endl;
-        }
+        /// check if restriction is needed
+        this->check_restriction(search, alpha_opt);
 
         alpha_plus = alpha_opt - alpha_trial;
         scalar_multiply_2d(search, alpha_plus, temp_1);
