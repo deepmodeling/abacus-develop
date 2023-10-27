@@ -108,64 +108,6 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& ste
     ModuleBase::TITLE("module_deltaspin", "cal_MW");
     const std::vector<std::vector<std::complex<double>>>& dm
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_vector();
-    ModuleBase::matrix orbMulP;
-    orbMulP = this->cal_MW_k(LM, dm);
-
-    std::vector<std::vector<std::vector<double>>> AorbMulP = this->convert(orbMulP);
-
-    size_t nw = this->get_nw();
-    int nat = this->get_nat();
-
-    this->zero_Mi();
-
-    const int nlocal = nw / 2;
-    for (const auto& sc_elem: this->get_atomCounts())
-    {
-        int it = sc_elem.first;
-        int nat_it = sc_elem.second;
-        for (int ia = 0; ia < nat_it; ia++)
-        {
-            int num = 0;
-            int iat = this->get_iat(it, ia);
-            std::vector<double> total_charge_soc(this->nspin_, 0.0);
-            for (const auto& lnchi: this->get_lnchiCounts().at(it))
-            {
-                std::vector<double> sum_l(this->nspin_, 0.0);
-                int L = lnchi.first;
-                int nchi = lnchi.second;
-                for (int Z = 0; Z < nchi; ++Z)
-                {
-                    std::vector<double> sum_m(this->nspin_, 0.0);
-                    for (int M = 0; M < (2 * L + 1); ++M)
-                    {
-                        for (int j = 0; j < 4; j++)
-                        {
-                            sum_m[j] += AorbMulP[j][iat][num];
-                        }
-                        num++;
-                    }
-                    for (int j = 0; j < 4; j++)
-                    {
-                        sum_l[j] += sum_m[j];
-                    }
-                }
-                for (int j = 0; j < 4; j++)
-                {
-                    total_charge_soc[j] += sum_l[j];
-                }
-            }
-            this->Mi_[iat].x = total_charge_soc[1];
-            this->Mi_[iat].y = total_charge_soc[2];
-            this->Mi_[iat].z = total_charge_soc[3];
-            if (std::abs(this->Mi_[iat].x) < this->sc_thr_)
-                this->Mi_[iat].x = 0.0;
-            if (std::abs(this->Mi_[iat].y) < this->sc_thr_)
-                this->Mi_[iat].y = 0.0;
-            if (std::abs(this->Mi_[iat].z) < this->sc_thr_)
-                this->Mi_[iat].z = 0.0;
-            if (print)
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(16) << " (" << Mi_[iat].x
-                          << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
-        }
-    }
+    this->calculate_MW(this->convert(this->cal_MW_k(LM, dm)));
+    this->print_Mi(print);
 }

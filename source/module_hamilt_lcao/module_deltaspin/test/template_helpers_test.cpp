@@ -40,4 +40,6 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     ModuleBase::matrix orbMulP;
     EXPECT_NO_THROW(sc.convert(orbMulP));
     EXPECT_NO_THROW(sc.run_lambda_loop(0));
+    std::vector<std::vector<std::vector<double>>> AorbMulP;
+    EXPECT_NO_THROW(sc.calculate_MW(AorbMulP));
 }

@@ -60,6 +60,12 @@ public:
 
   void run_lambda_loop(int outer_step);
 
+  /// calculate mw from AorbMulP matrix
+  void calculate_MW(const std::vector<std::vector<std::vector<double>>>& AorbMulP);
+
+  /// print mi
+  void print_Mi(bool print = false);
+
 public:
     /**
      * important outter class pointers used in spin-constrained DFT

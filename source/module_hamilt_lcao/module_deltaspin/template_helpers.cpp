@@ -26,6 +26,11 @@ void SpinConstrain<double, psi::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix
 {
 }
 
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::calculate_MW(const std::vector<std::vector<std::vector<double>>>& AorbMulP)
+{
+}
+
 template<>
 std::vector<std::vector<std::vector<double>>> SpinConstrain<double, psi::DEVICE_CPU>::convert(const ModuleBase::matrix &orbMulP)
 {

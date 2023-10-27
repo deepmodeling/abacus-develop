@@ -527,5 +527,21 @@ void SpinConstrain<FPTYPE, Device>::set_ParaV(Parallel_Orbitals* ParaV_in)
     }
 }
 
+/// print Mi
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    if (print)
+    {
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(16) << " (" << Mi_[iat].x
+                      << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
+        }
+    }
+}
+
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
 template class SpinConstrain<double, psi::DEVICE_CPU>;
