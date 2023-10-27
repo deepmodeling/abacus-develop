@@ -81,4 +81,13 @@ AddTest(
     ../../../module_basis/module_ao/parallel_2d.cpp
     ../../../module_basis/module_ao/parallel_orbitals.cpp
 )
+
+AddTest(
+  TARGET deltaspin_lambda_loop_helper
+  LIBS ${math_libs} base device
+  SOURCES lambda_loop_helper_test.cpp
+    ../spin_constrain.cpp
+    ../lambda_loop_helper.cpp
+    ../basic_funcs.cpp
+)
 endif() 
