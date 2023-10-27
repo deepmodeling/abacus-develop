@@ -505,6 +505,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mixing.o\
     fp_energy.o\
     forces.o\
+    forces_us.o\
     force_op.o\
     stress_op.o\
     wf_op.o\

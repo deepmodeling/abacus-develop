@@ -37,6 +37,8 @@ class ElecStatePW : public ElecState
     // update charge density for next scf step
     // void getNewRho() override;
 
+    Real* becsum = nullptr;
+
   protected:
     ModulePW::PW_Basis* rhopw_smooth = nullptr;
     ModulePW::PW_Basis_K* basis = nullptr;

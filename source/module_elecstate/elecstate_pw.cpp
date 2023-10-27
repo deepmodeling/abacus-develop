@@ -38,6 +38,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
     }
+    delmem_var_op()(this->ctx, becsum);
     delmem_complex_op()(this->ctx, this->wfcr);
     delmem_complex_op()(this->ctx, this->wfcr_another_spin);
 }
@@ -248,7 +249,6 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     this->vkb = this->ppcell->template get_vkb_data<Real>();
     T* becp = nullptr;
     resmem_complex_op()(this->ctx, becp, nbands * nkb, "ElecState<PW>::becp");
-    Real* becsum = nullptr;
     const int nh_tot = this->ppcell->nhm * (this->ppcell->nhm + 1) / 2;
     resmem_var_op()(this->ctx, becsum, nh_tot * ucell->nat * GlobalV::NSPIN, "ElecState<PW>::becsum");
     setmem_var_op()(this->ctx, becsum, 0, nh_tot * ucell->nat * GlobalV::NSPIN);
@@ -412,7 +412,6 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
         this->charge->rhopw->recip2real(&rhog[is * this->charge->rhopw->npw], this->rho[is]);
     }
 
-    delmem_var_op()(this->ctx, becsum);
     delmem_complex_op()(this->ctx, rhog);
 }
 
