@@ -61,5 +61,13 @@ TEST_F(SpinConstrainTest, CheckRmsStop)
     EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 --    13       RMS =1e-07"));
     EXPECT_THAT(output, testing::HasSubstr("Meet convergence criterion ( < 1e-06 ), exit."));
     EXPECT_THAT(output, testing::HasSubstr("Reach maximum number of steps ( 100 ), exit."));
-    
+}
+
+TEST_F(SpinConstrainTest, PrintHeader)
+{
+    testing::internal::CaptureStdout();
+    sc.print_header();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda begins ..."));
+    EXPECT_THAT(output, testing::HasSubstr("Covergence criterion for the iteration: 1e-06"));
 }

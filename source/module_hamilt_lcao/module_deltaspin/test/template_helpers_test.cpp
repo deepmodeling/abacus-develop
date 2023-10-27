@@ -47,6 +47,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0));
     EXPECT_FALSE(sc.check_rms_stop(0, 0, 0.0));
     EXPECT_NO_THROW(sc.print_termination());
+    EXPECT_NO_THROW(sc.print_header());
     std::vector<ModuleBase::Vector3<double>> new_spin, old_spin, new_delta_lambda, old_delta_lambda;
     EXPECT_FALSE(sc.check_gradient_decay(new_spin, old_spin, new_delta_lambda, old_delta_lambda));
 }

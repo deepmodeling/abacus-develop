@@ -30,6 +30,15 @@ bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int ou
     return false;
 }
 
+/// print header
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_header()
+{
+    std::cout << "===============================================================================" << std::endl;
+    std::cout << "Inner optimization for lambda begins ..." << std::endl;
+    std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
+}
+
 /// check gradient decay
 template <>
 bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(

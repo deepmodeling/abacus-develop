@@ -69,6 +69,8 @@ public:
                             std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
                             std::vector<ModuleBase::Vector3<double>> old_delta_lambda);
 
+  /// print header info
+  void print_header();
   /// print termination message
   void print_termination();
 

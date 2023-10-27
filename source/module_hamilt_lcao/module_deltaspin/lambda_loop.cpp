@@ -60,9 +60,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         //std::cout << "bound_gradient " << bound_gradient[it] << std::endl;
     }
 
-    std::cout << "===============================================================================" << std::endl;
-    std::cout << "Inner optimization for lambda begins ..." << std::endl;
-    std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
+    this->print_header();
     // lambda loop
     for (int i_step = 0; i_step < this->nsc_; i_step++)
     {
