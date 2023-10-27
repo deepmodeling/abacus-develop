@@ -63,7 +63,29 @@ double SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_alpha_opt(
     std::vector<ModuleBase::Vector3<double>> spin_plus,
     const double alpha_trial)
 {
-    return 0.0;
+    int nat = this->get_nat();
+    const double zero = 0.0;
+    std::vector<ModuleBase::Vector3<double>> spin_mask(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> target_spin_mask(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> spin_plus_mask(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> temp_1(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> temp_2(nat, 0.0);
+    where_fill_scalar_else_2d(this->constrain_, 0, zero, this->target_mag_, target_spin_mask);
+    where_fill_scalar_else_2d(this->constrain_, 0, zero, spin, spin_mask);
+    where_fill_scalar_else_2d(this->constrain_, 0, zero, spin_plus, spin_plus_mask);
+
+    for (int ia = 0; ia < nat; ia++)
+    {
+        for (int ic = 0; ic < 3; ic++)
+        {
+            temp_1[ia][ic]
+                = (target_spin_mask[ia][ic] - spin_mask[ia][ic]) * (spin_plus_mask[ia][ic] - spin_mask[ia][ic]);
+            temp_2[ia][ic] = std::pow(spin_mask[ia][ic] - spin_plus_mask[ia][ic], 2);
+        }
+    }
+    double sum_k = sum_2d(temp_1);
+    double sum_k2 = sum_2d(temp_2);
+    return sum_k * alpha_trial / sum_k2;
 }
 
 /// check gradient decay

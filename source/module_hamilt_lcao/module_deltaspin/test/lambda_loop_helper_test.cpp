@@ -84,3 +84,35 @@ TEST_F(SpinConstrainTest, CheckRestriction)
     EXPECT_THAT(output, testing::HasSubstr("alpha after restrict = 0.075"));
     EXPECT_THAT(output, testing::HasSubstr("boundary after = 3"));
 }
+
+TEST_F(SpinConstrainTest, CalAlphaOpt)
+{
+    std::vector<ModuleBase::Vector3<int>> constrain = {
+        {1, 1, 1}
+    };
+    std::vector<ModuleBase::Vector3<double>> target_mag = {
+        {0.0, 0.0, 2.0}
+    };
+    // Set up test input data
+    std::vector<ModuleBase::Vector3<double>> spin = {
+        {0.0, 0.0, 0.1}
+    };
+
+    std::vector<ModuleBase::Vector3<double>> spin_plus = {
+        {0.0, 0.0, 0.2}
+    };
+
+    sc.set_constrain(constrain.data(), 1);
+    sc.set_target_mag(target_mag.data(), 1);
+
+    double alpha_trial = 0.5;
+
+    // Set up expected output data
+    double expected_alpha_opt = 9.5;
+
+    // Call the function being tested
+    double actual_alpha_opt = sc.cal_alpha_opt(spin, spin_plus, alpha_trial);
+
+    // Compare the expected and actual output
+    EXPECT_NEAR(expected_alpha_opt, actual_alpha_opt, 1e-14);
+}
