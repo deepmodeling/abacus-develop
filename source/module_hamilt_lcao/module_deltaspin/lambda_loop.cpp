@@ -33,17 +33,12 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
     std::vector<double> bound_gradient(ntype,0.0);
 
     std::vector<ModuleBase::Vector3<double>> spin(nat,0.0), delta_spin(nat,0.0), delta_spin_old(nat,0.0);
-    std::vector<ModuleBase::Vector3<double>> search(nat,0.0), search_old(nat,0.0);
-
-    std::vector<ModuleBase::Vector3<double>> spin_mask(nat,0.0), target_spin_mask(nat,0.0);
-    std::vector<ModuleBase::Vector3<double>> new_spin(nat,0.0), spin_change(nat,0.0), spin_plus(nat,0.0);
-    std::vector<ModuleBase::Vector3<double>> spin_plus_mask(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> search(nat, 0.0), search_old(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> new_spin(nat, 0.0), spin_change(nat, 0.0), spin_plus(nat, 0.0);
 
     double alpha_opt, alpha_plus;
     double beta;
     double mean_error, mean_error_old, rms_error;
-    double boundary;
-    double sum_k, sum_k2;
     double g;
 
     // calculate number of components to be constrained
@@ -176,21 +171,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
 
         spin_plus = this->Mi_;
 
-        where_fill_scalar_else_2d(this->constrain_, 0, zero, this->target_mag_, target_spin_mask);
-        where_fill_scalar_else_2d(this->constrain_, 0, zero, spin, spin_mask);
-        where_fill_scalar_else_2d(this->constrain_, 0, zero, spin_plus, spin_plus_mask);
-
-        for (int ia = 0; ia < nat; ia++)
-        {
-            for (int ic = 0; ic < 3; ic++)
-            {
-                temp_1[ia][ic] = (target_spin_mask[ia][ic] - spin_mask[ia][ic]) * (spin_plus_mask[ia][ic] - spin_mask[ia][ic]);
-                temp_2[ia][ic] = std::pow(spin_mask[ia][ic] - spin_plus_mask[ia][ic], 2);
-            }
-        }
-        sum_k = sum_2d(temp_1);
-        sum_k2 = sum_2d(temp_2);
-        alpha_opt = sum_k * alpha_trial / sum_k2;
+        alpha_opt = this->cal_alpha_opt(spin, spin_plus, alpha_trial);
         /// check if restriction is needed
         this->check_restriction(search, alpha_opt);
 
