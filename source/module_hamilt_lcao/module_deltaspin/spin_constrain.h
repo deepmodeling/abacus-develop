@@ -63,6 +63,12 @@ public:
   /// lambda loop helper functions
   bool check_rms_stop(int outer_step, int i_step, double rms_error);
 
+  /// check gradient decay
+  bool check_gradient_decay(std::vector<ModuleBase::Vector3<double>> new_spin,
+                            std::vector<ModuleBase::Vector3<double>> old_spin,
+                            std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
+                            std::vector<ModuleBase::Vector3<double>> old_delta_lambda);
+
   /// print termination message
   void print_termination();
 
