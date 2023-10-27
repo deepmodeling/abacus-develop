@@ -71,3 +71,16 @@ TEST_F(SpinConstrainTest, PrintHeader)
     EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda begins ..."));
     EXPECT_THAT(output, testing::HasSubstr("Covergence criterion for the iteration: 1e-06"));
 }
+
+TEST_F(SpinConstrainTest, CheckRestriction)
+{
+    std::vector<ModuleBase::Vector3<double>> search = {
+        {0.0, 0.0, 40}
+    };
+    double alpha_trial = 0.1 / 13.605698;
+    testing::internal::CaptureStdout();
+    sc.check_restrction(search, alpha_trial);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("alpha after restrict = 0.075"));
+    EXPECT_THAT(output, testing::HasSubstr("boundary after = 3"));
+}

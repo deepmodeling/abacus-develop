@@ -39,6 +39,23 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_header()
     std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
 }
 
+/// check restriction
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_restrction(
+    const std::vector<ModuleBase::Vector3<double>>& search,
+    double& alpha_trial)
+{
+    double boundary = std::abs(alpha_trial * maxval_abs_2d(search));
+
+    if (this->restrict_current_ > 0 && boundary > this->restrict_current_)
+    {
+        alpha_trial = copysign(1.0, alpha_trial) * this->restrict_current_ / maxval_abs_2d(search);
+        boundary = std::abs(alpha_trial * maxval_abs_2d(search));
+        std::cout << "alpha after restrict = " << alpha_trial * ModuleBase::Ry_to_eV << std::endl;
+        std::cout << "boundary after = " << boundary * ModuleBase::Ry_to_eV << std::endl;
+    }
+}
+
 /// check gradient decay
 template <>
 bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(

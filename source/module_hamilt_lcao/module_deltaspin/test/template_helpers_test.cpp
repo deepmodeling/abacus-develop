@@ -50,4 +50,6 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_NO_THROW(sc.print_header());
     std::vector<ModuleBase::Vector3<double>> new_spin, old_spin, new_delta_lambda, old_delta_lambda;
     EXPECT_FALSE(sc.check_gradient_decay(new_spin, old_spin, new_delta_lambda, old_delta_lambda));
+    double alpha = 0.0;
+    EXPECT_NO_THROW(sc.check_restrction(new_spin, alpha));
 }
