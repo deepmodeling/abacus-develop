@@ -114,6 +114,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::collect_MW(ModuleBase
             {
                 const int ir = this->ParaV->global2local_row(k1);
                 const int ic = this->ParaV->global2local_col(k2);
+                // note that mud is column major
                 MecMulP(1, j) += mud(ic, ir).real();
                 MecMulP(2, j) += mud(ic, ir).imag();
             }

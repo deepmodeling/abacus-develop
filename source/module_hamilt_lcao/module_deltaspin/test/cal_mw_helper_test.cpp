@@ -68,3 +68,41 @@ TEST_F(SpinConstrainTest, CalculateMW)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (2, 3, 4)"));
 }
+
+TEST_F(SpinConstrainTest, CollectMW)
+{
+    // set paraV
+    Parallel_Orbitals paraV;
+    int nrow = 2;
+    int ncol = 2;
+    std::ofstream ofs("test.log");
+    paraV.set_global2local(nrow, ncol, false, ofs);
+    sc.set_ParaV(&paraV);
+    // Prepare the input data
+    int nw = sc.get_nw();
+    EXPECT_EQ(nw, 2);
+    int nlocal = sc.get_nw() / 2;
+    ModuleBase::matrix MecMulP(sc.get_nspin(), nlocal, true);
+    ModuleBase::ComplexMatrix mud(sc.ParaV->ncol, sc.ParaV->nrow, true);
+    mud(0, 0) = std::complex<double>(2.0, 0.0);
+    mud(0, 1) = std::complex<double>(3.0, -2.0);
+    mud(1, 0) = std::complex<double>(4.0, -3.0);
+    mud(1, 1) = std::complex<double>(5.0, 0.0);
+    // call the function
+    sc.collect_MW(MecMulP, mud, nw);
+    // Check the expected results
+    ModuleBase::matrix expected_MecMulP(4, 1);
+    expected_MecMulP(0, 0) = 7.0;
+    expected_MecMulP(1, 0) = 7.0;
+    expected_MecMulP(2, 0) = -1.0;
+    expected_MecMulP(3, 0) = -3.0;
+    // Compare the matrices
+    for (size_t i = 0; i < expected_MecMulP.nr; ++i)
+    {
+        for (size_t j = 0; j < expected_MecMulP.nc; ++j)
+        {
+            EXPECT_DOUBLE_EQ(MecMulP(i, j), expected_MecMulP(i, j));
+        }
+    }
+    remove("test.log");
+}
