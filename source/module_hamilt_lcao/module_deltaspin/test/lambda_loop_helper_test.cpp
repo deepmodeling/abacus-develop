@@ -116,3 +116,42 @@ TEST_F(SpinConstrainTest, CalAlphaOpt)
     // Compare the expected and actual output
     EXPECT_NEAR(expected_alpha_opt, actual_alpha_opt, 1e-14);
 }
+
+TEST_F(SpinConstrainTest, CheckGradientDecay)
+{
+    // Set up some data for testing
+    std::vector<ModuleBase::Vector3<double>> new_spin = {
+        {0.0, 0.0, 0.1}
+    };
+
+    std::vector<ModuleBase::Vector3<double>> new_spin1 = {
+        {0.0, 0.0, 10.0}
+    };
+
+    std::vector<ModuleBase::Vector3<double>> spin = {
+        {0.0, 0.0, 0.2}
+    };
+
+    std::vector<ModuleBase::Vector3<double>> delta_lambda = {
+        {0.0, 0.0, 1.0}
+    };
+
+    std::vector<ModuleBase::Vector3<double>> dnu_last_step = {
+        {0.0, 0.0, 2.0},
+    };
+
+    std::vector<ModuleBase::Vector3<int>> constrain = {
+        {0, 0, 1}
+    };
+
+    std::vector<double> decay_grad = {0.9};
+    sc.set_constrain(constrain.data(), 1);
+    sc.set_decay_grad(decay_grad.data(), 1);
+
+    // Call the function to test
+    EXPECT_TRUE(sc.check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step, false));
+    testing::internal::CaptureStdout();
+    EXPECT_FALSE(sc.check_gradient_decay(new_spin1, spin, delta_lambda, dnu_last_step, true));
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("maximum gradient appears at:"));
+}

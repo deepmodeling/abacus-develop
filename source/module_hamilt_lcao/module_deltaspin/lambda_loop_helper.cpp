@@ -92,9 +92,85 @@ double SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_alpha_opt(
 template <>
 bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(
     std::vector<ModuleBase::Vector3<double>> new_spin,
-    std::vector<ModuleBase::Vector3<double>> old_spin,
-    std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
-    std::vector<ModuleBase::Vector3<double>> old_delta_lambda)
+    std::vector<ModuleBase::Vector3<double>> spin,
+    std::vector<ModuleBase::Vector3<double>> delta_lambda,
+    std::vector<ModuleBase::Vector3<double>> dnu_last_step,
+    bool print)
 {
+    const double one = 1.0;
+    const double zero = 0.0;
+    int nat = this->get_nat();
+    int ntype = this->get_ntype();
+    std::vector<ModuleBase::Vector3<double>> spin_change(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> nu_change(nat, 1.0);
+    std::vector<std::vector<std::vector<std::vector<double>>>> spin_nu_gradient(
+        nat,
+        std::vector<std::vector<std::vector<double>>>(
+            3,
+            std::vector<std::vector<double>>(nat, std::vector<double>(3, 0.0))));
+    std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat, 0.0);
+    std::vector<std::pair<int, int>> max_gradient_index(ntype, std::make_pair(0, 0));
+    std::vector<double> max_gradient(ntype, 0.0);
+    subtract_2d(new_spin, spin, spin_change);
+    subtract_2d(delta_lambda, dnu_last_step, nu_change);
+    where_fill_scalar_2d(this->constrain_, 0, zero, spin_change);
+    where_fill_scalar_2d(this->constrain_, 0, one, nu_change);
+    // calculate spin_nu_gradient
+    for (int ia = 0; ia < nat; ia++)
+    {
+        for (int ic = 0; ic < 3; ic++)
+        {
+            for (int ja = 0; ja < nat; ja++)
+            {
+                for (int jc = 0; jc < 3; jc++)
+                {
+                    spin_nu_gradient[ia][ic][ja][jc] = spin_change[ia][ic] / nu_change[ja][jc];
+                }
+            }
+        }
+    }
+    for (const auto& sc_elem: this->get_atomCounts())
+    {
+        int it = sc_elem.first;
+        int nat_it = sc_elem.second;
+        max_gradient[it] = 0.0;
+        for (int ia = 0; ia < nat_it; ia++)
+        {
+            for (int ic = 0; ic < 3; ic++)
+            {
+                spin_nu_gradient_diag[ia][ic] = spin_nu_gradient[ia][ic][ia][ic];
+                if (std::abs(spin_nu_gradient_diag[ia][ic]) > std::abs(max_gradient[it]))
+                {
+                    max_gradient[it] = spin_nu_gradient_diag[ia][ic];
+                    max_gradient_index[it].first = ia;
+                    max_gradient_index[it].second = ic;
+                }
+            }
+        }
+    }
+    if (print)
+    {
+        print_2d("diagonal gradient: ", spin_nu_gradient_diag);
+        std::cout << "maximum gradient appears at: " << std::endl;
+        for (int it = 0; it < ntype; it++)
+        {
+            std::cout << "( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )"
+                      << std::endl;
+        }
+        std::cout << "maximum gradient: " << std::endl;
+        for (int it = 0; it < ntype; it++)
+        {
+            std::cout << max_gradient[it] << std::endl;
+        }
+    }
+    for (int it = 0; it < ntype; it++)
+    {
+        if (this->decay_grad_[it] > 0 && std::abs(max_gradient[it]) < this->decay_grad_[it])
+        {
+            std::cout << "Reach limitation of current step ( maximum gradient < " << this->decay_grad_[it]
+                      << " in atom type " << it << " ), exit." << std::endl;
+            return true;
+        }
+    }
     return false;
 }

@@ -86,7 +86,8 @@ bool SpinConstrain<double, psi::DEVICE_CPU>::check_gradient_decay(
     std::vector<ModuleBase::Vector3<double>> new_spin,
     std::vector<ModuleBase::Vector3<double>> old_spin,
     std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
-    std::vector<ModuleBase::Vector3<double>> old_delta_lambda)
+    std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
+    bool print)
 {
     return false;
 }
