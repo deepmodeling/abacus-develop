@@ -56,6 +56,16 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_restriction(
     }
 }
 
+/// calculate alpha_opt
+template <>
+double SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_alpha_opt(
+    std::vector<ModuleBase::Vector3<double>> spin,
+    std::vector<ModuleBase::Vector3<double>> spin_plus,
+    const double alpha_trial)
+{
+    return 0.0;
+}
+
 /// check gradient decay
 template <>
 bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(

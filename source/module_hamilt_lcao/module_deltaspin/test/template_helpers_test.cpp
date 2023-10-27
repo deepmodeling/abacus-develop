@@ -52,4 +52,5 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_FALSE(sc.check_gradient_decay(new_spin, old_spin, new_delta_lambda, old_delta_lambda));
     double alpha = 0.0;
     EXPECT_NO_THROW(sc.check_restriction(new_spin, alpha));
+    EXPECT_EQ(sc.cal_alpha_opt(new_spin, old_spin, alpha), 0.0);
 }

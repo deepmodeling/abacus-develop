@@ -55,6 +55,15 @@ void SpinConstrain<double, psi::DEVICE_CPU>::check_restriction(const std::vector
 {
 }
 
+/// calculate alpha_opt
+template <>
+double SpinConstrain<double, psi::DEVICE_CPU>::cal_alpha_opt(std::vector<ModuleBase::Vector3<double>> spin,
+                                                             std::vector<ModuleBase::Vector3<double>> spin_plus,
+                                                             const double alpha_trial)
+{
+    return 0.0;
+}
+
 template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::print_termination()
 {
