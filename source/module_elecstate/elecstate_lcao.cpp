@@ -177,28 +177,14 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-
-// interface for RI-related calculation, which needs loc.dm_gamma    
-#ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx || this->loc->out_dm)
-        {
-            this->loc->dm_gamma.resize(GlobalV::NSPIN);
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
-            {
-                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
-            }
-        }
-#else
         if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
         {
             this->loc->dm_gamma.resize(GlobalV::NSPIN);
             for (int is = 0; is < GlobalV::NSPIN; ++is)
             {
-                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
+                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));
             }
         }
-#endif
-
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
         for (int ik = 0; ik < psi.get_nk(); ++ik)
