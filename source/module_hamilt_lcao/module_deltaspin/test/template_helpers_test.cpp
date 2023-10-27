@@ -42,4 +42,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_NO_THROW(sc.run_lambda_loop(0));
     std::vector<std::vector<std::vector<double>>> AorbMulP;
     EXPECT_NO_THROW(sc.calculate_MW(AorbMulP));
+    ModuleBase::ComplexMatrix mud;
+    ModuleBase::matrix MecMulP;
+    EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0));
 }

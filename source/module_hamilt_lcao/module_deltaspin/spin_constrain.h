@@ -66,6 +66,9 @@ public:
   /// print mi
   void print_Mi(bool print = false);
 
+  /// collect_mw from matrix multiplication result
+  void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw);
+
 public:
     /**
      * important outter class pointers used in spin-constrained DFT

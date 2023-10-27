@@ -42,3 +42,10 @@ template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::run_lambda_loop(int outer_step)
 {
 }
+
+template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
+                                                        const ModuleBase::ComplexMatrix& mud,
+                                                        int nw)
+{
+}

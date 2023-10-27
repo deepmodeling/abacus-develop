@@ -15,19 +15,13 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
     int nw = this->get_nw();
-    const int nlocal = nw/2;
-    ModuleBase::matrix MecMulP, orbMulP;
-    MecMulP.create(this->nspin_, nlocal, true);
-    orbMulP.create(this->nspin_, nlocal, true);
-
+    const int nlocal = nw / 2;
+    ModuleBase::matrix MecMulP(this->nspin_, nlocal, true), orbMulP(this->nspin_, nlocal, true);
     for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)
             ->updateSk(ik, LM, 1);
-
-        ModuleBase::ComplexMatrix mud;
-        mud.create(this->ParaV->ncol, this->ParaV->nrow, true);
-
+        ModuleBase::ComplexMatrix mud(this->ParaV->ncol, this->ParaV->nrow, true);
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -52,45 +46,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
                 &one_int,
                 &one_int,
                 this->ParaV->desc);
-
-        for(size_t i=0; i < nw; ++i)
-        {
-            const int index = i%2;
-            if(!index)
-            {
-                const int j = i/2;
-                const int k1 = 2*j;
-                const int k2 = 2*j+1;
-                if(this->ParaV->in_this_processor(k1, k1))
-                {
-                    const int ir = this->ParaV->global2local_row(k1);
-                    const int ic = this->ParaV->global2local_col(k1);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) += mud(ic, ir).real();
-                }
-                if(this->ParaV->in_this_processor(k1, k2))
-                {
-                    const int ir = this->ParaV->global2local_row(k1);
-                    const int ic = this->ParaV->global2local_col(k2);
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    MecMulP(2, j) += mud(ic, ir).imag();
-                }
-                if(this->ParaV->in_this_processor(k2, k1))
-                {
-                    const int ir = this->ParaV->global2local_row(k2);
-                    const int ic = this->ParaV->global2local_col(k1);
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    MecMulP(2, j) -= mud(ic, ir).imag();
-                }
-                if(this->ParaV->in_this_processor(k2, k2))
-                {
-                    const int ir = this->ParaV->global2local_row(k2);
-                    const int ic = this->ParaV->global2local_col(k2);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) -= mud(ic, ir).real();
-                }
-            }
-        }
+        this->collect_MW(MecMulP, mud, nw);
 #endif
     }
 #ifdef __MPI
