@@ -28,6 +28,8 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
     double* becsum = static_cast<const elecstate::ElecStatePW<std::complex<FPTYPE>, Device>&>(elec).becsum;
 
+    ModuleBase::matrix forceq(ucell.nat, 3);
+
     ModuleBase::matrix veff = elec.pot->get_effective_v();
     ModuleBase::ComplexMatrix vg(GlobalV::NSPIN, npw);
     // fourier transform of the total effective potential
@@ -121,7 +123,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                     {
                         for (int ijh = 0; ijh < nij; ijh++)
                         {
-                            forcenl(iat, ipol) += ddeeq(is, ipol, ia, ijh) * becsum[index + ijh];
+                            forceq(iat, ipol) += ddeeq(is, ipol, ia, ijh) * becsum[index + ijh];
                         }
                     }
                 }
@@ -129,7 +131,8 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
         }
     }
 
-    Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
+    Parallel_Reduce::reduce_all(forceq.c, forceq.nr * forceq.nc);
+    forcenl += forceq;
 
     delete[] qnorm;
 
