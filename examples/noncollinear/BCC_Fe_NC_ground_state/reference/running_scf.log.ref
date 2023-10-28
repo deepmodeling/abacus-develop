@@ -1,0 +1,794 @@
+                                                                                     
+                              ABACUS v3.4.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: unknown
+
+    Start Time is Sat Oct 28 05:18:03 2023
+                                                                                     
+ ------------------------------------------------------------------------------------
+
+ READING GENERAL INFORMATION
+                           global_out_dir = OUT.ABACUS/
+                           global_in_card = INPUT
+                               pseudo_dir = 
+                              orbital_dir = 
+                                    DRANK = 1
+                                    DSIZE = 2
+                                   DCOLOR = 1
+                                    GRANK = 1
+                                    GSIZE = 1
+ The esolver type has been set to : ksdft_lcao
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Reading atom information in unitcell:                              |
+ | From the input file and the structure file we know the number of   |
+ | different elments in this unitcell, then we list the detail        |
+ | information for each element, especially the zeta and polar atomic |
+ | orbital number for each element. The total atom number is counted. |
+ | We calculate the nearest atom distance for each atom and show the  |
+ | Cartesian and Direct coordinates for each atom. We list the file   |
+ | address for atomic orbitals. The volume and the lattice vectors    |
+ | in real and reciprocal space is also shown.                        |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+ READING UNITCELL INFORMATION
+                                    ntype = 1
+                  lattice constant (Bohr) = 1.88973
+              lattice constant (Angstrom) = 1
+
+ READING ATOM TYPE 1
+                               atom label = Fe
+                      L=0, number of zeta = 4
+                      L=1, number of zeta = 2
+                      L=2, number of zeta = 2
+                      L=3, number of zeta = 1
+             number of atom for this type = 2
+               magnetization of element 1 = [ 0, 0, 5 ]
+
+                        TOTAL ATOM NUMBER = 2
+DIRECT COORDINATES
+   atom           x                y                z           mag          vx               vy               vz       
+taud_Fe1       0.0000000000     0.0000000000     0.0000000000 +5.0000     0.0000000000     0.0000000000     0.0000000000
+taud_Fe2       0.5000000000     0.5000000000     0.5000000000 +5.0000     0.0000000000     0.0000000000     0.0000000000
+
+
+                          Volume (Bohr^3) = 153.409
+                             Volume (A^3) = 22.7329
+
+ Lattice vectors: (Cartesian coordinate: in unit of a_0)
+             +2.83282                  +0                  +0
+                   +0            +2.83282                  +0
+                   +0                  +0            +2.83282
+ Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)
+            +0.353006                  -0                  +0
+                   -0           +0.353006                  -0
+                   +0                  -0           +0.353006
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Reading pseudopotentials files:                                    |
+ | The pseudopotential file is in UPF format. The 'NC' indicates that |
+ | the type of pseudopotential is 'norm conserving'. Functional of    |
+ | exchange and correlation is decided by 4 given parameters in UPF   |
+ | file.  We also read in the 'core correction' if there exists.      |
+ | Also we can read the valence electrons number and the maximal      |
+ | angular momentum used in this pseudopotential. We also read in the |
+ | trail wave function, trail atomic density and local-pseudopotential|
+ | on logrithmic grid. The non-local pseudopotential projector is also|
+ | read in if there is any.                                           |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+                PAO radial cut off (Bohr) = 15
+
+ Read in pseudopotential file is Fe.upf
+                     pseudopotential type = NC
+          exchange-correlation functional = PBE
+                 nonlocal core correction = 1
+                        valence electrons = 16
+                                     lmax = 2
+                           number of zeta = 6
+                     number of projectors = 10
+                           L of projector = 0
+                           L of projector = 0
+                           L of projector = 1
+                           L of projector = 1
+                           L of projector = 1
+                           L of projector = 1
+                           L of projector = 2
+                           L of projector = 2
+                           L of projector = 2
+                           L of projector = 2
+     initial pseudo atomic orbital number = 40
+                                   NLOCAL = 108
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                  
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Setup plane waves of charge/potential:                             |
+ | Use the energy cutoff and the lattice vectors to generate the      |
+ | dimensions of FFT grid. The number of FFT grid on each processor   |
+ | is 'nrxx'. The number of plane wave basis in reciprocal space is   |
+ | different for charege/potential and wave functions. We also set    |
+ | the 'sticks' for the parallel of FFT. The number of plane waves    |
+ | is 'npw' in each processor.                                        |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
+ SETUP THE PLANE WAVE BASIS
+ energy cutoff for charge/potential (unit:Ry) = 400
+            fft grid for charge/potential = [ 36, 36, 36 ]
+                        fft grid division = [ 3, 3, 3 ]
+        big fft grid for charge/potential = [ 12, 12, 12 ]
+                                     nbxx = 864
+                                     nrxx = 23328
+
+ SETUP PLANE WAVES FOR CHARGE/POTENTIAL
+                    number of plane waves = 20719
+                         number of sticks = 917
+
+ PARALLEL PW FOR CHARGE/POTENTIAL
+     PROC   COLUMNS(POT)             PW
+        1            459          10359
+        2            458          10360
+ --------------- sum -------------------
+        2            917          20719
+                            number of |g| = 241
+                                  max |g| = 36.1378
+                                  min |g| = 0.124613
+
+ SETUP THE ELECTRONS NUMBER
+            electron number of element Fe = 16
+      total electron number of element Fe = 32
+            AUTOSET number of electrons:  = 32
+ DONE : SETUP UNITCELL Time : 0.285805 (SEC)
+
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Setup K-points                                                     |
+ | We setup the k-points according to input parameters.               |
+ | The reduced k-points are set according to symmetry operations.     |
+ | We treat the spin as another set of k-points.                      |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
+ SETUP K-POINTS
+                                    nspin = 4
+                   Input type of k points = Monkhorst-Pack(Gamma)
+                                   nkstot = 1
+                               nkstot_ibz = 1
+      IBZ             DirectX             DirectY             DirectZ              Weight    ibz2bz
+        1                   0                   0                   0                   1         0
+                               nkstot now = 1
+
+  KPOINTS            DIRECT_X            DIRECT_Y            DIRECT_Z              WEIGHT
+        1                   0                   0                   0                   1
+
+           k-point number in this process = 1
+       minimum distributed K point number = 1
+
+  KPOINTS         CARTESIAN_X         CARTESIAN_Y         CARTESIAN_Z              WEIGHT
+        1                   0                   0                   0                   1
+
+  KPOINTS            DIRECT_X            DIRECT_Y            DIRECT_Z              WEIGHT
+        1                   0                   0                   0                   1
+ DONE : INIT K-POINTS Time : 0.286138 (SEC)
+
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Setup plane waves of wave functions:                               |
+ | Use the energy cutoff and the lattice vectors to generate the      |
+ | dimensions of FFT grid. The number of FFT grid on each processor   |
+ | is 'nrxx'. The number of plane wave basis in reciprocal space is   |
+ | different for charege/potential and wave functions. We also set    |
+ | the 'sticks' for the parallel of FFT. The number of plane wave of  |
+ | each k-point is 'npwk[ik]' in each processor                       |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
+ SETUP PLANE WAVES FOR WAVE FUNCTIONS
+     energy cutoff for wavefunc (unit:Ry) = 100
+              fft grid for wave functions = [ 36, 36, 36 ]
+                    number of plane waves = 2553
+                         number of sticks = 225
+
+ PARALLEL PW FOR WAVE FUNCTIONS
+     PROC   COLUMNS(POT)             PW
+        1            114           1276
+        2            111           1277
+ --------------- sum -------------------
+        2            225           2553
+ DONE : INIT PLANEWAVE Time : 0.333999 (SEC)
+
+                           occupied bands = 32
+                                   NLOCAL = 108
+                                   NBANDS = 52
+                                   NBANDS = 52
+
+ READING ORBITAL FILE NAMES FOR LCAO
+ orbital file: ../../../tests/PP_ORB/Fe_gga_10au_100Ry_4s2p2d1f.orb
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Setup numerical orbitals:                                          |
+ | This part setup: numerical atomic orbitals, non-local projectors   |
+ | and neutral potential (1D). The atomic orbitals information        |
+ | including the radius, angular momentum and zeta number.            |
+ | The neutral potential is the sum of local part of pseudopotential  |
+ | and potential given by atomic charge, they will cancel out beyond  |
+ | a certain radius cutoff, because the Z/r character.                |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
+ SETUP ONE DIMENSIONAL ORBITALS/POTENTIAL
+                        delta k  (1/Bohr) = 0.01
+                        delta r    (Bohr) = 0.01
+                        dr_uniform (Bohr) = 0.001
+                        rmax       (Bohr) = 30
+                                    kmesh = 1005
+      ORBITAL  L  N      nr      dr    RCUT  CHECK_UNIT    NEW_UNIT
+            1  0  0    1001    0.01      10           1           1
+            2  0  1    1001    0.01      10           1           1
+            3  0  2    1001    0.01      10           1           1
+            4  0  3    1001    0.01      10           1           1
+            5  1  0    1001    0.01      10           1           1
+            6  1  1    1001    0.01      10           1           1
+            7  2  0    1001    0.01      10           1           1
+            8  2  1    1001    0.01      10           1           1
+            9  3  0    1001    0.01      10           1           1
+ SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS
+ max number of nonlocal projetors among all species is 10
+
+ SETUP THE DIVISION OF H/S MATRIX
+ divide the H&S matrix using 2D block algorithms.
+                                     nb2d = 2
+               global2local_row dimension = 108
+               global2local_col dimension = 108
+                                     nloc = 5832
+
+ -------------------------------------------
+ SELF-CONSISTENT
+ -------------------------------------------
+
+
+
+
+ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ |                                                                    |
+ | Search adjacent atoms:                                             |
+ | Set the adjacent atoms for each atom and set the periodic boundary |
+ | condition for the atoms on real space FFT grid. For k-dependent    |
+ | algorithm, we also need to set the sparse H and S matrix element   |
+ | for each atom.                                                     |
+ |                                                                    |
+ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
+ SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS
+                  longest orb rcut (Bohr) = 10
+   longest nonlocal projector rcut (Bohr) = 1.58
+              searching radius is (Bohr)) = 23.2
+         searching radius unit is (Bohr)) = 1.89
+
+ SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION
+                          real space grid = [ 36, 36, 36 ]
+                 big cell numbers in grid = [ 12, 12, 12 ]
+             meshcell numbers in big cell = [ 3, 3, 3 ]
+                        extended fft grid = [ 23, 23, 23 ]
+                dimension of extened grid = [ 59, 59, 59 ]
+                            UnitCellTotal = 125
+              Atom number in sub-FFT-grid = 2
+    Local orbitals number in sub-FFT-grid = 108
+                                ParaV.nnr = 1215972
+                                     nnrg = 599238
+
+ Warning_Memory_Consuming allocated:  Gint::hRGintCd 36.6 MB
+
+ Warning_Memory_Consuming allocated:  Gint::DMRGint 18.4 MB
+
+ Warning_Memory_Consuming allocated:  Gint::DMRGint_full 18.3 MB
+
+ Warning_Memory_Consuming allocated:  pvpR_reduced 18.3 MB
+
+ Warning_Memory_Consuming allocated:  HamiltLCAO::hR 18.6 MB
+
+ Warning_Memory_Consuming allocated:  HamiltLCAO::sR 18.3 MB
+                                nnrg_last = 0
+                                 nnrg_now = 599238
+
+ Warning_Memory_Consuming allocated:  LOC::DM_R 18.3 MB
+                                 init_chg = atomic
+
+ Warning_Memory_Consuming allocated:  DensityMatrix::DMR 9.30356 MB
+ DONE : INIT SCF Time : 0.767981 (SEC)
+
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
+total magnetism (Bohr mag/cell)	8.73763e-15	1.09846e-14	5.99499
+       absolute magnetism (Bohr mag/cell) = 6.05921
+
+ Density error is 0.163176573639
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.6036967873     -6824.6684141715
+E_Harris        -501.5845258700     -6824.4075804597
+E_Fermi            1.4896057896        20.2671265124
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   2--------------------------------
+total magnetism (Bohr mag/cell)	3.33926e-14	1.25238e-15	5.99049
+       absolute magnetism (Bohr mag/cell) = 6.05312
+
+ Density error is 0.145456190237
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.6958031597     -6825.9215856588
+E_Harris        -497.3773097449     -6767.1654684422
+E_Fermi            1.4970236224        20.3680513047
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   3--------------------------------
+total magnetism (Bohr mag/cell)	-1.56858e-14	2.8844e-15	5.29152
+       absolute magnetism (Bohr mag/cell) = 5.35569
+
+ Density error is 0.0493706351945
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7376204207     -6826.4905386820
+E_Harris        -501.7374972827     -6826.4888633040
+E_Fermi            1.5639647442        21.2788319929
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   4--------------------------------
+total magnetism (Bohr mag/cell)	-3.37025e-14	-3.15571e-15	5.32486
+       absolute magnetism (Bohr mag/cell) = 5.38846
+
+ Density error is 0.0510896143916
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7103884884     -6826.1200292352
+E_Harris        -506.1951862627     -6887.1388333438
+E_Fermi            1.5654562986        21.2991256314
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   5--------------------------------
+total magnetism (Bohr mag/cell)	9.07264e-14	-2.10046e-15	5.20055
+       absolute magnetism (Bohr mag/cell) = 5.26275
+
+ Density error is 0.0146378477982
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7222712721     -6826.2817028029
+E_Harris        -504.4049015975     -6862.7807608552
+E_Fermi            1.5039768828        20.4626552659
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   6--------------------------------
+total magnetism (Bohr mag/cell)	-8.38979e-15	1.71394e-14	5.14138
+       absolute magnetism (Bohr mag/cell) = 5.20282
+
+ Density error is 0.0131689068004
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7232132257     -6826.2945187383
+E_Harris        -502.0009208113     -6830.0729242808
+E_Fermi            1.5013475627        20.4268815309
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   7--------------------------------
+total magnetism (Bohr mag/cell)	9.47366e-15	-2.41599e-15	4.70746
+       absolute magnetism (Bohr mag/cell) = 4.76638
+
+ Density error is 0.00816655058778
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7264474213     -6826.3385222264
+E_Harris        -501.8462296332     -6827.9682428276
+E_Fermi            1.4933803868        20.3184825415
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   8--------------------------------
+total magnetism (Bohr mag/cell)	2.23154e-14	-9.52789e-14	4.64562
+       absolute magnetism (Bohr mag/cell) = 4.70455
+
+ Density error is 0.00753930150845
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7258554038     -6826.3304674155
+E_Harris        -501.8608472806     -6828.1671261237
+E_Fermi            1.4924655319        20.3060353030
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=   9--------------------------------
+total magnetism (Bohr mag/cell)	1.88969e-14	1.08962e-14	4.25814
+       absolute magnetism (Bohr mag/cell) = 4.31884
+
+ Density error is 0.00328010589759
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7281779585     -6826.3620673939
+E_Harris        -501.7544182015     -6826.7190842155
+E_Fermi            1.4879484217        20.2445768656
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  10--------------------------------
+total magnetism (Bohr mag/cell)	-1.17753e-14	9.37045e-14	4.23726
+       absolute magnetism (Bohr mag/cell) = 4.29797
+
+ Density error is 0.00298974434518
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7279958125     -6826.3595891700
+E_Harris        -501.7462781363     -6826.6083329458
+E_Fermi            1.4877460562        20.2418235417
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  11--------------------------------
+total magnetism (Bohr mag/cell)	2.85638e-14	-1.11387e-14	4.29421
+       absolute magnetism (Bohr mag/cell) = 4.35477
+
+ Density error is 0.0037341263469
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7277777172     -6826.3566218310
+E_Harris        -501.7589949412     -6826.7813539530
+E_Fermi            1.4882348740        20.2484742483
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  12--------------------------------
+total magnetism (Bohr mag/cell)	-1.21118e-14	-4.51666e-14	4.09102
+       absolute magnetism (Bohr mag/cell) = 4.15165
+
+ Density error is 0.000984824014467
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7283747742     -6826.3647452080
+E_Harris        -501.7195746029     -6826.2450127362
+E_Fermi            1.4869366577        20.2308111095
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  13--------------------------------
+total magnetism (Bohr mag/cell)	2.8452e-14	-8.53336e-14	4.04034
+       absolute magnetism (Bohr mag/cell) = 4.10041
+
+ Density error is 0.000148830300296
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7284112924     -6826.3652420640
+E_Harris        -501.7275146342     -6826.3530424031
+E_Fermi            1.4866540733        20.2269663523
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  14--------------------------------
+total magnetism (Bohr mag/cell)	-6.62685e-14	-1.90354e-14	4.03851
+       absolute magnetism (Bohr mag/cell) = 4.09902
+
+ Density error is 0.000508220905709
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7284108203     -6826.3652356410
+E_Harris        -501.7258041753     -6826.3297704159
+E_Fermi            1.4865751495        20.2258925379
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  15--------------------------------
+total magnetism (Bohr mag/cell)	-1.63678e-14	-6.42261e-14	4.04266
+       absolute magnetism (Bohr mag/cell) = 4.10246
+
+ Density error is 0.000326207958441
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7284129183     -6826.3652641850
+E_Harris        -501.7288943881     -6826.3718149180
+E_Fermi            1.4866905576        20.2274627460
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  16--------------------------------
+total magnetism (Bohr mag/cell)	-1.5228e-14	2.63929e-14	4.03627
+       absolute magnetism (Bohr mag/cell) = 4.09623
+
+ Density error is 0.000108228601913
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7284135618     -6826.3652729411
+E_Harris        -501.7321519951     -6826.4161369355
+E_Fermi            1.4866291013        20.2266265903
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  17--------------------------------
+total magnetism (Bohr mag/cell)	-1.17747e-15	-3.19077e-14	4.03248
+       absolute magnetism (Bohr mag/cell) = 4.09241
+
+ Density error is 8.51246061628e-05
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7284137828     -6826.3652759480
+E_Harris        -501.7300008724     -6826.3868694098
+E_Fermi            1.4866087852        20.2263501749
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  18--------------------------------
+total magnetism (Bohr mag/cell)	1.12988e-14	6.1244e-15	4.031
+       absolute magnetism (Bohr mag/cell) = 4.09096
+
+ Density error is 4.53729591961e-05
+------------------------------------------------------
+  Energy         Rydberg                 eV         
+------------------------------------------------------
+E_KohnSham      -501.7284138113     -6826.3652763358
+E_Harris        -501.7295487119     -6826.3807174506
+E_Fermi            1.4865941207        20.2261506548
+------------------------------------------------------
+
+ LCAO ALGORITHM --------------- ION=   1  ELEC=  19--------------------------------
+total magnetism (Bohr mag/cell)	-6.04573e-14	4.97757e-14	4.03011
+       absolute magnetism (Bohr mag/cell) = 4.09012
+
+ Density error is 7.35959505502e-06
+----------------------------------------------------------
+    Energy           Rydberg                 eV         
+----------------------------------------------------------
+E_KohnSham          -501.7284138242     -6826.3652765106
+E_KS(sigma->0)      -501.6811220668     -6825.7218391414
+E_Harris            -501.7286494129     -6826.3684818604
+E_band               -28.8068111072      -391.9367722670
+E_one_elec          -207.2987908753     -2820.4447444151
+E_Hartree            125.1361437176      1702.5645803068
+E_xc                 -71.4042308701      -971.5044011405
+E_Ewald             -348.0669522816     -4735.6938365233
+E_entropy(-TS)        -0.0945835148        -1.2868747385
+E_descf                0.0000000000         0.0000000000
+E_exx                  0.0000000000         0.0000000000
+E_Fermi                1.4865827896        20.2259964874
+----------------------------------------------------------
+
+ charge density convergence is achieved
+ final etot is -6826.3652765 eV
+ EFERMI = 20.225996487 eV
+
+ STATE ENERGY(eV) AND OCCUPATIONS    NSPIN == 4
+ 1/1 kpoint (Cartesian) = 0.0000 0.0000 0.0000 (1276 pws)
+       1       -67.8972        1.00000
+       2       -67.7520        1.00000
+       3       -65.7245        1.00000
+       4       -65.5703        1.00000
+       5       -34.7991        1.00000
+       6       -34.4990        1.00000
+       7       -34.3762        1.00000
+       8       -34.0690        1.00000
+       9       -33.6218        1.00000
+      10       -33.2968        1.00000
+      11       -32.1205        1.00000
+      12       -31.7831        1.00000
+      13       -31.6999        1.00000
+      14       -31.3707        1.00000
+      15       -31.3546        1.00000
+      16       -31.0194        1.00000
+      17        10.1417        1.00000
+      18        10.3362        1.00000
+      19        14.5258        1.00000
+      20        14.5261        1.00000
+      21        16.0244        1.00000
+      22        16.0251        1.00000
+      23        17.2756       0.999994
+      24        17.3026       0.999993
+      25        17.3325       0.999991
+      26        18.7929       0.983330
+      27        18.8051       0.982568
+      28        19.2147       0.933410
+      29        19.2285       0.930716
+      30        19.2606       0.924145
+      31        19.8687       0.702119
+      32        19.9030       0.684233
+      33        19.9373       0.665932
+      34        21.1142      0.0936122
+      35        21.1157      0.0932335
+      36        22.1064     0.00261717
+      37        22.1423     0.00221715
+      38        22.1763     0.00189020
+      39        28.5499        0.00000
+      40        28.6156        0.00000
+      41        28.7769        0.00000
+      42        28.9382        0.00000
+      43        29.0060        0.00000
+      44        29.0584        0.00000
+      45        34.9955        0.00000
+      46        34.9958        0.00000
+      47        36.1724        0.00000
+      48        36.1729        0.00000
+      49        39.9084        0.00000
+      50        40.8249        0.00000
+      51        47.4006        0.00000
+      52        47.4006        0.00000
+
+
+
+ --------------------------------------------
+ !FINAL_ETOT_IS -6826.365276510646 eV
+ --------------------------------------------
+
+
+TIME STATISTICS
+------------------------------------------------------------------------------------
+     CLASS_NAME                 NAME            TIME(Sec)  CALLS   AVG(Sec) PER(%)
+------------------------------------------------------------------------------------
+                     total                      548.85           9  60.98   100.00
+Driver               reading                      0.01           1   0.01     0.00
+Input                Init                         0.00           1   0.00     0.00
+Input_Conv           Convert                      0.00           1   0.00     0.00
+Driver               driver_line                548.84           1 548.84   100.00
+UnitCell             check_tau                    0.00           1   0.00     0.00
+PW_Basis             setuptransform               0.21           1   0.21     0.04
+PW_Basis             distributeg                  0.00           1   0.00     0.00
+mymath               heapsort                     0.00           3   0.00     0.00
+PW_Basis_K           setuptransform               0.05           1   0.05     0.01
+PW_Basis_K           distributeg                  0.00           1   0.00     0.00
+PW_Basis             setup_struc_factor           0.00           1   0.00     0.00
+ORB_control          read_orb_first               0.10           1   0.10     0.02
+LCAO_Orbitals        Read_Orbitals                0.10           1   0.10     0.02
+NOrbital_Lm          extra_uniform                0.01           9   0.00     0.00
+Mathzone_Add1        SplineD2                     0.00           9   0.00     0.00
+Mathzone_Add1        Cubic_Spline_Interpolation   0.01           9   0.00     0.00
+Sphbes               Spherical_Bessel             0.04       10291   0.00     0.01
+ppcell_vl            init_vloc                    0.01           1   0.01     0.00
+Ions                 opt_ions                   548.26           1 548.26    99.89
+ESolver_KS_LCAO      Run                        548.26           1 548.26    99.89
+ESolver_KS_LCAO      beforescf                    0.19           1   0.19     0.03
+ESolver_KS_LCAO      beforesolver                 0.13           1   0.13     0.02
+ESolver_KS_LCAO      set_matrix_grid              0.03           1   0.03     0.01
+atom_arrange         search                       0.00           1   0.00     0.00
+Grid_Technique       init                         0.03           1   0.03     0.00
+Grid_BigCell         grid_expansion_index         0.01           2   0.00     0.00
+Record_adj           for_2d                       0.01           1   0.01     0.00
+Grid_Driver          Find_atom                    0.00          58   0.00     0.00
+LCAO_Hamilt          grid_prepare                 0.00           1   0.00     0.00
+Veff                 initialize_HR                0.01           1   0.01     0.00
+OverlapNew           initialize_SR                0.01           1   0.01     0.00
+EkineticNew          initialize_HR                0.00           1   0.00     0.00
+NonlocalNew          initialize_HR                0.00           1   0.00     0.00
+Charge               set_rho_core                 0.01           1   0.01     0.00
+PW_Basis             recip2real                   0.10         246   0.00     0.02
+PW_Basis             gathers_scatterp             0.03         246   0.00     0.00
+Charge               atomic_rho                   0.01           1   0.01     0.00
+Potential            init_pot                     0.04           1   0.04     0.01
+Potential            update_from_charge           0.70          20   0.04     0.13
+Potential            cal_fixed_v                  0.00           1   0.00     0.00
+PotLocal             cal_fixed_v                  0.00           1   0.00     0.00
+Potential            cal_v_eff                    0.70          20   0.04     0.13
+H_Hartree_pw         v_hartree                    0.02          20   0.00     0.00
+PW_Basis             real2recip                   0.09         220   0.00     0.02
+PW_Basis             gatherp_scatters             0.02         220   0.00     0.00
+PotXC                cal_v_eff                    0.68          20   0.03     0.12
+XC_Functional        v_xc                         0.67          20   0.03     0.12
+H_Ewald_pw           compute_ewald                0.00           1   0.00     0.00
+HSolverLCAO          solve                      547.23          19  28.80    99.71
+HamiltLCAO           updateHk                   309.90          19  16.31    56.46
+OperatorLCAO         init                       308.77          57   5.42    56.26
+Veff                 contributeHR               301.02          19  15.84    54.85
+Gint_interface       cal_gint                   534.33          95   5.62    97.36
+Gint_interface       cal_gint_vlocal            298.36          76   3.93    54.36
+Gint_Tools           cal_psir_ylm                29.02       82080   0.00     5.29
+Gint_k               transfer_pvpR                2.66          19   0.14     0.49
+OverlapNew           calculate_SR                 1.07           1   1.07     0.19
+OverlapNew           contributeHk                 0.07          19   0.00     0.01
+EkineticNew          contributeHR                 1.06          19   0.06     0.19
+EkineticNew          calculate_HR                 1.04           1   1.04     0.19
+NonlocalNew          contributeHR                 6.54          19   0.34     1.19
+NonlocalNew          calculate_HR                 6.37           1   6.37     1.16
+OperatorLCAO         contributeHk                 0.07          19   0.00     0.01
+HSolverLCAO          hamiltSolvePsiK              0.13          19   0.01     0.02
+DiagoElpa            elpa_solve                   0.12          19   0.01     0.02
+ElecStateLCAO        psiToRho                   237.20          19  12.48    43.22
+elecstate            cal_dm                       0.00          19   0.00     0.00
+psiMulPsiMpi         pdgemm                       0.00          19   0.00     0.00
+DensityMatrix        cal_DMR                      0.18          19   0.01     0.03
+ Local_Orbital_wfc   wfc_2d_to_grid               0.00          20   0.00     0.00
+Gint                 transfer_DMR                 1.03          19   0.05     0.19
+Gint_interface       cal_gint_rho               235.98          19  12.42    42.99
+Charge_Mixing        get_drho                     0.00          19   0.00     0.00
+Charge               mix_rho                      0.06          18   0.00     0.01
+Charge               Pulay_mixing                 0.02          18   0.00     0.00
+HamiltLCAO           updateSk                     0.00           1   0.00     0.00
+ModuleIO             write_istate_info            0.00           1   0.00     0.00
+------------------------------------------------------------------------------------
+
+ NAME---------------|MEMORY(MB)--------
+               total          340.1
+      Gint::hRGintCd          73.20
+      HamiltLCAO::hR          37.16
+       Gint::DMRGint          36.78
+      HamiltLCAO::sR          36.63
+  Gint::DMRGint_full          36.63
+        pvpR_reduced          36.57
+           LOC::DM_R          36.57
+  DensityMatrix::DMR          18.61
+TwoCenterTable: Nonlocal          4.371
+TwoCenterTable: Kinetic          3.586
+TwoCenterTable: Overlap          3.586
+        meshball_pos          2.623
+    GT::index2normal          1.567
+     GT::index2ucell          1.567
+           FFT::grid          1.424
+            Chg::rho          1.424
+       Chg::rho_save          1.424
+           Pot::veff          1.424
+ -------------   < 1.0 MB has been ignored ----------------
+ ----------------------------------------------------------
+
+ Start  Time  : Sat Oct 28 05:18:03 2023
+ Finish Time  : Sat Oct 28 05:27:12 2023
+ Total  Time  : 0 h 9 mins 9 secs 

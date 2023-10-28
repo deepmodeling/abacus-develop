@@ -12,7 +12,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_termination()
 template <>
 bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error)
 {
-    std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << std::setw(5) << i_step + 1
+    std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << std::left << std::setw(5) << i_step + 1
               << "       RMS =" << rms_error << std::endl;
     if (rms_error < this->sc_thr_ || i_step == this->nsc_ - 1)
     {
