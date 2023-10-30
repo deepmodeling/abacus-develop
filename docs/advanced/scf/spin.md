@@ -47,9 +47,9 @@ The SOC effect is considered but the magnetic moment is limited to the Z directi
  - noncolin=1 lspinorb=1 : 
 The SOC effect and non-collinear magnetic moment are both calculated.
 
-### DeltaSpin
+### Constraint Spin functionality for noncollinear spin polarized calculations
 
-The DeltaSpin function as proposed by Zefeng Cai and Ben Xu, et al. [arXiv:2208.04551v6](https://arxiv.org/abs/2208.04551) has been implemented in ABACUS in the LCAO basis. In order to use this function, the following parameters are needed to be set in the input file:
+The `DeltaSpin` function as proposed by Zefeng Cai and Ben Xu, et al. [arXiv:2208.04551v6](https://arxiv.org/abs/2208.04551) has been implemented in ABACUS in the LCAO basis. In order to use this function, the following parameters are needed to be set in the input file:
 ```
 #deltaspin
 sc_mag_switch                   1
@@ -92,7 +92,7 @@ An example of the sc_file json file is shown below:
 ]
 ```
 
-The sc_file json file is a list of elemental data in total. For each element, the user should specify its name, the `itype` parameter should be in accord with `STRU` file. `ScDecayGrad` is a parameter for each element in unit of  (uB^2/eV), this parameter needs to be determined for different element, for example, 0.9 uB^2/eV is an appropriate value for BCC-Fe according to Zefeng Cai's tests. `ScAtomData` specifies spin constraining parameters for each atom, the `index` starts from zero and corresponds atomic order in the `STRU` file. `lambda` is a 3d vector for each atom, and it is recommended to set to [0.0, 0.0, 0.0] for all atoms. Users have two optional choices to set the target magnetic moments for each atom, i.e., by a 3d vector or by angles. If the `target_mag` is set, the `target_mag_val` and `target_mag_angle1` and `target_mag_angle2` will be ignored. The `target_mag` is a 3d vector in unit of Bohr Mag (\muB), and the `target_mag_val` is a scalar value in unit of Bohr Mag (\muB), `target_mag_angle1` and `target_mag_angle2` are two angles in unit of degree. The `constrain` is a 3d vector, if the corresponding element is set to 1, the corresponding component of the magnetic moment will be constrained, otherwise, it will be free. Note that the initial atomic magnetic moments are still set in the `STRU` file. Simple examples are provided in the `abacus-develop/examples/noncollinear` directory. One should set `noncolliear` to 1 to run the DeltaSpin function, `lspinorb=1` is not mandatory, but it is recommended to set to 1 to get more accurate results.
+The sc_file json file is a list of elemental data in total. For each element, the user should specify its name, the `itype` parameter should be in accord with `STRU` file and start from 0. `ScDecayGrad` is a parameter for each element in unit of  (uB^2/eV), this parameter needs to be determined for different element, for example, 0.9 uB^2/eV is an appropriate value for BCC-Fe according to Zefeng Cai's tests. `ScAtomData` specifies spin constraining parameters for each atom, the `index` starts from 0 and corresponds atomic order in the `STRU` file. `lambda` is a 3d vector for each atom, and it is recommended to set to [0.0, 0.0, 0.0] for all atoms. Users have two optional choices to set the target magnetic moments for each atom, i.e., by a 3d vector or by angles. If the `target_mag` is set, the `target_mag_val` and `target_mag_angle1` and `target_mag_angle2` will be ignored. The `target_mag` is a 3d vector in unit of Bohr Mag (\muB), and the `target_mag_val` is a scalar value in unit of Bohr Mag (\muB), `target_mag_angle1` and `target_mag_angle2` are two angles in unit of degree. The `constrain` is a 3d vector, if the corresponding element is set to 1, the corresponding component of the magnetic moment will be constrained, otherwise, it will be free. Note that the initial atomic magnetic moments are still set in the `STRU` file. Simple examples are provided in the `abacus-develop/examples/noncollinear` directory. One should set `noncolliear` to 1 to run the DeltaSpin function, `lspinorb=1` is not mandatory, but it is recommended to set to 1 to get more accurate results.
 
 
 ## For the continuation job
