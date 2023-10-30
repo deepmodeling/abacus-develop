@@ -11,7 +11,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "vector3.h"
 
 namespace GlobalV
 {

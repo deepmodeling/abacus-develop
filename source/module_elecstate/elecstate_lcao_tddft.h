@@ -29,7 +29,6 @@ class ElecStateLCAO_TDDFT : public ElecStateLCAO<std::complex<double>>
     }
     void psiToRho_td(const psi::Psi<std::complex<double>>& psi);
     void calculate_weights_td();
-
 };
 
 } // namespace elecstate

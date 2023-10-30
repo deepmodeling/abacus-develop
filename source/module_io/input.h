@@ -565,8 +565,8 @@ class Input
      * 0: none spin-constrained DFT;
      * 1: constrain atomic spin;
      */
-    bool sc_mag_switch;
-    bool decay_grad_switch;
+    bool sc_mag_switch; // the switch to open the DeltaSpin function, 0: no spin-constrained DFT; 1: constrain atomic magnetization
+    bool decay_grad_switch;// the switch to use the local approximation of gradient decay, 0: no local approximation; 1: apply the method
     double sc_thr; // threshold for spin-constrained DFT in uB
     int nsc; // maximum number of inner lambda loop
     int nsc_min; // minimum number of inner lambda loop
