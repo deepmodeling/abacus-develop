@@ -947,6 +947,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     if (this->device == psi::GpuDevice)
     {
         delmem_var_op()(this->ctx, d_wg);
+        delmem_var_op()(this->ctx, d_ekb);
         delmem_var_op()(this->ctx, gcar);
         delmem_var_op()(this->ctx, force);
         delmem_int_op()(this->ctx, atom_nh);

@@ -85,8 +85,7 @@ public:
     double *d_deeq = nullptr;
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
     std::complex<float> *c_deeq_nc = nullptr; // GPU array of deeq_nc
-    std::complex<double> *z_deeq_nc = nullptr; // GPU array of deeq_nc
-	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
+    std::complex<double>* z_deeq_nc = nullptr; // GPU array of deeq_nc
 
     // liuyu add 2023-10-03
     // uspp

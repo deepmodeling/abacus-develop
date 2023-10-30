@@ -531,6 +531,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_kin.o\
     stress_func_loc.o\
     stress_func_nl.o\
+    stress_func_us.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\

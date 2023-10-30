@@ -196,7 +196,6 @@ void pseudopot_cell_vnl::init(const int ntype,
         }
         this->dvan.create(ntype, this->nhm, this->nhm);
         this->dvan_so.create(GlobalV::NSPIN, ntype, this->nhm, this->nhm);
-        this->becsum.create(GlobalV::NSPIN, GlobalC::ucell.nat, this->nhm * (this->nhm + 1) / 2);
 
         this->ijtoh.create(ntype, this->nhm, this->nhm);
         this->qq_at.create(GlobalC::ucell.nat, this->nhm, this->nhm);
@@ -999,6 +998,7 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
         double work = 0.0;
         for (int ig = 0; ig < ng; ig++)
         {
+            // calculate quantites depending on the module of G only when needed
             if (std::abs(qnorm[ig] - qm1) > 1e-6)
             {
                 work = ModuleBase::PolyInt::Polynomial_Interpolation(this->qrad,
