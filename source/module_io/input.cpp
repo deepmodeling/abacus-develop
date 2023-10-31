@@ -603,6 +603,17 @@ void Input::Default(void)
     //    precision control denghui added on 2023-01-01
     //==========================================================
     precision = "double";
+    //==========================================================
+    // variables for deltaspin
+    //==========================================================
+    sc_mag_switch = 0;
+    decay_grad_switch = false;
+    sc_thr = 1e-6;
+    nsc = 100;
+    nsc_min = 2;
+    alpha_trial = 0.01;
+    sccut = 3.0;
+    sc_file = "none";
     return;
 }
 
@@ -2175,6 +2186,32 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, precision);
         }
         //----------------------------------------------------------------------------------
+        //    Deltaspin
+        //----------------------------------------------------------------------------------
+        else if (strcmp("sc_mag_switch", word) == 0){
+            read_bool(ifs, sc_mag_switch);
+        }
+        else if (strcmp("decay_grad_switch", word) == 0){
+            read_bool(ifs, decay_grad_switch);
+        }
+        else if (strcmp("sc_thr", word) == 0){
+            read_value(ifs, sc_thr);
+        }
+        else if (strcmp("nsc", word) == 0){
+            read_value(ifs, nsc);
+        }
+        else if (strcmp("nsc_min", word) == 0){
+            read_value(ifs, nsc_min);
+        }
+        else if (strcmp("alpha_trial", word) == 0){
+            read_value(ifs, alpha_trial);
+        }
+        else if (strcmp("sccut", word) == 0){
+            read_value(ifs, sccut);
+        }
+        else if (strcmp("sc_file", word) == 0){
+            read_value(ifs, sc_file);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -3337,6 +3374,17 @@ void Input::Bcast()
     //    device control denghui added on 2022-11-05
     //----------------------------------------------------------------------------------
     Parallel_Common::bcast_string(device);
+    /**
+     *  Deltaspin variables
+    */
+    Parallel_Common::bcast_bool(sc_mag_switch);
+    Parallel_Common::bcast_bool(decay_grad_switch);
+    Parallel_Common::bcast_double(sc_thr);
+    Parallel_Common::bcast_int(nsc);
+    Parallel_Common::bcast_int(nsc_min);
+    Parallel_Common::bcast_string(sc_file);
+    Parallel_Common::bcast_double(alpha_trial);
+    Parallel_Common::bcast_double(sccut);
 
     return;
 }
@@ -3572,6 +3620,11 @@ void Input::Check(void)
         if (out_dos == 3)
         {
             ModuleBase::WARNING_QUIT("Input", "Fermi Surface Plotting not implemented for plane wave now.");
+        }
+
+        if (sc_mag_switch)
+        {
+            ModuleBase::WARNING_QUIT("Input", "Non-colliner Spin-constrained DFT not implemented for plane wave now.");
         }
 
     }
@@ -3810,6 +3863,51 @@ void Input::Check(void)
 			ModuleBase::WARNING_QUIT("INPUT", "bessel_descriptor_rcut must >=0");
 		}
 	}
+
+    // Deltaspin variables checking
+    if (sc_mag_switch)
+    {
+        if (sc_file == "none")
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_file (json format) must be set when sc_mag_switch > 0");
+        }
+        else
+        {
+            const std::string ss = "test -f " + sc_file;
+            if (system(ss.c_str()))
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "sc_file does not exist");
+            }
+        }
+        if (nspin != 4)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 4 when sc_mag_switch > 0");
+        }
+        if (calculation != "scf")
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "calculation must be scf when sc_mag_switch > 0");
+        }
+        if (sc_thr <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_thr must > 0");
+        }
+        if (nsc <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nsc must > 0");
+        }
+        if (nsc_min <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nsc_min must > 0");
+        }
+        if (alpha_trial <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "alpha_trial must > 0");
+        }
+        if (sccut <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
+        }
+    }
 
     return;
 }

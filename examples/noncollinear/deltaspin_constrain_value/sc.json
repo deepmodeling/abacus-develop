@@ -1,0 +1,23 @@
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+	"ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0, 0, 0],
+                "target_mag": [0.0, 0.0, 2.1],
+		"constrain": [1,1,1]
+            },
+            {
+                "index": 1,
+                "lambda": [0, 0, 0],
+                "target_mag_val": 2.1,
+		"target_mag_angle1": 0.0,
+		"target_mag_angle2": 0.0,
+		"constrain": [1,1,1]
+            }
+        ]
+    }
+]

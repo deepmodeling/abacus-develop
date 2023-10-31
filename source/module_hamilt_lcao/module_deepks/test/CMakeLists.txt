@@ -13,7 +13,7 @@ target_link_libraries(
     base cell symmetry md surchem xc_
     neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
-    pthread vdw dftu hcontainer
+    pthread vdw dftu deltaspin hcontainer
     deepks device numerical_atomic_orbitals container psi_initializer
     ${ABACUS_LINK_LIBRARIES}
 )

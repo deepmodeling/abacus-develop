@@ -19,6 +19,7 @@
 #include "operator_lcao/ekinetic_new.h"
 #include "operator_lcao/nonlocal_new.h"
 #include "operator_lcao/veff_lcao.h"
+#include "operator_lcao/sc_lambda_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
@@ -316,7 +317,6 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             this->getOperator()->add(deepks);
         }
     #endif
-        //end node should be OperatorDFTU
         if (GlobalV::dft_plus_u)
         {
             Operator<TK>* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
@@ -327,6 +327,16 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 this->kv->isk
             );
             this->getOperator()->add(dftu);
+        }
+        if (GlobalV::sc_mag_switch)
+        {
+            Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(
+                LM_in,
+                kv->kvec_d,
+                this->hR,// no explicit call yet
+                &(this->getHk(LM_in))
+            );
+            this->getOperator()->add(sc_lambda);
         }
     }
 

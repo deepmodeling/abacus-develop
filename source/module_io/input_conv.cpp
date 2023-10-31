@@ -724,6 +724,18 @@ void Input_Conv::Convert(void)
     GlobalV::of_read_kernel = INPUT.of_read_kernel;
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
 
+    //-----------------------------------------------
+    // Deltaspin related parameters
+    //-----------------------------------------------
+    GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
+    GlobalV::decay_grad_switch = INPUT.decay_grad_switch;
+    GlobalV::sc_thr = INPUT.sc_thr;
+    GlobalV::nsc = INPUT.nsc;
+    GlobalV::nsc_min = INPUT.nsc_min;
+    GlobalV::alpha_trial = INPUT.alpha_trial;
+    GlobalV::sccut = INPUT.sccut;
+    GlobalV::sc_file = INPUT.sc_file;
+
     // mixing parameters
     GlobalV::MIXING_MODE = INPUT.mixing_mode;
     GlobalV::MIXING_BETA = INPUT.mixing_beta;

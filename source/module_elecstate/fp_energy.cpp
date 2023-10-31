@@ -22,7 +22,7 @@ double fenergy::calculate_etot()
     else
     {
         etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield + gatefield
-               + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+               + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
 
 #ifdef USE_PAW
@@ -47,7 +47,7 @@ double fenergy::calculate_harris()
     else
     {
         etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-                  + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+                  + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
 #ifdef USE_PAW
     if(GlobalV::use_paw)
@@ -64,7 +64,7 @@ double fenergy::calculate_harris()
 void fenergy::clear_all()
 {
     etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx
-        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = 0.0;
+        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon = 0.0;
 }
 
 /// @brief print all energies
@@ -87,6 +87,7 @@ void fenergy::print_all() const
     std::cout << " esol_cav=" << esol_cav << std::endl;
     std::cout << " edftu=" << edftu << std::endl;
     std::cout << " edeepks_scf=" << edeepks_scf << std::endl;
+    std::cout << " escon=" << escon << std::endl;
     std::cout << std::endl;
     std::cout << " total= " << etot << std::endl;
 }

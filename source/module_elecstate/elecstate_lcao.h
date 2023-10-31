@@ -57,6 +57,8 @@ class ElecStateLCAO : public ElecState
     static int out_wfc_flag;
     static bool need_psi_grid;
 
+    double get_spin_constrain_energy() override;
+
   protected:
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.

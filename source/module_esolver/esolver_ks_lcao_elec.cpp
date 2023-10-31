@@ -22,6 +22,8 @@
 #include "module_io/dm_io.h"
 #include "module_elecstate/elecstate_lcao.h"
 
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+
 namespace ModuleESolver
 {
 
@@ -250,6 +252,28 @@ namespace ModuleESolver
             }
         }
 #endif
+        if (GlobalV::sc_mag_switch)
+        {
+            SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+            sc.init_sc(GlobalV::sc_thr,
+                GlobalV::nsc,
+                GlobalV::nsc_min,
+                GlobalV::alpha_trial,
+                GlobalV::sccut,
+                GlobalV::decay_grad_switch,
+                GlobalC::ucell,
+                GlobalV::sc_file,
+                GlobalV::NPOL,
+                &(this->orb_con.ParaV),
+                GlobalV::NSPIN,
+                this->kv,
+                GlobalV::KS_SOLVER,
+                &(this->LM),
+                this->phsol,
+                this->p_hamilt,
+                this->psi,
+                this->pelec);
+        }
         ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 
     }

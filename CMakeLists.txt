@@ -612,6 +612,7 @@ if(ENABLE_LCAO)
       gint
       dftu
       hcontainer
+      deltaspin
       numerical_atomic_orbitals
   )
   if (USE_ELPA)
