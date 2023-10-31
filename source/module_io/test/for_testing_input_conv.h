@@ -383,10 +383,10 @@ void UnitCell::setup(const std::string& latname_in,
     }
     return;
 }
-void Structure_Factor::set(const int&)
-{
-    return;
-}
+// void Structure_Factor::set(const int&)
+// {
+//     return;
+// }
 
 namespace MD_func
 {

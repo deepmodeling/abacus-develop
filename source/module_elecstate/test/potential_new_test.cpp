@@ -5,34 +5,6 @@
 #define private public
 #include "module_elecstate/potentials/potential_new.h"
 // mock functions
-void ModulePW::PW_Basis::initgrids(const double lat0_in,                // unit length (unit in bohr)
-                                   const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0)
-                                   const double gridecut                // unit in Ry, ecut to set up grids
-)
-{
-}
-void ModulePW::PW_Basis::initgrids(const double lat0_in,
-                                   const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors
-                                   const int nx_in,
-                                   int ny_in,
-                                   int nz_in)
-{
-}
-void ModulePW::PW_Basis::distribute_r()
-{
-}
-ModulePW::PW_Basis::PW_Basis()
-{
-}
-ModulePW::PW_Basis::~PW_Basis()
-{
-}
-ModulePW::FFT::FFT()
-{
-}
-ModulePW::FFT::~FFT()
-{
-}
 Structure_Factor::Structure_Factor()
 {
 }

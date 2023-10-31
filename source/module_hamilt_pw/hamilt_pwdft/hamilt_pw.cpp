@@ -204,6 +204,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
 {
     ModuleBase::TITLE("HamiltPW", "sPsi");
 
+    const T one{1, 0};
+    const T zero{0, 0};
+
     syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
     if (GlobalV::use_uspp)
     {
@@ -222,12 +225,12 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           transa,
                           npw,
                           this->ppcell->nkb,
-                          &this->one,
+                          &one,
                           this->vkb,
                           this->ppcell->vkb.nc,
                           psi_in,
                           inc,
-                          &this->zero,
+                          &zero,
                           becp,
                           inc);
             }
@@ -239,12 +242,12 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           nbands,
                           npw,
-                          &this->one,
+                          &one,
                           this->vkb,
                           this->ppcell->vkb.nc,
                           psi_in,
                           nrow,
-                          &this->zero,
+                          &zero,
                           becp,
                           this->ppcell->nkb);
             }
@@ -281,7 +284,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                         for (int j = 0; j < nh; j++)
                         {
                             int index = i * this->ppcell->nhm + j;
-                            qqc[i * nh + j] = qq_now[index] * this->one;
+                            qqc[i * nh + j] = qq_now[index] * one;
                         }
                     }
                     for (int ia = 0; ia < atoms->na; ia++)
@@ -293,12 +296,12 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                                   nh,
                                   nbands,
                                   nh,
-                                  &this->one,
+                                  &one,
                                   qqc,
                                   nh,
                                   &becp[this->ppcell->indv_ijkb0[iat]],
                                   this->ppcell->nkb,
-                                  &this->zero,
+                                  &zero,
                                   &ps[this->ppcell->indv_ijkb0[iat]],
                                   this->ppcell->nkb);
                     }
@@ -313,12 +316,12 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           transa,
                           npw,
                           this->ppcell->nkb,
-                          &this->one,
+                          &one,
                           this->vkb,
                           this->ppcell->vkb.nc,
                           ps,
                           inc,
-                          &this->one,
+                          &one,
                           spsi,
                           inc);
             }
@@ -330,12 +333,12 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           npw,
                           nbands,
                           this->ppcell->nkb,
-                          &this->one,
+                          &one,
                           this->vkb,
                           this->ppcell->vkb.nc,
                           ps,
                           this->ppcell->nkb,
-                          &this->one,
+                          &one,
                           spsi,
                           nrow);
             }

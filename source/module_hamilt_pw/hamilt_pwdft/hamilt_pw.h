@@ -41,8 +41,6 @@ class HamiltPW : public Hamilt<T, Device>
     mutable T* vkb = nullptr;
     Real* qq_nt = nullptr;
     T* qq_so = nullptr;
-    const T one{1, 0};
-    const T zero{0, 0};
 
   protected:
     Device* ctx = {};
