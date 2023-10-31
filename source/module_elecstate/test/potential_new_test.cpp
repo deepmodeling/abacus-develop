@@ -96,6 +96,7 @@ class PotentialNewTest : public ::testing::Test
 {
   protected:
     ModulePW::PW_Basis* rhopw = nullptr;
+    ModulePW::PW_Basis* rhodpw = nullptr;
     UnitCell* ucell = nullptr;
     ModuleBase::matrix* vloc = nullptr;
     Structure_Factor* structure_factors = nullptr;
@@ -105,6 +106,7 @@ class PotentialNewTest : public ::testing::Test
     virtual void SetUp()
     {
         rhopw = new ModulePW::PW_Basis;
+        rhodpw = new ModulePW::PW_Basis;
         ucell = new UnitCell;
         vloc = new ModuleBase::matrix;
         structure_factors = new Structure_Factor();
@@ -116,6 +118,8 @@ class PotentialNewTest : public ::testing::Test
     {
         if (rhopw != nullptr)
             delete rhopw;
+        if (rhodpw != nullptr)
+            delete rhodpw;
         if (ucell != nullptr)
             delete ucell;
         if (vloc != nullptr)
@@ -494,4 +498,149 @@ TEST_F(PotentialNewTest, GetFixedV)
         EXPECT_DOUBLE_EQ(v_eff_fixed_tmp_const[ic], pot->v_effective_fixed[ic]);
     }
 }
+
+TEST_F(PotentialNewTest, GetVeffSmooth)
+{
+    // construct potential
+    rhopw->nrxx = 100;
+    elecstate::tmp_xc_func_type = 3;
+    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
+    //
+    ModuleBase::matrix veff_smooth_tmp = pot->get_veff_smooth();
+    const ModuleBase::matrix veff_smooth_const_tmp = pot->get_veff_smooth();
+    EXPECT_EQ(veff_smooth_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(veff_smooth_tmp.nc, 100);
+    EXPECT_EQ(veff_smooth_const_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(veff_smooth_const_tmp.nc, 100);
+    for (int ir = 0; ir < veff_smooth_tmp.nr; ir++)
+    {
+        for (int ic = 0; ic < veff_smooth_tmp.nc; ic++)
+        {
+            EXPECT_DOUBLE_EQ(veff_smooth_tmp(ir, ic), pot->veff_smooth(ir, ic));
+            EXPECT_DOUBLE_EQ(veff_smooth_const_tmp(ir, ic), pot->veff_smooth(ir, ic));
+        }
+    }
+}
+
+TEST_F(PotentialNewTest, GetVofkSmooth)
+{
+    // construct potential
+    rhopw->nrxx = 100;
+    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
+    //
+    ModuleBase::matrix vofk_smooth_tmp = pot->get_veff_smooth();
+    const ModuleBase::matrix vofk_smooth_const_tmp = pot->get_veff_smooth();
+    EXPECT_EQ(vofk_smooth_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_smooth_tmp.nc, 100);
+    EXPECT_EQ(vofk_smooth_const_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_smooth_const_tmp.nc, 100);
+    for (int ir = 0; ir < vofk_smooth_tmp.nr; ir++)
+    {
+        for (int ic = 0; ic < vofk_smooth_tmp.nc; ic++)
+        {
+            EXPECT_DOUBLE_EQ(vofk_smooth_tmp(ir, ic), pot->vofk_smooth(ir, ic));
+            EXPECT_DOUBLE_EQ(vofk_smooth_const_tmp(ir, ic), pot->vofk_smooth(ir, ic));
+        }
+    }
+}
+
+TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
+{
+    GlobalV::double_grid = true;
+    elecstate::tmp_xc_func_type = 3;
+    // Init pw_basis
+    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+    rhopw->initparameters(false, 4);
+    rhopw->setuptransform();
+    rhopw->collect_local_pw();
+
+    rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
+    rhodpw->initparameters(false, 6);
+    static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
+    rhodpw->collect_local_pw();
+
+    pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
+
+    for (int ir = 0; ir < pot->v_effective.nr; ir++)
+    {
+        for (int ic = 0; ic < pot->v_effective.nc; ic++)
+        {
+            pot->v_effective(ir,ic) = ir+ic;
+            pot->vofk_effective(ir,ic) = ir+2*ic;
+        }
+    }
+
+    pot->interpolate_vrs();
+
+    std::vector<double> expect_veff = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
+    std::vector<double> expect_vofk =  {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
+
+    int index=0;
+    for (int ir = 0; ir < pot->veff_smooth.nr; ir++)
+    {
+        for (int ic = 0; ic < pot->veff_smooth.nc; ic++)
+        {
+            EXPECT_DOUBLE_EQ(pot->veff_smooth(ir,ic), expect_veff[index]);
+            EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir,ic), expect_vofk[index]);
+            index++;
+        }
+    }
+
+}
+
+TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
+{
+    GlobalV::double_grid = true;
+    // Init pw_basis
+    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+    rhopw->initparameters(false, 4);
+    rhopw->setuptransform();
+    rhopw->collect_local_pw();
+    rhodpw->gamma_only = false;
+
+    rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
+    rhodpw->initparameters(false, 6);
+    static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
+    rhodpw->collect_local_pw();
+    rhodpw->gamma_only = true;
+
+    pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
+
+    EXPECT_EXIT(pot->interpolate_vrs(), ::testing::ExitedWithCode(0), "");
+}
+
+TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
+{
+    GlobalV::double_grid = false;
+    elecstate::tmp_xc_func_type = 3;
+    // Init pw_basis
+    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+    rhopw->initparameters(false, 4);
+    rhopw->setuptransform();
+    rhopw->collect_local_pw();
+
+    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
+
+    for (int ir = 0; ir < pot->v_effective.nr; ir++)
+    {
+        for (int ic = 0; ic < pot->v_effective.nc; ic++)
+        {
+            pot->v_effective(ir,ic) = ir+ic;
+            pot->vofk_effective(ir,ic) = ir+2*ic;
+        }
+    }
+
+    pot->interpolate_vrs();
+
+    for (int ir = 0; ir < pot->veff_smooth.nr; ir++)
+    {
+        for (int ic = 0; ic < pot->veff_smooth.nc; ic++)
+        {
+            EXPECT_DOUBLE_EQ(pot->veff_smooth(ir,ic), ir+ic);
+            EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir,ic), ir+2*ic);
+        }
+    }
+
+}
+
 #undef private
