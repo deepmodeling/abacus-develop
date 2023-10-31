@@ -15,9 +15,23 @@ namespace elecstate
  * <TK,TR> = <double,double> for Gamma-only calculation
  * <TK,TR> = <std::complex<double>,double> for multi-k calculation
  */
-template <typename TK, typename TR>
-class DensityMatrix
-{
+    template<typename T> struct ShiftRealComplex
+    {
+        using type = void;
+    };
+    template<>
+    struct ShiftRealComplex<double> {
+        using type = std::complex<double>;
+    };
+    template<>
+    struct ShiftRealComplex<std::complex<double>> {
+        using type = double;
+    };
+
+    template <typename TK, typename TR>
+    class DensityMatrix
+    {
+        using TRShift = typename ShiftRealComplex<TR>::type;
   public:
     /**
      * @brief Destructor of class DensityMatrix
@@ -65,7 +79,8 @@ class DensityMatrix
     /// since copy HContainer from another HContainer with different TR is not supported yet
     /// would be refactor in the future
     /// @param _DMR_in 
-    void init_DMR(const hamilt::HContainer<std::complex<double>>& _DMR_in);
+    // the old input type ``:HContainer<complex<double>` causes redefination error if TR = complex<double>
+    void init_DMR(const hamilt::HContainer<TRShift>& _DMR_in);
 
     /**
      * @brief set _DMK element directly

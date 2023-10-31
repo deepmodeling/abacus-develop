@@ -11,6 +11,7 @@ if(ENABLE_LCAO)
         operator_lcao/overlap_new.cpp
         operator_lcao/ekinetic_new.cpp
         operator_lcao/nonlocal_new.cpp
+        operator_lcao/sc_lambda_lcao.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
         FORCE_gamma_edm.cpp

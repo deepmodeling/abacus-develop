@@ -36,6 +36,8 @@
 #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
 
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+
 namespace ModuleESolver
 {
     template <typename TK, typename TR>
@@ -527,9 +529,9 @@ namespace ModuleESolver
 #ifdef __EXX
     // calculate exact-exchange
     if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_eachiterinit(this->LOC, *(this->p_chgmix), iter);
+        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), *(this->p_chgmix), iter);
     else
-        this->exc->exx_eachiterinit(this->LOC, *(this->p_chgmix), iter);
+        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), *(this->p_chgmix), iter);
 #endif
 
     if (GlobalV::dft_plus_u)
@@ -556,6 +558,13 @@ namespace ModuleESolver
         }
         // update real space Hamiltonian
         this->p_hamilt->refresh();
+    }
+
+    // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    if (GlobalV::sc_mag_switch && iter > 1)
+    {
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        sc.run_lambda_loop(iter-1);
     }
 }
 
@@ -625,6 +634,12 @@ namespace ModuleESolver
         this->dpks_cal_e_delta_band(dm);
     }
 #endif
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(iter, &(this->LM));
+    }
+
     // (4) mohan add 2010-06-24
     // using new charge density.
     this->pelec->cal_energies(1);
@@ -756,6 +771,13 @@ namespace ModuleESolver
         }
     }
 
+    // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(iter, &(this->LM));
+    }
+
     // (11) calculate the total energy.
     this->pelec->cal_energies(2);
 }
@@ -847,7 +869,7 @@ namespace ModuleESolver
         // rpa_interface.rpa_exx_lcao().info.files_abfs = GlobalV::rpa_orbitals;
         // rpa_interface.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->LOC, this->pelec);
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(this->LOC, MPI_COMM_WORLD, this->kv, *this->LOWF.ParaV);
+        rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), MPI_COMM_WORLD, this->kv);
         rpa_lri_double.init(MPI_COMM_WORLD, this->kv);
         rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
     }
@@ -863,6 +885,12 @@ namespace ModuleESolver
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
+    if (GlobalV::sc_mag_switch)
+    {
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(istep, &(this->LM), true);
+    }
+
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
@@ -874,9 +902,9 @@ namespace ModuleESolver
 {
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
-        return this->exd->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, this->kv, iter);
+        return this->exd->exx_after_converge(*this->p_hamilt, this->LM, *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), this->kv, iter);
     else
-        return this->exc->exx_after_converge(*this->p_hamilt, this->LM, this->LOC, this->kv, iter);
+        return this->exc->exx_after_converge(*this->p_hamilt, this->LM, *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), this->kv, iter);
 #endif // __EXX
     return true;
 }

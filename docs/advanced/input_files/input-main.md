@@ -351,6 +351,15 @@
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
+  - [Deltaspin](#deltaspin)
+    - [sc\_mag\_switch](#sc_mag_switch)
+    - [decay\_grad\_switch](#decay_grad_switch)
+    - [sc\_thr](#sc_thr)
+    - [nsc](#nsc)
+    - [nsc\_min](#nsc_min)
+    - [alpha\_trial](#alpha_trial)
+    - [sccut](#sccut)
+    - [sc\_file](#sc_file)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3215,5 +3224,89 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
+
+## Deltaspin
+
+These variables are used to control the usage of deltaspin functionality.
+
+### sc_mag_switch
+
+- **Type**: boolean
+- **Description**: the switch of deltaspin functionality
+  - 0: no deltaspin
+  - 1: use the deltaspin method to constrain atomic magnetic moments
+- **Default**: 0
+
+### decay_grad_switch
+
+- **Type**: boolean
+- **Description**: the switch of decay gradient method
+  - 0: no decay gradient method
+  - 1: use the decay gradient method and set ScDecayGrad in the file specified by `sc_file`. ScDecayGrad is an element dependent parameter, which is used to control the decay rate of the gradient of the magnetic moment.
+- **Default**: 0
+
+### sc_thr
+
+- **Type**: Real
+- **Description**: the threshold of the spin constraint atomic magnetic moment
+- **Default**: 1e-6
+- **Unit**: Bohr Mag (\muB)
+
+### nsc
+
+- **Type**: Integer
+- **Description**: the maximum number of steps in the inner lambda loop
+- **Default**: 100
+
+### nsc_min
+
+- **Type**: Integer
+- **Description**: the minimum number of steps in the inner lambda loop
+- **Default**: 2
+
+### alpha_trial
+
+- **Type**: Real
+- **Description**: initial trial step size for lambda in eV/uB^2
+- **Default**: 0.01
+- **Unit**: eV/uB^2
+
+### sccut
+
+- **Type**: Real
+- **Description**: restriction of step size in eV/uB
+- **Default**: 3
+- **Unit**: eV/uB
+
+### sc_file
+
+- **Type**: String
+- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below:
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0, 0, 0],
+                "target_mag": [2.0, 0.0, 0.0],
+                "constrain": [1,1,1]
+            },
+            {
+                "index": 1,
+                "lambda": [0, 0, 0],
+                "target_mag_val": 2.0,
+                "target_mag_angle1": 80.0,
+                "target_mag_angle2": 0.0,
+                "constrain": [1,1,1]
+            }
+        ]
+    }
+]
+```
+- **Default**: none
 
 [back to top](#full-list-of-input-keywords)
