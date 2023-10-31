@@ -351,6 +351,15 @@
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
+  - [Deltaspin](#deltaspin)
+    - [sc\_mag\_switch](#sc_mag_switch)
+    - [decay\_grad\_switch](#decay_grad_switch)
+    - [sc\_thr](#sc_thr)
+    - [nsc](#nsc)
+    - [nsc\_min](#nsc_min)
+    - [alpha\_trial](#alpha_trial)
+    - [sccut](#sccut)
+    - [sc\_file](#sc_file)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -608,12 +617,12 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   Available options are:
 
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-  - gpu: for GPUs via CUDA.
+  - gpu: for GPUs via CUDA or ROCm.
 
   Known limitations:
 
   - pw basis: required by the `gpu` acceleration options
-  - cg ks_solver: required by the `gpu` acceleration options
+  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 [back to top](#full-list-of-input-keywords)
@@ -835,6 +844,7 @@ calculations.
   For plane-wave basis,
 
   - **cg**: cg method.
+  - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
@@ -881,7 +891,7 @@ calculations.
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - **fixed**: fixed occupations.
+  - **fixed**: fixed occupations (available for non-coductors only)
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
@@ -909,12 +919,15 @@ calculations.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
   - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+  
+  In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.
 - **Default**: broyden
 
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter. We recommend the following options:
+- **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
+We recommend the following options:
   - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
     - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
     - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
@@ -930,6 +943,8 @@ calculations.
 
 - **Type**: Integer
 - **Description**: It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
+  
+  For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
 
 ### mixing_gg0
@@ -938,6 +953,8 @@ calculations.
 - **Description**: Whether to perfom Kerker scaling.
   -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
   -  **0**: No Kerker scaling is performed.
+  
+  For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 0.0
 
 ### mixing_tau
@@ -3201,5 +3218,89 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
+
+## Deltaspin
+
+These variables are used to control the usage of deltaspin functionality.
+
+### sc_mag_switch
+
+- **Type**: boolean
+- **Description**: the switch of deltaspin functionality
+  - 0: no deltaspin
+  - 1: use the deltaspin method to constrain atomic magnetic moments
+- **Default**: 0
+
+### decay_grad_switch
+
+- **Type**: boolean
+- **Description**: the switch of decay gradient method
+  - 0: no decay gradient method
+  - 1: use the decay gradient method and set ScDecayGrad in the file specified by `sc_file`. ScDecayGrad is an element dependent parameter, which is used to control the decay rate of the gradient of the magnetic moment.
+- **Default**: 0
+
+### sc_thr
+
+- **Type**: Real
+- **Description**: the threshold of the spin constraint atomic magnetic moment
+- **Default**: 1e-6
+- **Unit**: Bohr Mag (\muB)
+
+### nsc
+
+- **Type**: Integer
+- **Description**: the maximum number of steps in the inner lambda loop
+- **Default**: 100
+
+### nsc_min
+
+- **Type**: Integer
+- **Description**: the minimum number of steps in the inner lambda loop
+- **Default**: 2
+
+### alpha_trial
+
+- **Type**: Real
+- **Description**: initial trial step size for lambda in eV/uB^2
+- **Default**: 0.01
+- **Unit**: eV/uB^2
+
+### sccut
+
+- **Type**: Real
+- **Description**: restriction of step size in eV/uB
+- **Default**: 3
+- **Unit**: eV/uB
+
+### sc_file
+
+- **Type**: String
+- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below:
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0, 0, 0],
+                "target_mag": [2.0, 0.0, 0.0],
+                "constrain": [1,1,1]
+            },
+            {
+                "index": 1,
+                "lambda": [0, 0, 0],
+                "target_mag_val": 2.0,
+                "target_mag_angle1": 80.0,
+                "target_mag_angle2": 0.0,
+                "constrain": [1,1,1]
+            }
+        ]
+    }
+]
+```
+- **Default**: none
 
 [back to top](#full-list-of-input-keywords)

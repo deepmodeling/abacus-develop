@@ -45,8 +45,8 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tma
 			RI::Tensor<Tdata> mR_2D;
 			for(const int ik : ik_list)
 			{
-				using Tdata_m = typename Tmatrix::type;
-				RI::Tensor<Tdata_m> mk_2D = RI_Util::Matrix_to_Tensor<Tdata_m>(*mks_2D[ik]);
+                using Tdata_m = typename Tmatrix::value_type;
+                RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik], pv.get_col_size(), pv.get_row_size());
 				const Tdata_m frac = SPIN_multiple
 					* RI::Global_Func::convert<Tdata_m>( std::exp(
                         -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));

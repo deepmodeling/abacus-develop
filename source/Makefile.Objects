@@ -50,6 +50,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_tddft:\
 ./module_hamilt_lcao/module_deepks:\
 ./module_hamilt_lcao/module_dftu:\
+./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
@@ -96,6 +97,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 
 OBJS_MAIN=main.o\
@@ -172,8 +174,8 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_interface.o\
 
 OBJS_ELECSTAT=elecstate.o\
-    elecstate_energy.o\
     elecstate_energy_terms.o\
+    elecstate_energy.o\
     elecstate_exx.o\
     elecstate_print.o\
     elecstate_pw.o\
@@ -258,6 +260,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
+    sc_lambda_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
@@ -529,7 +532,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_kin.o\
     stress_func_loc.o\
     stress_func_nl.o\
-    stress_func_print.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
@@ -552,6 +554,18 @@ OBJS_DFTU=dftu.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o
+
+OBJS_DELTASPIN=basic_funcs.o\
+      cal_h_lambda.o\
+      cal_mw_from_lambda.o\
+      cal_mw_helper.o\
+      cal_mw.o\
+      init_sc.o\
+      lambda_loop_helper.o\
+      lambda_loop.o\
+      sc_parse_json.o\
+      spin_constrain.o\
+      template_helpers.o\
 
 OBJS_TENSOR=tensor.o\
     tensor_buffer.o\

@@ -45,8 +45,13 @@ class Symmetry_Basic
 			int i, int j, int k, const int, const int, const int, int&, int&, int&);
 	void test_atom_ordering(double *posi, const int natom, int *subindex) const;
 
-	protected:
+    /// find out the greatest subgrop according to the number of operations of certain type.
+    /// used to deal with incomplete group due to a subtle`symmetry_prec`
+    int subgroup(const int& nrot, const int& ninv, const int& nc2, const int& nc3, const int& nc4, const int& nc6,
+        const int& ns1, const int& ns3, const int& ns4, const int& ns6);
 
+protected:
+    bool valid_group = true;    //whether the operators {gmatrix|gtrans} constitute a valid group
 	std::string get_brav_name(const int ibrav) const;
 	void pointgroup(const int &nrot,int &pgnumber,std::string &pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream &ofs_running);
 	void atom_ordering(double *posi, const int natom, int *subindex);

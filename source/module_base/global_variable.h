@@ -303,5 +303,14 @@ extern double nelec;
 extern bool out_bandgap;
 extern int out_interval;
 
+// Deltaspin related
+extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
+extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with decay grad set for some elements
+extern double sc_thr;
+extern int nsc;
+extern int nsc_min;
+extern double alpha_trial;
+extern double sccut;
+extern std::string sc_file;
 } // namespace GlobalV
 #endif

@@ -330,6 +330,10 @@ if(MKLROOT)
   if(NOT ENABLE_DEEPKS)
     list(APPEND math_libs IntelMKL::MKL)
   endif()
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
+    list(APPEND math_libs -lifcore)
+  endif()
 else()
   find_package(FFTW3 REQUIRED)
   find_package(LAPACK REQUIRED)
@@ -608,6 +612,7 @@ if(ENABLE_LCAO)
       gint
       dftu
       hcontainer
+      deltaspin
       numerical_atomic_orbitals
   )
   if (USE_ELPA)

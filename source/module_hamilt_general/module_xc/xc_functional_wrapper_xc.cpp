@@ -107,7 +107,7 @@ void XC_Functional::xc_spin(const double &rho, const double &zeta,
                 XC_Functional::pz_spin(rs, zeta, e, vup, vdw); break;
 
             // Correlation functionals containing PW correlationtests/integrate/101_PW_OU_pseudopot
-            case XC_GGA_C_PBE: case XC_GGA_C_PBE_SOL:
+            case XC_GGA_C_PBE: case XC_GGA_C_PBE_SOL: case XC_LDA_C_PW:
             //   PBC,PBCsol
                 XC_Functional::pw_spin(rs, zeta, e, vup, vdw); break;
 

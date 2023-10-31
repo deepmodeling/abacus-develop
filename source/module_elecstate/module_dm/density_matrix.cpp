@@ -216,7 +216,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
 }
 
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<std::complex<double>>& DMR_in)
+void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
 {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty

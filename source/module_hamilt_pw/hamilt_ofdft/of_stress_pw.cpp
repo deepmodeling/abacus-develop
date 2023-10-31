@@ -3,6 +3,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/output_log.h"
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an
 // input variable.
@@ -98,21 +99,21 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     bool ry = false;
-    this->printstress_total(sigmatot, ry);
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
 
     if (GlobalV::TEST_STRESS)
     {
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
         GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-        this->print_stress("KINETIC    STRESS", sigmakin, GlobalV::TEST_STRESS, ry);
-        this->print_stress("LOCAL    STRESS", sigmaloc, GlobalV::TEST_STRESS, ry);
-        this->print_stress("HARTREE    STRESS", sigmahar, GlobalV::TEST_STRESS, ry);
-        this->print_stress("NON-LOCAL    STRESS", sigmanl, GlobalV::TEST_STRESS, ry);
-        this->print_stress("XC    STRESS", sigmaxc, GlobalV::TEST_STRESS, ry);
-        this->print_stress("EWALD    STRESS", sigmaewa, GlobalV::TEST_STRESS, ry);
-        this->print_stress("NLCC    STRESS", sigmaxcc, GlobalV::TEST_STRESS, ry);
-        this->print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
     }
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
     return;

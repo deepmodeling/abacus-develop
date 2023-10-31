@@ -115,6 +115,7 @@ class ESolver_DP : public ESolver
     double dp_potential;          ///< the computed potential energy
     ModuleBase::matrix dp_force;  ///< the computed atomic forces
     ModuleBase::matrix dp_virial; ///< the computed lattice virials
+    UnitCell* ucell_;             ///< pointer to the unitcell information
 };
 
 } // namespace ModuleESolver

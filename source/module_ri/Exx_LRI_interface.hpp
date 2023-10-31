@@ -71,19 +71,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter)
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm, const Charge_Mixing& chgmix, const int& iter)
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && exx_lri->two_level_step)
         {
 			const bool flag_restart = (iter==1) ? true : false;
-			if(GlobalV::GAMMA_ONLY_LOCAL)
-				exx_lri->mix_DMk_2D.mix(loc.dm_gamma, flag_restart);
-			else
-				exx_lri->mix_DMk_2D.mix(loc.dm_k, flag_restart);
-
-            exx_lri->cal_exx_elec(*loc.LOWF->ParaV);
+            exx_lri->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
+            exx_lri->cal_exx_elec(*dm.get_paraV_pointer());
         }
     }
 }
@@ -117,7 +113,7 @@ template<typename T, typename Tdata>
 bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     hamilt::Hamilt<T>& hamilt,
     LCAO_Matrix& lm,
-    const Local_Orbital_Charge& loc,
+    const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
     int& iter)
 {
@@ -203,14 +199,11 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             }
 
-			const bool flag_restart = (exx_lri->two_level_step==0) ? true : false;
-			if (GlobalV::GAMMA_ONLY_LOCAL)
-				exx_lri->mix_DMk_2D.mix(loc.dm_gamma, flag_restart);
-			else
-				exx_lri->mix_DMk_2D.mix(loc.dm_k, flag_restart);
+            const bool flag_restart = (exx_lri->two_level_step == 0) ? true : false;
+            exx_lri->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
 
             // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
-            exx_lri->cal_exx_elec(*loc.LOWF->ParaV);
+            exx_lri->cal_exx_elec(*dm.get_paraV_pointer());
             iter = 0;
             std::cout << " Updating EXX and rerun SCF" << std::endl;
             exx_lri->two_level_step++;

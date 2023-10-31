@@ -151,7 +151,7 @@ class Kpt:
             np.reshape(self.numbers, (-1, 1))
         max_num = np.max(self.numbers)
         len_num = len(self.numbers)
-        k_coor_span = np.zeros((len_num, max_num), dtype=np.float)
+        k_coor_span = np.zeros((len_num, max_num), dtype=float)
         X, Y, Z = np.split(spec_k_coor, 3, axis=1)
         i_X, i_Y, i_Z = np.split(interval, 3, axis=1)
         for i, j in enumerate(self.numbers):
@@ -159,7 +159,7 @@ class Kpt:
         X = (i_X * k_coor_span + X.repeat(max_num, axis=1)).flatten()
         Y = (i_Y * k_coor_span + Y.repeat(max_num, axis=1)).flatten()
         Z = (i_Z * k_coor_span + Z.repeat(max_num, axis=1)).flatten()
-        k_direct_coor = np.empty((3, total_k), dtype=np.float)
+        k_direct_coor = np.empty((3, total_k), dtype=float)
         k_direct_coor[0] = X[:total_k]
         k_direct_coor[1] = Y[:total_k]
         k_direct_coor[2] = Z[:total_k]
@@ -251,10 +251,10 @@ def get_angular_momentum_label(l_index: int) -> str:
 
 angular_momentum_name = [
     ['$s$'],
-    ['$p_x$', '$p_y$', '$p_z$'],
-    ['$d_{3z^2-r^2}$', '$d_{xy}$', '$d_{xz}$', '$d_{x^2-y^2}$', '$d_{yz}$'],
-    ['$f_{5z^2-3r^2}$', '$f_{5xz^2-xr^2}$', '$f_{5yz^2-yr^2}$',
-        '$f_{zx^2-zy^2}$', '$f_{xyz}$', '$f_{x^3-3*xy^2}$', '$f_{3yx^2-y^3}$'],
+    ['$p_z$', '$p_x$', '$p_y$'],
+    ['$d_{z^2}$', '$d_{xz}$', '$d_{yz}$', '$d_{x^2-y^2}$', '$d_{xy}$'],
+    ['$f_{z^3}$', '$f_{xz^2}$', '$f_{yz^2}$', '$f_{z(x^2-y^2)}$', 
+        '$f_{xyz}$', '$f_{x(x^2-3y^2)}$', '$f_{y(3x^2-y^2)}$'],
     ['$g_1$', '$g_2$', '$g_3$', '$g_4$', '$g_5$',
         '$g_6$', '$g_7$', '$g_8$', '$g_9$']
 ]

@@ -154,11 +154,6 @@ class Stress_Func
                                        const FPTYPE& table_interval,
                                        const FPTYPE& x); // used in get_dvnl2()
 
-    // functions for stress print
-    void print_stress(const std::string& name, const ModuleBase::matrix& f, const bool screen, bool ry) const;
-
-    void printstress_total(const ModuleBase::matrix& scs, bool ry);
-
     static FPTYPE stress_invalid_threshold_ev;
     static FPTYPE output_acc;
 
