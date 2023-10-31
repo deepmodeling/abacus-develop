@@ -261,6 +261,7 @@ class Paw_Cell
 // Part IV. Calling Fortran subroutines from libpaw_interface
     public:
     void prepare_paw();
+    void io_redirect();
     void get_vloc_ncoret(double* vloc, double* ncoret);
     void init_rho(double** rho);
     void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);

@@ -254,6 +254,8 @@ extern "C"
         int&,int&,int*,double*,int&,int&,char*,int&,int&,double*);
     //  natom ntypat typat xred ixc xclevel filename_list nspden nsppol
 
+    void io_redirect_();
+
     void get_vloc_ncoret_(int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*,double*);
     //                    ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   vloc,   ncoret
 
@@ -280,6 +282,11 @@ void Paw_Cell::prepare_paw()
     prepare_libpaw_(ecut, ecutpaw, gmet.data(), rprimd.data(), gprimd.data(), ucvol,
             ngfft.data(), ngfftdg.data(), natom, ntypat, typat.data(), xred.data(),
             ixc, xclevel, filename_list, nspden, nsppol, epsatm.data());
+}
+
+void Paw_Cell::io_redirect()
+{
+    io_redirect_();
 }
 
 void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)

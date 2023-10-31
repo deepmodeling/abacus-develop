@@ -9,6 +9,9 @@
 #include "module_io/input_conv.h"
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 Driver::Driver()
 {
@@ -73,6 +76,15 @@ void Driver::reading(void)
     ss1 << GlobalV::global_out_dir << GlobalV::global_in_card;
     INPUT.Print(ss1.str());
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"READING CARDS");
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+#ifdef __MPI
+        GlobalC::paw_cell.io_redirect();
+#endif
+    }
+#endif
 
     ModuleBase::timer::tick("Driver", "reading");
     return;
