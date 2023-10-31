@@ -235,7 +235,7 @@ void Memory::print_all(std::ofstream &ofs)
 
 	const double small = 1.0; 
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(Memory::total);
+		Parallel_Reduce::reduce_all(Memory::total);
 #endif
     ofs <<"\n NAME---------------|MEMORY(MB)--------" << std::endl;
 //	std::cout<<"\n"<<std::setw(41)<< " " <<std::setprecision(4)<<total;
@@ -244,8 +244,32 @@ void Memory::print_all(std::ofstream &ofs)
 	bool *print_flag = new bool[n_memory];
 	for(int i=0; i<n_memory; i++) print_flag[i] = false;
 	
+
 	for (int i=0; i<n_memory; i++)
     {
+//		int k = 0;
+//		double tmp = -1.0;
+//		for(int j=0; j<n_memory; j++)
+//		{
+//			if(print_flag[j])
+//			{
+//				continue;
+//			}
+//			else if(tmp < consume[j])
+//			{
+//				k = j;
+//				tmp = consume[j];
+//			}
+//		}
+//		print_flag[k] = true;
+#ifdef __MPI
+//		Parallel_Reduce::reduce_all(consume[k]);
+		Parallel_Reduce::reduce_all(consume[i]);
+#endif
+	}
+
+	for (int i=0; i<n_memory; i++) // Xiaoyang fix memory record sum bug 2023/10/25
+	{
 		int k = 0;
 		double tmp = -1.0;
 		for(int j=0; j<n_memory; j++)
@@ -261,25 +285,30 @@ void Memory::print_all(std::ofstream &ofs)
 			}
 		}
 		print_flag[k] = true;
-#ifdef __MPI
-        Parallel_Reduce::reduce_all(consume[k]);
-#endif
-	    if ( consume[k] < small ) 
-        {
-            continue;
-        }
-  		else
-  		{
-        	ofs << std::setw(20) << name[k]
-             << std::setw(15) << consume[k] << std::endl;
+		if ( consume[k] < small ){
+			continue;
+		}
+		else
+		{
+			ofs << std::setw(20) << name[k]
+            << std::setw(15) << consume[k] << std::endl;
+		}
+
+	}
+//	    if ( consume[k] < small ) 
+//      {
+//            continue;
+//      }
+//  	else
+//  	{
+//        	ofs << std::setw(20) << name[k]
+//          << std::setw(15) << consume[k] << std::endl;
 
 //        	std::cout  << "\n "
 //             << std::setw(20) << class_name[k]
 //             << std::setw(20) << name[k]
 //             << std::setw(15) << consume[k];
-		}
-    }
-//    std::cout<<"\n ----------------------------------------------------------"<<std::endl;
+    std::cout<<"\n ----------------------------------------------------------"<<std::endl;
 	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;
 	delete[] print_flag; //mohan fix by valgrind at 2012-04-02
