@@ -235,6 +235,7 @@ void ESolver_SDFT_PW::postprocess()
         this->caldos(INPUT.dos_nche, INPUT.dos_sigma, emin, emax, INPUT.dos_edelta_ev, INPUT.npart_sto);
     }
 
+    //sKG cost memory, and it should be placed at the end of the program
     if (INPUT.cal_cond)
     {
         this->sKG(cond_nche, INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, INPUT.cond_dtbatch, INPUT.npart_sto);

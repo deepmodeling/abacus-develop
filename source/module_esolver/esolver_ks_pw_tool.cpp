@@ -250,10 +250,10 @@ void ESolver_KS_PW<FPTYPE, Device>::calcondw(const int nt,
     }
     double sigma0 = cw11[0] - (cw11[1] - cw11[0]) * 0.5;
 	double kappa0 = kappa[0] - (kappa[1] - kappa[0]) * 0.5;
-    double Lorentz0 = kappa0 / sigma0 / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV / 11604.518026 * pow(1.6021766208e-19/1.3806505e-23, 2);
+    double Lorent0 = kappa0 / sigma0 / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV / 11604.518026 * pow(1.6021766208e-19/1.3806505e-23, 2);
     std::cout << std::setprecision(6) << "DC electrical conductivity: " << sigma0 << " Sm^-1" << std::endl;
     std::cout << std::setprecision(6) << "Thermal conductivity: " << kappa0 << " W(mK)^-1" << std::endl;
-    std::cout << std::setprecision(6) << "Lorentz number: "<<Lorentz0<<" k_B^2/e^2"<<std::endl;
+    std::cout << std::setprecision(6) << "Lorenz number: "<<Lorent0<<" k_B^2/e^2"<<std::endl;
     ofscond.close();
 
     delete[] cw11;

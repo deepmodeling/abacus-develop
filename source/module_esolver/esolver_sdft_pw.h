@@ -75,26 +75,29 @@ private:
      * @brief calculate Jmatrix  <leftv|J|rightv>
      * 
      */
-    void cal_jmatrix(const psi::Psi<std::complex<double>>& leftv,
-                     psi::Psi<std::complex<double>>& rightv,
-#ifdef __MPI                
-                     psi::Psi<std::complex<double>>& tmppsi_all,
-                     int* nrecv_ks, int* displs_ks,
-                     int* nrecv_sto, int* displs_sto,
-#endif                      
-                     double *en,
-                     psi::Psi<std::complex<double>>& tmphpsil,
-                     psi::Psi<std::complex<double>>& tmphpsir,
-                     psi::Psi<std::complex<double>>& batchj1psi,
-                     psi::Psi<std::complex<double>>& batchj2psi,
+    void cal_jmatrix(const psi::Psi<std::complex<double>>& kspsi,
+                     const psi::Psi<std::complex<double>>& vkspsi,
+                     const std::complex<double>* psi_all,
+                     const double *en, const double* en_all,
+                     std::complex<double>* exptmf, std::complex<double>* expmtf,
+                     const psi::Psi<std::complex<double>>& leftchi,
+                     psi::Psi<std::complex<double>>& rightchi,
+                     psi::Psi<std::complex<double>>& left_hchi,
+                     psi::Psi<std::complex<double>>& right_hchi,
+                     psi::Psi<std::complex<double>>& batch_vchi,
+                     psi::Psi<std::complex<double>>& batch_vhchi,
+#ifdef __MPI                     
+                     psi::Psi<std::complex<double>>& chi_all,
+                     psi::Psi<std::complex<double>>& hchi_all,
+                     void* gatherinfo_ks, void* gatherinfo_sto,
+#endif                           
                      const int& bsize_psi,
                      ModuleBase::ComplexMatrix& j1, 
                      ModuleBase::ComplexMatrix& j2,
                      hamilt::Velocity& velop,
                      const int& ik,
                      const std::complex<double>& factor,
-                     const int bandinfo[6]
-                     );
+                     const int bandinfo[6]);
 
 
 };
