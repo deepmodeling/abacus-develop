@@ -113,9 +113,7 @@ class Absorption(Dipole, Efield):
         efield=self.padding(self.efield_data[dirc])
         dipole_fft = np.fft.fft(dipole)
         efield_fft = np.fft.fft(efield)
-        numerator=dipole_fft
-        denominator=efield_fft
-        alpha = np.abs((numerator/denominator).imag)
+        alpha = np.abs((dipole_fft/efield_fft).imag)
         return alpha
     
     def plot_abs(self, fig: Figure, ax: axes.Axes, directions: list = [0, 1, 2], x_range: list = [], unit: str = 'eV'):
