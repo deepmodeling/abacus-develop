@@ -20,7 +20,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
 
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
-#pragma omp parallel for
+//#pragma omp parallel for
   for (int z_index = 0; z_index < GridT.nbzp; z_index++) {
     int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;

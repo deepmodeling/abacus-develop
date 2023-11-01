@@ -12,16 +12,16 @@ __constant__ int bxyz_g[1];
 __constant__ int max_size_g[1];
 __constant__ int nwmax_g[1];
 __constant__ double delta_r_g[1];
-inline
-cudaError_t checkCuda(cudaError_t result)
+inline cudaError_t checkCuda(cudaError_t result)
 {
 #if defined(DEBUG) || defined(_DEBUG)
-  if (result != cudaSuccess) {
-    fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-    assert(result == cudaSuccess);
-  }
+    if (result != cudaSuccess)
+    {
+        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+        assert(result == cudaSuccess);
+    }
 #endif
-  return result;
+    return result;
 }
 
 void dump_cuda_array_to_file(double *cuda_array, int width, int hight, const std::string &filename)
@@ -353,121 +353,164 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
         }
     }
 
-    checkCuda( cudaMemcpyToSymbol(ylmcoef, ylmcoef_now, 36 * sizeof(double)));
-    checkCuda( cudaMemcpyToSymbol(bxyz_g, &bxyz, sizeof(int)));
-    checkCuda( cudaMemcpyToSymbol(max_size_g, &max_size, sizeof(int)));
-    checkCuda( cudaMemcpyToSymbol(nwmax_g, &nwmax, sizeof(int)));
-    checkCuda( cudaMemcpyToSymbol(delta_r_g, &GlobalC::ORB.dr_uniform, sizeof(double)));
+    checkCuda(cudaMemcpyToSymbol(ylmcoef, ylmcoef_now, 36 * sizeof(double)));
+    checkCuda(cudaMemcpyToSymbol(bxyz_g, &bxyz, sizeof(int)));
+    checkCuda(cudaMemcpyToSymbol(max_size_g, &max_size, sizeof(int)));
+    checkCuda(cudaMemcpyToSymbol(nwmax_g, &nwmax, sizeof(int)));
+    checkCuda(cudaMemcpyToSymbol(delta_r_g, &GlobalC::ORB.dr_uniform, sizeof(double)));
 
     int *atom_nw_g;
-    checkCuda( cudaMalloc((void **)&atom_nw_g, ntype * sizeof(int)));
-    checkCuda( cudaMemcpy(atom_nw_g, atom_nw_now, ntype * sizeof(int), cudaMemcpyHostToDevice));
+    checkCuda(cudaMalloc((void **)&atom_nw_g, ntype * sizeof(int)));
+    checkCuda(cudaMemcpy(atom_nw_g, atom_nw_now, ntype * sizeof(int), cudaMemcpyHostToDevice));
 
     int *ucell_atom_nwl;
-    checkCuda( cudaMalloc((void **)&ucell_atom_nwl, ntype * sizeof(int)));
-    checkCuda( cudaMemcpy(ucell_atom_nwl, ucell_atom_nwl_now, ntype * sizeof(int), cudaMemcpyHostToDevice));
+    checkCuda(cudaMalloc((void **)&ucell_atom_nwl, ntype * sizeof(int)));
+    checkCuda(cudaMemcpy(ucell_atom_nwl, ucell_atom_nwl_now, ntype * sizeof(int), cudaMemcpyHostToDevice));
 
     double *psi_u;
-    checkCuda( cudaMalloc((void **)&psi_u, ntype * nwmax * nr_max * sizeof(double) * 2));
-    checkCuda( cudaMemcpy(psi_u, psi_u_now, ntype * nwmax * nr_max * sizeof(double) * 2, cudaMemcpyHostToDevice));
+    checkCuda(cudaMalloc((void **)&psi_u, ntype * nwmax * nr_max * sizeof(double) * 2));
+    checkCuda(cudaMemcpy(psi_u, psi_u_now, ntype * nwmax * nr_max * sizeof(double) * 2, cudaMemcpyHostToDevice));
 
     bool *atom_iw2_new;
     int *atom_iw2_ylm;
-    checkCuda( cudaMalloc((void **)&atom_iw2_new, ntype * nwmax * sizeof(bool)));
-    checkCuda( cudaMalloc((void **)&atom_iw2_ylm, ntype * nwmax * sizeof(int)));
-    checkCuda( cudaMemcpy(atom_iw2_new, atom_iw2_new_now, ntype * nwmax * sizeof(bool), cudaMemcpyHostToDevice));
-    checkCuda( cudaMemcpy(atom_iw2_ylm, atom_iw2_ylm_now, ntype * nwmax * sizeof(int), cudaMemcpyHostToDevice));
-
-    double *psir_ylm_left;
-    checkCuda( cudaMalloc((void **)&psir_ylm_left, nbz * max_size * bxyz * nwmax * sizeof(double)));
-    checkCuda( cudaMemset(psir_ylm_left, 0, nbz * max_size * bxyz * nwmax * sizeof(double)));
-
-    double *psir_ylm_right;
-    checkCuda( cudaMalloc((void **)&psir_ylm_right, nbz * max_size * bxyz * nwmax * sizeof(double)));
-    checkCuda( cudaMemset(psir_ylm_right, 0, nbz * max_size * bxyz * nwmax * sizeof(double)));
+    checkCuda(cudaMalloc((void **)&atom_iw2_new, ntype * nwmax * sizeof(bool)));
+    checkCuda(cudaMalloc((void **)&atom_iw2_ylm, ntype * nwmax * sizeof(int)));
+    checkCuda(cudaMemcpy(atom_iw2_new, atom_iw2_new_now, ntype * nwmax * sizeof(bool), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(atom_iw2_ylm, atom_iw2_ylm_now, ntype * nwmax * sizeof(int), cudaMemcpyHostToDevice));
 
     double *GridVlocal_now = new double[lgd * lgd];
 
     double *GridVlocal;
-    checkCuda( cudaMalloc((void **)&GridVlocal, lgd * lgd * sizeof(double)));
-    checkCuda( cudaMemset(GridVlocal, 0, lgd * lgd * sizeof(double)));
+    checkCuda(cudaMalloc((void **)&GridVlocal, lgd * lgd * sizeof(double)));
+    checkCuda(cudaMemset(GridVlocal, 0, lgd * lgd * sizeof(double)));
+
+    const int nStreams = 8;
+    const int psir_size = nbz * max_size * bxyz * nwmax;
+    double *psir_ylm_left_global;
+    double *psir_ylm_right_global;
+    checkCuda(cudaMalloc((void **)&psir_ylm_left_global, psir_size * nStreams * sizeof(double)));
+    checkCuda(cudaMalloc((void **)&psir_ylm_right_global, psir_size * nStreams * sizeof(double)));
+    checkCuda(cudaMemset(psir_ylm_left_global, 0, psir_size * nStreams * sizeof(double)));
+    checkCuda(cudaMemset(psir_ylm_right_global, 0, psir_size * nStreams * sizeof(double)));
 
     const int atom_pair_size_of_meshcell = max_size * max_size * 6;
     const int atom_pair_size_over_nbz = atom_pair_size_of_meshcell * nbz;
 
-    int *atom_pair_input_info = new int[atom_pair_size_over_nbz];
-    int *atom_pair_input_info_g;
-    checkCuda( cudaMalloc((void **)&atom_pair_input_info_g, atom_pair_size_over_nbz * sizeof(int)));
+    int *atom_pair_input_info_global;
+    checkCuda(cudaMallocHost((void **)&atom_pair_input_info_global, atom_pair_size_over_nbz * nStreams * sizeof(int)));
+    int *atom_pair_input_info_g_global;
+    checkCuda(cudaMalloc((void **)&atom_pair_input_info_g_global, atom_pair_size_over_nbz * nStreams * sizeof(int)));
 
-    int *num_atom_pair = new int[nbz];
-    int *num_atom_pair_g;
-    checkCuda( cudaMalloc((void **)&num_atom_pair_g, nbz * sizeof(int)));
+    int *num_atom_pair_global;
+    ;
+    checkCuda(cudaMallocHost((void **)&num_atom_pair_global, nbz * nStreams * sizeof(int)));
+    int *num_atom_pair_g_global;
+    checkCuda(cudaMalloc((void **)&num_atom_pair_g_global, nbz * nStreams * sizeof(int)));
 
-    const int psi_size_max = max_size * bxyz;
-    double *psi_input_double = new double[psi_size_max * nbz * 5]; // [ x,y,z,distance, vlocal]
-    double *psi_input_double_g;
-    checkCuda( cudaMalloc((void **)&psi_input_double_g, psi_size_max * nbz * 5 * sizeof(double)));
+    const int psi_size_max = max_size * bxyz * nbz;
+    const int psi_size_max_per_z = max_size * bxyz;
+    double *psi_input_double_global;
+    checkCuda(cudaMallocHost((void **)&psi_input_double_global, psi_size_max * nStreams * 5 * sizeof(double)));
+    double *psi_input_double_g_global;
+    checkCuda(cudaMalloc((void **)&psi_input_double_g_global, psi_size_max * nStreams * 5 * sizeof(double)));
 
-    int *psi_input_int = new int[psi_size_max * nbz * 2];
-    int *psi_input_int_g;
-    checkCuda( cudaMalloc((void **)&psi_input_int_g, psi_size_max * nbz * sizeof(int) * 2));
+    int *psi_input_int_global;
+    checkCuda(cudaMallocHost((void **)&psi_input_int_global, psi_size_max * nStreams * 2 * sizeof(int)));
+    int *psi_input_int_g_global;
+    checkCuda(cudaMalloc((void **)&psi_input_int_g_global, psi_size_max * nStreams * 2 * sizeof(int)));
 
-    int *num_psir = new int[nbz];
-    int *num_psir_g;
-    checkCuda( cudaMalloc((void **)&num_psir_g, nbz * sizeof(int)));
+    int *num_psir_global;
+    checkCuda(cudaMallocHost((void **)&num_psir_global, nbz * nStreams * sizeof(int)));
+    int *num_psir_g_global;
+    checkCuda(cudaMalloc((void **)&num_psir_g_global, nbz * nStreams * sizeof(int)));
 
-    
+    int devId = 0;
+    cudaDeviceProp prop;
+    checkCuda(cudaGetDeviceProperties(&prop, devId));
+    // printf("Device : %s\n", prop.name);
+    checkCuda(cudaSetDevice(devId));
+
+    cudaStream_t stream[nStreams];
+    for (int i = 0; i < nStreams; ++i)
+    {
+        checkCuda(cudaStreamCreate(&stream[i]));
+    }
+
+    int iter_num = 0;
     for (int i = 0; i < nbx; i++)
     {
         for (int j = 0; j < nby; j++)
         {
+            int stream_num = iter_num % nStreams;
+            double *psi_input_double = &psi_input_double_global[psi_size_max * stream_num * 5];
+            int *psi_input_int = &psi_input_int_global[psi_size_max * stream_num * 2];
+            int *num_psir = &num_psir_global[nbz * stream_num];
+            int *atom_pair_input_info = &atom_pair_input_info_global[atom_pair_size_over_nbz * stream_num];
+            int *num_atom_pair = &num_atom_pair_global[nbz * stream_num];
             gpu_task_generate_vlocal(GridT, i, j, bx,
                                      by, bz, bxyz,
-                                     atom_pair_size_of_meshcell, psi_size_max,
+                                     atom_pair_size_of_meshcell, psi_size_max_per_z,
                                      max_size, ncx, ncy, nczp,
                                      vfactor,
                                      start_ind,
-                                     vlocal, psi_input_double, psi_input_int,
-                                     num_psir, atom_pair_input_info, num_atom_pair);
+                                     vlocal,
+                                     psi_input_double,
+                                     psi_input_int,
+                                     num_psir,
+                                     atom_pair_input_info,
+                                     num_atom_pair);
+            double *psi_input_double_g = &psi_input_double_g_global[psi_size_max * stream_num * 5];
+            int *psi_input_int_g = &psi_input_int_g_global[psi_size_max * stream_num * 2];
+            int *num_psir_g = &num_psir_g_global[nbz * stream_num];
+            double *psir_ylm_left_g = &psir_ylm_left_global[psir_size * stream_num];
+            double *psir_ylm_right_g = &psir_ylm_right_global[psir_size * stream_num];
+            int *atom_pair_input_info_g = &atom_pair_input_info_g_global[atom_pair_size_over_nbz * stream_num];
+            int *num_atom_pair_g = &num_atom_pair_g_global[nbz * stream_num];
 
-            checkCuda( cudaMemcpy(psi_input_double_g, psi_input_double, psi_size_max * nbz * 5 * sizeof(double), cudaMemcpyHostToDevice));
-            checkCuda( cudaMemcpy(psi_input_int_g, psi_input_int, psi_size_max * nbz * 2 * sizeof(int), cudaMemcpyHostToDevice));
+            // checkCuda(cudaStreamSynchronize(stream[stream_num]));
+            // checkCuda(cudaDeviceSynchronize());
 
-            checkCuda( cudaMemcpy(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice));
-            checkCuda( cudaMemset(psir_ylm_left, 0, nbz * max_size * bxyz * nwmax * sizeof(double)));
-            checkCuda( cudaMemset(psir_ylm_right, 0, nbz * max_size * bxyz * nwmax * sizeof(double)));
+            checkCuda(cudaMemcpy(psi_input_double_g, psi_input_double, psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpy(psi_input_int_g, psi_input_int, psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpy(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpy(atom_pair_input_info_g, atom_pair_input_info, atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpy(num_atom_pair_g, num_atom_pair, nbz * sizeof(int), cudaMemcpyHostToDevice));
 
-            checkCuda( cudaMemcpy(atom_pair_input_info_g, atom_pair_input_info, atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice));
-            checkCuda( cudaMemcpy(num_atom_pair_g, num_atom_pair, nbz * sizeof(int), cudaMemcpyHostToDevice));
-            dim3 grid1(nbz);
-            dim3 block1(32);
-            int shared_size = bxyz;
-            get_psi_and_vldr3<<<grid1, block1, shared_size>>>(psi_input_double_g,
-                                                              psi_input_int_g,
-                                                              num_psir_g,
-                                                              psi_size_max,
-                                                              ucell_atom_nwl,
-                                                              atom_iw2_new,
-                                                              atom_iw2_ylm,
-                                                              atom_nw_g,
-                                                              nr_max,
-                                                              psi_u,
-                                                              psir_ylm_left,
-                                                              psir_ylm_right);
-            dim3 grid4(nbz, 1024);
-            dim3 block4(8, 8);
-            psi_multiple<<<grid4, block4>>>(atom_pair_input_info_g,
-                                            num_atom_pair_g,
-                                            i * nby * nbz + j * nbz,
-                                            psir_ylm_left,
-                                            psir_ylm_right,
-                                            atom_pair_size_of_meshcell,
-                                            GridVlocal,
-                                            lgd);
+            checkCuda(cudaMemset(psir_ylm_left_g, 0, psir_size * sizeof(double)));
+            checkCuda(cudaMemset(psir_ylm_right_g, 0, psir_size * sizeof(double)));
+
+            dim3 grid_psi(nbz);
+            dim3 block_psi(32);
+            dim3 grid_multiple(nbz, 1024);
+            dim3 block_multiple(8, 8);
+
+            get_psi_and_vldr3<<<grid_psi, block_psi>>>(psi_input_double_g,
+                                                       psi_input_int_g,
+                                                       num_psir_g,
+                                                       psi_size_max_per_z,
+                                                       ucell_atom_nwl,
+                                                       atom_iw2_new,
+                                                       atom_iw2_ylm,
+                                                       atom_nw_g,
+                                                       nr_max,
+                                                       psi_u,
+                                                       psir_ylm_left_g,
+                                                       psir_ylm_right_g);
+            psi_multiple<<<grid_multiple, block_multiple>>>(atom_pair_input_info_g,
+                                                            num_atom_pair_g,
+                                                            i * nby * nbz + j * nbz,
+                                                            psir_ylm_left_g,
+                                                            psir_ylm_right_g,
+                                                            atom_pair_size_of_meshcell,
+                                                            GridVlocal,
+                                                            lgd);
+            iter_num++;
         }
     }
+    for (int i = 0; i < nStreams; ++i)
+        checkCuda(cudaStreamDestroy(stream[i]));
 
-    checkCuda( cudaMemcpy(GridVlocal_now, GridVlocal, lgd * lgd * sizeof(double), cudaMemcpyDeviceToHost));
+    checkCuda(cudaMemcpy(GridVlocal_now, GridVlocal, lgd * lgd * sizeof(double), cudaMemcpyDeviceToHost));
 
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
@@ -495,29 +538,28 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
         }
     }
     // free
-    checkCuda( cudaFree(psir_ylm_left));
-    checkCuda( cudaFree(psir_ylm_right));
-    checkCuda( cudaFree(atom_nw_g));
+    checkCuda(cudaFree(psir_ylm_left_global));
+    checkCuda(cudaFree(psir_ylm_right_global));
+    checkCuda(cudaFree(atom_nw_g));
 
-    checkCuda( cudaFree(ucell_atom_nwl));
-    checkCuda( cudaFree(psi_u));
-    checkCuda( cudaFree(atom_iw2_new));
-    checkCuda( cudaFree(atom_iw2_ylm));
-    checkCuda( cudaFree(GridVlocal));
+    checkCuda(cudaFree(ucell_atom_nwl));
+    checkCuda(cudaFree(psi_u));
+    checkCuda(cudaFree(atom_iw2_new));
+    checkCuda(cudaFree(atom_iw2_ylm));
+    checkCuda(cudaFree(GridVlocal));
 
-    checkCuda( cudaFree(atom_pair_input_info_g));
-    checkCuda( cudaFree(num_atom_pair_g));
+    checkCuda(cudaFree(atom_pair_input_info_g_global));
+    checkCuda(cudaFree(num_atom_pair_g_global));
 
-    checkCuda( cudaFree(psi_input_double_g));
-    checkCuda( cudaFree(psi_input_int_g));
-    checkCuda( cudaFree(num_psir_g));
+    checkCuda(cudaFree(psi_input_double_g_global));
+    checkCuda(cudaFree(psi_input_int_g_global));
+    checkCuda(cudaFree(num_psir_g_global));
 
-    delete[] atom_pair_input_info;
-    delete[] num_atom_pair;
-
-    delete[] psi_input_double;
-    delete[] psi_input_int;
-    delete[] num_psir;
+    checkCuda(cudaFreeHost(atom_pair_input_info_global));
+    checkCuda(cudaFreeHost(num_atom_pair_global));
+    checkCuda(cudaFreeHost(psi_input_double_global));
+    checkCuda(cudaFreeHost(psi_input_int_global));
+    checkCuda(cudaFreeHost(num_psir_global));
 
     delete[] GridVlocal_now;
     delete[] atom_nw_now;
