@@ -1,23 +1,26 @@
 #include "paw_cell.h"
 #include "module_base/tool_title.h"
 #include "module_base/tool_quit.h"
+#ifdef __MPI
+#include "module_base/parallel_reduce.h"
+#endif
+
+namespace GlobalC
+{
+    Paw_Cell paw_cell;
+}
 
 void Paw_Cell::init_paw_cell(
     const double ecutwfc_in, const double cell_factor_in,
     const double omega_in,
     const int nat_in, const int ntyp_in,
     const int * atom_type_in, const double ** atom_coord_in,
-    const std::vector<std::string> & filename_list_in,
-    const int nx_in, const int ny_in, const int nz_in,
-    const std::complex<double> * eigts1_in, const std::complex<double> * eigts2_in, const std::complex<double> * eigts3_in)
+    const std::vector<std::string> & filename_list_in)
 {
     ModuleBase::TITLE("Paw_Element","init_paw_cell");
 
     this -> nat = nat_in;
     this -> ntyp = ntyp_in;
-    this -> nx = nx_in;
-    this -> ny = ny_in;
-    this -> nz = nz_in;
     this -> omega = omega_in;
 
     atom_coord.resize(nat);
@@ -71,6 +74,16 @@ void Paw_Cell::init_paw_cell(
         int nproj = paw_element_list[it].get_mstates();
         paw_atom_list[iat].init_paw_atom(nproj);
     }
+}
+
+void Paw_Cell::set_eigts(const int nx_in, const int ny_in, const int nz_in,
+        const std::complex<double> * eigts1_in,
+        const std::complex<double> * eigts2_in,
+        const std::complex<double> * eigts3_in)
+{
+    this -> nx = nx_in;
+    this -> ny = ny_in;
+    this -> nz = nz_in;
 
     eigts1.resize(nat);
     eigts2.resize(nat);
@@ -142,6 +155,21 @@ void Paw_Cell::set_paw_k(
     {
         gnorm[ipw] = std::sqrt(kpg[ipw][0]*kpg[ipw][0] + kpg[ipw][1]*kpg[ipw][1] + kpg[ipw][2]*kpg[ipw][2]) * tpiba;
     }
+}
+
+void Paw_Cell::set_isk(const int nk, const int * isk_in)
+{
+    isk.resize(nk);
+    for(int ik = 0; ik < nk; ik ++)
+    {
+        isk[ik] = isk_in[ik];
+    }
+}
+
+void Paw_Cell::set_currentk(const int ik)
+{
+    current_k = ik;
+    current_spin = isk[ik];
 }
 
 void Paw_Cell::map_paw_proj()
@@ -422,6 +450,14 @@ void Paw_Cell::get_vkb()
     }
 }
 
+void Paw_Cell::reset_rhoij()
+{
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        paw_atom_list[iat].reset_rhoij();
+    }
+}
+
 void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double weight)
 {
     ModuleBase::TITLE("Paw_Cell","accumulate_rhoij");
@@ -451,18 +487,19 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
             }
         }
 
-        // ca should be summed over MPI ranks since planewave basis is distributed
-        // but not for now (I'll make sure serial version works first)
-        // Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+#ifdef __MPI
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
+#endif
 
         paw_atom_list[iat].set_ca(ca, weight);
-        paw_atom_list[iat].accumulate_rhoij();
+        paw_atom_list[iat].accumulate_rhoij(current_spin);
     }
 }
 
-std::vector<std::vector<double>> Paw_Cell::get_rhoij()
+/*
+std::vector<std::vector<std::vector<double>>> Paw_Cell::get_rhoij()
 {
-    std::vector<std::vector<double>> rhoij_all;
+    std::vector<std::vector<std::vector<double>>> rhoij_all;
     rhoij_all.resize(nat);
     for(int iat = 0; iat < nat; iat ++)
     {
@@ -471,6 +508,7 @@ std::vector<std::vector<double>> Paw_Cell::get_rhoij()
 
     return rhoij_all;
 }
+*/
 
 void Paw_Cell::get_rhoijp(std::vector<std::vector<double>> & rhoijp,
         std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel)
@@ -500,10 +538,13 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             vnlpsi[ipw] = psi[ipw];
         }        
     }
-    //for(int ipw = 0; ipw < npw; ipw ++)
-    //{
-    //    vnlpsi[ipw] = 0.0;
-    //}
+    else
+    {
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            vnlpsi[ipw] = 0.0;
+        }
+    }
 
     for(int iat = 0; iat < nat; iat ++)
     {
@@ -530,9 +571,9 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             }
         }
 
-        // ca should be summed over MPI ranks since planewave basis is distributed
-        // but not for now (I'll make sure serial version works first)
-        // Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+#ifdef __MPI
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
+#endif
 
         // sum_ij D_ij ca_j
         std::vector<std::complex<double>> v_ca;
@@ -545,7 +586,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             {
                 if(mode == 0) // V_{NL}|psi>
                 {
-                    v_ca[iproj] += paw_atom_list[iat].get_dij()[iproj*nproj+jproj] * ca[jproj];
+                    v_ca[iproj] += paw_atom_list[iat].get_dij()[current_spin][iproj*nproj+jproj] * ca[jproj];
                 }
                 else if(mode == 1) // (S+I)|psi>
                 {

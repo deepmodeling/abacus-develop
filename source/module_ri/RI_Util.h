@@ -42,7 +42,19 @@ namespace RI_Util
 			for(int ic=0; ic<m_old.nc; ++ic)
 				m_new(ir,ic) = RI::Global_Func::convert<Tdata>(m_old(ir,ic));
 		return m_new;
-	}
+    }
+
+    template<typename Tdata>
+    RI::Tensor<Tdata>
+        Vector_to_Tensor(const std::vector<Tdata>& m_old, const int nr, const int nc)
+    {
+        assert(nr * nc == m_old.size());
+        RI::Tensor<Tdata> m_new({ static_cast<size_t>(nr), static_cast<size_t>(nc) });
+        for (int ir = 0; ir < nr; ++ir)
+            for (int ic = 0; ic < nc; ++ic)
+                m_new(ir, ic) = RI::Global_Func::convert<Tdata>(m_old[ir * nc + ic]);
+        return m_new;
+    }
 }
 
 #include "RI_Util.hpp"

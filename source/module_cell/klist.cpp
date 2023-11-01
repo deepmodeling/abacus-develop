@@ -6,6 +6,9 @@
 #include "module_base/parallel_common.h"
 #include "module_base/memory.h"
 #include "module_io/berryphase.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 K_Vectors::K_Vectors()
 {
@@ -107,7 +110,11 @@ void K_Vectors::set(
                 this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
             }
             else
-                ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint", "Refine the lattice parameters in STRU or use a different`symmetry_prec`. ");
+                ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint", "Possible solutions: \n \
+1. Refine the lattice parameters in STRU;\n \
+2. Use a different`symmetry_prec`.  \n \
+3. Close symemtry: set `symmetry` to 0 in INPUT. \n \
+4. Set `symmetry_autoclose` to 1 in INPUT to automatically close symmetry when this error occurs.");
         }
         if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
@@ -157,6 +164,10 @@ void K_Vectors::set(
     this->print_klists(GlobalV::ofs_running);
 
 	//std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
+
+#ifdef USE_PAW
+    GlobalC::paw_cell.set_isk(nks,isk.data());
+#endif
 
     return;
 }
@@ -483,7 +494,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         }
     }
 
-    this->nks = this->nkstot;
+    this->nkstot_full = this->nks = this->nkstot;
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot",nkstot);
     return 1;
@@ -546,7 +557,7 @@ void K_Vectors::update_use_ibz( void )
     ModuleBase::TITLE("K_Vectors","update_use_ibz");
     assert( nkstot_ibz > 0 );
 
-	// update nkstot
+    // update nkstot
     this->nkstot = this->nkstot_ibz;
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot now",nkstot);
@@ -1034,6 +1045,8 @@ void K_Vectors::mpi_k(void)
     Parallel_Common::bcast_int(nspin);
 
     Parallel_Common::bcast_int(nkstot);
+
+    Parallel_Common::bcast_int(nkstot_full);
 
     Parallel_Common::bcast_int(nmp, 3);
 

@@ -1,11 +1,12 @@
 #ifndef K_VECTORS_H
 #define K_VECTORS_H
 
+#include <vector>
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix3.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include <vector>
 
 class K_Vectors
 {
@@ -23,8 +24,9 @@ public:
     std::vector<int> ibz2bz;					// mohan added 2009-05-18
 
     int nks;						// number of k points in this pool(processor, up+dw)
-    int nkstot;						// total number of k points
-    int nkstot_ibz;
+    int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points
+    int nkstot_ibz;             /// number of k points in IBZ
+    int nkstot_full;    /// number of k points in full k mesh
 
     int nmp[3];						// Number of Monhorst-Pack
 

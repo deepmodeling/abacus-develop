@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 ntype			1
-symmetry		-1
+symmetry		0
 gamma_only      0
 nspin			1
 
@@ -24,7 +24,7 @@ smearing_method		gauss
 smearing_sigma		0.002
 
 #Parameters (5.Mixing)
-mixing_type		pulay
+mixing_type		broyden
 
 #Parameters (7.Hybrid)
 dft_functional				hse

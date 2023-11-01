@@ -66,6 +66,41 @@ TEST_F(TimerTest, Start)
 	EXPECT_FALSE(ModuleBase::timer::timer_pool[""]["total"].start_flag);
 }
 
+TEST_F(TimerTest, write_to_json)
+{
+	ModuleBase::timer::tick("wavefunc","evc");
+	std::this_thread::sleep_for(std::chrono::microseconds(T_Elapse)); // 0.1 ms
+	ModuleBase::timer::tick("wavefunc","evc");
+	ModuleBase::timer::write_to_json("tmp.json");
+	// check if tmp.json exists
+	ifs.open("tmp.json");
+	EXPECT_TRUE(ifs.good());
+
+	// read all lines and remove all spaces and tabs and newlines
+	std::string line;
+	std::string tmp;
+	std::string content;
+	while(getline(ifs,line))
+	{
+		tmp = line;
+		tmp.erase(std::remove(tmp.begin(),tmp.end(),' '),tmp.end());
+		tmp.erase(std::remove(tmp.begin(),tmp.end(),'\t'),tmp.end());
+		tmp.erase(std::remove(tmp.begin(),tmp.end(),'\n'),tmp.end());
+		content += tmp;
+	}
+
+	// check if the content is correct
+	// shuold be like this:
+	// {"total": 0, "sub":[{"class_name": "wavefunc","sub":[{"name":"evc","cpu_second": 0.000318,"calls":2,"cpu_second_per_call":0.000159,"cpu_second_per_total": null}]}]}
+	EXPECT_THAT(content,testing::HasSubstr("\"total\":"));
+	EXPECT_THAT(content,testing::HasSubstr("\"sub\":[{\"class_name\":\"wavefunc\",\"sub\":[{\"name\":\"evc\",\"cpu_second\":"));
+	EXPECT_THAT(content,testing::HasSubstr("\"calls\":2,\"cpu_second_per_call\":"));
+	EXPECT_THAT(content,testing::HasSubstr("\"cpu_second_per_total\":"));
+	EXPECT_THAT(content,testing::HasSubstr("}]}]}"));
+	ifs.close();
+	remove("tmp.json");
+}
+
 TEST_F(TimerTest, PrintAll)
 {
 	ModuleBase::timer::tick("wavefunc","evc");
@@ -78,16 +113,30 @@ TEST_F(TimerTest, PrintAll)
 	output = testing::internal::GetCapturedStdout();
 	ofs.close();
 	// checout output on screen
+	std::cout << "Get captured stdout: \n" << std::endl;
+	std::cout << output << std::endl;
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
+	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
+	EXPECT_THAT(output,testing::HasSubstr("NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
 	// check output in file
 	ifs.open("tmp");
+	std::cout << "Capture contents line by line from output file: \n" << std::endl;
+	getline(ifs,output);
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 	getline(ifs,output);
 	getline(ifs,output);
-	getline(ifs,output);
-	getline(ifs,output);
-	getline(ifs,output);
+	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
+	EXPECT_THAT(output,testing::HasSubstr("NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
 	ifs.close();
+	remove("time.json");
 }
 
 TEST_F(TimerTest, PrintUntilNow)
@@ -108,15 +157,28 @@ TEST_F(TimerTest, Finish)
 	output = testing::internal::GetCapturedStdout();
 	ofs.close();
 	// checout output on screen
+	std::cout << "Get captured stdout: \n" << std::endl;
+	std::cout << output << std::endl;
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
+	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
+	EXPECT_THAT(output,testing::HasSubstr("NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
 	// check output in file
 	ifs.open("tmp");
+	std::cout << "Capture contents line by line from output file: \n" << std::endl;
+	getline(ifs,output);
+	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
 	getline(ifs,output);
 	getline(ifs,output);
-	getline(ifs,output);
-	getline(ifs,output);
-	getline(ifs,output);
+	EXPECT_THAT(output,testing::HasSubstr("CLASS_NAME"));
+	EXPECT_THAT(output,testing::HasSubstr("NAME"));
 	EXPECT_THAT(output,testing::HasSubstr("TIME(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("CALLS"));
+	EXPECT_THAT(output,testing::HasSubstr("AVG(Sec)"));
+	EXPECT_THAT(output,testing::HasSubstr("PER(%)"));
 	ifs.close();
 }
 

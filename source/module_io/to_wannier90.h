@@ -70,16 +70,24 @@ class toWannier90
     // void kmesh_get_bvectors(int multi, int reference_kpt, double dist_shell,
     // std::vector<ModuleBase::Vector3<double>>& bvector); void get_nnkpt_last();
 
-    void init_wannier_pw(const ModuleBase::matrix& ekb,
-        const ModulePW::PW_Basis* rhopw,
+    void init_wannier_pw(const bool out_wannier_mmn, 
+        const bool out_wannier_amn, 
+        const bool out_wannier_unk, 
+        const bool out_wannier_eig,
+        const bool wvfn_formatted,
+        const ModuleBase::matrix& ekb,
         const ModulePW::PW_Basis_K* wfcpw,
         const ModulePW::PW_Basis_Big* bigpw,
         const K_Vectors& kv,
         const psi::Psi<std::complex<double>>* psi = nullptr);
-    #ifdef __LCAO
-    void init_wannier_lcao(const Grid_Technique& gt,
+#ifdef __LCAO
+    void init_wannier_lcao(const bool out_wannier_mmn, 
+                           const bool out_wannier_amn, 
+                           const bool out_wannier_unk, 
+                           const bool out_wannier_eig,
+                           const bool wvfn_formatted,
+                           const Grid_Technique& gt,
                            const ModuleBase::matrix& ekb,
-                           const ModulePW::PW_Basis* rhopw,
                            const ModulePW::PW_Basis_K* wfcpw,
                            const ModulePW::PW_Basis_Big* bigpw,
                            const Structure_Factor& sf,
@@ -89,9 +97,7 @@ class toWannier90
     void read_nnkp(const K_Vectors& kv);
     void outEIG(const ModuleBase::matrix& ekb);
     void cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);
-    void cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw,
-                 const ModulePW::PW_Basis* rhopw,
-                 const ModulePW::PW_Basis_K* wfcpw);
+    void cal_Mmn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);
     void produce_trial_in_pw(const psi::Psi<std::complex<double>>& psi_pw,
                              const int& ik,
                              const ModulePW::PW_Basis_K* wfcpw,
@@ -109,18 +115,20 @@ class toWannier90
                                  const int npwx,
                                  ModuleBase::ComplexMatrix &trial_orbitals_k);
     void integral(const int meshr, const double *psir, const double *r, const double *rab, const int &l, double *table);
-    void writeUNK(const ModulePW::PW_Basis_K* wfcpw,
+    void writeUNK(const bool wvfn_formatted,
+                  const ModulePW::PW_Basis_K* wfcpw,
                   const psi::Psi<std::complex<double>>& psi_pw,
                   const ModulePW::PW_Basis_Big* bigpw);
     // void ToRealSpace(const int &ik, const int &ib, const ModuleBase::ComplexMatrix *evc, std::complex<double> *psir,
     // const ModuleBase::Vector3<double> G); std::complex<double> unkdotb(const std::complex<double> *psir, const int
     // ikb, const int bandindex, const ModuleBase::ComplexMatrix *psi_pw);
-    std::complex<double> unkdotkb(const ModulePW::PW_Basis* rhopw,
-                                  const ModulePW::PW_Basis_K* wfcpw,
+    std::complex<double> unkdotkb(const ModulePW::PW_Basis_K* wfcpw,
                                   const int& ik,
                                   const int& ikb,
                                   const int& iband_L,
                                   const int& iband_R,
+                                  std::complex<double>* psir,
+                                  std::complex<double>* phase,
                                   const ModuleBase::Vector3<double> G,
                                   const psi::Psi<std::complex<double>>& psi_pw);
     // std::complex<double> gamma_only_cal(const int &ib_L, const int &ib_R, const ModuleBase::ComplexMatrix *psi_pw,

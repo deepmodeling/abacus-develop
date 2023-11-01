@@ -62,7 +62,7 @@ ifeq ($(INTEL), ON)
 ##==========================
     LIBS += -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
     INCLUDES += -I${MKLROOT}/include/fftw
-    OPTS += -simd -qopenmp
+    OPTS +=  -qopenmp
 else
 ##==========================
 ## fftw 
@@ -110,6 +110,10 @@ matrix3.o\
 tool_quit.o\
 mymath.o\
 timer.o\
+formatter_fmt.o\
+formatter_physfmt.o\
+formatter_table.o\
+formatter_contextfmt.o\
 pw_basis.o\
 pw_distributer.o\
 pw_init.o\
@@ -121,7 +125,7 @@ fft.o\
 pw_basis_k.o\
 pw_transform_k.o\
 memory.o\
-memory_op.o\
+psi_memory_op.o\
 depend_mock.o
 
 OTHER_OBJS0=

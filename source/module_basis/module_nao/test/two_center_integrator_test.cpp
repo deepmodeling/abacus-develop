@@ -20,13 +20,13 @@ using iclock = std::chrono::high_resolution_clock;
 #endif
 
 /***********************************************************
- *      Unit test of class "TwoCenterTable"
+ *      Unit test of class "TwoCenterIntegrator"
  ***********************************************************/
 /*!
  *  Tested functions:
  *
  *  - build
- *      - builds a two-center integral radial table from two RadialCollection objects
+ *      - builds an object for doing a specific two-center integral
  *                                                                      */
 class TwoCenterIntegratorTest : public ::testing::Test
 {
@@ -75,6 +75,10 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
 {
     nfile = 3;
     orb.build(nfile, file, 'o');
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    orb.set_transformer(sbt);
+
     double rmax = orb.rcut_max() * 2.0;
     double dr = 0.01;
     int nr = static_cast<int>(rmax / dr) + 1;
@@ -89,8 +93,8 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
 
     start = iclock::now();
 
-    S_intor.tabulate(orb, orb, 'S', nr, rmax, true);
-    T_intor.tabulate(orb, orb, 'T', nr, rmax, true);
+    S_intor.tabulate(orb, orb, 'S', nr, rmax);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax);
 
     dur = iclock::now() - start;
     std::cout << "time elapsed = " << dur.count() << " s" << std::endl;
@@ -126,26 +130,26 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
                                     // S
                                     vR = vR0;
                                     vR[2] += dx;
-                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_p);
+                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_p);
 
                                     vR = vR0;
                                     vR[2] -= dx;
-                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_m);
+                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_m);
 
-                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, true, grad_elem);
+                                    S_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, nullptr, grad_elem);
 
                                     EXPECT_NEAR( (elem_p - elem_m) / (2. * dx), grad_elem[2], tol_d);
 
                                     // T
                                     vR = vR0;
                                     vR[2] += dx;
-                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_p);
+                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_p);
 
                                     vR = vR0;
                                     vR[2] -= dx;
-                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, false, &elem_m);
+                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, &elem_m);
 
-                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, true, grad_elem);
+                                    T_intor.calculate(t1, l1, izeta1, m1, t2, l2, izeta2, m2, vR, nullptr, grad_elem);
 
                                     EXPECT_NEAR( (elem_p - elem_m) / (2. * dx), grad_elem[2], tol_d);
                                 }

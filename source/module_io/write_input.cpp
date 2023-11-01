@@ -1,7 +1,7 @@
-#include "module_io/input.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_io/input.h"
 
 void Input::Print(const std::string &fn) const
 {
@@ -88,6 +88,13 @@ void Input::Print(const std::string &fn) const
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "ecutrho", ecutrho, "#energy cutoff for charge density and potential");
+    ModuleBase::GlobalFunc::OUTP(ofs, "erf_ecut", erf_ecut, "#the value of the constant energy cutoff");
+    ModuleBase::GlobalFunc::OUTP(ofs,
+                                 "erf_height",
+                                 erf_height,
+                                 "#the height of the energy step for reciprocal vectors");
+    ModuleBase::GlobalFunc::OUTP(ofs, "erf_sigma", erf_sigma, "#the width of the energy step for reciprocal vectors");
     if (ks_solver == "cg")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_nmax", pw_diag_nmax, "max iteration number for cg");
@@ -122,6 +129,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "nx", nx, "number of points along x axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "ny", ny, "number of points along y axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "nz", nz, "number of points along z axis for FFT grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsx", nsx, "number of points along x axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsy", nsy, "number of points along y axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nsz", nsz, "number of points along z axis for FFT smooth grid");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "cell_factor",
                                  cell_factor,
@@ -184,6 +194,8 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dm", out_dm, ">0 output density matrix");
 ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print out bandgap");
 
+    ModuleBase::GlobalFunc::OUTP(ofs, "use_paw", use_paw, "whether to use PAW in pw calculation");
+
     // for deepks
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_out_labels", deepks_out_labels, ">0 compute descriptor for deepks");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_scf", deepks_scf, ">0 add V_delta to Hamiltonian");
@@ -215,7 +227,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_element_info", out_element_info, "output (projected) wavefunction of each element");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_r", out_mat_r, "output r(R) matrix");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_lcao", out_wfc_lcao, "ouput LCAO wave functions, 0, no output 1: text, 2: binary");
     ModuleBase::GlobalFunc::OUTP(ofs, "bx", bx, "division of an element grid in FFT grid along x");
     ModuleBase::GlobalFunc::OUTP(ofs, "by", by, "division of an element grid in FFT grid along y");
     ModuleBase::GlobalFunc::OUTP(ofs, "bz", bz, "division of an element grid in FFT grid along z");
@@ -230,7 +242,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ofs << "\n#Parameters (7.Charge Mixing)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; pulay; broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
-    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay or broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_tau", mixing_tau, "whether to mix tau in mGGA calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dftu", mixing_dftu, "whether to mix locale in DFT+U calculation");
@@ -393,6 +405,11 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "towannier90", towannier90, "use wannier90 code interface or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "nnkpfile", nnkpfile, "the wannier90 code nnkp file name");
     ModuleBase::GlobalFunc::OUTP(ofs, "wannier_spin", wannier_spin, "calculate spin in wannier90 code interface");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_mmn", out_wannier_mmn, "output .mmn file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_amn", out_wannier_amn, "output .amn file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_unk", out_wannier_unk, "output UNK. file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_eig", out_wannier_eig, "output .eig file or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_wvfn_formatted", out_wannier_wvfn_formatted, "output UNK. file in text format or in binary format");
 
     ofs << "\n#Parameters (18.implicit_solvation)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "imp_sol", imp_sol, "calculate implicit solvation correction or not");
@@ -419,7 +436,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_read_kernel", of_read_kernel, "If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_kernel_file", of_kernel_file, "The name of WT kernel file.");
 
-    ofs << "\n#Parameters (19.dft+u)" << std::endl;
+    ofs << "\n#Parameters (20.dft+u)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
@@ -450,6 +467,16 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_smooth",	bessel_descriptor_smooth, "spherical bessel smooth or not");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_sigma",		bessel_descriptor_sigma, "spherical bessel smearing_sigma");
+   /// deltaspin variables
+   ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_mag_switch", sc_mag_switch, "0: no spin-constrained DFT; 1: constrain atomic magnetization");
+   ModuleBase::GlobalFunc::OUTP(ofs, "decay_grad_switch", decay_grad_switch, "switch to control gradient break condition");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_thr", sc_thr, "Convergence criterion of spin-constrained iteration (RMS) in uB");
+   ModuleBase::GlobalFunc::OUTP(ofs, "nsc", nsc, "Maximal number of spin-constrained iteration");
+   ModuleBase::GlobalFunc::OUTP(ofs, "nsc_min", nsc_min, "Minimum number of spin-constrained iteration");
+   ModuleBase::GlobalFunc::OUTP(ofs, "alpha_trial", alpha_trial, "Initial trial step size for lambda in eV/uB^2");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sccut", sccut, "Maximal step size for lambda in eV/uB");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_file", sc_file, "file name for parameters used in non-collinear spin-constrained DFT (json format)");
 
     ofs.close();
     return;

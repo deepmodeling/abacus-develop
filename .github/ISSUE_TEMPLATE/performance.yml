@@ -1,0 +1,32 @@
+name: Performance
+description: For users or developers to report software performance issues from a user perspective, such as slow response times, high resource usage, or scalability issues.
+labels: [Performance]
+assignees: [insert assignee here]
+
+body:
+- type: textarea
+  attributes:
+    label: Details
+    description: |
+      Please provide details about the performance issue you are experiencing. Include any relevant information such as the system you are using ABACUS with, the specific task you were performing, and any error messages you received.
+    placeholder: |
+      Example: I am calculate a system with 200 atoms, and the SCF calculation is very slow. I am performing the calculation on a cluster with 4 nodes, each with 32 cores and 128 GB memory. I have tried to increase the number of MPI processes, but the calculation is still slow ...
+  validations:
+      required: true
+- type: checkboxes
+  attributes:
+    label: Task list for Issue attackers (only for developers)
+    options:
+      - label: Reproduce the performance issue on a similar system or environment.
+      - label: Identify the specific section of the code causing the performance issue.
+      - label: Investigate the issue and determine the root cause.
+      - label: Research best practices and potential solutions for the identified performance issue.
+      - label: Implement the chosen solution to address the performance issue.
+      - label: Test the implemented solution to ensure it improves performance without introducing new issues.
+      - label: Optimize the solution if necessary, considering trade-offs between performance and other factors (e.g., code complexity, readability, maintainability).
+      - label: Review and incorporate any relevant feedback from users or developers.
+      - label: Merge the improved solution into the main codebase and notify the issue reporter.
+- type: markdown
+  attributes:
+    value: >
+      Thank you for reporting this performance issue. We will investigate and do our best to resolve it. 🚀

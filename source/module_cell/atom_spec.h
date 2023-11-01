@@ -31,7 +31,6 @@ public:
     int nwl; // max L(Angular momentum) (for local basis)
     double Rcut; //pengfei Li 16-2-29
     int *l_nchi; // number of chi for each L
-
     int stapos_wf; // start position of wave functions
 
     std::string label; // atomic symbol
@@ -40,6 +39,7 @@ public:
 	ModuleBase::Vector3<double> *taud;// Direct coordinates of each atom in this type.
     ModuleBase::Vector3<double> *vel;// velocities of each atom in this type.
     ModuleBase::Vector3<double> *force; // force acting on each atom in this type.
+    std::string label_orb; // atomic Element symbol in the orbital file of lcao
 
 	double* mag;
 	double* angle1;//spin angle, added by zhengdy-soc

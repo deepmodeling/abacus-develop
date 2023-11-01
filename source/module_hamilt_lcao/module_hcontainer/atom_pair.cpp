@@ -135,6 +135,9 @@ AtomPair<T>::AtomPair(const int& atom_i_,
     this->col_size = col_atom_begin[atom_j + 1] - col_atom_begin[atom_j];
     this->R_index.resize(3, 0);
     this->current_R = 0;
+    this->R_index[0] = rx;
+    this->R_index[1] = ry;
+    this->R_index[2] = rz;
     if (existed_matrix != nullptr)
     {
         this->ldc = row_atom_begin[natom] - row_atom_begin[0];
@@ -353,10 +356,11 @@ template <typename T>
 BaseMatrix<T>& AtomPair<T>::get_HR_values(int rx_in, int ry_in, int rz_in)
 {
     // find existed R index
-    if (this->find_R(rx_in, ry_in, rz_in))
+    const int r_index = this->find_R(rx_in, ry_in, rz_in);
+    if (r_index != -1)
     {
         // if found, return this->values[current_R]
-        return this->values[current_R];
+        return this->values[r_index];
     }
     // if not found, add a new BaseMatrix for this R index
     R_index.push_back(rx_in);
@@ -373,10 +377,11 @@ template <typename T>
 const BaseMatrix<T>& AtomPair<T>::get_HR_values(int rx_in, int ry_in, int rz_in) const
 {
     // if current_R is -1, R index has not been fixed, find existed R index
-    if (this->find_R(rx_in, ry_in, rz_in))
+    const int r_index = this->find_R(rx_in, ry_in, rz_in);
+    if (r_index != -1)
     {
         // if found, return this->values[current_R]
-        return this->values[current_R];
+        return this->values[r_index];
     }
     // if not found, throw a error message
     else
@@ -398,30 +403,31 @@ BaseMatrix<T>& AtomPair<T>::get_HR_values(const int& index) const
 
 // find_R
 template <typename T>
-bool AtomPair<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) const
+int AtomPair<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) const
 {
     for (int i = 0; i < this->R_index.size(); i += 3)
     {
         if (R_index[i] == rx_in && R_index[i + 1] == ry_in && R_index[i + 2] == rz_in)
         {
             this->current_R = i / 3;
-            return true;
+            return (i / 3);
         }
     }
-    return false;
+    return (-1);
 }
 
 // find_matrix
 template <typename T>
 const BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const
 {
-    if(!this->find_R(rx_in, ry_in, rz_in))
+    const int r_index = this->find_R(rx_in, ry_in, rz_in);
+    if(r_index == -1)
     {
         return nullptr;
     }
     else
     {
-        return &(this->values[this->current_R]);
+        return &(this->values[r_index]);
     }
 }
 
@@ -429,13 +435,14 @@ const BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in
 template <typename T>
 BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, const int& rz_in)
 {
-    if(!this->find_R(rx_in, ry_in, rz_in))
+    const int r_index = this->find_R(rx_in, ry_in, rz_in);
+    if(r_index == -1)
     {
         return nullptr;
     }
     else
     {
-        return &(this->values[this->current_R]);
+        return &(this->values[r_index]);
     }
 }
 
@@ -468,7 +475,7 @@ void AtomPair<T>::merge(const AtomPair<T>& other, bool skip_R)
         }
         const BaseMatrix<T>& matrix_tmp = other.get_HR_values(i / 3);
         //if not found, push_back this BaseMatrix to this->values
-        if (!this->find_R(rx, ry, rz))
+        if (this->find_R(rx, ry, rz) == -1)
         {
             this->R_index.push_back(rx);
             this->R_index.push_back(ry);
@@ -497,10 +504,18 @@ void AtomPair<T>::merge_to_gamma()
     this->R_index.resize(3, 0);
     // merge all values to first BaseMatrix
     BaseMatrix<T> tmp(this->row_size, this->col_size);
-    tmp.allocate(true);
+    bool empty = true;
     for (int i = 0; i < this->values.size(); i++)
     {
-        tmp.add_array(this->values[i].get_pointer());
+        if(this->values[i].get_pointer() != nullptr)
+        {
+            if(empty)
+            {
+                tmp.allocate(true);
+                empty = false;
+            }
+            tmp.add_array(this->values[i].get_pointer());
+        }
     }
     this->values.clear();
     this->values.push_back(tmp);

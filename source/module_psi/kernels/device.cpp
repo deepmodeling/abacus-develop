@@ -27,7 +27,9 @@ static bool is_init = false;
 template<> AbacusDevice_t get_device_type <DEVICE_CPU> (const DEVICE_CPU* dev) {
     return CpuDevice;
 }
-
+template<> std::string get_current_precision(const double* var) {
+    return "double";
+}
 template<> std::string get_current_precision (const std::complex<float> * var) {
     return "single";
 }
@@ -565,7 +567,7 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
 #else
     str = "cpu";
 #endif
-    if (ks_solver != "cg" && ks_solver != "dav") {
+    if (ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg") {
         str = "cpu";
     }
     if (basis_type != "pw") {

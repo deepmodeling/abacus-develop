@@ -245,8 +245,14 @@ public:
 
 #ifdef __LCAO
 	InfoNonlocal infoNL;//store nonlocal information of lcao, added by zhengdy 2021-09-07
-    void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
 #endif
+
+    /// @brief read number of numerical orbitals for each angular momentum
+    /// @param it index of atom type
+    /// @param orb_file orbital filename
+    /// @param ofs_running ofstream
+    /// @param atom Atom instance stored in UnitCell
+    void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
 	int read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running); // read in the atom information for each type of atom
 	bool read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
 
@@ -286,6 +292,15 @@ public:
 
     /// @brief calculate the total number of electrons in system (GlobalV::nelec)
     void cal_nelec(double& nelec);
+  
+    /// @brief check consistency between two atom labels from STRU and pseudo or orb file
+    void compare_atom_labels(std::string label1, std::string label2);
+    /// @brief get atomCounts, which is a map from element type to atom number
+    std::map<int, int> get_atomCounts() const;
+    /// @brief get orbitalCounts, which is a map from element type to orbital number
+    std::map<int, int> get_orbitalCounts() const;
+    /// @brief get lnchiCounts, which is a map from element type to the l:nchi map
+    std::map<int, std::map<int, int>> get_lnchiCounts() const;
 };
 
 #endif //unitcell class

@@ -215,8 +215,8 @@ void ModuleIO::save_HS_triangle(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_double_all(lineH, GlobalV::NLOCAL - i);
-            Parallel_Reduce::reduce_double_all(lineS, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_all(lineH, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_all(lineS, GlobalV::NLOCAL - i);
 
             if (GlobalV::DRANK == 0)
             {
@@ -316,8 +316,8 @@ void ModuleIO::save_HS_triangle(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_double_all(lineH, GlobalV::NLOCAL - i);
-            Parallel_Reduce::reduce_double_all(lineS, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_all(lineH, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_all(lineS, GlobalV::NLOCAL - i);
 
             if (GlobalV::DRANK == 0)
             {
@@ -459,8 +459,8 @@ void ModuleIO::save_HS_complete(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_double_all(lineH, GlobalV::NLOCAL);
-            Parallel_Reduce::reduce_double_all(lineS, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_all(lineH, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_all(lineS, GlobalV::NLOCAL);
 
             if (GlobalV::DRANK == 0)
             {
@@ -560,8 +560,8 @@ void ModuleIO::save_HS_complete(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_double_all(lineH, GlobalV::NLOCAL);
-            Parallel_Reduce::reduce_double_all(lineS, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_all(lineH, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_all(lineS, GlobalV::NLOCAL);
 
             if (GlobalV::DRANK == 0)
             {
@@ -735,8 +735,8 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_complex_double_pool(lineH, GlobalV::NLOCAL - i);
-            Parallel_Reduce::reduce_complex_double_pool(lineS, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_pool(lineH, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_pool(lineS, GlobalV::NLOCAL - i);
 
             if (GlobalV::DRANK == 0)
             {
@@ -836,8 +836,8 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_complex_double_pool(lineH, GlobalV::NLOCAL - i);
-            Parallel_Reduce::reduce_complex_double_pool(lineS, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_pool(lineH, GlobalV::NLOCAL - i);
+            Parallel_Reduce::reduce_pool(lineS, GlobalV::NLOCAL - i);
 
             if (GlobalV::DRANK == 0)
             {
@@ -980,8 +980,8 @@ void ModuleIO::save_HS_complex_complete(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_complex_double_pool(lineH, GlobalV::NLOCAL);
-            Parallel_Reduce::reduce_complex_double_pool(lineS, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_pool(lineH, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_pool(lineS, GlobalV::NLOCAL);
 
             if (GlobalV::DRANK == 0)
             {
@@ -1081,8 +1081,8 @@ void ModuleIO::save_HS_complex_complete(const int istep,
                 // do nothing
             }
 
-            Parallel_Reduce::reduce_complex_double_pool(lineH, GlobalV::NLOCAL);
-            Parallel_Reduce::reduce_complex_double_pool(lineS, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_pool(lineH, GlobalV::NLOCAL);
+            Parallel_Reduce::reduce_pool(lineS, GlobalV::NLOCAL);
 
             if (GlobalV::DRANK == 0)
             {
@@ -1257,17 +1257,17 @@ void ModuleIO::save_HSR_tr(const int current_spin, LCAO_Matrix &lm)
                         // do nothing
                     }
 
-                    // Parallel_Reduce::reduce_double_all(lineH,GlobalV::NLOCAL-i);
-                    // Parallel_Reduce::reduce_double_all(lineS,GlobalV::NLOCAL-i);
+                    // Parallel_Reduce::reduce_all(lineH,GlobalV::NLOCAL-i);
+                    // Parallel_Reduce::reduce_all(lineS,GlobalV::NLOCAL-i);
                     if (GlobalV::NSPIN != 4)
                     {
-                        Parallel_Reduce::reduce_double_all(lineH, GlobalV::NLOCAL);
-                        Parallel_Reduce::reduce_double_all(lineS, GlobalV::NLOCAL);
+                        Parallel_Reduce::reduce_all(lineH, GlobalV::NLOCAL);
+                        Parallel_Reduce::reduce_all(lineS, GlobalV::NLOCAL);
                     }
                     else
                     {
-                        Parallel_Reduce::reduce_complex_double_all(lineH_soc, GlobalV::NLOCAL);
-                        Parallel_Reduce::reduce_complex_double_all(lineS_soc, GlobalV::NLOCAL);
+                        Parallel_Reduce::reduce_all(lineH_soc, GlobalV::NLOCAL);
+                        Parallel_Reduce::reduce_all(lineS_soc, GlobalV::NLOCAL);
                     }
 
                     if (GlobalV::DRANK == 0)

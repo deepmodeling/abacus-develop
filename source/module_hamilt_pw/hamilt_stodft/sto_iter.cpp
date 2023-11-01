@@ -88,7 +88,7 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
 	    //sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
 	    zgemm_(&transC, &transN, &GlobalV::NBANDS, &nchipk, &npw, &ModuleBase::ONE, 
                 &psi(ik,0,0), &npwx, wfgout, &npwx, &ModuleBase::ZERO, sum, &GlobalV::NBANDS);
-	    Parallel_Reduce::reduce_complex_double_pool(sum, GlobalV::NBANDS * nchipk);
+        Parallel_Reduce::reduce_pool(sum, GlobalV::NBANDS * nchipk);
     
 	    //psi -= psi * sum
 	    zgemm_(&transN, &transN, &npw, &nchipk, &GlobalV::NBANDS, &ModuleBase::NEG_ONE, 
@@ -421,7 +421,7 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
     }
 }
 
-void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<double>* pHamilt, ModulePW::PW_Basis_K* wfc_basis)
+void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pes,hamilt::Hamilt<std::complex<double>>* pHamilt, ModulePW::PW_Basis_K* wfc_basis)
 {  
     ModuleBase::TITLE("Stochastic_Iter","sum_stoband");
     ModuleBase::timer::tick("Stochastic_Iter","sum_stoband");

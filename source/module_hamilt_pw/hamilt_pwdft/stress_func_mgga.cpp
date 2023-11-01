@@ -116,7 +116,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     {
         for (int m = 0; m < 3; m++)
         {
-            Parallel_Reduce::reduce_double_pool(sigma_mgga[l][m]);
+            Parallel_Reduce::reduce_pool(sigma_mgga[l][m]);
         }
     }
 #endif

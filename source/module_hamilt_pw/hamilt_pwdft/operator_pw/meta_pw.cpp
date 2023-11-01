@@ -5,13 +5,12 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_base/tool_quit.h"
 
-using hamilt::Meta;
-using hamilt::OperatorPW;
+namespace hamilt {
 
-template <typename FPTYPE, typename Device>
-Meta<OperatorPW<FPTYPE, Device>>::Meta(FPTYPE tpiba_in,
+template<typename T, typename Device>
+Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
                                        const int* isk_in,
-                                       const FPTYPE* vk_in,
+                                       const Real* vk_in,
                                        const int vk_row,
                                        const int vk_col,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
@@ -31,19 +30,20 @@ Meta<OperatorPW<FPTYPE, Device>>::Meta(FPTYPE tpiba_in,
     }
 }
 
-template<typename FPTYPE, typename Device>
-Meta<OperatorPW<FPTYPE, Device>>::~Meta()
+template<typename T, typename Device>
+Meta<OperatorPW<T, Device>>::~Meta()
 {
     delmem_complex_op()(this->ctx, this->porter);
 }
 
-template<typename FPTYPE, typename Device>
-void Meta<OperatorPW<FPTYPE, Device>>::act(
-    const psi::Psi<std::complex<FPTYPE>, Device> *psi_in, 
-    const int n_npwx, 
-    const std::complex<FPTYPE>* tmpsi_in, 
-    std::complex<FPTYPE>* tmhpsi
-)const
+template<typename T, typename Device>
+void Meta<OperatorPW<T, Device>>::act(
+    const int nbands,
+    const int nbasis,
+    const int npol,
+    const T* tmpsi_in,
+    T* tmhpsi,
+    const int ngk_ik)const
 {
     if (XC_Functional::get_func_type() != 3)
     {
@@ -52,17 +52,15 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
 
     ModuleBase::timer::tick("Operator", "MetaPW");
 
-    const int npw = psi_in->get_ngk(this->ik);
     const int current_spin = this->isk[this->ik];
-    this->max_npw = psi_in->get_nbasis() / psi_in->npol;
+    int max_npw = nbasis / npol;
     //npol == 2 case has not been considered
-    this->npol = psi_in->npol;
 
-    for (int ib = 0; ib < n_npwx; ++ib)
+    for (int ib = 0; ib < nbands; ++ib)
     {
         for (int j = 0; j < 3; j++)
         {
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), tmpsi_in, this->porter);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), tmpsi_in, this->porter);
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
@@ -70,18 +68,18 @@ void Meta<OperatorPW<FPTYPE, Device>>::act(
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
-            meta_op()(this->ctx, this->ik, j, npw, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<FPTYPE>(), wfcpw->get_kvec_c_data<FPTYPE>(), this->porter, tmhpsi, true);
+            meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, tmhpsi, true);
 
         } // x,y,z directions
-        tmhpsi += this->max_npw;
-        tmpsi_in += this->max_npw;
+        tmhpsi += max_npw;
+        tmpsi_in += max_npw;
     }
     ModuleBase::timer::tick("Operator", "MetaPW");
 }
 
-template<typename FPTYPE, typename Device>
+template<typename T, typename Device>
 template<typename T_in, typename Device_in>
-hamilt::Meta<OperatorPW<FPTYPE, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta) {
+Meta<OperatorPW<T, Device>>::Meta(const Meta<OperatorPW<T_in, Device_in>> *meta) {
     this->classname = "Meta";
     this->cal_type = pw_meta;
     this->ik = meta->get_ik();
@@ -97,15 +95,14 @@ hamilt::Meta<OperatorPW<FPTYPE, Device>>::Meta(const Meta<OperatorPW<T_in, Devic
     }
 }
 
-namespace hamilt {
-template class Meta<OperatorPW<float, psi::DEVICE_CPU>>;
-template class Meta<OperatorPW<double, psi::DEVICE_CPU>>;
-// template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
+template class Meta<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
+template class Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
+// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *meta);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Meta<OperatorPW<float, psi::DEVICE_GPU>>;
-template class Meta<OperatorPW<double, psi::DEVICE_GPU>>;
-// template Meta<OperatorPW<double, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
-// template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_CPU>> *meta);
-// template Meta<OperatorPW<double, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<double, psi::DEVICE_GPU>> *meta);
+template class Meta<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
+template class Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
+// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *meta);
+// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *meta);
+// template Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Meta(const Meta<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *meta);
 #endif
 } // namespace hamilt

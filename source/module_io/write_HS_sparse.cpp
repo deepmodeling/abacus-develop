@@ -96,10 +96,10 @@ void ModuleIO::save_HSR_sparse(
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(S_nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(S_nonzero_num, total_R_num);
     for (int ispin = 0; ispin < spin_loop; ++ispin)
     {
-        Parallel_Reduce::reduce_int_all(H_nonzero_num[ispin], total_R_num);
+        Parallel_Reduce::reduce_all(H_nonzero_num[ispin], total_R_num);
     }
 
     if (GlobalV::NSPIN == 2)
@@ -388,7 +388,7 @@ void ModuleIO::save_SR_sparse(
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(S_nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(S_nonzero_num, total_R_num);
 
     for (int index = 0; index < total_R_num; ++index)
     {
@@ -525,7 +525,7 @@ void ModuleIO::save_TR_sparse(
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(T_nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(T_nonzero_num, total_R_num);
 
     for (int index = 0; index < total_R_num; ++index)
     {
@@ -718,9 +718,9 @@ void ModuleIO::save_dH_sparse(
 
     for (int ispin = 0; ispin < spin_loop; ++ispin)
     {
-        Parallel_Reduce::reduce_int_all(dHx_nonzero_num[ispin], total_R_num);
-        Parallel_Reduce::reduce_int_all(dHy_nonzero_num[ispin], total_R_num);
-        Parallel_Reduce::reduce_int_all(dHz_nonzero_num[ispin], total_R_num); 
+        Parallel_Reduce::reduce_all(dHx_nonzero_num[ispin], total_R_num);
+        Parallel_Reduce::reduce_all(dHy_nonzero_num[ispin], total_R_num);
+        Parallel_Reduce::reduce_all(dHz_nonzero_num[ispin], total_R_num);
     }
 
     if (GlobalV::NSPIN == 2)

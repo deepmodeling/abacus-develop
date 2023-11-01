@@ -71,6 +71,11 @@ class Input
     bool towannier90; // add by jingan for wannier90
     std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
+    bool out_wannier_mmn;  // add by renxi for wannier90
+    bool out_wannier_amn;
+    bool out_wannier_unk;
+    bool out_wannier_eig;
+    bool out_wannier_wvfn_formatted;
 
     //==========================================================
     // Stochastic DFT
@@ -158,9 +163,14 @@ class Input
     double ecutwfc; // energy cutoff for wavefunctions
     double ecutrho; // energy cutoff for charge/potential
 
+    double erf_ecut;   // the value of the constant energy cutoff
+    double erf_height; // the height of the energy step for reciprocal vectors
+    double erf_sigma;  // the width of the energy step for reciprocal vectors
+
     int ncx, ncy, ncz; // three dimension of FFT charge/grid
     int nx, ny, nz; // three dimension of FFT wavefunc
     int bx, by, bz; // big mesh ball. mohan add 2011-04-21
+    int nsx, nsy, nsz; // three dimension of FFT smooth charge density
 
     //==========================================================
     // technique
@@ -227,7 +237,8 @@ class Input
 
     std::string init_wfc; // "file","atomic","random"
     std::string init_chg; // "file","atomic"
-
+    bool psi_initializer; // whether use psi_initializer to initialize wavefunctions
+    
     std::string chg_extrap; // xiaohui modify 2015-02-01
 
     int mem_saver; // 1: save psi when nscf calculation.
@@ -253,7 +264,7 @@ class Input
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
-    bool out_wfc_lcao; // output the wave functions in local basis.
+    int out_wfc_lcao; // output the wave functions in local basis.
     bool out_alllog; // output all logs.
     bool out_element_info; // output infomation of all element
 
@@ -546,6 +557,26 @@ class Input
     // variables for test only
     //==========================================================
     bool test_skip_ewald = false;
+
+    //==========================================================
+    // variables for non-collinear spin-constrained DFT (deltaspin)
+    //==========================================================
+    /**
+     * 0: none spin-constrained DFT;
+     * 1: constrain atomic spin;
+     */
+    bool sc_mag_switch; // the switch to open the DeltaSpin function, 0: no spin-constrained DFT; 1: constrain atomic magnetization
+    bool decay_grad_switch;// the switch to use the local approximation of gradient decay, 0: no local approximation; 1: apply the method
+    double sc_thr; // threshold for spin-constrained DFT in uB
+    int nsc; // maximum number of inner lambda loop
+    int nsc_min; // minimum number of inner lambda loop
+    double alpha_trial; // initial trial step size for lambda in eV/uB^2
+    double sccut; // restriction of step size in eV/uB
+    std::string sc_file; // file name for Deltaspin (json format)
+
+    // whether to use PAW
+    //==========================================================
+    bool use_paw = false;
 
   private:
     //==========================================================

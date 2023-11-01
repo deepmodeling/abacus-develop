@@ -31,6 +31,14 @@ class Inverse_Matrix_Complex
 	ModuleBase::ComplexMatrix EA;
 };
 
-
+/**
+ * @brief computes the inverse of a dim*dim real matrix "in" using LAPACK routines
+ * "out" contains the inverse on output; "in" is unchanged
+ *
+ * @param dim [in] dimension of the matrix
+ * @param in [in] input matrix
+ * @param out [out] output matrix
+ */
+void Inverse_Matrix_Real(const int dim, const double* in, double* out);
 }
 #endif

@@ -101,6 +101,19 @@ class DMTest : public testing::Test
 #endif
 };
 
+TEST_F(DMTest, DMConstructor_GammaOnly)
+{
+    // construct DM
+    std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
+    std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
+    int nspin = 2;
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin);
+    // compare
+    EXPECT_EQ(DM.get_DMK_size(), nspin);
+    EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
+    EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
+}
+
 TEST_F(DMTest, DMConstructor_nspin1)
 {
     // initalize a kvectors
@@ -144,6 +157,23 @@ TEST_F(DMTest, DMConstructor_nspin1)
                 for (int j = 0; j < paraV->ncol; j++)
                 {
                     EXPECT_EQ(DM.get_DMK(is, ik, i, j), is + ik * i + j);
+                }
+            }
+        }
+    }
+    // test for get_DMK_pointer
+    for (int is = 1; is <= nspin; is++)
+    {
+        int ik_begin = (is - 1) * kv->nks / nspin;
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
+        {
+            double* ptr = DM.get_DMK_pointer(ik + ik_begin);
+            for (int i = 0; i < paraV->nrow; i++)
+            {
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    // std::cout << ptr[i*paraV->ncol+j] << " ";
+                    EXPECT_EQ(ptr[i * paraV->ncol + j], is + ik * i + j);
                 }
             }
         }
@@ -195,6 +225,23 @@ TEST_F(DMTest, DMConstructor_nspin2)
             {
                 EXPECT_EQ(DM.get_DMK(1, ik, i, j), ik * i + j);
                 EXPECT_EQ(DM.get_DMK(1, ik, i, j), DM.get_DMK(2, ik, i, j));
+            }
+        }
+    }
+    // test for get_DMK_pointer
+    for (int is = 1; is <= nspin; is++)
+    {
+        int ik_begin = (is - 1) * kv->nks / nspin;
+        for (int ik = 0; ik < kv->nks / nspin; ik++)
+        {
+            double* ptr = DM.get_DMK_pointer(ik + ik_begin);
+            for (int i = 0; i < paraV->nrow; i++)
+            {
+                for (int j = 0; j < paraV->ncol; j++)
+                {
+                    // std::cout << ptr[i*paraV->ncol+j] << " ";
+                    EXPECT_EQ(ptr[i * paraV->ncol + j], ik * i + j);
+                }
             }
         }
     }

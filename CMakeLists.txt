@@ -24,6 +24,7 @@ option(INFO "Enable gathering of math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build." OFF)
 option(ENABLE_LIBRI "Enable EXX with LibRI." OFF)
 option(ENABLE_LIBCOMM "Enable communicate with LibComm." OFF)
+option(ENABLE_PAW "Enable PAW calculation" OFF)
 option(ENABLE_MPI "Enable compilation with or without MPI." ON)
 option(USE_ELPA "Enable ELPA" ON)
 option(USE_ABACUS_LIBM "Build libmath from source to speed up." ON)
@@ -32,24 +33,25 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
+option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 
 # get commit info
 if(COMMIT_INFO)
-  find_program(GIT_EXECUTABLE git)
-  if(NOT GIT_EXECUTABLE)
+  find_package(Git)
+  if(NOT Git_FOUND)
     message(WARNING "Git is not found, and abacus will not output the git commit information in log. \n\
 You can install Git first and reinstall abacus.")
   else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
-      COMMAND git log -1 --pretty=format:%h
+      COMMAND ${GIT_EXECUTABLE} log -1 --pretty=format:%h
       OUTPUT_VARIABLE GIT_COMMIT_HASH
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       RESULT_VARIABLE GIT_COMMIT_HASH_RESULT
     )
     execute_process(
-      COMMAND git log -1 --format=%cd
+      COMMAND ${GIT_EXECUTABLE} log -1 --format=%cd
       OUTPUT_VARIABLE GIT_COMMIT_DATE
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -72,10 +74,12 @@ if (NOT ENABLE_MPI)
   set (BUILD_TESTING OFF)
 endif()
 
-if(ENABLE_LCAO)
+if(ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus)
-else()
+elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw)
+elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
+  set(ABACUS_BIN_NAME abacus_pw_serial)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -98,6 +102,7 @@ set(ABACUS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(ABACUS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
+include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
 if(ENABLE_COVERAGE)
@@ -109,8 +114,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
   message(WARNING "GCC4 is not fully supported.")
 endif()
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
 set(FETCHCONTENT_QUIET FALSE) # Notify user when cloning git repo
 
 find_program(CCACHE ccache)
@@ -138,17 +141,17 @@ if(NOT CMAKE_BUILD_TYPE)
   add_compile_options(-O3 -g)
 endif()
 
-# Force turn off USE_ABACUS_LIBM on Intel Compiler
-if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel") OR
-    ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM"))
-    set(USE_ABACUS_LIBM OFF)
+if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
+  add_compile_options(-fp-model=strict) # stick to strict floating point model on Intel Compiler
+  set(USE_ABACUS_LIBM OFF) # Force turn off USE_ABACUS_LIBM on Intel Compiler
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare")
 endif()
+
 if (USE_ABACUS_LIBM)
   add_definitions(-DUSE_ABACUS_LIBM)
 endif()
 
 if (ENABLE_NATIVE_OPTIMIZATION)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -mtune=native")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 endif()
 
@@ -162,6 +165,10 @@ if(ENABLE_LCAO)
     include_directories(${ELPA_INCLUDE_DIR})
     target_link_libraries(${ABACUS_BIN_NAME} ELPA::ELPA)
     add_compile_definitions(__ELPA)
+  endif()
+
+  if (ENABLE_FFT_TWO_CENTER)
+      add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
 else()
   set(ENABLE_DEEPKS OFF)
@@ -186,7 +193,6 @@ target_link_libraries(${ABACUS_BIN_NAME} Threads::Threads)
 if(USE_OPENMP)
   find_package(OpenMP REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} OpenMP::OpenMP_CXX)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_CXX_FLAGS}")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   add_link_options(${OpenMP_CXX_LIBRARIES})
 endif()
@@ -273,6 +279,7 @@ if(USE_ROCM)
   find_package(HIP REQUIRED)
   find_package(hipfft REQUIRED)
   find_package(hipblas REQUIRED)
+  find_package(hipsolver REQUIRED)
 
   if(HIP_FOUND)
     message(STATUS "Found HIP: " ${HIP_VERSION})
@@ -282,15 +289,13 @@ if(USE_ROCM)
 
   include_directories(
     ${ROCM_PATH}/include
-    ${ROCM_PATH}/hip/include
-    ${ROCM_PATH}/hipfft/include
-    ${ROCM_PATH}/hipblas/include
   )
   target_link_libraries(${ABACUS_BIN_NAME}
-    hip::device
     hip::host
+    hip::device
     hip::hipfft
     roc::hipblas
+    roc::hipsolver
   )
   add_compile_definitions(__ROCM)
   add_compile_definitions(__UT_USE_ROCM)
@@ -298,7 +303,7 @@ if(USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
     message(FATAL_ERROR "Address Sanitizer is not supported on Intel compiler.")
   endif()
   add_compile_options(
@@ -325,16 +330,21 @@ if(MKLROOT)
   if(NOT ENABLE_DEEPKS)
     list(APPEND math_libs IntelMKL::MKL)
   endif()
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
+    list(APPEND math_libs -lifcore)
+  endif()
 else()
   find_package(FFTW3 REQUIRED)
   find_package(LAPACK REQUIRED)
-  find_package(ScaLAPACK REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
-  list(APPEND math_libs
-    FFTW3::FFTW3
-    LAPACK::LAPACK
-    ScaLAPACK::ScaLAPACK
-  )
+  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+
+  if(ENABLE_LCAO)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
+
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -379,34 +389,40 @@ if(ENABLE_DEEPKS)
     )
     FetchContent_MakeAvailable(libnpy)
   else()
-    include_directories(${libnpy_INCLUDE_DIR})	   
+    include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
   add_compile_definitions(__DEEPKS)
 endif()
+
+function(git_submodule_update)
+  if(GIT_SUBMOD_RESULT EQUAL "0")
+    message(DEBUG "Submodule init'ed")
+  else()
+    find_package(Git REQUIRED)
+    if(NOT EXISTS "${PROJECT_SOURCE_DIR}/.git")
+      message(FATAL_ERROR "Not a git repository; cannot update submodules")
+    endif()
+
+    message(STATUS "Updating submodules")
+    execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE GIT_SUBMOD_RESULT)
+    if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+      message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}.")
+    endif()
+  endif()
+endfunction()
 
 if(DEFINED LIBRI_DIR)
   set(ENABLE_LIBRI ON)
 endif()
 if(ENABLE_LIBRI)
   set(CMAKE_CXX_STANDARD 14)
-  if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Intel"))
-    message(WARNING "RI related features are only stable if compiled with Intel compiler.")
-  endif()
   if(LIBRI_DIR)
     include_directories(${LIBRI_DIR}/include)
   elseif(GIT_SUBMODULE)
-    find_package(Git QUIET)
-    if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    # Update submodules as needed
-      message(STATUS "Submodule update")
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-              RESULT_VARIABLE GIT_SUBMOD_RESULT)
-      if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-      endif()
-    endif()
+    git_submodule_update()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibRI/include)
   else()
     message(FATAL_ERROR "Must provide LIBRI_DIR for RI related features.")
@@ -420,31 +436,30 @@ if(ENABLE_LIBRI)
   )
 endif()
 
-if(ENABLE_LIBRI)
-  set(ENABLE_LIBCOMM ON)
-endif()
-if(DEFINED LIBCOMM_DIR)
+if(ENABLE_LIBRI OR DEFINED LIBCOMM_DIR)
   set(ENABLE_LIBCOMM ON)
 endif()
 if(ENABLE_LIBCOMM)
   if(LIBCOMM_DIR)
     include_directories(${LIBCOMM_DIR}/include)
   elseif(GIT_SUBMODULE)
-    find_package(Git QUIET)
-    if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    # Update submodules as needed
-      message(STATUS "Submodule update")
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-              RESULT_VARIABLE GIT_SUBMOD_RESULT)
-      if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-      endif()
-    endif()
+    git_submodule_update()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/LibComm/include)
   else()
-    message(FATAL_ERROR "Must provide LIBCOMM_DIR for communicate related features.")
+    message(FATAL_ERROR "Must provide LIBCOMM_DIR for RI related features.")
   endif()
+endif()
+
+if(ENABLE_PAW)
+  if(LIBPAW_DIR)
+    add_subdirectory(${LIBPAW_DIR})
+  elseif(GIT_SUBMODULE)
+    git_submodule_update()
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libpaw_interface)
+  else()
+    message(FATAL_ERROR "Must provide LIBPAW_DIR for PAW related features.")
+  endif()
+  add_compile_definitions(USE_PAW)
 endif()
 
 list(APPEND math_libs m)
@@ -576,12 +591,18 @@ target_link_libraries(${ABACUS_BIN_NAME}
     hamilt_ofdft
     hamilt_stodft
     psi
+    psi_initializer
     esolver
     vdw
     device
     container
-    kernels
 )
+
+if(ENABLE_PAW)
+  target_link_libraries(${ABACUS_BIN_NAME}
+  paw
+  )
+endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(${ABACUS_BIN_NAME}
@@ -591,6 +612,8 @@ if(ENABLE_LCAO)
       gint
       dftu
       hcontainer
+      deltaspin
+      numerical_atomic_orbitals
   )
   if (USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME}

@@ -47,10 +47,10 @@ LCAO_Orbitals::~LCAO_Orbitals()
 }
 #endif
 
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 }
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 }
 
@@ -113,5 +113,14 @@ Grid_Driver::Grid_Driver(const int& test_d_in, const int& test_gd_in, const int&
 {
 }
 Grid_Driver::~Grid_Driver()
+{
+}
+
+// mock Record_adj
+#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+Record_adj::Record_adj()
+{
+}
+Record_adj::~Record_adj()
 {
 }

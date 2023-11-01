@@ -9,19 +9,21 @@
 namespace hamilt
 {
 
-template class OperatorEXX<OperatorLCAO<double>>;
+template class OperatorEXX<OperatorLCAO<double, double>>;
 
-template class OperatorEXX<OperatorLCAO<std::complex<double>>>;
+template class OperatorEXX<OperatorLCAO<std::complex<double>, double>>;
 
-template<typename T>
-void OperatorEXX<OperatorLCAO<T>>::contributeHR()
+template class OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>;
+
+template<typename TK, typename TR>
+void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
 
 }
 
 // double and complex<double> are the same temperarily
 template<>
-void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
+void OperatorEXX<OperatorLCAO<double, double>>::contributeHk(int ik)
 {
     // Peize Lin add 2016-12-03
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
@@ -44,7 +46,7 @@ void OperatorEXX<OperatorLCAO<double>>::contributeHk(int ik)
 }
 
 template<>
-void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
+void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
     // Peize Lin add 2016-12-03
     if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
@@ -65,5 +67,29 @@ void OperatorEXX<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
 				*this->LM);
     }
 }
+
+template<>
+void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
+{
+    // Peize Lin add 2016-12-03
+    if(XC_Functional::get_func_type()==4 || XC_Functional::get_func_type()==5)
+    {
+		if(GlobalC::exx_info.info_ri.real_number)
+            RI_2D_Comm::add_Hexx(
+                kv,
+                ik,
+				GlobalC::exx_info.info_global.hybrid_alpha,
+				*this->LM->Hexxd,
+				*this->LM);
+		else
+            RI_2D_Comm::add_Hexx(
+                kv,
+                ik,
+				GlobalC::exx_info.info_global.hybrid_alpha,
+				*this->LM->Hexxc,
+				*this->LM);
+    }
+}
+
 } // namespace hamilt
 #endif

@@ -354,19 +354,10 @@ void ORB_control::divide_HS_2d(
 
 #ifdef __MPI
     // mohan add 2011-04-16
-    if (nb2d == 0)
-    {
-        if (nlocal > 0)
-            pv->set_block_size(1);
-        if (nlocal > 500)
-            pv->set_block_size(32);
-        if (nlocal > 1000)
-            pv->set_block_size(64);
-    }
-    else if (nb2d > 0)
-    {
-        pv->set_block_size(nb2d); // mohan add 2010-06-28
-    }
+#ifdef __DEBUG
+assert(nb2d > 0);
+#endif
+    pv->set_block_size(nb2d); // mohan add 2010-06-28
 
     if (ks_solver == "cusolver")
         pv->set_block_size(1); // Xu Shu add 2022-03-25

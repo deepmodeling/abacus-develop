@@ -6,6 +6,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/output_log.h"
 
 // new
 #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -106,29 +107,8 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     }
 	
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)
-	{
-		double *pos;
-		double d1,d2,d3;
-		pos = new double[GlobalC::ucell.nat*3];
-		ModuleBase::GlobalFunc::ZEROS(pos, GlobalC::ucell.nat*3);
-		int iat = 0;
-		for(int it = 0;it < GlobalC::ucell.ntype;it++)
-		{
-			//Atom* atom = &ucell.atoms[it];
-			for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
-			{
-				pos[3*iat  ] = GlobalC::ucell.atoms[it].taud[ia].x ;
-				pos[3*iat+1] = GlobalC::ucell.atoms[it].taud[ia].y ;
-				pos[3*iat+2] = GlobalC::ucell.atoms[it].taud[ia].z;
-				for(int k=0; k<3; ++k)
-				{
-                    p_symm->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
-                    p_symm->check_boundary(pos[iat * 3 + k]);
-                }
-				iat++;				
-			}
-		}
-		
+    {
+        double d1, d2, d3;
 		for(int iat=0; iat<GlobalC::ucell.nat; iat++)
 		{
 			ModuleBase::Mathzone::Cartesian_to_Direct(force(iat,0),force(iat,1),force(iat,2),
@@ -139,7 +119,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 			
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
 		}
-        p_symm->force_symmetry(force, pos, GlobalC::ucell);
+        p_symm->symmetrize_vec3_nat(force.c);
         for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
         {
 			ModuleBase::Mathzone::Direct_to_Cartesian(force(iat,0),force(iat,1),force(iat,2),
@@ -148,39 +128,44 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
                                         GlobalC::ucell.a3.x, GlobalC::ucell.a3.y, GlobalC::ucell.a3.z,
                                         d1,d2,d3);
 			force(iat,0) = d1;force(iat,1) = d2;force(iat,2) = d3;
-		}
-        // cout << "nrotk =" << p_symm->nrotk << endl;
-        delete[] pos;
+        }
     }
 
  	GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
 	if(GlobalV::TEST_FORCE)
 	{
-		Sto_Forces::print("LOCAL    FORCE (Ry/Bohr)", forcelc);
-		Sto_Forces::print("NONLOCAL FORCE (Ry/Bohr)", forcenl);
-		Sto_Forces::print("NLCC     FORCE (Ry/Bohr)", forcecc);
-		Sto_Forces::print("ION      FORCE (Ry/Bohr)", forceion);
-		Sto_Forces::print("SCC      FORCE (Ry/Bohr)", forcescc);
-		if(GlobalV::EFIELD_FLAG) Sto_Forces::print("EFIELD   FORCE (Ry/Bohr)", force_e);
-        if(GlobalV::GATE_FLAG) Sto_Forces::print("GATEFIELD   FORCE (Ry/Bohr)", force_gate);
-	}
-	
-		
-	// output force in unit eV/Angstrom
-	GlobalV::ofs_running << std::endl;
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (Ry/Bohr)", forcelc);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (Ry/Bohr)", forcenl);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (Ry/Bohr)", forcecc);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (Ry/Bohr)", forceion);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (Ry/Bohr)", forcescc);
+        if (GlobalV::EFIELD_FLAG)
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (Ry/Bohr)", force_e);
+        if (GlobalV::GATE_FLAG)
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD   FORCE (Ry/Bohr)", force_gate);
+    }
+
+    // output force in unit eV/Angstrom
+    GlobalV::ofs_running << std::endl;
     
 	if(GlobalV::TEST_FORCE)
 	{
-		Sto_Forces::print("LOCAL    FORCE (eV/Angstrom)", forcelc,0);
-		Sto_Forces::print("NONLOCAL FORCE (eV/Angstrom)", forcenl,0);
-		Sto_Forces::print("NLCC     FORCE (eV/Angstrom)", forcecc,0);
-		Sto_Forces::print("ION      FORCE (eV/Angstrom)", forceion,0);
-		Sto_Forces::print("SCC      FORCE (eV/Angstrom)", forcescc,0);
-		if(GlobalV::EFIELD_FLAG) Sto_Forces::print("EFIELD   FORCE (eV/Angstrom)", force_e,0);
-        if(GlobalV::GATE_FLAG) Sto_Forces::print("GATEFIELD   FORCE (eV/Angstrom)", force_gate,0);
-	}
-	Sto_Forces::print("   TOTAL-FORCE (eV/Angstrom)", force,0);
-	ModuleBase::timer::tick("Sto_Force","cal_force");
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, 0);
+        if (GlobalV::EFIELD_FLAG)
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
+        if (GlobalV::GATE_FLAG)
+            ModuleIO::print_force(GlobalV::ofs_running,
+                                  GlobalC::ucell,
+                                  "GATEFIELD   FORCE (eV/Angstrom)",
+                                  force_gate,
+                                  0);
+    }
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
+    ModuleBase::timer::tick("Sto_Force", "cal_force");
     return;
 }
 
@@ -245,7 +230,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
             	stowf.shchi->get_pointer(),&npwx,
             	&ModuleBase::ZERO,&becp(nksbands,0),&nkb);
         
-        Parallel_Reduce::reduce_complex_double_pool( becp.c, becp.size);
+        Parallel_Reduce::reduce_pool(becp.c, becp.size);
 
         //out.printcm_real("becp",becp,1.0e-4);
         // Calculate the derivative of beta,
@@ -352,7 +337,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
     }// end ik
 
     // sum up forcenl from all processors
-    Parallel_Reduce::reduce_double_all(forcenl.c, forcenl.nr * forcenl.nc);
+    Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr* forcenl.nc);
 
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
     return;

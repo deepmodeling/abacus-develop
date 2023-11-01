@@ -77,7 +77,7 @@ fi
 #echo $etot
 #echo "hasforce:"$has_force
 if ! test -z "$has_force" && [ $has_force == 1 ]; then
-	nn3=`echo "$natom + 4" |bc`
+	nn3=`echo "$natom + 1" |bc`
 	#nn1=`echo "$natom + 1" |bc`
 	#nn5=`echo "$natom + 6" |bc`
 	#grep -A$nn3 "TOTAL-FORCE" $running_path|sed '1,5d'|sed ''$nn1','$nn5'd'|awk '{printf $2"\t"$3"\t"$4"\n"}' > force.txt
@@ -91,7 +91,7 @@ fi
 #echo "has_stress:"$has_stress
 if ! test -z "$has_stress" && [  $has_stress == 1 ]; then
 	#grep -A6 "TOTAL-STRESS" $running_path|sed '1,4d'|sed '4,8d' >stress.txt
-    grep -A6 "TOTAL-STRESS" $running_path| awk 'NF==3' | tail -3> stress.txt
+    grep -A4 "TOTAL-STRESS" $running_path| awk 'NF==3' | tail -3> stress.txt
 	total_stress=`sum_file stress.txt`
 	rm stress.txt
 	echo "totalstressref $total_stress" >>$1
@@ -134,7 +134,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
 	pot1ref=refSPIN1_POT.cube
 	pot1cal=OUT.autotest/SPIN1_POT.cube
-	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
+	python3 ../tools/CompareFile.py $pot1ref $pot1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
 
@@ -170,11 +170,16 @@ fi
 if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
 	amnref=diamond.amn
 	amncal=OUT.autotest/diamond.amn
+	mmnref=diamond.mmn
+	mmncal=OUT.autotest/diamond.mmn
 	eigref=diamond.eig
 	eigcal=OUT.autotest/diamond.eig
 	sed -i '1d' $amncal
-	python3 ../tools/CompareFile.py $amnref $amncal 1
+	sed -i '1d' $mmncal
+	python3 ../tools/CompareFile.py $amnref $amncal 1 -abs 8
 	echo "CompareAMN_pass $?" >>$1
+	python3 ../tools/CompareFile.py $mmnref $mmncal 1 -abs 8
+	echo "CompareMMN_pass $?" >>$1
 	python3 ../tools/CompareFile.py $eigref $eigcal 8
 	echo "CompareEIG_pass $?" >>$1
 fi
@@ -201,7 +206,7 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
                 scal=OUT.autotest/data-1-S
         fi
 
-        python3 ../tools/CompareFile.py $href $hcal 8
+        python3 ../tools/CompareFile.py $href $hcal 6
     echo "CompareH_pass $?" >>$1
     python3 ../tools/CompareFile.py $sref $scal 8
     echo "CompareS_pass $?" >>$1
@@ -253,7 +258,7 @@ if ! test -z "$has_wfc_r"  && [ $has_wfc_r == 1 ]; then
 		exit 1
 	fi
 	nband=$(grep NBANDS OUT.autotest/running_scf.log|awk '{print $3}')
-	allgrid=$(grep "fft grid for wave functions" OUT.autotest/running_scf.log|awk -F "[=,]" '{print $2*$3*$4}')
+allgrid=$(grep "fft grid for wave functions" OUT.autotest/running_scf.log | awk -F "[=,\\\[\\\]]" '{print $3*$4*$5}')
 	for((band=0;band<$nband;band++));do
 		if [[ -f "OUT.autotest/wfc_realspace/wfc_realspace_0_$band" ]];then
 			variance_wfc_r=`sed -n "13,$"p OUT.autotest/wfc_realspace/wfc_realspace_0_$band | \
@@ -291,8 +296,8 @@ fi
 # echo "$has_lowf" ## test out_wfc_lcao > 0
 if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.dat
-		wfc_ref=LOWF_GAMMA_S1.dat.ref	
+		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.txt
+		wfc_ref=LOWF_GAMMA_S1.txt.ref	
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=10_LOWF_K_1
@@ -310,9 +315,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/"$wfc_name".dat > OUT.autotest/"$wfc_name"_mod.dat
-		wfc_cal=OUT.autotest/"$wfc_name"_mod.dat
-		wfc_ref="$wfc_name"_mod.dat.ref
+    	}' OUT.autotest/"$wfc_name".txt > OUT.autotest/"$wfc_name"_mod.txt
+		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
+		wfc_ref="$wfc_name"_mod.txt.ref
 	fi
 
 	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1

@@ -18,13 +18,14 @@ namespace hsolver{
 // by nstart states psi (atomic or random wavefunctions).
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
-template<typename FPTYPE, typename Device>
-void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
-    hamilt::Hamilt<FPTYPE, Device>* pHamilt,
-    const psi::Psi<std::complex<FPTYPE>, Device> &psi,
-    psi::Psi<std::complex<FPTYPE>, Device> &evc,
-    FPTYPE *en,
-    int n_band)
+template<typename T, typename Device>
+void DiagoIterAssist<T, Device>::diagH_subspace(
+    hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+    const psi::Psi<T, Device> &psi, // [in] wavefunction
+    psi::Psi<T, Device> &evc, // [out] wavefunction
+    Real *en, // [out] eigenvalues
+    int n_band // [in] number of bands to be calculated, also number of rows of evc, if set to 0, n_band = nstart, default 0
+    )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace");
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
@@ -37,7 +38,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         n_band = nstart;
     assert(n_band <= nstart);
 
-    std::complex<FPTYPE>* hcc = nullptr, * scc = nullptr, * vcc = nullptr;
+    T* hcc = nullptr, * scc = nullptr, * vcc = nullptr;
     resmem_complex_op()(ctx, hcc, nstart * nstart, "DiagSub::hcc");
     resmem_complex_op()(ctx, scc, nstart * nstart, "DiagSub::scc");
     resmem_complex_op()(ctx, vcc, nstart * nstart, "DiagSub::vcc");
@@ -49,11 +50,11 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     const int dmax = psi.get_nbasis();
 
     // qianrui improve this part 2021-3-14
-    const std::complex<FPTYPE>* ppsi = psi.get_pointer();
+    const T* ppsi = psi.get_pointer();
 
     // allocated hpsi
-    // std::vector<std::complex<FPTYPE>> hpsi(psi.get_nbands() * psi.get_nbasis());
-    std::complex<FPTYPE>* hphi = nullptr;
+    // std::vector<T> hpsi(psi.get_nbands() * psi.get_nbasis());
+    T* hphi = nullptr;
     resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis(), "DiagSub::hpsi");
     setmem_complex_op()(ctx, hphi, 0, psi.get_nbands() * psi.get_nbasis());
     // do hPsi for all bands
@@ -61,7 +62,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
 
-    gemm_op<FPTYPE, Device>()(
+    gemm_op<T, Device>()(
         ctx,
         'C',
         'N',
@@ -78,7 +79,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         nstart
     );
 
-    gemm_op<FPTYPE, Device>()(
+    gemm_op<T, Device>()(
         ctx,
         'C',
         'N',
@@ -97,8 +98,8 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Reduce::reduce_complex_double_pool(hcc, nstart * nstart);
-        Parallel_Reduce::reduce_complex_double_pool(scc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
     }
 
     // after generation of H and S matrix, diag them
@@ -107,18 +108,32 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") && GlobalV::CALCULATION == "nscf")
+    if (
+        (
+            (GlobalV::BASIS_TYPE == "lcao")
+          ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        )
+      &&(GlobalV::CALCULATION == "nscf")
+      )
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
-             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+    else if (
+        (
+            (GlobalV::BASIS_TYPE == "lcao")
+          ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        )
+      &&(
+            (GlobalV::CALCULATION == "scf")
+          ||(GlobalV::CALCULATION == "md")
+          ||(GlobalV::CALCULATION == "relax")
+        )
+        ) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        gemm_op<FPTYPE, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -140,11 +155,11 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
         // As the evc and psi may refer to the same matrix, we first
         // create a temporary matrix to store the result. (by wangjp)
         // qianrui improve this part 2021-3-13
-        std::complex<FPTYPE>* evctemp = nullptr;
+        T* evctemp = nullptr;
         resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
-        gemm_op<FPTYPE, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -161,7 +176,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
             dmin
         );
 
-        matrixSetToAnother<FPTYPE, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        matrixSetToAnother<T, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
         // for (int ib = 0; ib < n_band; ib++)
         // {
         //     for (int ig = 0; ig < dmin; ig++)
@@ -180,14 +195,14 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace(
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
 
-template<typename FPTYPE, typename Device>
-void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
-    hamilt::Hamilt<FPTYPE, Device>* pHamilt,
-    const std::complex<FPTYPE>* psi,
+template<typename T, typename Device>
+void DiagoIterAssist<T, Device>::diagH_subspace_init(
+    hamilt::Hamilt<T, Device>* pHamilt,
+    const T* psi,
     int psi_nr,
     int psi_nc,
-    psi::Psi<std::complex<FPTYPE>, Device> &evc,
-    FPTYPE *en)
+    psi::Psi<T, Device> &evc,
+    Real *en)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace_init");
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
@@ -204,7 +219,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     // ModuleBase::ComplexMatrix hc(nstart, nstart);
     // ModuleBase::ComplexMatrix sc(nstart, nstart);
     // ModuleBase::ComplexMatrix hvec(nstart, n_band);
-    std::complex<FPTYPE>* hcc = nullptr, * scc = nullptr, * vcc = nullptr;
+    T* hcc = nullptr, * scc = nullptr, * vcc = nullptr;
     resmem_complex_op()(ctx, hcc, nstart * nstart, "DiagSub::hcc");
     resmem_complex_op()(ctx, scc, nstart * nstart, "DiagSub::scc");
     resmem_complex_op()(ctx, vcc, nstart * nstart, "DiagSub::vcc");
@@ -218,18 +233,18 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     // qianrui improve this part 2021-3-14
     // std::complex<double> *aux = new std::complex<double>[dmax * nstart];
     // const std::complex<double> *paux = aux;
-    psi::Psi<std::complex<FPTYPE>, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0));
+    psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0));
     syncmem_complex_op ()(ctx, ctx, psi_temp.get_pointer(), psi, psi_temp.size());
     // ModuleBase::GlobalFunc::COPYARRAY(psi, psi_temp.get_pointer(), psi_temp.size());
 
-    const std::complex<FPTYPE> *ppsi = psi_temp.get_pointer();
+    const T *ppsi = psi_temp.get_pointer();
 
     // allocated hpsi
-    std::complex<FPTYPE>* hpsi = nullptr;
+    T* hpsi = nullptr;
     resmem_complex_op()(ctx, hpsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::hpsi");
     setmem_complex_op()(ctx, hpsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
     // ================================================
-    // std::vector<std::complex<FPTYPE>> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
+    // std::vector<T> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
 
 
     // do hPsi for all bands
@@ -237,7 +252,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
     pHamilt->ops->hPsi(hpsi_in);
 
-    gemm_op<FPTYPE, Device>()(
+    gemm_op<T, Device>()(
         ctx,
         'C',
         'N',
@@ -254,7 +269,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         nstart
     );
 
-    gemm_op<FPTYPE, Device>()(
+    gemm_op<T, Device>()(
         ctx,
         'C',
         'N',
@@ -273,8 +288,8 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Reduce::reduce_complex_double_pool(hcc, nstart * nstart);
-        Parallel_Reduce::reduce_complex_double_pool(scc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
     }
 
     // after generation of H and S matrix, diag them
@@ -300,14 +315,23 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
-             && (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "md"
-                 || GlobalV::CALCULATION == "relax")) // pengfei 2014-10-13
+    else if (
+        (
+            GlobalV::BASIS_TYPE == "lcao" 
+          ||GlobalV::BASIS_TYPE == "lcao_in_pw"
+          ||(GlobalV::BASIS_TYPE == "pw" && GlobalV::psi_initializer)
+        )
+      &&(
+            GlobalV::CALCULATION == "scf"
+          ||GlobalV::CALCULATION == "md"
+          ||GlobalV::CALCULATION == "relax"
+        )
+        ) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        gemm_op<FPTYPE, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -329,11 +353,11 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
         // As the evc and psi may refer to the same matrix, we first
         // create a temporary matrix to store the result. (by wangjp)
         // qianrui improve this part 2021-3-13
-        std::complex<FPTYPE>* evctemp = nullptr;
+        T* evctemp = nullptr;
         resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
-        gemm_op<FPTYPE, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -350,7 +374,7 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
             dmin
         );
 
-        matrixSetToAnother<FPTYPE, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        matrixSetToAnother<T, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
 
         delmem_complex_op()(ctx, evctemp);
     }
@@ -362,24 +386,24 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_subspace_init(
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
 
-template<typename FPTYPE, typename Device>
-void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
+template<typename T, typename Device>
+void DiagoIterAssist<T, Device>::diagH_LAPACK(
     const int nstart,
     const int nbands,
-    const std::complex<FPTYPE>* hcc,
-    const std::complex<FPTYPE>* scc,
+    const T* hcc,
+    const T* scc,
     const int ldh, // nstart
-    FPTYPE *e, // always in CPU
-    std::complex<FPTYPE>* vcc)
+    Real *e, // always in CPU
+    T* vcc)
 {
     ModuleBase::TITLE("DiagoIterAssist", "LAPACK_subspace");
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 
-    FPTYPE* eigenvalues = nullptr;
+    Real* eigenvalues = nullptr;
     resmem_var_op()(ctx, eigenvalues, nstart);
     setmem_var_op()(ctx, eigenvalues, 0, nstart);
 
-    dngvd_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
+    dngvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
     if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
 #if ((defined __CUDA) || (defined __ROCM))
@@ -401,21 +425,21 @@ void DiagoIterAssist<FPTYPE, Device>::diagH_LAPACK(
     //     //===========================
     //     // calculate all eigenvalues
     //     //===========================
-    //     // dngv_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
-    //     dngvd_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+    //     // dngv_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
+    //     dngvd_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, res, vcc);
     // }
     // else {
     //     //=====================================
     //     // calculate only m lowest eigenvalues
     //     //=====================================
-    //     dngvx_op<FPTYPE, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
+    //     dngvx_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
     // }
 
     ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
 }
 
-template<typename FPTYPE, typename Device>
-bool DiagoIterAssist<FPTYPE, Device>::test_exit_cond(const int &ntry, const int &notconv)
+template<typename T, typename Device>
+bool DiagoIterAssist<T, Device>::test_exit_cond(const int &ntry, const int &notconv)
 {
     //================================================================
     // If this logical function is true, need to do diagH_subspace
@@ -439,10 +463,17 @@ bool DiagoIterAssist<FPTYPE, Device>::test_exit_cond(const int &ntry, const int 
 }
 
 
-template class DiagoIterAssist<float, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class DiagoIterAssist<std::complex<float>, psi::DEVICE_GPU>;
+template class DiagoIterAssist<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+
+#ifdef __LCAO
 template class DiagoIterAssist<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class DiagoIterAssist<float, psi::DEVICE_GPU>;
 template class DiagoIterAssist<double, psi::DEVICE_GPU>;
+#endif
 #endif
 } // namespace hsolver

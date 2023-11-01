@@ -4,7 +4,7 @@ suffix    autotest
 #nbands   40
 
 calculation   scf
-ecutwfc       15
+ecutwfc       26
 scf_thr           1.0e-8
 scf_nmax         200
 out_mul    1
@@ -17,7 +17,7 @@ noncolin	1
 smearing_method    gaussian
 smearing_sigma       0.07
 
-mixing_type    pulay 
+mixing_type    broyden 
 mixing_beta    0.5
 mixing_ndim 10
 

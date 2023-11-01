@@ -1,11 +1,7 @@
 name: Build Test
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
 
 jobs:
   test:
@@ -20,10 +16,10 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build
         run: |
-          export I_MPI_CXX=icpx       
-          cd source 
+          export I_MPI_CXX=icpx
+          cd source
           make -j2 ${{ matrix.build_args }}
-          
+

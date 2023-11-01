@@ -8,6 +8,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+
 namespace ModuleBase
 {
 /**
@@ -70,6 +71,13 @@ class timer
     {
         disabled = true;
     }
+
+    /**
+     * @brief Write all computational processes to json file
+     *
+     * @param file_name The output file name
+     */
+    static void write_to_json(std::string file_name);
 
     /**
      * @brief Print all computational processes with during > 0.1 s

@@ -1,9 +1,10 @@
 #include "pw_basis_k.h"
 
 #include <utility>
+
 #include "module_base/constants.h"
-#include "module_base/timer.h"
 #include "module_base/memory.h"
+#include "module_base/timer.h"
 
 namespace ModulePW
 {
@@ -185,8 +186,11 @@ void PW_Basis_K::setuptransform()
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 
-void PW_Basis_K::collect_local_pw()
+void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)
 {
+    this->erf_ecut = erf_ecut_in;
+    this->erf_height = erf_height_in;
+    this->erf_sigma = erf_sigma_in;
     if(this->npwk_max <= 0) return;
     delete[] gk2;
     delete[] gcar;
@@ -214,8 +218,17 @@ void PW_Basis_K::collect_local_pw()
             f.y = iy;
             f.z = iz;
 
-            this->gk2[ik * npwk_max + igl] = (f+kv) * (this->GGT * (f+kv));
             this->gcar[ik * npwk_max + igl] = f * this->G;
+            double temp_gk2 = (f + kv) * (this->GGT * (f + kv));
+            if (erf_height > 0)
+            {
+                this->gk2[ik * npwk_max + igl]
+                    = temp_gk2 + erf_height / tpiba2 * (1.0 + std::erf((temp_gk2 * tpiba2 - erf_ecut) / erf_sigma));
+            }
+            else
+            {
+                this->gk2[ik * npwk_max + igl] = temp_gk2;
+            }
         }
     }
 #if defined(__CUDA) || defined(__ROCM)
@@ -328,6 +341,55 @@ void PW_Basis_K::get_ig2ixyz_k()
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
     }
 #endif
+}
+
+std::vector<int> PW_Basis_K::get_ig2ix(const int ik) const
+{
+    std::vector<int> ig_to_ix;
+    ig_to_ix.resize(npwk[ik]);
+
+    for(int ig = 0; ig < npwk[ik]; ig++)
+    {
+        int isz = this->igl2isz_k[ig + ik * npwk_max];
+        int is = isz / this->nz;
+        int ixy = this->is2fftixy[is];
+        int ix = ixy / this->ny;
+        if (ix < (nx / 2) + 1) ix += nx;
+        ig_to_ix[ig] = ix;
+    }
+    return ig_to_ix;
+}
+
+std::vector<int> PW_Basis_K::get_ig2iy(const int ik) const
+{
+    std::vector<int> ig_to_iy;
+    ig_to_iy.resize(npwk[ik]);
+
+    for(int ig = 0; ig < npwk[ik]; ig++)
+    {
+        int isz = this->igl2isz_k[ig + ik * npwk_max];
+        int is = isz / this->nz;
+        int ixy = this->is2fftixy[is];
+        int iy = ixy % this->ny;
+        if (iy < (ny / 2) + 1) iy += ny;
+        ig_to_iy[ig] = iy;
+    }
+    return ig_to_iy;
+}
+
+std::vector<int> PW_Basis_K::get_ig2iz(const int ik) const
+{
+    std::vector<int> ig_to_iz;
+    ig_to_iz.resize(npwk[ik]);
+
+    for(int ig = 0; ig < npwk[ik]; ig++)
+    {
+        int isz = this->igl2isz_k[ig + ik * npwk_max];
+        int iz = isz % this->nz;
+        if (iz < (nz / 2) + 1) iz += nz;
+        ig_to_iz[ig] = iz;
+    }
+    return ig_to_iz;
 }
 
 template <>

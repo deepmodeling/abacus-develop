@@ -5,6 +5,7 @@
 #include "../module_base/timer.h"
 #include "../module_base/constants.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/formatter.h"
 #include <cstring>		// Peize Lin fix bug about strcmp 2016-08-02
 
 
@@ -43,49 +44,59 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             pseudo_fn[i] = "auto";
             pseudo_type[i] = "auto";
 
-            bool end = false;
-            if (ss >> one_string)
-            {
-                if (one_string[0] != '#')
-                {
-                    pseudo_fn[i] = one_string;
-                }
-                else
-                {
-                    end = true;
-                }
-            }
-
-            if (!end && ss >> one_string && one_string[0] != '#')
-            {
-                if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
-                {
-                    pseudo_type[i] = one_string;
-                }
-                else
-                {
-                    GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
-                    ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
-                }
-            }
-
-			if(GlobalV::test_pseudo_cell==2) 
+			if(!GlobalV::use_paw)
 			{
-				ofs_running << "\n" << std::setw(6) << atom_label[i] 
-						<< std::setw(12) << atom_mass[i] 
-						<< std::setw(18) << pseudo_fn[i]
-						<< std::setw(18) << pseudo_type[i];
-			}
+				bool end = false;
+				if (ss >> one_string)
+				{
+					if (one_string[0] != '#')
+					{
+						pseudo_fn[i] = one_string;
+					}
+					else
+					{
+						end = true;
+					}
+				}
 
-			// Peize Lin test for bsse 2021.04.07
-			const std::string bsse_label = "empty";
-			this->atoms[i].flag_empty_element = 
-				(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
-				? true : false;
+				if (!end && ss >> one_string && one_string[0] != '#')
+				{
+					if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
+					{
+						pseudo_type[i] = one_string;
+					}
+					else
+					{
+						GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
+						ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
+					}
+				}
+
+				if(GlobalV::test_pseudo_cell==2) 
+				{
+					ofs_running << "\n" << std::setw(6) << atom_label[i] 
+							<< std::setw(12) << atom_mass[i] 
+							<< std::setw(18) << pseudo_fn[i]
+							<< std::setw(18) << pseudo_type[i];
+				}
+
+				// Peize Lin test for bsse 2021.04.07
+				const std::string bsse_label = "empty";
+				this->atoms[i].flag_empty_element = 
+					(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
+					? true : false;
+			}
 		}
 	}
-#ifdef __LCAO
-	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+
+	if(
+		(GlobalV::BASIS_TYPE == "lcao")
+	  ||(
+		  (GlobalV::BASIS_TYPE == "pw")
+		&&(GlobalV::psi_initializer)
+		&&(GlobalV::init_wfc.substr(0, 3) == "nao")
+		)
+	)
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_ORBITAL") )
 		{
@@ -105,11 +116,11 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			descriptor_file = GlobalV::global_orbital_dir + orbital_fn[0];
 		}
 	}
-
+#ifdef __LCAO
 	// Peize Lin add 2016-09-23
 #ifdef __MPI 
 #ifdef __EXX
-	if( GlobalC::exx_info.info_global.cal_exx )
+	if( GlobalC::exx_info.info_global.cal_exx || INPUT.rpa )
 	{
 		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
 		{
@@ -433,35 +444,39 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			// int atoms[it].nwl
 			// int* atoms[it].l_nchi;
 			//===========================================
-#ifdef __LCAO
-			if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+
+			if ((GlobalV::BASIS_TYPE == "lcao")||(GlobalV::BASIS_TYPE == "lcao_in_pw"))
 			{
                 std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
 				this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
 			}
-			else
-#else
-			if(GlobalV::BASIS_TYPE == "pw")
-#endif
+			else if(GlobalV::BASIS_TYPE == "pw")
 			{
-				this->atoms[it].nw = 0;
-
-				this->atoms[it].nwl = 2;
-				//std::cout << lmaxmax << std::endl;
-				if ( lmaxmax != 2 )
+				if ((GlobalV::psi_initializer)&&(GlobalV::init_wfc.substr(0, 3) == "nao"))
 				{
-					this->atoms[it].nwl = lmaxmax;
+					std::string orbital_file = GlobalV::global_orbital_dir + orbital_fn[it];
+					this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
 				}
-				delete[] this->atoms[it].l_nchi;
-				this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
-				for(int L=0; L<atoms[it].nwl+1; L++)
+				else
 				{
-					this->atoms[it].l_nchi[L] = 1;
-					// calculate the number of local basis(3D)
-					this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
-					std::stringstream ss;
-					ss << "L=" << L << ", number of zeta";
-					ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+					this->atoms[it].nw = 0;
+					this->atoms[it].nwl = 2;
+					//std::cout << lmaxmax << std::endl;
+					if ( lmaxmax != 2 )
+					{
+						this->atoms[it].nwl = lmaxmax;
+					}
+					delete[] this->atoms[it].l_nchi;
+					this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
+					for(int L=0; L<atoms[it].nwl+1; L++)
+					{
+						this->atoms[it].l_nchi[L] = 1;
+						// calculate the number of local basis(3D)
+						this->atoms[it].nw += (2*L + 1) * this->atoms[it].l_nchi[L];
+						std::stringstream ss;
+						ss << "L=" << L << ", number of zeta";
+						ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
+					}
 				}
 			} // end basis type
 #endif
@@ -889,7 +904,15 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 		ofs << atom_label[it] << " " << atom_mass[it] << " " << pseudo_fn[it] << " " << pseudo_type[it] << std::endl;
 	}
 
-	if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") //xiaohui add 2013-09-02. Attention...
+	if(
+		(GlobalV::BASIS_TYPE=="lcao") 
+	  ||(GlobalV::BASIS_TYPE=="lcao_in_pw") // lcao_in_pw is forever deprecated
+	  ||(//we also plan to output numerical orbital information if use init_wfc = nao
+			(GlobalV::BASIS_TYPE=="pw")
+		  &&(GlobalV::psi_initializer)
+		  &&(GlobalV::init_wfc.substr(0, 3)=="nao")
+	    )
+	  ) //xiaohui add 2013-09-02. Attention...
 	{	
 		ofs << "\nNUMERICAL_ORBITAL" << std::endl;
 		for(int it=0; it<ntype; it++)
@@ -910,9 +933,13 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 	ofs << lat0 << std::endl;
 
 	ofs << "\nLATTICE_VECTORS" << std::endl;
-	ofs << latvec.e11 << " " << latvec.e12 << " " << latvec.e13 << " #latvec1" << std::endl; 
-	ofs << latvec.e21 << " " << latvec.e22 << " " << latvec.e23 << " #latvec2" << std::endl;
-	ofs << latvec.e31 << " " << latvec.e32 << " " << latvec.e33 << " #latvec3" << std::endl;
+	context.set_context("vector3d");
+	context<<latvec.e11<<latvec.e12<<latvec.e13;
+	ofs << context.str() << " #latvec1" << std::endl; 
+	context<<latvec.e21<<latvec.e22<<latvec.e23;
+	ofs << context.str() << " #latvec2" << std::endl;
+	context<<latvec.e31<<latvec.e32<<latvec.e33;
+	ofs << context.str() << " #latvec3" << std::endl;
 	
 	ofs << "\nATOMIC_POSITIONS" << std::endl;
 
@@ -927,13 +954,20 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 			ofs << atoms[it].na << " #number of atoms" << std::endl;
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
-				ofs << atoms[it].tau[ia].x << "  " << atoms[it].tau[ia].y << "  " << atoms[it].tau[ia].z
-					<< "  m  " << atoms[it].mbl[ia].x << "  " << atoms[it].mbl[ia].y << "  " << atoms[it].mbl[ia].z;
+				context.set_context("vector3d");
+				context<<atoms[it].tau[ia].x<<atoms[it].tau[ia].y<<atoms[it].tau[ia].z;
+				ofs<<context.str()<<" m ";
+				context.set_context("vector3d_i");
+				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
+				ofs<<context.str();
 
 				if(level == 1)
 				{
 					// output velocity
-					ofs << "  v  " << atoms[it].vel[ia].x << "  " << atoms[it].vel[ia].y << "  " << atoms[it].vel[ia].z << std::endl;
+					ofs <<" v ";
+					context.set_context("vector3d");
+					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
+					ofs<<context.str()<<std::endl;
 				}
 				else if(level == 2)
 				{
@@ -961,13 +995,19 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 			ofs << atoms[it].na << " #number of atoms" << std::endl;
 			for(int ia=0; ia<atoms[it].na; ia++)
 			{
-				ofs << atoms[it].taud[ia].x << "  " << atoms[it].taud[ia].y << "  " << atoms[it].taud[ia].z
-					<< "  m  " << atoms[it].mbl[ia].x << "  " << atoms[it].mbl[ia].y << "  " << atoms[it].mbl[ia].z;
+				context.set_context("vector3d");
+				context<<atoms[it].taud[ia].x<<atoms[it].taud[ia].y<<atoms[it].taud[ia].z;
+				ofs<<context.str()<<" m ";
+				context.set_context("vector3d_i");
+				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
+				ofs<<context.str();
 
 				if(level == 1)
 				{
 					// output velocity
-					ofs << "  v  " << atoms[it].vel[ia].x << "  " << atoms[it].vel[ia].y << "  " << atoms[it].vel[ia].z << std::endl;
+					context.set_context("vector3d");
+					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
+					ofs <<" v "<<context.str()<<std::endl;
 				}
 				else if(level == 2)
 				{
@@ -996,6 +1036,7 @@ void UnitCell::print_tau(void)const
     ModuleBase::TITLE("UnitCell","print_tau");
     if(Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom")
     {
+
         GlobalV::ofs_running << "\n CARTESIAN COORDINATES ( UNIT = " << lat0 << " Bohr )." << std::endl;
         GlobalV::ofs_running << std::setw(13) << " atom"
         //<< std::setw(20) << "x" 
@@ -1041,21 +1082,9 @@ void UnitCell::print_tau(void)const
 
     if(Coordinate == "Direct")
     {
-        GlobalV::ofs_running << "\n DIRECT COORDINATES" << std::endl;
-        GlobalV::ofs_running << std::setw(13) << " atom"
-        //<< std::setw(20) << "x"
-        //<< std::setw(20) << "y"
-        //<< std::setw(20) << "z"
-        //<< " mag"
-        << std::setw(20) << "x"
-        << std::setw(20) << "y"
-        << std::setw(20) << "z"
-        << std::setw(20) << "mag"
-		<< std::setw(20) << "vx"
-        << std::setw(20) << "vy"
-        << std::setw(20) << "vz"
-        << std::endl;
-
+		context.set_context({"short_title", "coordinate", "coordinate", "coordinate", "charge", "coordinate", "coordinate", "coordinate"});
+		std::vector<std::string> titles;
+		std::vector<double> xs, ys, zs, mags, vxs, vys, vzs;
         int iat=0;
         for(int it=0; it<ntype; it++)
         {
@@ -1063,24 +1092,23 @@ void UnitCell::print_tau(void)const
             {
                 std::stringstream ss;
                 ss << "taud_" << atoms[it].label << ia+1;
-
-                GlobalV::ofs_running << " " << std::setw(12) << ss.str()
-                //<< std::setw(20) << atoms[it].taud[ia].x
-                //<< std::setw(20) << atoms[it].taud[ia].y
-                //<< std::setw(20) << atoms[it].taud[ia].z
-                //<< " " << atoms[it].mag[ia]
-                << std::setw(20) << atoms[it].taud[ia].x
-                << std::setw(20) << atoms[it].taud[ia].y
-                << std::setw(20) << atoms[it].taud[ia].z
-				<< std::setw(20) << atoms[it].mag[ia]
-				<< std::setw(20) << atoms[it].vel[ia].x
-                << std::setw(20) << atoms[it].vel[ia].y
-                << std::setw(20) << atoms[it].vel[ia].z
-                << std::endl;
-
+				titles.push_back(ss.str());
+				xs.push_back(atoms[it].taud[ia].x);
+				ys.push_back(atoms[it].taud[ia].y);
+				zs.push_back(atoms[it].taud[ia].z);
+				mags.push_back(atoms[it].mag[ia]);
+				vxs.push_back(atoms[it].vel[ia].x);
+				vys.push_back(atoms[it].vel[ia].y);
+				vzs.push_back(atoms[it].vel[ia].z);
                 ++iat;
             }
         }
+		context.enable_title();
+		context<<"atom"<<titles<<"x"<<xs<<"y"<<ys<<"z"<<zs<<"mag"<<mags<<"vx"<<vxs<<"vy"<<vys<<"vz"<<vzs;
+		context.center_title();
+		context.set_overall_title("DIRECT COORDINATES");
+		context.disable_up_frame(); context.disable_mid_frame(); context.disable_down_frame();
+		GlobalV::ofs_running<<context.str()<<std::endl;
     }
 
 	GlobalV::ofs_running << std::endl;
@@ -1176,7 +1204,6 @@ void UnitCell::check_dtau(void)
 	return;
 }
 
-#ifdef __LCAO
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
 	std::ifstream ifs(orb_file.c_str(), std::ios::in);  // pengfei 2014-10-13
@@ -1193,6 +1220,10 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 	while (ifs.good())
 	{
 		ifs >> word;
+		if (strcmp("Element", word) == 0)         // pengfei Li 16-2-29
+		{
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->label_orb);
+		}
 		if (strcmp("Lmax", word) == 0)
 		{
 			ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);
@@ -1251,5 +1282,8 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 		}
 	}
 	ifs.close();
+	if(!atom->nw)
+	{
+		std::cout << "ERROR: " << atom->label << " nw = " << atom->nw << std::endl;
+	}
 }
-#endif

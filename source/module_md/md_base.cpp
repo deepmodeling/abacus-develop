@@ -32,7 +32,12 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::init_vel(ucell, mdp.md_tfirst, mdp.my_rank, allmass, frozen_freedom_, ionmbl, vel);
+    MD_func::init_vel(ucell, mdp.my_rank, mdp.md_restart, mdp.md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
+    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    if (mdp.md_tlast < 0)
+    {
+        mdp.md_tlast = mdp.md_tfirst;
+    }
 }
 
 MD_base::~MD_base()
@@ -55,7 +60,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
     MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     ucell.ionic_position_updated = true;
 }
 
@@ -192,6 +196,7 @@ void MD_base::write_restart(const std::string& global_out_dir)
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
+        file << mdp.md_tfirst << std::endl;
         file.close();
     }
 #ifdef __MPI
@@ -201,5 +206,5 @@ void MD_base::write_restart(const std::string& global_out_dir)
 
 void MD_base::restart(const std::string& global_readin_dir)
 {
-    step_rst_ = MD_func::current_step(mdp.my_rank, global_readin_dir);
+    MD_func::current_md_info(mdp.my_rank, global_readin_dir, step_rst_, mdp.md_tfirst);
 }

@@ -358,7 +358,7 @@ void cal_r_overlap_R::out_rR(const int &istep)
             }
         }
         
-        Parallel_Reduce::reduce_int_all(rR_nonzero_num, 3);
+        Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
 
         if (rR_nonzero_num[0] || rR_nonzero_num[1] || rR_nonzero_num[2])
         {
@@ -595,7 +595,7 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
             }
         }
         
-        Parallel_Reduce::reduce_int_all(rR_nonzero_num, 3);
+        Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
 
         if (binary)
         {

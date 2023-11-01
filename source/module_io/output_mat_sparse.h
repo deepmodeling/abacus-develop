@@ -9,20 +9,22 @@
 
 namespace ModuleIO
 {
-/// @brief the output interface to write the sparse matrix of H, S, T, and r
-class Output_Mat_Sparse : public Output_Interface
+    /// @brief the output interface to write the sparse matrix of H, S, T, and r
+    template<typename T>
+    class Output_Mat_Sparse : public Output_Interface
 {
   public:
     Output_Mat_Sparse(int out_mat_hsR,
-                      int out_mat_dh,
-                      int out_mat_t,
-                      int out_mat_r,
-                      int istep,
-                      const ModuleBase::matrix& v_eff,
-                      const Parallel_Orbitals& pv,
-                      LCAO_Hamilt& UHM,
-                      LCAO_Matrix& LM,
-                      const K_Vectors& kv);
+        int out_mat_dh,
+        int out_mat_t,
+        int out_mat_r,
+        int istep,
+        const ModuleBase::matrix& v_eff,
+        const Parallel_Orbitals& pv,
+        LCAO_Hamilt& UHM,
+        LCAO_Matrix& LM,
+        const K_Vectors& kv,
+        hamilt::Hamilt<T>* p_ham);
     void write() override;
 
   private:
@@ -36,6 +38,7 @@ class Output_Mat_Sparse : public Output_Interface
     LCAO_Hamilt& _UHM;
     LCAO_Matrix& _LM;
     const K_Vectors& _kv;
+    hamilt::Hamilt<T>* _p_ham;
 };
 } // namespace ModuleIO
 

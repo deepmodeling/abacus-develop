@@ -37,7 +37,7 @@ class Stochastic_Iter
 
     void sum_stoband(Stochastic_WF& stowf,
                      elecstate::ElecState* pes,
-                     hamilt::Hamilt<double>* pHamilt,
+                     hamilt::Hamilt<std::complex<double>>* pHamilt,
                      ModulePW::PW_Basis_K* wfc_basis);
 
     double calne(elecstate::ElecState* pes);

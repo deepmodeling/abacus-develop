@@ -4,6 +4,8 @@ list(APPEND objects
     hcontainer.cpp
     output_hcontainer.cpp
     func_folding.cpp
+    transfer.cpp
+    func_transfer.cpp
 )
 
 add_library(

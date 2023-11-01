@@ -324,10 +324,10 @@ std::vector<std::vector<std::vector<std::vector<double>>>> GenerateFaln(const st
 }
 
 /* OVERLOAD (de)constructors... */
-pseudo_nc::pseudo_nc()
+pseudo::pseudo()
 {
 }
-pseudo_nc::~pseudo_nc()
+pseudo::~pseudo()
 {
 }
 Atom::Atom()

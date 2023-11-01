@@ -10,7 +10,7 @@ out_chg     0
 
 smearing_method       fixed
 
-mixing_type    pulay
+mixing_type    broyden
 mixing_beta    0.4
 
 ks_solver     genelpa

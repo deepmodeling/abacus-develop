@@ -11,8 +11,14 @@ namespace GlobalV
 MPI_Comm POOL_WORLD;
 namespace Parallel_Reduce
 {
-    void reduce_double_all(double &object){return;};
-    void reduce_double_pool(double &object){return;};
-    void reduce_double_pool(float &object){return;};
+    template<typename T> void reduce_all(T& object) { return; };
+    template<typename T> void reduce_pool(T& object) { return; };
+
+    template<>
+    void reduce_all<double>(double& object) { return; };
+    template<>
+    void reduce_pool<double>(double& object) { return; };
+    template<>
+    void reduce_pool<float>(float& object) { return; };
 }
 #endif

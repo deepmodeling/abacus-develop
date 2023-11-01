@@ -1,8 +1,10 @@
 #include "potential_io.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_base/timer.h"
+
 #include "module_base/element_name.h"
+#include "module_base/timer.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_elecstate/potentials/efield.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 
 namespace ModuleIO
@@ -85,42 +87,11 @@ void write_elecstat_pot(
     double* v_elecstat = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(v_elecstat, rho_basis->nrxx);
 
-    std::complex<double>* vh_r = new std::complex<double>[rho_basis->nrxx];
-    ModuleBase::GlobalFunc::ZEROS(vh_r, rho_basis->nrxx);
-    std::complex<double>* vh_g = new std::complex<double>[rho_basis->npw];
-
-    int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
-        nspin0 = GlobalV::NSPIN;
-    for (int is = 0; is < nspin0; is++)
-    {
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
-            vh_r[ir] += std::complex<double>(chr->rho[is][ir], 0.0);
-        }
-    }
-
-    //=============================
-    //  bring rho (aux) to G space
-    //=============================
-    rho_basis->real2recip(vh_r, vh_g);
-
-    //=======================================================
-    // calculate hartree potential in G-space (NB: V(G=0)=0 )
-    //=======================================================
-
-    for (int ig = 0; ig < rho_basis->npw; ++ig)
-    {
-        if (rho_basis->ig_gge0 == ig)
-            continue;
-        const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (ucell_->tpiba2 * rho_basis->gg[ig]);
-        vh_g[ig] *= fac;
-    }
-
     //==========================================
-    // transform hartree potential to real space
+    // Hartree potential
     //==========================================
-    rho_basis->recip2real(vh_g, vh_r);
+    ModuleBase::matrix vh(GlobalV::NSPIN, rho_basis->nrxx);
+    vh = elecstate::H_Hartree_pw::v_hartree(*ucell_, rho_basis, GlobalV::NSPIN, chr->rho);
 
     //==========================================
     // Dipole correction
@@ -141,7 +112,7 @@ void write_elecstat_pot(
     //==========================================
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
-        v_elecstat[ir] = vh_r[ir].real() + v_effective_fixed[ir];
+        v_elecstat[ir] = vh(0, ir) + v_effective_fixed[ir];
 
         if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
         {
@@ -181,8 +152,6 @@ void write_elecstat_pot(
         out_fermi);
 
     delete[] v_elecstat;
-    delete[] vh_g;
-    delete[] vh_r;
 
     ModuleBase::timer::tick("Potential", "write_elecstat_pot");
     return;

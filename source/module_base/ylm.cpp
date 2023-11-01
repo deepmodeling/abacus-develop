@@ -1,6 +1,8 @@
+#include "ylm.h"
+
 #include <cassert>
 #include <iomanip>
-#include "ylm.h"
+
 #include "constants.h"
 #include "timer.h"
 #include "tool_quit.h"

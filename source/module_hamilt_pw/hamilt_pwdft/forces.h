@@ -17,7 +17,8 @@
 template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Forces
 {
-  public:
+public:
+    template<typename T>
     friend class Force_Stress_LCAO;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
@@ -43,7 +44,6 @@ class Forces
   protected:
     int nat = 0;
     int npwx = 0;
-    static FPTYPE output_acc;
 
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
@@ -58,14 +58,11 @@ class Forces
                        const ModuleBase::matrix& v_current,
                        const bool vnew_exist);
 
-    static void print(const std::string& name, const ModuleBase::matrix& f, bool rv = true);
-    static void print_to_files(std::ofstream& ofs, const std::string& name, const ModuleBase::matrix& f);
-
   private:
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
-    using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
+    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_vkb1_nl_op = hamilt::cal_vkb1_nl_op<FPTYPE, Device>;
     using cal_force_nl_op = hamilt::cal_force_nl_op<FPTYPE, Device>;
 

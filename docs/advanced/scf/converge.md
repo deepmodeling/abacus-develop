@@ -8,7 +8,7 @@ By mixing the electron density with that obtained from previous steps, numerical
 
 For each of the mixing types, we also provide variables for controlling relevant parameters, including `mixing_beta`, `mixing_ndim`, and `mixing_gg0`.
 
-The default choice is `pulay`, which should work fine in most cases. If convergence issue arises in metallic systems, inclusion of Kerker preconditioning may be helpful, which can be achieved by setting [mixing_gg0](../input_files/input-main.md#mixing_gg0) to be a positive number. For the default pulay method, a choice of 1.5 might be a good start.
+The default choice is `broyden`, which should work fine in most cases. If convergence issue arises in metallic systems, inclusion of Kerker preconditioning may be helpful, which can be achieved by setting [mixing_gg0](../input_files/input-main.md#mixing_gg0) to be a positive number. For the default broyden method, a choice of 1.5 might be a good start.
 
 A large `mixing_beta` means a larger change in electron density for each SCF step. For well-behaved systems, a larger `mixing_beta` leads to faster convergence. However, for some difficult cases, a smaller `mixing_beta` is preferred to avoid numerical instabilities.
 
