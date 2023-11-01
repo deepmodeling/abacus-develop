@@ -21,7 +21,8 @@ jobs:
           cmake --install build
       - name: Testing
         run: |
-          cmake --build build --target test ARGS="-V --timeout 21600"
+          cd tests/integrate
+          bash Autotest.sh -n 2 -s true
       - name: Publish Report to Dashboard
         uses: crazy-max/ghaction-github-pages@v4
         if: ${{ ! cancelled() }}
