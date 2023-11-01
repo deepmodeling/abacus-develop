@@ -340,7 +340,10 @@ void Charge::atomic_rho(const int spin_number_need,
                             // liuyu 2023-11-01
                             if (atom->ncpp.tvanp)
                             {
-                                rhoatm[ir] = atom->ncpp.rho_at[ir];
+                                for (int ir = 0; ir < mesh; ++ir)
+                                {
+                                    rhoatm[ir] = atom->ncpp.rho_at[ir];
+                                }
                             }
                             else
                             {

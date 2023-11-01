@@ -718,8 +718,11 @@ void ESolver_KS_PW<T, Device>::eachiterfinish(const int iter)
     // liuyu 2023-10-24
     // D in uspp need vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
-    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
-    GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
+    if (GlobalV::use_uspp)
+    {
+        ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+        GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
+    }
 
     // print_eigenvalue(GlobalV::ofs_running);
     this->pelec->cal_energies(2);
