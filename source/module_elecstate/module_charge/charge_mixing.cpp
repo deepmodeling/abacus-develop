@@ -108,15 +108,9 @@ void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
             }
         }
     }
-    // auto set kerker mixing for trans metal system
-    if (has_trans_metal)
-    {
-        this->mixing_gg0 = 1.5;
-    }
-    else
-    {
-        this->mixing_gg0 = 0.0;
-    }
+    // auto set kerker mixing_gg0 = 1.0 as default
+    this->mixing_gg0 = 1.0;
+
     GlobalV::ofs_running << "      Autoset mixing_gg0 to " << this->mixing_gg0 << std::endl;
     GlobalV::ofs_running << "-------------------------------------" << std::endl;
     // auto set for inhomogeneous system
@@ -362,7 +356,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
 void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
-    if (this->mixing_gg0 <= 0.0)
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
         return;
     const double fac = this->mixing_gg0;
     const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
@@ -374,7 +368,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), 0.1);
+            double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
             drhog[is * this->rhopw->npw + ig] *= filter_g;
         }
     }
@@ -383,7 +377,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
-    if (this->mixing_gg0 <= 0.0)
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
         return;
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN);
     std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN);
@@ -405,7 +399,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), 0.1);
+            double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
     }
