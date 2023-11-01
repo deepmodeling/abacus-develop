@@ -166,6 +166,13 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     }
 
     Parallel_Reduce::reduce_all(stressus.c, stressus.nr * stressus.nc);
+    for (int l = 0; l < 3; l++)
+    {
+        for (int m = l; m < 3; m++)
+        {
+            stressus(m, l) = stressus(l, m);
+        }
+    }
     sigma += stressus;
 
     delete[] qnorm;
