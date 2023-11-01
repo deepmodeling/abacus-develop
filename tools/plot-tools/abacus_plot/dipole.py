@@ -113,10 +113,8 @@ class Absorption(Dipole, Efield):
         efield=self.padding(self.efield_data[dirc])
         dipole_fft = np.fft.fft(dipole)
         efield_fft = np.fft.fft(efield)
-        numerator=dipole_fft*efield_fft.conjugate()
-        denominator=efield_fft*efield_fft.conjugate()
-        #added to avoid zero division
-        denominator=0.01*max(denominator)+denominator
+        numerator=dipole_fft
+        denominator=efield_fft
         alpha = np.abs((numerator/denominator).imag)
         return alpha
     
