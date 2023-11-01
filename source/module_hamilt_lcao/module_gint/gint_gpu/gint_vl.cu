@@ -244,25 +244,27 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
     {
         int atomnow1 = atom_pair_input_info_g[atom_pair_index];
         int atomnow2 = atom_pair_input_info_g[atom_pair_index + 1];
-        int iw1 = threadIdx.x;
-        int iw2 = threadIdx.y;
-        if (iw1 >= atom_pair_input_info_g[atom_pair_index + 2] || iw2 >= atom_pair_input_info_g[atom_pair_index + 3])
+        int atom_nw1 = atom_pair_input_info_g[atom_pair_index + 2];
+        int atom_nw2 = atom_pair_input_info_g[atom_pair_index + 3];
+        for (int iw1 = threadIdx.x; iw1 < atom_nw1; iw1 += blockDim.x)
         {
-            return;
-        }
-        int lo1_iw1 = atom_pair_input_info_g[atom_pair_index + 4] + iw1;
-        int lo2_iw2 = atom_pair_input_info_g[atom_pair_index + 5] + iw2;
-        double v2 = 0.0;
-        int vldr3_index = blockIdx.x * max_size_g[0];
+            for (int iw2 = threadIdx.y; iw2 < atom_nw2; iw2 += blockDim.y)
+            {
+                int lo1_iw1 = atom_pair_input_info_g[atom_pair_index + 4] + iw1;
+                int lo2_iw2 = atom_pair_input_info_g[atom_pair_index + 5] + iw2;
+                double v2 = 0.0;
+                int vldr3_index = blockIdx.x * max_size_g[0];
 
-        int calc_index1 = ((vldr3_index + atomnow1) * nwmax_g[0] + iw1) * bxyz_g[0];
-        int calc_index2 = ((vldr3_index + atomnow2) * nwmax_g[0] + iw2) * bxyz_g[0];
+                int calc_index1 = ((vldr3_index + atomnow1) * nwmax_g[0] + iw1) * bxyz_g[0];
+                int calc_index2 = ((vldr3_index + atomnow2) * nwmax_g[0] + iw2) * bxyz_g[0];
 
-        for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1, ++calc_index2)
-        {
-            v2 += psir_ylm_left[calc_index1] * psir_ylm_right[calc_index2];
+                for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1, ++calc_index2)
+                {
+                    v2 += psir_ylm_left[calc_index1] * psir_ylm_right[calc_index2];
+                }
+                atomicAdd(&(GridVlocal[lo1_iw1 * lgd + lo2_iw2]), v2);
+            }
         }
-        atomicAdd(&(GridVlocal[lo1_iw1 * lgd + lo2_iw2]), v2);
     }
 }
 
@@ -284,7 +286,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        int *start_ind,
                        const Grid_Technique &GridT)
 {
-
     const Numerical_Orbital_Lm *pointer;
     const int nbx = GridT.nbx;
     const int nby = GridT.nby;
@@ -425,9 +426,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
 
             cudaMemcpy(atom_pair_input_info_g, atom_pair_input_info, atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice);
             cudaMemcpy(num_atom_pair_g, num_atom_pair, nbz * sizeof(int), cudaMemcpyHostToDevice);
-            const int ALIGN_SIZE = 32;
             dim3 grid1(nbz);
-            dim3 block1(ALIGN_SIZE);
+            dim3 block1(32);
             int shared_size = bxyz;
             get_psi_and_vldr3<<<grid1, block1, shared_size>>>(psi_input_double_g,
                                                               psi_input_int_g,
@@ -441,8 +441,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                               psi_u,
                                                               psir_ylm_left,
                                                               psir_ylm_right);
-            dim3 grid4(nbz, 256);
-            dim3 block4(nwmax, nwmax);
+            dim3 grid4(nbz, 1024);
+            dim3 block4(8, 8);
             psi_multiple<<<grid4, block4>>>(atom_pair_input_info_g,
                                             num_atom_pair_g,
                                             i * nby * nbz + j * nbz,
