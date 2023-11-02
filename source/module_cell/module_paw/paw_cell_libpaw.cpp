@@ -496,13 +496,13 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
 #endif
 }
 
-void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
+void Paw_Cell::extract_dij(int iat, int size_dij, double* dij)
 {
     int iat_fortran = iat + 1;
     get_dij_(iat_fortran,size_dij,nspden,dij);
 }
 
-void Paw_Cell::get_sij(int it, int size_sij, double* sij)
+void Paw_Cell::extract_sij(int it, int size_sij, double* sij)
 {
     int it_fortran = it + 1;
     get_sij_(it_fortran,size_sij,sij);
@@ -585,7 +585,7 @@ void Paw_Cell::set_dij()
            dij[is] = new double[nproj * nproj];
         }
 
-        get_dij(iat,size_dij,dij_libpaw);
+        extract_dij(iat,size_dij,dij_libpaw);
 
 #ifdef __MPI
         Parallel_Common::bcast_double(dij_libpaw,size_dij*nspden);
@@ -624,7 +624,7 @@ void Paw_Cell::set_sij()
         double* sij_libpaw = new double[size_sij];
         double* sij = new double[nproj * nproj];
 
-        get_sij(it,size_sij,sij_libpaw);
+        extract_sij(it,size_sij,sij_libpaw);
 
         for(int jproj = 0; jproj < nproj; jproj ++)
         {
