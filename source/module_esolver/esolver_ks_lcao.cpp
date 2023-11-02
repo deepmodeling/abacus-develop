@@ -493,7 +493,9 @@ namespace ModuleESolver
             // calculate the density matrix using read in wave functions
             // and the ncalculate the charge density on grid.
 
-            this->pelec->psiToRho(this->psi[0]);
+            this->pelec->skip_weights = true;
+            this->pelec->psiToRho(*this->psi);
+            this->pelec->skip_weights = false;
 
             // calculate the local potential(rho) again.
             // the grid integration will do in later grid integration.
