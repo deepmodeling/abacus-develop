@@ -74,7 +74,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
-        sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / GlobalC::ucell.omega;
+        sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
     this->stress_gga(sigmaxc, rho_basis, pelec->charge);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -95,7 +95,13 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, pelec->charge);
 
     // nonlocal
-    this->stress_nl(sigmanl, this->pelec->wg, p_sf, p_kv, p_symm, wfc_basis, d_psi_in);
+    this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in);
+
+    // add US term from augmentation charge derivatives
+    if (GlobalV::use_uspp)
+    {
+        this->stress_us(sigmanl, rho_basis, &GlobalC::ppcell, ucell);
+    }
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
@@ -117,7 +123,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->symmetrize_mat3(sigmatot, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigmatot, ucell);
     }
 
 	bool ry = false;

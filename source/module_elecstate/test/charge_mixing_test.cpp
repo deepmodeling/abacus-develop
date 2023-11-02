@@ -22,6 +22,10 @@ Charge::~Charge()
 Charge::Charge()
 {
 }
+void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
+{
+    this->rhopw = rhopw_in;
+}
 int XC_Functional::get_func_type()
 {
     return FUNC_TYPE;
@@ -291,6 +295,8 @@ TEST_F(ChargeMixingTest, InnerDotTest)
 
 TEST_F(ChargeMixingTest, MixRhoTest)
 {
+    GlobalV::double_grid = false;
+    charge.set_rhopw(&pw_basis);
     const int nspin = GlobalV::NSPIN = 1;
     GlobalV::DOMAG_Z = false;
     FUNC_TYPE = 3;
@@ -402,4 +408,34 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     delete[] charge.kin_r;
     delete[] charge.kin_r_save;
 }
+
+TEST_F(ChargeMixingTest, HighFreqMixTest)
+{
+    const int number = 10;
+    std::complex<double>* data = new std::complex<double>[number];
+    std::complex<double>* data_save = new std::complex<double>[number];
+
+    // initialize 
+    for (int i = 0; i < number; i++)
+    {
+        data[i] = {1.0, 1.0};  
+        data_save[i] = {2.0, 2.0};  
+    }
+
+    Charge_Mixing mixer;
+    mixer.set_rhopw(&pw_basis);
+    mixer.set_mixing("broyden", 1.0, 1, 0.2, false);
+    mixer.high_freq_mix(data, data_save, number);
+
+    for (int i = 0; i < number; i++)
+    {
+        std::complex<double> expected = data_save[i] + mixer.mixing_beta * (data[i] - data_save[i]);
+        EXPECT_DOUBLE_EQ(data[i].real(), expected.real());
+        EXPECT_DOUBLE_EQ(data[i].imag(), expected.imag());
+    }
+
+    delete[] data;
+    delete[] data_save;
+}
+
 #undef private

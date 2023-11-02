@@ -552,15 +552,20 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs)
         }
 
         // PP_Q
-        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_Q>"))
+        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_Q", true, false))
         {
-            this->qqq.create(nbeta, nbeta);
-            for (int i = 0; i < nbeta; i++)
+            ifs.ignore(150, '>');
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_Q>");
+        }
+        this->qqq.create(nbeta, nbeta);
+        for (int i = 0; i < nbeta; i++)
+        {
+            for (int j = 0; j < nbeta; j++)
             {
-                for (int j = 0; j < nbeta; j++)
-                {
-                    ifs >> qqq(i, j);
-                }
+                ifs >> qqq(i, j);
             }
         }
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_Q>");

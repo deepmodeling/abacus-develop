@@ -7,6 +7,7 @@
 #include "module_base/intarray.h"
 #include "module_base/realarray.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/soc.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
 #ifdef __LCAO
@@ -84,8 +85,7 @@ public:
     double *d_deeq = nullptr;
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
     std::complex<float> *c_deeq_nc = nullptr; // GPU array of deeq_nc
-    std::complex<double> *z_deeq_nc = nullptr; // GPU array of deeq_nc
-	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
+    std::complex<double>* z_deeq_nc = nullptr; // GPU array of deeq_nc
 
     // liuyu add 2023-10-03
     // uspp
@@ -99,10 +99,16 @@ public:
     ModuleBase::IntArray lpl;       // for each input limi,ljmj points to the allowed LM
     ModuleBase::realArray qrad;     // radial FT of Q functions
 
+    float* s_qq_nt = nullptr;
+    double* d_qq_nt = nullptr;
+    std::complex<float>* c_qq_so = nullptr;  // GPU array of qq_so
+    std::complex<double>* z_qq_so = nullptr; // GPU array of qq_so
+
     mutable ModuleBase::ComplexMatrix vkb;    // all beta functions in reciprocal space
     mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
     std::complex<double>*** vkb1_alpha;
     std::complex<double>*** vkb_alpha;
+    Structure_Factor* psf = nullptr;
 
     // other variables
     std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
@@ -134,10 +140,25 @@ public:
                       const int itype,
                       const double* qnorm,
                       const ModuleBase::matrix ylm,
-                      std::complex<double>* qg);
+                      std::complex<double>* qg) const;
+    template <typename FPTYPE, typename Device>
+    void radial_fft_q(Device* ctx,
+                      const int ng,
+                      const int ih,
+                      const int jh,
+                      const int itype,
+                      const FPTYPE* qnorm,
+                      const FPTYPE* ylm,
+                      std::complex<FPTYPE>* qg) const;
 
-    // calculate the effective coefficient matrix for non-local pseudopotential projectors
-    void cal_effective_D();
+    /**
+     * @brief calculate the effective coefficient matrix for non-local pseudopotential projectors
+     *
+     * @param veff effective potential
+     * @param rho_basis potential FFT grids
+     * @param cell UnitCell
+     */
+    void cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
 #ifdef __LCAO
     ORB_gaunt_table MGT;
 #endif
@@ -153,6 +174,10 @@ public:
     template <typename FPTYPE>
     FPTYPE* get_deeq_data() const;
     template <typename FPTYPE>
+    FPTYPE* get_qq_nt_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_qq_so_data() const;
+    template <typename FPTYPE>
     std::complex<FPTYPE>* get_vkb_data() const;
     template <typename FPTYPE>
     std::complex<FPTYPE>* get_deeq_nc_data() const;
@@ -165,7 +190,8 @@ public:
     std::complex<double>* z_vkb = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
-    Structure_Factor* psf = nullptr;
+
+    Soc soc;
 
     /**
      * @brief Compute interpolation table qrad
@@ -177,6 +203,31 @@ public:
      * @param cell UnitCell
      */
     void compute_qrad(UnitCell& cell);
+
+    /**
+     * @brief computes the integral of the effective potential with the Q function
+     *
+     * @param veff effective potential
+     * @param rho_basis potential FFT grids
+     * @param cell UnitCell
+     */
+    void newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+
+    /**
+     * @brief calculate D functions in the soc case when tvanp is true
+     *
+     * @param iat the index of atom
+     * @param cell UnitCell
+     */
+    void newd_so(const int& iat, UnitCell& cell);
+
+    /**
+     * @brief calculate D functions in the noncolin case when tvanp is true
+     *
+     * @param iat the index of atom
+     * @param cell UnitCell
+     */
+    void newd_nc(const int& iat, UnitCell& cell);
 };
 
 #endif // VNL_IN_PW

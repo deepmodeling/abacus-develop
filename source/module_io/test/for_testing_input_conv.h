@@ -1,3 +1,6 @@
+#ifndef INPUT_CONV_TEST_H
+#define INPUT_CONV_TEST_H
+
 #define private public
 
 #include "module_cell/module_symmetry/symmetry.h"
@@ -152,6 +155,12 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
 }
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
+{
+}
+Soc::~Soc()
+{
+}
+Fcoef::~Fcoef()
 {
 }
 pseudopot_cell_vl::pseudopot_cell_vl()
@@ -374,10 +383,10 @@ void UnitCell::setup(const std::string& latname_in,
     }
     return;
 }
-void Structure_Factor::set(const int&)
-{
-    return;
-}
+// void Structure_Factor::set(const int&)
+// {
+//     return;
+// }
 
 namespace MD_func
 {
@@ -400,3 +409,5 @@ Charge_Mixing CHR_MIX;
 } // namespace GlobalC
 
 #undef private
+
+#endif
