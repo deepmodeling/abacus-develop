@@ -328,6 +328,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 {
     ModuleBase::TITLE("Paw_Cell", "get_nhat");
 
+    nhatgr = new double[3*nfft];
     double* nhat_tmp;
     nhat_tmp = new double[nfft*nspden];
 
@@ -387,6 +388,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
         }
     }
     delete[] nhat_tmp;
+    delete[] nhatgr;
 }
 
 void Paw_Cell::calculate_dij(double* vks, double* vxc)
