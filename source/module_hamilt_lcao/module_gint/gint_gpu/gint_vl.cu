@@ -384,7 +384,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     checkCuda(cudaMalloc((void **)&GridVlocal, lgd * lgd * sizeof(double)));
     checkCuda(cudaMemset(GridVlocal, 0, lgd * lgd * sizeof(double)));
 
-    const int nStreams = 8;
+    const int nStreams = 16;
     const int psir_size = nbz * max_size * bxyz * nwmax;
     double *psir_ylm_left_global;
     double *psir_ylm_right_global;
@@ -468,7 +468,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int *num_atom_pair_g = &num_atom_pair_g_global[nbz * stream_num];
 
             checkCuda(cudaStreamSynchronize(stream[stream_num]));
-            //checkCuda(cudaDeviceSynchronize());
 
             checkCuda(cudaMemcpyAsync(psi_input_double_g, psi_input_double, psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice, stream[stream_num]));
             checkCuda(cudaMemcpyAsync(psi_input_int_g, psi_input_int, psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, stream[stream_num]));
@@ -504,7 +503,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                                                    atom_pair_size_of_meshcell,
                                                                                    GridVlocal,
                                                                                    lgd);
-            //checkCuda(cudaEventRecord(gpu_finish_Event[i], stream[i]));
             iter_num++;
         }
     }
