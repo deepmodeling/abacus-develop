@@ -950,7 +950,7 @@ We recommend the following options:
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
   -  **0**: No Kerker scaling is performed.
   
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
