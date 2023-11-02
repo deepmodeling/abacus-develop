@@ -754,8 +754,6 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         ModuleBase::Memory::record("SDFT::sfchi", sto_memory_cost);
         psi::Psi<std::complex<double>> smfchi(1, perbands_sto, npwx, kv.ngk.data());
         ModuleBase::Memory::record("SDFT::smfchi", sto_memory_cost);
-        psi::Psi<std::complex<double>> tmphchil(1, perbands_sto, npwx, kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::tmphchil/r", sto_memory_cost * 2);
 #ifdef __MPI
         psi::Psi<std::complex<float>> chi_all, hchi_all, psi_all;
         if (GlobalV::NSTOGROUP > 1)
@@ -777,15 +775,6 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             f_kspsi.resize(1, 1, 1);
         }
 #endif
-
-        const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
-        parallel_distribution parajmat(ndim * dim_jmatrix, GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL);
-        std::vector<std::complex<float>> j1l(ndim * dim_jmatrix), j2l(ndim * dim_jmatrix);
-        ModuleBase::Memory::record("SDFT::j1l", sizeof(std::complex<float>) * ndim * dim_jmatrix);
-        ModuleBase::Memory::record("SDFT::j2l", sizeof(std::complex<float>) * ndim * dim_jmatrix);
-        std::vector<std::complex<float>> j1r(ndim * dim_jmatrix), j2r(ndim * dim_jmatrix);
-        ModuleBase::Memory::record("SDFT::j1r", sizeof(std::complex<float>) * ndim * dim_jmatrix);
-        ModuleBase::Memory::record("SDFT::j2r", sizeof(std::complex<float>) * ndim * dim_jmatrix);
 
         const int nbatch_psi = npart_sto;
         const int bsize_psi = ceil(double(perbands_sto) / nbatch_psi);
@@ -859,6 +848,17 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             ModuleBase::Memory::record("SDFT::poly_expmtsmfchi",
                                        sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
         }
+        
+        const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
+        parallel_distribution parajmat(ndim * dim_jmatrix, GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL);
+        std::vector<std::complex<float>> j1l(ndim * dim_jmatrix), j2l(ndim * dim_jmatrix);
+        ModuleBase::Memory::record("SDFT::j1l", sizeof(std::complex<float>) * ndim * dim_jmatrix);
+        ModuleBase::Memory::record("SDFT::j2l", sizeof(std::complex<float>) * ndim * dim_jmatrix);
+        std::vector<std::complex<float>> j1r(ndim * dim_jmatrix), j2r(ndim * dim_jmatrix);
+        ModuleBase::Memory::record("SDFT::j1r", sizeof(std::complex<float>) * ndim * dim_jmatrix);
+        ModuleBase::Memory::record("SDFT::j2r", sizeof(std::complex<float>) * ndim * dim_jmatrix);
+        psi::Psi<std::complex<double>> tmphchil(1, perbands_sto, npwx, kv.ngk.data());
+        ModuleBase::Memory::record("SDFT::tmphchil/r", sto_memory_cost * 2);
 
         //------------------------  t loop  --------------------------
         std::cout << "ik=" << ik << ": ";

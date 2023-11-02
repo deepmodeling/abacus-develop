@@ -158,7 +158,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
                     {
                         for (int i = 0; i < npw; ++i)
                         {
-                            std::complex<double> p = stowf.shchi[ik](ibnd - nksbands, i);
+                            std::complex<double> p = stowf.shchi->operator()(ik, ibnd - nksbands, i);
                             double np = p.real() * p.real() + p.imag() * p.imag();
                             s_kin(l, m) += p_kv->wk[ik] * gk[l][i] * gk[m][i] * kfac[i] * np;
                         }
@@ -202,6 +202,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
     delete[] gk[1];
     delete[] gk[2];
     delete[] gk;
+    delete[] kfac;
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
 
     return;
@@ -267,6 +268,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
         char transa = 'C';
         char transb = 'N';
         psi_in[0].fix_k(ik);
+        stowf.shchi->fix_k(ik);
         // KS orbitals
         int npmks = GlobalV::NPOL * nksbands;
         zgemm_(&transa,
