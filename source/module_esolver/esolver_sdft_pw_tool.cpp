@@ -718,8 +718,11 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         info_gatherv sto_npwx(perbands_sto, GlobalV::NSTOGROUP, npwx, PARAPW_WORLD);
 #endif
         const int bandsinfo[6]{perbands_ks, perbands_sto, perbands, allbands_ks, allbands_sto, allbands};
-        double* en = nullptr;
-        const double* en_all = &(this->pelec->ekb(ik, GlobalV::NBANDS - allbands_ks));
+        double *en = nullptr, *en_all = nullptr;
+        if (allbands_ks > 0)
+        {
+            en_all = &(this->pelec->ekb(ik, GlobalV::NBANDS - allbands_ks));
+        }
         if (perbands_ks > 0)
         {
             en = new double[perbands_ks];
@@ -768,7 +771,8 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             {
                 for (int ig = 0; ig < npw; ++ig)
                 {
-                    psi_all(0, ib, ig) = static_cast<std::complex<float>>(psi[0](GlobalV::NBANDS - allbands_ks + ib, ig));
+                    psi_all(0, ib, ig)
+                        = static_cast<std::complex<float>>(psi[0](GlobalV::NBANDS - allbands_ks + ib, ig));
                 }
             }
             kspsi_all = &psi_all;
@@ -848,7 +852,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             ModuleBase::Memory::record("SDFT::poly_expmtsmfchi",
                                        sizeof(std::complex<double>) * nche_KG * perbands_sto * npwx);
         }
-        
+
         const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
         parallel_distribution parajmat(ndim * dim_jmatrix, GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL);
         std::vector<std::complex<float>> j1l(ndim * dim_jmatrix), j2l(ndim * dim_jmatrix);
