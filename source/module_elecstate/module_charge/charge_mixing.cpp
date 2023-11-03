@@ -208,13 +208,13 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhog_in.data(), rhog_out.data(), screen, true);
+    this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
 
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
 
-    this->mixing->mix_data(this->rho_mdata, rhog_out.data());
+    this->mixing->mix_data(this->rho_mdata, rhog_out);
 
     if (GlobalV::double_grid)
     {
