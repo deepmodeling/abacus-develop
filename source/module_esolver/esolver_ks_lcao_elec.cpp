@@ -107,9 +107,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             nsk = GlobalV::NSPIN;
             ncol = this->LOWF.ParaV->ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx"
-#ifdef __CUSOLVER_LCAO
                 || GlobalV::KS_SOLVER == "cusolver"
-#endif
             )
             {
                 ncol = this->LOWF.ParaV->ncol;
@@ -123,12 +121,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #else
             ncol = GlobalV::NBANDS;
 #endif
-#ifdef __CUSOLVER_LCAO
-            if (GlobalV::KS_SOLVER == "cusolver")
-            {
-                ncol = this->LOWF.paraV->ncol;
-            }
-#endif
+
         }
         this->psi = new psi::Psi<TK>(nsk, ncol, this->LOWF.ParaV->nrow, nullptr);
     }
