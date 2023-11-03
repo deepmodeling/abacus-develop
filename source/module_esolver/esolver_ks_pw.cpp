@@ -141,16 +141,14 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     //=================================
     // initalize local pseudopotential
     //=================================
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //======================================
     // Initalize non local pseudopotential
     //======================================
-    GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
-
-    GlobalC::ppcell.cal_effective_D();
 
     if (!GlobalV::psi_initializer)
     {
@@ -189,10 +187,13 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-                                                                 &(this->chr),
-                                                                 &(this->kv),
-                                                                 this->pw_rho,
-                                                                 this->pw_big);
+                                                            &(this->chr),
+                                                            &(this->kv),
+                                                            &ucell,
+                                                            &(GlobalC::ppcell),
+                                                            this->pw_rhod,
+                                                            this->pw_rho,
+                                                            this->pw_big);
     }
 
     // Inititlize the charge density.
@@ -202,7 +203,8 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
     {
-        this->pelec->pot = new elecstate::Potential(this->pw_rho,
+        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                    this->pw_rho,
                                                     &GlobalC::ucell,
                                                     &(GlobalC::ppcell.vloc),
                                                     &(this->sf),
@@ -249,16 +251,20 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 
         delete this->pelec;
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-                                                                 &(this->chr),
-                                                                 (K_Vectors*)(&(this->kv)),
-                                                                 this->pw_rho,
-                                                                 this->pw_big);
+                                                            &(this->chr),
+                                                            (K_Vectors*)(&(this->kv)),
+                                                            &ucell,
+                                                            &(GlobalC::ppcell),
+                                                            this->pw_rhod,
+                                                            this->pw_rho,
+                                                            this->pw_big);
 
         this->pelec->charge->allocate(GlobalV::NSPIN);
         this->pelec->omega = GlobalC::ucell.omega;
 
         delete this->pelec->pot;
-        this->pelec->pot = new elecstate::Potential(this->pw_rho,
+        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                    this->pw_rho,
                                                     &GlobalC::ucell,
                                                     &(GlobalC::ppcell.vloc),
                                                     &(this->sf),
@@ -270,7 +276,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     }
     else
     {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rho);
+        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         this->pw_wfc->initgrids(GlobalC::ucell.lat0,
@@ -362,7 +368,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     // calculate ewald energy
     if (!GlobalV::test_skip_ewald)
     {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, this->sf.strucFac);
+        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rhod, this->sf.strucFac);
     }
 
     //=========================================================
@@ -370,11 +376,19 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     //=========================================================
     this->pelec->init_scf(istep, this->sf.strucFac);
     // Symmetry_rho should behind init_scf, because charge should be initialized first.
+    // liuyu comment: Symmetry_rho should be located between init_rho and v_of_rho?
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, this->symm);
     }
+
+    // liuyu move here 2023-10-09
+    // D in uspp need vloc, thus behind init_scf()
+    // calculate the effective coefficient matrix for non-local pseudopotential projectors
+    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+    GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
+
     /*
         after init_rho (in pelec->init_scf), we have rho now.
         before hamilt2density, we update Hk and initialize psi
@@ -665,7 +679,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, this->symm);
     }
 
     // compute magnetization, only for LSDA(spin==2)
@@ -701,6 +715,15 @@ void ESolver_KS_PW<T, Device>::updatepot(const int istep, const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::eachiterfinish(const int iter)
 {
+    // liuyu 2023-10-24
+    // D in uspp need vloc, thus needs update when veff updated
+    // calculate the effective coefficient matrix for non-local pseudopotential projectors
+    if (GlobalV::use_uspp)
+    {
+        ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+        GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
+    }
+
     // print_eigenvalue(GlobalV::ofs_running);
     this->pelec->cal_energies(2);
     // We output it for restarting the scf.
@@ -807,7 +830,7 @@ void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
                                ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                                : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     }
-    ff.cal_force(force, *this->pelec, this->pw_rho, &this->symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
+    ff.cal_force(force, *this->pelec, this->pw_rhod, &this->symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
 }
 
 template <typename T, typename Device>
@@ -824,7 +847,7 @@ void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
     }
     ss.cal_stress(stress,
                   GlobalC::ucell,
-                  this->pw_rho,
+                  this->pw_rhod,
                   &this->symm,
                   &this->sf,
                   &this->kv,

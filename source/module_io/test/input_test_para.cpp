@@ -130,9 +130,9 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.bx,0);
         EXPECT_EQ(INPUT.by,0);
         EXPECT_EQ(INPUT.bz,0);
-        EXPECT_EQ(INPUT.nsx, 0);
-        EXPECT_EQ(INPUT.nsy, 0);
-        EXPECT_EQ(INPUT.nsz, 0);
+        EXPECT_EQ(INPUT.ndx, 0);
+        EXPECT_EQ(INPUT.ndy, 0);
+        EXPECT_EQ(INPUT.ndz, 0);
         EXPECT_EQ(INPUT.diago_proc,0);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);

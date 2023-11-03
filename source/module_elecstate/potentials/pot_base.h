@@ -39,6 +39,7 @@ class PotBase
 
   protected:
     const ModulePW::PW_Basis* rho_basis_ = nullptr;
+    const ModulePW::PW_Basis* rho_basis_smooth_ = nullptr;
 };
 
 } // namespace elecstate

@@ -39,7 +39,7 @@
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
     - [nx, ny, nz](#nx-ny-nz)
-    - [nsx, nsy, nsz](#nsx-nsy-nsz)
+    - [ndx, ndy, ndz](#ndx-ndy-ndz)
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
@@ -699,13 +699,19 @@ These variables are used to control the plane wave related parameters.
 ### nx, ny, nz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. 
+
+    Note: You must specify all three dimensions for this setting to be used.
 - **Default**: 0
 
-### nsx, nsy, nsz
+### ndx, ndy, ndz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the smooth part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the dense part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. 
+
+    Note: You must specify all three dimensions for this setting to be used.
+
+    Note: These parameters must be used combined with [nx,ny,nz](#nx-ny-nz). If [nx,ny,nz](#nx-ny-nz) are unset, ndx,ndy,ndz are used as [nx,ny,nz](#nx-ny-nz).
 - **Default**: 0
 
 ### pw_seed
@@ -929,9 +935,8 @@ calculations.
 - **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
 We recommend the following options:
   - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
-    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
-    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
-    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=1.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=1.0`.
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
@@ -951,7 +956,7 @@ We recommend the following options:
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
   -  **0**: No Kerker scaling is performed.
   
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.

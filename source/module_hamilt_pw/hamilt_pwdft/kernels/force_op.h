@@ -46,7 +46,7 @@ struct cal_force_nl_op {
     ///
     /// Input Parameters
     /// @param ctx - which device this function runs on
-    /// @param multi_proj - control flag
+    /// @param nondiagonal - control flag
     /// @param nbands_occ - number of occupied bands
     /// @param wg_nc - the second dimension of matrix wg
     /// @param ntype - total atomic type
@@ -62,34 +62,37 @@ struct cal_force_nl_op {
     /// @param atom_na - GlobalC::ucell.atoms[ii].na
     /// @param tpiba - GlobalC::ucell.tpiba
     /// @param d_wg - input parameter wg
+    /// @param d_ekb - input parameter ekb
+    /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
     /// @param becp - intermediate matrix with GlobalV::NBANDS * nkb
     /// @param dbecp - intermediate matrix with 3 * GlobalV::NBANDS * nkb
     ///
     /// Output Parameters
     /// @param force - output forces
-    void operator()(
-        const psi::DEVICE_CPU *ctx,
-        const bool &multi_proj,
-        const int &nbands_occ,
-        const int &wg_nc,
-        const int &ntype,
-        const int &spin,
-        const int &deeq_2,
-        const int &deeq_3,
-        const int &deeq_4,
-        const int &forcenl_nc,
-        const int &nbands,
-        const int &ik,
-        const int &nkb,
-        const int *atom_nh,
-        const int *atom_na,
-        const FPTYPE &tpiba,
-        const FPTYPE *d_wg,
-        const FPTYPE *deeq,
-        const std::complex<FPTYPE> *becp,
-        const std::complex<FPTYPE> *dbecp,
-        FPTYPE *force);
+    void operator()(const psi::DEVICE_CPU* ctx,
+                    const bool& nondiagonal,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& spin,
+                    const int& deeq_2,
+                    const int& deeq_3,
+                    const int& deeq_4,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* d_ekb,
+                    const FPTYPE* qq_nt,
+                    const FPTYPE* deeq,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -112,28 +115,29 @@ struct cal_vkb1_nl_op<FPTYPE, psi::DEVICE_GPU> {
 
 template <typename FPTYPE>
 struct cal_force_nl_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator() (
-        const psi::DEVICE_GPU *ctx,
-        const bool &multi_proj,
-        const int &nbands_occ,
-        const int &wg_nc,
-        const int &ntype,
-        const int &spin,
-        const int &deeq_2,
-        const int &deeq_3,
-        const int &deeq_4,
-        const int &forcenl_nc,
-        const int &nbands,
-        const int &ik,
-        const int &nkb,
-        const int *atom_nh,
-        const int *atom_na,
-        const FPTYPE &tpiba,
-        const FPTYPE *d_wg,
-        const FPTYPE *deeq,
-        const std::complex<FPTYPE> *becp,
-        const std::complex<FPTYPE> *dbecp,
-        FPTYPE *force);
+    void operator()(const psi::DEVICE_GPU* ctx,
+                    const bool& nondiagonal,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& spin,
+                    const int& deeq_2,
+                    const int& deeq_3,
+                    const int& deeq_4,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* d_ekb,
+                    const FPTYPE* qq_nt,
+                    const FPTYPE* deeq,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force);
 };
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

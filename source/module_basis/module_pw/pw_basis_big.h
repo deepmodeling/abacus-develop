@@ -15,15 +15,12 @@ namespace ModulePW
 class PW_Basis_Big: public PW_Basis
 {
 public:
-    
-    // combine [bx,by,bz] FFT grids into a big one
-	// typical values are bx=2, by=2, bz=2
-	// nbx=nx/bx, nby=ny/by, nbz=nz/bz, 
-    PW_Basis_Big(){
-        bx = 1;
-        by = 1;
-        bz = 1;
-    }
+  // combine [bx,by,bz] FFT grids into a big one
+  // typical values are bx=2, by=2, bz=2
+  // nbx=nx/bx, nby=ny/by, nbz=nz/bz,
+  PW_Basis_Big()
+  {
+  }
     PW_Basis_Big(std::string device_, std::string precision_) : PW_Basis(device_, precision_) {}
 
     ~PW_Basis_Big(){};
@@ -34,7 +31,7 @@ public:
         bz = bz_in;
         bxyz = bx * by * bz;
     }
-    int bx,by,bz,bxyz;
+    int bx = 1, by = 1, bz = 1, bxyz = 1;
     int nbx, nby, nbz;
     int nbzp;
     int nbxx;

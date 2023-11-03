@@ -60,27 +60,28 @@ struct cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_CPU> {
 
 template <typename FPTYPE>
 struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
-    void operator()(
-            const psi::DEVICE_CPU *ctx,
-            const bool &multi_proj,
-            const int &ipol,
-            const int &jpol,
-            const int &nkb,
-            const int &nbands_occ,
-            const int &ntype,
-            const int &spin,
-            const int &wg_nc,
-            const int &ik,
-            const int &deeq_2,
-            const int &deeq_3,
-            const int &deeq_4,
-            const int *atom_nh,
-            const int *atom_na,
-            const FPTYPE *d_wg,
-            const FPTYPE *deeq,
-            const std::complex<FPTYPE> *becp,
-            const std::complex<FPTYPE> *dbecp,
-            FPTYPE *stress)
+    void operator()(const psi::DEVICE_CPU* ctx,
+                    const bool& nondiagonal,
+                    const int& ipol,
+                    const int& jpol,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& spin,
+                    const int& wg_nc,
+                    const int& ik,
+                    const int& deeq_2,
+                    const int& deeq_3,
+                    const int& deeq_4,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* d_ekb,
+                    const FPTYPE* qq_nt,
+                    const FPTYPE* deeq,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress)
     {
         FPTYPE local_stress = 0;
 #ifdef _OPENMP
@@ -102,11 +103,14 @@ struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
                     {
                         for(int ip2=0; ip2<Nprojs; ip2++)
                         {
-                            if(!multi_proj && ip1 != ip2) {
+                            if (!nondiagonal && ip1 != ip2)
+                            {
                                 continue;
                             }
                             FPTYPE fac = d_wg[ik * wg_nc + ib] * 1.0;
-                            FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                            FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+                            FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2]
+                                        - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
                             const int inkb1 = sum + ia * Nprojs + ip1;
                             const int inkb2 = sum + ia * Nprojs + ip2;
                             //out<<"\n ps = "<<ps;

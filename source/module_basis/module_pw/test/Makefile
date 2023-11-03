@@ -123,6 +123,7 @@ pw_distributeg_method1.o\
 pw_distributeg_method2.o\
 fft.o\
 pw_basis_k.o\
+pw_basis_sup.o\
 pw_transform_k.o\
 memory.o\
 psi_memory_op.o\
