@@ -49,6 +49,10 @@ class Potential : public PotBase
     // default constructor for UT
     Potential(){};
     // In constructor, size of every potential components should be allocated
+    // rho_basis_in is the dense grids, rho_basis_smooth_in is the smooth grids in USPP
+    // charge density and potential are defined on dense grids,
+    // but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
+    // Note: rho_basis_in and rho_basis_smooth_in are the same in NCPP
     Potential(const ModulePW::PW_Basis* rho_basis_in,
               const ModulePW::PW_Basis* rho_basis_smooth_in,
               const UnitCell* ucell_in,

@@ -195,31 +195,51 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     // ONLY smooth part of charge density is mixed by specific mixing method
     // The high_frequency part is mixed by plain mixing method.
     // NOTE: chr->rhopw is dense, while this->rhopw is smooth
-    std::vector<std::complex<double>> rhog_in(GlobalV::NSPIN * this->rhopw->npw);
-    std::vector<std::complex<double>> rhog_out(GlobalV::NSPIN * this->rhopw->npw);
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    std::complex<double>* rhog_in = nullptr;
+    std::complex<double>* rhog_out = nullptr;
+    if (GlobalV::double_grid)
     {
-        std::memcpy(&rhog_in[is * rhopw->npw], chr->rhog_save[is], rhopw->npw * sizeof(std::complex<double>));
-        std::memcpy(&rhog_out[is * rhopw->npw], chr->rhog[is], rhopw->npw * sizeof(std::complex<double>));
+        rhog_in = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
+        rhog_out = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::memcpy(&rhog_in[is * rhopw->npw], chr->rhog_save[is], rhopw->npw * sizeof(std::complex<double>));
+            std::memcpy(&rhog_out[is * rhopw->npw], chr->rhog[is], rhopw->npw * sizeof(std::complex<double>));
+        }
+    }
+    else
+    {
+        rhog_in = chr->rhog_save[0];
+        rhog_out = chr->rhog[0];
     }
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhog_in.data(), rhog_out.data(), screen, true);
+    this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
 
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
 
-    this->mixing->mix_data(this->rho_mdata, rhog_out.data());
+    this->mixing->mix_data(this->rho_mdata, rhog_out);
 
-    // simple mixing for high_frequencies
-    this->high_freq_mix(chr->rhog[0], chr->rhog_save[0], GlobalV::NSPIN * chr->rhopw->npw);
+    if (GlobalV::double_grid)
+    {
+        // simple mixing for high_frequencies
+        this->high_freq_mix(chr->rhog[0], chr->rhog_save[0], GlobalV::NSPIN * chr->rhopw->npw);
 
-    // combine smooth part and high_frequency part
+        // combine smooth part and high_frequency part
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::memcpy(chr->rhog[is], &rhog_out[is * rhopw->npw], rhopw->npw * sizeof(std::complex<double>));
+        }
+
+        delete[] rhog_in;
+        delete[] rhog_out;
+    }
+
     // rhog to rho
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        std::memcpy(chr->rhog[is], &rhog_out[is * rhopw->npw], rhopw->npw * sizeof(std::complex<double>));
         chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
     }
 
@@ -228,36 +248,61 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     {
         std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * chr->rhopw->npw);
         std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * chr->rhopw->npw);
-        std::vector<std::complex<double>> taug_in(GlobalV::NSPIN * this->rhopw->npw);
-        std::vector<std::complex<double>> taug_out(GlobalV::NSPIN * this->rhopw->npw);
+        std::complex<double>* taug_in = nullptr;
+        std::complex<double>* taug_out = nullptr;
+        if (GlobalV::double_grid)
+        {
+            taug_in = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
+            taug_out = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
+        }
+        else
+        {
+            taug_in = kin_g_save.data();
+            taug_out = kin_g.data();
+        }
+
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
             chr->rhopw->real2recip(chr->kin_r[is], &kin_g[is * chr->rhopw->npw]);
             chr->rhopw->real2recip(chr->kin_r_save[is], &kin_g_save[is * chr->rhopw->npw]);
+
             // similar to rhog and rhog_save
-            std::memcpy(&taug_in[is * rhopw->npw],
-                        &kin_g_save[is * chr->rhopw->npw],
-                        rhopw->npw * sizeof(std::complex<double>));
-            std::memcpy(&taug_out[is * rhopw->npw],
-                        &kin_g[is * chr->rhopw->npw],
-                        rhopw->npw * sizeof(std::complex<double>));
+            if (GlobalV::double_grid)
+            {
+                std::memcpy(&taug_in[is * rhopw->npw],
+                            &kin_g_save[is * chr->rhopw->npw],
+                            rhopw->npw * sizeof(std::complex<double>));
+                std::memcpy(&taug_out[is * rhopw->npw],
+                            &kin_g[is * chr->rhopw->npw],
+                            rhopw->npw * sizeof(std::complex<double>));
+            }
         }
         // Note: there is no kerker modification for tau because I'm not sure
         // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->tau_mdata, taug_in.data(), taug_out.data(), nullptr, false);
+        this->mixing->push_data(this->tau_mdata, taug_in, taug_out, nullptr, false);
 
-        this->mixing->mix_data(this->tau_mdata, taug_out.data());
+        this->mixing->mix_data(this->tau_mdata, taug_out);
 
-        // simple mixing for high_frequencies
-        this->high_freq_mix(kin_g.data(), kin_g_save.data(), GlobalV::NSPIN * chr->rhopw->npw);
+        if (GlobalV::double_grid)
+        {
+            // simple mixing for high_frequencies
+            this->high_freq_mix(kin_g.data(), kin_g_save.data(), GlobalV::NSPIN * chr->rhopw->npw);
 
-        // combine smooth part and high_frequency part
+            // combine smooth part and high_frequency part
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                std::memcpy(&kin_g[is * chr->rhopw->npw],
+                            &taug_out[is * rhopw->npw],
+                            rhopw->npw * sizeof(std::complex<double>));
+            }
+
+            delete[] taug_in;
+            delete[] taug_out;
+        }
+
         // kin_g to kin_r
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            std::memcpy(&kin_g[is * chr->rhopw->npw],
-                        &taug_out[is * rhopw->npw],
-                        rhopw->npw * sizeof(std::complex<double>));
             chr->rhopw->recip2real(&kin_g[is * chr->rhopw->npw], chr->kin_r[is]);
         }
     }

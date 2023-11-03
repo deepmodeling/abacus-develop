@@ -144,7 +144,7 @@ namespace ModuleESolver
         std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
                   << std::endl;
         if (GlobalV::double_grid)
-            std::cout << " UNIFORM GRID DIM(DENSE): " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
+            std::cout << " UNIFORM GRID DIM(DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
                       << std::endl;
 
         ofs << "\n\n\n\n";
