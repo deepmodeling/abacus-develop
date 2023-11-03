@@ -251,30 +251,32 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
     int end_index = start_index + atom_pair_num;
     start_index += blockIdx.y * 6;
     int step = gridDim.y * 6;
+    int vldr3_index = blockIdx.x * max_size_g[0];
     for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
     {
         int atomnow1 = atom_pair_input_info_g[atom_pair_index];
         int atomnow2 = atom_pair_input_info_g[atom_pair_index + 1];
-        int atom_nw1 = atom_pair_input_info_g[atom_pair_index + 2];
+        int nw_mul = atom_pair_input_info_g[atom_pair_index + 2];
         int atom_nw2 = atom_pair_input_info_g[atom_pair_index + 3];
-        for (int iw1 = threadIdx.x; iw1 < atom_nw1; iw1 += blockDim.x)
+        int lo1 = atom_pair_input_info_g[atom_pair_index + 4];
+        int lo2 = atom_pair_input_info_g[atom_pair_index + 5];
+        int calc_index1 = (vldr3_index + atomnow1) * nwmax_g[0];
+        int calc_index2 = (vldr3_index + atomnow2) * nwmax_g[0];
+
+        for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
         {
-            for (int iw2 = threadIdx.y; iw2 < atom_nw2; iw2 += blockDim.y)
+            int iw1 = iw_index / atom_nw2;
+            int iw2 = iw_index % atom_nw2;
+            double v2 = 0.0;
+
+            int calc_index1_w = (calc_index1 + iw1) * bxyz_g[0];
+            int calc_index2_w = (calc_index2 + iw2) * bxyz_g[0];
+
+            for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1_w, ++calc_index2_w)
             {
-                int lo1_iw1 = atom_pair_input_info_g[atom_pair_index + 4] + iw1;
-                int lo2_iw2 = atom_pair_input_info_g[atom_pair_index + 5] + iw2;
-                double v2 = 0.0;
-                int vldr3_index = blockIdx.x * max_size_g[0];
-
-                int calc_index1 = ((vldr3_index + atomnow1) * nwmax_g[0] + iw1) * bxyz_g[0];
-                int calc_index2 = ((vldr3_index + atomnow2) * nwmax_g[0] + iw2) * bxyz_g[0];
-
-                for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1, ++calc_index2)
-                {
-                    v2 += psir_ylm_left[calc_index1] * psir_ylm_right[calc_index2];
-                }
-                atomicAdd(&(GridVlocal[lo1_iw1 * lgd + lo2_iw2]), v2);
+                v2 += psir_ylm_left[calc_index1_w] * psir_ylm_right[calc_index2_w];
             }
+            atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
         }
     }
 }
@@ -481,7 +483,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             dim3 grid_psi(nbz);
             dim3 block_psi(32);
             dim3 grid_multiple(nbz, 1024);
-            dim3 block_multiple(8, 8);
+            dim3 block_multiple(256);
 
             get_psi_and_vldr3<<<grid_psi, block_psi, 0, stream[stream_num]>>>(psi_input_double_g,
                                                                               psi_input_int_g,

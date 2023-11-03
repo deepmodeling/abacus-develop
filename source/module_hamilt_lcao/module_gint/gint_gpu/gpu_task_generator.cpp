@@ -20,7 +20,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
 
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
-//#pragma omp parallel for
+
   for (int z_index = 0; z_index < GridT.nbzp; z_index++) {
     int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
@@ -99,10 +99,8 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
               atom_pair_index_in_nbz + atom_pair_index_in_meshcell;
           atom_pair_input_info[atom_pair_index] = atom1;
           atom_pair_input_info[atom_pair_index + 1] = atom2;
-          atom_pair_input_info[atom_pair_index + 2] =
-              GlobalC::ucell.atoms[it1].nw;
-          atom_pair_input_info[atom_pair_index + 3] =
-              GlobalC::ucell.atoms[it2].nw;
+          atom_pair_input_info[atom_pair_index + 2] = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
+          atom_pair_input_info[atom_pair_index + 3] = GlobalC::ucell.atoms[it2].nw;
           atom_pair_input_info[atom_pair_index + 4] = lo1;
           atom_pair_input_info[atom_pair_index + 5] = lo2;
           atom_pair_index_in_meshcell += 6;
