@@ -152,20 +152,20 @@ TEST_F(ChargeMixingTest, AutoSetTest)
     CMtest.auto_set(0.0, GlobalC::ucell);
     EXPECT_EQ(CMtest.mixing_beta, 0.2);
     EXPECT_EQ(CMtest.mixing->mixing_beta, 0.2);
-    EXPECT_EQ(CMtest.mixing_gg0, 0.0);
+    EXPECT_EQ(CMtest.mixing_gg0, 1.0);
 
     CMtest.need_auto_set();
     CMtest.auto_set(1.0, GlobalC::ucell);
     EXPECT_EQ(CMtest.mixing_beta, 0.7);
     EXPECT_EQ(CMtest.mixing->mixing_beta, 0.7);
-    EXPECT_EQ(CMtest.mixing_gg0, 0.0);
+    EXPECT_EQ(CMtest.mixing_gg0, 1.0);
 
     GlobalC::ucell.atoms = new Atom[1];
     GlobalC::ucell.ntype = 1;
     GlobalC::ucell.atoms[0].ncpp.psd = "Sc";
     CMtest.need_auto_set();
     CMtest.auto_set(1.0, GlobalC::ucell);
-    EXPECT_EQ(CMtest.mixing_gg0, 1.5);
+    EXPECT_EQ(CMtest.mixing_gg0, 1.0);
 }
 
 TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
@@ -198,7 +198,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     {
         std::complex<double> ration = drhog[i] / drhog_old[i];
         double gg = this->pw_basis.gg[i];
-        double ration_ref = std::max(gg / (gg + gg0), 0.1);
+        double ration_ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
         EXPECT_NEAR(ration.real(), ration_ref, 1e-10);
         EXPECT_NEAR(ration.imag(), 0, 1e-10);
     }
