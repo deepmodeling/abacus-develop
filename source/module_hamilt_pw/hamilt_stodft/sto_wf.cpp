@@ -230,8 +230,8 @@ void Init_Com_Orbitals(Stochastic_WF& stowf)
     const int npwx = stowf.npwx;
     const int nks = stowf.nks;
     size_t size = stowf.nchip_max * npwx * nks;
-    stowf.chi0 = new psi::Psi<std::complex<double>>(nks, npwx, npwx, ngk);
-    chi0->zero_out();
+    stowf.chi0 = new psi::Psi<std::complex<double>>(nks, npwx, npwx, stowf.ngk);
+    stowf.chi0->zero_out();
     ModuleBase::Memory::record("SDFT::chi0", size * sizeof(std::complex<double>));
     for (int ik = 0; ik < nks; ++ik)
     {
