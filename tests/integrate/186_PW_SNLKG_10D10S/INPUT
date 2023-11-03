@@ -36,7 +36,6 @@ mixing_type		broyden
 mixing_beta		0.4
 
 cal_cond      1
-cond_nche  36
 cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02

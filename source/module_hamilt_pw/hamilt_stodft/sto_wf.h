@@ -3,6 +3,7 @@
 
 #include "module_cell/klist.h"
 #include "module_base/complexmatrix.h"
+#include "module_psi/psi.h"
 
 //----------------------------------------------
 // Generate stochastic wave functions 
@@ -18,11 +19,13 @@ class Stochastic_WF
 
 	void init(K_Vectors* p_kv, const int npwx_in);
 
-	// ModuleBase::ComplexMatrix may not be a best filetype to store the electronic wave functions
-    ModuleBase::ComplexMatrix* chi0 = nullptr;  	// origin stochastic wavefunctions in real space
-	ModuleBase::ComplexMatrix* chiortho = nullptr;	// stochastic wavefunctions after in reciprocal space orthogonalized with KS wavefunctions
-	ModuleBase::ComplexMatrix* shchi = nullptr;     // sqrt(f(H))|chi>
-	int nchi = 0; 				// Total number of stochatic obitals
+    // origin stochastic wavefunctions in real space
+    psi::Psi<std::complex<double>>* chi0 = nullptr;
+    // stochastic wavefunctions after in reciprocal space orthogonalized with KS wavefunctions
+    psi::Psi<std::complex<double>>* chiortho = nullptr;
+    // sqrt(f(H))|chi>
+    psi::Psi<std::complex<double>>* shchi = nullptr;
+    int nchi = 0; 				// Total number of stochatic obitals
 	int *nchip = nullptr; 				// The number of stochatic orbitals in current process of each k point.
 	int nchip_max = 0;             // Max number of stochastic orbitals among all k points.
 	int nks = 0;           //number of k-points
@@ -35,9 +38,9 @@ class Stochastic_WF
 
 };
 //init stochastic orbitals
-void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in, const int nks);
+void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in);
 //update stochastic orbitals
-void Update_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in, const int nks);
+void Update_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in);
 //init complete orbitals
-void Init_Com_Orbitals(Stochastic_WF& stowf, const int ndim);
+void Init_Com_Orbitals(Stochastic_WF& stowf);
 #endif 

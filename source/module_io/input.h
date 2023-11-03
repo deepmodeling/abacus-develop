@@ -91,7 +91,7 @@ class Input
     int method_sto; //different methods for sdft, 1: slow, less memory  2: fast, more memory
     int npart_sto; //for method_sto = 2, reduce memory
     bool cal_cond; //calculate electronic conductivities
-    int cond_nche; //orders of Chebyshev expansions for conductivities
+    double cond_che_thr; //control the error of Chebyshev expansions for conductivities
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
     double cond_dt;  //dt to integrate conductivities

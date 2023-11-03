@@ -170,7 +170,7 @@ void Input::Default(void)
     npart_sto = 1;
     cal_cond = false;
     dos_nche = 100;
-    cond_nche = 20;
+    cond_che_thr = 1e-8;
     cond_dw = 0.1;
     cond_wcut = 10;
     cond_dt = 0.02;
@@ -786,9 +786,9 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, cal_cond);
         }
-        else if (strcmp("cond_nche", word) == 0)
+        else if (strcmp("cond_che_thr", word) == 0)
         {
-            read_value(ifs, cond_nche);
+            read_value(ifs, cond_che_thr);
         }
         else if (strcmp("cond_dw", word) == 0)
         {
@@ -2981,7 +2981,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(method_sto);
     Parallel_Common::bcast_int(npart_sto);
     Parallel_Common::bcast_bool(cal_cond);
-    Parallel_Common::bcast_int(cond_nche);
+    Parallel_Common::bcast_double(cond_che_thr);
     Parallel_Common::bcast_double(cond_dw);
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_double(cond_dt);
