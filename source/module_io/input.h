@@ -84,6 +84,7 @@ class Input
     int nbands_sto;			// number of stochastic bands //qianrui 2021-2-5
     std::string nbndsto_str; // string parameter for stochastic bands
     int seed_sto; // random seed for sDFT
+    double initsto_ecut = 0.0; // maximum ecut to init stochastic bands
     double emax_sto; // Emax & Emin to normalize H
     double emin_sto;
     int bndpar; //parallel for stochastic/deterministic bands
