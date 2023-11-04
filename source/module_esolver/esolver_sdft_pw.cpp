@@ -78,8 +78,17 @@ void ESolver_SDFT_PW::Init(Input& inp, UnitCell& ucell)
     this->Init_GlobalC(inp, ucell); // temporary
 
     stowf.init(&kv, pw_wfc->npwk_max);
-    if (INPUT.nbands_sto != 0)
-        Init_Sto_Orbitals(this->stowf, inp.seed_sto);
+    if (inp.nbands_sto != 0)
+    {
+        if (inp.initsto_ecut < inp.ecutwfc)
+        {
+            Init_Sto_Orbitals(this->stowf, inp.seed_sto);
+        }
+        else
+        {
+            Init_Sto_Orbitals_Ecut(this->stowf, inp.seed_sto, kv, *pw_wfc, inp.initsto_ecut);
+        }
+    }
     else
         Init_Com_Orbitals(this->stowf);
     size_t size = stowf.chi0->size();

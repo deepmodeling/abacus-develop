@@ -47,6 +47,12 @@ void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
         srand((unsigned)std::abs(seed_in) + GlobalV::MY_RANK * 10000);
     }
 
+    Allocate_Chi0(stowf);
+    Update_Sto_Orbitals(stowf, seed_in);
+}
+
+void Allocate_Chi0(Stochastic_WF& stowf)
+{
     bool firstrankmore = false;
     int igroup = 0;
     // I am not sure which is better.
@@ -82,30 +88,6 @@ void Init_Sto_Orbitals(Stochastic_WF& stowf, const int seed_in)
     for (int ik = 0; ik < nks; ++ik)
     {
         stowf.nchip[ik] = tmpnchip;
-    }
-    stowf.chi0->fix_k(0);
-
-    if (seed_in >= 0)
-    {
-        for (int i = 0; i < size; ++i)
-        {
-            const double phi = 2 * ModuleBase::PI * rand() / double(RAND_MAX);
-            stowf.chi0->get_pointer()[i] = std::complex<double>(cos(phi), sin(phi)) / sqrt(double(nchi));
-        }
-    }
-    else
-    {
-        for (int i = 0; i < size; ++i)
-        {
-            if (rand() / double(RAND_MAX) < 0.5)
-            {
-                stowf.chi0->get_pointer()[i] = -1.0 / sqrt(double(nchi));
-            }
-            else
-            {
-                stowf.chi0->get_pointer()[i] = 1.0 / sqrt(double(nchi));
-            }
-        }
     }
 }
 
@@ -245,3 +227,78 @@ void Init_Com_Orbitals(Stochastic_WF& stowf)
     }
 }
 #endif
+void Init_Sto_Orbitals_Ecut(Stochastic_WF& stowf,
+                            const int seed_in,
+                            const K_Vectors& kv,
+                            const ModulePW::PW_Basis_K& wfcpw,
+                            const int max_ecut)
+{
+    Allocate_Chi0(stowf);
+
+    ModulePW::PW_Basis pwmax;
+#ifdef __MPI
+    pwmax.initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+#endif
+    pwmax.initgrids(wfcpw.lat0, wfcpw.latvec, max_ecut);
+    const int nx = pwmax.nx;
+    const int ny = pwmax.ny;
+    const int nz = pwmax.nz;
+    const int nkstot = kv.nkstot;
+    const int nks = kv.nks;
+    const int nchitot = INPUT.nbands_sto;
+    bool* updown = new bool[nx * ny * nz];
+    int* nrecv = new int[GlobalV::NSTOGROUP];
+    const int nchiper = stowf.nchip[0];
+#ifdef __MPI
+    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, PARAPW_WORLD);
+#endif
+    int ichi_start = 0;
+    for (int i = 0; i < GlobalV::MY_STOGROUP; ++i)
+    {
+        ichi_start += nrecv[i];
+    }
+
+    for (int ik = 0; ik < nks; ++ik)
+    {
+        const int iktot = kv.getik_global(ik);
+        const int npw = wfcpw.npwk[ik];
+        int* ig2ixyz = new int[npw];
+
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            ModuleBase::Vector3<double> gdirect = wfcpw.getgdirect(ik, ig);
+            int ix = static_cast<int>(gdirect.x);
+            int iy = static_cast<int>(gdirect.y);
+            int iz = static_cast<int>(gdirect.z);
+            ix = (ix + nx) % nx;
+            iy = (iy + ny) % ny;
+            iz = (iz + nz) % nz;
+            ig2ixyz[ig] = ix * ny * nz + iy * nz + iz;
+        }
+
+        for (int ichi = 0; ichi < nchiper; ++ichi)
+        {
+            unsigned int seed = std::abs(seed_in) * (nkstot * nchitot) + iktot * nchitot + ichi_start + ichi;
+            srand(seed);
+            for (int i = 0; i < nx * ny * nz; ++i)
+            {
+                updown[i] = (rand() / double(RAND_MAX) < 0.5);
+            }
+
+            for (int ig = 0; ig < npw; ++ig)
+            {
+                if (updown[ig2ixyz[ig]])
+                {
+                    stowf.chi0->operator()(ik, ichi, ig) = -1.0 / sqrt(double(nchitot));
+                }
+                else
+                {
+                    stowf.chi0->operator()(ik, ichi, ig) = 1.0 / sqrt(double(nchitot));
+                }
+            }
+        }
+        delete[] ig2ixyz;
+    }
+    delete[] nrecv;
+    delete[] updown;
+}
