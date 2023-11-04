@@ -204,7 +204,7 @@ TEST_F(write_input, STO3)
         testing::HasSubstr("seed_sto                       0 #the random seed to generate stochastic orbitals"));
     EXPECT_THAT(
         output,
-        testing::HasSubstr("initsto_ecut                       0 #maximum ecut to init stochastic bands"));
+        testing::HasSubstr("initsto_ecut                   0 #maximum ecut to init stochastic bands"));
     EXPECT_THAT(output,
                 testing::HasSubstr(
                     "initsto_freq                   0 #frequency to generate new stochastic orbitals when running md"));
