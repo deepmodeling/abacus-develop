@@ -277,7 +277,6 @@ class Broyden_Mixing : public Mixing
         }
         else
         {
-            beta(0, 0) = inner_product(FP_dF, FP_dF);
             coef[0] = 1.0;
         }
 

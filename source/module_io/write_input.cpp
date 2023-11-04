@@ -146,9 +146,10 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "emin_sto", emin_sto, "trial energy to guess the lower bound of eigen energies of the Hamitonian operator");
     ModuleBase::GlobalFunc::OUTP(ofs, "emax_sto", emax_sto, "trial energy to guess the upper bound of eigen energies of the Hamitonian operator");
     ModuleBase::GlobalFunc::OUTP(ofs, "seed_sto", seed_sto, "the random seed to generate stochastic orbitals");
+    ModuleBase::GlobalFunc::OUTP(ofs, "initsto_ecut", initsto_ecut, "maximum ecut to init stochastic bands");
     ModuleBase::GlobalFunc::OUTP(ofs, "initsto_freq", initsto_freq, "frequency to generate new stochastic orbitals when running md");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_cond", cal_cond, "calculate electronic conductivities");
-    ModuleBase::GlobalFunc::OUTP(ofs, "cond_nche", cond_nche, "orders of Chebyshev expansions for conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_che_thr", cond_che_thr, "control the error of Chebyshev expansions for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dw", cond_dw, "frequency interval for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dt", cond_dt, "t interval to integrate Onsager coefficiencies");
