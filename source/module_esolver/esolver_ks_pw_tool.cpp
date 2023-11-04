@@ -55,7 +55,8 @@ void ESolver_KS_PW<T, Device>::KG(const double fwhmin,
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
 
     hamilt::Velocity velop(this->pw_wfc, this->kv.isk.data(), &GlobalC::ppcell, &GlobalC::ucell, INPUT.cond_nonlocal);
-    double decut = (wcut + 5*fwhmin)  / ModuleBase::Ry_to_eV;
+    double decut = (wcut + fwhmin)  / ModuleBase::Ry_to_eV;
+    std::cout<<"Recommended dt: "<<0.25*M_PI/decut<<" a.u."<<std::endl;
     for (int ik = 0; ik < nk; ++ik)
     {
         velop.init(ik);
@@ -249,11 +250,12 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
         ofscond << std::setw(8) << (iw + 0.5) * dw * ModuleBase::Ry_to_eV << std::setw(20) << cw11[iw] << std::setw(20)
                 << kappa[iw] << std::setw(20) << cw12[iw] << std::setw(20) << cw22[iw] << std::endl;
     }
-    std::cout << std::setprecision(6) << "DC electrical conductivity: " << cw11[0] - (cw11[1] - cw11[0]) * 0.5
-              << " Sm^-1" << std::endl;
-    std::cout << std::setprecision(6) << "Thermal conductivity: " << kappa[0] - (kappa[1] - kappa[0]) * 0.5
-              << " W(mK)^-1" << std::endl;
-    ;
+    double sigma0 = cw11[0] - (cw11[1] - cw11[0]) * 0.5;
+	double kappa0 = kappa[0] - (kappa[1] - kappa[0]) * 0.5;
+    double Lorent0 = kappa0 / sigma0 / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV / 11604.518026 * pow(1.6021766208e-19/1.3806505e-23, 2);
+    std::cout << std::setprecision(6) << "DC electrical conductivity: " << sigma0 << " Sm^-1" << std::endl;
+    std::cout << std::setprecision(6) << "Thermal conductivity: " << kappa0 << " W(mK)^-1" << std::endl;
+    std::cout << std::setprecision(6) << "Lorenz number: "<<Lorent0<<" k_B^2/e^2"<<std::endl;
     ofscond.close();
 
     delete[] cw11;

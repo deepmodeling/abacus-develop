@@ -108,6 +108,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete this->psi_init;
         this->psi_init = nullptr;
     }
+    delete this->psi;
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)

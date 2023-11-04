@@ -215,7 +215,8 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
         becp.zero_out();
 		char transa = 'C';
         char transb = 'N';
-		psi_in[0].fix_k(ik);
+		psi_in->fix_k(ik);
+		stowf.shchi->fix_k(ik);
 		//KS orbitals
 		int npmks = GlobalV::NPOL * nksbands;
 		zgemm_(&transa,&transb,&nkb,&npmks,&npw,&ModuleBase::ONE,
@@ -226,7 +227,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 		int npmsto = GlobalV::NPOL * nstobands;
 		zgemm_(&transa,&transb,&nkb,&npmsto,&npw,&ModuleBase::ONE,
 				GlobalC::ppcell.vkb.c,&npwx,
-            	stowf.shchi[ik].c,&npwx,
+            	stowf.shchi->get_pointer(),&npwx,
             	&ModuleBase::ZERO,&becp(nksbands,0),&nkb);
         
         Parallel_Reduce::reduce_pool(becp.c, becp.size);
@@ -265,7 +266,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 			//stochastic orbitals
 			zgemm_(&transa,&transb,&nkb,&npmsto,&npw,&ModuleBase::ONE,
 					vkb1.c,&npwx,
-        	    	stowf.shchi[ik].c,&npwx,
+        	    	stowf.shchi->get_pointer(),&npwx,
         	    	&ModuleBase::ZERO,&dbecp(ipol, nksbands, 0),&nkb);
         }// end ipol
 

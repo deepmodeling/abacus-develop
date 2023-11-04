@@ -54,6 +54,7 @@ TEST_F(InputParaTest,Bcast)
 	    EXPECT_EQ(INPUT.emax_sto,0.0);
 	    EXPECT_EQ(INPUT.nche_sto,100);
         EXPECT_EQ(INPUT.seed_sto,0);
+        EXPECT_EQ(INPUT.initsto_ecut,0.0);
         EXPECT_EQ(INPUT.bndpar,1);
         EXPECT_EQ(INPUT.kpar,1);
         EXPECT_EQ(INPUT.initsto_freq,0);
@@ -61,7 +62,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.npart_sto,1);
         EXPECT_FALSE(INPUT.cal_cond);
         EXPECT_EQ(INPUT.dos_nche,100);
-        EXPECT_EQ(INPUT.cond_nche,20);
+        EXPECT_DOUBLE_EQ(INPUT.cond_che_thr,1e-8);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
         EXPECT_EQ(INPUT.cond_dt,0.02);
