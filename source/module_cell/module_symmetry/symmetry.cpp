@@ -1627,6 +1627,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
     delete[] isymflag;
     delete[] table_xyz;
     delete[] invmap;
+    delete[] count_xyz;
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
 

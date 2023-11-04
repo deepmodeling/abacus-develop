@@ -124,15 +124,15 @@ REAL Sto_Func<REAL>:: n_root_fdlnfd(REAL rawe)
 }
 
 template<typename REAL>
-REAL Sto_Func<REAL>::n_fd(REAL rawe)
+REAL Sto_Func<REAL>::nroot_mfd(REAL rawe)
 {
     REAL Ebar = (Emin + Emax)/2;
 	REAL DeltaE = (Emax - Emin)/2;
     REAL ne_mu = (rawe * DeltaE + Ebar - mu) / this->tem ;
-    if(ne_mu > 36)
-        return 1;
+    if(ne_mu < -72)
+        return 0;
     else
-        return 1 - 1 / (1 + exp(ne_mu));
+        return 1 / sqrt(1 + exp(-ne_mu));
 }
 
 template<typename REAL>
