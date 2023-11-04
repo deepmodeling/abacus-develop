@@ -72,7 +72,11 @@ class Operator
 
     Operator* next_op = nullptr;
 
-    virtual int get_act_type() const { return this->act_type; }
+    /// type 1 (default): pointer-only
+    ///         act(const T* psi_in, T* psi_out)
+    /// type 2: use the `Psi`class 
+    ///         act(const Psi& psi_in, Psi& psi_out)
+    int get_act_type() const { return this->act_type; }
 protected:
     int ik = 0;
     int act_type = 1;   ///< determine which act() interface would be called in hPsi()
