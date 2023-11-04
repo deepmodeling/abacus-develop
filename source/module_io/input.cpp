@@ -758,6 +758,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, seed_sto);
         }
+        else if (strcmp("initsto_ecut", word) == 0)
+        {
+            read_value(ifs, initsto_ecut);
+        }
         else if (strcmp("pw_seed", word) == 0)
         {
             read_value(ifs, pw_seed);
@@ -2974,6 +2978,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
+    Parallel_Common::bcast_double(initsto_ecut);
     Parallel_Common::bcast_int(pw_seed);
     Parallel_Common::bcast_double(emax_sto);
     Parallel_Common::bcast_double(emin_sto);

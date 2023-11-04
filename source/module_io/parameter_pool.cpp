@@ -479,6 +479,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.seed_sto = *static_cast<int*>(input_parameters["seed_sto"].get());
     }
+    else if (input_parameters.count("initsto_ecut") != 0)
+    {
+        INPUT.initsto_ecut = *static_cast<double*>(input_parameters["initsto_ecut"].get());
+    }
     else if (input_parameters.count("emax_sto") != 0)
     {
         INPUT.emax_sto = *static_cast<double*>(input_parameters["emax_sto"].get());
