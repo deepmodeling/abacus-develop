@@ -5,8 +5,7 @@ list(APPEND objects
     hsolver_pw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
-    diago_cusolver.cpp
-    diago_cusolver.h
+    
 )
 
 if(ENABLE_LCAO)
@@ -25,6 +24,8 @@ if(ENABLE_LCAO)
           ./kernels/math_kernel_op.cpp
           ./kernels/dngvd_op.cpp
           ./kernels/cuda/diag_cusolver.cu
+          diago_cusolver.cpp
+          diago_cusolver.h
 
       )
 

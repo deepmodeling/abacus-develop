@@ -3,7 +3,9 @@
 #include "diago_blas.h"
 #include "module_base/timer.h"
 #include "module_io/write_HS.h"
+#ifdef __CUSOLVER_LCAO
 #include "diago_cusolver.h"
+#endif
 #ifdef __ELPA
 #include "diago_elpa.h"
 #endif
@@ -56,6 +58,7 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 #endif
+#ifdef __CUSOLVER_LCAO
     else if (this->method == "cusolver")
     {
         if (this->pdiagh != nullptr)
@@ -72,6 +75,7 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
             this->pdiagh->method = this->method;
         }
     }
+#endif
     else if (this->method == "lapack")
     {
         ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
