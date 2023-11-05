@@ -1033,6 +1033,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, gamma_only);
         }
+        else if (strcmp("fft_mode", word) == 0)
+        {
+            read_value(ifs, fft_mode);
+        }
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
@@ -3050,6 +3054,7 @@ void Input::Bcast()
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
+    Parallel_Common::bcast_int(fft_mode);
     Parallel_Common::bcast_double(ecutwfc);
     Parallel_Common::bcast_double(ecutrho);
     Parallel_Common::bcast_bool(GlobalV::double_grid);

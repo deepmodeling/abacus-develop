@@ -206,6 +206,7 @@ namespace ModuleESolver
             MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
             // qianrui add 2021-8-13 to make different kpar parameters can get the same results
 #endif
+        this->pw_wfc->ft.fft_mode = inp.fft_mode;
         this->pw_wfc->setuptransform();
         for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];

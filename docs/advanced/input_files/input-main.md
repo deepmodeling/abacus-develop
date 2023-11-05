@@ -45,6 +45,7 @@
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [erf\_ecut](#erf_ecut)
+    - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
@@ -745,6 +746,16 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
 - **Default**: 0.0
 - **Unit**: Ry
+
+### fft_mode
+
+- **Type**: Integer
+- **Description**: Set the mode of FFTW.
+  - 0: FFTW_ESTIMATE
+  - 1: FFTW_MEASURE
+  - 2: FFTW_PATIENT
+  - 3: FFTW_EXHAUSTIVE
+- **Default**: 0
 
 ### erf_height
 
