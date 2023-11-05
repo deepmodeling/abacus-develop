@@ -247,40 +247,119 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
                              double *GridVlocal,
                              int lgd)
 {
+
+    auto block = cooperative_groups::this_thread_block();
+    constexpr int stages_count = 2;
+    extern __shared__ double shared[];
+    int ylm_size = nwmax_g[0] * bxyz_g[0];
+    int ylm_size_byte = ylm_size * sizeof(double);
+    int shared_offset[stages_count] = {0, ylm_size * 2}; // Offsets to each batch
+    __shared__ cuda::pipeline_shared_state<
+        cuda::thread_scope::thread_scope_block,
+        stages_count>
+        shared_state;
+    auto pipeline = cuda::make_pipeline(block, &shared_state);
+
     int atom_pair_num = num_atom_pair_g[blockIdx.x];
     int start_index = atom_pair_size_of_meshcell * blockIdx.x;
     int end_index = start_index + atom_pair_num;
     start_index += blockIdx.y * 6;
     int step = gridDim.y * 6;
     int vldr3_index = blockIdx.x * max_size_g[0];
-    #pragma unroll
-    for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
+    double * shared_psi = shared;
+    if (start_index < end_index)
     {
-        int atomnow1 = atom_pair_input_info_g[atom_pair_index];
-        int atomnow2 = atom_pair_input_info_g[atom_pair_index + 1];
-        int nw_mul = atom_pair_input_info_g[atom_pair_index + 2];
-        int atom_nw2 = atom_pair_input_info_g[atom_pair_index + 3];
-        int lo1 = atom_pair_input_info_g[atom_pair_index + 4];
-        int lo2 = atom_pair_input_info_g[atom_pair_index + 5];
-        int calc_index1 = (vldr3_index + atomnow1) * nwmax_g[0];
-        int calc_index2 = (vldr3_index + atomnow2) * nwmax_g[0];
+        {
+            pipeline.producer_acquire();
+            int atom_pair_copy_index = start_index;
+            int atomnow1 = atom_pair_input_info_g[atom_pair_copy_index];
+            int atomnow2 = atom_pair_input_info_g[atom_pair_copy_index + 1];
+            int calc_index1 = (vldr3_index + atomnow1) * ylm_size;
+            int calc_index2 = (vldr3_index + atomnow2) * ylm_size;
+            double *psi_left_shared = shared_psi;
+            double *psi_right_shared = shared_psi + ylm_size;
+            cuda::memcpy_async(block, psi_left_shared, psir_ylm_left + calc_index1, ylm_size_byte, pipeline);
+            cuda::memcpy_async(block, psi_right_shared, psir_ylm_right + calc_index2, ylm_size_byte, pipeline);
+            pipeline.producer_commit();
+        }
+        int batch = 1;
+        int atom_pair_copy_index = start_index + step;
+        #pragma unroll
+        for (; atom_pair_copy_index < end_index; atom_pair_copy_index += step)
+        {
+            size_t compute_stage_idx = (batch - 1) % stages_count;
+            size_t copy_stage_idx = batch % stages_count;
+            int atom_pair_compute_index = atom_pair_copy_index - step;
+            {
+                pipeline.producer_acquire();
+                int atomnow1 = atom_pair_input_info_g[atom_pair_copy_index];
+                int atomnow2 = atom_pair_input_info_g[atom_pair_copy_index + 1];
+                int calc_index1 = (vldr3_index + atomnow1) * ylm_size;
+                int calc_index2 = (vldr3_index + atomnow2) * ylm_size;
+                double *psi_left_shared = shared_psi + shared_offset[copy_stage_idx];
+                double *psi_right_shared = psi_left_shared + ylm_size;
+                cuda::memcpy_async(block, psi_left_shared, psir_ylm_left + calc_index1, ylm_size_byte, pipeline);
+                cuda::memcpy_async(block, psi_right_shared, psir_ylm_right + calc_index2, ylm_size_byte, pipeline);
+                pipeline.producer_commit();
+            }
+            {
+                pipeline.consumer_wait();
+                int nw_mul = atom_pair_input_info_g[atom_pair_compute_index + 2];
+                int atom_nw2 = atom_pair_input_info_g[atom_pair_compute_index + 3];
+                int lo1 = atom_pair_input_info_g[atom_pair_compute_index + 4];
+                int lo2 = atom_pair_input_info_g[atom_pair_compute_index + 5];
+                double *psi_left_shared = shared_psi + shared_offset[compute_stage_idx];
+                double *psi_right_shared = psi_left_shared + ylm_size;
+
+                #pragma unroll
+                for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
+                {
+                    int iw1 = iw_index / atom_nw2;
+                    int iw2 = iw_index % atom_nw2;
+                    double v2 = 0.0;
+
+                    int calc_index1_w = iw1 * bxyz_g[0];
+                    int calc_index2_w = iw2 * bxyz_g[0];
+                    #pragma unroll
+                    for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1_w, ++calc_index2_w)
+                    {
+                        v2 += psi_left_shared[calc_index1_w] * psi_right_shared[calc_index2_w];
+                    }
+                    // GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)] += v2;
+                    atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
+                }
+                pipeline.consumer_release();
+            }
+            batch++;
+        }
+
+        pipeline.consumer_wait();
+        int atom_pair_compute_index = atom_pair_copy_index - step;
+
+        size_t compute_stage_idx = (batch - 1) % stages_count;
+        int nw_mul = atom_pair_input_info_g[atom_pair_compute_index + 2];
+        int atom_nw2 = atom_pair_input_info_g[atom_pair_compute_index + 3];
+        int lo1 = atom_pair_input_info_g[atom_pair_compute_index + 4];
+        int lo2 = atom_pair_input_info_g[atom_pair_compute_index + 5];
+        double *psi_left_shared = shared_psi + shared_offset[compute_stage_idx];
+        double *psi_right_shared = psi_left_shared + ylm_size;
+
         #pragma unroll
         for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
         {
             int iw1 = iw_index / atom_nw2;
             int iw2 = iw_index % atom_nw2;
             double v2 = 0.0;
-
-            int calc_index1_w = (calc_index1 + iw1) * bxyz_g[0];
-            int calc_index2_w = (calc_index2 + iw2) * bxyz_g[0];
+            int calc_index1_w = iw1 * bxyz_g[0];
+            int calc_index2_w = iw2 * bxyz_g[0];
             #pragma unroll
             for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1_w, ++calc_index2_w)
             {
-                v2 += psir_ylm_left[calc_index1_w] * psir_ylm_right[calc_index2_w];
+                v2 += psi_left_shared[calc_index1_w] * psi_right_shared[calc_index2_w];
             }
-            //GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)] += v2;
             atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
         }
+        pipeline.consumer_release();
     }
 }
 
@@ -442,13 +521,13 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     }
 
     int iter_num = 0;
-    //int omp_thread_num = omp_get_num_threads();
-    //omp_set_num_threads(nStreams);
+    // int omp_thread_num = omp_get_num_threads();
+    // omp_set_num_threads(nStreams);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < nbx; i++)
     {
-    #pragma omp parallel for
+#pragma omp parallel for
         for (int j = 0; j < nby; j++)
         {
             int stream_num = iter_num % nStreams;
@@ -488,11 +567,11 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             checkCuda(cudaMemsetAsync(psir_ylm_left_g, 0, psir_size * sizeof(double), stream[stream_num]));
             checkCuda(cudaMemsetAsync(psir_ylm_right_g, 0, psir_size * sizeof(double), stream[stream_num]));
 
-            dim3 grid_psi(nbz, 8);
+            dim3 grid_psi(nbz, 4);
             dim3 block_psi(64);
-            dim3 grid_multiple(nbz, 1024);
-            dim3 block_multiple(256);
-
+            dim3 grid_multiple(nbz, 8);
+            dim3 block_multiple(384);
+            size_t multiple_shared = nwmax * bxyz * sizeof(double) * 2 * 2;
             get_psi_and_vldr3<<<grid_psi, block_psi, 0, stream[stream_num]>>>(psi_input_double_g,
                                                                               psi_input_int_g,
                                                                               num_psir_g,
@@ -505,13 +584,14 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                                               psi_u,
                                                                               psir_ylm_left_g,
                                                                               psir_ylm_right_g);
-            psi_multiple<<<grid_multiple, block_multiple, 0, stream[stream_num]>>>(atom_pair_input_info_g,
-                                                                                   num_atom_pair_g,
-                                                                                   psir_ylm_left_g,
-                                                                                   psir_ylm_right_g,
-                                                                                   atom_pair_size_of_meshcell,
-                                                                                   GridVlocal,
-                                                                                   lgd);
+
+            psi_multiple<<<grid_multiple, block_multiple, multiple_shared, stream[stream_num]>>>(atom_pair_input_info_g,
+                                                                                                 num_atom_pair_g,
+                                                                                                 psir_ylm_left_g,
+                                                                                                 psir_ylm_right_g,
+                                                                                                 atom_pair_size_of_meshcell,
+                                                                                                 GridVlocal,
+                                                                                                 lgd);
             iter_num++;
         }
     }
@@ -520,7 +600,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
 
     checkCuda(cudaMemcpy(GridVlocal_now, GridVlocal, lgd * lgd * sizeof(double), cudaMemcpyDeviceToHost));
 
-    //omp_set_num_threads(omp_thread_num);
+    // omp_set_num_threads(omp_thread_num);
 
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
