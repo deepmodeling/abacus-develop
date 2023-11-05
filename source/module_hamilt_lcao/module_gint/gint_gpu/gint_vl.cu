@@ -61,8 +61,8 @@ __global__ void get_psi_and_vldr3(double *input_double,
     int size = num_psir[blockIdx.x];
     int start_index = psi_size_max * blockIdx.x;
     int end_index = start_index + size;
-    start_index += threadIdx.x;
-    for (int index = start_index; index < end_index; index += blockDim.x)
+    start_index += threadIdx.x + blockDim.x * blockIdx.y;
+    for (int index = start_index; index < end_index; index += blockDim.x * gridDim.y)
     {
         double dr[3];
         int index_double = index * 5;
@@ -276,6 +276,7 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
             {
                 v2 += psir_ylm_left[calc_index1_w] * psir_ylm_right[calc_index2_w];
             }
+            //GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)] += v2;
             atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
         }
     }
@@ -386,7 +387,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     checkCuda(cudaMalloc((void **)&GridVlocal, lgd * lgd * sizeof(double)));
     checkCuda(cudaMemset(GridVlocal, 0, lgd * lgd * sizeof(double)));
 
-    const int nStreams = 16;
+    const int nStreams = 4;
     const int psir_size = nbz * max_size * bxyz * nwmax;
     double *psir_ylm_left_global;
     double *psir_ylm_right_global;
@@ -439,8 +440,13 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     }
 
     int iter_num = 0;
+    //int omp_thread_num = omp_get_num_threads();
+    //omp_set_num_threads(nStreams);
+
+    #pragma omp parallel for
     for (int i = 0; i < nbx; i++)
     {
+    #pragma omp parallel for
         for (int j = 0; j < nby; j++)
         {
             int stream_num = iter_num % nStreams;
@@ -480,8 +486,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             checkCuda(cudaMemsetAsync(psir_ylm_left_g, 0, psir_size * sizeof(double), stream[stream_num]));
             checkCuda(cudaMemsetAsync(psir_ylm_right_g, 0, psir_size * sizeof(double), stream[stream_num]));
 
-            dim3 grid_psi(nbz);
-            dim3 block_psi(32);
+            dim3 grid_psi(nbz, 8);
+            dim3 block_psi(64);
             dim3 grid_multiple(nbz, 1024);
             dim3 block_multiple(256);
 
@@ -512,6 +518,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
         checkCuda(cudaStreamDestroy(stream[i]));
 
     checkCuda(cudaMemcpy(GridVlocal_now, GridVlocal, lgd * lgd * sizeof(double), cudaMemcpyDeviceToHost));
+
+    //omp_set_num_threads(omp_thread_num);
 
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
