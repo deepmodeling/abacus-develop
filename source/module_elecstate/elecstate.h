@@ -167,7 +167,6 @@ class ElecState
     // calculate ebands for all k points and all occupied bands
     void calEBand();
 
-  private:
     bool skip_weights = false;
 };
 
