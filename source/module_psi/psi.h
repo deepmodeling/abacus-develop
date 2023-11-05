@@ -50,6 +50,8 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     // Constructor 7: initialize a new psi from the given psi_in with a different class template
     // in this case, psi_in may have a different device type.
     template <typename T_in, typename Device_in = Device> Psi(const Psi<T_in, Device_in>& psi_in);
+    // Constructor 8: a pointer version of constructor 3
+    Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
     // Destructor for deleting the psi array manually
     ~Psi();
 
@@ -137,6 +139,8 @@ template <typename T, typename Device = DEVICE_CPU> class Psi
     const int* ngk = nullptr;
 
     bool k_first = true;
+
+    bool allocate_inside = true;  ///<whether allocate psi inside Psi class
 
     using set_memory_op = psi::memory::set_memory_op<T, Device>;
     using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
