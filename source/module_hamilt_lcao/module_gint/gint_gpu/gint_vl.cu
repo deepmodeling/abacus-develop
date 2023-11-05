@@ -252,6 +252,7 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
     start_index += blockIdx.y * 6;
     int step = gridDim.y * 6;
     int vldr3_index = blockIdx.x * max_size_g[0];
+    #pragma unroll
     for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
     {
         int atomnow1 = atom_pair_input_info_g[atom_pair_index];
@@ -262,7 +263,7 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
         int lo2 = atom_pair_input_info_g[atom_pair_index + 5];
         int calc_index1 = (vldr3_index + atomnow1) * nwmax_g[0];
         int calc_index2 = (vldr3_index + atomnow2) * nwmax_g[0];
-
+        #pragma unroll
         for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
         {
             int iw1 = iw_index / atom_nw2;
@@ -271,7 +272,7 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
 
             int calc_index1_w = (calc_index1 + iw1) * bxyz_g[0];
             int calc_index2_w = (calc_index2 + iw2) * bxyz_g[0];
-
+            #pragma unroll
             for (int ib = 0; ib < bxyz_g[0]; ++ib, ++calc_index1_w, ++calc_index2_w)
             {
                 v2 += psir_ylm_left[calc_index1_w] * psir_ylm_right[calc_index2_w];
