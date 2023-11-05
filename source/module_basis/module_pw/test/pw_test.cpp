@@ -2,6 +2,9 @@
 #include "test_tool.h"
 #include "mpi.h"
 #endif
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "fftw3.h"
 #include "pw_test.h"
 using namespace std;
