@@ -65,12 +65,18 @@ class Operator
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi
-    virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
+    // virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
+    virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out, const int nbands) const {};
     /// interface type 3: return a Psi-type HPsi
     // virtual psi::Psi<T> act(const psi::Psi<T,Device>& psi_in) const { return psi_in; };
 
     Operator* next_op = nullptr;
 
+    /// type 1 (default): pointer-only
+    ///         act(const T* psi_in, T* psi_out)
+    /// type 2: use the `Psi`class 
+    ///         act(const Psi& psi_in, Psi& psi_out)
+    int get_act_type() const { return this->act_type; }
 protected:
     int ik = 0;
     int act_type = 1;   ///< determine which act() interface would be called in hPsi()
