@@ -12,8 +12,8 @@ protected:
     const psi::DEVICE_CPU * cpu_ctx = {};
     const psi::DEVICE_GPU * gpu_ctx = {};
 
-    int ik = 0, ntype = 1, nx = 12, ny = 12, nz = 12,
-            npw = 59, npwx = 70, fftny = 12, eigts1_nc = 25, eigts2_nc = 25, eigts3_nc = 25;
+    int ik = 0, ntype = 1, nx = 12, ny = 12, nz = 12, rho_nx = 12, rho_ny = 12, rho_nz = 12, npw = 59, npwx = 70,
+        fftny = 12, eigts1_nc = 25, eigts2_nc = 25, eigts3_nc = 25;
 
     double TWO_PI = 6.2831853071795862;
 
@@ -52,19 +52,31 @@ protected:
 TEST_F(TestSrcPWWfMultiDevice, cal_sk_op_cpu)
 {
     std::vector<std::complex<double>> sk(expected_sk.size(), 0);
-    hamilt::cal_sk_op<double, psi::DEVICE_CPU>()(
-         cpu_ctx,
-         ik, ntype,
-         nx, ny, nz,
-         npw, npwx,
-         fftny,
-         eigts1_nc, eigts2_nc, eigts3_nc,
-         atom_na.data(), igl2isz.data(), is2fftixy.data(),
-         TWO_PI,
-         kvec_c.data(),
-         atom_tau.data(),
-         eigts1.data(), eigts2.data(), eigts3.data(),
-         sk.data());
+    hamilt::cal_sk_op<double, psi::DEVICE_CPU>()(cpu_ctx,
+                                                 ik,
+                                                 ntype,
+                                                 nx,
+                                                 ny,
+                                                 nz,
+                                                 rho_nx,
+                                                 rho_ny,
+                                                 rho_nz,
+                                                 npw,
+                                                 npwx,
+                                                 fftny,
+                                                 eigts1_nc,
+                                                 eigts2_nc,
+                                                 eigts3_nc,
+                                                 atom_na.data(),
+                                                 igl2isz.data(),
+                                                 is2fftixy.data(),
+                                                 TWO_PI,
+                                                 kvec_c.data(),
+                                                 atom_tau.data(),
+                                                 eigts1.data(),
+                                                 eigts2.data(),
+                                                 eigts3.data(),
+                                                 sk.data());
 
     for (int ii = 0; ii < sk.size(); ii++) {
         EXPECT_LT(fabs(sk[ii] - expected_sk[ii]), 6e-5);
@@ -101,19 +113,31 @@ TEST_F(TestSrcPWWfMultiDevice, cal_sk_op_gpu)
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_eigts2, eigts2.data(), eigts2.size());
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_eigts3, eigts3.data(), eigts3.size());
 
-    hamilt::cal_sk_op<double, psi::DEVICE_GPU>()(
-            gpu_ctx,
-            ik, ntype,
-            nx, ny, nz,
-            npw, npwx,
-            fftny,
-            eigts1_nc, eigts2_nc, eigts3_nc,
-            d_atom_na, d_igl2isz, d_is2fftixy,
-            TWO_PI,
-            d_kvec_c,
-            d_atom_tau,
-            d_eigts1, d_eigts2, d_eigts3,
-            d_sk);
+    hamilt::cal_sk_op<double, psi::DEVICE_GPU>()(gpu_ctx,
+                                                 ik,
+                                                 ntype,
+                                                 nx,
+                                                 ny,
+                                                 nz,
+                                                 rho_nx,
+                                                 rho_ny,
+                                                 rho_nz,
+                                                 npw,
+                                                 npwx,
+                                                 fftny,
+                                                 eigts1_nc,
+                                                 eigts2_nc,
+                                                 eigts3_nc,
+                                                 d_atom_na,
+                                                 d_igl2isz,
+                                                 d_is2fftixy,
+                                                 TWO_PI,
+                                                 d_kvec_c,
+                                                 d_atom_tau,
+                                                 d_eigts1,
+                                                 d_eigts2,
+                                                 d_eigts3,
+                                                 d_sk);
 
     syncmem_complex_d2h_op()(cpu_ctx, gpu_ctx, sk.data(), d_sk, sk.size());
 
