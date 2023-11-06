@@ -3,6 +3,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_io/output_log.h"
 
 void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                                const elecstate::ElecState& elec,
@@ -68,27 +69,27 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigmatot, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigmatot, GlobalC::ucell);
     }
 
 	bool ry = false;
-	this->printstress_total(sigmatot, ry);
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
 
-	if(GlobalV::TEST_STRESS) 
-	{               
-		GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
-		GlobalV::ofs_running << setiosflags(std::ios::showpos);
-		GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-		this->print_stress("KINETIC    STRESS",sigmakin,GlobalV::TEST_STRESS,ry);
-		this->print_stress("LOCAL    STRESS",sigmaloc,GlobalV::TEST_STRESS,ry);
-		this->print_stress("HARTREE    STRESS",sigmahar,GlobalV::TEST_STRESS,ry);
-		this->print_stress("NON-LOCAL    STRESS",sigmanl,GlobalV::TEST_STRESS,ry);
-		this->print_stress("XC    STRESS",sigmaxc,GlobalV::TEST_STRESS,ry);
-		this->print_stress("EWALD    STRESS",sigmaewa,GlobalV::TEST_STRESS,ry);
-		this->print_stress("NLCC    STRESS",sigmaxcc,GlobalV::TEST_STRESS,ry);
-		this->print_stress("TOTAL    STRESS",sigmatot,GlobalV::TEST_STRESS,ry);
-	}
-	ModuleBase::timer::tick("Sto_Stress_PW","cal_stress");
+    if (GlobalV::TEST_STRESS)
+    {
+        GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
+        GlobalV::ofs_running << setiosflags(std::ios::showpos);
+        GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
+    }
+    ModuleBase::timer::tick("Sto_Stress_PW","cal_stress");
 	return;
 }
 
@@ -190,7 +191,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 	}
 	
 
-	Parallel_Reduce::reduce_double_all( s_kin.c, 9 );
+	Parallel_Reduce::reduce_all( s_kin.c, 9 );
 
 	for(int l=0;l<3;++l)
 	{
@@ -202,7 +203,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     }
     delete[] gk[0];
     delete[] gk[1];
@@ -285,7 +286,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
             	stowf.shchi[ik].c,&npwx,
             	&ModuleBase::ZERO,&becp(nksbands,0),&nkb);
 		
-		Parallel_Reduce::reduce_complex_double_pool( becp.c, becp.size);
+		Parallel_Reduce::reduce_pool( becp.c, becp.size);
 
         for (int i = 0; i < 3; ++i)
         {
@@ -409,7 +410,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 		}
 	}
 	// sum up forcenl from all processors
-	Parallel_Reduce::reduce_double_all( sigmanlc.c, 9);
+	Parallel_Reduce::reduce_all( sigmanlc.c, 9);
 
         
 	for (int ipol = 0; ipol<3; ++ipol)
@@ -430,7 +431,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 	//do symmetry
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->stress_symmetry(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
     }
 	
 	//  this->print(ofs_running, "nonlocal stress", stresnl);

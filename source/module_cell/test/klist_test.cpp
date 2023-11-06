@@ -6,7 +6,7 @@
 #include "module_cell/parallel_kpoints.h"
 #include "module_base/parallel_global.h"
 #define private public
-#include "../klist.h"
+#include "module_cell/klist.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_cell/atom_pseudo.h"
@@ -39,6 +39,12 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
+Soc::~Soc()
+{
+}
+Fcoef::~Fcoef()
+{
+}
 
 namespace GlobalC
 {

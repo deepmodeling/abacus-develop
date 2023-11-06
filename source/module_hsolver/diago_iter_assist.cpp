@@ -62,7 +62,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
 
-    gemm_op<Real, Device>()(
+    gemm_op<T, Device>()(
         ctx,
         'C',
         'N',
@@ -78,28 +78,22 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         hcc,
         nstart
     );
+    delmem_complex_op()(ctx, hphi);
 
-    gemm_op<Real, Device>()(
-        ctx,
-        'C',
-        'N',
-        nstart,
-        nstart,
-        dmin,
-        &one,
-        ppsi,
-        dmax,
-        ppsi,
-        dmax,
-        &zero,
-        scc,
-        nstart
-    );
+    // allocated spsi
+    T* sphi = nullptr;
+    resmem_complex_op()(ctx, sphi, nstart * dmax, "DiagSub::spsi");
+    setmem_complex_op()(ctx, sphi, 0, nstart * dmax);
+    // do sPsi for all bands
+    pHamilt->sPsi(ppsi, sphi, dmax, dmin, nstart);
+
+    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, sphi, dmax, &zero, scc, nstart);
+    delmem_complex_op()(ctx, sphi);
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Reduce::reduce_complex_double_pool(hcc, nstart * nstart);
-        Parallel_Reduce::reduce_complex_double_pool(scc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
     }
 
     // after generation of H and S matrix, diag them
@@ -133,7 +127,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        gemm_op<Real, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -159,7 +153,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
-        gemm_op<Real, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -176,7 +170,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
             dmin
         );
 
-        matrixSetToAnother<Real, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        matrixSetToAnother<T, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
         // for (int ib = 0; ib < n_band; ib++)
         // {
         //     for (int ig = 0; ig < dmin; ig++)
@@ -190,7 +184,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     delmem_complex_op()(ctx, hcc);
     delmem_complex_op()(ctx, scc);
     delmem_complex_op()(ctx, vcc);
-    delmem_complex_op()(ctx, hphi);
 
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
@@ -246,13 +239,12 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     // ================================================
     // std::vector<T> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
 
-
     // do hPsi for all bands
     psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
     hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
     pHamilt->ops->hPsi(hpsi_in);
 
-    gemm_op<Real, Device>()(
+    gemm_op<T, Device>()(
         ctx,
         'C',
         'N',
@@ -268,28 +260,22 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         hcc,
         nstart
     );
+    delmem_complex_op()(ctx, hpsi);
 
-    gemm_op<Real, Device>()(
-        ctx,
-        'C',
-        'N',
-        nstart,
-        nstart,
-        dmin,
-        &one,
-        ppsi,
-        dmax,
-        ppsi,
-        dmax,
-        &zero,
-        scc,
-        nstart
-    );
+    // allocated spsi
+    T* spsi = nullptr;
+    resmem_complex_op()(ctx, spsi, psi_temp.get_nbands() * psi_temp.get_nbasis(), "DiagSub::spsi");
+    setmem_complex_op()(ctx, spsi, 0, psi_temp.get_nbands() * psi_temp.get_nbasis());
+    // do sPsi for all bands
+    pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), psi_temp.get_nbands());
+
+    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
+    delmem_complex_op()(ctx, spsi);
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Reduce::reduce_complex_double_pool(hcc, nstart * nstart);
-        Parallel_Reduce::reduce_complex_double_pool(scc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
+        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
     }
 
     // after generation of H and S matrix, diag them
@@ -331,7 +317,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        gemm_op<Real, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -357,7 +343,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
-        gemm_op<Real, Device>()(
+        gemm_op<T, Device>()(
             ctx,
             'N',
             'N',
@@ -374,7 +360,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
             dmin
         );
 
-        matrixSetToAnother<Real, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
+        matrixSetToAnother<T, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
 
         delmem_complex_op()(ctx, evctemp);
     }
@@ -382,7 +368,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     delmem_complex_op()(ctx, hcc);
     delmem_complex_op()(ctx, scc);
     delmem_complex_op()(ctx, vcc);
-    delmem_complex_op()(ctx, hpsi);
     ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
 }
 
@@ -403,7 +388,7 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(
     resmem_var_op()(ctx, eigenvalues, nstart);
     setmem_var_op()(ctx, eigenvalues, 0, nstart);
 
-    dngvd_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
+    dngvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
     if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
 #if ((defined __CUDA) || (defined __ROCM))
@@ -468,5 +453,12 @@ template class DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoIterAssist<std::complex<float>, psi::DEVICE_GPU>;
 template class DiagoIterAssist<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+
+#ifdef __LCAO
+template class DiagoIterAssist<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class DiagoIterAssist<double, psi::DEVICE_GPU>;
+#endif
 #endif
 } // namespace hsolver

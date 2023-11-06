@@ -17,7 +17,8 @@
 template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
 class Forces
 {
-  public:
+public:
+    template<typename T>
     friend class Force_Stress_LCAO;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
@@ -26,7 +27,8 @@ class Forces
      * (2) cal_foce_ew: contribution due to ewald potential.
      * (3) cal_force_cc: contributino due to NLCC.
      * (4) cal_nl: contribution due to the non-local pseudopotential.
-     * (4) cal_scc: contributino due to incomplete SCF calculation.
+     * (5) cal_force_us: contribution due to US pseudopotential.
+     * (6) cal_scc: contributino due to incomplete SCF calculation.
      */
     Forces(const int nat_in):nat(nat_in){};
     ~Forces(){};
@@ -43,13 +45,13 @@ class Forces
   protected:
     int nat = 0;
     int npwx = 0;
-    static FPTYPE output_acc;
 
     void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
     void cal_force_nl(ModuleBase::matrix& forcenl,
                       const ModuleBase::matrix& wg,
+                      const ModuleBase::matrix& ekb,
                       K_Vectors* p_kv,
                       ModulePW::PW_Basis_K* psi_basis,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
@@ -57,15 +59,17 @@ class Forces
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,
                        const bool vnew_exist);
-
-    static void print(const std::string& name, const ModuleBase::matrix& f, bool rv = true);
-    static void print_to_files(std::ofstream& ofs, const std::string& name, const ModuleBase::matrix& f);
+    void cal_force_us(ModuleBase::matrix& forcenl,
+                      ModulePW::PW_Basis* rho_basis,
+                      pseudopot_cell_vnl* ppcell_in,
+                      const elecstate::ElecState& elec,
+                      const UnitCell& ucell);
 
   private:
     Device* ctx = {};
     psi::DEVICE_CPU* cpu_ctx = {};
     psi::AbacusDevice_t device = {};
-    using gemm_op = hsolver::gemm_op<FPTYPE, Device>;
+    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_vkb1_nl_op = hamilt::cal_vkb1_nl_op<FPTYPE, Device>;
     using cal_force_nl_op = hamilt::cal_force_nl_op<FPTYPE, Device>;
 

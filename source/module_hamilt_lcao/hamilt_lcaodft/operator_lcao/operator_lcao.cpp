@@ -16,7 +16,7 @@ void OperatorLCAO<double, double>::get_hs_pointers()
 {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->LM->Hloc.data();
-    if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO::out_mat_hs)
+    if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO<double>::out_mat_hs)
     {
         if (this->smatrix_k == nullptr)
         {
@@ -26,7 +26,7 @@ void OperatorLCAO<double, double>::get_hs_pointers()
         const int inc = 1;
         BlasConnector::copy(this->LM->Sloc.size(), this->LM->Sloc.data(), inc, this->smatrix_k, inc);
 #ifdef __ELPA
-        hsolver::DiagoElpa::DecomposedState = 0;
+        hsolver::DiagoElpa<double>::DecomposedState = 0;
 #endif
         this->new_e_iteration = false;
     }
@@ -178,7 +178,13 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
             //only HK should be updated when cal_type=lcao_dftu
             //in cal_type=lcao_dftu, HK only need to update from one node
             this->contributeHk(ik_in);
-
+            break;
+        }
+        case lcao_sc_lambda:
+        {
+            //update HK only
+            //in cal_type=lcao_sc_mag, HK only need to be updated
+            this->contributeHk(ik_in);
             break;
         }
         case lcao_exx:

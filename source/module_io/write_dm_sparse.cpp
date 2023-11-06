@@ -171,7 +171,7 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
         count++;
     }
 
-    Parallel_Reduce::reduce_int_all(DMR_nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(DMR_nonzero_num, total_R_num);
 
     for (int index = 0; index < total_R_num; ++index)
     {

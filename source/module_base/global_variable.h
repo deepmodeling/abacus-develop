@@ -60,6 +60,7 @@ extern bool relax_new;
 
 extern bool use_paw;
 extern bool use_uspp;
+extern bool double_grid;
 
 extern bool fixed_atoms;
 
@@ -93,6 +94,7 @@ extern int SCF_THR_TYPE; // type of the criterion of scf_thr, 1: reci drho for p
 
 extern double DQ; // 19 mohan add 2009-09-10
 extern int NQX; // 20 mohan add 2009-09-10
+extern int NQXQ; // liuyu add 2023-10-03
 
 extern int NURSE; // 21 mohan add 2010-09-10
 extern bool COLOUR; // mohan add 2011-04-26
@@ -270,6 +272,13 @@ extern int of_full_pw_dim;  // If of_full_pw = 1, the dimention of FFT will be t
 extern bool of_read_kernel; // If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF.
 extern std::string of_kernel_file; // The name of WT kernel file.
 
+// mixing parameters
+extern std::string MIXING_MODE;
+extern double MIXING_BETA;
+extern int MIXING_NDIM;
+extern double MIXING_GG0;
+extern bool MIXING_TAU;
+
 //==========================================================
 // device flags added by denghui
 //==========================================================
@@ -295,5 +304,14 @@ extern double nelec;
 extern bool out_bandgap;
 extern int out_interval;
 
+// Deltaspin related
+extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
+extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with decay grad set for some elements
+extern double sc_thr;
+extern int nsc;
+extern int nsc_min;
+extern double alpha_trial;
+extern double sccut;
+extern std::string sc_file;
 } // namespace GlobalV
 #endif

@@ -39,6 +39,8 @@ struct fenergy
     double edftu = 0.0;       ///< DFT+U energy
     double edeepks_scf = 0.0; /// DeePKS energy
 
+    double escon = 0.0; ///< spin constraint energy
+
     double calculate_etot();
     double calculate_harris();
     void clear_all();

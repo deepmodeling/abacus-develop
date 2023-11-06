@@ -157,6 +157,21 @@ void Paw_Cell::set_paw_k(
     }
 }
 
+void Paw_Cell::set_isk(const int nk, const int * isk_in)
+{
+    isk.resize(nk);
+    for(int ik = 0; ik < nk; ik ++)
+    {
+        isk[ik] = isk_in[ik];
+    }
+}
+
+void Paw_Cell::set_currentk(const int ik)
+{
+    current_k = ik;
+    current_spin = isk[ik];
+}
+
 void Paw_Cell::map_paw_proj()
 {
     ModuleBase::TITLE("Paw_Element","map_paw_proj");
@@ -473,17 +488,18 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
         }
 
 #ifdef __MPI
-         Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
 #endif
 
         paw_atom_list[iat].set_ca(ca, weight);
-        paw_atom_list[iat].accumulate_rhoij();
+        paw_atom_list[iat].accumulate_rhoij(current_spin);
     }
 }
 
-std::vector<std::vector<double>> Paw_Cell::get_rhoij()
+/*
+std::vector<std::vector<std::vector<double>>> Paw_Cell::get_rhoij()
 {
-    std::vector<std::vector<double>> rhoij_all;
+    std::vector<std::vector<std::vector<double>>> rhoij_all;
     rhoij_all.resize(nat);
     for(int iat = 0; iat < nat; iat ++)
     {
@@ -492,6 +508,7 @@ std::vector<std::vector<double>> Paw_Cell::get_rhoij()
 
     return rhoij_all;
 }
+*/
 
 void Paw_Cell::get_rhoijp(std::vector<std::vector<double>> & rhoijp,
         std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel)
@@ -555,7 +572,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
         }
 
 #ifdef __MPI
-        Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
 #endif
 
         // sum_ij D_ij ca_j
@@ -569,7 +586,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             {
                 if(mode == 0) // V_{NL}|psi>
                 {
-                    v_ca[iproj] += paw_atom_list[iat].get_dij()[iproj*nproj+jproj] * ca[jproj];
+                    v_ca[iproj] += paw_atom_list[iat].get_dij()[current_spin][iproj*nproj+jproj] * ca[jproj];
                 }
                 else if(mode == 1) // (S+I)|psi>
                 {

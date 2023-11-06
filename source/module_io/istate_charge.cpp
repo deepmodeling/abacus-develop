@@ -20,19 +20,27 @@ IState_Charge::~IState_Charge()
 void IState_Charge::begin(Gint_Gamma& gg,
                           elecstate::ElecState* pelec,
                           const ModulePW::PW_Basis* rhopw,
-                          const ModulePW::PW_Basis_Big* bigpw)
+                          const ModulePW::PW_Basis_Big* bigpw,
+                          const bool gamma_only_local,
+                          const int nbands_istate,
+                          const int nbands,
+                          const double nelec,
+                          const int nspin,
+                          const std::string& global_out_dir,
+                          const int my_rank,
+                          std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
     std::cout << " Perform |psi(i)|^2 for selected bands." << std::endl;
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    if (!gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("IState_Charge::begin", "Only available for GAMMA_ONLY_LOCAL now.");
     }
 
     int mode = 0;
-    if (GlobalV::NBANDS_ISTATE > 0)
+    if (nbands_istate > 0)
         mode = 1;
     else
         mode = 2;
@@ -46,25 +54,25 @@ void IState_Charge::begin(Gint_Gamma& gg,
     // from wave functions.
     // (2.2) carry out the grid integration to
     // get the charge density.
-    this->bands_picked = new int[GlobalV::NBANDS];
-    ModuleBase::GlobalFunc::ZEROS(bands_picked, GlobalV::NBANDS);
+    this->bands_picked = new int[nbands];
+    ModuleBase::GlobalFunc::ZEROS(bands_picked, nbands);
 
     // (1)
 
     // (1.2) read in LOWF_GAMMA.dat
-    std::cout << " number of electrons = " << GlobalV::nelec << std::endl;
+    std::cout << " number of electrons = " << nelec << std::endl;
 
     // mohan update 2011-03-21
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
-    fermi_band = static_cast<int>((GlobalV::nelec + 1) / 2 + 1.0e-8);
+    fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
     if (mode == 1)
     {
-        bands_below = GlobalV::NBANDS_ISTATE;
-        bands_above = GlobalV::NBANDS_ISTATE;
+        bands_below = nbands_istate;
+        bands_above = nbands_istate;
 
         std::cout << " plot band decomposed charge density below fermi surface with " << bands_below << " bands."
                   << std::endl;
@@ -72,7 +80,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
         std::cout << " plot band decomposed charge density above fermi surface with " << bands_above << " bands."
                   << std::endl;
 
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < nbands; ib++)
         {
             if (ib >= fermi_band - bands_below)
             {
@@ -87,9 +95,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
     {
         bool stop = false;
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "istate.info";
+        ss << global_out_dir << "istate.info";
         std::cout << " Open the file : " << ss.str() << std::endl;
-        if (GlobalV::MY_RANK == 0)
+        if (my_rank == 0)
         {
             std::ifstream ifs(ss.str().c_str());
             if (!ifs)
@@ -99,7 +107,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
             else
             {
                 // int band_index;
-                for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+                for (int ib = 0; ib < nbands; ++ib)
                 {
                     ModuleBase::GlobalFunc::READ_VALUE(ifs, bands_picked[ib]);
                 }
@@ -112,12 +120,12 @@ void IState_Charge::begin(Gint_Gamma& gg,
 #endif
         if (stop)
         {
-            GlobalV::ofs_warning << " Can't find the file : " << ss.str() << std::endl;
+            ofs_warning << " Can't find the file : " << ss.str() << std::endl;
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "can't find the istate file.");
         }
     }
 
-    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+    for (int ib = 0; ib < nbands; ib++)
     {
         if (bands_picked[ib])
         {
@@ -127,10 +135,10 @@ void IState_Charge::begin(Gint_Gamma& gg,
             // band, whenever it is occupied or not.
 
 #ifdef __MPI
-            this->idmatrix(ib, pelec);
+            this->idmatrix(ib, pelec, GlobalV::NSPIN, GlobalV::nelec, GlobalV::NLOCAL);
 #endif
             // (2) zero out of charge density array.
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < nspin; is++)
             {
                 ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], rhopw->nrxx);
             }
@@ -141,9 +149,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
             gg.cal_gint(&inout);
             pelec->charge->save_rho_before_sum_band(); // xiaohui add 2014-12-09
             std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "BAND" << ib + 1;
+            ssc << global_out_dir << "BAND" << ib + 1;
             // 0 means definitely output charge density.
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < nspin; is++)
             {
                 ssc << "_SPIN" << is << "_CHG.cube";
                 const double ef_tmp = pelec->eferm.get_efval(is);
@@ -156,7 +164,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 #endif
                     pelec->charge->rho_save[is],
                     is,
-                    GlobalV::NSPIN,
+                    nspin,
                     0,
                     ssc.str(),
                     rhopw->nx,
@@ -173,18 +181,22 @@ void IState_Charge::begin(Gint_Gamma& gg,
 }
 
 #ifdef __MPI
-void IState_Charge::idmatrix(const int& ib, elecstate::ElecState* pelec)
+void IState_Charge::idmatrix(const int& ib,
+                             elecstate::ElecState* pelec,
+                             const int nspin,
+                             const double nelec,
+                             const int nlocal)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
 
-    assert(pelec->wg.nr == GlobalV::NSPIN);
-    for (int is = 0; is != GlobalV::NSPIN; ++is)
+    assert(pelec->wg.nr == nspin);
+    for (int is = 0; is != nspin; ++is)
     {
         std::vector<double> wg_local(this->loc->ParaV->ncol, 0.0);
         const int ib_local = this->loc->ParaV->global2local_col(ib);
 
         int fermi_band = 0;
-        fermi_band = static_cast<int>((GlobalV::nelec + 1) / 2 + 1.0e-8);
+        fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
         if (ib_local >= 0)
         {
@@ -215,8 +227,8 @@ void IState_Charge::idmatrix(const int& ib, elecstate::ElecState* pelec)
 
         pdgemm_(&N_char,
                 &T_char,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
+                &nlocal,
+                &nlocal,
                 &pelec->wg.nc,
                 &one_float,
                 wg_wfc.get_pointer(),

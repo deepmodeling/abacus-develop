@@ -1,14 +1,15 @@
 #ifndef VECTOR3_H
 #define VECTOR3_H
 
-#ifdef _MCD_CHECK
-#include "mcd.h"
-#endif
-
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <array>
+
+#ifdef _MCD_CHECK
+#include "mcd.h"
+#endif
+
 namespace ModuleBase
 {
 

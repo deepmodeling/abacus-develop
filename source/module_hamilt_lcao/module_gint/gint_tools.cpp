@@ -827,30 +827,18 @@ namespace Gint_Tools
 		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
 		double ** psi_DM,
 		const double*const*const DM,
-		const int job) // 1: density, 2: force
+        const bool if_symm) // true: density, use dsymv; false: potential/transition density use dgemv
 	{
 		constexpr char side='L', uplo='U';
 		constexpr char transa='N', transb='N';
 		constexpr double alpha_symm=1, beta=1;
 		constexpr int inc=1;
-		double alpha_gemm;
-
-		switch(job)
-		{
-			case 1:
-				alpha_gemm=2.0;
-				break;
-			case 2:
-				alpha_gemm=1.0;
-				break;
-			default:
-				ModuleBase::WARNING_QUIT("psir_dm","job can only be 1 or 2");
-		}
+        double alpha_gemm = if_symm ? 2.0 : 1.0;
 
 		for (int ia1=0; ia1<na_grid; ia1++)
 		{
 			const int iw1_lo=block_iw[ia1];
-			if(job==1)//density
+            if (if_symm)//density
 			{
             	//ia1==ia2, diagonal part
 				// find the first ib and last ib for non-zeros cal_flag
@@ -903,18 +891,7 @@ namespace Gint_Tools
 				}
 			}
 
-			int start;
-			switch(job)
-			{
-				case 1:
-					start=ia1+1;
-					break;
-				case 2:
-					start=0;
-					break;
-				default:
-					ModuleBase::WARNING_QUIT("psi_dm","job can only be 1 or 2");
-			}
+            int start = if_symm ? ia1 + 1 : 0;
 
 			for (int ia2=start; ia2<na_grid; ia2++)
 			{
@@ -981,7 +958,7 @@ namespace Gint_Tools
 		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
 		double ** psi_DM,
 		const hamilt::HContainer<double>* DM,
-		const int job) // 1: density, 2: force
+        const bool if_symm) // 1: density, 2: force
 	{
 		bool *all_out_of_range = new bool[na_grid];
 		for(int ia=0; ia<na_grid; ++ia) //number of atoms
@@ -1001,21 +978,9 @@ namespace Gint_Tools
 		constexpr char transa='N', transb='N';
 		constexpr double alpha_symm=1, beta=1;
 		constexpr int inc=1;
-		double alpha_gemm;
+        double alpha_gemm = if_symm ? 2.0 : 1.0;
 
-		switch(job)
-		{
-			case 1:
-				alpha_gemm=2.0;
-				break;
-			case 2:
-				alpha_gemm=1.0;
-				break;
-			default:
-				ModuleBase::WARNING_QUIT("psir_dm","job can only be 1 or 2");
-		}
-
-		for (int ia1=0; ia1<na_grid; ia1++)
+        for (int ia1 = 0; ia1 < na_grid; ia1++)
 		{
 			if(all_out_of_range[ia1]) continue;
 
@@ -1024,7 +989,7 @@ namespace Gint_Tools
 			const double* tmp_matrix = DM->find_pair(iat1, iat1)->get_pointer(0);
 			const int iw1_lo=block_iw[ia1];
 
-			if(job==1)//density
+            if (if_symm)//density
 			{
             	//ia1==ia2, diagonal part
 				// find the first ib and last ib for non-zeros cal_flag
@@ -1077,18 +1042,7 @@ namespace Gint_Tools
 				}
 			}
 
-			int start;
-			switch(job)
-			{
-				case 1:
-					start=ia1+1;
-					break;
-				case 2:
-					start=0;
-					break;
-				default:
-					ModuleBase::WARNING_QUIT("psi_dm","job can only be 1 or 2");
-			}
+            int start = if_symm ? ia1 + 1 : 0;
 
 			for (int ia2=start; ia2<na_grid; ia2++)
 			{
@@ -1180,7 +1134,7 @@ namespace Gint_Tools
 		double ** psi_DMR,
 		double* DMR,
 		const hamilt::HContainer<double>* DM,
-		const int job)
+        const bool if_symm)
 	{
 		double *psi2, *psi2_dmr;
 		int iwi, iww;
@@ -1204,18 +1158,8 @@ namespace Gint_Tools
 		const char trans='N';
 		const double alpha=1.0, beta=1.0;
 		const int inc=1;
-		double alpha1;
-		switch(job)
-		{
-			case 1:
-				alpha1=2.0;
-				break;
-			case 2:
-				alpha1=1.0;
-				break;
-			default:
-				ModuleBase::WARNING_QUIT("psir_dmr","job can only be 1 or 2");
-		}
+        double alpha1;
+        alpha1 = if_symm ? 2.0 : 1.0;
 
 		for (int ia1=0; ia1<na_grid; ia1++)
 		{
@@ -1235,7 +1179,7 @@ namespace Gint_Tools
 			const int R1y = gt.ucell_index2y[id1];
 			const int R1z = gt.ucell_index2z[id1];
 			const double* tmp_matrix = DM->find_matrix(iat, iat, 0, 0, 0)->get_pointer();
-			if(job==1) //density
+            if (if_symm) //density
 			{
 				const int idx1=block_index[ia1];
 				int* find_start = gt.find_R2[iat];
@@ -1307,18 +1251,7 @@ namespace Gint_Tools
 			}
 
 			// get (j,beta,R2)
-			int start;
-			switch(job)
-			{
-				case 1:
-					start=ia1+1;
-					break;
-				case 2:
-					start=0;
-					break;
-				default:
-					ModuleBase::WARNING_QUIT("psi_dmr","job can only be 1 or 2");
-			}
+            int start = if_symm ? ia1 + 1 : 0;
 
 			for (int ia2=start; ia2<na_grid; ia2++)
 			{

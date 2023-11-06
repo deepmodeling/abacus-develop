@@ -12,11 +12,17 @@
 
 #include "diagh.h"
 #include "module_base/complexmatrix.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/macros.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_psi/kernels/device.h"
 
-#include <module_base/macros.h>
-
+template<typename T> struct consts
+{
+    consts();
+    T zero;
+    T one;
+    T neg_one;
+};
 namespace hsolver
 {
 
@@ -143,12 +149,13 @@ class DiagoDavid : public DiagH<T, Device>
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, Device>;
     using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
     using castmem_complex_op = psi::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
+    using syncmem_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
+    using syncmem_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
-    const T * one = nullptr, * zero = nullptr, * neg_one = nullptr;
+    consts<T> cs;
+    const T* one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
 template <typename Real, typename Device> int DiagoDavid<Real, Device>::PW_DIAG_NDIM = 4;
 } // namespace hsolver

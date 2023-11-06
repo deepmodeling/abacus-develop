@@ -23,7 +23,7 @@ class Local_Orbital_Charge;
 class Parallel_Orbitals;
 class K_Vectors;
 
-template <typename Tdata> class RPA_LRI
+template <typename T, typename Tdata> class RPA_LRI
 {
   private:
     using TA = int;
@@ -40,14 +40,13 @@ template <typename Tdata> class RPA_LRI
     ~RPA_LRI(){};
     void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
     void cal_rpa_cv();
-    void cal_postSCF_exx(const Local_Orbital_Charge& loc,
-                    const MPI_Comm& mpi_comm_in,
-                    const K_Vectors& kv,
-                    const Parallel_Orbitals& pv);
+    void cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
+        const MPI_Comm& mpi_comm_in,
+        const K_Vectors& kv);
     void out_for_RPA(const Parallel_Orbitals& parav,
-                     const psi::Psi<std::complex<double>> &psi,
-                     const elecstate::ElecState *pelec);
-    void out_eigen_vector(const Parallel_Orbitals &parav, const psi::Psi<std::complex<double>> &psi);
+        const psi::Psi<T>& psi,
+        const elecstate::ElecState* pelec);
+    void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc();
     void out_bands(const elecstate::ElecState *pelec);
 

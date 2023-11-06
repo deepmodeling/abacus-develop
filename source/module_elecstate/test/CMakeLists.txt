@@ -70,7 +70,7 @@ AddTest(
 
 AddTest(
   TARGET potentials_new
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device planewave_serial
   SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
 )
 
@@ -86,8 +86,6 @@ AddTest(
   LIBS  base ${math_libs}  psi  device planewave_serial cell_info
   SOURCES charge_mixing_test.cpp  
   ../module_charge/charge_mixing.cpp
-  ../module_charge/charge_broyden.cpp
-  ../module_charge/charge_pulay.cpp
   ../../module_io/output.cpp
 )
 

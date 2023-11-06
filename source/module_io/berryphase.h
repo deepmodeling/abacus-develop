@@ -59,10 +59,17 @@ public:
                      const K_Vectors& kv);
 
     void Macroscopic_polarization(const int npwx,
-                                  const psi::Psi<std::complex<double>>* psi_in,
-                                  const ModulePW::PW_Basis* rhopw,
-                                  const ModulePW::PW_Basis_K* wfcpw,
-                                  const K_Vectors& kv);
+        const psi::Psi<double>* psi_in,
+        const ModulePW::PW_Basis* rhopw,
+        const ModulePW::PW_Basis_K* wfcpw,
+        const K_Vectors& kv) {
+        throw std::logic_error("berry phase supports only multi-k");
+    };
+    void Macroscopic_polarization(const int npwx,
+        const psi::Psi<std::complex<double>>* psi_in,
+        const ModulePW::PW_Basis* rhopw,
+        const ModulePW::PW_Basis_K* wfcpw,
+        const K_Vectors& kv);
 
     std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
 	

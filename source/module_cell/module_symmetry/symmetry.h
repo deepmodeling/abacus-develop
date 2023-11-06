@@ -19,6 +19,7 @@ public:
 	//1 : point group symmetry is considered
     static int symm_flag;
     static bool symm_autoclose;
+    static bool pricell_loop;   ///< whether to loop primitive cell in rhog_symmetry
 
 	void analy_sys(const UnitCell &ucell, std::ofstream &ofs_running);
 	bool available;
@@ -102,9 +103,13 @@ public:
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
-	void force_symmetry(ModuleBase::matrix &force, double* pos, const UnitCell &ucell);
-	void stress_symmetry(ModuleBase::matrix &sigma, const UnitCell &ucell);
-	void write();
+
+    /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
+    void symmetrize_vec3_nat(double* v)const;
+    /// symmetrize a 3*3 tensor, which can be stress or variation of unitcell in cell-relax
+    void symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const;
+
+    void write();
 
 	void print_pos(const double* pos, const int &nat);
 
@@ -124,13 +129,22 @@ public:
 	// has (min)inal number.
 	ModuleBase::Vector3<double> sptmin;
 
-	// to be called in lattice_type
+    /// atom-map for each symmetry operation: isym_rotiat[isym][iat]=rotiat
+    std::vector<std::vector<int>> isym_rotiat_;
+
+
+    /// @brief  set atom map for each symmetry operation
+    void set_atom_map(const UnitCell& ucell);
+    // to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-			int& real_brav, double* cel_const, double* tmp_const)const;
+        int& real_brav, double* cel_const, double* tmp_const)const;
+
+    /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
+    bool magmom_same_check(const UnitCell& ucell)const;
 };
 }
 

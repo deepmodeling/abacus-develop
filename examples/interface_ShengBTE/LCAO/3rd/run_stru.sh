@@ -29,7 +29,7 @@ ks_solver       genelpa
 gamma_only      0
 smearing_method gauss
 smearing_sigma  0.01
-mixing_type     pulay
+mixing_type     broyden
 mixing_beta     0.7
 
 stru_file       STRU_$stru

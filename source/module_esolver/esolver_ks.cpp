@@ -1,16 +1,17 @@
 #include "esolver_ks.h"
 
+#include <time.h>
+#ifdef __MPI
+#include <mpi.h>
+#else
+#include <chrono>
+#endif
+
 #include <iostream>
 
-#include "../module_io/print_info.h"
+#include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
-#include "time.h"
-#ifdef __MPI
-#include "mpi.h"
-#else
-#include "chrono"
-#endif
 
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
@@ -47,20 +48,6 @@ namespace ModuleESolver
         ///----------------------------------------------------------
         p_chgmix = new Charge_Mixing();
         p_chgmix->set_rhopw(this->pw_rho);
-        p_chgmix->set_mixing(INPUT.mixing_mode,
-                             INPUT.mixing_beta,
-                             INPUT.mixing_ndim,
-                             INPUT.mixing_gg0,
-                             INPUT.mixing_tau);
-        // using bandgap to auto set mixing_beta
-        if (std::abs(INPUT.mixing_beta + 10.0) < 1e-6)
-        {
-            p_chgmix->need_auto_set();
-        }
-        else if (INPUT.mixing_beta > 1.0 || INPUT.mixing_beta < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-        }
 
         ///----------------------------------------------------------
         /// wavefunc
@@ -74,6 +61,7 @@ namespace ModuleESolver
     template<typename T, typename Device>
     ESolver_KS<T, Device>::~ESolver_KS()
     {
+        delete this->psi;
         delete this->pw_wfc;
         delete this->p_hamilt;
         delete this->phsol;
@@ -84,6 +72,23 @@ namespace ModuleESolver
     void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
     {
         ESolver_FP::Init(inp,ucell);
+
+        //------------------Charge Mixing------------------
+        p_chgmix->set_mixing(GlobalV::MIXING_MODE,
+                             GlobalV::MIXING_BETA,
+                             GlobalV::MIXING_NDIM,
+                             GlobalV::MIXING_GG0,
+                             GlobalV::MIXING_TAU);
+        // using bandgap to auto set mixing_beta
+        if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
+        {
+            p_chgmix->need_auto_set();
+        }
+        else if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
+        {
+            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
+        }
+        
 #ifdef USE_PAW
         if(GlobalV::use_paw)
         {
@@ -187,37 +192,38 @@ namespace ModuleESolver
         //{
             //Envelope function is calculated as lcao_in_pw
             //new plane wave basis
-    #ifdef __MPI
-            this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
-    #endif
-            this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
-                                    ucell.latvec,
-                                    this->pw_rho->nx,
-                                    this->pw_rho->ny,
-                                    this->pw_rho->nz);
-            this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
 #ifdef __MPI
-            if(INPUT.pw_seed > 0)    MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX , MPI_COMM_WORLD);
-            //qianrui add 2021-8-13 to make different kpar parameters can get the same results
-    #endif
-            this->pw_wfc->setuptransform();
-            for (int ik = 0; ik < this->kv.nks; ++ik)
+        this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+#endif
+        this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
+                                ucell.latvec,
+                                this->pw_rho->nx,
+                                this->pw_rho->ny,
+                                this->pw_rho->nz);
+        this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+#ifdef __MPI
+        if (INPUT.pw_seed > 0)
+            MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+            // qianrui add 2021-8-13 to make different kpar parameters can get the same results
+#endif
+        this->pw_wfc->setuptransform();
+        for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-            this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
-            this->print_wfcfft(inp, GlobalV::ofs_running);
+        this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
+        this->print_wfcfft(inp, GlobalV::ofs_running);
         //}
         // initialize the real-space uniform grid for FFT and parallel
         // distribution of plane waves
-        GlobalC::Pgrid.init(this->pw_rho->nx,
-                            this->pw_rho->ny,
-                            this->pw_rho->nz,
-                            this->pw_rho->nplane,
-                            this->pw_rho->nrxx,
+        GlobalC::Pgrid.init(this->pw_rhod->nx,
+                            this->pw_rhod->ny,
+                            this->pw_rhod->nz,
+                            this->pw_rhod->nplane,
+                            this->pw_rhod->nrxx,
                             pw_big->nbz,
                             pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
 
         // Calculate Structure factor
-        this->sf.setup_structure_factor(&GlobalC::ucell, this->pw_rho);
+        this->sf.setup_structure_factor(&GlobalC::ucell, this->pw_rhod);
 
         // Initialize charge extrapolation
         CE.Init_CE(GlobalC::ucell.nat);
@@ -227,7 +233,8 @@ namespace ModuleESolver
         {
             GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
-                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz);
+                                            this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
+                                            this->pw_wfc->startz,this->pw_wfc->numz);
             GlobalC::paw_cell.prepare_paw();
             GlobalC::paw_cell.set_sij();
 
@@ -249,16 +256,16 @@ namespace ModuleESolver
         {
             // initialize the real-space uniform grid for FFT and parallel
             // distribution of plane waves
-            GlobalC::Pgrid.init(this->pw_rho->nx,
-                                this->pw_rho->ny,
-                                this->pw_rho->nz,
-                                this->pw_rho->nplane,
-                                this->pw_rho->nrxx,
+            GlobalC::Pgrid.init(this->pw_rhod->nx,
+                                this->pw_rhod->ny,
+                                this->pw_rhod->nz,
+                                this->pw_rhod->nplane,
+                                this->pw_rhod->nrxx,
                                 pw_big->nbz,
                                 pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
 
             // Calculate Structure factor
-            this->sf.setup_structure_factor(&ucell, this->pw_rho);
+            this->sf.setup_structure_factor(&ucell, this->pw_rhod);
         }
     }
 
@@ -396,15 +403,15 @@ namespace ModuleESolver
                             }
                             p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         }
-                        //conv_elec = this->estate.mix_rho();
-                        p_chgmix->mix_rho(iter, pelec->charge);
+                        
+                        p_chgmix->mix_rho(pelec->charge);
                         //----------charge mixing done-----------
                     }
                 }
 #ifdef __MPI
 		        MPI_Bcast(&drho, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
 		        MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE , 0, PARAPW_WORLD);
-                MPI_Bcast(pelec->charge->rho[0], this->pw_rho->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
+                MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 
                 // Hamilt should be used after it is constructed.
@@ -476,7 +483,7 @@ namespace ModuleESolver
         int precision = 3;
         std::string tag = "CHG";
         return ModuleIO::Output_Rho(this->pw_big,
-                                    this->pw_rho,
+                                    this->pw_rhod,
                                     is,
                                     GlobalV::NSPIN,
                                     pelec->charge->rho_save[is],
@@ -495,7 +502,7 @@ namespace ModuleESolver
         int precision = 11;
         std::string tag = "TAU";
         return ModuleIO::Output_Rho(this->pw_big,
-                                    this->pw_rho,
+                                    this->pw_rhod,
                                     is,
                                     GlobalV::NSPIN,
                                     pelec->charge->kin_r_save[is],
@@ -514,7 +521,7 @@ namespace ModuleESolver
         int precision = 3;
         std::string tag = "POT";
         return ModuleIO::Output_Potential(this->pw_big,
-                                          this->pw_rho,
+                                          this->pw_rhod,
                                           GlobalV::NSPIN,
                                           iter,
                                           GlobalV::out_pot,
@@ -535,5 +542,8 @@ template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
 template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
+#endif
+#ifdef __LCAO
+template class ESolver_KS<double, psi::DEVICE_CPU>;
 #endif
 }

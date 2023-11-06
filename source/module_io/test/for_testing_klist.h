@@ -36,6 +36,12 @@ pseudopot_cell_vl::pseudopot_cell_vl(){}
 pseudopot_cell_vl::~pseudopot_cell_vl(){}
 pseudopot_cell_vnl::pseudopot_cell_vnl(){}
 pseudopot_cell_vnl::~pseudopot_cell_vnl(){}
+Soc::~Soc()
+{
+}
+Fcoef::~Fcoef()
+{
+}
 
 namespace GlobalC
 {

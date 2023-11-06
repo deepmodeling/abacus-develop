@@ -62,15 +62,6 @@ void Charge::destroy()
     {
         for (int i = 0; i < GlobalV::NSPIN; i++)
         {
-            delete[] rho[i];
-            delete[] rhog[i];
-            delete[] rho_save[i];
-            delete[] rhog_save[i];
-            if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
-            {
-                delete[] kin_r[i];
-                delete[] kin_r_save[i];
-            }
             if(GlobalV::use_paw)
             {
                 delete[] nhat[i];
@@ -83,6 +74,12 @@ void Charge::destroy()
         delete[] rhog_save;
         delete[] rho_core;
         delete[] rhog_core;
+        delete[] _space_rho;
+        delete[] _space_rho_save;
+        delete[] _space_rhog;
+        delete[] _space_rhog_save;
+        delete[] _space_kin_r;
+        delete[] _space_kin_r_save;
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
             delete[] kin_r;
@@ -120,6 +117,15 @@ void Charge::allocate(const int& nspin_in)
     }
 
     // allocate memory
+    _space_rho = new double[nspin * nrxx];
+    _space_rho_save = new double[nspin * nrxx];
+    _space_rhog = new std::complex<double>[nspin * ngmc];
+    _space_rhog_save = new std::complex<double>[nspin * ngmc];
+    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+    {
+        _space_kin_r = new double[nspin * nrxx];
+        _space_kin_r_save = new double[nspin * nrxx];
+    }
     rho = new double*[nspin];
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
@@ -137,19 +143,19 @@ void Charge::allocate(const int& nspin_in)
 
     for (int is = 0; is < nspin; is++)
     {
-        rho[is] = new double[nrxx];
-        rhog[is] = new std::complex<double>[ngmc];
-        rho_save[is] = new double[nrxx];
-        rhog_save[is] = new std::complex<double>[ngmc];
+        rho[is] = _space_rho + is * nrxx;
+        rhog[is] = _space_rhog + is * ngmc;
+        rho_save[is] = _space_rho_save + is * nrxx;
+        rhog_save[is] = _space_rhog_save + is * ngmc;
         ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
         {
-            kin_r[is] = new double[nrxx];
+            kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
-            kin_r_save[is] = new double[nrxx];
+            kin_r_save[is] = _space_kin_r_save + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r_save[is], nrxx);
         }
         if(GlobalV::use_paw)
@@ -215,7 +221,7 @@ double Charge::sum_rho(void) const
     sum_rho *= elecstate::get_ucell_omega() / static_cast<double>(this->rhopw->nxyz);
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(sum_rho);
+    Parallel_Reduce::reduce_pool(sum_rho);
 #endif
 
     // mohan fixed bug 2010-01-18,
@@ -286,7 +292,7 @@ void Charge::atomic_rho(const int spin_number_need,
             }
             ne[is] *= omega / (double)this->rhopw->nxyz;
 #ifdef __MPI
-            Parallel_Reduce::reduce_double_pool(ne[is]);
+            Parallel_Reduce::reduce_pool(ne[is]);
 #endif
             GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "Electron number from rho", ne[is]);
@@ -330,35 +336,51 @@ void Charge::atomic_rho(const int spin_number_need,
                         //----------------------------------------------------------
                         const std::vector<double> rhoatm = [&]() -> std::vector<double> {
                             std::vector<double> rhoatm(mesh);
-                            for (int ir = 0; ir < mesh; ++ir)
+                            // this is only one part of the charge density for uspp
+                            // liuyu 2023-11-01
+                            if (atom->ncpp.tvanp)
                             {
-                                double r2 = atom->ncpp.r[ir] * atom->ncpp.r[ir];
-                                rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
+                                for (int ir = 0; ir < mesh; ++ir)
+                                {
+                                    rhoatm[ir] = atom->ncpp.rho_at[ir];
+                                }
                             }
-                            rhoatm[0] = pow((rhoatm[2] / rhoatm[1]), 1. / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add
-                            rhoatm[0] = pow(rhoatm[0], atom->ncpp.r[1]);
-                            rhoatm[0] = rhoatm[1] / rhoatm[0];
-
-                            double charge = 0.0;
-                            ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh,
-                                                                atom->ncpp.rho_at,
-                                                                atom->ncpp.rab,
-                                                                charge);
-                            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge from rho_at", charge);
-                            assert(charge != 0.0
-                                || charge == atom->ncpp.zv); // Peize Lin add charge==atom->zv for bsse 2021.04.07
-
-                            double scale = 1.0;
-                            if (charge != atom->ncpp.zv)
+                            else
                             {
-                                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge should be", atom->ncpp.zv);
-                                scale = atom->ncpp.zv / charge;
-                            }
+                                for (int ir = 0; ir < mesh; ++ir)
+                                {
+                                    double r2 = atom->ncpp.r[ir] * atom->ncpp.r[ir];
+                                    rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
+                                }
+                                rhoatm[0]
+                                    = pow((rhoatm[2] / rhoatm[1]), 1. / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add
+                                rhoatm[0] = pow(rhoatm[0], atom->ncpp.r[1]);
+                                rhoatm[0] = rhoatm[1] / rhoatm[0];
 
-                            for (int ir = 0; ir < mesh; ++ir)
-                            {
-                                rhoatm[ir] *= scale;
-                                rhoatm[ir] *= (ModuleBase::FOUR_PI * atom->ncpp.r[ir] * atom->ncpp.r[ir]);
+                                double charge = 0.0;
+                                ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh,
+                                                                       atom->ncpp.rho_at,
+                                                                       atom->ncpp.rab,
+                                                                       charge);
+                                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge from rho_at", charge);
+                                assert(charge != 0.0
+                                       || charge
+                                              == atom->ncpp.zv); // Peize Lin add charge==atom->zv for bsse 2021.04.07
+
+                                double scale = 1.0;
+                                if (charge != atom->ncpp.zv)
+                                {
+                                    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning,
+                                                                "charge should be",
+                                                                atom->ncpp.zv);
+                                    scale = atom->ncpp.zv / charge;
+                                }
+
+                                for (int ir = 0; ir < mesh; ++ir)
+                                {
+                                    rhoatm[ir] *= scale;
+                                    rhoatm[ir] *= (ModuleBase::FOUR_PI * atom->ncpp.r[ir] * atom->ncpp.r[ir]);
+                                }
                             }
                             return rhoatm;
                         }();
@@ -373,7 +395,6 @@ void Charge::atomic_rho(const int spin_number_need,
                             std::vector<double> rho1d(ucell.meshx);
                             for (int ir = 0; ir < mesh; ir++)
                             {
-                                //              rho1d [ir] = atom->rho_at[ir];
                                 rho1d[ir] = rhoatm[ir];
                             }
                             ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab, rho_lgl[0]);
@@ -404,7 +425,6 @@ void Charge::atomic_rho(const int spin_number_need,
                                     if (atom->ncpp.r[ir] < 1.0e-8)
                                     {
                                         rho1d[ir] = rhoatm[ir];
-                                        // rho1d[ir] = atom->rho_at[ir];
                                     }
                                     else
                                     {
@@ -595,7 +615,7 @@ void Charge::atomic_rho(const int spin_number_need,
                 ne[is] += rho_in[is][ir];
             ne[is] *= omega / (double)this->rhopw->nxyz;
     #ifdef __MPI
-            Parallel_Reduce::reduce_double_pool(ne[is]);
+            Parallel_Reduce::reduce_pool(ne[is]);
     #endif
             // we check that everything is correct
             double neg = 0.0;
@@ -611,9 +631,9 @@ void Charge::atomic_rho(const int spin_number_need,
             }
 
     #ifdef __MPI
-            Parallel_Reduce::reduce_double_pool(neg);
-            Parallel_Reduce::reduce_double_pool(ima);
-            Parallel_Reduce::reduce_double_pool(sumrea);
+            Parallel_Reduce::reduce_pool(neg);
+            Parallel_Reduce::reduce_pool(ima);
+            Parallel_Reduce::reduce_pool(sumrea);
     #endif
             // mohan fix bug 2011-04-03
             neg = neg / (double)this->rhopw->nxyz * omega;
@@ -671,7 +691,7 @@ double Charge::check_ne(const double* rho_in) const
         ne += rho_in[ir];
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_pool(ne);
+    Parallel_Reduce::reduce_pool(ne);
 #endif
     ne = ne * elecstate::get_ucell_omega() / (double)this->rhopw->nxyz;
     std::cout << std::setprecision(10);

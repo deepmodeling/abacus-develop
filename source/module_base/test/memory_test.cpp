@@ -6,7 +6,8 @@
 namespace GlobalV
 {
 	std::ofstream ofs_running;
-}
+    int KPAR = 1;
+} // namespace GlobalV
 
 /************************************************
  *  unit test of class Memory

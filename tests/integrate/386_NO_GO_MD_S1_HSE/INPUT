@@ -24,7 +24,7 @@ smearing_method		gaussian
 smearing_sigma		0.02
 
 #Parameters (7.Charge Mixing)
-mixing_type			pulay
+mixing_type			broyden
 mixing_beta			0.4
 
 #Parameters (9.Molecular dynamics)

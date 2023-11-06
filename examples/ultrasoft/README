@@ -1,0 +1,21 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+ABACUS supports density functional theory calculations using ultrasoft pseudopotentials
+
+First one should prepare corresponding ultrasoft pseudopotentials and other input files.
+
+`ecutrho` should be no less than 4 times of `ecutwfc`. (`ecutrho` = 8 to 12 times `ecutwfc`, typically)
+
+```
+INPUT_PARAMETERS
+ecutwfc                 40
+ecutrho                 240
+```
+
+Detailed explaination of these keywords can be found [here](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/input-main.md#plane-wave-related-variables).
+
+

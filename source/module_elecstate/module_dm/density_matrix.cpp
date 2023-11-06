@@ -216,7 +216,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
 }
 
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<std::complex<double>>& DMR_in)
+void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
 {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty
@@ -251,27 +251,6 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<std::complex<doubl
         }
     }
     ModuleBase::Memory::record("DensityMatrix::DMR", this->_DMR.size() * this->_DMR[0]->get_memory_size());
-}
-
-// initialize density matrix DMR from another HContainer (mainly used)
-template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR_grid(const hamilt::HContainer<TR>& DMR_in)
-{
-    // ensure _DMR is empty
-    for (auto& it: this->_DMR_grid)
-    {
-        delete it;
-    }
-    this->_DMR_grid.clear();
-    // set up a HContainer using another one
-    for (int is = 0; is < this->_nspin; ++is) // loop over spin
-    {
-        hamilt::HContainer<TR>* tmp_DMR;
-        tmp_DMR = new hamilt::HContainer<TR>(DMR_in);
-        // zero.out
-        tmp_DMR->set_zero();
-        this->_DMR_grid.push_back(tmp_DMR);
-    }
 }
 
 // get _DMR pointer
@@ -371,8 +350,18 @@ int DensityMatrix<TK, TR>::get_DMK_nks() const
 {
 #ifdef __DEBUG
     assert(this->_DMK.size() != 0);
+    assert(this->_kv != nullptr);
 #endif
     return this->_kv->nks;
+}
+
+template <typename TK, typename TR>
+int DensityMatrix<TK, TR>::get_DMK_size() const
+{
+#ifdef __DEBUG
+    assert(this->_DMK.size() != 0);
+#endif
+    return this->_DMK.size();
 }
 
 template <typename TK, typename TR>
@@ -403,9 +392,9 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
         hamilt::HContainer<TR>* tmp_DMR = this->_DMR[is-1];
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
-        // #ifdef _OPENMP
-        // #pragma omp parallel for
-        // #endif
+#ifdef _OPENMP
+        #pragma omp parallel for
+#endif
         for (int iap = 0; iap < tmp_DMR->size_atom_pairs(); ++iap)
         {
             hamilt::AtomPair<double>& tmp_ap = tmp_DMR->get_atom_pair(iap);
@@ -829,5 +818,6 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
 // T of HContainer can be double or complex<double>
 template class DensityMatrix<double, double>;               // Gamma-Only case
 template class DensityMatrix<std::complex<double>, double>; // Multi-k case
+//template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
 
 } // namespace elecstate

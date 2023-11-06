@@ -170,7 +170,7 @@ class Input
     int ncx, ncy, ncz; // three dimension of FFT charge/grid
     int nx, ny, nz; // three dimension of FFT wavefunc
     int bx, by, bz; // big mesh ball. mohan add 2011-04-21
-    int nsx, nsy, nsz; // three dimension of FFT smooth charge density
+    int ndx, ndy, ndz; // three dimension of FFT smooth charge density
 
     //==========================================================
     // technique
@@ -559,6 +559,21 @@ class Input
     bool test_skip_ewald = false;
 
     //==========================================================
+    // variables for non-collinear spin-constrained DFT (deltaspin)
+    //==========================================================
+    /**
+     * 0: none spin-constrained DFT;
+     * 1: constrain atomic spin;
+     */
+    bool sc_mag_switch; // the switch to open the DeltaSpin function, 0: no spin-constrained DFT; 1: constrain atomic magnetization
+    bool decay_grad_switch;// the switch to use the local approximation of gradient decay, 0: no local approximation; 1: apply the method
+    double sc_thr; // threshold for spin-constrained DFT in uB
+    int nsc; // maximum number of inner lambda loop
+    int nsc_min; // minimum number of inner lambda loop
+    double alpha_trial; // initial trial step size for lambda in eV/uB^2
+    double sccut; // restriction of step size in eV/uB
+    std::string sc_file; // file name for Deltaspin (json format)
+
     // whether to use PAW
     //==========================================================
     bool use_paw = false;

@@ -1,0 +1,32 @@
+[
+    {
+        "element": "Si",
+        "itype": 1,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0.1, 0.1, 0.2],
+                "target_mag": [1.0, 2.0, 3.0],
+                "constrain": [0, 0, 1]
+            },
+            {
+                "index": 4,
+                "lambda": [0.2, 0.4, 0.5],
+                "target_mag": [1.5, 2.5, 3.5],
+                "constrain": [0, 0, 1]
+            }
+        ]
+    },
+    {
+        "element": "O",
+        "itype": 0,
+        "ScAtomData": [
+            {
+                "index": 1,
+                "lambda": [0.3, 0.5, 0.7],
+                "target_mag": [0.5, 1.0, 1.5],
+                "constrain": [0, 0, 1]
+            }
+        ]
+    }
+]

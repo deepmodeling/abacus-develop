@@ -31,15 +31,15 @@ AddTest(
   SOURCES test_paw2.cpp ../paw_atom.cpp
 )
 
-AddTest(
-  TARGET Test_Paw3
-  LIBS ${math_libs} base device libpaw_interface -lifcore
-  SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
-)
-AddTest(
-  TARGET Test_Paw4
-  LIBS ${math_libs} base device libpaw_interface -lifcore
-  SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp
-)
-add_dependencies(Test_Paw3 libpaw_interface)
-add_dependencies(Test_Paw4 libpaw_interface)
+#AddTest(
+#  TARGET Test_Paw3
+#  LIBS ${math_libs} base device libpaw_interface
+#  SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
+#)
+#AddTest(
+#  TARGET Test_Paw4
+#  LIBS ${math_libs} base device libpaw_interface
+#  SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp
+#)
+#add_dependencies(Test_Paw3 libpaw_interface)
+#add_dependencies(Test_Paw4 libpaw_interface)

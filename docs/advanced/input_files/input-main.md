@@ -39,7 +39,7 @@
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
     - [nx, ny, nz](#nx-ny-nz)
-    - [nsx, nsy, nsz](#nsx-nsy-nsz)
+    - [ndx, ndy, ndz](#ndx-ndy-ndz)
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
@@ -351,6 +351,15 @@
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
+  - [Deltaspin](#deltaspin)
+    - [sc\_mag\_switch](#sc_mag_switch)
+    - [decay\_grad\_switch](#decay_grad_switch)
+    - [sc\_thr](#sc_thr)
+    - [nsc](#nsc)
+    - [nsc\_min](#nsc_min)
+    - [alpha\_trial](#alpha_trial)
+    - [sccut](#sccut)
+    - [sc\_file](#sc_file)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -432,7 +441,7 @@ These variables are used to control general system parameters.
 ### kpar
 
 - **Type**: Integer
-- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI threads.
+- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
 - **Default**: 1
 
 ### bndpar
@@ -574,8 +583,8 @@ These variables are used to control general system parameters.
 - **Type**: Integer
 - **Availability**: pw base
 - **Description**: 
-  - 0: it will be set to the number of MPI threads. Normally, it is fine just leave it to the default value.
-  - `>0`: it specifies the number of threads used for carrying out diagonalization. Must be less than or equal to total number of MPI threads. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI threads.
+  - 0: it will be set to the number of MPI processes. Normally, it is fine just leave it to the default value.
+  - `>0`: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI processes.
 - **Default**: 0
 
 ### nbspline
@@ -608,12 +617,12 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   Available options are:
 
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-  - gpu: for GPUs via CUDA.
+  - gpu: for GPUs via CUDA or ROCm.
 
   Known limitations:
 
   - pw basis: required by the `gpu` acceleration options
-  - cg ks_solver: required by the `gpu` acceleration options
+  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 [back to top](#full-list-of-input-keywords)
@@ -690,13 +699,19 @@ These variables are used to control the plane wave related parameters.
 ### nx, ny, nz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. 
+
+    Note: You must specify all three dimensions for this setting to be used.
 - **Default**: 0
 
-### nsx, nsy, nsz
+### ndx, ndy, ndz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the smooth part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the dense part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. 
+
+    Note: You must specify all three dimensions for this setting to be used.
+
+    Note: These parameters must be used combined with [nx,ny,nz](#nx-ny-nz). If [nx,ny,nz](#nx-ny-nz) are unset, ndx,ndy,ndz are used as [nx,ny,nz](#nx-ny-nz).
 - **Default**: 0
 
 ### pw_seed
@@ -835,6 +850,7 @@ calculations.
   For plane-wave basis,
 
   - **cg**: cg method.
+  - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
@@ -881,7 +897,7 @@ calculations.
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - **fixed**: fixed occupations.
+  - **fixed**: fixed occupations (available for non-coductors only)
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
@@ -907,18 +923,20 @@ calculations.
 - **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
-  - **pulay**: Standard Pulay method.
-  - **broyden**: Broyden method.
-- **Default**: pulay
+  - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
+  - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+  
+  In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.
+- **Default**: broyden
 
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter. We recommend the following options:
+- **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
+We recommend the following options:
   - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
-    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
-    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
-    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=1.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=1.0`.
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
@@ -929,15 +947,19 @@ calculations.
 ### mixing_ndim
 
 - **Type**: Integer
-- **Description**: It indicates the mixing dimensions in Pulay, Pulay method uses the density from previous mixing_ndim steps and do a charge mixing based on this density.
+- **Description**: It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
+  
+  For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
 
 ### mixing_gg0
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
   -  **0**: No Kerker scaling is performed.
+  
+  For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 0.0
 
 ### mixing_tau
@@ -2075,7 +2097,7 @@ These variables are relevant when using hybrid functionals.
 ### exx_distribute_type
 
 - **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different threads, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
+- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different processes, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`. 
   - `order`: Atom pairs are simply distributed by their orders. 
   - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method. 
   - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
@@ -3201,5 +3223,89 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
+
+## Deltaspin
+
+These variables are used to control the usage of deltaspin functionality.
+
+### sc_mag_switch
+
+- **Type**: boolean
+- **Description**: the switch of deltaspin functionality
+  - 0: no deltaspin
+  - 1: use the deltaspin method to constrain atomic magnetic moments
+- **Default**: 0
+
+### decay_grad_switch
+
+- **Type**: boolean
+- **Description**: the switch of decay gradient method
+  - 0: no decay gradient method
+  - 1: use the decay gradient method and set ScDecayGrad in the file specified by `sc_file`. ScDecayGrad is an element dependent parameter, which is used to control the decay rate of the gradient of the magnetic moment.
+- **Default**: 0
+
+### sc_thr
+
+- **Type**: Real
+- **Description**: the threshold of the spin constraint atomic magnetic moment
+- **Default**: 1e-6
+- **Unit**: Bohr Mag (\muB)
+
+### nsc
+
+- **Type**: Integer
+- **Description**: the maximum number of steps in the inner lambda loop
+- **Default**: 100
+
+### nsc_min
+
+- **Type**: Integer
+- **Description**: the minimum number of steps in the inner lambda loop
+- **Default**: 2
+
+### alpha_trial
+
+- **Type**: Real
+- **Description**: initial trial step size for lambda in eV/uB^2
+- **Default**: 0.01
+- **Unit**: eV/uB^2
+
+### sccut
+
+- **Type**: Real
+- **Description**: restriction of step size in eV/uB
+- **Default**: 3
+- **Unit**: eV/uB
+
+### sc_file
+
+- **Type**: String
+- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below:
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0, 0, 0],
+                "target_mag": [2.0, 0.0, 0.0],
+                "constrain": [1,1,1]
+            },
+            {
+                "index": 1,
+                "lambda": [0, 0, 0],
+                "target_mag_val": 2.0,
+                "target_mag_angle1": 80.0,
+                "target_mag_angle2": 0.0,
+                "constrain": [1,1,1]
+            }
+        ]
+    }
+]
+```
+- **Default**: none
 
 [back to top](#full-list-of-input-keywords)

@@ -168,7 +168,7 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "user_fp_params":{  # All the ABACUS input paramters are defined here
     "ntype": 1,         # defining input parameters from INPUT files is not supported yet.
     "ecutwfc": 80,      
-    "mixing_type": "pulay",
+    "mixing_type": "broyden",
     "mixing_beta": 0.8,
     "symmetry": 1,
     "nspin": 1,

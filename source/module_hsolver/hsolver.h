@@ -4,12 +4,12 @@
 #include <complex>
 
 #include "diagh.h"
+#include "module_base/macros.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 #include "module_psi/psi.h"
-#include <module_base/macros.h>
 
 namespace hsolver
 {
@@ -37,15 +37,6 @@ class HSolver
     // solve Hamiltonian to electronic density in ElecState
     virtual void solve(hamilt::Hamilt<T, Device>* phm,
                        psi::Psi<T, Device>& ppsi,
-                       elecstate::ElecState* pes,
-                       const std::string method,
-                       const bool skip_charge = false)
-    {
-        return;
-    }
-
-    virtual void solve(hamilt::Hamilt<T, Device>* phm,
-                       psi::Psi<Real, Device>& ppsi,
                        elecstate::ElecState* pes,
                        const std::string method,
                        const bool skip_charge = false)

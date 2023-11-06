@@ -107,7 +107,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // init Psi, HSolver, ElecState, Hamilt
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO(this->LOWF.ParaV);
+        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
@@ -116,7 +116,8 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     this->pelec->omega = GlobalC::ucell.omega;
 
     // Initializee the potential.
-    this->pelec->pot = new elecstate::Potential(pw_rho,
+    this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                pw_rho,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(sf),
@@ -168,7 +169,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
                                              kv.nks);
         this->pelec_td->psiToRho_td(this->psi[0]);
     }
-    // using HSolverLCAO::solve()
+    // using HSolverLCAO<std::complex<double>>::solve()
     else if (this->phsol != nullptr)
     {
         // reset energy
@@ -177,10 +178,6 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
         if (this->psi != nullptr)
         {
             this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
-        }
-        else if (this->psid != nullptr)
-        {
-            this->phsol->solve(this->p_hamilt, this->psid[0], this->pelec_td, GlobalV::KS_SOLVER);
         }
     }
     else
@@ -251,7 +248,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         }
         for (int ik = 0; ik < kv.nks; ++ik)
         {
-            if (hsolver::HSolverLCAO::out_mat_hs)
+            if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs)
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -265,20 +262,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                                     h_mat.p,
                                     s_mat.p,
                                     bit,
-                                    hsolver::HSolverLCAO::out_mat_hs,
-                                    "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0],
-                                    1); // LiuXh, 2017-03-21
-            }
-            else if (this->psid != nullptr && (istep % GlobalV::out_interval == 0))
-            {
-                hamilt::MatrixBlock<double> h_mat, s_mat;
-                this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(istep,
-                                    h_mat.p,
-                                    s_mat.p,
-                                    bit,
-                                    hsolver::HSolverLCAO::out_mat_hs,
+                    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs,
                                     "data-" + std::to_string(ik),
                                     this->LOWF.ParaV[0],
                                     1); // LiuXh, 2017-03-21
@@ -297,16 +281,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         {
             if (istep % GlobalV::out_interval == 0)
             {
-                if (this->psi != nullptr)
-                {
                     this->psi[0].fix_k(ik);
                     this->pelec->print_psi(this->psi[0], istep);
-                }
-                else
-                {
-                    this->psid[0].fix_k(ik);
-                    this->pelec->print_psi(this->psid[0], istep);
-                }
             }
         }
         elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
@@ -423,7 +399,7 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
         }
     }
 
-    ESolver_KS_LCAO::afterscf(istep);
+    ESolver_KS_LCAO<std::complex<double>, double>::afterscf(istep);
 }
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
