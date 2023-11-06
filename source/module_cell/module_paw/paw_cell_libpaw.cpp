@@ -600,10 +600,13 @@ void Paw_Cell::set_dij()
            dij[is] = new double[nproj * nproj];
         }
 
-        extract_dij(iat,size_dij,dij_libpaw);
+        
 
 #ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0) extract_dij(iat,size_dij,dij_libpaw);
         Parallel_Common::bcast_double(dij_libpaw,size_dij*nspden);
+#else
+        extract_dij(iat,size_dij,dij_libpaw);
 #endif
 
         for(int is = 0; is < nspden; is ++)
@@ -639,7 +642,12 @@ void Paw_Cell::set_sij()
         double* sij_libpaw = new double[size_sij];
         double* sij = new double[nproj * nproj];
 
+#ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0) extract_sij(it,size_sij,sij_libpaw);
+        Parallel_Common::bcast_double(sij_libpaw,size_sij*nspden);
+#else
         extract_sij(it,size_sij,sij_libpaw);
+#endif
 
         for(int jproj = 0; jproj < nproj; jproj ++)
         {
