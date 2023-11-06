@@ -174,10 +174,14 @@ class Paw_Cell
     // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
     void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
 
+    // set by providing dij explicitly
     void set_dij(const int iat, double** dij_in){paw_atom_list[iat].set_dij(dij_in);}
+    // set by extracting dij from libpaw_interface
     void set_dij();
 
+    // set by providing sij explicitly
     void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
+    // set by extracting sij from libpaw_interface
     void set_sij();
 
 // Part III. Passing info for the initialization of PAW
@@ -266,8 +270,8 @@ class Paw_Cell
     void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
     void get_nhat(double** nhat, double* nhatgr);
     void calculate_dij(double* vks, double* vxc);
-    void get_dij(int iat, int size_dij, double* dij);
-    void get_sij(int iat, int size_sij, double* sij);
+    void extract_dij(int iat, int size_dij, double* dij);
+    void extract_sij(int iat, int size_sij, double* sij);
 
 // Part V. Relevant for parallel computing
 // Note about the parallelization of PAW: ABINIT supports the parallelization based on

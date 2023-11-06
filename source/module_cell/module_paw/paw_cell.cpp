@@ -489,10 +489,16 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
 
 #ifdef __MPI
         Parallel_Reduce::reduce_pool(ca.data(), nproj);
-#endif
 
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            paw_atom_list[iat].set_ca(ca, weight);
+            paw_atom_list[iat].accumulate_rhoij(current_spin);
+        }
+#else
         paw_atom_list[iat].set_ca(ca, weight);
         paw_atom_list[iat].accumulate_rhoij(current_spin);
+#endif
     }
 }
 
