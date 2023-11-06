@@ -2,6 +2,9 @@
 #include "test_tool.h"
 #include "mpi.h"
 #endif
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "fftw3.h"
 #include "pw_test.h"
 using namespace std;
@@ -50,6 +53,11 @@ int main(int argc, char **argv)
     nproc_in_pool = kpar = 1;
     rank_in_pool = 0;
 #endif
+#ifdef _OPENMP
+    // ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
+	fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+#endif
     int result = 0;
     testing::AddGlobalTestEnvironment(new TestEnv);
     testing::InitGoogleTest(&argc, argv);
@@ -57,5 +65,8 @@ int main(int argc, char **argv)
 #ifdef __MPI
     finishmpi();
 #endif  
+#ifdef _OPENMP
+	fftw_cleanup_threads();
+#endif
     return result;
 }

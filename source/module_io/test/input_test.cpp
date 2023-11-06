@@ -119,6 +119,7 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
+		EXPECT_EQ(INPUT.fft_mode,0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -476,6 +477,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
         EXPECT_DOUBLE_EQ(INPUT.ecutrho, 0.0);
+		EXPECT_EQ(INPUT.fft_mode,0);
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
         EXPECT_EQ(INPUT.ncz,0);

@@ -95,6 +95,7 @@ void Input::Print(const std::string &fn) const
                                  erf_height,
                                  "#the height of the energy step for reciprocal vectors");
     ModuleBase::GlobalFunc::OUTP(ofs, "erf_sigma", erf_sigma, "#the width of the energy step for reciprocal vectors");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fft_mode", fft_mode, "#mode of FFTW");
     if (ks_solver == "cg")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_nmax", pw_diag_nmax, "max iteration number for cg");

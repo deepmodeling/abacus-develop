@@ -254,6 +254,17 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         std::vector<std::vector<int>> rhoijselect;
         std::vector<int> nrhoijsel;
 
+#ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+            }  
+        }
+#else
         GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
         for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
@@ -261,10 +272,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
         }
 
+#endif
         double* nhatgr;
-        nhatgr = new double[3*GlobalC::paw_cell.get_nfft()];
         GlobalC::paw_cell.get_nhat(pes->charge->nhat,nhatgr);
-        delete[] nhatgr;
     }
 #endif
     ModuleBase::timer::tick("HSolverPW", "solve");

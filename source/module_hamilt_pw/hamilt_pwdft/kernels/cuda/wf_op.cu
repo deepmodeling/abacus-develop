@@ -16,6 +16,9 @@ __global__ void cal_sk(
     const int nx,
     const int ny,
     const int nz,
+    const int rho_nx,
+    const int rho_ny,
+    const int rho_nz,
     const int npw,
     const int npwx,
     const int fftny,
@@ -49,9 +52,15 @@ __global__ void cal_sk(
             const int ixy = is2fftixy[is];
             int ix = ixy / fftny;
             int iy = ixy % fftny;
-            if (ix < int(nx / 2) + 1) ix += nx;
-            if (iy < int(ny / 2) + 1) iy += ny;
-            if (iz < int(nz / 2) + 1) iz += nz;
+            if (ix >= int(nx / 2) + 1)
+                ix -= nx;
+            if (iy >= int(ny / 2) + 1)
+                iy -= ny;
+            if (iz >= int(nz / 2) + 1)
+                iz -= nz;
+            ix += rho_nx;
+            iy += rho_ny;
+            iz += rho_nz;
             sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
                                   * eigts3[iat * eigts3_nc + iz];
             iat++;
@@ -67,6 +76,9 @@ void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     const int &nx,
     const int &ny,
     const int &nz,
+    const int& rho_nx,
+    const int& rho_ny,
+    const int& rho_nz,
     const int &npw,
     const int &npwx,
     const int &fftny,
@@ -88,6 +100,7 @@ void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     cal_sk<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
          ik, ntype,
          nx, ny, nz,
+         rho_nx, rho_ny, rho_nz,
          npw, npwx,
          fftny,
          eigts1_nc, eigts2_nc, eigts3_nc,

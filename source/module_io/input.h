@@ -160,6 +160,7 @@ class Input
     //==========================================================
     bool gamma_only; // for plane wave.
     bool gamma_only_local; // for local orbitals.
+    int fft_mode = 0; // fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
 
     double ecutwfc; // energy cutoff for wavefunctions
     double ecutrho; // energy cutoff for charge/potential
