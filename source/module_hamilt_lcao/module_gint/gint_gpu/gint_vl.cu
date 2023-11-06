@@ -6,10 +6,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include <fstream>
 #include <sstream>
-#include <cooperative_groups.h>
-#include <cooperative_groups/memcpy_async.h>
-#include <cuda_runtime.h>
-#include <cuda/pipeline>
 
 __constant__ double ylmcoef[36];
 __constant__ int bxyz_g[1];
@@ -241,12 +237,15 @@ __global__ void get_psi_and_vldr3(double *input_double,
 
 __global__ void psi_multiple(int *atom_pair_input_info_g,
                              int *num_atom_pair_g,
+                             int grid_index,
                              double *psir_ylm_left,
                              double *psir_ylm_right,
                              int atom_pair_size_of_meshcell,
                              double *GridVlocal,
                              int lgd)
 {
+    // int k = blockIdx.x;
+    grid_index += blockIdx.x;
     int atom_pair_num = num_atom_pair_g[blockIdx.x];
     int start_index = atom_pair_size_of_meshcell * blockIdx.x;
     int end_index = start_index + atom_pair_num;
@@ -507,6 +506,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                                               psir_ylm_right_g);
             psi_multiple<<<grid_multiple, block_multiple, 0, stream[stream_num]>>>(atom_pair_input_info_g,
                                                                                    num_atom_pair_g,
+                                                                                   i * nby * nbz + j * nbz,
                                                                                    psir_ylm_left_g,
                                                                                    psir_ylm_right_g,
                                                                                    atom_pair_size_of_meshcell,
