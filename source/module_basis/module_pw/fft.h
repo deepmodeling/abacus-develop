@@ -75,12 +75,12 @@ public:
 
   public:
 	//init fftw_plans
-	void initplan();
+	void initplan(const unsigned int& flag = 0);
 	// We have not support mpi fftw yet.
 	// void initplan_mpi();
 	//init fftwf_plans
 #if defined(__ENABLE_FLOAT_FFTW)
-	void initplanf();
+	void initplanf(const unsigned int& flag = 0);
 #endif // defined(__ENABLE_FLOAT_FFTW)
 	// void initplanf_mpi();
 
@@ -105,48 +105,48 @@ public:
     template <typename FPTYPE>
     std::complex<FPTYPE>* get_auxr_3d_data() const;
 
+	int fft_mode = 0; ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive 
+
   private:
     bool gamma_only = false;
     bool mpifft = false; // if use mpi fft, only used when define __FFTW3_MPI
 
-    bool destroyp = true;
-    fftw_plan planzfor;
-    fftw_plan planzbac;
-	fftw_plan planxfor1;
-	fftw_plan planxbac1;
-	fftw_plan planxfor2;
-	fftw_plan planxbac2;
-	fftw_plan planyfor;
-	fftw_plan planybac;
-	fftw_plan planxr2c;
-	fftw_plan planxc2r;
-	fftw_plan planyr2c;
-	fftw_plan planyc2r;
+    fftw_plan planzfor  = NULL;
+    fftw_plan planzbac  = NULL;
+	fftw_plan planxfor1 = NULL;
+	fftw_plan planxbac1 = NULL;
+	fftw_plan planxfor2 = NULL;
+	fftw_plan planxbac2 = NULL;
+	fftw_plan planyfor  = NULL;
+	fftw_plan planybac  = NULL;
+	fftw_plan planxr2c  = NULL;
+	fftw_plan planxc2r  = NULL;
+	fftw_plan planyr2c  = NULL;
+	fftw_plan planyc2r  = NULL;
 //	fftw_plan plan3dforward;
 //	fftw_plan plan3dbackward;
 
 #if defined(__CUDA)
-    cufftHandle c_handle;
-    cufftHandle z_handle;
+    cufftHandle c_handle = NULL;
+    cufftHandle z_handle = NULL;
 #elif defined(__ROCM)
-    hipfftHandle c_handle;
-    hipfftHandle z_handle;
+    hipfftHandle c_handle = NULL;
+    hipfftHandle z_handle = NULL;
 #endif
 
 #if defined(__ENABLE_FLOAT_FFTW)
-	bool destroypf=true;
-	fftwf_plan planfzfor;
-	fftwf_plan planfzbac;
-	fftwf_plan planfxfor1;
-	fftwf_plan planfxbac1;
-	fftwf_plan planfxfor2;
-	fftwf_plan planfxbac2;
-	fftwf_plan planfyfor;
-	fftwf_plan planfybac;
-	fftwf_plan planfxr2c;
-	fftwf_plan planfxc2r;
-	fftwf_plan planfyr2c;
-	fftwf_plan planfyc2r;
+	fftwf_plan planfzfor = NULL;
+	fftwf_plan planfzbac = NULL;
+	fftwf_plan planfxfor1= NULL;
+	fftwf_plan planfxbac1= NULL;
+	fftwf_plan planfxfor2= NULL;
+	fftwf_plan planfxbac2= NULL;
+	fftwf_plan planfyfor = NULL;
+	fftwf_plan planfybac = NULL;
+	fftwf_plan planfxr2c = NULL;
+	fftwf_plan planfxc2r = NULL;
+	fftwf_plan planfyr2c = NULL;
+	fftwf_plan planfyc2r = NULL;
 #endif // defined(__ENABLE_FLOAT_FFTW)
 
     mutable std::complex<float>* c_auxr_3d = nullptr;  // fft space

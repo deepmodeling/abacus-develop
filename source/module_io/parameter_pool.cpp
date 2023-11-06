@@ -659,6 +659,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.gamma_only_local = *static_cast<bool*>(input_parameters["gamma_only_local"].get());
     }
+    else if (input_parameters.count("fft_mode") != 0)
+    {
+        INPUT.fft_mode = *static_cast<int*>(input_parameters["fft_mode"].get());
+    }
     else if (input_parameters.count("ecutwfc") != 0)
     {
         INPUT.ecutwfc = *static_cast<double*>(input_parameters["ecutwfc"].get());

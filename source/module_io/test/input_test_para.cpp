@@ -125,6 +125,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
+        EXPECT_EQ(INPUT.fft_mode,0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
