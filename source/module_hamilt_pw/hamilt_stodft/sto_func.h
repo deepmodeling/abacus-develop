@@ -20,7 +20,7 @@ public:
     REAL fdlnfd(REAL e);
     REAL nfdlnfd(REAL e);
     REAL n_root_fdlnfd(REAL e);
-    REAL n_fd(REAL e);
+    REAL nroot_mfd(REAL e);
 
 public:
     REAL t;

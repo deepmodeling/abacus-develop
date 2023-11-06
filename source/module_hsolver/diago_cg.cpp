@@ -109,9 +109,9 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
             syncmem_complex_op()(this->ctx, this->ctx, pphi_m, psi_m_in, this->dim);
             // ModuleBase::GlobalFunc::COPYARRAY(psi_m_in, pphi_m, this->dim);
         }
-        phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, static_cast<size_t>(this->dim)); // sphi = S|psi(m)>
+        phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, this->dmx, this->dim, 1); // sphi = S|psi(m)>
         this->schmit_orth(m, phi);
-        phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, static_cast<size_t>(this->dim)); // sphi = S|psi(m)>
+        phm_in->sPsi(this->phi_m->get_pointer(), this->sphi, this->dmx, this->dim, 1); // sphi = S|psi(m)>
 
         //do hPsi, actually the result of hpsi stored in Operator,
         //the necessary of copying operation should be checked later
@@ -139,7 +139,7 @@ void DiagoCG<T, Device>::diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T
             hpsi_info cg_hpsi_in(this->cg, cg_hpsi_range, this->pphi);
             phm_in->ops->hPsi(cg_hpsi_in);
 
-            phm_in->sPsi(this->cg->get_pointer(), this->scg, (size_t)this->dim);
+            phm_in->sPsi(this->cg->get_pointer(), this->scg, this->dmx, this->dim, 1);
             converged = this->update_psi(cg_norm, theta, this->eigenvalue[m]);
 
             if (converged) {
@@ -258,7 +258,7 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
     }
     // ModuleBase::timer::tick("DiagoCG","orth_grad");
 
-    phm_in->sPsi(this->gradient, this->scg, (size_t)this->dim);
+    phm_in->sPsi(this->gradient, this->scg, this->dmx, this->dim, 1);
     // int inc = 1;
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-07

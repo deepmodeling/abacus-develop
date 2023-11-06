@@ -26,12 +26,15 @@ std::complex<double>* Structure_Factor::get_sk(const int ik,
         const int ixy = wfc_basis->is2fftixy[is];
         int ix = ixy / wfc_basis->fftny;
         int iy = ixy % wfc_basis->fftny;
-        if (ix < int(nx / 2) + 1)
-            ix += nx;
-        if (iy < int(ny / 2) + 1)
-            iy += ny;
-        if (iz < int(nz / 2) + 1)
-            iz += nz;
+        if (ix >= int(nx / 2) + 1)
+            ix -= nx;
+        if (iy >= int(ny / 2) + 1)
+            iy -= ny;
+        if (iz >= int(nz / 2) + 1)
+            iz -= nz;
+        ix += this->rho_basis->nx;
+        iy += this->rho_basis->ny;
+        iz += this->rho_basis->nz;
         const int iat = GlobalC::ucell.itia2iat(it, ia);
         sk[igl] = kphase * this->eigts1(iat, ix) * this->eigts2(iat, iy) * this->eigts3(iat, iz);
     }
@@ -105,6 +108,9 @@ void Structure_Factor::get_sk(Device* ctx,
                 wfc_basis->nx,
                 wfc_basis->ny,
                 wfc_basis->nz,
+                this->rho_basis->nx,
+                this->rho_basis->ny,
+                this->rho_basis->nz,
                 _npw,
                 wfc_basis->npwk_max,
                 wfc_basis->fftny,

@@ -116,7 +116,8 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     this->pelec->omega = GlobalC::ucell.omega;
 
     // Initializee the potential.
-    this->pelec->pot = new elecstate::Potential(pw_rho,
+    this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                pw_rho,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(sf),

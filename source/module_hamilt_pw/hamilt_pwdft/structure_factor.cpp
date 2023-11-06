@@ -41,12 +41,10 @@ Structure_Factor::~Structure_Factor()
 }
 
 // called in input.cpp
-void Structure_Factor::set
-(
-    const int &nbspline_in
-)
+void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nbspline_in)
 {
     ModuleBase::TITLE("PW_Basis","set");
+    this->rho_basis = rho_basis_in;
     this->nbspline = nbspline_in;
     return;
 }

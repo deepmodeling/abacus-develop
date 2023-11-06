@@ -34,6 +34,8 @@ template<typename Device> void print_device_info (const Device* dev, std::ofstre
 
 template<typename Device> void record_device_memory (const Device* dev, std::ofstream& ofs_device, std::string str, size_t size) {return;}
 
+std::string get_device_info(std::string device_flag);
+
 int get_device_kpar(const int& kpar);
 std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type);
 

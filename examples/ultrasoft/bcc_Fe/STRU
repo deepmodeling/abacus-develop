@@ -1,0 +1,14 @@
+ATOMIC_SPECIES
+Fe 55.845 Fe.pbe-nd-rrkjus.UPF
+
+LATTICE_CONSTANT
+5.6
+
+ATOMIC_POSITIONS
+Direct
+
+Fe
+8
+1 
+0 0 0
+

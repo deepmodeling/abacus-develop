@@ -32,6 +32,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     ModuleBase::TITLE("Forces", "init");
     this->device = psi::device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
+    const ModuleBase::matrix& ekb = elec.ekb;
     const Charge* const chr = elec.charge;
     force.create(nat, 3);
 
@@ -45,7 +46,11 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     if(wfc_basis != nullptr)
     {
         this->npwx = wfc_basis->npwk_max;
-        this->cal_force_nl(forcenl, wg, pkv, wfc_basis, psi_in);
+        this->cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, psi_in);
+        if (GlobalV::use_uspp)
+        {
+            this->cal_force_us(forcenl, rho_basis, &GlobalC::ppcell, elec, GlobalC::ucell);
+        }
     }
     this->cal_force_cc(forcecc, rho_basis, chr);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
@@ -730,6 +735,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                                           const ModuleBase::matrix& wg,
+                                          const ModuleBase::matrix& ekb,
                                           K_Vectors* p_kv,
                                           ModulePW::PW_Basis_K* wfc_basis,
                                           const psi::Psi<complex<FPTYPE>, Device>* psi_in)
@@ -743,6 +749,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         return; // mohan add 2010-07-25
     }
 
+    // There is a contribution for jh<>ih in US case or multi projectors case
+    // Actually, the judge of nondiagonal should be done on every atom type
+    const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
+
     // dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
     // ModuleBase::ComplexArray dbecp(3, GlobalV::NBANDS, nkb);
     // ModuleBase::ComplexMatrix becp(GlobalV::NBANDS, nkb);
@@ -755,8 +765,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // init additional params
     FPTYPE *force = nullptr;
     FPTYPE *d_wg = nullptr;
+    FPTYPE* d_ekb = nullptr;
     FPTYPE *gcar = nullptr;
     auto *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
+    auto* qq_nt = GlobalC::ppcell.get_qq_nt_data<FPTYPE>();
     int wg_nc = wg.nc;
     int *atom_nh = nullptr, *atom_na = nullptr;
     int* h_atom_nh = new int[GlobalC::ucell.ntype];
@@ -769,9 +781,11 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     if (this->device == psi::GpuDevice)
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
+        resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
         resmem_var_op()(this->ctx, force, forcenl.nr * forcenl.nc);
         resmem_var_op()(this->ctx, gcar, 3 * wfc_basis->nks * wfc_basis->npwk_max);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, ekb.c, ekb.nr * ekb.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, force, forcenl.c, forcenl.nr * forcenl.nc);
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
@@ -787,6 +801,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     else
     {
         d_wg = wg.c;
+        d_ekb = ekb.c;
         force = forcenl.c;
         gcar = &wfc_basis->gcar[0][0];
         atom_nh = h_atom_nh;
@@ -893,7 +908,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         //		and at last sum up all the forces.
         //		Parallel_Reduce::reduce_pool( dbecp.ptr, dbecp.ndata);
         cal_force_nl_op()(this->ctx,
-                          GlobalC::ppcell.multi_proj,
+                          nondiagonal,
                           nbands_occ,
                           wg_nc,
                           GlobalC::ucell.ntype,
@@ -909,6 +924,8 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                           atom_na,
                           GlobalC::ucell.tpiba,
                           d_wg,
+                          d_ekb,
+                          qq_nt,
                           deeq,
                           becp,
                           dbecp,
@@ -930,6 +947,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     if (this->device == psi::GpuDevice)
     {
         delmem_var_op()(this->ctx, d_wg);
+        delmem_var_op()(this->ctx, d_ekb);
         delmem_var_op()(this->ctx, gcar);
         delmem_var_op()(this->ctx, force);
         delmem_int_op()(this->ctx, atom_nh);

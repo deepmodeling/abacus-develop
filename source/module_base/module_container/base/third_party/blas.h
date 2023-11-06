@@ -65,8 +65,24 @@ void dsymv_(const char *uplo, const int *n,
             const double *beta, double *y, const int *incy);
 
 // A := alpha x * y.T + A
-void dger_(int *m, int *n, double *alpha, double *x, int *incx, double *y, int *incy, double *a, int *lda);
-void zgerc_(int *m, int *n, std::complex<double> *alpha,std::complex<double> *x, int *incx, std::complex<double> *y, int *incy,std::complex<double> *a, int *lda);
+void dger_(const int* m,
+           const int* n,
+           const double* alpha,
+           const double* x,
+           const int* incx,
+           const double* y,
+           const int* incy,
+           double* a,
+           const int* lda);
+void zgerc_(const int* m,
+            const int* n,
+            const std::complex<double>* alpha,
+            const std::complex<double>* x,
+            const int* incx,
+            const std::complex<double>* y,
+            const int* incy,
+            std::complex<double>* a,
+            const int* lda);
 
 // level 3: matrix-matrix operations, O(n^2) data and O(n^3) work.
 

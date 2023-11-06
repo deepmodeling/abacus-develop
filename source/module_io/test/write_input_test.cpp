@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #define private public
 #include "module_io/input.h"
 /************************************************
@@ -14,8 +14,8 @@
 
 class write_input : public testing::Test
 {
-     protected:
-     Input INPUT;
+  protected:
+    Input INPUT;
 };
 
 TEST_F(write_input, General1)
@@ -24,8 +24,8 @@ TEST_F(write_input, General1)
     INPUT.Read("./support/witestfile");
     std::string output_file = "write_input_test.log";
     INPUT.Print(output_file);
-    int a=access("write_input_test.log",00);
-    EXPECT_EQ(a,0);
+    int a = access("write_input_test.log", 00);
+    EXPECT_EQ(a, 0);
     std::ifstream ifs("write_input_test.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(output, testing::HasSubstr("INPUT_PARAMETERS"));
@@ -202,13 +202,17 @@ TEST_F(write_input, STO3)
     EXPECT_THAT(
         output,
         testing::HasSubstr("seed_sto                       0 #the random seed to generate stochastic orbitals"));
+    EXPECT_THAT(
+        output,
+        testing::HasSubstr("initsto_ecut                   0 #maximum ecut to init stochastic bands"));
     EXPECT_THAT(output,
                 testing::HasSubstr(
                     "initsto_freq                   0 #frequency to generate new stochastic orbitals when running md"));
     EXPECT_THAT(output, testing::HasSubstr("cal_cond                       0 #calculate electronic conductivities"));
     EXPECT_THAT(
         output,
-        testing::HasSubstr("cond_nche                      20 #orders of Chebyshev expansions for conductivities"));
+        testing::HasSubstr(
+            "cond_che_thr                   1e-08 #control the error of Chebyshev expansions for conductivities"));
     EXPECT_THAT(output,
                 testing::HasSubstr("cond_dw                        0.1 #frequency interval for conductivities"));
     EXPECT_THAT(output,
@@ -366,7 +370,7 @@ TEST_F(write_input, Smearing6)
     remove("write_input_test.log");
 }
 
-TEST_F(write_input,Mixing7)
+TEST_F(write_input, Mixing7)
 {
     INPUT.Default();
     INPUT.Read("./support/witestfile");
@@ -889,12 +893,21 @@ TEST_F(write_input, Deltaspin22)
     std::ifstream ifs("write_input_test.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(output, testing::HasSubstr("#Parameters (22.non-collinear spin-constrained DFT)"));
-    EXPECT_THAT(output, testing::HasSubstr("sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization"));
-    EXPECT_THAT(output, testing::HasSubstr("decay_grad_switch              0 #switch to control gradient break condition"));
-    EXPECT_THAT(output, testing::HasSubstr("sc_thr                         1e-06 #Convergence criterion of spin-constrained iteration (RMS)"));
-    EXPECT_THAT(output, testing::HasSubstr("nsc                            100 #Maximal number of spin-constrained iteration"));
-    EXPECT_THAT(output, testing::HasSubstr("nsc_min                        2 #Minimum number of spin-constrained iteration"));
-    EXPECT_THAT(output, testing::HasSubstr("sc_file                        none #file name for parameters used in non-collinear spin-constrained DFT (json format)"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("decay_grad_switch              0 #switch to control gradient break condition"));
+    EXPECT_THAT(output,
+                testing::HasSubstr(
+                    "sc_thr                         1e-06 #Convergence criterion of spin-constrained iteration (RMS)"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("nsc                            100 #Maximal number of spin-constrained iteration"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("nsc_min                        2 #Minimum number of spin-constrained iteration"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("sc_file                        none #file name for parameters used in "
+                                   "non-collinear spin-constrained DFT (json format)"));
     EXPECT_THAT(output, testing::HasSubstr("alpha_trial                    0.01 #Initial trial step size for lambda"));
     ifs.close();
     EXPECT_THAT(output, testing::HasSubstr("sccut                          3 #Maximal step size for lambda in eV/uB"));

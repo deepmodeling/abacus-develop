@@ -23,15 +23,22 @@ class Velocity
 
     void init(const int ik_in);
 
-    //input: n_npwx, output: 3*n_npwx
-    void act
-    (
-        const psi::Psi<std::complex<double>> *psi_in, 
-        const int n_npwx, 
-        const std::complex<double>* tmpsi_in, 
-        std::complex<double>* tmhpsi,
-        const bool add = false
-    )const;
+    /**
+     * @brief calculate \hat{v}|\psi>
+     * 
+     * @param psi_in Psi class which contains some information
+     * @param n_npwx i = 1 : n_npwx
+     * @param tmpsi_in |\psi_i>    size: n_npwx*npwx 
+     * @param tmhpsi \hat{v}|\psi> size: 3*n_npwx*npwx
+     * @param add true : tmhpsi = tmhpsi + v|\psi>  false: tmhpsi = v|\psi>
+     * 
+     */
+    void act(const psi::Psi<std::complex<double>>* psi_in,
+             const int n_npwx,
+             const std::complex<double>* tmpsi_in,
+             std::complex<double>* tmhpsi,
+             const bool add = false) const;
+    
     bool nonlocal = true;
 
     private:

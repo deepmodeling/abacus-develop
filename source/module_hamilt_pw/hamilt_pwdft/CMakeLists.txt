@@ -9,6 +9,7 @@ list(APPEND objects
     operator_pw/velocity_pw.cpp
     operator_pw/operator_pw.cpp
     forces.cpp
+    forces_us.cpp
     stress_func_cc.cpp
     stress_func_ewa.cpp
     stress_func_gga.cpp
@@ -17,6 +18,7 @@ list(APPEND objects
     stress_func_kin.cpp
     stress_func_loc.cpp
     stress_func_nl.cpp
+    stress_func_us.cpp
     stress_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
