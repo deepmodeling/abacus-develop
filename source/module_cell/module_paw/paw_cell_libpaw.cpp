@@ -528,8 +528,17 @@ void Paw_Cell::init_rho(double ** rho)
     double* rho_tmp;
     rho_tmp = new double[nfft*nspden];
 
+#ifdef __MPI
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+                gmet.data(), ucvol, xred.data(), rho_tmp);      
+    }
+    Parallel_Common::bcast_double(rho_tmp,nfft*nspden);
+#else
     init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
             gmet.data(), ucvol, xred.data(), rho_tmp);
+#endif
 
 #ifdef __MPI
     // I'm not sure about this yet !!!
