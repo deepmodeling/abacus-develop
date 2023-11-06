@@ -434,7 +434,7 @@ void Chebyshev<REAL>::recurs_complex(
 	{
     	for(int i = 0; i < N; ++i)
     	{
-        	arraynp1[i+ib*LDA]=2.0*arraynp1[i+ib*LDA]-arrayn_1[i+ib*LDA];
+        	arraynp1[i+ib*LDA]=REAL(2.0)*arraynp1[i+ib*LDA]-arrayn_1[i+ib*LDA];
     	}
 	}
 }

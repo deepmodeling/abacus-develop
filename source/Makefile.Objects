@@ -340,6 +340,7 @@ OBJS_PSI_INITIALIZER=psi_initializer.o\
 OBJS_PW=fft.o\
     pw_basis.o\
     pw_basis_k.o\
+    pw_basis_sup.o\
     pw_distributeg.o\
     pw_distributeg_method1.o\
     pw_distributeg_method2.o\
@@ -507,6 +508,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mixing.o\
     fp_energy.o\
     forces.o\
+    forces_us.o\
     force_op.o\
     stress_op.o\
     wf_op.o\
@@ -532,6 +534,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_kin.o\
     stress_func_loc.o\
     stress_func_nl.o\
+    stress_func_us.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\

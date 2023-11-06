@@ -110,8 +110,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-    GlobalC::ppcell.cal_effective_D();
-
     if(this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
@@ -120,7 +118,8 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    this->pelec->pot = new elecstate::Potential(pw_rho,
+    this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                pw_rho,
                                                 &GlobalC::ucell,
                                                 &GlobalC::ppcell.vloc,
                                                 &sf,
@@ -161,6 +160,12 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // calculate the total local pseudopotential in real space
     //=========================================================
     this->pelec->init_scf(0, sf.strucFac); // atomic_rho, v_of_rho, set_vrs
+
+    // liuyu move here 2023-10-09
+    // D in uspp need vloc, thus behind init_scf()
+    // calculate the effective coefficient matrix for non-local pseudopotential projectors
+    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+    GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -275,7 +280,8 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     this->pelec->omega = GlobalC::ucell.omega;
 
     delete this->pelec->pot;
-    this->pelec->pot = new elecstate::Potential(this->pw_rho,
+    this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                this->pw_rho,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(this->sf),
