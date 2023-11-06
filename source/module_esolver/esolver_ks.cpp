@@ -234,7 +234,11 @@ namespace ModuleESolver
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->startz,this->pw_wfc->numz);
+#ifdef __MPI
+            if(GlobalV::RANK_IN_POOL == 0) GlobalC::paw_cell.prepare_paw();
+#else
             GlobalC::paw_cell.prepare_paw();
+#endif
             GlobalC::paw_cell.set_sij();
 
             GlobalC::paw_cell.set_eigts(
