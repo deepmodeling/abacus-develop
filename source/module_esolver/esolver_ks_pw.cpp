@@ -320,6 +320,28 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         GlobalC::paw_cell.prepare_paw();
 #endif
         GlobalC::paw_cell.set_sij();
+
+        std::vector<std::vector<double>> rhoijp;
+        std::vector<std::vector<int>> rhoijselect;
+        std::vector<int> nrhoijsel;
+#ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+            }  
+        }
+#else
+        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        {
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+        }
+#endif
     }
 #endif
 
