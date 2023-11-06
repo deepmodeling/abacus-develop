@@ -124,7 +124,11 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 
-    if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack" && this->method != "cusolver")
+    if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack"
+#ifdef __CUSOLVER_LCAO
+        && this->method != "cusolver"
+#endif
+    )
     {
         delete this->pdiagh;
         this->pdiagh = nullptr;
