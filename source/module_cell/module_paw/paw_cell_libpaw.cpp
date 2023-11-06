@@ -287,9 +287,19 @@ void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
     double * vloc_tmp, * ncoret_tmp;
     vloc_tmp = new double[nfft];
     ncoret_tmp = new double[nfft];
-    
+
+#ifdef __MPI
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+                gmet.data(), ucvol, xred.data(), ncoret_tmp, vloc_tmp);
+    }
+    Parallel_Common::bcast_double(vloc_tmp,nfft);
+    Parallel_Common::bcast_double(ncoret_tmp,nfft);
+#else
     get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
             gmet.data(), ucvol, xred.data(), ncoret_tmp, vloc_tmp);
+#endif
 
     for(int ix = 0; ix < nx; ix ++)
     {
@@ -316,6 +326,9 @@ void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
 #endif
         }
     }
+
+    delete[] vloc_tmp;
+    delete[] ncoret_tmp;
 }
 
 void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp)
