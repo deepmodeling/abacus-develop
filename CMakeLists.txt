@@ -232,15 +232,33 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+  if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+    find_package(CUDAToolkit REQUIRED)
+    # check https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/Internal/CMakeCUDAArchitecturesAll.cmake
+    # for available architechures in different CUDA versions
+    set(CMAKE_CUDA_ARCHITECTURES
+      60 # P100
+      70 # V100
+    )
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 10.0)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 75) # T4
+    endif()
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.0)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 80) # A100
+    endif()
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.1)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 86)
+    endif()
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.8)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 89)
+    endif()
+  endif()
   enable_language(CUDA)
-  set(CMAKE_CUDA_ARCHITECTURES 60 70 75 80 86)
+  # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(
     TARGET ${ABACUS_BIN_NAME}
     PROPERTY CUDA_ARCHITECTURES
-    60 # P100
-    70 # V100
-    75 # T4
-    80 # A100
+    ${CMAKE_CUDA_ARCHITECTURES}
   )
   target_link_libraries(${ABACUS_BIN_NAME}
     -lcudart
