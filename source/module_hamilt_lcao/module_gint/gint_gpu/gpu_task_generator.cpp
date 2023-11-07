@@ -97,8 +97,8 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
         if (lo1 <= lo2) {
           int atom_pair_index =
               atom_pair_index_in_nbz + atom_pair_index_in_meshcell;
-          atom_pair_input_info[atom_pair_index] = atom1;
-          atom_pair_input_info[atom_pair_index + 1] = atom2;
+          atom_pair_input_info[atom_pair_index] = atom1 * nwmax;
+          atom_pair_input_info[atom_pair_index + 1] = atom2 * nwmax;
           atom_pair_input_info[atom_pair_index + 2] = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
           atom_pair_input_info[atom_pair_index + 3] = GlobalC::ucell.atoms[it2].nw;
           atom_pair_input_info[atom_pair_index + 4] = lo1;

@@ -251,18 +251,18 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
     int end_index = start_index + atom_pair_num;
     start_index += blockIdx.y * 6;
     int step = gridDim.y * 6;
-    int vldr3_index = blockIdx.x * max_size_g[0];
+    int vldr3_index = blockIdx.x * max_size_g[0] * nwmax_g[0];
     #pragma unroll
     for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
     {
-        int atomnow1 = atom_pair_input_info_g[atom_pair_index];
-        int atomnow2 = atom_pair_input_info_g[atom_pair_index + 1];
+        //int atomnow1 = atom_pair_input_info_g[atom_pair_index];
+        //int atomnow2 = atom_pair_input_info_g[atom_pair_index + 1];
+        int calc_index1 = vldr3_index + atom_pair_input_info_g[atom_pair_index];
+        int calc_index2 = vldr3_index + atom_pair_input_info_g[atom_pair_index + 1];
         int nw_mul = atom_pair_input_info_g[atom_pair_index + 2];
         int atom_nw2 = atom_pair_input_info_g[atom_pair_index + 3];
         int lo1 = atom_pair_input_info_g[atom_pair_index + 4];
         int lo2 = atom_pair_input_info_g[atom_pair_index + 5];
-        int calc_index1 = (vldr3_index + atomnow1) * nwmax_g[0];
-        int calc_index2 = (vldr3_index + atomnow2) * nwmax_g[0];
         #pragma unroll
         for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
         {
@@ -277,7 +277,6 @@ __global__ void psi_multiple(int *atom_pair_input_info_g,
             {
                 v2 += psir_ylm_left[calc_index1_w] * psir_ylm_right[calc_index2_w];
             }
-            //GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)] += v2;
             atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
         }
     }
@@ -406,7 +405,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     checkCuda(cudaMalloc((void **)&atom_pair_input_info_g_global, atom_pair_size_over_nbz * nStreams * sizeof(int)));
 
     int *num_atom_pair_global;
-    ;
     checkCuda(cudaMallocHost((void **)&num_atom_pair_global, nbz * nStreams * sizeof(int)));
     int *num_atom_pair_g_global;
     checkCuda(cudaMalloc((void **)&num_atom_pair_g_global, nbz * nStreams * sizeof(int)));
@@ -489,8 +487,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
 
             dim3 grid_psi(nbz, 8);
             dim3 block_psi(64);
-            dim3 grid_multiple(nbz, 1024);
-            dim3 block_multiple(256);
+            dim3 grid_multiple(nbz, 512);
+            dim3 block_multiple(128);
 
             get_psi_and_vldr3<<<grid_psi, block_psi, 0, stream[stream_num]>>>(psi_input_double_g,
                                                                               psi_input_int_g,
@@ -519,8 +517,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
         checkCuda(cudaStreamDestroy(stream[i]));
 
     checkCuda(cudaMemcpy(GridVlocal_now, GridVlocal, lgd * lgd * sizeof(double), cudaMemcpyDeviceToHost));
-
-    //omp_set_num_threads(omp_thread_num);
 
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
