@@ -54,6 +54,8 @@ class Paw_Cell
     void accumulate_rhoij(const std::complex<double> * psi, const double weight);
     void reset_rhoij();
 
+    void init_rhoij(); // set rhoij according to occupation number in xml file
+
     // returns rhoij for each atom
     //std::vector<std::vector<double>> get_rhoij();
     // returns rhoijp and related info for each atom
