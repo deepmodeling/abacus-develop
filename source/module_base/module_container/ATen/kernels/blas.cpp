@@ -1,7 +1,7 @@
-#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/blas.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 template <typename T>
 struct blas_dot<T, DEVICE_CPU> {
@@ -220,5 +220,5 @@ template struct blas_gemm_batched_strided<double, DEVICE_CPU>;
 template struct blas_gemm_batched_strided<std::complex<float >, DEVICE_CPU>;
 template struct blas_gemm_batched_strided<std::complex<double>, DEVICE_CPU>;
 
-} // namespace op
+} // namespace kernels
 } // namespace container

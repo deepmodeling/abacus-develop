@@ -22,6 +22,7 @@ VPATH=./src_global:\
 ./module_base/module_container/base/core:\
 ./module_base/module_container/ATen/core:\
 ./module_base/module_container/ATen/kernels:\
+./module_base/module_container/ATen/ops:\
 ./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
@@ -575,10 +576,11 @@ OBJS_TENSOR=tensor.o\
     tensor_map.o\
     tensor_shape.o\
     tensor_types.o\
+    blas.o\
+    lapack.o\
+    linalg.o\
+    memory_impl.o\
     einsum_op.o\
-    blas_op.o\
-    lapack_op.o\
     linalg_op.o\
-    memory_op_impl.o\
     cpu_allocator.o\
     refcount.o

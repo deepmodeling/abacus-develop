@@ -1,4 +1,4 @@
-#include <ATen/kernels/lapack_op.h>
+#include <ATen/kernels/lapack.h>
 #include <base/third_party/lapack.h>
 
 #include <cublas_v2.h>
@@ -7,7 +7,7 @@
 #include <thrust/complex.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 
 static cusolverDnHandle_t cusolver_handle = nullptr;
@@ -140,5 +140,5 @@ template struct lapack_dngvd<double, DEVICE_GPU>;
 template struct lapack_dngvd<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_dngvd<std::complex<double>, DEVICE_GPU>;
 
-} // namespace op
+} // namespace kernels
 } // namespace container

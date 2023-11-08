@@ -10,7 +10,7 @@ namespace container {
 /**
  * @brief Interface to access the raw ref-counted data buffer.
  */
- class TensorBuffer : public base::counted_base {
+class TensorBuffer : public base::core::counted_base {
    public:
     /**
      * @brief Construct a new TensorBuffer object.
@@ -18,9 +18,9 @@ namespace container {
      * @param alloc Pointer to the allocator to use for memory allocation.
      * @param data_ptr Pointer to the underlying data buffer.
      */
-    TensorBuffer(base::Allocator* alloc, void* data_ptr);
+    TensorBuffer(base::core::Allocator* alloc, void* data_ptr);
 
-    TensorBuffer(base::Allocator* alloc, size_t size);
+    TensorBuffer(base::core::Allocator* alloc, size_t size);
 
     /**
       * @brief Construct a new TensorBuffer object.
@@ -82,7 +82,7 @@ namespace container {
      *
      * @return Allocator* Pointer to the Allocator object.
      */
-    base::Allocator* allocator() const;
+    base::core::Allocator* allocator() const;
 
     /**
      * @brief Reinterpret the buffer as an array of type T.
@@ -136,9 +136,10 @@ namespace container {
 
 
   private:
-    base::Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
+    base::core::Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
     void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
-    bool owns_memory = false;    ///< Bool to indicate whether this tensor owns it's memory.
+    bool owns_memory_ = false;    ///< Bool to indicate whether this tensor owns it's memory.
+    int64_t allocated_bytes_ = 0; ///< The number of bytes allocated for this buffer.
 };
 
 }  // namespace container

@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <ATen/core/tensor.h>
-#include <ATen/kernels/lapack_op.h>
-#include <ATen/kernels/einsum_op.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <ATen/ops/einsum_op.h>
+#include <test/test_utils.h>
 
 namespace container {
 namespace op {

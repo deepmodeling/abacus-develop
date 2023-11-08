@@ -1,8 +1,9 @@
-#include <ATen/kernels/lapack_op.h>
+#include <ATen/kernels/lapack.h>
+
 #include <base/third_party/lapack.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 template <typename T>
 struct set_matrix<T, DEVICE_CPU> {
@@ -148,5 +149,5 @@ template struct lapack_dngvd<double, DEVICE_CPU>;
 template struct lapack_dngvd<std::complex<float>,  DEVICE_CPU>;
 template struct lapack_dngvd<std::complex<double>, DEVICE_CPU>;
 
-} // namespace op
+} // namespace kernels
 } // namespace container

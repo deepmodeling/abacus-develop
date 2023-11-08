@@ -46,8 +46,8 @@
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/lapack_op.h>
+#include <ATen/kernels/blas.h>
+#include <ATen/kernels/lapack.h>
 
 namespace ModuleESolver
 {
@@ -63,8 +63,8 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
     {
         hsolver::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
-        container::op::createGpuBlasHandle();
-        container::op::createGpuSolverHandle();
+        container::kernels::createGpuBlasHandle();
+        container::kernels::createGpuSolverHandle();
     }
 #endif
 }
@@ -94,8 +94,8 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
         hsolver::destroyGpuSolverHandle();
-        container::op::destroyGpuBlasHandle();
-        container::op::destroyGpuSolverHandle();
+        container::kernels::destroyGpuBlasHandle();
+        container::kernels::destroyGpuSolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }

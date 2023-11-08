@@ -7,7 +7,7 @@
 
 namespace container {
 namespace cuBlasConnector {
-    
+
 static inline
 void dot(cublasHandle_t& handle, const int& n, const float *x, const int& incx, const float *y, const int& incy, float* result)
 {
