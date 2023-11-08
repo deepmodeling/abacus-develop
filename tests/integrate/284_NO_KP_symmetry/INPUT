@@ -25,3 +25,4 @@ smearing_sigma		0.002
 mixing_type             broyden
 mixing_beta             0.1
 ks_solver 		genelpa
+symmetry_prec 1e-5

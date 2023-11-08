@@ -210,7 +210,7 @@ void Input::Default(void)
     symmetry = "default";
     init_vel = false;
     ref_cell_factor = 1.0;
-    symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
+    symmetry_prec = 1.0e-6; // LiuXh add 2021-08-12, accuracy for symmetry
     symmetry_autoclose = false; // whether to close symmetry automatically when error occurs in symmetry analysis
     cal_force = 0;
     force_thr = 1.0e-3;

@@ -35,3 +35,4 @@ force_thr_ev            0.01
 stress_thr              2
 relax_nmax              32
 out_stru                1
+symmetry_prec 1e-5
