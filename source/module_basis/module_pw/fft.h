@@ -127,11 +127,11 @@ public:
 //	fftw_plan plan3dbackward;
 
 #if defined(__CUDA)
-    cufftHandle c_handle = NULL;
-    cufftHandle z_handle = NULL;
+    cufftHandle c_handle = {};
+    cufftHandle z_handle = {};
 #elif defined(__ROCM)
-    hipfftHandle c_handle = NULL;
-    hipfftHandle z_handle = NULL;
+    hipfftHandle c_handle = {};
+    hipfftHandle z_handle = {};
 #endif
 
 #if defined(__ENABLE_FLOAT_FFTW)

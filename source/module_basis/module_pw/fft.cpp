@@ -365,16 +365,16 @@ void FFT:: cleanFFT()
     if (this->device == "gpu") {
         if (this->precision == "single") {
         #if defined(__CUDA)
-            if(c_handle) { cufftDestroy(c_handle);  c_handle = NULL;}
+            if(c_handle) { cufftDestroy(c_handle);  c_handle = {};}
         #elif defined(__ROCM)
-            if(c_handle) { hipfftDestroy(c_handle); c_handle = NULL;}
+            if(c_handle) { hipfftDestroy(c_handle); c_handle = {};}
         #endif
         }
         else {
         #if defined(__CUDA)
-            if(z_handle) { cufftDestroy(z_handle);  z_handle = NULL;}
+            if(z_handle) { cufftDestroy(z_handle);  z_handle = {};}
         #elif defined(__ROCM)
-            if(z_handle) { hipfftDestroy(z_handle); z_handle = NULL;}
+            if(z_handle) { hipfftDestroy(z_handle); z_handle = {};}
         #endif
         }
     }
