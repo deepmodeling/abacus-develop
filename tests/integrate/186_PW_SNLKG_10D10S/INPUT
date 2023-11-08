@@ -42,3 +42,4 @@ cond_dw          0.02
 cond_dt          0.237464
 cond_dtbatch     4
 cond_nonlocal    1
+symmetry_prec 1e-5
