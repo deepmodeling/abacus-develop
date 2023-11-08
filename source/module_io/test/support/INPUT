@@ -47,6 +47,7 @@ ecutwfc                        20 ##energy cutoff for wave functions
 erf_ecut                       20 #the value of the constant energy cutoff
 erf_height                     20 #the height of the energy step for reciprocal vectors
 erf_sigma                      4 #the width of the energy step for reciprocal vectors
+fft_mode                       0 #mode of FFTW
 pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations
 scf_thr                        1e-08 #charge density error
 scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao
@@ -77,9 +78,10 @@ nche_sto                       100 #Chebyshev expansion orders
 emin_sto                       0 #trial energy to guess the lower bound of eigen energies of the Hamitonian operator
 emax_sto                       0 #trial energy to guess the upper bound of eigen energies of the Hamitonian operator
 seed_sto                       0 #the random seed to generate stochastic orbitals
+initsto_ecut                   0 #maximum ecut to init stochastic bands
 initsto_freq                   0 #frequency to generate new stochastic orbitals when running md
 cal_cond                       0 #calculate electronic conductivities
-cond_nche                      20 #orders of Chebyshev expansions for conductivities
+cond_che_thr                   1e-08 #control the error of Chebyshev expansions for conductivities
 cond_dw                        0.1 #frequency interval for conductivities
 cond_wcut                      10 #cutoff frequency (omega) for conductivities
 cond_dt                        0.07 #control the t interval

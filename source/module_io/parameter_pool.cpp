@@ -479,6 +479,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.seed_sto = *static_cast<int*>(input_parameters["seed_sto"].get());
     }
+    else if (input_parameters.count("initsto_ecut") != 0)
+    {
+        INPUT.initsto_ecut = *static_cast<double*>(input_parameters["initsto_ecut"].get());
+    }
     else if (input_parameters.count("emax_sto") != 0)
     {
         INPUT.emax_sto = *static_cast<double*>(input_parameters["emax_sto"].get());
@@ -507,9 +511,9 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.cal_cond = *static_cast<bool*>(input_parameters["cal_cond"].get());
     }
-    else if (input_parameters.count("cond_nche") != 0)
+    else if (input_parameters.count("cond_che_thr") != 0)
     {
-        INPUT.cond_nche = *static_cast<int*>(input_parameters["cond_nche"].get());
+        INPUT.cond_che_thr = *static_cast<double*>(input_parameters["cond_che_thr"].get());
     }
     else if (input_parameters.count("cond_dw") != 0)
     {
@@ -654,6 +658,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("gamma_only_local") != 0)
     {
         INPUT.gamma_only_local = *static_cast<bool*>(input_parameters["gamma_only_local"].get());
+    }
+    else if (input_parameters.count("fft_mode") != 0)
+    {
+        INPUT.fft_mode = *static_cast<int*>(input_parameters["fft_mode"].get());
     }
     else if (input_parameters.count("ecutwfc") != 0)
     {

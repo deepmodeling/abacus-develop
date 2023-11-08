@@ -190,10 +190,11 @@ namespace ModuleESolver
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
     {
-        this->pelec->pot = new elecstate::Potential(this->pw_rho,
+        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                    this->pw_rho,
                                                     &GlobalC::ucell,
                                                     &(GlobalC::ppcell.vloc),
-            &(this->sf),
+                                                    &(this->sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
@@ -242,10 +243,11 @@ namespace ModuleESolver
         // Initialize the potential.
         if (this->pelec->pot == nullptr)
         {
-            this->pelec->pot = new elecstate::Potential(this->pw_rho,
+            this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                        this->pw_rho,
                                                         &GlobalC::ucell,
                                                         &(GlobalC::ppcell.vloc),
-                &(this->sf),
+                                                        &(this->sf),
                                                         &(this->pelec->f_en.etxc),
                                                         &(this->pelec->f_en.vtxc));
         }
@@ -493,7 +495,9 @@ namespace ModuleESolver
             // calculate the density matrix using read in wave functions
             // and the ncalculate the charge density on grid.
 
-            this->pelec->psiToRho(this->psi[0]);
+            this->pelec->skip_weights = true;
+            this->pelec->psiToRho(*this->psi);
+            this->pelec->skip_weights = false;
 
             // calculate the local potential(rho) again.
             // the grid integration will do in later grid integration.

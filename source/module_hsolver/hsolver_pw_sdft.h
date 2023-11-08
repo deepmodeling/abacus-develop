@@ -15,7 +15,7 @@ namespace hsolver
               : HSolverPW(wfc_basis_in, pwf_in)
           {
               this->classname = "HSolverPW_SDFT";
-              stoiter.init(stowf.nchip, method_sto, pkv, wfc_basis_in, stowf);
+              stoiter.init(method_sto, pkv, wfc_basis_in, stowf);
         }
         virtual void solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
                            psi::Psi<std::complex<double>>& psi,

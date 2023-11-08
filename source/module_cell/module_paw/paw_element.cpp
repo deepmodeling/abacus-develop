@@ -44,7 +44,7 @@ void Paw_Element::read_paw_xml(std::string filename)
     this->reset_buffer(ifs);
 
 // ============================================================
-// 3. number of projector channels and corresponding l values
+// 3. number of projector channels and corresponding l values, and occupation numbers
 // example : 
 // <valence_states>
 //   <state n=" 1" l="0" f=" 1.0000000E+00" rc=" 0.9949503343" e="-2.3345876E-01" id=  "H1"/>
@@ -57,6 +57,7 @@ void Paw_Element::read_paw_xml(std::string filename)
     this->reset_buffer(ifs);
 
     lstate.resize(nstates);
+    lstate_occ.resize(nstates);
     lmax = 0;
     for(int istate = 0; istate < nstates; istate ++)
     {
@@ -64,6 +65,16 @@ void Paw_Element::read_paw_xml(std::string filename)
 
         this->lstate[istate] = this->extract_int(line,"l=");
         lmax = std::max(lmax, lstate[istate]);
+
+        int pos = line.find("f=");
+        if(pos!=std::string::npos)
+        {
+            this->lstate_occ[istate] = this->extract_double(line,"f=");
+        }
+        else
+        {
+            this->lstate_occ[istate] = 0.0;
+        }
     }
 
     this->nstates_to_mstates();
@@ -273,6 +284,7 @@ void Paw_Element::nstates_to_mstates()
 
     mstate.resize(mstates);
     im_to_istate.resize(mstates);
+    mstate_occ.resize(mstates);
 
     int index = 0;
     for(int istate = 0; istate < nstates; istate ++)
@@ -282,6 +294,7 @@ void Paw_Element::nstates_to_mstates()
         {
             mstate[index] = im - lstate[istate];
             im_to_istate[index] = istate;
+            mstate_occ[index] = lstate_occ[istate] / double(nm);
             index ++;
         }
     }

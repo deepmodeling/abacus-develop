@@ -117,7 +117,12 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
             // the US part if needed
             if (atom->ncpp.tvanp)
             {
-                double* norm_beta = new double[atom->ncpp.kkbeta];
+                int kkbeta = atom->ncpp.kkbeta;
+                if ((kkbeta % 2 == 0) && kkbeta > 0)
+                {
+                    kkbeta--;
+                }
+                double* norm_beta = new double[kkbeta];
                 double* work = new double[atom->ncpp.nbeta];
                 for (int ib = 0; ib < atom->ncpp.nbeta; ib++)
                 {
@@ -138,11 +143,11 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                     }
                     if (match)
                     {
-                        for (int ik = 0; ik < atom->ncpp.kkbeta; ik++)
+                        for (int ik = 0; ik < kkbeta; ik++)
                         {
                             norm_beta[ik] = atom->ncpp.betar(ib, ik) * atom->ncpp.chi(ic, ik);
                         }
-                        ModuleBase::Integral::Simpson_Integral(atom->ncpp.kkbeta, norm_beta, atom->ncpp.rab, work[ib]);
+                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, atom->ncpp.rab, work[ib]);
                     }
                     else
                     {

@@ -12,13 +12,12 @@ class Structure_Factor
 public:
     Structure_Factor();
     ~Structure_Factor();
-    void set(const int &nbspline_in);
+    void set(const ModulePW::PW_Basis* rho_basis_in, const int& nbspline_in);
 
-
-//===============================================
-// Part 4: G vectors in reciprocal FFT box
-//===============================================
-public:
+    //===============================================
+    // Part 4: G vectors in reciprocal FFT box
+    //===============================================
+  public:
     int nbspline;
 
 	// structure factor (ntype, ngmc)
@@ -56,6 +55,6 @@ public:
   private:
     std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;
     std::complex<double> * z_eigts1 = nullptr, * z_eigts2 = nullptr, * z_eigts3 = nullptr;
-
+    const ModulePW::PW_Basis* rho_basis = nullptr;
 };
 #endif //PlaneWave class

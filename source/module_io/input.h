@@ -84,6 +84,7 @@ class Input
     int nbands_sto;			// number of stochastic bands //qianrui 2021-2-5
     std::string nbndsto_str; // string parameter for stochastic bands
     int seed_sto; // random seed for sDFT
+    double initsto_ecut = 0.0; // maximum ecut to init stochastic bands
     double emax_sto; // Emax & Emin to normalize H
     double emin_sto;
     int bndpar; //parallel for stochastic/deterministic bands
@@ -91,7 +92,7 @@ class Input
     int method_sto; //different methods for sdft, 1: slow, less memory  2: fast, more memory
     int npart_sto; //for method_sto = 2, reduce memory
     bool cal_cond; //calculate electronic conductivities
-    int cond_nche; //orders of Chebyshev expansions for conductivities
+    double cond_che_thr; //control the error of Chebyshev expansions for conductivities
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
     double cond_dt;  //dt to integrate conductivities
@@ -159,6 +160,7 @@ class Input
     //==========================================================
     bool gamma_only; // for plane wave.
     bool gamma_only_local; // for local orbitals.
+    int fft_mode = 0; // fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
 
     double ecutwfc; // energy cutoff for wavefunctions
     double ecutrho; // energy cutoff for charge/potential
@@ -170,7 +172,7 @@ class Input
     int ncx, ncy, ncz; // three dimension of FFT charge/grid
     int nx, ny, nz; // three dimension of FFT wavefunc
     int bx, by, bz; // big mesh ball. mohan add 2011-04-21
-    int nsx, nsy, nsz; // three dimension of FFT smooth charge density
+    int ndx, ndy, ndz; // three dimension of FFT smooth charge density
 
     //==========================================================
     // technique

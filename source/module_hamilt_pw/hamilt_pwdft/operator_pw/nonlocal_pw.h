@@ -48,6 +48,14 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
     const UnitCell *get_ucell() const {return this->ucell;}
+    T* get_vkb() const
+    {
+        return this->vkb;
+    }
+    T* get_becp() const
+    {
+        return this->becp;
+    }
 
   private:
     void add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const;

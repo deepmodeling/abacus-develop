@@ -170,7 +170,7 @@ void Input::Default(void)
     npart_sto = 1;
     cal_cond = false;
     dos_nche = 100;
-    cond_nche = 20;
+    cond_che_thr = 1e-8;
     cond_dw = 0.1;
     cond_wcut = 10;
     cond_dt = 0.02;
@@ -257,9 +257,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
-    nsx = 0;
-    nsy = 0;
-    nsz = 0;
+    ndx = 0;
+    ndy = 0;
+    ndz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -758,6 +758,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, seed_sto);
         }
+        else if (strcmp("initsto_ecut", word) == 0)
+        {
+            read_value(ifs, initsto_ecut);
+        }
         else if (strcmp("pw_seed", word) == 0)
         {
             read_value(ifs, pw_seed);
@@ -786,9 +790,9 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, cal_cond);
         }
-        else if (strcmp("cond_nche", word) == 0)
+        else if (strcmp("cond_che_thr", word) == 0)
         {
-            read_value(ifs, cond_nche);
+            read_value(ifs, cond_che_thr);
         }
         else if (strcmp("cond_dw", word) == 0)
         {
@@ -1029,6 +1033,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, gamma_only);
         }
+        else if (strcmp("fft_mode", word) == 0)
+        {
+            read_value(ifs, fft_mode);
+        }
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
@@ -1064,17 +1072,17 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, bz);
         }
-        else if (strcmp("nsx", word) == 0)
+        else if (strcmp("ndx", word) == 0)
         {
-            read_value(ifs, nsx);
+            read_value(ifs, ndx);
         }
-        else if (strcmp("nsy", word) == 0)
+        else if (strcmp("ndy", word) == 0)
         {
-            read_value(ifs, nsy);
+            read_value(ifs, ndy);
         }
-        else if (strcmp("nsz", word) == 0)
+        else if (strcmp("ndz", word) == 0)
         {
-            read_value(ifs, nsz);
+            read_value(ifs, ndz);
         }
         else if (strcmp("erf_ecut", word) == 0)
         {
@@ -2566,9 +2574,30 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (nx * ny * nz && ndx * ndy * ndz == 0)
+    {
+        ndx = nx;
+        ndy = ny;
+        ndz = nz;
+    }
+    if (ndx * ndy * ndz && nx * ny * nz == 0)
+    {
+        nx = ndx;
+        ny = ndy;
+        nz = ndz;
+    }
+    if (ndx > nx || ndy > ny || ndz > nz)
+    {
+        GlobalV::double_grid = true;
+    }
+
     if (ecutrho <= 0.0)
     {
         ecutrho = 4.0 * ecutwfc;
+    }
+    if (nx * ny * nz == 0 && ecutrho / ecutwfc > 4 + 1e-8)
+    {
+        GlobalV::double_grid = true;
     }
 
     if (esolver_type == "sdft"&&psi_initializer)
@@ -2953,6 +2982,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
+    Parallel_Common::bcast_double(initsto_ecut);
     Parallel_Common::bcast_int(pw_seed);
     Parallel_Common::bcast_double(emax_sto);
     Parallel_Common::bcast_double(emin_sto);
@@ -2960,7 +2990,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(method_sto);
     Parallel_Common::bcast_int(npart_sto);
     Parallel_Common::bcast_bool(cal_cond);
-    Parallel_Common::bcast_int(cond_nche);
+    Parallel_Common::bcast_double(cond_che_thr);
     Parallel_Common::bcast_double(cond_dw);
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_double(cond_dt);
@@ -3024,8 +3054,10 @@ void Input::Bcast()
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
+    Parallel_Common::bcast_int(fft_mode);
     Parallel_Common::bcast_double(ecutwfc);
     Parallel_Common::bcast_double(ecutrho);
+    Parallel_Common::bcast_bool(GlobalV::double_grid);
     Parallel_Common::bcast_int(ncx);
     Parallel_Common::bcast_int(ncy);
     Parallel_Common::bcast_int(ncz);
@@ -3035,9 +3067,9 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
-    Parallel_Common::bcast_int(nsx);
-    Parallel_Common::bcast_int(nsy);
-    Parallel_Common::bcast_int(nsz);
+    Parallel_Common::bcast_int(ndx);
+    Parallel_Common::bcast_int(ndy);
+    Parallel_Common::bcast_int(ndz);
     Parallel_Common::bcast_double(erf_ecut);
     Parallel_Common::bcast_double(erf_height);
     Parallel_Common::bcast_double(erf_sigma);
@@ -3394,13 +3426,14 @@ void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
 
-    if (ecutrho <= ecutwfc)
+    if (ecutrho / ecutwfc < 4 - 1e-8)
     {
-        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+        ModuleBase::WARNING_QUIT("Input", "ecutrho/ecutwfc must >= 4");
     }
-    else if (ecutrho / ecutwfc < 4 - 1e-8)
+
+    if (ndx < nx || ndy < ny || ndz < nz)
     {
-        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+        ModuleBase::WARNING_QUIT("Input", "smooth grids is denser than dense grids");
     }
 
     if (nbands < 0)
