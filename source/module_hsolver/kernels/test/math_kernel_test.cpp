@@ -75,8 +75,8 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using vector_mul_vector_op_cpu = hsolver::vector_mul_vector_op<std::complex<double>, psi::DEVICE_CPU>;
     using vector_div_vector_op_cpu = hsolver::vector_div_vector_op<std::complex<double>, psi::DEVICE_CPU>;
     using constantvector_addORsub_constantVector_op_cpu
-        = hsolver::constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
-    using axpy_op_cpu = hsolver::axpy_op<double, psi::DEVICE_CPU>;
+        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, psi::DEVICE_CPU>;
+    using axpy_op_cpu = hsolver::axpy_op<std::complex<double>, psi::DEVICE_CPU>;
     using scal_op_cpu = hsolver::scal_op<double, psi::DEVICE_CPU>;
     using gemv_op_cpu = hsolver::gemv_op<std::complex<double>, psi::DEVICE_CPU>;
     // gpu operator
@@ -84,8 +84,8 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using vector_mul_vector_op_gpu = hsolver::vector_mul_vector_op<std::complex<double>, psi::DEVICE_GPU>;
     using vector_div_vector_op_gpu = hsolver::vector_div_vector_op<std::complex<double>, psi::DEVICE_GPU>;
     using constantvector_addORsub_constantVector_op_gpu
-        = hsolver::constantvector_addORsub_constantVector_op<double, psi::DEVICE_GPU>;
-    using axpy_op_gpu = hsolver::axpy_op<double, psi::DEVICE_GPU>;
+        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, psi::DEVICE_GPU>;
+    using axpy_op_gpu = hsolver::axpy_op<std::complex<double>, psi::DEVICE_GPU>;
     using scal_op_gpu = hsolver::scal_op<double, psi::DEVICE_GPU>;
     using gemv_op_gpu = hsolver::gemv_op<std::complex<double>, psi::DEVICE_GPU>;
 
