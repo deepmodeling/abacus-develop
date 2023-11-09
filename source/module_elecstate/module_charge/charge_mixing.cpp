@@ -8,6 +8,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+
 Charge_Mixing::Charge_Mixing()
 {
 }
@@ -41,6 +42,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
     else if (this->mixing_mode == "pulay")
     {
+        delete this->mixing;
         this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else
@@ -306,19 +308,32 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
 void Charge_Mixing::mix_rho_real(Charge* chr)
 {
-    // electronic density
-    double* rhor_in = chr->rho_save[0];
-    double* rhor_out = chr->rho[0];
-
+    double* rhor_in;
+    double* rhor_out;
+    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    {
+        rhor_in = chr->rho_save[0];
+        rhor_out = chr->rho[0];    
+    }
+    else if (GlobalV::NSPIN == 2)
+    {
+        chr->allocate_rho_mag();
+        chr->get_rho_mag();
+        rhor_in = chr->rho_mag_save;
+        rhor_out = chr->rho_mag;
+    }
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
     this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
-
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
-
     this->mixing->mix_data(this->rho_mdata, rhor_out);
-
+    if (GlobalV::NSPIN == 2)
+    {
+        chr->get_rho_from_mag();
+        chr->destroy_rho_mag();
+    }
+    chr->renormalize_rho();
     double *taur_out, *taur_in;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
@@ -330,6 +345,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taur_out);
     }
+
 }
 
 void Charge_Mixing::mix_reset()
@@ -464,23 +480,42 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
         this->rhopw->real2recip(drhor + is * this->rhopw->nrxx, drhog.data() + is * this->rhopw->npw);
     }
-    // Kerker_screen_recip(drhog.data()); Note that we can not use it.
-    // However, we should rewrite it:
-    const double fac = this->mixing_gg0;
-    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
+    // kerker
+    double fac, gg0, amin;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
+
+        if (is == 1 && GlobalV::NSPIN == 2)
+        {
+            if (GlobalV::MIXING_GG0_MAG <= 0.0 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            {
+                for (int ig = 0; ig < this->rhopw->npw; ig++)
+                {
+                    drhog[is * this->rhopw->npw + ig] *= 0;
+                }
+                break;
+            }
+            fac = GlobalV::MIXING_GG0_MAG;
+            amin = GlobalV::MIXING_BETA_MAG;
+        }
+        else
+        {
+            fac = this->mixing_gg0;
+            amin = this->mixing_beta;
+        }
+        
+        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
+            double filter_g = std::max(gg / (gg + gg0), 0.1 / amin);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
     }
-
+    // inverse FT
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
@@ -492,6 +527,72 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN; ir++)
     {
         drhor[ir] -= drhor_filter[ir];
+    }
+}
+
+void Charge_Mixing::Kerker_screen_real_test(double* drhor)
+{
+    // for total charge density
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+        return;
+    std::vector<double> drhor_filter(this->rhopw->nrxx);
+    std::vector<std::complex<double>> drhog(this->rhopw->npw);
+    // Note after this process some G which is higher than Gmax will be filtered.
+    // FT
+    this->rhopw->real2recip(drhor, drhog.data());
+    const double fac = this->mixing_gg0;
+    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+    for (int ig = 0; ig < this->rhopw->npw; ig++)
+    {
+        double gg = this->rhopw->gg[ig];
+        double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
+        drhog[ig] *= (1 - filter_g);
+    }
+    // inverse FT
+    this->rhopw->recip2real(drhog.data(), drhor_filter.data());
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+    for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+    {
+        drhor[ir] -= drhor_filter[ir];
+    }
+
+    // for magnetic density
+    if (GlobalV::NSPIN == 2)
+    {
+        if (GlobalV::MIXING_GG0_MAG <= 0.0 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            return;
+        std::vector<double> drhor_mag_filter(this->rhopw->nrxx);
+        std::vector<std::complex<double>> drhog_mag(this->rhopw->npw);
+        // Note after this process some G which is higher than Gmax will be filtered.
+        // FT
+        this->rhopw->real2recip(drhor + this->rhopw->nrxx, drhog_mag.data());
+        const double fac_mag = GlobalV::MIXING_GG0_MAG;
+        const double gg0_mag = std::pow(fac_mag * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ig++)
+        {
+            double gg = this->rhopw->gg[ig];
+            double filter_g = std::max(gg / (gg + gg0_mag), 0.1 / GlobalV::MIXING_BETA_MAG);
+            drhog_mag[ig] *= (1 - filter_g);
+        }
+        // inverse FT
+        this->rhopw->recip2real(drhog_mag.data(), drhor_mag_filter.data());
+        // value magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+        {
+            drhor[ir + this->rhopw->nrxx] -= drhor_mag_filter[ir];
+        }
     }
 }
 

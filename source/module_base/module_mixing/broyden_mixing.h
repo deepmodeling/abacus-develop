@@ -6,6 +6,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_base/global_variable.h"
 
 namespace Base_Mixing
 {
@@ -125,21 +126,42 @@ class Broyden_Mixing : public Mixing
         {
             F_tmp[i] = data_out[i] - data_in[i];
         }
-
         // get screened F
         if (screen != nullptr)
             screen(F_tmp.data());
-
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
+        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        {
+            // rho_tot
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-        for (int i = 0; i < length; ++i)
-        {
-            data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
+            for (int i = 0; i < length; ++i)
+            {
+                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
+            }
         }
+        else if (GlobalV::NSPIN == 2)
+        {
+            // rho_tot
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#endif
+            for (int i = 0; i < length / 2; ++i)
+            {
+                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
+            }
+            // magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#endif
+            for (int i = length / 2; i < length; ++i)
+            {
+                data[i] = data_in[i] + GlobalV::MIXING_BETA_MAG * F_tmp[i];
+            }
 
+        }
         mdata.push(data.data());
 
         if (!need_calcoef)

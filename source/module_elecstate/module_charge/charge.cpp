@@ -258,6 +258,59 @@ void Charge::renormalize_rho(void)
     return;
 }
 
+void Charge::get_rho_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rho_tot_mag");
+
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho_mag[ir] = rho[0][ir] + rho[1][ir];
+        rho_mag_save[ir] = rho_save[0][ir] + rho_save[1][ir];
+    }
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho_mag[ir + nrxx] = rho[0][ir] - rho[1][ir];
+        rho_mag_save[ir + nrxx] = rho_save[0][ir] - rho_save[1][ir];
+    }
+    return;
+}
+
+void Charge::get_rho_from_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rho_from_mag");
+    for (int is = 0; is < nspin; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+        //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
+    }
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
+        rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+    }
+
+    return;
+}
+
+void Charge::allocate_rho_mag(void)
+{
+    rho_mag = new double[nrxx * nspin];
+    rho_mag_save = new double[nrxx * nspin];
+
+    ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * nspin);
+    ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * nspin);
+
+    return;
+}
+
+void Charge::destroy_rho_mag(void)
+{
+    delete[] rho_mag;
+    delete[] rho_mag_save;
+
+    return;
+}
+
 //-------------------------------------------------------
 // superposition of atomic charges contained in the array
 // rho_at (read from pseudopotential files)

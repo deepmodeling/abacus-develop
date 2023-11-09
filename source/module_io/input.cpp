@@ -299,7 +299,9 @@ void Input::Default(void)
     mixing_mode = "broyden";
     mixing_beta = -10.0;
     mixing_ndim = 8;
-    mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27
+    mixing_gg0 = 1.00; // used in kerker method. mohan add 2014-09-27
+    mixing_beta_mag = 1.6;
+    mixing_gg0_mag = 1.00;
     mixing_tau = false;
     mixing_dftu = false;
     //----------------------------------------------------------
@@ -1225,6 +1227,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_gg0", word) == 0) // mohan add 2014-09-27
         {
             read_value(ifs, mixing_gg0);
+        }
+        else if (strcmp("mixing_beta_mag", word) == 0)
+        {
+            read_value(ifs, mixing_beta_mag);
+        }
+        else if (strcmp("mixing_gg0_mag", word) == 0)
+        {
+            read_value(ifs, mixing_gg0_mag);
         }
         else if (strcmp("mixing_tau", word) == 0)
         {
@@ -3101,6 +3111,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_beta);
     Parallel_Common::bcast_int(mixing_ndim);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
+    Parallel_Common::bcast_double(mixing_beta_mag);
+    Parallel_Common::bcast_double(mixing_gg0_mag);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
 

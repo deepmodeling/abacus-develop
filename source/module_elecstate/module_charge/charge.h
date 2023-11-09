@@ -36,6 +36,9 @@ class Charge
     double **rho = nullptr;
     double **rho_save = nullptr;
 
+    double *rho_mag = nullptr; // for magnetic density
+    double *rho_mag_save = nullptr; 
+
     std::complex<double> **rhog = nullptr;
     std::complex<double> **rhog_save = nullptr;
 
@@ -82,6 +85,14 @@ class Charge
     void set_rho_core_paw();
 
     void renormalize_rho(void);
+
+    //
+    void allocate_rho_mag(void); // allocate rho_mag[nnrx] and rho_mag_save[nnrx]
+    void destroy_rho_mag(void); // destroy rho_mag[nnrx] and rho_mag_save[nnrx]
+    void get_rho_mag(void); // get rho_tot[nnrx]
+    void get_rho_from_mag(void); // get rho[is][nnrx] from rho_tot[nnrx] and rho_mag[nnrx]
+
+    double sum_rho(void) const;
 
     void save_rho_before_sum_band(void);
 
@@ -131,7 +142,6 @@ class Charge
     int nspin; // number of spins
     ModulePW::PW_Basis* rhopw = nullptr;
   private:
-    double sum_rho(void) const;
 
     void destroy();    // free arrays  liuyu 2023-03-12
 
