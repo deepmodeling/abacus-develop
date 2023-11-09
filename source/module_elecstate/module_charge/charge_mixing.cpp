@@ -59,7 +59,9 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
     }
 
+#ifdef USE_PAW
     if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+#endif
 
     // Note: we can not init tau_mdata here temporarily, since set_xc_type() is after it.
     // this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
