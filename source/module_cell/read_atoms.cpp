@@ -627,6 +627,9 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					{
 						if(GlobalV::NONCOLIN)
 						{
+							//if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
+							GlobalV::DOMAG_Z = false;
+							GlobalV::DOMAG = true;
 							if(input_angle_mag)
 							{
 								atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
@@ -637,9 +640,6 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 										sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
 									atoms[it].m_loc_[ia].y = atoms[it].mag[ia] *
 										sin(atoms[it].angle1[ia]) * sin(atoms[it].angle2[ia]);
-									//if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
-									GlobalV::DOMAG_Z = false;
-									GlobalV::DOMAG = true;
 								}
 							}
 							else if (input_vec_mag)
@@ -649,9 +649,6 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 								if(mxy>1e-8)
 								{
 									atoms[it].angle2[ia]=atan2(atoms[it].m_loc_[ia].y,atoms[it].m_loc_[ia].x);
-									//if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
-									GlobalV::DOMAG_Z = false;
-									GlobalV::DOMAG = true;
 								}
 							}
 						}
