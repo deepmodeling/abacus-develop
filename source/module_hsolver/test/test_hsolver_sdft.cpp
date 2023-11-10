@@ -35,12 +35,11 @@ Stochastic_Iter::~Stochastic_Iter()
     delete[] chiallorder;
 }
 
-void Stochastic_Iter::init(int *nchip_in, const int method_in, K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf)
+void Stochastic_Iter::init(const int method_in, K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf)
 {
-    this->nchip = nchip_in;
+    this->nchip = stowf.nchip;;
     this->targetne = 1;
     this->method = method_in;
-
 }
 
 void Stochastic_Iter::orthog(

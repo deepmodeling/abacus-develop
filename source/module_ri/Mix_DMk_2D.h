@@ -43,29 +43,29 @@ public:
 	 * @param dm Double Density matrix.
 	 * @param flag_restart Flag indicating whether restart mixing.
 	 */
-	void mix(const std::vector<ModuleBase::matrix> &dm, const bool flag_restart);
+    void mix(const std::vector<std::vector<double>>& dm, const bool flag_restart);
 
 	/**
 	 * @brief Mixes the complex density matrix.
 	 * @param dm Complex density matrix.
 	 * @param flag_restart Flag indicating whether restart mixing.
 	 */
-	void mix(const std::vector<ModuleBase::ComplexMatrix> &dm, const bool flag_restart);
+    void mix(const std::vector<std::vector<std::complex<double>>>& dm, const bool flag_restart);
 
 	/**
 	 * @brief Returns the double density matrix.
 	 * @return Double density matrices for each k-points.
 	 */
-	std::vector<const ModuleBase::matrix*> get_DMk_gamma_out() const;
+    std::vector<const std::vector<double>*> get_DMk_gamma_out() const;
 	/**
 	 * @brief Returns the complex density matrix.
 	 * @return Complex density matrices for each k-points.
 	 */
-	std::vector<const ModuleBase::ComplexMatrix*> get_DMk_k_out() const;
+    std::vector<const std::vector<std::complex<double>>*> get_DMk_k_out() const;
 
 private:
-	std::vector<Mix_Matrix<ModuleBase::matrix>> mix_DMk_gamma;
-	std::vector<Mix_Matrix<ModuleBase::ComplexMatrix>> mix_DMk_k;
+    std::vector<Mix_Matrix<std::vector<double>>> mix_DMk_gamma;
+    std::vector<Mix_Matrix<std::vector<std::complex<double>>>> mix_DMk_k;
 	bool gamma_only;
 };
 

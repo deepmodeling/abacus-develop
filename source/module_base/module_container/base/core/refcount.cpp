@@ -1,8 +1,8 @@
 #include <base/core/refcount.h>
 #include "refcount.h"
 
-namespace container{
 namespace base {
+namespace core {
 
 counted_base::counted_base() : ref_(1) {}
 
@@ -26,5 +26,5 @@ bool counted_base::ref_count_is_one() const {
     return ref_count() == 1;
 }
 
+} // namespace core
 } // namespace base
-} // namespace container

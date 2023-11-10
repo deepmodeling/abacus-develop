@@ -7,7 +7,9 @@ class LCAO_Matrix;
 class Charge_Mixing;
 namespace elecstate
 {
-class ElecState;
+    class ElecState;
+    template <typename TK, typename TR>
+    class DensityMatrix;
 }
 
 template<typename T, typename Tdata>
@@ -32,7 +34,8 @@ public:
     void exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
-    void exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter);
+    void exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
+        const Charge_Mixing& chgmix, const int& iter);
 
     /// @brief in hamilt2density: calculate Hexx and Eexx
     void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv);
@@ -41,7 +44,7 @@ public:
     bool exx_after_converge(
         hamilt::Hamilt<T>& hamilt,
         LCAO_Matrix& lm,
-        const Local_Orbital_Charge& loc,
+        const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
         const K_Vectors& kv,
         int& iter);
     

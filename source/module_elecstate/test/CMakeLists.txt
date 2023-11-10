@@ -70,7 +70,7 @@ AddTest(
 
 AddTest(
   TARGET potentials_new
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device planewave_serial
   SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
 )
 

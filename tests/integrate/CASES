@@ -12,6 +12,8 @@
 101_PW_upf201_blps_pseudopots
 101_PW_upf201_pseudopots
 101_PW_upf201_upf100_pseudopots
+101_PW_upf201_uspp_Fe
+101_PW_upf201_uspp_NaCl
 101_PW_VW_pseudopots
 102_PW_DA_davidson
 102_PW_BPCG
@@ -63,6 +65,7 @@
 110_PW_SY
 110_PW_SY_symmetry
 110_PW_SY_symmetry_12K
+110_PW_SY_symmetry_LiRh
 111_PW_elec_add
 111_PW_elec_minus
 111_PW_S2_elec_add
@@ -128,6 +131,7 @@
 204_NO_KP_FM
 204_NO_KP_NC
 204_NO_NC_magnetic
+204_NO_KP_NC_deltaspin
 205_NO_FD_smearing
 205_NO_FX_smearing
 205_NO_GA_smearing

@@ -21,12 +21,12 @@ void Symmetry_rho::begin(const int& spin_now,
 
 	if(ModuleSymmetry::Symmetry::symm_flag != 1) return;
 	// both parallel and serial
-	if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
-	{
-		psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) psymm(CHR.kin_r[spin_now], rho_basis,Pgrid,symm);
-	}
-	else	//space group, do rho_symm in reciprocal space
+    // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
+    // {
+    // 	psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
+    // 	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) psymm(CHR.kin_r[spin_now], rho_basis,Pgrid,symm);
+    // }
+    // else	//space group, do rho_symm in reciprocal space
 	{
 		rho_basis->real2recip(CHR.rho[spin_now], CHR.rhog[spin_now]);
 		psymmg(CHR.rhog[spin_now], rho_basis, Pgrid, symm);	//need to modify

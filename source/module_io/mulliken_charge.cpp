@@ -132,8 +132,8 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<std::com
     // std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
     // std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
     ModuleBase::matrix MecMulP, orbMulP;
-    MecMulP.create(GlobalV::NSPIN, nlocal);
-    orbMulP.create(GlobalV::NSPIN, nlocal);
+    MecMulP.create(GlobalV::NSPIN, nlocal, true);
+    orbMulP.create(GlobalV::NSPIN, nlocal, true);
 
     for(size_t ik = 0; ik != kv.nks; ++ik)
     {
@@ -149,7 +149,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<std::com
         }
 
         ModuleBase::ComplexMatrix mud;
-        mud.create(LM->ParaV->ncol, LM->ParaV->nrow);
+        mud.create(LM->ParaV->ncol, LM->ParaV->nrow, true);
 
 #ifdef __MPI
         const char T_char = 'T';

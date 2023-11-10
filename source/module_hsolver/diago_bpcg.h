@@ -318,16 +318,16 @@ class DiagoBPCG : public DiagH<T, Device>
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
-    using setmem_var_op = ct::op::set_memory_op<Real, ct_Device>;
-    using resmem_var_op = ct::op::resize_memory_op<Real, ct_Device>;
-    using delmem_var_op = ct::op::delete_memory_op<Real, ct_Device>;
-    using syncmem_var_h2d_op = ct::op::synchronize_memory_op<Real, ct_Device, ct::DEVICE_CPU>;
-    using syncmem_var_d2h_op = ct::op::synchronize_memory_op<Real, ct::DEVICE_CPU, ct_Device>;
+    using setmem_var_op = ct::kernels::set_memory<Real, ct_Device>;
+    using resmem_var_op = ct::kernels::resize_memory<Real, ct_Device>;
+    using delmem_var_op = ct::kernels::delete_memory<Real, ct_Device>;
+    using syncmem_var_h2d_op = ct::kernels::synchronize_memory<Real, ct_Device, ct::DEVICE_CPU>;
+    using syncmem_var_d2h_op = ct::kernels::synchronize_memory<Real, ct::DEVICE_CPU, ct_Device>;
 
-    using setmem_complex_op = ct::op::set_memory_op<T, ct_Device>;
-    using delmem_complex_op = ct::op::delete_memory_op<T, ct_Device>;
-    using resmem_complex_op = ct::op::resize_memory_op<T, ct_Device>;
-    using syncmem_complex_op = ct::op::synchronize_memory_op<T, ct_Device, ct_Device>;
+    using setmem_complex_op = ct::kernels::set_memory<T, ct_Device>;
+    using delmem_complex_op = ct::kernels::delete_memory<T, ct_Device>;
+    using resmem_complex_op = ct::kernels::resize_memory<T, ct_Device>;
+    using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
 
     using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
     using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;

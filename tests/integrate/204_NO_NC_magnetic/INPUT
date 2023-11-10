@@ -4,7 +4,7 @@ suffix    autotest
 #nbands   40
 
 calculation   scf
-ecutwfc       15
+ecutwfc       26
 scf_thr           1.0e-8
 scf_nmax         200
 out_mul    1

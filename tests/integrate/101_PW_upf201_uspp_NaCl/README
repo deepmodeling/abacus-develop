@@ -1,0 +1,6 @@
+This test for:
+*NaCl-B1
+*nspin 1
+*upf201 ultrasoft pseudopotential
+*mixing_type broyden
+*mixing_beta 0.4

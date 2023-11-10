@@ -1,6 +1,7 @@
 #include "forces.h"
 
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/output_log.h"
 // new
 #include "module_base/complexmatrix.h"
 #include "module_base/libm/libm.h"
@@ -19,9 +20,6 @@
 #endif
 
 template <typename FPTYPE, typename Device>
-FPTYPE Forces<FPTYPE, Device>::output_acc = 1.0e-8; // (Ryd/angstrom).
-
-template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        const elecstate::ElecState& elec,
                                        ModulePW::PW_Basis* rho_basis,
@@ -34,6 +32,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     ModuleBase::TITLE("Forces", "init");
     this->device = psi::device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
+    const ModuleBase::matrix& ekb = elec.ekb;
     const Charge* const chr = elec.charge;
     force.create(nat, 3);
 
@@ -47,7 +46,11 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     if(wfc_basis != nullptr)
     {
         this->npwx = wfc_basis->npwk_max;
-        this->cal_force_nl(forcenl, wg, pkv, wfc_basis, psi_in);
+        this->cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, psi_in);
+        if (GlobalV::use_uspp)
+        {
+            this->cal_force_us(forcenl, rho_basis, &GlobalC::ppcell, elec, GlobalC::ucell);
+        }
     }
     this->cal_force_cc(forcecc, rho_basis, chr);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
@@ -67,7 +70,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         }
         if (GlobalV::TEST_FORCE)
         {
-            Forces::print("VDW      FORCE (Ry/Bohr)", force_vdw);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VDW      FORCE (Ry/Bohr)", force_vdw);
         }
     }
 
@@ -78,7 +81,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         elecstate::Efield::compute_force(GlobalC::ucell, force_e);
         if (GlobalV::TEST_FORCE)
         {
-            Forces::print("EFIELD      FORCE (Ry/Bohr)", force_e);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD      FORCE (Ry/Bohr)", force_e);
         }
     }
 
@@ -89,7 +92,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
         if (GlobalV::TEST_FORCE)
         {
-            Forces::print("GATEFIELD      FORCE (Ry/Bohr)", force_gate);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD      FORCE (Ry/Bohr)", force_gate);
         }
     }
 
@@ -100,7 +103,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, rho_basis, forcesol);
         if (GlobalV::TEST_FORCE)
         {
-            Forces::print("IMP_SOL      FORCE (Ry/Bohr)", forcesol);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
         }
     }
 
@@ -211,16 +214,17 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
     /*if(GlobalV::TEST_FORCE)
     {
-        Forces::print("LOCAL    FORCE (Ry/Bohr)", forcelc);
-        Forces::print("NONLOCAL FORCE (Ry/Bohr)", forcenl);
-        Forces::print("NLCC     FORCE (Ry/Bohr)", forcecc);
-        Forces::print("ION      FORCE (Ry/Bohr)", forceion);
-        Forces::print("SCC      FORCE (Ry/Bohr)", forcescc);
-        if(GlobalV::EFIELD) Forces::print("EFIELD   FORCE (Ry/Bohr)", force_e);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"LOCAL    FORCE (Ry/Bohr)", forcelc);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"NONLOCAL FORCE (Ry/Bohr)", forcenl);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"NLCC     FORCE (Ry/Bohr)", forcecc);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"ION      FORCE (Ry/Bohr)", forceion);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"SCC      FORCE (Ry/Bohr)", forcescc);
+        if(GlobalV::EFIELD) ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"EFIELD   FORCE (Ry/Bohr)",
+    force_e);
     }*/
 
     /*
-        Forces::print("   TOTAL-FORCE (Ry/Bohr)", force);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell,"   TOTAL-FORCE (Ry/Bohr)", force);
 
         if(INPUT.out_force)                                                   // pengfei 2016-12-20
         {
@@ -244,166 +248,24 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
     if (GlobalV::TEST_FORCE)
     {
-        Forces::print("LOCAL    FORCE (eV/Angstrom)", forcelc, 0);
-        Forces::print("NONLOCAL FORCE (eV/Angstrom)", forcenl, 0);
-        Forces::print("NLCC     FORCE (eV/Angstrom)", forcecc, 0);
-        Forces::print("ION      FORCE (eV/Angstrom)", forceion, 0);
-        Forces::print("SCC      FORCE (eV/Angstrom)", forcescc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, 0);
         if (GlobalV::EFIELD_FLAG)
-            Forces::print("EFIELD   FORCE (eV/Angstrom)", force_e, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
         if (GlobalV::GATE_FLAG)
-            Forces::print("GATEFIELD   FORCE (eV/Angstrom)", force_gate, 0);
+            ModuleIO::print_force(GlobalV::ofs_running,
+                                  GlobalC::ucell,
+                                  "GATEFIELD   FORCE (eV/Angstrom)",
+                                  force_gate,
+                                  0);
         if (GlobalV::imp_sol)
-            Forces::print("IMP_SOL   FORCE (eV/Angstrom)", forcesol, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, 0);
     }
-    Forces::print("   TOTAL-FORCE (eV/Angstrom)", force, 0);
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
 
-    return;
-}
-
-template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::print_to_files(std::ofstream& ofs, const std::string& name, const ModuleBase::matrix& f)
-{
-    int iat = 0;
-    ofs << " " << name;
-    ofs << std::setprecision(8);
-    // ofs << std::setiosflags(ios::showpos);
-
-    double fac = ModuleBase::Ry_to_eV / 0.529177; // (eV/A)
-
-    if (GlobalV::TEST_FORCE)
-    {
-        std::cout << std::setiosflags(std::ios::showpos);
-        std::cout << " " << name;
-        std::cout << std::setprecision(8);
-    }
-
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            ofs << " " << std::setw(5) << it << std::setw(8) << ia + 1 << std::setw(20) << f(iat, 0) * fac
-                << std::setw(20) << f(iat, 1) * fac << std::setw(20) << f(iat, 2) * fac << std::endl;
-
-            if (GlobalV::TEST_FORCE)
-            {
-                std::cout << " " << std::setw(5) << it << std::setw(8) << ia + 1 << std::setw(20) << f(iat, 0) * fac
-                          << std::setw(20) << f(iat, 1) * fac << std::setw(20) << f(iat, 2) * fac << std::endl;
-            }
-            iat++;
-        }
-    }
-
-    GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
-    std::cout << std::resetiosflags(std::ios::showpos);
-    return;
-}
-
-template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::print(const std::string& name, const ModuleBase::matrix& f, bool ry)
-{
-    ModuleBase::GlobalFunc::NEW_PART(name);
-
-    GlobalV::ofs_running << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y"
-                         << std::setw(15) << "z" << std::endl;
-    GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
-    GlobalV::ofs_running << std::setprecision(8);
-
-    const double fac = ModuleBase::Ry_to_eV / 0.529177;
-
-    if (GlobalV::TEST_FORCE)
-    {
-        std::cout << " --------------- " << name << " ---------------" << std::endl;
-        std::cout << " " << std::setw(8) << "atom" << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15)
-                  << "z" << std::endl;
-        std::cout << std::setiosflags(std::ios::showpos);
-        std::cout << std::setprecision(6);
-    }
-
-    int iat = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            std::stringstream ss;
-            ss << GlobalC::ucell.atoms[it].label << ia + 1;
-
-            if (ry) // output Rydberg Unit
-            {
-                GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-                if (std::abs(f(iat, 0)) > Forces::output_acc)
-                    GlobalV::ofs_running << std::setw(20) << f(iat, 0);
-                else
-                    GlobalV::ofs_running << std::setw(20) << "0";
-                if (std::abs(f(iat, 1)) > Forces::output_acc)
-                    GlobalV::ofs_running << std::setw(20) << f(iat, 1);
-                else
-                    GlobalV::ofs_running << std::setw(20) << "0";
-                if (std::abs(f(iat, 2)) > Forces::output_acc)
-                    GlobalV::ofs_running << std::setw(20) << f(iat, 2);
-                else
-                    GlobalV::ofs_running << std::setw(20) << "0";
-                GlobalV::ofs_running << std::endl;
-            }
-            else
-            {
-                GlobalV::ofs_running << " " << std::setw(8) << ss.str();
-                if (std::abs(f(iat, 0)) > Forces::output_acc)
-                    GlobalV::ofs_running << std::setw(20) << f(iat, 0) * fac;
-                else
-                    GlobalV::ofs_running << std::setw(20) << "0";
-                if (std::abs(f(iat, 1)) > Forces::output_acc)
-                    GlobalV::ofs_running << std::setw(20) << f(iat, 1) * fac;
-                else
-                    GlobalV::ofs_running << std::setw(20) << "0";
-                if (std::abs(f(iat, 2)) > Forces::output_acc)
-                    GlobalV::ofs_running << std::setw(20) << f(iat, 2) * fac;
-                else
-                    GlobalV::ofs_running << std::setw(20) << "0";
-                GlobalV::ofs_running << std::endl;
-            }
-
-            if (GlobalV::TEST_FORCE && ry)
-            {
-                std::cout << " " << std::setw(8) << ss.str();
-                if (std::abs(f(iat, 0)) > Forces::output_acc)
-                    std::cout << std::setw(20) << f(iat, 0);
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(f(iat, 1)) > Forces::output_acc)
-                    std::cout << std::setw(20) << f(iat, 1);
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(f(iat, 2)) > Forces::output_acc)
-                    std::cout << std::setw(20) << f(iat, 2);
-                else
-                    std::cout << std::setw(20) << "0";
-                std::cout << std::endl;
-            }
-            else if (GlobalV::TEST_FORCE)
-            {
-                std::cout << " " << std::setw(8) << ss.str();
-                if (std::abs(f(iat, 0)) > Forces::output_acc)
-                    std::cout << std::setw(20) << f(iat, 0) * fac;
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(f(iat, 1)) > Forces::output_acc)
-                    std::cout << std::setw(20) << f(iat, 1) * fac;
-                else
-                    std::cout << std::setw(20) << "0";
-                if (std::abs(f(iat, 2)) > Forces::output_acc)
-                    std::cout << std::setw(20) << f(iat, 2) * fac;
-                else
-                    std::cout << std::setw(20) << "0";
-                std::cout << std::endl;
-            }
-
-            iat++;
-        }
-    }
-
-    GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
-    std::cout << std::resetiosflags(std::ios::showpos);
     return;
 }
 
@@ -873,6 +735,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                                           const ModuleBase::matrix& wg,
+                                          const ModuleBase::matrix& ekb,
                                           K_Vectors* p_kv,
                                           ModulePW::PW_Basis_K* wfc_basis,
                                           const psi::Psi<complex<FPTYPE>, Device>* psi_in)
@@ -886,6 +749,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         return; // mohan add 2010-07-25
     }
 
+    // There is a contribution for jh<>ih in US case or multi projectors case
+    // Actually, the judge of nondiagonal should be done on every atom type
+    const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
+
     // dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
     // ModuleBase::ComplexArray dbecp(3, GlobalV::NBANDS, nkb);
     // ModuleBase::ComplexMatrix becp(GlobalV::NBANDS, nkb);
@@ -898,8 +765,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // init additional params
     FPTYPE *force = nullptr;
     FPTYPE *d_wg = nullptr;
+    FPTYPE* d_ekb = nullptr;
     FPTYPE *gcar = nullptr;
     auto *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
+    auto* qq_nt = GlobalC::ppcell.get_qq_nt_data<FPTYPE>();
     int wg_nc = wg.nc;
     int *atom_nh = nullptr, *atom_na = nullptr;
     int* h_atom_nh = new int[GlobalC::ucell.ntype];
@@ -912,9 +781,11 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     if (this->device == psi::GpuDevice)
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
+        resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
         resmem_var_op()(this->ctx, force, forcenl.nr * forcenl.nc);
         resmem_var_op()(this->ctx, gcar, 3 * wfc_basis->nks * wfc_basis->npwk_max);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, ekb.c, ekb.nr * ekb.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, force, forcenl.c, forcenl.nr * forcenl.nc);
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
@@ -930,6 +801,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     else
     {
         d_wg = wg.c;
+        d_ekb = ekb.c;
         force = forcenl.c;
         gcar = &wfc_basis->gcar[0][0];
         atom_nh = h_atom_nh;
@@ -1036,7 +908,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         //		and at last sum up all the forces.
         //		Parallel_Reduce::reduce_pool( dbecp.ptr, dbecp.ndata);
         cal_force_nl_op()(this->ctx,
-                          GlobalC::ppcell.multi_proj,
+                          nondiagonal,
                           nbands_occ,
                           wg_nc,
                           GlobalC::ucell.ntype,
@@ -1052,6 +924,8 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                           atom_na,
                           GlobalC::ucell.tpiba,
                           d_wg,
+                          d_ekb,
+                          qq_nt,
                           deeq,
                           becp,
                           dbecp,
@@ -1073,6 +947,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     if (this->device == psi::GpuDevice)
     {
         delmem_var_op()(this->ctx, d_wg);
+        delmem_var_op()(this->ctx, d_ekb);
         delmem_var_op()(this->ctx, gcar);
         delmem_var_op()(this->ctx, force);
         delmem_int_op()(this->ctx, atom_nh);

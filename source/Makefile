@@ -49,7 +49,7 @@ else
 endif
 
 ifeq ($(INTEL), ON)
-    OPTS += -lifcore -simd -qopenmp
+    OPTS += -lifcore  -qopenmp
     ##==========================
     ## MKL package
     ##==========================

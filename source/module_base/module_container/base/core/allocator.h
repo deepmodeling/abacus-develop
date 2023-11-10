@@ -3,9 +3,8 @@
 
 #include <ATen/core/tensor_types.h>
 
-namespace container {
-
 namespace base {
+namespace core {
 /**
  * @brief An abstract base class for memory allocators.
  *
@@ -58,7 +57,7 @@ class Allocator {
      *
      * @return MemoryType The type of memory used by the TensorBuffer.
      */
-    virtual DeviceType GetDeviceType() = 0;
+    virtual container::DeviceType GetDeviceType() = 0;
 
     virtual ~Allocator() = default;
 
@@ -69,7 +68,7 @@ class Allocator {
     size_t allocated_size_ = 0;
 };
 
+} // namespace core
 } // namespace base
-} // namespace container
 
 #endif // BASE_CORE_ALLOCATOR_H_

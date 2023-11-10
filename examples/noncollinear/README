@@ -1,0 +1,15 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example show how to perform noncollinear calculations in numerical atomic
+orbital basis
+
+BCC_Fe_NC_ground_state: calculates the ground state energy of Body center cubic iron
+BCC_Fe_NC_deltaspin: use the deltaspin method to constrain atomic magnetic moments
+deltaspin_constrain_value: use the deltaspin method to constrain atomic magnetic moments to a different value than the ground state
+deltaspin_constrain_angle: use the deltaspin method to constrain atomic magnetic moments to a different direction than the ground state
+
+Please also note that the provided examples are only shown for the functionality of the DeltaSpin method. Further carefull convergence of parameters (such as ecut, size of KPT, smearing method, etc.) should be tested before running the provided examples in research.

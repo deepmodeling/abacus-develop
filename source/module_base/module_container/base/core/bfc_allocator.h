@@ -3,8 +3,8 @@
 
 #include <base/core/allocator.h>
 
-namespace container {
 namespace base {
+namespace core {
 /**
  * @brief An allocator that allocates memory on a GPU device.
  *
@@ -131,7 +131,7 @@ public:
     
 };
 
+} // namespace core
 } // namespace base
-} // namespace container
 
 #endif // BASE_CORE_BFC_ALLOCATOR_H_

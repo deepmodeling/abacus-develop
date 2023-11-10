@@ -170,7 +170,7 @@ void Input::Default(void)
     npart_sto = 1;
     cal_cond = false;
     dos_nche = 100;
-    cond_nche = 20;
+    cond_che_thr = 1e-8;
     cond_dw = 0.1;
     cond_wcut = 10;
     cond_dt = 0.02;
@@ -210,7 +210,7 @@ void Input::Default(void)
     symmetry = "default";
     init_vel = false;
     ref_cell_factor = 1.0;
-    symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
+    symmetry_prec = 1.0e-6; // LiuXh add 2021-08-12, accuracy for symmetry
     symmetry_autoclose = false; // whether to close symmetry automatically when error occurs in symmetry analysis
     cal_force = 0;
     force_thr = 1.0e-3;
@@ -257,9 +257,9 @@ void Input::Default(void)
     bx = 0;
     by = 0;
     bz = 0;
-    nsx = 0;
-    nsy = 0;
-    nsz = 0;
+    ndx = 0;
+    ndy = 0;
+    ndz = 0;
     //----------------------------------------------------------
     // diagonalization
     //----------------------------------------------------------
@@ -603,6 +603,17 @@ void Input::Default(void)
     //    precision control denghui added on 2023-01-01
     //==========================================================
     precision = "double";
+    //==========================================================
+    // variables for deltaspin
+    //==========================================================
+    sc_mag_switch = 0;
+    decay_grad_switch = false;
+    sc_thr = 1e-6;
+    nsc = 100;
+    nsc_min = 2;
+    alpha_trial = 0.01;
+    sccut = 3.0;
+    sc_file = "none";
     return;
 }
 
@@ -747,6 +758,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, seed_sto);
         }
+        else if (strcmp("initsto_ecut", word) == 0)
+        {
+            read_value(ifs, initsto_ecut);
+        }
         else if (strcmp("pw_seed", word) == 0)
         {
             read_value(ifs, pw_seed);
@@ -775,9 +790,9 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, cal_cond);
         }
-        else if (strcmp("cond_nche", word) == 0)
+        else if (strcmp("cond_che_thr", word) == 0)
         {
-            read_value(ifs, cond_nche);
+            read_value(ifs, cond_che_thr);
         }
         else if (strcmp("cond_dw", word) == 0)
         {
@@ -1018,6 +1033,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, gamma_only);
         }
+        else if (strcmp("fft_mode", word) == 0)
+        {
+            read_value(ifs, fft_mode);
+        }
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
@@ -1053,17 +1072,17 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, bz);
         }
-        else if (strcmp("nsx", word) == 0)
+        else if (strcmp("ndx", word) == 0)
         {
-            read_value(ifs, nsx);
+            read_value(ifs, ndx);
         }
-        else if (strcmp("nsy", word) == 0)
+        else if (strcmp("ndy", word) == 0)
         {
-            read_value(ifs, nsy);
+            read_value(ifs, ndy);
         }
-        else if (strcmp("nsz", word) == 0)
+        else if (strcmp("ndz", word) == 0)
         {
-            read_value(ifs, nsz);
+            read_value(ifs, ndz);
         }
         else if (strcmp("erf_ecut", word) == 0)
         {
@@ -2175,6 +2194,32 @@ bool Input::Read(const std::string &fn)
             read_value(ifs, precision);
         }
         //----------------------------------------------------------------------------------
+        //    Deltaspin
+        //----------------------------------------------------------------------------------
+        else if (strcmp("sc_mag_switch", word) == 0){
+            read_bool(ifs, sc_mag_switch);
+        }
+        else if (strcmp("decay_grad_switch", word) == 0){
+            read_bool(ifs, decay_grad_switch);
+        }
+        else if (strcmp("sc_thr", word) == 0){
+            read_value(ifs, sc_thr);
+        }
+        else if (strcmp("nsc", word) == 0){
+            read_value(ifs, nsc);
+        }
+        else if (strcmp("nsc_min", word) == 0){
+            read_value(ifs, nsc_min);
+        }
+        else if (strcmp("alpha_trial", word) == 0){
+            read_value(ifs, alpha_trial);
+        }
+        else if (strcmp("sccut", word) == 0){
+            read_value(ifs, sccut);
+        }
+        else if (strcmp("sc_file", word) == 0){
+            read_value(ifs, sc_file);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -2529,9 +2574,30 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if (nx * ny * nz && ndx * ndy * ndz == 0)
+    {
+        ndx = nx;
+        ndy = ny;
+        ndz = nz;
+    }
+    if (ndx * ndy * ndz && nx * ny * nz == 0)
+    {
+        nx = ndx;
+        ny = ndy;
+        nz = ndz;
+    }
+    if (ndx > nx || ndy > ny || ndz > nz)
+    {
+        GlobalV::double_grid = true;
+    }
+
     if (ecutrho <= 0.0)
     {
         ecutrho = 4.0 * ecutwfc;
+    }
+    if (nx * ny * nz == 0 && ecutrho / ecutwfc > 4 + 1e-8)
+    {
+        GlobalV::double_grid = true;
     }
 
     if (esolver_type == "sdft"&&psi_initializer)
@@ -2944,6 +3010,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
+    Parallel_Common::bcast_double(initsto_ecut);
     Parallel_Common::bcast_int(pw_seed);
     Parallel_Common::bcast_double(emax_sto);
     Parallel_Common::bcast_double(emin_sto);
@@ -2951,7 +3018,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(method_sto);
     Parallel_Common::bcast_int(npart_sto);
     Parallel_Common::bcast_bool(cal_cond);
-    Parallel_Common::bcast_int(cond_nche);
+    Parallel_Common::bcast_double(cond_che_thr);
     Parallel_Common::bcast_double(cond_dw);
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_double(cond_dt);
@@ -3015,8 +3082,10 @@ void Input::Bcast()
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
+    Parallel_Common::bcast_int(fft_mode);
     Parallel_Common::bcast_double(ecutwfc);
     Parallel_Common::bcast_double(ecutrho);
+    Parallel_Common::bcast_bool(GlobalV::double_grid);
     Parallel_Common::bcast_int(ncx);
     Parallel_Common::bcast_int(ncy);
     Parallel_Common::bcast_int(ncz);
@@ -3026,9 +3095,9 @@ void Input::Bcast()
     Parallel_Common::bcast_int(bx);
     Parallel_Common::bcast_int(by);
     Parallel_Common::bcast_int(bz);
-    Parallel_Common::bcast_int(nsx);
-    Parallel_Common::bcast_int(nsy);
-    Parallel_Common::bcast_int(nsz);
+    Parallel_Common::bcast_int(ndx);
+    Parallel_Common::bcast_int(ndy);
+    Parallel_Common::bcast_int(ndz);
     Parallel_Common::bcast_double(erf_ecut);
     Parallel_Common::bcast_double(erf_height);
     Parallel_Common::bcast_double(erf_sigma);
@@ -3365,6 +3434,17 @@ void Input::Bcast()
     //    device control denghui added on 2022-11-05
     //----------------------------------------------------------------------------------
     Parallel_Common::bcast_string(device);
+    /**
+     *  Deltaspin variables
+    */
+    Parallel_Common::bcast_bool(sc_mag_switch);
+    Parallel_Common::bcast_bool(decay_grad_switch);
+    Parallel_Common::bcast_double(sc_thr);
+    Parallel_Common::bcast_int(nsc);
+    Parallel_Common::bcast_int(nsc_min);
+    Parallel_Common::bcast_string(sc_file);
+    Parallel_Common::bcast_double(alpha_trial);
+    Parallel_Common::bcast_double(sccut);
 
     return;
 }
@@ -3374,13 +3454,14 @@ void Input::Check(void)
 {
     ModuleBase::TITLE("Input", "Check");
 
-    if (ecutrho <= ecutwfc)
+    if (ecutrho / ecutwfc < 4 - 1e-8)
     {
-        ModuleBase::WARNING_QUIT("Input", "ecutrho must > ecutwfc");
+        ModuleBase::WARNING_QUIT("Input", "ecutrho/ecutwfc must >= 4");
     }
-    else if (ecutrho / ecutwfc < 4 - 1e-8)
+
+    if (ndx < nx || ndy < ny || ndz < nz)
     {
-        std::cout << "ecutrho < 4*ecutwfc, not recommended" << std::endl;
+        ModuleBase::WARNING_QUIT("Input", "smooth grids is denser than dense grids");
     }
 
     if (nbands < 0)
@@ -3600,6 +3681,11 @@ void Input::Check(void)
         if (out_dos == 3)
         {
             ModuleBase::WARNING_QUIT("Input", "Fermi Surface Plotting not implemented for plane wave now.");
+        }
+
+        if (sc_mag_switch)
+        {
+            ModuleBase::WARNING_QUIT("Input", "Non-colliner Spin-constrained DFT not implemented for plane wave now.");
         }
 
     }
@@ -3838,6 +3924,51 @@ void Input::Check(void)
 			ModuleBase::WARNING_QUIT("INPUT", "bessel_descriptor_rcut must >=0");
 		}
 	}
+
+    // Deltaspin variables checking
+    if (sc_mag_switch)
+    {
+        if (sc_file == "none")
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_file (json format) must be set when sc_mag_switch > 0");
+        }
+        else
+        {
+            const std::string ss = "test -f " + sc_file;
+            if (system(ss.c_str()))
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "sc_file does not exist");
+            }
+        }
+        if (nspin != 4)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 4 when sc_mag_switch > 0");
+        }
+        if (calculation != "scf")
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "calculation must be scf when sc_mag_switch > 0");
+        }
+        if (sc_thr <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_thr must > 0");
+        }
+        if (nsc <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nsc must > 0");
+        }
+        if (nsc_min <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nsc_min must > 0");
+        }
+        if (alpha_trial <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "alpha_trial must > 0");
+        }
+        if (sccut <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
+        }
+    }
 
     return;
 }

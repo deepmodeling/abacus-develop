@@ -268,6 +268,11 @@ void _internal_output(
     }
 }
 
+template <typename T>
+T extract(const container::Tensor& tensor) {
+    return reinterpret_cast<T*>(tensor.data())[0];
+}
+
 } // namespace container
 
 #endif // ATEN_CORE_TENSOR_UTILS_H_

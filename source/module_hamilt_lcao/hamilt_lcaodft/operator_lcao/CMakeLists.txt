@@ -9,6 +9,7 @@ add_library(
     overlap_new.cpp
     ekinetic_new.cpp
     nonlocal_new.cpp
+    sc_lambda_lcao.cpp
 )
 
 if(ENABLE_COVERAGE)

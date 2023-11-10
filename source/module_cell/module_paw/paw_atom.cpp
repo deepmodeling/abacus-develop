@@ -71,6 +71,17 @@ void Paw_Atom::accumulate_rhoij(const int current_spin)
     }
 }
 
+void Paw_Atom::set_rhoij(std::vector<double> & rhoij_in)
+{
+    for(int i = 0; i < nproj*(nproj+1)/2; i ++)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is ++)
+        {
+            rhoij[is][i] = rhoij_in[i];
+        }
+    }   
+}
+
 void Paw_Atom::convert_rhoij()
 {
     nrhoijsel = 0;

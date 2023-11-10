@@ -62,6 +62,7 @@ int SCF_NMAX = 100;
 
 bool use_paw = false;
 bool use_uspp = false;
+bool double_grid = false;
 
 std::string BASIS_TYPE = "pw"; // xiaohui add 2013-09-01
 std::string KS_SOLVER = "cg"; // xiaohui add 2013-09-01
@@ -271,4 +272,16 @@ int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
+
+//==========================================================
+// Deltaspin related
+//==========================================================
+bool sc_mag_switch = 0;
+bool decay_grad_switch = 0;
+double sc_thr = 1.0e-6;
+int nsc = 100;
+int nsc_min = 2;
+double alpha_trial = 0.01; // eV/uB^2
+double sccut = 3;          // eV/uB
+std::string sc_file = "none";
 } // namespace GlobalV

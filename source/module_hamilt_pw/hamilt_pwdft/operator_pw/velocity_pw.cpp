@@ -59,7 +59,7 @@ void Velocity::act
     {
         for (int ig = 0; ig < npw; ++ig)
         {
-            ModuleBase::Vector3<double> tmpg = wfcpw->getgpluskcar(this->ik, ig);
+            const ModuleBase::Vector3<double>& tmpg = wfcpw->getgpluskcar(this->ik, ig);
             if(add)
             {
                 tmhpsi[ig]                       += tmpsi_in[ig] * tmpg.x * tpiba;

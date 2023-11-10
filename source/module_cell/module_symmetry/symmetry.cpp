@@ -22,7 +22,7 @@ Symmetry::~Symmetry()
 
 int Symmetry::symm_flag = 0;
 bool Symmetry::symm_autoclose = false;
-
+bool Symmetry::pricell_loop = true;
 
 void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 {
@@ -213,7 +213,26 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP IN SPACE GROUP", this->spgname);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
+    if (!this->valid_group)
+    {   // select the operations that have the inverse
+        std::vector<int>invmap(this->nrotk, -1);
+        this->gmatrix_invmap(this->gmatrix, this->nrotk, invmap.data());
+        int nrotk_new = 0;
+        for (int isym = 0;isym < this->nrotk;++isym)
+        {
+            if (invmap[isym] != -1)
+            {
+                if(nrotk_new < isym)
+                {
+                    this->gmatrix[nrotk_new] = this->gmatrix[isym];
+                    this->gtrans[nrotk_new] = this->gtrans[isym];
+                }
+                ++nrotk_new;
+            }
+        }
+        this->nrotk = nrotk_new;
+    }
 
     //convert gmatrix to reciprocal space
     this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
@@ -224,6 +243,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
     this->set_atom_map(ucell);
+
+    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(ucell);
 
 	delete[] newpos;
     delete[] na;
@@ -1409,8 +1430,9 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 	// allocate flag for each FFT grid.
     int* symflag = new int[fftnx*fftny*fftnz];// which group the grid belongs to
     int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
-    int(*table_xyz)[48] = new int[fftnx*fftny*fftnz][48];// group information
-    for (int i=0; i<fftnx*fftny*fftnz; i++)
+    int(*table_xyz)[48] = new int[fftnx * fftny * fftnz][48];// group information
+    int* count_xyz = new int[fftnx * fftny * fftnz];// how many symmetry operations has been covered
+    for (int i = 0; i < fftnx * fftny * fftnz; i++)
     {
         symflag[i] = -1;
     }
@@ -1510,8 +1532,9 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                         symflag[ixyz] = group_index;
                         isymflag[group_index][rot_count] = invmap[isym];
                         table_xyz[group_index][rot_count] = ixyz;
-                         ++rot_count;
-                        assert(rot_count<=nrotk);
+                        ++rot_count;
+                        assert(rot_count <= nrotk);
+                        count_xyz[group_index] = rot_count;
                     }
                 group_index++;
                 }
@@ -1541,10 +1564,10 @@ for (int g_index = 0; g_index < group_index; g_index++)
     std::complex<double> sum(0, 0);
     int rot_count=0;
 
-    for (int c_index = 0; c_index < nrotk; ++c_index)
+    for (int c_index = 0; c_index < count_xyz[g_index]; ++c_index)
     {
-                int ixyz0=table_xyz[g_index][c_index];
-                int ipw0=ixyz2ipw[ixyz0];
+        int ixyz0 = table_xyz[g_index][c_index];
+        int ipw0 = ixyz2ipw[ixyz0];
                 if (symflag[ixyz0] == g_index)
                 {
                     // note : do not use PBC after rotation. 
@@ -1563,7 +1586,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
                     double arg_gtrans = tmp_gdirect_double * gtrans[isymflag[g_index][c_index]];
                     std::complex<double> phase_gtrans (ModuleBase::libm::cos(arg_gtrans), ModuleBase::libm::sin(arg_gtrans));
                     // for each pricell in supercell:
-                    for (int ipt = 0;ipt < this->ncell;++ipt)
+                    for (int ipt = 0;ipt < ((ModuleSymmetry::Symmetry::pricell_loop) ? this->ncell : 1);++ipt)
                     {
                         double arg = tmp_gdirect_double * ptrans[ipt];
                         double tmp_cos = 0.0, tmp_sin = 0.0;
@@ -1604,6 +1627,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
     delete[] isymflag;
     delete[] table_xyz;
     delete[] invmap;
+    delete[] count_xyz;
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
 
@@ -2064,4 +2088,26 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
 #endif
     return;
 }
+
+bool Symmetry::magmom_same_check(const UnitCell& ucell) const
+{
+    ModuleBase::TITLE("Symmetry", "magmom_same_check");
+    bool pricell_loop = true;
+    for (int it = 0;it < ntype;++it)
+    {
+        if (pricell_loop)
+            for (int ia = 1;ia < ucell.atoms[it].na;++ia)
+            {
+                if (!equal(ucell.atoms[it].m_loc_[ia].x, ucell.atoms[it].m_loc_[0].x) ||
+                    !equal(ucell.atoms[it].m_loc_[ia].y, ucell.atoms[it].m_loc_[0].y) ||
+                    !equal(ucell.atoms[it].m_loc_[ia].z, ucell.atoms[it].m_loc_[0].z))
+                {
+                    pricell_loop = false;
+                    break;
+                }
+            }
+    }
+    return pricell_loop;
+}
+
 }

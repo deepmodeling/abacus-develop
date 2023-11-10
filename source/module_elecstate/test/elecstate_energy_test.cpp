@@ -80,6 +80,7 @@ class MockElecState : public ElecState
         GlobalV::BASIS_TYPE = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
+        GlobalV::sc_mag_switch = 1;
     }
 };
 const double* ElecState::getRho(int spin) const
@@ -111,7 +112,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarris)
 {
     elecstate->f_en.deband_harris = 0.1;
     elecstate->cal_energies(1);
-    // deband_harris + hatree + efiled + gatefield
+    // deband_harris + hatree + efiled + gatefield + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
 }
 
@@ -120,7 +121,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
     elecstate->f_en.deband_harris = 0.1;
     GlobalV::imp_sol = true;
     elecstate->cal_energies(1);
-    // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav
+    // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.6);
 }
 
@@ -129,7 +130,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
     elecstate->f_en.deband_harris = 0.1;
     GlobalV::dft_plus_u = true;
     elecstate->cal_energies(1);
-    // deband_harris + hatree + efiled + gatefield + edftu
+    // deband_harris + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.3);
 #else
@@ -141,7 +142,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
 {
     elecstate->f_en.deband = 0.1;
     elecstate->cal_energies(2);
-    // deband + hatree + efiled + gatefield
+    // deband + hatree + efiled + gatefield + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
 }
 
@@ -150,7 +151,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
     elecstate->f_en.deband = 0.1;
     GlobalV::imp_sol = true;
     elecstate->cal_energies(2);
-    // deband + hatree + efiled + gatefield + esol_el + esol_cav
+    // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
 }
 
@@ -159,7 +160,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
     elecstate->f_en.deband = 0.1;
     GlobalV::dft_plus_u = true;
     elecstate->cal_energies(2);
-    // deband + hatree + efiled + gatefield + edftu
+    // deband + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
 #else

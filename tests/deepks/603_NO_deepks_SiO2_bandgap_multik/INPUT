@@ -20,3 +20,4 @@ deepks_scf 1
 deepks_out_labels 1
 deepks_bandgap 1
 deepks_model ./model.ptg
+symmetry_prec 1e-5

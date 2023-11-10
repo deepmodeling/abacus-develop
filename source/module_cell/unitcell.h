@@ -292,8 +292,15 @@ public:
 
     /// @brief calculate the total number of electrons in system (GlobalV::nelec)
     void cal_nelec(double& nelec);
+  
     /// @brief check consistency between two atom labels from STRU and pseudo or orb file
     void compare_atom_labels(std::string label1, std::string label2);
+    /// @brief get atomCounts, which is a map from element type to atom number
+    std::map<int, int> get_atomCounts() const;
+    /// @brief get orbitalCounts, which is a map from element type to orbital number
+    std::map<int, int> get_orbitalCounts() const;
+    /// @brief get lnchiCounts, which is a map from element type to the l:nchi map
+    std::map<int, std::map<int, int>> get_lnchiCounts() const;
 };
 
 #endif //unitcell class

@@ -162,6 +162,7 @@ int ModuleIO::read_wfc_nao_complex(
 
 #ifdef __MPI
     Parallel_Common::bcast_int(error);
+    Parallel_Common::bcast_double(&pelec->wg.c[ik * pelec->wg.nc], pelec->wg.nc);
 #endif
 	if(error==2) return 2;
 	if(error==3) return 3;

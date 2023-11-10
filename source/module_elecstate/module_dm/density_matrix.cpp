@@ -216,7 +216,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
 }
 
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<std::complex<double>>& DMR_in)
+void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
 {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty
@@ -585,7 +585,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                             // save them back to the tmp_matrix
                             target_DMR[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();
                             target_DMR[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();
-                            target_DMR[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag();
+                            target_DMR[icol + step_trace[2]] = - tmp[1].imag() + tmp[2].imag();// (i * (rho_updown - rho_downup)).real()
                             target_DMR[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();
                         }
                         tmp_DMR_pointer += this->_paraV->get_col_size(iat2) * 2;

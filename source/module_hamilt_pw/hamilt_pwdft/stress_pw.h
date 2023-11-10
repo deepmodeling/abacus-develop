@@ -26,6 +26,13 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     void stress_vdw(ModuleBase::matrix& smearing_sigma,
                     UnitCell& ucell); // force and stress calculated in vdw together.
 
+    // the stress from the non-local pseudopotentials in uspp
+    // which is due to the dependence of the Q function on the atomic position
+    void stress_us(ModuleBase::matrix& sigma,
+                   ModulePW::PW_Basis* rho_basis,
+                   pseudopot_cell_vnl* ppcell_in,
+                   const UnitCell& ucell); // nonlocal part of uspp in PW basis
+
     const elecstate::ElecState* pelec = nullptr;
 };
 #endif

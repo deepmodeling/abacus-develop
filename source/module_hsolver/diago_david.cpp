@@ -17,29 +17,6 @@
 
 using namespace hsolver;
 
-template class consts<double>;
-template class consts<std::complex<double>>;
-template class consts<std::complex<float>>;
-
-template<> consts<double>::consts()
-{
-    zero = 0.0;
-    one = 1.0;
-    neg_one = -1.0;
-}
-template<> consts<std::complex<double>>::consts()
-{
-    zero = std::complex<double>(0.0, 0.0);
-    one = std::complex<double>(1.0, 0.0);
-    neg_one = std::complex<double>(-1.0, 0.0);
-}
-template<> consts<std::complex<float>>::consts()
-{
-    zero = std::complex<float>(0.0, 0.0);
-    one = std::complex<float>(1.0, 0.0);
-    neg_one = std::complex<float>(-1.0, 0.0);
-}
-
 inline double get_real(const double& x)
 {
     return x;
@@ -182,7 +159,11 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+            phm_in->sPsi(psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0),
+                         &this->sphi[m * this->dim],
+                         this->dim,
+                         this->dim,
+                         1);
         }
     }
     // begin SchmitOrth
@@ -208,7 +189,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(&basis(m, 0), &this->sphi[m * this->dim], (size_t)this->dim);
+            phm_in->sPsi(&basis(m, 0), &this->sphi[m * this->dim], this->dim, this->dim, 1);
         }
     }
 
@@ -511,7 +492,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
+            phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], this->dim, this->dim, 1);
         }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
@@ -554,7 +535,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
         else
         {
-            phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], (size_t)this->dim);
+            phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], this->dim, this->dim, 1);
         }
     }
     // calculate H|psi> for not convergence bands

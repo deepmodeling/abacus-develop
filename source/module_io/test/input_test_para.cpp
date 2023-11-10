@@ -54,6 +54,7 @@ TEST_F(InputParaTest,Bcast)
 	    EXPECT_EQ(INPUT.emax_sto,0.0);
 	    EXPECT_EQ(INPUT.nche_sto,100);
         EXPECT_EQ(INPUT.seed_sto,0);
+        EXPECT_EQ(INPUT.initsto_ecut,0.0);
         EXPECT_EQ(INPUT.bndpar,1);
         EXPECT_EQ(INPUT.kpar,1);
         EXPECT_EQ(INPUT.initsto_freq,0);
@@ -61,7 +62,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.npart_sto,1);
         EXPECT_FALSE(INPUT.cal_cond);
         EXPECT_EQ(INPUT.dos_nche,100);
-        EXPECT_EQ(INPUT.cond_nche,20);
+        EXPECT_DOUBLE_EQ(INPUT.cond_che_thr,1e-8);
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
         EXPECT_EQ(INPUT.cond_dt,0.02);
@@ -93,7 +94,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_TRUE(INPUT.search_pbc);
         EXPECT_EQ(INPUT.symmetry,"default");
         EXPECT_FALSE(INPUT.init_vel);
-        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-5);
+        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-6);
         EXPECT_FALSE(INPUT.symmetry_autoclose);
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
@@ -124,15 +125,16 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
+        EXPECT_EQ(INPUT.fft_mode,0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
         EXPECT_EQ(INPUT.bx,0);
         EXPECT_EQ(INPUT.by,0);
         EXPECT_EQ(INPUT.bz,0);
-        EXPECT_EQ(INPUT.nsx, 0);
-        EXPECT_EQ(INPUT.nsy, 0);
-        EXPECT_EQ(INPUT.nsz, 0);
+        EXPECT_EQ(INPUT.ndx, 0);
+        EXPECT_EQ(INPUT.ndy, 0);
+        EXPECT_EQ(INPUT.ndz, 0);
         EXPECT_EQ(INPUT.diago_proc,0);
         EXPECT_EQ(INPUT.pw_diag_nmax,50);
         EXPECT_EQ(INPUT.diago_cg_prec,1);

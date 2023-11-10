@@ -19,6 +19,7 @@ public:
 	//1 : point group symmetry is considered
     static int symm_flag;
     static bool symm_autoclose;
+    static bool pricell_loop;   ///< whether to loop primitive cell in rhog_symmetry
 
 	void analy_sys(const UnitCell &ucell, std::ofstream &ofs_running);
 	bool available;
@@ -140,7 +141,10 @@ public:
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-			int& real_brav, double* cel_const, double* tmp_const)const;
+        int& real_brav, double* cel_const, double* tmp_const)const;
+
+    /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
+    bool magmom_same_check(const UnitCell& ucell)const;
 };
 }
 

@@ -1,9 +1,10 @@
 #include "elecstate_lcao.h"
 
 #include "cal_dm.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/timer.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -176,28 +177,14 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-
-// interface for RI-related calculation, which needs loc.dm_gamma    
-#ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx || this->loc->out_dm)
-        {
-            this->loc->dm_gamma.resize(GlobalV::NSPIN);
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
-            {
-                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
-            }
-        }
-#else
         if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
         {
             this->loc->dm_gamma.resize(GlobalV::NSPIN);
             for (int is = 0; is < GlobalV::NSPIN; ++is)
             {
-                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
+                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));
             }
         }
-#endif
-
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
         for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -250,6 +237,19 @@ void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* pa
     this->DM = new DensityMatrix<TK,double>(kv, paraV, nspin);
 }
 
+template<>
+double ElecStateLCAO<double>::get_spin_constrain_energy()
+{
+    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double>::getScInstance();
+    return sc.cal_escon();
+}
+
+template<>
+double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
+{
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>>::getScInstance();
+    return sc.cal_escon();
+}
 
 template class ElecStateLCAO<double>; // Gamma_only case
 template class ElecStateLCAO<std::complex<double>>; // multi-k case
