@@ -79,7 +79,7 @@ just by using this toolchain
 > cp ***.tar.gz build/
 ```
 
-Notice: for `CEREAL`, `LibNPY`, `LibRI` and `LibCOMM`, 
+Notice: for `CEREAL`, `Libnpy`, `LibRI` and `LibComm`, 
 you need to download them from github.com, 
 rename it as formatted, and put them in `build` directory at the same time
 e.g.:
