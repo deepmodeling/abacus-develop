@@ -140,7 +140,7 @@ If compliation is successful, a message will be shown like this:
 >     ./build_abacus_intel.sh
 > or you can modify the builder scripts to suit your needs.
 ```
-You can run build_abacus_gnu.sh or build_abacus_intel.sh to build ABACUS 
+You can run `build_abacus_gnu.sh` or `build_abacus_intel.sh` to build ABACUS 
 by gnu-toolchain or intel-toolchain respectively, the builder scripts will
 automatically locate the environment and compile ABACUS.
 You can manually change the builder scripts to suit your needs.
@@ -162,6 +162,18 @@ or you can also do it in a more completely way:
 ```
 
 ## Common Problem and Solution
+### GPU version of ABACUS
+add following options in build*.sh:
+```shell
+cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DMPI_CXX_COMPILER=mpiicpc \
+        ......
+        -DUSE_CUDA=1 \
+        -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \
+        ......
+```
+
 ### shell problem
 If you encounter problem like:
 ```shell
