@@ -1,5 +1,5 @@
 # The ABACUS Toolchain
-Version 2023.4
+Version 2023.5
 
 ## Author
 [QuantumMisaka](https://github.com/QuantumMisaka) 
@@ -31,13 +31,14 @@ and give setup files that you can use to compile ABACUS.
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
 - [ ] A better `setup` and toolchain code structure.
 - [ ] Modulefile generation scripts.
-- [ ] Support for `acml` toolchain (scripts are partly in toolchain now) or other AMD compiler and math lib like `AOCL` and `AOCC`
+- [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC`
 
 
 ## Usage Online & Offline
 Main script is `install_abacus_toolchain.sh`, 
 which will use scripts in `scripts` directory 
 to compile install dependencies of ABACUS.
+You can just `./install_abacus_toolchain.sh -h` to get more help message.
 
 **Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, espacially for `gcc` or `intel-oneAPI` !!!! for example, `module load mkl mpi icc compiler`**
 
@@ -146,6 +147,7 @@ Users can get help messages by simply:
 
 
 ## Common Problem and Solution
+### shell problem
 If you encounter problem like:
 ```shell
 /bin/bash^M: bad interpreter: No such file or directory
@@ -156,6 +158,22 @@ or   `permission denied` problem, you can simply run:
 ```
 And also, you can fix `permission denied` problem via `chmod +x`
 if `pre_set.sh` have no execution permission.
+
+### libtorch and deepks problem
+If deepks feature have problem, you can manually change libtorch version
+from 2.0.1 to 1.12.0 in `toolchain/scripts/stage4/install_libtorch.sh`.
+Also, you can install ABACUS without deepks by removing all the deepks and related options.
+
+
+### LibRI and LibComm problem
+(There is some problem sometimes when compling with LibRI and LibComm, detailed information is needed)
+
+
+### Intel-oneAPI problem
+Sometimes Intel-oneAPI have problem to link `mpirun`, 
+which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
+Try `source /path/to/setvars.sh` or install another version of IntelMPI may help.
+
 
 
 ## Advanced Installation Usage
