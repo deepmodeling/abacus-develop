@@ -3,7 +3,7 @@
 
 #include <complex>
 
-#include "tensor.h"
+#include <ATen/core/tensor.h>
 
 namespace container {
 
@@ -32,18 +32,32 @@ namespace container {
      */
     TensorMap(void *data, DataType data_type, DeviceType device, const TensorShape &shape);
 
-     /**
-      * @brief Resize the tensor to the new shape.
-      *
-      * The tensor will be resized to the new shape, and its data buffer will be reallocated
-      * if necessary. If the new shape has a different number of elements than the current
-      * shape, the data buffer will be reallocated. If the new shape has the same number of
-      * elements as the current shape, the data buffer will not be reallocated, but the
-      * shape of the tensor will be updated.
-      *
-      * @param new_shape The new shape of the tensor.
-      */
-     void resize(const TensorShape& new_shape) override;
+    /**
+     * @brief Constructs a TensorMap from the provided data, with the specified shape.
+     *
+     * This constructor creates a TensorMap that references the data pointed to by the
+     * 'data' parameter, and associates it with the given Tensor 'other' and TensorShape 'shape'.
+     * The TensorMap allows access to the data with the specified shape without owning the data.
+     *
+     * @param data A pointer to the data to be referenced by the TensorMap.
+     * @param other The Tensor object to be associated with the TensorMap.
+     * @param shape The shape of the data referenced by the TensorMap.
+     */
+    TensorMap(void *data, const Tensor& other, const TensorShape& shape);
+
+    /**
+     * @brief Constructs a TensorMap from the provided data, using the shape of the provided Tensor.
+     *
+     * This constructor creates a TensorMap that references the data pointed to by the 'data' parameter,
+     * and associates it with the given Tensor 'other'. The shape of the data is determined by the shape
+     * of the 'other' Tensor. The TensorMap allows access to the data with the shape of 'other' without
+     * owning the data.
+     *
+     * @param data A pointer to the data to be referenced by the TensorMap.
+     * @param other The Tensor object to be associated with the TensorMap, which defines the shape.
+     */
+    TensorMap(void *data, const Tensor& other);
+
 };
 
 } // namespace container

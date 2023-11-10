@@ -56,9 +56,13 @@ class Paw_Element
     std::vector<int> lstate; //l quantum number of each channel
     int    lmax; // max of quantum number l
 
+    std::vector<double> lstate_occ; //occupation number of each (n,l) channel
+
     int    mstates; //#. m states (for each (n,l) channel, there will be 2l+1 m states)
     std::vector<int> mstate; //m quantum number of each mstate
     std::vector<int> im_to_istate; //map from mstate to (n,l) channel (namely nstates)
+
+    std::vector<double> mstate_occ; //occupation number of each mstate
 
     //for log grid, r_i = rstep * exp[(lstep * i)-1]
     //rstep <-> a, lstep <-> d from xml file
@@ -139,6 +143,8 @@ class Paw_Element
     std::vector<int> get_im_to_istate(){return im_to_istate;}
     //max quantum nubmer l
     int get_lmax(){return lmax;}
+
+    std::vector<double> get_mstate_occ(){return mstate_occ;}
 
     // return ptilde_q for a given channel at a given q_in, using spline
     double get_ptilde(const int istate_in, const double q_in, const double omega);

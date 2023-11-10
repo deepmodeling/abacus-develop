@@ -1,11 +1,11 @@
-#include <ATen/kernels/blas_op.h>
+#include <ATen/kernels/blas.h>
 #include <base/third_party/blas.h>
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 static cublasHandle_t cublas_handle = nullptr;
 
@@ -241,5 +241,5 @@ template struct blas_gemm_batched_strided<double, DEVICE_GPU>;
 template struct blas_gemm_batched_strided<std::complex<float >, DEVICE_GPU>;
 template struct blas_gemm_batched_strided<std::complex<double>, DEVICE_GPU>;
 
-} // namespace op
+} // namespace kernels
 } // namespace container

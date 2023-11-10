@@ -88,7 +88,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.symmetry,"default");
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.ref_cell_factor,1.0);
-        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-5);
+        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-6);
         EXPECT_FALSE(INPUT.symmetry_autoclose);
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
@@ -119,6 +119,7 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.erf_ecut, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 0.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 0.1);
+		EXPECT_EQ(INPUT.fft_mode,0);
         EXPECT_EQ(INPUT.nx,0);
         EXPECT_EQ(INPUT.ny,0);
         EXPECT_EQ(INPUT.nz,0);
@@ -444,7 +445,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.search_pbc);
         EXPECT_EQ(INPUT.symmetry,"1");
         EXPECT_FALSE(INPUT.init_vel);
-        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-5);
+        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-6);
         EXPECT_FALSE(INPUT.symmetry_autoclose);
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_NEAR(INPUT.force_thr,1.0e-3,1.0e-7);
@@ -476,6 +477,7 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.erf_height, 20.0);
         EXPECT_DOUBLE_EQ(INPUT.erf_sigma, 4.0);
         EXPECT_DOUBLE_EQ(INPUT.ecutrho, 0.0);
+		EXPECT_EQ(INPUT.fft_mode,0);
         EXPECT_EQ(INPUT.ncx,0);
         EXPECT_EQ(INPUT.ncy,0);
         EXPECT_EQ(INPUT.ncz,0);

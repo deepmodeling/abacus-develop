@@ -206,6 +206,7 @@ namespace ModuleESolver
             MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
             // qianrui add 2021-8-13 to make different kpar parameters can get the same results
 #endif
+        this->pw_wfc->ft.fft_mode = inp.fft_mode;
         this->pw_wfc->setuptransform();
         for (int ik = 0; ik < this->kv.nks; ++ik)
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
@@ -235,12 +236,38 @@ namespace ModuleESolver
             GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                             this->pw_wfc->startz,this->pw_wfc->numz);
+#ifdef __MPI
+            if(GlobalV::RANK_IN_POOL == 0) GlobalC::paw_cell.prepare_paw();
+#else
             GlobalC::paw_cell.prepare_paw();
+#endif
             GlobalC::paw_cell.set_sij();
 
             GlobalC::paw_cell.set_eigts(
                 this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                 this->sf.eigts1.c,this->sf.eigts2.c,this->sf.eigts3.c);
+
+            std::vector<std::vector<double>> rhoijp;
+            std::vector<std::vector<int>> rhoijselect;
+            std::vector<int> nrhoijsel;
+#ifdef __MPI
+            if(GlobalV::RANK_IN_POOL == 0)
+            {
+                GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+                for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+                {
+                    GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+                }  
+            }
+#else
+            this->get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+            }
+#endif
         }
 #endif
     }

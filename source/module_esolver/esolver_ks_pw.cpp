@@ -46,8 +46,8 @@
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/lapack_op.h>
+#include <ATen/kernels/blas.h>
+#include <ATen/kernels/lapack.h>
 
 namespace ModuleESolver
 {
@@ -63,8 +63,8 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
     {
         hsolver::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
-        container::op::createGpuBlasHandle();
-        container::op::createGpuSolverHandle();
+        container::kernels::createGpuBlasHandle();
+        container::kernels::createGpuSolverHandle();
     }
 #endif
 }
@@ -94,8 +94,8 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
         hsolver::destroyGpuSolverHandle();
-        container::op::destroyGpuBlasHandle();
-        container::op::destroyGpuSolverHandle();
+        container::kernels::destroyGpuBlasHandle();
+        container::kernels::destroyGpuSolverHandle();
 #endif
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }
@@ -314,8 +314,34 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                          this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
                                          this->pw_wfc->startz,this->pw_wfc->numz);
 
+#ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0) GlobalC::paw_cell.prepare_paw();
+#else
         GlobalC::paw_cell.prepare_paw();
+#endif
         GlobalC::paw_cell.set_sij();
+
+        std::vector<std::vector<double>> rhoijp;
+        std::vector<std::vector<int>> rhoijselect;
+        std::vector<int> nrhoijsel;
+#ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            {
+                GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+            }  
+        }
+#else
+        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+
+        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        {
+            GlobalC::paw_cell.set_rhoij(iat,nrhoijsel[iat],rhoijselect[iat].size(),rhoijselect[iat].data(),rhoijp[iat].data());
+        }
+#endif
     }
 #endif
 

@@ -7,7 +7,7 @@
 
 
 TEST(CPUAllocator, AllocateAndFree) {
-  container::base::CPUAllocator alloc;
+  base::core::CPUAllocator alloc;
   // Allocate memory of size 100.
   void* ptr = alloc.allocate(100);
   EXPECT_NE(nullptr, ptr);
@@ -24,7 +24,7 @@ TEST(CPUAllocator, AllocateAndFree) {
 }
 
 TEST(CPUAllocator, AllocatedSize) {
-  container::base::CPUAllocator alloc;
+  base::core::CPUAllocator alloc;
   // Allocate memory of size 100 and check its size.
   void* ptr = alloc.allocate(100);
   EXPECT_NE(nullptr, ptr);
@@ -32,7 +32,7 @@ TEST(CPUAllocator, AllocatedSize) {
 }
 
 TEST(CPUAllocator, GetDeviceType) {
-  container::base::CPUAllocator alloc;
+  base::core::CPUAllocator alloc;
   EXPECT_EQ(container::DeviceType::CpuDevice,
             alloc.GetDeviceType());
 }

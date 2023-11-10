@@ -45,6 +45,7 @@
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [erf\_ecut](#erf_ecut)
+    - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
@@ -427,7 +428,7 @@ These variables are used to control general system parameters.
 - **Type**: Real
 - **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
   > Note: if *[calculation](#calculation)==cell_relax*, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation. The new value will be printed in `OUT.${suffix}/running_cell-relax.log` in that case.
-- **Default**: 1.0e-5
+- **Default**: 1.0e-6
 - **Unit**:  Bohr
 
 ### symmetry_autoclose
@@ -745,6 +746,16 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
 - **Default**: 0.0
 - **Unit**: Ry
+
+### fft_mode
+
+- **Type**: Integer
+- **Description**: Set the mode of FFTW.
+  - 0: FFTW_ESTIMATE
+  - 1: FFTW_MEASURE
+  - 2: FFTW_PATIENT
+  - 3: FFTW_EXHAUSTIVE
+- **Default**: 0
 
 ### erf_height
 

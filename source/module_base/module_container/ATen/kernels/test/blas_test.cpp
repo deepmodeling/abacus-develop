@@ -1,26 +1,26 @@
 #include <gtest/gtest.h>
 
 #include <ATen/core/tensor.h>
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/test/op_test_utils.h>
+#include <ATen/kernels/blas.h>
+#include <test/test_utils.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 template <typename T>
-class BlasOpTest : public testing::Test {
+class BlasTest : public testing::Test {
 public:
-    BlasOpTest() {
+    BlasTest() {
         test_utils::init_blas_handle();
     }
-    ~BlasOpTest() override {
+    ~BlasTest() override {
         test_utils::delete_blas_handle();
     }
 };
 
-TYPED_TEST_SUITE(BlasOpTest, test_utils::Types);
+TYPED_TEST_SUITE(BlasTest, test_utils::Types);
 
-TYPED_TEST(BlasOpTest, Dot) {
+TYPED_TEST(BlasTest, Dot) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -37,7 +37,7 @@ TYPED_TEST(BlasOpTest, Dot) {
     EXPECT_EQ(result, expected);
 }
 
-TYPED_TEST(BlasOpTest, Scal) {
+TYPED_TEST(BlasTest, Scal) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -54,7 +54,7 @@ TYPED_TEST(BlasOpTest, Scal) {
 }
 
 
-TYPED_TEST(BlasOpTest, Axpy) {
+TYPED_TEST(BlasTest, Axpy) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -72,7 +72,7 @@ TYPED_TEST(BlasOpTest, Axpy) {
 }
 
 
-TYPED_TEST(BlasOpTest, Gemv) {
+TYPED_TEST(BlasTest, Gemv) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -95,7 +95,7 @@ TYPED_TEST(BlasOpTest, Gemv) {
 }
 
 
-TYPED_TEST(BlasOpTest, GemvBatched) {
+TYPED_TEST(BlasTest, GemvBatched) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -145,7 +145,7 @@ TYPED_TEST(BlasOpTest, GemvBatched) {
 }
 
 
-TYPED_TEST(BlasOpTest, GemvBatchedStrided) {
+TYPED_TEST(BlasTest, GemvBatchedStrided) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -194,7 +194,7 @@ TYPED_TEST(BlasOpTest, GemvBatchedStrided) {
 }
 
 
-TYPED_TEST(BlasOpTest, Gemm) {
+TYPED_TEST(BlasTest, Gemm) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -217,7 +217,7 @@ TYPED_TEST(BlasOpTest, Gemm) {
 }
 
 
-TYPED_TEST(BlasOpTest, GemmBatched) {
+TYPED_TEST(BlasTest, GemmBatched) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
@@ -267,7 +267,7 @@ TYPED_TEST(BlasOpTest, GemmBatched) {
 }
 
 
-TYPED_TEST(BlasOpTest, GemmBatchedStrided) {
+TYPED_TEST(BlasTest, GemmBatchedStrided) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 

@@ -210,7 +210,7 @@ void Input::Default(void)
     symmetry = "default";
     init_vel = false;
     ref_cell_factor = 1.0;
-    symmetry_prec = 1.0e-5; // LiuXh add 2021-08-12, accuracy for symmetry
+    symmetry_prec = 1.0e-6; // LiuXh add 2021-08-12, accuracy for symmetry
     symmetry_autoclose = false; // whether to close symmetry automatically when error occurs in symmetry analysis
     cal_force = 0;
     force_thr = 1.0e-3;
@@ -1032,6 +1032,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("gamma_only", word) == 0)
         {
             read_bool(ifs, gamma_only);
+        }
+        else if (strcmp("fft_mode", word) == 0)
+        {
+            read_value(ifs, fft_mode);
         }
         else if (strcmp("ecutwfc", word) == 0)
         {
@@ -3050,6 +3054,7 @@ void Input::Bcast()
 
     Parallel_Common::bcast_bool(gamma_only);
     Parallel_Common::bcast_bool(gamma_only_local);
+    Parallel_Common::bcast_int(fft_mode);
     Parallel_Common::bcast_double(ecutwfc);
     Parallel_Common::bcast_double(ecutrho);
     Parallel_Common::bcast_bool(GlobalV::double_grid);

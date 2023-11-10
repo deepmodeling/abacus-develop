@@ -19,9 +19,9 @@ DiagoCG<T, Device>::DiagoCG(const Real* precondition_in)
     this->precondition = precondition_in;
     test_cg = 0;
     reorder = false;
-    this->one = new T(1.0, 0.0);
-    this->zero = new T(0.0, 0.0);
-    this->neg_one = new T(-1.0, 0.0);
+    this->one = &this->cs.one;
+    this->zero = &this->cs.zero;
+    this->neg_one = &this->cs.neg_one;
 }
 
 template<typename T, typename Device>
@@ -35,9 +35,6 @@ DiagoCG<T, Device>::~DiagoCG() {
     delmem_complex_op()(this->ctx, this->gradient);
     delmem_complex_op()(this->ctx, this->g0);
     delmem_complex_op()(this->ctx, this->lagrange);
-    delete this->one;
-    delete this->zero;
-    delete this->neg_one;
 }
 
 template<typename T, typename Device>
@@ -250,7 +247,7 @@ void DiagoCG<T, Device>::calculate_gradient()
     //     this->gradient[i] -= lambda * this->pphi[i];
     // }
     // haozhihan replace this 2022-10-6
-    constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
+    constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, this->gradient, this->gradient, 1.0, this->pphi, (-lambda));
 }
 
 template<typename T, typename Device>
@@ -311,6 +308,16 @@ void DiagoCG<T, Device>::orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, 
         this->one,
         this->scg,
         1);
+}
+
+inline void init_real(const double in, double& out)
+{
+    out = in;
+}
+template<typename FPTYPE>
+inline void init_real(const FPTYPE  in, std::complex<FPTYPE>& out)
+{
+    out = std::complex<FPTYPE>(in, 0.0);
 }
 
 template<typename T, typename Device>
@@ -377,10 +384,11 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, Real &gg_last, const
         //     pcg[i] = gamma * pcg[i] + this->gradient[i];
         // }
         // haozhihan replace this 2022-10-6
-        constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, pcg, pcg, gamma, this->gradient, 1.0);
+        constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, pcg, pcg, gamma, this->gradient, 1.0);
 
         const Real norma = gamma * cg_norm * sin(theta);
-        T znorma(norma * -1, 0.0);
+        T znorma;
+        init_real(norma * -1, znorma);
 
         // haozhihan replace this 2022-10-6
         // const int one = 1;
@@ -389,7 +397,7 @@ void DiagoCG<T, Device>::calculate_gamma_cg(const int iter, Real &gg_last, const
         {
             pcg[i] -= norma * pphi_m[i];
         }*/
-        axpy_op<Real, Device>()(this->ctx, this->dim, &znorma, pphi_m, 1, pcg, 1);
+        axpy_op<T, Device>()(this->ctx, this->dim, &znorma, pphi_m, 1, pcg, 1);
     }
 }
 
@@ -436,7 +444,7 @@ bool DiagoCG<T, Device>::update_psi(Real &cg_norm, Real &theta, Real &eigenvalue
     // }
     
     // haozhihan replace this 2022-10-6
-    constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, phi_m_pointer, phi_m_pointer, cost, pcg, sint_norm);
+    constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, phi_m_pointer, phi_m_pointer, cost, pcg, sint_norm);
 
 
     //	std::cout << "\n overlap2 = "  << this->ddot(dim, phi_m, phi_m);
@@ -455,12 +463,36 @@ bool DiagoCG<T, Device>::update_psi(Real &cg_norm, Real &theta, Real &eigenvalue
         // }
 
         // haozhihan replace this 2022-10-6
-        constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, this->sphi, this->sphi, cost, this->scg, sint_norm);
-        constantvector_addORsub_constantVector_op<Real, Device>()(this->ctx, this->dim, this->hphi, this->hphi, cost, this->pphi, sint_norm);
+        constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, this->sphi, this->sphi, cost, this->scg, sint_norm);
+        constantvector_addORsub_constantVector_op<T, Device>()(this->ctx, this->dim, this->hphi, this->hphi, cost, this->pphi, sint_norm);
         return 0;
     }
 }
 
+inline double get_real(const double& x)
+{
+    return x;
+}
+inline double get_real(const std::complex<double>& x)
+{
+    return x.real();
+}
+inline float get_real(const std::complex<float>& x)
+{
+    return x.real();
+}
+inline double get_conj(const double& x)
+{
+    return x;
+}
+inline std::complex<double> get_conj(const std::complex<double>& x)
+{
+    return std::conj(x);
+}
+inline std::complex<float> get_conj(const std::complex<float>& x)
+{
+    return std::conj(x);
+}
 template<typename T, typename Device>
 void DiagoCG<T, Device>::schmit_orth(
                           const int &m, // end
@@ -499,9 +531,9 @@ void DiagoCG<T, Device>::schmit_orth(
     // be careful , here reduce m+1
     Parallel_Reduce::reduce_pool(lagrange_so, m + 1);
 
-    T var(0, 0);
+    T var = cs.zero;
     syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_so + m, 1);
-    Real psi_norm = var.real();
+    Real psi_norm = get_real(var);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
@@ -536,7 +568,7 @@ void DiagoCG<T, Device>::schmit_orth(
         std::cout << " m = " << m << std::endl;
         for (int j = 0; j <= m; ++j)
         {
-            std::cout << "j = " << j << " lagrange norm = " << (conj(lagrange_so[j]) * lagrange_so[j]).real()
+            std::cout << "j = " << j << " lagrange norm = " << get_real(get_conj(lagrange_so[j]) * lagrange_so[j])
                       << std::endl;
         }
         std::cout << " in DiagoCG, psi norm = " << psi_norm << std::endl;
@@ -599,4 +631,11 @@ template class DiagoCG<std::complex<double>, psi::DEVICE_CPU>;
 template class DiagoCG<std::complex<float>, psi::DEVICE_GPU>;
 template class DiagoCG<std::complex<double>, psi::DEVICE_GPU>;
 #endif 
+
+#ifdef __LCAO
+template class DiagoCG<double, psi::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class DiagoCG<double, psi::DEVICE_GPU>;
+#endif
+#endif
 } // namespace hsolver

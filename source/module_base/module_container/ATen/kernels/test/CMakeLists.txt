@@ -1,8 +1,8 @@
 AddTest(
-  TARGET Container_Kernels_UTs
+  TARGET container_kernels_uts
   LIBS ${math_libs}
-  SOURCES blas_op_test.cpp lapack_op_test.cpp einsum_op_test.cpp
-  linalg_op_test.cpp memory_op_test.cpp
+  SOURCES blas_test.cpp lapack_test.cpp
+  memory_test.cpp linalg_test.cpp
 )
 
-target_link_libraries(Container_Kernels_UTs container base device)
+target_link_libraries(container_kernels_uts container base device)
