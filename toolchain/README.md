@@ -38,6 +38,7 @@ and give setup files that you can use to compile ABACUS.
 Main script is `install_abacus_toolchain.sh`, 
 which will use scripts in `scripts` directory 
 to compile install dependencies of ABACUS.
+
 You can just `./install_abacus_toolchain.sh -h` to get more help message.
 
 **Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, espacially for `gcc` or `intel-oneAPI` !!!! for example, `module load mkl mpi icc compiler`**
@@ -160,12 +161,6 @@ or you can also do it in a more completely way:
 > rm -rf install build/*/* build/OpenBLAS*/ build/setup_*
 ```
 
-Users can get help messages by simply:
-```shell
-> ./install_abacus_toolchain.sh -h # or --help
-```
-
-
 ## Common Problem and Solution
 ### shell problem
 If you encounter problem like:
@@ -184,6 +179,18 @@ If deepks feature have problem, you can manually change libtorch version
 from 2.0.1 to 1.12.0 in `toolchain/scripts/stage4/install_libtorch.sh`.
 Also, you can install ABACUS without deepks by removing all the deepks and related options.
 
+NOTICE: if you want deepks feature, your intel-mkl environment should be accessible in building process. you can check it in `build_abacus_gnu.sh`
+
+### deepmd feature problem
+When you encounter problem like `GLIBCXX_3.4.29 not found`, it is sure that your `gcc` version is lower than the requirement of `libdeepmd`.
+
+After my test, you need `gcc`>11.3.1 to enable deepmd feature in ABACUS.
+
+### ELPA problem via Intel-oneAPI toolchain in AMD server
+The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server.
+
+The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in toolchain*.sh via `--with-intel-classic=yes`
+
 
 ### LibRI and LibComm problem
 (There is some problem sometimes when compling with LibRI and LibComm, detailed information is needed)
@@ -193,6 +200,8 @@ Also, you can install ABACUS without deepks by removing all the deepks and relat
 Sometimes Intel-oneAPI have problem to link `mpirun`, 
 which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
 Try `source /path/to/setvars.sh` or install another version of IntelMPI may help.
+
+More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
 
 
 
