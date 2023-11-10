@@ -479,10 +479,12 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
         }
         else if(GlobalV::init_wfc == "nao")
         {
+            /*
             if(GlobalV::NSPIN == 4)
             {
                 ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
             }
+            */
             #ifdef __MPI
             this->psi_init = new psi_initializer_nao<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
             #else
@@ -504,10 +506,12 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
         }
         else if(GlobalV::init_wfc == "nao+random")
         {
+            /*
             if(GlobalV::NSPIN == 4)
             {
                 ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
             }
+            */
             #ifdef __MPI
             this->psi_init = new psi_initializer_nao_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
             #else

@@ -71,7 +71,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		     << std::setw(16) << "KPOINTS"
 		     << std::setw(12) << "PROCESSORS";
 
-		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw" || (GlobalV::BASIS_TYPE=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 		{
 			std::cout << std::setw(12) << "NBASE";
 		}
@@ -108,7 +108,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		std::cout << std::setw(12) << GlobalV::NPROC;
 
-		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw" || (GlobalV::BASIS_TYPE=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 		{
 			std::cout << std::setw(12) << GlobalV::NLOCAL;
 		}
@@ -132,11 +132,11 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 				std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
 			}
 		}
-		else if(GlobalV::BASIS_TYPE=="lcao_in_pw")
+		else if(GlobalV::BASIS_TYPE=="lcao_in_pw" || (GlobalV::BASIS_TYPE=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 		{
 			std::cout << " Expand Atomic bases into plane waves" << std::endl;
 		}
-		else if(GlobalV::BASIS_TYPE=="pw")
+		else if(GlobalV::BASIS_TYPE=="pw" && GlobalV::init_wfc.substr(0, 3) != "nao")
 		{
 			std::cout << " Use plane wave basis" << std::endl;
 		}
@@ -150,7 +150,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 		std::cout << " " << std::setw(8) << "ELEMENT";
 
-		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+		if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw" || (GlobalV::BASIS_TYPE=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 		{
 			std::cout << std::setw(16) << "ORBITALS";
 			std::cout << std::setw(12) << "NBASE";
@@ -173,7 +173,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 				std::cout << " " << std::setw(8) << ucell.atoms[it].label;
 			}
 
-			if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw")
+			if(GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw" || (GlobalV::BASIS_TYPE=="pw" && GlobalV::init_wfc.substr(0, 3) == "nao"))
 			{
 				std::stringstream orb;
 

@@ -98,7 +98,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
                         }
                         else
                         {
-                            nbands_local += this->p_ucell->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL * GlobalV::NPOL;
+                            nbands_local += this->p_ucell->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
                         }
                         
                     }
@@ -133,6 +133,17 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
             nbands_actual, 
                 nbasis_actual, 
                     this->pw_wfc->npwk);
+    GlobalV::ofs_running << "Allocate memory for psi and psig done.\n"
+                         << "Print detailed information of dimension of psi and psig:\n"
+                         << "nkpts_actual = " << nkpts_actual << "\n"
+                         << "GlobalV::NBANDS = " << GlobalV::NBANDS << "\n"
+                         << "nbasis_actual = " << nbasis_actual << "\n"
+                         << "this->pw_wfc->npwk = " << this->pw_wfc->npwk << "\n"
+                         << "nbands_actual = " << nbands_actual << "\n"
+                         << "this->pw_wfc->npwk_max = " << this->pw_wfc->npwk_max << "\n"
+                         << "GlobalV::NPOL = " << GlobalV::NPOL << "\n"
+                         << "this->nbands_complem = " << this->nbands_complem << "\n";
+    
     const size_t memory_cost_psi = 
             nkpts_actual*
                 GlobalV::NBANDS * this->pw_wfc->npwk_max * GlobalV::NPOL*
