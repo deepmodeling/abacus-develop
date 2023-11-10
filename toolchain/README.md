@@ -94,11 +94,12 @@ The needed dependencies version default:
 And Intel-oneAPI need user or server manager to manually install from Intel.
 [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
 
-Dependencies below are optional:
+Dependencies below are optional， which is NOT installed by default:
 - `LibTorch` 2.0.1
 - `Libnpy` 0.1.0
 - `LibRI` 0.1.0
 - `LibComm` 0.1.0
+Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default.
 
 Notice: for `CEREAL`, `Libnpy`, `LibRI` and `LibComm`, 
 you need to download them from github.com, 
