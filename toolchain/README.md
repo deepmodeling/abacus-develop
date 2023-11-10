@@ -52,7 +52,7 @@ You can just `./install_abacus_toolchain.sh -h` to get more help message.
 
 All packages will be downloaded from [cp2k-static/download](https://www.cp2k.org/static/downloads). by  `wget` , and will be detailedly compiled and installed in `install` directory by toolchain scripts, despite of:
 - `CEREAL` which will be downloaded from [CEREAL](https://github.com/USCiLab/cereal)  
-- `LibNPY` which will be downloaded from [LIBNPY](https://github.com/llohse/libnpy)
+- `Libnpy` which will be downloaded from [LIBNPY](https://github.com/llohse/libnpy)
 - `LibRI` which will be downloaded from [LibRI](https://github.com/abacusmodeling/LibRI)
 - `LibCOMM` which will be downloaded from [LibComm](https://github.com/abacusmodeling/LibComm)
 Notice: These packages will be downloaded by `wget` from `github.com`, which is hard to be done in Chinese Internet. You may need to use offline installation method. 
@@ -78,6 +78,25 @@ just by using this toolchain
 > mkdir build 
 > cp ***.tar.gz build/
 ```
+
+The needed dependencies version default:
+- `cmake` 3.27.6
+- `gcc` 13.2.0 (which will always NOT be installed, But use system)
+- `OpenMPI` 4.1.5
+- `MPICH` 4.1.2
+- `OpenBLAS` 0.3.24 (Intel toolchain need `get_vars.sh` tool from it)
+- `ScaLAPACK` 2.2.1
+- `FFTW` 3.3.10
+- `LibXC` 6.2.2
+- `ELPA` 2023.05.001
+- `CEREAL` 1.3.2
+And Intel-oneAPI need user or server manager to manually install from Intel.
+
+Dependencies below are optional:
+- `LibTorch` 2.0.1
+- `Libnpy` 0.1.0
+- `LibRI` 0.1.0
+- `LibComm` 0.1.0
 
 Notice: for `CEREAL`, `Libnpy`, `LibRI` and `LibComm`, 
 you need to download them from github.com, 
