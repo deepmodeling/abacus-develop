@@ -438,7 +438,7 @@ These variables are used to control general system parameters.
 - **Description**: Control how to deal with error in symmetry analysis due to inaccurate lattice parameters or atom positions in STRU file, especially useful when *[calculation](#calculation)==cell-relax*
   - False: quit with an error message
   - True: automatically set symmetry to 0 and continue running without symmetry analysis
-- **Default**: False
+- **Default**: True
 
 ### kpar
 
