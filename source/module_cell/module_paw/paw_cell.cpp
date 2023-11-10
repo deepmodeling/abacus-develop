@@ -76,6 +76,29 @@ void Paw_Cell::init_paw_cell(
     }
 
     this -> init_rhoij();
+    this -> init_mix_dij();
+}
+
+void Paw_Cell::init_mix_dij()
+{
+    first_iter = true;
+    count = 0;
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        dij_save.resize(natom);
+        for(int iat = 0; iat < natom; iat ++)
+        {
+            const int it = atom_type[iat];
+            const int nproj = paw_element_list[it].get_mstates();
+            const int size_dij = nproj * (nproj+1) / 2;
+            dij_save[iat].resize(size_dij * nspden);
+            for(int i = 0; i < size_dij * nspden; i ++)
+            {
+                dij_save[iat][i] = 0.0;
+            }
+        }
+    }
 }
 
 void Paw_Cell::init_rhoij()

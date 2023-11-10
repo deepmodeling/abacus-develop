@@ -236,6 +236,15 @@ class Paw_Cell
     double calculate_ecore();
 
     private:
+
+    bool first_iter;
+    int count;
+
+    void init_mix_dij();
+    void mix_dij(const int iat, double*dij_libpaw);
+
+    std::vector<std::vector<double>> dij_save;
+
 // Info to be passed to libpaw_interface:
 // 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
 // there will be one coarse grid for density/potential, and a fine grid for PAW
