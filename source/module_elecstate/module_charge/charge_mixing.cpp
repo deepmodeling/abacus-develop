@@ -470,7 +470,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
         return;
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN);
     std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN);
@@ -487,7 +487,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 
         if (is == 1 && GlobalV::NSPIN == 2)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
             {
                 for (int ig = 0; ig < this->rhopw->npw; ig++)
                 {
@@ -511,6 +511,12 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];
+            // I have not decided how to handle gg=0 part, will be changed in future
+            //if (gg == 0)
+            //{
+            //    drhog[is * this->rhopw->npw + ig] *= 0;
+            //    continue;
+            //}
             double filter_g = std::max(gg / (gg + gg0), 0.1 / amin);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
@@ -533,7 +539,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 void Charge_Mixing::Kerker_screen_real_test(double* drhor)
 {
     // for total charge density
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
         return;
     std::vector<double> drhor_filter(this->rhopw->nrxx);
     std::vector<std::complex<double>> drhog(this->rhopw->npw);
@@ -565,7 +571,7 @@ void Charge_Mixing::Kerker_screen_real_test(double* drhor)
     // for magnetic density
     if (GlobalV::NSPIN == 2)
     {
-        if (GlobalV::MIXING_GG0_MAG <= 0.0 || GlobalV::MIXING_BETA_MAG <= 0.1)
+        if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
             return;
         std::vector<double> drhor_mag_filter(this->rhopw->nrxx);
         std::vector<std::complex<double>> drhog_mag(this->rhopw->npw);
