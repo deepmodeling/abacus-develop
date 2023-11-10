@@ -19,7 +19,7 @@ source $INSTALL_DIR/setup
 cd $ABACUS_DIR
 ABACUS_DIR=$(pwd)
 
-BUILD_DIR=build_abacus
+BUILD_DIR=build_abacus_intel-mpich
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR

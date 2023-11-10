@@ -91,6 +91,7 @@ The needed dependencies version default:
 - `ELPA` 2023.05.001
 - `CEREAL` 1.3.2
 And Intel-oneAPI need user or server manager to manually install from Intel.
+[Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
 
 Dependencies below are optional:
 - `LibTorch` 2.0.1
