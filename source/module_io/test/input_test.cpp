@@ -445,7 +445,7 @@ TEST_F(InputTest, Read)
         EXPECT_TRUE(INPUT.search_pbc);
         EXPECT_EQ(INPUT.symmetry,"1");
         EXPECT_FALSE(INPUT.init_vel);
-        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-6);
+        EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-5);
         EXPECT_FALSE(INPUT.symmetry_autoclose);
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_NEAR(INPUT.force_thr,1.0e-3,1.0e-7);
@@ -1025,13 +1025,14 @@ TEST_F(InputTest, Check)
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("ecutrho/ecutwfc must >= 4"));
-
+    INPUT.ecutrho = 100.0;
     INPUT.nx = INPUT.ny = INPUT.nz = 10;
     INPUT.ndx = INPUT.ndy = INPUT.ndz = 8;
     testing::internal::CaptureStdout();
-    INPUT.Check();
+    EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("smooth grids is denser than dense grids"));
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 11;
     //
     INPUT.nbands = -1;
     testing::internal::CaptureStdout();
