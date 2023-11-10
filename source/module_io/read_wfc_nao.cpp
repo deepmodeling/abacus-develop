@@ -330,7 +330,7 @@ void ModuleIO::distri_wfc_nao(double** ctot, const int& is,
 //1. alloc work array; set some parameters
 
 	long maxnloc; // maximum number of elements in local matrix
-	MPI_Reduce(&ParaV->nloc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaV->comm_2D);
+    MPI_Reduce(&ParaV->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaV->comm_2D);
 	MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, ParaV->comm_2D);
 	//reduce and bcast could be replaced by allreduce
 	
@@ -375,7 +375,7 @@ assert(GlobalV::NB2D > 0);
 			const int inc=1;
 			if(myid==src_rank)
 			{
-				BlasConnector::copy(ParaV->nloc, work, inc, &(psid[0](is, 0, 0)), inc);
+                BlasConnector::copy(ParaV->nloc_wfc, work, inc, &(psid[0](is, 0, 0)), inc);
 			}
 		}//loop ipcol
 	}//loop	iprow
