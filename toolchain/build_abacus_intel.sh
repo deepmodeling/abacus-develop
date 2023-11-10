@@ -42,9 +42,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLibxc_DIR=$LIBXC \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
-        -DENABLE_LIBRI=OFF \
         -DUSE_OPENMP=ON \
-        -DENABLE_ASAN=OFF \
         -DUSE_ELPA=ON \
 #         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
@@ -56,7 +54,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 # 	      -DTensorFlow_DIR=$DEEPMD \
 
 cmake --build $BUILD_DIR -j `nproc` 
-cmake --install $BUILD_DIR 
+cmake --install $BUILD_DIR 2>/dev/null
 
 # if one want's to include deepmd, your gcc version should be >= 11.3.0
 
