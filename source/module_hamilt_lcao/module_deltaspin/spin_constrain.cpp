@@ -60,9 +60,9 @@ int SpinConstrain<FPTYPE, Device>::get_npol()
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_nspin(int nspin_in)
 {
-    if (nspin_in != 4)
+    if (nspin_in != 4 && nspin_in != 2)
     {
-        ModuleBase::WARNING_QUIT("SpinConstrain::set_nspin","nspin must be 4 now");
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_nspin","nspin must be 2 or 4");
     }
     this->nspin_ = nspin_in;
 }

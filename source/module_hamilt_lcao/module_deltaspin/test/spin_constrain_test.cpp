@@ -245,9 +245,9 @@ TYPED_TEST(SpinConstrainTest, NSPIN)
 TYPED_TEST(SpinConstrainTest, NSPINwarning)
 {
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.set_nspin(2), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.set_nspin(1), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("nspin must be 4 now"));
+    EXPECT_THAT(output, testing::HasSubstr("nspin must be 2 or 4"));
 }
 
 TYPED_TEST(SpinConstrainTest, SetScDecayGrad)
