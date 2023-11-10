@@ -21,9 +21,9 @@
 --with-fftw=no \
 --with-elpa=install \
 --with-cereal=install \
---with-libtorch=install \
---with-libnpy=install \
+--with-libtorch=no \
+--with-libnpy=no \
 --with-libri=no \
 --with-libcomm=no \
---with-intel-classic=yes \
+--with-intel-classic=no \
 | tee compile.log
