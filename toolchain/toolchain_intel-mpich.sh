@@ -6,8 +6,8 @@
 #SBATCH -e compile.err
 
 # JamesMisaka in 2023-09-16
-# install abacus by intel-toolchain 
-# use mkl , and mpich instead of intelmpi
+# install abacus dependency by intel-toolchain 
+# use mkl ,and mpich instead of intelmpi
 # libtorch and libnpy are for deepks support, which can be =no
 
 # module load mkl compiler
