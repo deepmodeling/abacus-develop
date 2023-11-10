@@ -219,11 +219,15 @@ class Paw_Cell
     int get_libpaw_ixc() {return ixc;}
     int get_libpaw_xclevel() {return xclevel;}
     int get_nspin() {return nspden;}
+
+    double get_epawdc() {return epawdc * 2.0;}
     
     int get_nfft() {return nfft;}
     int get_nrxx() {return nx*ny*num_z[GlobalV::RANK_IN_POOL];}
     int get_val(const int it) {return paw_element_list[it].get_zval();}
     int get_zat(const int it) {return paw_element_list[it].get_zat();}
+
+    double calculate_ecore();
 
     private:
 // Info to be passed to libpaw_interface:
@@ -242,6 +246,7 @@ class Paw_Cell
 
     double ecut, ecutpaw;
     std::vector<double> rprimd, gprimd, gmet;
+    std::vector<double> epsatm;
     double ucvol;
     std::vector<int> ngfft, ngfftdg;
     int nfft;
@@ -251,6 +256,7 @@ class Paw_Cell
     char* filename_list;
     int xclevel, ixc;
     int nspden, nsppol;
+    double epawdc;
 
 // Part IV. Calling Fortran subroutines from libpaw_interface
     public:

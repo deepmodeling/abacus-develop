@@ -218,7 +218,7 @@ void Paw_Element::spherical_bessel_function(const int l, const double xx,
 // search for case("r=a*(exp(d*i)-1)") in m_pawpsp.F90, for example
 double Paw_Element::simpson_integration(std::vector<double> & f) const
 {
-    int ir=nr;
+    int ir=nr-1;
     while (std::abs(f[ir]) < 1e-20)
     {
        ir=ir-1;
@@ -275,6 +275,7 @@ void Paw_Element::prepare_simpson_integration(const double r_for_intg, int & mes
         meshsz = ir;
     }
 
+    if(meshsz == nr) meshsz -= 1;
     //std::cout << "meshsz : " << meshsz << std::endl;
 
 //get simp_fact
