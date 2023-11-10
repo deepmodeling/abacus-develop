@@ -3912,9 +3912,9 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("INPUT", "sc_file does not exist");
             }
         }
-        if (nspin != 4)
+        if (nspin != 4 && nspin != 2)
         {
-            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 4 when sc_mag_switch > 0");
+            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 2 or 4 when sc_mag_switch > 0");
         }
         if (calculation != "scf")
         {

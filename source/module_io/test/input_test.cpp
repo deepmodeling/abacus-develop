@@ -1025,13 +1025,14 @@ TEST_F(InputTest, Check)
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("ecutrho/ecutwfc must >= 4"));
-
+	INPUT.ecutrho = 100.0;
     INPUT.nx = INPUT.ny = INPUT.nz = 10;
     INPUT.ndx = INPUT.ndy = INPUT.ndz = 8;
     testing::internal::CaptureStdout();
-    INPUT.Check();
+	EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("smooth grids is denser than dense grids"));
+	INPUT.ndx = INPUT.ndy = INPUT.ndz = 11;
     //
     INPUT.nbands = -1;
     testing::internal::CaptureStdout();
@@ -1570,7 +1571,7 @@ TEST_F(InputTest, Check)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("nspin must be 4 when sc_mag_switch > 0"));
+	EXPECT_THAT(output,testing::HasSubstr("nspin must be 2 or 4 when sc_mag_switch > 0"));
 	INPUT.nspin = 4;
 	// warning 4 of Deltaspin
 	INPUT.calculation = "nscf";
