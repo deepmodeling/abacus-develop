@@ -118,7 +118,7 @@ The --enable-FEATURE options follow the rules:
   --enable-FEATURE=no     Disable this particular feature
   --enable-FEATURE        The option keyword alone is equivalent to
                           --enable-FEATURE=yes
-
+  ===== NOTICE: THESE FEATURE AER NOT INCLUDED IN ABACUS =====
   --enable-cuda           Turn on GPU (CUDA) support (can be combined
                           with --enable-opencl).
                           Default = no
@@ -302,9 +302,9 @@ enable_tsan="__FALSE__"
 enable_opencl="__FALSE__"
 enable_cuda="__FALSE__"
 enable_hip="__FALSE__"
-export intel_classic="yes" 
+export intel_classic="no" 
 # no, then icc->icx, icpc->icpx, 
-# which cannot compile elpa-2021 and fftw.3.3.10 in some place
+# which cannot compile elpa in AMD server
 # due to some so-called cross-compile problem
 # and will lead to problem in force calculation
 # but icx is recommended by intel compiler
