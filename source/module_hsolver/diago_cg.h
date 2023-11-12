@@ -111,6 +111,7 @@ class DiagoCG : public DiagH<T, Device>
     using setmem_var_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
 
+    consts<T> cs;
     const T * one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
 

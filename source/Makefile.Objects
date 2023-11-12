@@ -273,6 +273,7 @@ OBJS_HCONTAINER=base_matrix.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
+    diagh_consts.o\
     diago_bpcg.o\
     hsolver_pw.o\
     hsolver_pw_sdft.o\

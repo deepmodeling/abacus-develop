@@ -1,4 +1,5 @@
 list(APPEND objects
+    diagh_consts.cpp
     diago_cg.cpp
     diago_david.cpp
     diago_bpcg.cpp

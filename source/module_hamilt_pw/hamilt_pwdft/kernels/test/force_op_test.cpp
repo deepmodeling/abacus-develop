@@ -241,12 +241,17 @@ TEST_F(TestSrcPWForceMultiDevice, cal_force_nl_op_gpu)
 {
     std::vector<double> res(expected_force.size(), 0);
     double * d_res = nullptr, * d_wg = nullptr, * d_deeq = nullptr;
+    double * d_ekb = nullptr, * d_qq_nt = nullptr;
     resmem_var_op()(gpu_ctx, d_wg, wg.size());
     resmem_var_op()(gpu_ctx, d_res, res.size());
     resmem_var_op()(gpu_ctx, d_deeq, deeq.size());
+    resmem_var_op()(gpu_ctx, d_ekb, ekb.size());
+    resmem_var_op()(gpu_ctx, d_qq_nt, qq_nt.size());
     syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_wg, wg.data(), wg.size());
     syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_res, res.data(), res.size());
     syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_deeq, deeq.data(), deeq.size());
+    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_ekb, ekb.data(), ekb.size());
+    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_qq_nt, qq_nt.data(), qq_nt.size());
 
     int * d_atom_nh = nullptr, * d_atom_na = nullptr;
     resmem_int_op()(gpu_ctx, d_atom_nh, atom_nh.size());
@@ -279,6 +284,8 @@ TEST_F(TestSrcPWForceMultiDevice, cal_force_nl_op_gpu)
         d_atom_na,
         tpiba,
         d_wg,
+        d_ekb,
+        d_qq_nt,
         d_deeq,
         d_becp,
         d_dbecp,
@@ -292,6 +299,8 @@ TEST_F(TestSrcPWForceMultiDevice, cal_force_nl_op_gpu)
     delmem_var_op()(gpu_ctx, d_wg);
     delmem_var_op()(gpu_ctx, d_res);
     delmem_var_op()(gpu_ctx, d_deeq);
+    delmem_var_op()(gpu_ctx, d_ekb);
+    delmem_var_op()(gpu_ctx, d_qq_nt);
 
     delmem_int_op()(gpu_ctx, d_atom_nh);
     delmem_int_op()(gpu_ctx, d_atom_na);
